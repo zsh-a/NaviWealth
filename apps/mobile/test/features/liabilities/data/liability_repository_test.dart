@@ -1,7 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/invariants.dart';
@@ -73,14 +72,15 @@ void main() {
     expect(schedule.first.periodIndex, 1);
     expect(schedule.last.remainingBalance, Decimal.zero);
 
-    final batch = await outbox.peekBatch();
-    // 1 liability insert + 12 amortization inserts = 13 ops.
+    final batch = outbox.queued;
+    // 1 liability insert + 12 amortization inserts = 13 dirty pointers.
     expect(batch, hasLength(13));
-    expect(batch.first.tableName, 'liabilities');
-    expect(batch.first.opType, OpType.insert);
-    expect(batch.skip(1).every((o) => o.tableName == 'amortization_entries'),
-        isTrue);
-    expect(batch.skip(1).every((o) => o.opType == OpType.insert), isTrue);
+    expect(batch.first.table, 'liabilities');
+    expect(batch.first.rowId, l.id);
+    expect(
+      batch.skip(1).every((o) => o.table == 'amortization_entries'),
+      isTrue,
+    );
   });
 
   test('credit-card liability persists without a schedule', () async {
@@ -96,9 +96,9 @@ void main() {
     final schedule = await repo.scheduleFor(cc.id);
     expect(schedule, isEmpty);
 
-    final batch = await outbox.peekBatch();
+    final batch = outbox.queued;
     expect(batch, hasLength(1));
-    expect(batch.single.tableName, 'liabilities');
+    expect(batch.single.table, 'liabilities');
   });
 
   test(
@@ -116,8 +116,8 @@ void main() {
         startDate: DateTime.utc(2026, 1, 1),
         accountId: 'acc-1',
       );
-      // Drain create-time ops so the next assertion is easier to read.
-      await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+      // Drain create-time pointers so the next assertion is easier to read.
+      outbox.clearQueued();
 
       final journalEntryId = await repo.registerPayment(
         liabilityId: l.id,
@@ -129,17 +129,15 @@ void main() {
       expect(schedule.first.paidAt, isNotNull);
       expect(schedule[1].paidAt, isNull);
 
-      final batch = await outbox.peekBatch();
+      final batch = outbox.queued;
       expect(batch, hasLength(5));
       final amortOp = batch.firstWhere(
-        (o) => o.tableName == 'amortization_entries',
+        (o) => o.table == 'amortization_entries',
       );
-      expect(amortOp.opType, OpType.update);
-      expect(amortOp.fieldsDiff!.containsKey('paid_at'), isTrue);
-      final jeOp = batch.firstWhere((o) => o.tableName == 'journal_entries');
-      expect(jeOp.opType, OpType.insert);
+      expect(amortOp.table, 'amortization_entries');
+      final jeOp = batch.firstWhere((o) => o.table == 'journal_entries');
       expect(jeOp.rowId, journalEntryId);
-      final postingOps = batch.where((o) => o.tableName == 'postings');
+      final postingOps = batch.where((o) => o.table == 'postings');
       expect(postingOps, hasLength(3));
     },
   );

@@ -1,9 +1,9 @@
 import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../data/db/app_database.dart';
 import '../../data/domain/hlc.dart';
 import 'cursor_store.dart';
-import 'op.dart';
 import 'op_outbox.dart';
 import 'row_applier.dart' show kSyncPkOverrides;
 
@@ -26,18 +26,14 @@ class DriftOutboxStore implements OutboxStore {
   }
 
   @override
-  Future<void> enqueue(Op op) async {
+  Future<void> enqueue({required String table, required String rowId}) async {
     await _db.customStatement(
-      'INSERT OR IGNORE INTO op_outbox '
-      '(op_id, hlc_text, device_id, table_name, row_id, op_type, created_at) '
-      'VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO op_outbox (op_id, table_name, row_id, created_at) '
+      'VALUES (?, ?, ?, ?)',
       [
-        op.opId,
-        op.hlc.toString(),
-        op.deviceId,
-        op.tableName,
-        op.rowId,
-        op.opType.wire,
+        const Uuid().v4(),
+        table,
+        rowId,
         DateTime.now().toUtc().toIso8601String(),
       ],
     );
@@ -165,20 +161,19 @@ class NoopOutboxStore implements OutboxStore {
   Future<int> depth() async => 0;
 
   @override
-  Future<void> enqueue(Op op) async {}
+  Future<void> enqueue({required String table, required String rowId}) async {}
 }
 
 /// In-memory [OutboxStore] for tests.
 class InMemoryOutboxStore implements OutboxStore {
-  final List<Op> items = [];
+  final List<({String table, String rowId})> items = [];
 
   @override
   Future<int> depth() async => items.length;
 
   @override
-  Future<void> enqueue(Op op) async {
-    if (items.any((o) => o.opId == op.opId)) return;
-    items.add(op);
+  Future<void> enqueue({required String table, required String rowId}) async {
+    items.add((table: table, rowId: rowId));
   }
 }
 

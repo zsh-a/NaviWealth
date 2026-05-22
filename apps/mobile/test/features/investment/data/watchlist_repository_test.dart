@@ -2,7 +2,6 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/data/db/providers.dart';
 import 'package:naviwealth/data/repositories/mutation_context.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
@@ -45,10 +44,9 @@ void main() {
       expect(item.alertRules.above, Decimal.parse('200'));
       expect(await repo.listActive('u-test'), hasLength(1));
 
-      var ops = await outbox.peekBatch();
-      expect(ops.single.tableName, 'watchlist_items');
-      expect(ops.single.opType, OpType.insert);
-      expect(ops.single.fieldsDiff?['symbol'], 'AAPL');
+      var ops = outbox.queued;
+      expect(ops.single.table, 'watchlist_items');
+      expect(ops.single.rowId, 'us_stock:AAPL');
 
       await repo.updateAlertRules(
         item: item,
@@ -57,12 +55,14 @@ void main() {
       await repo.remove(item);
 
       expect(await repo.listActive('u-test'), isEmpty);
-      ops = await outbox.peekBatch();
-      expect(ops.map((op) => op.opType), [
-        OpType.insert,
-        OpType.update,
-        OpType.delete,
-      ]);
+      ops = outbox.queued;
+      // insert + update + delete each enqueue one dirty pointer at the same
+      // row.
+      expect(ops, hasLength(3));
+      expect(
+        ops.every((o) => o.table == 'watchlist_items' && o.rowId == item.id),
+        isTrue,
+      );
     },
   );
 }

@@ -161,13 +161,13 @@ void main() {
     );
 
     await coordinator.triggerNow();
-    final firstBatch = await outbox.peekBatch();
+    final firstBatch = outbox.queued;
     expect(firstBatch, hasLength(1));
-    expect(firstBatch.single.fieldsDiff!['source'], 'auto:fake');
+    expect(firstBatch.single.table, 'prices');
 
     // Second cycle on same UTC day → no new row written.
     await coordinator.triggerNow();
-    final secondBatch = await outbox.peekBatch();
+    final secondBatch = outbox.queued;
     expect(secondBatch, hasLength(1), reason: 'idempotent per day');
   });
 
@@ -195,8 +195,8 @@ void main() {
 
     await coordinator.triggerNow();
     expect(market.quotedSymbols, ['AAPL']);
-    final batch = await outbox.peekBatch();
-    expect(batch, isEmpty, reason: 'no OpLog writes when toggle OFF');
+    final batch = outbox.queued;
+    expect(batch, isEmpty, reason: 'no outbox writes when toggle OFF');
   });
 
   test('Phase E: does not overwrite a same-day manual row', () async {
@@ -221,8 +221,7 @@ void main() {
       source: 'manual',
     );
     // Drain the manual row from outbox so we only assert on cycle output.
-    final seed = await outbox.peekBatch();
-    await outbox.ack(seed.map((o) => o.opId).toList());
+    outbox.clearQueued();
 
     final coordinator = PriceSyncCoordinator(
       market: market,
@@ -235,7 +234,7 @@ void main() {
     );
     await coordinator.triggerNow();
 
-    final after = await outbox.peekBatch();
+    final after = outbox.queued;
     expect(after, isEmpty, reason: 'manual row wins, no auto row written');
   });
 

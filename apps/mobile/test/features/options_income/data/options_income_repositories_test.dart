@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/options_income/data/approved_underlyings_repository.dart';
@@ -38,7 +37,7 @@ void main() {
   });
 
   group('OptionsStrategyProfileRepository', () {
-    test('upsert(insert) persists row and queues insert op', () async {
+    test('upsert(insert) persists row and queues a dirty pointer', () async {
       final draft = defaultProfileForMode(OptionsStrategyMode.balanced);
 
       final saved = await profileRepo.upsert(draft);
@@ -47,21 +46,19 @@ void main() {
       expect(saved.sync.ownerUserId, isNotEmpty);
       expect(saved.mode, OptionsStrategyMode.balanced);
 
-      final batch = await outbox.peekBatch();
+      final batch = outbox.queued;
       expect(batch, hasLength(1));
-      expect(batch.single.tableName, 'options_strategy_profile');
-      expect(batch.single.opType, OpType.insert);
+      expect(batch.single.table, 'options_strategy_profile');
       // Singleton: row id == owner_user_id.
       expect(batch.single.rowId, saved.sync.ownerUserId);
-      expect(batch.single.fieldsDiff!['mode'], 'balanced');
-      expect(batch.single.fieldsDiff!['only_on_approved_underlyings'], true);
     });
 
-    test('second upsert produces update op, not insert', () async {
+    test('second upsert queues another dirty pointer at the same row',
+        () async {
       await profileRepo.upsert(
         defaultProfileForMode(OptionsStrategyMode.balanced),
       );
-      await outbox.ack((await outbox.peekBatch()).map((op) => op.opId));
+      outbox.clearQueued();
 
       final loaded = await profileRepo.get('u-test');
       await profileRepo.upsert(
@@ -70,15 +67,10 @@ void main() {
         ),
       );
 
-      final batch = await outbox.peekBatch();
+      final batch = outbox.queued;
       expect(batch, hasLength(1));
-      expect(batch.single.opType, OpType.update);
-      // PK is never part of the update diff.
-      expect(batch.single.fieldsDiff!.containsKey('user_id'), isFalse);
-      expect(
-        batch.single.fieldsDiff!['risk_disclosure_ack_at'],
-        '2026-05-21T00:00:00.000Z',
-      );
+      expect(batch.single.table, 'options_strategy_profile');
+      expect(batch.single.rowId, loaded.sync.ownerUserId);
     });
 
     test('watch streams the latest profile (or null when absent)', () async {
@@ -103,7 +95,7 @@ void main() {
   });
 
   group('ApprovedUnderlyingsRepository', () {
-    test('add persists row and queues insert op with composite id',
+    test('add persists row and queues a dirty pointer with composite id',
         () async {
       final saved = await approvedRepo.add(
         symbol: 'aapl',
@@ -116,43 +108,40 @@ void main() {
       expect(saved.allowPut, isTrue);
       expect(saved.allowCall, isTrue);
 
-      final batch = await outbox.peekBatch();
+      final batch = outbox.queued;
       expect(batch, hasLength(1));
-      expect(batch.single.tableName, 'approved_underlyings');
-      expect(batch.single.opType, OpType.insert);
+      expect(batch.single.table, 'approved_underlyings');
       expect(batch.single.rowId, 'us_stock:AAPL');
-      expect(batch.single.fieldsDiff!['symbol'], 'AAPL');
-      expect(batch.single.fieldsDiff!['allow_put'], true);
     });
 
-    test('update emits partial diff op', () async {
+    test('update queues a dirty pointer at the row', () async {
       final initial = await approvedRepo.add(
         symbol: 'MSFT',
         market: AssetMarket.usStock,
       );
-      await outbox.ack((await outbox.peekBatch()).map((op) => op.opId));
+      outbox.clearQueued();
 
       await approvedRepo.update(initial.copyWith(allowCall: false));
 
-      final batch = await outbox.peekBatch();
-      expect(batch.single.opType, OpType.update);
-      expect(batch.single.fieldsDiff!['allow_call'], false);
-      // Untouched fields are not in the diff (we ship a partial update).
-      expect(batch.single.fieldsDiff!.containsKey('symbol'), isFalse);
+      final batch = outbox.queued;
+      expect(batch, hasLength(1));
+      expect(batch.single.table, 'approved_underlyings');
+      expect(batch.single.rowId, initial.id);
     });
 
-    test('remove writes tombstone and queues delete op', () async {
+    test('remove writes tombstone and queues a dirty pointer', () async {
       final initial = await approvedRepo.add(
         symbol: 'NVDA',
         market: AssetMarket.usStock,
       );
-      await outbox.ack((await outbox.peekBatch()).map((op) => op.opId));
+      outbox.clearQueued();
 
       await approvedRepo.remove(initial);
 
-      final batch = await outbox.peekBatch();
-      expect(batch.single.opType, OpType.delete);
-      expect(batch.single.fieldsDiff, isNull);
+      final batch = outbox.queued;
+      expect(batch, hasLength(1));
+      expect(batch.single.table, 'approved_underlyings');
+      expect(batch.single.rowId, initial.id);
 
       // List queries omit the soft-deleted row.
       final active = await approvedRepo.listActive('u-test');

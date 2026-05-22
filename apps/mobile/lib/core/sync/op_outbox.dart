@@ -1,20 +1,19 @@
-import 'op.dart';
-
-/// Append-only log of locally-authored mutations awaiting sync.
+/// Append-only dirty-pointer log of locally-authored mutations
+/// (`docs/sync-v2.md` §7.1).
 ///
-/// In sync v2 this is a *dirty-pointer log*: the write path enqueues one
-/// entry per mutation, and the sync engine reads only the `(table, row_id)`
-/// set out of it (see [PendingRows]) to push each row's current state. The
-/// historical `op_type` / `fields_diff` are no longer interpreted.
+/// One entry per mutation. The sync engine reads only the `(table, rowId)`
+/// set out of it and pushes each row's *current* state — there is no op
+/// type, no field diff, nothing else to interpret. Entries are deleted once
+/// the server acknowledges the row.
 abstract class OutboxStore {
   /// Number of queued entries (for status display).
   Future<int> depth();
 
-  /// Append an entry. Idempotent on `op_id`.
-  Future<void> enqueue(Op op);
+  /// Append an entry marking `(table, rowId)` dirty.
+  Future<void> enqueue({required String table, required String rowId});
 }
 
-/// One queued local mutation, reduced to a pointer at its row.
+/// One queued mutation, reduced to a pointer at its row.
 class PendingPointer {
   const PendingPointer({
     required this.opId,

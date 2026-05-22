@@ -281,12 +281,11 @@ Every syncable Drift table already carries the metadata v2 needs, via the
 | `deleted_at` | Tombstone — non-null ⇒ `deleted`. |
 | `owner_user_id`, `updated_by_device`, `updated_at` | Author / audit metadata, carried in the payload. |
 
-Locally-dirty rows are tracked in a lightweight **pending-change log**
-(`op_outbox`): one entry per mutation, holding just `(table, row_id)` plus
-the stamp. The sync engine reads the *set* of dirty `(table, row_id)` pairs
-out of it and pushes each row's **current state** — the historical
-op_type/diff is never interpreted. Entries are deleted once the server
-acknowledges the row.
+Locally-dirty rows are tracked in a lightweight **dirty-pointer log**, the
+`op_outbox` table — exactly four columns: `(op_id, table_name, row_id,
+created_at)`. The sync engine reads the *set* of dirty `(table_name,
+row_id)` pairs out of it and pushes each row's **current state**. Entries
+are deleted once the server acknowledges the row.
 
 ### 7.2 Local write path
 
@@ -374,26 +373,26 @@ Relative to v1:
   `materialise.rs`, `state.rs`, `op.rs`, `sql_table_name` mapping, `hlc.rs`,
   the `/sync/push` + `/sync/pull` split. The whole server sync surface is now
   one table + one `store.rs` + one `routes/sync.rs`.
-- **Client:** `op_applier.dart` and every per-table applier
-  (`account_op_applier.dart`, `generic_op_applier.dart`) — replaced by one
-  schema-driven `RowApplier`. The `SyncEngine`, API client and storage layer
-  are rewritten; the `op.dart` types and the `op_outbox` table are kept but
-  repurposed as the lightweight pending-change log (§7.1).
+- **Client:** the whole `op.dart` (`Op`, `OpType`, `validateOpForQueue`),
+  `op_applier.dart` and every per-table applier (`account_op_applier.dart`,
+  `generic_op_applier.dart`) — replaced by one schema-driven `RowApplier`.
+  The `SyncEngine`, API client and storage layer are rewritten. `op_outbox`
+  is rebuilt as a four-column dirty-pointer log (DB migration v13 → v14,
+  which also drops the dead `sync_errors` table).
 - **Protocol:** `fields_diff` shallow-merge, `op_type` semantics, batch
   ordering, per-op idempotency keys, clock-skew rejection, server HLC
-  re-stamping, the `/me` clock-calibration role, backfill SOP.
+  re-stamping, the `/me` clock-calibration role.
 
 Net: the sync layer drops to roughly one third of its size, and v1's three
 severity-🔴 bugs (poison-op head-of-line block, clock-skew sync stall,
 divergent orphan handling) cannot occur by construction.
 
-> **Implementation note.** The client keeps its existing per-row HLC stamp
-> as the opaque `version` token (§4.1) and reuses the `op_outbox` table as
-> the pending-change log, rather than introducing a fresh integer `version`
-> column and a `sync_dirty` flag. This keeps the v2 cutover off the
-> write-path — repositories, the mutation stamper and the table schema are
-> untouched — while still delivering every v2 property above. Swapping in a
-> plain integer `version` later needs no server or protocol change.
+> **Implementation note.** The client uses its existing per-row HLC string
+> as the opaque `version` token (§4.1) rather than a separate integer
+> column — the server is agnostic, so swapping in a plain `i64` later needs
+> no protocol change. The conflict stamp lives in each row's `hlc` column;
+> there is no separate `sync_dirty` flag — dirtiness is the dirty-pointer
+> log (§7.1).
 
 ## 10. Phase 2 — realtime push wake-up (optional)
 

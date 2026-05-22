@@ -2,7 +2,6 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 
-import '../../core/sync/op.dart';
 import '../../core/sync/op_outbox.dart';
 import '../db/app_database.dart';
 import '../domain/price_observation.dart';
@@ -123,19 +122,9 @@ class PriceRepository {
       updatedByDevice: stamp.deviceId,
       hlc: stamp.hlc,
     );
-    final fields = _insertFields(domain);
     await _db.transaction(() async {
       await _db.into(_db.prices).insert(companion);
-      final op = Op(
-        opId: _uuid.v4(),
-        tableName: _tableName,
-        rowId: id,
-        opType: OpType.insert,
-        fieldsDiff: fields,
-        hlc: stamp.hlc,
-        deviceId: stamp.deviceId,
-      );
-      await _outbox.enqueue(op);
+      await _outbox.enqueue(table: _tableName, rowId: id);
     });
     return domain;
   }
@@ -155,33 +144,11 @@ class PriceRepository {
       await (_db.update(
         _db.prices,
       )..where((t) => t.id.equals(id))).write(companion);
-      final op = Op(
-        opId: _uuid.v4(),
-        tableName: _tableName,
-        rowId: id,
-        opType: OpType.delete,
-        fieldsDiff: null,
-        hlc: stamp.hlc,
-        deviceId: stamp.deviceId,
-      );
-      await _outbox.enqueue(op);
+      await _outbox.enqueue(table: _tableName, rowId: id);
     });
   }
 
   // ---------- Helpers ----------
-
-  Map<String, Object?> _insertFields(PriceObservation p) => {
-    'id': p.id,
-    'unit': p.unit,
-    'quote_currency': p.quoteCurrency,
-    'observed_on': p.observedOn.toUtc().toIso8601String(),
-    'per_unit': p.perUnit.toString(),
-    'source': p.source,
-    'owner_user_id': p.sync.ownerUserId,
-    'updated_at': p.sync.updatedAt.toUtc().toIso8601String(),
-    'updated_by_device': p.sync.updatedByDevice,
-    'hlc': p.sync.hlc.toString(),
-  };
 
   PriceObservation _toDomain(PriceRow row) => PriceObservation(
     id: row.id,

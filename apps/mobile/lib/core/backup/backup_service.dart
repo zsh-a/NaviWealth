@@ -1,17 +1,15 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../data/db/app_database.dart';
 import '../../data/domain/hlc.dart';
 import '../logging/app_logger.dart';
-import '../sync/op.dart';
 import '../sync/op_outbox.dart';
+import '../sync/row_applier.dart';
 import 'backup_codec.dart';
 
 const _backupMagic = 'naviwealth.backup.v1';
-const _uuid = Uuid();
 
 /// Result of a successful backup restore.
 class RestoreResult {
@@ -47,21 +45,21 @@ class BackupService {
     required AppDatabase db,
     required BackupCodec codec,
     required OutboxStore outbox,
-    required String deviceId,
-    required Future<Hlc> Function() stampHlc,
+    // Retained for call-site compatibility. The sync-v2 outbox is a pure
+    // dirty-pointer log, so the restore enqueue no longer needs a device id
+    // or an HLC stamp — the sync engine reads each restored row's current
+    // state (including its own `hlc`) directly at push time.
+    String? deviceId,
+    Future<Hlc> Function()? stampHlc,
     AppLogger? logger,
   }) : _db = db,
        _codec = codec,
        _outbox = outbox,
-       _deviceId = deviceId,
-       _stampHlc = stampHlc,
        _logger = logger ?? AppLogger.instance;
 
   final AppDatabase _db;
   final BackupCodec _codec;
   final OutboxStore _outbox;
-  final String _deviceId;
-  final Future<Hlc> Function() _stampHlc;
   final AppLogger _logger;
 
   /// Export all syncable user data as an encrypted backup envelope.
@@ -304,32 +302,15 @@ class BackupService {
     }
   }
 
-  /// Enqueue an insert op into the outbox for a restored row.
+  /// Mark a restored row dirty so the sync engine re-pushes it. The
+  /// sync-v2 outbox only needs `(table, rowId)` — the engine reads the
+  /// row's current state at push time.
   Future<void> _enqueueRestoreOp(
     String tableName,
     Map<String, Object?> row,
   ) async {
-    // Extract the primary key as the row id.
     final rowId = _extractRowId(tableName, row);
-
-    // Parse the HLC from the row, or stamp a new one if missing.
-    final hlcStr = row['hlc'] as String?;
-    final hlc = hlcStr != null ? Hlc.parse(hlcStr) : await _stampHlc();
-
-    // Build fieldsDiff — the full row for insert ops.
-    final fieldsDiff = Map<String, Object?>.from(row);
-
-    final op = Op(
-      opId: _uuid.v4(),
-      tableName: tableName,
-      rowId: rowId,
-      opType: OpType.insert,
-      fieldsDiff: fieldsDiff,
-      hlc: hlc,
-      deviceId: _deviceId,
-    );
-
-    await _outbox.enqueue(op);
+    await _outbox.enqueue(table: tableName, rowId: rowId);
   }
 
   /// Extract the primary key value from a row map.

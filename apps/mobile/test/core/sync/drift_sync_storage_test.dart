@@ -1,30 +1,11 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 
 import '../../data/db/test_database.dart';
-
-Op _op({
-  required String id,
-  required int wall,
-  String table = 'accounts',
-  String rowId = 'A-1',
-  OpType type = OpType.update,
-}) {
-  return Op(
-    opId: id,
-    tableName: table,
-    rowId: rowId,
-    opType: type,
-    fieldsDiff: type == OpType.delete ? null : {'name': 'n-$id'},
-    hlc: Hlc(wallMillis: wall, counter: 0, nodeId: 'dev'),
-    deviceId: 'dev',
-  );
-}
 
 Future<void> _insertAccount(AppDatabase db, String id, {String? name}) {
   return db
@@ -46,23 +27,24 @@ Future<void> _insertAccount(AppDatabase db, String id, {String? name}) {
 
 void main() {
   group('DriftOutboxStore', () {
-    test('enqueue is idempotent on op_id', () async {
+    test('each enqueue appends a dirty pointer', () async {
       final db = makeTestDatabase();
       addTearDown(db.close);
       final outbox = DriftOutboxStore(db);
-      final op = _op(id: '1', wall: 1_000_000_000_000);
-      await outbox.enqueue(op);
-      await outbox.enqueue(op);
-      expect(await outbox.depth(), 1);
+      await outbox.enqueue(table: 'accounts', rowId: 'A-1');
+      await outbox.enqueue(table: 'accounts', rowId: 'A-1');
+      // The v2 outbox is an append-only log; dedup happens downstream when
+      // the engine collapses pointers to one push per row.
+      expect(await outbox.depth(), 2);
     });
 
-    test('depth reflects the number of queued ops', () async {
+    test('depth reflects the number of queued pointers', () async {
       final db = makeTestDatabase();
       addTearDown(db.close);
       final outbox = DriftOutboxStore(db);
       expect(await outbox.depth(), 0);
-      await outbox.enqueue(_op(id: 'a', wall: 1_500_000_000_000));
-      await outbox.enqueue(_op(id: 'b', wall: 1_500_000_000_001));
+      await outbox.enqueue(table: 'accounts', rowId: 'A-1');
+      await outbox.enqueue(table: 'accounts', rowId: 'A-2');
       expect(await outbox.depth(), 2);
     });
   });
@@ -73,8 +55,8 @@ void main() {
       addTearDown(db.close);
       final outbox = DriftOutboxStore(db);
       final pending = DriftPendingRows(db);
-      await outbox.enqueue(_op(id: '1', wall: 1_500_000_000_000));
-      await outbox.enqueue(_op(id: '2', wall: 1_500_000_000_001));
+      await outbox.enqueue(table: 'accounts', rowId: 'A-1');
+      await outbox.enqueue(table: 'accounts', rowId: 'A-2');
       expect(await pending.depth(), 2);
     });
 
@@ -83,15 +65,10 @@ void main() {
       addTearDown(db.close);
       final outbox = DriftOutboxStore(db);
       final pending = DriftPendingRows(db);
-      await outbox.enqueue(
-        _op(id: 'first', wall: 1_500_000_000_000, rowId: 'A-1'),
-      );
-      await outbox.enqueue(
-        _op(id: 'second', wall: 1_500_000_000_001, rowId: 'A-2'),
-      );
+      await outbox.enqueue(table: 'accounts', rowId: 'A-1');
+      await outbox.enqueue(table: 'accounts', rowId: 'A-2');
 
       final pointers = await pending.pointers();
-      expect(pointers.map((p) => p.opId).toList(), ['first', 'second']);
       expect(pointers.first.table, 'accounts');
       expect(pointers.first.rowId, 'A-1');
       expect(pointers.last.rowId, 'A-2');
@@ -123,13 +100,15 @@ void main() {
       addTearDown(db.close);
       final outbox = DriftOutboxStore(db);
       final pending = DriftPendingRows(db);
-      await outbox.enqueue(_op(id: '1', wall: 1_500_000_000_000));
-      await outbox.enqueue(_op(id: '2', wall: 1_500_000_000_001));
+      await outbox.enqueue(table: 'accounts', rowId: 'A-1');
+      await outbox.enqueue(table: 'accounts', rowId: 'A-2');
 
-      await pending.clear(['1']);
+      final before = await pending.pointers();
+      await pending.clear([before.first.opId]);
 
       final pointers = await pending.pointers();
-      expect(pointers.single.opId, '2');
+      expect(pointers.single.opId, before.last.opId);
+      expect(pointers.single.rowId, 'A-2');
       expect(await pending.depth(), 1);
     });
 
@@ -138,7 +117,7 @@ void main() {
       addTearDown(db.close);
       final outbox = DriftOutboxStore(db);
       final pending = DriftPendingRows(db);
-      await outbox.enqueue(_op(id: '1', wall: 1_500_000_000_000));
+      await outbox.enqueue(table: 'accounts', rowId: 'A-1');
       await pending.clear(const <String>[]);
       expect(await pending.depth(), 1);
     });

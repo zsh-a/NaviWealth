@@ -155,7 +155,6 @@ final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
   final backfilled = await SyncBackfill(
     db: db,
     outbox: outbox,
-    engine: engine,
     session: session,
   ).enqueueMissingLocalRows();
   if (backfilled > 0) {

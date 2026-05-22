@@ -1,7 +1,6 @@
 import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 
-import '../../core/sync/op.dart';
 import '../../core/sync/op_outbox.dart';
 import '../../domain/values/asset_market.dart';
 import '../db/app_database.dart';
@@ -21,24 +20,24 @@ import 'mutation_context.dart';
 /// valuation rows are UUIDs the user can rename freely.
 ///
 /// Every mutation here lives in a single Drift transaction that *both*
-/// writes the `assets` row and enqueues a sync [Op] — same contract as
-/// [AccountRepository] and [ManualAssetRepository] — so peers see the new
-/// asset on the next outbox drain.
+/// writes the `assets` row and marks it dirty in the sync outbox — same
+/// contract as [AccountRepository] and [ManualAssetRepository] — so peers
+/// see the new asset on the next outbox drain.
 class SecuritiesAssetRepository {
   SecuritiesAssetRepository({
     required AppDatabase db,
     required OutboxStore outbox,
     required MutationStamper stamper,
+    // Retained for call-site compatibility; securities ids are deterministic
+    // (`<market>:<symbol>`) so no UUID is generated here.
     Uuid uuid = const Uuid(),
   }) : _db = db,
        _outbox = outbox,
-       _stamper = stamper,
-       _uuid = uuid;
+       _stamper = stamper;
 
   final AppDatabase _db;
   final OutboxStore _outbox;
   final MutationStamper _stamper;
-  final Uuid _uuid;
 
   static const String _tableName = 'assets';
 
@@ -208,12 +207,7 @@ class SecuritiesAssetRepository {
       await (_db.update(
         _db.assets,
       )..where((t) => t.id.equals(existing.id))).write(pending);
-      await _enqueue(
-        opType: OpType.update,
-        rowId: existing.id,
-        fields: diff,
-        stamp: stamp,
-      );
+      await _outbox.enqueue(table: _tableName, rowId: existing.id);
     });
     return (await findById(existing.id))!;
   }
@@ -232,12 +226,7 @@ class SecuritiesAssetRepository {
       await (_db.update(
         _db.assets,
       )..where((t) => t.id.equals(id))).write(companion);
-      await _enqueue(
-        opType: OpType.delete,
-        rowId: id,
-        fields: null,
-        stamp: stamp,
-      );
+      await _outbox.enqueue(table: _tableName, rowId: id);
     });
   }
 
@@ -272,30 +261,9 @@ class SecuritiesAssetRepository {
       updatedByDevice: stamp.deviceId,
       hlc: stamp.hlc,
     );
-    final fields = <String, Object?>{
-      'id': id,
-      'type': type.name,
-      'symbol': symbol,
-      'currency': currency,
-      'name': name,
-      'market': market.wire,
-      'industry': industry,
-      'region': region,
-      'isin': isin,
-      'logo_url': logoUrl,
-      'owner_user_id': stamp.ownerUserId,
-      'updated_at': stamp.now.toUtc().toIso8601String(),
-      'updated_by_device': stamp.deviceId,
-      'hlc': stamp.hlc.toString(),
-    };
     await _db.transaction(() async {
       await _db.into(_db.assets).insert(companion);
-      await _enqueue(
-        opType: OpType.insert,
-        rowId: id,
-        fields: fields,
-        stamp: stamp,
-      );
+      await _outbox.enqueue(table: _tableName, rowId: id);
     });
     return (await findById(id))!;
   }
@@ -362,32 +330,9 @@ class SecuritiesAssetRepository {
       await (_db.update(
         _db.assets,
       )..where((t) => t.id.equals(existing.id))).write(pending);
-      await _enqueue(
-        opType: OpType.update,
-        rowId: existing.id,
-        fields: diff,
-        stamp: stamp,
-      );
+      await _outbox.enqueue(table: _tableName, rowId: existing.id);
     });
     return (await findById(existing.id))!;
-  }
-
-  Future<void> _enqueue({
-    required OpType opType,
-    required String rowId,
-    required Map<String, Object?>? fields,
-    required MutationStamp stamp,
-  }) async {
-    final op = Op(
-      opId: _uuid.v4(),
-      tableName: _tableName,
-      rowId: rowId,
-      opType: opType,
-      fieldsDiff: fields,
-      hlc: stamp.hlc,
-      deviceId: stamp.deviceId,
-    );
-    await _outbox.enqueue(op);
   }
 
   Asset _toAsset(AssetRow row) {

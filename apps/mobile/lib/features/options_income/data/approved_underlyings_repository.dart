@@ -1,17 +1,12 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
-import 'package:uuid/uuid.dart';
 
-import '../../../core/sync/op.dart';
 import '../../../core/sync/op_outbox.dart';
 import '../../../data/db/app_database.dart';
-import '../../../data/domain/hlc.dart';
 import '../../../data/domain/sync_meta.dart';
 import '../../../data/repositories/mutation_context.dart';
 import '../../../domain/values/asset_market.dart';
 import '../domain/approved_underlying.dart';
-
-const _uuid = Uuid();
 
 /// CRUD surface for `approved_underlyings`. Hard architectural rule (see
 /// `docs/options-income.md` §1.2): the scanner reads from this list only.
@@ -27,6 +22,8 @@ class ApprovedUnderlyingsRepository {
   final AppDatabase _db;
   final OutboxStore _outbox;
   final MutationStamper _stamper;
+
+  static const String _tableName = 'approved_underlyings';
 
   Stream<List<ApprovedUnderlying>> watchActive(String ownerUserId) {
     final query = _db.select(_db.approvedUnderlyings)
@@ -79,27 +76,11 @@ class ApprovedUnderlyingsRepository {
       deletedAt: const Value(null),
     );
 
-    final fields = _fields(
-      id: id,
-      symbol: normalizedSymbol,
-      market: market.wire,
-      allowPut: allowPut,
-      allowCall: allowCall,
-      maxBuyPrice: maxBuyPrice,
-      minSellPrice: minSellPrice,
-      notes: notes,
-      ownerUserId: stamp.ownerUserId,
-      updatedAt: stamp.now,
-      updatedByDevice: stamp.deviceId,
-      hlc: stamp.hlc,
-      deletedAt: null,
-    );
-
     await _db.transaction(() async {
       await _db
           .into(_db.approvedUnderlyings)
           .insertOnConflictUpdate(companion);
-      await _enqueue(OpType.insert, id, fields, stamp);
+      await _outbox.enqueue(table: _tableName, rowId: id);
     });
 
     return ApprovedUnderlying(
@@ -122,16 +103,6 @@ class ApprovedUnderlyingsRepository {
 
   Future<ApprovedUnderlying> update(ApprovedUnderlying item) async {
     final stamp = await _stamper.stamp();
-    final diff = <String, Object?>{
-      'allow_put': item.allowPut,
-      'allow_call': item.allowCall,
-      'max_buy_price': item.maxBuyPrice?.toString(),
-      'min_sell_price': item.minSellPrice?.toString(),
-      'notes': item.notes,
-      'updated_at': _iso(stamp.now),
-      'updated_by_device': stamp.deviceId,
-      'hlc': stamp.hlc.toString(),
-    };
     await _db.transaction(() async {
       await (_db.update(
         _db.approvedUnderlyings,
@@ -147,7 +118,7 @@ class ApprovedUnderlyingsRepository {
           hlc: Value(stamp.hlc),
         ),
       );
-      await _enqueue(OpType.update, item.id, diff, stamp);
+      await _outbox.enqueue(table: _tableName, rowId: item.id);
     });
     return item.copyWith(
       sync: SyncMeta(
@@ -172,27 +143,8 @@ class ApprovedUnderlyingsRepository {
           hlc: Value(stamp.hlc),
         ),
       );
-      await _enqueue(OpType.delete, item.id, null, stamp);
+      await _outbox.enqueue(table: _tableName, rowId: item.id);
     });
-  }
-
-  Future<void> _enqueue(
-    OpType type,
-    String rowId,
-    Map<String, Object?>? fields,
-    MutationStamp stamp,
-  ) {
-    return _outbox.enqueue(
-      Op(
-        opId: _uuid.v4(),
-        tableName: 'approved_underlyings',
-        rowId: rowId,
-        opType: type,
-        fieldsDiff: fields,
-        hlc: stamp.hlc,
-        deviceId: stamp.deviceId,
-      ),
-    );
   }
 }
 
@@ -216,35 +168,3 @@ ApprovedUnderlying _rowToDomain(ApprovedUnderlyingRow row) {
   );
 }
 
-Map<String, Object?> _fields({
-  required String id,
-  required String symbol,
-  required String market,
-  required bool allowPut,
-  required bool allowCall,
-  required Decimal? maxBuyPrice,
-  required Decimal? minSellPrice,
-  required String? notes,
-  required String ownerUserId,
-  required DateTime updatedAt,
-  required String updatedByDevice,
-  required Hlc hlc,
-  required DateTime? deletedAt,
-}) =>
-    {
-      'id': id,
-      'symbol': symbol,
-      'market': market,
-      'allow_put': allowPut,
-      'allow_call': allowCall,
-      'max_buy_price': maxBuyPrice?.toString(),
-      'min_sell_price': minSellPrice?.toString(),
-      'notes': notes,
-      'owner_user_id': ownerUserId,
-      'updated_at': _iso(updatedAt),
-      'updated_by_device': updatedByDevice,
-      'hlc': hlc.toString(),
-      'deleted_at': deletedAt == null ? null : _iso(deletedAt),
-    };
-
-String _iso(DateTime value) => value.toUtc().toIso8601String();

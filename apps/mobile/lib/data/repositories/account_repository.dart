@@ -1,23 +1,21 @@
 import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 
-import '../../core/sync/op.dart';
 import '../../core/sync/op_outbox.dart';
 import '../audit/event_log_writer.dart';
 import '../db/app_database.dart';
 import '../domain/account.dart';
 import '../domain/enums.dart';
-import '../domain/hlc.dart';
 import '../domain/sync_meta.dart';
 import 'mutation_context.dart';
 
 /// Read/write API for [Account] rows.
 ///
 /// Every mutation lives in a Drift transaction that *both* writes the row
-/// and enqueues a corresponding [Op] into the sync outbox. The two writes
-/// committing together is what makes the local store the durable source of
-/// queued ops — if the process crashes between them, the row is rolled back
-/// and the user sees the failure rather than a silently un-synced change.
+/// and marks it dirty in the sync outbox. The two writes committing together
+/// is what makes the local store durable — if the process crashes between
+/// them, the row is rolled back and the user sees the failure rather than a
+/// silently un-synced change.
 class AccountRepository {
   AccountRepository({
     required AppDatabase db,
@@ -120,33 +118,9 @@ class AccountRepository {
       updatedByDevice: stamp.deviceId,
       hlc: stamp.hlc,
     );
-    final fields = _accountInsertFields(
-      id: id,
-      type: type,
-      name: name,
-      currency: currency,
-      category: resolvedCategory,
-      institution: institution,
-      accountNumber: accountNumber,
-      note: note,
-      archived: false,
-      parentId: parentId,
-      icon: icon,
-      color: color,
-      ownerUserId: stamp.ownerUserId,
-      updatedAt: stamp.now,
-      updatedByDevice: stamp.deviceId,
-      hlc: stamp.hlc,
-    );
-
     await _db.transaction(() async {
       await _db.into(_db.accounts).insert(companion);
-      await _enqueue(
-        opType: OpType.insert,
-        rowId: id,
-        fields: fields,
-        stamp: stamp,
-      );
+      await _outbox.enqueue(table: _tableName, rowId: id);
       await _eventLog.recordCreated(
         entityTable: _tableName,
         entityId: id,
@@ -280,12 +254,7 @@ class AccountRepository {
       await (_db.update(
         _db.accounts,
       )..where((t) => t.id.equals(id))).write(pending);
-      await _enqueue(
-        opType: OpType.update,
-        rowId: id,
-        fields: diff,
-        stamp: stamp,
-      );
+      await _outbox.enqueue(table: _tableName, rowId: id);
       if (priorRow != null) {
         final auditBefore = <String, Object?>{};
         final auditAfter = <String, Object?>{};
@@ -358,12 +327,7 @@ class AccountRepository {
       await (_db.update(
         _db.accounts,
       )..where((t) => t.id.equals(id))).write(companion);
-      await _enqueue(
-        opType: OpType.delete,
-        rowId: id,
-        fields: null,
-        stamp: stamp,
-      );
+      await _outbox.enqueue(table: _tableName, rowId: id);
       await _eventLog.recordSoftDeleted(
         entityTable: _tableName,
         entityId: id,
@@ -374,62 +338,6 @@ class AccountRepository {
   }
 
   // ---------- Helpers ----------
-
-  Future<void> _enqueue({
-    required OpType opType,
-    required String rowId,
-    required Map<String, Object?>? fields,
-    required MutationStamp stamp,
-  }) async {
-    final op = Op(
-      opId: _uuid.v4(),
-      tableName: _tableName,
-      rowId: rowId,
-      opType: opType,
-      fieldsDiff: fields,
-      hlc: stamp.hlc,
-      deviceId: stamp.deviceId,
-    );
-    await _outbox.enqueue(op);
-  }
-
-  Map<String, Object?> _accountInsertFields({
-    required String id,
-    required AccountCategory type,
-    required String name,
-    required String currency,
-    required AccountSide category,
-    required String? institution,
-    required String? accountNumber,
-    required String? note,
-    required bool archived,
-    required String? parentId,
-    required String? icon,
-    required String? color,
-    required String ownerUserId,
-    required DateTime updatedAt,
-    required String updatedByDevice,
-    required Hlc hlc,
-  }) {
-    return {
-      'id': id,
-      'type': type.name,
-      'name': name,
-      'currency': currency,
-      'category': category.name,
-      'institution': institution,
-      'account_number': accountNumber,
-      'note': note,
-      'archived': archived,
-      'parent_id': parentId,
-      'icon': icon,
-      'color': color,
-      'owner_user_id': ownerUserId,
-      'updated_at': updatedAt.toUtc().toIso8601String(),
-      'updated_by_device': updatedByDevice,
-      'hlc': hlc.toString(),
-    };
-  }
 
   Account _toAccount(AccountRow row) {
     return Account(
@@ -658,32 +566,9 @@ class AccountRepository {
         updatedByDevice: stamp.deviceId,
         hlc: stamp.hlc,
       );
-      final fields = _accountInsertFields(
-        id: id,
-        type: type,
-        name: name,
-        currency: currency,
-        category: seed.category,
-        institution: null,
-        accountNumber: null,
-        note: null,
-        archived: false,
-        parentId: parentId,
-        icon: seed.icon,
-        color: seed.color,
-        ownerUserId: stamp.ownerUserId,
-        updatedAt: stamp.now,
-        updatedByDevice: stamp.deviceId,
-        hlc: stamp.hlc,
-      );
       await _db.transaction(() async {
         await _db.into(_db.accounts).insert(companion);
-        await _enqueue(
-          opType: OpType.insert,
-          rowId: id,
-          fields: fields,
-          stamp: stamp,
-        );
+        await _outbox.enqueue(table: _tableName, rowId: id);
         // Mirror the audit shape `create` uses so an account-history view
         // can replay system-account seeding the same way it replays user
         // account creates.

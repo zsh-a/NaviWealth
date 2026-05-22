@@ -2,8 +2,32 @@ import 'package:drift/drift.dart';
 
 import '../../data/db/app_database.dart';
 import '../../data/domain/hlc.dart';
-import 'op.dart' show kSyncableTables;
 import 'sync_api_client.dart';
+
+/// The closed set of tables that participate in sync (`docs/sync-v2.md` §4).
+/// Adding a value is a data-model change only — the server's row store is
+/// schema-agnostic.
+const Set<String> kSyncableTables = {
+  'accounts',
+  'assets',
+  'liabilities',
+  'fx_rates',
+  'tags',
+  'goals',
+  'devices',
+  'amortization_entries',
+  'tag_links',
+  'categories',
+  'settings',
+  'users',
+  'journal_entries',
+  'postings',
+  'prices',
+  'watchlist_items',
+  'options_strategy_profile',
+  'approved_underlyings',
+  'options_trade_journal',
+};
 
 /// Primary-key column for the tables whose PK is not `id`.
 const Map<String, String> kSyncPkOverrides = {

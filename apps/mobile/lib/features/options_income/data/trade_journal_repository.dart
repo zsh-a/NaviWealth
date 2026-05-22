@@ -2,10 +2,8 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../core/sync/op.dart';
 import '../../../core/sync/op_outbox.dart';
 import '../../../data/db/app_database.dart';
-import '../../../data/domain/hlc.dart';
 import '../../../data/domain/sync_meta.dart';
 import '../../../data/repositories/mutation_context.dart';
 import '../domain/options_strategy_profile.dart';
@@ -28,6 +26,8 @@ class TradeJournalRepository {
   final AppDatabase _db;
   final OutboxStore _outbox;
   final MutationStamper _stamper;
+
+  static const String _tableName = 'options_trade_journal';
 
   Stream<List<TradeJournalEntry>> watchActive(String ownerUserId) {
     final query = _db.select(_db.optionsTradeJournal)
@@ -79,28 +79,9 @@ class TradeJournalRepository {
       hlc: stamp.hlc,
       deletedAt: const Value(null),
     );
-    final fields = _fields(
-      id: id,
-      strategy: strategy.wire,
-      symbol: symbol,
-      optionSymbol: optionSymbol,
-      openedAt: openedAt,
-      closedAt: null,
-      entryCredit: entryCredit,
-      exitDebit: null,
-      realizedPnl: null,
-      currency: currency,
-      status: status.wire,
-      notes: notes,
-      ownerUserId: stamp.ownerUserId,
-      updatedAt: stamp.now,
-      updatedByDevice: stamp.deviceId,
-      hlc: stamp.hlc,
-      deletedAt: null,
-    );
     await _db.transaction(() async {
       await _db.into(_db.optionsTradeJournal).insertOnConflictUpdate(companion);
-      await _enqueue(OpType.insert, id, fields, stamp);
+      await _outbox.enqueue(table: _tableName, rowId: id);
     });
     return TradeJournalEntry(
       id: id,
@@ -126,22 +107,6 @@ class TradeJournalRepository {
 
   Future<TradeJournalEntry> update(TradeJournalEntry entry) async {
     final stamp = await _stamper.stamp();
-    final diff = <String, Object?>{
-      'strategy': entry.strategy.wire,
-      'symbol': entry.symbol,
-      'option_symbol': entry.optionSymbol,
-      'opened_at': _iso(entry.openedAt),
-      'closed_at': _isoOrNull(entry.closedAt),
-      'entry_credit': entry.entryCredit.toString(),
-      'exit_debit': entry.exitDebit?.toString(),
-      'realized_pnl': entry.realizedPnl?.toString(),
-      'currency': entry.currency,
-      'status': entry.status.wire,
-      'notes': entry.notes,
-      'updated_at': _iso(stamp.now),
-      'updated_by_device': stamp.deviceId,
-      'hlc': stamp.hlc.toString(),
-    };
     await _db.transaction(() async {
       await (_db.update(
         _db.optionsTradeJournal,
@@ -163,7 +128,7 @@ class TradeJournalRepository {
           hlc: Value(stamp.hlc),
         ),
       );
-      await _enqueue(OpType.update, entry.id, diff, stamp);
+      await _outbox.enqueue(table: _tableName, rowId: entry.id);
     });
     return entry.copyWith(
       sync: SyncMeta(
@@ -188,27 +153,8 @@ class TradeJournalRepository {
           hlc: Value(stamp.hlc),
         ),
       );
-      await _enqueue(OpType.delete, entry.id, null, stamp);
+      await _outbox.enqueue(table: _tableName, rowId: entry.id);
     });
-  }
-
-  Future<void> _enqueue(
-    OpType type,
-    String rowId,
-    Map<String, Object?>? fields,
-    MutationStamp stamp,
-  ) {
-    return _outbox.enqueue(
-      Op(
-        opId: _uuid.v4(),
-        tableName: 'options_trade_journal',
-        rowId: rowId,
-        opType: type,
-        fieldsDiff: fields,
-        hlc: stamp.hlc,
-        deviceId: stamp.deviceId,
-      ),
-    );
   }
 }
 
@@ -237,44 +183,3 @@ TradeJournalEntry _rowToDomain(OptionsTradeJournalRow row) {
   );
 }
 
-Map<String, Object?> _fields({
-  required String id,
-  required String strategy,
-  required String symbol,
-  required String optionSymbol,
-  required DateTime openedAt,
-  required DateTime? closedAt,
-  required Decimal entryCredit,
-  required Decimal? exitDebit,
-  required Decimal? realizedPnl,
-  required String currency,
-  required String status,
-  required String? notes,
-  required String ownerUserId,
-  required DateTime updatedAt,
-  required String updatedByDevice,
-  required Hlc hlc,
-  required DateTime? deletedAt,
-}) =>
-    {
-      'id': id,
-      'strategy': strategy,
-      'symbol': symbol,
-      'option_symbol': optionSymbol,
-      'opened_at': _iso(openedAt),
-      'closed_at': _isoOrNull(closedAt),
-      'entry_credit': entryCredit.toString(),
-      'exit_debit': exitDebit?.toString(),
-      'realized_pnl': realizedPnl?.toString(),
-      'currency': currency,
-      'status': status,
-      'notes': notes,
-      'owner_user_id': ownerUserId,
-      'updated_at': _iso(updatedAt),
-      'updated_by_device': updatedByDevice,
-      'hlc': hlc.toString(),
-      'deleted_at': _isoOrNull(deletedAt),
-    };
-
-String _iso(DateTime value) => value.toUtc().toIso8601String();
-String? _isoOrNull(DateTime? value) => value == null ? null : _iso(value);

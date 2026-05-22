@@ -1,7 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/entry_kind.dart';
 import 'package:naviwealth/data/domain/enums.dart';
@@ -66,18 +65,15 @@ void main() {
     expect(je.postings[0].position, 0);
     expect(je.postings[1].position, 1);
 
-    final batch = await outbox.peekBatch();
-    // 1 JE op + 2 posting ops.
+    final batch = outbox.queued;
+    // 1 JE pointer + 2 posting pointers.
     expect(batch, hasLength(3));
-    expect(batch.map((o) => o.tableName).toSet(), {
+    expect(batch.map((o) => o.table).toSet(), {
       'journal_entries',
       'postings',
     });
-    final je0 = batch.firstWhere((o) => o.tableName == 'journal_entries');
-    expect(je0.opType, OpType.insert);
-    expect(je0.fieldsDiff!['narration'], 'Transfer');
-    expect(je0.fieldsDiff!['flag'], 'confirmed');
-    expect(je0.fieldsDiff!['tag_ids_json'], '[]');
+    final je0 = batch.firstWhere((o) => o.table == 'journal_entries');
+    expect(je0.rowId, je.entry.id);
   });
 
   test('create rejects unbalanced postings before touching the DB', () async {
@@ -97,7 +93,7 @@ void main() {
     // Nothing was written.
     final entries = await db.select(db.journalEntries).get();
     expect(entries, isEmpty);
-    final ops = await outbox.peekBatch();
+    final ops = outbox.queued;
     expect(ops, isEmpty);
   });
 
@@ -157,7 +153,7 @@ void main() {
   });
 
   test(
-    'softDelete tombstones JE + every posting and queues delete ops',
+    'softDelete tombstones JE + every posting and queues dirty pointers',
     () async {
       final je = await repo.create(
         entry: JournalEntryDraft(
@@ -166,34 +162,15 @@ void main() {
         ),
         postings: [cashLeg('a', '-50.00'), cashLeg('b', '50.00')],
       );
-      await outbox.ack((await outbox.peekBatch()).map((o) => o.opId).toList());
+      outbox.clearQueued();
 
       await repo.softDelete(je.entry.id);
 
       expect(await repo.getById(je.entry.id), isNull);
-      final batch = await outbox.peekBatch();
+      final batch = outbox.queued;
       expect(batch, hasLength(3));
-      expect(batch.every((o) => o.opType == OpType.delete), isTrue);
-      expect(batch.every((o) => o.fieldsDiff == null), isTrue);
-      final tables = batch.map((o) => o.tableName).toSet();
+      final tables = batch.map((o) => o.table).toSet();
       expect(tables, {'journal_entries', 'postings'});
-    },
-  );
-
-  test(
-    'queued ops are well-formed for the sync wire (validateOpForQueue)',
-    () async {
-      await repo.create(
-        entry: JournalEntryDraft(
-          date: DateTime.utc(2026, 1, 15),
-          narration: 'Validate',
-        ),
-        postings: [cashLeg('a', '-1.00'), cashLeg('b', '1.00')],
-      );
-      final batch = await outbox.peekBatch();
-      for (final op in batch) {
-        expect(validateOpForQueue(op), isNull, reason: 'op=$op');
-      }
     },
   );
 

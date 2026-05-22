@@ -1,7 +1,6 @@
 import 'package:drift/drift.dart' show Variable;
 import 'package:naviwealth/core/sync/clock.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/core/sync/row_applier.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
@@ -51,9 +50,6 @@ class VirtualDevice {
   late final SyncEngine engine;
 
   bool offline = false;
-  int _opCounter = 0;
-
-  String _nextOpId() => '$id-op-${(++_opCounter).toString().padLeft(5, '0')}';
 
   /// Number of locally-dirty rows awaiting push.
   Future<int> pendingDepth() => pending.depth();
@@ -78,16 +74,7 @@ class VirtualDevice {
       'deleted_at': deleted ? clock.nowMillis() ~/ 1000 : null,
     };
     await _writeLocal(table, rowId, row);
-    final op = Op(
-      opId: _nextOpId(),
-      tableName: table,
-      rowId: rowId,
-      opType: deleted ? OpType.delete : OpType.update,
-      fieldsDiff: deleted ? null : columns,
-      hlc: hlc,
-      deviceId: id,
-    );
-    await _outbox.enqueue(op);
+    await _outbox.enqueue(table: table, rowId: rowId);
   }
 
   /// Apply a full row-state to the local DB via INSERT OR REPLACE — the same
