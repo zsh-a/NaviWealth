@@ -7,7 +7,6 @@ import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/sync/clock.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/errors.dart';
-import 'package:naviwealth/core/sync/op.dart';
 import 'package:naviwealth/core/sync/op_outbox.dart';
 import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/core/sync/row_applier.dart';
@@ -451,11 +450,5 @@ void main() {
         isTrue,
       );
     });
-  });
-
-  // op.dart is unchanged in v2 — a smoke check that OpType still parses.
-  test('OpType round-trips through the wire encoding', () {
-    expect(parseOpType(OpType.insert.wire), OpType.insert);
-    expect(parseOpType(OpType.delete.wire), OpType.delete);
   });
 }

@@ -41,8 +41,11 @@ Map<String, Object?> _accountPayload({
   };
 }
 
-String _hlc(int wall) =>
-    Hlc(wallMillis: wall, counter: 0, nodeId: Hlc.serverNodeId).toString();
+String _hlc(int wall) => Hlc(
+  wallMillis: wall,
+  counter: 0,
+  nodeId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+).toString();
 
 RowChange _accountChange({
   required String version,

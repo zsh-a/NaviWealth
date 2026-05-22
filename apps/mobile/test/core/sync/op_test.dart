@@ -55,24 +55,6 @@ void main() {
       expect(op.toJson()['op_type'], 'delete');
     });
 
-    // SP-B-5: null vs absent column distinction (preserved in JSON)
-    test('null is distinct from absent', () {
-      final op = Op(
-        opId: 'op-4',
-        tableName: 'accounts',
-        rowId: 'A1',
-        opType: OpType.update,
-        fieldsDiff: const {'note': null},
-        hlc: hlc,
-        deviceId: dev,
-      );
-      final encoded = op.encode();
-      expect(encoded.contains('"note":null'), isTrue);
-      final round = Op.decode(encoded);
-      expect(round.fieldsDiff!.containsKey('note'), isTrue);
-      expect(round.fieldsDiff!['note'], isNull);
-    });
-
     // SP-B-7
     test('validateOpForQueue rejects oversized diff', () {
       final big = 'x' * (65 * 1024);
@@ -115,25 +97,6 @@ void main() {
       );
       expect(validateOpForQueue(op), 'unknown_table');
     });
-
-    test('round-trip JSON', () {
-      final op = Op(
-        opId: 'op-rt',
-        tableName: 'journal_entries',
-        rowId: 'JE1',
-        opType: OpType.update,
-        fieldsDiff: const {'description': 'rebate'},
-        hlc: hlc,
-        deviceId: dev,
-      );
-      expect(Op.decode(op.encode()), isA<Op>());
-      final round = Op.decode(op.encode());
-      expect(round.opId, op.opId);
-      expect(round.tableName, op.tableName);
-      expect(round.rowId, op.rowId);
-      expect(round.hlc, op.hlc);
-      expect(round.fieldsDiff, op.fieldsDiff);
-    });
   });
 
   // Pin the forward-only sync enum so any future add / drop is a deliberate
@@ -146,9 +109,9 @@ void main() {
       );
     });
 
-    test('matches the documented v1 closed set', () {
-      // Mirror of `docs/sync-protocol.md` §4.1. Updating either side
-      // without the other is the bug this test catches.
+    test('matches the documented closed set', () {
+      // Mirror of `docs/sync-v2.md` §4. Updating either side without the
+      // other is the bug this test catches.
       const expected = <String>{
         'accounts',
         'assets',

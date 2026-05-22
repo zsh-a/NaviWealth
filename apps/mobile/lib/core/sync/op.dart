@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import '../../data/domain/hlc.dart';
 
-/// The set of synced tables (`docs/sync-protocol.md` §4.1). Closed enum;
-/// adding a new value is a data-model change, not a wire-protocol change.
+/// The set of synced tables (`docs/sync-v2.md` §4). Adding a new value is a
+/// data-model change only — the server's row store is schema-agnostic.
 const Set<String> kSyncableTables = {
   'accounts',
   'assets',
@@ -42,28 +42,9 @@ extension OpTypeWire on OpType {
   String get wire => name; // values are exactly 'insert' | 'update' | 'delete'
 }
 
-OpType parseOpType(String wire) {
-  switch (wire) {
-    case 'insert':
-      return OpType.insert;
-    case 'update':
-      return OpType.update;
-    case 'delete':
-      return OpType.delete;
-  }
-  throw FormatException('Unknown op_type: $wire');
-}
-
-/// One mutation: a single row's `insert | update | delete` carrying the
-/// authoritative HLC. Wire format is JSON per `docs/sync-protocol.md` §4.
-///
-/// Two distinct flavours coexist:
-///  - Locally-generated ops carry `client_hlc`; the server overwrites with
-///    `server_hlc` on accept.
-///  - Server-fetched ops carry `server_hlc` directly.
-///
-/// Both round-trip through this class; the only difference is who stamped
-/// the `hlc`.
+/// A locally-authored mutation, queued in the `op_outbox` pending-change log
+/// (`docs/sync-v2.md` §7.1). v2 only reads `(tableName, rowId)` back out of
+/// it — the row's current state is what gets pushed.
 class Op {
   const Op({
     required this.opId,
@@ -108,16 +89,6 @@ class Op {
   /// of who stamped the HLC.
   final String deviceId;
 
-  Op copyWith({Hlc? hlc}) => Op(
-    opId: opId,
-    tableName: tableName,
-    rowId: rowId,
-    opType: opType,
-    fieldsDiff: fieldsDiff,
-    hlc: hlc ?? this.hlc,
-    deviceId: deviceId,
-  );
-
   Map<String, Object?> toJson() => {
     'op_id': opId,
     'table': tableName,
@@ -135,39 +106,14 @@ class Op {
   /// hot path.
   int get encodedSizeBytes => utf8.encode(encode()).length;
 
-  static Op fromJson(Map<String, Object?> j) {
-    final fieldsDiffRaw = j['fields_diff'];
-    Map<String, Object?>? diff;
-    if (fieldsDiffRaw == null) {
-      diff = null;
-    } else if (fieldsDiffRaw is Map<String, Object?>) {
-      diff = Map<String, Object?>.from(fieldsDiffRaw);
-    } else if (fieldsDiffRaw is Map) {
-      diff = fieldsDiffRaw.map((k, v) => MapEntry(k as String, v));
-    } else {
-      throw const FormatException('fields_diff must be object or null');
-    }
-    return Op(
-      opId: j['op_id'] as String,
-      tableName: j['table'] as String,
-      rowId: j['row_id'] as String,
-      opType: parseOpType(j['op_type'] as String),
-      fieldsDiff: diff,
-      hlc: Hlc.parse(j['hlc'] as String),
-      deviceId: j['device_id'] as String,
-    );
-  }
-
-  static Op decode(String s) => fromJson(jsonDecode(s) as Map<String, Object?>);
-
   @override
   String toString() => 'Op($opType $tableName/$rowId hlc=$hlc dev=$deviceId)';
 }
 
-/// Validation guard called from the repo layer before queuing the op.
+/// Client-side guard called from the repo layer before queuing a mutation.
 ///
-/// Returns `null` on success, an error code matching the spec's §5.4 table
-/// when invalid (so the caller can drop the op + record to `sync_errors`).
+/// Returns `null` when the row is safe to queue, or a short error code when
+/// it is not (unknown table, malformed/oversized payload).
 String? validateOpForQueue(Op op) {
   if (!kSyncableTables.contains(op.tableName)) {
     return 'unknown_table';

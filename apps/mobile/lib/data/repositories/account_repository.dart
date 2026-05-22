@@ -171,9 +171,9 @@ class AccountRepository {
 
   /// Updates only the named fields. Returns the refreshed [Account].
   ///
-  /// Sync semantics: the queued op carries `fields_diff` for *just* the
-  /// edited columns plus the new sync metadata, so peers apply field-level
-  /// LWW per the protocol (`docs/sync-protocol.md` §6).
+  /// Sync semantics: the write marks the row dirty; the sync engine pushes
+  /// the row's whole current state and peers apply row-level LWW
+  /// (`docs/sync-v2.md` §6).
   Future<Account> update(
     String id, {
     String? name,

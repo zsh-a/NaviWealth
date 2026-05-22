@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart';
 
 import '../../data/db/app_database.dart';
@@ -31,9 +29,8 @@ class DriftOutboxStore implements OutboxStore {
   Future<void> enqueue(Op op) async {
     await _db.customStatement(
       'INSERT OR IGNORE INTO op_outbox '
-      '(op_id, hlc_text, device_id, table_name, row_id, op_type, '
-      ' fields_diff, created_at, attempts) '
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)',
+      '(op_id, hlc_text, device_id, table_name, row_id, op_type, created_at) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?)',
       [
         op.opId,
         op.hlc.toString(),
@@ -41,7 +38,6 @@ class DriftOutboxStore implements OutboxStore {
         op.tableName,
         op.rowId,
         op.opType.wire,
-        op.fieldsDiff == null ? null : jsonEncode(op.fieldsDiff),
         DateTime.now().toUtc().toIso8601String(),
       ],
     );

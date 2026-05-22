@@ -6,19 +6,17 @@
 /// lexicographically — `nodeId` is only the final tie-breaker and never
 /// affects causality.
 ///
-/// **Wire format (frozen by `docs/sync-protocol.md` §3.1):**
-/// `<wallMillis>.<counter:%04x>-<nodeId>`. The dot separator and zero-padded
-/// hex counter are mandatory: this lets a TEXT column on D1 / SQLite be
-/// indexed and range-scanned in lex order without a separate sortable column.
+/// **Canonical string form:** `<wallMillis>.<counter:%04x>-<nodeId>`. The dot
+/// separator and zero-padded hex counter make it sort lexicographically the
+/// same as the `(wallMillis, counter, nodeId)` tuple — which is why sync v2
+/// uses this string directly as the opaque, ordered `version` token
+/// (`docs/sync-v2.md` §4.1).
 class Hlc implements Comparable<Hlc> {
   const Hlc({
     required this.wallMillis,
     required this.counter,
     required this.nodeId,
   });
-
-  /// Special node id used for server-stamped HLCs (§3.1).
-  static const String serverNodeId = '00000000-0000-0000-0000-000000000000';
 
   /// Logical counter is u16; overflow bumps `wallMillis`.
   static const int counterMax = 0xFFFF;
@@ -97,9 +95,9 @@ class Hlc implements Comparable<Hlc> {
     return Hlc(wallMillis: maxWall, counter: nextCounter, nodeId: nodeId);
   }
 
-  /// Parse the canonical wire format `<wallMillis>.<counter:%04x>-<nodeId>`
-  /// (`docs/sync-protocol.md` §3.1). Throws [FormatException] on malformed
-  /// input — callers should treat this as a non-recoverable corruption signal.
+  /// Parse the canonical string form `<wallMillis>.<counter:%04x>-<nodeId>`.
+  /// Throws [FormatException] on malformed input — callers should treat this
+  /// as a non-recoverable corruption signal.
   factory Hlc.parse(String packed) {
     final dot = packed.indexOf('.');
     final dash = dot < 0 ? -1 : packed.indexOf('-', dot + 1);
