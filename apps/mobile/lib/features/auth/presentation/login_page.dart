@@ -21,6 +21,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _passwordFocus = FocusNode();
+  _AuthMode _mode = _AuthMode.signIn;
   bool _submitting = false;
   final bool _obscurePassword = true;
   AuthErrorKind? _lastErrorKind;
@@ -44,13 +45,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _lastErrorMessage = null;
     });
     try {
-      await ref
-          .read(authControllerProvider.notifier)
-          .login(
-            email: _emailController.text,
-            password: _passwordController.text,
-            deviceName: _suggestedDeviceName(),
-          );
+      final controller = ref.read(authControllerProvider.notifier);
+      if (_mode == _AuthMode.signIn) {
+        await controller.login(
+          email: _emailController.text,
+          password: _passwordController.text,
+          deviceName: _suggestedDeviceName(),
+        );
+      } else {
+        await controller.register(
+          email: _emailController.text,
+          password: _passwordController.text,
+          deviceName: _suggestedDeviceName(),
+        );
+      }
       // The router redirect will pick up the AuthLoggedIn transition and
       // bounce us to the original destination (or `/`).
     } on AuthException catch (e) {
@@ -62,6 +70,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  void _toggleMode() {
+    if (_submitting) return;
+    setState(() {
+      _mode = switch (_mode) {
+        _AuthMode.signIn => _AuthMode.register,
+        _AuthMode.register => _AuthMode.signIn,
+      };
+      _lastErrorKind = null;
+      _lastErrorMessage = null;
+    });
   }
 
   String? _suggestedDeviceName() {
@@ -81,6 +101,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       AuthErrorKind.invalidCredentials => l10n.authLoginErrorInvalidCredentials,
       AuthErrorKind.network => l10n.authLoginErrorNetwork,
       AuthErrorKind.server => l10n.authLoginErrorServer,
+      AuthErrorKind.accountExists => l10n.authRegisterErrorAccountExists,
       AuthErrorKind.unauthorized ||
       AuthErrorKind.badRequest ||
       AuthErrorKind.unknown => l10n.authLoginErrorGeneric,
@@ -133,7 +154,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              l10n.authLoginTitle,
+                              _mode == _AuthMode.signIn
+                                  ? l10n.authLoginTitle
+                                  : l10n.authRegisterTitle,
                               style: context.theme.typography.md,
                               textAlign: TextAlign.center,
                             ),
@@ -181,7 +204,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               textInputAction: TextInputAction.done,
                               obscureText: _obscurePassword,
                               enabled: !_submitting,
-                              autofillHints: const [AutofillHints.password],
+                              autofillHints: [
+                                _mode == _AuthMode.signIn
+                                    ? AutofillHints.password
+                                    : AutofillHints.newPassword,
+                              ],
                               validator: (value) =>
                                   _validatePassword(value, l10n: l10n),
                               onSubmit: (_) => _submit(),
@@ -197,14 +224,34 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 420),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FButton(
-                        key: const ValueKey('login.submit'),
-                        variant: FButtonVariant.primary,
-                        onPress: _submitting ? null : _submit,
-                        child: Text(_submitting ? '' : l10n.authLoginSubmit),
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        FButton(
+                          key: const ValueKey('login.submit'),
+                          variant: FButtonVariant.primary,
+                          onPress: _submitting ? null : _submit,
+                          child: Text(
+                            _submitting
+                                ? ''
+                                : _mode == _AuthMode.signIn
+                                ? l10n.authLoginSubmit
+                                : l10n.authRegisterSubmit,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        FButton(
+                          key: const ValueKey('login.toggleMode'),
+                          variant: FButtonVariant.ghost,
+                          onPress: _submitting ? null : _toggleMode,
+                          child: Text(
+                            _mode == _AuthMode.signIn
+                                ? l10n.authRegisterSwitch
+                                : l10n.authLoginSwitch,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -236,6 +283,8 @@ String? _validatePassword(String? raw, {required AppLocalizations l10n}) {
 final RegExp _emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
 
 enum _BannerKind { info, error }
+
+enum _AuthMode { signIn, register }
 
 class _Banner extends StatelessWidget {
   const _Banner({required this.kind, required this.message, this.details});

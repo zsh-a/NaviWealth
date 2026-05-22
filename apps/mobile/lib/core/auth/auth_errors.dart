@@ -18,6 +18,10 @@ enum AuthErrorKind {
   /// surfaces as a generic error in UI.
   badRequest,
 
+  /// Registration was attempted after the single-user backend already has
+  /// an account.
+  accountExists,
+
   /// 5xx — backend is down. UI offers retry; auto-retry is *not* applied so
   /// users don't pile on during incidents.
   server,

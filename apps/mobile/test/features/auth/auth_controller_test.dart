@@ -13,6 +13,8 @@ import 'package:naviwealth/features/auth/data/auth_controller.dart';
 class _FakeAuthApi implements AuthApiClient {
   AuthSession? loginResponse;
   Object? loginError;
+  AuthSession? registerResponse;
+  Object? registerError;
   RefreshedToken? refreshResponse;
   Object? refreshError;
   DevicesResponse? devicesResponse;
@@ -22,6 +24,10 @@ class _FakeAuthApi implements AuthApiClient {
     ({String email, String password, String? deviceName, String? deviceId})
   >
   loginCalls = [];
+  final List<
+    ({String email, String password, String? deviceName, String? deviceId})
+  >
+  registerCalls = [];
   final List<AuthSession> refreshCalls = [];
   final List<({AuthSession session, String deviceId})> logoutCalls = [];
 
@@ -40,6 +46,23 @@ class _FakeAuthApi implements AuthApiClient {
     ));
     if (loginError != null) throw loginError!;
     return loginResponse!;
+  }
+
+  @override
+  Future<AuthSession> register({
+    required String email,
+    required String password,
+    String? deviceName,
+    String? deviceId,
+  }) async {
+    registerCalls.add((
+      email: email,
+      password: password,
+      deviceName: deviceName,
+      deviceId: deviceId,
+    ));
+    if (registerError != null) throw registerError!;
+    return registerResponse!;
   }
 
   @override
@@ -221,6 +244,58 @@ void main() {
         () => container
             .read(authControllerProvider.notifier)
             .login(email: 'a@b.com', password: 'wrong'),
+        throwsA(isA<AuthException>()),
+      );
+      expect(
+        container.read(authControllerProvider).value,
+        isA<AuthLoggedOut>(),
+      );
+    });
+  });
+
+  group('AuthController.register', () {
+    test(
+      'creates first account session, persists it, and bumps router version',
+      () async {
+        final api = _FakeAuthApi()..registerResponse = _session(token: 'fresh');
+        final container = _container(api: api);
+        addTearDown(container.dispose);
+
+        await container.read(authControllerProvider.future);
+        await Future<void>.delayed(Duration.zero);
+        final versionBefore = container.read(routeRedirectVersionProvider);
+
+        await container
+            .read(authControllerProvider.notifier)
+            .register(email: 'new@user.com', password: 'hunter22');
+        await Future<void>.delayed(Duration.zero);
+
+        final state = container.read(authControllerProvider).value;
+        expect(state, isA<AuthLoggedIn>());
+        expect((state as AuthLoggedIn).session.accessToken, 'fresh');
+        expect(api.registerCalls, hasLength(1));
+        expect(api.registerCalls.single.deviceId, isNotEmpty);
+        expect(
+          container.read(routeRedirectVersionProvider),
+          greaterThan(versionBefore),
+        );
+
+        final stored = await container.read(tokenStoreProvider).read();
+        expect(stored?.accessToken, 'fresh');
+      },
+    );
+
+    test('propagates registration failure without changing state', () async {
+      final api = _FakeAuthApi()
+        ..registerError = AuthException(AuthErrorKind.accountExists);
+      final container = _container(api: api);
+      addTearDown(container.dispose);
+      await container.read(authControllerProvider.future);
+
+      await expectLater(
+        () => container
+            .read(authControllerProvider.notifier)
+            .register(email: 'new@user.com', password: 'hunter22'),
         throwsA(isA<AuthException>()),
       );
       expect(

@@ -1,36 +1,33 @@
--- Full reset: drop every app table plus d1's migration ledger so the
--- next `wrangler d1 migrations apply` rebuilds the schema from scratch.
+-- Full reset: drop every app table plus d1's migration ledger so the next
+-- `wrangler d1 migrations apply` rebuilds the schema from scratch.
 --
--- Keep this list in sync with the CREATE TABLE statements in
--- apps/backend/migrations/*.sql. Dropping in children-first order keeps
--- FK constraint complaints quiet on databases that have foreign_keys
--- enforcement on.
+-- Keep this list in sync with active CREATE TABLE statements in
+-- apps/backend/migrations/*.sql.
 
-DROP TABLE IF EXISTS postings;
-DROP TABLE IF EXISTS journal_entries;
-DROP TABLE IF EXISTS amortization_entries;
-DROP TABLE IF EXISTS tag_links;
-DROP TABLE IF EXISTS tags;
-DROP TABLE IF EXISTS prices;
-DROP TABLE IF EXISTS fx_rates;
-DROP TABLE IF EXISTS categories;
-DROP TABLE IF EXISTS settings;
-DROP TABLE IF EXISTS goals;
-DROP TABLE IF EXISTS liabilities;
-DROP TABLE IF EXISTS assets;
-DROP TABLE IF EXISTS accounts;
-DROP TABLE IF EXISTS op_log;
-DROP TABLE IF EXISTS sync_state;
+-- Current sync v2 schema.
+DROP TABLE IF EXISTS sync_rows;
+
+-- Current AI/read-model tables.
+DROP TABLE IF EXISTS read_model_subscription_changes;
+DROP TABLE IF EXISTS read_model_asset_allocation_snapshot;
+DROP TABLE IF EXISTS read_model_investment_performance;
+DROP TABLE IF EXISTS read_model_transfer_links;
+DROP TABLE IF EXISTS read_model_refund_links;
+DROP TABLE IF EXISTS read_model_net_worth_daily;
+DROP TABLE IF EXISTS read_model_xirr_snapshot;
+DROP TABLE IF EXISTS read_model_anomaly_flags;
+DROP TABLE IF EXISTS read_model_recurring_patterns;
+DROP TABLE IF EXISTS read_model_cashflow_buckets;
+DROP TABLE IF EXISTS read_model_net_worth_snapshot;
+DROP TABLE IF EXISTS read_model_holdings_snapshot;
+DROP TABLE IF EXISTS read_model_monthly_spend_by_category;
+DROP TABLE IF EXISTS read_model_freshness_meta;
 DROP TABLE IF EXISTS ai_request_log;
-
--- Sync materialisations.
-DROP TABLE IF EXISTS synced_devices;
-DROP TABLE IF EXISTS synced_users;
 
 -- Auth tables.
 DROP TABLE IF EXISTS devices;
 DROP TABLE IF EXISTS users;
 
--- D1's migration ledger. Drop it last so a re-apply replays every file
--- in apps/backend/migrations/ from 0001.
+-- D1's migration ledger. Drop it last so a re-apply replays every file in
+-- apps/backend/migrations/ from 0001.
 DROP TABLE IF EXISTS d1_migrations;

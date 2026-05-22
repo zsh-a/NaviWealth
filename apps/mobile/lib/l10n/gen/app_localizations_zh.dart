@@ -1812,7 +1812,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authLoginTitle => '欢迎回来';
 
   @override
+  String get authRegisterTitle => '创建账号';
+
+  @override
   String get authLoginSubmit => '登录';
+
+  @override
+  String get authRegisterSubmit => '创建账号';
+
+  @override
+  String get authRegisterSwitch => '创建账号';
+
+  @override
+  String get authLoginSwitch => '返回登录';
 
   @override
   String get authEmailLabel => '邮箱';
@@ -1849,6 +1861,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get authLoginErrorGeneric => '登录失败，请重试。';
+
+  @override
+  String get authRegisterErrorAccountExists => '账号已存在，请直接登录。';
 
   @override
   String get authLoginNoticeSessionExpired => '登录已过期，请重新登录。';

@@ -44,6 +44,24 @@ class DioAuthApiClient implements AuthApiClient {
   }
 
   @override
+  Future<AuthSession> register({
+    required String email,
+    required String password,
+    String? deviceName,
+    String? deviceId,
+  }) async {
+    final body = <String, Object?>{
+      'email': email.trim(),
+      'password': password,
+      if (deviceName != null && deviceName.isNotEmpty)
+        'device_name': deviceName,
+      if (deviceId != null && deviceId.isNotEmpty) 'device_id': deviceId,
+    };
+    final res = await _post('/auth/register', body: body, isRegister: true);
+    return AuthSession.fromJson(res);
+  }
+
+  @override
   Future<RefreshedToken> refresh(AuthSession current) async {
     final res = await _post('/auth/refresh', bearer: current.accessToken);
     return RefreshedToken(
@@ -83,12 +101,14 @@ class DioAuthApiClient implements AuthApiClient {
     Object? body,
     String? bearer,
     bool isLogin = false,
+    bool isRegister = false,
   }) => _send(
     method: 'POST',
     path: path,
     body: body,
     bearer: bearer,
     isLogin: isLogin,
+    isRegister: isRegister,
   );
 
   Future<Map<String, Object?>> _send({
@@ -97,6 +117,7 @@ class DioAuthApiClient implements AuthApiClient {
     Object? body,
     String? bearer,
     bool isLogin = false,
+    bool isRegister = false,
   }) async {
     final headers = <String, Object>{
       'Content-Type': 'application/json; charset=utf-8',
@@ -139,7 +160,13 @@ class DioAuthApiClient implements AuthApiClient {
           message: 'unexpected JSON shape from $path',
         );
       }
-      throw _mapStatus(status, res, path, isLogin: isLogin);
+      throw _mapStatus(
+        status,
+        res,
+        path,
+        isLogin: isLogin,
+        isRegister: isRegister,
+      );
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout ||
@@ -153,7 +180,13 @@ class DioAuthApiClient implements AuthApiClient {
       }
       if (e.response != null) {
         final status = e.response!.statusCode ?? 0;
-        throw _mapStatus(status, e.response!, path, isLogin: isLogin);
+        throw _mapStatus(
+          status,
+          e.response!,
+          path,
+          isLogin: isLogin,
+          isRegister: isRegister,
+        );
       }
       throw AuthException(AuthErrorKind.unknown, message: e.message, cause: e);
     }
@@ -164,6 +197,7 @@ class DioAuthApiClient implements AuthApiClient {
     Response<dynamic> res,
     String path, {
     required bool isLogin,
+    required bool isRegister,
   }) {
     final message = _readErrorMessage(res.data);
     if (status == 401) {
@@ -178,6 +212,13 @@ class DioAuthApiClient implements AuthApiClient {
         AuthErrorKind.server,
         statusCode: status,
         message: message ?? 'server error from $path',
+      );
+    }
+    if (isRegister && status == 409) {
+      return AuthException(
+        AuthErrorKind.accountExists,
+        statusCode: status,
+        message: message,
       );
     }
     if (status >= 400) {

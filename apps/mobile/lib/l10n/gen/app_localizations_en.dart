@@ -1869,7 +1869,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authLoginTitle => 'Welcome back';
 
   @override
+  String get authRegisterTitle => 'Create account';
+
+  @override
   String get authLoginSubmit => 'Sign in';
+
+  @override
+  String get authRegisterSubmit => 'Create account';
+
+  @override
+  String get authRegisterSwitch => 'Create an account';
+
+  @override
+  String get authLoginSwitch => 'Sign in instead';
 
   @override
   String get authEmailLabel => 'Email';
@@ -1910,6 +1922,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authLoginErrorGeneric => 'Sign-in failed. Please try again.';
+
+  @override
+  String get authRegisterErrorAccountExists =>
+      'An account already exists. Sign in instead.';
 
   @override
   String get authLoginNoticeSessionExpired =>

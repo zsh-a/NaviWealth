@@ -412,6 +412,6 @@ Phase 2 is deferred; Phase 1 (this doc, polling + D1) ships first.
 
 - `apps/backend/src/routes/sync.rs` — the single `/sync` handler
 - `apps/backend/src/sync/store.rs` — generic row store + LWW
-- `apps/backend/migrations/0021_sync_v2_rows.sql` — `sync_rows` schema
+- `apps/backend/migrations/0002_sync_schema.sql` — `sync_rows` schema
 - `apps/mobile/lib/core/sync/` — client engine, version stamper, applier
 - `docs/sync-protocol.md` — v1 (superseded, history only)

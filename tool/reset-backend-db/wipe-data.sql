@@ -1,32 +1,32 @@
 -- Data-only reset: clear every app row, keep the schema and the
 -- d1_migrations history. Tables are listed children-first so foreign-key
--- constraints (where present) don't reject a delete.
+-- constraints (where present) do not reject a delete.
 --
--- Keep this list in sync with the CREATE TABLE statements in
--- apps/backend/migrations/*.sql. Adding a table? Append it here too.
+-- Keep this list in sync with the active CREATE TABLE statements in
+-- apps/backend/migrations/*.sql.
 
-DELETE FROM postings;
-DELETE FROM journal_entries;
-DELETE FROM amortization_entries;
-DELETE FROM tag_links;
-DELETE FROM tags;
-DELETE FROM prices;
-DELETE FROM fx_rates;
-DELETE FROM categories;
-DELETE FROM settings;
-DELETE FROM goals;
-DELETE FROM liabilities;
-DELETE FROM assets;
-DELETE FROM accounts;
-DELETE FROM op_log;
-DELETE FROM sync_state;
+-- Sync v2 row-state store.
+DELETE FROM sync_rows;
+DELETE FROM sqlite_sequence WHERE name = 'sync_rows';
+
+-- AI/read-model tables.
+DELETE FROM read_model_subscription_changes;
+DELETE FROM read_model_asset_allocation_snapshot;
+DELETE FROM read_model_investment_performance;
+DELETE FROM read_model_transfer_links;
+DELETE FROM read_model_refund_links;
+DELETE FROM read_model_net_worth_daily;
+DELETE FROM read_model_xirr_snapshot;
+DELETE FROM read_model_anomaly_flags;
+DELETE FROM read_model_recurring_patterns;
+DELETE FROM read_model_cashflow_buckets;
+DELETE FROM read_model_net_worth_snapshot;
+DELETE FROM read_model_holdings_snapshot;
+DELETE FROM read_model_monthly_spend_by_category;
+DELETE FROM read_model_freshness_meta;
 DELETE FROM ai_request_log;
 
--- Materialised sync mirrors (latest-state copies of synced rows).
-DELETE FROM synced_devices;
-DELETE FROM synced_users;
-
--- Auth identities live in `users` / `devices`. Wiping them logs every
--- client out and forces a fresh `tool/register-user/register.sh`.
+-- Auth identities live in `users` / `devices`. Wiping them logs every client
+-- out and forces a fresh `tool/register-user/register.sh`.
 DELETE FROM devices;
 DELETE FROM users;
