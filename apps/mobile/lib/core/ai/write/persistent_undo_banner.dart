@@ -13,6 +13,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../l10n/gen/app_localizations.dart';
 import '../visual/visual.dart';
 import 'drift_undo_stack.dart';
 import 'providers.dart';
@@ -93,7 +94,7 @@ class _UndoRow extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               AiPill(
-                label: '撤销',
+                label: AppLocalizations.of(context).commonUndo,
                 state: AiPillState.selected,
                 onTap: onUndo,
               ),

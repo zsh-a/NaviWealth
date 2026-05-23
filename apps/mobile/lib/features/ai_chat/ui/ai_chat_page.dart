@@ -10,6 +10,7 @@ import '../../../core/auth/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
+import '../state/ai_context_summary_provider.dart';
 import '../state/chat_controller.dart';
 import '../state/chat_session_scope.dart';
 import '../state/route_context_provider.dart';
@@ -258,21 +259,17 @@ class _ChatPane extends ConsumerWidget {
   }
 }
 
-class _EmptyConversation extends StatelessWidget {
+class _EmptyConversation extends ConsumerWidget {
   const _EmptyConversation({required this.onSuggest});
 
   final ValueChanged<String> onSuggest;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    final suggestions = <(String, IconData)>[
-      (l10n.aiChatEmptySuggestion1, Icons.calendar_month_outlined),
-      (l10n.aiChatEmptySuggestion2, Icons.shield_outlined),
-      (l10n.aiChatEmptySuggestion3, Icons.donut_small_outlined),
-      (l10n.aiChatEmptySuggestion4, Icons.trending_up),
-    ];
+    final summary = ref.watch(aiContextSummaryProvider);
+    final suggestions = _composeSuggestions(l10n, summary);
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = Breakpoints.isMobile(constraints.maxWidth);
@@ -341,6 +338,61 @@ class _EmptyConversation extends StatelessWidget {
       },
     );
   }
+}
+
+/// Build the 4 empty-state tiles. Dynamic suggestions sourced from
+/// [AiContextSummary] take priority (up to 3 slots) so the first thing
+/// the user sees reflects what's actually happening in their portfolio
+/// right now; static fallbacks fill the rest so the surface never
+/// shrinks below 4 tiles.
+List<(String, IconData)> _composeSuggestions(
+  AppLocalizations l10n,
+  AiContextSummary s,
+) {
+  final out = <(String, IconData)>[];
+
+  // Sign-aware net worth movement — most timely signal a user has.
+  final pct = s.monthlyChangePct;
+  if (pct != null && pct.isFinite) {
+    out.add((
+      l10n.aiChatEmptyDynamicNetWorth,
+      pct >= 0 ? Icons.trending_up_outlined : Icons.trending_down_outlined,
+    ));
+  }
+  if (s.unusualExpensesCount > 0) {
+    out.add((
+      l10n.aiChatEmptyDynamicAnomaly(s.unusualExpensesCount),
+      Icons.bolt_outlined,
+    ));
+  }
+  if (s.upcomingMaturitiesCount > 0) {
+    out.add((
+      l10n.aiChatEmptyDynamicMaturity(
+        s.upcomingMaturitiesCount,
+        s.upcomingMaturitiesDays,
+      ),
+      Icons.event_available_outlined,
+    ));
+  }
+
+  // Cap dynamic suggestions at 3 so a static "evergreen" question is
+  // always present — helps when the dynamic ones all point at the same
+  // kind of follow-up (e.g. anomaly + maturity both feel reactive).
+  if (out.length > 3) out.removeRange(3, out.length);
+
+  final defaults = <(String, IconData)>[
+    (l10n.aiChatEmptySuggestion1, Icons.calendar_month_outlined),
+    (l10n.aiChatEmptySuggestion2, Icons.shield_outlined),
+    (l10n.aiChatEmptySuggestion3, Icons.donut_small_outlined),
+    (l10n.aiChatEmptySuggestion4, Icons.trending_up),
+  ];
+  final existing = {for (final s in out) s.$1};
+  for (final d in defaults) {
+    if (out.length >= 4) break;
+    if (existing.contains(d.$1)) continue;
+    out.add(d);
+  }
+  return out;
 }
 
 class _SuggestionTile extends StatelessWidget {

@@ -1706,6 +1706,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonSaveFailed => 'Couldn\'t save your changes. Tap retry.';
 
   @override
+  String get commonUndo => 'Undo';
+
+  @override
   String get deferredLoadFailedTitle => 'Couldn\'t load this section';
 
   @override
@@ -3463,6 +3466,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatEmptySuggestionsHeader => 'Try these';
 
   @override
+  String get aiChatEmptyDynamicNetWorth =>
+      'Explain this month\'s net worth change';
+
+  @override
+  String aiChatEmptyDynamicAnomaly(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Look at the $count flagged expenses',
+      one: 'Look at the flagged expense',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiChatEmptyDynamicMaturity(int count, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count deposits mature in ${days}d — what should I do?',
+      one: '1 deposit matures in ${days}d — what should I do?',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get aiChatBootstrappingLabel => 'Preparing conversation…';
 
   @override
@@ -3533,6 +3562,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String aiChatRunningTool(String tool) {
     return 'Running $tool';
   }
+
+  @override
+  String get aiChatJumpToLatestTooltip => 'Jump to latest';
 
   @override
   String get aiChatStaleSyncNotice =>
@@ -3658,6 +3690,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiChatProposalBatchConfirmAll => 'Confirm all';
+
+  @override
+  String aiChatProposalConfirmTokenWarning(String token) {
+    return 'High-risk action. Type \"$token\" to enable Confirm.';
+  }
+
+  @override
+  String aiChatProposalConfirmTokenPending(String token) {
+    return 'Confirm is disabled until you type \"$token\".';
+  }
 
   @override
   String get aiChatFieldQuantity => 'Quantity';

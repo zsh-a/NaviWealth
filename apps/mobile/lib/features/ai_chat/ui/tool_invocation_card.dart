@@ -35,7 +35,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
     final l10n = AppLocalizations.of(context);
     final invocation = widget.invocation;
     final pending = invocation.output == null;
-    final friendlyName = _friendlyToolName(l10n, invocation.name);
+    final friendlyName = friendlyToolName(l10n, invocation.name);
     final summary = _summarizeInput(invocation.input);
     final jumps = _extractJumps(l10n, invocation.output);
 
@@ -301,7 +301,11 @@ class _CodeBlock extends StatelessWidget {
   }
 }
 
-String _friendlyToolName(AppLocalizations l10n, String wireName) {
+/// Map a wire tool name (e.g. `get_holdings`) to a localized,
+/// user-facing label (e.g. "查询持仓"). Unknown wires fall through to
+/// the raw name — better than an opaque "unknown" placeholder, since
+/// power users can still recognise the tool and report bugs.
+String friendlyToolName(AppLocalizations l10n, String wireName) {
   return switch (wireName) {
     'get_holdings' => l10n.aiChatToolGetHoldings,
     'compute_xirr' => l10n.aiChatToolComputeXirr,

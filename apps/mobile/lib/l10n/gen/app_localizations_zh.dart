@@ -1651,6 +1651,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonSaveFailed => '保存失败，点击重试';
 
   @override
+  String get commonUndo => '撤销';
+
+  @override
   String get deferredLoadFailedTitle => '该页面加载失败';
 
   @override
@@ -3327,6 +3330,29 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatEmptySuggestionsHeader => '试试这些';
 
   @override
+  String get aiChatEmptyDynamicNetWorth => '聊聊本月净值变化';
+
+  @override
+  String aiChatEmptyDynamicAnomaly(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '看看这 $count 笔异常支出',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiChatEmptyDynamicMaturity(int count, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '我有 $count 笔存款将在 $days 天内到期，怎么办？',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get aiChatBootstrappingLabel => '正在准备会话…';
 
   @override
@@ -3395,6 +3421,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String aiChatRunningTool(String tool) {
     return '正在 $tool';
   }
+
+  @override
+  String get aiChatJumpToLatestTooltip => '跳到最新';
 
   @override
   String get aiChatStaleSyncNotice => '本地数据未完成同步，回答可能滞后于你刚刚的录入。';
@@ -3516,6 +3545,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiChatProposalBatchConfirmAll => '全部确认';
+
+  @override
+  String aiChatProposalConfirmTokenWarning(String token) {
+    return '此操作高风险。请输入「$token」启用确认。';
+  }
+
+  @override
+  String aiChatProposalConfirmTokenPending(String token) {
+    return '输入「$token」后即可点击确认。';
+  }
 
   @override
   String get aiChatFieldQuantity => '数量';
