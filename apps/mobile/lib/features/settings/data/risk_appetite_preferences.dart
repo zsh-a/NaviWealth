@@ -65,27 +65,10 @@ class RiskAppetiteController extends StateNotifier<RiskAppetite> {
   RiskAppetiteController(this._prefs) : super(_load(_prefs));
 
   static const String _key = 'naviwealth.preferences.risk_appetite';
-  static const String _legacySchemeKey = 'naviwealth.rebalance.selected_scheme';
 
   final SharedPreferences _prefs;
 
-  static RiskAppetite _load(SharedPreferences p) {
-    final raw = p.getString(_key);
-    if (raw != null) return _parse(raw);
-    // One-shot migration: pull the previously independent
-    // `selectedSchemeProvider` value forward so users who already
-    // picked "aggressive" / "custom" don't get reset to moderate the
-    // first time the SSOT loads. The legacy key uses the
-    // AllocationSchemePreset enum names; we map them back.
-    final legacy = p.getString(_legacySchemeKey);
-    return switch (legacy) {
-      'conservative' => RiskAppetite.conservative,
-      'balanced' => RiskAppetite.moderate,
-      'aggressive' => RiskAppetite.aggressive,
-      'custom' => RiskAppetite.custom,
-      _ => RiskAppetite.moderate,
-    };
-  }
+  static RiskAppetite _load(SharedPreferences p) => _parse(p.getString(_key));
 
   Future<void> set(RiskAppetite next) async {
     if (next == state) return;
