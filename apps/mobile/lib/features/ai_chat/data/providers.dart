@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart' show IterableExtension;
 import 'package:decimal/decimal.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +32,7 @@ import '../../fire/data/fire_bucket_rules_preferences.dart';
 import '../../fire/data/fire_providers.dart';
 import '../../fire/domain/fire_bucket.dart';
 import '../../fire/domain/fire_plan.dart';
+import '../../fire/domain/fire_projection.dart' show FireScenarioTier;
 import '../../home/data/dashboard_providers.dart';
 import '../../investment/data/providers.dart';
 import '../../investment/domain/models/holding_snapshot.dart';
@@ -221,6 +223,8 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
     // appetite SSOT landed.
     final riskAppetite = ref.read(riskAppetiteProvider);
 
+    final fireGoal = _summarizeFireGoal(ref);
+
     final pack = compressor.compress(
       route: route,
       intent: intent,
@@ -233,6 +237,7 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
       analyticalUploads: analyticalUploads,
       deviceHlc: analyticalUploads.isEmpty ? null : localHlcText,
       riskPreference: riskAppetite.toWire(),
+      fireGoal: fireGoal,
     );
 
     // The historical router still classifies online chat as cloud-bound.
@@ -269,6 +274,60 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
       localHlcText: null,
       traceVerbose: false,
     );
+  }
+}
+
+/// Build a [FireGoalSummary] from the live `firePlanProvider` +
+/// dashboard snapshot + projection scenarios. Returns `null` when the
+/// plan has no configured target — that's a meaningful signal to the
+/// AI ("ask the user about FIRE setup") rather than padding with zero.
+///
+/// All upstream reads are non-blocking `.value` lookups: a missing
+/// snapshot or scenario simply degrades the summary (no progress, no
+/// years estimate) but never blocks the chat turn.
+FireGoalSummary? _summarizeFireGoal(Ref ref) {
+  try {
+    final plan = ref.read(firePlanProvider);
+    if (plan.targetNetWorth <= Decimal.zero) return null;
+
+    final snapshot = ref.read(dashboardSnapshotProvider).value;
+    double progress = 0;
+    if (snapshot != null && snapshot.netWorth.amount > Decimal.zero) {
+      final ratio = (snapshot.netWorth.amount / plan.targetNetWorth).toDouble();
+      progress = ratio.clamp(0.0, 1.0);
+    }
+
+    double? yearsRemaining;
+    final view = ref.read(fireDashboardViewProvider).value;
+    if (view != null && view.scenarios.isNotEmpty) {
+      // Prefer the live / neutral scenario over an outlier — matches
+      // the heuristic the FIRE state provider uses elsewhere.
+      final scenario = view.scenarios.firstWhereOrNull(
+            (s) => s.tier == FireScenarioTier.live,
+          ) ??
+          view.scenarios.firstWhereOrNull(
+            (s) => s.tier == FireScenarioTier.neutral,
+          ) ??
+          view.scenarios.first;
+      final months = scenario.monthsToTarget;
+      if (months != null && months > 0) yearsRemaining = months / 12.0;
+    }
+
+    // The wire field is "minor units"; multiply by 100 so e.g. ¥1.5M
+    // arrives as "150000000". The AI prompt only uses it qualitatively
+    // (order-of-magnitude) — exact JPY/USD precision isn't needed.
+    final targetMinor = (plan.targetNetWorth * Decimal.fromInt(100))
+        .toBigInt()
+        .toString();
+    return FireGoalSummary(
+      targetMinor: targetMinor,
+      currency: plan.baseCurrency,
+      progressFraction: progress,
+      yearsRemainingEstimate: yearsRemaining,
+    );
+  } catch (_) {
+    // Transparency wiring is best-effort; never block chat over it.
+    return null;
   }
 }
 

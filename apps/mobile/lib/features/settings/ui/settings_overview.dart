@@ -13,6 +13,9 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../analytics/data/risk_threshold_preferences.dart';
 import '../../analytics/domain/concentration_risk.dart';
 import '../../auth/data/auth_controller.dart';
+import '../../expense/data/expense_report_providers.dart';
+import '../../fire/data/fire_plan_preferences.dart';
+import '../../fire/domain/fire_plan.dart';
 import '../../rebalance/data/rebalance_providers.dart';
 import '../../rebalance/domain/allocation_schemes.dart';
 import '../../rebalance/ui/target_allocation_editor_sheet.dart';
@@ -67,8 +70,17 @@ class SettingsOverview extends ConsumerWidget {
                 onTap: () => showTargetAllocationEditorSheet(context: context),
               ),
               _SectionDivider(),
+              _MonthlyExpenseLink(
+                onTap: () =>
+                    context.goNamed(AppRouteNames.monthlyExpense),
+              ),
+              _SectionDivider(),
               _RiskThresholdsLink(
                 onTap: () => context.goNamed(AppRouteNames.riskThresholds),
+              ),
+              _SectionDivider(),
+              _StressTestLink(
+                onTap: () => context.goNamed(AppRouteNames.stressTest),
               ),
             ],
           ),
@@ -654,6 +666,48 @@ class _RiskThresholdsLink extends ConsumerWidget {
         (t.sectorWarning - d.sectorWarning).abs() > eps ||
         (t.regionWarning - d.regionWarning).abs() > eps ||
         (t.currencyWarning - d.currencyWarning).abs() > eps;
+  }
+}
+
+class _StressTestLink extends ConsumerWidget {
+  const _StressTestLink({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final risk = ref.watch(firePlanExtrasProvider).riskSettings;
+    final isCustom = risk != const FireRiskSettings();
+    return InlineLinkRow(
+      icon: Icons.science_outlined,
+      label: l10n.settingsStressTestLabel,
+      subtitle: isCustom
+          ? l10n.settingsStressTestSubtitleCustom
+          : l10n.settingsStressTestSubtitleAuto,
+      onTap: onTap,
+    );
+  }
+}
+
+class _MonthlyExpenseLink extends ConsumerWidget {
+  const _MonthlyExpenseLink({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final prefs = ref.watch(monthlyExpensePreferencesProvider);
+    final subtitle = prefs.override != null
+        ? l10n.settingsMonthlyExpenseSubtitleOverride
+        : l10n.settingsMonthlyExpenseSubtitleAuto(prefs.windowMonths);
+    return InlineLinkRow(
+      icon: Icons.calendar_view_month_outlined,
+      label: l10n.settingsMonthlyExpenseLabel,
+      subtitle: subtitle,
+      onTap: onTap,
+    );
   }
 }
 

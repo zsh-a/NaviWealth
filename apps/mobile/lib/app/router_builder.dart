@@ -60,6 +60,8 @@ import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../features/settings/ui/ai_llm_credentials_page.dart';
 import '../features/settings/ui/ai_privacy_page.dart';
 import '../features/settings/ui/ai_transparency_page.dart';
+import '../features/settings/ui/fire_stress_settings_page.dart';
+import '../features/settings/ui/monthly_expense_settings_page.dart';
 import '../features/settings/ui/risk_thresholds_page.dart';
 import '../features/settings/ui/sync_status_page.dart';
 import 'app_shell.dart';
@@ -467,6 +469,17 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     path: 'risk-thresholds',
                     name: AppRouteNames.riskThresholds,
                     builder: (context, state) => const RiskThresholdsPage(),
+                  ),
+                  GoRoute(
+                    path: 'stress-test',
+                    name: AppRouteNames.stressTest,
+                    builder: (context, state) => const FireStressSettingsPage(),
+                  ),
+                  GoRoute(
+                    path: 'monthly-expense',
+                    name: AppRouteNames.monthlyExpense,
+                    builder: (context, state) =>
+                        const MonthlyExpenseSettingsPage(),
                   ),
                   GoRoute(
                     path: 'ai-transparency',
