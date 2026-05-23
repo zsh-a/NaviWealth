@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../../l10n/gen/app_localizations.dart';
+import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 
 /// Standard empty-state for any chart. Used by `Nw*Chart` when the data is
@@ -24,16 +25,16 @@ class EmptyChartPlaceholder extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border.all(color: colors.border),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.s24),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: colors.mutedForeground, size: 32),
-              const SizedBox(height: 8),
+              Icon(icon, color: colors.mutedForeground, size: AppIconSizes.xl),
+              const SizedBox(height: AppSpacing.s8),
               Text(
                 message ?? l10n.chartEmptyDefault,
                 style: TypographyTokens.bodyMedium.copyWith(

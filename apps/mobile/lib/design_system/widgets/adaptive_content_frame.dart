@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/breakpoints.dart';
+import '../tokens/dimens_tokens.dart';
 
 /// Standard page-level frame for responsive content surfaces.
 ///
@@ -16,9 +17,9 @@ class AdaptiveContentFrame extends StatelessWidget {
     this.maxWidth = AdaptiveMaxWidth.page,
     this.layout = AdaptiveFrameLayout.singleColumn,
     this.padding,
-    this.sectionGap = 20,
-    this.columnGap = 24,
-    this.columnBreakpoint = 1024,
+    this.sectionGap = AppSpacing.s20,
+    this.columnGap = AppSpacing.s24,
+    this.columnBreakpoint = Breakpoints.contentTwoColumn,
     this.rightRailWidth = 340,
     this.primaryFlex = 1,
     this.secondaryFlex = 1,
@@ -79,8 +80,8 @@ class AdaptiveContentFrame extends StatelessWidget {
 
   EdgeInsets _defaultPadding(BuildContext context, double width) {
     final base = Breakpoints.isMobile(width)
-        ? const EdgeInsets.all(16)
-        : const EdgeInsets.all(24);
+        ? const EdgeInsets.all(AppSpacing.s16)
+        : const EdgeInsets.all(AppSpacing.s24);
     return base.copyWith(
       bottom: base.bottom + MediaQuery.paddingOf(context).bottom,
     );

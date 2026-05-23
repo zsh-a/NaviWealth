@@ -23,40 +23,16 @@ class FireUnconfiguredBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.flag_outlined,
-              size: 64,
-              color: context.theme.colors.primary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.fireEmptyTitle,
-              style: context.theme.typography.lg,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.fireEmptyHint,
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            FButton(
-              variant: FButtonVariant.primary,
-              onPress: () => showFireGoalSheet(context),
-              prefix: const Icon(Icons.add, size: 16),
-              child: Text(l10n.fireEmptySetGoalCta),
-            ),
-          ],
-        ),
+    return AppEmptyState(
+      icon: Icons.flag_outlined,
+      iconSize: 64,
+      title: l10n.fireEmptyTitle,
+      message: l10n.fireEmptyHint,
+      action: FButton(
+        variant: FButtonVariant.primary,
+        onPress: () => showFireGoalSheet(context),
+        prefix: const Icon(Icons.add, size: AppIconSizes.sm),
+        child: Text(l10n.fireEmptySetGoalCta),
       ),
     );
   }

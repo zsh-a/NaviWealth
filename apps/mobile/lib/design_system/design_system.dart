@@ -20,6 +20,7 @@ export 'tokens/typography_tokens.dart';
 export 'widgets/adaptive_content_frame.dart';
 export 'widgets/animated_money_text.dart';
 export 'widgets/app_action_sheet_tile.dart';
+export 'widgets/app_empty_state.dart';
 export 'widgets/app_form_scaffold_body.dart';
 export 'widgets/app_sheet.dart';
 export 'widgets/app_toast.dart';

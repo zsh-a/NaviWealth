@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 
 /// Accent-coloured section header used above grouped cards / lists.
@@ -21,13 +22,18 @@ class SectionHeader extends StatelessWidget {
     final colors = context.theme.colors;
     final accent = titleColor ?? colors.primary;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s20,
+        AppSpacing.s16,
+        AppSpacing.s8,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: TypographyTokens.sectionHeaderTitle(accent)),
           if (subtitle != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               subtitle!,
               style: TypographyTokens.sectionHeaderSubtitle(

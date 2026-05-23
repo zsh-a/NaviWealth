@@ -269,12 +269,15 @@ class AppSheet extends StatelessWidget {
   static Widget _dragHandle(FColors colors) {
     return Center(
       child: Container(
-        width: 36,
+        width: AppSpacing.s32 + AppSpacing.s4, // 36 — wider than radius for pill shape
         height: AppSpacing.s4,
-        margin: const EdgeInsets.only(top: 10, bottom: AppSpacing.s6),
+        margin: const EdgeInsets.only(
+          top: AppSpacing.s8 + AppSpacing.s2, // 10 — sits below the sheet's top corner
+          bottom: AppSpacing.s6,
+        ),
         decoration: BoxDecoration(
           color: colors.mutedForeground.withValues(alpha: 0.35),
-          borderRadius: BorderRadius.circular(2),
+          borderRadius: BorderRadius.circular(AppSpacing.s2),
         ),
       ),
     );

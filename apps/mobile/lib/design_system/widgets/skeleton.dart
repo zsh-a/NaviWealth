@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/dimens_tokens.dart';
+
 /// Pulsing placeholder rectangle for skeleton screens.
 ///
 /// Used in lieu of a spinner while a card or list hydrates its first data
@@ -182,16 +184,16 @@ class SkeletonCard extends StatelessWidget {
   const SkeletonCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(20),
+    this.padding = const EdgeInsets.all(AppSpacing.s20),
   });
 
   /// Placeholder layout — typically a [Column] / [Row] of [SkeletonBox]es
   /// roughly mirroring the card's final content.
   final Widget child;
 
-  /// Padding inside the card, defaulting to [EdgeInsets.all(20)] to match
-  /// the hero cards (NetWorth / Allocation / Trend). Pass [EdgeInsets.all(16)]
-  /// for compact cards.
+  /// Padding inside the card, defaulting to [AppSpacing.s20] to match
+  /// the hero cards (NetWorth / Allocation / Trend). Pass
+  /// `EdgeInsets.all(AppSpacing.s16)` for compact cards.
   final EdgeInsetsGeometry padding;
 
   @override

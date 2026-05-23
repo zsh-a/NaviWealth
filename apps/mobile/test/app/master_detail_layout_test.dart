@@ -47,7 +47,8 @@ void main() {
     final detailRect = tester.getRect(find.byKey(const ValueKey('detail')));
 
     expect(masterRect.width, kMasterPaneDefaultWidth);
-    expect(detailRect.left, kMasterPaneDefaultWidth + 6);
+    // Detail pane sits past the splitter's hit area (AppSpacing.s16 = 16dp).
+    expect(detailRect.left, kMasterPaneDefaultWidth + AppSpacing.s16);
   });
 
   testWidgets('clamps an oversized persisted master pane width', (

@@ -18,6 +18,7 @@ class ChartPalette {
     required this.axisLabel,
     required this.tooltipBackground,
     required this.tooltipForeground,
+    required this.dotStroke,
   });
 
   /// Categorical color sequence. Walk in order; wrap around when exceeded.
@@ -28,6 +29,12 @@ class ChartPalette {
   final Color axisLabel;
   final Color tooltipBackground;
   final Color tooltipForeground;
+
+  /// Halo color used around touched-spot dots so the colored dot reads as
+  /// raised against whatever surface holds the chart. Matches the page
+  /// background — near-white in light mode, near-black in dark mode — so
+  /// dark mode no longer gets a harsh white ring.
+  final Color dotStroke;
 
   /// Build the palette from the active theme. Cached via [Theme.of] —
   /// callers should resolve this once per `build()` rather than per data
@@ -47,6 +54,7 @@ class ChartPalette {
       axisLabel: colors.mutedForeground,
       tooltipBackground: colors.foreground,
       tooltipForeground: colors.background,
+      dotStroke: colors.background,
     );
   }
 

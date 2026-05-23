@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../tokens/breakpoints.dart';
+import '../tokens/dimens_tokens.dart';
+
 /// Switches between a two-column [Row] (wide) and a stacked [Column]
 /// (narrow) at [breakpoint].
 ///
 /// Used by content surfaces (FIRE / Analytics / AI Chat) that already sit
 /// inside the app shell, so the breakpoint is measured against the
-/// surface's own constraints — not the window. The default 1024 keeps the
-/// shell's drawer / rail in mind: a 1240-wide window minus a ~256-wide
-/// permanent drawer leaves ~984 dp for content, which stays single-column;
-/// a 1440-wide window leaves ~1180 dp and switches to two columns.
+/// surface's own constraints — not the window. The default
+/// [Breakpoints.contentTwoColumn] keeps the shell's drawer / rail in mind.
 ///
 /// Each side stretches to fill its share of the available width. Vertical
 /// extents are intrinsic — wrap [left] / [right] in a [Column] to compose
@@ -18,8 +19,8 @@ class ResponsiveTwoColumn extends StatelessWidget {
     super.key,
     required this.left,
     required this.right,
-    this.breakpoint = 1024,
-    this.gap = 16,
+    this.breakpoint = Breakpoints.contentTwoColumn,
+    this.gap = AppSpacing.s16,
   });
 
   final Widget left;
