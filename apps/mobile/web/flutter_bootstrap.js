@@ -7,8 +7,8 @@
 // Flutter never registers its own flutter_service_worker.js. This app
 // ships a hand-written web/service_worker.js, registered from index.html.
 //
-// {{flutter_js}} and {{flutter_build_config}} are substituted by the
-// Flutter web build at compile time.
+// The Flutter loader and build config placeholders below are substituted by
+// the Flutter web build at compile time.
 {{flutter_js}}
 {{flutter_build_config}}
 
