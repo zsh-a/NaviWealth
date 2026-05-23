@@ -5343,10 +5343,10 @@ abstract class AppLocalizations {
   /// **'Rebalance settings'**
   String get rebalanceSettingsTooltip;
 
-  /// No description provided for @rebalanceSettingsTitle.
+  /// Title of the sheet that exposes the rebalance feature's drift-trigger thresholds — distinct from the concentration-alert thresholds in Settings.
   ///
   /// In en, this message translates to:
-  /// **'Settings'**
+  /// **'Drift thresholds'**
   String get rebalanceSettingsTitle;
 
   /// No description provided for @rebalanceWarningThreshold.
@@ -5493,10 +5493,10 @@ abstract class AppLocalizations {
   /// **'Currency'**
   String get riskDimensionCurrency;
 
-  /// No description provided for @settingsRiskSection.
+  /// Header for the section that groups every investment-related preference (risk appetite, target allocation, alert thresholds).
   ///
   /// In en, this message translates to:
-  /// **'Risk Preferences'**
+  /// **'Investment Preferences'**
   String get settingsRiskSection;
 
   /// No description provided for @settingsRiskAssetLabel.
@@ -5552,6 +5552,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reset to defaults'**
   String get settingsRiskResetDefaults;
+
+  /// Label for the risk-appetite chip row in Settings — the single dial that drives the rebalance preset and AI tone.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk appetite'**
+  String get settingsRiskAppetiteLabel;
+
+  /// No description provided for @settingsRiskAppetiteConservative.
+  ///
+  /// In en, this message translates to:
+  /// **'Conservative'**
+  String get settingsRiskAppetiteConservative;
+
+  /// No description provided for @settingsRiskAppetiteModerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced'**
+  String get settingsRiskAppetiteModerate;
+
+  /// No description provided for @settingsRiskAppetiteAggressive.
+  ///
+  /// In en, this message translates to:
+  /// **'Aggressive'**
+  String get settingsRiskAppetiteAggressive;
+
+  /// No description provided for @settingsRiskAppetiteCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get settingsRiskAppetiteCustom;
+
+  /// Subtitle shown under the appetite chip row when the user is on the Custom track (they've hand-edited target weights).
+  ///
+  /// In en, this message translates to:
+  /// **'Custom target weights'**
+  String get settingsRiskAppetiteCustomBadge;
+
+  /// Inline link row in Settings — opens the per-category target weight editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Target allocation'**
+  String get settingsTargetAllocationLabel;
+
+  /// Subtitle for the target-allocation link row when the user is on a preset — e.g. "Balanced preset".
+  ///
+  /// In en, this message translates to:
+  /// **'{preset} preset'**
+  String settingsTargetAllocationSubtitlePreset(String preset);
+
+  /// No description provided for @settingsTargetAllocationSubtitleCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Hand-tuned weights'**
+  String get settingsTargetAllocationSubtitleCustom;
+
+  /// Inline link row in Settings — opens the advanced concentration-alert thresholds page.
+  ///
+  /// In en, this message translates to:
+  /// **'Concentration alert thresholds'**
+  String get settingsRiskThresholdsLabel;
+
+  /// No description provided for @settingsRiskThresholdsSubtitleAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-tuned by your risk appetite'**
+  String get settingsRiskThresholdsSubtitleAuto;
+
+  /// No description provided for @settingsRiskThresholdsSubtitleCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom thresholds set'**
+  String get settingsRiskThresholdsSubtitleCustom;
+
+  /// No description provided for @settingsRiskThresholdsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Concentration alert thresholds'**
+  String get settingsRiskThresholdsTitle;
+
+  /// No description provided for @settingsRiskThresholdsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'These thresholds decide when the Risk Alerts panel flags a position as concentrated. They\'re auto-tuned based on your risk appetite — tweak only if you want to override the defaults.'**
+  String get settingsRiskThresholdsHint;
 
   /// No description provided for @tradeEntryAppBarTitle.
   ///

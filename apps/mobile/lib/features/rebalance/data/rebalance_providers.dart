@@ -6,12 +6,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../design_system/preferences/theme_preferences.dart';
 import '../../home/data/dashboard_providers.dart';
+import '../../settings/data/risk_appetite_preferences.dart';
 import '../domain/allocation_schemes.dart';
 import '../domain/rebalance_engine.dart';
 import '../domain/rebalance_models.dart';
 
 const _kTargetAllocationKey = 'naviwealth.rebalance.target_allocation';
-const _kSelectedSchemeKey = 'naviwealth.rebalance.selected_scheme';
 const _kWarningThresholdKey = 'naviwealth.rebalance.warning_threshold';
 const _kCriticalThresholdKey = 'naviwealth.rebalance.critical_threshold';
 
@@ -26,32 +26,39 @@ final rebalanceEngineProvider = Provider<RebalanceEngine>((ref) {
   );
 });
 
-/// User-selected allocation scheme preset. Defaults to [balanced].
-final selectedSchemeProvider =
-    StateNotifierProvider<SelectedSchemeController, AllocationSchemePreset>((
-      ref,
-    ) {
-      return SelectedSchemeController(ref.watch(sharedPreferencesProvider));
-    });
+/// User-selected allocation scheme preset.
+///
+/// **Derived** from [riskAppetiteProvider] — there is one user-facing
+/// "risk appetite" dial in Settings, and the rebalance preset is just
+/// its projection onto allocation space. Callers who want to *change*
+/// the selection must write to `riskAppetiteProvider`; this provider
+/// is read-only by design.
+final selectedSchemeProvider = Provider<AllocationSchemePreset>((ref) {
+  return schemePresetFor(ref.watch(riskAppetiteProvider));
+});
 
-class SelectedSchemeController extends StateNotifier<AllocationSchemePreset> {
-  SelectedSchemeController(this._prefs) : super(_load(_prefs));
+/// Map [RiskAppetite] → [AllocationSchemePreset]. The two domains are
+/// 1:1 (with `moderate` ↔ `balanced` being the only name divergence)
+/// so the inverse can be done cheaply in either direction.
+AllocationSchemePreset schemePresetFor(RiskAppetite appetite) =>
+    switch (appetite) {
+      RiskAppetite.conservative => AllocationSchemePreset.conservative,
+      RiskAppetite.moderate => AllocationSchemePreset.balanced,
+      RiskAppetite.aggressive => AllocationSchemePreset.aggressive,
+      RiskAppetite.custom => AllocationSchemePreset.custom,
+    };
 
-  final SharedPreferences _prefs;
-
-  static AllocationSchemePreset _load(SharedPreferences p) {
-    final raw = p.getString(_kSelectedSchemeKey);
-    return AllocationSchemePreset.values.firstWhere(
-      (e) => e.name == raw,
-      orElse: () => AllocationSchemePreset.balanced,
-    );
-  }
-
-  Future<void> select(AllocationSchemePreset preset) async {
-    state = preset;
-    await _prefs.setString(_kSelectedSchemeKey, preset.name);
-  }
-}
+/// Inverse of [schemePresetFor] — useful for UI surfaces that still
+/// think in terms of presets (e.g. the Rebalance page's
+/// `_SchemeSelector`) but ultimately want to write the canonical
+/// appetite.
+RiskAppetite appetiteForScheme(AllocationSchemePreset preset) =>
+    switch (preset) {
+      AllocationSchemePreset.conservative => RiskAppetite.conservative,
+      AllocationSchemePreset.balanced => RiskAppetite.moderate,
+      AllocationSchemePreset.aggressive => RiskAppetite.aggressive,
+      AllocationSchemePreset.custom => RiskAppetite.custom,
+    };
 
 /// User's target allocation weights. When the scheme changes, this resets
 /// to the preset's default weights unless the user has customised it.

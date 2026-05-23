@@ -5,14 +5,20 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
+import '../../../core/ai/visual/visual.dart';
 import '../../../core/config/app_version.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../analytics/data/risk_threshold_preferences.dart';
+import '../../analytics/domain/concentration_risk.dart';
 import '../../auth/data/auth_controller.dart';
+import '../../rebalance/data/rebalance_providers.dart';
+import '../../rebalance/domain/allocation_schemes.dart';
+import '../../rebalance/ui/target_allocation_editor_sheet.dart';
 import '../../shared/forms/currency_picker.dart';
 import '../data/base_currency_preference.dart';
+import '../data/risk_appetite_preferences.dart';
 import 'inline_setting_row.dart';
 
 /// Settings landing page — iOS-style inset-grouped sections.
@@ -51,9 +57,21 @@ class SettingsOverview extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _SectionHeader(title: l10n.settingsRiskSection),
-        const SoftCard(
-          padding: EdgeInsets.symmetric(vertical: 4),
-          child: _RiskThresholdSettings(),
+        SoftCard(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            children: [
+              const _RiskAppetiteRow(),
+              _SectionDivider(),
+              _TargetAllocationLink(
+                onTap: () => showTargetAllocationEditorSheet(context: context),
+              ),
+              _SectionDivider(),
+              _RiskThresholdsLink(
+                onTap: () => context.goNamed(AppRouteNames.riskThresholds),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -491,198 +509,151 @@ class _MarketColorPreview extends StatelessWidget {
   }
 }
 
-class _RiskThresholdSettings extends ConsumerWidget {
-  const _RiskThresholdSettings();
+/// Risk appetite chip row — the single user-facing dial that drives
+/// rebalance preset, AI tone and (by default) concentration alert
+/// sensitivity. Sits at the top of the Investment Preferences card so
+/// it reads as the section's "main idea".
+class _RiskAppetiteRow extends ConsumerWidget {
+  const _RiskAppetiteRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final appetite = ref.watch(riskAppetiteProvider);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.tune_outlined,
+                size: 18,
+                color: colors.mutedForeground,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                l10n.settingsRiskAppetiteLabel,
+                style: context.theme.typography.sm,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // The row is intentionally tight — chips share a stadium
+          // shape and the active one paints in the AI active tone, so
+          // selection is glanceable without verbose copy.
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final option in _appetiteOptionsForChips(l10n))
+                AiPill(
+                  label: option.label,
+                  state: appetite == option.value
+                      ? AiPillState.selected
+                      : AiPillState.neutral,
+                  onTap: () => _onPick(ref, option.value),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onPick(WidgetRef ref, RiskAppetite next) async {
+    final current = ref.read(riskAppetiteProvider);
+    if (current == next) return;
+    await ref.read(riskAppetiteProvider.notifier).set(next);
+    // Picking a non-custom preset resets target weights to that
+    // preset's defaults. Custom is reached via the target editor
+    // sheet itself (which writes appetite = custom internally).
+    if (next != RiskAppetite.custom) {
+      await ref
+          .read(targetAllocationProvider.notifier)
+          .update(allocationScheme(schemePresetFor(next)));
+    }
+  }
+}
+
+class _AppetiteOption {
+  const _AppetiteOption(this.value, this.label);
+  final RiskAppetite value;
+  final String label;
+}
+
+List<_AppetiteOption> _appetiteOptionsForChips(AppLocalizations l10n) {
+  return [
+    _AppetiteOption(
+      RiskAppetite.conservative,
+      l10n.settingsRiskAppetiteConservative,
+    ),
+    _AppetiteOption(RiskAppetite.moderate, l10n.settingsRiskAppetiteModerate),
+    _AppetiteOption(
+      RiskAppetite.aggressive,
+      l10n.settingsRiskAppetiteAggressive,
+    ),
+    _AppetiteOption(RiskAppetite.custom, l10n.settingsRiskAppetiteCustom),
+  ];
+}
+
+class _TargetAllocationLink extends ConsumerWidget {
+  const _TargetAllocationLink({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final appetite = ref.watch(riskAppetiteProvider);
+    final subtitle = appetite == RiskAppetite.custom
+        ? l10n.settingsTargetAllocationSubtitleCustom
+        : l10n.settingsTargetAllocationSubtitlePreset(
+            switch (appetite) {
+              RiskAppetite.conservative => l10n.settingsRiskAppetiteConservative,
+              RiskAppetite.moderate => l10n.settingsRiskAppetiteModerate,
+              RiskAppetite.aggressive => l10n.settingsRiskAppetiteAggressive,
+              RiskAppetite.custom => l10n.settingsRiskAppetiteCustom,
+            },
+          );
+    return InlineLinkRow(
+      icon: Icons.donut_small_outlined,
+      label: l10n.settingsTargetAllocationLabel,
+      subtitle: subtitle,
+      onTap: onTap,
+    );
+  }
+}
+
+class _RiskThresholdsLink extends ConsumerWidget {
+  const _RiskThresholdsLink({required this.onTap});
+
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final thresholds = ref.watch(concentrationThresholdsProvider);
-
-    return Column(
-      children: [
-        _ThresholdSlider(
-          icon: Icons.account_balance_wallet_outlined,
-          label: l10n.settingsRiskAssetLabel,
-          value: thresholds.assetWarning,
-          onChanged: (v) =>
-              ref.read(concentrationThresholdsProvider.notifier).updateAsset(v),
-        ),
-        _SectionDivider(),
-        _ThresholdSlider(
-          icon: Icons.category_outlined,
-          label: l10n.settingsRiskSectorLabel,
-          value: thresholds.sectorWarning,
-          onChanged: (v) => ref
-              .read(concentrationThresholdsProvider.notifier)
-              .updateSector(v),
-        ),
-        _SectionDivider(),
-        _ThresholdSlider(
-          icon: Icons.public,
-          label: l10n.settingsRiskRegionLabel,
-          value: thresholds.regionWarning,
-          onChanged: (v) => ref
-              .read(concentrationThresholdsProvider.notifier)
-              .updateRegion(v),
-        ),
-        _SectionDivider(),
-        _ThresholdSlider(
-          icon: Icons.currency_exchange,
-          label: l10n.settingsRiskCurrencyLabel,
-          value: thresholds.currencyWarning,
-          onChanged: (v) => ref
-              .read(concentrationThresholdsProvider.notifier)
-              .updateCurrency(v),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(14, 4, 14, 8),
-          child: Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: FTappable(
-              onPress: () => ref
-                  .read(concentrationThresholdsProvider.notifier)
-                  .resetToDefaults(),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Text(
-                  l10n.settingsRiskResetDefaults,
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+    final isCustom = _isCustomThresholds(thresholds);
+    return InlineLinkRow(
+      icon: Icons.notifications_active_outlined,
+      label: l10n.settingsRiskThresholdsLabel,
+      subtitle: isCustom
+          ? l10n.settingsRiskThresholdsSubtitleCustom
+          : l10n.settingsRiskThresholdsSubtitleAuto,
+      onTap: onTap,
     );
   }
-}
 
-/// Compact slider row — icon + label · slider · trailing percent.
-///
-/// Owns its own [FContinuousSliderController] across rebuilds so a
-/// LayoutBuilder rebuild (e.g. window resize) doesn't make Forui call
-/// `attach` and synchronously fire `onChange` during the layout pass —
-/// which would crash with `StateNotifier.state= called during build`
-/// when the callback writes back into a Riverpod controller.
-///
-/// External `value` updates (e.g. from "Reset to defaults") are
-/// applied through `didUpdateWidget` only when they actually differ
-/// from the controller's current value.
-class _ThresholdSlider extends StatefulWidget {
-  const _ThresholdSlider({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final IconData icon;
-  final String label;
-  final double value;
-  final ValueChanged<double> onChanged;
-
-  @override
-  State<_ThresholdSlider> createState() => _ThresholdSliderState();
-}
-
-class _ThresholdSliderState extends State<_ThresholdSlider> {
-  late FContinuousSliderController _controller;
-  bool _suppressOnChange = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = FContinuousSliderController(
-      value: FSliderValue(max: _toFraction(widget.value)),
-    )..addListener(_onSliderChanged);
-  }
-
-  @override
-  void didUpdateWidget(covariant _ThresholdSlider oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.value == oldWidget.value) return;
-    final next = _toFraction(widget.value);
-    if ((next - _controller.value.max).abs() < 0.0001) return;
-    // Push the new external value into the controller without
-    // re-invoking onChanged — otherwise we'd loop back into the parent
-    // notifier from inside a layout pass.
-    _suppressOnChange = true;
-    try {
-      _controller.value = FSliderValue(max: next);
-    } finally {
-      // Reset on the next microtask so the legitimate user-driven
-      // notification immediately after still fires.
-      Future.microtask(() => _suppressOnChange = false);
-    }
-  }
-
-  void _onSliderChanged() {
-    if (_suppressOnChange) return;
-    final next = 0.05 + _controller.value.max * 0.90;
-    if ((next - widget.value).abs() < 0.0001) return;
-    // Defer the parent notifier write to a microtask. FSliderController
-    // sometimes notifies during layout (attach/didUpdateWidget); pushing
-    // out of the layout phase keeps the StateNotifier guard happy.
-    Future.microtask(() {
-      if (!mounted) return;
-      widget.onChanged(next);
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.removeListener(_onSliderChanged);
-    _controller.dispose();
-    super.dispose();
-  }
-
-  double _toFraction(double v) => ((v - 0.05) / 0.90).clamp(0.0, 1.0);
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      child: Row(
-        children: [
-          Icon(widget.icon, size: 18, color: colors.mutedForeground),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 72,
-            child: Text(
-              widget.label,
-              style: context.theme.typography.sm,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Expanded(
-            child: FSlider(
-              control: FSliderControl.managedContinuous(
-                controller: _controller,
-              ),
-              tooltipBuilder: (_, v) =>
-                  Text('${((0.05 + v * 0.90) * 100).round()}%'),
-            ),
-          ),
-          SizedBox(
-            width: 44,
-            child: Text(
-              '${(widget.value * 100).round()}%',
-              style: context.theme.typography.sm.copyWith(
-                color: colors.mutedForeground,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-              textAlign: TextAlign.end,
-            ),
-          ),
-        ],
-      ),
-    );
+  static bool _isCustomThresholds(ConcentrationThresholds t) {
+    const eps = 1e-6;
+    final d = ConcentrationThresholds.defaults();
+    return (t.assetWarning - d.assetWarning).abs() > eps ||
+        (t.sectorWarning - d.sectorWarning).abs() > eps ||
+        (t.regionWarning - d.regionWarning).abs() > eps ||
+        (t.currencyWarning - d.currencyWarning).abs() > eps;
   }
 }
 

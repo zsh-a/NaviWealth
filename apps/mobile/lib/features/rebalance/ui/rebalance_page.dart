@@ -6,6 +6,7 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../home/ui/asset_category_visuals.dart';
 import '../../investment/presentation/trade_entry_form_page.dart';
+import '../../settings/data/risk_appetite_preferences.dart';
 import '../application/rebalance_trade_entry_prefills.dart';
 import '../data/rebalance_providers.dart';
 import '../domain/allocation_schemes.dart';
@@ -190,7 +191,11 @@ class _SchemeSelector extends ConsumerWidget {
     WidgetRef ref,
     AllocationSchemePreset preset,
   ) async {
-    await ref.read(selectedSchemeProvider.notifier).select(preset);
+    // Risk appetite is the single source of truth; the scheme provider
+    // simply reflects it. We write the appetite, then refresh the
+    // target weights to the preset's defaults so the user sees the new
+    // bars immediately.
+    await ref.read(riskAppetiteProvider.notifier).set(appetiteForScheme(preset));
     await ref
         .read(targetAllocationProvider.notifier)
         .update(allocationScheme(preset));

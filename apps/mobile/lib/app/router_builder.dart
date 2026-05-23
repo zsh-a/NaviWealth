@@ -60,6 +60,7 @@ import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../features/settings/ui/ai_llm_credentials_page.dart';
 import '../features/settings/ui/ai_privacy_page.dart';
 import '../features/settings/ui/ai_transparency_page.dart';
+import '../features/settings/ui/risk_thresholds_page.dart';
 import '../features/settings/ui/sync_status_page.dart';
 import 'app_shell.dart';
 import 'deferred_route.dart';
@@ -461,6 +462,11 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     path: 'ai-llm',
                     name: AppRouteNames.aiLlm,
                     builder: (context, state) => const AiLlmCredentialsPage(),
+                  ),
+                  GoRoute(
+                    path: 'risk-thresholds',
+                    name: AppRouteNames.riskThresholds,
+                    builder: (context, state) => const RiskThresholdsPage(),
                   ),
                   GoRoute(
                     path: 'ai-transparency',

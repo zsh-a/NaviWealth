@@ -35,6 +35,7 @@ import '../../home/data/dashboard_providers.dart';
 import '../../investment/data/providers.dart';
 import '../../investment/domain/models/holding_snapshot.dart';
 import '../../liabilities/data/providers.dart';
+import '../../settings/data/risk_appetite_preferences.dart';
 import '../domain/chat_models.dart';
 import '../state/chat_sync_gate.dart';
 import '../state/route_context_provider.dart';
@@ -213,6 +214,13 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
       holdings: holdings,
     );
 
+    // Pull the user's declared risk appetite (Settings SSOT) and
+    // project it onto the 3-value AI wire enum. The on-device LLM
+    // sees the user's actual tolerance instead of the hardcoded
+    // `moderate` placeholder the compressor used before W-D7's risk
+    // appetite SSOT landed.
+    final riskAppetite = ref.read(riskAppetiteProvider);
+
     final pack = compressor.compress(
       route: route,
       intent: intent,
@@ -224,6 +232,7 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
       freshnessHint: freshnessHint,
       analyticalUploads: analyticalUploads,
       deviceHlc: analyticalUploads.isEmpty ? null : localHlcText,
+      riskPreference: riskAppetite.toWire(),
     );
 
     // The historical router still classifies online chat as cloud-bound.
