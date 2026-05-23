@@ -59,6 +59,7 @@ Future<void> showAiSheet(
       context: context,
       side: FLayout.btt,
       mainAxisMaxRatio: null,
+      resizeToAvoidBottomInset: false,
       builder: (_) => _SheetFrame(
         child: AiSheetShell.invocation(
           invocation: invocation,
@@ -74,6 +75,7 @@ Future<void> showAiSheet(
       side: FLayout.btt,
       context: context,
       mainAxisMaxRatio: null,
+      resizeToAvoidBottomInset: false,
       builder: (_) =>
           _SheetFrame(child: AiSheetShell.conversation(prefill: prefill)),
     );
@@ -91,10 +93,10 @@ Future<void> showAiSheet(
 
 /// Bottom-sheet frame that stays usable while the soft keyboard is up.
 ///
-/// `showFSheet` slides a fixed-height box up from the bottom and does
-/// **not** resize for `MediaQuery.viewInsets` (unlike `FScaffold`, which
-/// the full chat page uses). Without compensation the composer / footer
-/// buttons sit behind the keyboard and can't be tapped. This frame:
+/// `showFSheet` slides a fixed-height box up from the bottom. This
+/// route opts out of forui's automatic inset shifting so keyboard
+/// avoidance has a single owner here: without compensation the composer
+/// / footer buttons sit behind the keyboard and can't be tapped. This frame:
 ///
 ///  - reads `viewInsets` *inside* the subtree so it rebuilds when the
 ///    keyboard toggles,

@@ -292,20 +292,24 @@ class AppSheetFooter extends StatelessWidget {
     super.key,
     required this.submitLabel,
     required this.onSubmit,
+    this.submitKey,
     this.cancelLabel,
     this.onCancel,
+    this.cancelKey,
     this.busy = false,
     this.destructive = false,
   });
 
   final String submitLabel;
   final VoidCallback onSubmit;
+  final Key? submitKey;
 
   /// Defaults to "Cancel" when null is passed by the caller's l10n.
   final String? cancelLabel;
 
   /// Defaults to `Navigator.maybePop()` when null.
   final VoidCallback? onCancel;
+  final Key? cancelKey;
   final bool busy;
   final bool destructive;
 
@@ -316,6 +320,7 @@ class AppSheetFooter extends StatelessWidget {
       children: [
         Expanded(
           child: FButton(
+            key: cancelKey,
             variant: FButtonVariant.outline,
             onPress: busy
                 ? null
@@ -326,6 +331,7 @@ class AppSheetFooter extends StatelessWidget {
         const SizedBox(width: AppSpacing.s12),
         Expanded(
           child: FButton(
+            key: submitKey,
             variant: destructive
                 ? FButtonVariant.destructive
                 : FButtonVariant.primary,
