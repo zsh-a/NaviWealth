@@ -118,6 +118,52 @@ Future<LocalSecurityChoice?> _openSheet(
 }
 
 void main() {
+  testWidgets('does not add its own keyboard inset padding', (tester) async {
+    const keyboardInset = 320.0;
+    final dirty = FormDirtyController();
+    addTearDown(dirty.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          marketDataServiceProvider.overrideWith(
+            (_) async => _ConfigurableMarket(),
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('zh'),
+          home: FTheme(
+            data: FThemes.slate.light.desktop,
+            child: MediaQuery(
+              data: const MediaQueryData(
+                viewInsets: EdgeInsets.only(bottom: keyboardInset),
+              ),
+              child: ManualSecuritySheet(prefillSymbol: 'AAPL', dirty: dirty),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final paddings = tester.widgetList<Padding>(
+      find.descendant(
+        of: find.byType(ManualSecuritySheet),
+        matching: find.byType(Padding),
+      ),
+    );
+    for (final padding in paddings) {
+      final bottom = padding.padding.resolve(TextDirection.ltr).bottom;
+      expect(
+        bottom,
+        isNot(keyboardInset),
+        reason:
+            'showAppFormSheet already lifts form sheets above the keyboard.',
+      );
+    }
+  });
+
   testWidgets('"从网络导入" populates fields from a single search hit', (
     tester,
   ) async {

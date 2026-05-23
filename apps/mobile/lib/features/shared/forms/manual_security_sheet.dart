@@ -278,147 +278,119 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final viewInsets = MediaQuery.viewInsetsOf(context);
     final marketLabels = _marketLabels(l10n);
     final typeLabels = _typeLabels(l10n);
-    return Padding(
-      padding: EdgeInsets.only(bottom: viewInsets.bottom),
+    return AppSheet(
+      title: l10n.manualSecuritySheetTitle,
+      subtitle: l10n.manualSecuritySheetDescription,
+      footer: AppSheetFooter(
+        cancelLabel: l10n.commonCancel,
+        submitLabel: l10n.manualSecurityAddAction,
+        submitKey: const Key('manual-security-submit'),
+        onSubmit: _submit,
+      ),
       child: Form(
         key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                l10n.manualSecuritySheetTitle,
-                style: context.theme.typography.md,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                l10n.manualSecuritySheetDescription,
-                style: context.theme.typography.xs,
-              ),
-              const SizedBox(height: 16),
-              FTextFormField(
-                key: const Key('manual-security-symbol'),
-                control: FTextFieldControl.managed(controller: _symbolCtl),
-                label: Text(l10n.manualSecurityCodeLabel),
-                textCapitalization: TextCapitalization.characters,
-                validator: (v) {
-                  final t = v?.trim() ?? '';
-                  if (t.isEmpty) return l10n.manualSecurityCodeRequired;
-                  if (t.contains(':')) return l10n.manualSecurityCodeNoColon;
-                  return null;
-                },
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FButton(
-                  key: const Key('manual-security-import'),
-                  variant: FButtonVariant.ghost,
-                  onPress: _importing ? null : _importFromNetwork,
-                  prefix: const Icon(Icons.cloud_download_outlined, size: 16),
-                  child: Text(
-                    _importing
-                        ? l10n.manualSecurityImporting
-                        : l10n.manualSecurityImportAction,
-                  ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FTextFormField(
+              key: const Key('manual-security-symbol'),
+              control: FTextFieldControl.managed(controller: _symbolCtl),
+              label: Text(l10n.manualSecurityCodeLabel),
+              textCapitalization: TextCapitalization.characters,
+              validator: (v) {
+                final t = v?.trim() ?? '';
+                if (t.isEmpty) return l10n.manualSecurityCodeRequired;
+                if (t.contains(':')) return l10n.manualSecurityCodeNoColon;
+                return null;
+              },
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FButton(
+                key: const Key('manual-security-import'),
+                variant: FButtonVariant.ghost,
+                onPress: _importing ? null : _importFromNetwork,
+                prefix: const Icon(Icons.cloud_download_outlined, size: 16),
+                child: Text(
+                  _importing
+                      ? l10n.manualSecurityImporting
+                      : l10n.manualSecurityImportAction,
                 ),
               ),
-              const SizedBox(height: 12),
-              FTextFormField(
-                key: const Key('manual-security-name'),
-                control: FTextFieldControl.managed(controller: _nameCtl),
-                label: Text(l10n.manualSecurityNameLabel),
-              ),
-              const SizedBox(height: 12),
-              FSelect<AssetMarket>(
-                key: const Key('manual-security-market'),
-                items: {
-                  for (final m in _supportedMarkets)
-                    (marketLabels[m] ?? m.wire): m,
-                },
-                control: FSelectControl<AssetMarket>.managed(
-                  initial: _market,
-                  onChange: (m) {
-                    if (m == null) return;
-                    setState(() {
-                      _market = m;
-                      _currency = _defaultCurrencyFor(m);
-                      if (m == AssetMarket.crypto) {
-                        _type = AssetType.crypto;
-                      } else if (_type == AssetType.crypto) {
-                        _type = AssetType.stock;
-                      }
-                      widget.dirty.markDirty();
-                    });
-                  },
-                ),
-                label: Text(l10n.manualSecurityMarketLabel),
-              ),
-              const SizedBox(height: 12),
-              FSelect<AssetType>(
-                key: const Key('manual-security-type'),
-                items: {
-                  for (final t in _supportedTypes) (typeLabels[t] ?? t.name): t,
-                },
-                control: FSelectControl<AssetType>.managed(
-                  initial: _type,
-                  onChange: (t) {
-                    if (t == null) return;
-                    setState(() {
-                      _type = t;
-                      widget.dirty.markDirty();
-                    });
-                  },
-                ),
-                label: Text(l10n.manualSecurityTypeLabel),
-              ),
-              const SizedBox(height: 12),
-              CurrencyPicker(
-                value: _currency,
-                onChanged: (v) {
-                  if (v != null) {
-                    setState(() {
-                      _currency = v;
-                      widget.dirty.markDirty();
-                    });
-                  }
+            ),
+            const SizedBox(height: 12),
+            FTextFormField(
+              key: const Key('manual-security-name'),
+              control: FTextFieldControl.managed(controller: _nameCtl),
+              label: Text(l10n.manualSecurityNameLabel),
+            ),
+            const SizedBox(height: 12),
+            FSelect<AssetMarket>(
+              key: const Key('manual-security-market'),
+              items: {
+                for (final m in _supportedMarkets)
+                  (marketLabels[m] ?? m.wire): m,
+              },
+              control: FSelectControl<AssetMarket>.managed(
+                initial: _market,
+                onChange: (m) {
+                  if (m == null) return;
+                  setState(() {
+                    _market = m;
+                    _currency = _defaultCurrencyFor(m);
+                    if (m == AssetMarket.crypto) {
+                      _type = AssetType.crypto;
+                    } else if (_type == AssetType.crypto) {
+                      _type = AssetType.stock;
+                    }
+                    widget.dirty.markDirty();
+                  });
                 },
               ),
-              const SizedBox(height: 12),
-              FTextFormField(
-                key: const Key('manual-security-isin'),
-                control: FTextFieldControl.managed(controller: _isinCtl),
-                label: Text(l10n.manualSecurityIsinLabel),
-                textCapitalization: TextCapitalization.characters,
+              label: Text(l10n.manualSecurityMarketLabel),
+            ),
+            const SizedBox(height: 12),
+            FSelect<AssetType>(
+              key: const Key('manual-security-type'),
+              items: {
+                for (final t in _supportedTypes) (typeLabels[t] ?? t.name): t,
+              },
+              control: FSelectControl<AssetType>.managed(
+                initial: _type,
+                onChange: (t) {
+                  if (t == null) return;
+                  setState(() {
+                    _type = t;
+                    widget.dirty.markDirty();
+                  });
+                },
               ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: FButton(
-                      variant: FButtonVariant.outline,
-                      onPress: () => Navigator.of(context).maybePop(),
-                      child: Text(l10n.commonCancel),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FButton(
-                      key: const Key('manual-security-submit'),
-                      variant: FButtonVariant.primary,
-                      onPress: _submit,
-                      child: Text(l10n.manualSecurityAddAction),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+              label: Text(l10n.manualSecurityTypeLabel),
+            ),
+            const SizedBox(height: 12),
+            CurrencyPicker(
+              value: _currency,
+              onChanged: (v) {
+                if (v != null) {
+                  setState(() {
+                    _currency = v;
+                    widget.dirty.markDirty();
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 12),
+            FTextFormField(
+              key: const Key('manual-security-isin'),
+              control: FTextFieldControl.managed(controller: _isinCtl),
+              label: Text(l10n.manualSecurityIsinLabel),
+              textCapitalization: TextCapitalization.characters,
+            ),
+          ],
         ),
       ),
     );
