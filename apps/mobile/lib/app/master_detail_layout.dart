@@ -106,8 +106,11 @@ class _SplitterState extends State<_Splitter> {
         onHorizontalDragEnd: (_) => setState(() => _dragging = false),
         onHorizontalDragCancel: () => setState(() => _dragging = false),
         onHorizontalDragUpdate: (d) => widget.onChanged(d.delta.dx),
+        // Hit area is intentionally wider than the visible hairline so
+        // touch/mouse can grab the splitter without precision aiming. The
+        // visible bar stays at 1–2 px to keep the chrome quiet.
         child: SizedBox(
-          width: 6,
+          width: AppSpacing.s16,
           child: Center(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 120),
@@ -134,16 +137,16 @@ class MasterDetailEmpty extends StatelessWidget {
     final typography = context.theme.typography;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon ?? Icons.touch_app_outlined,
-              size: 36,
+              size: AppIconSizes.xl,
               color: colors.mutedForeground,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(
               message,
               textAlign: TextAlign.center,

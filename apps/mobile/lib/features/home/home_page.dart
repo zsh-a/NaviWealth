@@ -461,23 +461,21 @@ class _MetricCell extends StatelessWidget {
   }
 }
 
-class _ErrorBody extends StatelessWidget {
+class _ErrorBody extends ConsumerWidget {
   const _ErrorBody({required this.error});
 
   final Object error;
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(
-          AppLocalizations.of(context).dashboardSnapshotError('$error'),
-          textAlign: TextAlign.center,
-          style: context.theme.typography.sm.copyWith(
-            color: context.theme.colors.destructive,
-          ),
-        ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return AppEmptyState.error(
+      title: l10n.dashboardSnapshotError('$error'),
+      action: FButton(
+        variant: FButtonVariant.outline,
+        onPress: () => ref.invalidate(dashboardSnapshotProvider),
+        prefix: const Icon(Icons.refresh, size: AppIconSizes.sm),
+        child: Text(l10n.commonRetry),
       ),
     );
   }

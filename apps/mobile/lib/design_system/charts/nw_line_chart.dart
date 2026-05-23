@@ -203,6 +203,7 @@ class _NwLineChartState extends State<NwLineChart> {
                   maxY: chartMaxY,
                   plotInsets: plotInsets,
                   color: palette.axisLabel,
+                  dotStrokeColor: palette.dotStroke,
                 ),
               ),
             ),
@@ -475,7 +476,7 @@ class _NwLineChartState extends State<NwLineChart> {
               getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
                 radius: 4,
                 color: bar.color ?? Colors.transparent,
-                strokeColor: Colors.white,
+                strokeColor: palette.dotStroke,
                 strokeWidth: 1.5,
               ),
             ),
@@ -629,6 +630,7 @@ class _CrosshairPainter extends CustomPainter {
     required this.maxY,
     required this.plotInsets,
     required this.color,
+    required this.dotStrokeColor,
   });
 
   final FlSpot spot;
@@ -639,6 +641,7 @@ class _CrosshairPainter extends CustomPainter {
   final double maxY;
   final _ChartPlotInsets plotInsets;
   final Color color;
+  final Color dotStrokeColor;
 
   // Cached Paint objects — reused across frames.
   late final _hairlinePaint = Paint()
@@ -646,8 +649,8 @@ class _CrosshairPainter extends CustomPainter {
     ..strokeWidth = 1
     ..style = PaintingStyle.stroke;
   late final _dotFillPaint = Paint()..style = PaintingStyle.fill;
-  static final _dotStrokePaint = Paint()
-    ..color = Colors.white
+  late final _dotStrokePaint = Paint()
+    ..color = dotStrokeColor
     ..style = PaintingStyle.stroke
     ..strokeWidth = 1.5;
 
@@ -724,7 +727,8 @@ class _CrosshairPainter extends CustomPainter {
       old.maxX != maxX ||
       old.minY != minY ||
       old.maxY != maxY ||
-      old.plotInsets != plotInsets;
+      old.plotInsets != plotInsets ||
+      old.dotStrokeColor != dotStrokeColor;
 }
 
 // ---------------------------------------------------------------------------

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/dimens_tokens.dart';
+
 /// One row in a bottom-sheet action list.
 ///
 /// Mixes in [FTileMixin] so it can be dropped straight into an
@@ -30,14 +32,14 @@ class AppActionSheetTile extends StatelessWidget with FTileMixin {
       // Accent-tinted chip — readable contrast and on-brand, versus the
       // old washed-out grey-on-grey square.
       prefix: Container(
-        width: 38,
-        height: 38,
+        width: AppSpacing.s40,
+        height: AppSpacing.s40,
         decoration: BoxDecoration(
           color: colors.primary.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         alignment: Alignment.center,
-        child: Icon(icon, size: 19, color: colors.primary),
+        child: Icon(icon, size: AppIconSizes.md, color: colors.primary),
       ),
       title: Text(
         title,
@@ -57,7 +59,7 @@ class AppActionSheetTile extends StatelessWidget with FTileMixin {
       ),
       suffix: Icon(
         Icons.chevron_right,
-        size: 18,
+        size: AppIconSizes.md,
         color: colors.mutedForeground.withValues(alpha: 0.55),
       ),
     );
