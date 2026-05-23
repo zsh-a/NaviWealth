@@ -1905,6 +1905,12 @@
   "@aiChatJumpToLatestTooltip": {
     "description": "Tooltip on the floating button that re-anchors the conversation to the most recent message after the user has scrolled up."
   },
+  "aiChatMessageCopy": "Copy",
+  "@aiChatMessageCopy": { "description": "Inline action under a completed assistant message — copies its text to the clipboard." },
+  "aiChatMessageCopied": "Copied to clipboard",
+  "@aiChatMessageCopied": { "description": "Confirmation snackbar shown after the user copies an assistant reply." },
+  "aiChatMessageRegenerate": "Regenerate",
+  "@aiChatMessageRegenerate": { "description": "Inline action under the last assistant message — discards the turn and re-runs the prompt." },
   "aiChatStaleSyncNotice": "Local data hasn't finished syncing; answers may lag behind your most recent edits.",
 
   "aiChatTruncatedMaxTokens": "Reply was cut off — output length limit reached",

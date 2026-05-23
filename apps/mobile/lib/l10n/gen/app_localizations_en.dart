@@ -3567,6 +3567,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatJumpToLatestTooltip => 'Jump to latest';
 
   @override
+  String get aiChatMessageCopy => 'Copy';
+
+  @override
+  String get aiChatMessageCopied => 'Copied to clipboard';
+
+  @override
+  String get aiChatMessageRegenerate => 'Regenerate';
+
+  @override
   String get aiChatStaleSyncNotice =>
       'Local data hasn\'t finished syncing; answers may lag behind your most recent edits.';
 

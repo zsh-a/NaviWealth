@@ -6153,6 +6153,24 @@ abstract class AppLocalizations {
   /// **'Jump to latest'**
   String get aiChatJumpToLatestTooltip;
 
+  /// Inline action under a completed assistant message — copies its text to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get aiChatMessageCopy;
+
+  /// Confirmation snackbar shown after the user copies an assistant reply.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to clipboard'**
+  String get aiChatMessageCopied;
+
+  /// Inline action under the last assistant message — discards the turn and re-runs the prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate'**
+  String get aiChatMessageRegenerate;
+
   /// No description provided for @aiChatStaleSyncNotice.
   ///
   /// In en, this message translates to:

@@ -219,6 +219,17 @@ class ChatHistoryStore {
     _notify();
   }
 
+  /// Drop a single message. Used by the "regenerate" affordance, which
+  /// discards the failed/unwanted assistant turn (and its paired user
+  /// turn) before re-running the same prompt.
+  Future<void> deleteMessage(String id) async {
+    await _db.customStatement(
+      'DELETE FROM chat_messages WHERE id = ?1',
+      <Object?>[id],
+    );
+    _notify();
+  }
+
   static String? _encodeStopReason(ChatStopReason? reason) => switch (reason) {
     null => null,
     ChatStopReason.endTurn => 'end_turn',

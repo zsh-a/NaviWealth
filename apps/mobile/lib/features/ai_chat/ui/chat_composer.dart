@@ -85,7 +85,6 @@ class _ChatComposerState extends State<ChatComposer> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final canSend = !widget._busy && _controller.text.trim().isNotEmpty;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -109,10 +108,11 @@ class _ChatComposerState extends State<ChatComposer> {
                 child: Focus(
                   onKeyEvent: _onKey,
                   child: FTextField(
-                    control: FTextFieldControl.managed(
-                      controller: _controller,
-                      onChange: (_) => setState(() {}),
-                    ),
+                    // No keystroke setState — `_TrailingButton` listens
+                    // to the controller directly so a keypress only
+                    // rebuilds the send button, not the whole composer
+                    // (FTextField + AnimatedSwitcher + SafeArea + …).
+                    control: FTextFieldControl.managed(controller: _controller),
                     focusNode: _focusNode,
                     textInputAction: TextInputAction.newline,
                     keyboardType: TextInputType.multiline,
@@ -128,11 +128,12 @@ class _ChatComposerState extends State<ChatComposer> {
                 ),
               ),
               const SizedBox(width: 8),
-              AnimatedSwitcher(
-                duration: Motion.fast,
-                transitionBuilder: (child, anim) =>
-                    FadeTransition(opacity: anim, child: child),
-                child: _trailingButton(context, canSend, l10n),
+              _TrailingButton(
+                controller: _controller,
+                isStreaming: widget.isStreaming,
+                isFlushing: widget.isFlushing,
+                onSend: _send,
+                onCancel: widget.onCancel,
               ),
             ],
           ),
@@ -141,37 +142,77 @@ class _ChatComposerState extends State<ChatComposer> {
     );
   }
 
-  Widget _trailingButton(
-    BuildContext context,
-    bool canSend,
-    AppLocalizations l10n,
-  ) {
-    if (widget.isStreaming) {
+}
+
+/// Scoped trailing-button rebuild. Listens to the composer's
+/// [TextEditingController] so a keystroke only repaints this 36×36 area
+/// rather than the entire composer (which previously did `setState({})`
+/// on every keypress and rebuilt the FTextField + AnimatedSwitcher).
+class _TrailingButton extends StatelessWidget {
+  const _TrailingButton({
+    required this.controller,
+    required this.isStreaming,
+    required this.isFlushing,
+    required this.onSend,
+    required this.onCancel,
+  });
+
+  final TextEditingController controller;
+  final bool isStreaming;
+  final bool isFlushing;
+  final VoidCallback onSend;
+  final VoidCallback onCancel;
+
+  bool get _busy => isStreaming || isFlushing;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    Widget current(bool canSend) {
+      if (isStreaming) {
+        return FTooltip(
+          key: const ValueKey('stop'),
+          tipBuilder: (_, _) => Text(l10n.aiChatComposerStopTooltip),
+          child: FButton.icon(
+            variant: FButtonVariant.secondary,
+            onPress: onCancel,
+            child: const Icon(Icons.stop),
+          ),
+        );
+      }
+      if (isFlushing) {
+        return const Padding(
+          key: ValueKey('flushing'),
+          padding: EdgeInsets.all(8),
+          child: SizedBox(width: 20, height: 20, child: FCircularProgress()),
+        );
+      }
       return FTooltip(
-        key: const ValueKey('stop'),
-        tipBuilder: (_, _) => Text(l10n.aiChatComposerStopTooltip),
+        key: const ValueKey('send'),
+        tipBuilder: (_, _) => Text(l10n.aiChatComposerSendTooltip),
         child: FButton.icon(
-          variant: FButtonVariant.secondary,
-          onPress: widget.onCancel,
-          child: const Icon(Icons.stop),
+          variant: FButtonVariant.primary,
+          onPress: canSend ? onSend : null,
+          child: const Icon(Icons.arrow_upward),
         ),
       );
     }
-    if (widget.isFlushing) {
-      return const Padding(
-        key: ValueKey('flushing'),
-        padding: EdgeInsets.all(8),
-        child: SizedBox(width: 20, height: 20, child: FCircularProgress()),
-      );
-    }
-    return FTooltip(
-      key: const ValueKey('send'),
-      tipBuilder: (_, _) => Text(l10n.aiChatComposerSendTooltip),
-      child: FButton.icon(
-        variant: FButtonVariant.primary,
-        onPress: canSend ? _send : null,
-        child: const Icon(Icons.arrow_upward),
-      ),
+
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final canSend = !_busy && controller.text.trim().isNotEmpty;
+        // AnimatedSwitcher's keyed children cross-fade only when
+        // isStreaming / isFlushing flips — toggling `canSend` keeps the
+        // same key, so a keystroke doesn't trigger a transition.
+        return AnimatedSwitcher(
+          duration: Motion.fast,
+          transitionBuilder: (child, anim) =>
+              FadeTransition(opacity: anim, child: child),
+          child: current(canSend),
+        );
+      },
     );
   }
 }
