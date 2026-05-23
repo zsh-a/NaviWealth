@@ -122,6 +122,33 @@ class ChatController extends StateNotifier<ChatTurnState> {
     }
   }
 
+  /// Branch-replace a past user turn: discards the message + every
+  /// reply (and follow-up turn) after it, then sends [newContent] as
+  /// a fresh user turn. No-op when a turn is in flight, the new
+  /// content is empty, or the message id can't be found / isn't a
+  /// user turn.
+  Future<void> editAndResend({
+    required String messageId,
+    required String newContent,
+    required String staleSyncNotice,
+    String? systemContext,
+  }) async {
+    if (state.isBusy) return;
+    final trimmed = newContent.trim();
+    if (trimmed.isEmpty) return;
+    final repo = await ref.read(chatRepositoryProvider.future);
+    final ok = await repo.discardFromUserMessage(
+      sessionId: sessionId,
+      messageId: messageId,
+    );
+    if (!ok) return;
+    await send(
+      trimmed,
+      staleSyncNotice: staleSyncNotice,
+      systemContext: systemContext,
+    );
+  }
+
   /// Re-run the last assistant turn. Discards both the assistant
   /// message and the user message that produced it, then re-sends the
   /// user content through [send]. No-op while a turn is in flight, or

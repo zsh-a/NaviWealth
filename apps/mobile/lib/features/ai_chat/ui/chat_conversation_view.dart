@@ -141,17 +141,22 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
         if (messages.isEmpty) {
           return widget.emptyBuilder?.call(context) ?? const SizedBox.shrink();
         }
-        // Locate the trailing assistant message once per build — the
-        // bubble uses this to gate the "regenerate" affordance to the
-        // most recent reply only (older replies stay copy-only so a
-        // mid-thread regenerate can't accidentally torpedo follow-up
-        // user turns).
+        // Locate the trailing assistant and user messages once per
+        // build — bubbles use these to gate the "regenerate" (assistant)
+        // and "edit & resend" (user) affordances to the most recent
+        // turn only. Editing mid-thread would silently overwrite all
+        // follow-ups, which is almost never what users want.
         var lastAssistantIdx = -1;
+        var lastUserIdx = -1;
         for (var i = messages.length - 1; i >= 0; i--) {
-          if (messages[i].role == ChatRole.assistant) {
+          if (lastAssistantIdx < 0 &&
+              messages[i].role == ChatRole.assistant) {
             lastAssistantIdx = i;
-            break;
           }
+          if (lastUserIdx < 0 && messages[i].role == ChatRole.user) {
+            lastUserIdx = i;
+          }
+          if (lastAssistantIdx >= 0 && lastUserIdx >= 0) break;
         }
         return Stack(
           children: [
@@ -165,6 +170,7 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
                 invocationIntent: widget.invocationIntent,
                 onReplyChip: widget.onReplyChip,
                 isLastAssistant: i == lastAssistantIdx,
+                isLastUser: i == lastUserIdx,
               ),
             ),
             Positioned(

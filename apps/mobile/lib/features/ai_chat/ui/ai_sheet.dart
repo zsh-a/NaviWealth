@@ -150,24 +150,34 @@ class _DesktopSheetOverlay extends ConsumerStatefulWidget {
 
 class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
   static const _prefKey = 'naviwealth.ai_chat.sheet_offset';
-  static const _sheetW = 480.0;
-  static const _sheetH = 600.0;
+
+  // Default + bounds for the resizable sheet. The min keeps the
+  // composer + at least one bubble visible; the max stops the user
+  // from dragging it beyond a usable second-window size.
+  static const Size _defaultSize = Size(480, 600);
+  static const Size _minSize = Size(360, 420);
+  static const Size _maxSize = Size(880, 960);
 
   Offset? _offset;
+  Size? _size;
 
   @override
   void initState() {
     super.initState();
-    _loadPosition();
+    _loadPersisted();
   }
 
-  Future<void> _loadPosition() async {
+  Future<void> _loadPersisted() async {
     final prefs = ref.read(sharedPreferencesProvider);
     final dx = prefs.getDouble('$_prefKey.dx');
     final dy = prefs.getDouble('$_prefKey.dy');
-    if (dx != null && dy != null && mounted) {
-      setState(() => _offset = Offset(dx, dy));
-    }
+    final w = prefs.getDouble('$_prefKey.w');
+    final h = prefs.getDouble('$_prefKey.h');
+    if (!mounted) return;
+    setState(() {
+      if (dx != null && dy != null) _offset = Offset(dx, dy);
+      if (w != null && h != null) _size = Size(w, h);
+    });
   }
 
   Future<void> _persistPosition(Offset o) async {
@@ -178,26 +188,99 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
     ]);
   }
 
-  Offset _defaultPosition(Size screenSize) {
-    return Offset(
-      screenSize.width - _sheetW - 24,
-      screenSize.height - _sheetH - 24,
+  Future<void> _persistSize(Size s) async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    await Future.wait([
+      prefs.setDouble('$_prefKey.w', s.width),
+      prefs.setDouble('$_prefKey.h', s.height),
+    ]);
+  }
+
+  Size _effectiveSize() {
+    final s = _size ?? _defaultSize;
+    return Size(
+      s.width.clamp(_minSize.width, _maxSize.width),
+      s.height.clamp(_minSize.height, _maxSize.height),
     );
   }
 
-  Offset _clampToScreen(Offset o, Size screenSize) {
-    final maxDx = screenSize.width - _sheetW;
-    final maxDy = screenSize.height - _sheetH;
+  Offset _defaultPosition(Size screenSize, Size sheetSize) {
+    return Offset(
+      screenSize.width - sheetSize.width - 24,
+      screenSize.height - sheetSize.height - 24,
+    );
+  }
+
+  Offset _clampToScreen(Offset o, Size screenSize, Size sheetSize) {
+    final maxDx = (screenSize.width - sheetSize.width).clamp(
+      0.0,
+      double.infinity,
+    );
+    final maxDy = (screenSize.height - sheetSize.height).clamp(
+      0.0,
+      double.infinity,
+    );
     return Offset(o.dx.clamp(0.0, maxDx), o.dy.clamp(0.0, maxDy));
+  }
+
+  void _onHeaderDrag(DragUpdateDetails details, Size screenSize) {
+    final sheetSize = _effectiveSize();
+    final base = _offset ?? _defaultPosition(screenSize, sheetSize);
+    setState(() {
+      _offset = _clampToScreen(
+        Offset(base.dx + details.delta.dx, base.dy + details.delta.dy),
+        screenSize,
+        sheetSize,
+      );
+    });
+  }
+
+  void _onHeaderDragEnd() {
+    final o = _offset;
+    if (o != null) _persistPosition(o);
+  }
+
+  void _onResize(DragUpdateDetails details) {
+    final cur = _effectiveSize();
+    setState(() {
+      _size = Size(
+        (cur.width + details.delta.dx).clamp(_minSize.width, _maxSize.width),
+        (cur.height + details.delta.dy).clamp(_minSize.height, _maxSize.height),
+      );
+    });
+  }
+
+  void _onResizeEnd(Size screenSize) {
+    final s = _effectiveSize();
+    _persistSize(s);
+    // Resize-bigger may push the existing top-left position past the
+    // screen edge — re-clamp + persist so the next open lands cleanly.
+    final o = _offset;
+    if (o != null) {
+      final clamped = _clampToScreen(o, screenSize, s);
+      if (clamped != o) {
+        setState(() => _offset = clamped);
+        _persistPosition(clamped);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.sizeOf(context);
-    final pos = _clampToScreen(
-      _offset ?? _defaultPosition(screenSize),
-      screenSize,
-    );
+    final sheetSize = _effectiveSize();
+    final basePos = _offset ?? _defaultPosition(screenSize, sheetSize);
+    final pos = _clampToScreen(basePos, screenSize, sheetSize);
+    // If the window shrank since last session and the persisted offset
+    // now sits offscreen, write back the clamped offset so we don't
+    // re-clamp on every build.
+    if (_offset != null && pos != _offset) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _offset = pos);
+        _persistPosition(pos);
+      });
+    }
 
     final colors = context.theme.colors;
     return Stack(
@@ -205,11 +288,11 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
         Positioned(
           left: pos.dx,
           top: pos.dy,
+          width: sheetSize.width,
+          height: sheetSize.height,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: Container(
-              width: _sheetW,
-              height: _sheetH,
               decoration: BoxDecoration(
                 color: colors.background,
                 borderRadius: BorderRadius.circular(20),
@@ -222,35 +305,68 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
                   ),
                 ],
               ),
-              child: Column(
+              child: Stack(
                 children: [
-                  // Drag handle — only this area initiates drag.
-                  GestureDetector(
-                    onPanUpdate: (details) {
-                      setState(() {
-                        _offset = Offset(
-                          pos.dx + details.delta.dx,
-                          pos.dy + details.delta.dy,
-                        );
-                      });
-                    },
-                    onPanEnd: (_) {
-                      if (_offset != null) _persistPosition(_offset!);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Container(
-                        width: 36,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: colors.mutedForeground.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(2),
+                  Column(
+                    children: [
+                      // Full-width draggable header strip — anywhere on
+                      // the top 24px counts as a drag handle, not just
+                      // the 36×4 pill (which was a visible-but-tiny
+                      // hitbox most users never tried to grab).
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onPanUpdate: (d) => _onHeaderDrag(d, screenSize),
+                        onPanEnd: (_) => _onHeaderDragEnd(),
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.move,
+                          child: SizedBox(
+                            height: 24,
+                            child: Center(
+                              child: Container(
+                                width: 36,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: colors.mutedForeground.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: AiSheetShell.conversation(
+                          prefill: widget.prefill,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // SE-corner resize affordance — three short diagonal
+                  // strokes, hit area extends a bit past the visual.
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onPanUpdate: _onResize,
+                      onPanEnd: (_) => _onResizeEnd(screenSize),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.resizeDownRight,
+                        child: SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CustomPaint(
+                            painter: _ResizeGripPainter(
+                              color: colors.mutedForeground.withValues(
+                                alpha: 0.55,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    child: AiSheetShell.conversation(prefill: widget.prefill),
                   ),
                 ],
               ),
@@ -260,6 +376,31 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
       ],
     );
   }
+}
+
+/// Paints three short diagonal strokes in the bottom-right corner so
+/// the user can see where to grab to resize. Kept ultra-minimal —
+/// macOS-style two-line "ear" or Windows-style three-dot grip.
+class _ResizeGripPainter extends CustomPainter {
+  _ResizeGripPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+    final w = size.width;
+    final h = size.height;
+    canvas.drawLine(Offset(w - 14, h - 4), Offset(w - 4, h - 14), paint);
+    canvas.drawLine(Offset(w - 10, h - 4), Offset(w - 4, h - 10), paint);
+    canvas.drawLine(Offset(w - 6, h - 4), Offset(w - 4, h - 6), paint);
+  }
+
+  @override
+  bool shouldRepaint(_ResizeGripPainter old) => old.color != color;
 }
 
 /// The unified sheet content. `invocation == null` ⇒ conversation mode

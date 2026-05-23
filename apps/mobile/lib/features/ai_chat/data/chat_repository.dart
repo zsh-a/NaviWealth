@@ -506,6 +506,30 @@ class ChatRepository {
     await _store.updateMessage(message.copyWith(toolCalls: updatedToolCalls));
   }
 
+  /// Discard the target user message AND every message that follows it
+  /// (assistant reply, follow-up turns, system notices). Branch
+  /// semantics: editing a past prompt overwrites the conversation from
+  /// that point on, since the new wording will yield a different
+  /// timeline and we don't keep history-branches today.
+  ///
+  /// Returns `false` when the message id is unknown or doesn't point
+  /// at a user turn (defensive; the UI gates this affordance to
+  /// trailing user messages, but a stale id from a fast tap is
+  /// possible).
+  Future<bool> discardFromUserMessage({
+    required String sessionId,
+    required String messageId,
+  }) async {
+    final messages = await _store.listMessages(sessionId);
+    final idx = messages.indexWhere((m) => m.id == messageId);
+    if (idx < 0) return false;
+    if (messages[idx].role != ChatRole.user) return false;
+    for (var i = idx; i < messages.length; i++) {
+      await _store.deleteMessage(messages[i].id);
+    }
+    return true;
+  }
+
   /// Discard the last assistant turn and the user turn that produced
   /// it, returning the user-turn content so the caller can re-send it
   /// through [sendMessage]. The two messages are removed in one go so

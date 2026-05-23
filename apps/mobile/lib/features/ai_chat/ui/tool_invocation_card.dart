@@ -301,6 +301,49 @@ class _CodeBlock extends StatelessWidget {
   }
 }
 
+/// Map a wire tool name to an icon that lets the user spot at a
+/// glance "this turn touched holdings" vs "this turn touched FIRE
+/// buckets". The fallback is a generic gear since the catch-all
+/// sparkle is already used as the assistant identity glyph
+/// elsewhere — repeating it on per-tool rows muddies the signal.
+IconData toolIcon(String wireName) {
+  return switch (wireName) {
+    // Portfolio / holdings reads
+    'get_holdings' => Icons.account_balance_wallet_outlined,
+    'read_account_window' => Icons.account_balance_outlined,
+    'read_asset_window' => Icons.show_chart_outlined,
+    'read_category_window' => Icons.category_outlined,
+    'list_payment_accounts' => Icons.payments_outlined,
+    // Aggregations / breakdowns
+    'compute_net_worth' || 'get_net_worth_summary' => Icons.savings_outlined,
+    'compute_xirr' || 'get_xirr_summary' => Icons.percent,
+    'get_investment_performance' => Icons.trending_up,
+    'get_asset_allocation' => Icons.pie_chart_outline,
+    'get_industry_breakdown' => Icons.donut_small_outlined,
+    'get_geo_breakdown' => Icons.public_outlined,
+    'get_market_cap_breakdown' => Icons.show_chart,
+    'get_risk_alerts' => Icons.warning_amber_outlined,
+    'get_anomaly_flags' => Icons.bolt_outlined,
+    'get_cashflow_buckets' => Icons.account_tree_outlined,
+    // Expense intelligence
+    'get_recurring_patterns' => Icons.repeat,
+    'get_subscription_changes' => Icons.subscriptions_outlined,
+    'get_refund_links' => Icons.assignment_return_outlined,
+    'get_transfer_links' => Icons.swap_horiz,
+    // FIRE
+    'get_fire_state' || 'get_fire_plan' => Icons.flag_outlined,
+    'get_fire_buckets' => Icons.account_tree_outlined,
+    'get_fire_review' => Icons.history,
+    'get_fire_stress_tests' || 'simulate_fire_plan' => Icons.science_outlined,
+    // Options income
+    'get_options_income_opportunities' => Icons.savings,
+    'get_options_strategy_profile' => Icons.handshake_outlined,
+    // Anything else — generic gear, never the AI sparkle (kept for
+    // assistant-identity affordances elsewhere).
+    _ => Icons.settings_suggest_outlined,
+  };
+}
+
 /// Map a wire tool name (e.g. `get_holdings`) to a localized,
 /// user-facing label (e.g. "查询持仓"). Unknown wires fall through to
 /// the raw name — better than an opaque "unknown" placeholder, since

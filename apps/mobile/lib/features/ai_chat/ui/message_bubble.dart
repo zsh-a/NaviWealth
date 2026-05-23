@@ -34,6 +34,7 @@ class MessageBubble extends StatelessWidget {
     this.onReplyChip,
     this.invocationIntent,
     this.isLastAssistant = false,
+    this.isLastUser = false,
   });
 
   final String sessionId;
@@ -55,11 +56,21 @@ class MessageBubble extends StatelessWidget {
   /// follow-up turn, which is almost never what the user wants.
   final bool isLastAssistant;
 
+  /// Whether this is the trailing user message in the timeline. Only
+  /// the trailing user message gets the "edit & resend" affordance —
+  /// mid-thread edit would silently discard every follow-up turn,
+  /// which is destructive and almost never the user intent.
+  final bool isLastUser;
+
   @override
   Widget build(BuildContext context) {
     final Widget child = switch (message.role) {
       ChatRole.system => _SystemNotice(text: message.content),
-      ChatRole.user => _UserBubble(message: message),
+      ChatRole.user => _UserBubble(
+        sessionId: sessionId,
+        message: message,
+        isLastUser: isLastUser,
+      ),
       ChatRole.assistant || ChatRole.error => _AssistantBubble(
         sessionId: sessionId,
         message: message,
@@ -87,55 +98,135 @@ class MessageBubble extends StatelessWidget {
   }
 }
 
-class _UserBubble extends StatelessWidget {
-  const _UserBubble({required this.message});
+class _UserBubble extends ConsumerWidget {
+  const _UserBubble({
+    required this.sessionId,
+    required this.message,
+    this.isLastUser = false,
+  });
 
+  final String sessionId;
   final ChatMessage message;
 
+  /// Only the trailing user message gets the edit-and-resend
+  /// affordance — see [MessageBubble.isLastUser].
+  final bool isLastUser;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
+    final turn = ref.watch(chatControllerProvider(sessionId));
+    // Edit is gated to: (a) the trailing user turn, (b) not currently
+    // streaming/flushing — otherwise tapping mid-stream would race the
+    // in-flight pipeline and produce duplicates.
+    final showEdit = isLastUser && !turn.isBusy;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Flexible(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 640),
-              child: Semantics(
-                container: true,
-                label: l10n.aiChatSemanticsUserMessage,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.primary,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      topRight: Radius.circular(4),
-                      bottomLeft: Radius.circular(8),
-                      bottomRight: Radius.circular(8),
-                    ),
-                  ),
-                  child: SelectableText(
-                    message.content,
-                    style: typography.sm.copyWith(
-                      height: 1.5,
-                      color: colors.primaryForeground,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Flexible(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 640),
+                  child: Semantics(
+                    container: true,
+                    label: l10n.aiChatSemanticsUserMessage,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.primary,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(8),
+                          topRight: Radius.circular(4),
+                          bottomLeft: Radius.circular(8),
+                          bottomRight: Radius.circular(8),
+                        ),
+                      ),
+                      child: SelectableText(
+                        message.content,
+                        style: typography.sm.copyWith(
+                          height: 1.5,
+                          color: colors.primaryForeground,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
+          if (showEdit)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: _ActionButton(
+                icon: Icons.edit_outlined,
+                label: l10n.aiChatEditUserMessage,
+                onPressed: () => _editAndResend(context, ref),
+              ),
+            ),
         ],
       ),
     );
+  }
+
+  Future<void> _editAndResend(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final controller = TextEditingController(text: message.content);
+    final result = await showAppFormSheet<String>(
+      context: context,
+      builder: (ctx) => AppSheet(
+        title: l10n.aiChatEditUserMessageTitle,
+        footer: AppSheetFooter(
+          submitLabel: l10n.aiChatEditUserMessageSubmit,
+          cancelLabel: l10n.commonCancel,
+          // Treat as destructive — saving discards the existing AI
+          // reply (+ any later turns) before re-running the prompt.
+          destructive: true,
+          onSubmit: () =>
+              Navigator.of(ctx).pop(controller.text.trim()),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n.aiChatEditUserMessageWarning,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 12),
+            FTextField(
+              control: FTextFieldControl.managed(controller: controller),
+              autofocus: true,
+              minLines: 3,
+              maxLines: 8,
+              keyboardType: TextInputType.multiline,
+              textInputAction: TextInputAction.newline,
+            ),
+          ],
+        ),
+      ),
+    );
+    if (result == null || result.isEmpty) return;
+    if (result == message.content.trim()) return;
+    if (!context.mounted) return;
+    await ref
+        .read(chatControllerProvider(sessionId).notifier)
+        .editAndResend(
+          messageId: message.id,
+          newContent: result,
+          staleSyncNotice: l10n.aiChatStaleSyncNotice,
+        );
   }
 }
 
