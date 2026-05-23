@@ -68,4 +68,24 @@ class ConcentrationThresholdsController
       _prefs.remove(_currencyKey),
     ]);
   }
+
+  /// Replace all four warning levels in one shot. Used by the risk
+  /// appetite SSOT to snap thresholds onto the matching preset when
+  /// the user picks Conservative / Moderate / Aggressive — saves a
+  /// round trip per-field and a noisy four-emission state thrash.
+  Future<void> applyAll(ConcentrationThresholds next) async {
+    if (next.assetWarning == state.assetWarning &&
+        next.sectorWarning == state.sectorWarning &&
+        next.regionWarning == state.regionWarning &&
+        next.currencyWarning == state.currencyWarning) {
+      return;
+    }
+    state = next;
+    await Future.wait<void>([
+      _prefs.setDouble(_assetKey, next.assetWarning),
+      _prefs.setDouble(_sectorKey, next.sectorWarning),
+      _prefs.setDouble(_regionKey, next.regionWarning),
+      _prefs.setDouble(_currencyKey, next.currencyWarning),
+    ]);
+  }
 }

@@ -11,7 +11,6 @@ import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../analytics/data/risk_threshold_preferences.dart';
-import '../../analytics/domain/concentration_risk.dart';
 import '../../auth/data/auth_controller.dart';
 import '../../expense/data/expense_report_providers.dart';
 import '../../fire/data/fire_plan_preferences.dart';
@@ -578,6 +577,9 @@ class _RiskAppetiteRow extends ConsumerWidget {
   Future<void> _onPick(WidgetRef ref, RiskAppetite next) async {
     final current = ref.read(riskAppetiteProvider);
     if (current == next) return;
+    // Capture the thresholds *before* writing the appetite, so a
+    // hand-customised state ("not at any preset") is preserved.
+    final priorThresholds = ref.read(concentrationThresholdsProvider);
     await ref.read(riskAppetiteProvider.notifier).set(next);
     // Picking a non-custom preset resets target weights to that
     // preset's defaults. Custom is reached via the target editor
@@ -586,6 +588,16 @@ class _RiskAppetiteRow extends ConsumerWidget {
       await ref
           .read(targetAllocationProvider.notifier)
           .update(allocationScheme(schemePresetFor(next)));
+    }
+    // Honour the "auto-tuned by your risk appetite" promise on the
+    // thresholds link row: when the user hasn't drifted off the
+    // appetite-aligned presets, snap the thresholds to match the new
+    // appetite. Hand-customised thresholds (not at any preset) stay
+    // put — those users explicitly opted out of the auto-tune.
+    if (isAtAnyAppetitePreset(priorThresholds)) {
+      await ref
+          .read(concentrationThresholdsProvider.notifier)
+          .applyAll(concentrationThresholdsForAppetite(next));
     }
   }
 }
@@ -648,7 +660,10 @@ class _RiskThresholdsLink extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final thresholds = ref.watch(concentrationThresholdsProvider);
-    final isCustom = _isCustomThresholds(thresholds);
+    // "Custom" iff the user has drifted off every appetite-aligned
+    // preset. Just being non-default no longer counts: aggressive
+    // users sitting on the aggressive preset are still "auto-tuned".
+    final isCustom = !isAtAnyAppetitePreset(thresholds);
     return InlineLinkRow(
       icon: Icons.notifications_active_outlined,
       label: l10n.settingsRiskThresholdsLabel,
@@ -657,15 +672,6 @@ class _RiskThresholdsLink extends ConsumerWidget {
           : l10n.settingsRiskThresholdsSubtitleAuto,
       onTap: onTap,
     );
-  }
-
-  static bool _isCustomThresholds(ConcentrationThresholds t) {
-    const eps = 1e-6;
-    final d = ConcentrationThresholds.defaults();
-    return (t.assetWarning - d.assetWarning).abs() > eps ||
-        (t.sectorWarning - d.sectorWarning).abs() > eps ||
-        (t.regionWarning - d.regionWarning).abs() > eps ||
-        (t.currencyWarning - d.currencyWarning).abs() > eps;
   }
 }
 
