@@ -31,9 +31,10 @@ class ContextCompressor {
     final currency = baseCurrency ?? 'USD';
     return BaseContext(
       preferredCurrency: currency,
-      // Wired to the SSOT in features/settings/data/risk_appetite_preferences.dart
-      // by the feature-layer adapter (chat repository). Falls back to
-      // `moderate` when the adapter hasn't been wired (legacy tests).
+      // The feature-layer adapter (chat repository) passes the user's
+      // declared appetite from features/settings/data/risk_appetite_preferences.dart.
+      // The `?? moderate` is for direct callers without access to that
+      // SSOT — e.g. unit tests exercising the compressor in isolation.
       riskPreference: riskPreference ?? RiskPreference.moderate,
       accounts: accountSummary,
       // TODO(phase2): replace with real cashflow aggregation —
