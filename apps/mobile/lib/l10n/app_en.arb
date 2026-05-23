@@ -1911,6 +1911,20 @@
   "@aiChatMessageCopied": { "description": "Confirmation snackbar shown after the user copies an assistant reply." },
   "aiChatMessageRegenerate": "Regenerate",
   "@aiChatMessageRegenerate": { "description": "Inline action under the last assistant message — discards the turn and re-runs the prompt." },
+  "aiChatSemanticsUserMessage": "You said:",
+  "@aiChatSemanticsUserMessage": { "description": "Screen-reader prefix announcing a user chat bubble. Followed by the message content." },
+  "aiChatSemanticsAssistantMessage": "Assistant reply",
+  "@aiChatSemanticsAssistantMessage": { "description": "Screen-reader announcement for an assistant chat bubble. The bubble contents (text + tool calls) follow." },
+  "aiChatSemanticsAssistantError": "Assistant reply failed",
+  "@aiChatSemanticsAssistantError": { "description": "Screen-reader announcement when the assistant bubble is in an errored state." },
+  "aiChatSemanticsSystemNotice": "System notice:",
+  "@aiChatSemanticsSystemNotice": { "description": "Screen-reader prefix announcing an inline system message (truncation notice, stale-sync warning)." },
+  "aiChatToolDebugTooltip": "View raw tool input/output",
+  "@aiChatToolDebugTooltip": { "description": "Tooltip on the small info icon at the end of an inline tool attribution row, opening the debug sheet with raw JSON." },
+  "aiChatTransparencyOpenDetail": "View full transparency trace",
+  "@aiChatTransparencyOpenDetail": { "description": "Tooltip / a11y hint on the transparency badge — taps navigate to the per-trace detail page." },
+  "aiChatProfileChipTooltip": "Switch model profile",
+  "@aiChatProfileChipTooltip": { "description": "Tooltip on the active LlmProfile chip above the composer. Taps open the AI LLM credentials settings page so the user can swap profiles." },
   "aiChatStaleSyncNotice": "Local data hasn't finished syncing; answers may lag behind your most recent edits.",
 
   "aiChatTruncatedMaxTokens": "Reply was cut off — output length limit reached",
@@ -1987,6 +2001,24 @@
     "placeholders": { "count": { "type": "int" } }
   },
   "aiChatProposalBatchConfirmAll": "Confirm all",
+  "aiChatProposalBatchResultAllOk": "{count, plural, =1{Applied 1 item} other{Applied {count} items}}",
+  "@aiChatProposalBatchResultAllOk": {
+    "description": "Snackbar shown after the user taps 'Confirm all' and every item applied cleanly.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiChatProposalBatchResultMixed": "Applied {applied} · {failed} failed",
+  "@aiChatProposalBatchResultMixed": {
+    "description": "Snackbar shown after batch confirm when some items applied and some errored. Both counts are positive.",
+    "placeholders": {
+      "applied": { "type": "int" },
+      "failed": { "type": "int" }
+    }
+  },
+  "aiChatProposalBatchResultAllFailed": "{count, plural, =1{Failed to apply} other{All {count} items failed}}",
+  "@aiChatProposalBatchResultAllFailed": {
+    "description": "Snackbar shown after batch confirm when every eligible item errored.",
+    "placeholders": { "count": { "type": "int" } }
+  },
 
   "aiChatProposalConfirmTokenWarning": "High-risk action. Type \"{token}\" to enable Confirm.",
   "@aiChatProposalConfirmTokenWarning": {

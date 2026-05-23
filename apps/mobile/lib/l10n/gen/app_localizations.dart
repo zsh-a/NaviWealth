@@ -6171,6 +6171,48 @@ abstract class AppLocalizations {
   /// **'Regenerate'**
   String get aiChatMessageRegenerate;
 
+  /// Screen-reader prefix announcing a user chat bubble. Followed by the message content.
+  ///
+  /// In en, this message translates to:
+  /// **'You said:'**
+  String get aiChatSemanticsUserMessage;
+
+  /// Screen-reader announcement for an assistant chat bubble. The bubble contents (text + tool calls) follow.
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant reply'**
+  String get aiChatSemanticsAssistantMessage;
+
+  /// Screen-reader announcement when the assistant bubble is in an errored state.
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant reply failed'**
+  String get aiChatSemanticsAssistantError;
+
+  /// Screen-reader prefix announcing an inline system message (truncation notice, stale-sync warning).
+  ///
+  /// In en, this message translates to:
+  /// **'System notice:'**
+  String get aiChatSemanticsSystemNotice;
+
+  /// Tooltip on the small info icon at the end of an inline tool attribution row, opening the debug sheet with raw JSON.
+  ///
+  /// In en, this message translates to:
+  /// **'View raw tool input/output'**
+  String get aiChatToolDebugTooltip;
+
+  /// Tooltip / a11y hint on the transparency badge — taps navigate to the per-trace detail page.
+  ///
+  /// In en, this message translates to:
+  /// **'View full transparency trace'**
+  String get aiChatTransparencyOpenDetail;
+
+  /// Tooltip on the active LlmProfile chip above the composer. Taps open the AI LLM credentials settings page so the user can swap profiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch model profile'**
+  String get aiChatProfileChipTooltip;
+
   /// No description provided for @aiChatStaleSyncNotice.
   ///
   /// In en, this message translates to:
@@ -6368,6 +6410,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm all'**
   String get aiChatProposalBatchConfirmAll;
+
+  /// Snackbar shown after the user taps 'Confirm all' and every item applied cleanly.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Applied 1 item} other{Applied {count} items}}'**
+  String aiChatProposalBatchResultAllOk(int count);
+
+  /// Snackbar shown after batch confirm when some items applied and some errored. Both counts are positive.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied {applied} · {failed} failed'**
+  String aiChatProposalBatchResultMixed(int applied, int failed);
+
+  /// Snackbar shown after batch confirm when every eligible item errored.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Failed to apply} other{All {count} items failed}}'**
+  String aiChatProposalBatchResultAllFailed(int count);
 
   /// Warning above the typed-confirm field for high-risk proposals (broker_order, bulk_delete). {token} is the literal string the user must type.
   ///

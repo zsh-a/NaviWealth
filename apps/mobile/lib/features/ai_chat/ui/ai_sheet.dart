@@ -43,6 +43,7 @@ import '../state/chat_session_scope.dart';
 import '../state/route_context_provider.dart';
 import 'chat_composer.dart';
 import 'chat_conversation_view.dart';
+import 'llm_profile_chip.dart';
 
 /// Open the AI sheet. Pass [invocation] for the object-semantic mode;
 /// otherwise it opens (or resumes) the user's conversation. Never
@@ -498,8 +499,10 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
                   ),
                 ),
         ),
-        if (activeId != null)
+        if (activeId != null) ...[
+          const LlmProfileChip(),
           _ConversationComposer(sessionId: activeId, prefill: widget.prefill),
+        ],
       ],
     );
   }

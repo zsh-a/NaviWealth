@@ -18,6 +18,7 @@ import 'ai_action_cards_rail.dart';
 import 'ai_context_summary_header.dart';
 import 'chat_composer.dart';
 import 'chat_conversation_view.dart';
+import 'llm_profile_chip.dart';
 import 'sessions_panel.dart';
 
 /// Top-level "AI 助手" surface (FIR-60).
@@ -244,6 +245,7 @@ class _ChatPane extends ConsumerWidget {
                 emptyBuilder: (_) => _EmptyConversation(onSuggest: send),
               ),
             ),
+            const LlmProfileChip(),
             ChatComposer(
               isStreaming: turn.isStreaming,
               isFlushing: turn.isFlushing,

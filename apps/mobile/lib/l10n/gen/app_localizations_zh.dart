@@ -3435,6 +3435,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatMessageRegenerate => '重新生成';
 
   @override
+  String get aiChatSemanticsUserMessage => '你说：';
+
+  @override
+  String get aiChatSemanticsAssistantMessage => 'AI 回复';
+
+  @override
+  String get aiChatSemanticsAssistantError => 'AI 回复出错';
+
+  @override
+  String get aiChatSemanticsSystemNotice => '系统提示：';
+
+  @override
+  String get aiChatToolDebugTooltip => '查看工具原始数据';
+
+  @override
+  String get aiChatTransparencyOpenDetail => '查看完整透明度记录';
+
+  @override
+  String get aiChatProfileChipTooltip => '切换模型 Profile';
+
+  @override
   String get aiChatStaleSyncNotice => '本地数据未完成同步，回答可能滞后于你刚刚的录入。';
 
   @override
@@ -3554,6 +3575,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiChatProposalBatchConfirmAll => '全部确认';
+
+  @override
+  String aiChatProposalBatchResultAllOk(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '已记录 $count 项',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiChatProposalBatchResultMixed(int applied, int failed) {
+    return '已记录 $applied 项 · $failed 项失败';
+  }
+
+  @override
+  String aiChatProposalBatchResultAllFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 项全部失败',
+    );
+    return '$_temp0';
+  }
 
   @override
   String aiChatProposalConfirmTokenWarning(String token) {

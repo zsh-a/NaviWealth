@@ -3576,6 +3576,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatMessageRegenerate => 'Regenerate';
 
   @override
+  String get aiChatSemanticsUserMessage => 'You said:';
+
+  @override
+  String get aiChatSemanticsAssistantMessage => 'Assistant reply';
+
+  @override
+  String get aiChatSemanticsAssistantError => 'Assistant reply failed';
+
+  @override
+  String get aiChatSemanticsSystemNotice => 'System notice:';
+
+  @override
+  String get aiChatToolDebugTooltip => 'View raw tool input/output';
+
+  @override
+  String get aiChatTransparencyOpenDetail => 'View full transparency trace';
+
+  @override
+  String get aiChatProfileChipTooltip => 'Switch model profile';
+
+  @override
   String get aiChatStaleSyncNotice =>
       'Local data hasn\'t finished syncing; answers may lag behind your most recent edits.';
 
@@ -3699,6 +3720,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiChatProposalBatchConfirmAll => 'Confirm all';
+
+  @override
+  String aiChatProposalBatchResultAllOk(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Applied $count items',
+      one: 'Applied 1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiChatProposalBatchResultMixed(int applied, int failed) {
+    return 'Applied $applied · $failed failed';
+  }
+
+  @override
+  String aiChatProposalBatchResultAllFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'All $count items failed',
+      one: 'Failed to apply',
+    );
+    return '$_temp0';
+  }
 
   @override
   String aiChatProposalConfirmTokenWarning(String token) {
