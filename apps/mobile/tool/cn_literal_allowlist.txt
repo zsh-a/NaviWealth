@@ -47,7 +47,6 @@ lib/core/ai/local/skills/txn_classifier.dart
 lib/core/ai/regression/regression_corpus.dart
 lib/core/ai/router/routing_policy.dart
 lib/core/ai/write/ai_source_mark.dart
-lib/core/ai/write/persistent_undo_banner.dart
 # Device-side AI runtime descriptors/prompts/proposal text landed on the
 # integration branch while the mobile workflow was failing before this lint.
 # These are semantic corpora and persisted proposal summaries, not simple
