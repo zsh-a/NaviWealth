@@ -269,6 +269,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
         prefixes: [backHeaderAction(context)],
       ),
       childPad: false,
+      resizeToAvoidBottomInset: false,
       child: Material(
         color: Colors.transparent,
         child: Form(

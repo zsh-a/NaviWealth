@@ -118,11 +118,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final save = find.text('Save');
+    final save = find.widgetWithText(FButton, 'Save');
     expect(save, findsOneWidget);
     expect(
       tester.getBottomLeft(save).dy,
-      lessThan(size.height - keyboardInset),
+      moreOrLessEquals(size.height - keyboardInset - 12, epsilon: 1),
     );
   });
 }

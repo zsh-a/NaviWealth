@@ -180,6 +180,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
         prefixes: [backHeaderAction(context)],
       ),
       childPad: false,
+      resizeToAvoidBottomInset: false,
       child: !supported
           ? ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),

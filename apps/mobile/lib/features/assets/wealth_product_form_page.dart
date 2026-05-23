@@ -251,6 +251,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
           ],
         ),
         childPad: false,
+        resizeToAvoidBottomInset: false,
         child: Material(
           color: Colors.transparent,
           child: accountsAsync.when(

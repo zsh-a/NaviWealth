@@ -109,6 +109,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
           prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
         ),
         childPad: false,
+        resizeToAvoidBottomInset: false,
         child: Material(
           color: Colors.transparent,
           child: Form(

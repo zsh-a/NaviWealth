@@ -5,10 +5,13 @@ import '../tokens/dimens_tokens.dart';
 
 /// Full-screen form body with a scrollable field area and a pinned action bar.
 ///
-/// Use inside a page-level `FScaffold(childPad: false, child: ...)`.
-/// `FScaffold` owns keyboard avoidance; this widget keeps the primary action
-/// out of the scroll extent so focusing the last input does not push it to the
-/// top of the available viewport.
+/// Use inside a page-level
+/// `FScaffold(childPad: false, resizeToAvoidBottomInset: false, child: ...)`.
+///
+/// This widget owns keyboard avoidance so every form keeps the same geometry:
+/// the fields stay scrollable and the primary action bar moves as one block
+/// above the IME instead of letting nested scaffolds/resize modes double-count
+/// the keyboard inset on some Android keyboards.
 class AppFormScaffoldBody extends StatelessWidget {
   const AppFormScaffoldBody({
     super.key,
@@ -27,22 +30,29 @@ class AppFormScaffoldBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            controller: controller,
-            physics: physics,
-            padding: padding,
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: children,
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      padding: EdgeInsets.only(bottom: keyboardInset),
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              controller: controller,
+              physics: physics,
+              padding: padding,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: children,
+              ),
             ),
           ),
-        ),
-        AppFormActionBar(child: action),
-      ],
+          AppFormActionBar(child: action),
+        ],
+      ),
     );
   }
 }

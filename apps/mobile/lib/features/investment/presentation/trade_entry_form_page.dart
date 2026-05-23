@@ -420,6 +420,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
         ),
         childPad: false,
+        resizeToAvoidBottomInset: false,
         child: Material(
           color: Colors.transparent,
           child: accountsAsync.when(
