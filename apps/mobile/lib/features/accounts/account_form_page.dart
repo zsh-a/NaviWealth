@@ -254,6 +254,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
           ],
         ),
         childPad: false,
+        resizeToAvoidBottomInset: false,
         child: loadingExisting
             ? const Center(child: FCircularProgress())
             : Form(

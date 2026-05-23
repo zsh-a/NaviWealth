@@ -201,6 +201,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
           ],
         ),
         childPad: false,
+        resizeToAvoidBottomInset: false,
         child: Material(
           color: Colors.transparent,
           child: accountsAsync.when(

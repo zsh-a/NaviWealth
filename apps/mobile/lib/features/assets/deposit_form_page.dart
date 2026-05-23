@@ -244,6 +244,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
           ],
         ),
         childPad: false,
+        resizeToAvoidBottomInset: false,
         child: Material(
           color: Colors.transparent,
           child: accountsAsync.when(

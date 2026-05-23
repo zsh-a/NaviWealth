@@ -121,6 +121,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
           prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
         ),
         childPad: false,
+        resizeToAvoidBottomInset: false,
         child: accountsAsync.when(
           data: (accounts) => _buildForm(context, accounts, convertMode),
           loading: () => const Center(child: FCircularProgress()),

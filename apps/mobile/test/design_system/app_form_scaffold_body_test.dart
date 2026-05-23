@@ -12,7 +12,11 @@ Widget _wrap(Widget child, {required double keyboardInset}) {
         data: MediaQueryData(
           viewInsets: EdgeInsets.only(bottom: keyboardInset),
         ),
-        child: FScaffold(childPad: false, child: child),
+        child: FScaffold(
+          childPad: false,
+          resizeToAvoidBottomInset: false,
+          child: child,
+        ),
       ),
     ),
   );
@@ -44,7 +48,10 @@ void main() {
     expect(find.byKey(const Key('form-action')), findsOneWidget);
     expect(
       tester.getBottomLeft(find.byKey(const Key('form-action'))).dy,
-      lessThan(size.height - keyboardInset),
+      moreOrLessEquals(
+        size.height - keyboardInset - AppSpacing.s12,
+        epsilon: 1,
+      ),
     );
   });
 }
