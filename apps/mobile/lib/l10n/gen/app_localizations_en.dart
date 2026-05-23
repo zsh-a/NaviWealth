@@ -3094,7 +3094,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rebalanceSettingsTooltip => 'Rebalance settings';
 
   @override
-  String get rebalanceSettingsTitle => 'Settings';
+  String get rebalanceSettingsTitle => 'Drift thresholds';
 
   @override
   String get rebalanceWarningThreshold => 'Warning threshold';
@@ -3182,7 +3182,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get riskDimensionCurrency => 'Currency';
 
   @override
-  String get settingsRiskSection => 'Risk Preferences';
+  String get settingsRiskSection => 'Investment Preferences';
 
   @override
   String get settingsRiskAssetLabel => 'Single asset limit';
@@ -3214,6 +3214,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsRiskResetDefaults => 'Reset to defaults';
+
+  @override
+  String get settingsRiskAppetiteLabel => 'Risk appetite';
+
+  @override
+  String get settingsRiskAppetiteConservative => 'Conservative';
+
+  @override
+  String get settingsRiskAppetiteModerate => 'Balanced';
+
+  @override
+  String get settingsRiskAppetiteAggressive => 'Aggressive';
+
+  @override
+  String get settingsRiskAppetiteCustom => 'Custom';
+
+  @override
+  String get settingsRiskAppetiteCustomBadge => 'Custom target weights';
+
+  @override
+  String get settingsTargetAllocationLabel => 'Target allocation';
+
+  @override
+  String settingsTargetAllocationSubtitlePreset(String preset) {
+    return '$preset preset';
+  }
+
+  @override
+  String get settingsTargetAllocationSubtitleCustom => 'Hand-tuned weights';
+
+  @override
+  String get settingsRiskThresholdsLabel => 'Concentration alert thresholds';
+
+  @override
+  String get settingsRiskThresholdsSubtitleAuto =>
+      'Auto-tuned by your risk appetite';
+
+  @override
+  String get settingsRiskThresholdsSubtitleCustom => 'Custom thresholds set';
+
+  @override
+  String get settingsRiskThresholdsTitle => 'Concentration alert thresholds';
+
+  @override
+  String get settingsRiskThresholdsHint =>
+      'These thresholds decide when the Risk Alerts panel flags a position as concentrated. They\'re auto-tuned based on your risk appetite — tweak only if you want to override the defaults.';
 
   @override
   String get tradeEntryAppBarTitle => 'Record trade';

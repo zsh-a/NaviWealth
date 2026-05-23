@@ -7,9 +7,9 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../home/domain/dashboard_models.dart';
 import '../../home/ui/asset_category_visuals.dart';
+import '../../settings/data/risk_appetite_preferences.dart';
 import '../../shared/forms/form_dirty_guard.dart';
 import '../data/rebalance_providers.dart';
-import '../domain/allocation_schemes.dart';
 import '../domain/rebalance_models.dart';
 import 'deviation_bar.dart';
 
@@ -145,9 +145,10 @@ class _TargetAllocationEditorSheetState
     widget.dirty.busy = true;
     try {
       await ref.read(targetAllocationProvider.notifier).update(allocation);
-      await ref
-          .read(selectedSchemeProvider.notifier)
-          .select(AllocationSchemePreset.custom);
+      // Saving a hand-edited set of weights is what makes the user
+      // "custom" — write through the SSOT so Settings + Rebalance both
+      // reflect the new state instantly.
+      await ref.read(riskAppetiteProvider.notifier).set(RiskAppetite.custom);
       widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
     } finally {

@@ -2971,7 +2971,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rebalanceSettingsTooltip => '再平衡设置';
 
   @override
-  String get rebalanceSettingsTitle => '设置';
+  String get rebalanceSettingsTitle => '漂移阈值';
 
   @override
   String get rebalanceWarningThreshold => '预警阈值';
@@ -3058,7 +3058,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get riskDimensionCurrency => '币种';
 
   @override
-  String get settingsRiskSection => '风险偏好';
+  String get settingsRiskSection => '投资偏好';
 
   @override
   String get settingsRiskAssetLabel => '单一资产上限';
@@ -3086,6 +3086,51 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsRiskResetDefaults => '恢复默认';
+
+  @override
+  String get settingsRiskAppetiteLabel => '风险偏好';
+
+  @override
+  String get settingsRiskAppetiteConservative => '保守';
+
+  @override
+  String get settingsRiskAppetiteModerate => '平衡';
+
+  @override
+  String get settingsRiskAppetiteAggressive => '激进';
+
+  @override
+  String get settingsRiskAppetiteCustom => '自定义';
+
+  @override
+  String get settingsRiskAppetiteCustomBadge => '已自定义目标配置';
+
+  @override
+  String get settingsTargetAllocationLabel => '目标资产配置';
+
+  @override
+  String settingsTargetAllocationSubtitlePreset(String preset) {
+    return '$preset预设';
+  }
+
+  @override
+  String get settingsTargetAllocationSubtitleCustom => '已手工调整权重';
+
+  @override
+  String get settingsRiskThresholdsLabel => '集中度警报阈值';
+
+  @override
+  String get settingsRiskThresholdsSubtitleAuto => '按风险偏好自动调整';
+
+  @override
+  String get settingsRiskThresholdsSubtitleCustom => '已自定义';
+
+  @override
+  String get settingsRiskThresholdsTitle => '集中度警报阈值';
+
+  @override
+  String get settingsRiskThresholdsHint =>
+      '这些阈值决定何时把某项持仓标为集中度过高。系统已根据你的风险偏好自动调整 —— 除非想覆盖默认值，否则无需修改。';
 
   @override
   String get tradeEntryAppBarTitle => '录入交易';

@@ -26,12 +26,15 @@ class ContextCompressor {
       totalCount: 0,
       byKind: <String, int>{},
     ),
+    RiskPreference? riskPreference,
   }) {
     final currency = baseCurrency ?? 'USD';
     return BaseContext(
       preferredCurrency: currency,
-      // TODO(phase2): wire to settings.riskPreference.
-      riskPreference: RiskPreference.moderate,
+      // Wired to the SSOT in features/settings/data/risk_appetite_preferences.dart
+      // by the feature-layer adapter (chat repository). Falls back to
+      // `moderate` when the adapter hasn't been wired (legacy tests).
+      riskPreference: riskPreference ?? RiskPreference.moderate,
       accounts: accountSummary,
       // TODO(phase2): replace with real cashflow aggregation —
       // monthlyChangePct on the dashboard is net-worth delta, not
@@ -111,12 +114,14 @@ class ContextCompressor {
     List<AnalyticalUpload> analyticalUploads = const <AnalyticalUpload>[],
     String? deviceHlc,
     PrivacyBudget budget = PrivacyBudget.standard,
+    RiskPreference? riskPreference,
   }) {
     final pack = ContextPack(
       version: kCurrentContextPackVersion,
       base: compressBase(
         baseCurrency: baseCurrency,
         accountSummary: accountSummary,
+        riskPreference: riskPreference,
       ),
       task: compressTask(
         route: route,

@@ -70,6 +70,13 @@ abstract final class AppRoutes {
   static const settingsAiPrivacy = '/settings/ai-privacy';
   // §4.6 W-D1 — bring-your-own LLM key for the on-device AI runtime.
   static const settingsAiLlm = '/settings/ai-llm';
+  // Investment preferences — risk appetite SSOT + advanced
+  // concentration thresholds.
+  static const settingsRiskThresholds = '/settings/risk-thresholds';
+  // Target allocation editor is reachable via the rebalance Custom
+  // chip; settings overview links to it through a deep link for
+  // discoverability.
+  static const rebalanceTargetAllocation = '/rebalance/target-allocation';
   static String settingsAiTransparencyDetail(String requestId) =>
       '/settings/ai-transparency/${Uri.encodeComponent(requestId)}';
 
@@ -113,6 +120,7 @@ abstract final class AppRouteNames {
   static const aiHistory = 'ai-history';
   static const aiPrivacy = 'ai-privacy';
   static const aiLlm = 'ai-llm';
+  static const riskThresholds = 'risk-thresholds';
 
   static const accounts = 'accounts';
   static const accountsList = 'accounts-list';
