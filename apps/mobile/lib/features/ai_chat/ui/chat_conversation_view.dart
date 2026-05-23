@@ -62,21 +62,55 @@ class ChatConversationView extends ConsumerStatefulWidget {
 class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
   final ScrollController _scroll = ScrollController();
 
+  /// Whether the viewport is currently anchored at (or within
+  /// [_bottomThreshold] of) the bottom of the list. We only follow new
+  /// snapshots when this is true — once the user scrolls up to read
+  /// history we stop pulling them back, and the floating jump-to-latest
+  /// button below lets them re-anchor on demand.
+  bool _atBottom = true;
+
+  /// Pixels from the bottom that still count as "at the bottom". Wide
+  /// enough that a momentum scroll-back near the edge doesn't detach.
+  static const double _bottomThreshold = 96;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_onScroll);
+  }
+
   @override
   void dispose() {
+    _scroll.removeListener(_onScroll);
     _scroll.dispose();
     super.dispose();
   }
 
-  void _scrollToBottom() {
+  void _onScroll() {
+    if (!_scroll.hasClients) return;
+    final pos = _scroll.position;
+    if (!pos.hasContentDimensions) return;
+    final distance = pos.maxScrollExtent - pos.pixels;
+    final next = distance <= _bottomThreshold;
+    if (next != _atBottom) {
+      setState(() => _atBottom = next);
+    }
+  }
+
+  void _scrollToBottom({bool animated = true}) {
     if (!_scroll.hasClients) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scroll.hasClients) return;
-      _scroll.animateTo(
-        _scroll.position.maxScrollExtent,
-        duration: Motion.fast,
-        curve: Motion.standardDecelerate,
-      );
+      final target = _scroll.position.maxScrollExtent;
+      if (animated) {
+        _scroll.animateTo(
+          target,
+          duration: Motion.fast,
+          curve: Motion.standardDecelerate,
+        );
+      } else {
+        _scroll.jumpTo(target);
+      }
     });
   }
 
@@ -86,9 +120,13 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
       chatMessagesStreamProvider(widget.sessionId),
     );
 
-    // Follow every new snapshot to the bottom.
+    // Follow new snapshots to the bottom — but only when the user is
+    // still anchored there. Reading history without being yanked back
+    // mid-scroll is the whole point of the at-bottom gate.
     ref.listen(chatMessagesStreamProvider(widget.sessionId), (_, next) {
-      next.whenData((_) => _scrollToBottom());
+      next.whenData((_) {
+        if (_atBottom) _scrollToBottom();
+      });
     });
 
     return messagesAsync.when(
@@ -102,18 +140,100 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
         if (messages.isEmpty) {
           return widget.emptyBuilder?.call(context) ?? const SizedBox.shrink();
         }
-        return ListView.builder(
-          controller: _scroll,
-          padding: widget.padding,
-          itemCount: messages.length,
-          itemBuilder: (_, i) => MessageBubble(
-            sessionId: widget.sessionId,
-            message: messages[i],
-            invocationIntent: widget.invocationIntent,
-            onReplyChip: widget.onReplyChip,
-          ),
+        return Stack(
+          children: [
+            ListView.builder(
+              controller: _scroll,
+              padding: widget.padding,
+              itemCount: messages.length,
+              itemBuilder: (_, i) => MessageBubble(
+                sessionId: widget.sessionId,
+                message: messages[i],
+                invocationIntent: widget.invocationIntent,
+                onReplyChip: widget.onReplyChip,
+              ),
+            ),
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: _JumpToBottomButton(
+                visible: !_atBottom,
+                onPressed: () => _scrollToBottom(),
+              ),
+            ),
+          ],
         );
       },
+    );
+  }
+}
+
+/// Floating "↓ jump to latest" button surfaced when the user has
+/// scrolled away from the bottom of an active conversation. Fades /
+/// scales in via [AnimatedSwitcher] so it doesn't pop in abruptly when
+/// streaming starts.
+class _JumpToBottomButton extends StatelessWidget {
+  const _JumpToBottomButton({required this.visible, required this.onPressed});
+
+  final bool visible;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: Motion.fast,
+      transitionBuilder: (child, anim) =>
+          FadeTransition(opacity: anim, child: child),
+      child: !visible
+          ? const SizedBox.shrink(key: ValueKey('jtb-empty'))
+          : _JumpToBottomChip(
+              key: const ValueKey('jtb-visible'),
+              onPressed: onPressed,
+            ),
+    );
+  }
+}
+
+class _JumpToBottomChip extends StatelessWidget {
+  const _JumpToBottomChip({super.key, required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    return FTooltip(
+      tipBuilder: (_, _) => Text(l10n.aiChatJumpToLatestTooltip),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onPressed,
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: colors.background,
+              border: Border.all(color: colors.border),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x1A000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.arrow_downward,
+              size: 18,
+              color: colors.foreground,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

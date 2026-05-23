@@ -12,6 +12,7 @@ import '../state/chat_controller.dart';
 import 'ai_transparency_badge.dart';
 import 'propose_card.dart';
 import 'reply_chips.dart';
+import 'tool_invocation_card.dart' show friendlyToolName;
 import 'tool_invocation_inline.dart';
 
 /// Renders a single chat row. Roles map to distinct visual treatments:
@@ -397,11 +398,14 @@ class _AssistantBody extends StatelessWidget {
             const AiSparkle(active: true),
             const SizedBox(width: 6),
             Text(
-              l10n.aiChatRunningTool(pendingToolName!),
-              style: AiType.meta(context).copyWith(
-                color: AiTone.active(context),
-                fontFamily: 'monospace',
-              ),
+              // Pass the friendly localized tool name (e.g. "查询持仓")
+              // instead of the wire id — generic users shouldn't need to
+              // decode `get_holdings`, and we drop the monospace face so
+              // mixed CJK/ASCII renders consistently.
+              l10n.aiChatRunningTool(friendlyToolName(l10n, pendingToolName!)),
+              style: AiType.meta(
+                context,
+              ).copyWith(color: AiTone.active(context)),
             ),
             const SizedBox(width: 2),
             _TypingDots(color: AiTone.active(context).withValues(alpha: 0.7)),

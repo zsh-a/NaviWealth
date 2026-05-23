@@ -3080,6 +3080,12 @@ abstract class AppLocalizations {
   /// **'Couldn\'t save your changes. Tap retry.'**
   String get commonSaveFailed;
 
+  /// Generic undo affordance label.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get commonUndo;
+
   /// Shown when a route's deferred bundle fails to download (offline, bad CDN cache, etc.).
   ///
   /// In en, this message translates to:
@@ -6003,6 +6009,24 @@ abstract class AppLocalizations {
   /// **'Try these'**
   String get aiChatEmptySuggestionsHeader;
 
+  /// Empty-state suggestion shown when AiContextSummary has a monthlyChangePct signal.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain this month\'s net worth change'**
+  String get aiChatEmptyDynamicNetWorth;
+
+  /// Empty-state suggestion shown when AiContextSummary has flagged expense anomalies.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Look at the flagged expense} other{Look at the {count} flagged expenses}}'**
+  String aiChatEmptyDynamicAnomaly(int count);
+
+  /// Empty-state suggestion shown when AiContextSummary has upcoming deposit maturities.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 deposit matures in {days}d — what should I do?} other{{count} deposits mature in {days}d — what should I do?}}'**
+  String aiChatEmptyDynamicMaturity(int count, int days);
+
   /// No description provided for @aiChatBootstrappingLabel.
   ///
   /// In en, this message translates to:
@@ -6117,11 +6141,17 @@ abstract class AppLocalizations {
   /// **'Thinking…'**
   String get aiChatThinking;
 
-  /// Streaming indicator while the assistant is waiting for a tool call
+  /// Streaming indicator while the assistant is waiting for a tool call. {tool} is already a localized friendly name from friendlyToolName().
   ///
   /// In en, this message translates to:
   /// **'Running {tool}'**
   String aiChatRunningTool(String tool);
+
+  /// Tooltip on the floating button that re-anchors the conversation to the most recent message after the user has scrolled up.
+  ///
+  /// In en, this message translates to:
+  /// **'Jump to latest'**
+  String get aiChatJumpToLatestTooltip;
 
   /// No description provided for @aiChatStaleSyncNotice.
   ///
@@ -6320,6 +6350,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm all'**
   String get aiChatProposalBatchConfirmAll;
+
+  /// Warning above the typed-confirm field for high-risk proposals (broker_order, bulk_delete). {token} is the literal string the user must type.
+  ///
+  /// In en, this message translates to:
+  /// **'High-risk action. Type \"{token}\" to enable Confirm.'**
+  String aiChatProposalConfirmTokenWarning(String token);
+
+  /// Helper text shown below the typed-confirm field while the user's input does not yet match the token.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm is disabled until you type \"{token}\".'**
+  String aiChatProposalConfirmTokenPending(String token);
 
   /// No description provided for @aiChatFieldQuantity.
   ///

@@ -903,6 +903,8 @@
   "@commonSaveFailed": {
     "description": "Generic failure snackbar shown when an optimistic form submit fails after the form has already popped."
   },
+  "commonUndo": "Undo",
+  "@commonUndo": { "description": "Generic undo affordance label." },
 
   "deferredLoadFailedTitle": "Couldn't load this section",
   "@deferredLoadFailedTitle": {
@@ -1844,6 +1846,23 @@
   "aiChatEmptySuggestion3": "What does my industry breakdown look like?",
   "aiChatEmptySuggestion4": "What's my XIRR since inception?",
   "aiChatEmptySuggestionsHeader": "Try these",
+  "aiChatEmptyDynamicNetWorth": "Explain this month's net worth change",
+  "@aiChatEmptyDynamicNetWorth": {
+    "description": "Empty-state suggestion shown when AiContextSummary has a monthlyChangePct signal."
+  },
+  "aiChatEmptyDynamicAnomaly": "{count, plural, =1{Look at the flagged expense} other{Look at the {count} flagged expenses}}",
+  "@aiChatEmptyDynamicAnomaly": {
+    "description": "Empty-state suggestion shown when AiContextSummary has flagged expense anomalies.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiChatEmptyDynamicMaturity": "{count, plural, =1{1 deposit matures in {days}d — what should I do?} other{{count} deposits mature in {days}d — what should I do?}}",
+  "@aiChatEmptyDynamicMaturity": {
+    "description": "Empty-state suggestion shown when AiContextSummary has upcoming deposit maturities.",
+    "placeholders": {
+      "count": { "type": "int" },
+      "days": { "type": "int" }
+    }
+  },
   "aiChatBootstrappingLabel": "Preparing conversation…",
 
   "aiChatSessionsHeader": "Conversations",
@@ -1879,8 +1898,12 @@
   "aiChatThinking": "Thinking…",
   "aiChatRunningTool": "Running {tool}",
   "@aiChatRunningTool": {
-    "description": "Streaming indicator while the assistant is waiting for a tool call",
+    "description": "Streaming indicator while the assistant is waiting for a tool call. {tool} is already a localized friendly name from friendlyToolName().",
     "placeholders": { "tool": { "type": "String" } }
+  },
+  "aiChatJumpToLatestTooltip": "Jump to latest",
+  "@aiChatJumpToLatestTooltip": {
+    "description": "Tooltip on the floating button that re-anchors the conversation to the most recent message after the user has scrolled up."
   },
   "aiChatStaleSyncNotice": "Local data hasn't finished syncing; answers may lag behind your most recent edits.",
 
@@ -1958,6 +1981,17 @@
     "placeholders": { "count": { "type": "int" } }
   },
   "aiChatProposalBatchConfirmAll": "Confirm all",
+
+  "aiChatProposalConfirmTokenWarning": "High-risk action. Type \"{token}\" to enable Confirm.",
+  "@aiChatProposalConfirmTokenWarning": {
+    "description": "Warning above the typed-confirm field for high-risk proposals (broker_order, bulk_delete). {token} is the literal string the user must type.",
+    "placeholders": { "token": { "type": "String" } }
+  },
+  "aiChatProposalConfirmTokenPending": "Confirm is disabled until you type \"{token}\".",
+  "@aiChatProposalConfirmTokenPending": {
+    "description": "Helper text shown below the typed-confirm field while the user's input does not yet match the token.",
+    "placeholders": { "token": { "type": "String" } }
+  },
 
   "aiChatFieldQuantity": "Quantity",
   "aiChatFieldPrice": "Price (leave blank to backfill from market)",

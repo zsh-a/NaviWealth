@@ -325,30 +325,15 @@ class _ExpandedView extends StatelessWidget {
           const SizedBox(height: 8),
           ProposalPayloadDetails(plan: plan, overrides: overrides),
           if (plan.warnings.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            for (final w in plan.warnings)
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.warning_amber_rounded,
-                      size: 14,
-                      color: colors.mutedForeground,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        w,
-                        style: context.theme.typography.xs.copyWith(
-                          color: context.theme.colors.mutedForeground,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            const SizedBox(height: 10),
+            // Warnings are the user's last chance to spot a wrong
+            // proposal before applying — they need to read as *content*,
+            // not meta. We don't introduce a new warning hue (§5.6
+            // AiTone discipline: one alive color, one alert color),
+            // instead we lift them into a surfaceTint callout with an
+            // accent stripe + heavier icon/weight so they stand out
+            // against the body without going destructive-red.
+            _WarningCallout(warnings: plan.warnings),
           ],
           if (isErrored && applyState.errorMessage != null) ...[
             const SizedBox(height: 8),
@@ -567,7 +552,7 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '此操作高风险。请输入「$_confirmToken」启用 Confirm。',
+                l10n.aiChatProposalConfirmTokenWarning(_confirmToken),
                 style: AiType.meta(
                   context,
                 ).copyWith(color: AiTone.error(context)),
@@ -603,7 +588,10 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
               if (!_matches)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: Text('Confirm 暂未启用', style: AiType.meta(context)),
+                  child: Text(
+                    l10n.aiChatProposalConfirmTokenPending(_confirmToken),
+                    style: AiType.meta(context),
+                  ),
                 )
               else
                 Padding(
@@ -1266,5 +1254,61 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+}
+
+/// Surfaces propose-plan warnings so the user actually notices them
+/// before tapping Confirm. Stays within the AiTone discipline (no new
+/// warning hue): the visual hook is a surface-tint container + a 2px
+/// accent stripe + bolder icon/text, not a saturated yellow.
+class _WarningCallout extends StatelessWidget {
+  const _WarningCallout({required this.warnings});
+
+  final List<String> warnings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      decoration: BoxDecoration(
+        color: AiTone.surfaceTint(context),
+        borderRadius: BorderRadius.circular(8),
+        border: Border(
+          left: BorderSide(
+            color: AiTone.active(context).withValues(alpha: 0.6),
+            width: 2,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < warnings.length; i++) ...[
+            if (i > 0) const SizedBox(height: 4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: 16,
+                  color: AiTone.onSurface(context),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    warnings[i],
+                    style: context.theme.typography.xs.copyWith(
+                      color: AiTone.onSurface(context),
+                      fontWeight: FontWeight.w500,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }

@@ -506,6 +506,7 @@
   "commonLoadError": "加载失败：{error}",
   "commonLoadFailed": "加载失败，请稍后重试。",
   "commonSaveFailed": "保存失败，点击重试",
+  "commonUndo": "撤销",
 
   "deferredLoadFailedTitle": "该页面加载失败",
   "deferredLoadRetry": "重试",
@@ -1032,6 +1033,9 @@
   "aiChatEmptySuggestion3": "我的行业分布是怎样的？",
   "aiChatEmptySuggestion4": "从开户到现在我的 XIRR 是多少？",
   "aiChatEmptySuggestionsHeader": "试试这些",
+  "aiChatEmptyDynamicNetWorth": "聊聊本月净值变化",
+  "aiChatEmptyDynamicAnomaly": "{count, plural, other{看看这 {count} 笔异常支出}}",
+  "aiChatEmptyDynamicMaturity": "{count, plural, other{我有 {count} 笔存款将在 {days} 天内到期，怎么办？}}",
   "aiChatBootstrappingLabel": "正在准备会话…",
 
   "aiChatSessionsHeader": "对话",
@@ -1054,6 +1058,7 @@
   "aiChatComposerStopTooltip": "停止生成",
   "aiChatThinking": "正在思考…",
   "aiChatRunningTool": "正在 {tool}",
+  "aiChatJumpToLatestTooltip": "跳到最新",
   "aiChatStaleSyncNotice": "本地数据未完成同步，回答可能滞后于你刚刚的录入。",
 
   "aiChatTruncatedMaxTokens": "回复因长度上限被截断",
@@ -1090,6 +1095,9 @@
   "aiChatProposalUndoCountdown": "撤销 ({seconds}s)",
   "aiChatProposalBatchPending": "本轮共有 {count} 项待确认",
   "aiChatProposalBatchConfirmAll": "全部确认",
+
+  "aiChatProposalConfirmTokenWarning": "此操作高风险。请输入「{token}」启用确认。",
+  "aiChatProposalConfirmTokenPending": "输入「{token}」后即可点击确认。",
 
   "aiChatFieldQuantity": "数量",
   "aiChatFieldPrice": "价格 (留空则市场回填)",
