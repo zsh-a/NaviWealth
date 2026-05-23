@@ -5,12 +5,16 @@
 /// (legacy messages, in-flight messages, or failed prep).
 library;
 
+import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/trace/trace.dart';
+import '../../../l10n/gen/app_localizations.dart';
 
 class AiTransparencyBadge extends ConsumerWidget {
   const AiTransparencyBadge({super.key, required this.messageId});
@@ -22,12 +26,35 @@ class AiTransparencyBadge extends ConsumerWidget {
     final traceAsync = ref.watch(aiTraceByIdProvider(messageId));
     final trace = traceAsync.asData?.value;
     if (trace == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    final muted = context.theme.colors.mutedForeground;
+    // Tappable: jumps to the existing per-trace detail page so the
+    // user can drill into spans / tool I/O / disclosure summary. Tiny
+    // info icon at the end advertises the affordance — the muted text
+    // alone never read as a button.
     return Padding(
       padding: const EdgeInsets.only(top: 6),
-      child: Text(
-        formatAiTraceBadge(trace),
-        style: context.theme.typography.xs.copyWith(
-          color: context.theme.colors.mutedForeground,
+      child: FTooltip(
+        tipBuilder: (_, _) => Text(l10n.aiChatTransparencyOpenDetail),
+        child: FTappable(
+          onPress: () => context.go(
+            AppRoutes.settingsAiTransparencyDetail(messageId),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    formatAiTraceBadge(trace),
+                    style: context.theme.typography.xs.copyWith(color: muted),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.chevron_right, size: 14, color: muted),
+              ],
+            ),
+          ),
         ),
       ),
     );

@@ -1283,6 +1283,8 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
   Future<void> _confirmAll() async {
     Haptics.primaryPress();
     setState(() => _busy = true);
+    var applied = 0;
+    var failed = 0;
     try {
       final applier = await ref.read(proposalApplierProvider.future);
       final repo = await ref.read(chatRepositoryProvider.future);
@@ -1306,6 +1308,11 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
             toolInvocationId: entry.invocation.id,
             newState: result,
           );
+          if (result.status == ProposalApplyStatus.applied) {
+            applied++;
+          } else {
+            failed++;
+          }
         } on ProposalApplyException catch (e) {
           await repo.updateToolApplyState(
             sessionId: widget.sessionId,
@@ -1316,11 +1323,36 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
               errorMessage: e.message,
             ),
           );
+          failed++;
         }
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() => _busy = false);
+        // Each per-card view already flips to its applied / errored
+        // surface, but with N items in a turn it's still easy to lose
+        // track of "did anything fail?". The batch snackbar gives one
+        // unambiguous result line.
+        _showBatchSnackbar(applied: applied, failed: failed);
+      }
     }
+  }
+
+  void _showBatchSnackbar({required int applied, required int failed}) {
+    if (applied == 0 && failed == 0) return;
+    final l10n = AppLocalizations.of(context);
+    final String message;
+    if (failed == 0) {
+      message = l10n.aiChatProposalBatchResultAllOk(applied);
+    } else if (applied == 0) {
+      message = l10n.aiChatProposalBatchResultAllFailed(failed);
+    } else {
+      message = l10n.aiChatProposalBatchResultMixed(applied, failed);
+    }
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 3)),
+    );
   }
 }
 

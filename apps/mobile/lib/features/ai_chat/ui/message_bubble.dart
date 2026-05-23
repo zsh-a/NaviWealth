@@ -96,6 +96,7 @@ class _UserBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -104,25 +105,29 @@ class _UserBubble extends StatelessWidget {
           Flexible(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 640),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.primary,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(4),
-                    bottomLeft: Radius.circular(8),
-                    bottomRight: Radius.circular(8),
+              child: Semantics(
+                container: true,
+                label: l10n.aiChatSemanticsUserMessage,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
                   ),
-                ),
-                child: SelectableText(
-                  message.content,
-                  style: typography.sm.copyWith(
-                    height: 1.5,
-                    color: colors.primaryForeground,
+                  decoration: BoxDecoration(
+                    color: colors.primary,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(8),
+                      topRight: Radius.circular(4),
+                      bottomLeft: Radius.circular(8),
+                      bottomRight: Radius.circular(8),
+                    ),
+                  ),
+                  child: SelectableText(
+                    message.content,
+                    style: typography.sm.copyWith(
+                      height: 1.5,
+                      color: colors.primaryForeground,
+                    ),
                   ),
                 ),
               ),
@@ -156,12 +161,16 @@ class _AssistantBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     final errorMessage = _localizedErrorMessage(context, message.errorMessage);
     // Calm error treatment (§5.6): the body — reasoning panel, tool
     // cards, model text — must stay readable. The error is signalled by
-    // a soft destructive border + the destructive `errorMessage` line,
-    // never by drowning the whole bubble in a saturated red fill (which
-    // also tanked contrast on the muted-foreground reasoning text).
+    // a soft destructive border + a leading ⚠ + the destructive
+    // `errorMessage` line, never by drowning the whole bubble in a
+    // saturated red fill (which tanks contrast on the muted reasoning
+    // text). The icon is the a11y-friendly half of the cue — for users
+    // who can't perceive the border tint, the icon + role announcement
+    // still signal "this turn errored".
     final textColor = colors.foreground;
     final isStreaming = message.status == ChatMessageStatus.streaming;
 
@@ -174,6 +183,26 @@ class _AssistantBubble extends StatelessWidget {
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (_isError) ...[
+          Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 16,
+                color: colors.destructive,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                l10n.aiChatSemanticsAssistantError,
+                style: context.theme.typography.xs.copyWith(
+                  color: colors.destructive,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+        ],
         if ((message.reasoningText ?? '').isNotEmpty) ...[
           _ReasoningPanel(text: message.reasoningText!),
           const SizedBox(height: 8),
@@ -260,7 +289,13 @@ class _AssistantBubble extends StatelessWidget {
           Flexible(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 720),
-              child: RepaintBoundary(child: bubble),
+              child: Semantics(
+                container: true,
+                label: _isError
+                    ? l10n.aiChatSemanticsAssistantError
+                    : l10n.aiChatSemanticsAssistantMessage,
+                child: RepaintBoundary(child: bubble),
+              ),
             ),
           ),
         ],
@@ -770,19 +805,24 @@ class _SystemNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: context.theme.colors.secondary.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(9999),
-          ),
-          child: Text(
-            text,
-            style: context.theme.typography.xs2.copyWith(
-              color: context.theme.colors.mutedForeground,
+        child: Semantics(
+          container: true,
+          label: l10n.aiChatSemanticsSystemNotice,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: context.theme.colors.secondary.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(9999),
+            ),
+            child: Text(
+              text,
+              style: context.theme.typography.xs2.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
             ),
           ),
         ),

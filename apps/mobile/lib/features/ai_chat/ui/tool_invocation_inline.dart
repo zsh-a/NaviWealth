@@ -15,11 +15,13 @@
 /// text segments.
 library;
 
+import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/ai/visual/visual.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
 import 'tool_invocation_card.dart';
 import 'tool_invocation_renderers.dart';
@@ -94,6 +96,10 @@ class _AttributionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    // Long-press to view raw I/O was an invisible power-user gesture —
+    // we keep it for muscle memory, but a tiny info icon at the end of
+    // the row makes the affordance discoverable for everyone else.
     return GestureDetector(
       onLongPress: () => _openDebugSheet(context),
       behavior: HitTestBehavior.opaque,
@@ -105,6 +111,21 @@ class _AttributionRow extends StatelessWidget {
             child: Text(
               _friendly(invocation.name),
               style: AiType.meta(context).copyWith(fontFamily: 'monospace'),
+            ),
+          ),
+          const SizedBox(width: 6),
+          FTooltip(
+            tipBuilder: (_, _) => Text(l10n.aiChatToolDebugTooltip),
+            child: FTappable(
+              onPress: () => _openDebugSheet(context),
+              child: Padding(
+                padding: const EdgeInsets.all(2),
+                child: Icon(
+                  Icons.info_outline,
+                  size: 12,
+                  color: AiTone.muted(context),
+                ),
+              ),
             ),
           ),
         ],
