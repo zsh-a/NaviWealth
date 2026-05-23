@@ -5637,6 +5637,162 @@ abstract class AppLocalizations {
   /// **'These thresholds decide when the Risk Alerts panel flags a position as concentrated. They\'re auto-tuned based on your risk appetite — tweak only if you want to override the defaults.'**
   String get settingsRiskThresholdsHint;
 
+  /// Inline link row in Settings — opens the FIRE stress-test parameter editor.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE stress-test parameters'**
+  String get settingsStressTestLabel;
+
+  /// No description provided for @settingsStressTestSubtitleAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Using defaults'**
+  String get settingsStressTestSubtitleAuto;
+
+  /// No description provided for @settingsStressTestSubtitleCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom assumptions set'**
+  String get settingsStressTestSubtitleCustom;
+
+  /// No description provided for @settingsStressTestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE stress-test parameters'**
+  String get settingsStressTestTitle;
+
+  /// No description provided for @settingsStressTestHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Stress tests on the FIRE page run a few \"what if\" scenarios against your plan. These knobs decide how harsh each scenario assumes the world gets — only worth tweaking if you want a more conservative (higher) or relaxed (lower) test.'**
+  String get settingsStressTestHint;
+
+  /// No description provided for @settingsStressTestMarketDrawdownLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Market drawdown'**
+  String get settingsStressTestMarketDrawdownLabel;
+
+  /// No description provided for @settingsStressTestMarketDrawdownSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bear-market drop applied to growth assets'**
+  String get settingsStressTestMarketDrawdownSubtitle;
+
+  /// No description provided for @settingsStressTestExpenseShockLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense shock'**
+  String get settingsStressTestExpenseShockLabel;
+
+  /// No description provided for @settingsStressTestExpenseShockSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sustained living-cost increase'**
+  String get settingsStressTestExpenseShockSubtitle;
+
+  /// No description provided for @settingsStressTestFxShockLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'FX shock'**
+  String get settingsStressTestFxShockLabel;
+
+  /// No description provided for @settingsStressTestFxShockSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency swing magnitude'**
+  String get settingsStressTestFxShockSubtitle;
+
+  /// No description provided for @settingsStressTestLumpSumLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'One-off lump-sum outlay'**
+  String get settingsStressTestLumpSumLabel;
+
+  /// No description provided for @settingsStressTestLumpSumSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical / family-support shock, in your base currency'**
+  String get settingsStressTestLumpSumSubtitle;
+
+  /// No description provided for @settingsStressTestLumpSumHint.
+  ///
+  /// In en, this message translates to:
+  /// **'0 = test disabled'**
+  String get settingsStressTestLumpSumHint;
+
+  /// No description provided for @settingsStressTestResetDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to defaults'**
+  String get settingsStressTestResetDefaults;
+
+  /// Inline link row in Settings — opens the monthly-expense window / override editor that powers the FIRE projection.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly expense model'**
+  String get settingsMonthlyExpenseLabel;
+
+  /// No description provided for @settingsMonthlyExpenseSubtitleAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'{months}-month rolling average'**
+  String settingsMonthlyExpenseSubtitleAuto(int months);
+
+  /// No description provided for @settingsMonthlyExpenseSubtitleOverride.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual override set'**
+  String get settingsMonthlyExpenseSubtitleOverride;
+
+  /// No description provided for @settingsMonthlyExpenseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your FIRE projection needs a monthly-expense figure. By default we average your past spending over a rolling window; flip on the manual override if you\'d rather hand-pick a number.'**
+  String get settingsMonthlyExpenseHint;
+
+  /// No description provided for @settingsMonthlyExpenseWindowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rolling window'**
+  String get settingsMonthlyExpenseWindowLabel;
+
+  /// No description provided for @settingsMonthlyExpenseWindowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Months of history averaged into the auto-derived expense.'**
+  String get settingsMonthlyExpenseWindowSubtitle;
+
+  /// No description provided for @settingsMonthlyExpenseWindowValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{months, plural, =1{1 month} other{{months} months}}'**
+  String settingsMonthlyExpenseWindowValue(int months);
+
+  /// No description provided for @settingsMonthlyExpenseOverrideLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual override'**
+  String get settingsMonthlyExpenseOverrideLabel;
+
+  /// No description provided for @settingsMonthlyExpenseOverrideSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bypass the auto-derivation. Leave blank to use the rolling average.'**
+  String get settingsMonthlyExpenseOverrideSubtitle;
+
+  /// No description provided for @settingsMonthlyExpenseOverrideHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave blank for auto'**
+  String get settingsMonthlyExpenseOverrideHint;
+
+  /// No description provided for @settingsMonthlyExpenseResetDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to defaults'**
+  String get settingsMonthlyExpenseResetDefaults;
+
   /// No description provided for @tradeEntryAppBarTitle.
   ///
   /// In en, this message translates to:

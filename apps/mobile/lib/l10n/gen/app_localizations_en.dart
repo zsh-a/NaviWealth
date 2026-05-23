@@ -3262,6 +3262,101 @@ class AppLocalizationsEn extends AppLocalizations {
       'These thresholds decide when the Risk Alerts panel flags a position as concentrated. They\'re auto-tuned based on your risk appetite — tweak only if you want to override the defaults.';
 
   @override
+  String get settingsStressTestLabel => 'FIRE stress-test parameters';
+
+  @override
+  String get settingsStressTestSubtitleAuto => 'Using defaults';
+
+  @override
+  String get settingsStressTestSubtitleCustom => 'Custom assumptions set';
+
+  @override
+  String get settingsStressTestTitle => 'FIRE stress-test parameters';
+
+  @override
+  String get settingsStressTestHint =>
+      'Stress tests on the FIRE page run a few \"what if\" scenarios against your plan. These knobs decide how harsh each scenario assumes the world gets — only worth tweaking if you want a more conservative (higher) or relaxed (lower) test.';
+
+  @override
+  String get settingsStressTestMarketDrawdownLabel => 'Market drawdown';
+
+  @override
+  String get settingsStressTestMarketDrawdownSubtitle =>
+      'Bear-market drop applied to growth assets';
+
+  @override
+  String get settingsStressTestExpenseShockLabel => 'Expense shock';
+
+  @override
+  String get settingsStressTestExpenseShockSubtitle =>
+      'Sustained living-cost increase';
+
+  @override
+  String get settingsStressTestFxShockLabel => 'FX shock';
+
+  @override
+  String get settingsStressTestFxShockSubtitle => 'Currency swing magnitude';
+
+  @override
+  String get settingsStressTestLumpSumLabel => 'One-off lump-sum outlay';
+
+  @override
+  String get settingsStressTestLumpSumSubtitle =>
+      'Medical / family-support shock, in your base currency';
+
+  @override
+  String get settingsStressTestLumpSumHint => '0 = test disabled';
+
+  @override
+  String get settingsStressTestResetDefaults => 'Reset to defaults';
+
+  @override
+  String get settingsMonthlyExpenseLabel => 'Monthly expense model';
+
+  @override
+  String settingsMonthlyExpenseSubtitleAuto(int months) {
+    return '$months-month rolling average';
+  }
+
+  @override
+  String get settingsMonthlyExpenseSubtitleOverride => 'Manual override set';
+
+  @override
+  String get settingsMonthlyExpenseHint =>
+      'Your FIRE projection needs a monthly-expense figure. By default we average your past spending over a rolling window; flip on the manual override if you\'d rather hand-pick a number.';
+
+  @override
+  String get settingsMonthlyExpenseWindowLabel => 'Rolling window';
+
+  @override
+  String get settingsMonthlyExpenseWindowSubtitle =>
+      'Months of history averaged into the auto-derived expense.';
+
+  @override
+  String settingsMonthlyExpenseWindowValue(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months months',
+      one: '1 month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsMonthlyExpenseOverrideLabel => 'Manual override';
+
+  @override
+  String get settingsMonthlyExpenseOverrideSubtitle =>
+      'Bypass the auto-derivation. Leave blank to use the rolling average.';
+
+  @override
+  String get settingsMonthlyExpenseOverrideHint => 'Leave blank for auto';
+
+  @override
+  String get settingsMonthlyExpenseResetDefaults => 'Reset to defaults';
+
+  @override
   String get tradeEntryAppBarTitle => 'Record trade';
 
   @override

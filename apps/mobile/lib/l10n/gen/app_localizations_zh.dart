@@ -3133,6 +3133,95 @@ class AppLocalizationsZh extends AppLocalizations {
       '这些阈值决定何时把某项持仓标为集中度过高。系统已根据你的风险偏好自动调整 —— 除非想覆盖默认值，否则无需修改。';
 
   @override
+  String get settingsStressTestLabel => 'FIRE 压力测试参数';
+
+  @override
+  String get settingsStressTestSubtitleAuto => '使用默认假设';
+
+  @override
+  String get settingsStressTestSubtitleCustom => '已自定义';
+
+  @override
+  String get settingsStressTestTitle => 'FIRE 压力测试参数';
+
+  @override
+  String get settingsStressTestHint =>
+      'FIRE 页面的压力测试用这些假设跑\"如果……怎么办\"的场景。这些参数决定每个场景假设多坏 —— 想要更保守（调高）或更宽松（调低）才需要动。';
+
+  @override
+  String get settingsStressTestMarketDrawdownLabel => '市场下跌';
+
+  @override
+  String get settingsStressTestMarketDrawdownSubtitle => '熊市对成长资产的冲击幅度';
+
+  @override
+  String get settingsStressTestExpenseShockLabel => '支出冲击';
+
+  @override
+  String get settingsStressTestExpenseShockSubtitle => '持续性生活成本上升';
+
+  @override
+  String get settingsStressTestFxShockLabel => '汇率冲击';
+
+  @override
+  String get settingsStressTestFxShockSubtitle => '外币波动幅度';
+
+  @override
+  String get settingsStressTestLumpSumLabel => '一次性大额支出';
+
+  @override
+  String get settingsStressTestLumpSumSubtitle => '医疗 / 家庭支援等突发开销（基础币种）';
+
+  @override
+  String get settingsStressTestLumpSumHint => '0 表示不测试此项';
+
+  @override
+  String get settingsStressTestResetDefaults => '恢复默认';
+
+  @override
+  String get settingsMonthlyExpenseLabel => '月度支出模型';
+
+  @override
+  String settingsMonthlyExpenseSubtitleAuto(int months) {
+    return '$months 个月滚动平均';
+  }
+
+  @override
+  String get settingsMonthlyExpenseSubtitleOverride => '已手动覆盖';
+
+  @override
+  String get settingsMonthlyExpenseHint =>
+      'FIRE 投影需要一个「月度支出」基线。默认用过去几个月的滚动均值；如果想手填一个数字，使用下方的「手动覆盖」。';
+
+  @override
+  String get settingsMonthlyExpenseWindowLabel => '滚动窗口';
+
+  @override
+  String get settingsMonthlyExpenseWindowSubtitle => '自动派生时使用的历史月份数';
+
+  @override
+  String settingsMonthlyExpenseWindowValue(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months 个月',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsMonthlyExpenseOverrideLabel => '手动覆盖';
+
+  @override
+  String get settingsMonthlyExpenseOverrideSubtitle => '跳过自动派生。留空则继续用滚动均值。';
+
+  @override
+  String get settingsMonthlyExpenseOverrideHint => '留空则使用自动';
+
+  @override
+  String get settingsMonthlyExpenseResetDefaults => '恢复默认';
+
+  @override
   String get tradeEntryAppBarTitle => '录入交易';
 
   @override

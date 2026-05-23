@@ -6,11 +6,13 @@
 /// inputs from feature providers lives separately so this layer has
 /// no `core → features` import dependency.
 ///
-/// Phase 1 fills the inputs we already aggregate today (header
-/// metrics, expense anomaly, deposit maturity) and leaves several
-/// fields at safe defaults — see `TODO(phase2)` markers. The
-/// downstream [ContextPack.assertBudget] keeps the output well below
-/// the 16KB standard tier even when every signal is present.
+/// The feature-layer adapter in `features/ai_chat/data/providers.dart`
+/// (`_prepareChatTrace`) is responsible for pulling values out of
+/// Riverpod and passing them through the typed parameters here. The
+/// `cashflow` and `accounts` fields are Wave-32-deprecated and emit
+/// empty placeholders for wire compatibility until ContextPack v2.
+/// The downstream [ContextPack.assertBudget] keeps the output well
+/// below the 16KB standard tier even when every signal is present.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +29,7 @@ class ContextCompressor {
       byKind: <String, int>{},
     ),
     RiskPreference? riskPreference,
+    FireGoalSummary? fireGoal,
   }) {
     final currency = baseCurrency ?? 'USD';
     return BaseContext(
@@ -37,10 +40,10 @@ class ContextCompressor {
       // SSOT — e.g. unit tests exercising the compressor in isolation.
       riskPreference: riskPreference ?? RiskPreference.moderate,
       accounts: accountSummary,
-      // TODO(phase2): replace with real cashflow aggregation —
-      // monthlyChangePct on the dashboard is net-worth delta, not
-      // cashflow direction. Keeping `unknown` here is more honest
-      // than treating the proxy as authoritative.
+      // Wave 32 deprecated [BaseContext.cashflow] — the cloud planner
+      // reads cashflow buckets from its own read model, so the client
+      // emits an empty placeholder for wire-compat until ContextPack
+      // ticks to v2 and the field drops.
       cashflow: CashflowSummary(
         baseCurrency: currency,
         monthsCovered: 0,
@@ -48,8 +51,11 @@ class ContextCompressor {
         averageOutflowMinor: '0',
         trend: CashflowTrend.unknown,
       ),
-      // TODO(phase2): integrate FIRE goal data.
-      fireGoal: null,
+      // Wired by the chat-repository adapter from firePlanProvider +
+      // dashboard snapshot + the live FIRE projection scenario. `null`
+      // is meaningful: it signals "plan not configured yet", and the
+      // AI prompt treats that as "ask about FIRE goal setup".
+      fireGoal: fireGoal,
     );
   }
 
@@ -116,6 +122,7 @@ class ContextCompressor {
     String? deviceHlc,
     PrivacyBudget budget = PrivacyBudget.standard,
     RiskPreference? riskPreference,
+    FireGoalSummary? fireGoal,
   }) {
     final pack = ContextPack(
       version: kCurrentContextPackVersion,
@@ -123,6 +130,7 @@ class ContextCompressor {
         baseCurrency: baseCurrency,
         accountSummary: accountSummary,
         riskPreference: riskPreference,
+        fireGoal: fireGoal,
       ),
       task: compressTask(
         route: route,

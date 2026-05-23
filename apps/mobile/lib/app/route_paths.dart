@@ -73,6 +73,10 @@ abstract final class AppRoutes {
   // Investment preferences — risk appetite SSOT + advanced
   // concentration thresholds.
   static const settingsRiskThresholds = '/settings/risk-thresholds';
+  // Stress-test parameters for the FIRE engine.
+  static const settingsStressTest = '/settings/stress-test';
+  // Monthly-expense window / override editor (powers FIRE projection).
+  static const settingsMonthlyExpense = '/settings/monthly-expense';
   // Target allocation editor is reachable via the rebalance Custom
   // chip; settings overview links to it through a deep link for
   // discoverability.
@@ -121,6 +125,8 @@ abstract final class AppRouteNames {
   static const aiPrivacy = 'ai-privacy';
   static const aiLlm = 'ai-llm';
   static const riskThresholds = 'risk-thresholds';
+  static const stressTest = 'stress-test';
+  static const monthlyExpense = 'monthly-expense';
 
   static const accounts = 'accounts';
   static const accountsList = 'accounts-list';
