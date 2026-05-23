@@ -122,6 +122,26 @@ class ChatController extends StateNotifier<ChatTurnState> {
     }
   }
 
+  /// Re-run the last assistant turn. Discards both the assistant
+  /// message and the user message that produced it, then re-sends the
+  /// user content through [send]. No-op while a turn is in flight, or
+  /// when there's nothing eligible to regenerate (no assistant message,
+  /// no preceding user message, or the assistant is still streaming).
+  Future<void> regenerateLast({
+    required String staleSyncNotice,
+    String? systemContext,
+  }) async {
+    if (state.isBusy) return;
+    final repo = await ref.read(chatRepositoryProvider.future);
+    final priorContent = await repo.prepareRegenerateLastAssistant(sessionId);
+    if (priorContent == null) return;
+    await send(
+      priorContent,
+      staleSyncNotice: staleSyncNotice,
+      systemContext: systemContext,
+    );
+  }
+
   /// Cancel the in-flight stream. Repository will mark the assistant
   /// turn as `errored` with reason "已取消".
   void cancel() {

@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
+import '../domain/chat_models.dart';
 import 'message_bubble.dart';
 
 /// The conversation timeline — message list + follow-scroll + the
@@ -140,6 +141,18 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
         if (messages.isEmpty) {
           return widget.emptyBuilder?.call(context) ?? const SizedBox.shrink();
         }
+        // Locate the trailing assistant message once per build — the
+        // bubble uses this to gate the "regenerate" affordance to the
+        // most recent reply only (older replies stay copy-only so a
+        // mid-thread regenerate can't accidentally torpedo follow-up
+        // user turns).
+        var lastAssistantIdx = -1;
+        for (var i = messages.length - 1; i >= 0; i--) {
+          if (messages[i].role == ChatRole.assistant) {
+            lastAssistantIdx = i;
+            break;
+          }
+        }
         return Stack(
           children: [
             ListView.builder(
@@ -151,6 +164,7 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
                 message: messages[i],
                 invocationIntent: widget.invocationIntent,
                 onReplyChip: widget.onReplyChip,
+                isLastAssistant: i == lastAssistantIdx,
               ),
             ),
             Positioned(

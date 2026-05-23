@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -32,6 +33,7 @@ class MessageBubble extends StatelessWidget {
     required this.message,
     this.onReplyChip,
     this.invocationIntent,
+    this.isLastAssistant = false,
   });
 
   final String sessionId;
@@ -47,6 +49,12 @@ class MessageBubble extends StatelessWidget {
   /// invocation). Drives the rules-based chip suggester.
   final String? invocationIntent;
 
+  /// Whether this is the trailing assistant message in the timeline.
+  /// Only the trailing one gets a "regenerate" affordance — discarding
+  /// a mid-thread assistant reply would silently throw away every
+  /// follow-up turn, which is almost never what the user wants.
+  final bool isLastAssistant;
+
   @override
   Widget build(BuildContext context) {
     final Widget child = switch (message.role) {
@@ -57,6 +65,7 @@ class MessageBubble extends StatelessWidget {
         message: message,
         onReplyChip: onReplyChip,
         invocationIntent: invocationIntent,
+        isLastAssistant: isLastAssistant,
       ),
     };
     return TweenAnimationBuilder<double>(
@@ -131,12 +140,14 @@ class _AssistantBubble extends StatelessWidget {
     required this.message,
     this.onReplyChip,
     this.invocationIntent,
+    this.isLastAssistant = false,
   });
 
   final String sessionId;
   final ChatMessage message;
   final void Function(String chip)? onReplyChip;
   final String? invocationIntent;
+  final bool isLastAssistant;
 
   bool get _isError =>
       message.role == ChatRole.error ||
@@ -188,6 +199,19 @@ class _AssistantBubble extends StatelessWidget {
             message.role == ChatRole.assistant &&
             message.status == ChatMessageStatus.complete)
           AiTransparencyBadge(messageId: message.id),
+        // Inline per-message actions: copy (always on completed /
+        // errored assistant rows) + regenerate (only on the trailing
+        // assistant row, so a mid-thread tap can't silently discard
+        // follow-up turns).
+        if (!isStreaming && message.role == ChatRole.assistant)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: _AssistantActions(
+              sessionId: sessionId,
+              message: message,
+              canRegenerate: isLastAssistant,
+            ),
+          ),
         // Wave 34 — reply chips under completed assistant turns. Skip
         // when no onReplyChip handler is supplied (older surfaces) or
         // when the turn errored / was cancelled.
@@ -799,6 +823,109 @@ class _ReplyChips extends StatelessWidget {
         for (final label in labels)
           AiPill(label: label, onTap: () => onTap(label)),
       ],
+    );
+  }
+}
+
+/// Inline copy / regenerate row shown under a completed (or errored)
+/// assistant turn. Kept low-contrast on purpose — these are escape
+/// hatches users only reach for when something is off, not primary
+/// affordances competing with the reply chips below them.
+class _AssistantActions extends ConsumerWidget {
+  const _AssistantActions({
+    required this.sessionId,
+    required this.message,
+    required this.canRegenerate,
+  });
+
+  final String sessionId;
+  final ChatMessage message;
+
+  /// True when this row sits under the trailing assistant message,
+  /// which is the only time regenerate is safe (mid-thread regenerate
+  /// would silently drop every follow-up turn).
+  final bool canRegenerate;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final canCopy = message.content.trim().isNotEmpty;
+    if (!canCopy && !canRegenerate) return const SizedBox.shrink();
+    final turn = ref.watch(chatControllerProvider(sessionId));
+    return Wrap(
+      spacing: 4,
+      runSpacing: 2,
+      children: [
+        if (canCopy)
+          _ActionButton(
+            icon: Icons.copy_outlined,
+            label: l10n.aiChatMessageCopy,
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: message.content));
+              if (!context.mounted) return;
+              final messenger = ScaffoldMessenger.maybeOf(context);
+              messenger?.showSnackBar(
+                SnackBar(
+                  content: Text(l10n.aiChatMessageCopied),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
+        if (canRegenerate)
+          _ActionButton(
+            icon: Icons.refresh,
+            label: l10n.aiChatMessageRegenerate,
+            // Disable while a turn is in flight so a double-tap doesn't
+            // race against the on-going stream.
+            onPressed: turn.isBusy
+                ? null
+                : () {
+                    ref
+                        .read(chatControllerProvider(sessionId).notifier)
+                        .regenerateLast(
+                          staleSyncNotice: l10n.aiChatStaleSyncNotice,
+                        );
+                  },
+          ),
+      ],
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onPressed != null;
+    final color = enabled
+        ? context.theme.colors.mutedForeground
+        : context.theme.colors.mutedForeground.withValues(alpha: 0.4);
+    return FTappable(
+      onPress: onPressed,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: context.theme.typography.xs.copyWith(color: color),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

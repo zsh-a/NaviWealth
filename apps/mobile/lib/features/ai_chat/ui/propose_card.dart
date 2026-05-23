@@ -14,6 +14,7 @@ import '../data/providers.dart';
 import '../domain/chat_models.dart';
 import '../domain/proposal_apply_state.dart';
 import '../domain/proposal_plan.dart';
+import '../state/chat_controller.dart';
 
 /// Wave 38 — bridge between mobile enum and the snake_case
 /// `kindLabel` strings used by `interactionModeForKindLabel`. Must
@@ -66,7 +67,6 @@ class ProposeCard extends ConsumerStatefulWidget {
 }
 
 class _ProposeCardState extends ConsumerState<ProposeCard> {
-  Timer? _undoTicker;
   // Override values applied via the inline edit sheet, layered on top of
   // the original plan when the user finally confirms.
   Map<String, Object?>? _overrides;
@@ -75,45 +75,10 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
       widget.invocation.applyState ?? ProposalApplyState.pending;
 
   @override
-  void initState() {
-    super.initState();
-    _maybeStartUndoTicker();
-  }
-
-  @override
-  void didUpdateWidget(ProposeCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _maybeStartUndoTicker();
-  }
-
-  void _maybeStartUndoTicker() {
-    final state = _applyState;
-    if (state.status == ProposalApplyStatus.applied) {
-      _undoTicker?.cancel();
-      _undoTicker = Timer.periodic(const Duration(seconds: 1), (_) {
-        if (!mounted) return;
-        // Trigger a rebuild so the undo button disappears once the 60s
-        // window elapses — the UI condition reads `appliedAt` against
-        // wall clock, no extra state required.
-        setState(() {});
-      });
-    } else {
-      _undoTicker?.cancel();
-      _undoTicker = null;
-    }
-  }
-
-  @override
-  void dispose() {
-    _undoTicker?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final plan = widget.plan;
     if (plan is ClarificationProposalPlan) {
-      return _ClarificationView(plan: plan);
+      return _ClarificationView(plan: plan, sessionId: widget.sessionId);
     }
     if (plan is! ReadyProposalPlan) {
       return const SizedBox.shrink();
@@ -126,9 +91,11 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
         return _CollapsedView(
           plan: plan,
           applyState: state,
-          onUndo:
-              state.status == ProposalApplyStatus.applied &&
-                  state.isUndoableAt(DateTime.now())
+          // The countdown widget owns the "is the window still open?"
+          // gate now — we only have to say whether undo is *ever*
+          // applicable for this state (i.e. the proposal was actually
+          // applied, not cancelled / undone).
+          onUndoRequest: state.status == ProposalApplyStatus.applied
               ? _onUndo
               : null,
         );
@@ -202,7 +169,6 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
       final result = await applier.apply(effective);
       if (!mounted) return;
       await _persist(result);
-      _maybeStartUndoTicker();
     } on ProposalApplyException catch (e) {
       Haptics.error();
       await _persist(
@@ -615,12 +581,19 @@ class _CollapsedView extends StatelessWidget {
   const _CollapsedView({
     required this.plan,
     required this.applyState,
-    required this.onUndo,
+    required this.onUndoRequest,
   });
 
   final ReadyProposalPlan plan;
   final ProposalApplyState applyState;
-  final VoidCallback? onUndo;
+
+  /// Invoked when the user taps the (self-ticking) undo button. `null`
+  /// when this state can't be undone at all (already-undone / cancelled
+  /// rows). The countdown widget owns the "is the 60s window still
+  /// open?" question — we no longer pass a precomputed `onUndo` derived
+  /// from `DateTime.now()`, which kept forcing the whole ProposeCard
+  /// subtree to rebuild every second.
+  final VoidCallback? onUndoRequest;
 
   @override
   Widget build(BuildContext context) {
@@ -646,9 +619,6 @@ class _CollapsedView extends StatelessWidget {
       default:
         return const SizedBox.shrink();
     }
-    final secondsLeft = onUndo != null && applyState.appliedAt != null
-        ? 60 - DateTime.now().difference(applyState.appliedAt!).inSeconds
-        : 0;
 
     return Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -669,12 +639,12 @@ class _CollapsedView extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (onUndo != null && secondsLeft > 0)
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: onUndo,
-                  prefix: const Icon(Icons.undo, size: 12),
-                  child: Text(l10n.aiChatProposalUndoCountdown(secondsLeft)),
+              if (onUndoRequest != null &&
+                  applyState.status == ProposalApplyStatus.applied &&
+                  applyState.appliedAt != null)
+                _UndoCountdownButton(
+                  appliedAt: applyState.appliedAt!,
+                  onUndo: onUndoRequest!,
                 ),
             ],
           ),
@@ -684,15 +654,96 @@ class _CollapsedView extends StatelessWidget {
   }
 }
 
-class _ClarificationView extends StatelessWidget {
-  const _ClarificationView({required this.plan});
+/// Self-contained 60-second undo button. Owns its own 1-second ticker
+/// so the host `_ProposeCardState` no longer has to `setState` (and
+/// rebuild every sibling sub-view: warnings, payload rows, …) every
+/// second just to refresh a single label.
+class _UndoCountdownButton extends StatefulWidget {
+  const _UndoCountdownButton({required this.appliedAt, required this.onUndo});
 
-  final ClarificationProposalPlan plan;
+  final DateTime appliedAt;
+  final VoidCallback onUndo;
+
+  @override
+  State<_UndoCountdownButton> createState() => _UndoCountdownButtonState();
+}
+
+class _UndoCountdownButtonState extends State<_UndoCountdownButton> {
+  static const int _windowSeconds = 60;
+  Timer? _ticker;
+  late int _secondsLeft;
+
+  @override
+  void initState() {
+    super.initState();
+    _recomputeSecondsLeft();
+    if (_secondsLeft > 0) {
+      _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        setState(_recomputeSecondsLeft);
+        if (_secondsLeft <= 0) {
+          _ticker?.cancel();
+          _ticker = null;
+        }
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(_UndoCountdownButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.appliedAt != widget.appliedAt) {
+      _ticker?.cancel();
+      _recomputeSecondsLeft();
+      if (_secondsLeft > 0) {
+        _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+          if (!mounted) return;
+          setState(_recomputeSecondsLeft);
+          if (_secondsLeft <= 0) {
+            _ticker?.cancel();
+            _ticker = null;
+          }
+        });
+      }
+    }
+  }
+
+  void _recomputeSecondsLeft() {
+    final elapsed = DateTime.now().difference(widget.appliedAt).inSeconds;
+    _secondsLeft = _windowSeconds - elapsed;
+    if (_secondsLeft < 0) _secondsLeft = 0;
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_secondsLeft <= 0) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    return FButton(
+      variant: FButtonVariant.ghost,
+      onPress: widget.onUndo,
+      prefix: const Icon(Icons.undo, size: 12),
+      child: Text(l10n.aiChatProposalUndoCountdown(_secondsLeft)),
+    );
+  }
+}
+
+class _ClarificationView extends ConsumerWidget {
+  const _ClarificationView({required this.plan, required this.sessionId});
+
+  final ClarificationProposalPlan plan;
+  final String sessionId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
+    final turn = ref.watch(chatControllerProvider(sessionId));
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: FCard.raw(
@@ -735,12 +786,28 @@ class _ClarificationView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
+                // Tapping a candidate sends its label as the next user
+                // turn so the clarification round-trips through the same
+                // chat pipeline. Disabled while a turn is in flight
+                // (`turn.isBusy`) to avoid stacking duplicate selects.
                 Wrap(
                   spacing: 8,
                   runSpacing: 4,
                   children: [
                     for (final c in plan.candidates)
-                      FBadge(child: Text(c.label ?? c.id)),
+                      AiPill(
+                        label: c.label ?? c.id,
+                        onTap: turn.isBusy
+                            ? null
+                            : () => ref
+                                  .read(
+                                    chatControllerProvider(sessionId).notifier,
+                                  )
+                                  .send(
+                                    c.label ?? c.id,
+                                    staleSyncNotice: l10n.aiChatStaleSyncNotice,
+                                  ),
+                      ),
                   ],
                 ),
               ],

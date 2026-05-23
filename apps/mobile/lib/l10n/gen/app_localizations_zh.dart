@@ -3426,6 +3426,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatJumpToLatestTooltip => '跳到最新';
 
   @override
+  String get aiChatMessageCopy => '复制';
+
+  @override
+  String get aiChatMessageCopied => '已复制到剪贴板';
+
+  @override
+  String get aiChatMessageRegenerate => '重新生成';
+
+  @override
   String get aiChatStaleSyncNotice => '本地数据未完成同步，回答可能滞后于你刚刚的录入。';
 
   @override
