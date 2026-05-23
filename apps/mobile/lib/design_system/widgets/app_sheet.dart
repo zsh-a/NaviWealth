@@ -124,16 +124,55 @@ class AppSheet extends StatelessWidget {
   final Widget? footer;
   final bool scrollable;
 
+  // ── Canonical padding constants ──────────────────────────────────────
+  // Three padding sets share the s16 horizontal column but differ on the
+  // vertical axis because each band has a different neighbour:
+  //   - header sits below the drag handle and above the body
+  //   - body sits below the header (which already adds s8 bottom)
+  //   - footer sits below the hairline and above the safe area
+  // Pulling the magic numbers up here keeps the relationship explicit so
+  // chrome-wide restyles are a one-edit job.
+
+  /// Header padding — asymmetric: extra left (s20) gives the title breathing
+  /// room; tighter right (s12) because action buttons / close icons sit there
+  /// and don't need the full column inset.
+  static const EdgeInsets kHeaderPadding = EdgeInsets.fromLTRB(
+    AppSpacing.s20,
+    AppSpacing.s4,
+    AppSpacing.s12,
+    AppSpacing.s8,
+  );
+
+  /// Body padding when a [footer] is present — bottom is tight (s12) because
+  /// the footer's own s12 top padding adds the rest of the breathing room.
+  static const EdgeInsets kBodyWithFooterPadding = EdgeInsets.fromLTRB(
+    AppSpacing.s16,
+    AppSpacing.s4,
+    AppSpacing.s16,
+    AppSpacing.s12,
+  );
+
+  /// Body padding when no footer is present — bottom expands to s16 so the
+  /// body has full breathing room above the safe area.
+  static const EdgeInsets kBodyPadding = EdgeInsets.fromLTRB(
+    AppSpacing.s16,
+    AppSpacing.s4,
+    AppSpacing.s16,
+    AppSpacing.s16,
+  );
+
+  /// Footer padding — symmetric vertical so the buttons sit clear of both
+  /// the hairline above and the safe area below.
+  static const EdgeInsets kFooterPadding = EdgeInsets.symmetric(
+    horizontal: AppSpacing.s16,
+    vertical: AppSpacing.s12,
+  );
+
   Widget _header(BuildContext context) {
     final colors = context.theme.colors;
     final hasSubtitle = subtitle != null && subtitle!.isNotEmpty;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s20,
-        AppSpacing.s4,
-        AppSpacing.s12,
-        AppSpacing.s8,
-      ),
+      padding: kHeaderPadding,
       child: Row(
         crossAxisAlignment: hasSubtitle
             ? CrossAxisAlignment.start
@@ -197,12 +236,7 @@ class AppSheet extends StatelessWidget {
               child: SingleChildScrollView(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.s16,
-                  AppSpacing.s4,
-                  AppSpacing.s16,
-                  AppSpacing.s12,
-                ),
+                padding: kBodyWithFooterPadding,
                 child: child,
               ),
             ),
@@ -211,12 +245,7 @@ class AppSheet extends StatelessWidget {
                 border: Border(top: BorderSide(color: hairline)),
               ),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.s16,
-                  AppSpacing.s12,
-                  AppSpacing.s16,
-                  AppSpacing.s12,
-                ),
+                padding: kFooterPadding,
                 child: footer,
               ),
             ),
@@ -228,24 +257,8 @@ class AppSheet extends StatelessWidget {
     // ── Legacy branch: unchanged behaviour for existing showAppSheet
     // call sites (mainAxisSize.min + AnimatedSize, no pinned footer).
     final body = scrollable
-        ? SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s16,
-              AppSpacing.s4,
-              AppSpacing.s16,
-              AppSpacing.s16,
-            ),
-            child: child,
-          )
-        : Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s16,
-              AppSpacing.s4,
-              AppSpacing.s16,
-              AppSpacing.s16,
-            ),
-            child: child,
-          );
+        ? SingleChildScrollView(padding: kBodyPadding, child: child)
+        : Padding(padding: kBodyPadding, child: child);
 
     final content = Column(
       mainAxisSize: MainAxisSize.min,

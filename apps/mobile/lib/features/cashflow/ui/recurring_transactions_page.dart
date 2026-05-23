@@ -41,12 +41,26 @@ class RecurringTransactionsPage extends ConsumerWidget {
           isLoading: rulesAsync.isLoading,
           child: rulesAsync.when(
             loading: () => const _RecurringSkeleton(),
-            error: (error, _) => _ErrorState(
-              message: l10n.recurringLoadError('$error'),
-              onRetry: () => ref.invalidate(recurringTransactionsProvider),
+            error: (error, _) => AppEmptyState.error(
+              title: l10n.recurringLoadError('$error'),
+              action: FButton(
+                variant: FButtonVariant.ghost,
+                onPress: () => ref.invalidate(recurringTransactionsProvider),
+                child: Text(l10n.commonRetry),
+              ),
             ),
             data: (rules) => rules.isEmpty
-                ? _EmptyState(onCreate: () => showRecurringTransactionForm(context, ref))
+                ? AppEmptyState(
+                    icon: Icons.event_repeat_outlined,
+                    iconSize: 56,
+                    title: l10n.recurringEmptyTitle,
+                    message: l10n.recurringEmptyBody,
+                    action: FButton(
+                      onPress: () =>
+                          showRecurringTransactionForm(context, ref),
+                      child: Text(l10n.recurringEmptyCta),
+                    ),
+                  )
                 : _RecurringList(rules: rules),
           ),
         ),
@@ -281,81 +295,6 @@ String _describeRecurrence(AppLocalizations l10n, String rrule) {
     parts.add(l10n.recurringUntil('$y-$m-$d'));
   }
   return parts.join(' · ');
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.onCreate});
-
-  final VoidCallback onCreate;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.event_repeat_outlined,
-              size: 56,
-              color: context.theme.colors.primary,
-            ),
-            const SizedBox(height: AppSpacing.s16),
-            Text(
-              l10n.recurringEmptyTitle,
-              style: context.theme.typography.lg,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            Text(
-              l10n.recurringEmptyBody,
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.s16),
-            FButton(onPress: onCreate, child: Text(l10n.recurringEmptyCta)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            color: context.theme.colors.destructive,
-            size: 32,
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: AppSpacing.s8),
-          FButton(
-            variant: FButtonVariant.ghost,
-            onPress: onRetry,
-            child: Text(l10n.commonRetry),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _RecurringSkeleton extends StatelessWidget {
