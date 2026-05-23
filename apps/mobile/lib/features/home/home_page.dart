@@ -97,13 +97,20 @@ class _DashboardBody extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final useCockpit = width >= 1024;
+        final useCockpit = width >= Breakpoints.contentTwoColumn;
         final basePadding = Breakpoints.isMobile(width)
-            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 16)
-            : const EdgeInsets.symmetric(horizontal: 24, vertical: 24);
+            ? const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s16,
+                vertical: AppSpacing.s16,
+              )
+            : const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s24,
+                vertical: AppSpacing.s24,
+              );
         final padding = basePadding.copyWith(
-          bottom:
-              basePadding.bottom + MediaQuery.paddingOf(context).bottom + 16,
+          bottom: basePadding.bottom +
+              MediaQuery.paddingOf(context).bottom +
+              AppSpacing.s16,
         );
 
         return ListView(
@@ -125,9 +132,9 @@ class _DashboardBody extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const _CashFlowCardsGrid(),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppSpacing.s20),
                     AllocationSummary(snapshot: snapshot),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppSpacing.s20),
                     const TrendCard(),
                   ],
                 ),
@@ -136,7 +143,7 @@ class _DashboardBody extends ConsumerWidget {
                   children: [
                     if (insights.isNotEmpty) ...[
                       AiInsightFeed(insights: insights),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: AppSpacing.s20),
                     ],
                     const ActivityTimelinePreview(),
                   ],
@@ -151,17 +158,17 @@ class _DashboardBody extends ConsumerWidget {
                   children: [
                     const HomeGreetingHeader(),
                     _NetWorthHeader(snapshot: snapshot),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppSpacing.s20),
                     const _CashFlowCardsGrid(),
                     if (insights.isNotEmpty) ...[
-                      const SizedBox(height: 20),
+                      const SizedBox(height: AppSpacing.s20),
                       AiInsightFeed(insights: insights),
                     ],
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppSpacing.s20),
                     AllocationSummary(snapshot: snapshot),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppSpacing.s20),
                     const ActivityTimelinePreview(),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppSpacing.s20),
                     const TrendCard(),
                   ],
                 ),
@@ -186,7 +193,7 @@ class _CashFlowCardsGrid extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               PassiveIncomeCard(),
-              SizedBox(height: 12),
+              SizedBox(height: AppSpacing.s12),
               CashflowCalendarCard(),
             ],
           );
@@ -195,7 +202,7 @@ class _CashFlowCardsGrid extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(child: PassiveIncomeCard()),
-            SizedBox(width: 12),
+            SizedBox(width: AppSpacing.s12),
             Expanded(child: CashflowCalendarCard()),
           ],
         );
@@ -217,7 +224,7 @@ class _NetWorthHeader extends ConsumerWidget {
     final value = hasData ? snapshot.netWorth.amount.toDouble() : null;
     final metricsAsync = ref.watch(dashboardHeaderMetricsProvider);
     return SoftCard(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSpacing.s20),
       borderRadius: 18,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,7 +236,7 @@ class _NetWorthHeader extends ConsumerWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           // Cap dynamic-text scaling on the 32dp hero number so users on
           // 200% system font size don't blow the card out of its row.
           // FittedBox handles long currency strings (¥123,456,789.00)
@@ -248,10 +255,10 @@ class _NetWorthHeader extends ConsumerWidget {
             ),
           ),
           if (hasData) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             _DeltaMetricsRow(metrics: metricsAsync),
           ],
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           // Assets / liabilities breakdown. Uses the same currency
           // formatting (symbol + grouping) as the hero number and
           // mirrors the Accounts-hub net-worth card, so money reads the
@@ -312,12 +319,16 @@ class _ValuationStatusLine extends ConsumerWidget {
 
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: AppSpacing.s8),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (active)
-            const SizedBox(width: 12, height: 12, child: FCircularProgress())
+            const SizedBox(
+              width: AppSpacing.s12,
+              height: AppSpacing.s12,
+              child: FCircularProgress(),
+            )
           else
             Container(
               width: 7,
@@ -327,7 +338,7 @@ class _ValuationStatusLine extends ConsumerWidget {
                 shape: BoxShape.circle,
               ),
             ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Flexible(
             child: Text(
               label,
@@ -363,17 +374,17 @@ class _DeltaMetricsRow extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           SkeletonBox(width: 60, height: 14, radius: 4),
-          SizedBox(width: 16),
+          SizedBox(width: AppSpacing.s16),
           SkeletonBox(width: 60, height: 14, radius: 4),
-          SizedBox(width: 16),
+          SizedBox(width: AppSpacing.s16),
           SkeletonBox(width: 60, height: 14, radius: 4),
         ],
       ),
       error: (_, _) => const SizedBox.shrink(),
       data: (m) {
         return Wrap(
-          spacing: 16,
-          runSpacing: 4,
+          spacing: AppSpacing.s16,
+          runSpacing: AppSpacing.s4,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             _MetricCell(
@@ -454,7 +465,7 @@ class _MetricCell extends StatelessWidget {
             color: context.theme.colors.mutedForeground,
           ),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppSpacing.s4),
         child,
       ],
     );

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 
 import '../theme/market_colors.dart';
+import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'axes.dart';
 import 'chart_palette.dart';
@@ -761,39 +762,50 @@ class _ChartTooltip extends StatelessWidget {
 
     // Tooltips are small, transient, and frequently re-positioned as the
     // user drags the spot indicator. Per-frame BackdropFilter resampling
-    // is wasted work on a 200-px panel that rebuilds whenever the spot
-    // index changes. Use a near-opaque themed surface — keeps the panel
+    // is wasted work on a panel that rebuilds whenever the spot index
+    // changes. Use a near-opaque themed surface — keeps the panel
     // legible over busy chart lines without GPU readback.
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: Align(
         alignment: Alignment.topRight,
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            color: context.theme.colors.muted.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: context.theme.colors.border.withValues(alpha: 0.5),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                xAxis.formatPrecise(point.x),
-                style: TypographyTokens.numericCaption.copyWith(
-                  color: onSurface.withValues(alpha: 0.6),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Cap the tooltip at half of the chart's available width so it
+            // never dominates narrow phones (320dp → ≤160px panel) while
+            // still allowing the design's 200px ceiling on tablets/desktops.
+            final maxWidth = math.min(200.0, constraints.maxWidth * 0.5);
+            return Container(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s8 + AppSpacing.s2, // 10
+                vertical: AppSpacing.s8,
+              ),
+              decoration: BoxDecoration(
+                color: context.theme.colors.muted.withValues(alpha: 0.94),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(
+                  color: context.theme.colors.border.withValues(alpha: 0.5),
+                  width: 1,
                 ),
               ),
-              const SizedBox(height: 4),
-              for (var i = 0; i < processed.length; i++)
-                _buildSeriesRow(i, processed[i], safeIndex, onSurface),
-            ],
-          ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    xAxis.formatPrecise(point.x),
+                    style: TypographyTokens.numericCaption.copyWith(
+                      color: onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s4),
+                  for (var i = 0; i < processed.length; i++)
+                    _buildSeriesRow(i, processed[i], safeIndex, onSurface),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

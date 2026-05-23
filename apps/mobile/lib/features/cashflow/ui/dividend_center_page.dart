@@ -40,9 +40,14 @@ class DividendCenterPage extends ConsumerWidget {
           isLoading: snapshot.isLoading,
           child: snapshot.when(
             loading: () => const DividendCenterSkeleton(),
-            error: (error, _) => _ErrorState(
-              message: l10n.dividendCenterLoadError('$error'),
-              onRetry: () => ref.invalidate(dividendCenterSnapshotProvider),
+            error: (error, _) => AppEmptyState.error(
+              title: l10n.dividendCenterLoadError('$error'),
+              action: FButton(
+                variant: FButtonVariant.ghost,
+                onPress: () =>
+                    ref.invalidate(dividendCenterSnapshotProvider),
+                child: Text(l10n.commonRetry),
+              ),
             ),
             data: (data) => _DividendCenterBody(snapshot: data),
           ),
@@ -619,35 +624,3 @@ class _SectionHeading extends StatelessWidget {
   }
 }
 
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            color: context.theme.colors.destructive,
-            size: 32,
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: AppSpacing.s8),
-          FButton(
-            variant: FButtonVariant.ghost,
-            onPress: onRetry,
-            child: Text(l10n.commonRetry),
-          ),
-        ],
-      ),
-    );
-  }
-}
