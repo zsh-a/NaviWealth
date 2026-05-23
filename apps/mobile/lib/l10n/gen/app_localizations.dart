@@ -6213,6 +6213,84 @@ abstract class AppLocalizations {
   /// **'Switch model profile'**
   String get aiChatProfileChipTooltip;
 
+  /// Inline action under the trailing user message — opens a sheet to edit and re-send the prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get aiChatEditUserMessage;
+
+  /// Title of the edit-and-resend sheet for user messages.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit and resend'**
+  String get aiChatEditUserMessageTitle;
+
+  /// Warning shown in the edit sheet about branch-replace semantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving discards the existing reply and any later turns, then re-runs your edited prompt.'**
+  String get aiChatEditUserMessageWarning;
+
+  /// Submit button label in the edit-and-resend sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Save and resend'**
+  String get aiChatEditUserMessageSubmit;
+
+  /// Footer toggle in the proposal edit sheet that expands the curated fields list to every payload key.
+  ///
+  /// In en, this message translates to:
+  /// **'More fields'**
+  String get aiChatProposalEditMoreFields;
+
+  /// Footer toggle that collapses the proposal edit sheet back to the curated high-frequency fields.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard fields'**
+  String get aiChatProposalEditStandardFields;
+
+  /// Placeholder text in the search box at the top of the sessions panel.
+  ///
+  /// In en, this message translates to:
+  /// **'Search conversations…'**
+  String get aiChatSessionsSearchHint;
+
+  /// Empty state shown in the sessions panel when no session titles match the current search query.
+  ///
+  /// In en, this message translates to:
+  /// **'No conversations match \"{query}\"'**
+  String aiChatSessionsSearchEmpty(String query);
+
+  /// Section header in the sessions panel for conversations with their last message today (local time).
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get aiChatSessionsGroupToday;
+
+  /// Section header — conversations whose last message landed yesterday (local time).
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get aiChatSessionsGroupYesterday;
+
+  /// Section header — conversations within the past 7 days but not today/yesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get aiChatSessionsGroupThisWeek;
+
+  /// Section header — conversations within the past 30 days but not in the more recent buckets.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get aiChatSessionsGroupThisMonth;
+
+  /// Section header — conversations older than 30 days.
+  ///
+  /// In en, this message translates to:
+  /// **'Older'**
+  String get aiChatSessionsGroupOlder;
+
   /// No description provided for @aiChatStaleSyncNotice.
   ///
   /// In en, this message translates to:

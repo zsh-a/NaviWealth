@@ -3597,6 +3597,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatProfileChipTooltip => 'Switch model profile';
 
   @override
+  String get aiChatEditUserMessage => 'Edit';
+
+  @override
+  String get aiChatEditUserMessageTitle => 'Edit and resend';
+
+  @override
+  String get aiChatEditUserMessageWarning =>
+      'Saving discards the existing reply and any later turns, then re-runs your edited prompt.';
+
+  @override
+  String get aiChatEditUserMessageSubmit => 'Save and resend';
+
+  @override
+  String get aiChatProposalEditMoreFields => 'More fields';
+
+  @override
+  String get aiChatProposalEditStandardFields => 'Standard fields';
+
+  @override
+  String get aiChatSessionsSearchHint => 'Search conversations…';
+
+  @override
+  String aiChatSessionsSearchEmpty(String query) {
+    return 'No conversations match \"$query\"';
+  }
+
+  @override
+  String get aiChatSessionsGroupToday => 'Today';
+
+  @override
+  String get aiChatSessionsGroupYesterday => 'Yesterday';
+
+  @override
+  String get aiChatSessionsGroupThisWeek => 'This week';
+
+  @override
+  String get aiChatSessionsGroupThisMonth => 'This month';
+
+  @override
+  String get aiChatSessionsGroupOlder => 'Older';
+
+  @override
   String get aiChatStaleSyncNotice =>
       'Local data hasn\'t finished syncing; answers may lag behind your most recent edits.';
 

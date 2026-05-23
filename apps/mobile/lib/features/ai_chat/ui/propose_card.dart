@@ -895,25 +895,64 @@ class ProposalEditSheet extends StatefulWidget {
 }
 
 class _ProposalEditSheetState extends State<ProposalEditSheet> {
-  late final Map<String, TextEditingController> _controllers;
-  late List<_EditableField> _fields;
+  /// Lazy controller bag — populated as fields become visible. Keeping
+  /// the values across mode toggles means typing in standard mode,
+  /// flipping to full, and flipping back doesn't reset edits.
+  final Map<String, TextEditingController> _controllers = {};
+  List<_EditableField> _curated = const <_EditableField>[];
+  bool _fullMode = false;
+  bool _initialized = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _fields = const <_EditableField>[];
-    _controllers = {};
-  }
+  /// Payload keys that are bookkeeping rather than user content — never
+  /// surface them in the editor.
+  static const _internalKeys = <String>{'id', 'proposal_id', 'request_id'};
 
-  void _ensureFieldsInitialized(AppLocalizations l10n) {
-    if (_fields.isNotEmpty) return;
-    _fields = _editableFieldsFor(l10n, widget.plan.kind);
-    for (final f in _fields) {
+  void _ensureInitialized(AppLocalizations l10n) {
+    if (_initialized) return;
+    _initialized = true;
+    _curated = _editableFieldsFor(l10n, widget.plan.kind);
+    for (final f in _curated) {
       _controllers[f.payloadKey] = TextEditingController(
         text: _initialFor(f.payloadKey),
       );
     }
+    // Kinds with no curated fields (FIRE proposals, unknown) must still
+    // be editable — promote them straight into full mode so the sheet
+    // isn't empty.
+    if (_curated.isEmpty) _fullMode = true;
   }
+
+  /// Curated + extras (when in full mode), preserving the curated order
+  /// at the top so the most-frequent fields stay where users expect
+  /// them after toggling.
+  List<_EditableField> _currentFields() {
+    if (!_fullMode) return _curated;
+    final covered = <String>{for (final f in _curated) f.payloadKey};
+    final extras = <_EditableField>[];
+    for (final key in widget.plan.payload.keys) {
+      if (covered.contains(key)) continue;
+      if (_internalKeys.contains(key) || key.startsWith('_')) continue;
+      _controllers.putIfAbsent(
+        key,
+        () => TextEditingController(text: _initialFor(key)),
+      );
+      extras.add(_EditableField(payloadKey: key, label: _humanize(key)));
+    }
+    return [..._curated, ...extras];
+  }
+
+  bool get _hasExtraFields {
+    final covered = <String>{for (final f in _curated) f.payloadKey};
+    for (final key in widget.plan.payload.keys) {
+      if (covered.contains(key)) continue;
+      if (_internalKeys.contains(key) || key.startsWith('_')) continue;
+      return true;
+    }
+    return false;
+  }
+
+  static String _humanize(String snakeCase) =>
+      snakeCase.replaceAll('_', ' ');
 
   String _initialFor(String key) {
     final overridden = widget.initial?[key];
@@ -932,15 +971,17 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
 
   Map<String, Object?> _collect() {
     final out = <String, Object?>{};
-    for (final f in _fields) {
-      final text = _controllers[f.payloadKey]!.text.trim();
+    // Collect from every controller the user has ever seen so flipping
+    // to full mode, editing, then collapsing back doesn't lose the
+    // extra-field edits.
+    for (final entry in _controllers.entries) {
+      final text = entry.value.text.trim();
       if (text.isEmpty) {
-        // Setting empty string preserves the field's current value rather
-        // than nuking it — applier reads payload via plan.get() which
-        // already treats empty as absent.
+        // Setting empty preserves the underlying value — applier reads
+        // payload via plan.get() which already treats empty as absent.
         continue;
       }
-      out[f.payloadKey] = text;
+      out[entry.key] = text;
     }
     return out;
   }
@@ -948,7 +989,13 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    _ensureFieldsInitialized(l10n);
+    _ensureInitialized(l10n);
+    final fields = _currentFields();
+    // Toggle is meaningful only when both modes have content. If the
+    // kind has no curated fields we silently force full mode; if there
+    // are no extra payload keys beyond curated, there's nowhere to
+    // expand to.
+    final showToggle = _curated.isNotEmpty && _hasExtraFields;
     return AppSheet(
       title: l10n.aiChatProposalEditKindTitle(
         proposalKindLabel(l10n, widget.plan.kind),
@@ -962,7 +1009,7 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (final f in _fields) ...[
+          for (final f in fields) ...[
             FTextField(
               control: FTextFieldControl.managed(
                 controller: _controllers[f.payloadKey],
@@ -975,6 +1022,40 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
             ),
             const SizedBox(height: 12),
           ],
+          if (showToggle)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FTappable(
+                onPress: () => setState(() => _fullMode = !_fullMode),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 6,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _fullMode
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                        size: 16,
+                        color: AiTone.active(context),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _fullMode
+                            ? l10n.aiChatProposalEditStandardFields
+                            : l10n.aiChatProposalEditMoreFields,
+                        style: AiType.meta(
+                          context,
+                        ).copyWith(color: AiTone.active(context)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

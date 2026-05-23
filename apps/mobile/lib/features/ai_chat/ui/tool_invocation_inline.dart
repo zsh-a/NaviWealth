@@ -15,7 +15,7 @@
 /// text segments.
 library;
 
-import 'package:flutter/material.dart' show Icons;
+import 'package:flutter/material.dart' show Icon, Icons;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -105,7 +105,14 @@ class _AttributionRow extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: Row(
         children: [
-          const AiSparkle(),
+          // Per-tool icon picked from `toolIcon` — gives the row a
+          // glanceable identity (chart vs flag vs subscription) that
+          // the generic sparkle previously washed out.
+          Icon(
+            toolIcon(invocation.name),
+            size: 14,
+            color: AiTone.muted(context),
+          ),
           const SizedBox(width: 6),
           Flexible(
             child: Text(

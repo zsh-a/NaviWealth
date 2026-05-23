@@ -3456,6 +3456,47 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatProfileChipTooltip => '切换模型 Profile';
 
   @override
+  String get aiChatEditUserMessage => '编辑';
+
+  @override
+  String get aiChatEditUserMessageTitle => '编辑后重发';
+
+  @override
+  String get aiChatEditUserMessageWarning => '保存后，原 AI 回复及之后的所有内容都会被丢弃并重新生成。';
+
+  @override
+  String get aiChatEditUserMessageSubmit => '保存并重发';
+
+  @override
+  String get aiChatProposalEditMoreFields => '更多字段';
+
+  @override
+  String get aiChatProposalEditStandardFields => '常用字段';
+
+  @override
+  String get aiChatSessionsSearchHint => '搜索对话…';
+
+  @override
+  String aiChatSessionsSearchEmpty(String query) {
+    return '未找到与「$query」匹配的对话';
+  }
+
+  @override
+  String get aiChatSessionsGroupToday => '今天';
+
+  @override
+  String get aiChatSessionsGroupYesterday => '昨天';
+
+  @override
+  String get aiChatSessionsGroupThisWeek => '本周';
+
+  @override
+  String get aiChatSessionsGroupThisMonth => '本月';
+
+  @override
+  String get aiChatSessionsGroupOlder => '更早';
+
+  @override
   String get aiChatStaleSyncNotice => '本地数据未完成同步，回答可能滞后于你刚刚的录入。';
 
   @override
