@@ -22,8 +22,9 @@
 #   tool/fetch-onnxruntime.sh <target> <dest_dir>
 #
 # Targets:
-#   aarch64-apple-darwin    aarch64-apple-ios    aarch64-apple-ios-sim
-#   x86_64-apple-darwin     x86_64-apple-ios     aarch64-linux-android
+#   aarch64-apple-darwin    x86_64-apple-darwin
+#   aarch64-linux-android   armv7-linux-androideabi
+#   x86_64-linux-android    i686-linux-android
 #
 # Cached in $REPO_ROOT/.cache/onnxruntime/ so repeat runs are free.
 
@@ -66,10 +67,29 @@ case "$TARGET" in
     echo "       D-2.x when HealthOS lands." >&2
     exit 2
     ;;
-  aarch64-linux-android | armv7-linux-androideabi | x86_64-linux-android)
-    echo "ERROR: Android .so fetch not implemented; use Microsoft's" >&2
-    echo "       onnxruntime-android Maven artifact when wiring Android." >&2
-    exit 2
+  aarch64-linux-android)
+    ARCHIVE="onnxruntime-android-${ORT_VERSION}.aar"
+    INNER_LIB="jni/arm64-v8a/libonnxruntime.so"
+    OUT_NAME="libonnxruntime.so"
+    MAVEN_ARTIFACT="onnxruntime-android"
+    ;;
+  armv7-linux-androideabi)
+    ARCHIVE="onnxruntime-android-${ORT_VERSION}.aar"
+    INNER_LIB="jni/armeabi-v7a/libonnxruntime.so"
+    OUT_NAME="libonnxruntime.so"
+    MAVEN_ARTIFACT="onnxruntime-android"
+    ;;
+  x86_64-linux-android)
+    ARCHIVE="onnxruntime-android-${ORT_VERSION}.aar"
+    INNER_LIB="jni/x86_64/libonnxruntime.so"
+    OUT_NAME="libonnxruntime.so"
+    MAVEN_ARTIFACT="onnxruntime-android"
+    ;;
+  i686-linux-android)
+    ARCHIVE="onnxruntime-android-${ORT_VERSION}.aar"
+    INNER_LIB="jni/x86/libonnxruntime.so"
+    OUT_NAME="libonnxruntime.so"
+    MAVEN_ARTIFACT="onnxruntime-android"
     ;;
   *)
     echo "ERROR: unsupported target: $TARGET" >&2
@@ -77,13 +97,17 @@ case "$TARGET" in
     ;;
 esac
 
-CACHED_TGZ="$ORT_CACHE/$ARCHIVE"
-URL="https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/${ARCHIVE}"
+CACHED_ARCHIVE="$ORT_CACHE/$ARCHIVE"
+if [[ "${MAVEN_ARTIFACT:-}" == "onnxruntime-android" ]]; then
+  URL="https://repo.maven.apache.org/maven2/com/microsoft/onnxruntime/${MAVEN_ARTIFACT}/${ORT_VERSION}/${ARCHIVE}"
+else
+  URL="https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/${ARCHIVE}"
+fi
 
-if [[ ! -f "$CACHED_TGZ" ]]; then
+if [[ ! -f "$CACHED_ARCHIVE" ]]; then
   echo "==> Downloading $URL"
-  curl -fsSL -o "$CACHED_TGZ.partial" "$URL"
-  mv "$CACHED_TGZ.partial" "$CACHED_TGZ"
+  curl -fsSL -o "$CACHED_ARCHIVE.partial" "$URL"
+  mv "$CACHED_ARCHIVE.partial" "$CACHED_ARCHIVE"
 fi
 
 EXTRACT_DIR="$ORT_CACHE/extracted-$TARGET"
@@ -91,7 +115,11 @@ if [[ ! -f "$EXTRACT_DIR/$INNER_LIB" ]]; then
   echo "==> Extracting $ARCHIVE"
   rm -rf "$EXTRACT_DIR"
   mkdir -p "$EXTRACT_DIR"
-  tar xzf "$CACHED_TGZ" -C "$EXTRACT_DIR"
+  case "$ARCHIVE" in
+    *.tgz) tar xzf "$CACHED_ARCHIVE" -C "$EXTRACT_DIR" ;;
+    *.aar) unzip -q "$CACHED_ARCHIVE" "$INNER_LIB" -d "$EXTRACT_DIR" ;;
+    *) echo "ERROR: unsupported archive type: $ARCHIVE" >&2; exit 1 ;;
+  esac
 fi
 
 cp -f "$EXTRACT_DIR/$INNER_LIB" "$DEST_DIR/$OUT_NAME"

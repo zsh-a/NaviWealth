@@ -12,6 +12,9 @@ on:
       - 'docs/ai-protocol.md'
       - 'tool/check-tool-descriptors.sh'
       - 'tool/check-modal-helpers.sh'
+      - 'tool/fetch-onnxruntime.sh'
+      - 'tool/embed-onnxruntime-android.sh'
+      - 'tool/embed-onnxruntime-macos.sh'
       - 'apps/mobile/tool/check-back-nav-coverage.sh'
   pull_request:
     paths:
@@ -23,6 +26,9 @@ on:
       - 'docs/ai-protocol.md'
       - 'tool/check-tool-descriptors.sh'
       - 'tool/check-modal-helpers.sh'
+      - 'tool/fetch-onnxruntime.sh'
+      - 'tool/embed-onnxruntime-android.sh'
+      - 'tool/embed-onnxruntime-macos.sh'
       - 'apps/mobile/tool/check-back-nav-coverage.sh'
 
 concurrency:

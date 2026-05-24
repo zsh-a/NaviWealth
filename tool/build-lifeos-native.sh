@@ -158,6 +158,9 @@ build_android() {
   echo
   echo "Android .so per ABI in: $DIST_DIR/android/"
   find "$DIST_DIR/android" -name "${LIB_BASENAME}.so" -exec ls -lh {} \;
+
+  "$REPO_ROOT/tool/embed-onnxruntime-android.sh" "$DIST_DIR/android" \
+    "aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android"
 }
 
 case "${1:-}" in

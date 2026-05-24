@@ -340,10 +340,13 @@ Future<_EmbedderPathResolution> _resolveEmbedderPaths(AppConfig config) async {
 /// - **macOS**: `<exec>/../Frameworks/libonnxruntime.dylib` (Pod-
 ///   bundled location), then `<exec>/libonnxruntime.dylib`.
 /// - **Linux**: `<exec>/libonnxruntime.so`.
-/// - **Android / iOS**: not yet wired — needs a platform-specific
-///   bundling step (TODO when D-2 ships HealthOS on those targets).
+/// - **Android**: `libonnxruntime.so` packaged in the app's native
+///   library directory by Gradle; the dynamic loader resolves by name.
+/// - **iOS**: not yet wired — needs a platform-specific bundling step
+///   (TODO when D-2 ships HealthOS on iOS).
 ///
 String? _discoverBundledOrtDylib() {
+  if (Platform.isAndroid) return 'libonnxruntime.so';
   if (!Platform.isMacOS && !Platform.isLinux) return null;
   final exec = Platform.resolvedExecutable;
   final execDir = File(exec).parent;
