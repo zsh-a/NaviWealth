@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/format/formatters.dart';
+import '../../domain/values/money.dart';
 import '../theme/semantic_colors.dart';
 import '../tokens/typography_tokens.dart';
 
@@ -251,4 +252,152 @@ class SignedMoneyText extends StatelessWidget {
     final semantic = SemanticColors.of(context);
     return value > Decimal.zero ? semantic.success : semantic.danger;
   }
+}
+
+/// Two-currency money render — primary (typically the report base currency)
+/// in the regular weight + size, with a smaller muted caption underneath
+/// showing the original-currency amount.
+///
+/// When [originalAmount] is null, or its currency matches [primaryAmount]'s,
+/// the caption is suppressed and the output is visually identical to a plain
+/// [MoneyText] — so callers can hand both in unconditionally and let the
+/// widget decide whether the second line carries any signal.
+class DualMoneyText extends StatelessWidget {
+  const DualMoneyText({
+    super.key,
+    required this.primaryAmount,
+    this.originalAmount,
+    this.primarySymbolStyle = MoneySymbolStyle.symbol,
+    this.captionSymbolStyle = MoneySymbolStyle.isoCode,
+    this.primaryStyle,
+    this.captionStyle,
+    this.color,
+    this.captionColor,
+    this.locale,
+    this.textAlign,
+    this.compact = false,
+    this.showSign = false,
+    this.captionLeading = ' · ',
+    this.layout = DualMoneyLayout.inline,
+    this.semanticsLabel,
+  });
+
+  /// The amount the caller wants to surface first (usually base currency).
+  /// `null` renders the standard "no data" placeholder.
+  final Money? primaryAmount;
+
+  /// The original-currency value. When `null` or in the same currency as
+  /// [primaryAmount], the caption is hidden.
+  final Money? originalAmount;
+
+  final MoneySymbolStyle primarySymbolStyle;
+  final MoneySymbolStyle captionSymbolStyle;
+  final TextStyle? primaryStyle;
+  final TextStyle? captionStyle;
+  final Color? color;
+  final Color? captionColor;
+  final String? locale;
+  final TextAlign? textAlign;
+  final bool compact;
+  final bool showSign;
+
+  /// Glyph inserted between primary and caption when [layout] is `inline`.
+  final String captionLeading;
+
+  final DualMoneyLayout layout;
+
+  /// Override the spoken accessibility label. Defaults to
+  /// `"$primary (original $originalAmount $code)"` when both are present.
+  final String? semanticsLabel;
+
+  bool get _captionVisible {
+    final orig = originalAmount;
+    if (orig == null) return false;
+    final base = primaryAmount;
+    if (base == null) return false;
+    return orig.currency.toUpperCase() != base.currency.toUpperCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = MoneyText(
+      amount: primaryAmount?.amount.toDouble(),
+      currencyCode: primaryAmount?.currency ?? 'CNY',
+      symbolStyle: primarySymbolStyle,
+      style: primaryStyle,
+      color: color,
+      locale: locale,
+      textAlign: textAlign,
+      compact: compact,
+      showSign: showSign,
+      semanticsLabel: semanticsLabel ?? _spokenLabel(),
+    );
+    if (!_captionVisible) return primary;
+
+    final captionTextStyle =
+        (captionStyle ?? TypographyTokens.numericCaption).copyWith(
+      color: captionColor ?? context.theme.colors.mutedForeground,
+      fontFeatures: TypographyTokens.tabularFigures,
+    );
+    final caption = MoneyText(
+      amount: originalAmount!.amount.toDouble(),
+      currencyCode: originalAmount!.currency,
+      symbolStyle: captionSymbolStyle,
+      style: captionTextStyle,
+      locale: locale,
+      compact: compact,
+      // Caption never carries a leading `+` even when primary does — the
+      // sign on the primary is enough to communicate direction; doubling
+      // it just adds visual noise.
+      showSign: false,
+      // Already covered by primary's semantics label.
+      semanticsLabel: '',
+    );
+
+    switch (layout) {
+      case DualMoneyLayout.inline:
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            primary,
+            Text(
+              captionLeading,
+              style: captionTextStyle,
+              semanticsLabel: '',
+            ),
+            caption,
+          ],
+        );
+      case DualMoneyLayout.stacked:
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: textAlign == TextAlign.end
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
+          children: [primary, caption],
+        );
+    }
+  }
+
+  String? _spokenLabel() {
+    final base = primaryAmount;
+    if (base == null) return null;
+    final orig = originalAmount;
+    if (orig == null || orig.currency.toUpperCase() == base.currency.toUpperCase()) {
+      return '${base.amount} ${base.currency}';
+    }
+    return '${base.amount} ${base.currency} '
+        '(原币 ${orig.amount} ${orig.currency})';
+  }
+}
+
+/// How [DualMoneyText] arranges primary + caption.
+enum DualMoneyLayout {
+  /// One line, primary and caption side-by-side separated by [DualMoneyText.captionLeading].
+  inline,
+
+  /// Two stacked lines, primary on top.
+  stacked,
 }

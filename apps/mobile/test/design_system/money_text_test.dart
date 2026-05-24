@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/domain/values/money.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
   theme: AppTheme.light(),
@@ -110,4 +111,93 @@ void main() {
 
     expect(find.text('10 AAPL'), findsOneWidget);
   });
+
+  // §3.1 multi-currency dual-display — [DualMoneyText] surfaces both the
+  // base-currency value (primary) and the native-currency value (caption)
+  // for journal entries that involve FX conversion.
+  testWidgets(
+    'DualMoneyText shows primary + caption when currencies differ',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          DualMoneyText(
+            primaryAmount: Money.parse('1000.00', 'USD'),
+            originalAmount: Money.parse('7240.00', 'CNY'),
+          ),
+        ),
+      );
+      expect(find.textContaining('1,000'), findsOneWidget);
+      expect(find.textContaining('7,240'), findsOneWidget);
+      // ISO-code style on the caption surfaces the original currency.
+      expect(find.textContaining('CNY'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'DualMoneyText hides caption when original currency matches primary',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          DualMoneyText(
+            primaryAmount: Money.parse('1000.00', 'USD'),
+            originalAmount: Money.parse('1000.00', 'USD'),
+          ),
+        ),
+      );
+      // Only one Text → the secondary caption is suppressed when there is
+      // no FX delta to communicate.
+      expect(find.byType(Text), findsOneWidget);
+      expect(find.textContaining('CNY'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'DualMoneyText hides caption when original is null',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          DualMoneyText(primaryAmount: Money.parse('1000.00', 'USD')),
+        ),
+      );
+      expect(find.byType(Text), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'DualMoneyText stacked layout renders primary on top, caption below',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          DualMoneyText(
+            primaryAmount: Money.parse('1000.00', 'USD'),
+            originalAmount: Money.parse('7240.00', 'CNY'),
+            layout: DualMoneyLayout.stacked,
+          ),
+        ),
+      );
+      expect(find.byType(Column), findsWidgets);
+      // No inline separator glyph in stacked mode.
+      expect(find.text(' · '), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'DualMoneyText accessibility label folds in the original currency',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          DualMoneyText(
+            primaryAmount: Money.parse('1000.00', 'USD'),
+            originalAmount: Money.parse('7240.00', 'CNY'),
+          ),
+        ),
+      );
+      // The primary Text carries the consolidated semantics label; the
+      // caption Text label is suppressed to keep VoiceOver focused.
+      final primary = tester.widget<Text>(find.textContaining('1,000'));
+      expect(primary.semanticsLabel, contains('USD'));
+      expect(primary.semanticsLabel, contains('原币'));
+      expect(primary.semanticsLabel, contains('CNY'));
+    },
+  );
 }
