@@ -77,4 +77,139 @@ void main() {
       );
     });
   });
+
+  group('BatchProposal envelope (M-2)', () {
+    LocalImmediateWrite immediate(String token) {
+      return LocalImmediateWrite(
+        proposalId: 'p_$token',
+        kindLabel: 'memo_edit',
+        summaryZh: 'edit',
+        undo: UndoToken(token: token, expiresAtIso: '2026-05-12T00:00:00Z'),
+      );
+    }
+
+    LocalProposal proposal(String id) {
+      return LocalProposal(
+        proposalId: id,
+        kindLabel: 'recategorize_batch',
+        summaryZh: 'recat',
+        payload: const <String, Object?>{},
+      );
+    }
+
+    test('rejects empty children at construction', () {
+      expect(
+        () => BatchProposal(
+          proposalId: 'b1',
+          kindLabel: 'batch_apply',
+          summaryZh: '5 edits',
+          children: const [],
+          undo: const BatchUndoToken(
+            tokens: [],
+            expiresAtIso: '2026-05-12T00:00:00Z',
+          ),
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+    });
+
+    test('rejects ExternalSideEffect children', () {
+      expect(
+        () => BatchProposal(
+          proposalId: 'b1',
+          kindLabel: 'batch_apply',
+          summaryZh: 'mixed',
+          children: [
+            immediate('t1'),
+            const ExternalSideEffect(
+              proposalId: 'p_x',
+              kindLabel: 'broker_order',
+              summaryZh: 'place order',
+              target: ExternalTarget(system: 'broker', endpoint: 'op-1'),
+              payload: <String, Object?>{},
+            ),
+          ],
+          undo: const BatchUndoToken(
+            tokens: [],
+            expiresAtIso: '2026-05-12T00:00:00Z',
+          ),
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('rejects nested batches', () {
+      final inner = BatchProposal(
+        proposalId: 'b_inner',
+        kindLabel: 'batch_apply',
+        summaryZh: 'inner',
+        children: [immediate('t1')],
+        undo: const BatchUndoToken(
+          tokens: [],
+          expiresAtIso: '2026-05-12T00:00:00Z',
+        ),
+      );
+      expect(
+        () => BatchProposal(
+          proposalId: 'b_outer',
+          kindLabel: 'batch_apply',
+          summaryZh: 'outer',
+          children: [immediate('t2'), inner],
+          undo: const BatchUndoToken(
+            tokens: [],
+            expiresAtIso: '2026-05-12T00:00:00Z',
+          ),
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('envelopeKind discriminator is "batch"', () {
+      final batch = BatchProposal(
+        proposalId: 'b1',
+        kindLabel: 'batch_apply',
+        summaryZh: '5 edits',
+        children: [immediate('t1')],
+        undo: const BatchUndoToken(
+          tokens: [],
+          expiresAtIso: '2026-05-12T00:00:00Z',
+        ),
+      );
+      expect(batch.envelopeKind, 'batch');
+    });
+
+    test(
+      'mode: all-immediate children → swipe (already applied semantics)',
+      () {
+        final batch = BatchProposal(
+          proposalId: 'b1',
+          kindLabel: 'batch_apply',
+          summaryZh: '3 edits',
+          children: [immediate('t1'), immediate('t2'), immediate('t3')],
+          undo: const BatchUndoToken(
+            tokens: [],
+            expiresAtIso: '2026-05-12T00:00:00Z',
+          ),
+        );
+        expect(deriveInteractionMode(batch), InteractionMode.swipe);
+      },
+    );
+
+    test(
+      'mode: presence of LocalProposal upgrades the batch to confirmDiff',
+      () {
+        final batch = BatchProposal(
+          proposalId: 'b1',
+          kindLabel: 'batch_apply',
+          summaryZh: 'mixed',
+          children: [immediate('t1'), proposal('p1')],
+          undo: const BatchUndoToken(
+            tokens: [],
+            expiresAtIso: '2026-05-12T00:00:00Z',
+          ),
+        );
+        expect(deriveInteractionMode(batch), InteractionMode.confirmDiff);
+      },
+    );
+  });
 }

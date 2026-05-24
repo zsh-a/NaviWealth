@@ -54,7 +54,42 @@ InteractionMode deriveInteractionMode(ProposalEnvelope p) {
       return InteractionMode.swipe;
     case LocalProposal _:
       return InteractionMode.confirmDiff;
+    case BatchProposal batch:
+      return _deriveBatchMode(batch);
   }
+}
+
+/// `roadmap-next.md` §4 M-2 — most-conservative-child wins. Order
+/// (least → most friction): `oneTap` < `swipe` < `confirmDiff` <
+/// `typed`. Batches never include `typed` children (the envelope
+/// rejects [ExternalSideEffect] at construction), so the upper bound
+/// is `confirmDiff`. Empty batches are unreachable — the envelope
+/// asserts non-empty children.
+InteractionMode _deriveBatchMode(BatchProposal batch) {
+  var rank = 0;
+  for (final child in batch.children) {
+    final childRank = _rankOf(deriveInteractionMode(child));
+    if (childRank > rank) rank = childRank;
+  }
+  return _modeForRank(rank);
+}
+
+int _rankOf(InteractionMode mode) {
+  return switch (mode) {
+    InteractionMode.oneTap => 0,
+    InteractionMode.swipe => 1,
+    InteractionMode.confirmDiff => 2,
+    InteractionMode.typed => 3,
+  };
+}
+
+InteractionMode _modeForRank(int rank) {
+  return switch (rank) {
+    0 => InteractionMode.oneTap,
+    1 => InteractionMode.swipe,
+    2 => InteractionMode.confirmDiff,
+    _ => InteractionMode.typed,
+  };
 }
 
 /// Public counterpart to [deriveInteractionMode] for callers that

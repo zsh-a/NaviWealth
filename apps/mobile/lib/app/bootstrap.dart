@@ -14,6 +14,7 @@ import '../core/logging/app_logger.dart';
 import '../core/logging/crash_reporter.dart';
 import '../core/logging/logging_crash_reporter.dart';
 import '../core/logging/providers.dart';
+import '../core/perf/providers.dart';
 import '../core/sync/providers.dart';
 import '../data/market/sync/price_sync_providers.dart';
 import '../design_system/preferences/theme_preferences.dart';
@@ -94,6 +95,11 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // Force eager creation so AppLogger.instance is ready before any error
   // handler fires.
   final logger = container.read(loggerProvider);
+  // Eager-init the frame timing collector so the addTimingsCallback
+  // subscription is in place before the first frame ships. Otherwise
+  // PerfTraceRecorder windows opened at startup would race the first
+  // few frames and miss them. `roadmap-next.md` §4 M-5.
+  container.read(frameTimingCollectorProvider);
 
   FlutterError.onError = (details) {
     if (isBenignDuplicateKeyDownAssertion(details)) {

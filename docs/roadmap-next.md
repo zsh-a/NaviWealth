@@ -142,11 +142,11 @@
 | ID | 轨道 | 说明 |
 |---|---|---|
 | M-1 | Desktop shell master-detail | ✅ **已基本落地**:`app/master_detail_layout.dart` 两栏带 splitter + URL-driven 选择 crossfade,接到 `_DesktopShell`(`AppRootShell` ≥ 1240dp 分支)+ accounts / assets / ai_chat master 列表;5 个 layout test。后续如出现新 master-list 域,直接复用该 widget,不再当 M-1 条目计 |
-| M-2 | AI Copilot M2 | Batch proposals + undo + 长任务进度条 |
-| M-3 | Income Planner P5 | Tradier OAuth + 真 greeks。**Backend proxy 必须 schema-agnostic**,走 `sync_rows`,不在 Worker 里写业务逻辑 |
-| M-4 | Investment advanced M2/M3 | DCA simulator ✅ **已落地** (`features/investment/domain/dca/dca_simulator.dart` + `presentation/dca_simulator_page.dart`,挂在 `/plan/dca`,带 golden + engine 测试)。剩余:Event timeline 完整(超出 §3.5 MVP 的部分)、tax export(等决策门 §8) |
-| M-5 | Performance traces | 观测性 M2 |
-| M-6 | Command palette + 快捷键 | Desktop shell M1 + M3 |
+| M-2 | AI Copilot M2 | **Contract 层已落地** (2026-05-24):`core/ai/contracts/proposal_envelope.dart` 新增 `BatchProposal` sealed subtype + `BatchUndoToken`(拒绝 external / 拒绝嵌套 / 空 children 触发 assert);`interaction_mode.dart` 加 `_deriveBatchMode`(最保守-子项胜出,oneTap<swipe<confirmDiff,batch 永不到 typed)。`core/ai/progress/long_task_progress.dart` — 进度描述符(id/label/detail/ratio/cancelable + 钳位 + elapsed)。新增 12 个单测(6 envelope+mode / 6 progress)。**UI wire-up 是后续 PR**(`propose_card.dart` 路由 BatchProposal + DriftUndoStack 加 `batch_undo` kind + 长任务进度条 widget) |
+| M-3 | Income Planner P5 | 🚧 **被决策门阻塞**(§8:Tradier OAuth backend proxy 单独 Worker 与否未定);Tradier OAuth + 真 greeks。**Backend proxy 必须 schema-agnostic**,走 `sync_rows`,不在 Worker 里写业务逻辑。决策出来前不动 |
+| M-4 | Investment advanced M2/M3 | DCA simulator ✅ **已落地** (`features/investment/domain/dca/dca_simulator.dart` + `presentation/dca_simulator_page.dart`,挂在 `/plan/dca`,带 golden + engine 测试)。Event timeline ✅ **MVP 已闭合**(§3.5,12hr cache + EquityAssetDetailPage 嵌入)。**Tax export 🚧 被决策门阻塞**(§8:IRS / 中国个税 / 通用 CSV 优先级未定);domain 层 `features/investment/domain/tax/` 已有 `tax_policy` / `jurisdiction_tax_policy` / `tax_jurisdiction` 骨架,export pipeline 等格式决策后单独 PR |
+| M-5 | Performance traces | ✅ **harness 已落地** (2026-05-24):`core/perf/frame_timing_collector.dart` 接 `SchedulerBinding.addTimingsCallback` 维护 600 帧 ring buffer + p50/p95/jank 统计;`perf_trace_recorder.dart` 暴露 `begin/end/measure` 名义窗口,基于 vsync 时间戳过滤而非 wall clock,保证多窗口不互相串扰;`providers.dart` 在 `frameTimingCollectorProvider` 首读时 attach,bootstrap eager init。10 个单测(ring 容量 / 空状态 / jank 计数 / p50+p95 插值 / 窗口过滤 / begin-end / 嵌套报错 / measure 抛异常仍释放)。后续如需 UI 看板可单建 dev surface,不阻塞 M-5 关闭 |
+| M-6 | Command palette + 快捷键 | ✅ **已落地**:`core/command_palette/` 全套(`command_palette_dialog.dart` + `default_commands.dart` + `ask_ai_result_pane.dart`)挂在全局 Cmd/Ctrl+K;`core/shortcuts/` 完整(global/scope/master-detail 三层 + 帮助对话框 + 键位平台适配)。测试:command palette 2 个文件 85 cases,shortcuts 3 个文件 65 cases。Desktop shell 接 `GlobalShortcutsScope` 已 wire |
 
 ---
 
