@@ -20,12 +20,11 @@
 /// the plugin loader) and dev-machine experimentation.
 library;
 
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
-    show ExternalLibrary;
 import 'package:naviwealth/src/rust/api/embedder.dart' as frb;
-import 'package:naviwealth/src/rust/frb_generated.dart' show RustLib;
 
 import 'embedder.dart';
+import 'lifeos_native_runtime_io.dart'
+    if (dart.library.js_interop) 'lifeos_native_runtime_web.dart';
 
 /// Thrown when the Rust embedder can't be constructed (missing
 /// native library, missing model files, malformed config, etc.).
@@ -67,11 +66,7 @@ Future<void> initLifeosNativeRuntime({String? libraryPath}) {
 
 Future<void> _runInit(String? libraryPath) async {
   try {
-    if (libraryPath != null && libraryPath.isNotEmpty) {
-      await RustLib.init(externalLibrary: ExternalLibrary.open(libraryPath));
-    } else {
-      await RustLib.init();
-    }
+    await initRustLibRuntime(libraryPath: libraryPath);
   } on Object catch (e) {
     throw RustEmbedderUnavailable(
       'failed to initialise lifeos_native runtime',
@@ -115,11 +110,7 @@ class RustGemmaEmbedder implements Embedder {
       );
       // dimension() / fingerprint() are `#[frb(sync)]` so they return
       // immediately and we can cache them on the Dart side.
-      return RustGemmaEmbedder._(
-        inner,
-        inner.fingerprint(),
-        inner.dimension(),
-      );
+      return RustGemmaEmbedder._(inner, inner.fingerprint(), inner.dimension());
     } on Object catch (e) {
       throw RustEmbedderUnavailable('GemmaEmbedder.load failed', cause: e);
     }
