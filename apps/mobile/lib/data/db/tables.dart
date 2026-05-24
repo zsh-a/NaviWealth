@@ -462,6 +462,45 @@ class Categories extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Monthly category budgets (`roadmap-next.md` §3.2 Budget MVP).
+///
+/// One row per (categoryId, periodMonth) — pinning a budget to a category
+/// + calendar month lets the dashboard read "this month's progress" with a
+/// single keyed lookup. Currency is stored explicitly so a multi-currency
+/// installation can budget in the category's native currency rather than
+/// always in the report base.
+///
+/// The aggregate "spent vs. budgeted" view is **not** stored here; it is a
+/// pure derivation over postings against the same category — see
+/// `features/cashflow/data/budget_progress_provider.dart`.
+@DataClassName('BudgetRow')
+class Budgets extends Table with SyncableTable {
+  TextColumn get id => text()();
+
+  /// Foreign key into `categories.id`. Untyped (no DB-level FK) so an
+  /// orphaned category doesn't cascade-wipe budget history; the UI
+  /// surfaces orphans with a "category missing" marker instead.
+  TextColumn get categoryId => text()();
+
+  /// Budget month, encoded `YYYY-MM` (e.g. `'2026-05'`). String avoids
+  /// timezone foot-guns from storing a DateTime midnight.
+  TextColumn get periodMonth => text().withLength(min: 7, max: 7)();
+
+  /// Budget amount in the category's chosen currency.
+  TextColumn get amount => text().map(const DecimalConverter())();
+
+  /// ISO 4217 / synthetic unit (allows budgeting in points, miles, etc.
+  /// if a future category opts into a non-money unit — same shape as
+  /// postings.unit).
+  TextColumn get currency => text().withLength(min: 3, max: 16)();
+
+  /// Optional user note (e.g. "extra dining for Mum's birthday").
+  TextColumn get note => text().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DataClassName('GoalRow')
 class Goals extends Table with SyncableTable {
   TextColumn get id => text()();
