@@ -208,7 +208,6 @@ class _ChatPane extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final turn = ref.watch(chatControllerProvider(sessionId));
-    final l10n = AppLocalizations.of(context);
     final routeCtx = ref.watch(aiRouteContextProvider);
     final systemContext = routeCtx.toSystemContext();
 
@@ -223,11 +222,7 @@ class _ChatPane extends ConsumerWidget {
 
     void send(String text) => ref
         .read(chatControllerProvider(sessionId).notifier)
-        .send(
-          text,
-          staleSyncNotice: l10n.aiChatStaleSyncNotice,
-          systemContext: systemContext,
-        );
+        .send(text, systemContext: systemContext);
 
     return Center(
       child: ConstrainedBox(
@@ -248,7 +243,6 @@ class _ChatPane extends ConsumerWidget {
             const LlmProfileChip(),
             ChatComposer(
               isStreaming: turn.isStreaming,
-              isFlushing: turn.isFlushing,
               onSend: send,
               onCancel: () => ref
                   .read(chatControllerProvider(sessionId).notifier)

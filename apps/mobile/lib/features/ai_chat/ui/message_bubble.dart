@@ -222,11 +222,7 @@ class _UserBubble extends ConsumerWidget {
     if (!context.mounted) return;
     await ref
         .read(chatControllerProvider(sessionId).notifier)
-        .editAndResend(
-          messageId: message.id,
-          newContent: result,
-          staleSyncNotice: l10n.aiChatStaleSyncNotice,
-        );
+        .editAndResend(messageId: message.id, newContent: result);
   }
 }
 
@@ -756,10 +752,7 @@ class _TruncationFooter extends ConsumerWidget {
                   onPressed: () {
                     ref
                         .read(chatControllerProvider(sessionId).notifier)
-                        .send(
-                          l10n.aiChatTruncatedContinuePrompt,
-                          staleSyncNotice: l10n.aiChatStaleSyncNotice,
-                        );
+                        .send(l10n.aiChatTruncatedContinuePrompt);
                   },
                 ),
             ],
@@ -1014,9 +1007,7 @@ class _AssistantActions extends ConsumerWidget {
                 : () {
                     ref
                         .read(chatControllerProvider(sessionId).notifier)
-                        .regenerateLast(
-                          staleSyncNotice: l10n.aiChatStaleSyncNotice,
-                        );
+                        .regenerateLast();
                   },
           ),
       ],

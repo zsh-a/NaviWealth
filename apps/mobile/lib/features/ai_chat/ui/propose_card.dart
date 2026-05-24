@@ -803,10 +803,7 @@ class _ClarificationView extends ConsumerWidget {
                                   .read(
                                     chatControllerProvider(sessionId).notifier,
                                   )
-                                  .send(
-                                    c.label ?? c.id,
-                                    staleSyncNotice: l10n.aiChatStaleSyncNotice,
-                                  ),
+                                  .send(c.label ?? c.id),
                       ),
                   ],
                 ),

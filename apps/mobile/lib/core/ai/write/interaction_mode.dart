@@ -4,28 +4,26 @@
 /// side_effect)` — feature code is *not allowed* to hand-pick a mode.
 /// Lowering an action's risk classification is the *only* way to make
 /// it more frictionless, and that requires a code change to the
-/// proposal kindLabel + matching descriptor on the backend.
+/// proposal kindLabel + matching descriptor.
 ///
-/// Mapping table (must stay in sync with `policy/tool_policy.rs`
-/// propose entries and §5.5 of `docs/ai-architecture.md`):
+/// Mapping table (must stay in sync with §5.5 of `docs/ai-architecture.md`).
+/// `interactionModeForKindLabel` is single-sourced — the propose-card flow
+/// in the UI calls it with the device propose tool's kindLabel string,
+/// rather than constructing an envelope first.
 ///
-///   - `LocalImmediateWrite`      → `swipe`   (already applied locally;
-///                                            the UI affordance is the
-///                                            persistent undo banner)
-///   - `LocalProposal`            → `confirmDiff`
-///   - `CloudProposal.broker_order`     → `typed`
-///   - `CloudProposal.bulk_delete`      → `typed`
-///   - `CloudProposal.rebalance`        → `confirmDiff`
-///   - `CloudProposal.liability_payment`→ `confirmDiff`
-///   - `CloudProposal.trade`            → `confirmDiff`
-///   - `CloudProposal.account_create`   → `confirmDiff`
-///   - `CloudProposal.asset_valuation`  → `confirmDiff`
-///   - `CloudProposal.expense`          → `oneTap` (small, easy to undo)
-///   - `CloudProposal.memo_edit`        → `oneTap`
-///   - `CloudProposal.category_set`     → `oneTap`
-///   - `CloudProposal.tag_apply`        → `oneTap`
+///   - `LocalImmediateWrite`            → `swipe`   (already applied locally;
+///                                                  the UI affordance is the
+///                                                  persistent undo banner)
+///   - `LocalProposal`                  → `confirmDiff`
 ///   - `ExternalSideEffect`             → `typed`
-///   - anything unknown                 → `confirmDiff` (safe default)
+///   - kindLabel `broker_order` / `bulk_delete`               → `typed`
+///   - kindLabel `rebalance` / `liability_payment` / `trade`
+///       / `account_create` / `asset_valuation`               → `confirmDiff`
+///   - kindLabel `expense` / `memo_edit` / `category_set`
+///       / `tag_apply`                                        → `oneTap`
+///       (small, easy to undo)
+///   - anything unknown                                       → `confirmDiff`
+///       (safe default)
 library;
 
 import '../contracts/proposal_envelope.dart';
@@ -56,8 +54,6 @@ InteractionMode deriveInteractionMode(ProposalEnvelope p) {
       return InteractionMode.swipe;
     case LocalProposal _:
       return InteractionMode.confirmDiff;
-    case CloudProposal cp:
-      return interactionModeForKindLabel(cp.kindLabel);
   }
 }
 

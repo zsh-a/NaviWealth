@@ -41,41 +41,11 @@ void main() {
       expect(deriveInteractionMode(p), InteractionMode.confirmDiff);
     });
 
-    test('CloudProposal kindLabel mapping table', () {
-      final cases = <String, InteractionMode>{
-        'broker_order': InteractionMode.typed,
-        'bulk_delete': InteractionMode.typed,
-        'rebalance': InteractionMode.confirmDiff,
-        'liability_payment': InteractionMode.confirmDiff,
-        'trade': InteractionMode.confirmDiff,
-        'account_create': InteractionMode.confirmDiff,
-        'asset_valuation': InteractionMode.confirmDiff,
-        'expense': InteractionMode.oneTap,
-        'memo_edit': InteractionMode.oneTap,
-        'category_set': InteractionMode.oneTap,
-        'tag_apply': InteractionMode.oneTap,
-      };
-      for (final entry in cases.entries) {
-        final p = CloudProposal(
-          proposalId: 'p1',
-          kindLabel: entry.key,
-          summaryZh: 's',
-          toolName: 'propose_${entry.key}',
-          payload: const <String, Object?>{},
-        );
-        expect(
-          deriveInteractionMode(p),
-          entry.value,
-          reason: 'kindLabel=${entry.key}',
-        );
-      }
-    });
-
     test(
-      'Wave 38 — interactionModeForKindLabel mirrors deriveInteractionMode for CloudProposal',
+      'interactionModeForKindLabel covers every device propose kindLabel',
       () {
         // The propose_card flow calls interactionModeForKindLabel(_kindLabel(plan.kind))
-        // instead of constructing a CloudProposal. Make sure the two paths agree.
+        // directly; this table is the authoritative mapping post-CloudProposal removal.
         const labels = <String, InteractionMode>{
           'expense': InteractionMode.oneTap,
           'memo_edit': InteractionMode.oneTap,
@@ -100,15 +70,11 @@ void main() {
       },
     );
 
-    test('unknown CloudProposal kindLabel falls back to confirmDiff', () {
-      const p = CloudProposal(
-        proposalId: 'p1',
-        kindLabel: 'newfangled_action',
-        summaryZh: 's',
-        toolName: 'propose_newfangled',
-        payload: <String, Object?>{},
+    test('unknown kindLabel falls back to confirmDiff', () {
+      expect(
+        interactionModeForKindLabel('newfangled_action'),
+        InteractionMode.confirmDiff,
       );
-      expect(deriveInteractionMode(p), InteractionMode.confirmDiff);
     });
   });
 }

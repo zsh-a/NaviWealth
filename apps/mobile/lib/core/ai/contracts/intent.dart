@@ -101,8 +101,8 @@ enum SideEffectScope {
   local,
 
   /// Cross-cutting ledger mutation that needs multi-account reasoning
-  /// (rebalance, FIRE plan adjustment, batch budget rebuild). Routed
-  /// to the cloud planner as a CloudProposal.
+  /// (rebalance, FIRE plan adjustment, batch budget rebuild). Applied
+  /// via the device propose flow + `proposal_applier`.
   crossCutting,
 
   /// Touches an external system (broker order, bank transfer,

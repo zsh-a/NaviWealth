@@ -16,16 +16,10 @@ class ChatComposer extends StatefulWidget {
     required this.isStreaming,
     required this.onSend,
     required this.onCancel,
-    this.isFlushing = false,
     this.initialText,
   });
 
   final bool isStreaming;
-
-  /// Pre-chat sync gate (FIR-71) is draining the OpLog. The composer
-  /// disables input and shows "正在同步..." for the typically sub-second
-  /// window while we wait for `/sync/push` to land.
-  final bool isFlushing;
 
   /// Optional text to pre-fill the composer with (e.g. from "Ask AI" in
   /// the command palette).
@@ -33,7 +27,7 @@ class ChatComposer extends StatefulWidget {
   final ValueChanged<String> onSend;
   final VoidCallback onCancel;
 
-  bool get _busy => isStreaming || isFlushing;
+  bool get _busy => isStreaming;
 
   @override
   State<ChatComposer> createState() => _ChatComposerState();
@@ -119,9 +113,7 @@ class _ChatComposerState extends State<ChatComposer> {
                     minLines: 1,
                     maxLines: 6,
                     enabled: !widget._busy,
-                    hint: widget.isFlushing
-                        ? l10n.aiChatComposerHintFlushing
-                        : widget.isStreaming
+                    hint: widget.isStreaming
                         ? l10n.aiChatComposerHintStreaming
                         : l10n.aiChatComposerHintIdle,
                   ),
@@ -131,7 +123,6 @@ class _ChatComposerState extends State<ChatComposer> {
               _TrailingButton(
                 controller: _controller,
                 isStreaming: widget.isStreaming,
-                isFlushing: widget.isFlushing,
                 onSend: _send,
                 onCancel: widget.onCancel,
               ),
@@ -152,18 +143,14 @@ class _TrailingButton extends StatelessWidget {
   const _TrailingButton({
     required this.controller,
     required this.isStreaming,
-    required this.isFlushing,
     required this.onSend,
     required this.onCancel,
   });
 
   final TextEditingController controller;
   final bool isStreaming;
-  final bool isFlushing;
   final VoidCallback onSend;
   final VoidCallback onCancel;
-
-  bool get _busy => isStreaming || isFlushing;
 
   @override
   Widget build(BuildContext context) {
@@ -181,13 +168,6 @@ class _TrailingButton extends StatelessWidget {
           ),
         );
       }
-      if (isFlushing) {
-        return const Padding(
-          key: ValueKey('flushing'),
-          padding: EdgeInsets.all(8),
-          child: SizedBox(width: 20, height: 20, child: FCircularProgress()),
-        );
-      }
       return FTooltip(
         key: const ValueKey('send'),
         tipBuilder: (_, _) => Text(l10n.aiChatComposerSendTooltip),
@@ -202,10 +182,10 @@ class _TrailingButton extends StatelessWidget {
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
-        final canSend = !_busy && controller.text.trim().isNotEmpty;
+        final canSend = !isStreaming && controller.text.trim().isNotEmpty;
         // AnimatedSwitcher's keyed children cross-fade only when
-        // isStreaming / isFlushing flips — toggling `canSend` keeps the
-        // same key, so a keystroke doesn't trigger a transition.
+        // isStreaming flips — toggling `canSend` keeps the same key, so
+        // a keystroke doesn't trigger a transition.
         return AnimatedSwitcher(
           duration: Motion.fast,
           transitionBuilder: (child, anim) =>
