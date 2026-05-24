@@ -13,13 +13,13 @@ import 'package:naviwealth/data/domain/sync_meta.dart';
 import 'package:naviwealth/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/domain/values/money.dart';
-import 'package:naviwealth/features/accounts/accounts_hub_page.dart';
 import 'package:naviwealth/features/accounts/data/account_balances_provider.dart';
 import 'package:naviwealth/features/accounts/domain/account_balances.dart';
 import 'package:naviwealth/features/accounts/ui/accounts_master.dart';
 import 'package:naviwealth/features/activity/ui/activity_entry_detail_page.dart';
 import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/wealth/ui/wealth_hub_page.dart';
 
 import '_golden_setup.dart';
 
@@ -210,14 +210,14 @@ void main() {
     );
   });
 
-  runAllVariants('accounts_hub_page', (tester, variant) async {
+  runAllVariants('wealth_hub_page', (tester, variant) async {
     await pumpAndSnapshotMobile(
       tester,
-      name: 'accounts_hub_page',
+      name: 'wealth_hub_page',
       variant: variant,
       locale: _locale,
       overrides: _accountOverrides(),
-      child: const AccountsHubPage(),
+      child: const WealthHubPage(),
     );
   });
 

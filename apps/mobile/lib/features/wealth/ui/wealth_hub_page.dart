@@ -14,8 +14,8 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../accounts/data/account_balances_provider.dart';
 import '../../accounts/domain/account_balances.dart';
 import '../../accounts/ui/account_grouped_sections.dart';
-import '../../accounts/ui/accounts_action_panel.dart';
 import '../../home/data/dashboard_providers.dart';
+import 'wealth_action_panel.dart';
 
 /// Wealth hub — landing page for the Wealth tab (IA contract §1).
 ///
@@ -43,7 +43,7 @@ class WealthHubPage extends ConsumerWidget {
           FHeaderAction(
             icon: const Icon(Icons.add_outlined),
             semanticsLabel: l10n.accountsActionsTitle,
-            onPress: () => showAccountsActionPanel(context),
+            onPress: () => showWealthActionPanel(context),
           ),
         ],
       ),

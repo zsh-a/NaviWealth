@@ -8,15 +8,19 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../assets/physical/ui/physical_asset_create_sheet.dart';
 
-/// Accounts-scoped quick-add panel.
+/// Wealth-scoped quick-add panel.
 ///
-/// Surfaced from the Accounts hub's "+" header action. Lists only the
+/// Surfaced from the Wealth hub's "+" header action. Lists only the
 /// **structural** entries — anything that creates a new wealth
 /// container or asset / liability instance. Activities (record an
 /// expense, log a trade, transfer cash) live on the Activity page's
 /// action panel instead, so this menu reads as "what kind of thing am
 /// I adding to my net worth?".
-Future<void> showAccountsActionPanel(BuildContext context) {
+///
+/// Renamed from `showAccountsActionPanel` under the IA contract — the
+/// l10n strings still use the legacy `accountsAction*` keys (their
+/// English / Chinese copy is correct regardless of the hub label).
+Future<void> showWealthActionPanel(BuildContext context) {
   final l10n = AppLocalizations.of(context);
   return showAppSheet<void>(
     context: context,

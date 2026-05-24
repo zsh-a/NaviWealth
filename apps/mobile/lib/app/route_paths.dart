@@ -23,16 +23,14 @@
 /// "Analytics" is NOT a section name — split per object:
 ///   Wealth → Portfolio Analytics, Plan → Scenario Analytics / FIRE Projection.
 ///
-/// ## Migration phases
+/// ## Migration status
 ///
-/// - **Phase A** (this file): canonical strings are now `/wealth/*` and
-///   `/plan/*`. Legacy `/accounts/*` literal strings are preserved via
-///   redirect routes in `router_builder.dart` so external deep links and
-///   chat history continue resolving. Internal callers MUST use the new
-///   constant names (e.g. `AppRoutes.planFire`, not the deprecated
-///   `accountsFire` alias).
-/// - **Phase B**: Plan hub real hero + decision chain (separate work).
-/// - **Phase C**: Wealth hub rewrite (separate work).
+/// Phases A / B / C / D all shipped. Legacy `/accounts/*` routes,
+/// redirects, and `@Deprecated` aliases have been removed — there is
+/// only one canonical IA now. External callers (browser history, AI
+/// chat `routeHint` payloads minted before the migration) that still
+/// reference `/accounts/*` will 404; rebuild affected sessions or
+/// re-introduce a targeted redirect.
 abstract final class AppRoutes {
   // ── Auth ────────────────────────────────────────────────────────────────
   static const login = '/login';
@@ -136,55 +134,6 @@ abstract final class AppRoutes {
 
   static String tradeForAsset(String id) =>
       '$tradeEntry?assetId=${Uri.encodeQueryComponent(id)}';
-
-  // ── Deprecated aliases (Phase A bridge) ────────────────────────────────
-  // Keep these so older code paths (and the AI tool catalog that ships
-  // route hints in trace payloads) keep compiling during the migration.
-  // Internal new code must use the canonical names above. These can be
-  // deleted in Phase D after all callers and tests are clean.
-  @Deprecated('Use AppRoutes.wealth')
-  static const accounts = wealth;
-  @Deprecated('Use AppRoutes.wealthAccounts')
-  static const accountsList = wealthAccounts;
-  @Deprecated('Use AppRoutes.wealthAccountNew')
-  static const accountListNew = wealthAccountNew;
-  @Deprecated('Use AppRoutes.wealthNewCash')
-  static const accountNewCash = wealthNewCash;
-  @Deprecated('Use AppRoutes.wealthNewDeposit')
-  static const accountNewDeposit = wealthNewDeposit;
-  @Deprecated('Use AppRoutes.wealthNewWealth')
-  static const accountNewWealth = wealthNewWealth;
-  @Deprecated('Use AppRoutes.wealthCorporateAction')
-  static const accountCorporateAction = wealthCorporateAction;
-  @Deprecated('Use AppRoutes.wealthLiabilities')
-  static const liabilities = wealthLiabilities;
-  @Deprecated('Use AppRoutes.wealthLiabilityNew')
-  static const liabilityNew = wealthLiabilityNew;
-  @Deprecated('Use AppRoutes.planFire')
-  static const accountsFire = planFire;
-  @Deprecated('Use AppRoutes.planRebalance')
-  static const accountsRebalance = planRebalance;
-  @Deprecated('Use AppRoutes.planProjection')
-  static const accountsAnalytics = planProjection;
-  @Deprecated('Use AppRoutes.planIncome')
-  static const accountsIncomePlanner = planIncome;
-  @Deprecated('Use AppRoutes.wealthPortfolio')
-  static const accountsPortfolioHub = wealthPortfolio;
-  @Deprecated('Use AppRoutes.wealthWatchlist')
-  static const accountsWatchlist = wealthWatchlist;
-  @Deprecated('Use AppRoutes.planDca')
-  static const accountsDcaSimulator = planDca;
-  @Deprecated('Use AppRoutes.wealthIncomeProjection')
-  static const accountsDividends = wealthIncomeProjection;
-
-  @Deprecated('Use AppRoutes.wealthAsset()')
-  static String accountAsset(String id) => wealthAsset(id);
-  @Deprecated('Use AppRoutes.wealthPhysical()')
-  static String physicalAsset(String id) => wealthPhysical(id);
-  @Deprecated('Use AppRoutes.wealthLiability()')
-  static String liability(String id) => wealthLiability(id);
-  @Deprecated('Use AppRoutes.wealthAccount()')
-  static String accountListItem(String id) => wealthAccount(id);
 }
 
 /// Canonical GoRouter route names. Used by tests and named navigation
@@ -250,48 +199,6 @@ abstract final class AppRouteNames {
   static const transfer = 'transfer';
   static const journalEntries = 'journal-entries';
   static const activityIngest = 'activity-ingest';
-
-  // ── Deprecated aliases (Phase A bridge) ────────────────────────────────
-  @Deprecated('Use AppRouteNames.wealth')
-  static const accounts = wealth;
-  @Deprecated('Use AppRouteNames.wealthAccounts')
-  static const accountsList = wealthAccounts;
-  @Deprecated('Use AppRouteNames.wealthAccountNew')
-  static const accountListNew = wealthAccountNew;
-  @Deprecated('Use AppRouteNames.wealthAccount')
-  static const accountListItem = wealthAccount;
-  @Deprecated('Use AppRouteNames.wealthNewCash')
-  static const accountNewCash = wealthNewCash;
-  @Deprecated('Use AppRouteNames.wealthNewDeposit')
-  static const accountNewDeposit = wealthNewDeposit;
-  @Deprecated('Use AppRouteNames.wealthNewWealth')
-  static const accountNewWealth = wealthNewWealth;
-  @Deprecated('Use AppRouteNames.wealthCorporateAction')
-  static const accountCorporateAction = wealthCorporateAction;
-  @Deprecated('Use AppRouteNames.wealthAssetDetail')
-  static const accountAssetDetail = wealthAssetDetail;
-  @Deprecated('Use AppRouteNames.wealthPhysicalDetail')
-  static const physicalAssetDetail = wealthPhysicalDetail;
-  @Deprecated('Use AppRouteNames.wealthLiabilities')
-  static const liabilities = wealthLiabilities;
-  @Deprecated('Use AppRouteNames.wealthLiabilityNew')
-  static const liabilityNew = wealthLiabilityNew;
-  @Deprecated('Use AppRouteNames.wealthLiabilityDetail')
-  static const liabilityDetail = wealthLiabilityDetail;
-  @Deprecated('Use AppRouteNames.planFire')
-  static const accountsFire = planFire;
-  @Deprecated('Use AppRouteNames.planRebalance')
-  static const accountsRebalance = planRebalance;
-  @Deprecated('Use AppRouteNames.planProjection')
-  static const accountsAnalytics = planProjection;
-  @Deprecated('Use AppRouteNames.planIncome')
-  static const accountsIncomePlanner = planIncome;
-  @Deprecated('Use AppRouteNames.wealthPortfolio')
-  static const accountsPortfolioHub = wealthPortfolio;
-  @Deprecated('Use AppRouteNames.wealthWatchlist')
-  static const accountsWatchlist = wealthWatchlist;
-  @Deprecated('Use AppRouteNames.planDca')
-  static const accountsDcaSimulator = planDca;
 }
 
 /// Primary shell tab paths in display order. See `app_shell.dart` for the
