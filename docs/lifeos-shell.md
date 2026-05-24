@@ -227,8 +227,9 @@ LLM 应**优先**调 `build_context`(回答涉及"以前 / 上次 / 我当时为
 | Bootstrap post-swap `runtime.dropStaleVectors()` | ✅ 切换后 fingerprint 不一致的 embeddings 自动清掉,indexer 下次 reindex | `lib/app/bootstrap.dart` |
 | **cargokit Flutter plugin** (`rust_builder/`) | ✅ `flutter_rust_bridge_codegen integrate` 产出;iOS/macOS podspec + Android gradle 钩子自动 invoke cargokit → cargo,**`flutter run` / `flutter build` 直接出产物**,无需手动脚本 | `apps/mobile/rust_builder/` |
 | Manual `tool/build-lifeos-native.sh`(optional) | ✅ 只用于 `flutter test` desktop + standalone artefact + Rust-only CI smoke | `tool/build-lifeos-native.sh` |
-| **In-app model installer** | ✅ ModelBundle + ModelDownloader (dio + progress + sha256 + atomic rename) + Riverpod 状态机 + Settings UI;`<app_support>/embedders/` 统一位置 | `core/ai/local/embedding/model_{manifest,install_paths,downloader,install_state}.dart` + `features/settings/ui/ai_models_page.dart` |
-| Bootstrap auto-discovery | ✅ 启动时检查 `--dart-define` overrides → 否则探测 installer 目录 → 都没有就停 stub | `lib/app/bootstrap.dart::_resolveEmbedderPaths` |
+| **In-app model installer** (仅 EmbeddingGemma weights) | ✅ ModelBundle + ModelDownloader (dio + progress + sha256 + atomic rename) + Riverpod 状态机 + Settings UI;`<app_support>/embedders/` 统一位置 | `core/ai/local/embedding/model_{manifest,install_paths,downloader,install_state}.dart` + `features/settings/ui/ai_models_page.dart` |
+| **ORT 是 build 时管理**(不进 in-app installer) | ✅ `tool/fetch-onnxruntime.sh` 下载 ORT 1.24.2(匹配 `ort 2.0.0-rc.12`),cache 在 `.cache/onnxruntime/`,放 `libonnxruntime.dylib` 到 cdylib 输出目录 | `tool/fetch-onnxruntime.sh` |
+| Bootstrap auto-discovery (model 走 installer, ORT 走 build-bundled) | ✅ 启动:`--dart-define` overrides → installer model dir + `_discoverBundledOrtDylib` → 任一失败停 stub | `lib/app/bootstrap.dart::_resolveEmbedderPaths` + `_discoverBundledOrtDylib` |
 | crate README + 用户安装步骤 | ✅ 重写为 in-app installer 主路径 | `apps/mobile/native/lifeos_native/README.md` |
 
 **为什么 fastembed 而不是 candle / llama.cpp / 原始 GGUF Q8_0**:
@@ -243,12 +244,13 @@ LLM 应**优先**调 `build_context`(回答涉及"以前 / 上次 / 我当时为
 
 **生产启用步骤** (终端用户,无需 CLI):
 
-1. 打开 app → Settings → **AI 模型**
-2. 在 "EmbeddingGemma 300M" 卡片点击 "下载"(~300 MB,进度条显示)
-3. 在 "ONNX Runtime" 卡片点击 "下载"(~16 MB)
-4. 重启应用 — bootstrap 自动探测 `<app_support>/embedders/` 下的安装目录,切换到 Rust embedder
+1. 开发者运行一次 `tool/build-lifeos-native.sh macos`(同时编译 Rust + 拉 ORT,自动嵌入 dist/macos/)。CI / cargokit `flutter run` 会在 build 阶段自动做这件事
+2. 用户:打开 app → Settings → **AI 模型** → 在 "EmbeddingGemma 300M" 卡片点 "下载"(~330 MB,进度条显示)
+3. 用户:重启应用 — bootstrap 自动探测 `<app_support>/embedders/` 下的模型 + 可执行文件附近的 `libonnxruntime.dylib`,切换到 Rust embedder
 
-无 `--dart-define`,无 curl。模型存到 `getApplicationSupportDirectory()`,survives app update,不进 iCloud。
+ORT **不进** in-app installer —— 它是 Rust crate 依赖,跟 `liblifeos_native.{dylib,so}` 一起在 build 阶段拉(`tool/fetch-onnxruntime.sh`)。用户视角下完全看不到 ORT。
+
+`--dart-define` 仍可作开发者 override(`RUST_EMBEDDER_{MODEL_DIR,ORT_DYLIB_PATH,LIBRARY_PATH}`):测试 / 复现 / 预先 stage 模型目录时用。
 
 **`--dart-define` 仍可作开发者 override**(`RUST_EMBEDDER_{MODEL_DIR,ORT_DYLIB_PATH,LIBRARY_PATH}`),适合:
 - 测试 (`flutter test` 没有 plugin loader,需要 `--dart-define=RUST_EMBEDDER_LIBRARY_PATH=...`)

@@ -25,6 +25,11 @@ const _candidateDylibPaths = <String>[
   'native/lifeos_native/target/release/liblifeos_native.dylib',
 ];
 
+const _realModelDir = String.fromEnvironment('RUST_EMBEDDER_MODEL_DIR');
+const _realOrtDylibPath = String.fromEnvironment(
+  'RUST_EMBEDDER_ORT_DYLIB_PATH',
+);
+
 String? _findDylib() {
   for (final p in _candidateDylibPaths) {
     final f = File(p);
@@ -78,6 +83,39 @@ void main() {
         throwsA(isA<RustEmbedderUnavailable>()),
       );
     }, skip: skipReason);
+
+    test(
+      'GemmaEmbedder.load embeds text with real model when configured',
+      () async {
+        final realSkipReason = switch ((
+          skipReason,
+          _realModelDir.isEmpty,
+          _realOrtDylibPath.isEmpty,
+        )) {
+          (final reason?, _, _) => reason,
+          (_, true, _) => 'RUST_EMBEDDER_MODEL_DIR not set',
+          (_, _, true) => 'RUST_EMBEDDER_ORT_DYLIB_PATH not set',
+          _ => null,
+        };
+        if (realSkipReason != null) {
+          markTestSkipped(realSkipReason);
+          return;
+        }
+
+        final embedder = await RustGemmaEmbedder.load(
+          modelDir: _realModelDir,
+          ortDylibPath: _realOrtDylibPath,
+          libraryPath: dylibPath,
+        ).timeout(const Duration(minutes: 3));
+
+        expect(embedder.fingerprint, 'embeddinggemma-300m-onnx-int8-d768');
+        expect(embedder.dimension, 768);
+        final vector = await embedder.embed('验证 EmbeddingGemma 真实模型推理');
+        expect(vector, hasLength(768));
+        expect(vector.any((v) => v.abs() > 0.0001), isTrue);
+      },
+      timeout: const Timeout(Duration(minutes: 4)),
+    );
   });
 
   group('initLifeosNativeRuntime error paths', () {

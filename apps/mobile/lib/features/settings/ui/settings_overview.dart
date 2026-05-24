@@ -111,7 +111,7 @@ class SettingsOverview extends ConsumerWidget {
           InlineLinkRow(
             icon: Icons.download_outlined,
             label: 'AI 模型',
-            subtitle: '下载 / 管理本地 embedder (EmbeddingGemma + ONNX Runtime)',
+            subtitle: '下载 / 管理本地 embedder 模型 (EmbeddingGemma)',
             onTap: () => context.goNamed(AppRouteNames.aiModels),
           ),
         ],
