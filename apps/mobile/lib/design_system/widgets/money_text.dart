@@ -388,8 +388,11 @@ class DualMoneyText extends StatelessWidget {
     if (orig == null || orig.currency.toUpperCase() == base.currency.toUpperCase()) {
       return '${base.amount} ${base.currency}';
     }
-    return '${base.amount} ${base.currency} '
-        '(原币 ${orig.amount} ${orig.currency})';
+    // Neutral middot-separated form keeps the spoken label localisable
+    // without depending on AppLocalizations from a design-system widget.
+    // VoiceOver/TalkBack read both amounts + ISO codes verbatim — that
+    // is the maximally clear cue and the only thing this label is for.
+    return '${base.amount} ${base.currency} · ${orig.amount} ${orig.currency}';
   }
 }
 

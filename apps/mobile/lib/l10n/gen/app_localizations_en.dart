@@ -4646,6 +4646,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDataSubtitle => 'Export or import encrypted data backups';
 
   @override
+  String get settingsCrashReportingTitle => 'Crash reporting';
+
+  @override
+  String get settingsCrashReportingSubtitle =>
+      'Send anonymous error reports to help fix bugs. Off by default.';
+
+  @override
   String get settingsAiPrivacyTitle => 'AI privacy';
 
   @override

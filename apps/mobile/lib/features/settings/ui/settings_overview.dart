@@ -8,6 +8,7 @@ import '../../../app/route_paths.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/config/app_version.dart';
 import '../../../core/haptics/haptics.dart';
+import '../../../core/logging/crash_reporting_preference.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../analytics/data/risk_threshold_preferences.dart';
@@ -129,6 +130,8 @@ class SettingsOverview extends ConsumerWidget {
             subtitle: l10n.settingsDataSubtitle,
             onTap: () => context.goNamed(AppRouteNames.backup),
           ),
+          _SectionDivider(),
+          const _CrashReportingRow(),
         ],
       ),
     );
@@ -510,6 +513,29 @@ class _MarketColorPreview extends StatelessWidget {
 }
 
 /// Risk appetite chip row — the single user-facing dial that drives
+/// Opt-in toggle for anonymous crash + breadcrumb telemetry
+/// (`roadmap-next.md` §3.6). Defaults to OFF — flipping this only takes
+/// effect on the *next* error captured, not retroactively, and even when
+/// enabled it stays a no-op until the Sentry integration registers a
+/// real [crashReporterDelegateProvider].
+class _CrashReportingRow extends ConsumerWidget {
+  const _CrashReportingRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final enabled = ref.watch(crashReportingEnabledProvider);
+    return InlineSwitchRow(
+      icon: Icons.bug_report_outlined,
+      label: l10n.settingsCrashReportingTitle,
+      subtitle: l10n.settingsCrashReportingSubtitle,
+      value: enabled,
+      onChanged: (next) =>
+          ref.read(crashReportingEnabledProvider.notifier).setEnabled(next),
+    );
+  }
+}
+
 /// rebalance preset, AI tone and (by default) concentration alert
 /// sensitivity. Sits at the top of the Planning card so it reads as
 /// the section's "main idea".
