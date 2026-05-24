@@ -85,6 +85,7 @@
 
 - ✅ **数据层落地** (2026-05-24): `budgets` 表 (schema v15) + `BudgetRepository`,sync 走 row-state。9 个 repo 测试。
 - ✅ **Riverpod provider 接线** (2026-05-24): `budgetRepositoryProvider` / `budgetsStreamProvider` / `budgetsForMonthProvider` 在 `data/repositories/providers.dart`,可被任何 UI 消费。
+- ✅ **读模型 `MonthlyBudgetSummary`** (2026-05-24): `features/cashflow/domain/budget_summary.dart`,`buildMonthlyBudgetSummary` pure 聚合器(joins budgets × spend by categoryId,过滤异币种 / 跨月 / tombstone),输出 `rankedByStrain`,total over/under flag。7 个测试。
 - ⏳ 现金流预测视图(归位 **Plan tab**)— UI 集成,作为单独 PR
 - ⏳ 与 FIRE engine 的接口:预算偏差影响 safety level(松耦合 — Budget 写 read-model,FIRE 订阅)— 等 UI 之后
 - 详: [midterm 2.1 M1](./roadmap-midterm-execution.md)
@@ -103,7 +104,7 @@
 > 让 AI 回答时引用本地 trace 证据,而不是凭空生成数字。
 
 - ✅ **UserProfile contract 落地** (2026-05-24): `core/ai/contracts/user_profile.dart`,`composeUserProfile` pure function (consumption concentration + savings rate + risk appetite),snake_case JSON 接口 + < 8KB roundtrip 验证。11 个测试。
-- ⏳ system prompt 注入 + 8KB 降级 — 等 chat 集成
+- ✅ **System prompt 注入** (2026-05-24): `core/ai/runtime/device/device_user_profile_prompt.dart` 的 `renderContextPackSystemAppendix(pack)` 把 `ContextPack.BaseContext` 渲染成 < 1KB 中文 appendix(风险偏好 + 报表币种 + 月均收支 + 趋势 + FIRE 进度);`DeviceLlmRuntime.run` 把它喂给 `DeviceSession.systemAppendix`。CN literal allowlist 已登记。8 个测试。
 - ⏳ tool result evidence 字段 + UI 跳转 — 单独 PR
 - 详: [midterm 2.5 M1](./roadmap-midterm-execution.md)
 
