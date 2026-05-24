@@ -249,8 +249,11 @@
 
 | 阶段 | 状态 |
 |---|---|
-| D-0 决策落地 + 文档基线 | ✅ 进行中(本批 commit) |
-| D-1 Shell foundation (1.1–1.8) | ⏳ 未启动 |
+| D-0 决策落地 + 文档基线 | ✅ 完成 (2026-05-24) |
+| D-1.7 Memory Layer substrate (vector store + embedder seam) | ✅ 完成 (2026-05-24) |
+| D-1.7b Memory Runtime (typed records + lifecycle + ContextBuilder) | ✅ 完成 (2026-05-24) |
+| D-1.7c Rust MiniLM embedder drop-in | ⏳ 唯一剩余的 Rust 工作 (`lifeos-shell.md` §6.6) |
+| D-1.1 / 1.2 / 1.3 / 1.4 / 1.5 / 1.6 / 1.8 | ⏳ 未启动 |
 | D-2 HealthOS MVP | ⏳ 等 D-1 |
 | D-3+ TimeOS / KnowledgeOS / LivingOS | ❌ 触发性,未触发 |
 
