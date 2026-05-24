@@ -72,7 +72,6 @@ void main() {
         backend: Backend.hybrid,
         budgetTier: BudgetTier.standard,
         routingReason: 'analyze_hybrid',
-        usedCloud: true,
         totalDurationMs: 0,
       );
       final start = DateTime.parse('2026-05-10T10:00:00.000Z');
@@ -117,7 +116,6 @@ void main() {
         backend: Backend.device,
         budgetTier: BudgetTier.small,
         routingReason: 'analyze_offline_template',
-        usedCloud: false,
         totalDurationMs: 0,
       );
       final trace = AiTraceBuilder.fromSeed(seed).finalize(
@@ -139,6 +137,5 @@ AiTrace _trace(String id, String iso) => AiTrace(
   backend: Backend.device,
   budgetTier: BudgetTier.small,
   routingReason: 'test',
-  usedCloud: false,
   totalDurationMs: 0,
 );

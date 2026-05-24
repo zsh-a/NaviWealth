@@ -65,8 +65,6 @@ class ContextCompressor {
     double? expenseAnomalyDelta,
     int? depositMaturityCount,
     int? depositMaturityDays,
-    List<AnalyticalUpload> analyticalUploads = const <AnalyticalUpload>[],
-    String? deviceHlc,
   }) {
     final signals = <RecentSignal>[];
     if (expenseAnomalyDelta != null) {
@@ -96,8 +94,6 @@ class ContextCompressor {
       route: route,
       intent: intent,
       signals: List<RecentSignal>.unmodifiable(signals),
-      analyticalUploads: List<AnalyticalUpload>.unmodifiable(analyticalUploads),
-      deviceHlc: deviceHlc,
     );
   }
 
@@ -115,8 +111,6 @@ class ContextCompressor {
     double? expenseAnomalyDelta,
     int? depositMaturityCount,
     int? depositMaturityDays,
-    List<AnalyticalUpload> analyticalUploads = const <AnalyticalUpload>[],
-    String? deviceHlc,
     PrivacyBudget budget = PrivacyBudget.standard,
     RiskPreference? riskPreference,
     FireGoalSummary? fireGoal,
@@ -135,8 +129,6 @@ class ContextCompressor {
         expenseAnomalyDelta: expenseAnomalyDelta,
         depositMaturityCount: depositMaturityCount,
         depositMaturityDays: depositMaturityDays,
-        analyticalUploads: analyticalUploads,
-        deviceHlc: deviceHlc,
       ),
       budget: budget,
     );

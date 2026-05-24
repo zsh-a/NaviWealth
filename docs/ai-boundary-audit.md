@@ -1,16 +1,17 @@
 # `core/ai/` 边界审计（2026-05-24）
 
-> **状态：已落地（2026-05-24，三轮）**。
+> **状态：已落地（2026-05-24，四轮）**。
 > - **第一轮（A0 / A / B / C）**：删 freshness/router/RuntimeRegistry/AiRuntime 抽象等
 > - **第二轮（F + CloudProposal + Backend fossil + AnalyticalUpload doc + ai-architecture.md 校准）**
 > - **第三轮（G / H / I+J / K / L）**：删 disclosure 全链（DisclosureSummary/`usedRawLedger`/`disclosures`/
 >   addDisclosure/LedgerField/DisclosureRequest/DisclosureResponse/UserConsent）、TaskContext 的
 >   `retrieved`/`aggregates`/ScopedAggregate、ToolDescriptor.readModelLayer + ReadModelLayer enum、
 >   AnonymizationLevel enum + amountAnonymization getter、3 个 l10n orphan keys
+> - **第四轮（M / N / D-partial）**：删 ToolDescriptor.`allowedRuntimes` + `AllowedRuntime` enum、
+>   `AiTrace.usedCloud`（持久化但零读取）、`TaskContext.analyticalUploads` 预注入 + `deviceHlc` +
+>   `_buildAnalyticalUploads` 链（保留 `AnalyticalUpload` class，6 个 device tool 仍作输出 shape 用）
 >
-> 批 D（ContextPack/AnalyticalUpload 是否预注入）仍待测量后定，未做。
->
-> 累计 stats（三轮合计）：~3 700 行净删除，约 50 个文件触及。
+> 累计 stats（四轮合计）：~4 400 行净删除，约 55 个文件触及。
 > 当前架构 SSOT 见 `docs/ai-architecture.md`。
 >
 > 保留本文档作历史参考，解释这轮清理"删了什么 / 留了什么 / 为什么"。

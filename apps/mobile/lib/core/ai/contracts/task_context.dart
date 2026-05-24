@@ -233,39 +233,21 @@ class TaskContext {
     required this.route,
     required this.intent,
     this.signals = const <RecentSignal>[],
-    this.analyticalUploads = const <AnalyticalUpload>[],
-    this.deviceHlc,
   });
 
   final RouteContext route;
   final IntentHint intent;
   final List<RecentSignal> signals;
 
-  /// 端侧 detector 信号（recurring_pattern / anomaly_flag / refund_link /
-  /// transfer_link / subscription_change / investment_performance）预注入
-  /// 到 device LLM 的 prompt。类名见 [AnalyticalUpload]——"Upload"是历史命名，
-  /// 已无 upload 行为。
-  final List<AnalyticalUpload> analyticalUploads;
-
-  /// 端侧本地最新 HLC（同 syncLocalHlcProvider 的字符串形式），用作本批
-  /// analyticalUploads 的时戳，让 LLM 知道这批摘要是多久前的快照。
-  /// Null = 没上报或未取到 HLC。
-  final String? deviceHlc;
-
   Map<String, Object?> toJson() => <String, Object?>{
     'route': route.toJson(),
     'intent': intent.toJson(),
     'signals': signals.map((s) => s.toJson()).toList(growable: false),
-    if (analyticalUploads.isNotEmpty)
-      'analytical_uploads':
-          analyticalUploads.map((u) => u.toJson()).toList(growable: false),
-    if (deviceHlc != null && deviceHlc!.isNotEmpty) 'device_hlc': deviceHlc,
   };
 
   factory TaskContext.fromJson(Map<String, Object?> json) {
     final route = json['route'];
     final intent = json['intent'];
-    final dh = json['device_hlc'];
     return TaskContext(
       route: route is Map
           ? RouteContext.fromJson(_strKeyed(route))
@@ -277,11 +259,6 @@ class TaskContext {
               risk: RiskLevel.info,
             ),
       signals: _list(json['signals'], RecentSignal.fromJson),
-      analyticalUploads: _list(
-        json['analytical_uploads'],
-        AnalyticalUpload.fromJson,
-      ),
-      deviceHlc: dh is String ? dh : null,
     );
   }
 }
