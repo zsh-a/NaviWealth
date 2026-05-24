@@ -13,18 +13,25 @@ import 'crash_reporter.dart';
 /// Construct one instance per app (see `loggerProvider`). Call
 /// [AppLogger.bootstrap] at startup to install the global default used by code
 /// paths that run before Riverpod is ready (e.g. zone error handlers).
+Talker createAppTalker() {
+  return Talker(
+    settings: TalkerSettings(
+      useConsoleLogs: true,
+      useHistory: true,
+      maxHistoryItems: 1000,
+      timeFormat: TimeFormat.timeAndSeconds,
+    ),
+  );
+}
+
 class AppLogger {
-  AppLogger({required AppEnvironment environment, CrashReporter? crashReporter})
-    : _environment = environment,
-      _crashReporter = crashReporter ?? const NoopCrashReporter(),
-      _talker = Talker(
-        settings: TalkerSettings(
-          useConsoleLogs: true,
-          useHistory: true,
-          maxHistoryItems: 1000,
-          timeFormat: TimeFormat.timeAndSeconds,
-        ),
-      );
+  AppLogger({
+    required AppEnvironment environment,
+    CrashReporter? crashReporter,
+    Talker? talker,
+  }) : _environment = environment,
+       _crashReporter = crashReporter ?? const NoopCrashReporter(),
+       _talker = talker ?? createAppTalker();
 
   final AppEnvironment _environment;
   final CrashReporter _crashReporter;
