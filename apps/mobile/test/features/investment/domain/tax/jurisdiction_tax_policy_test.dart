@@ -72,8 +72,9 @@ void main() {
     test('custom override beats the default table', () {
       final custom = JurisdictionTaxPolicy(
         dividendRates: {
-          const DividendTaxKey(TaxJurisdiction.us, TaxJurisdiction.cn):
-              d('0.05'),
+          const DividendTaxKey(TaxJurisdiction.us, TaxJurisdiction.cn): d(
+            '0.05',
+          ),
         },
       );
       final r = custom.dividendWithholding(
@@ -110,17 +111,19 @@ void main() {
       expect(r.tax, d('220'));
     });
 
-    test('US holder long-term gain (>= 365 days) uses long-term rate (15%)',
-        () {
-      final r = policy.capitalGainsTax(
-        realizedGain: d('1000'),
-        currency: 'USD',
-        holdingPeriod: const Duration(days: 365),
-        holderJurisdiction: TaxJurisdiction.us,
-      );
-      expect(r.rate, d('0.15'));
-      expect(r.tax, d('150'));
-    });
+    test(
+      'US holder long-term gain (>= 365 days) uses long-term rate (15%)',
+      () {
+        final r = policy.capitalGainsTax(
+          realizedGain: d('1000'),
+          currency: 'USD',
+          holdingPeriod: const Duration(days: 365),
+          holderJurisdiction: TaxJurisdiction.us,
+        );
+        expect(r.rate, d('0.15'));
+        expect(r.tax, d('150'));
+      },
+    );
 
     test('losses incur no tax', () {
       final r = policy.capitalGainsTax(

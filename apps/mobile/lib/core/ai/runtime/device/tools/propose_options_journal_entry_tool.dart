@@ -24,37 +24,34 @@ class ProposeOptionsJournalEntryTool implements DeviceTool {
 
   @override
   Map<String, Object?> get inputSchema => const <String, Object?>{
-        'type': 'object',
-        'required': <String>[
-          'strategy',
-          'underlying',
-          'option_symbol',
-          'entry_credit',
-        ],
-        'properties': <String, Object?>{
-          'strategy': <String, Object?>{
-            'type': 'string',
-            'enum': ['cash_secured_put', 'covered_call'],
-          },
-          'underlying': <String, Object?>{'type': 'string'},
-          'option_symbol': <String, Object?>{'type': 'string'},
-          'opened_at_iso': <String, Object?>{'type': 'string'},
-          'entry_credit': <String, Object?>{
-            'type': 'number',
-            'minimum': 0,
-          },
-          'currency': <String, Object?>{
-            'type': 'string',
-            'minLength': 3,
-            'maxLength': 8,
-          },
-          'status': <String, Object?>{
-            'type': 'string',
-            'enum': ['open', 'closed', 'assigned', 'expired'],
-          },
-          'notes': <String, Object?>{'type': 'string'},
-        },
-      };
+    'type': 'object',
+    'required': <String>[
+      'strategy',
+      'underlying',
+      'option_symbol',
+      'entry_credit',
+    ],
+    'properties': <String, Object?>{
+      'strategy': <String, Object?>{
+        'type': 'string',
+        'enum': ['cash_secured_put', 'covered_call'],
+      },
+      'underlying': <String, Object?>{'type': 'string'},
+      'option_symbol': <String, Object?>{'type': 'string'},
+      'opened_at_iso': <String, Object?>{'type': 'string'},
+      'entry_credit': <String, Object?>{'type': 'number', 'minimum': 0},
+      'currency': <String, Object?>{
+        'type': 'string',
+        'minLength': 3,
+        'maxLength': 8,
+      },
+      'status': <String, Object?>{
+        'type': 'string',
+        'enum': ['open', 'closed', 'assigned', 'expired'],
+      },
+      'notes': <String, Object?>{'type': 'string'},
+    },
+  };
 
   @override
   Future<Object?> invoke(
@@ -75,15 +72,16 @@ class ProposeOptionsJournalEntryTool implements DeviceTool {
         'propose_options_journal_entry: missing required fields',
       );
     }
-    final openedAt = proposalOptionalStr(input, 'opened_at_iso') ??
+    final openedAt =
+        proposalOptionalStr(input, 'opened_at_iso') ??
         DateTime.now().toUtc().toIso8601String();
     if (!isRfc3339(openedAt)) {
       return proposalBadRequest(
         'propose_options_journal_entry: opened_at_iso must be RFC3339',
       );
     }
-    final currency =
-        (proposalOptionalStr(input, 'currency') ?? 'USD').toUpperCase();
+    final currency = (proposalOptionalStr(input, 'currency') ?? 'USD')
+        .toUpperCase();
     final statusRaw = proposalOptionalStr(input, 'status') ?? 'open';
     final status = parseTradeJournalStatus(statusRaw);
     final notes = proposalOptionalStr(input, 'notes');

@@ -44,8 +44,7 @@ class DividendCenterPage extends ConsumerWidget {
               title: l10n.dividendCenterLoadError('$error'),
               action: FButton(
                 variant: FButtonVariant.ghost,
-                onPress: () =>
-                    ref.invalidate(dividendCenterSnapshotProvider),
+                onPress: () => ref.invalidate(dividendCenterSnapshotProvider),
                 child: Text(l10n.commonRetry),
               ),
             ),
@@ -240,8 +239,7 @@ class _RankingSection extends ConsumerWidget {
                         code: snapshot.baseCurrency,
                       ),
                     ),
-                    if (row != rows.last)
-                      const Divider(height: AppSpacing.s16),
+                    if (row != rows.last) const Divider(height: AppSpacing.s16),
                   ],
                 ],
               );
@@ -419,11 +417,7 @@ class _TimelineRow extends StatelessWidget {
             Text(date, style: TextStyle(color: muted)),
             const SizedBox(width: AppSpacing.s12),
             Expanded(
-              child: Text(
-                asset,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: Text(asset, maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
             const SizedBox(width: AppSpacing.s12),
             Flexible(
@@ -623,4 +617,3 @@ class _SectionHeading extends StatelessWidget {
     );
   }
 }
-

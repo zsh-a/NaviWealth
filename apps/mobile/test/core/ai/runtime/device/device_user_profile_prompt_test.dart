@@ -32,10 +32,7 @@ ContextPack _pack({
     ),
     task: const TaskContext(
       route: RouteContext(path: '/', area: 'home'),
-      intent: IntentHint(
-        capability: Capability.analyze,
-        risk: RiskLevel.info,
-      ),
+      intent: IntentHint(capability: Capability.analyze, risk: RiskLevel.info),
     ),
     budget: PrivacyBudget.standard,
   );
@@ -48,14 +45,16 @@ void main() {
     });
 
     test('includes risk / currency / cashflow / FIRE bullets', () {
-      final out = renderContextPackSystemAppendix(_pack(
-        fireGoal: const FireGoalSummary(
-          targetMinor: '25000000',
-          currency: 'CNY',
-          progressFraction: 0.32,
-          yearsRemainingEstimate: 12.4,
+      final out = renderContextPackSystemAppendix(
+        _pack(
+          fireGoal: const FireGoalSummary(
+            targetMinor: '25000000',
+            currency: 'CNY',
+            progressFraction: 0.32,
+            yearsRemainingEstimate: 12.4,
+          ),
         ),
-      ));
+      );
       expect(out, isNotNull);
       expect(out!, startsWith('\n\n'));
       expect(out, contains('用户画像'));
@@ -105,22 +104,26 @@ void main() {
     });
 
     test('stays well under the 1KB hard cap', () {
-      final out = renderContextPackSystemAppendix(_pack(
-        fireGoal: const FireGoalSummary(
-          targetMinor: '25000000',
-          currency: 'CNY',
-          progressFraction: 0.32,
-          yearsRemainingEstimate: 12.4,
+      final out = renderContextPackSystemAppendix(
+        _pack(
+          fireGoal: const FireGoalSummary(
+            targetMinor: '25000000',
+            currency: 'CNY',
+            progressFraction: 0.32,
+            yearsRemainingEstimate: 12.4,
+          ),
         ),
-      ));
+      );
       expect(out!.length, lessThan(kUserProfileAppendixByteCap));
     });
 
     test('compact-formats large minor amounts as 万 units', () {
-      final out = renderContextPackSystemAppendix(_pack(
-        avgInflowMinor: '15000000', // 150 000.00 → 15.0 万
-        avgOutflowMinor: '8000000', // 80 000.00 → 8.00 万
-      ));
+      final out = renderContextPackSystemAppendix(
+        _pack(
+          avgInflowMinor: '15000000', // 150 000.00 → 15.0 万
+          avgOutflowMinor: '8000000', // 80 000.00 → 8.00 万
+        ),
+      );
       expect(out, contains('15.0 万'));
       // Below 100k threshold the formatter switches precision; ensure
       // the threshold still emits a 万 unit (2-decimal form).

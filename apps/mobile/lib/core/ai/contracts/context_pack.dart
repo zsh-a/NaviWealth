@@ -67,12 +67,8 @@ class ContextPack {
       version: v is Map
           ? ContextPackVersion.fromJson(_strKeyed(v))
           : kCurrentContextPackVersion,
-      base: b is Map
-          ? BaseContext.fromJson(_strKeyed(b))
-          : _emptyBase,
-      task: t is Map
-          ? TaskContext.fromJson(_strKeyed(t))
-          : _emptyTask,
+      base: b is Map ? BaseContext.fromJson(_strKeyed(b)) : _emptyBase,
+      task: t is Map ? TaskContext.fromJson(_strKeyed(t)) : _emptyTask,
       budget: bg is Map
           ? PrivacyBudget.fromJson(_strKeyed(bg))
           : PrivacyBudget.standard,
@@ -135,8 +131,5 @@ const BaseContext _emptyBase = BaseContext(
 // lists inside TaskContext make the whole tree const-buildable.
 const TaskContext _emptyTask = TaskContext(
   route: RouteContext(path: '/', area: 'unknown'),
-  intent: IntentHint(
-    capability: Capability.analyze,
-    risk: RiskLevel.info,
-  ),
+  intent: IntentHint(capability: Capability.analyze, risk: RiskLevel.info),
 );

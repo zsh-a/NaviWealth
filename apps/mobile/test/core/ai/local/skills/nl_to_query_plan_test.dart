@@ -74,10 +74,7 @@ void main() {
       expect(plan, isA<TransactionsFilterPlan>());
       final p = plan! as TransactionsFilterPlan;
       expect(p.range.toExclusive, '2026-05-11T00:00:00.000Z');
-      expect(
-        DateTime.parse(p.range.fromInclusive),
-        DateTime.utc(2026, 4, 11),
-      );
+      expect(DateTime.parse(p.range.fromInclusive), DateTime.utc(2026, 4, 11));
     });
 
     test('交易 without a window returns null (would otherwise be unbounded)', () {
@@ -101,10 +98,7 @@ void main() {
       final plan = parseNlQuery('过去 14 天的交易', now: now);
       expect(plan, isA<TransactionsFilterPlan>());
       final p = plan! as TransactionsFilterPlan;
-      expect(
-        DateTime.parse(p.range.fromInclusive),
-        DateTime.utc(2026, 4, 27),
-      );
+      expect(DateTime.parse(p.range.fromInclusive), DateTime.utc(2026, 4, 27));
     });
 
     test('today / tomorrow / unsupported windows fall through', () {

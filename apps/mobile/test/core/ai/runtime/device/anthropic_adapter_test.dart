@@ -100,9 +100,15 @@ void main() {
       );
       expect(events, hasLength(2));
       final a = events[0] as LlmUsage;
-      expect([a.inputTokens, a.outputTokens, a.cacheReadTokens, a.cacheWriteTokens], [11, 1, 2, 3]);
+      expect(
+        [a.inputTokens, a.outputTokens, a.cacheReadTokens, a.cacheWriteTokens],
+        [11, 1, 2, 3],
+      );
       final b = events[1] as LlmUsage;
-      expect([b.inputTokens, b.outputTokens, b.cacheReadTokens, b.cacheWriteTokens], [0, 7, 0, 0]);
+      expect(
+        [b.inputTokens, b.outputTokens, b.cacheReadTokens, b.cacheWriteTokens],
+        [0, 7, 0, 0],
+      );
     });
 
     test('maps message_delta stop_reason', () {
@@ -115,7 +121,9 @@ void main() {
 
     test('unknown stop_reason yields no stop event (parity with backend)', () {
       expect(
-        _mapAll('data: {"type":"message_delta","delta":{"stop_reason":"weird"}}\n\n'),
+        _mapAll(
+          'data: {"type":"message_delta","delta":{"stop_reason":"weird"}}\n\n',
+        ),
         isEmpty,
       );
     });
@@ -158,12 +166,15 @@ void main() {
           'data: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}\n\n';
       final events = await decodeAnthropicSse(_chunked(sse, size: 5)).toList();
       expect(events.whereType<LlmTextDelta>().single.text, '你好世界');
-      expect(events.whereType<LlmMessageStop>().single.reason,
-          LlmStopReason.endTurn);
+      expect(
+        events.whereType<LlmMessageStop>().single.reason,
+        LlmStopReason.endTurn,
+      );
     });
 
     test('skips `:` keepalive comment lines', () async {
-      const sse = ':keepalive\n\n'
+      const sse =
+          ':keepalive\n\n'
           'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"x"}}\n\n';
       final events = await decodeAnthropicSse(_chunked(sse)).toList();
       expect(events.single, isA<LlmTextDelta>());
@@ -180,21 +191,27 @@ void main() {
 
     test('honours /v1, exact /messages and trailing slashes', () {
       expect(
-        LlmConfig(apiKey: 'k', baseUrl: 'https://x.test/v1', model: 'm')
-            .messagesUrl(),
+        LlmConfig(
+          apiKey: 'k',
+          baseUrl: 'https://x.test/v1',
+          model: 'm',
+        ).messagesUrl(),
         'https://x.test/v1/messages',
       );
       expect(
         LlmConfig(
-                apiKey: 'k',
-                baseUrl: 'https://x.test/custom/messages',
-                model: 'm')
-            .messagesUrl(),
+          apiKey: 'k',
+          baseUrl: 'https://x.test/custom/messages',
+          model: 'm',
+        ).messagesUrl(),
         'https://x.test/custom/messages',
       );
       expect(
-        LlmConfig(apiKey: 'k', baseUrl: 'https://x.test///', model: 'm')
-            .messagesUrl(),
+        LlmConfig(
+          apiKey: 'k',
+          baseUrl: 'https://x.test///',
+          model: 'm',
+        ).messagesUrl(),
         'https://x.test/v1/messages',
       );
     });
@@ -254,25 +271,24 @@ void main() {
       );
       final streaming =
           jsonDecode(req.encodeStreaming()) as Map<String, Object?>;
-      final oneShot =
-          jsonDecode(req.encodeOneShot()) as Map<String, Object?>;
+      final oneShot = jsonDecode(req.encodeOneShot()) as Map<String, Object?>;
       expect(streaming['stream'], true);
       expect(oneShot['stream'], false);
       final msg0 =
           (streaming['messages']! as List).first as Map<String, Object?>;
       expect(msg0['content'], 'hi');
-      final tool0 =
-          (streaming['tools']! as List).first as Map<String, Object?>;
+      final tool0 = (streaming['tools']! as List).first as Map<String, Object?>;
       expect(tool0['input_schema'], {'type': 'object'});
       expect(streaming['max_tokens'], 256);
     });
 
     test('content-block builders match Anthropic shapes', () {
       expect(AnthropicBlocks.text('a'), {'type': 'text', 'text': 'a'});
-      expect(
-        AnthropicBlocks.thinking(thinking: 'reasoned', signature: 'sig'),
-        {'type': 'thinking', 'thinking': 'reasoned', 'signature': 'sig'},
-      );
+      expect(AnthropicBlocks.thinking(thinking: 'reasoned', signature: 'sig'), {
+        'type': 'thinking',
+        'thinking': 'reasoned',
+        'signature': 'sig',
+      });
       // No signature (reasoning-only providers): the key is omitted, not
       // serialised as null.
       expect(AnthropicBlocks.thinking(thinking: 'r'), {

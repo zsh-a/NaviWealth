@@ -1,0 +1,42 @@
+[package]
+name = "lifeos_native"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Native primitives for NaviWealth / LifeOS (D-1.7c: EmbeddingGemma embedder via fastembed)."
+
+# Single FFI surface for the Flutter app. Builds as both cdylib (iOS /
+# macOS / Android dynamic linking) and staticlib (iOS device archive).
+[lib]
+name = "lifeos_native"
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+# fastembed wraps `ort` (ONNX Runtime) — much simpler DX than candle
+# for embedding inference. `UserDefinedEmbeddingModel` lets us load
+# the EmbeddingGemma ONNX export from disk. We disable defaults to
+# drop hf-hub (we ship our own model loading) and image-models.
+#
+# `ort-load-dynamic` instead of `ort-download-binaries`: ORT's
+# prebuilt static archives ship duplicate `.o` files across their
+# sub-libraries (libonnx_proto.a + libonnxruntime_optimizer.a etc.
+# all contain a copy of `onnx-ml.pb.cc.o`), which surfaces as ~756
+# "duplicate symbol" errors when force-loaded into the Flutter app.
+# Dynamic loading avoids the issue — ORT is shipped as a separate
+# `libonnxruntime.dylib` / `.so` / `.dll` discovered at runtime via
+# `ORT_DYLIB_PATH`. The Flutter side bundles the dylib alongside
+# the app; see `apps/mobile/native/lifeos_native/README.md`.
+fastembed = { version = "5.13", default-features = false, features = ["ort-load-dynamic"] }
+anyhow = "1"
+# flutter_rust_bridge generates Dart bindings from these signatures.
+# Surface in `src/api/` is the only thing the codegen looks at;
+# everything else stays private to the crate.
+flutter_rust_bridge = "=2.12.0"
+
+[profile.release]
+# Smaller binary; matters for mobile bundle size.
+opt-level = "z"
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"

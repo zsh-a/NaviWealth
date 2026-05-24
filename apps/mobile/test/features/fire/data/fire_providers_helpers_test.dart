@@ -31,11 +31,7 @@ void main() {
         period: CashFlowPeriod.month,
         baseCurrency: 'CNY',
         buckets: [
-          _bucket(
-            key: '2026-04',
-            kind: CashFlowKind.expense,
-            amount: '-4000',
-          ),
+          _bucket(key: '2026-04', kind: CashFlowKind.expense, amount: '-4000'),
         ],
         totalInBase: Money(Decimal.parse('-4000'), 'CNY'),
       );
@@ -116,25 +112,27 @@ void main() {
       );
     }
 
-    test('investable sums financial sleeves but skips real estate / vehicle',
-        () {
-      final s = snapshot(
-        allocations: [
-          alloc(AssetCategory.cash, '20000'),
-          alloc(AssetCategory.stock, '300000'),
-          alloc(AssetCategory.etf, '150000'),
-          alloc(AssetCategory.bondsAndFunds, '50000'),
-          alloc(AssetCategory.crypto, '10000'),
-          alloc(AssetCategory.realEstate, '2000000'),
-          alloc(AssetCategory.vehicle, '120000'),
-          alloc(AssetCategory.liability, '500000'),
-        ],
-      );
-      expect(
-        computeInvestableAssets(s),
-        Money(Decimal.parse('530000'), 'CNY'),
-      );
-    });
+    test(
+      'investable sums financial sleeves but skips real estate / vehicle',
+      () {
+        final s = snapshot(
+          allocations: [
+            alloc(AssetCategory.cash, '20000'),
+            alloc(AssetCategory.stock, '300000'),
+            alloc(AssetCategory.etf, '150000'),
+            alloc(AssetCategory.bondsAndFunds, '50000'),
+            alloc(AssetCategory.crypto, '10000'),
+            alloc(AssetCategory.realEstate, '2000000'),
+            alloc(AssetCategory.vehicle, '120000'),
+            alloc(AssetCategory.liability, '500000'),
+          ],
+        );
+        expect(
+          computeInvestableAssets(s),
+          Money(Decimal.parse('530000'), 'CNY'),
+        );
+      },
+    );
 
     test('liquid is exactly the cash slice', () {
       final s = snapshot(

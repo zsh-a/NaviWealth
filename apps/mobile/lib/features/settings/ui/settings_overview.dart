@@ -110,7 +110,8 @@ class SettingsOverview extends ConsumerWidget {
         ],
       ),
     );
-    final isLocalOnly = ref.watch(authControllerProvider).value is AuthLocalOnly;
+    final isLocalOnly =
+        ref.watch(authControllerProvider).value is AuthLocalOnly;
     final dataGroup = _Section(
       title: l10n.settingsDataSection,
       child: Column(
@@ -181,10 +182,7 @@ class SettingsOverview extends ConsumerWidget {
             dataGroup,
             const SizedBox(height: 16),
             aboutGroup,
-            if (kDebugMode) ...[
-              const SizedBox(height: 16),
-              developerGroup,
-            ],
+            if (kDebugMode) ...[const SizedBox(height: 16), developerGroup],
           ],
         );
 
@@ -319,7 +317,8 @@ class _AccountSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final isLocalOnly = ref.watch(authControllerProvider).value is AuthLocalOnly;
+    final isLocalOnly =
+        ref.watch(authControllerProvider).value is AuthLocalOnly;
 
     if (isLocalOnly) {
       return _LocalModeStatusRow(

@@ -53,25 +53,25 @@ void main() {
       expect(batch.single.rowId, saved.sync.ownerUserId);
     });
 
-    test('second upsert queues another dirty pointer at the same row',
-        () async {
-      await profileRepo.upsert(
-        defaultProfileForMode(OptionsStrategyMode.balanced),
-      );
-      outbox.clearQueued();
+    test(
+      'second upsert queues another dirty pointer at the same row',
+      () async {
+        await profileRepo.upsert(
+          defaultProfileForMode(OptionsStrategyMode.balanced),
+        );
+        outbox.clearQueued();
 
-      final loaded = await profileRepo.get('u-test');
-      await profileRepo.upsert(
-        loaded!.copyWith(
-          riskDisclosureAckAt: DateTime.utc(2026, 5, 21),
-        ),
-      );
+        final loaded = await profileRepo.get('u-test');
+        await profileRepo.upsert(
+          loaded!.copyWith(riskDisclosureAckAt: DateTime.utc(2026, 5, 21)),
+        );
 
-      final batch = outbox.queued;
-      expect(batch, hasLength(1));
-      expect(batch.single.table, 'options_strategy_profile');
-      expect(batch.single.rowId, loaded.sync.ownerUserId);
-    });
+        final batch = outbox.queued;
+        expect(batch, hasLength(1));
+        expect(batch.single.table, 'options_strategy_profile');
+        expect(batch.single.rowId, loaded.sync.ownerUserId);
+      },
+    );
 
     test('watch streams the latest profile (or null when absent)', () async {
       final emissions = <bool>[];
@@ -95,24 +95,26 @@ void main() {
   });
 
   group('ApprovedUnderlyingsRepository', () {
-    test('add persists row and queues a dirty pointer with composite id',
-        () async {
-      final saved = await approvedRepo.add(
-        symbol: 'aapl',
-        market: AssetMarket.usStock,
-      );
+    test(
+      'add persists row and queues a dirty pointer with composite id',
+      () async {
+        final saved = await approvedRepo.add(
+          symbol: 'aapl',
+          market: AssetMarket.usStock,
+        );
 
-      // Symbol normalised to upper-case; id is `<market>:<symbol>`.
-      expect(saved.symbol, 'AAPL');
-      expect(saved.id, 'us_stock:AAPL');
-      expect(saved.allowPut, isTrue);
-      expect(saved.allowCall, isTrue);
+        // Symbol normalised to upper-case; id is `<market>:<symbol>`.
+        expect(saved.symbol, 'AAPL');
+        expect(saved.id, 'us_stock:AAPL');
+        expect(saved.allowPut, isTrue);
+        expect(saved.allowCall, isTrue);
 
-      final batch = outbox.queued;
-      expect(batch, hasLength(1));
-      expect(batch.single.table, 'approved_underlyings');
-      expect(batch.single.rowId, 'us_stock:AAPL');
-    });
+        final batch = outbox.queued;
+        expect(batch, hasLength(1));
+        expect(batch.single.table, 'approved_underlyings');
+        expect(batch.single.rowId, 'us_stock:AAPL');
+      },
+    );
 
     test('update queues a dirty pointer at the row', () async {
       final initial = await approvedRepo.add(

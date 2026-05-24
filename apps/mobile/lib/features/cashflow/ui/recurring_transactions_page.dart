@@ -56,8 +56,7 @@ class RecurringTransactionsPage extends ConsumerWidget {
                     title: l10n.recurringEmptyTitle,
                     message: l10n.recurringEmptyBody,
                     action: FButton(
-                      onPress: () =>
-                          showRecurringTransactionForm(context, ref),
+                      onPress: () => showRecurringTransactionForm(context, ref),
                       child: Text(l10n.recurringEmptyCta),
                     ),
                   )
@@ -127,8 +126,7 @@ class _RecurringRow extends ConsumerWidget {
     }
 
     return SoftCard(
-      onPress: () =>
-          showRecurringTransactionForm(context, ref, existing: rule),
+      onPress: () => showRecurringTransactionForm(context, ref, existing: rule),
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
         children: [

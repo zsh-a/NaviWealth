@@ -48,7 +48,7 @@ class CrashReportingPreferenceController extends StateNotifier<bool> {
 /// scattering `if (enabled)` checks across every logger call site.
 class OptInCrashReporter extends CrashReporter {
   OptInCrashReporter({required CrashReporter delegate, required this.enabled})
-      : _delegate = delegate;
+    : _delegate = delegate;
 
   final CrashReporter _delegate;
 

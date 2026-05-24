@@ -118,9 +118,7 @@ void main() {
   });
 
   test('LWW applies a higher-version change', () async {
-    await applier.applyAll([
-      _accountChange(version: _hlc(1_000), name: 'Old'),
-    ]);
+    await applier.applyAll([_accountChange(version: _hlc(1_000), name: 'Old')]);
     final written = await applier.applyAll([
       _accountChange(version: _hlc(3_000), name: 'Updated', device: _devB),
     ]);

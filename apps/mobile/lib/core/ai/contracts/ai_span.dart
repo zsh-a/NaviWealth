@@ -235,9 +235,7 @@ class AiSpan {
       status: status is String
           ? AiSpanStatusWire.parse(status)
           : AiSpanStatus.ok,
-      errorCode: json['err_code'] is String
-          ? json['err_code'] as String
-          : null,
+      errorCode: json['err_code'] is String ? json['err_code'] as String : null,
       errorMessage: json['err_msg'] is String
           ? json['err_msg'] as String
           : null,
@@ -248,9 +246,7 @@ class AiSpan {
       stopReason: json['stop'] is String ? json['stop'] as String : null,
       input: json['input'],
       output: json['output'],
-      attributes: attrs is Map
-          ? attrs.map((k, v) => MapEntry('$k', v))
-          : null,
+      attributes: attrs is Map ? attrs.map((k, v) => MapEntry('$k', v)) : null,
     );
   }
 }

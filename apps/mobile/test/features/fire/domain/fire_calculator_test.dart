@@ -23,23 +23,22 @@ FireGoal _goal({
 void main() {
   final start = DateTime.utc(2026, 1, 1);
   group('FireCalculator', () {
-    test('emits the three default scenario tiers when no live rate is given',
-        () {
-      final view = const FireCalculator().buildView(
-        goal: _goal(),
-        currentNetWorth: _d('200000'),
-        baseCurrency: 'CNY',
-        start: start,
-      );
-      expect(
-        view.scenarios.map((s) => s.tier).toSet(),
-        {
+    test(
+      'emits the three default scenario tiers when no live rate is given',
+      () {
+        final view = const FireCalculator().buildView(
+          goal: _goal(),
+          currentNetWorth: _d('200000'),
+          baseCurrency: 'CNY',
+          start: start,
+        );
+        expect(view.scenarios.map((s) => s.tier).toSet(), {
           FireScenarioTier.conservative,
           FireScenarioTier.neutral,
           FireScenarioTier.aggressive,
-        },
-      );
-    });
+        });
+      },
+    );
 
     test('adds the live tier when liveAnnualReturn is supplied', () {
       final view = const FireCalculator().buildView(
@@ -69,12 +68,15 @@ void main() {
         baseCurrency: 'CNY',
         start: start,
       );
-      final cons = view.scenarios
-          .firstWhere((s) => s.tier == FireScenarioTier.conservative);
-      final neu = view.scenarios
-          .firstWhere((s) => s.tier == FireScenarioTier.neutral);
-      final agg = view.scenarios
-          .firstWhere((s) => s.tier == FireScenarioTier.aggressive);
+      final cons = view.scenarios.firstWhere(
+        (s) => s.tier == FireScenarioTier.conservative,
+      );
+      final neu = view.scenarios.firstWhere(
+        (s) => s.tier == FireScenarioTier.neutral,
+      );
+      final agg = view.scenarios.firstWhere(
+        (s) => s.tier == FireScenarioTier.aggressive,
+      );
       // All should reach within the horizon for these inputs.
       expect(cons.monthsToTarget, isNotNull);
       expect(neu.monthsToTarget, isNotNull);
@@ -97,22 +99,25 @@ void main() {
       expect(view.progressRatio, 1.0); // clamped to [0, 1]
     });
 
-    test('reports unreachable when no return + zero surplus + inflation > 0',
-        () {
-      final view = const FireCalculator().buildView(
-        goal: _goal(monthlySurplus: '0', inflationRate: 0.03),
-        currentNetWorth: _d('500000'),
-        baseCurrency: 'CNY',
-        start: start,
-      );
-      // Conservative real return ≈ 0% after 3% inflation → unreachable.
-      // (3% nominal − 3% inflation; net worth tracks inflation, target races
-      // ahead of net worth's modest gain over zero surplus.)
-      final cons = view.scenarios
-          .firstWhere((s) => s.tier == FireScenarioTier.conservative);
-      expect(cons.monthsToTarget, isNull);
-      expect(cons.isUnreachable, isTrue);
-    });
+    test(
+      'reports unreachable when no return + zero surplus + inflation > 0',
+      () {
+        final view = const FireCalculator().buildView(
+          goal: _goal(monthlySurplus: '0', inflationRate: 0.03),
+          currentNetWorth: _d('500000'),
+          baseCurrency: 'CNY',
+          start: start,
+        );
+        // Conservative real return ≈ 0% after 3% inflation → unreachable.
+        // (3% nominal − 3% inflation; net worth tracks inflation, target races
+        // ahead of net worth's modest gain over zero surplus.)
+        final cons = view.scenarios.firstWhere(
+          (s) => s.tier == FireScenarioTier.conservative,
+        );
+        expect(cons.monthsToTarget, isNull);
+        expect(cons.isUnreachable, isTrue);
+      },
+    );
 
     test('inflation pushes back the crossing date', () {
       final base = const FireCalculator().buildView(
@@ -159,15 +164,17 @@ void main() {
         baseCurrency: 'CNY',
         start: start,
       );
-      final neu = view.scenarios
-          .firstWhere((s) => s.tier == FireScenarioTier.neutral);
+      final neu = view.scenarios.firstWhere(
+        (s) => s.tier == FireScenarioTier.neutral,
+      );
       expect(neu.points.length, greaterThanOrEqualTo(2));
       expect(neu.points.first.date, start);
       // Crossing month must be one of the sampled points.
       final crossing = neu.monthsToTarget;
       if (crossing != null) {
         final hasCrossing = neu.points.any(
-          (p) => p.date.year == start.year + crossing ~/ 12 &&
+          (p) =>
+              p.date.year == start.year + crossing ~/ 12 &&
               p.date.month == ((start.month + crossing - 1) % 12) + 1,
         );
         expect(hasCrossing, isTrue);

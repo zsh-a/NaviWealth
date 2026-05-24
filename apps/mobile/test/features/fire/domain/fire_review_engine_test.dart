@@ -98,9 +98,7 @@ void main() {
       );
       // No critical findings expected.
       expect(
-        review.findings.any(
-          (f) => f.severity == FireActionSeverity.critical,
-        ),
+        review.findings.any((f) => f.severity == FireActionSeverity.critical),
         isFalse,
       );
       // Healthy net worth + below SWR + within target cash + ETA all
@@ -112,8 +110,7 @@ void main() {
       expect(codes, contains(FireReviewFindingCode.fireEtaProgressing));
     });
 
-    test('broken plan emits critical findings + reports stress dangers',
-        () {
+    test('broken plan emits critical findings + reports stress dangers', () {
       final state = _state(
         investable: '0',
         liquid: '0',
@@ -160,8 +157,7 @@ void main() {
       }
     });
 
-    test('currency mismatches and unmapped holdings surface as findings',
-        () {
+    test('currency mismatches and unmapped holdings surface as findings', () {
       final state = _state(currencyMismatch: 2);
       final review = generateReview(
         kind: FireReviewKind.monthly,

@@ -18,9 +18,9 @@ class OptionsStrategyProfileRepository {
     required AppDatabase db,
     required OutboxStore outbox,
     required MutationStamper stamper,
-  })  : _db = db,
-        _outbox = outbox,
-        _stamper = stamper;
+  }) : _db = db,
+       _outbox = outbox,
+       _stamper = stamper;
 
   final AppDatabase _db;
   final OutboxStore _outbox;
@@ -33,17 +33,18 @@ class OptionsStrategyProfileRepository {
       ..where((t) => t.userId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..limit(1);
-    return query
-        .watchSingleOrNull()
-        .map((row) => row == null ? null : _rowToDomain(row));
+    return query.watchSingleOrNull().map(
+      (row) => row == null ? null : _rowToDomain(row),
+    );
   }
 
   Future<OptionsStrategyProfile?> get(String ownerUserId) async {
-    final row = await (_db.select(_db.optionsStrategyProfileTable)
-          ..where((t) => t.userId.equals(ownerUserId))
-          ..where((t) => t.deletedAt.isNull())
-          ..limit(1))
-        .getSingleOrNull();
+    final row =
+        await (_db.select(_db.optionsStrategyProfileTable)
+              ..where((t) => t.userId.equals(ownerUserId))
+              ..where((t) => t.deletedAt.isNull())
+              ..limit(1))
+            .getSingleOrNull();
     return row == null ? null : _rowToDomain(row);
   }
 
@@ -55,7 +56,9 @@ class OptionsStrategyProfileRepository {
     final companion = OptionsStrategyProfileTableCompanion.insert(
       userId: stamp.ownerUserId,
       mode: profile.mode.wire,
-      allowedStrategiesJson: Value(_encodeStrategies(profile.allowedStrategies)),
+      allowedStrategiesJson: Value(
+        _encodeStrategies(profile.allowedStrategies),
+      ),
       minDte: profile.minDte,
       maxDte: profile.maxDte,
       deltaPutMin: profile.deltaPutMin,
@@ -105,7 +108,6 @@ class OptionsStrategyProfileRepository {
       profile.copyWith(riskDisclosureAckAt: DateTime.now().toUtc()),
     );
   }
-
 }
 
 OptionsStrategyProfile _rowToDomain(OptionsStrategyProfileRow row) {
@@ -154,4 +156,3 @@ Set<OptionsStrategyKind> _decodeStrategies(String json) {
   }
   return out;
 }
-

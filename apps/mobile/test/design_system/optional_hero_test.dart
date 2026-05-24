@@ -7,10 +7,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: OptionalHero(
-            tag: 'asset-1-name',
-            child: Text('Apple'),
-          ),
+          body: OptionalHero(tag: 'asset-1-name', child: Text('Apple')),
         ),
       ),
     );

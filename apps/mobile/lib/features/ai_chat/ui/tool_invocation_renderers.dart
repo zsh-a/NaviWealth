@@ -789,7 +789,9 @@ class AssetAllocationView extends StatelessWidget {
       if (mb == null) continue;
       final bucket = _AllocBucket.fromJson(mb);
       if (bucket == null) continue;
-      byCurrency.putIfAbsent(bucket.currency, () => <_AllocBucket>[]).add(bucket);
+      byCurrency
+          .putIfAbsent(bucket.currency, () => <_AllocBucket>[])
+          .add(bucket);
     }
     if (byCurrency.isEmpty) {
       return const _EmptyHint(text: '持仓数据格式异常');
@@ -859,8 +861,9 @@ class _AllocBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest
-            .withValues(alpha: 0.4),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -918,8 +921,10 @@ class _AllocBlock extends StatelessWidget {
                               '${(sorted[i].weight * 100).toStringAsFixed(1)}%',
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(
-                                fontFeatures: const [FontFeature.tabularFigures()],
-                              ),
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
                             ),
                           ],
                         ),
@@ -1057,9 +1062,9 @@ class RecurringPatternsView extends StatelessWidget {
               children: [
                 Text(
                   merchant,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 2),
                 Row(
@@ -1100,9 +1105,9 @@ Widget _miniChip(BuildContext context, String label) {
     ),
     child: Text(
       label,
-      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-        color: cs.onSurfaceVariant,
-      ),
+      style: Theme.of(
+        context,
+      ).textTheme.labelSmall?.copyWith(color: cs.onSurfaceVariant),
     ),
   );
 }
@@ -1182,17 +1187,17 @@ class SubscriptionChangesView extends StatelessWidget {
               children: [
                 Text(
                   merchant,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${fmt.format(prev.abs() / 100.0)} → ${fmt.format(next.abs() / 100.0)} $currency'
                   '${since != null ? ' · 自 ${_displayDate(since)}' : ''}',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: cs.onSurfaceVariant,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(color: cs.onSurfaceVariant),
                 ),
               ],
             ),
@@ -1258,8 +1263,7 @@ class RefundLinksView extends StatelessWidget {
     if (mp == null) return const SizedBox.shrink();
     final origin = _asString(mp['original_txn_id']) ?? '?';
     final refund = _asString(mp['refund_txn_id']) ?? '?';
-    final amountMinor =
-        int.tryParse(_asString(mp['amount_minor']) ?? '') ?? 0;
+    final amountMinor = int.tryParse(_asString(mp['amount_minor']) ?? '') ?? 0;
     final currency = _asString(mp['currency']) ?? '';
     final cs = Theme.of(context).colorScheme;
     return Container(
@@ -1285,10 +1289,11 @@ class RefundLinksView extends StatelessWidget {
                     Expanded(
                       child: Text(
                         origin,
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          fontFamily: 'monospace',
-                          color: cs.onSurfaceVariant,
-                        ),
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
+                              fontFamily: 'monospace',
+                              color: cs.onSurfaceVariant,
+                            ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -1297,19 +1302,16 @@ class RefundLinksView extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(
-                      Icons.north_east,
-                      size: 14,
-                      color: cs.primary,
-                    ),
+                    Icon(Icons.north_east, size: 14, color: cs.primary),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         refund,
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          fontFamily: 'monospace',
-                          color: cs.primary,
-                        ),
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
+                              fontFamily: 'monospace',
+                              color: cs.primary,
+                            ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),

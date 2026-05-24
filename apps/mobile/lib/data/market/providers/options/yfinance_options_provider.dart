@@ -19,8 +19,8 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
   YFinanceOptionsProvider({
     required MarketHttpClient http,
     required YahooCrumbSession session,
-  })  : _http = http,
-        _session = session;
+  }) : _http = http,
+       _session = session;
 
   final MarketHttpClient _http;
   final YahooCrumbSession _session;
@@ -32,16 +32,13 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
   final Map<String, _CachedChainPayload> _perKeyCache = {};
   static const Duration _perKeyTtl = Duration(minutes: 5);
 
-  static const _base =
-      'https://query1.finance.yahoo.com/v7/finance/options';
+  static const _base = 'https://query1.finance.yahoo.com/v7/finance/options';
 
   @override
   String get name => 'yfinance_options';
 
   @override
-  Future<OptionsChainSnapshot> fetchChain(
-    OptionsChainRequest request,
-  ) async {
+  Future<OptionsChainSnapshot> fetchChain(OptionsChainRequest request) async {
     final upper = request.underlying.toUpperCase();
     final cached = _perKeyCache[upper];
     final now = DateTime.now().toUtc();
@@ -100,10 +97,7 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
           path: '$_base/${Uri.encodeComponent(symbol)}',
           method: 'GET',
           responseType: ResponseType.json,
-          queryParameters: {
-            'date': ?expirationEpoch,
-            'crumb': ?_session.crumb,
-          },
+          queryParameters: {'date': ?expirationEpoch, 'crumb': ?_session.crumb},
           headers: headers,
         ),
         endpoint: 'getOptionsChain',
@@ -119,11 +113,11 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
     }
   }
 
-  Future<_RawChain> _fetchOnce(
-    String symbol, {
-    int? expirationEpoch,
-  }) async {
-    final response = await _sendAuthed(symbol, expirationEpoch: expirationEpoch);
+  Future<_RawChain> _fetchOnce(String symbol, {int? expirationEpoch}) async {
+    final response = await _sendAuthed(
+      symbol,
+      expirationEpoch: expirationEpoch,
+    );
     final body = response.data;
     if (body is! Map<String, dynamic>) {
       throw ProviderResponseException(
@@ -156,12 +150,11 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
     }
     final result = _expectMap(results.first, 'optionChain.result[0]');
     final quote = _expectMap(result['quote'], 'quote');
-    final currency =
-        (quote['currency'] as String?)?.toUpperCase() ?? 'USD';
+    final currency = (quote['currency'] as String?)?.toUpperCase() ?? 'USD';
     final underlyingPriceRaw =
         (quote['regularMarketPrice'] as num?)?.toString() ??
-            (quote['ask'] as num?)?.toString() ??
-            (quote['bid'] as num?)?.toString();
+        (quote['ask'] as num?)?.toString() ??
+        (quote['bid'] as num?)?.toString();
     if (underlyingPriceRaw == null) {
       throw ProviderResponseException(
         'quote.regularMarketPrice missing for $symbol',
@@ -178,8 +171,7 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
     int? firstExpirationEpoch;
     if (options.isNotEmpty) {
       final expSlice = _expectMap(options.first, 'options[0]');
-      final expEpoch =
-          (expSlice['expirationDate'] as num?)?.toInt();
+      final expEpoch = (expSlice['expirationDate'] as num?)?.toInt();
       firstExpirationEpoch = expEpoch;
       final expiration = expEpoch == null
           ? null
@@ -243,7 +235,11 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
     final bid = Money(_decimal(_safeNum(bidRaw)), currency);
     final ask = Money(_decimal(_safeNum(askRaw)), currency);
     final mid = _midpoint(bid: bid, ask: ask, lastFallback: raw['lastPrice']);
-    final spread = _spreadPct(bid: bid.amount, ask: ask.amount, mid: mid.amount);
+    final spread = _spreadPct(
+      bid: bid.amount,
+      ask: ask.amount,
+      mid: mid.amount,
+    );
     final dte = expiration
         .toUtc()
         .difference(DateTime(fetchedAt.year, fetchedAt.month, fetchedAt.day))
@@ -265,10 +261,9 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
       mid: mid,
       volume: (raw['volume'] as num?)?.toInt() ?? 0,
       openInterest: (raw['openInterest'] as num?)?.toInt() ?? 0,
-      impliedVolatility:
-          (raw['impliedVolatility'] as num?) == null
-              ? null
-              : _decimal(raw['impliedVolatility'] as num),
+      impliedVolatility: (raw['impliedVolatility'] as num?) == null
+          ? null
+          : _decimal(raw['impliedVolatility'] as num),
       delta: null, // yfinance does not return greeks.
       underlyingPrice: underlyingPrice,
       bidAskSpreadPct: spread,
@@ -285,8 +280,9 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
     final hasAsk = ask.amount > Decimal.zero;
     if (hasBid && hasAsk) {
       final sum = bid.amount + ask.amount;
-      final midAmount =
-          (sum / Decimal.fromInt(2)).toDecimal(scaleOnInfinitePrecision: 6);
+      final midAmount = (sum / Decimal.fromInt(2)).toDecimal(
+        scaleOnInfinitePrecision: 6,
+      );
       return Money(midAmount, bid.currency).rounded();
     }
     if (hasAsk) return ask;
@@ -323,9 +319,11 @@ class YFinanceOptionsProvider implements OptionsChainProvider {
         epoch * 1000,
         isUtc: true,
       );
-      final dte = DateTime.utc(exp.year, exp.month, exp.day)
-          .difference(today)
-          .inDays;
+      final dte = DateTime.utc(
+        exp.year,
+        exp.month,
+        exp.day,
+      ).difference(today).inDays;
       if (dte < minDte || dte > maxDte) continue;
       picked.add(epoch);
     }

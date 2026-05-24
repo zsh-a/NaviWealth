@@ -12,11 +12,11 @@ import 'package:naviwealth/features/options_income/presentation/wheel_lifecycle_
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 SyncMeta _meta() => SyncMeta(
-      ownerUserId: 'u',
-      updatedAt: DateTime.utc(2026, 5, 24),
-      updatedByDevice: 'd',
-      hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'd'),
-    );
+  ownerUserId: 'u',
+  updatedAt: DateTime.utc(2026, 5, 24),
+  updatedByDevice: 'd',
+  hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'd'),
+);
 
 TradeJournalEntry _entry({
   String id = 'e',
@@ -25,22 +25,23 @@ TradeJournalEntry _entry({
   required TradeJournalStatus status,
   String entryCredit = '0',
   String? exitDebit,
-}) =>
-    TradeJournalEntry(
-      id: id,
-      strategy: strategy,
-      symbol: symbol,
-      optionSymbol: '$symbol-OPT',
-      openedAt: DateTime.utc(2026, 5, 1),
-      closedAt: status == TradeJournalStatus.open ? null : DateTime.utc(2026, 5, 15),
-      entryCredit: Decimal.parse(entryCredit),
-      exitDebit: exitDebit == null ? null : Decimal.parse(exitDebit),
-      realizedPnl: null,
-      currency: 'USD',
-      status: status,
-      notes: null,
-      sync: _meta(),
-    );
+}) => TradeJournalEntry(
+  id: id,
+  strategy: strategy,
+  symbol: symbol,
+  optionSymbol: '$symbol-OPT',
+  openedAt: DateTime.utc(2026, 5, 1),
+  closedAt: status == TradeJournalStatus.open
+      ? null
+      : DateTime.utc(2026, 5, 15),
+  entryCredit: Decimal.parse(entryCredit),
+  exitDebit: exitDebit == null ? null : Decimal.parse(exitDebit),
+  realizedPnl: null,
+  currency: 'USD',
+  status: status,
+  notes: null,
+  sync: _meta(),
+);
 
 Future<void> _pump(WidgetTester tester, List<TradeJournalEntry> entries) async {
   await tester.pumpWidget(
@@ -48,11 +49,9 @@ Future<void> _pump(WidgetTester tester, List<TradeJournalEntry> entries) async {
       overrides: [
         // Inject the journal stream — wheelLifecyclesProvider derives
         // from it without touching the database.
-        tradeJournalEntriesProvider.overrideWith(
-          (ref) async* {
-            yield entries;
-          },
-        ),
+        tradeJournalEntriesProvider.overrideWith((ref) async* {
+          yield entries;
+        }),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),

@@ -38,17 +38,14 @@ class ReadAssetWindowTool implements DeviceTool {
       'from': {'type': 'string'},
       'to': {'type': 'string'},
       'purpose': {'type': 'string', 'enum': kScopedPurposes.toList()},
-      'limit': {
-        'type': 'integer',
-        'minimum': 1,
-        'maximum': 50,
-        'default': 20,
-      },
+      'limit': {'type': 'integer', 'minimum': 1, 'maximum': 50, 'default': 20},
     },
   };
 
-  Map<String, Object?> _bad(String message) =>
-      <String, Object?>{'error': message, 'code': 'bad_request'};
+  Map<String, Object?> _bad(String message) => <String, Object?>{
+    'error': message,
+    'code': 'bad_request',
+  };
 
   @override
   Future<Object?> invoke(
@@ -103,13 +100,15 @@ class ReadAssetWindowTool implements DeviceTool {
     required String purpose,
   }) {
     final hits =
-        <({
-          String id,
-          double qty,
-          double? costPerUnit,
-          String? currency,
-          DateTime date,
-        })>[];
+        <
+          ({
+            String id,
+            double qty,
+            double? costPerUnit,
+            String? currency,
+            DateTime date,
+          })
+        >[];
     for (final ewp in entries) {
       final date = ewp.entry.date.toUtc();
       if (date.isBefore(from) || !date.isBefore(to)) continue;

@@ -14,11 +14,7 @@ abstract class DeviceToolDispatcher {
   /// output the loop serialises into a `tool_result` block. Must never
   /// throw — surface failures as an `{error, code, message}` map so the
   /// model can react.
-  Future<Object?> dispatch(
-    DeviceSession session,
-    String name,
-    Object? input,
-  );
+  Future<Object?> dispatch(DeviceSession session, String name, Object? input);
 }
 
 /// Placeholder until W-D4. With no tool schemas advertised the model
@@ -31,13 +27,12 @@ class UnavailableToolDispatcher implements DeviceToolDispatcher {
     DeviceSession session,
     String name,
     Object? input,
-  ) async =>
-      <String, Object?>{
-        'error': 'tool_unavailable',
-        'code': 'tool_unavailable',
-        'tool': name,
-        'message':
-            '端侧工具尚未接入（W-D4 待落地）。请直接基于已知信息回答，'
-            '或告诉用户该数据当前在本机模式下不可用。',
-      };
+  ) async => <String, Object?>{
+    'error': 'tool_unavailable',
+    'code': 'tool_unavailable',
+    'tool': name,
+    'message':
+        '端侧工具尚未接入（W-D4 待落地）。请直接基于已知信息回答，'
+        '或告诉用户该数据当前在本机模式下不可用。',
+  };
 }

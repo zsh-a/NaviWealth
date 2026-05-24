@@ -50,37 +50,40 @@ DeviceSession _session() => DeviceSession(
 
 void main() {
   group('DeviceAgentLoop span emission', () {
-    test('emits one llm span with tokens / model / stop / parent=turn', () async {
-      final adapter = _ScriptedAdapter([
-        [
-          const LlmTextDelta('答案'),
-          const LlmUsage(
-            inputTokens: 120,
-            outputTokens: 30,
-            cacheReadTokens: 8,
-            cacheWriteTokens: 0,
-          ),
-          const LlmMessageStop(LlmStopReason.endTurn),
-        ],
-      ]);
-      final loop = DeviceAgentLoop(
-        streamFn: adapter.stream,
-        model: 'claude-sonnet-4-6',
-        dispatcher: _OkDispatcher(),
-      );
-      final events = await loop.run(_session()).toList();
+    test(
+      'emits one llm span with tokens / model / stop / parent=turn',
+      () async {
+        final adapter = _ScriptedAdapter([
+          [
+            const LlmTextDelta('答案'),
+            const LlmUsage(
+              inputTokens: 120,
+              outputTokens: 30,
+              cacheReadTokens: 8,
+              cacheWriteTokens: 0,
+            ),
+            const LlmMessageStop(LlmStopReason.endTurn),
+          ],
+        ]);
+        final loop = DeviceAgentLoop(
+          streamFn: adapter.stream,
+          model: 'claude-sonnet-4-6',
+          dispatcher: _OkDispatcher(),
+        );
+        final events = await loop.run(_session()).toList();
 
-      final span = events.whereType<SpanEvent>().single;
-      expect(span.kind, AiSpanKind.llm);
-      expect(span.id, 'r1');
-      expect(span.parentId, kTurnSpanId);
-      expect(span.status, AiSpanStatus.ok);
-      expect(span.model, 'claude-sonnet-4-6');
-      expect(span.stopReason, 'end_turn');
-      expect(span.tokens!.input, 120);
-      expect(span.tokens!.cacheRead, 8);
-      expect(span.endedAt.isBefore(span.startedAt), isFalse);
-    });
+        final span = events.whereType<SpanEvent>().single;
+        expect(span.kind, AiSpanKind.llm);
+        expect(span.id, 'r1');
+        expect(span.parentId, kTurnSpanId);
+        expect(span.status, AiSpanStatus.ok);
+        expect(span.model, 'claude-sonnet-4-6');
+        expect(span.stopReason, 'end_turn');
+        expect(span.tokens!.input, 120);
+        expect(span.tokens!.cacheRead, 8);
+        expect(span.endedAt.isBefore(span.startedAt), isFalse);
+      },
+    );
 
     test('tool span parents onto its round and carries IO', () async {
       final adapter = _ScriptedAdapter([
@@ -141,9 +144,7 @@ void main() {
 
     test('provider error round emits an errored llm span', () async {
       final adapter = _ScriptedAdapter([
-        [
-          const LlmStreamErrorEvent(code: 'rate_limit', message: 'slow down'),
-        ],
+        [const LlmStreamErrorEvent(code: 'rate_limit', message: 'slow down')],
       ]);
       final loop = DeviceAgentLoop(
         streamFn: adapter.stream,

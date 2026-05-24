@@ -23,8 +23,9 @@ void main() {
   group('Settings → Base currency', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
-    testWidgets('shows the current base currency in the trailing label',
-        (tester) async {
+    testWidgets('shows the current base currency in the trailing label', (
+      tester,
+    ) async {
       final prefs = await SharedPreferences.getInstance();
       await tester.pumpWidget(await _wrap(prefs));
       await tester.pumpAndSettle();
@@ -46,13 +47,14 @@ void main() {
             overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
             child: MaterialApp(
               theme: AppTheme.light(),
-              localizationsDelegates:
-                  AppLocalizations.localizationsDelegates,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
-              home: Consumer(builder: (context, ref, _) {
-                container = ProviderScope.containerOf(context, listen: false);
-                return const SettingsPage();
-              }),
+              home: Consumer(
+                builder: (context, ref, _) {
+                  container = ProviderScope.containerOf(context, listen: false);
+                  return const SettingsPage();
+                },
+              ),
             ),
           ),
         );

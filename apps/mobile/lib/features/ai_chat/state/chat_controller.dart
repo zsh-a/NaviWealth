@@ -44,10 +44,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
   /// Send [content] as the next user turn. Concurrent calls are
   /// rejected — the UI disables the send button while the pipeline is
   /// running.
-  Future<void> send(
-    String content, {
-    String? systemContext,
-  }) async {
+  Future<void> send(String content, {String? systemContext}) async {
     final trimmed = content.trim();
     if (trimmed.isEmpty || state.isBusy) return;
 
@@ -108,9 +105,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
   /// user content through [send]. No-op while a turn is in flight, or
   /// when there's nothing eligible to regenerate (no assistant message,
   /// no preceding user message, or the assistant is still streaming).
-  Future<void> regenerateLast({
-    String? systemContext,
-  }) async {
+  Future<void> regenerateLast({String? systemContext}) async {
     if (state.isBusy) return;
     final repo = await ref.read(chatRepositoryProvider.future);
     final priorContent = await repo.prepareRegenerateLastAssistant(sessionId);

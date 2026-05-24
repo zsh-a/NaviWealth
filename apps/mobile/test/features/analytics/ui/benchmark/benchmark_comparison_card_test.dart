@@ -31,14 +31,17 @@ ProviderContainer _container({
 }) {
   return ProviderContainer(
     overrides: [
-      benchmarkComparisonPortfolioSeriesProvider
-          .overrideWith((_) => AsyncValue.data(portfolio)),
-      benchmarkHistorySourceProvider
-          .overrideWith((_) async => _StubBenchmarkSource(series)),
+      benchmarkComparisonPortfolioSeriesProvider.overrideWith(
+        (_) => AsyncValue.data(portfolio),
+      ),
+      benchmarkHistorySourceProvider.overrideWith(
+        (_) async => _StubBenchmarkSource(series),
+      ),
       // Pin the range chip so the resolved [DashboardTimeRange] is
       // deterministic — chronologically wrap the fixture data.
-      benchmarkComparisonRangeProvider
-          .overrideWith((_) => DashboardRangePreset.y3),
+      benchmarkComparisonRangeProvider.overrideWith(
+        (_) => DashboardRangePreset.y3,
+      ),
     ],
   );
 }
@@ -52,9 +55,7 @@ Future<void> _pump(WidgetTester tester, ProviderContainer container) async {
         supportedLocales: AppLocalizations.supportedLocales,
         locale: Locale('en'),
         home: Scaffold(
-          body: SingleChildScrollView(
-            child: BenchmarkComparisonCard(),
-          ),
+          body: SingleChildScrollView(child: BenchmarkComparisonCard()),
         ),
       ),
     ),
@@ -100,8 +101,9 @@ void main() {
     },
   );
 
-  testWidgets('toggling a benchmark chip updates the selection state',
-      (tester) async {
+  testWidgets('toggling a benchmark chip updates the selection state', (
+    tester,
+  ) async {
     final now = DateTime.now();
     final from = now.subtract(const Duration(days: 365));
     final container = _container(
@@ -127,10 +129,9 @@ void main() {
       tester.element(find.byType(BenchmarkComparisonCard)),
     );
 
-    expect(
-      container.read(benchmarkComparisonSelectionProvider),
-      const [BenchmarkIndex.hs300],
-    );
+    expect(container.read(benchmarkComparisonSelectionProvider), const [
+      BenchmarkIndex.hs300,
+    ]);
     await tester.tap(find.text(l10n.benchmarkIndexSp500));
     await tester.pumpAndSettle();
 
@@ -140,8 +141,9 @@ void main() {
     );
   });
 
-  testWidgets('renders the empty state when both sides have no data',
-      (tester) async {
+  testWidgets('renders the empty state when both sides have no data', (
+    tester,
+  ) async {
     final container = _container(portfolio: const [], series: const {});
     addTearDown(container.dispose);
     await _pump(tester, container);

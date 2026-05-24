@@ -96,10 +96,7 @@ class _PerspectiveToggle extends StatelessWidget {
 }
 
 class _PerspectiveBody extends ConsumerWidget {
-  const _PerspectiveBody({
-    required this.snapshot,
-    required this.perspective,
-  });
+  const _PerspectiveBody({required this.snapshot, required this.perspective});
 
   final DashboardSnapshot snapshot;
   final WealthPerspective perspective;
@@ -207,7 +204,10 @@ class _BucketRow extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              formatters.currency(bucket.valueInBase.amount, code: baseCurrency),
+              formatters.currency(
+                bucket.valueInBase.amount,
+                code: baseCurrency,
+              ),
               style: context.theme.typography.sm.copyWith(
                 fontWeight: FontWeight.w600,
               ),

@@ -18,7 +18,5 @@ final frameTimingCollectorProvider = Provider<FrameTimingCollector>((ref) {
 /// Recorder that resolves named windows against the active
 /// [frameTimingCollectorProvider].
 final perfTraceRecorderProvider = Provider<PerfTraceRecorder>((ref) {
-  return PerfTraceRecorder(
-    collector: ref.watch(frameTimingCollectorProvider),
-  );
+  return PerfTraceRecorder(collector: ref.watch(frameTimingCollectorProvider));
 });

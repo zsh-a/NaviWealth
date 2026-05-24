@@ -20,9 +20,7 @@ void main() {
       tester,
       name: 'ai_chat_page_login_required',
       variant: variant,
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ],
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
       child: const AiChatPage(),
     );
   });

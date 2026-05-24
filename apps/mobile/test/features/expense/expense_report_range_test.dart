@@ -55,9 +55,8 @@ void main() {
 
     test('custom range rejects missing args', () {
       expect(
-        () => ExpenseReportRange.resolve(
-          preset: ExpenseReportRangePreset.custom,
-        ),
+        () =>
+            ExpenseReportRange.resolve(preset: ExpenseReportRangePreset.custom),
         throwsArgumentError,
       );
     });

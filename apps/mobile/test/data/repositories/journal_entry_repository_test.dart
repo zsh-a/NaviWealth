@@ -68,10 +68,7 @@ void main() {
     final batch = outbox.queued;
     // 1 JE pointer + 2 posting pointers.
     expect(batch, hasLength(3));
-    expect(batch.map((o) => o.table).toSet(), {
-      'journal_entries',
-      'postings',
-    });
+    expect(batch.map((o) => o.table).toSet(), {'journal_entries', 'postings'});
     final je0 = batch.firstWhere((o) => o.table == 'journal_entries');
     expect(je0.rowId, je.entry.id);
   });

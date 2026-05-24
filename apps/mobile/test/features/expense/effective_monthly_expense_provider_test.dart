@@ -13,25 +13,24 @@ import 'package:naviwealth/features/expense/domain/monthly_expense_derivation.da
 import 'package:shared_preferences/shared_preferences.dart';
 
 SyncMeta _meta() => SyncMeta(
-      ownerUserId: 'u',
-      updatedAt: DateTime.utc(2026, 4, 1),
-      updatedByDevice: 't',
-      hlc: Hlc.zero('t'),
-    );
+  ownerUserId: 'u',
+  updatedAt: DateTime.utc(2026, 4, 1),
+  updatedByDevice: 't',
+  hlc: Hlc.zero('t'),
+);
 
 Expense _expense({
   required String id,
   required Decimal amount,
   required DateTime date,
-}) =>
-    Expense(
-      id: id,
-      expenseAccountId: 'cat-1',
-      amount: amount,
-      currency: 'CNY',
-      tradeDate: date,
-      sync: _meta(),
-    );
+}) => Expense(
+  id: id,
+  expenseAccountId: 'cat-1',
+  amount: amount,
+  currency: 'CNY',
+  tradeDate: date,
+  sync: _meta(),
+);
 
 Future<ProviderContainer> _container({
   List<Expense> expenses = const [],
@@ -42,7 +41,9 @@ Future<ProviderContainer> _container({
   return ProviderContainer(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
-      journalExpensesStreamProvider.overrideWith((ref) => Stream.value(expenses)),
+      journalExpensesStreamProvider.overrideWith(
+        (ref) => Stream.value(expenses),
+      ),
       // expense report converter chains through fxRatesStreamProvider →
       // appDatabaseProvider; stub it so tests don't touch the real DB.
       fxRatesStreamProvider.overrideWith(
@@ -119,9 +120,7 @@ void main() {
 
   test('clearing the override returns to auto', () async {
     final container = await _container(
-      initialPrefs: const {
-        'naviwealth.expense.monthly.override': '999',
-      },
+      initialPrefs: const {'naviwealth.expense.monthly.override': '999'},
       expenses: const [],
     );
     addTearDown(container.dispose);

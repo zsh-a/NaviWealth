@@ -82,20 +82,19 @@ Asset asset({
   String symbol = 'AAPL',
   String currency = 'USD',
   String? market,
-}) =>
-    Asset(
-      id: id,
-      type: type,
-      symbol: symbol,
-      currency: currency,
-      market: market,
-      sync: SyncMeta(
-        ownerUserId: 'u',
-        updatedAt: DateTime.utc(2026, 4, 28),
-        updatedByDevice: 'dev',
-        hlc: const Hlc(wallMillis: 0, counter: 0, nodeId: 'dev'),
-      ),
-    );
+}) => Asset(
+  id: id,
+  type: type,
+  symbol: symbol,
+  currency: currency,
+  market: market,
+  sync: SyncMeta(
+    ownerUserId: 'u',
+    updatedAt: DateTime.utc(2026, 4, 28),
+    updatedByDevice: 'dev',
+    hlc: const Hlc(wallMillis: 0, counter: 0, nodeId: 'dev'),
+  ),
+);
 
 /// Counter-based [Hlc] supplier so tests can assert on emitted HLCs.
 class CountingHlcStamper {

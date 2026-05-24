@@ -8,8 +8,7 @@ import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 /// order they were appended.
 extension InMemoryOutboxTestExt on InMemoryOutboxStore {
   /// Queued `(table, rowId)` pointers, oldest first.
-  List<({String table, String rowId})> get queued =>
-      List.unmodifiable(items);
+  List<({String table, String rowId})> get queued => List.unmodifiable(items);
 
   /// Drop every queued pointer.
   void clearQueued() => items.clear();

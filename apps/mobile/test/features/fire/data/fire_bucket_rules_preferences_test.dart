@@ -22,43 +22,45 @@ void main() {
     expect(c.read(fireBucketRulesProvider), isEmpty);
   });
 
-  test('upsert + remove + clear all round-trip across containers',
-      () async {
+  test('upsert + remove + clear all round-trip across containers', () async {
     final prefs = await SharedPreferences.getInstance();
     final c = container(prefs);
 
-    await c.read(fireBucketRulesProvider.notifier).upsert(
-      const FireBucketRule(
-        id: 'asset-1',
-        role: FireBucketRole.growth,
-        targetTable: 'assets',
-        targetId: 'asset-1',
-      ),
-    );
-    await c.read(fireBucketRulesProvider.notifier).upsert(
-      const FireBucketRule(
-        id: 'asset-2',
-        role: FireBucketRole.defensive,
-        targetTable: 'assets',
-        targetId: 'asset-2',
-      ),
-    );
+    await c
+        .read(fireBucketRulesProvider.notifier)
+        .upsert(
+          const FireBucketRule(
+            id: 'asset-1',
+            role: FireBucketRole.growth,
+            targetTable: 'assets',
+            targetId: 'asset-1',
+          ),
+        );
+    await c
+        .read(fireBucketRulesProvider.notifier)
+        .upsert(
+          const FireBucketRule(
+            id: 'asset-2',
+            role: FireBucketRole.defensive,
+            targetTable: 'assets',
+            targetId: 'asset-2',
+          ),
+        );
 
     // Replacement keyed by id.
-    await c.read(fireBucketRulesProvider.notifier).upsert(
-      const FireBucketRule(
-        id: 'asset-1',
-        role: FireBucketRole.cash,
-        targetTable: 'assets',
-        targetId: 'asset-1',
-      ),
-    );
+    await c
+        .read(fireBucketRulesProvider.notifier)
+        .upsert(
+          const FireBucketRule(
+            id: 'asset-1',
+            role: FireBucketRole.cash,
+            targetTable: 'assets',
+            targetId: 'asset-1',
+          ),
+        );
     expect(c.read(fireBucketRulesProvider), hasLength(2));
     expect(
-      c
-          .read(fireBucketRulesProvider)
-          .firstWhere((r) => r.id == 'asset-1')
-          .role,
+      c.read(fireBucketRulesProvider).firstWhere((r) => r.id == 'asset-1').role,
       FireBucketRole.cash,
     );
 

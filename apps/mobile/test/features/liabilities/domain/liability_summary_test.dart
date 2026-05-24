@@ -51,8 +51,20 @@ AmortizationEntry _row({
 void main() {
   test('fromSchedule sums principal/interest and counts paid periods', () {
     final schedule = [
-      _row(idx: 1, principal: '10000', interest: '500', balance: '110000', paid: true),
-      _row(idx: 2, principal: '10000', interest: '458', balance: '100000', paid: true),
+      _row(
+        idx: 1,
+        principal: '10000',
+        interest: '500',
+        balance: '110000',
+        paid: true,
+      ),
+      _row(
+        idx: 2,
+        principal: '10000',
+        interest: '458',
+        balance: '100000',
+        paid: true,
+      ),
       _row(idx: 3, principal: '10000', interest: '417', balance: '90000'),
     ];
     final s = LiabilitySummary.fromSchedule(
@@ -82,9 +94,7 @@ void main() {
   test('interestRatio is interest / total payment', () {
     final s = LiabilitySummary.fromSchedule(
       liability: _liability(),
-      schedule: [
-        _row(idx: 1, principal: '100', interest: '25', balance: '0'),
-      ],
+      schedule: [_row(idx: 1, principal: '100', interest: '25', balance: '0')],
     );
     // 25 / (100 + 25) = 0.2
     expect(s.interestRatio, d('0.2'));

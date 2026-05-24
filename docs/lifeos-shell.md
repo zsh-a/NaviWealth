@@ -57,7 +57,7 @@ D-1  Shell foundation                            (4–6 周)
   D-1.6  Cross-feature composition uplift (ai_chat)
   D-1.7  Memory Layer 通电 substrate                    ✅ 落地 (vector store + embedder seam)
   D-1.7b Memory Runtime (typed + lifecycle + ContextBuilder)  ✅ 落地 (2026-05-24)
-  D-1.7c Rust MiniLM embedder drop-in                   ⏳ 未做 (§6.6 步骤已列)
+  D-1.7c Rust EmbeddingGemma-300M drop-in (fastembed/ort, ONNX INT8)  ✅ 落地 (2026-05-24, host build 验证;iOS/Android cross-compile + 模型 bytes 待用户机器执行)
   D-1.8  Multi-domain IA shell
 D-2  HealthOS MVP                                (8–12 周)  详见 healthos-domain.md
 D-3+ 触发性 (TimeOS / Knowledge / Living)         不预排
@@ -206,16 +206,85 @@ TradeJournalEntry  →  always emit event (trade_opened/closed/assigned/expired)
 
 LLM 应**优先**调 `build_context`(回答涉及"以前 / 上次 / 我当时为什么 / 我的偏好"等问题);`query_memory` 留作模糊 fallback。
 
-### 6.6 Rust MiniLM drop-in (D-1.7c, 未做)
+### 6.6 Rust EmbeddingGemma drop-in (D-1.7c)
 
-唯一剩余的 Rust 工作:
+**已落地** (2026-05-24,**代码完成 + macOS host build 验证**;iOS/Android cross-compile + 模型 bytes 待用户在自己机器执行)。
 
-1. 新建 `apps/mobile/native/lifeos_native/` 单 crate,`fastembed-rs` 或 `candle`
-2. FFI 表面只 1 个函数:`embed(text: String) -> Vec<f32>`(tokenizer 同 crate)
-3. Dart 侧 `RustMinilmEmbedder implements Embedder`, `fingerprint => 'minilm-l6-v2-d384'`
-4. `bootstrap.dart` `embedderProvider.overrideWithValue(RustMinilmEmbedder(...))`
-5. `runtime.dropStaleVectors()` 清旧 → 下次 indexer cycle 自动用真模型重 embed
-6. **memory/event records 不动**(架构债已经在 D-1.7b 提前还掉)
+> **2026-05-24 模型变更**: 从 MiniLM-L6-v2 (candle, 384-d) 切换到 EmbeddingGemma-300M (fastembed/ort, ONNX INT8, 768-d 多语言)。改动理由: 用户要求更强的多语言 + 决策上下文召回,fastembed 显著降低 DX 复杂度。Fingerprint 变更 (`minilm-l6-v2-d384` → `embeddinggemma-300m-onnx-int8-d768`) 自动让旧 embeddings 失效。
+
+| 组件 | 状态 | 位置 |
+|---|---|---|
+| Rust crate (`lifeos_native`) | ✅ fastembed-rs 5.13 + ort (download-binaries) + `flutter_rust_bridge 2.12`,18 MB dylib (ORT statically bundled,CoreML EP linked) | `apps/mobile/native/lifeos_native/` |
+| Rust 公共 API (FRB 扫描) | ✅ `pub struct GemmaEmbedder` + `load/embed/dimension/fingerprint` 方法 + 2 个 top-level 常量函数;`Result<T, anyhow::Error>` 自动变 Dart 异常 | `src/api/embedder.rs` |
+| EmbeddingGemma loader (UserDefinedEmbeddingModel + Pooling::Mean) | ✅ INT8 ONNX,Mutex wrap (`TextEmbedding::embed` 需要 `&mut self`) | `src/api/embedder.rs` |
+| `frb_generated.rs` / `frb_generated.dart{,.io,.web}` | ✅ 自动生成 (1700 行),提交进 repo | `src/frb_generated.rs` + `lib/src/rust/` |
+| Cargo unit tests | ✅ 3 个 (常量 + null/missing dir 错误路径) | `cargo test --release` |
+| Dart `RustGemmaEmbedder implements Embedder` | ✅ FRB-generated `GemmaEmbedder` 上的瘦适配器(~60 行) | `lib/core/ai/local/embedding/rust_gemma_embedder.dart` |
+| `RustLib.init` 单次保护 + 自定义 `libraryPath` 支持 | ✅ `initLifeosNativeRuntime(libraryPath?)` idempotent | 同上 |
+| Dart 集成测试 | ✅ 5 个,host build dylib 实际加载 + FRB-generated `embeddingDim()` / `embedderFingerprint()` + 错误路径 | `test/core/ai/local/embedding/rust_gemma_embedder_test.dart` |
+| `AppConfig.rustEmbedderModelDir` + `rustEmbedderLibraryPath` | ✅ `--dart-define` 注入 | `lib/core/config/app_config.dart` |
+| Bootstrap `embedderProvider.overrideWith` + graceful fallback | ✅ `FutureProvider<Embedder>`,加载失败自动回 `StubEmbedder`,boot 不破 | `lib/app/bootstrap.dart` |
+| Bootstrap post-swap `runtime.dropStaleVectors()` | ✅ 切换后 fingerprint 不一致的 embeddings 自动清掉,indexer 下次 reindex | `lib/app/bootstrap.dart` |
+| **cargokit Flutter plugin** (`rust_builder/`) | ✅ `flutter_rust_bridge_codegen integrate` 产出;iOS/macOS podspec + Android gradle 钩子自动 invoke cargokit → cargo,**`flutter run` / `flutter build` 直接出产物**,无需手动脚本 | `apps/mobile/rust_builder/` |
+| Manual `tool/build-lifeos-native.sh`(optional) | ✅ 只用于 `flutter test` desktop + standalone artefact + Rust-only CI smoke | `tool/build-lifeos-native.sh` |
+| crate README + model 下载说明 | ✅ | `apps/mobile/native/lifeos_native/README.md` |
+
+**为什么 fastembed 而不是 candle / llama.cpp / 原始 GGUF Q8_0**:
+
+| 方案 | dylib 大小 | DX | 模型格式 | 决策 |
+|---|---|---|---|---|
+| **fastembed-rs (选中)** | 18 MB (含 ORT) | 低 — `embed(vec)` 一行 | ONNX INT8 | 简化开发流程 (用户明确要求) |
+| candle | 2.4 MB | 中 — 手写 BertModel + pool + normalise | safetensors | 没有 Gemma3 embedding wired up,GGUF Q8_0 embedding 不支持 |
+| llama-cpp-2 (true GGUF Q8_0) | ~3-5 MB | 中 — cmake build | GGUF | 字面上是 "Q8_0",但 cmake 加 CI 摩擦 |
+
+**ONNX INT8 ≠ GGUF Q8_0,但 8-bit 量化质量等价**;cosine 召回 vs FP32 差 < 1%(EmbeddingGemma model card 数据)。
+
+**生产启用步骤** (用户机器):
+
+```bash
+# 1. 下载模型(~300 MB INT8 ONNX + 几 MB JSON,一次性)
+mkdir -p ~/models/embeddinggemma-300m-ONNX && cd ~/models/embeddinggemma-300m-ONNX
+curl -L -o model_int8.onnx \
+  https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX/resolve/main/onnx/model_int8.onnx
+for f in tokenizer.json config.json special_tokens_map.json tokenizer_config.json; do
+  curl -L -o "$f" \
+    "https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX/resolve/main/$f"
+done
+
+# 2. 启动 app — flutter run 直接构建 Rust 并打包(经 rust_builder 插件 + cargokit
+#    自动调 cargo build);首次 ~3 分钟,后续 ~2s 增量。无需手动构建脚本。
+flutter run --dart-define=RUST_EMBEDDER_MODEL_DIR=$HOME/models/embeddinggemma-300m-ONNX
+```
+
+> `flutter test` 在 desktop 上跑(非 device)时,test harness 不走插件加载,所以
+> 测试还需要先 `tool/build-lifeos-native.sh macos` + 额外传
+> `--dart-define=RUST_EMBEDDER_LIBRARY_PATH=...`。生产 `flutter run` / `flutter build`
+> 不需要。
+
+启动后 bootstrap 会:
+1. 读 `embedderProvider` → 加载 Rust EmbeddingGemma(失败回 stub,日志告警)
+2. 跑 `runtime.dropStaleVectors()`(stub fingerprint 或前一个模型的旧 embeddings 一次性删掉)
+3. 启动 indexers(`memoryLayerBootstrapProvider`) → trade journal 自动用 EmbeddingGemma 重 embed (768-d)
+
+**没做**(用户机器或 follow-up):
+- ⏳ iOS 设备真编译(`flutter build ios` 触发 cargokit → cargo,自动;需要用户机器有 Xcode + iOS target)
+- ⏳ Android 真编译(`flutter build apk` 触发 cargokit → cargo,自动;需要 NDK)
+- ⏳ 模型 bytes 进 Flutter assets(可选,300 MB 是显著 bundle 增量;当前是显式路径)
+- ⏳ CI `mobile.yml` 加 cargo 工具链 step(`flutter build` 在 CI 跑就需要;目前 CI 跳过 mobile builds)
+
+**为什么从手写 dart:ffi 切到 `flutter_rust_bridge` (2026-05-24)**:
+- 用户明确预期"后续扩展"——加新 Rust 函数 / 复杂类型(Stream / Result / 嵌套 struct)时,手写 FFI 的边际成本陡增
+- FRB v2.12 codegen 自动处理:
+  - `Result<T, anyhow::Error>` → Dart `Future<T>` 抛异常带 message
+  - `Vec<f32>` → `Float32List`
+  - `String` 双向 marshalling
+  - `#[frb(opaque)]` struct → Dart `RustOpaqueInterface` (handle-based,自动 GC 释放)
+  - `#[frb(sync)]` → Dart 同步返回 `T` 而非 `Future<T>`
+- 编译时按 `apps/mobile/flutter_rust_bridge.yaml` 配置扫描 `crate::api` module,把 Rust 函数签名变成 Dart bindings
+- 调用顺序:`tool/build-lifeos-native.sh` 自动 `flutter_rust_bridge_codegen generate` → `cargo build`
+- AppFlowy 走的是 FRB 之外的自建 protobuf event dispatch,我们**不**做这个;FRB 已是行业标准的轻量级方案
+
+**FRB 之前的手写 FFI 留给历史**: 5 个 C 函数 + 1 repr(C) struct + 200 行 Dart `Pointer<Utf8>` + `calloc` 模板代码。`Float32List` 跨边界需要手动 `unpackVector`。新增一个函数要写 Rust extern "C" + Dart typedef + 错误传播。Trade-off 不再划算。
 
 ### 6.7 第二域接入路径 (D-2.4 HealthOS)
 
@@ -329,8 +398,8 @@ Plus updated descriptor/registry tests (catalog → 37 tools).
 
 | 模块 | 进 Rust? | 时机 | Crate |
 |---|---|---|---|
-| Memory Layer embedder | ✅ 是 | D-1.7 | `fastembed-rs` 或 `candle` |
-| Memory Layer tokenizer | ✅ 是 | D-1.7 (同 crate) | `tokenizers` |
+| Memory Layer embedder | ✅ 落地 | D-1.7c (2026-05-24) | `fastembed-rs` (EmbeddingGemma-300M, ONNX INT8) |
+| Memory Layer tokenizer | ✅ 落地 | D-1.7c (fastembed 内置) | — (打包在 fastembed 里) |
 | Vector ANN | ❌ 否 (MVP) | > 50k 条目触发 | `usearch-rs` |
 | Sync E2EE | 🟡 触发后 | sync v2 稳定 ≥ 1 月触发 | `age` 或 `libsodium-sys-stable` |
 | 其它 D-1.x / D-2.x | ❌ 否 | — | (留 Dart) |
@@ -339,21 +408,27 @@ Plus updated descriptor/registry tests (catalog → 37 tools).
 
 ```
 apps/mobile/native/
-└── lifeos_native/         # 单一 crate
-    ├── Cargo.toml
+└── lifeos_native/         # 单一 crate (D-1.7c 落地)
+    ├── Cargo.toml         # fastembed + ort + flutter_rust_bridge,opt-level=z + LTO + strip
     └── src/
-        ├── lib.rs         # flutter_rust_bridge entry
-        ├── embedder.rs
-        ├── tokenizer.rs
-        └── crypto.rs      # D-3 触发后
+        ├── lib.rs         # pub mod api; mod frb_generated;
+        ├── api/
+        │   ├── mod.rs
+        │   └── embedder.rs  # FRB-visible Rust API (GemmaEmbedder + helpers)
+        ├── frb_generated.rs # AUTO-GENERATED — do not edit
+        └── crypto.rs        # D-3 触发后 (E2EE) — 也会进 api/ module
 ```
 
-对照 AppFlowy 的 20+ crate(`flowy-document` / `flowy-database2` / `flowy-search` / `flowy-ai` / ...):我们**只一个 crate, 2–3 模块**。
+对照 AppFlowy 的 20+ crate(`flowy-document` / `flowy-database2` / `flowy-search` / `flowy-ai` / ...):我们**只一个 crate, 2 模块**。
 
 ### 10.3 FFI 工具
 
-- 选 **`flutter_rust_bridge`**(自动 Dart binding)
-- **不**做 AppFlowy 的自建 FlowySDK + protobuf event dispatch(那是为宽 FFI / 团队产品设计的)
+- 选 **`flutter_rust_bridge` 2.12** (2026-05-24 起,改之前是手写 dart:ffi)
+- 配置: `apps/mobile/flutter_rust_bridge.yaml`,扫描 `crate::api` module
+- 调用: `tool/build-lifeos-native.sh` 自动 codegen → cargo build
+- 生成产物提交 repo (`lib/src/rust/{api,frb_generated*}.dart` + `native/lifeos_native/src/frb_generated.rs`),analyze 排除自动生成代码 (analysis_options exclude `lib/src/rust/**`)
+- **不**做 AppFlowy 的自建 FlowySDK + protobuf event dispatch(那是为宽 FFI / 团队产品设计的);FRB 是更轻量的现代方案
+- 切换原因:5 函数 surface 加上"后续扩展"预期,FRB 的 codegen + Result/Stream/嵌套 struct marshalling 收益开始超过手写成本
 
 ### 10.4 Web
 

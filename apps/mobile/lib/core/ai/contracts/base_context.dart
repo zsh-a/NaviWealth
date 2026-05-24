@@ -69,10 +69,7 @@ class AccountSummary {
       }
     }
     final total = json['total_count'];
-    return AccountSummary(
-      totalCount: total is int ? total : 0,
-      byKind: byKind,
-    );
+    return AccountSummary(totalCount: total is int ? total : 0, byKind: byKind);
   }
 }
 

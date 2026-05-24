@@ -379,8 +379,9 @@ void main() {
           ownerUserId: 'user-1',
           content: '帮我看 XIRR',
         );
-        final assistant = (await store.listMessages(id))
-            .firstWhere((m) => m.role == ChatRole.assistant);
+        final assistant = (await store.listMessages(
+          id,
+        )).firstWhere((m) => m.role == ChatRole.assistant);
         expect(assistant.toolCalls.map((t) => t.name), [
           'compute_xirr',
           'get_transactions',
@@ -412,32 +413,36 @@ void main() {
         ownerUserId: 'user-1',
         content: 'long question',
       );
-      final assistant = (await store.listMessages(id))
-          .firstWhere((m) => m.role == ChatRole.assistant);
+      final assistant = (await store.listMessages(
+        id,
+      )).firstWhere((m) => m.role == ChatRole.assistant);
       expect(assistant.status, ChatMessageStatus.complete);
       expect(assistant.stopReason, ChatStopReason.maxTokens);
     });
 
-    test('records ChatStopReason.error when the stream ends without done',
-        () async {
-      final noDoneApi = _NoDoneApi(const [TextEvent('partial')]);
-      final repo2 = ChatRepository(
-        store: store,
-        api: noDoneApi,
-        sessionReader: () => _fakeSession,
-      );
-      final id = await activeSessionId();
-      final outcome = await repo2.sendMessage(
-        sessionId: id,
-        ownerUserId: 'user-1',
-        content: 'q',
-      );
-      expect(outcome, SendOutcome.errored);
-      final assistant = (await store.listMessages(id))
-          .firstWhere((m) => m.role == ChatRole.assistant);
-      expect(assistant.status, ChatMessageStatus.errored);
-      expect(assistant.stopReason, ChatStopReason.error);
-    });
+    test(
+      'records ChatStopReason.error when the stream ends without done',
+      () async {
+        final noDoneApi = _NoDoneApi(const [TextEvent('partial')]);
+        final repo2 = ChatRepository(
+          store: store,
+          api: noDoneApi,
+          sessionReader: () => _fakeSession,
+        );
+        final id = await activeSessionId();
+        final outcome = await repo2.sendMessage(
+          sessionId: id,
+          ownerUserId: 'user-1',
+          content: 'q',
+        );
+        expect(outcome, SendOutcome.errored);
+        final assistant = (await store.listMessages(
+          id,
+        )).firstWhere((m) => m.role == ChatRole.assistant);
+        expect(assistant.status, ChatMessageStatus.errored);
+        expect(assistant.stopReason, ChatStopReason.error);
+      },
+    );
 
     test('autotitles the session from the first user prompt', () async {
       api.script.add(const DoneEvent(stopReason: 'end_turn', rounds: 1));
@@ -532,11 +537,7 @@ void main() {
             routingReason: 'analyze_hybrid',
             totalDurationMs: 0,
           );
-          return (
-            pack: pack,
-            traceSeed: seed,
-            traceVerbose: false,
-          );
+          return (pack: pack, traceSeed: seed, traceVerbose: false);
         },
         traceStore: traceStore,
       );
@@ -660,5 +661,4 @@ void main() {
       expect(await traceStore.recent(), hasLength(1));
     });
   });
-
 }

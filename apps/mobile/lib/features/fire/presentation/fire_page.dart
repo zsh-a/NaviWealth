@@ -16,7 +16,10 @@ class FirePage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final viewAsync = ref.watch(fireDashboardViewProvider);
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.fireAppBarTitle), prefixes: [backHeaderAction(context)]),
+      header: FHeader.nested(
+        title: Text(l10n.fireAppBarTitle),
+        prefixes: [backHeaderAction(context)],
+      ),
       childPad: false,
       child: Material(
         color: Colors.transparent,

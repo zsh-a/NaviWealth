@@ -15,17 +15,17 @@ class AccentColors {
   ///
   /// Light mode → teal600 (good contrast on white surfaces).
   /// Dark mode  → teal400 (lifts off slate surfaces without glare).
-  static Color primary(Brightness brightness) =>
-      brightness == Brightness.dark ? ColorPalette.teal400 : ColorPalette.teal600;
+  static Color primary(Brightness brightness) => brightness == Brightness.dark
+      ? ColorPalette.teal400
+      : ColorPalette.teal600;
 
   /// Color drawn on top of `primary` (button labels, badge text).
   ///
   /// Both modes use a near-white tone so we don't have to flip with
   /// brightness — teal600 / teal400 both pass WCAG AA on white.
-  static Color onPrimary(Brightness brightness) =>
-      brightness == Brightness.dark
-          ? ColorPalette.neutral950
-          : ColorPalette.neutral0;
+  static Color onPrimary(Brightness brightness) => brightness == Brightness.dark
+      ? ColorPalette.neutral950
+      : ColorPalette.neutral0;
 
   /// Soft tinted background (insight cards, chip backgrounds).
   static Color tint(Brightness brightness) => brightness == Brightness.dark

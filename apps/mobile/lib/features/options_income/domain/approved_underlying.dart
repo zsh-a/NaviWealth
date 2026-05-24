@@ -54,10 +54,7 @@ class ApprovedUnderlying {
 
   String get displaySymbol => symbol.toUpperCase();
 
-  static String idFor({
-    required AssetMarket market,
-    required String symbol,
-  }) =>
+  static String idFor({required AssetMarket market, required String symbol}) =>
       '${market.wire}:${symbol.trim().toUpperCase()}';
 
   ApprovedUnderlying copyWith({

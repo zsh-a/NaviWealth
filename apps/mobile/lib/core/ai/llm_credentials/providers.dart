@@ -47,16 +47,16 @@ final deviceLlmPlatformSupportedProvider = Provider<bool>((ref) {
 /// container through [AsyncValue.guard] per the convention.
 final llmCredentialsProvider =
     AsyncNotifierProvider<LlmCredentialsNotifier, LlmCredentials?>(
-  LlmCredentialsNotifier.new,
-);
+      LlmCredentialsNotifier.new,
+    );
 
-class LlmCredentialsNotifier extends ConventionalAsyncNotifier<LlmCredentials?> {
+class LlmCredentialsNotifier
+    extends ConventionalAsyncNotifier<LlmCredentials?> {
   @override
   Future<LlmCredentials?> fetch() =>
       ref.read(llmCredentialStoreProvider).read();
 
-  LlmCredentials get _current =>
-      state.asData?.value ?? const LlmCredentials();
+  LlmCredentials get _current => state.asData?.value ?? const LlmCredentials();
 
   Future<void> _persist(LlmCredentials next) async {
     state = await AsyncValue.guard(() async {

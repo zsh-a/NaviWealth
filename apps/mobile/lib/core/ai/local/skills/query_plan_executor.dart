@@ -73,7 +73,8 @@ class InMemoryQueryPlanExecutor implements QueryPlanExecutor {
       final NetWorthTrendPlan p => QueryResult(
         plan: p,
         rows: const <QueryRow>[],
-        note: 'net-worth trend requires the dashboard adapter (not wired in Phase 3-A)',
+        note:
+            'net-worth trend requires the dashboard adapter (not wired in Phase 3-A)',
       ),
       final SubscriptionListPlan p => _subscriptions(p),
       final RefundMatchingPlan p => _refunds(p),
@@ -83,9 +84,10 @@ class InMemoryQueryPlanExecutor implements QueryPlanExecutor {
   // ── plan implementations ────────────────────────────────────────
 
   QueryResult _spending(SpendingByCategoryPlan plan) {
-    final inRange = _filterByRange(transactions, plan.range)
-        .where((t) => parseAmountMinor(t.amountMinor) < 0)
-        .toList(growable: false);
+    final inRange = _filterByRange(
+      transactions,
+      plan.range,
+    ).where((t) => parseAmountMinor(t.amountMinor) < 0).toList(growable: false);
     final hintsFilter = plan.categoryHints?.toSet();
     final byCategory = <String, int>{};
     String? currency;
@@ -98,22 +100,24 @@ class InMemoryQueryPlanExecutor implements QueryPlanExecutor {
       byCategory[hint] =
           (byCategory[hint] ?? 0) + parseAmountMinor(t.amountMinor).abs();
     }
-    final rows = byCategory.entries
-        .map(
-          (e) => QueryRow(
-            label: e.key,
-            values: <String, Object?>{
-              'category': e.key,
-              'amount_minor': e.value,
-              'currency': currency,
-            },
-          ),
-        )
-        .toList(growable: false)
-      ..sort(
-        (a, b) => (b.values['amount_minor']! as int)
-            .compareTo(a.values['amount_minor']! as int),
-      );
+    final rows =
+        byCategory.entries
+            .map(
+              (e) => QueryRow(
+                label: e.key,
+                values: <String, Object?>{
+                  'category': e.key,
+                  'amount_minor': e.value,
+                  'currency': currency,
+                },
+              ),
+            )
+            .toList(growable: false)
+          ..sort(
+            (a, b) => (b.values['amount_minor']! as int).compareTo(
+              a.values['amount_minor']! as int,
+            ),
+          );
     final total = byCategory.values.fold<int>(0, (a, b) => a + b);
     return QueryResult(
       plan: plan,
@@ -133,9 +137,9 @@ class InMemoryQueryPlanExecutor implements QueryPlanExecutor {
     for (final t in _filterByRange(transactions, plan.range)) {
       if (plan.currency != null && t.currency != plan.currency) continue;
       if (plan.merchantSubstring != null &&
-          !merchantKey(t.description).contains(
-            plan.merchantSubstring!.toLowerCase(),
-          )) {
+          !merchantKey(
+            t.description,
+          ).contains(plan.merchantSubstring!.toLowerCase())) {
         continue;
       }
       final amt = parseAmountMinor(t.amountMinor);
@@ -202,9 +206,10 @@ class InMemoryQueryPlanExecutor implements QueryPlanExecutor {
   }
 
   QueryResult _refunds(RefundMatchingPlan plan) {
-    final scoped = _filterByRange(transactions, plan.range).toList(
-      growable: false,
-    );
+    final scoped = _filterByRange(
+      transactions,
+      plan.range,
+    ).toList(growable: false);
     final matches = matchRefunds(scoped);
     final rows = matches
         .map(

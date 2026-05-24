@@ -248,8 +248,7 @@ class OptionsStrategyProfileTable extends Table with SyncableTable {
   IntColumn get minOpenInterest => integer()();
   IntColumn get minVolume => integer()();
   TextColumn get maxBidAskSpreadPct => text().map(const DecimalConverter())();
-  BoolColumn get avoidEarnings =>
-      boolean().withDefault(const Constant(true))();
+  BoolColumn get avoidEarnings => boolean().withDefault(const Constant(true))();
   BoolColumn get avoidMacroEvents =>
       boolean().withDefault(const Constant(true))();
   BoolColumn get onlyOnApprovedUnderlyings =>
@@ -269,18 +268,17 @@ class OptionsStrategyProfileTable extends Table with SyncableTable {
 @DataClassName('OptionsTradeJournalRow')
 class OptionsTradeJournal extends Table with SyncableTable {
   TextColumn get id => text()();
-  TextColumn get strategy => text()();   // cash_secured_put | covered_call
+  TextColumn get strategy => text()(); // cash_secured_put | covered_call
   TextColumn get symbol => text()();
   TextColumn get optionSymbol => text()();
   DateTimeColumn get openedAt => dateTime()();
   DateTimeColumn get closedAt => dateTime().nullable()();
   TextColumn get entryCredit => text().map(const DecimalConverter())();
-  TextColumn get exitDebit =>
-      text().map(const DecimalConverter()).nullable()();
+  TextColumn get exitDebit => text().map(const DecimalConverter()).nullable()();
   TextColumn get realizedPnl =>
       text().map(const DecimalConverter()).nullable()();
   TextColumn get currency => text().withLength(min: 3, max: 8)();
-  TextColumn get status => text()();    // open | closed | assigned | expired
+  TextColumn get status => text()(); // open | closed | assigned | expired
   TextColumn get notes => text().nullable()();
 
   @override

@@ -26,19 +26,19 @@ enum MemoryKind { event, semantic, episodic, procedural }
 
 extension MemoryKindWire on MemoryKind {
   String get wire => switch (this) {
-        MemoryKind.event => 'event',
-        MemoryKind.semantic => 'semantic',
-        MemoryKind.episodic => 'episodic',
-        MemoryKind.procedural => 'procedural',
-      };
+    MemoryKind.event => 'event',
+    MemoryKind.semantic => 'semantic',
+    MemoryKind.episodic => 'episodic',
+    MemoryKind.procedural => 'procedural',
+  };
 
   static MemoryKind parse(String s) => switch (s) {
-        'event' => MemoryKind.event,
-        'semantic' => MemoryKind.semantic,
-        'episodic' => MemoryKind.episodic,
-        'procedural' => MemoryKind.procedural,
-        _ => MemoryKind.event,
-      };
+    'event' => MemoryKind.event,
+    'semantic' => MemoryKind.semantic,
+    'episodic' => MemoryKind.episodic,
+    'procedural' => MemoryKind.procedural,
+    _ => MemoryKind.event,
+  };
 }
 
 /// One typed memory row. Created by an Extractor (per-feature indexer
@@ -158,50 +158,49 @@ class MemoryRecord {
     DateTime? validUntil,
     DateTime? lastAccessedAt,
     DateTime? updatedAt,
-  }) =>
-      MemoryRecord(
-        id: id,
-        ownerUserId: ownerUserId,
-        kind: kind ?? this.kind,
-        scope: scope ?? this.scope,
-        source: source ?? this.source,
-        sourceId: sourceId ?? this.sourceId,
-        sourceEventId: sourceEventId ?? this.sourceEventId,
-        title: title ?? this.title,
-        summary: summary ?? this.summary,
-        payload: payload ?? this.payload,
-        entities: entities ?? this.entities,
-        importance: importance ?? this.importance,
-        confidence: confidence ?? this.confidence,
-        validFrom: validFrom ?? this.validFrom,
-        validUntil: validUntil ?? this.validUntil,
-        lastAccessedAt: lastAccessedAt ?? this.lastAccessedAt,
-        createdAt: createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-      );
+  }) => MemoryRecord(
+    id: id,
+    ownerUserId: ownerUserId,
+    kind: kind ?? this.kind,
+    scope: scope ?? this.scope,
+    source: source ?? this.source,
+    sourceId: sourceId ?? this.sourceId,
+    sourceEventId: sourceEventId ?? this.sourceEventId,
+    title: title ?? this.title,
+    summary: summary ?? this.summary,
+    payload: payload ?? this.payload,
+    entities: entities ?? this.entities,
+    importance: importance ?? this.importance,
+    confidence: confidence ?? this.confidence,
+    validFrom: validFrom ?? this.validFrom,
+    validUntil: validUntil ?? this.validUntil,
+    lastAccessedAt: lastAccessedAt ?? this.lastAccessedAt,
+    createdAt: createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'id': id,
-        'kind': kind.wire,
-        'owner_user_id': ownerUserId,
-        'scope': scope,
-        if (source != null) 'source': source,
-        if (sourceId != null) 'source_id': sourceId,
-        if (sourceEventId != null) 'source_event_id': sourceEventId,
-        'title': title,
-        'summary': summary,
-        'payload': payload,
-        'entities': entities.toList(growable: false),
-        'importance': importance,
-        'confidence': confidence,
-        if (validFrom != null) 'valid_from': validFrom!.toUtc().toIso8601String(),
-        if (validUntil != null)
-          'valid_until': validUntil!.toUtc().toIso8601String(),
-        if (lastAccessedAt != null)
-          'last_accessed_at': lastAccessedAt!.toUtc().toIso8601String(),
-        'created_at': createdAt.toUtc().toIso8601String(),
-        'updated_at': updatedAt.toUtc().toIso8601String(),
-      };
+    'id': id,
+    'kind': kind.wire,
+    'owner_user_id': ownerUserId,
+    'scope': scope,
+    if (source != null) 'source': source,
+    if (sourceId != null) 'source_id': sourceId,
+    if (sourceEventId != null) 'source_event_id': sourceEventId,
+    'title': title,
+    'summary': summary,
+    'payload': payload,
+    'entities': entities.toList(growable: false),
+    'importance': importance,
+    'confidence': confidence,
+    if (validFrom != null) 'valid_from': validFrom!.toUtc().toIso8601String(),
+    if (validUntil != null)
+      'valid_until': validUntil!.toUtc().toIso8601String(),
+    if (lastAccessedAt != null)
+      'last_accessed_at': lastAccessedAt!.toUtc().toIso8601String(),
+    'created_at': createdAt.toUtc().toIso8601String(),
+    'updated_at': updatedAt.toUtc().toIso8601String(),
+  };
 
   factory MemoryRecord.fromJson(Map<String, Object?> json) {
     final entitiesRaw = json['entities'];
@@ -224,8 +223,12 @@ class MemoryRecord {
       validFrom: _dt(json['valid_from']),
       validUntil: _dt(json['valid_until']),
       lastAccessedAt: _dt(json['last_accessed_at']),
-      createdAt: _dt(json['created_at']) ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-      updatedAt: _dt(json['updated_at']) ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      createdAt:
+          _dt(json['created_at']) ??
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      updatedAt:
+          _dt(json['updated_at']) ??
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
     );
   }
 

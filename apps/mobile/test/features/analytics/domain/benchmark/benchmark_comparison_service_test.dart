@@ -19,23 +19,26 @@ void main() {
     }
   });
 
-  test('normalizes the portfolio curve to 1.0 at the first in-window point', () {
-    final result = service.compute(
-      from: _d(2025, 1, 1),
-      to: _d(2025, 12, 31),
-      portfolio: [
-        TimeSeriesPoint(asOf: _d(2025, 1, 1), value: 1000),
-        TimeSeriesPoint(asOf: _d(2025, 7, 1), value: 1100),
-        TimeSeriesPoint(asOf: _d(2025, 12, 31), value: 1200),
-      ],
-      benchmarks: const {},
-    );
+  test(
+    'normalizes the portfolio curve to 1.0 at the first in-window point',
+    () {
+      final result = service.compute(
+        from: _d(2025, 1, 1),
+        to: _d(2025, 12, 31),
+        portfolio: [
+          TimeSeriesPoint(asOf: _d(2025, 1, 1), value: 1000),
+          TimeSeriesPoint(asOf: _d(2025, 7, 1), value: 1100),
+          TimeSeriesPoint(asOf: _d(2025, 12, 31), value: 1200),
+        ],
+        benchmarks: const {},
+      );
 
-    expect(result.portfolioPoints, hasLength(3));
-    expect(result.portfolioPoints[0].value, _closeTo(1.0));
-    expect(result.portfolioPoints[1].value, _closeTo(1.1));
-    expect(result.portfolioPoints[2].value, _closeTo(1.2));
-  });
+      expect(result.portfolioPoints, hasLength(3));
+      expect(result.portfolioPoints[0].value, _closeTo(1.0));
+      expect(result.portfolioPoints[1].value, _closeTo(1.1));
+      expect(result.portfolioPoints[2].value, _closeTo(1.2));
+    },
+  );
 
   test('drops points outside [from, to] before normalizing', () {
     final result = service.compute(
@@ -66,10 +69,7 @@ void main() {
       ],
       benchmarks: const {},
     );
-    expect(
-      result.portfolioAnnualizedReturn,
-      _closeTo(0.10028, 1e-3),
-    );
+    expect(result.portfolioAnnualizedReturn, _closeTo(0.10028, 1e-3));
   });
 
   test('returns null annualized when window is empty or degenerate', () {
@@ -78,21 +78,21 @@ void main() {
           .compute(
             from: _d(2024, 1, 1),
             to: _d(2024, 1, 1),
-            portfolio: [
-              TimeSeriesPoint(asOf: _d(2024, 1, 1), value: 100),
-            ],
+            portfolio: [TimeSeriesPoint(asOf: _d(2024, 1, 1), value: 100)],
             benchmarks: const {},
           )
           .portfolioAnnualizedReturn,
       isNull,
     );
     expect(
-      service.compute(
-        from: _d(2024, 1, 1),
-        to: _d(2024, 12, 31),
-        portfolio: const [],
-        benchmarks: const {},
-      ).portfolioAnnualizedReturn,
+      service
+          .compute(
+            from: _d(2024, 1, 1),
+            to: _d(2024, 12, 31),
+            portfolio: const [],
+            benchmarks: const {},
+          )
+          .portfolioAnnualizedReturn,
       isNull,
     );
   });
@@ -162,10 +162,10 @@ void main() {
       },
       order: const [BenchmarkIndex.hs300, BenchmarkIndex.sp500],
     );
-    expect(
-      result.benchmarks.map((b) => b.index).toList(),
-      const [BenchmarkIndex.hs300, BenchmarkIndex.sp500],
-    );
+    expect(result.benchmarks.map((b) => b.index).toList(), const [
+      BenchmarkIndex.hs300,
+      BenchmarkIndex.sp500,
+    ]);
   });
 
   test('rejects non-positive base values', () {

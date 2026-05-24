@@ -106,25 +106,27 @@ void main() {
     expect(active.map((a) => a.id), [live.id]);
   });
 
-  test('clearInstitution nulls the column and queues a dirty pointer',
-      () async {
-    final acc = await repo.create(
-      type: AccountCategory.bank,
-      name: 'A',
-      currency: 'CNY',
-      institution: '招商银行',
-    );
-    outbox.clearQueued();
+  test(
+    'clearInstitution nulls the column and queues a dirty pointer',
+    () async {
+      final acc = await repo.create(
+        type: AccountCategory.bank,
+        name: 'A',
+        currency: 'CNY',
+        institution: '招商银行',
+      );
+      outbox.clearQueued();
 
-    await repo.update(acc.id, clearInstitution: true);
-    final reloaded = await repo.findById(acc.id);
-    expect(reloaded!.institution, isNull);
+      await repo.update(acc.id, clearInstitution: true);
+      final reloaded = await repo.findById(acc.id);
+      expect(reloaded!.institution, isNull);
 
-    final batch = outbox.queued;
-    expect(batch, hasLength(1));
-    expect(batch.single.table, 'accounts');
-    expect(batch.single.rowId, acc.id);
-  });
+      final batch = outbox.queued;
+      expect(batch, hasLength(1));
+      expect(batch.single.table, 'accounts');
+      expect(batch.single.rowId, acc.id);
+    },
+  );
 
   group('FIR-126 — accountCategory', () {
     test('create defaults the category from the carrier type', () async {
@@ -258,8 +260,7 @@ void main() {
       expect(ops.last.rowId, child.id);
     });
 
-    test('update queues a dirty pointer for parentId / icon / color',
-        () async {
+    test('update queues a dirty pointer for parentId / icon / color', () async {
       final acc = await repo.create(
         type: AccountCategory.asset,
         name: 'Misc',

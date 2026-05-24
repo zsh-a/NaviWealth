@@ -37,10 +37,7 @@ CategoryAllocation _alloc(
 DashboardSnapshot _snapshot(List<CategoryAllocation> allocations) {
   final totalAssets = allocations
       .where((a) => a.category != AssetCategory.liability)
-      .fold<Decimal>(
-        Decimal.zero,
-        (sum, a) => sum + a.totalInBase.amount,
-      );
+      .fold<Decimal>(Decimal.zero, (sum, a) => sum + a.totalInBase.amount);
   return DashboardSnapshot(
     asOf: DateTime.utc(2026, 5, 20),
     baseCurrency: 'CNY',
@@ -51,10 +48,7 @@ DashboardSnapshot _snapshot(List<CategoryAllocation> allocations) {
   );
 }
 
-FirePlan _plan({
-  String monthlyExpenses = '4000',
-  int cashBucketMonths = 12,
-}) {
+FirePlan _plan({String monthlyExpenses = '4000', int cashBucketMonths = 12}) {
   return FirePlan.fromGoal(
     FireGoal(
       targetAmount: Decimal.parse('1000000'),
@@ -69,8 +63,7 @@ FirePlan _plan({
 
 void main() {
   group('allocateBuckets', () {
-    test('default classifier slots each category into its expected role',
-        () {
+    test('default classifier slots each category into its expected role', () {
       final snap = _snapshot([
         _alloc(AssetCategory.cash, [_item('cash-1', '50000')]),
         _alloc(AssetCategory.bondsAndFunds, [_item('bond-1', '40000')]),
@@ -83,18 +76,24 @@ void main() {
         snapshot: snap,
         monthlyExpense: Money(Decimal.parse('4000'), 'CNY'),
       );
-      final byRole = {
-        for (final b in allocation.buckets) b.role: b,
-      };
-      expect(byRole[FireBucketRole.cash]!.currentValue.amount,
-          Decimal.parse('50000'));
-      expect(byRole[FireBucketRole.defensive]!.currentValue.amount,
-          Decimal.parse('40000'));
+      final byRole = {for (final b in allocation.buckets) b.role: b};
+      expect(
+        byRole[FireBucketRole.cash]!.currentValue.amount,
+        Decimal.parse('50000'),
+      );
+      expect(
+        byRole[FireBucketRole.defensive]!.currentValue.amount,
+        Decimal.parse('40000'),
+      );
       // stock + etf + crypto all map to growth by default.
-      expect(byRole[FireBucketRole.growth]!.currentValue.amount,
-          Decimal.parse('320000'));
-      expect(byRole[FireBucketRole.riskReserve]!.currentValue.amount,
-          Decimal.zero);
+      expect(
+        byRole[FireBucketRole.growth]!.currentValue.amount,
+        Decimal.parse('320000'),
+      );
+      expect(
+        byRole[FireBucketRole.riskReserve]!.currentValue.amount,
+        Decimal.zero,
+      );
       expect(byRole[FireBucketRole.dream]!.currentValue.amount, Decimal.zero);
       expect(allocation.unmappedHoldings, isEmpty);
     });
@@ -110,10 +109,10 @@ void main() {
         monthlyExpense: Money(Decimal.parse('4000'), 'CNY'),
       );
       expect(allocation.unmappedHoldings, hasLength(2));
-      expect(
-        allocation.unmappedHoldings.map((u) => u.id).toSet(),
-        {'house', 'car'},
-      );
+      expect(allocation.unmappedHoldings.map((u) => u.id).toSet(), {
+        'house',
+        'car',
+      });
       for (final bucket in allocation.buckets) {
         expect(bucket.currentValue.amount, Decimal.zero);
       }
@@ -145,34 +144,36 @@ void main() {
       );
     });
 
-    test('allocationPct splits a holding across explicit + default fallback',
-        () {
-      // 50% to dream — the other 50% still counts? The model treats
-      // unallocated remainder as ignored; the rule's pct directly
-      // scales the contribution.
-      final snap = _snapshot([
-        _alloc(AssetCategory.realEstate, [_item('rental', '1000000')]),
-      ]);
-      final allocation = allocateBuckets(
-        plan: _plan(),
-        snapshot: snap,
-        monthlyExpense: Money(Decimal.parse('4000'), 'CNY'),
-        userRules: [
-          const FireBucketRule(
-            id: 'rental',
-            role: FireBucketRole.dream,
-            targetTable: 'assets',
-            targetId: 'rental',
-            allocationPct: 0.5,
-          ),
-        ],
-      );
-      final dream = allocation.buckets.firstWhere(
-        (b) => b.role == FireBucketRole.dream,
-      );
-      expect(dream.currentValue.amount, Decimal.parse('500000'));
-      expect(allocation.unmappedHoldings, isEmpty);
-    });
+    test(
+      'allocationPct splits a holding across explicit + default fallback',
+      () {
+        // 50% to dream — the other 50% still counts? The model treats
+        // unallocated remainder as ignored; the rule's pct directly
+        // scales the contribution.
+        final snap = _snapshot([
+          _alloc(AssetCategory.realEstate, [_item('rental', '1000000')]),
+        ]);
+        final allocation = allocateBuckets(
+          plan: _plan(),
+          snapshot: snap,
+          monthlyExpense: Money(Decimal.parse('4000'), 'CNY'),
+          userRules: [
+            const FireBucketRule(
+              id: 'rental',
+              role: FireBucketRole.dream,
+              targetTable: 'assets',
+              targetId: 'rental',
+              allocationPct: 0.5,
+            ),
+          ],
+        );
+        final dream = allocation.buckets.firstWhere(
+          (b) => b.role == FireBucketRole.dream,
+        );
+        expect(dream.currentValue.amount, Decimal.parse('500000'));
+        expect(allocation.unmappedHoldings, isEmpty);
+      },
+    );
 
     test('cash bucket target = monthlyExpense × targetCashBucketMonths', () {
       final snap = _snapshot([

@@ -40,8 +40,7 @@ final recentAiTracesProvider = FutureProvider<List<AiTrace>>(
 /// uses `ChatMessage.id == requestId`, so any consumer can resolve the
 /// trace for a message directly. Auto-disposed because trace lookups
 /// are typically per-card and short-lived.
-final aiTraceByIdProvider = FutureProvider.autoDispose
-    .family<AiTrace?, String>(
-      (ref, requestId) =>
-          ref.watch(aiTraceStoreProvider).findByRequestId(requestId),
-    );
+final aiTraceByIdProvider = FutureProvider.autoDispose.family<AiTrace?, String>(
+  (ref, requestId) =>
+      ref.watch(aiTraceStoreProvider).findByRequestId(requestId),
+);

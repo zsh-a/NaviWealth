@@ -29,11 +29,11 @@ class CorporateActionsService {
     Duration successTtl = const Duration(hours: 12),
     Duration errorTtl = const Duration(minutes: 15),
     DateTime Function()? now,
-  })  : _http = http,
-        _logger = logger,
-        _successTtl = successTtl,
-        _errorTtl = errorTtl,
-        _now = now ?? (() => DateTime.now().toUtc());
+  }) : _http = http,
+       _logger = logger,
+       _successTtl = successTtl,
+       _errorTtl = errorTtl,
+       _now = now ?? (() => DateTime.now().toUtc());
 
   final MarketHttpClient _http;
   final AppLogger _logger;

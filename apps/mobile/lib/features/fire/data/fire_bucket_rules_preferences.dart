@@ -14,9 +14,8 @@ import '../domain/fire_bucket.dart';
 /// one-shot exporter can ferry them across.
 final fireBucketRulesProvider =
     StateNotifierProvider<FireBucketRulesController, List<FireBucketRule>>(
-  (ref) =>
-      FireBucketRulesController(ref.watch(sharedPreferencesProvider)),
-);
+      (ref) => FireBucketRulesController(ref.watch(sharedPreferencesProvider)),
+    );
 
 class FireBucketRulesController extends StateNotifier<List<FireBucketRule>> {
   FireBucketRulesController(this._prefs) : super(_load(_prefs));

@@ -69,8 +69,11 @@ void main() {
       stopwatch.stop();
       final perRunMs = stopwatch.elapsedMicroseconds / 10 / 1000;
       // CI guard: 4× expected budget so transient noise doesn't flake.
-      expect(perRunMs, lessThan(5.0),
-          reason: 'LTTB regressed: $perRunMs ms/run');
+      expect(
+        perRunMs,
+        lessThan(5.0),
+        reason: 'LTTB regressed: $perRunMs ms/run',
+      );
     });
 
     test('maybeDownsample respects enabled flag', () {

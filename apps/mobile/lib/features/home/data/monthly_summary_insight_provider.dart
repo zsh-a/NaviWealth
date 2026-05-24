@@ -33,7 +33,8 @@ class MonthlySummary {
 
   /// Stable hash for the dismissed-insights store so dismissing the
   /// March recap doesn't suppress April's.
-  String get scopeHash => '${year.toString().padLeft(4, '0')}-'
+  String get scopeHash =>
+      '${year.toString().padLeft(4, '0')}-'
       '${month.toString().padLeft(2, '0')}';
 }
 
@@ -120,4 +121,3 @@ TrendPoint? _lastPointBefore(List<TrendPoint> points, DateTime threshold) {
   }
   return best;
 }
-

@@ -96,31 +96,32 @@ final firePlanProvider = Provider<FirePlan>((ref) {
 /// Per-role bucket coverage + the assets the allocator couldn't slot.
 /// Watches the snapshot, the plan, and the user's bucket rules so the
 /// FIRE state and the buckets card stay in sync.
-final fireBucketAllocationProvider =
-    Provider<AsyncValue<FireBucketAllocation>>((ref) {
-  final plan = ref.watch(firePlanProvider);
-  final snapshotAsync = ref.watch(dashboardSnapshotProvider);
-  final rules = ref.watch(fireBucketRulesProvider);
+final fireBucketAllocationProvider = Provider<AsyncValue<FireBucketAllocation>>(
+  (ref) {
+    final plan = ref.watch(firePlanProvider);
+    final snapshotAsync = ref.watch(dashboardSnapshotProvider);
+    final rules = ref.watch(fireBucketRulesProvider);
 
-  return snapshotAsync.when(
-    loading: () => const AsyncValue.loading(),
-    error: (e, st) => AsyncValue.error(e, st),
-    data: (snapshot) {
-      final base = snapshot.baseCurrency;
-      final activePlan = plan.baseCurrency == base
-          ? plan
-          : plan.copyWith(baseCurrency: base);
-      return AsyncValue.data(
-        allocateBuckets(
-          plan: activePlan,
-          snapshot: snapshot,
-          monthlyExpense: activePlan.monthlyExpenseMoney,
-          userRules: rules,
-        ),
-      );
-    },
-  );
-});
+    return snapshotAsync.when(
+      loading: () => const AsyncValue.loading(),
+      error: (e, st) => AsyncValue.error(e, st),
+      data: (snapshot) {
+        final base = snapshot.baseCurrency;
+        final activePlan = plan.baseCurrency == base
+            ? plan
+            : plan.copyWith(baseCurrency: base);
+        return AsyncValue.data(
+          allocateBuckets(
+            plan: activePlan,
+            snapshot: snapshot,
+            monthlyExpense: activePlan.monthlyExpenseMoney,
+            userRules: rules,
+          ),
+        );
+      },
+    );
+  },
+);
 
 /// The FIRE OS read model. Recomputes whenever the plan, the dashboard
 /// snapshot, the trailing cashflow summary, or the projection changes.
@@ -156,10 +157,9 @@ final fireStateProvider = Provider<AsyncValue<FireState>>((ref) {
         trailing = trailingAnnualSpend(summary, now: now);
       });
 
-      final allocation = ref.watch(fireBucketAllocationProvider).maybeWhen(
-            data: (a) => a,
-            orElse: () => null,
-          );
+      final allocation = ref
+          .watch(fireBucketAllocationProvider)
+          .maybeWhen(data: (a) => a, orElse: () => null);
 
       final etaMonths = fireView.whenOrNull(
         data: (view) {
@@ -199,8 +199,9 @@ final fireNowProvider = Provider<DateTime>((ref) => DateTime.now().toUtc());
 /// Stress-test verdicts for the current [FireState]. Computed in pure
 /// dart (no LLM); the AI tool surface in Phase 5 reads this provider
 /// directly so explanations stay grounded in deterministic results.
-final fireStressTestsProvider =
-    Provider<AsyncValue<List<FireStressResult>>>((ref) {
+final fireStressTestsProvider = Provider<AsyncValue<List<FireStressResult>>>((
+  ref,
+) {
   final stateAsync = ref.watch(fireStateProvider);
   return stateAsync.when(
     loading: () => const AsyncValue.loading(),
@@ -214,46 +215,44 @@ final fireStressTestsProvider =
 /// so the UI never shows a stale verdict.
 final fireLiveReviewProvider =
     Provider.family<AsyncValue<FireReview>, FireReviewKind>((ref, kind) {
-  final stateAsync = ref.watch(fireStateProvider);
-  final stressAsync = ref.watch(fireStressTestsProvider);
-  return stateAsync.when(
-    loading: () => const AsyncValue.loading(),
-    error: (e, st) => AsyncValue.error(e, st),
-    data: (state) {
-      final stress = stressAsync.maybeWhen(
-        data: (r) => r,
-        orElse: () => const <FireStressResult>[],
+      final stateAsync = ref.watch(fireStateProvider);
+      final stressAsync = ref.watch(fireStressTestsProvider);
+      return stateAsync.when(
+        loading: () => const AsyncValue.loading(),
+        error: (e, st) => AsyncValue.error(e, st),
+        data: (state) {
+          final stress = stressAsync.maybeWhen(
+            data: (r) => r,
+            orElse: () => const <FireStressResult>[],
+          );
+          return AsyncValue.data(
+            generateReview(
+              kind: kind,
+              state: state,
+              stressTests: stress,
+              now: ref.watch(fireNowProvider),
+            ),
+          );
+        },
       );
-      return AsyncValue.data(
-        generateReview(
-          kind: kind,
-          state: state,
-          stressTests: stress,
-          now: ref.watch(fireNowProvider),
-        ),
-      );
-    },
-  );
-});
+    });
 
 /// Persist the live review for [kind] into [fireReviewCacheProvider].
 /// Called by the UI's "Save snapshot" action and by the AI propose
 /// pathway once the user confirms a review-update.
 Future<void> saveLiveReview(WidgetRef ref, FireReviewKind kind) async {
-  final review = ref.read(fireLiveReviewProvider(kind)).maybeWhen(
-        data: (r) => r,
-        orElse: () => null,
-      );
+  final review = ref
+      .read(fireLiveReviewProvider(kind))
+      .maybeWhen(data: (r) => r, orElse: () => null);
   if (review == null) return;
   await ref.read(fireReviewCacheProvider.notifier).upsert(review);
 }
 
 /// Ref-side variant of [saveLiveReview] for AI tool dispatch.
 Future<void> saveLiveReviewWithRef(Ref ref, FireReviewKind kind) async {
-  final review = ref.read(fireLiveReviewProvider(kind)).maybeWhen(
-        data: (r) => r,
-        orElse: () => null,
-      );
+  final review = ref
+      .read(fireLiveReviewProvider(kind))
+      .maybeWhen(data: (r) => r, orElse: () => null);
   if (review == null) return;
   await ref.read(fireReviewCacheProvider.notifier).upsert(review);
 }
@@ -265,30 +264,34 @@ Future<void> saveLiveReviewWithRef(Ref ref, FireReviewKind kind) async {
 /// the user confirmed.
 Future<void> saveFirePlan(WidgetRef ref, FirePlan plan) async {
   await ref.read(fireGoalProvider.notifier).save(plan.toGoal());
-  await ref.read(firePlanExtrasProvider.notifier).save(
-    FirePlanExtras(
-      safeWithdrawalRate: plan.safeWithdrawalRate,
-      targetCashBucketMonths: plan.targetCashBucketMonths,
-      lifestyleMode: plan.lifestyleMode,
-      reserves: plan.reserves,
-      riskSettings: plan.riskSettings,
-    ),
-  );
+  await ref
+      .read(firePlanExtrasProvider.notifier)
+      .save(
+        FirePlanExtras(
+          safeWithdrawalRate: plan.safeWithdrawalRate,
+          targetCashBucketMonths: plan.targetCashBucketMonths,
+          lifestyleMode: plan.lifestyleMode,
+          reserves: plan.reserves,
+          riskSettings: plan.riskSettings,
+        ),
+      );
 }
 
 /// Variant of [saveFirePlan] for code paths that only hold a [Ref]
 /// (Riverpod listeners, AI tool dispatch). Has the same semantics.
 Future<void> saveFirePlanWithRef(Ref ref, FirePlan plan) async {
   await ref.read(fireGoalProvider.notifier).save(plan.toGoal());
-  await ref.read(firePlanExtrasProvider.notifier).save(
-    FirePlanExtras(
-      safeWithdrawalRate: plan.safeWithdrawalRate,
-      targetCashBucketMonths: plan.targetCashBucketMonths,
-      lifestyleMode: plan.lifestyleMode,
-      reserves: plan.reserves,
-      riskSettings: plan.riskSettings,
-    ),
-  );
+  await ref
+      .read(firePlanExtrasProvider.notifier)
+      .save(
+        FirePlanExtras(
+          safeWithdrawalRate: plan.safeWithdrawalRate,
+          targetCashBucketMonths: plan.targetCashBucketMonths,
+          lifestyleMode: plan.lifestyleMode,
+          reserves: plan.reserves,
+          riskSettings: plan.riskSettings,
+        ),
+      );
 }
 
 // =====================================================================
@@ -335,10 +338,7 @@ Money _computeLiquidAssets(DashboardSnapshot snapshot) {
 /// annualise. Returns `null` when fewer than three months of expense
 /// data exist — early-onboarding users would otherwise see a withdrawal
 /// rate built on one outlier month.
-Money? trailingAnnualSpend(
-  CashFlowSummary summary, {
-  DateTime? now,
-}) {
+Money? trailingAnnualSpend(CashFlowSummary summary, {DateTime? now}) {
   if (summary.buckets.isEmpty) return null;
   final nowUtc = (now ?? DateTime.now()).toUtc();
 
@@ -367,10 +367,9 @@ Money? trailingAnnualSpend(
   }
 
   if (observedMonths.length < 3) return null;
-  final monthly =
-      (sum / Decimal.fromInt(observedMonths.length)).toDecimal(
-        scaleOnInfinitePrecision: 2,
-      );
+  final monthly = (sum / Decimal.fromInt(observedMonths.length)).toDecimal(
+    scaleOnInfinitePrecision: 2,
+  );
   final annualised = monthly * Decimal.fromInt(12);
   return Money(annualised, summary.baseCurrency);
 }

@@ -17,7 +17,8 @@ void main() {
     final result = pipeline.plan(
       source: const IngestSource(
         kind: IngestSourceKind.pasteText,
-        payload: 'date,description,amount,currency\n'
+        payload:
+            'date,description,amount,currency\n'
             '2026-05-10,STARBUCKS 04291,-38.00,CNY\n'
             '2026-05-12,Unknown Vendor,-12.00,CNY\n',
         originLabel: '粘贴文本',
@@ -59,8 +60,7 @@ void main() {
     expect(result.duplicateCount, 1);
   });
 
-  test('non-device-parsable sources are rejected, never silently dropped',
-      () {
+  test('non-device-parsable sources are rejected, never silently dropped', () {
     final result = build().plan(
       source: const IngestSource(
         kind: IngestSourceKind.receiptImage,
@@ -76,10 +76,7 @@ void main() {
 
   test('empty payload yields zero drafts without rejection', () {
     final result = build().plan(
-      source: const IngestSource(
-        kind: IngestSourceKind.csv,
-        payload: '',
-      ),
+      source: const IngestSource(kind: IngestSourceKind.csv, payload: ''),
       existingLedger: const [],
       ownerUserId: 'u1',
     );

@@ -83,7 +83,7 @@ class ProposalApplier {
   /// upserting into the bucket-rules store. Returns the resulting
   /// rule id (= payload `target_id`, since rules are keyed by it).
   final Future<String> Function(Map<String, Object?> payload)?
-      fireBucketRuleWriter;
+  fireBucketRuleWriter;
 
   /// Run the compensating write encoded in [state]. No-op if [state] isn't
   /// in the `applied` status.
@@ -114,15 +114,14 @@ class ProposalApplier {
       final state = switch (plan.kind) {
         ProposalKind.trade => await _applyTrade(plan, at),
         ProposalKind.expense => await _applyExpense(plan, at),
-        ProposalKind.liabilityPayment =>
-          await _applyLiabilityPayment(plan, at),
+        ProposalKind.liabilityPayment => await _applyLiabilityPayment(plan, at),
         ProposalKind.accountCreate => await _applyAccountCreate(plan, at),
         ProposalKind.assetValuation => await _applyAssetValuation(plan, at),
         ProposalKind.firePlanUpdate => await _applyFirePlanUpdate(plan, at),
-        ProposalKind.fireBucketRule =>
-          await _applyFireBucketRule(plan, at),
-        ProposalKind.unknown =>
-          throw ProposalApplyException('unknown proposal kind'),
+        ProposalKind.fireBucketRule => await _applyFireBucketRule(plan, at),
+        ProposalKind.unknown => throw ProposalApplyException(
+          'unknown proposal kind',
+        ),
       };
       // Wave 39 — when an apply succeeds, record the AI touch keyed by
       // (entityType, entityId). Detail pages surface a tiny sparkle

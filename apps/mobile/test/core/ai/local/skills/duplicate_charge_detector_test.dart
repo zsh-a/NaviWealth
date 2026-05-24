@@ -8,14 +8,13 @@ TransactionInput _t({
   required int signedMinor,
   String currency = 'CNY',
   required DateTime occurredAt,
-}) =>
-    TransactionInput(
-      id: id,
-      description: description,
-      amountMinor: signedMinor.toString(),
-      currency: currency,
-      occurredAt: occurredAt,
-    );
+}) => TransactionInput(
+  id: id,
+  description: description,
+  amountMinor: signedMinor.toString(),
+  currency: currency,
+  occurredAt: occurredAt,
+);
 
 void main() {
   group('detectDuplicateCharges', () {

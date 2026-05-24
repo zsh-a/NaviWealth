@@ -16,8 +16,15 @@ import 'memory_runtime.dart';
 import 'memory_store.dart';
 
 /// The active embedder. Default is [StubEmbedder]; swap to the Rust
-/// MiniLM port at bootstrap by overriding this provider.
-final embedderProvider = Provider<Embedder>((ref) => StubEmbedder());
+/// EmbeddingGemma port at bootstrap by overriding this provider with
+/// a Future producing a [RustGemmaEmbedder].
+///
+/// Async because the Rust embedder's load is async (FRB-generated
+/// `GemmaEmbedder.load` returns a `Future`). The stub default
+/// completes synchronously for tests that don't override.
+final embedderProvider = FutureProvider<Embedder>(
+  (ref) async => StubEmbedder(),
+);
 
 final memoryStoreProvider = FutureProvider<MemoryStore>((ref) async {
   final db = await ref.watch(appDatabaseProvider.future);
@@ -32,7 +39,7 @@ final eventStoreProvider = FutureProvider<EventStore>((ref) async {
 /// Single composition root for the Memory Runtime — every caller
 /// (AI tools, indexers, UI) reads through this.
 final memoryRuntimeProvider = FutureProvider<MemoryRuntime>((ref) async {
-  final embedder = ref.watch(embedderProvider);
+  final embedder = await ref.watch(embedderProvider.future);
   final memoryStore = await ref.watch(memoryStoreProvider.future);
   final eventStore = await ref.watch(eventStoreProvider.future);
   return MemoryRuntime(

@@ -49,39 +49,41 @@ void main() {
 
   tearDown(() async => db.close());
 
-  test('create persists liability + full schedule and queues insert ops',
-      () async {
-    final l = await repo.create(
-      type: LiabilityType.mortgage,
-      name: 'Home',
-      principal: d('120000'),
-      interestRate: d('0.05'),
-      currency: 'CNY',
-      paymentMethod: RepaymentMethod.equalPrincipal,
-      termMonths: 12,
-      startDate: DateTime.utc(2026, 1, 1),
-    );
+  test(
+    'create persists liability + full schedule and queues insert ops',
+    () async {
+      final l = await repo.create(
+        type: LiabilityType.mortgage,
+        name: 'Home',
+        principal: d('120000'),
+        interestRate: d('0.05'),
+        currency: 'CNY',
+        paymentMethod: RepaymentMethod.equalPrincipal,
+        termMonths: 12,
+        startDate: DateTime.utc(2026, 1, 1),
+      );
 
-    expect(l.name, 'Home');
+      expect(l.name, 'Home');
 
-    final list = await repo.watchAll().first;
-    expect(list, hasLength(1));
+      final list = await repo.watchAll().first;
+      expect(list, hasLength(1));
 
-    final schedule = await repo.scheduleFor(l.id);
-    expect(schedule, hasLength(12));
-    expect(schedule.first.periodIndex, 1);
-    expect(schedule.last.remainingBalance, Decimal.zero);
+      final schedule = await repo.scheduleFor(l.id);
+      expect(schedule, hasLength(12));
+      expect(schedule.first.periodIndex, 1);
+      expect(schedule.last.remainingBalance, Decimal.zero);
 
-    final batch = outbox.queued;
-    // 1 liability insert + 12 amortization inserts = 13 dirty pointers.
-    expect(batch, hasLength(13));
-    expect(batch.first.table, 'liabilities');
-    expect(batch.first.rowId, l.id);
-    expect(
-      batch.skip(1).every((o) => o.table == 'amortization_entries'),
-      isTrue,
-    );
-  });
+      final batch = outbox.queued;
+      // 1 liability insert + 12 amortization inserts = 13 dirty pointers.
+      expect(batch, hasLength(13));
+      expect(batch.first.table, 'liabilities');
+      expect(batch.first.rowId, l.id);
+      expect(
+        batch.skip(1).every((o) => o.table == 'amortization_entries'),
+        isTrue,
+      );
+    },
+  );
 
   test('credit-card liability persists without a schedule', () async {
     final cc = await repo.create(
@@ -101,46 +103,41 @@ void main() {
     expect(batch.single.table, 'liabilities');
   });
 
-  test(
-    'registerPayment marks period paid, writes a journal entry, and queues '
-    'amortization-update + journal-entry/posting ops',
-    () async {
-      final l = await repo.create(
-        type: LiabilityType.mortgage,
-        name: 'Home',
-        principal: d('120000'),
-        interestRate: d('0.05'),
-        currency: 'CNY',
-        paymentMethod: RepaymentMethod.equalPrincipal,
-        termMonths: 12,
-        startDate: DateTime.utc(2026, 1, 1),
-        accountId: 'acc-1',
-      );
-      // Drain create-time pointers so the next assertion is easier to read.
-      outbox.clearQueued();
+  test('registerPayment marks period paid, writes a journal entry, and queues '
+      'amortization-update + journal-entry/posting ops', () async {
+    final l = await repo.create(
+      type: LiabilityType.mortgage,
+      name: 'Home',
+      principal: d('120000'),
+      interestRate: d('0.05'),
+      currency: 'CNY',
+      paymentMethod: RepaymentMethod.equalPrincipal,
+      termMonths: 12,
+      startDate: DateTime.utc(2026, 1, 1),
+      accountId: 'acc-1',
+    );
+    // Drain create-time pointers so the next assertion is easier to read.
+    outbox.clearQueued();
 
-      final journalEntryId = await repo.registerPayment(
-        liabilityId: l.id,
-        periodIndex: 1,
-      );
-      expect(journalEntryId, isNotEmpty);
+    final journalEntryId = await repo.registerPayment(
+      liabilityId: l.id,
+      periodIndex: 1,
+    );
+    expect(journalEntryId, isNotEmpty);
 
-      final schedule = await repo.scheduleFor(l.id);
-      expect(schedule.first.paidAt, isNotNull);
-      expect(schedule[1].paidAt, isNull);
+    final schedule = await repo.scheduleFor(l.id);
+    expect(schedule.first.paidAt, isNotNull);
+    expect(schedule[1].paidAt, isNull);
 
-      final batch = outbox.queued;
-      expect(batch, hasLength(5));
-      final amortOp = batch.firstWhere(
-        (o) => o.table == 'amortization_entries',
-      );
-      expect(amortOp.table, 'amortization_entries');
-      final jeOp = batch.firstWhere((o) => o.table == 'journal_entries');
-      expect(jeOp.rowId, journalEntryId);
-      final postingOps = batch.where((o) => o.table == 'postings');
-      expect(postingOps, hasLength(3));
-    },
-  );
+    final batch = outbox.queued;
+    expect(batch, hasLength(5));
+    final amortOp = batch.firstWhere((o) => o.table == 'amortization_entries');
+    expect(amortOp.table, 'amortization_entries');
+    final jeOp = batch.firstWhere((o) => o.table == 'journal_entries');
+    expect(jeOp.rowId, journalEntryId);
+    final postingOps = batch.where((o) => o.table == 'postings');
+    expect(postingOps, hasLength(3));
+  });
 
   test('registerPayment refuses to mark a period twice', () async {
     final l = await repo.create(

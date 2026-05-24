@@ -27,29 +27,23 @@ class ScanSideInputs {
   final Money availableCash;
 }
 
-final scanSideInputsProvider =
-    FutureProvider.autoDispose<ScanSideInputs>((ref) async {
+final scanSideInputsProvider = FutureProvider.autoDispose<ScanSideInputs>((
+  ref,
+) async {
   // Defaults to USD because yfinance options are US-only at MVP.
   const baseCurrency = 'USD';
-  final defaultCash = Money(
-    Decimal.parse('1000000'),
-    baseCurrency,
-  );
+  final defaultCash = Money(Decimal.parse('1000000'), baseCurrency);
   // currentUserId is used implicitly downstream — touching the provider
   // keeps the bridge invalidating when the user switches.
   await ref.watch(currentUserIdProvider)();
   Map<String, int> holdings;
   try {
-    final snapshot =
-        await ref.watch(devicePortfolioSnapshotProvider.future);
+    final snapshot = await ref.watch(devicePortfolioSnapshotProvider.future);
     holdings = _extractShares(snapshot);
   } catch (_) {
     holdings = const {};
   }
-  return ScanSideInputs(
-    holdingsBySymbol: holdings,
-    availableCash: defaultCash,
-  );
+  return ScanSideInputs(holdingsBySymbol: holdings, availableCash: defaultCash);
 });
 
 Map<String, int> _extractShares(Map<String, Object?>? snapshot) {

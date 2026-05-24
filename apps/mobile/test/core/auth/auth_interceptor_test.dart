@@ -107,7 +107,10 @@ void main() {
       () async {
         // First call returns 401 (with stale token); second call returns 200
         // (must carry the rotated token).
-        final adapter = _ScriptedAdapter([_R(401, '{"code":"unauthorized"}'), _R(200)]);
+        final adapter = _ScriptedAdapter([
+          _R(401, '{"code":"unauthorized"}'),
+          _R(200),
+        ]);
         var token = 'old';
         var refreshes = 0;
         final dio = _buildDio(
@@ -161,10 +164,7 @@ void main() {
         },
       );
 
-      await expectLater(
-        dio.get<dynamic>('/me'),
-        throwsA(isA<DioException>()),
-      );
+      await expectLater(dio.get<dynamic>('/me'), throwsA(isA<DioException>()));
       expect(refreshes, 0);
     });
 
@@ -189,29 +189,31 @@ void main() {
       expect(refreshes, 0);
     });
 
-    test('retried request that 401s a second time is not rotated again',
-        () async {
-      // First 401 → rotate, retry 401 again → bail out.
-      final adapter = _ScriptedAdapter([
-        _R(401, '{"code":"unauthorized"}'),
-        _R(401, '{"code":"unauthorized"}'),
-      ]);
-      var refreshes = 0;
-      final dio = _buildDio(
-        adapter: adapter,
-        reader: () => _session('old'),
-        onUnauthorized: () async {
-          refreshes += 1;
-          return true;
-        },
-      );
+    test(
+      'retried request that 401s a second time is not rotated again',
+      () async {
+        // First 401 → rotate, retry 401 again → bail out.
+        final adapter = _ScriptedAdapter([
+          _R(401, '{"code":"unauthorized"}'),
+          _R(401, '{"code":"unauthorized"}'),
+        ]);
+        var refreshes = 0;
+        final dio = _buildDio(
+          adapter: adapter,
+          reader: () => _session('old'),
+          onUnauthorized: () async {
+            refreshes += 1;
+            return true;
+          },
+        );
 
-      await expectLater(
-        dio.get<dynamic>('/sync/pull'),
-        throwsA(isA<DioException>()),
-      );
-      expect(refreshes, 1);
-      expect(adapter.calls, hasLength(2));
-    });
+        await expectLater(
+          dio.get<dynamic>('/sync/pull'),
+          throwsA(isA<DioException>()),
+        );
+        expect(refreshes, 1);
+        expect(adapter.calls, hasLength(2));
+      },
+    );
   });
 }

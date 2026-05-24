@@ -37,9 +37,8 @@ class AiTransparencyBadge extends ConsumerWidget {
       child: FTooltip(
         tipBuilder: (_, _) => Text(l10n.aiChatTransparencyOpenDetail),
         child: FTappable(
-          onPress: () => context.go(
-            AppRoutes.settingsAiTransparencyDetail(messageId),
-          ),
+          onPress: () =>
+              context.go(AppRoutes.settingsAiTransparencyDetail(messageId)),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 2),
             child: Row(

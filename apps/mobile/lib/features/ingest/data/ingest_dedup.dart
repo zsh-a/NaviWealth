@@ -52,10 +52,7 @@ DedupResult classifyDedup(
     final sameDay = _sameCalendarDay(parsed.occurredAt, e.occurredAt);
 
     if (existingAmount == amount && (keyMatch || sameDay)) {
-      return DedupResult(
-        verdict: DedupVerdict.duplicate,
-        targetEntryId: e.id,
-      );
+      return DedupResult(verdict: DedupVerdict.duplicate, targetEntryId: e.id);
     }
 
     if (keyMatch && _withinTolerance(amount, existingAmount)) {

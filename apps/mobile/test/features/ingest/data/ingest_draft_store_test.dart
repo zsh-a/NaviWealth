@@ -26,23 +26,25 @@ IngestDraft _draft(
 );
 
 void main() {
-  test('putAll + listByStatus round-trips and preserves parsed fields',
-      () async {
-    final db = makeTestDatabase();
-    final store = IngestDraftStore(db, ownerUserId: 'u1');
+  test(
+    'putAll + listByStatus round-trips and preserves parsed fields',
+    () async {
+      final db = makeTestDatabase();
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
 
-    await store.putAll([_draft('d1'), _draft('d2')]);
-    final pending = await store.listByStatus(DraftStatus.pending);
+      await store.putAll([_draft('d1'), _draft('d2')]);
+      final pending = await store.listByStatus(DraftStatus.pending);
 
-    expect(pending, hasLength(2));
-    final d = pending.firstWhere((x) => x.draftId == 'd1');
-    expect(d.parsed.amountMinor, -3800);
-    expect(d.parsed.categoryHint, 'coffee');
-    expect(d.parsed.currency, 'CNY');
-    expect(d.sourceKind, IngestSourceKind.csv);
-    expect(d.originLabel, '粘贴文本');
-    await db.close();
-  });
+      expect(pending, hasLength(2));
+      final d = pending.firstWhere((x) => x.draftId == 'd1');
+      expect(d.parsed.amountMinor, -3800);
+      expect(d.parsed.categoryHint, 'coffee');
+      expect(d.parsed.currency, 'CNY');
+      expect(d.sourceKind, IngestSourceKind.csv);
+      expect(d.originLabel, '粘贴文本');
+      await db.close();
+    },
+  );
 
   test('updateStatus moves a draft out of the pending queue', () async {
     final db = makeTestDatabase();

@@ -17,11 +17,7 @@ void main() {
   setUp(() {
     db = makeTestDatabase();
     final outbox = InMemoryOutboxStore();
-    repo = BudgetRepository(
-      db: db,
-      outbox: outbox,
-      stamper: makeStubStamper(),
-    );
+    repo = BudgetRepository(db: db, outbox: outbox, stamper: makeStubStamper());
   });
 
   tearDown(() => db.close());
@@ -31,13 +27,12 @@ void main() {
     String periodMonth = '2026-05',
     required String amount,
     String currency = 'CNY',
-  }) =>
-      repo.create(
-        categoryId: categoryId,
-        periodMonth: periodMonth,
-        amount: Decimal.parse(amount),
-        currency: currency,
-      );
+  }) => repo.create(
+    categoryId: categoryId,
+    periodMonth: periodMonth,
+    amount: Decimal.parse(amount),
+    currency: currency,
+  );
 
   group('buildMonthlyBudgetSummary', () {
     test('joins matching budget + spend by categoryId', () async {
@@ -61,22 +56,25 @@ void main() {
       expect(result.summary.progressFraction, closeTo(0.954, 0.01));
     });
 
-    test('category with no spend defaults to zero, retains its budget', () async {
-      final food = await seedBudget(categoryId: 'cat-food', amount: '1500');
+    test(
+      'category with no spend defaults to zero, retains its budget',
+      () async {
+        final food = await seedBudget(categoryId: 'cat-food', amount: '1500');
 
-      final result = buildMonthlyBudgetSummary(
-        periodMonth: '2026-05',
-        budgets: [food],
-        spendByCategoryId: const {},
-        targetCurrency: 'CNY',
-      );
+        final result = buildMonthlyBudgetSummary(
+          periodMonth: '2026-05',
+          budgets: [food],
+          spendByCategoryId: const {},
+          targetCurrency: 'CNY',
+        );
 
-      final s = result.summary.categories.single;
-      expect(s.spent, Money.zero('CNY'));
-      expect(s.remaining, Money.parse('1500', 'CNY'));
-      expect(s.progressFraction, 0.0);
-      expect(s.isOverBudget, isFalse);
-    });
+        final s = result.summary.categories.single;
+        expect(s.spent, Money.zero('CNY'));
+        expect(s.remaining, Money.parse('1500', 'CNY'));
+        expect(s.progressFraction, 0.0);
+        expect(s.isOverBudget, isFalse);
+      },
+    );
 
     test('over-budget category is correctly flagged', () async {
       final food = await seedBudget(categoryId: 'cat-food', amount: '1000');
@@ -84,9 +82,7 @@ void main() {
       final result = buildMonthlyBudgetSummary(
         periodMonth: '2026-05',
         budgets: [food],
-        spendByCategoryId: {
-          'cat-food': Money.parse('1300', 'CNY'),
-        },
+        spendByCategoryId: {'cat-food': Money.parse('1300', 'CNY')},
         targetCurrency: 'CNY',
       );
       final s = result.summary.categories.single;
@@ -141,14 +137,16 @@ void main() {
 
       final result = buildMonthlyBudgetSummary(
         periodMonth: '2026-05',
-        budgets: [may, april.copyWith(deletedAt: Value(DateTime.now())), june],
+        budgets: [
+          may,
+          april.copyWith(deletedAt: Value(DateTime.now())),
+          june,
+        ],
         spendByCategoryId: const {},
         targetCurrency: 'CNY',
       );
       expect(aprilDeleted, isNull, reason: 'sanity: tombstone is set');
-      expect(result.summary.categories.map((c) => c.categoryId), [
-        'cat-food',
-      ]);
+      expect(result.summary.categories.map((c) => c.categoryId), ['cat-food']);
       // April + June are filtered (deleted / wrong month). Only May
       // contributes to the total.
       expect(result.summary.totalBudgeted, Money.parse('1000', 'CNY'));
@@ -160,10 +158,7 @@ void main() {
         categoryId: 'cat-food',
         amount: '1000',
       );
-      final under = await seedBudget(
-        categoryId: 'cat-fun',
-        amount: '500',
-      );
+      final under = await seedBudget(categoryId: 'cat-fun', amount: '500');
 
       final result = buildMonthlyBudgetSummary(
         periodMonth: '2026-05',

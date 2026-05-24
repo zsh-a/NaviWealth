@@ -104,18 +104,18 @@ class _EventRow extends StatelessWidget {
 }
 
 IconData _kindIcon(CorporateActionKind kind) => switch (kind) {
-      CorporateActionKind.cashDividend => Icons.payments_outlined,
-      CorporateActionKind.split => Icons.call_split,
-      CorporateActionKind.rights => Icons.local_offer_outlined,
-      CorporateActionKind.drip => Icons.refresh_outlined,
-    };
+  CorporateActionKind.cashDividend => Icons.payments_outlined,
+  CorporateActionKind.split => Icons.call_split,
+  CorporateActionKind.rights => Icons.local_offer_outlined,
+  CorporateActionKind.drip => Icons.refresh_outlined,
+};
 
 String _kindLabel(AppLocalizations l10n, CorporateActionEvent event) =>
     switch (event.kind) {
       CorporateActionKind.cashDividend => l10n.investmentEventDividend,
       CorporateActionKind.split => l10n.investmentEventSplit(
-          event.ratio?.toString() ?? '',
-        ),
+        event.ratio?.toString() ?? '',
+      ),
       CorporateActionKind.rights => l10n.investmentEventRights,
       CorporateActionKind.drip => l10n.investmentEventDrip,
     };

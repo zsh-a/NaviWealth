@@ -16,7 +16,7 @@ import 'refresh_rate.dart';
 /// like" without re-sampling the platform.
 class FrameTimingCollector {
   FrameTimingCollector({this.capacity = 600, int? frameBudgetUs})
-      : _frameBudgetUs = frameBudgetUs ?? targetFrameBudgetUs();
+    : _frameBudgetUs = frameBudgetUs ?? targetFrameBudgetUs();
 
   /// Max samples to keep. Default holds ~10s of 60fps timing.
   final int capacity;
@@ -69,10 +69,12 @@ class FrameTimingCollector {
   FrameStats statsForWindow({required Duration from, required Duration to}) {
     final fromUs = from.inMicroseconds;
     final toUs = to.inMicroseconds;
-    final filtered = _samples.where((t) {
-      final vsync = t.timestampInMicroseconds(FramePhase.vsyncStart);
-      return vsync >= fromUs && vsync <= toUs;
-    }).toList(growable: false);
+    final filtered = _samples
+        .where((t) {
+          final vsync = t.timestampInMicroseconds(FramePhase.vsyncStart);
+          return vsync >= fromUs && vsync <= toUs;
+        })
+        .toList(growable: false);
     return _statsFor(filtered);
   }
 
@@ -81,18 +83,15 @@ class FrameTimingCollector {
     if (list.isEmpty) {
       return FrameStats.empty(frameBudgetUs: _frameBudgetUs);
     }
-    final totalDurations = list
-        .map((t) => t.totalSpan.inMicroseconds)
-        .toList(growable: false)
-      ..sort();
-    final buildDurations = list
-        .map((t) => t.buildDuration.inMicroseconds)
-        .toList(growable: false)
-      ..sort();
-    final rasterDurations = list
-        .map((t) => t.rasterDuration.inMicroseconds)
-        .toList(growable: false)
-      ..sort();
+    final totalDurations =
+        list.map((t) => t.totalSpan.inMicroseconds).toList(growable: false)
+          ..sort();
+    final buildDurations =
+        list.map((t) => t.buildDuration.inMicroseconds).toList(growable: false)
+          ..sort();
+    final rasterDurations =
+        list.map((t) => t.rasterDuration.inMicroseconds).toList(growable: false)
+          ..sort();
     final janky = list
         .where((t) => t.totalSpan.inMicroseconds > _frameBudgetUs)
         .length;

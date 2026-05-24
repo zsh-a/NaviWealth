@@ -31,8 +31,9 @@ Future<Widget?> renderVia(
 }
 
 void main() {
-  testWidgets('Wave 34 dispatch returns a widget for each new tool',
-      (tester) async {
+  testWidgets('Wave 34 dispatch returns a widget for each new tool', (
+    tester,
+  ) async {
     expect(
       await renderVia(tester, 'get_asset_allocation', <String, Object?>{
         'buckets': [
@@ -105,8 +106,7 @@ void main() {
     );
   });
 
-  testWidgets('empty payloads still return the typed widget',
-      (tester) async {
+  testWidgets('empty payloads still return the typed widget', (tester) async {
     expect(
       await renderVia(tester, 'get_asset_allocation', <String, Object?>{
         'buckets': [],
@@ -133,8 +133,9 @@ void main() {
     );
   });
 
-  testWidgets('malformed payload still resolves to a widget (no throw)',
-      (tester) async {
+  testWidgets('malformed payload still resolves to a widget (no throw)', (
+    tester,
+  ) async {
     expect(
       await renderVia(tester, 'get_asset_allocation', <String, Object?>{}),
       isA<AssetAllocationView>(),
@@ -152,32 +153,28 @@ void main() {
     );
   });
 
-  testWidgets('new tools do not force raw-JSON fallback via oversize check',
-      (tester) async {
+  testWidgets('new tools do not force raw-JSON fallback via oversize check', (
+    tester,
+  ) async {
     expect(
-      isOversizedToolPayload(
-        'get_recurring_patterns',
-        <String, Object?>{'patterns': <Object?>[]},
-      ),
+      isOversizedToolPayload('get_recurring_patterns', <String, Object?>{
+        'patterns': <Object?>[],
+      }),
       isFalse,
     );
     expect(
-      isOversizedToolPayload(
-        'get_asset_allocation',
-        <String, Object?>{'buckets': <Object?>[]},
-      ),
+      isOversizedToolPayload('get_asset_allocation', <String, Object?>{
+        'buckets': <Object?>[],
+      }),
       isFalse,
     );
     expect(
-      isOversizedToolPayload(
-        'get_subscription_changes',
-        <String, Object?>{
-          'changes': List<Map<String, Object?>>.generate(
-            100,
-            (i) => <String, Object?>{'merchant_key': 'm$i'},
-          ),
-        },
-      ),
+      isOversizedToolPayload('get_subscription_changes', <String, Object?>{
+        'changes': List<Map<String, Object?>>.generate(
+          100,
+          (i) => <String, Object?>{'merchant_key': 'm$i'},
+        ),
+      }),
       isFalse,
     );
   });

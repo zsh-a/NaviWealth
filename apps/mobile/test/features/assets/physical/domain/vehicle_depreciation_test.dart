@@ -145,10 +145,7 @@ void main() {
       );
       // 120 months / stride 10 -> 13 samples (inclusive endpoints).
       expect(pts.length, lessThanOrEqualTo(13));
-      expect(
-        pts.every((p) => p.kind == ValuationPointKind.projected),
-        isTrue,
-      );
+      expect(pts.every((p) => p.kind == ValuationPointKind.projected), isTrue);
     });
   });
 }

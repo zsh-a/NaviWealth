@@ -23,27 +23,30 @@ const _aaplChain = {
   },
 };
 
-CannedResponse _json(Object body, {int status = 200}) =>
-    CannedResponse(body, status: status, headers: const {
-      Headers.contentTypeHeader: ['application/json;charset=utf-8'],
-    });
+CannedResponse _json(Object body, {int status = 200}) => CannedResponse(
+  body,
+  status: status,
+  headers: const {
+    Headers.contentTypeHeader: ['application/json;charset=utf-8'],
+  },
+);
 
 CannedResponse _setCookie(String value) => CannedResponse(
-      '',
-      status: 404,
-      headers: {
-        'set-cookie': [value],
-        Headers.contentTypeHeader: ['text/html'],
-      },
-    );
+  '',
+  status: 404,
+  headers: {
+    'set-cookie': [value],
+    Headers.contentTypeHeader: ['text/html'],
+  },
+);
 
 CannedResponse _crumb(String token) => CannedResponse(
-      token,
-      status: 200,
-      headers: const {
-        Headers.contentTypeHeader: ['text/plain'],
-      },
-    );
+  token,
+  status: 200,
+  headers: const {
+    Headers.contentTypeHeader: ['text/plain'],
+  },
+);
 
 (YFinanceOptionsProvider, CannedAdapter) _makeProvider(FakeClock clock) {
   final adapter = CannedAdapter();
@@ -73,42 +76,41 @@ CannedResponse _crumb(String token) => CannedResponse(
 
 void main() {
   group('YFinanceOptionsProvider', () {
-    test('attaches crumb + Cookie to the options request on first call',
-        () async {
-      final clock = FakeClock();
-      final (provider, adapter) = _makeProvider(clock);
-      adapter
-        ..enqueueRaw('fc.yahoo.com', _setCookie('A1=tok1'))
-        ..enqueueRaw('getcrumb', _crumb('XCRUMB1'))
-        ..enqueueRaw('finance/options/AAPL', _json(_aaplChain));
+    test(
+      'attaches crumb + Cookie to the options request on first call',
+      () async {
+        final clock = FakeClock();
+        final (provider, adapter) = _makeProvider(clock);
+        adapter
+          ..enqueueRaw('fc.yahoo.com', _setCookie('A1=tok1'))
+          ..enqueueRaw('getcrumb', _crumb('XCRUMB1'))
+          ..enqueueRaw('finance/options/AAPL', _json(_aaplChain));
 
-      await provider.fetchChain(
-        const OptionsChainRequest(
-          underlying: 'AAPL',
-          minDte: 0,
-          maxDte: 60,
-        ),
-      );
+        await provider.fetchChain(
+          const OptionsChainRequest(underlying: 'AAPL', minDte: 0, maxDte: 60),
+        );
 
-      final chainCall =
-          adapter.calls.firstWhere((c) => c.uri.path.contains('options/AAPL'));
-      expect(chainCall.queryParameters['crumb'], 'XCRUMB1');
-      expect(chainCall.headers['Cookie'], 'A1=tok1');
-    });
+        final chainCall = adapter.calls.firstWhere(
+          (c) => c.uri.path.contains('options/AAPL'),
+        );
+        expect(chainCall.queryParameters['crumb'], 'XCRUMB1');
+        expect(chainCall.headers['Cookie'], 'A1=tok1');
+      },
+    );
 
-    test('refreshes crumb + retries once when chain endpoint returns 401',
-        () async {
-      final clock = FakeClock();
-      final (provider, adapter) = _makeProvider(clock);
-      adapter
-        // First handshake.
-        ..enqueueRaw('fc.yahoo.com', _setCookie('A1=stale'))
-        ..enqueueRaw('getcrumb', _crumb('STALE'))
-        // Stale crumb → 401.
-        ..enqueueRaw(
-          'finance/options/AAPL',
-          _json(
-            {
+    test(
+      'refreshes crumb + retries once when chain endpoint returns 401',
+      () async {
+        final clock = FakeClock();
+        final (provider, adapter) = _makeProvider(clock);
+        adapter
+          // First handshake.
+          ..enqueueRaw('fc.yahoo.com', _setCookie('A1=stale'))
+          ..enqueueRaw('getcrumb', _crumb('STALE'))
+          // Stale crumb → 401.
+          ..enqueueRaw(
+            'finance/options/AAPL',
+            _json({
               'finance': {
                 'result': null,
                 'error': {
@@ -116,31 +118,26 @@ void main() {
                   'description': 'Invalid Crumb',
                 },
               },
-            },
-            status: 401,
-          ),
-        )
-        // Second handshake after invalidate.
-        ..enqueueRaw('fc.yahoo.com', _setCookie('A1=fresh'))
-        ..enqueueRaw('getcrumb', _crumb('FRESH'))
-        // Retry succeeds.
-        ..enqueueRaw('finance/options/AAPL', _json(_aaplChain));
+            }, status: 401),
+          )
+          // Second handshake after invalidate.
+          ..enqueueRaw('fc.yahoo.com', _setCookie('A1=fresh'))
+          ..enqueueRaw('getcrumb', _crumb('FRESH'))
+          // Retry succeeds.
+          ..enqueueRaw('finance/options/AAPL', _json(_aaplChain));
 
-      await provider.fetchChain(
-        const OptionsChainRequest(
-          underlying: 'AAPL',
-          minDte: 0,
-          maxDte: 60,
-        ),
-      );
+        await provider.fetchChain(
+          const OptionsChainRequest(underlying: 'AAPL', minDte: 0, maxDte: 60),
+        );
 
-      final chainCalls = adapter.calls
-          .where((c) => c.uri.path.contains('options/AAPL'))
-          .toList();
-      expect(chainCalls, hasLength(2));
-      expect(chainCalls.first.queryParameters['crumb'], 'STALE');
-      expect(chainCalls.last.queryParameters['crumb'], 'FRESH');
-      expect(chainCalls.last.headers['Cookie'], 'A1=fresh');
-    });
+        final chainCalls = adapter.calls
+            .where((c) => c.uri.path.contains('options/AAPL'))
+            .toList();
+        expect(chainCalls, hasLength(2));
+        expect(chainCalls.first.queryParameters['crumb'], 'STALE');
+        expect(chainCalls.last.queryParameters['crumb'], 'FRESH');
+        expect(chainCalls.last.headers['Cookie'], 'A1=fresh');
+      },
+    );
   });
 }

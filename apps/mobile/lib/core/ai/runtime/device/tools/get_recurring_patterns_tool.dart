@@ -54,9 +54,7 @@ class GetRecurringPatternsTool implements DeviceTool {
       journalExpensesStreamProvider.future,
     );
     final uploads = [
-      for (final p in detectRecurring(
-        expenses.map(expenseToTransactionInput),
-      ))
+      for (final p in detectRecurring(expenses.map(expenseToTransactionInput)))
         recurringPatternToUpload(p),
     ];
     return shape(
@@ -79,9 +77,7 @@ class GetRecurringPatternsTool implements DeviceTool {
     final ccy = (currency != null && currency.trim().isNotEmpty)
         ? currency.trim().toUpperCase()
         : null;
-    final cad = (cadence == 'weekly' || cadence == 'monthly')
-        ? cadence
-        : null;
+    final cad = (cadence == 'weekly' || cadence == 'monthly') ? cadence : null;
 
     final patterns = <Map<String, Object?>>[];
     for (final u in uploads) {

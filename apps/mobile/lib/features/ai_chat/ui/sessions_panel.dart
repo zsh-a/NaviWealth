@@ -357,7 +357,9 @@ List<_SessionGroup> _groupByRecency(
 
   final out = <_SessionGroup>[];
   if (tToday.isNotEmpty) {
-    out.add(_SessionGroup(label: l10n.aiChatSessionsGroupToday, sessions: tToday));
+    out.add(
+      _SessionGroup(label: l10n.aiChatSessionsGroupToday, sessions: tToday),
+    );
   }
   if (tYesterday.isNotEmpty) {
     out.add(

@@ -25,25 +25,24 @@ MemoryRecord _mem({
   DateTime? updatedAt,
   DateTime? validFrom,
   DateTime? validUntil,
-}) =>
-    MemoryRecord(
-      id: id,
-      kind: kind,
-      ownerUserId: _kOwner,
-      scope: scope,
-      source: source,
-      sourceId: sourceId,
-      title: title,
-      summary: summary,
-      payload: payload ?? const {'outcome': 'closed'},
-      entities: entities,
-      importance: importance,
-      confidence: confidence,
-      validFrom: validFrom,
-      validUntil: validUntil,
-      createdAt: createdAt ?? _t(1),
-      updatedAt: updatedAt ?? _t(1),
-    );
+}) => MemoryRecord(
+  id: id,
+  kind: kind,
+  ownerUserId: _kOwner,
+  scope: scope,
+  source: source,
+  sourceId: sourceId,
+  title: title,
+  summary: summary,
+  payload: payload ?? const {'outcome': 'closed'},
+  entities: entities,
+  importance: importance,
+  confidence: confidence,
+  validFrom: validFrom,
+  validUntil: validUntil,
+  createdAt: createdAt ?? _t(1),
+  updatedAt: updatedAt ?? _t(1),
+);
 
 void main() {
   late SqliteMemoryStore store;
@@ -121,20 +120,12 @@ void main() {
   group('SqliteMemoryStore.queryMemories', () {
     Future<void> seed() async {
       await store.writeMemory(
-        _mem(
-          id: 'a',
-          kind: MemoryKind.episodic,
-          entities: {'NVDA', 'put'},
-        ),
+        _mem(id: 'a', kind: MemoryKind.episodic, entities: {'NVDA', 'put'}),
         vector: const <double>[1, 0],
         fingerprint: _kFp,
       );
       await store.writeMemory(
-        _mem(
-          id: 'b',
-          kind: MemoryKind.episodic,
-          entities: {'AAPL', 'call'},
-        ),
+        _mem(id: 'b', kind: MemoryKind.episodic, entities: {'AAPL', 'call'}),
         vector: const <double>[0, 1],
         fingerprint: _kFp,
       );
@@ -169,8 +160,7 @@ void main() {
         kinds: const {MemoryKind.episodic},
       );
       expect(episodic.map((c) => c.record.id), containsAll(['a', 'b']));
-      expect(episodic.map((c) => c.record.id),
-          isNot(contains('rule-1')));
+      expect(episodic.map((c) => c.record.id), isNot(contains('rule-1')));
     });
 
     test("scope filter: '*' records apply to any specific scope", () async {
@@ -186,10 +176,7 @@ void main() {
 
     test("scope='*' query matches every scope", () async {
       await seed();
-      final all = await store.queryMemories(
-        ownerUserId: _kOwner,
-        scope: '*',
-      );
+      final all = await store.queryMemories(ownerUserId: _kOwner, scope: '*');
       final ids = all.map((c) => c.record.id).toSet();
       expect(ids, containsAll(['a', 'b', 'rule-1', 'pref-1']));
     });
@@ -225,7 +212,7 @@ void main() {
         ownerUserId: _kOwner,
         kinds: const {MemoryKind.episodic},
         queryVector: const <double>[1, 0],
-        fingerprint: 'minilm-l6-v2-d384',
+        fingerprint: 'embeddinggemma-300m-onnx-int8-d768',
       );
       expect(hits, isEmpty);
     });
@@ -241,14 +228,8 @@ void main() {
         ),
       );
       final at = _t(10);
-      final live = await store.queryMemories(
-        ownerUserId: _kOwner,
-        validAt: at,
-      );
-      expect(
-        live.map((c) => c.record.id),
-        isNot(contains('expired-rule')),
-      );
+      final live = await store.queryMemories(ownerUserId: _kOwner, validAt: at);
+      expect(live.map((c) => c.record.id), isNot(contains('expired-rule')));
     });
 
     test('other owners are excluded', () async {

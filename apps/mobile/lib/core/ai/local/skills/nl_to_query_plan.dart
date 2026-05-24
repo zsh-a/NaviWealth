@@ -141,8 +141,7 @@ DateRange? _extractDateRange(String q, DateTime now) {
     r'近\s*(\d+)\s*天|过去\s*(\d+)\s*天|last\s*(\d+)\s*days?',
   ).firstMatch(q);
   if (m != null) {
-    final n =
-        int.tryParse(m.group(1) ?? m.group(2) ?? m.group(3) ?? '0') ?? 0;
+    final n = int.tryParse(m.group(1) ?? m.group(2) ?? m.group(3) ?? '0') ?? 0;
     if (n > 0) return _lastNDays(now, n);
   }
   return null;
@@ -181,11 +180,7 @@ DateRange _previousWeek(DateTime now) {
 
 DateRange _currentWeek(DateTime now) {
   final dayOfWeek = now.toUtc().weekday;
-  final start = DateTime.utc(
-    now.year,
-    now.month,
-    now.day - (dayOfWeek - 1),
-  );
+  final start = DateTime.utc(now.year, now.month, now.day - (dayOfWeek - 1));
   final end = start.add(const Duration(days: 7));
   return _range(start, end);
 }

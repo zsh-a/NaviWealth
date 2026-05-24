@@ -5,20 +5,16 @@ import 'package:naviwealth/core/ai/trace/ai_trace_builder.dart';
 AiTrace _seed() => const AiTrace(
   requestId: 'req-1',
   startedAtIso: '2026-05-17T10:00:00.000Z',
-  intent: IntentHint(
-    capability: Capability.analyze,
-    risk: RiskLevel.suggest,
-  ),
+  intent: IntentHint(capability: Capability.analyze, risk: RiskLevel.suggest),
   backend: Backend.device,
   budgetTier: BudgetTier.standard,
   routingReason: 'device_llm_direct',
   totalDurationMs: 0,
 );
 
-DateTime _at(int msAfterStart) =>
-    DateTime.parse('2026-05-17T10:00:00.000Z').add(
-      Duration(milliseconds: msAfterStart),
-    );
+DateTime _at(int msAfterStart) => DateTime.parse(
+  '2026-05-17T10:00:00.000Z',
+).add(Duration(milliseconds: msAfterStart));
 
 void main() {
   group('AiTraceBuilder spans', () {
@@ -84,8 +80,7 @@ void main() {
     });
 
     test('no spans → empty list (legacy timeline fallback path)', () {
-      final t = AiTraceBuilder.fromSeed(_seed())
-          .finalize(finishedAt: _at(500));
+      final t = AiTraceBuilder.fromSeed(_seed()).finalize(finishedAt: _at(500));
       expect(t.spans, isEmpty);
       expect(t.hasSpans, isFalse);
     });

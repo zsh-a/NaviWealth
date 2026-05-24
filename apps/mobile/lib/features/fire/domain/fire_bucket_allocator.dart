@@ -115,7 +115,8 @@ FireBucketAllocation allocateBuckets({
   // Targets per role.
   final cashTarget =
       monthlyExpense.amount * Decimal.fromInt(plan.targetCashBucketMonths);
-  final riskReserveTarget = plan.totalReserves.amount +
+  final riskReserveTarget =
+      plan.totalReserves.amount +
       Decimal.parse(plan.riskSettings.oneOffShockAmount.toStringAsFixed(2));
 
   Money money(Decimal d) => Money(d, plan.baseCurrency);

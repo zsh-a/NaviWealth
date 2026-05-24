@@ -334,11 +334,11 @@ class DualMoneyText extends StatelessWidget {
     );
     if (!_captionVisible) return primary;
 
-    final captionTextStyle =
-        (captionStyle ?? TypographyTokens.numericCaption).copyWith(
-      color: captionColor ?? context.theme.colors.mutedForeground,
-      fontFeatures: TypographyTokens.tabularFigures,
-    );
+    final captionTextStyle = (captionStyle ?? TypographyTokens.numericCaption)
+        .copyWith(
+          color: captionColor ?? context.theme.colors.mutedForeground,
+          fontFeatures: TypographyTokens.tabularFigures,
+        );
     final caption = MoneyText(
       amount: originalAmount!.amount.toDouble(),
       currencyCode: originalAmount!.currency,
@@ -362,11 +362,7 @@ class DualMoneyText extends StatelessWidget {
           textBaseline: TextBaseline.alphabetic,
           children: [
             primary,
-            Text(
-              captionLeading,
-              style: captionTextStyle,
-              semanticsLabel: '',
-            ),
+            Text(captionLeading, style: captionTextStyle, semanticsLabel: ''),
             caption,
           ],
         );
@@ -385,7 +381,8 @@ class DualMoneyText extends StatelessWidget {
     final base = primaryAmount;
     if (base == null) return null;
     final orig = originalAmount;
-    if (orig == null || orig.currency.toUpperCase() == base.currency.toUpperCase()) {
+    if (orig == null ||
+        orig.currency.toUpperCase() == base.currency.toUpperCase()) {
       return '${base.amount} ${base.currency}';
     }
     // Neutral middot-separated form keeps the spoken label localisable

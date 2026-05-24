@@ -110,7 +110,5 @@ Iterable<RefundMatch> _matchInGroup(List<TransactionInput> group) sync* {
 int _toleranceFor(int originalSignedAmount) {
   final magnitude = originalSignedAmount.abs();
   final pct = (magnitude * kRefundAmountToleranceFraction).ceil();
-  return pct > kRefundAmountToleranceMinor
-      ? pct
-      : kRefundAmountToleranceMinor;
+  return pct > kRefundAmountToleranceMinor ? pct : kRefundAmountToleranceMinor;
 }

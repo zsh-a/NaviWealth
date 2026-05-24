@@ -66,15 +66,9 @@ void main() {
         ingestSourceFromCapture(fileName: 'noext', bytes: _b('x')),
         isNull,
       );
+      expect(ingestSourceFromCapture(fileName: 'a.csv', bytes: null), isNull);
       expect(
-        ingestSourceFromCapture(fileName: 'a.csv', bytes: null),
-        isNull,
-      );
-      expect(
-        ingestSourceFromCapture(
-          fileName: 'a.csv',
-          bytes: Uint8List(0),
-        ),
+        ingestSourceFromCapture(fileName: 'a.csv', bytes: Uint8List(0)),
         isNull,
       );
     });

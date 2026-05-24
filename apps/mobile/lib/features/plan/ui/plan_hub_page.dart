@@ -67,10 +67,7 @@ class _PlanHero extends ConsumerWidget {
     return viewAsync.when(
       loading: () => const SoftCard(
         padding: EdgeInsets.all(AppSpacing.s20),
-        child: SizedBox(
-          height: 96,
-          child: Center(child: FCircularProgress()),
-        ),
+        child: SizedBox(height: 96, child: Center(child: FCircularProgress())),
       ),
       error: (_, _) => _emptyHero(context, l10n),
       data: (view) {
@@ -112,10 +109,7 @@ class _PlanHero extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.s8),
-          Text(
-            l10n.planHeroEmpty,
-            style: context.theme.typography.md,
-          ),
+          Text(l10n.planHeroEmpty, style: context.theme.typography.md),
           const SizedBox(height: AppSpacing.s16),
           FButton(
             variant: FButtonVariant.primary,

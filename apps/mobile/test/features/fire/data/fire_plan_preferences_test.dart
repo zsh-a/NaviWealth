@@ -10,65 +10,66 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  test('extras start at the documented defaults when nothing is persisted',
-      () async {
-    final prefs = await SharedPreferences.getInstance();
-    final container = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-    );
-    addTearDown(container.dispose);
+  test(
+    'extras start at the documented defaults when nothing is persisted',
+    () async {
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(container.dispose);
 
-    final extras = container.read(firePlanExtrasProvider);
-    expect(extras.safeWithdrawalRate, FirePlan.defaultSafeWithdrawalRate);
-    expect(
-      extras.targetCashBucketMonths,
-      FirePlan.defaultCashBucketMonths,
-    );
-    expect(extras.lifestyleMode, FireLifestyleMode.standard);
-    expect(extras.reserves, isEmpty);
-    expect(extras.riskSettings, const FireRiskSettings());
-  });
+      final extras = container.read(firePlanExtrasProvider);
+      expect(extras.safeWithdrawalRate, FirePlan.defaultSafeWithdrawalRate);
+      expect(extras.targetCashBucketMonths, FirePlan.defaultCashBucketMonths);
+      expect(extras.lifestyleMode, FireLifestyleMode.standard);
+      expect(extras.reserves, isEmpty);
+      expect(extras.riskSettings, const FireRiskSettings());
+    },
+  );
 
-  test('save + reload round-trips every field across container instances',
-      () async {
-    final prefs = await SharedPreferences.getInstance();
-    final write = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-    );
-    addTearDown(write.dispose);
+  test(
+    'save + reload round-trips every field across container instances',
+    () async {
+      final prefs = await SharedPreferences.getInstance();
+      final write = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(write.dispose);
 
-    final reserve = FireReserve(
-      id: 'r1',
-      label: 'Medical',
-      amount: Money(Decimal.parse('30000'), 'CNY'),
-      kind: FireReserveKind.medical,
-    );
-    final updated = FirePlanExtras(
-      safeWithdrawalRate: 0.035,
-      targetCashBucketMonths: 18,
-      lifestyleMode: FireLifestyleMode.fat,
-      reserves: [reserve],
-      riskSettings: const FireRiskSettings(
-        marketDrawdownPct: 0.45,
-        expenseShockPct: 0.25,
-        fxShockPct: 0.12,
-        oneOffShockAmount: 80000,
-      ),
-    );
-    await write.read(firePlanExtrasProvider.notifier).save(updated);
+      final reserve = FireReserve(
+        id: 'r1',
+        label: 'Medical',
+        amount: Money(Decimal.parse('30000'), 'CNY'),
+        kind: FireReserveKind.medical,
+      );
+      final updated = FirePlanExtras(
+        safeWithdrawalRate: 0.035,
+        targetCashBucketMonths: 18,
+        lifestyleMode: FireLifestyleMode.fat,
+        reserves: [reserve],
+        riskSettings: const FireRiskSettings(
+          marketDrawdownPct: 0.45,
+          expenseShockPct: 0.25,
+          fxShockPct: 0.12,
+          oneOffShockAmount: 80000,
+        ),
+      );
+      await write.read(firePlanExtrasProvider.notifier).save(updated);
 
-    // Fresh container: re-read off SharedPreferences end-to-end.
-    final reload = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-    );
-    addTearDown(reload.dispose);
-    final restored = reload.read(firePlanExtrasProvider);
-    expect(restored.safeWithdrawalRate, 0.035);
-    expect(restored.targetCashBucketMonths, 18);
-    expect(restored.lifestyleMode, FireLifestyleMode.fat);
-    expect(restored.reserves, [reserve]);
-    expect(restored.riskSettings, updated.riskSettings);
-  });
+      // Fresh container: re-read off SharedPreferences end-to-end.
+      final reload = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(reload.dispose);
+      final restored = reload.read(firePlanExtrasProvider);
+      expect(restored.safeWithdrawalRate, 0.035);
+      expect(restored.targetCashBucketMonths, 18);
+      expect(restored.lifestyleMode, FireLifestyleMode.fat);
+      expect(restored.reserves, [reserve]);
+      expect(restored.riskSettings, updated.riskSettings);
+    },
+  );
 
   test('clear() resets to defaults', () async {
     final prefs = await SharedPreferences.getInstance();
@@ -77,9 +78,9 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    await container.read(firePlanExtrasProvider.notifier).save(
-      FirePlanExtras.defaults().copyWith(safeWithdrawalRate: 0.05),
-    );
+    await container
+        .read(firePlanExtrasProvider.notifier)
+        .save(FirePlanExtras.defaults().copyWith(safeWithdrawalRate: 0.05));
     await container.read(firePlanExtrasProvider.notifier).clear();
     expect(
       container.read(firePlanExtrasProvider).safeWithdrawalRate,

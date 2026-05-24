@@ -119,8 +119,8 @@ CREATE INDEX IF NOT EXISTS idx_memories_source
 ''';
 
 /// Vectors keyed by memory id. 1:1 with memories (FK CASCADE). Stored
-/// as little-endian Float32 BLOB (32-d stub = 128 bytes; 384-d MiniLM
-/// = 1.5 KB).
+/// as little-endian Float32 BLOB (32-d stub = 128 bytes; 768-d
+/// EmbeddingGemma = 3 KB).
 const String createMemoryEmbeddings = '''
 CREATE TABLE IF NOT EXISTS memory_embeddings (
   memory_id    TEXT PRIMARY KEY,

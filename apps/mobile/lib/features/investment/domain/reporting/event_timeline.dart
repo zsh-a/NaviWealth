@@ -69,18 +69,17 @@ enum CorporateActionKind {
 
 extension CorporateActionKindWire on CorporateActionKind {
   String get wire => switch (this) {
-        CorporateActionKind.cashDividend => 'cash_dividend',
-        CorporateActionKind.split => 'split',
-        CorporateActionKind.rights => 'rights',
-        CorporateActionKind.drip => 'drip',
-      };
+    CorporateActionKind.cashDividend => 'cash_dividend',
+    CorporateActionKind.split => 'split',
+    CorporateActionKind.rights => 'rights',
+    CorporateActionKind.drip => 'drip',
+  };
 }
 
 /// Split numerator / denominator. e.g. `SplitRatio(4, 1)` for 4-for-1.
 class SplitRatio {
   const SplitRatio(this.numerator, this.denominator)
-      : assert(numerator > 0 && denominator > 0,
-            'split ratio must be positive');
+    : assert(numerator > 0 && denominator > 0, 'split ratio must be positive');
   final int numerator;
   final int denominator;
 
@@ -106,11 +105,7 @@ List<CorporateActionEvent> buildEventTimeline({
   int windowDays = 90,
 }) {
   if (windowDays <= 0) {
-    throw ArgumentError.value(
-      windowDays,
-      'windowDays',
-      'must be > 0',
-    );
+    throw ArgumentError.value(windowDays, 'windowDays', 'must be > 0');
   }
   final lowerBound = _dateFloor(from ?? DateTime.now().toUtc());
   final upperBound = lowerBound.add(Duration(days: windowDays));

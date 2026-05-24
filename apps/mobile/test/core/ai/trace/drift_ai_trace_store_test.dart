@@ -25,9 +25,15 @@ void main() {
     final db = makeTestDatabase();
     final store = DriftAiTraceStore(db);
 
-    await store.append(trace(id: 'r1', startedAt: DateTime.utc(2026, 5, 12, 9)));
-    await store.append(trace(id: 'r2', startedAt: DateTime.utc(2026, 5, 12, 10)));
-    await store.append(trace(id: 'r3', startedAt: DateTime.utc(2026, 5, 12, 11)));
+    await store.append(
+      trace(id: 'r1', startedAt: DateTime.utc(2026, 5, 12, 9)),
+    );
+    await store.append(
+      trace(id: 'r2', startedAt: DateTime.utc(2026, 5, 12, 10)),
+    );
+    await store.append(
+      trace(id: 'r3', startedAt: DateTime.utc(2026, 5, 12, 11)),
+    );
 
     final recent = await store.recent();
     expect(recent, hasLength(3));
@@ -81,8 +87,12 @@ void main() {
   test('append upserts on duplicate request_id', () async {
     final db = makeTestDatabase();
     final store = DriftAiTraceStore(db);
-    await store.append(trace(id: 'r1', startedAt: DateTime.utc(2026, 5, 12, 9)));
-    await store.append(trace(id: 'r1', startedAt: DateTime.utc(2026, 5, 12, 10)));
+    await store.append(
+      trace(id: 'r1', startedAt: DateTime.utc(2026, 5, 12, 9)),
+    );
+    await store.append(
+      trace(id: 'r1', startedAt: DateTime.utc(2026, 5, 12, 10)),
+    );
     final all = await store.recent();
     expect(all, hasLength(1));
     expect(all.single.requestId, 'r1');

@@ -73,32 +73,31 @@ class EventRecord {
     Map<String, Object?>? payload,
     Set<String>? entities,
     double? importance,
-  }) =>
-      EventRecord(
-        id: id,
-        ownerUserId: ownerUserId,
-        type: type ?? this.type,
-        timestamp: timestamp ?? this.timestamp,
-        source: source ?? this.source,
-        title: title ?? this.title,
-        summary: summary ?? this.summary,
-        payload: payload ?? this.payload,
-        entities: entities ?? this.entities,
-        importance: importance ?? this.importance,
-      );
+  }) => EventRecord(
+    id: id,
+    ownerUserId: ownerUserId,
+    type: type ?? this.type,
+    timestamp: timestamp ?? this.timestamp,
+    source: source ?? this.source,
+    title: title ?? this.title,
+    summary: summary ?? this.summary,
+    payload: payload ?? this.payload,
+    entities: entities ?? this.entities,
+    importance: importance ?? this.importance,
+  );
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'id': id,
-        'type': type,
-        'timestamp': timestamp.toUtc().toIso8601String(),
-        'source': source,
-        'owner_user_id': ownerUserId,
-        if (title != null) 'title': title,
-        'summary': summary,
-        'payload': payload,
-        'entities': entities.toList(growable: false),
-        'importance': importance,
-      };
+    'id': id,
+    'type': type,
+    'timestamp': timestamp.toUtc().toIso8601String(),
+    'source': source,
+    'owner_user_id': ownerUserId,
+    if (title != null) 'title': title,
+    'summary': summary,
+    'payload': payload,
+    'entities': entities.toList(growable: false),
+    'importance': importance,
+  };
 
   factory EventRecord.fromJson(Map<String, Object?> json) {
     final entitiesRaw = json['entities'];

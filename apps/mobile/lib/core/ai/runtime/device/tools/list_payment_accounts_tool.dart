@@ -37,10 +37,7 @@ class ListPaymentAccountsTool implements DeviceTool {
         'enum': ['record_expense', 'account_selection'],
         'description': '调用目的；用于审计和约束模型只在选择支付账户时读取。',
       },
-      'currency': {
-        'type': 'string',
-        'description': '可选；按账户币种过滤，例如 CNY。',
-      },
+      'currency': {'type': 'string', 'description': '可选；按账户币种过滤，例如 CNY。'},
       'max_results': {
         'type': 'integer',
         'minimum': 1,
@@ -106,8 +103,7 @@ class ListPaymentAccountsTool implements DeviceTool {
             return false;
           }
           return true;
-        }).toList()
-        ..sort((a, b) {
+        }).toList()..sort((a, b) {
           final byName = a.name.compareTo(b.name);
           return byName != 0 ? byName : a.id.compareTo(b.id);
         });

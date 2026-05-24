@@ -121,11 +121,7 @@ FireBucketRole? _roleFromWire(String wire) {
   return null;
 }
 
-Future<bool> _exists(
-  DeviceToolContext ctx,
-  String table,
-  String id,
-) async {
+Future<bool> _exists(DeviceToolContext ctx, String table, String id) async {
   switch (table) {
     case 'assets':
       final assets = await ctx.ref.read(allAssetsStreamProvider.future);

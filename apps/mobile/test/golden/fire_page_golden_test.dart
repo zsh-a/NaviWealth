@@ -29,18 +29,12 @@ void main() {
         manualAssetsStreamProvider.overrideWith(
           (_) => Stream.value(const <Asset>[]),
         ),
-        physicalAssetsListProvider.overrideWith(
-          (_) => Stream.value(const []),
-        ),
-        liabilitiesStreamProvider.overrideWith(
-          (_) => Stream.value(const []),
-        ),
+        physicalAssetsListProvider.overrideWith((_) => Stream.value(const [])),
+        liabilitiesStreamProvider.overrideWith((_) => Stream.value(const [])),
         fxRatesStreamProvider.overrideWith(
           (_) => Stream<List<FxRate>>.value(const []),
         ),
-        allAssetsStreamProvider.overrideWith(
-          (_) => Stream.value(const []),
-        ),
+        allAssetsStreamProvider.overrideWith((_) => Stream.value(const [])),
         holdingsSnapshotProvider.overrideWith(
           (_) async => const <String, HoldingSnapshot>{},
         ),

@@ -154,10 +154,7 @@ void main() {
     final probeRouter = GoRouter(
       initialLocation: AppRoutes.wealth,
       routes: <RouteBase>[
-        GoRoute(
-          path: AppRoutes.wealth,
-          builder: (_, _) => const _Marker('a'),
-        ),
+        GoRoute(path: AppRoutes.wealth, builder: (_, _) => const _Marker('a')),
       ],
     );
     addTearDown(probeRouter.dispose);

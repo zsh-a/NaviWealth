@@ -9,6 +9,7 @@ Before touching architecture, read `docs/lifeos-architecture-northstar.md` (boun
 | Area | Path | Language |
 |------|------|----------|
 | Mobile app | `apps/mobile/` | Dart (Flutter) |
+| Mobile native primitives | `apps/mobile/native/lifeos_native/` | Rust (candle MiniLM embedder; D-1.7c) |
 | Backend | `apps/backend/` | Rust (Cloudflare Workers + D1) |
 | Securities catalog build | `tool/asset_catalog/` | Python |
 | Docs | `docs/` | Markdown |

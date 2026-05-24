@@ -9,11 +9,11 @@ import 'package:naviwealth/features/expense/domain/expense_report_aggregator.dar
 import 'package:naviwealth/features/expense/domain/expense_report_range.dart';
 
 SyncMeta _meta() => SyncMeta(
-      ownerUserId: 'u',
-      updatedAt: DateTime.utc(2026, 4, 1),
-      updatedByDevice: 't',
-      hlc: Hlc.zero('t'),
-    );
+  ownerUserId: 'u',
+  updatedAt: DateTime.utc(2026, 4, 1),
+  updatedByDevice: 't',
+  hlc: Hlc.zero('t'),
+);
 
 Expense _expense({
   required String id,
@@ -21,15 +21,14 @@ Expense _expense({
   required Decimal amount,
   required DateTime date,
   String currency = 'CNY',
-}) =>
-    Expense(
-      id: id,
-      expenseAccountId: expenseAccountId,
-      amount: amount,
-      currency: currency,
-      tradeDate: date,
-      sync: _meta(),
-    );
+}) => Expense(
+  id: id,
+  expenseAccountId: expenseAccountId,
+  amount: amount,
+  currency: currency,
+  tradeDate: date,
+  sync: _meta(),
+);
 
 CurrencyConverter _converterWithRates(Iterable<FxRate> rates) =>
     FxRateCurrencyConverter(InMemoryFxRateLookup(rates));

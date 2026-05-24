@@ -32,8 +32,9 @@ final undoStackProvider = Provider<DriftUndoStack?>((ref) {
   );
 });
 
-final undoEntriesStreamProvider =
-    StreamProvider<List<PersistedUndoEntry>>((ref) async* {
+final undoEntriesStreamProvider = StreamProvider<List<PersistedUndoEntry>>((
+  ref,
+) async* {
   final stack = ref.watch(undoStackProvider);
   if (stack == null) {
     yield const <PersistedUndoEntry>[];
@@ -62,13 +63,14 @@ final aiTouchedStoreProvider = Provider<DriftAiTouchedStore?>((ref) {
 /// streams the latest [AiTouchedEntity] (or null). Auto-dispose so
 /// off-screen detail pages release their subscription.
 final aiTouchedAtProvider = StreamProvider.autoDispose
-    .family<AiTouchedEntity?, ({String entityType, String entityId})>(
-  (ref, key) async* {
-    final store = ref.watch(aiTouchedStoreProvider);
-    if (store == null) {
-      yield null;
-      return;
-    }
-    yield* store.watchLatest(key.entityType, key.entityId);
-  },
-);
+    .family<AiTouchedEntity?, ({String entityType, String entityId})>((
+      ref,
+      key,
+    ) async* {
+      final store = ref.watch(aiTouchedStoreProvider);
+      if (store == null) {
+        yield null;
+        return;
+      }
+      yield* store.watchLatest(key.entityType, key.entityId);
+    });

@@ -10,10 +10,7 @@ void main() {
         toolCount: 1,
         durationMs: 850,
       );
-      expect(
-        formatAiTraceBadge(trace),
-        '本地数据 + 云端推理 · 1 个工具 · 850ms',
-      );
+      expect(formatAiTraceBadge(trace), '本地数据 + 云端推理 · 1 个工具 · 850ms');
     });
 
     test('device-only path with no tools', () {
@@ -22,10 +19,7 @@ void main() {
         toolCount: 0,
         durationMs: 80,
       );
-      expect(
-        formatAiTraceBadge(trace),
-        '全部本地处理 · 80ms',
-      );
+      expect(formatAiTraceBadge(trace), '全部本地处理 · 80ms');
     });
 
     test('rounds long durations to whole seconds', () {
@@ -34,10 +28,7 @@ void main() {
         toolCount: 0,
         durationMs: 13_400,
       );
-      expect(
-        formatAiTraceBadge(trace),
-        '仅云端推理 · 13s',
-      );
+      expect(formatAiTraceBadge(trace), '仅云端推理 · 13s');
     });
   });
 }

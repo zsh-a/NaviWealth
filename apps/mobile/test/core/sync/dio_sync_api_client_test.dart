@@ -129,7 +129,10 @@ void main() {
       await client.sync(
         deviceId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
         since: 1287,
-        changes: [_change(), _change(id: 'A2')],
+        changes: [
+          _change(),
+          _change(id: 'A2'),
+        ],
       );
 
       final captured = adapter.calls.single;
@@ -166,7 +169,8 @@ void main() {
         changes: [_change(payload: null, deleted: true)],
       );
 
-      final body = jsonDecode(adapter.calls.single.body) as Map<String, Object?>;
+      final body =
+          jsonDecode(adapter.calls.single.body) as Map<String, Object?>;
       final change = (body['changes'] as List).single as Map<String, Object?>;
       expect(change['payload'], isNull);
       expect(change['deleted'], true);

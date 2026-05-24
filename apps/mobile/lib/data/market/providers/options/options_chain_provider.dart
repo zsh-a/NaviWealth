@@ -17,9 +17,7 @@ abstract class OptionsChainProvider {
   ///   * enforce per-symbol-per-expiration throttling (5 minutes per the
   ///     design doc) — repeated calls inside the window may return the
   ///     last successful payload from in-memory cache.
-  Future<OptionsChainSnapshot> fetchChain(
-    OptionsChainRequest request,
-  );
+  Future<OptionsChainSnapshot> fetchChain(OptionsChainRequest request);
 }
 
 class OptionsChainRequest {

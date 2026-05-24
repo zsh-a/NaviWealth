@@ -68,16 +68,13 @@ void main() {
 
     test('returns one result per scenario in stable order', () {
       final results = runStressTests(_state());
-      expect(
-        results.map((r) => r.scenario).toList(),
-        [
-          FireStressScenario.marketDrawdown,
-          FireStressScenario.expenseSurge,
-          FireStressScenario.oneOffShock,
-          FireStressScenario.fxShock,
-          FireStressScenario.cashDepletion,
-        ],
-      );
+      expect(results.map((r) => r.scenario).toList(), [
+        FireStressScenario.marketDrawdown,
+        FireStressScenario.expenseSurge,
+        FireStressScenario.oneOffShock,
+        FireStressScenario.fxShock,
+        FireStressScenario.cashDepletion,
+      ]);
     });
 
     test('market drawdown -35% scales investable assets', () {
@@ -111,24 +108,26 @@ void main() {
       expect(surge.verdict, FireStressVerdict.cautious);
     });
 
-    test('one-off shock removes the configured outlay from liquid + invest',
-        () {
-      final state = _state(oneOff: 20000);
-      final shock = runStressTests(state).firstWhere(
-        (r) => r.scenario == FireStressScenario.oneOffShock,
-      );
-      expect(shock.netWorthAfter.amount, Decimal.parse('1980000'));
-      expect(shock.investableAssetsAfter.amount, Decimal.parse('1980000'));
-      // Liquid 48_000 - 20_000 = 28_000 → cash months = 28000 / 4000 = 7.
-      expect(shock.cashBucketMonthsAfter, closeTo(7.0, 1e-9));
-      expect(shock.verdict, FireStressVerdict.cautious);
-    });
+    test(
+      'one-off shock removes the configured outlay from liquid + invest',
+      () {
+        final state = _state(oneOff: 20000);
+        final shock = runStressTests(
+          state,
+        ).firstWhere((r) => r.scenario == FireStressScenario.oneOffShock);
+        expect(shock.netWorthAfter.amount, Decimal.parse('1980000'));
+        expect(shock.investableAssetsAfter.amount, Decimal.parse('1980000'));
+        // Liquid 48_000 - 20_000 = 28_000 → cash months = 28000 / 4000 = 7.
+        expect(shock.cashBucketMonthsAfter, closeTo(7.0, 1e-9));
+        expect(shock.verdict, FireStressVerdict.cautious);
+      },
+    );
 
     test('fx shock with currency mismatches nudges safe → cautious', () {
       final state = _state(currencyMismatch: 2, fx: 0.05);
-      final fx = runStressTests(state).firstWhere(
-        (r) => r.scenario == FireStressScenario.fxShock,
-      );
+      final fx = runStressTests(
+        state,
+      ).firstWhere((r) => r.scenario == FireStressScenario.fxShock);
       expect(fx.verdict, FireStressVerdict.cautious);
       expect(fx.note, contains('fx_gaps_present'));
     });
@@ -137,19 +136,15 @@ void main() {
       final state = _state(liquid: '120000', cashMonths: 6);
       // Horizon: targetCashBucketMonths = 6, monthly = 4_000 → depletes
       // by 24_000 → liquid after 96_000 → cash months 24.
-      final depl = runStressTests(state).firstWhere(
-        (r) => r.scenario == FireStressScenario.cashDepletion,
-      );
+      final depl = runStressTests(
+        state,
+      ).firstWhere((r) => r.scenario == FireStressScenario.cashDepletion);
       expect(depl.cashBucketMonthsAfter, closeTo(24.0, 1e-9));
       expect(depl.verdict, FireStressVerdict.safe);
     });
 
     test('zero-asset plan goes to danger across the board', () {
-      final state = _state(
-        investable: '0',
-        liquid: '0',
-        netWorth: '0',
-      );
+      final state = _state(investable: '0', liquid: '0', netWorth: '0');
       final results = runStressTests(state);
       for (final r in results) {
         expect(r.verdict, FireStressVerdict.danger);
@@ -165,17 +160,14 @@ void main() {
       final drawdown = stress.first;
       expect(drawdown.params.drawdownPct, 0.5);
       // 2_000_000 × 0.5 = 1_000_000.
-      expect(
-        drawdown.investableAssetsAfter.amount,
-        Decimal.parse('1000000'),
-      );
+      expect(drawdown.investableAssetsAfter.amount, Decimal.parse('1000000'));
     });
 
     test('toJson omits infinity withdrawal rate, includes all params', () {
       final state = _state(investable: '0', annualSpend: '60000');
-      final r = runStressTests(state).firstWhere(
-        (r) => r.scenario == FireStressScenario.marketDrawdown,
-      );
+      final r = runStressTests(
+        state,
+      ).firstWhere((r) => r.scenario == FireStressScenario.marketDrawdown);
       final json = r.toJson();
       expect(json['scenario'], 'market_drawdown');
       expect(json['withdrawal_rate_after'], isNull);

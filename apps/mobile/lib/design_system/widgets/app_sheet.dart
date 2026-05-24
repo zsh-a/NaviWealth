@@ -244,10 +244,7 @@ class AppSheet extends StatelessWidget {
               decoration: BoxDecoration(
                 border: Border(top: BorderSide(color: hairline)),
               ),
-              child: Padding(
-                padding: kFooterPadding,
-                child: footer,
-              ),
+              child: Padding(padding: kFooterPadding, child: footer),
             ),
           ],
         ),
@@ -282,10 +279,14 @@ class AppSheet extends StatelessWidget {
   static Widget _dragHandle(FColors colors) {
     return Center(
       child: Container(
-        width: AppSpacing.s32 + AppSpacing.s4, // 36 — wider than radius for pill shape
+        width:
+            AppSpacing.s32 +
+            AppSpacing.s4, // 36 — wider than radius for pill shape
         height: AppSpacing.s4,
         margin: const EdgeInsets.only(
-          top: AppSpacing.s8 + AppSpacing.s2, // 10 — sits below the sheet's top corner
+          top:
+              AppSpacing.s8 +
+              AppSpacing.s2, // 10 — sits below the sheet's top corner
           bottom: AppSpacing.s6,
         ),
         decoration: BoxDecoration(

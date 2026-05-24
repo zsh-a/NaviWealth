@@ -42,18 +42,17 @@ class YahooCrumbSession {
   /// should send. Yahoo's options endpoint is particularly picky and
   /// returns 401 / 429 to clients that omit any of these.
   static Map<String, String> browserHeaders() => const {
-        'User-Agent': userAgent,
-        'Accept': '*/*',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate',
-        'Connection': 'keep-alive',
-      };
+    'User-Agent': userAgent,
+    'Accept': '*/*',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Accept-Encoding': 'gzip, deflate',
+    'Connection': 'keep-alive',
+  };
   static const _primaryPrimingUrl = 'https://fc.yahoo.com/';
   static const _fallbackPrimingUrl = 'https://finance.yahoo.com/';
   // yfinance v0.2.40+ moved getcrumb to query1; query2 still works but
   // gets harsher per-IP throttling.
-  static const _crumbUrl =
-      'https://query1.finance.yahoo.com/v1/test/getcrumb';
+  static const _crumbUrl = 'https://query1.finance.yahoo.com/v1/test/getcrumb';
 
   static const _requestTimeout = Duration(seconds: 8);
 
@@ -68,10 +67,9 @@ class YahooCrumbSession {
   /// `Cookie` header value built from the current jar, or `null` when
   /// empty. Callers that always want a header (even if empty) should
   /// coalesce to `''`.
-  String? get cookieHeader =>
-      _cookies.isEmpty ? null : _cookies.entries
-          .map((e) => '${e.key}=${e.value}')
-          .join('; ');
+  String? get cookieHeader => _cookies.isEmpty
+      ? null
+      : _cookies.entries.map((e) => '${e.key}=${e.value}').join('; ');
 
   /// Ensures cookies + crumb are populated. Concurrent calls share one
   /// refresh future so a burst of options scans doesn't fire N priming

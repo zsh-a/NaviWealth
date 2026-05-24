@@ -39,10 +39,11 @@ class DuplicateChargeSummary {
   /// "today's duplicate-charge cluster" doesn't permanently mute
   /// future duplicates against unrelated merchants.
   String get scopeHash {
-    final sorted = matches
-        .map((m) => '${m.merchantKey}:${m.amountMinor}:${m.gapDays}')
-        .toList(growable: false)
-      ..sort();
+    final sorted =
+        matches
+            .map((m) => '${m.merchantKey}:${m.amountMinor}:${m.gapDays}')
+            .toList(growable: false)
+          ..sort();
     return sorted.join(',');
   }
 }
@@ -50,13 +51,11 @@ class DuplicateChargeSummary {
 /// Returns the dashboard summary, or `null` when no suspicious pair
 /// is detected. The provider is sync — the detector runs over the
 /// already-loaded expense list.
-final duplicateChargeInsightProvider = Provider<DuplicateChargeSummary?>(
-  (ref) {
-    final expenses = ref.watch(journalExpensesStreamProvider).value;
-    if (expenses == null || expenses.isEmpty) return null;
-    return _summarize(expenses);
-  },
-);
+final duplicateChargeInsightProvider = Provider<DuplicateChargeSummary?>((ref) {
+  final expenses = ref.watch(journalExpensesStreamProvider).value;
+  if (expenses == null || expenses.isEmpty) return null;
+  return _summarize(expenses);
+});
 
 DuplicateChargeSummary? _summarize(Iterable<Expense> expenses) {
   final txns = expenses.map(expenseToTransactionInput).toList(growable: false);

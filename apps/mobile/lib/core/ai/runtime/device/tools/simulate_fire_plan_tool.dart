@@ -72,14 +72,14 @@ class SimulateFirePlanTool implements DeviceTool {
       monthlySurplus: dec('monthly_surplus') ?? base.plan.monthlySurplus,
       safeWithdrawalRate:
           (input['safe_withdrawal_rate'] is num
-                  ? (input['safe_withdrawal_rate'] as num).toDouble()
-                  : null) ??
-              base.plan.safeWithdrawalRate,
+              ? (input['safe_withdrawal_rate'] as num).toDouble()
+              : null) ??
+          base.plan.safeWithdrawalRate,
       targetCashBucketMonths:
           (input['target_cash_bucket_months'] is num
-                  ? (input['target_cash_bucket_months'] as num).toInt()
-                  : null) ??
-              base.plan.targetCashBucketMonths,
+              ? (input['target_cash_bucket_months'] as num).toInt()
+              : null) ??
+          base.plan.targetCashBucketMonths,
       targetNetWorth: dec('target_net_worth') ?? base.plan.targetNetWorth,
     );
 
@@ -99,8 +99,7 @@ class SimulateFirePlanTool implements DeviceTool {
               : null);
 
     final netWorth = Money(
-      investable.amount +
-          (base.netWorth.amount - base.investableAssets.amount),
+      investable.amount + (base.netWorth.amount - base.investableAssets.amount),
       base.baseCurrency,
     );
 

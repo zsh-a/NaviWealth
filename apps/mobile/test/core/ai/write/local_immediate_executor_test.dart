@@ -3,22 +3,25 @@ import 'package:naviwealth/core/ai/write/write.dart';
 
 void main() {
   group('LocalImmediateWriteExecutor', () {
-    test('register returns a LocalImmediateWrite envelope with undo token', () async {
-      var clock = DateTime.utc(2026, 5, 10, 10);
-      final exec = LocalImmediateWriteExecutor(now: () => clock);
+    test(
+      'register returns a LocalImmediateWrite envelope with undo token',
+      () async {
+        var clock = DateTime.utc(2026, 5, 10, 10);
+        final exec = LocalImmediateWriteExecutor(now: () => clock);
 
-      final envelope = await exec.register(
-        kindLabel: 'memo_edit',
-        summaryZh: '修改备注',
-        revert: () async {},
-      );
+        final envelope = await exec.register(
+          kindLabel: 'memo_edit',
+          summaryZh: '修改备注',
+          revert: () async {},
+        );
 
-      expect(envelope.kindLabel, 'memo_edit');
-      expect(envelope.summaryZh, '修改备注');
-      expect(envelope.undo.token, isNotEmpty);
-      expect(envelope.undo.expiresAtIso, contains('2026-05-10T10:00:30'));
-      expect(exec.pendingCount, 1);
-    });
+        expect(envelope.kindLabel, 'memo_edit');
+        expect(envelope.summaryZh, '修改备注');
+        expect(envelope.undo.token, isNotEmpty);
+        expect(envelope.undo.expiresAtIso, contains('2026-05-10T10:00:30'));
+        expect(exec.pendingCount, 1);
+      },
+    );
 
     test('undo runs the revert and consumes the entry', () async {
       final exec = LocalImmediateWriteExecutor();
@@ -85,26 +88,30 @@ void main() {
       );
 
       final recent = exec.recent();
-      expect(
-        recent.map((e) => e.summaryZh).toList(),
-        <String>['第三次', '第二次', '第一次'],
-      );
+      expect(recent.map((e) => e.summaryZh).toList(), <String>[
+        '第三次',
+        '第二次',
+        '第一次',
+      ]);
     });
 
-    test('multiple undo calls on the same token are idempotent (false)', () async {
-      final exec = LocalImmediateWriteExecutor();
-      var count = 0;
-      final envelope = await exec.register(
-        kindLabel: 'memo_edit',
-        summaryZh: '修改',
-        revert: () async {
-          count++;
-        },
-      );
+    test(
+      'multiple undo calls on the same token are idempotent (false)',
+      () async {
+        final exec = LocalImmediateWriteExecutor();
+        var count = 0;
+        final envelope = await exec.register(
+          kindLabel: 'memo_edit',
+          summaryZh: '修改',
+          revert: () async {
+            count++;
+          },
+        );
 
-      expect(await exec.undo(envelope.undo.token), isTrue);
-      expect(await exec.undo(envelope.undo.token), isFalse);
-      expect(count, 1);
-    });
+        expect(await exec.undo(envelope.undo.token), isTrue);
+        expect(await exec.undo(envelope.undo.token), isFalse);
+        expect(count, 1);
+      },
+    );
   });
 }

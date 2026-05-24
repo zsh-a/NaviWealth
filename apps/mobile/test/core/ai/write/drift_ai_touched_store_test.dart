@@ -12,23 +12,20 @@ void main() {
     String type = 'journal_entries',
     String? kind = 'expense',
     String? traceId,
-  }) =>
-      AiTouchedEntity(
-        entityType: type,
-        entityId: id,
-        touchedAt: at,
-        kindLabel: kind,
-        traceId: traceId,
-      );
+  }) => AiTouchedEntity(
+    entityType: type,
+    entityId: id,
+    touchedAt: at,
+    kindLabel: kind,
+    traceId: traceId,
+  );
 
   test('recordTouch + latestTouch round-trips fields', () async {
     final db = makeTestDatabase();
     final store = DriftAiTouchedStore(db);
-    await store.recordTouch(touch(
-      id: 'e1',
-      at: DateTime.utc(2026, 5, 12, 9),
-      traceId: 'r_42',
-    ));
+    await store.recordTouch(
+      touch(id: 'e1', at: DateTime.utc(2026, 5, 12, 9), traceId: 'r_42'),
+    );
     final hit = await store.latestTouch('journal_entries', 'e1');
     expect(hit, isNotNull);
     expect(hit!.entityId, 'e1');
@@ -89,18 +86,22 @@ void main() {
   test('different entity types share id space without collision', () async {
     final db = makeTestDatabase();
     final store = DriftAiTouchedStore(db);
-    await store.recordTouch(touch(
-      id: 'shared_id',
-      at: DateTime.utc(2026, 5, 12),
-      type: 'journal_entries',
-      kind: 'expense',
-    ));
-    await store.recordTouch(touch(
-      id: 'shared_id',
-      at: DateTime.utc(2026, 5, 13),
-      type: 'accounts',
-      kind: 'account_create',
-    ));
+    await store.recordTouch(
+      touch(
+        id: 'shared_id',
+        at: DateTime.utc(2026, 5, 12),
+        type: 'journal_entries',
+        kind: 'expense',
+      ),
+    );
+    await store.recordTouch(
+      touch(
+        id: 'shared_id',
+        at: DateTime.utc(2026, 5, 13),
+        type: 'accounts',
+        kind: 'account_create',
+      ),
+    );
     final exp = await store.latestTouch('journal_entries', 'shared_id');
     final acc = await store.latestTouch('accounts', 'shared_id');
     expect(exp!.kindLabel, 'expense');

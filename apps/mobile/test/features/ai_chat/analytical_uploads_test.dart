@@ -19,7 +19,8 @@ void main() {
       final t = TransactionInput(
         id: 'e1',
         description: 'STARBUCKS 04291',
-        amountMinor: '-${(Decimal.parse('4.50') * Decimal.fromInt(100)).floor().toBigInt()}',
+        amountMinor:
+            '-${(Decimal.parse('4.50') * Decimal.fromInt(100)).floor().toBigInt()}',
         currency: 'USD',
         occurredAt: DateTime.utc(2026, 5, 12, 10),
         accountId: 'cat_food',
@@ -92,38 +93,41 @@ void main() {
       expect(upload.payload['merchant_key'], 'netflix');
     });
 
-    test('id format is "merchantKey|currency" so multi-currency same merchant becomes two rows', () {
-      // Two parallel patterns: NETFLIX in USD and NETFLIX in CNY.
-      final usdTxns = <TransactionInput>[
-        for (var m = 1; m <= 3; m++)
-          TransactionInput(
-            id: 'u$m',
-            description: 'NETFLIX',
-            amountMinor: '-999',
-            currency: 'USD',
-            occurredAt: DateTime.utc(2026, m, 5),
-          ),
-      ];
-      final cnyTxns = <TransactionInput>[
-        for (var m = 1; m <= 3; m++)
-          TransactionInput(
-            id: 'c$m',
-            description: 'NETFLIX',
-            amountMinor: '-7900',
-            currency: 'CNY',
-            occurredAt: DateTime.utc(2026, m, 5),
-          ),
-      ];
-      final patterns = detectRecurring(<TransactionInput>[
-        ...usdTxns,
-        ...cnyTxns,
-      ]);
-      expect(patterns, hasLength(2));
-      final ids = patterns
-          .map((p) => '${p.merchantKey}|${p.currency}')
-          .toSet();
-      expect(ids, <String>{'netflix|USD', 'netflix|CNY'});
-    });
+    test(
+      'id format is "merchantKey|currency" so multi-currency same merchant becomes two rows',
+      () {
+        // Two parallel patterns: NETFLIX in USD and NETFLIX in CNY.
+        final usdTxns = <TransactionInput>[
+          for (var m = 1; m <= 3; m++)
+            TransactionInput(
+              id: 'u$m',
+              description: 'NETFLIX',
+              amountMinor: '-999',
+              currency: 'USD',
+              occurredAt: DateTime.utc(2026, m, 5),
+            ),
+        ];
+        final cnyTxns = <TransactionInput>[
+          for (var m = 1; m <= 3; m++)
+            TransactionInput(
+              id: 'c$m',
+              description: 'NETFLIX',
+              amountMinor: '-7900',
+              currency: 'CNY',
+              occurredAt: DateTime.utc(2026, m, 5),
+            ),
+        ];
+        final patterns = detectRecurring(<TransactionInput>[
+          ...usdTxns,
+          ...cnyTxns,
+        ]);
+        expect(patterns, hasLength(2));
+        final ids = patterns
+            .map((p) => '${p.merchantKey}|${p.currency}')
+            .toSet();
+        expect(ids, <String>{'netflix|USD', 'netflix|CNY'});
+      },
+    );
 
     test('no patterns → no recurring uploads (mirrors guard in providers)', () {
       final txns = <TransactionInput>[
@@ -203,10 +207,10 @@ void main() {
           'base_currency': snap.baseCurrency,
           'as_of': snap.asOf.toUtc().toIso8601String(),
           'quantity': snap.quantity.toString(),
-          'cost_basis_in_asset_currency':
-              snap.costBasisInAssetCurrency.toString(),
-          'market_value_in_asset_currency':
-              snap.marketValueInAssetCurrency.toString(),
+          'cost_basis_in_asset_currency': snap.costBasisInAssetCurrency
+              .toString(),
+          'market_value_in_asset_currency': snap.marketValueInAssetCurrency
+              .toString(),
           'cost_basis_in_base': snap.costBasisInBase.toString(),
           'market_value_in_base': snap.marketValueInBase.toString(),
           'unrealized_pnl_in_base': snap.unrealizedPnlInBase.toString(),
@@ -230,43 +234,46 @@ void main() {
     });
   });
 
-  group('Wave 16: matchTransfers + TransferMatch → AnalyticalUpload payload', () {
-    test('id is "{from}|{to}"; payload carries amount + currency', () {
-      final txns = <TransactionInput>[
-        TransactionInput(
-          id: 'out_a',
-          description: 'TRANSFER OUT',
-          amountMinor: '-100000',
-          currency: 'USD',
-          occurredAt: DateTime.utc(2026, 4, 1),
-          accountId: 'checking',
-        ),
-        TransactionInput(
-          id: 'in_b',
-          description: 'TRANSFER IN',
-          amountMinor: '100000',
-          currency: 'USD',
-          occurredAt: DateTime.utc(2026, 4, 2),
-          accountId: 'savings',
-        ),
-      ];
-      final matches = matchTransfers(txns);
-      expect(matches, hasLength(1));
-      final m = matches.single;
-      final upload = AnalyticalUpload(
-        kind: 'transfer_link',
-        id: '${m.fromTxnId}|${m.toTxnId}',
-        payload: <String, Object?>{
-          'from_txn_id': m.fromTxnId,
-          'to_txn_id': m.toTxnId,
-          'amount_minor': m.amountMinor.toString(),
-          'currency': m.currency,
-        },
-      );
-      expect(upload.kind, 'transfer_link');
-      expect(upload.id, 'out_a|in_b');
-      expect(upload.payload['amount_minor'], '100000');
-      expect(upload.payload['currency'], 'USD');
-    });
-  });
+  group(
+    'Wave 16: matchTransfers + TransferMatch → AnalyticalUpload payload',
+    () {
+      test('id is "{from}|{to}"; payload carries amount + currency', () {
+        final txns = <TransactionInput>[
+          TransactionInput(
+            id: 'out_a',
+            description: 'TRANSFER OUT',
+            amountMinor: '-100000',
+            currency: 'USD',
+            occurredAt: DateTime.utc(2026, 4, 1),
+            accountId: 'checking',
+          ),
+          TransactionInput(
+            id: 'in_b',
+            description: 'TRANSFER IN',
+            amountMinor: '100000',
+            currency: 'USD',
+            occurredAt: DateTime.utc(2026, 4, 2),
+            accountId: 'savings',
+          ),
+        ];
+        final matches = matchTransfers(txns);
+        expect(matches, hasLength(1));
+        final m = matches.single;
+        final upload = AnalyticalUpload(
+          kind: 'transfer_link',
+          id: '${m.fromTxnId}|${m.toTxnId}',
+          payload: <String, Object?>{
+            'from_txn_id': m.fromTxnId,
+            'to_txn_id': m.toTxnId,
+            'amount_minor': m.amountMinor.toString(),
+            'currency': m.currency,
+          },
+        );
+        expect(upload.kind, 'transfer_link');
+        expect(upload.id, 'out_a|in_b');
+        expect(upload.payload['amount_minor'], '100000');
+        expect(upload.payload['currency'], 'USD');
+      });
+    },
+  );
 }

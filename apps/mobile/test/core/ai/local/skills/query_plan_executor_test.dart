@@ -45,10 +45,11 @@ void main() {
         ),
       );
       // Sort: transport (2500), subscription (999), coffee (500).
-      expect(
-        result.rows.map((r) => r.values['category']).toList(),
-        <String>['transport', 'subscription', 'coffee'],
-      );
+      expect(result.rows.map((r) => r.values['category']).toList(), <String>[
+        'transport',
+        'subscription',
+        'coffee',
+      ]);
     });
 
     test('inflows are excluded from spending totals', () async {

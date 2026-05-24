@@ -82,9 +82,7 @@ void main() {
 
         // Flip the toggle on; provider re-emits so the next read sees the
         // enabled wrapper.
-        await c
-            .read(crashReportingEnabledProvider.notifier)
-            .setEnabled(true);
+        await c.read(crashReportingEnabledProvider.notifier).setEnabled(true);
         c.read(crashReporterProvider).captureError(StateError('second'));
         expect(spy.captured, hasLength(1));
         expect(

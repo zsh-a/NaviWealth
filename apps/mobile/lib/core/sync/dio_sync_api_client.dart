@@ -11,7 +11,8 @@ import 'sync_api_client.dart';
 /// Translates Dio errors into [SyncException]s with the [SyncErrorKind] the
 /// engine reacts to. The mapping mirrors `docs/sync-v2.md` §5.
 class DioSyncApiClient implements SyncApiClient {
-  DioSyncApiClient({required Dio dio, required this.tokenProvider}) : _dio = dio;
+  DioSyncApiClient({required Dio dio, required this.tokenProvider})
+    : _dio = dio;
 
   final Dio _dio;
 
@@ -41,7 +42,8 @@ class DioSyncApiClient implements SyncApiClient {
       seq: (res['seq'] as num).toInt(),
       changes: changesRaw
           .map(
-            (m) => RowChange.fromJson(m.map((k, v) => MapEntry(k as String, v))),
+            (m) =>
+                RowChange.fromJson(m.map((k, v) => MapEntry(k as String, v))),
           )
           .toList(growable: false),
       more: (res['more'] as bool?) ?? false,
@@ -108,7 +110,11 @@ class DioSyncApiClient implements SyncApiClient {
           e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout) {
-        throw SyncException(SyncErrorKind.network, message: e.message, cause: e);
+        throw SyncException(
+          SyncErrorKind.network,
+          message: e.message,
+          cause: e,
+        );
       }
       if (e.response != null) {
         throw _mapStatus(e.response!, path);

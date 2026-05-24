@@ -153,8 +153,9 @@ class FireReview {
       'target_cash_bucket_months': targetCashBucketMonths,
       'fire_eta_months': fireEtaMonths,
       'findings': findings.map((f) => f.toJson()).toList(growable: false),
-      'suggested_actions':
-          suggestedActions.map((a) => a.toJson()).toList(growable: false),
+      'suggested_actions': suggestedActions
+          .map((a) => a.toJson())
+          .toList(growable: false),
     };
   }
 
@@ -194,7 +195,8 @@ class FireReview {
         orElse: () => FireReviewKind.monthly,
       ),
       periodKey: json['period_key'] as String? ?? '',
-      generatedAt: DateTime.tryParse(json['generated_at'] as String? ?? '') ??
+      generatedAt:
+          DateTime.tryParse(json['generated_at'] as String? ?? '') ??
           DateTime.now().toUtc(),
       baseCurrency: base,
       safetyLevel: FireSafetyLevel.values.firstWhere(

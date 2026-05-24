@@ -41,13 +41,16 @@ class _FakeMarketData implements MarketDataService {
   }
 
   @override
-  Future<MarketResponse<Quote>> getQuote(String symbol, {AssetMarket? market}) =>
-      throw UnimplementedError();
+  Future<MarketResponse<Quote>> getQuote(
+    String symbol, {
+    AssetMarket? market,
+  }) => throw UnimplementedError();
 
   @override
-  Future<MarketResponse<List<SymbolInfo>>> searchSymbol(String query,
-          {AssetMarket? market}) =>
-      throw UnimplementedError();
+  Future<MarketResponse<List<SymbolInfo>>> searchSymbol(
+    String query, {
+    AssetMarket? market,
+  }) => throw UnimplementedError();
 }
 
 HistoricalBar _bar(DateTime d, String close, {String? adj}) {
@@ -63,36 +66,37 @@ HistoricalBar _bar(DateTime d, String close, {String? adj}) {
 }
 
 void main() {
-  test('routes to MarketDataService with the catalogue symbol + market', () async {
-    final fake = _FakeMarketData(
-      bars: [
-        _bar(DateTime.utc(2024, 1, 2), '4750'),
-        _bar(DateTime.utc(2024, 6, 1), '5200'),
-      ],
-    );
-    final source = MarketDataBenchmarkHistorySource(marketData: fake);
-    final from = DateTime.utc(2024, 1, 1);
-    final to = DateTime.utc(2024, 12, 31);
+  test(
+    'routes to MarketDataService with the catalogue symbol + market',
+    () async {
+      final fake = _FakeMarketData(
+        bars: [
+          _bar(DateTime.utc(2024, 1, 2), '4750'),
+          _bar(DateTime.utc(2024, 6, 1), '5200'),
+        ],
+      );
+      final source = MarketDataBenchmarkHistorySource(marketData: fake);
+      final from = DateTime.utc(2024, 1, 1);
+      final to = DateTime.utc(2024, 12, 31);
 
-    final points = await source.seriesFor(
-      index: BenchmarkIndex.sp500,
-      from: from,
-      to: to,
-    );
+      final points = await source.seriesFor(
+        index: BenchmarkIndex.sp500,
+        from: from,
+        to: to,
+      );
 
-    expect(fake.lastSymbol, '^GSPC');
-    expect(fake.lastMarket, AssetMarket.usStock);
-    expect(fake.lastFrom, from);
-    expect(fake.lastTo, to);
-    expect(points, hasLength(2));
-    expect(points.first.value, 4750);
-  });
+      expect(fake.lastSymbol, '^GSPC');
+      expect(fake.lastMarket, AssetMarket.usStock);
+      expect(fake.lastFrom, from);
+      expect(fake.lastTo, to);
+      expect(points, hasLength(2));
+      expect(points.first.value, 4750);
+    },
+  );
 
   test('prefers adjustedClose when present', () async {
     final fake = _FakeMarketData(
-      bars: [
-        _bar(DateTime.utc(2024, 1, 2), '100', adj: '95'),
-      ],
+      bars: [_bar(DateTime.utc(2024, 1, 2), '100', adj: '95')],
     );
     final source = MarketDataBenchmarkHistorySource(marketData: fake);
     final points = await source.seriesFor(
@@ -120,10 +124,7 @@ void main() {
   test('returns empty list on generic MarketDataException', () async {
     final source = MarketDataBenchmarkHistorySource(
       marketData: _FakeMarketData(
-        error: const ProviderResponseException(
-          'malformed',
-          provider: 'fake',
-        ),
+        error: const ProviderResponseException('malformed', provider: 'fake'),
       ),
     );
     final points = await source.seriesFor(

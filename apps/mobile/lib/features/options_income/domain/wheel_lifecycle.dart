@@ -66,15 +66,14 @@ class WheelLifecycle {
   factory WheelLifecycle.empty({
     required String symbol,
     required String currency,
-  }) =>
-      WheelLifecycle(
-        symbol: symbol,
-        currency: currency,
-        stage: WheelStage.between,
-        openPosition: null,
-        cumulativeIncome: Decimal.zero,
-        entries: const [],
-      );
+  }) => WheelLifecycle(
+    symbol: symbol,
+    currency: currency,
+    stage: WheelStage.between,
+    openPosition: null,
+    cumulativeIncome: Decimal.zero,
+    entries: const [],
+  );
 
   final String symbol;
   final String currency;

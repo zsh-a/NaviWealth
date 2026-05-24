@@ -73,7 +73,8 @@ String? renderContextPackSystemAppendix(ContextPack? pack) {
 
   // Cap: drop trailing lines until we fit. The header always survives so
   // the model still knows a profile block was attempted.
-  while (lines.length > 1 && _utf8ByteCount(lines.join('\n')) > kUserProfileAppendixByteCap) {
+  while (lines.length > 1 &&
+      _utf8ByteCount(lines.join('\n')) > kUserProfileAppendixByteCap) {
     lines.removeLast();
   }
   if (lines.length == 1) return null;
@@ -82,17 +83,17 @@ String? renderContextPackSystemAppendix(ContextPack? pack) {
 }
 
 String? _riskLabel(RiskPreference pref) => switch (pref) {
-      RiskPreference.conservative => '保守（避免波动，优先保本）',
-      RiskPreference.moderate => '中性（接受适度波动以换取长期回报）',
-      RiskPreference.aggressive => '激进（接受较大回撤换取较高预期收益）',
-    };
+  RiskPreference.conservative => '保守（避免波动，优先保本）',
+  RiskPreference.moderate => '中性（接受适度波动以换取长期回报）',
+  RiskPreference.aggressive => '激进（接受较大回撤换取较高预期收益）',
+};
 
 String _trendLabel(CashflowTrend trend) => switch (trend) {
-      CashflowTrend.improving => '净流入改善',
-      CashflowTrend.worsening => '净流入恶化',
-      CashflowTrend.stable => '趋势平稳',
-      CashflowTrend.unknown => '趋势未知',
-    };
+  CashflowTrend.improving => '净流入改善',
+  CashflowTrend.worsening => '净流入恶化',
+  CashflowTrend.stable => '趋势平稳',
+  CashflowTrend.unknown => '趋势未知',
+};
 
 /// Minor-unit string → human-readable major unit. Returns `null` on parse
 /// failure or non-positive amounts so the appendix simply omits the line.

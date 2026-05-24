@@ -15,9 +15,8 @@ import '../domain/fire_review.dart';
 /// annual) so a long-lived install doesn't bloat SharedPreferences.
 final fireReviewCacheProvider =
     StateNotifierProvider<FireReviewCacheController, List<FireReview>>(
-  (ref) =>
-      FireReviewCacheController(ref.watch(sharedPreferencesProvider)),
-);
+      (ref) => FireReviewCacheController(ref.watch(sharedPreferencesProvider)),
+    );
 
 class FireReviewCacheController extends StateNotifier<List<FireReview>> {
   FireReviewCacheController(this._prefs) : super(_load(_prefs));

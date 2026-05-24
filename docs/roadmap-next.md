@@ -252,7 +252,7 @@
 | D-0 决策落地 + 文档基线 | ✅ 完成 (2026-05-24) |
 | D-1.7 Memory Layer substrate (vector store + embedder seam) | ✅ 完成 (2026-05-24) |
 | D-1.7b Memory Runtime (typed records + lifecycle + ContextBuilder) | ✅ 完成 (2026-05-24) |
-| D-1.7c Rust MiniLM embedder drop-in | ⏳ 唯一剩余的 Rust 工作 (`lifeos-shell.md` §6.6) |
+| D-1.7c Rust EmbeddingGemma-300M drop-in (fastembed/ort, ONNX INT8, 768-d) | ✅ 落地 (2026-05-24) — fastembed-rs 5.13, 18 MB dylib (ORT bundled), AppConfig opt-in, host build 验证;iOS/Android cross-compile 待用户机器执行 (`lifeos-shell.md` §6.6) |
 | D-1.1 / 1.2 / 1.3 / 1.4 / 1.5 / 1.6 / 1.8 | ⏳ 未启动 |
 | D-2 HealthOS MVP | ⏳ 等 D-1 |
 | D-3+ TimeOS / KnowledgeOS / LivingOS | ❌ 触发性,未触发 |

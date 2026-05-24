@@ -39,10 +39,7 @@ class BudgetRepository {
     final query = _db.select(_db.budgets)
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([
-        (t) => OrderingTerm(
-              expression: t.periodMonth,
-              mode: OrderingMode.desc,
-            ),
+        (t) => OrderingTerm(expression: t.periodMonth, mode: OrderingMode.desc),
         (t) => OrderingTerm(expression: t.categoryId),
       ]);
     return query.watch();
@@ -184,9 +181,7 @@ class BudgetRepository {
   Future<void> delete(String id) async {
     final stamp = await _stamper.stamp();
     await _db.transaction(() async {
-      await (_db.update(
-        _db.budgets,
-      )..where((t) => t.id.equals(id))).write(
+      await (_db.update(_db.budgets)..where((t) => t.id.equals(id))).write(
         BudgetsCompanion(
           updatedAt: Value(stamp.now),
           updatedByDevice: Value(stamp.deviceId),
@@ -198,9 +193,9 @@ class BudgetRepository {
     });
   }
 
-  Future<BudgetRow?> _byId(String id) =>
-      (_db.select(_db.budgets)..where((t) => t.id.equals(id)))
-          .getSingleOrNull();
+  Future<BudgetRow?> _byId(String id) => (_db.select(
+    _db.budgets,
+  )..where((t) => t.id.equals(id))).getSingleOrNull();
 
   static final RegExp _monthPattern = RegExp(r'^\d{4}-(0[1-9]|1[0-2])$');
 

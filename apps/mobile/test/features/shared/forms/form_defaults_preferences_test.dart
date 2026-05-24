@@ -5,10 +5,8 @@ import 'package:naviwealth/features/shared/forms/forms.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 ProviderContainer _container(SharedPreferences prefs) => ProviderContainer(
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ],
-    );
+  overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -56,7 +54,9 @@ void main() {
     final container = _container(prefs);
     addTearDown(container.dispose);
 
-    await container.read(formDefaultsProvider.notifier).rememberExpense(
+    await container
+        .read(formDefaultsProvider.notifier)
+        .rememberExpense(
           accountId: 'acct-1',
           categoryId: 'cat-1',
           currency: 'CNY',
@@ -69,9 +69,9 @@ void main() {
     // A subsequent partial write must not blank out fields that the
     // caller didn't touch — most save flows pass `null` when the user
     // didn't change a particular field.
-    await container.read(formDefaultsProvider.notifier).rememberExpense(
-          accountId: 'acct-2',
-        );
+    await container
+        .read(formDefaultsProvider.notifier)
+        .rememberExpense(accountId: 'acct-2');
     expect(prefs.getString('naviwealth.forms.expense.account'), 'acct-2');
     expect(prefs.getString('naviwealth.forms.expense.category'), 'cat-1');
     expect(prefs.getString('naviwealth.forms.expense.currency'), 'CNY');
@@ -88,14 +88,12 @@ void main() {
     final container = _container(prefs);
     addTearDown(container.dispose);
 
-    await container.read(formDefaultsProvider.notifier).rememberTrade(
-          accountId: 'broker-1',
-          currency: 'USD',
-        );
-    await container.read(formDefaultsProvider.notifier).rememberAsset(
-          accountId: 'bank-1',
-          currency: 'CNY',
-        );
+    await container
+        .read(formDefaultsProvider.notifier)
+        .rememberTrade(accountId: 'broker-1', currency: 'USD');
+    await container
+        .read(formDefaultsProvider.notifier)
+        .rememberAsset(accountId: 'bank-1', currency: 'CNY');
 
     final state = container.read(formDefaultsProvider);
     expect(state.tradeAccountId, 'broker-1');
@@ -118,6 +116,9 @@ void main() {
         .read(formDefaultsProvider.notifier)
         .rememberExpense(accountId: '', categoryId: '');
 
-    expect(prefs.getString('naviwealth.forms.expense.account'), 'acct-original');
+    expect(
+      prefs.getString('naviwealth.forms.expense.account'),
+      'acct-original',
+    );
   });
 }

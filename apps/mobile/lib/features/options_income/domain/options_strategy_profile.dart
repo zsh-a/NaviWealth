@@ -178,11 +178,11 @@ OptionsStrategyKind? parseOptionsStrategyKind(String wire) {
 /// this never reaches the database — it just satisfies the constructor's
 /// `required` contract.
 SyncMeta _draftSyncMeta() => SyncMeta(
-      ownerUserId: '',
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-      updatedByDevice: '',
-      hlc: Hlc.zero(''),
-    );
+  ownerUserId: '',
+  updatedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+  updatedByDevice: '',
+  hlc: Hlc.zero(''),
+);
 
 /// Preset values for each mode. Mirrors the design doc §5.1 ranges. Custom
 /// mode reuses the balanced preset as a starting point — the user edits

@@ -10,21 +10,19 @@ class _HapticsRecorder {
 
   void install() {
     TestWidgetsFlutterBinding.ensureInitialized();
-    TestDefaultBinaryMessengerBinding
-        .instance.defaultBinaryMessenger
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, (call) async {
-      if (call.method == 'HapticFeedback.vibrate') {
-        // Argument is the haptic type string ("HapticFeedbackType.lightImpact"
-        // etc.) or null for the default rumble.
-        calls.add((call.arguments as String?) ?? 'default');
-      }
-      return null;
-    });
+          if (call.method == 'HapticFeedback.vibrate') {
+            // Argument is the haptic type string ("HapticFeedbackType.lightImpact"
+            // etc.) or null for the default rumble.
+            calls.add((call.arguments as String?) ?? 'default');
+          }
+          return null;
+        });
   }
 
   void dispose() {
-    TestDefaultBinaryMessengerBinding
-        .instance.defaultBinaryMessenger
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, null);
   }
 }

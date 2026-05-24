@@ -117,10 +117,12 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           iconColor: Colors.amber,
           route: AppRoutes.planFire,
           fireOsBucketRoleLabel: _bucketRoleWire(worst.role),
-          fireOsBucketCurrentLabel:
-              fmt.format(worst.currentValue.amount.toDouble()).trim(),
-          fireOsBucketTargetLabel:
-              fmt.format(worst.targetValue.amount.toDouble()).trim(),
+          fireOsBucketCurrentLabel: fmt
+              .format(worst.currentValue.amount.toDouble())
+              .trim(),
+          fireOsBucketTargetLabel: fmt
+              .format(worst.targetValue.amount.toDouble())
+              .trim(),
         ),
       );
     }

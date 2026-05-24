@@ -74,28 +74,30 @@ void main() {
     );
   });
 
-  test('deleteByNaturalKey removes the matching (base, quote, day) row',
-      () async {
-    await repo.upsertDaily(
-      baseCurrency: 'USD',
-      quoteCurrency: 'CNY',
-      rate: Decimal.parse('7.20'),
-      asOf: DateTime.utc(2026, 4, 28),
-    );
-    await repo.upsertDaily(
-      baseCurrency: 'HKD',
-      quoteCurrency: 'CNY',
-      rate: Decimal.parse('0.92'),
-      asOf: DateTime.utc(2026, 4, 28),
-    );
-    await repo.deleteByNaturalKey(
-      base: 'usd',
-      quote: 'cny',
-      // Pass an intra-day timestamp to confirm normalisation works.
-      date: DateTime.utc(2026, 4, 28, 9, 15),
-    );
-    final all = await repo.listAll();
-    expect(all, hasLength(1));
-    expect(all.single.base, 'HKD');
-  });
+  test(
+    'deleteByNaturalKey removes the matching (base, quote, day) row',
+    () async {
+      await repo.upsertDaily(
+        baseCurrency: 'USD',
+        quoteCurrency: 'CNY',
+        rate: Decimal.parse('7.20'),
+        asOf: DateTime.utc(2026, 4, 28),
+      );
+      await repo.upsertDaily(
+        baseCurrency: 'HKD',
+        quoteCurrency: 'CNY',
+        rate: Decimal.parse('0.92'),
+        asOf: DateTime.utc(2026, 4, 28),
+      );
+      await repo.deleteByNaturalKey(
+        base: 'usd',
+        quote: 'cny',
+        // Pass an intra-day timestamp to confirm normalisation works.
+        date: DateTime.utc(2026, 4, 28, 9, 15),
+      );
+      final all = await repo.listAll();
+      expect(all, hasLength(1));
+      expect(all.single.base, 'HKD');
+    },
+  );
 }

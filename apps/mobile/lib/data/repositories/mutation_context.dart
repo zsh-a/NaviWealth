@@ -89,9 +89,7 @@ final mutationStamperProvider = FutureProvider<MutationStamper>((ref) async {
     // engine. The device id comes from the local install identity (no
     // backend); HLC ticks go straight through DriftCursorStore.
     final db = await ref.watch(appDatabaseProvider.future);
-    final deviceId = await ref
-        .read(deviceIdentityStoreProvider)
-        .getOrCreate();
+    final deviceId = await ref.read(deviceIdentityStoreProvider).getOrCreate();
     final stamper = LocalHlcStamper(db: db, deviceId: deviceId);
     return MutationStamper(
       currentUserId: ref.watch(currentUserIdProvider),

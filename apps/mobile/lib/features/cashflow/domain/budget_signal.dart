@@ -33,11 +33,11 @@ enum BudgetSignal {
 
 extension BudgetSignalWire on BudgetSignal {
   String get wire => switch (this) {
-        BudgetSignal.noData => 'no_data',
-        BudgetSignal.comfortable => 'comfortable',
-        BudgetSignal.strained => 'strained',
-        BudgetSignal.overBudget => 'over_budget',
-      };
+    BudgetSignal.noData => 'no_data',
+    BudgetSignal.comfortable => 'comfortable',
+    BudgetSignal.strained => 'strained',
+    BudgetSignal.overBudget => 'over_budget',
+  };
 }
 
 /// Bands used by [budgetSignalFor]. Kept as a top-level constant so the

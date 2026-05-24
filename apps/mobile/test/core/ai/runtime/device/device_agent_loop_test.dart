@@ -143,61 +143,59 @@ void main() {
       expect(session.messages.length, 3);
     });
 
-    test(
-      'reasoning + signature survive into the next tool round',
-      () async {
-        // Round 1: the model reasons (thinking + signature), then calls
-        // a tool. Round 2: plain answer. The round-1 assistant turn must
-        // be replayed to round 2 *with* its thinking block first —
-        // dropping it makes reasoning providers (native Anthropic
-        // extended thinking, MiMo thinking mode) reject round 2.
-        final adapter = _RequestCapturingAdapter([
-          [
-            const LlmThinkingDelta('weighing '),
-            const LlmThinkingDelta('the options'),
-            const LlmThinkingSignatureDelta('sig-'),
-            const LlmThinkingSignatureDelta('xyz'),
-            const LlmTextDelta('on it'),
-            const LlmToolCallStart(id: 't1', name: 'get_holdings'),
-            const LlmToolCallEnd(id: 't1', name: 'get_holdings', input: {}),
-            const LlmMessageStop(LlmStopReason.toolUse),
-          ],
-          [
-            const LlmTextDelta('done'),
-            const LlmMessageStop(LlmStopReason.endTurn),
-          ],
-        ]);
-        final loop = DeviceAgentLoop(
-          streamFn: adapter.stream,
-          model: 'm',
-          dispatcher: _RecordingDispatcher(),
-        );
-        final session = _session([_user('hi')]);
-        await loop.run(session).toList();
+    test('reasoning + signature survive into the next tool round', () async {
+      // Round 1: the model reasons (thinking + signature), then calls
+      // a tool. Round 2: plain answer. The round-1 assistant turn must
+      // be replayed to round 2 *with* its thinking block first —
+      // dropping it makes reasoning providers (native Anthropic
+      // extended thinking, MiMo thinking mode) reject round 2.
+      final adapter = _RequestCapturingAdapter([
+        [
+          const LlmThinkingDelta('weighing '),
+          const LlmThinkingDelta('the options'),
+          const LlmThinkingSignatureDelta('sig-'),
+          const LlmThinkingSignatureDelta('xyz'),
+          const LlmTextDelta('on it'),
+          const LlmToolCallStart(id: 't1', name: 'get_holdings'),
+          const LlmToolCallEnd(id: 't1', name: 'get_holdings', input: {}),
+          const LlmMessageStop(LlmStopReason.toolUse),
+        ],
+        [
+          const LlmTextDelta('done'),
+          const LlmMessageStop(LlmStopReason.endTurn),
+        ],
+      ]);
+      final loop = DeviceAgentLoop(
+        streamFn: adapter.stream,
+        model: 'm',
+        dispatcher: _RecordingDispatcher(),
+      );
+      final session = _session([_user('hi')]);
+      await loop.run(session).toList();
 
-        // The persisted assistant turn leads with the reconstructed
-        // thinking block (reasoning text + concatenated signature),
-        // ahead of the text and tool_use blocks.
-        final assistant = session.messages[1];
-        expect(assistant.role, 'assistant');
-        final blocks = assistant.content! as List;
-        expect(blocks.first, {
-          'type': 'thinking',
-          'thinking': 'weighing the options',
-          'signature': 'sig-xyz',
-        });
-        expect(
-          blocks.map((b) => (b as Map)['type']),
-          ['thinking', 'text', 'tool_use'],
-        );
+      // The persisted assistant turn leads with the reconstructed
+      // thinking block (reasoning text + concatenated signature),
+      // ahead of the text and tool_use blocks.
+      final assistant = session.messages[1];
+      expect(assistant.role, 'assistant');
+      final blocks = assistant.content! as List;
+      expect(blocks.first, {
+        'type': 'thinking',
+        'thinking': 'weighing the options',
+        'signature': 'sig-xyz',
+      });
+      expect(blocks.map((b) => (b as Map)['type']), [
+        'thinking',
+        'text',
+        'tool_use',
+      ]);
 
-        // And round 2 actually received it (the 400-prevention).
-        final round2 = adapter.requests[1].messages;
-        final replayed = round2[1].content! as List;
-        expect((replayed.first as Map)['type'], 'thinking');
-        expect((replayed.first as Map)['signature'], 'sig-xyz');
-      },
-    );
+      // And round 2 actually received it (the 400-prevention).
+      final round2 = adapter.requests[1].messages;
+      final replayed = round2[1].content! as List;
+      expect((replayed.first as Map)['type'], 'thinking');
+      expect((replayed.first as Map)['signature'], 'sig-xyz');
+    });
 
     test(
       'reasoning with no signature still re-sent (MiMo-style provider)',
@@ -401,10 +399,7 @@ void main() {
           const LlmToolCallEnd(id: 't1', name: 'get_holdings', input: {}),
           const LlmMessageStop(LlmStopReason.toolUse),
         ],
-        [
-          const LlmTextDelta('完成'),
-          const LlmMessageStop(LlmStopReason.endTurn),
-        ],
+        [const LlmTextDelta('完成'), const LlmMessageStop(LlmStopReason.endTurn)],
       ]);
       final loop = DeviceAgentLoop(
         streamFn: adapter.stream,

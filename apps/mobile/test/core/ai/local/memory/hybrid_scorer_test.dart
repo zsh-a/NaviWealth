@@ -4,7 +4,8 @@ import 'package:naviwealth/core/ai/local/memory/hybrid_scorer.dart';
 void main() {
   group('hybridScore', () {
     test('weights sum to 1.0', () {
-      const sum = kWeightSemantic +
+      const sum =
+          kWeightSemantic +
           kWeightImportance +
           kWeightEntity +
           kWeightRecency +
@@ -34,18 +35,20 @@ void main() {
       expect(s, 0.0);
     });
 
-    test('null semantic clamps to 0 contribution (other weights still rank)',
-        () {
-      final withNull = hybridScore(
-        semanticSim: null,
-        importance: 1.0,
-        entityOverlap: 1.0,
-        recency: 1.0,
-        confidence: 1.0,
-      );
-      // 1 - 0.35 = 0.65 expected.
-      expect(withNull, closeTo(0.65, 1e-9));
-    });
+    test(
+      'null semantic clamps to 0 contribution (other weights still rank)',
+      () {
+        final withNull = hybridScore(
+          semanticSim: null,
+          importance: 1.0,
+          entityOverlap: 1.0,
+          recency: 1.0,
+          confidence: 1.0,
+        );
+        // 1 - 0.35 = 0.65 expected.
+        expect(withNull, closeTo(0.65, 1e-9));
+      },
+    );
 
     test('out-of-range inputs are clamped to [0, 1]', () {
       final low = hybridScore(
@@ -123,8 +126,7 @@ void main() {
 
     test('custom half-life respected', () {
       final past = now.subtract(const Duration(days: 7));
-      final score = recencyScore(past, now,
-          halfLife: const Duration(days: 7));
+      final score = recencyScore(past, now, halfLife: const Duration(days: 7));
       expect(score, closeTo(0.5, 1e-3));
     });
   });

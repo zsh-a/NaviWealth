@@ -69,7 +69,8 @@ class _UndoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final summary = entry.payload['summary_zh'] as String? ??
+    final summary =
+        entry.payload['summary_zh'] as String? ??
         entry.payload['summaryZh'] as String? ??
         entry.kind;
     return Material(

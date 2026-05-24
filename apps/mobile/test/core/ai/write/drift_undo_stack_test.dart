@@ -23,8 +23,12 @@ void main() {
   test('put + all round-trips', () async {
     final db = makeTestDatabase();
     final stack = DriftUndoStack(db);
-    await stack.put(entry(token: 't1', createdAt: DateTime.utc(2026, 5, 12, 9)));
-    await stack.put(entry(token: 't2', createdAt: DateTime.utc(2026, 5, 12, 10)));
+    await stack.put(
+      entry(token: 't1', createdAt: DateTime.utc(2026, 5, 12, 9)),
+    );
+    await stack.put(
+      entry(token: 't2', createdAt: DateTime.utc(2026, 5, 12, 10)),
+    );
     final all = await stack.all();
     expect(all, hasLength(2));
     expect(all.first.token, 't2');
@@ -55,20 +59,23 @@ void main() {
   test('pruneExpiredBefore drops only expired rows', () async {
     final db = makeTestDatabase();
     final stack = DriftUndoStack(db);
-    await stack.put(entry(
-      token: 'expired',
-      createdAt: DateTime.utc(2026, 5, 12, 9),
-      expiresAt: DateTime.utc(2026, 5, 12, 10),
-    ));
-    await stack.put(entry(
-      token: 'fresh',
-      createdAt: DateTime.utc(2026, 5, 12, 9),
-      expiresAt: DateTime.utc(2026, 5, 12, 23),
-    ));
-    await stack.put(entry(
-      token: 'no_expiry',
-      createdAt: DateTime.utc(2026, 5, 12, 9),
-    ));
+    await stack.put(
+      entry(
+        token: 'expired',
+        createdAt: DateTime.utc(2026, 5, 12, 9),
+        expiresAt: DateTime.utc(2026, 5, 12, 10),
+      ),
+    );
+    await stack.put(
+      entry(
+        token: 'fresh',
+        createdAt: DateTime.utc(2026, 5, 12, 9),
+        expiresAt: DateTime.utc(2026, 5, 12, 23),
+      ),
+    );
+    await stack.put(
+      entry(token: 'no_expiry', createdAt: DateTime.utc(2026, 5, 12, 9)),
+    );
 
     await stack.pruneExpiredBefore(DateTime.utc(2026, 5, 12, 12));
     final remaining = (await stack.all()).map((e) => e.token).toSet();
@@ -112,11 +119,9 @@ void main() {
       'tags': <String>['food', 'coffee'],
       'meta': <String, Object?>{'amount_minor': '-450', 'currency': 'USD'},
     };
-    await stack.put(entry(
-      token: 't',
-      createdAt: DateTime.utc(2026, 5, 12),
-      payload: payload,
-    ));
+    await stack.put(
+      entry(token: 't', createdAt: DateTime.utc(2026, 5, 12), payload: payload),
+    );
     final read = await stack.take('t');
     expect(read!.payload, payload);
     await db.close();

@@ -7,10 +7,7 @@ import 'package:naviwealth/features/fire/domain/fire_review.dart';
 import 'package:naviwealth/features/fire/domain/fire_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-FireReview _review({
-  required FireReviewKind kind,
-  required String periodKey,
-}) {
+FireReview _review({required FireReviewKind kind, required String periodKey}) {
   return FireReview(
     kind: kind,
     periodKey: periodKey,
@@ -51,44 +48,42 @@ void main() {
   test('upsert deduplicates by (kind, periodKey)', () async {
     final prefs = await SharedPreferences.getInstance();
     final c = container(prefs);
-    await c.read(fireReviewCacheProvider.notifier).upsert(
-      _review(kind: FireReviewKind.monthly, periodKey: '2026-05'),
-    );
-    await c.read(fireReviewCacheProvider.notifier).upsert(
-      _review(kind: FireReviewKind.monthly, periodKey: '2026-05'),
-    );
+    await c
+        .read(fireReviewCacheProvider.notifier)
+        .upsert(_review(kind: FireReviewKind.monthly, periodKey: '2026-05'));
+    await c
+        .read(fireReviewCacheProvider.notifier)
+        .upsert(_review(kind: FireReviewKind.monthly, periodKey: '2026-05'));
     expect(c.read(fireReviewCacheProvider), hasLength(1));
 
-    await c.read(fireReviewCacheProvider.notifier).upsert(
-      _review(kind: FireReviewKind.quarterly, periodKey: '2026-Q2'),
-    );
+    await c
+        .read(fireReviewCacheProvider.notifier)
+        .upsert(_review(kind: FireReviewKind.quarterly, periodKey: '2026-Q2'));
     expect(c.read(fireReviewCacheProvider), hasLength(2));
   });
 
-  test('latest returns the most recently upserted review per kind',
-      () async {
+  test('latest returns the most recently upserted review per kind', () async {
     final prefs = await SharedPreferences.getInstance();
     final c = container(prefs);
     final controller = c.read(fireReviewCacheProvider.notifier);
-    await controller
-        .upsert(_review(kind: FireReviewKind.monthly, periodKey: '2026-04'));
-    await controller
-        .upsert(_review(kind: FireReviewKind.monthly, periodKey: '2026-05'));
+    await controller.upsert(
+      _review(kind: FireReviewKind.monthly, periodKey: '2026-04'),
+    );
+    await controller.upsert(
+      _review(kind: FireReviewKind.monthly, periodKey: '2026-05'),
+    );
     expect(controller.latest(FireReviewKind.monthly)!.periodKey, '2026-05');
   });
 
   test('persistence survives a container restart', () async {
     final prefs = await SharedPreferences.getInstance();
     final write = container(prefs);
-    await write.read(fireReviewCacheProvider.notifier).upsert(
-      _review(kind: FireReviewKind.annual, periodKey: '2026'),
-    );
+    await write
+        .read(fireReviewCacheProvider.notifier)
+        .upsert(_review(kind: FireReviewKind.annual, periodKey: '2026'));
 
     final reload = container(prefs);
     expect(reload.read(fireReviewCacheProvider), hasLength(1));
-    expect(
-      reload.read(fireReviewCacheProvider).first.periodKey,
-      '2026',
-    );
+    expect(reload.read(fireReviewCacheProvider).first.periodKey, '2026');
   });
 }

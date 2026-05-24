@@ -158,7 +158,9 @@ final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
     session: session,
   ).enqueueMissingLocalRows();
   if (backfilled > 0) {
-    ref.read(loggerProvider).i('sync: queued $backfilled historical local rows');
+    ref
+        .read(loggerProvider)
+        .i('sync: queued $backfilled historical local rows');
   }
   return engine;
 });

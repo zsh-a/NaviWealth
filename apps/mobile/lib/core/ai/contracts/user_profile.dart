@@ -33,19 +33,19 @@ class CategoryShare {
   final double shareFraction;
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'category_id': categoryId,
-        'label': label,
-        'share': double.parse(shareFraction.toStringAsFixed(3)),
-      };
+    'category_id': categoryId,
+    'label': label,
+    'share': double.parse(shareFraction.toStringAsFixed(3)),
+  };
 
   factory CategoryShare.fromJson(Map<String, Object?> json) => CategoryShare(
-        categoryId: json['category_id'] as String? ?? '',
-        label: json['label'] as String? ?? '',
-        shareFraction: switch (json['share']) {
-          final num n => n.toDouble(),
-          _ => 0.0,
-        },
-      );
+    categoryId: json['category_id'] as String? ?? '',
+    label: json['label'] as String? ?? '',
+    shareFraction: switch (json['share']) {
+      final num n => n.toDouble(),
+      _ => 0.0,
+    },
+  );
 }
 
 /// Risk-preference proxy. Mirrors the user's settings choice — kept as a
@@ -54,16 +54,16 @@ enum RiskAppetite { conservative, moderate, aggressive }
 
 extension RiskAppetiteWire on RiskAppetite {
   String get wire => switch (this) {
-        RiskAppetite.conservative => 'conservative',
-        RiskAppetite.moderate => 'moderate',
-        RiskAppetite.aggressive => 'aggressive',
-      };
+    RiskAppetite.conservative => 'conservative',
+    RiskAppetite.moderate => 'moderate',
+    RiskAppetite.aggressive => 'aggressive',
+  };
 
   static RiskAppetite parse(String? s) => switch (s) {
-        'conservative' => RiskAppetite.conservative,
-        'aggressive' => RiskAppetite.aggressive,
-        _ => RiskAppetite.moderate,
-      };
+    'conservative' => RiskAppetite.conservative,
+    'aggressive' => RiskAppetite.aggressive,
+    _ => RiskAppetite.moderate,
+  };
 }
 
 /// Compact, evidence-free portrait of the user that ships in the AI
@@ -95,35 +95,36 @@ class UserProfile {
   final String baseCurrency;
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'version': '1.0',
-        'window_days': windowDays,
-        'savings_rate': double.parse(savingsRate.toStringAsFixed(3)),
-        'risk_appetite': riskAppetite.wire,
-        'top_categories': topCategories
-            .map((c) => c.toJson())
-            .toList(growable: false),
-        'base_currency': baseCurrency,
-      };
+    'version': '1.0',
+    'window_days': windowDays,
+    'savings_rate': double.parse(savingsRate.toStringAsFixed(3)),
+    'risk_appetite': riskAppetite.wire,
+    'top_categories': topCategories
+        .map((c) => c.toJson())
+        .toList(growable: false),
+    'base_currency': baseCurrency,
+  };
 
   factory UserProfile.fromJson(Map<String, Object?> json) => UserProfile(
-        windowDays: switch (json['window_days']) {
-          final num n => n.toInt(),
-          _ => 90,
-        },
-        savingsRate: switch (json['savings_rate']) {
-          final num n => n.toDouble(),
-          _ => 0.0,
-        },
-        riskAppetite: RiskAppetiteWire.parse(json['risk_appetite'] as String?),
-        topCategories: switch (json['top_categories']) {
-          final List<Object?> list => list
-              .whereType<Map<String, Object?>>()
-              .map(CategoryShare.fromJson)
-              .toList(growable: false),
-          _ => const [],
-        },
-        baseCurrency: json['base_currency'] as String? ?? 'CNY',
-      );
+    windowDays: switch (json['window_days']) {
+      final num n => n.toInt(),
+      _ => 90,
+    },
+    savingsRate: switch (json['savings_rate']) {
+      final num n => n.toDouble(),
+      _ => 0.0,
+    },
+    riskAppetite: RiskAppetiteWire.parse(json['risk_appetite'] as String?),
+    topCategories: switch (json['top_categories']) {
+      final List<Object?> list =>
+        list
+            .whereType<Map<String, Object?>>()
+            .map(CategoryShare.fromJson)
+            .toList(growable: false),
+      _ => const [],
+    },
+    baseCurrency: json['base_currency'] as String? ?? 'CNY',
+  );
 }
 
 /// One observation handed to [composeUserProfile] — typically a posting,
@@ -160,11 +161,7 @@ UserProfile composeUserProfile({
   int topCategoryLimit = 5,
 }) {
   if (windowDays <= 0) {
-    throw ArgumentError.value(
-      windowDays,
-      'windowDays',
-      'must be > 0',
-    );
+    throw ArgumentError.value(windowDays, 'windowDays', 'must be > 0');
   }
   if (topCategoryLimit <= 0) {
     throw ArgumentError.value(

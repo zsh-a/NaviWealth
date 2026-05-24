@@ -33,11 +33,6 @@ class IngestQueueSummary {
 final ingestQueueInsightProvider = Provider<IngestQueueSummary?>((ref) {
   final drafts = ref.watch(pendingIngestDraftsProvider).value;
   if (drafts == null || drafts.isEmpty) return null;
-  final fresh = drafts
-      .where((d) => d.verdict == DedupVerdict.newTxn)
-      .length;
-  return IngestQueueSummary(
-    pendingCount: drafts.length,
-    freshCount: fresh,
-  );
+  final fresh = drafts.where((d) => d.verdict == DedupVerdict.newTxn).length;
+  return IngestQueueSummary(pendingCount: drafts.length, freshCount: fresh);
 });

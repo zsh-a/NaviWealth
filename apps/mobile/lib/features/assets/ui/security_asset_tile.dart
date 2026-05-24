@@ -101,11 +101,7 @@ class SecurityAssetTile extends StatelessWidget {
   void _onTap(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     if (MasterDetailLayout.shouldUseMasterDetail(width)) {
-      replaceSelectedQuery(
-        context,
-        path: AppRoutes.wealth,
-        selected: asset.id,
-      );
+      replaceSelectedQuery(context, path: AppRoutes.wealth, selected: asset.id);
     } else {
       context.go(AppRoutes.wealthAsset(asset.id));
     }

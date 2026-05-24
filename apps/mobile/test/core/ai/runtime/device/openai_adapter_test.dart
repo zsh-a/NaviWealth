@@ -187,7 +187,8 @@ void main() {
       );
       final assistant =
           (openAiChatCompletionsPayload(req, stream: false)['messages']!
-              as List)[0] as Map;
+                  as List)[0]
+              as Map;
       expect(assistant.containsKey('reasoning_content'), isFalse);
     });
   });

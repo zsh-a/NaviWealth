@@ -155,21 +155,21 @@ final budgetRepositoryProvider = FutureProvider<BudgetRepository>((ref) async {
 /// categoryId asc). UIs that show "this month's budgets" subscribe via
 /// [budgetsForMonthProvider] instead; this raw stream powers the budget
 /// management list.
-final budgetsStreamProvider = StreamProvider.autoDispose<List<BudgetRow>>(
-  (ref) async* {
-    final repo = await ref.watch(budgetRepositoryProvider.future);
-    yield* repo.watchAll();
-  },
-);
+final budgetsStreamProvider = StreamProvider.autoDispose<List<BudgetRow>>((
+  ref,
+) async* {
+  final repo = await ref.watch(budgetRepositoryProvider.future);
+  yield* repo.watchAll();
+});
 
 /// Live stream of budgets for a specific `YYYY-MM` calendar month. The
 /// family key is the month string — UIs key on the displayed month so
 /// switching months tears down the prior subscription cleanly.
 final budgetsForMonthProvider = StreamProvider.autoDispose
     .family<List<BudgetRow>, String>((ref, periodMonth) async* {
-  final repo = await ref.watch(budgetRepositoryProvider.future);
-  yield* repo.watchByMonth(periodMonth);
-});
+      final repo = await ref.watch(budgetRepositoryProvider.future);
+      yield* repo.watchByMonth(periodMonth);
+    });
 
 /// Pure derivation of the budget posture for a given month. FIRE engine
 /// / dashboard insights subscribe to this rather than to budgets +
@@ -181,23 +181,21 @@ final budgetsForMonthProvider = StreamProvider.autoDispose
 /// integration ships in a follow-up. The signal therefore reduces to
 /// "budgets exist but no spend tracked yet" → [BudgetSignal.noData],
 /// which is the correct quiet state until the spend join lands.
-final monthlyBudgetSignalProvider =
-    Provider.autoDispose.family<AsyncValue<BudgetSignal>, String>(
-  (ref, periodMonth) {
-    final budgetsAsync = ref.watch(budgetsForMonthProvider(periodMonth));
-    return budgetsAsync.whenData((rows) {
-      final res = buildMonthlyBudgetSummary(
-        periodMonth: periodMonth,
-        budgets: rows,
-        spendByCategoryId: const <String, Money>{},
-        targetCurrency: rows.isEmpty
-            ? 'CNY'
-            : rows.first.currency.toUpperCase(),
-      );
-      return budgetSignalFor(res.summary);
+final monthlyBudgetSignalProvider = Provider.autoDispose
+    .family<AsyncValue<BudgetSignal>, String>((ref, periodMonth) {
+      final budgetsAsync = ref.watch(budgetsForMonthProvider(periodMonth));
+      return budgetsAsync.whenData((rows) {
+        final res = buildMonthlyBudgetSummary(
+          periodMonth: periodMonth,
+          budgets: rows,
+          spendByCategoryId: const <String, Money>{},
+          targetCurrency: rows.isEmpty
+              ? 'CNY'
+              : rows.first.currency.toUpperCase(),
+        );
+        return budgetSignalFor(res.summary);
+      });
     });
-  },
-);
 
 /// Live stream of every recorded FX rate. The dashboard converter and the
 /// FX-rate management page both watch this so a manual rate insert

@@ -115,8 +115,9 @@ class FireStressResult {
       'withdrawal_rate_after': cleanDouble(withdrawalRateAfter),
       'cash_bucket_months_after': cleanDouble(cashBucketMonthsAfter),
       'currency': netWorthAfter.currency,
-      'recommended_actions':
-          recommendedActions.map((a) => a.toJson()).toList(growable: false),
+      'recommended_actions': recommendedActions
+          .map((a) => a.toJson())
+          .toList(growable: false),
       if (note != null) 'note': note,
     };
   }

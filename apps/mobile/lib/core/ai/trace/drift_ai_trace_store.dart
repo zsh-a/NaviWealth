@@ -46,16 +46,15 @@ class DriftAiTraceStore implements AiTraceStore {
   @override
   Future<List<AiTrace>> recent({int limit = 50}) async {
     if (limit <= 0) return const <AiTrace>[];
-    final rows = await _db.customSelect(
-      'SELECT payload_json FROM ai_traces '
-      'WHERE owner_user_id = ?1 '
-      'ORDER BY started_at_iso DESC '
-      'LIMIT ?2',
-      variables: [
-        Variable.withString(_owner),
-        Variable.withInt(limit),
-      ],
-    ).get();
+    final rows = await _db
+        .customSelect(
+          'SELECT payload_json FROM ai_traces '
+          'WHERE owner_user_id = ?1 '
+          'ORDER BY started_at_iso DESC '
+          'LIMIT ?2',
+          variables: [Variable.withString(_owner), Variable.withInt(limit)],
+        )
+        .get();
     final out = <AiTrace>[];
     for (final row in rows) {
       final raw = row.read<String>('payload_json');
@@ -81,14 +80,16 @@ class DriftAiTraceStore implements AiTraceStore {
 
   @override
   Future<AiTrace?> findByRequestId(String requestId) async {
-    final rows = await _db.customSelect(
-      'SELECT payload_json FROM ai_traces '
-      'WHERE request_id = ?1 AND owner_user_id = ?2 LIMIT 1',
-      variables: [
-        Variable.withString(requestId),
-        Variable.withString(_owner),
-      ],
-    ).get();
+    final rows = await _db
+        .customSelect(
+          'SELECT payload_json FROM ai_traces '
+          'WHERE request_id = ?1 AND owner_user_id = ?2 LIMIT 1',
+          variables: [
+            Variable.withString(requestId),
+            Variable.withString(_owner),
+          ],
+        )
+        .get();
     if (rows.isEmpty) return null;
     try {
       final raw = rows.first.read<String>('payload_json');

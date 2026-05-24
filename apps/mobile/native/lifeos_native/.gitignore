@@ -1,0 +1,4 @@
+# Cargo build artifacts and dist outputs — see README "Build" section
+# for the reproducible build commands.
+/target/
+/dist/

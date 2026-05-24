@@ -60,16 +60,17 @@ void main() {
     expect(hits.first.match, AssetSearchHitMatch.exact);
   });
 
-  test('searchLocal("kweichow") returns 贵州茅台 via English-name prefix',
-      () async {
-    final hits = await search.searchLocal('kweichow');
-    expect(hits.first.id, 'cn_a:600519');
-    // Prefix match on `name_en = 'Kweichow Moutai'`.
-    expect(hits.first.match, AssetSearchHitMatch.prefix);
-  });
+  test(
+    'searchLocal("kweichow") returns 贵州茅台 via English-name prefix',
+    () async {
+      final hits = await search.searchLocal('kweichow');
+      expect(hits.first.id, 'cn_a:600519');
+      // Prefix match on `name_en = 'Kweichow Moutai'`.
+      expect(hits.first.match, AssetSearchHitMatch.prefix);
+    },
+  );
 
-  test('searchLocal("gzmt") returns 贵州茅台 via pinyin-initials match',
-      () async {
+  test('searchLocal("gzmt") returns 贵州茅台 via pinyin-initials match', () async {
     final hits = await search.searchLocal('gzmt');
     expect(hits.first.id, 'cn_a:600519');
   });
@@ -80,10 +81,10 @@ void main() {
     // 'mtjt' isn't in any of the canonical name columns — it lives in
     // the aliases bag, so the only path that surfaces it is FTS.
     expect(hits.first.source, AssetSearchHitSource.catalog);
-    expect(
-      [AssetSearchHitMatch.fts, AssetSearchHitMatch.exact],
-      contains(hits.first.match),
-    );
+    expect([
+      AssetSearchHitMatch.fts,
+      AssetSearchHitMatch.exact,
+    ], contains(hits.first.match));
   });
 
   test('searchLocal("apple") returns AAPL via English-name FTS', () async {
@@ -110,36 +111,41 @@ void main() {
 
     final hits = await search.searchLocal('AAPL');
     final aapl = hits.where((h) => h.symbol.toLowerCase() == 'aapl').toList();
-    expect(aapl, hasLength(1),
-        reason: 'owned + catalog must collapse to a single (market, symbol)');
+    expect(
+      aapl,
+      hasLength(1),
+      reason: 'owned + catalog must collapse to a single (market, symbol)',
+    );
     expect(aapl.single.source, AssetSearchHitSource.owned);
   });
 
-  test('owned + catalog priority order: owned > exact > prefix > fts',
-      () async {
-    final outbox = InMemoryOutboxStore();
-    final repo = SecuritiesAssetRepository(
-      db: db,
-      outbox: outbox,
-      stamper: makeStubStamper(),
-    );
-    // Owned row with a name that starts with our query so it joins the
-    // owned tier.
-    await repo.upsertSecurity(
-      symbol: 'OWNED1',
-      market: AssetMarket.usStock,
-      type: AssetType.stock,
-      currency: 'USD',
-      name: 'Foo Owned',
-    );
+  test(
+    'owned + catalog priority order: owned > exact > prefix > fts',
+    () async {
+      final outbox = InMemoryOutboxStore();
+      final repo = SecuritiesAssetRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(),
+      );
+      // Owned row with a name that starts with our query so it joins the
+      // owned tier.
+      await repo.upsertSecurity(
+        symbol: 'OWNED1',
+        market: AssetMarket.usStock,
+        type: AssetType.stock,
+        currency: 'USD',
+        name: 'Foo Owned',
+      );
 
-    final hits = await search.searchLocal('Foo');
-    expect(hits.first.source, AssetSearchHitSource.owned);
-    expect(
-      hits.skip(1).every((h) => h.source == AssetSearchHitSource.catalog),
-      isTrue,
-    );
-  });
+      final hits = await search.searchLocal('Foo');
+      expect(hits.first.source, AssetSearchHitSource.owned);
+      expect(
+        hits.skip(1).every((h) => h.source == AssetSearchHitSource.catalog),
+        isTrue,
+      );
+    },
+  );
 
   // ---------- limit / market filter ----------
 
@@ -180,8 +186,7 @@ void main() {
         maxRequests: 1,
         window: const Duration(seconds: 1),
       ),
-      dio: Dio()
-        ..httpClientAdapter = _ThrowingAdapter(),
+      dio: Dio()..httpClientAdapter = _ThrowingAdapter(),
       metrics: metrics,
     );
     expect(client.providerName, 'test-no-net');
@@ -190,8 +195,11 @@ void main() {
     expect(hits, isNotEmpty);
 
     final snap = metrics.snapshot();
-    expect(snap.requests, isEmpty,
-        reason: 'searchLocal must not record any HTTP request metric');
+    expect(
+      snap.requests,
+      isEmpty,
+      reason: 'searchLocal must not record any HTTP request metric',
+    );
   });
 
   // ---------- performance ----------
@@ -203,24 +211,24 @@ void main() {
     // should still fit comfortably in the same budget thanks to the
     // (market, symbol) and FTS5 indexes.
     final synthetic = StringBuffer();
-    synthetic.writeln(jsonEncode({
-      'version': 'v-bench',
-      'checksum': 'bench-1',
-      'count': 1000,
-    }));
+    synthetic.writeln(
+      jsonEncode({'version': 'v-bench', 'checksum': 'bench-1', 'count': 1000}),
+    );
     for (var i = 0; i < 1000; i++) {
       final letters = String.fromCharCodes(
         List.generate(4, (j) => 65 + ((i * 7 + j * 3) % 26)),
       );
-      synthetic.writeln(jsonEncode({
-        's': letters + i.toString().padLeft(4, '0'),
-        'm': 'us_stock',
-        't': 'stock',
-        'c': 'USD',
-        'ne': 'Synthetic $letters Holdings',
-        'p': letters.toLowerCase(),
-        'pi': letters[0].toLowerCase(),
-      }));
+      synthetic.writeln(
+        jsonEncode({
+          's': letters + i.toString().padLeft(4, '0'),
+          'm': 'us_stock',
+          't': 'stock',
+          'c': 'USD',
+          'ne': 'Synthetic $letters Holdings',
+          'p': letters.toLowerCase(),
+          'pi': letters[0].toLowerCase(),
+        }),
+      );
     }
     final loader = SecuritiesCatalogLoader(
       db: db,
@@ -266,8 +274,6 @@ class _ThrowingAdapter implements HttpClientAdapter {
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) {
-    throw StateError(
-      'searchLocal triggered an HTTP request to ${options.uri}',
-    );
+    throw StateError('searchLocal triggered an HTTP request to ${options.uri}');
   }
 }

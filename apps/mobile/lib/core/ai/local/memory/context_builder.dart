@@ -39,7 +39,8 @@ class ContextBuilder {
 
     // Semantic preferences — no semantic query needed; the user's
     // long-term facts should always come through when in-scope.
-    final preferences = intent.kindHints.isEmpty ||
+    final preferences =
+        intent.kindHints.isEmpty ||
             intent.kindHints.contains(MemoryKind.semantic)
         ? await runtime.recall(
             ownerUserId: ownerUserId,
@@ -51,7 +52,8 @@ class ContextBuilder {
         : const <MemoryHit>[];
 
     // Procedural rules — explicit; embed scope-match only.
-    final rules = intent.kindHints.isEmpty ||
+    final rules =
+        intent.kindHints.isEmpty ||
             intent.kindHints.contains(MemoryKind.procedural)
         ? await runtime.recall(
             ownerUserId: ownerUserId,
@@ -63,7 +65,8 @@ class ContextBuilder {
         : const <MemoryHit>[];
 
     // Episodic decisions — hybrid-scored against intent.
-    final episodicHits = intent.kindHints.isEmpty ||
+    final episodicHits =
+        intent.kindHints.isEmpty ||
             intent.kindHints.contains(MemoryKind.episodic)
         ? await runtime.recall(
             ownerUserId: ownerUserId,
@@ -86,9 +89,9 @@ class ContextBuilder {
     final eventsRelated = (entities == null || entities.isEmpty)
         ? <EventRecord>[]
         : eventsAll
-            .where((e) => e.entities.intersection(entities).isNotEmpty)
-            .take(perSlotLimit)
-            .toList(growable: false);
+              .where((e) => e.entities.intersection(entities).isNotEmpty)
+              .take(perSlotLimit)
+              .toList(growable: false);
     final eventsRecent = eventsAll.length <= perSlotLimit
         ? eventsAll
         : eventsAll.sublist(0, perSlotLimit);
@@ -96,8 +99,9 @@ class ContextBuilder {
     return ContextPackMemory(
       userPreferences: preferences.map((h) => h.record).toList(growable: false),
       recentEvents: eventsRecent,
-      relatedDecisions:
-          episodicHits.map((h) => h.record).toList(growable: false),
+      relatedDecisions: episodicHits
+          .map((h) => h.record)
+          .toList(growable: false),
       applicableRules: rules.map((h) => h.record).toList(growable: false),
       relatedEvents: eventsRelated,
     );

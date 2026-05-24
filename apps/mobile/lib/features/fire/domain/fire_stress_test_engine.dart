@@ -39,8 +39,9 @@ List<FireStressResult> runStressTests(
 // =====================================================================
 
 FireStressResult _marketDrawdown(FireState state, FireStressParams? override) {
-  final pct = (override?.drawdownPct ?? state.plan.riskSettings.marketDrawdownPct)
-      .clamp(0.0, 0.99);
+  final pct =
+      (override?.drawdownPct ?? state.plan.riskSettings.marketDrawdownPct)
+          .clamp(0.0, 0.99);
   final factor = Decimal.parse((1 - pct).toStringAsFixed(4));
   final investableAfter = Money(
     state.investableAssets.amount * factor,
@@ -76,9 +77,9 @@ FireStressResult _marketDrawdown(FireState state, FireStressParams? override) {
 // =====================================================================
 
 FireStressResult _expenseSurge(FireState state, FireStressParams? override) {
-  final pct = (override?.expenseShockPct ??
-          state.plan.riskSettings.expenseShockPct)
-      .clamp(0.0, 5.0);
+  final pct =
+      (override?.expenseShockPct ?? state.plan.riskSettings.expenseShockPct)
+          .clamp(0.0, 5.0);
   final factor = Decimal.parse((1 + pct).toStringAsFixed(4));
   final annualSpendAfter = Money(
     state.annualSpend.amount * factor,
@@ -179,8 +180,7 @@ FireStressResult _fxShock(FireState state, FireStressParams? override) {
     withdrawalRate: wrAfter,
     cashBucketMonths: state.cashBucketMonths,
   );
-  if (state.currencyMismatchCount > 0 &&
-      verdict == FireStressVerdict.safe) {
+  if (state.currencyMismatchCount > 0 && verdict == FireStressVerdict.safe) {
     verdict = FireStressVerdict.cautious;
   }
   return FireStressResult(
@@ -204,8 +204,10 @@ FireStressResult _fxShock(FireState state, FireStressParams? override) {
 // =====================================================================
 
 FireStressResult _cashDepletion(FireState state, FireStressParams? override) {
-  final horizon = (override?.months ?? state.plan.targetCashBucketMonths)
-      .clamp(1, 240);
+  final horizon = (override?.months ?? state.plan.targetCashBucketMonths).clamp(
+    1,
+    240,
+  );
   final monthly = state.monthlyExpense.amount;
   final liquidAfter = Money(
     monthly > Decimal.zero

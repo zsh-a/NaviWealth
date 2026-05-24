@@ -948,8 +948,7 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
     return false;
   }
 
-  static String _humanize(String snakeCase) =>
-      snakeCase.replaceAll('_', ' ');
+  static String _humanize(String snakeCase) => snakeCase.replaceAll('_', ' ');
 
   String _initialFor(String key) {
     final overridden = widget.initial?[key];
@@ -1263,9 +1262,7 @@ List<_Row> _rowsFor(
     case ProposalKind.firePlanUpdate:
       // The applier reads `payload.after`; surface it as a single row
       // so the confirm card still shows what's about to change.
-      return [
-        _Row(l10n.aiChatRowNote, plan.summaryZh),
-      ];
+      return [_Row(l10n.aiChatRowNote, plan.summaryZh)];
     case ProposalKind.fireBucketRule:
       return [
         if (read('role') != null) _Row(l10n.aiChatRowNote, plan.summaryZh),

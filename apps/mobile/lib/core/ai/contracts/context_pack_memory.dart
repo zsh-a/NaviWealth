@@ -81,15 +81,20 @@ class ContextPackMemory {
       applicableRules.isEmpty;
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'user_preferences':
-            userPreferences.map((m) => m.toJson()).toList(growable: false),
-        'recent_events':
-            recentEvents.map((e) => e.toJson()).toList(growable: false),
-        'related_decisions':
-            relatedDecisions.map((m) => m.toJson()).toList(growable: false),
-        'applicable_rules':
-            applicableRules.map((m) => m.toJson()).toList(growable: false),
-        'related_events':
-            relatedEvents.map((e) => e.toJson()).toList(growable: false),
-      };
+    'user_preferences': userPreferences
+        .map((m) => m.toJson())
+        .toList(growable: false),
+    'recent_events': recentEvents
+        .map((e) => e.toJson())
+        .toList(growable: false),
+    'related_decisions': relatedDecisions
+        .map((m) => m.toJson())
+        .toList(growable: false),
+    'applicable_rules': applicableRules
+        .map((m) => m.toJson())
+        .toList(growable: false),
+    'related_events': relatedEvents
+        .map((e) => e.toJson())
+        .toList(growable: false),
+  };
 }

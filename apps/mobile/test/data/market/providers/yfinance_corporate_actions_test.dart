@@ -7,9 +7,7 @@ const _exDivTs1 = 1714521600; // 2024-05-01 UTC
 const _exDivTs2 = 1722470400; // 2024-08-01 UTC
 const _splitTs = 1659384000; // 2022-08-02 UTC
 
-Map<String, Object?> _chart({
-  Map<String, Object?>? events,
-}) {
+Map<String, Object?> _chart({Map<String, Object?>? events}) {
   final result = <String, Object?>{
     'meta': <String, Object?>{'symbol': 'AAPL'},
   };
@@ -72,7 +70,10 @@ void main() {
         expect(e.ratio, isNull);
       }
       final amounts = out.map((e) => e.cashAmount).toList();
-      expect(amounts, containsAll([Decimal.parse('0.22'), Decimal.parse('0.24')]));
+      expect(
+        amounts,
+        containsAll([Decimal.parse('0.22'), Decimal.parse('0.24')]),
+      );
     });
 
     test('parses split events with numerator/denominator', () {
@@ -138,23 +139,20 @@ void main() {
         currency: 'USD',
       );
       expect(out, hasLength(2));
-      expect(
-        out.map((e) => e.kind).toSet(),
-        {CorporateActionKind.cashDividend, CorporateActionKind.split},
-      );
+      expect(out.map((e) => e.kind).toSet(), {
+        CorporateActionKind.cashDividend,
+        CorporateActionKind.split,
+      });
     });
 
     test('event ids are deterministic so re-fetch dedups in the timeline', () {
       Map<String, Object?> body() => _chart(
-            events: <String, Object?>{
-              'dividends': <String, Object?>{
-                '$_exDivTs1': <String, Object?>{
-                  'date': _exDivTs1,
-                  'amount': 0.22,
-                },
-              },
-            },
-          );
+        events: <String, Object?>{
+          'dividends': <String, Object?>{
+            '$_exDivTs1': <String, Object?>{'date': _exDivTs1, 'amount': 0.22},
+          },
+        },
+      );
       final first = parseYahooCorporateActions(
         responseBody: body(),
         symbol: 'AAPL',

@@ -154,8 +154,9 @@ class FireState {
       'fire_eta_months': fireEtaMonths,
       'currency_mismatch_count': currencyMismatchCount,
       'lifestyle_mode': plan.lifestyleMode.name,
-      'suggested_actions':
-          suggestedActions.map((a) => a.toJson()).toList(growable: false),
+      'suggested_actions': suggestedActions
+          .map((a) => a.toJson())
+          .toList(growable: false),
       'buckets': buckets
           .map(
             (b) => <String, Object?>{
@@ -168,8 +169,9 @@ class FireState {
             },
           )
           .toList(growable: false),
-      'stress_tests':
-          stressTests.map((s) => s.toJson()).toList(growable: false),
+      'stress_tests': stressTests
+          .map((s) => s.toJson())
+          .toList(growable: false),
       'unmapped_holdings': unmappedHoldings
           .map(
             (u) => <String, Object?>{

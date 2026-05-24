@@ -50,14 +50,31 @@ void main() {
           CategoryAllocation(
             category: AssetCategory.cash,
             totalInBase: _cny('5000'),
-            items: [_item(id: 'cny', inBase: '5000', currency: 'CNY', nativeAmount: '5000')],
+            items: [
+              _item(
+                id: 'cny',
+                inBase: '5000',
+                currency: 'CNY',
+                nativeAmount: '5000',
+              ),
+            ],
           ),
           CategoryAllocation(
             category: AssetCategory.stock,
             totalInBase: _cny('20000'),
             items: [
-              _item(id: 'aapl', inBase: '12000', currency: 'USD', nativeAmount: '160'),
-              _item(id: 'tsla', inBase: '8000', currency: 'USD', nativeAmount: '110'),
+              _item(
+                id: 'aapl',
+                inBase: '12000',
+                currency: 'USD',
+                nativeAmount: '160',
+              ),
+              _item(
+                id: 'tsla',
+                inBase: '8000',
+                currency: 'USD',
+                nativeAmount: '110',
+              ),
             ],
           ),
           CategoryAllocation(
@@ -91,7 +108,9 @@ void main() {
           CategoryAllocation(
             category: AssetCategory.stock,
             totalInBase: _cny('1'),
-            items: [_item(id: 'a', inBase: '1', currency: 'CNY', nativeAmount: '1')],
+            items: [
+              _item(id: 'a', inBase: '1', currency: 'CNY', nativeAmount: '1'),
+            ],
           ),
         ],
       );
@@ -99,7 +118,8 @@ void main() {
       final agg = buildWealthAggregation(
         snapshot: snapshot,
         perspective: WealthPerspective.byCategory,
-        categoryLabel: (c) => c == AssetCategory.stock ? 'Stocks (i18n)' : c.name,
+        categoryLabel: (c) =>
+            c == AssetCategory.stock ? 'Stocks (i18n)' : c.name,
       );
 
       expect(agg.buckets.single.label, 'Stocks (i18n)');
@@ -116,7 +136,9 @@ void main() {
           CategoryAllocation(
             category: AssetCategory.cash,
             totalInBase: _cny('1'),
-            items: [_item(id: 'cny', inBase: '1', currency: 'CNY', nativeAmount: '1')],
+            items: [
+              _item(id: 'cny', inBase: '1', currency: 'CNY', nativeAmount: '1'),
+            ],
           ),
         ],
       );
@@ -139,15 +161,30 @@ void main() {
             category: AssetCategory.stock,
             totalInBase: _cny('14000'),
             items: [
-              _item(id: 'aapl', inBase: '12000', currency: 'USD', nativeAmount: '160'),
-              _item(id: '600519', inBase: '2000', currency: 'CNY', nativeAmount: '2000'),
+              _item(
+                id: 'aapl',
+                inBase: '12000',
+                currency: 'USD',
+                nativeAmount: '160',
+              ),
+              _item(
+                id: '600519',
+                inBase: '2000',
+                currency: 'CNY',
+                nativeAmount: '2000',
+              ),
             ],
           ),
           CategoryAllocation(
             category: AssetCategory.crypto,
             totalInBase: _cny('6000'),
             items: [
-              _item(id: 'btc', inBase: '6000', currency: 'USD', nativeAmount: '0.1'),
+              _item(
+                id: 'btc',
+                inBase: '6000',
+                currency: 'USD',
+                nativeAmount: '0.1',
+              ),
             ],
           ),
         ],
@@ -202,7 +239,12 @@ void main() {
             category: AssetCategory.cash,
             totalInBase: _cny('100'),
             items: [
-              _item(id: 'a', inBase: '100', currency: 'CNY', nativeAmount: '100'),
+              _item(
+                id: 'a',
+                inBase: '100',
+                currency: 'CNY',
+                nativeAmount: '100',
+              ),
             ],
           ),
           CategoryAllocation(

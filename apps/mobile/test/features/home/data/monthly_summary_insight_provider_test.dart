@@ -41,10 +41,7 @@ void main() {
       ]);
       // 9 days into May → window has closed.
       expect(
-        summarizeMonthlyDelta(
-          trend: trend,
-          now: DateTime.utc(2026, 5, 9),
-        ),
+        summarizeMonthlyDelta(trend: trend, now: DateTime.utc(2026, 5, 9)),
         isNull,
       );
     });
@@ -85,10 +82,7 @@ void main() {
         _p(DateTime.utc(2026, 4, 30), 60000),
       ]);
       expect(
-        summarizeMonthlyDelta(
-          trend: trend,
-          now: DateTime.utc(2026, 5, 3),
-        ),
+        summarizeMonthlyDelta(trend: trend, now: DateTime.utc(2026, 5, 3)),
         isNull,
       );
     });
@@ -100,10 +94,7 @@ void main() {
         _p(DateTime.utc(2026, 5, 1), 105000),
       ]);
       expect(
-        summarizeMonthlyDelta(
-          trend: trend,
-          now: DateTime.utc(2026, 5, 3),
-        ),
+        summarizeMonthlyDelta(trend: trend, now: DateTime.utc(2026, 5, 3)),
         isNull,
       );
     });

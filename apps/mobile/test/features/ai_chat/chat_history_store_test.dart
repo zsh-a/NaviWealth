@@ -60,10 +60,7 @@ void main() {
       expect(messages[1].content, '约 ¥123,456。');
       expect(messages[1].toolCalls, hasLength(1));
       expect(messages[1].toolCalls.single.name, 'get_holdings');
-      expect(
-        (messages[1].toolCalls.single.output! as Map)['rows'],
-        isEmpty,
-      );
+      expect((messages[1].toolCalls.single.output! as Map)['rows'], isEmpty);
     });
 
     test('updateMessage rewrites content and tool calls in place', () async {

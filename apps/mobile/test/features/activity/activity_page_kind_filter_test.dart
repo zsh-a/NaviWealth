@@ -97,10 +97,7 @@ void main() {
     await tester.pumpWidget(_wrap(container: container));
     await tester.pumpAndSettle();
 
-    expect(
-      container.read(activityFeedQueryProvider).kinds,
-      isEmpty,
-    );
+    expect(container.read(activityFeedQueryProvider).kinds, isEmpty);
 
     await tester.tap(find.text('Expense'));
     await tester.pumpAndSettle();
@@ -114,10 +111,7 @@ void main() {
     await tester.tap(find.text('Expense'));
     await tester.pumpAndSettle();
 
-    expect(
-      container.read(activityFeedQueryProvider).kinds,
-      isEmpty,
-    );
+    expect(container.read(activityFeedQueryProvider).kinds, isEmpty);
   });
 
   testWidgets('All chip clears any selected kinds', (tester) async {
@@ -130,7 +124,9 @@ void main() {
     await tester.pumpWidget(_wrap(container: container));
     await tester.pumpAndSettle();
 
-    container.read(activityFeedQueryProvider.notifier).setQuery(
+    container
+        .read(activityFeedQueryProvider.notifier)
+        .setQuery(
           const ActivityFeedQuery(
             kinds: {ActivityKind.expense, ActivityKind.transfer},
           ),
@@ -140,9 +136,6 @@ void main() {
     await tester.tap(find.text('All'));
     await tester.pumpAndSettle();
 
-    expect(
-      container.read(activityFeedQueryProvider).kinds,
-      isEmpty,
-    );
+    expect(container.read(activityFeedQueryProvider).kinds, isEmpty);
   });
 }

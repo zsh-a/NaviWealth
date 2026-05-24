@@ -56,7 +56,9 @@ void main() {
     final container = _container(prefs);
     addTearDown(container.dispose);
 
-    await container.read(fireGoalProvider.notifier).save(
+    await container
+        .read(fireGoalProvider.notifier)
+        .save(
           FireGoal(
             targetAmount: Decimal.parse('500000'),
             monthlyExpenses: Decimal.zero,
@@ -72,17 +74,19 @@ void main() {
     expect(container2.read(fireGoalProvider).isConfigured, isFalse);
   });
 
-  test('corrupt decimal in storage falls back to zero rather than throwing',
-      () async {
-    SharedPreferences.setMockInitialValues({
-      'naviwealth.fire.target_amount': 'not-a-number',
-    });
-    final prefs = await SharedPreferences.getInstance();
-    final container = _container(prefs);
-    addTearDown(container.dispose);
+  test(
+    'corrupt decimal in storage falls back to zero rather than throwing',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'naviwealth.fire.target_amount': 'not-a-number',
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final container = _container(prefs);
+      addTearDown(container.dispose);
 
-    final goal = container.read(fireGoalProvider);
-    expect(goal.targetAmount, Decimal.zero);
-    expect(goal.isConfigured, isFalse);
-  });
+      final goal = container.read(fireGoalProvider);
+      expect(goal.targetAmount, Decimal.zero);
+      expect(goal.isConfigured, isFalse);
+    },
+  );
 }

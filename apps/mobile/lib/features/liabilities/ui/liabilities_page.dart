@@ -62,7 +62,10 @@ class LiabilitiesPage extends ConsumerWidget {
     if (embedded) return body;
 
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.liabilitiesAppBarTitle), prefixes: [backHeaderAction(context)]),
+      header: FHeader.nested(
+        title: Text(l10n.liabilitiesAppBarTitle),
+        prefixes: [backHeaderAction(context)],
+      ),
       childPad: false,
       child: Material(color: Colors.transparent, child: body),
     );

@@ -25,16 +25,15 @@ class GetWheelLifecycleTool implements DeviceTool {
 
   @override
   Map<String, Object?> get inputSchema => const <String, Object?>{
-        'type': 'object',
-        'properties': <String, Object?>{
-          'symbol': <String, Object?>{
-            'type': 'string',
-            'description':
-                '只读取这个标的的周期(大小写不敏感)。不传则返回所有标的的周期列表。',
-          },
-        },
-        'additionalProperties': false,
-      };
+    'type': 'object',
+    'properties': <String, Object?>{
+      'symbol': <String, Object?>{
+        'type': 'string',
+        'description': '只读取这个标的的周期(大小写不敏感)。不传则返回所有标的的周期列表。',
+      },
+    },
+    'additionalProperties': false,
+  };
 
   @override
   Future<Object?> invoke(
@@ -46,8 +45,7 @@ class GetWheelLifecycleTool implements DeviceTool {
     if (cycles == null) {
       return <String, Object?>{
         'cycles': <Object?>[],
-        'guidance':
-            '交易日志尚未加载完毕,请稍后再问;或先邀请用户在 Income Planner 录入一笔交易。',
+        'guidance': '交易日志尚未加载完毕,请稍后再问;或先邀请用户在 Income Planner 录入一笔交易。',
       };
     }
 
@@ -55,16 +53,13 @@ class GetWheelLifecycleTool implements DeviceTool {
     final filtered = filter == null || filter.isEmpty
         ? cycles
         : cycles
-            .where((c) => c.symbol.toUpperCase() == filter)
-            .toList(growable: false);
+              .where((c) => c.symbol.toUpperCase() == filter)
+              .toList(growable: false);
 
     final result = <String, Object?>{
-      'cycles': [
-        for (final cycle in filtered) _cycleToWire(cycle),
-      ],
+      'cycles': [for (final cycle in filtered) _cycleToWire(cycle)],
       if (filter != null && filtered.isEmpty)
-        'guidance':
-            '$filter 没有任何 Wheel 周期记录;请先建议用户在 Income Planner 录入一笔交易。',
+        'guidance': '$filter 没有任何 Wheel 周期记录;请先建议用户在 Income Planner 录入一笔交易。',
     };
     return withEvidence(
       result: result,
@@ -81,35 +76,33 @@ class GetWheelLifecycleTool implements DeviceTool {
   }
 
   Map<String, Object?> _cycleToWire(WheelLifecycle cycle) => <String, Object?>{
-        'symbol': cycle.symbol,
-        'currency': cycle.currency,
-        'stage': _stageWire(cycle.stage),
-        'has_open_position': cycle.hasOpenPosition,
-        'holds_shares': cycle.holdsShares,
-        'cumulative_income': cycle.cumulativeIncome.toString(),
-        'entry_count': cycle.entries.length,
-        'open_position': cycle.openPosition == null
-            ? null
-            : <String, Object?>{
-                'id': cycle.openPosition!.id,
-                'strategy': cycle.openPosition!.strategy.wire,
-                'option_symbol': cycle.openPosition!.optionSymbol,
-                'opened_at': cycle.openPosition!.openedAt
-                    .toUtc()
-                    .toIso8601String(),
-                'entry_credit': cycle.openPosition!.entryCredit.toString(),
-              },
-      };
+    'symbol': cycle.symbol,
+    'currency': cycle.currency,
+    'stage': _stageWire(cycle.stage),
+    'has_open_position': cycle.hasOpenPosition,
+    'holds_shares': cycle.holdsShares,
+    'cumulative_income': cycle.cumulativeIncome.toString(),
+    'entry_count': cycle.entries.length,
+    'open_position': cycle.openPosition == null
+        ? null
+        : <String, Object?>{
+            'id': cycle.openPosition!.id,
+            'strategy': cycle.openPosition!.strategy.wire,
+            'option_symbol': cycle.openPosition!.optionSymbol,
+            'opened_at': cycle.openPosition!.openedAt.toUtc().toIso8601String(),
+            'entry_credit': cycle.openPosition!.entryCredit.toString(),
+          },
+  };
 
   static String _stageWire(WheelStage stage) => switch (stage) {
-        WheelStage.between => 'between',
-        WheelStage.cashWaiting => 'cash_waiting',
-        WheelStage.shortPut => 'short_put',
-        WheelStage.putExpired => 'put_expired',
-        WheelStage.putAssigned => 'put_assigned',
-        WheelStage.sharesHeld => 'shares_held',
-        WheelStage.shortCall => 'short_call',
-        WheelStage.callExpired => 'call_expired',
-        WheelStage.callCalled => 'call_called',
-      };
+    WheelStage.between => 'between',
+    WheelStage.cashWaiting => 'cash_waiting',
+    WheelStage.shortPut => 'short_put',
+    WheelStage.putExpired => 'put_expired',
+    WheelStage.putAssigned => 'put_assigned',
+    WheelStage.sharesHeld => 'shares_held',
+    WheelStage.shortCall => 'short_call',
+    WheelStage.callExpired => 'call_expired',
+    WheelStage.callCalled => 'call_called',
+  };
 }

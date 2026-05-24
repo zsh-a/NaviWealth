@@ -16,8 +16,8 @@ class CategoryBudgetStatus {
     required this.categoryId,
     required this.budgeted,
     required this.spent,
-  })  : _budgetedAmount = budgeted.amount,
-        _spentAmount = spent.amount;
+  }) : _budgetedAmount = budgeted.amount,
+       _spentAmount = spent.amount;
 
   /// Stable category id — typically a system expense account id, but the
   /// reader treats it as an opaque key. Whatever the caller used when
@@ -106,7 +106,8 @@ class MonthlyBudgetSummary {
 /// before handing it in. Budgets stored in another currency are dropped
 /// rather than silently sign-flipped (the dropped count is in the result's
 /// `mismatchedCount` for the UI to surface).
-({MonthlyBudgetSummary summary, int mismatchedCount}) buildMonthlyBudgetSummary({
+({MonthlyBudgetSummary summary, int mismatchedCount})
+buildMonthlyBudgetSummary({
   required String periodMonth,
   required Iterable<BudgetRow> budgets,
   required Map<String, Money> spendByCategoryId,
@@ -129,9 +130,7 @@ class MonthlyBudgetSummary {
     final spend = spendByCategoryId[row.categoryId];
     final spent = spend == null
         ? Money.zero(upper)
-        : (spend.currency.toUpperCase() == upper
-            ? spend
-            : Money.zero(upper));
+        : (spend.currency.toUpperCase() == upper ? spend : Money.zero(upper));
     statuses.add(
       CategoryBudgetStatus(
         categoryId: row.categoryId,

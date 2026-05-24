@@ -414,17 +414,11 @@ void main() {
             fee: Decimal.zero,
           );
       expect(
-        () => engine.applyDrip(
-          make(amount: Decimal.zero, price: d('1')),
-          lots,
-        ),
+        () => engine.applyDrip(make(amount: Decimal.zero, price: d('1')), lots),
         throwsA(isA<ArgumentError>()),
       );
       expect(
-        () => engine.applyDrip(
-          make(amount: d('1'), price: Decimal.zero),
-          lots,
-        ),
+        () => engine.applyDrip(make(amount: d('1'), price: Decimal.zero), lots),
         throwsA(isA<ArgumentError>()),
       );
     });

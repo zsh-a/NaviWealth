@@ -136,32 +136,29 @@ void main() {
 }
 
 OptionsStrategyProfile _profileBalanced() => defaultProfileForMode(
-      OptionsStrategyMode.balanced,
-    ).copyWith(
-      riskDisclosureAckAt: DateTime.utc(2026, 5, 21),
-    );
+  OptionsStrategyMode.balanced,
+).copyWith(riskDisclosureAckAt: DateTime.utc(2026, 5, 21));
 
 ApprovedUnderlying _approved({
   required String symbol,
   bool allowPut = true,
   bool allowCall = true,
-}) =>
-    ApprovedUnderlying(
-      id: ApprovedUnderlying.idFor(market: AssetMarket.usStock, symbol: symbol),
-      symbol: symbol,
-      market: AssetMarket.usStock,
-      allowPut: allowPut,
-      allowCall: allowCall,
-      maxBuyPrice: null,
-      minSellPrice: null,
-      notes: null,
-      sync: SyncMeta(
-        ownerUserId: 'u1',
-        updatedAt: DateTime.utc(2026, 5, 21),
-        updatedByDevice: 'dev',
-        hlc: Hlc.zero('u1'),
-      ),
-    );
+}) => ApprovedUnderlying(
+  id: ApprovedUnderlying.idFor(market: AssetMarket.usStock, symbol: symbol),
+  symbol: symbol,
+  market: AssetMarket.usStock,
+  allowPut: allowPut,
+  allowCall: allowCall,
+  maxBuyPrice: null,
+  minSellPrice: null,
+  notes: null,
+  sync: SyncMeta(
+    ownerUserId: 'u1',
+    updatedAt: DateTime.utc(2026, 5, 21),
+    updatedByDevice: 'dev',
+    hlc: Hlc.zero('u1'),
+  ),
+);
 
 OptionContract _putContract({
   required double strike,
@@ -170,16 +167,15 @@ OptionContract _putContract({
   int dte = 30,
   int oi = 500,
   int volume = 50,
-}) =>
-    _contract(
-      type: OptionType.put,
-      strike: strike,
-      bid: bid,
-      ask: ask,
-      dte: dte,
-      oi: oi,
-      volume: volume,
-    );
+}) => _contract(
+  type: OptionType.put,
+  strike: strike,
+  bid: bid,
+  ask: ask,
+  dte: dte,
+  oi: oi,
+  volume: volume,
+);
 
 OptionContract _callContract({
   required double strike,
@@ -188,16 +184,15 @@ OptionContract _callContract({
   int dte = 30,
   int oi = 500,
   int volume = 50,
-}) =>
-    _contract(
-      type: OptionType.call,
-      strike: strike,
-      bid: bid,
-      ask: ask,
-      dte: dte,
-      oi: oi,
-      volume: volume,
-    );
+}) => _contract(
+  type: OptionType.call,
+  strike: strike,
+  bid: bid,
+  ask: ask,
+  dte: dte,
+  oi: oi,
+  volume: volume,
+);
 
 OptionContract _contract({
   required OptionType type,
@@ -213,12 +208,14 @@ OptionContract _contract({
   final askDec = Decimal.parse(ask.toString());
   final midDec = Decimal.parse(((bid + ask) / 2).toStringAsFixed(4));
   final mid = midDec <= Decimal.zero ? Decimal.one : midDec;
-  final spread =
-      ((askDec - bidDec) / mid).toDecimal(scaleOnInfinitePrecision: 6);
+  final spread = ((askDec - bidDec) / mid).toDecimal(
+    scaleOnInfinitePrecision: 6,
+  );
   return OptionContract(
     underlying: 'AAPL',
     market: AssetMarket.usStock,
-    optionSymbol: 'AAPL250620${type == OptionType.put ? "P" : "C"}'
+    optionSymbol:
+        'AAPL250620${type == OptionType.put ? "P" : "C"}'
         '${(strike * 1000).toInt().toString().padLeft(8, "0")}',
     type: type,
     expiration: DateTime.utc(2026, 6, 20),

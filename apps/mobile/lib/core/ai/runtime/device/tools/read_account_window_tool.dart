@@ -46,12 +46,7 @@ class ReadAccountWindowTool implements DeviceTool {
       'from': {'type': 'string', 'description': 'ISO 起点（包含）'},
       'to': {'type': 'string', 'description': 'ISO 终点（不包含），to - from ≤ 31 天'},
       'purpose': {'type': 'string', 'enum': kScopedPurposes.toList()},
-      'limit': {
-        'type': 'integer',
-        'minimum': 1,
-        'maximum': 50,
-        'default': 20,
-      },
+      'limit': {'type': 'integer', 'minimum': 1, 'maximum': 50, 'default': 20},
       'category': {'type': 'string', 'description': '可选；按类目二次过滤'},
       'min_amount_minor': {
         'type': 'integer',
@@ -64,8 +59,10 @@ class ReadAccountWindowTool implements DeviceTool {
     },
   };
 
-  Map<String, Object?> _bad(String message) =>
-      <String, Object?>{'error': message, 'code': 'bad_request'};
+  Map<String, Object?> _bad(String message) => <String, Object?>{
+    'error': message,
+    'code': 'bad_request',
+  };
 
   @override
   Future<Object?> invoke(
@@ -126,8 +123,7 @@ class ReadAccountWindowTool implements DeviceTool {
       accountKind: accountKind,
       minAmountMinor: minAmount,
       maxAmountMinor: maxAmount,
-      categoryFilter:
-          (categoryFilter != null && categoryFilter.isNotEmpty)
+      categoryFilter: (categoryFilter != null && categoryFilter.isNotEmpty)
           ? categoryFilter
           : null,
     );
@@ -149,19 +145,26 @@ class ReadAccountWindowTool implements DeviceTool {
     int? maxAmountMinor,
     String? categoryFilter,
   }) {
-    final hits = <({String id, BigInt amount, String currency, DateTime date, String? note})>[];
+    final hits =
+        <
+          ({
+            String id,
+            BigInt amount,
+            String currency,
+            DateTime date,
+            String? note,
+          })
+        >[];
     for (final ewp in entries) {
       final date = ewp.entry.date.toUtc();
       if (date.isBefore(from) || !date.isBefore(to)) continue;
       for (final p in ewp.postings) {
         if (p.accountId != accountId) continue;
         final amount = (p.units * Decimal.fromInt(100)).round().toBigInt();
-        if (minAmountMinor != null &&
-            amount < BigInt.from(minAmountMinor)) {
+        if (minAmountMinor != null && amount < BigInt.from(minAmountMinor)) {
           continue;
         }
-        if (maxAmountMinor != null &&
-            amount > BigInt.from(maxAmountMinor)) {
+        if (maxAmountMinor != null && amount > BigInt.from(maxAmountMinor)) {
           continue;
         }
         hits.add((

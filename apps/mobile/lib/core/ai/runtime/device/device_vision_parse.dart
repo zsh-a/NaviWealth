@@ -45,7 +45,12 @@ AnthropicToolSchema visionParseToolSchema() => const AnthropicToolSchema(
             },
             'confidence': {'type': 'number'},
           },
-          'required': ['description', 'amount_minor', 'currency', 'occurred_at'],
+          'required': [
+            'description',
+            'amount_minor',
+            'currency',
+            'occurred_at',
+          ],
         },
       },
     },

@@ -31,10 +31,7 @@ Account _account(String id, String name) {
   );
 }
 
-Widget _wrap({
-  required List<Account> accounts,
-  Widget? home,
-}) {
+Widget _wrap({required List<Account> accounts, Widget? home}) {
   return ProviderScope(
     overrides: [
       accountsStreamProvider.overrideWith((_) => Stream.value(accounts)),
@@ -163,7 +160,9 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    container.read(activityFeedQueryProvider.notifier).setQuery(
+    container
+        .read(activityFeedQueryProvider.notifier)
+        .setQuery(
           ActivityFeedQuery(
             dateRange: DateTimeRange(
               start: DateTime(2026, 5, 1),

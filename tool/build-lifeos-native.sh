@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+# OPTIONAL out-of-Flutter build for the lifeos_native Rust crate.
+#
+# **The primary build path is `flutter run` / `flutter build`** — the
+# `rust_builder/` Flutter plugin invokes cargokit which calls cargo
+# for the right target automatically. You only need this script when:
+#
+#   - Running `flutter test` on desktop and the test imports the lib
+#     via `--dart-define=RUST_EMBEDDER_LIBRARY_PATH=...`
+#   - Producing standalone artefacts (e.g. xcframework for sharing
+#     between repos)
+#   - Reproducing a Rust-only build outside the Flutter toolchain
+#     (CI smoke check, container build, etc.)
+#
+# Usage:
+#   tool/build-lifeos-native.sh macos              # host arch only
+#   tool/build-lifeos-native.sh macos universal     # arm64 + x86_64 lipo'd dylib
+#   tool/build-lifeos-native.sh ios                # device (arm64) + sim (arm64+x86_64) xcframework
+#   tool/build-lifeos-native.sh android            # arm64-v8a + armeabi-v7a + x86_64
+#
+# Outputs (in apps/mobile/native/lifeos_native/dist/):
+#   macos/liblifeos_native.dylib
+#   ios/LifeosNative.xcframework
+#   android/<abi>/liblifeos_native.so
+#
+# Prerequisites checked at run time; missing tools print install hints.
+#
+# Docs: docs/lifeos-shell.md §6.6 (D-1.7c).
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+CRATE_DIR="$REPO_ROOT/apps/mobile/native/lifeos_native"
+DIST_DIR="$CRATE_DIR/dist"
+LIB_BASENAME="liblifeos_native"
+FRB_CONFIG="$REPO_ROOT/apps/mobile/flutter_rust_bridge.yaml"
+
+# Regenerate the flutter_rust_bridge bindings whenever the Rust API
+# signature might have changed. Cheap when nothing changed (frb checks
+# rust-content-hash) and required when src/api/*.rs is edited.
+run_frb_codegen() {
+  if ! command -v flutter_rust_bridge_codegen >/dev/null 2>&1; then
+    echo "==> Installing flutter_rust_bridge_codegen (one-time)"
+    cargo install flutter_rust_bridge_codegen --version "^2.12" --locked
+  fi
+  echo "==> Regenerating FRB bindings"
+  (cd "$REPO_ROOT/apps/mobile" && flutter_rust_bridge_codegen generate) \
+    || { echo "ERROR: flutter_rust_bridge_codegen generate failed" >&2; exit 1; }
+}
+
+ensure_target() {
+  local target="$1"
+  if ! rustup target list --installed | grep -qx "$target"; then
+    echo "==> Installing Rust target: $target"
+    rustup target add "$target"
+  fi
+}
+
+build_macos() {
+  local mode="${1:-host}"
+  mkdir -p "$DIST_DIR/macos"
+  if [[ "$mode" == "universal" ]]; then
+    ensure_target aarch64-apple-darwin
+    ensure_target x86_64-apple-darwin
+    echo "==> cargo build --release --target aarch64-apple-darwin"
+    (cd "$CRATE_DIR" && cargo build --release --target aarch64-apple-darwin )
+    echo "==> cargo build --release --target x86_64-apple-darwin"
+    (cd "$CRATE_DIR" && cargo build --release --target x86_64-apple-darwin )
+    echo "==> lipo arm64 + x86_64 → $DIST_DIR/macos/${LIB_BASENAME}.dylib"
+    lipo -create \
+      "$CRATE_DIR/target/aarch64-apple-darwin/release/${LIB_BASENAME}.dylib" \
+      "$CRATE_DIR/target/x86_64-apple-darwin/release/${LIB_BASENAME}.dylib" \
+      -output "$DIST_DIR/macos/${LIB_BASENAME}.dylib"
+  else
+    echo "==> cargo build --release (host arch)"
+    (cd "$CRATE_DIR" && cargo build --release )
+    cp "$CRATE_DIR/target/release/${LIB_BASENAME}.dylib" \
+      "$DIST_DIR/macos/${LIB_BASENAME}.dylib"
+  fi
+  echo
+  echo "macOS dylib: $DIST_DIR/macos/${LIB_BASENAME}.dylib"
+  ls -lh "$DIST_DIR/macos/${LIB_BASENAME}.dylib"
+}
+
+build_ios() {
+  if ! command -v xcodebuild >/dev/null 2>&1; then
+    echo "ERROR: xcodebuild not found. Install Xcode + 'sudo xcode-select -s /Applications/Xcode.app'"
+    exit 1
+  fi
+  ensure_target aarch64-apple-ios
+  ensure_target aarch64-apple-ios-sim
+  ensure_target x86_64-apple-ios
+
+  mkdir -p "$DIST_DIR/ios"
+
+  echo "==> cargo build --release --target aarch64-apple-ios (device)"
+  (cd "$CRATE_DIR" && cargo build --release --target aarch64-apple-ios )
+
+  echo "==> cargo build --release --target aarch64-apple-ios-sim (sim arm64)"
+  (cd "$CRATE_DIR" && cargo build --release --target aarch64-apple-ios-sim )
+
+  echo "==> cargo build --release --target x86_64-apple-ios (sim x86_64)"
+  (cd "$CRATE_DIR" && cargo build --release --target x86_64-apple-ios )
+
+  # Fat sim static lib (arm64 + x86_64).
+  local sim_dir="$CRATE_DIR/target/ios-sim-universal/release"
+  mkdir -p "$sim_dir"
+  lipo -create \
+    "$CRATE_DIR/target/aarch64-apple-ios-sim/release/${LIB_BASENAME}.a" \
+    "$CRATE_DIR/target/x86_64-apple-ios/release/${LIB_BASENAME}.a" \
+    -output "$sim_dir/${LIB_BASENAME}.a"
+
+  local xcfwk="$DIST_DIR/ios/LifeosNative.xcframework"
+  rm -rf "$xcfwk"
+  echo "==> Assembling $xcfwk"
+  xcodebuild -create-xcframework \
+    -library "$CRATE_DIR/target/aarch64-apple-ios/release/${LIB_BASENAME}.a" \
+    -library "$sim_dir/${LIB_BASENAME}.a" \
+    -output "$xcfwk"
+
+  echo
+  echo "iOS xcframework: $xcfwk"
+}
+
+build_android() {
+  if [[ -z "${ANDROID_NDK_HOME:-}" ]]; then
+    echo "ERROR: ANDROID_NDK_HOME is not set. Install Android NDK (r25c+) and:"
+    echo "  export ANDROID_NDK_HOME=\$HOME/Library/Android/sdk/ndk/<version>"
+    exit 1
+  fi
+  if ! command -v cargo-ndk >/dev/null 2>&1; then
+    echo "==> Installing cargo-ndk (one-time)"
+    cargo install cargo-ndk
+  fi
+  ensure_target aarch64-linux-android
+  ensure_target armv7-linux-androideabi
+  ensure_target x86_64-linux-android
+
+  mkdir -p "$DIST_DIR/android"
+  echo "==> cargo ndk → arm64-v8a / armeabi-v7a / x86_64"
+  (cd "$CRATE_DIR" && cargo ndk \
+    -t arm64-v8a -t armeabi-v7a -t x86_64 \
+    -o "../../../../$DIST_DIR/android" \
+    build --release)
+
+  echo
+  echo "Android .so per ABI in: $DIST_DIR/android/"
+  find "$DIST_DIR/android" -name "${LIB_BASENAME}.so" -exec ls -lh {} \;
+}
+
+case "${1:-}" in
+  macos|ios|android)
+    run_frb_codegen
+    ;;
+esac
+
+case "${1:-}" in
+  macos)
+    build_macos "${2:-host}"
+    ;;
+  ios)
+    build_ios
+    ;;
+  android)
+    build_android
+    ;;
+  ""|--help|-h)
+    sed -n '2,12p' "$0"
+    exit 0
+    ;;
+  *)
+    echo "Unknown platform: $1"
+    sed -n '2,12p' "$0"
+    exit 1
+    ;;
+esac

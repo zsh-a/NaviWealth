@@ -181,12 +181,8 @@ void main() {
         'c': _equity(id: 'c', symbol: 'NONE'),
       };
       final overrides = InMemoryEquityClassificationOverrideStore({
-        'a': EquityClassificationOverride(
-          marketCap: _d('500000000000'),
-        ),
-        'b': EquityClassificationOverride(
-          marketCap: _d('1000000000'),
-        ),
+        'a': EquityClassificationOverride(marketCap: _d('500000000000')),
+        'b': EquityClassificationOverride(marketCap: _d('1000000000')),
       });
       final view = const EquityAllocationService().aggregate(
         snapshots: [
@@ -223,9 +219,7 @@ void main() {
     });
 
     test('skips zero / negative market value snapshots', () {
-      final assets = {
-        'a': _equity(id: 'a', symbol: 'A', industry: 'Tech'),
-      };
+      final assets = {'a': _equity(id: 'a', symbol: 'A', industry: 'Tech')};
       final view = const EquityAllocationService().aggregate(
         snapshots: [_snap(assetId: 'a', mvBase: Decimal.zero)],
         assetLookup: (id) => assets[id],

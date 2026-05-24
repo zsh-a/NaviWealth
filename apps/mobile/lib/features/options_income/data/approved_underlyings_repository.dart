@@ -15,9 +15,9 @@ class ApprovedUnderlyingsRepository {
     required AppDatabase db,
     required OutboxStore outbox,
     required MutationStamper stamper,
-  })  : _db = db,
-        _outbox = outbox,
-        _stamper = stamper;
+  }) : _db = db,
+       _outbox = outbox,
+       _stamper = stamper;
 
   final AppDatabase _db;
   final OutboxStore _outbox;
@@ -30,9 +30,9 @@ class ApprovedUnderlyingsRepository {
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([(t) => OrderingTerm.asc(t.symbol)]);
-    return query
-        .watch()
-        .map((rows) => rows.map(_rowToDomain).toList(growable: false));
+    return query.watch().map(
+      (rows) => rows.map(_rowToDomain).toList(growable: false),
+    );
   }
 
   Future<List<ApprovedUnderlying>> listActive(String ownerUserId) async {
@@ -77,9 +77,7 @@ class ApprovedUnderlyingsRepository {
     );
 
     await _db.transaction(() async {
-      await _db
-          .into(_db.approvedUnderlyings)
-          .insertOnConflictUpdate(companion);
+      await _db.into(_db.approvedUnderlyings).insertOnConflictUpdate(companion);
       await _outbox.enqueue(table: _tableName, rowId: id);
     });
 
@@ -167,4 +165,3 @@ ApprovedUnderlying _rowToDomain(ApprovedUnderlyingRow row) {
     ),
   );
 }
-

@@ -76,8 +76,11 @@ Future<void> showWealthActionPanel(BuildContext context) {
           icon: Icons.payments_outlined,
           title: l10n.superFabLiability,
           subtitle: l10n.accountsActionLiabilityHint,
-          onPress: () =>
-              _closeAndPush(sheetContext, context, AppRoutes.wealthLiabilityNew),
+          onPress: () => _closeAndPush(
+            sheetContext,
+            context,
+            AppRoutes.wealthLiabilityNew,
+          ),
         ),
       ],
     ),

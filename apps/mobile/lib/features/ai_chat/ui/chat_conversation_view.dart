@@ -149,8 +149,7 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
         var lastAssistantIdx = -1;
         var lastUserIdx = -1;
         for (var i = messages.length - 1; i >= 0; i--) {
-          if (lastAssistantIdx < 0 &&
-              messages[i].role == ChatRole.assistant) {
+          if (lastAssistantIdx < 0 && messages[i].role == ChatRole.assistant) {
             lastAssistantIdx = i;
           }
           if (lastUserIdx < 0 && messages[i].role == ChatRole.user) {

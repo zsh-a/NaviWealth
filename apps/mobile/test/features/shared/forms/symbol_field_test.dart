@@ -118,10 +118,7 @@ void main() {
 
     await tester.pumpWidget(
       _wrap(
-        search: _FakeSearch(
-          db,
-          onSearch: (_, m) => capturedMarket = m,
-        ),
+        search: _FakeSearch(db, onSearch: (_, m) => capturedMarket = m),
         formKey: formKey,
         onChanged: (_) {},
         markets: const [AssetMarket.cnA],
@@ -187,10 +184,7 @@ void main() {
                 // ReadOnly short-circuits before the FutureProvider unwrap,
                 // so this exercises the public widget without needing a
                 // real search service.
-                child: const SymbolField(
-                  readOnly: true,
-                  initialValue: initial,
-                ),
+                child: const SymbolField(readOnly: true, initialValue: initial),
               ),
             ),
           ),

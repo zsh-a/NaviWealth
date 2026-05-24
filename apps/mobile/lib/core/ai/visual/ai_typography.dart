@@ -23,20 +23,12 @@ class AiType {
   AiType._();
 
   /// Primary body text on AI surfaces (chat bubbles, timeline rows).
-  static TextStyle body(BuildContext c) =>
-      Theme.of(c).textTheme.bodyMedium!.copyWith(
-        fontSize: 13,
-        height: 1.45,
-        color: AiTone.onSurface(c),
-      );
+  static TextStyle body(BuildContext c) => Theme.of(c).textTheme.bodyMedium!
+      .copyWith(fontSize: 13, height: 1.45, color: AiTone.onSurface(c));
 
   /// Subtle metadata: timestamps, durations, "x ms", chip values.
-  static TextStyle meta(BuildContext c) =>
-      Theme.of(c).textTheme.labelSmall!.copyWith(
-        fontSize: 11,
-        height: 1.3,
-        color: AiTone.muted(c),
-      );
+  static TextStyle meta(BuildContext c) => Theme.of(c).textTheme.labelSmall!
+      .copyWith(fontSize: 11, height: 1.3, color: AiTone.muted(c));
 
   /// Pill / capsule / chip label. Slightly weightier than meta to
   /// signal interactivity.
@@ -50,9 +42,6 @@ class AiType {
 
   /// Sheet / page headers. Kept at Material titleMedium size so
   /// transitions from non-AI pages don't jump.
-  static TextStyle title(BuildContext c) =>
-      Theme.of(c).textTheme.titleMedium!.copyWith(
-        fontWeight: FontWeight.w600,
-        color: AiTone.onSurface(c),
-      );
+  static TextStyle title(BuildContext c) => Theme.of(c).textTheme.titleMedium!
+      .copyWith(fontWeight: FontWeight.w600, color: AiTone.onSurface(c));
 }

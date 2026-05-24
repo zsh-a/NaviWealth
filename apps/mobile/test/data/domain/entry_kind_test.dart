@@ -21,22 +21,19 @@ Posting _p({
   Cost? cost,
   Price? price,
   int position = 0,
-}) =>
-    Posting(
-      id: 'p-$accountId-$position',
-      journalEntryId: 'je-1',
-      position: position,
-      accountId: accountId,
-      units: units,
-      unit: unit,
-      cost: cost,
-      price: price,
-      sync: _sync,
-    );
+}) => Posting(
+  id: 'p-$accountId-$position',
+  journalEntryId: 'je-1',
+  position: position,
+  accountId: accountId,
+  units: units,
+  unit: unit,
+  cost: cost,
+  price: price,
+  sync: _sync,
+);
 
-AccountSide? Function(String) _categoryMap(
-  Map<String, AccountSide> m,
-) =>
+AccountSide? Function(String) _categoryMap(Map<String, AccountSide> m) =>
     (id) => m[id];
 
 void main() {
@@ -53,83 +50,79 @@ void main() {
     test('unknown account → other (graceful when tree is hydrating)', () {
       final result = classifyEntryKind(
         postings: [
-          _p(
-            accountId: 'mystery',
-            units: Decimal.parse('100'),
-            unit: 'USD',
-          ),
+          _p(accountId: 'mystery', units: Decimal.parse('100'), unit: 'USD'),
         ],
         resolveCategory: (_) => null,
       );
       expect(result.kind, EntryKind.other);
     });
 
-    test('buy: asset commodity + cash on the same brokerage → trade (-out)', () {
-      final result = classifyEntryKind(
-        postings: [
-          _p(
-            accountId: 'a-brokerage',
-            units: Decimal.parse('100'),
-            unit: 'NASDAQ:AAPL',
-            cost: Cost(perUnit: Decimal.parse('150'), currency: 'USD'),
-          ),
-          _p(
-            accountId: 'a-brokerage',
-            units: Decimal.parse('-15000'),
-            unit: 'USD',
-            position: 1,
-          ),
-        ],
-        resolveCategory: _categoryMap({
-          'a-brokerage': AccountSide.asset,
-        }),
-      );
-      expect(result.kind, EntryKind.trade);
-      expect(result.isInflow, isFalse);
-    });
+    test(
+      'buy: asset commodity + cash on the same brokerage → trade (-out)',
+      () {
+        final result = classifyEntryKind(
+          postings: [
+            _p(
+              accountId: 'a-brokerage',
+              units: Decimal.parse('100'),
+              unit: 'NASDAQ:AAPL',
+              cost: Cost(perUnit: Decimal.parse('150'), currency: 'USD'),
+            ),
+            _p(
+              accountId: 'a-brokerage',
+              units: Decimal.parse('-15000'),
+              unit: 'USD',
+              position: 1,
+            ),
+          ],
+          resolveCategory: _categoryMap({'a-brokerage': AccountSide.asset}),
+        );
+        expect(result.kind, EntryKind.trade);
+        expect(result.isInflow, isFalse);
+      },
+    );
 
-    test('sell: asset commodity (-) + cash (+) + capital gains → income wins', () {
-      // The sell builder emits a leg on Income:CapitalGains, which —
-      // by §1.1 priority — classifies the JE as `income` rather than
-      // `trade`. The badge layer disambiguates via the income sub-account.
-      final result = classifyEntryKind(
-        postings: [
-          _p(
-            accountId: 'a-brokerage',
-            units: Decimal.parse('-50'),
-            unit: 'NASDAQ:AAPL',
-            cost: Cost(perUnit: Decimal.parse('150'), currency: 'USD'),
-          ),
-          _p(
-            accountId: 'a-cap-gains',
-            units: Decimal.parse('-500'),
-            unit: 'USD',
-            position: 1,
-          ),
-          _p(
-            accountId: 'a-brokerage',
-            units: Decimal.parse('8000'),
-            unit: 'USD',
-            position: 2,
-          ),
-        ],
-        resolveCategory: _categoryMap({
-          'a-brokerage': AccountSide.asset,
-          'a-cap-gains': AccountSide.income,
-        }),
-      );
-      expect(result.kind, EntryKind.income);
-      expect(result.isInflow, isTrue);
-    });
+    test(
+      'sell: asset commodity (-) + cash (+) + capital gains → income wins',
+      () {
+        // The sell builder emits a leg on Income:CapitalGains, which —
+        // by §1.1 priority — classifies the JE as `income` rather than
+        // `trade`. The badge layer disambiguates via the income sub-account.
+        final result = classifyEntryKind(
+          postings: [
+            _p(
+              accountId: 'a-brokerage',
+              units: Decimal.parse('-50'),
+              unit: 'NASDAQ:AAPL',
+              cost: Cost(perUnit: Decimal.parse('150'), currency: 'USD'),
+            ),
+            _p(
+              accountId: 'a-cap-gains',
+              units: Decimal.parse('-500'),
+              unit: 'USD',
+              position: 1,
+            ),
+            _p(
+              accountId: 'a-brokerage',
+              units: Decimal.parse('8000'),
+              unit: 'USD',
+              position: 2,
+            ),
+          ],
+          resolveCategory: _categoryMap({
+            'a-brokerage': AccountSide.asset,
+            'a-cap-gains': AccountSide.income,
+          }),
+        );
+        expect(result.kind, EntryKind.income);
+        expect(result.isInflow, isTrue);
+      },
+    );
 
     test('transfer: two distinct fiat asset accounts, no commodities', () {
       final result = classifyEntryKind(
         postings: [
-          _p(
-            accountId: 'a-bank-a',
-            units: Decimal.parse('-1000'),
-            unit: 'CNY',
-          ),
+          _p(accountId: 'a-bank-a', units: Decimal.parse('-1000'), unit: 'CNY'),
           _p(
             accountId: 'a-bank-b',
             units: Decimal.parse('1000'),
@@ -149,11 +142,7 @@ void main() {
     test('expense: expense account + asset cash', () {
       final result = classifyEntryKind(
         postings: [
-          _p(
-            accountId: 'a-food',
-            units: Decimal.parse('300'),
-            unit: 'CNY',
-          ),
+          _p(accountId: 'a-food', units: Decimal.parse('300'), unit: 'CNY'),
           _p(
             accountId: 'a-bank',
             units: Decimal.parse('-300'),
@@ -173,11 +162,7 @@ void main() {
     test('income: salary deposit', () {
       final result = classifyEntryKind(
         postings: [
-          _p(
-            accountId: 'a-bank',
-            units: Decimal.parse('10000'),
-            unit: 'CNY',
-          ),
+          _p(accountId: 'a-bank', units: Decimal.parse('10000'), unit: 'CNY'),
           _p(
             accountId: 'a-salary',
             units: Decimal.parse('-10000'),
@@ -197,11 +182,7 @@ void main() {
     test('payment: liability + asset (+ optional interest expense)', () {
       final result = classifyEntryKind(
         postings: [
-          _p(
-            accountId: 'a-mortgage',
-            units: Decimal.parse('500'),
-            unit: 'CNY',
-          ),
+          _p(accountId: 'a-mortgage', units: Decimal.parse('500'), unit: 'CNY'),
           _p(
             accountId: 'a-interest',
             units: Decimal.parse('50'),
@@ -255,11 +236,7 @@ void main() {
     test('opening: equity + asset cash (no commodity legs)', () {
       final result = classifyEntryKind(
         postings: [
-          _p(
-            accountId: 'a-bank',
-            units: Decimal.parse('10000'),
-            unit: 'CNY',
-          ),
+          _p(accountId: 'a-bank', units: Decimal.parse('10000'), unit: 'CNY'),
           _p(
             accountId: 'a-equity-opening',
             units: Decimal.parse('-10000'),
@@ -276,35 +253,38 @@ void main() {
       expect(result.isInflow, isTrue);
     });
 
-    test('liability opening seed (liability + equity) classifies as opening', () {
-      // Beancount-style liability seed: pair a liability balance with
-      // its Equity:OpeningBalance offset. No asset cash leg in this
-      // shape, so isInflow stays absent — the badge simply renders the
-      // generic "starting balance" affordance.
-      final result = classifyEntryKind(
-        postings: [
-          _p(
-            accountId: 'a-mortgage',
-            units: Decimal.parse('-50000'),
-            unit: 'CNY',
-          ),
-          _p(
-            accountId: 'a-equity-opening',
-            units: Decimal.parse('50000'),
-            unit: 'CNY',
-            position: 1,
-          ),
-        ],
-        resolveCategory: _categoryMap({
-          'a-mortgage': AccountSide.liability,
-          'a-equity-opening': AccountSide.equity,
-        }),
-      );
-      expect(result.kind, EntryKind.opening);
-      // No asset legs touched ⇒ assetCashSum stays at zero ⇒ isInflow
-      // is `false` under the strict `> 0` check. Pin the contract so a
-      // future change to inflow semantics doesn't slip past review.
-      expect(result.isInflow, isFalse);
-    });
+    test(
+      'liability opening seed (liability + equity) classifies as opening',
+      () {
+        // Beancount-style liability seed: pair a liability balance with
+        // its Equity:OpeningBalance offset. No asset cash leg in this
+        // shape, so isInflow stays absent — the badge simply renders the
+        // generic "starting balance" affordance.
+        final result = classifyEntryKind(
+          postings: [
+            _p(
+              accountId: 'a-mortgage',
+              units: Decimal.parse('-50000'),
+              unit: 'CNY',
+            ),
+            _p(
+              accountId: 'a-equity-opening',
+              units: Decimal.parse('50000'),
+              unit: 'CNY',
+              position: 1,
+            ),
+          ],
+          resolveCategory: _categoryMap({
+            'a-mortgage': AccountSide.liability,
+            'a-equity-opening': AccountSide.equity,
+          }),
+        );
+        expect(result.kind, EntryKind.opening);
+        // No asset legs touched ⇒ assetCashSum stays at zero ⇒ isInflow
+        // is `false` under the strict `> 0` check. Pin the contract so a
+        // future change to inflow semantics doesn't slip past review.
+        expect(result.isInflow, isFalse);
+      },
+    );
   });
 }

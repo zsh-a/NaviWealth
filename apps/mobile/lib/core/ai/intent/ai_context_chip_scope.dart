@@ -112,9 +112,7 @@ class AiContextChipScope extends InheritedWidget {
   static Map<String, Object?> contextMapOf(BuildContext context) {
     final chips = chipsOf(context);
     if (chips.isEmpty) return const <String, Object?>{};
-    return <String, Object?>{
-      for (final c in chips) c.key: c.value,
-    };
+    return <String, Object?>{for (final c in chips) c.key: c.value};
   }
 
   @override
