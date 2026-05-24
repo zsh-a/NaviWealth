@@ -1,11 +1,12 @@
 # 00 · 信息架构 / IA Contract
 
-> **状态（2026-05-24）**: 当前代码处于过渡态 `Home / Activity / Accounts / Settings`；
-> 目标 IA 是 `Today / Activity / Wealth / Plan` + 全局 `Search` / `Settings`。
+> **状态（2026-05-24）**: 迁移完成。当前代码就是目标 IA
+> `Today / Activity / Wealth / Plan` + 全局 `Search` / `Settings`。
+> Phase A → B → C → D 全部 shipped；`/accounts/*` 旧路径和 redirect 安全网已删除。
 > 任何新功能在写代码前必须先用 §3 边界规则判定归位。
 >
-> **怎么读这篇**: §1 是目标蓝图，§2 是过渡现状，§3 是合同核心（必读），
-> §7 是迁移计划。审 PR 时引用 §3 的允许/禁止条目作为归位依据。
+> **怎么读这篇**: §1 是合同蓝图，§3 是合同核心（必读），
+> §7 是迁移历史（已完成，留作参考）。审 PR 时引用 §3 的允许/禁止条目作为归位依据。
 
 ---
 
@@ -62,24 +63,24 @@ Plan       /plan
 
 ---
 
-## 2. 当前状态 vs 目标状态
+## 2. 当前状态 (post-migration)
 
 `apps/mobile/lib/app/route_paths.dart` 当前 (`kPrimaryTabPaths`):
 
 ```
-Home  /          Activity  /activity   Accounts  /accounts   Settings  /settings
+Today  /     Activity  /activity     Wealth  /wealth     Plan  /plan
 ```
 
-主要偏离：
+Settings 在 `/settings`，不占主导航——通过 Today 顶栏 ⚙ 进入。
 
-| 偏离 | 现状 | 目标 |
-|------|------|------|
-| 缺 Plan tab | FIRE / Rebalance / Income / DCA / Analytics 全挂在 `/accounts/*` | 独立 `/plan/*` |
-| Accounts 是混合桶 | 账户列表 + Liabilities + 9 个规划/分析子页 | 拆为 Wealth（对象）和 Plan（决策） |
-| Settings 是 tab | 占一级槽位 | 降级为全局 meta，从 Today 顶栏访问 |
-| 命名 | `Accounts`、`Analytics` | `Wealth`，`Analytics` 拆分到所属对象（见 §4） |
+迁移历史（已完成）：
 
-迁移按 §7 分 Phase A / B / C 推进。
+| Phase | 落地内容 |
+|-------|---------|
+| A | 新增 `/wealth/*` + `/plan/*` canonical 路由；保留 `/accounts/*` redirect |
+| B | Plan hub 加 FIRE-progress hero；Today FIRE/Rebalance 卡降级为 read-only teaser |
+| C | Wealth hub 重写为 Net Worth Hero + section grid |
+| D | 删除 `/accounts/*` redirect、`@Deprecated` 别名和对应测试 |
 
 ---
 
@@ -169,38 +170,29 @@ Home  /          Activity  /activity   Accounts  /accounts   Settings  /settings
 - 所有业务导航通过 `lib/app/route_paths.dart` 中的常量或 helper，不允许字面量字符串散落在 UI。
 - 详情 ID 使用不透明字符串；展示前按路由 helper 编码 (`Uri.encodeComponent`)。
 - 列表选择状态使用 query string，例如 `/wealth/accounts?selected=<id>`。
-- **过渡期路径必须 redirect，不能 404**（与 §7 之前的旧版本 IA 文档相反——那条"旧路径应 404"的原则已废除）。Phase A 期间 `/accounts/fire` 等旧路径必须 redirect 到 `/plan/fire`，并由测试保护。
+- 旧 `/accounts/*` 路径不再解析（Phase D 已删 redirect）。任何在 Phase A 之前生成、仍引用旧路径的外部链接 / AI chat `routeHint` 会 404；客户端按需重新生成会话。
 
 ---
 
-## 7. 迁移计划
+## 7. 迁移历史（全部完成）
 
-**严格按 Phase 顺序，不要短路 Phase A。**
+四个 phase 已全部 shipped。下面保留作为参考，新功能不再走这套流程——只按 §3 / §8 归位即可。
 
-### Phase A — additive, 零破坏
+### Phase A — additive, 零破坏 ✅
 
-1. 新增 Plan tab + `/plan` hub 占位页（hub 用 section 列表即可，不写 hero）。
-2. 新增 canonical 路由：`/plan/fire`、`/plan/rebalance`、`/plan/income`、`/plan/dca`、`/plan/scenarios`、`/plan/projection`。
-3. 新增 `/wealth` 与子路由占位。
-4. **保留**旧路径 `/accounts/fire`、`/accounts/rebalance`、`/accounts/analytics`、`/accounts/income`、`/accounts/dca`、`/accounts/dividends` 作为 redirect 到新路径；不删除。
-5. 命令面板候选项 + Today 的 FIRE / Rebalance 卡 CTA 改指向 `/plan/*`。
-6. 加 redirect 测试（保护 deep link 不断）。
-7. 改 `kPrimaryTabPaths` 与 4 个 nav label：`navHome → navToday`、`navAccounts → navWealth`，新增 `navPlan`。`navSettings` 退出 nav，新增 Today 顶栏 ⚙ 入口。
+新增 Plan / Wealth canonical 路由，保留 `/accounts/*` 作为 redirect；改 `kPrimaryTabPaths` 与 4 个 nav label；Settings 退出 nav，进入 Today 顶栏 ⚙。
 
-### Phase B — 让 Plan 站稳
+### Phase B — 让 Plan 站稳 ✅
 
-- Plan hub 加真正的 hero（例如"距离 FIRE 还有 8 年"）+ section grid 链入 FIRE / Rebalance / Income / DCA / Scenarios。
-- Today 的 FIRE 卡降级为纯摘要 + CTA → `/plan/fire`，决策都在 Plan 完成。
-- Plan 各子页之间的内部导航打通（FIRE → Scenarios → Rebalance 一条决策链）。
+Plan hub 上线 FIRE-progress hero（years-to-FIRE + 进度条 + 双 CTA）。Today FIRE/Rebalance 卡降级为只读 teaser，CTA 跳 `/plan/fire` / `/plan/rebalance`。
 
-### Phase C — Wealth hub 重写（最重，放最后）
+### Phase C — Wealth hub 重写 ✅
 
-- 现在 `accounts_master.dart` 只是裸 ListView (`lib/features/accounts/ui/accounts_master.dart`)。Phase C 给 Wealth 一个 Net Worth Hero + Accounts / Holdings / Portfolio / Watchlist / Liabilities / Income Projection sections，对齐 Today 的"hero + cards"模板。
-- 只在 Plan 边界在真实使用中观察到稳定后再启动 Phase C。
+`WealthHubPage` 替代了原裸 ListView：Net Worth Hero + 5 个 section（Accounts / Holdings / Watchlist / Liabilities / Income Projection）+ 分组账户列表。
 
-### Phase D — 清理（可选，未来）
+### Phase D — 清理 ✅
 
-- Phase C 上线 + 至少 1 个版本后，再考虑删除 `/accounts/*` redirect。命令面板 / Today 卡 / 测试无任何引用之后才能删。
+`/accounts/*` redirect 路由、`@Deprecated` 别名（AppRoutes + AppRouteNames）、`test/app/legacy_route_redirects_test.dart` 全部删除。旧 `AccountsHubPage` 删除，`showAccountsActionPanel` 重命名为 `showWealthActionPanel`。
 
 ---
 

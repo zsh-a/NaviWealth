@@ -100,13 +100,14 @@ Future<void> preloadDeferredRoutesForTest() async {
 
 /// Builds the app's [GoRouter].
 ///
-/// IA structure (post-Phase A, see `apps/mobile/docs/design/00-information-architecture.md`):
+/// IA structure (post-Phase D, see `apps/mobile/docs/design/00-information-architecture.md`):
 ///
 /// - 4-branch [StatefulShellRoute]: Today / Activity / Wealth / Plan.
 ///   Settings is no longer a shell branch — it lives as a top-level
 ///   non-shell route reached from the Today header gear icon.
-/// - Legacy `/accounts/*` paths resolve via redirect-only top-level routes
-///   so external deep links and AI chat history continue working.
+/// - Legacy `/accounts/*` paths no longer exist. Phase A's redirect
+///   safety net was removed in Phase D; external callers must use the
+///   canonical `/wealth/*` and `/plan/*` paths.
 GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
   return GoRouter(
     initialLocation: initialLocation,
@@ -132,8 +133,6 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
       // outside the shell so it covers the full canvas while open and
       // returns to whatever tab the user came from on pop.
       _settingsRoute(),
-      // Legacy /accounts/* redirects (Phase A) — keep until Phase D.
-      ..._legacyAccountsRedirects(),
       // Main shell: 4-branch IndexedStack preserves tab state across switches.
       // Order matches kPrimaryTabPaths: Today / Activity / Wealth / Plan.
       // The former `/ai` tab is gone (§5.10) — AI is now an overlay (command
@@ -545,111 +544,6 @@ GoRoute _settingsRoute() {
       ),
     ],
   );
-}
-
-/// Phase A redirect routes: legacy `/accounts/*` URLs continue to resolve
-/// by redirecting to the canonical `/wealth/*` or `/plan/*` paths. Kept
-/// alive so external deep links and AI chat history (which embed full
-/// paths in `routeHint` payloads) don't break after the IA migration.
-///
-/// Delete in Phase D once telemetry shows no hits for 1+ release.
-List<GoRoute> _legacyAccountsRedirects() {
-  String redirect(String to) => to;
-  return <GoRoute>[
-    GoRoute(path: '/accounts', redirect: (_, _) => redirect(AppRoutes.wealth)),
-    GoRoute(
-      path: '/accounts/list',
-      redirect: (_, _) => redirect(AppRoutes.wealthAccounts),
-    ),
-    GoRoute(
-      path: '/accounts/list/new',
-      redirect: (_, _) => redirect(AppRoutes.wealthAccountNew),
-    ),
-    GoRoute(
-      path: '/accounts/list/:accountId',
-      redirect: (_, state) {
-        final id = state.pathParameters['accountId'] ?? '';
-        return AppRoutes.wealthAccount(id);
-      },
-    ),
-    GoRoute(
-      path: '/accounts/new/cash',
-      redirect: (_, _) => redirect(AppRoutes.wealthNewCash),
-    ),
-    GoRoute(
-      path: '/accounts/new/deposit',
-      redirect: (_, _) => redirect(AppRoutes.wealthNewDeposit),
-    ),
-    GoRoute(
-      path: '/accounts/new/wealth',
-      redirect: (_, _) => redirect(AppRoutes.wealthNewWealth),
-    ),
-    GoRoute(
-      path: '/accounts/corporate-action',
-      redirect: (_, _) => redirect(AppRoutes.wealthCorporateAction),
-    ),
-    GoRoute(
-      path: '/accounts/portfolio',
-      redirect: (_, _) => redirect(AppRoutes.wealthPortfolio),
-    ),
-    GoRoute(
-      path: '/accounts/watchlist',
-      redirect: (_, _) => redirect(AppRoutes.wealthWatchlist),
-    ),
-    GoRoute(
-      path: '/accounts/dividends',
-      redirect: (_, _) => redirect(AppRoutes.wealthIncomeProjection),
-    ),
-    GoRoute(
-      path: '/accounts/asset/:assetId',
-      redirect: (_, state) {
-        final id = state.pathParameters['assetId'] ?? '';
-        return AppRoutes.wealthAsset(id);
-      },
-    ),
-    GoRoute(
-      path: '/accounts/physical/:id',
-      redirect: (_, state) {
-        final id = state.pathParameters['id'] ?? '';
-        return AppRoutes.wealthPhysical(id);
-      },
-    ),
-    GoRoute(
-      path: '/accounts/liabilities',
-      redirect: (_, _) => redirect(AppRoutes.wealthLiabilities),
-    ),
-    GoRoute(
-      path: '/accounts/liabilities/new',
-      redirect: (_, _) => redirect(AppRoutes.wealthLiabilityNew),
-    ),
-    GoRoute(
-      path: '/accounts/liabilities/:id',
-      redirect: (_, state) {
-        final id = state.pathParameters['id'] ?? '';
-        return AppRoutes.wealthLiability(id);
-      },
-    ),
-    GoRoute(
-      path: '/accounts/fire',
-      redirect: (_, _) => redirect(AppRoutes.planFire),
-    ),
-    GoRoute(
-      path: '/accounts/rebalance',
-      redirect: (_, _) => redirect(AppRoutes.planRebalance),
-    ),
-    GoRoute(
-      path: '/accounts/analytics',
-      redirect: (_, _) => redirect(AppRoutes.planProjection),
-    ),
-    GoRoute(
-      path: '/accounts/income',
-      redirect: (_, _) => redirect(AppRoutes.planIncome),
-    ),
-    GoRoute(
-      path: '/accounts/dca',
-      redirect: (_, _) => redirect(AppRoutes.planDca),
-    ),
-  ];
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) => buildAppRouter(ref));
