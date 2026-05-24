@@ -114,8 +114,9 @@
 - ✅ **Watchlist** — 已有(`features/investment/data/watchlist_*`、`presentation/watchlist_page.dart`)
 - ✅ **Event timeline 域** (2026-05-24): `features/investment/domain/reporting/event_timeline.dart`,`CorporateActionEvent` + `buildEventTimeline`(symbol filter / 时间窗 / chronological sort / dedup)。9 个测试。
 - ✅ **yfinance parser** (2026-05-24): `data/market/providers/yfinance_corporate_actions.dart` `parseYahooCorporateActions()` pure 函数,从 yfinance `chart.result[0].events.{dividends,splits}` JSON 提取 `CorporateActionEvent` 列表;defensive,malformed row 丢弃不抛;事件 id 稳定(`div_SYMBOL_YYYY-MM-DD` / `split_SYMBOL_YYYY-MM-DD`)。7 个测试。
-- ✅ **EventTimelineSection embeddable widget + provider** (2026-05-24): `features/investment/ui/event_timeline_section.dart` 接 `upcomingEventsForSymbolProvider(symbol)` family(默认返回空,等待网络层),按时间排序渲染分红 / 拆股 / 配股 / DRIP 行。`data/event_timeline_providers.dart` 是单点 seam — 未来 yfinance 抓取 PR 替换 `corporateActionEventsProvider(symbol)` 即可填充。5 个 widget 测试 + 新 l10n。
-- ⏳ Holding detail page 嵌入 + yfinance 抓取 wire-up — 单独 PR(widget 已经可以直接 `EventTimelineSection(symbol: ...)` 嵌进任何 detail 页)
+- ✅ **EventTimelineSection embeddable widget + provider** (2026-05-24): `features/investment/ui/event_timeline_section.dart` 接 `upcomingEventsForSymbolProvider(symbol)` family,按时间排序渲染分红 / 拆股 / 配股 / DRIP 行。5 个 widget 测试 + 新 l10n。
+- ✅ **yfinance 网络抓取 wire-up** (2026-05-24): `data/market/services/corporate_actions_service.dart` — 调用 yfinance `chart` 端点 `events=div,splits`,经 `parseYahooCorporateActions` 解析。12 小时 TTL in-memory 缓存 + 15 分钟 error TTL(防故障期间反复打);concurrent calls 同 symbol 自动 dedup;404/500 → 空列表 + 日志(best-effort,UI 静默)。`event_timeline_providers.dart` 升级到 FutureProvider 接服务,`EventTimelineSection` 通过 `AsyncValue.value ?? []` 优雅降级。8 个服务测试(快乐路径 / 缓存 / dedup / 多 symbol / HTTP 失败缓存 / invalidate / 空 symbol / 货币 fallback)。
+- ⏳ Holding detail page 嵌入 `EventTimelineSection(symbol: ...)` — 一行修改的单独 UI PR
 - 详: [midterm 2.2 M1/M2](./roadmap-midterm-execution.md)
 
 ### 3.6 Crash reporting opt-in(M1)

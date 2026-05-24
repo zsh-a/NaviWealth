@@ -23,7 +23,11 @@ class EventTimelineSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final events = ref.watch(upcomingEventsForSymbolProvider(symbol));
+    final eventsAsync = ref.watch(upcomingEventsForSymbolProvider(symbol));
+    // Network fetcher is best-effort: loading + error both reduce to
+    // the same empty placeholder so the holding detail page stays
+    // calm during a transient outage.
+    final events = eventsAsync.value ?? const <CorporateActionEvent>[];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

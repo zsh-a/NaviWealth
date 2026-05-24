@@ -1,33 +1,71 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/logging/providers.dart';
+import '../../../data/market/http/clock.dart' as market_clock;
+import '../../../data/market/http/market_http_client.dart';
+import '../../../data/market/http/rate_limiter.dart';
+import '../../../data/market/market_data_providers.dart';
+import '../../../data/market/services/corporate_actions_service.dart';
 import '../domain/reporting/event_timeline.dart';
 
-/// Per-symbol upcoming corporate-action events (`docs/roadmap-next.md`
-/// §3.5). The provider is the seam the holding detail "事件" tab reads,
-/// and the place where a future fetcher PR will plug in
-/// `data/market/providers/yfinance_corporate_actions.dart`.
+/// Underlying corporate-actions fetcher. One instance per app — the
+/// service owns an in-memory TTL cache, so a singleton avoids fan-out
+/// fetches when multiple watchers ask for the same symbol.
 ///
-/// Default returns an empty list — until the yfinance fetcher lands the
-/// UI will render its empty state. The page is therefore safe to ship now
-/// without holding for the network plumbing.
+/// Tests override [corporateActionEventsProvider] directly (single seam)
+/// so they don't need a fake service.
+final corporateActionsServiceProvider = Provider<CorporateActionsService>((
+  ref,
+) {
+  final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
+  final http = MarketHttpClient(
+    providerName: 'yfinance',
+    rateLimiter: RateLimiter(
+      maxRequests: 60,
+      window: const Duration(minutes: 1),
+      clock: const market_clock.SystemClock(),
+    ),
+    dio: dio,
+    clock: const market_clock.SystemClock(),
+    metrics: ref.watch(marketMetricsProvider),
+  );
+  return CorporateActionsService(
+    http: http,
+    logger: ref.watch(loggerProvider),
+  );
+});
+
+/// Per-symbol corporate-action events (`docs/roadmap-next.md` §3.5).
+/// UI surfaces (holding detail "事件" tab) subscribe to this; the
+/// [CorporateActionsService] supplies events via the yfinance chart
+/// endpoint with a 12-hour TTL cache.
+///
+/// Returns `[]` while loading and on any network error — the service
+/// caches errors briefly to avoid hammering Yahoo on transient outages.
 ///
 /// Tests override this provider directly to inject canned events.
-final corporateActionEventsProvider =
-    Provider.autoDispose.family<List<CorporateActionEvent>, String>(
-  (ref, symbol) => const [],
-);
+final corporateActionEventsProvider = FutureProvider.autoDispose
+    .family<List<CorporateActionEvent>, String>((ref, symbol) {
+  final service = ref.watch(corporateActionsServiceProvider);
+  return service.getForSymbol(symbol);
+});
 
-/// Filtered timeline projection for [symbol] over the next [windowDays]
-/// days. Centralises the `buildEventTimeline` call so callers don't have
-/// to thread the symbol set / window themselves — the page renders the
-/// raw output of this provider.
-final upcomingEventsForSymbolProvider =
-    Provider.autoDispose.family<List<CorporateActionEvent>, String>(
-  (ref, symbol) {
-    final raw = ref.watch(corporateActionEventsProvider(symbol));
-    return buildEventTimeline(
+/// Filtered timeline projection for [symbol] over the next 90 days.
+/// Centralises the `buildEventTimeline` call so callers don't thread
+/// the symbol set / window themselves.
+///
+/// Returns an [AsyncValue]: the upstream fetcher is async, so this
+/// provider mirrors the same lifecycle (loading → data → error). The
+/// widget consumer renders an empty placeholder for loading + error
+/// because corporate-action data is best-effort, not load-bearing.
+final upcomingEventsForSymbolProvider = Provider.autoDispose
+    .family<AsyncValue<List<CorporateActionEvent>>, String>((ref, symbol) {
+  final eventsAsync = ref.watch(corporateActionEventsProvider(symbol));
+  return eventsAsync.whenData(
+    (raw) => buildEventTimeline(
       events: raw,
       watchedSymbols: <String>{symbol},
-    );
-  },
-);
+    ),
+  );
+});
