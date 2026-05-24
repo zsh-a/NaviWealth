@@ -87,11 +87,12 @@ jobs:
         # stays identical. Bans showDialog/AlertDialog/etc. in features.
         working-directory: ${{ github.workspace }}
         run: ./tool/check-modal-helpers.sh
-      - name: Money display lint advisory — no naked toStringAsFixed
-        # Advisory until MT-2.3.M1.2 clears the remaining feature batches;
-        # then switch to strict mode so new naked money strings fail CI.
+      - name: Money display lint — no naked toStringAsFixed
+        # Existing non-money uses are centrally allowlisted. Any new naked
+        # formatter must either use MoneyText/AppFormatters or document a
+        # non-money reason in tool/money-display-to-string-allowlist.txt.
         working-directory: ${{ github.workspace }}
-        run: ./tool/lint-money-display.sh --advisory
+        run: ./tool/lint-money-display.sh --strict
       - name: Back-nav coverage — every non-tab page surfaces a way out
         # Tab pages (Today/Activity/Wealth/Plan) intentionally have no
         # back arrow. Every other FHeader.nested page must wire one via
