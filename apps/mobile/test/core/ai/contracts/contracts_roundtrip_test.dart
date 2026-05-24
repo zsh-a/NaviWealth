@@ -455,54 +455,6 @@ void main() {
     });
   });
 
-  group('FreshnessHint (Wave 6)', () {
-    test('round-trips force_refresh_read_models list', () {
-      const h = FreshnessHint(
-        forceRefreshReadModels: <String>[
-          'monthly_spend_by_category',
-          'holdings_snapshot',
-        ],
-      );
-      final decoded = FreshnessHint.fromJson(
-        jsonDecode(jsonEncode(h.toJson())) as Map<String, Object?>,
-      );
-      expect(decoded.forceRefreshReadModels, h.forceRefreshReadModels);
-    });
-
-    test('TaskContext omits freshness_hint when empty', () {
-      const task = TaskContext(
-        route: RouteContext(path: '/', area: 'home'),
-        intent: IntentHint(
-          capability: Capability.analyze,
-          risk: RiskLevel.info,
-        ),
-      );
-      final json = task.toJson();
-      expect(json.containsKey('freshness_hint'), isFalse);
-    });
-
-    test('TaskContext emits freshness_hint when non-empty', () {
-      const task = TaskContext(
-        route: RouteContext(path: '/', area: 'home'),
-        intent: IntentHint(
-          capability: Capability.analyze,
-          risk: RiskLevel.info,
-        ),
-        freshnessHint: FreshnessHint(
-          forceRefreshReadModels: <String>['monthly_spend_by_category'],
-        ),
-      );
-      final json = task.toJson();
-      expect(json.containsKey('freshness_hint'), isTrue);
-      final decoded = TaskContext.fromJson(
-        jsonDecode(jsonEncode(json)) as Map<String, Object?>,
-      );
-      expect(decoded.freshnessHint?.forceRefreshReadModels, <String>[
-        'monthly_spend_by_category',
-      ]);
-    });
-  });
-
   group('AnalyticalUpload + TaskContext.analytical_uploads (Wave 10/11)', () {
     test('round-trips a list of uploads with payload JSON shape', () {
       const uploads = <AnalyticalUpload>[
@@ -562,58 +514,6 @@ void main() {
     });
   });
 
-  group('AiTrace stale_read_model_names (Wave 6)', () {
-    test('round-trips as a JSON list under stale_read_model_names key', () {
-      const trace = AiTrace(
-        requestId: 't',
-        startedAtIso: '2026-05-12T10:00:00.000Z',
-        intent: IntentHint(
-          capability: Capability.analyze,
-          risk: RiskLevel.info,
-        ),
-        backend: Backend.hybrid,
-        budgetTier: BudgetTier.standard,
-        routingReason: 'test',
-        usedCloud: true,
-        usedRawLedger: false,
-        totalDurationMs: 100,
-        staleReadModelNames: <String>{
-          'monthly_spend_by_category',
-          'holdings_snapshot',
-        },
-      );
-      final json = trace.toJson();
-      expect(json.containsKey('stale_read_model_names'), isTrue);
-      final decoded = AiTrace.fromJson(
-        jsonDecode(jsonEncode(json)) as Map<String, Object?>,
-      );
-      expect(decoded.staleReadModelNames, <String>{
-        'monthly_spend_by_category',
-        'holdings_snapshot',
-      });
-      expect(decoded.staleReadModels, 2);
-    });
-
-    test('omits stale_read_model_names key when set is empty', () {
-      const trace = AiTrace(
-        requestId: 't',
-        startedAtIso: '2026-05-12T10:00:00.000Z',
-        intent: IntentHint(
-          capability: Capability.analyze,
-          risk: RiskLevel.info,
-        ),
-        backend: Backend.device,
-        budgetTier: BudgetTier.small,
-        routingReason: 'test',
-        usedCloud: false,
-        usedRawLedger: false,
-        totalDurationMs: 50,
-      );
-      final json = trace.toJson();
-      expect(json.containsKey('stale_read_model_names'), isFalse);
-      expect(trace.staleReadModels, 0);
-    });
-  });
 }
 
 ContextPack _samplePack() => ContextPack(

@@ -2,14 +2,12 @@ import 'package:collection/collection.dart' show IterableExtension;
 import 'package:decimal/decimal.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/llm_credentials/llm_credentials.dart';
 import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../core/ai/local/skills/skills.dart';
-import '../../../core/ai/router/router.dart';
 import '../../../core/ai/runtime/ai_runtime.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
 import '../../../core/ai/runtime/device/openai/openai_client.dart';
@@ -90,19 +88,6 @@ final aiChatApiClientProvider = Provider<AiChatApiClient>((ref) {
   );
 });
 
-/// AiRuntime registry. Post-W-D7 the `cloud_anthropic` runtime is gone
-/// (cloud backend deleted); the map holds the stub `rules_device` and —
-/// when available — the §4.6 `device_llm` runtime. `ChatRepository`
-/// routes via [aiChatApiClientProvider]; the registry stays the
-/// canonical id→runtime map for trace labelling.
-final runtimeRegistryProvider = Provider<RuntimeRegistry>((ref) {
-  final device = ref.watch(deviceLlmRuntimeProvider);
-  return RuntimeRegistry(<RuntimeId, AiRuntime>{
-    RuntimeId.rulesDevice: const RulesDeviceRuntime(),
-    RuntimeId.deviceLlm: ?device,
-  });
-});
-
 /// Chat persistence is awaited once via [appDatabaseProvider]. We expose
 /// the store as an `AsyncValue` so consumers can react to first-time DB
 /// boot the same way the rest of the app does.
@@ -126,40 +111,18 @@ final chatRepositoryProvider = FutureProvider<ChatRepository>((ref) async {
         ref.read(devicePortfolioSnapshotProvider.future),
     tracePrep: ({required requestId}) => _prepareChatTrace(ref, requestId),
     traceStore: traceStore,
-    onTraceFinalized: (trace) {
-      // Retained freshness bridge for old trace/tool-result shapes.
-      // Device tools read local Drift directly, so this normally stays
-      // empty after W-D7.
-      if (trace.staleReadModelNames.isEmpty) return;
-      final pending = ref.read(pendingFreshnessHintProvider);
-      ref.read(pendingFreshnessHintProvider.notifier).state = <String>{
-        ...pending,
-        ...trace.staleReadModelNames,
-      };
-    },
   );
 });
-
-/// Read model names whose `source_hlc_watermark` lagged the device's
-/// local HLC on an older cloud-backed chat turn. Consumed (and cleared)
-/// by `_prepareChatTrace` on the next request. Device tools read local
-/// Drift directly, so new turns should not populate this.
-///
-/// docs/ai-architecture.md §4.2 (freshness gate Phase 2).
-final pendingFreshnessHintProvider = StateProvider<Set<String>>(
-  (_) => <String>{},
-);
 
 /// Build the typed [ContextPack] + seed [AiTrace] for one chat turn.
 ///
 /// Captures the current Riverpod state — route, header metrics, anomaly,
-/// maturity — and folds it through [ContextCompressor] and [AiRouter].
-/// Failures are absorbed (returns nulls) so chat itself is never blocked
-/// by the transparency layer hiccupping.
+/// maturity — and folds it through [ContextCompressor]. Failures are
+/// absorbed (returns nulls) so chat itself is never blocked by the
+/// transparency layer hiccupping.
 Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
   try {
     final compressor = ref.read(contextCompressorProvider);
-    final router = ref.read(aiRouterProvider);
     final routeCtx = ref.read(aiRouteContextProvider);
     final route = RouteContext(
       path: routeCtx.path,
@@ -178,29 +141,11 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
     final anomaly = ref.read(expenseAnomalyInsightProvider);
     final maturity = ref.read(depositMaturityInsightProvider);
 
-    // Consume any pending freshness hint from the previous turn's
-    // stale-read-model detection (Phase 2 gate). Clear immediately so
-    // a second concurrent send doesn't double-trigger.
-    final pendingNames = ref.read(pendingFreshnessHintProvider);
-    if (pendingNames.isNotEmpty) {
-      ref.read(pendingFreshnessHintProvider.notifier).state = <String>{};
-    }
-
-    // Snapshot local HLC once: used by both the freshness gate
-    // (tool_result watermark comparison) AND the analytical_uploads
-    // device_hlc tag (§4.3.3).
+    // Snapshot local HLC once: stamps the `analytical_uploads` batch in
+    // the ContextPack (device_hlc) so the LLM can reason about how
+    // fresh the inlined detector summaries are.
     final localHlc = await ref.read(syncLocalHlcProvider.future);
     final localHlcText = localHlc?.toString();
-
-    // Wave 32: FreshnessHint carries lastLocalHlc so trace/context
-    // capture remains self-contained. The force-refresh list is a
-    // retained cloud-era field and is usually empty after W-D7.
-    final freshnessHint = (pendingNames.isEmpty && localHlcText == null)
-        ? null
-        : FreshnessHint(
-            forceRefreshReadModels: pendingNames.toList(growable: false),
-            lastLocalHlc: localHlcText,
-          );
 
     // Wave 11/15/16/17 — derive AnalyticalUpload list from end-side detector
     // outputs. anomaly_flag comes from expenseAnomalyInsightProvider
@@ -233,45 +178,40 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
       expenseAnomalyDelta: anomaly?.deltaRatio,
       depositMaturityCount: maturity?.count,
       depositMaturityDays: maturity?.days,
-      freshnessHint: freshnessHint,
       analyticalUploads: analyticalUploads,
       deviceHlc: analyticalUploads.isEmpty ? null : localHlcText,
       riskPreference: riskAppetite.toWire(),
       fireGoal: fireGoal,
     );
 
-    // The historical router still classifies online chat as cloud-bound.
-    // Capture that decision, then override the effective trace below
-    // when a device runtime is available.
-    final decision = router.decide(
-      const RoutingInputs(intent: intent, online: true),
+    // Post-W-D7 there is only one runtime (device LLM) and one
+    // fallback (device_unavailable). The router that historically chose
+    // between cloud / hybrid / device is gone; we stamp the trace
+    // directly with the runtime that will actually run this turn.
+    final deviceUsable = ref.read(deviceLlmAvailableProvider);
+    final effectiveSeed = AiTrace(
+      requestId: requestId,
+      startedAtIso: DateTime.now().toUtc().toIso8601String(),
+      intent: intent,
+      backend: Backend.device,
+      budgetTier: pack.budget.tier,
+      routingReason: deviceUsable
+          ? kDeviceLlmDirectRoutingReason
+          : 'device_unavailable',
+      usedCloud: false,
+      usedRawLedger: false,
+      totalDurationMs: 0,
     );
-    final seed = router.seedTrace(requestId: requestId, decision: decision);
-
-    // §4.6 W-D6 — keep the transparency record truthful: the router
-    // always decides cloud for an online chat, but if the on-device
-    // runtime will actually handle this turn (native × key × opt-in),
-    // the trace must say so. `device_llm_direct` also drives the
-    // distinct "未经我方服务器" badge text.
-    final effectiveSeed = ref.read(deviceLlmAvailableProvider)
-        ? seed.copyWith(
-            backend: Backend.device,
-            routingReason: kDeviceLlmDirectRoutingReason,
-            usedCloud: false,
-          )
-        : seed;
 
     return (
       pack: pack,
       traceSeed: effectiveSeed,
-      localHlcText: localHlcText,
       traceVerbose: ref.read(aiTraceVerboseProvider),
     );
   } catch (_) {
     return (
       pack: null,
       traceSeed: null,
-      localHlcText: null,
       traceVerbose: false,
     );
   }
@@ -478,11 +418,16 @@ final chatMessagesStreamProvider =
       yield* repo.watchMessages(sessionId);
     });
 
-/// Pre-chat sync flush gate (FIR-71). The AI backend reads the user's
-/// data from D1, which is updated by the client's OpLog push. Without
-/// this gate, a user who records a transaction and immediately asks the
-/// model "what's my position?" can race the 30-s polling cycle and get
-/// a stale answer.
+/// Pre-chat sync flush gate (FIR-71, partially obsolete).
+///
+/// The original motivation — "AI backend reads user data from D1, so
+/// flush local OpLog first" — went away with W-D7 (no cloud AI backend).
+/// Device tools read local Drift directly, so a single-device user never
+/// needs this gate. It still runs because `chat_controller.dart` awaits
+/// it, but its remaining value is the multi-device case (user records on
+/// device A, asks on device B before A's push lands). That justification
+/// is thin and worth a separate decision — see `docs/ai-boundary-audit.md`
+/// §4.2 / batch F.
 final chatSyncGateProvider = FutureProvider<ChatSyncGate?>((ref) async {
   final engine = await ref.watch(syncEngineProvider.future);
   if (engine == null) return null;

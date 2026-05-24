@@ -434,12 +434,6 @@ class _TraceRow extends StatelessWidget {
                             trace.toolSpans.length,
                           ),
                         ),
-                      if (trace.staleReadModels > 0)
-                        AiPill(
-                          label: l10n.aiTransparencyStaleCount(
-                            trace.staleReadModels,
-                          ),
-                        ),
                       if (isError)
                         AiPill(
                           label: trace.terminalReason.wire,

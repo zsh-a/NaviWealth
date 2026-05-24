@@ -7,7 +7,6 @@ export 'ai_span.dart';
 export 'ai_trace.dart';
 export 'base_context.dart';
 export 'context_pack.dart';
-export 'freshness.dart';
 export 'intent.dart';
 export 'privacy_budget.dart';
 export 'privacy_mode_provider.dart';
