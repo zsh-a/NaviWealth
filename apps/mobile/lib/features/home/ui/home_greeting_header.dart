@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../auth/data/auth_controller.dart';
 import '../data/dashboard_insights_provider.dart';
 import '../data/dashboard_providers.dart';
 
@@ -77,10 +78,13 @@ class HomeGreetingHeader extends ConsumerWidget {
                   ),
                 ),
               ),
-              // IA contract §1: Settings is global meta — accessed from the
-              // Today header gear, not a tab. Pushes outside the shell so
-              // pop returns to whatever tab the user came from.
-              _SettingsGearButton(),
+              // IA contract §1: Settings is global meta — accessed from
+              // the Today header avatar, not a tab. Pushes outside the
+              // shell so pop returns to whatever tab the user came from.
+              // Avatar replaces the previous gear so the editorial header
+              // doesn't read as chrome-heavy; it can later carry a sync
+              // status ring + an initial once display-name lands.
+              const _AccountAvatarButton(),
             ],
           ),
           if (statusFragments.isNotEmpty) ...[
@@ -133,11 +137,27 @@ class _StatusFragment {
   final Color color;
 }
 
-class _SettingsGearButton extends StatelessWidget {
+/// 36dp circular avatar in the top-right of the Today header. Single
+/// entry point to /settings on mobile (the desktop shell pins Settings
+/// at the bottom of its sidebar instead).
+///
+/// Two visual states:
+///   * **logged-in / local-only**: teal-tinted disc with a person glyph
+///     (initial-letter rendering will land once display name is in
+///     [AuthSession]; keep the path open by reading auth state).
+///   * **logged-out**: shouldn't render on Today — the auth guard
+///     redirects to /login first — but if it does, the same disc shows
+///     so the layout doesn't jump.
+class _AccountAvatarButton extends ConsumerWidget {
+  const _AccountAvatarButton();
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
+    // Watch auth state so future profile-aware rendering can branch
+    // without another refactor. Today the icon is the same either way.
+    ref.watch(authControllerProvider);
     return Semantics(
       label: l10n.navSettingsTooltip,
       button: true,
@@ -150,13 +170,16 @@ class _SettingsGearButton extends StatelessWidget {
             height: 36,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: colors.foreground.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(10),
+              // Soft primary tint — matches the avatar disc used in
+              // settings (pre-Phase-D) and other "personal" affordances
+              // so this reads as identity, not chrome.
+              color: colors.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.settings_outlined,
+              Icons.person_outline,
               size: 18,
-              color: colors.mutedForeground,
+              color: colors.primary,
             ),
           ),
         ),

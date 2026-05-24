@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../../home/data/dashboard_providers.dart';
 import '../../home/domain/dashboard_models.dart';
 import '../data/fire_providers.dart';
@@ -45,68 +46,64 @@ class _FireBucketsCardState extends ConsumerState<FireBucketsCard> {
     return allocationAsync.when(
       loading: () => const _BucketsSkeleton(),
       error: (e, _) => const SizedBox.shrink(),
-      data: (allocation) => FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.fireOsBucketsTitle,
-                      style: context.theme.typography.md,
-                    ),
-                  ),
-                  FireAiCapsule(
-                    intent: 'review_cash_bucket',
-                    source: 'fire_buckets_card',
-                    objectLabel: l10n.fireOsBucketsTitle,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                l10n.fireOsBucketsSubtitle,
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
+      data: (allocation) => AiHoverOverlay(
+        capsule: FireAiCapsule(
+          intent: 'review_cash_bucket',
+          source: 'fire_buckets_card',
+          objectLabel: l10n.fireOsBucketsTitle,
+        ),
+        child: FCard.raw(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.fireOsBucketsTitle,
+                  style: context.theme.typography.md,
                 ),
-              ),
-              const SizedBox(height: 12),
-              for (final bucket in allocation.buckets) ...[
-                _BucketRow(
-                  bucket: bucket,
-                  formatters: formatters,
-                  l10n: l10n,
-                  expanded: _expanded.contains(bucket.role),
-                  onTap: () => setState(() {
-                    if (!_expanded.add(bucket.role)) {
-                      _expanded.remove(bucket.role);
-                    }
-                  }),
-                  itemsById: itemsById,
-                ),
-                const SizedBox(height: 10),
-              ],
-              if (allocation.unmappedHoldings.isNotEmpty) ...[
-                _UnmappedSection(
-                  unmapped: allocation.unmappedHoldings,
-                  formatters: formatters,
-                  l10n: l10n,
+                const SizedBox(height: 4),
+                Text(
+                  l10n.fireOsBucketsSubtitle,
+                  style: context.theme.typography.xs.copyWith(
+                    color: context.theme.colors.mutedForeground,
+                  ),
                 ),
                 const SizedBox(height: 12),
-              ],
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => showFireBucketMappingSheet(context),
-                  prefix: const Icon(Icons.tune, size: 14),
-                  child: Text(l10n.fireOsBucketsManageCta),
+                for (final bucket in allocation.buckets) ...[
+                  _BucketRow(
+                    bucket: bucket,
+                    formatters: formatters,
+                    l10n: l10n,
+                    expanded: _expanded.contains(bucket.role),
+                    onTap: () => setState(() {
+                      if (!_expanded.add(bucket.role)) {
+                        _expanded.remove(bucket.role);
+                      }
+                    }),
+                    itemsById: itemsById,
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                if (allocation.unmappedHoldings.isNotEmpty) ...[
+                  _UnmappedSection(
+                    unmapped: allocation.unmappedHoldings,
+                    formatters: formatters,
+                    l10n: l10n,
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: () => showFireBucketMappingSheet(context),
+                    prefix: const Icon(Icons.tune, size: 14),
+                    child: Text(l10n.fireOsBucketsManageCta),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -182,16 +179,11 @@ class _BucketRow extends StatelessWidget {
                 ),
               const SizedBox(width: 6),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: statusColor.withValues(alpha: 0.4),
-                  ),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.4)),
                 ),
                 child: Text(
                   _statusLabel(l10n, bucket.status),
@@ -355,10 +347,7 @@ class _UnmappedSection extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    formatters.currency(
-                      u.value.amount,
-                      code: u.value.currency,
-                    ),
+                    formatters.currency(u.value.amount, code: u.value.currency),
                     style: context.theme.typography.xs.copyWith(
                       color: colors.mutedForeground,
                     ),

@@ -284,6 +284,15 @@ class InlineSwitchRow extends StatelessWidget {
 /// Single-line link row (no trailing value chip; just chevron). Same
 /// chrome as [InlineSettingRow]. Use for navigation tiles inside an
 /// inset-grouped section.
+///
+/// Three trailing-content modes — pick at most one:
+///   * [trailingValue]  — muted gray text (e.g. "On", "CNY"). The
+///                         classic chip slot.
+///   * [trailingBadge]  — compact uppercase pill (e.g. "AUTO", "CUSTOM")
+///                         in a soft tint. Replaces wordy subtitles that
+///                         only convey state.
+///   * [trailing]       — escape-hatch widget; use sparingly when
+///                         neither of the above fits.
 class InlineLinkRow extends StatelessWidget {
   const InlineLinkRow({
     super.key,
@@ -292,13 +301,23 @@ class InlineLinkRow extends StatelessWidget {
     required this.onTap,
     this.subtitle,
     this.trailingValue,
-  });
+    this.trailingBadge,
+    this.trailing,
+  }) : assert(
+         (trailingValue == null ? 0 : 1) +
+                 (trailingBadge == null ? 0 : 1) +
+                 (trailing == null ? 0 : 1) <=
+             1,
+         'InlineLinkRow accepts at most one of trailingValue / trailingBadge / trailing',
+       );
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final String? subtitle;
   final String? trailingValue;
+  final String? trailingBadge;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -343,6 +362,12 @@ class InlineLinkRow extends StatelessWidget {
                   textAlign: TextAlign.end,
                 ),
               ),
+            ] else if (trailingBadge != null) ...[
+              const SizedBox(width: 8),
+              _StatusBadge(label: trailingBadge!),
+            ] else if (trailing != null) ...[
+              const SizedBox(width: 8),
+              trailing!,
             ],
             const SizedBox(width: 4),
             Icon(
@@ -351,6 +376,38 @@ class InlineLinkRow extends StatelessWidget {
               color: colors.mutedForeground.withValues(alpha: 0.6),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact uppercase pill used by [InlineLinkRow.trailingBadge].
+///
+/// Single styling source-of-truth so AUTO / CUSTOM / NEW etc. all read
+/// the same — a tiny `muted` chip that doesn't compete with the label
+/// or the chevron. If you need accent colors later, add an optional
+/// `tone` parameter; for now everything stays neutral.
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: colors.foreground.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label.toUpperCase(),
+        style: context.theme.typography.xs2.copyWith(
+          color: colors.mutedForeground,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
         ),
       ),
     );

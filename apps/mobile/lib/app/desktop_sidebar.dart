@@ -2,8 +2,11 @@ import 'package:flutter/material.dart' show IconData, Icons;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
 import '../design_system/design_system.dart';
+import '../l10n/gen/app_localizations.dart';
+import 'route_paths.dart';
 import 'shell_preferences.dart';
 
 /// Collapsible left sidebar for the desktop shell.
@@ -58,6 +61,12 @@ class DesktopSidebar extends ConsumerWidget {
               ),
             ),
             const FDivider(),
+            // Pinned bottom row — Settings is off-nav (IA contract §1)
+            // but the desktop shell has the room to surface it as a
+            // discoverable entry, mirroring the Today-header avatar on
+            // mobile. Not a destination, so [selectedIndex] semantics
+            // are unaffected.
+            _SettingsPinnedRow(collapsed: collapsed),
             _CollapseToggle(
               collapsed: collapsed,
               onToggle: () =>
@@ -169,6 +178,64 @@ class _SidebarItem extends StatelessWidget {
       );
     }
     return tap;
+  }
+}
+
+/// Pinned bottom row that pushes /settings.
+///
+/// Renders as a small icon-only square when [collapsed], or as a full
+/// row with an outlined gear + label when expanded. Mirrors the visual
+/// language of [_SidebarItem] minus the "selected" affordance — Settings
+/// is never the active tab.
+class _SettingsPinnedRow extends StatelessWidget {
+  const _SettingsPinnedRow({required this.collapsed});
+
+  final bool collapsed;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final label = l10n.navSettings;
+    final iconColor = colors.mutedForeground;
+    final row = Row(
+      children: [
+        SizedBox(
+          width: kSidebarCollapsedWidth - 16,
+          child: Icon(Icons.settings_outlined, color: iconColor),
+        ),
+        if (!collapsed)
+          Expanded(
+            child: Text(
+              label,
+              style: context.theme.typography.sm.copyWith(
+                color: colors.foreground,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+      ],
+    );
+    final tile = Container(
+      height: 48,
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      alignment: Alignment.centerLeft,
+      child: row,
+    );
+    final tap = FTappable(
+      onPress: () => context.push(AppRoutes.settings),
+      child: tile,
+    );
+    if (collapsed) {
+      return FTooltip(tipBuilder: (_, _) => Text(label), child: tap);
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: tap,
+    );
   }
 }
 

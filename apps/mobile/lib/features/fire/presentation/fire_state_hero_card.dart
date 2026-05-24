@@ -7,6 +7,7 @@ import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../../ai_chat/ui/ai_sheet.dart';
 import '../data/fire_providers.dart';
 import '../domain/fire_action.dart';
@@ -46,11 +47,7 @@ class FireStateHeroCard extends ConsumerWidget {
     return stateAsync.when(
       loading: () => const _HeroSkeleton(),
       error: (e, _) => _HeroErrorCard(message: '$e'),
-      data: (state) => _HeroBody(
-        l10n: l10n,
-        state: state,
-        onExplain: explain,
-      ),
+      data: (state) => _HeroBody(l10n: l10n, state: state, onExplain: explain),
     );
   }
 }
@@ -166,8 +163,7 @@ class _MetricsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final swrPct = (state.plan.safeWithdrawalRate * 100)
-        .toStringAsFixed(1);
+    final swrPct = (state.plan.safeWithdrawalRate * 100).toStringAsFixed(1);
     final wrLabel = state.withdrawalRate.isFinite
         ? l10n.fireOsHeroWithdrawalRateValue(
             (state.withdrawalRate * 100).toStringAsFixed(2),
@@ -193,8 +189,8 @@ class _MetricsGrid extends StatelessWidget {
       state.annualSpend.amount,
       code: state.baseCurrency,
     );
-    final spendSourceLabel = state.annualSpendSource ==
-            FireAnnualSpendSource.trailing12m
+    final spendSourceLabel =
+        state.annualSpendSource == FireAnnualSpendSource.trailing12m
         ? l10n.fireOsAnnualSpendSourceTrailing
         : l10n.fireOsAnnualSpendSourcePlan;
 
@@ -315,36 +311,30 @@ class _SuggestedActions extends StatelessWidget {
   Widget build(BuildContext context) {
     if (state.suggestedActions.isEmpty) return const SizedBox.shrink();
     final colors = context.theme.colors;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                l10n.fireOsSuggestedActionsTitle,
-                style: context.theme.typography.sm.copyWith(
-                  color: colors.mutedForeground,
-                ),
-              ),
+    return AiHoverOverlay(
+      topOffset: 0,
+      endOffset: 0,
+      capsule: FireAiCapsule(
+        intent: 'suggest_fire_actions',
+        source: 'fire_os_hero_actions',
+        objectLabel: l10n.fireOsSuggestedActionsTitle,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.fireOsSuggestedActionsTitle,
+            style: context.theme.typography.sm.copyWith(
+              color: colors.mutedForeground,
             ),
-            FireAiCapsule(
-              intent: 'suggest_fire_actions',
-              source: 'fire_os_hero_actions',
-              objectLabel: l10n.fireOsSuggestedActionsTitle,
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        for (final action in state.suggestedActions.take(3)) ...[
-          _ActionRow(
-            action: action,
-            formatters: formatters,
-            l10n: l10n,
           ),
           const SizedBox(height: 6),
+          for (final action in state.suggestedActions.take(3)) ...[
+            _ActionRow(action: action, formatters: formatters, l10n: l10n),
+            const SizedBox(height: 6),
+          ],
         ],
-      ],
+      ),
     );
   }
 }
@@ -418,7 +408,11 @@ class _HeroSkeleton extends StatelessWidget {
               color: context.theme.colors.muted,
             ),
             const SizedBox(height: 16),
-            Container(width: double.infinity, height: 64, color: context.theme.colors.muted),
+            Container(
+              width: double.infinity,
+              height: 64,
+              color: context.theme.colors.muted,
+            ),
           ],
         ),
       ),

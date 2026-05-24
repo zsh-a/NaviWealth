@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/ai/intent/intent.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../../ai_chat/ui/ai_object_capsule.dart';
 import '../data/dashboard_insights_provider.dart';
 import '../data/dismissed_insights_store.dart';
@@ -88,98 +89,81 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
     final route = item.route;
     final tappable = item.onTap != null || route != null;
     final iconTint = item.iconColor ?? colors.primary;
-    return SoftCard(
-      onPress: !tappable ? null : (item.onTap ?? () => context.push(route!)),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: iconTint.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(10),
+    return AiHoverOverlay(
+      capsule: _InsightOverlayActions(
+        expanded: _expanded,
+        onExpand: () => setState(() => _expanded = !_expanded),
+        onDismiss: _dismiss,
+        askCapsule: AiObjectCapsule(
+          source: 'home_insight_card',
+          intent: 'explain_insight',
+          object: AiObjectRef(type: 'insight', id: _insightStableId(item)),
+          objectLabel: insightHeadline(l10n, item),
+          fallbackLabel: l10n.dashboardInsightActionAsk,
+        ),
+        l10n: l10n,
+      ),
+      child: SoftCard(
+        onPress: !tappable ? null : (item.onTap ?? () => context.push(route!)),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: iconTint.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(item.icon, size: 18, color: iconTint),
                 ),
-                alignment: Alignment.center,
-                child: Icon(item.icon, size: 18, color: iconTint),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      insightHeadline(l10n, item),
-                      style: context.theme.typography.sm.copyWith(
-                        fontWeight: FontWeight.w600,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        insightHeadline(l10n, item),
+                        style: context.theme.typography.sm.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      insightDetail(l10n, item),
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
+                      const SizedBox(height: 2),
+                      Text(
+                        insightDetail(l10n, item),
+                        style: context.theme.typography.xs.copyWith(
+                          color: colors.mutedForeground,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              if (tappable) ...[
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right,
-                  size: 18,
-                  color: colors.mutedForeground.withValues(alpha: 0.6),
-                ),
+                if (tappable) ...[
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 18,
+                    color: colors.mutedForeground.withValues(alpha: 0.6),
+                  ),
+                ],
               ],
+            ),
+            if (_expanded) ...[
+              const SizedBox(height: 8),
+              _ExpandedDetail(item: item),
             ],
-          ),
-          const SizedBox(height: 8),
-          if (_expanded) ...[
-            _ExpandedDetail(item: item),
-            const SizedBox(height: 8),
           ],
-          Row(
-            children: [
-              _ActionPill(
-                icon: _expanded
-                    ? Icons.unfold_less_outlined
-                    : Icons.unfold_more_outlined,
-                label: l10n.dashboardInsightActionExpand,
-                onTap: () => setState(() => _expanded = !_expanded),
-              ),
-              const SizedBox(width: 8),
-              // 问一下 — pipes the insight into the existing
-              // explain_insight intent capsule (§5.3 AiIntentInvocation
-              // contract; surfaces in the inline bottom sheet).
-              AiObjectCapsule(
-                source: 'home_insight_card',
-                intent: 'explain_insight',
-                object: AiObjectRef(
-                  type: 'insight',
-                  id: _insightStableId(item),
-                ),
-                objectLabel: insightHeadline(l10n, item),
-                fallbackLabel: l10n.dashboardInsightActionAsk,
-              ),
-              const Spacer(),
-              _ActionPill(
-                icon: Icons.close_outlined,
-                label: l10n.dashboardInsightActionDismiss,
-                onTap: () => _dismiss(),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -264,37 +248,92 @@ class _ExpandedDetail extends StatelessWidget {
   }
 }
 
-class _ActionPill extends StatelessWidget {
-  const _ActionPill({
+/// Floating action cluster that the hover overlay reveals in the
+/// card's top-right corner. Groups expand / ask-AI / dismiss into one
+/// tinted chip so the underlying card stays text-only at rest.
+class _InsightOverlayActions extends StatelessWidget {
+  const _InsightOverlayActions({
+    required this.expanded,
+    required this.onExpand,
+    required this.onDismiss,
+    required this.askCapsule,
+    required this.l10n,
+  });
+
+  final bool expanded;
+  final VoidCallback onExpand;
+  final VoidCallback onDismiss;
+  final Widget askCapsule;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final isDark = colors.brightness == Brightness.dark;
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        decoration: BoxDecoration(
+          color: isDark
+              ? colors.background.withValues(alpha: 0.92)
+              : Colors.white.withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: colors.foreground.withValues(alpha: isDark ? 0.10 : 0.06),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _OverlayIconButton(
+              icon: expanded
+                  ? Icons.unfold_less_outlined
+                  : Icons.unfold_more_outlined,
+              tooltip: l10n.dashboardInsightActionExpand,
+              onTap: onExpand,
+            ),
+            askCapsule,
+            _OverlayIconButton(
+              icon: Icons.close_outlined,
+              tooltip: l10n.dashboardInsightActionDismiss,
+              onTap: onDismiss,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OverlayIconButton extends StatelessWidget {
+  const _OverlayIconButton({
     required this.icon,
-    required this.label,
+    required this.tooltip,
     required this.onTap,
   });
 
   final IconData icon;
-  final String label;
+  final String tooltip;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FTappable(
-      onPress: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: colors.mutedForeground),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: context.theme.typography.xs.copyWith(
-                color: colors.mutedForeground,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+    return FTooltip(
+      tipBuilder: (_, _) => Text(tooltip),
+      child: FTappable(
+        onPress: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          child: Icon(icon, size: 14, color: colors.mutedForeground),
         ),
       ),
     );

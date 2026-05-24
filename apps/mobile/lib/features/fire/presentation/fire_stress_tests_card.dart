@@ -6,6 +6,7 @@ import 'package:forui/forui.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../data/fire_providers.dart';
 import '../domain/fire_stress_test.dart';
 import 'fire_ai_capsule.dart';
@@ -23,70 +24,63 @@ class FireStressTestsCard extends ConsumerWidget {
       appFormattersProvider(Localizations.localeOf(context)),
     );
     final stressAsync = ref.watch(fireStressTestsProvider);
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.fireOsStressTitle,
-                    style: context.theme.typography.md,
+    return AiHoverOverlay(
+      capsule: FireAiCapsule(
+        intent: 'explain_stress_test',
+        source: 'fire_stress_card',
+        objectLabel: l10n.fireOsStressTitle,
+      ),
+      child: FCard.raw(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.fireOsStressTitle, style: context.theme.typography.md),
+              const SizedBox(height: 4),
+              Text(
+                l10n.fireOsStressSubtitle,
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
+                ),
+              ),
+              const SizedBox(height: 12),
+              stressAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: SizedBox.shrink(),
+                ),
+                error: (e, _) => Text(
+                  '$e',
+                  style: context.theme.typography.xs.copyWith(
+                    color: context.theme.colors.destructive,
                   ),
                 ),
-                FireAiCapsule(
-                  intent: 'explain_stress_test',
-                  source: 'fire_stress_card',
-                  objectLabel: l10n.fireOsStressTitle,
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              l10n.fireOsStressSubtitle,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
-            const SizedBox(height: 12),
-            stressAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: SizedBox.shrink(),
-              ),
-              error: (e, _) => Text(
-                '$e',
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.destructive,
-                ),
-              ),
-              data: (results) {
-                if (results.isEmpty) {
-                  return Text(
-                    l10n.fireOsStressEmpty,
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
-                  );
-                }
-                return Column(
-                  children: [
-                    for (final r in results) ...[
-                      _StressRow(
-                        result: r,
-                        formatters: formatters,
-                        l10n: l10n,
+                data: (results) {
+                  if (results.isEmpty) {
+                    return Text(
+                      l10n.fireOsStressEmpty,
+                      style: context.theme.typography.xs.copyWith(
+                        color: context.theme.colors.mutedForeground,
                       ),
-                      const SizedBox(height: 10),
+                    );
+                  }
+                  return Column(
+                    children: [
+                      for (final r in results) ...[
+                        _StressRow(
+                          result: r,
+                          formatters: formatters,
+                          l10n: l10n,
+                        ),
+                        const SizedBox(height: 10),
+                      ],
                     ],
-                  ],
-                );
-              },
-            ),
-          ],
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -143,10 +137,7 @@ class _StressRow extends StatelessWidget {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 2,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: verdictColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(999),
@@ -167,15 +158,24 @@ class _StressRow extends StatelessWidget {
           spacing: 12,
           runSpacing: 4,
           children: [
-            Text(wrLabel,
-                style: context.theme.typography.xs.copyWith(
-                    color: colors.mutedForeground)),
-            Text(cashLabel,
-                style: context.theme.typography.xs.copyWith(
-                    color: colors.mutedForeground)),
-            Text(nwLabel,
-                style: context.theme.typography.xs.copyWith(
-                    color: colors.mutedForeground)),
+            Text(
+              wrLabel,
+              style: context.theme.typography.xs.copyWith(
+                color: colors.mutedForeground,
+              ),
+            ),
+            Text(
+              cashLabel,
+              style: context.theme.typography.xs.copyWith(
+                color: colors.mutedForeground,
+              ),
+            ),
+            Text(
+              nwLabel,
+              style: context.theme.typography.xs.copyWith(
+                color: colors.mutedForeground,
+              ),
+            ),
           ],
         ),
       ],
@@ -234,4 +234,3 @@ Color _verdictColor(FColors colors, FireStressVerdict v) {
       return colors.destructive;
   }
 }
-

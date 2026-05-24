@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import '../../../core/ai/intent/intent.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../../ai_chat/ui/ai_object_capsule.dart';
 import '../data/dashboard_providers.dart';
 import '../domain/dashboard_time_range.dart';
@@ -39,67 +40,63 @@ class TrendCard extends ConsumerWidget {
           value: selectedRange.preset.name,
         ),
       ],
-      child: SoftCard(
-        padding: const EdgeInsets.all(20),
-        borderRadius: 18,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.dashboardTrendTitle,
-                    style: context.theme.typography.md,
+      child: AiHoverOverlay(
+        capsule: trendAsync.maybeWhen(
+          data: (trend) => trend.isEmpty
+              ? const SizedBox.shrink()
+              : AiObjectCapsule(
+                  source: 'home_trend_card',
+                  intent: 'explain_chart',
+                  object: const AiObjectRef(
+                    type: 'chart',
+                    id: 'net_worth_trend',
                   ),
+                  objectLabel: l10n.dashboardTrendTitle,
                 ),
-                // Layer 2 trailing capsule — opens the AI bottom sheet
-                // pre-loaded with chart context (read from the
-                // surrounding AiContextChipScope).
-                trendAsync.maybeWhen(
-                  data: (trend) => trend.isEmpty
-                      ? const SizedBox.shrink()
-                      : Padding(
-                          padding: const EdgeInsets.only(right: 4),
-                          child: AiObjectCapsule(
-                            source: 'home_trend_card',
-                            intent: 'explain_chart',
-                            object: const AiObjectRef(
-                              type: 'chart',
-                              id: 'net_worth_trend',
-                            ),
-                            objectLabel: l10n.dashboardTrendTitle,
-                          ),
-                        ),
-                  orElse: () => const SizedBox.shrink(),
-                ),
-                trendAsync.maybeWhen(
-                  data: (trend) => FTooltip(
-                    tipBuilder: (_, _) => Text(l10n.aiChatSheetExpandTooltip),
-                    child: FButton.icon(
-                      variant: FButtonVariant.ghost,
-                      onPress: trend.isEmpty
-                          ? null
-                          : () => showDashboardChartFullscreen(
-                              context: context,
-                              title: l10n.dashboardTrendTitle,
-                              child: const _TrendFullscreenContent(),
-                            ),
-                      child: const Icon(Icons.fullscreen, size: 20),
+          orElse: () => const SizedBox.shrink(),
+        ),
+        child: SoftCard(
+          padding: const EdgeInsets.all(20),
+          borderRadius: 18,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.dashboardTrendTitle,
+                      style: context.theme.typography.md,
                     ),
                   ),
-                  orElse: () => const SizedBox(width: 48, height: 48),
-                ),
-              ],
-            ),
-            const _RangeChips(),
-            const SizedBox(height: 12),
-            trendAsync.when(
-              loading: () => const _TrendSkeleton(),
-              error: (e, st) => _TrendError(error: e),
-              data: (trend) => _TrendChart(trend: trend),
-            ),
-          ],
+                  trendAsync.maybeWhen(
+                    data: (trend) => FTooltip(
+                      tipBuilder: (_, _) => Text(l10n.aiChatSheetExpandTooltip),
+                      child: FButton.icon(
+                        variant: FButtonVariant.ghost,
+                        onPress: trend.isEmpty
+                            ? null
+                            : () => showDashboardChartFullscreen(
+                                context: context,
+                                title: l10n.dashboardTrendTitle,
+                                child: const _TrendFullscreenContent(),
+                              ),
+                        child: const Icon(Icons.fullscreen, size: 20),
+                      ),
+                    ),
+                    orElse: () => const SizedBox(width: 48, height: 48),
+                  ),
+                ],
+              ),
+              const _RangeChips(),
+              const SizedBox(height: 12),
+              trendAsync.when(
+                loading: () => const _TrendSkeleton(),
+                error: (e, st) => _TrendError(error: e),
+                data: (trend) => _TrendChart(trend: trend),
+              ),
+            ],
+          ),
         ),
       ),
     );

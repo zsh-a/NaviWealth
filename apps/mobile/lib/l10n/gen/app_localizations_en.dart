@@ -4626,7 +4626,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAccountSection => 'Account';
 
   @override
+  String get settingsNumbersAndMoneySection => 'Numbers & Money';
+
+  @override
+  String get settingsPlanningSection => 'Planning';
+
+  @override
+  String get settingsAiSection => 'AI';
+
+  @override
+  String get settingsAboutSection => 'About';
+
+  @override
   String get settingsDataSection => 'Data';
+
+  @override
+  String get settingsBadgeAuto => 'Auto';
+
+  @override
+  String get settingsBadgeCustom => 'Custom';
 
   @override
   String get settingsDataTitle => 'Backup & Restore';

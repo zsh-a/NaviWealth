@@ -8007,11 +8007,47 @@ abstract class AppLocalizations {
   /// **'Account'**
   String get settingsAccountSection;
 
-  /// Settings section header for backup/restore
+  /// Settings section header for base currency / FX rates — formatting + financial semantics, not just display
+  ///
+  /// In en, this message translates to:
+  /// **'Numbers & Money'**
+  String get settingsNumbersAndMoneySection;
+
+  /// Settings section header for Plan-related parameters (risk appetite, target allocation, monthly expense, thresholds, stress test). Renamed from 'Investment Preferences' to match the Plan tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Planning'**
+  String get settingsPlanningSection;
+
+  /// Settings section header for AI privacy, LLM provider key, and chat history/transparency
+  ///
+  /// In en, this message translates to:
+  /// **'AI'**
+  String get settingsAiSection;
+
+  /// Settings section header for the About tile (version, commit, etc.)
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settingsAboutSection;
+
+  /// Settings section header for sync + backup/restore (AI rows moved to the AI section)
   ///
   /// In en, this message translates to:
   /// **'Data'**
   String get settingsDataSection;
+
+  /// Compact trailing pill on a settings link row indicating the value is auto-tuned by another preference (e.g. risk appetite). Renders uppercase.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get settingsBadgeAuto;
+
+  /// Compact trailing pill on a settings link row indicating the value has been hand-customised. Renders uppercase.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get settingsBadgeCustom;
 
   /// Settings tile that opens the backup page
   ///
