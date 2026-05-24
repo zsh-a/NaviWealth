@@ -58,7 +58,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 17;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -75,6 +75,7 @@ class AppDatabase extends _$AppDatabase {
       await _createAiTouchedEntitiesTable(this);
       await _createIngestTables(this);
       await _createOptionsOpportunityCache(this);
+      await _createMemoryRuntime(this);
     },
     onUpgrade: (m, from, to) async {
       // v1 → v2: capture the AI stream's `stop_reason` on chat messages
@@ -216,6 +217,21 @@ class AppDatabase extends _$AppDatabase {
           'CREATE INDEX IF NOT EXISTS idx_budgets_category_period '
           'ON budgets(category_id, period_month)',
         );
+      }
+      // v15 → v16: Memory Layer persistent vector store
+      // (`docs/lifeos-shell.md` §6, D-1.7). Local-only — derived from
+      // domain rows, re-indexable, never enters sync.
+      if (from < 16) {
+        await _createMemoryDocuments(this);
+      }
+      // v16 → v17: Memory Runtime split (`docs/lifeos-shell.md` §6,
+      // D-1.7b). memory_documents → memories (typed) + memory_embeddings
+      // (vectors keyed by memory_id) + events (cross-domain event log).
+      // The v16 table held derived data only, so dropping it is safe —
+      // indexers re-populate from source-of-truth tables at next boot.
+      if (from < 17) {
+        await customStatement('DROP TABLE IF EXISTS memory_documents');
+        await _createMemoryRuntime(this);
       }
     },
     beforeOpen: (details) async {
@@ -410,6 +426,25 @@ Future<void> _createOptionsTradeJournalIndexes(AppDatabase db) async {
 
 Future<void> _createOptionsOpportunityCache(AppDatabase db) async {
   for (final stmt in optionsOpportunityCacheDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
+/// Legacy v16 DDL — kept only so the `if (from < 16)` step in
+/// [migration] still applies cleanly when a user jumps v15 → v17.
+/// v17 immediately drops the table, so this is effectively a no-op
+/// migration path in practice.
+Future<void> _createMemoryDocuments(AppDatabase db) async {
+  await db.customStatement(
+    'CREATE TABLE IF NOT EXISTS memory_documents ('
+    '  id TEXT PRIMARY KEY, source TEXT, source_id TEXT, owner_user_id TEXT,'
+    '  title TEXT, body TEXT, fingerprint TEXT, dimension INTEGER,'
+    '  vector_bytes BLOB, updated_at INTEGER)',
+  );
+}
+
+Future<void> _createMemoryRuntime(AppDatabase db) async {
+  for (final stmt in memoryRuntimeDdl) {
     await db.customStatement(stmt);
   }
 }

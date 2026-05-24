@@ -19,6 +19,7 @@ import '../anthropic/anthropic_wire.dart';
 import '../device_session.dart';
 import '../device_tool_dispatcher.dart';
 import 'breakdown_tools.dart';
+import 'build_context_tool.dart';
 import 'device_tool.dart';
 import 'get_anomaly_flags_tool.dart';
 import 'get_asset_allocation_tool.dart';
@@ -48,6 +49,7 @@ import 'propose_liability_payment_tool.dart';
 import 'propose_options_journal_entry_tool.dart';
 import 'propose_options_profile_update_tool.dart';
 import 'propose_trade_tool.dart';
+import 'query_memory_tool.dart';
 import 'read_account_window_tool.dart';
 import 'read_asset_window_tool.dart';
 import 'read_category_window_tool.dart';
@@ -100,6 +102,11 @@ const List<DeviceTool> kDeviceTools = <DeviceTool>[
   ProposeOptionsJournalEntryTool(),
   // Income Planner P4 — Wheel lifecycle (`roadmap-next.md` §3.3).
   GetWheelLifecycleTool(),
+  // Memory Runtime (`lifeos-shell.md` §6, D-1.7b) — query_memory is the
+  // flat-hits back-compat surface; build_context returns the
+  // kind-classified ContextPack.
+  QueryMemoryTool(),
+  BuildContextTool(),
 ];
 
 DeviceToolRegistry defaultDeviceToolRegistry() =>

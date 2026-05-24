@@ -55,7 +55,9 @@ D-1  Shell foundation                            (4–6 周)
   D-1.4  Sync row family namespace (fin:* / health:*)
   D-1.5  Auth domain scopes + 域级 opt-in
   D-1.6  Cross-feature composition uplift (ai_chat)
-  D-1.7  Memory Layer 通电 (embedder Rust + 第一个 caller)
+  D-1.7  Memory Layer 通电 substrate                    ✅ 落地 (vector store + embedder seam)
+  D-1.7b Memory Runtime (typed + lifecycle + ContextBuilder)  ✅ 落地 (2026-05-24)
+  D-1.7c Rust MiniLM embedder drop-in                   ⏳ 未做 (§6.6 步骤已列)
   D-1.8  Multi-domain IA shell
 D-2  HealthOS MVP                                (8–12 周)  详见 healthos-domain.md
 D-3+ 触发性 (TimeOS / Knowledge / Living)         不预排
@@ -130,24 +132,123 @@ abstract class DomainContextProvider {
 
 ---
 
-## 6. Memory Layer
+## 6. Memory Runtime
 
-**今天**: `core/ai/local/embedding/` 是 `StubEmbedder` + `InMemoryVectorStore`,零 caller(northstar §2.6 "deliberate dormant")。
+> **Phase D-1.7b 落地** (2026-05-24): 升级为"长期上下文运行时",不再是"语义化全文索引"。Schema v17 拆分,引入 typed records + lifecycle + Context Builder。
 
-**Phase D-1.7 通电**:
+### 6.1 五种 Memory 抽象
 
-| 组件 | 实现 | 语言 |
-|---|---|---|
-| Embedder | MiniLM via `fastembed-rs` 或 `candle` | **Rust** (见 §10) |
-| Tokenizer | HuggingFace `tokenizers` | **Rust** (同 crate) |
-| Vector store | SQLite 暴力 cosine (< 50k 条目);> 50k 触发 `usearch-rs` | Dart (sqlite) |
-| Contract | `MemoryEntry / Chunk / EmbeddingModel / SearchQuery / SearchHit` | Dart (跨域中立) |
+按用户原始设计(2026-05-24 review)落地 4 个 memory kind + 一个独立 event log:
 
-**第一个 caller (D-1.7 验收)**: Finance trade journal 长期上下文检索。AI Chat 问"我去年这个时候卖 put 的逻辑是什么"时,从 trade journal embedding 索引返回 top-k。
+| Kind | 用途 | 抽取触发 | 例 |
+|---|---|---|---|
+| **event** | "发生了什么" | 每条 trade journal 入库 | `trade_closed`: NVDA put closed at 70% credit |
+| **semantic** | 长期事实 / 偏好 | 用户配置 / AI 提炼(尚无 caller) | "user prefers local-first" |
+| **episodic** | 决策 + 推理 + 结果 | 终态 trade(closed/assigned/expired)抽取 | "closed NVDA put early: IV 回落, 风险收益比下降" |
+| **procedural** | 规则 | 用户配置 / AI 提炼(尚无 caller) | "当 put 收益 >= 70% 考虑平仓" |
+| **events 表** | 时间线主干 | 任何 indexer 写入 | 与 memories 分离;cheap, abundant;不带 confidence/lifecycle |
 
-**第二个 caller (D-2.4)**: HealthOS sleep / activity 长期叙事。
+### 6.2 数据形状
 
-**约束**: contract 严禁 finance/health 字眼。`MemoryEntry.sourceTable` 是字符串而非 enum。
+```
+events                                 memories                          memory_embeddings
+─────────                              ──────────                        ──────────────────
+id          PK                         id                  PK            memory_id    PK (FK CASCADE)
+type        free string                kind                event|sem|...  fingerprint  Embedder.fingerprint
+timestamp   millis                     scope               '*' | 'options_trading' | ...  dimension
+source      'options_trade_journal'    owner_user_id                     vector_bytes Float32 LE BLOB
+owner_user_id                          source/sourceId/sourceEventId
+title/summary                          title/summary       (summary embedded)
+payload_json                           payload_json        kind-specific
+entities_json                          entities_json       boost match
+importance                             importance/confidence
+                                       valid_from/valid_until
+                                       created_at/updated_at/last_accessed_at
+```
+
+- `memory_embeddings` 是 1:1 FK 侧表 —— **embedder swap 不必动 records**,只 drop 旧 fingerprint 的 vectors 即可触发 reindex
+- 所有表都在 `local_only_tables.dart`,**不进 sync**(derived data,re-indexable)
+- `scope='*'` 是 wildcard:在任何具体 scope 查询里都会命中(适合通用偏好)
+
+### 6.3 Runtime API (`core/ai/local/memory/`)
+
+| 模块 | 责任 |
+|---|---|
+| `embedder.dart` (`embedding/`) | `Embedder` 抽象 + fingerprint 守门;`StubEmbedder` 默认 |
+| `memory_store.dart` | `MemoryStore` 抽象 + `SqliteMemoryStore` 实现(JOIN memories + memory_embeddings) |
+| `event_store.dart` | `EventStore` + `SqliteEventStore` |
+| `hybrid_scorer.dart` | 纯函数 `hybridScore = 0.35*sem + 0.25*imp + 0.20*ent + 0.10*rec + 0.10*con` + `entityOverlap` (Jaccard) + `recencyScore`(指数衰减) |
+| `memory_runtime.dart` | composition root:`remember / recall / forget / supersede / recordEvent / recentEvents / dropStaleVectors` |
+| `context_builder.dart` | 按 5 槽组装 `ContextPackMemory{user_preferences, applicable_rules, related_decisions, recent_events, related_events}` |
+| `providers.dart` | Riverpod 接线 —— 跨域中立,**不**import `features/` |
+
+### 6.4 Extractor:从 raw → typed memory
+
+第一个 caller `features/options_income/data/trade_journal_memory_indexer.dart`:
+
+```
+TradeJournalEntry  →  always emit event (trade_opened/closed/assigned/expired)
+                  →  if terminal status: also emit episodic memory
+                       payload = {context, decision, reasoning, outcome}
+                       importance heuristic: assigned 0.75 > closed 0.6 > expired 0.5
+                                            +0.1 if notes attached, +0.05 if |pnl|/credit >= 1
+                       confidence: 0.9 with notes, 0.75 otherwise
+```
+
+**故意 defer**:semantic / procedural 自动抽取 —— 需要跨多条 entry 的模式检测,等 AI Chat 接 extractor 之后再做。当前 schema 允许这两种 kind 写入,只是没有自动 caller。
+
+### 6.5 Device AI tools
+
+| Tool | 用途 | 输入 | 输出 |
+|---|---|---|---|
+| `build_context` (推荐) | 按 5 槽分类的 ContextPack | `{query?, entities?, scope?, kinds?, per_slot_limit?}` | `{user_preferences, applicable_rules, related_decisions, recent_events, related_events}` |
+| `query_memory` (back-compat) | 扁平 hybrid-ranked hit 列表 | `{query, kind?, source?, top_k?}` | `{hits[{id, kind, source, title, excerpt, score, semantic_sim, entity_overlap, recency, importance, confidence}]}` |
+
+LLM 应**优先**调 `build_context`(回答涉及"以前 / 上次 / 我当时为什么 / 我的偏好"等问题);`query_memory` 留作模糊 fallback。
+
+### 6.6 Rust MiniLM drop-in (D-1.7c, 未做)
+
+唯一剩余的 Rust 工作:
+
+1. 新建 `apps/mobile/native/lifeos_native/` 单 crate,`fastembed-rs` 或 `candle`
+2. FFI 表面只 1 个函数:`embed(text: String) -> Vec<f32>`(tokenizer 同 crate)
+3. Dart 侧 `RustMinilmEmbedder implements Embedder`, `fingerprint => 'minilm-l6-v2-d384'`
+4. `bootstrap.dart` `embedderProvider.overrideWithValue(RustMinilmEmbedder(...))`
+5. `runtime.dropStaleVectors()` 清旧 → 下次 indexer cycle 自动用真模型重 embed
+6. **memory/event records 不动**(架构债已经在 D-1.7b 提前还掉)
+
+### 6.7 第二域接入路径 (D-2.4 HealthOS)
+
+```
+1. 写 features/health/data/sleep_memory_indexer.dart (复制 trade_journal 模板)
+2. 在 memory_indexers_bootstrap.dart 加一行: ref.watch(sleepDailyMemoryIndexerProvider);
+3. emit events 用 source='health:sleep' / type='sleep_session_ended'
+4. emit episodic memories 用 scope='health'
+5. Memory Layer 本身完全不动 —— scope='health' 和 scope='options_trading' 在同一张表共存
+```
+
+### 6.8 反目标(D-1.7b 故意没做)
+
+- ❌ Memory links 表(图结构) —— Context Builder 已够用,等真的不够再加
+- ❌ Auto-summarisation / agent self-reflection —— Extractor 用 deterministic heuristics
+- ❌ Embedding everything raw —— Extractor 是写入门
+- ❌ 把 memory 模块整个 Rust 化(`lifeos-shell.md` §10 边界仍然成立)
+
+### 6.9 测试覆盖
+
+D-1.7b 总计 **~120 测试**:
+
+- `test/core/ai/contracts/memory_record_test.dart` — 8 (kind wire + JSON roundtrip)
+- `test/core/ai/local/memory/hybrid_scorer_test.dart` — 18 (weights / Jaccard / decay)
+- `test/core/ai/local/memory/memory_store_test.dart` — 17 (CRUD / query filters / fingerprint / scope wildcard)
+- `test/core/ai/local/memory/event_store_test.dart` — 8 (CRUD / time / type / entity / owner)
+- `test/core/ai/local/memory/memory_runtime_test.dart` — 11 (recall / supersede / events / drop stale)
+- `test/core/ai/local/memory/context_builder_test.dart` — 7 (slot classification / scope / kindHints / limit)
+- `test/features/options_income/data/trade_journal_memory_indexer_test.dart` — 8 (event emission / importance / idempotency / owner / back-pointer)
+- `test/core/ai/runtime/device/tools/query_memory_tool_test.dart` — 7
+- `test/core/ai/runtime/device/tools/build_context_tool_test.dart` — 6
+
+Plus updated descriptor/registry tests (catalog → 37 tools).
 
 ---
 

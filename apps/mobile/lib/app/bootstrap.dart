@@ -21,6 +21,7 @@ import '../design_system/preferences/theme_preferences.dart';
 import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
 import '../features/cashflow/data/recurring_transaction_providers.dart';
+import 'memory_indexers_bootstrap.dart';
 import 'route_guard.dart';
 
 /// Initializes the app shell: framework binding, URL strategy, and the global
@@ -158,6 +159,11 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // warming and FX refresh so dashboard valuations have one startup path.
   container.read(syncSchedulerBootstrapProvider);
   container.read(priceSyncCoordinatorBootstrapProvider);
+  // Eager-bind Memory Layer indexers (`docs/lifeos-shell.md` §6, D-1.7).
+  // Reading this provider subscribes the trade-journal indexer (and any
+  // future domain indexers) to their source streams so semantic memory
+  // stays current without UI involvement.
+  container.read(memoryLayerBootstrapProvider);
   if (container.read(core_auth.authSessionProvider) != null) {
     unawaited(
       container.read(

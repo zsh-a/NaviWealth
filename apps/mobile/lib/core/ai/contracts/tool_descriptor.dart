@@ -376,6 +376,21 @@ const allToolDescriptors = <ToolDescriptor>[
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
   ),
+  // Memory Runtime (`lifeos-shell.md` §6, D-1.7b).
+  ToolDescriptor(
+    name: 'query_memory',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.small,
+  ),
+  ToolDescriptor(
+    name: 'build_context',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.standard,
+  ),
 ];
 
 ToolDescriptor? lookupToolDescriptor(String name) {

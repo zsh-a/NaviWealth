@@ -1,11 +1,10 @@
 /// Pure Dart embedding abstraction.
 ///
-/// Today only [StubEmbedder] exists — a hash-based pseudo-vector good
-/// enough for the storage / retrieval / ranking pipeline tests. A real
-/// on-device embedder (MiniLM via ONNX or a platform-specific runtime)
-/// is a deliberate future swap, gated on the Memory Layer contract
-/// (see `docs/ai-boundary-audit.md` §3.1). The rest of the
-/// semantic-memory plumbing should not change when the model swaps.
+/// `StubEmbedder` is the deterministic hash-based pseudo-embedder used by
+/// tests and dev builds. A real on-device embedder (MiniLM via Rust FFI —
+/// see `docs/lifeos-shell.md` §10) drops in behind the same interface; the
+/// [Embedder.fingerprint] discipline below lets the persistent vector
+/// store invalidate rows produced by a different model.
 library;
 
 import 'dart:math' as math;
@@ -13,6 +12,14 @@ import 'dart:math' as math;
 abstract class Embedder {
   /// Output vector dimension. Stable across calls.
   int get dimension;
+
+  /// Stable identifier for this model + version + dimension. Persisted
+  /// alongside every stored vector so the store can drop rows produced
+  /// by a different embedder. Format is free-form but must change
+  /// whenever the vector space changes (model swap, dimension change,
+  /// normalisation rule change). Examples: `'stub-v1-d32'`,
+  /// `'minilm-l6-v2-d384'`.
+  String get fingerprint;
 
   /// Embed a single text. The returned vector has length [dimension]
   /// and is unit-length (L2-normalised) so consumers can use a plain
@@ -48,6 +55,9 @@ class StubEmbedder implements Embedder {
 
   @override
   final int dimension;
+
+  @override
+  String get fingerprint => 'stub-v1-d$dimension';
 
   @override
   Future<List<double>> embed(String text) async {
