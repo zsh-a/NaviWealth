@@ -177,7 +177,7 @@ class _BucketRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final value = bucket.valueInBase.amount.toDouble();
-    final pct = totalAmount == 0 ? 0.0 : (value / totalAmount) * 100;
+    final share = totalAmount == 0 ? 0.0 : value / totalAmount;
     return Row(
       children: [
         Expanded(
@@ -214,7 +214,7 @@ class _BucketRow extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              '${pct.toStringAsFixed(1)}%',
+              formatters.percent(share, decimalDigits: 1),
               style: context.theme.typography.xs.copyWith(
                 color: colors.mutedForeground,
               ),
