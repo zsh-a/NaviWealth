@@ -172,6 +172,13 @@ Settings 在 `/settings`，不占主导航——通过 Today 顶栏 ⚙ 进入�
 - 列表选择状态使用 query string，例如 `/wealth/accounts?selected=<id>`。
 - 旧 `/accounts/*` 路径不再解析（Phase D 已删 redirect）。任何在 Phase A 之前生成、仍引用旧路径的外部链接 / AI chat `routeHint` 会 404；客户端按需重新生成会话。
 
+### 返回按钮（back-nav）
+
+- **一级 tab 页**（Today / Activity / Wealth / Plan）**禁止**带返回箭头——这是底栏切换的家。
+- **其它所有有 header 的页**（push/go 抵达的子页、Settings、master-detail 的 standalone 模式）**必须**通过 `appSubPageHeader(...)` 构造 header，由它自动注入 `backHeaderAction`。直接写 `FHeader.nested(...)` 而没有 back 是禁止行为。
+- 唯一例外：master-detail 右侧空态、全屏 modal 的 `×` 关闭按钮——加进 `tool/check-back-nav-coverage.sh` 的 `EMBEDDED_HEADERS` 白名单，并写明原因。
+- CI 在 `tool/check-back-nav-coverage.sh` 里强制——增加新页面时如果忘记 back 会直接红。
+
 ---
 
 ## 7. 迁移历史（全部完成）

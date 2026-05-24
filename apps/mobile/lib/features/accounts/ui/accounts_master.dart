@@ -117,7 +117,8 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return FScaffold(
-      header: FHeader.nested(
+      header: appSubPageHeader(
+        context: context,
         title: Text(l10n.navAccounts),
         suffixes: [
           FHeaderAction(

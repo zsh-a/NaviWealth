@@ -12,6 +12,7 @@ on:
       - 'docs/ai-protocol.md'
       - 'tool/check-tool-descriptors.sh'
       - 'tool/check-modal-helpers.sh'
+      - 'apps/mobile/tool/check-back-nav-coverage.sh'
   pull_request:
     paths:
       - 'apps/mobile/**'
@@ -22,6 +23,7 @@ on:
       - 'docs/ai-protocol.md'
       - 'tool/check-tool-descriptors.sh'
       - 'tool/check-modal-helpers.sh'
+      - 'apps/mobile/tool/check-back-nav-coverage.sh'
 
 concurrency:
   group: mobile-${{ github.ref }}
@@ -85,6 +87,13 @@ jobs:
         # stays identical. Bans showDialog/AlertDialog/etc. in features.
         working-directory: ${{ github.workspace }}
         run: ./tool/check-modal-helpers.sh
+      - name: Back-nav coverage — every non-tab page surfaces a way out
+        # Tab pages (Today/Activity/Wealth/Plan) intentionally have no
+        # back arrow. Every other FHeader.nested page must wire one via
+        # appSubPageHeader() or backHeaderAction() so users pushed in
+        # via deep link / sibling nav can leave without the system
+        # gesture (which doesn't exist on web).
+        run: ./tool/check-back-nav-coverage.sh
       - name: Run tests + pin failure footprint (Wave 41)
         # We can't yet bring the failing-test footprint to zero (~50
         # files broken by design-system API drift unrelated to the AI
