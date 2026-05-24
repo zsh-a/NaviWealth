@@ -35,7 +35,7 @@ Future<void> _pump(
     ProviderScope(
       overrides: [
         corporateActionEventsProvider(symbol).overrideWith(
-          (ref) => events,
+          (ref) async => events,
         ),
       ],
       child: MaterialApp(
