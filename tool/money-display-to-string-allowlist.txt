@@ -1,0 +1,87 @@
+# Tab-separated allowlist for tool/lint-money-display.sh.
+# Format:
+# path<TAB>trimmed .toStringAsFixed line<TAB>reason
+apps/mobile/lib/core/ai/contracts/user_profile.dart	'share': double.parse(shareFraction.toStringAsFixed(3)),	ratio-json-rounding
+apps/mobile/lib/core/ai/contracts/user_profile.dart	'savings_rate': double.parse(savingsRate.toStringAsFixed(3)),	ratio-json-rounding
+apps/mobile/lib/core/ai/runtime/device/device_user_profile_prompt.dart	final progressStr = progress.toStringAsFixed(1);	percent-display
+apps/mobile/lib/core/ai/runtime/device/device_user_profile_prompt.dart	final etaStr = eta == null ? '' : '，预计 ${eta.toStringAsFixed(1)} 年达成';	duration-display
+apps/mobile/lib/core/ai/runtime/device/device_user_profile_prompt.dart	return '${(major / 10000).toStringAsFixed(1)} 万';	ai-context-compact-amount
+apps/mobile/lib/core/ai/runtime/device/device_user_profile_prompt.dart	return '${(major / 10000).toStringAsFixed(2)} 万';	ai-context-compact-amount
+apps/mobile/lib/core/ai/runtime/device/device_user_profile_prompt.dart	return major.toStringAsFixed(0);	ai-context-compact-amount
+apps/mobile/lib/core/ai/runtime/device/tools/propose_fire_bucket_rule_tool.dart	final pctPart = pct != null ? '(${(pct * 100).toStringAsFixed(0)}%)' : '';	percent-display
+apps/mobile/lib/core/ai/runtime/device/tools/simulate_fire_plan_tool.dart	if (raw is num) return Decimal.parse(raw.toDouble().toStringAsFixed(2));	decimal-rounding
+apps/mobile/lib/data/market/providers/options/yfinance_options_provider.dart	final rounded = Decimal.parse(raw.toStringAsFixed(4));	decimal-rounding
+apps/mobile/lib/design_system/charts/nw_pie_chart.dart	? '${pct.toStringAsFixed(0)}%'	percent-display
+apps/mobile/lib/design_system/charts/nw_pie_chart.dart	'${pct.toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/design_system/charts/nw_pie_chart.dart	if (abs >= 1e12) return '$sign${(abs / 1e12).toStringAsFixed(1)}T';	compact-chart-label
+apps/mobile/lib/design_system/charts/nw_pie_chart.dart	if (abs >= 1e9) return '$sign${(abs / 1e9).toStringAsFixed(1)}B';	compact-chart-label
+apps/mobile/lib/design_system/charts/nw_pie_chart.dart	if (abs >= 1e6) return '$sign${(abs / 1e6).toStringAsFixed(1)}M';	compact-chart-label
+apps/mobile/lib/design_system/charts/nw_pie_chart.dart	if (abs >= 1e3) return '$sign${(abs / 1e3).toStringAsFixed(1)}K';	compact-chart-label
+apps/mobile/lib/design_system/charts/nw_pie_chart.dart	return value.toStringAsFixed(0);	compact-chart-label
+apps/mobile/lib/design_system/charts/nw_pie_chart.dart	'${percent.toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/features/ai_chat/data/providers.dart	if (raw is num) return Decimal.parse(raw.toDouble().toStringAsFixed(2));	decimal-rounding
+apps/mobile/lib/features/ai_chat/ui/ai_context_summary_header.dart	final abs = (pct.abs() * 100).toStringAsFixed(1);	percent-display
+apps/mobile/lib/features/ai_chat/ui/ai_transparency_badge.dart	if (seconds < 10) return '${seconds.toStringAsFixed(1)}s';	duration-display
+apps/mobile/lib/features/ai_chat/ui/tool_invocation_renderers.dart	'${(sorted[i].weight * 100).toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/features/ai_chat/ui/tool_invocation_renderers.dart	'${delta >= 0 ? '+' : ''}${(delta * 100).toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/features/analytics/ui/benchmark/benchmark_comparison_content.dart	return '$sign${pct.toStringAsFixed(2)}%';	percent-display
+apps/mobile/lib/features/assets/ui/manual_asset_tile.dart	.toStringAsFixed(2)	rate-percent-display
+apps/mobile/lib/features/expense/ui/expense_report_sections.dart	'${(percent * 100).toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/features/fire/domain/fire_bucket_allocator.dart	: Decimal.parse(pct.clamp(0.0, 1.0).toStringAsFixed(4));	decimal-rounding
+apps/mobile/lib/features/fire/domain/fire_bucket_allocator.dart	Decimal.parse(plan.riskSettings.oneOffShockAmount.toStringAsFixed(2));	decimal-rounding
+apps/mobile/lib/features/fire/domain/fire_calculator.dart	final f = Decimal.parse(factor.toStringAsFixed(4));	decimal-rounding
+apps/mobile/lib/features/fire/domain/fire_state_service.dart	final factor = Decimal.parse(trailingScale.toStringAsFixed(4));	decimal-rounding
+apps/mobile/lib/features/fire/domain/fire_stress_test_engine.dart	final factor = Decimal.parse((1 - pct).toStringAsFixed(4));	decimal-rounding
+apps/mobile/lib/features/fire/domain/fire_stress_test_engine.dart	final factor = Decimal.parse((1 + pct).toStringAsFixed(4));	decimal-rounding
+apps/mobile/lib/features/fire/domain/fire_stress_test_engine.dart	final shock = Decimal.parse(amount.toStringAsFixed(2));	decimal-rounding
+apps/mobile/lib/features/fire/domain/fire_stress_test_engine.dart	final factor = Decimal.parse((1 - pct).toStringAsFixed(4));	decimal-rounding-fx-shock
+apps/mobile/lib/features/fire/presentation/fire_dashboard_content.dart	'(${(s.annualReturn * 100).toStringAsFixed(1)}%)',	percent-display
+apps/mobile/lib/features/fire/presentation/fire_dashboard_content.dart	(scenario.annualReturn * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/fire/presentation/fire_dashboard_content.dart	return Decimal.parse(value.toStringAsFixed(2));	decimal-rounding
+apps/mobile/lib/features/fire/presentation/fire_goal_form.dart	(_inflation * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/fire/presentation/fire_goal_form.dart	'${l10n.fireOsPlanFormSwrValue((_swr * 100).toStringAsFixed(1))}',	percent-display
+apps/mobile/lib/features/fire/presentation/fire_review_card.dart	return l10n.fireOsReviewDiffWr(sign, pp.abs().toStringAsFixed(2));	percentage-point-display
+apps/mobile/lib/features/fire/presentation/fire_review_card.dart	((f.pct ?? 0) * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/fire/presentation/fire_review_card.dart	((f.pct ?? 0) * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/fire/presentation/fire_simulations_card.dart	ppDelta.abs().toStringAsFixed(2),	percentage-point-display
+apps/mobile/lib/features/fire/presentation/fire_simulations_card.dart	delta.abs().toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/fire/presentation/fire_state_hero_card.dart	final swrPct = (state.plan.safeWithdrawalRate * 100).toStringAsFixed(1);	percent-display
+apps/mobile/lib/features/fire/presentation/fire_state_hero_card.dart	(state.withdrawalRate * 100).toStringAsFixed(2),	percent-display
+apps/mobile/lib/features/fire/presentation/fire_state_hero_card.dart	state.cashBucketMonths.toStringAsFixed(1),	duration-display
+apps/mobile/lib/features/fire/presentation/fire_state_hero_card.dart	(pct * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/fire/presentation/fire_stress_tests_card.dart	(result.withdrawalRateAfter * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/fire/presentation/fire_stress_tests_card.dart	result.cashBucketMonthsAfter.toStringAsFixed(1),	duration-display
+apps/mobile/lib/features/fire/presentation/fire_stress_tests_card.dart	((r.params.drawdownPct ?? 0) * 100).toStringAsFixed(0),	percent-display
+apps/mobile/lib/features/fire/presentation/fire_stress_tests_card.dart	((r.params.expenseShockPct ?? 0) * 100).toStringAsFixed(0),	percent-display
+apps/mobile/lib/features/fire/presentation/fire_stress_tests_card.dart	Decimal.parse(amount.toStringAsFixed(2)),	decimal-rounding-before-currency-formatter
+apps/mobile/lib/features/fire/presentation/fire_stress_tests_card.dart	((r.params.fxShockPct ?? 0) * 100).toStringAsFixed(0),	percent-display
+apps/mobile/lib/features/home/ui/ai_insight_feed.dart	item.driftPct?.toStringAsFixed(2) ?? '',	percent-display
+apps/mobile/lib/features/home/ui/ai_insight_feed.dart	item.anomalyPct?.toStringAsFixed(2) ?? '',	percent-display
+apps/mobile/lib/features/home/ui/allocation_card.dart	: '${(percent! * 100).toStringAsFixed(1)}%';	percent-display
+apps/mobile/lib/features/home/ui/allocation_detail_panel.dart	'${pct.toStringAsFixed(pct >= 10 ? 0 : 1)}%',	percent-display
+apps/mobile/lib/features/home/ui/allocation_summary.dart	final pct = (segment.ratio * 100).clamp(0, 100).toStringAsFixed(1);	percent-display
+apps/mobile/lib/features/home/ui/home_greeting_header.dart	final absPct = (pct.abs() * 100).toStringAsFixed(1);	percent-display
+apps/mobile/lib/features/home/ui/insight_feed_strings.dart	((item.fireOsWithdrawalRate ?? 0) * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/home/ui/insight_feed_strings.dart	((item.fireOsSafeWithdrawalRate ?? 0) * 100).toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/home/ui/insight_feed_strings.dart	(item.fireOsCashBucketMonths ?? 0).toStringAsFixed(1),	duration-display
+apps/mobile/lib/features/investment/presentation/dca_simulator_page.dart	return '${value.toStringAsFixed(1)}%';	percent-display
+apps/mobile/lib/features/options_income/domain/services/opportunity_scorer.dart	final hundred = (value * Decimal.fromInt(100)).toStringAsFixed(1);	percent-display
+apps/mobile/lib/features/options_income/presentation/income_planner_page.dart	final pct = (value * Decimal.fromInt(100)).toStringAsFixed(1);	percent-display
+apps/mobile/lib/features/options_income/presentation/opportunity_detail_sheet.dart	final pct = (value * Decimal.fromInt(100)).toStringAsFixed(1);	percent-display
+apps/mobile/lib/features/plan/ui/plan_hub_page.dart	: (monthsToTarget / 12).toStringAsFixed(monthsToTarget < 24 ? 1 : 0);	duration-display
+apps/mobile/lib/features/plan/ui/plan_hub_page.dart	final progressPct = (progress * 100).clamp(0, 100).toStringAsFixed(0);	percent-display
+apps/mobile/lib/features/rebalance/ui/deviation_bar.dart	'${(actualWeight * 100).toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/features/rebalance/ui/deviation_bar.dart	' / ${(targetWeight * 100).toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/features/rebalance/ui/deviation_bar.dart	final text = '$sign${(deviation * 100).toStringAsFixed(1)}%';	percent-display
+apps/mobile/lib/features/rebalance/ui/rebalance_page.dart	'${(plan.driftBeforePct * 100).toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/features/rebalance/ui/rebalance_page.dart	'${(plan.driftAfterPct * 100).toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/features/rebalance/ui/rebalance_page.dart	Text('${((0.01 + v * 0.19) * 100).toStringAsFixed(0)}%'),	percent-display
+apps/mobile/lib/features/rebalance/ui/rebalance_page.dart	Text('${((0.05 + v * 0.25) * 100).toStringAsFixed(0)}%'),	percent-display
+apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	return value.toStringAsFixed(1);	percent-display
+apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	_totalPct.toStringAsFixed(1),	percent-display
+apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	semanticsLabel: '${totalPct.toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	label: '${value.toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/features/settings/ui/ai_trace_waterfall.dart	if (cost != null) AiPill(label: '≈¥${cost.toStringAsFixed(4)}'),	ai-cost-diagnostic
+apps/mobile/lib/features/settings/ui/ai_trace_waterfall.dart	if (n < 1000000) return '${(n / 1000).toStringAsFixed(1)}k';	compact-token-label
+apps/mobile/lib/features/settings/ui/ai_trace_waterfall.dart	return '${(n / 1000000).toStringAsFixed(2)}M';	compact-token-label
+apps/mobile/lib/features/settings/ui/ai_transparency_page.dart	if (hasCost) AiPill(label: '≈¥${cost.toStringAsFixed(3)}'),	ai-cost-diagnostic
