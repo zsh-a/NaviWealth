@@ -19,7 +19,7 @@
 
 ## 0. 约束(读懂这里再排期)
 
-1. **作用域**:只做 FinanceOS。本文档不包含 LifeOS / 多域 shell / HealthOS / TimeOS / LivingOS 的任何 phase。
+1. **作用域**:FinanceOS 域路线(本文档)+ Phase D 状态指针(§10,详见 `lifeos-shell.md`)。HealthOS 域 SSOT 在 `healthos-domain.md`,**不重复**。TimeOS / KnowledgeOS / LivingOS 未触发,本文档不规划。
 2. **IA 锁定**:Today / Activity / Wealth / Plan + 全局 Settings + Search 已锁定。任何新功能必须归位到现有 tab,**不**新增 tab、不重命名 tab、不引入"Analytics"标签。见 memory `ia_contract.md`。
 3. **架构边界**: 新增代码遵守北极星 §2。新 device tool 必须放 `features/<域>/ai_tools/`(尚未启用迁移,但**新增**不要再往 `core/ai/runtime/device/tools/` 里堆 Finance tool)。
 4. **抽象克制**: 单域 generalization 不做。任何"为以后可能的第二个域而提前抽象"的 PR 视为违反 §1.2,拒绝。
@@ -182,7 +182,7 @@
 - ❌ 把 `data/db/` 改名/迁移到 `core/persistence/` 纯为"反映跨域角色"
 - ❌ 在 `features/<finance>/` 内 import `features/<其它>/`(`shared/` 例外)
 - ❌ 把 Finance 实体(`Money` / `Account` / `JournalEntry`)塞进任何 `core/ai/contracts/` / `core/sync/` 协议字段
-- ❌ 写"LifeOS Phase 0–N"路线图(包括本文档不允许的形态)
+- ❌ 写**未触发域**(TimeOS / KnowledgeOS / LivingOS)的"Phase 0–N"路线图。HealthOS 已触发(2026-05-24),其 SSOT 在 `healthos-domain.md`,本条目不再阻止
 
 ### 6.2 产品形态类(援引北极星 §1.7)
 
@@ -238,4 +238,27 @@
 - PR review: 触及 `core/` 或新建跨 feature import 时,把 PR 对照 §6 + 北极星 §2 走一遍
 - 改本文档前自问:是 §2/§3/§4 的事实推进?还是 §5 的触发条件成立?
   - 都不是 → 不应该改本文档。先去 detail 文档动手
-- 本文档目标长度: **< 350 行**(当前在限内)。超出意味着在写 detail,应该回流到 detail 文档
+- 本文档目标长度: **< 400 行**(当前在限内)。超出意味着在写 detail,应该回流到 detail 文档
+
+---
+
+## 10. Phase D 状态 (2026-05-24 启动)
+
+> Phase D 是 LifeOS 多域 shell 启动。本节是**指针**,真正的 SSOT 在 `lifeos-shell.md`。
+> 决策记录见 `lifeos-decision-2026-05-24.md`,架构边界更新见 `lifeos-architecture-northstar.md` §4。
+
+| 阶段 | 状态 |
+|---|---|
+| D-0 决策落地 + 文档基线 | ✅ 进行中(本批 commit) |
+| D-1 Shell foundation (1.1–1.8) | ⏳ 未启动 |
+| D-2 HealthOS MVP | ⏳ 等 D-1 |
+| D-3+ TimeOS / KnowledgeOS / LivingOS | ❌ 触发性,未触发 |
+
+**Phase D-1 期间 §3 / §4 FinanceOS 新功能冻结**: 只接 P0 bug 修复。§3.2 (Budget × FIRE 接线) / §3.6 (Sentry SDK 接入) 这两个尾巴可在 D-1 启动前清掉,清完即冻结。
+
+**Rust 边界**: Phase D 期间新增 Rust 模块**仅** Memory Layer embedder + tokenizer(D-1.7),装在 `apps/mobile/native/lifeos_native/` 单一 crate。其它所有 D-1.x / D-2.x 全留 Dart。详见 `lifeos-shell.md` §10。
+
+**相关文档**:
+- `lifeos-decision-2026-05-24.md` — 启动 ADR(为什么 HealthOS / 为什么不并发 / 约束)
+- `lifeos-shell.md` — 跨域 shell SSOT(IA / Memory / sync namespace / auth scope / tool 分层 / Rust 边界 / CI gate)
+- `healthos-domain.md` — HealthOS 域 SSOT(scope / schema / AI tools / IA placement)
