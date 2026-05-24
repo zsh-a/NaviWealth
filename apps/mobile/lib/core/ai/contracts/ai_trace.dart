@@ -1,16 +1,17 @@
-/// Per-request AI Router decision + execution record.
+/// Per-request AI execution record.
 ///
 /// Stored locally only — never replicated via OpLog. Drives the user-
-/// visible 'AI 透明度' affordance ('未上传原始交易明细', tool count,
-/// disclosure summary) and the in-app audit page. 30-day rolling
-/// retention; older rows are pruned by [AiTraceStore].
+/// visible 'AI 透明度' affordance (tool count, spans, badge) and the
+/// in-app audit page. 30-day rolling retention; older rows are pruned
+/// by [AiTraceStore].
+///
+/// Post-W-D7 there is no router decision and no cloud disclosure; the
+/// trace records what the device runtime did.
 library;
 
 import 'ai_span.dart';
 import 'intent.dart';
 import 'privacy_budget.dart' show BudgetTier, BudgetTierWire;
-import 'scoped_disclosure.dart'
-    show DisclosurePurpose, DisclosurePurposeWire, UserConsent, UserConsentWire;
 
 /// §4.6 W-D6 — [AiTrace.routingReason] value set when the on-device
 /// LLM runtime (user's own key, direct to provider) handled the turn.
@@ -48,42 +49,6 @@ extension BackendWire on Backend {
     'hybrid' => Backend.hybrid,
     _ => Backend.device,
   };
-}
-
-class DisclosureSummary {
-  const DisclosureSummary({
-    required this.purpose,
-    required this.fieldsCount,
-    required this.rowCount,
-    required this.consent,
-  });
-
-  final DisclosurePurpose purpose;
-  final int fieldsCount;
-  final int rowCount;
-  final UserConsent consent;
-
-  Map<String, Object?> toJson() => <String, Object?>{
-    'purpose': purpose.wire,
-    'fields_count': fieldsCount,
-    'row_count': rowCount,
-    'consent': consent.wire,
-  };
-
-  factory DisclosureSummary.fromJson(Map<String, Object?> json) {
-    final p = json['purpose'];
-    final f = json['fields_count'];
-    final r = json['row_count'];
-    final c = json['consent'];
-    return DisclosureSummary(
-      purpose: p is String
-          ? DisclosurePurposeWire.parse(p)
-          : DisclosurePurpose.other,
-      fieldsCount: f is int ? f : 0,
-      rowCount: r is int ? r : 0,
-      consent: c is String ? UserConsentWire.parse(c) : UserConsent.denied,
-    );
-  }
 }
 
 /// How the turn ended (Wave 30). Distinguishes "normal completion" from
@@ -132,9 +97,7 @@ class AiTrace {
     required this.budgetTier,
     required this.routingReason,
     required this.usedCloud,
-    required this.usedRawLedger,
     required this.totalDurationMs,
-    this.disclosures = const <DisclosureSummary>[],
     this.terminalReason = TerminalReason.done,
     this.invocation,
     this.spans = const <AiSpan>[],
@@ -146,19 +109,17 @@ class AiTrace {
   final Backend backend;
   final BudgetTier budgetTier;
 
-  /// Short label for why the router chose this backend
-  /// ('offline_fallback', 'capability_classify', 'risk_propose', ...).
-  /// Free-form for now; promoted to an enum once the matrix stabilises.
+  /// Short label for which runtime handled the turn — `device_llm_direct`
+  /// (see [kDeviceLlmDirectRoutingReason]), `device_unavailable`, or
+  /// `layer4_cloud_vision` (ingest). Free-form for now.
   final String routingReason;
 
+  /// True for old (pre-W-D7) trace rows that hit the cloud relay.
+  /// New rows from the device runtime always set this `false`; ingest
+  /// Vision trace still sets it `true` until that path is audited.
   final bool usedCloud;
 
-  /// True if any DisclosureRequest was answered with consent != denied.
-  /// Drives the user-visible '未上传原始交易明细' badge — its inverse.
-  final bool usedRawLedger;
-
   final int totalDurationMs;
-  final List<DisclosureSummary> disclosures;
 
   /// How the turn ended. Defaults to [TerminalReason.done] for
   /// callers that haven't been updated yet (Wave 30).
@@ -217,9 +178,7 @@ class AiTrace {
     'budget_tier': budgetTier.wire,
     'routing_reason': routingReason,
     'used_cloud': usedCloud,
-    'used_raw_ledger': usedRawLedger,
     'total_duration_ms': totalDurationMs,
-    'disclosures': disclosures.map((d) => d.toJson()).toList(growable: false),
     'terminal_reason': terminalReason.wire,
     if (invocation != null && invocation!.isNotEmpty)
       'invocation': invocation,
@@ -235,7 +194,6 @@ class AiTrace {
     final bt = json['budget_tier'];
     final rr = json['routing_reason'];
     final uc = json['used_cloud'];
-    final ul = json['used_raw_ledger'];
     final td = json['total_duration_ms'];
     return AiTrace(
       requestId: id is String ? id : '',
@@ -252,9 +210,7 @@ class AiTrace {
           : BudgetTier.standard,
       routingReason: rr is String ? rr : '',
       usedCloud: uc is bool ? uc : false,
-      usedRawLedger: ul is bool ? ul : false,
       totalDurationMs: td is int ? td : 0,
-      disclosures: _list(json['disclosures'], DisclosureSummary.fromJson),
       terminalReason: switch (json['terminal_reason']) {
         final String s => TerminalReasonWire.parse(s),
         _ => TerminalReason.done,

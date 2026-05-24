@@ -19,7 +19,6 @@ void main() {
     budgetTier: BudgetTier.small,
     routingReason: 'test',
     usedCloud: true,
-    usedRawLedger: false,
     totalDurationMs: 12,
   );
 

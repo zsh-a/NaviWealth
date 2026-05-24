@@ -23,7 +23,6 @@ AiTrace _trace({
   budgetTier: BudgetTier.small,
   routingReason: routingReason,
   usedCloud: backend != Backend.device,
-  usedRawLedger: false,
   totalDurationMs: 1200,
 );
 

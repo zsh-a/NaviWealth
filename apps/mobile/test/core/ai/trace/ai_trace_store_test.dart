@@ -61,7 +61,7 @@ void main() {
   });
 
   group('AiTraceBuilder', () {
-    test('finalize captures spans + disclosures and computes duration', () {
+    test('finalize captures spans and computes duration', () {
       const seed = AiTrace(
         requestId: 'req-1',
         startedAtIso: '2026-05-10T10:00:00.000Z',
@@ -73,7 +73,6 @@ void main() {
         budgetTier: BudgetTier.standard,
         routingReason: 'analyze_hybrid',
         usedCloud: true,
-        usedRawLedger: false,
         totalDurationMs: 0,
       );
       final start = DateTime.parse('2026-05-10T10:00:00.000Z');
@@ -87,19 +86,11 @@ void main() {
           endedAt: start.add(const Duration(milliseconds: 60)),
           tokens: const SpanTokens(input: 30, output: 9),
         )
-        ..addDisclosure(
-          const DisclosureSummary(
-            purpose: DisclosurePurpose.anomalyExplain,
-            fieldsCount: 3,
-            rowCount: 12,
-            consent: UserConsent.session,
-          ),
-        )
         ..addSpan(
           id: 'tool:t1',
           parentId: 'r1',
           kind: AiSpanKind.tool,
-          name: 'tool:request_disclosure',
+          name: 'tool:get_holdings',
           startedAt: start.add(const Duration(milliseconds: 20)),
           endedAt: start.add(const Duration(milliseconds: 220)),
         );
@@ -112,40 +103,7 @@ void main() {
       // turn root + llm + tool.
       expect(trace.spans, hasLength(3));
       expect(trace.llmRoundCount, 1);
-      expect(trace.toolSpans.single.name, 'tool:request_disclosure');
-      expect(trace.disclosures, hasLength(1));
-      // Consented disclosure flips the privacy badge.
-      expect(trace.usedRawLedger, isTrue);
-    });
-
-    test('denied-only disclosures keep usedRawLedger false', () {
-      const seed = AiTrace(
-        requestId: 'req-1',
-        startedAtIso: '2026-05-10T10:00:00.000Z',
-        intent: IntentHint(
-          capability: Capability.analyze,
-          risk: RiskLevel.info,
-        ),
-        backend: Backend.hybrid,
-        budgetTier: BudgetTier.standard,
-        routingReason: 'analyze_hybrid',
-        usedCloud: true,
-        usedRawLedger: false,
-        totalDurationMs: 0,
-      );
-      final builder = AiTraceBuilder.fromSeed(seed)
-        ..addDisclosure(
-          const DisclosureSummary(
-            purpose: DisclosurePurpose.drillDownExpense,
-            fieldsCount: 0,
-            rowCount: 0,
-            consent: UserConsent.denied,
-          ),
-        );
-      final trace = builder.finalize(
-        finishedAt: DateTime.utc(2026, 5, 10, 10, 0, 1),
-      );
-      expect(trace.usedRawLedger, isFalse);
+      expect(trace.toolSpans.single.name, 'tool:get_holdings');
     });
 
     test('clamps negative duration to zero', () {
@@ -160,7 +118,6 @@ void main() {
         budgetTier: BudgetTier.small,
         routingReason: 'analyze_offline_template',
         usedCloud: false,
-        usedRawLedger: false,
         totalDurationMs: 0,
       );
       final trace = AiTraceBuilder.fromSeed(seed).finalize(
@@ -183,6 +140,5 @@ AiTrace _trace(String id, String iso) => AiTrace(
   budgetTier: BudgetTier.small,
   routingReason: 'test',
   usedCloud: false,
-  usedRawLedger: false,
   totalDurationMs: 0,
 );

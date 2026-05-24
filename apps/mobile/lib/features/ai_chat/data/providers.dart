@@ -198,7 +198,6 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
           ? kDeviceLlmDirectRoutingReason
           : 'device_unavailable',
       usedCloud: false,
-      usedRawLedger: false,
       totalDurationMs: 0,
     );
 

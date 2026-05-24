@@ -81,25 +81,6 @@ extension SideEffectWire on SideEffect {
   };
 }
 
-/// Which Read Model layer this tool reads (docs/ai-architecture.md §4.3).
-/// `null` = not a Read Model consumer (for example proposal tools).
-enum ReadModelLayer { snapshot, analytical, scopedDetail }
-
-extension ReadModelLayerWire on ReadModelLayer {
-  String get wire => switch (this) {
-    ReadModelLayer.snapshot => 'snapshot',
-    ReadModelLayer.analytical => 'analytical',
-    ReadModelLayer.scopedDetail => 'scoped_detail',
-  };
-
-  static ReadModelLayer? parse(String? s) => switch (s) {
-    'snapshot' => ReadModelLayer.snapshot,
-    'analytical' => ReadModelLayer.analytical,
-    'scoped_detail' => ReadModelLayer.scopedDetail,
-    _ => null,
-  };
-}
-
 class ToolDescriptor {
   const ToolDescriptor({
     required this.name,
@@ -109,12 +90,11 @@ class ToolDescriptor {
     required this.allowedContextTier,
     // §4.6 W-D7 — the cloud AI backend was deleted; every tool now runs
     // device-only. No descriptor overrides this, so the default *is*
-    // the reconciliation (line 1254: "allowed_runtimes … 删 cloud 时一
-    // 并 flip"). Registry membership (`kDeviceTools`) remains the real
-    // dispatch gate; this field is now consistent metadata, not cloud.
+    // the reconciliation. Registry membership (`kDeviceTools`) remains
+    // the real dispatch gate; this field is now consistent metadata,
+    // not cloud-vs-device routing.
     this.allowedRuntimes = const <AllowedRuntime>{AllowedRuntime.device},
     this.sideEffect = SideEffect.none,
-    this.readModelLayer,
   });
 
   final String name;
@@ -133,9 +113,6 @@ class ToolDescriptor {
   /// Side-effect classification (orthogonal to risk level).
   final SideEffect sideEffect;
 
-  /// Read Model layer this tool consumes; `null` means it doesn't.
-  final ReadModelLayer? readModelLayer;
-
   Map<String, Object?> toJson() => <String, Object?>{
     'name': name,
     'access': access.wire,
@@ -144,7 +121,6 @@ class ToolDescriptor {
     'allowed_context_tier': allowedContextTier.wire,
     'allowed_runtimes': <String>[for (final r in allowedRuntimes) r.wire],
     'side_effect': sideEffect.wire,
-    'read_model_layer': readModelLayer?.wire,
   };
 
   factory ToolDescriptor.fromJson(Map<String, Object?> json) {
@@ -155,7 +131,6 @@ class ToolDescriptor {
     final t = json['allowed_context_tier'];
     final ar = json['allowed_runtimes'];
     final se = json['side_effect'];
-    final rml = json['read_model_layer'];
     return ToolDescriptor(
       name: n is String ? n : '',
       access: a is String ? AccessWire.parse(a) : Access.read,
@@ -173,7 +148,6 @@ class ToolDescriptor {
             }
           : const <AllowedRuntime>{AllowedRuntime.device},
       sideEffect: se is String ? SideEffectWire.parse(se) : SideEffect.none,
-      readModelLayer: rml is String ? ReadModelLayerWire.parse(rml) : null,
     );
   }
 }
@@ -185,7 +159,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.suggest,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.small,
-    readModelLayer: ReadModelLayer.analytical,
   ),
   ToolDescriptor(
     name: 'get_asset_allocation',
@@ -193,7 +166,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.small,
-    readModelLayer: ReadModelLayer.snapshot,
   ),
   ToolDescriptor(
     name: 'get_cashflow_buckets',
@@ -201,7 +173,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.small,
-    readModelLayer: ReadModelLayer.snapshot,
   ),
   ToolDescriptor(
     name: 'get_geo_breakdown',
@@ -209,7 +180,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
-    readModelLayer: ReadModelLayer.snapshot,
   ),
   ToolDescriptor(
     name: 'get_holdings',
@@ -217,7 +187,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.small,
-    readModelLayer: ReadModelLayer.snapshot,
   ),
   ToolDescriptor(
     name: 'get_industry_breakdown',
@@ -225,7 +194,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
-    readModelLayer: ReadModelLayer.snapshot,
   ),
   ToolDescriptor(
     name: 'get_investment_performance',
@@ -233,7 +201,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.small,
-    readModelLayer: ReadModelLayer.analytical,
   ),
   ToolDescriptor(
     name: 'get_market_cap_breakdown',
@@ -241,7 +208,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
-    readModelLayer: ReadModelLayer.snapshot,
   ),
   ToolDescriptor(
     name: 'get_net_worth_summary',
@@ -249,7 +215,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.small,
-    readModelLayer: ReadModelLayer.snapshot,
   ),
   ToolDescriptor(
     name: 'get_recurring_patterns',
@@ -257,7 +222,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.small,
-    readModelLayer: ReadModelLayer.analytical,
   ),
   ToolDescriptor(
     name: 'get_refund_links',
@@ -265,7 +229,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.small,
-    readModelLayer: ReadModelLayer.analytical,
   ),
   ToolDescriptor(
     name: 'get_subscription_changes',
@@ -273,7 +236,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.suggest,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.small,
-    readModelLayer: ReadModelLayer.analytical,
   ),
   ToolDescriptor(
     name: 'get_transfer_links',
@@ -281,7 +243,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.small,
-    readModelLayer: ReadModelLayer.analytical,
   ),
   ToolDescriptor(
     name: 'list_payment_accounts',
@@ -336,7 +297,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
-    readModelLayer: ReadModelLayer.scopedDetail,
   ),
   ToolDescriptor(
     name: 'read_asset_window',
@@ -344,7 +304,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
-    readModelLayer: ReadModelLayer.scopedDetail,
   ),
   ToolDescriptor(
     name: 'read_category_window',
@@ -352,7 +311,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
-    readModelLayer: ReadModelLayer.scopedDetail,
   ),
   // FIRE OS Phase 5 tools — see docs/roadmap-fire-os.md §5.
   ToolDescriptor(
@@ -361,7 +319,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
-    readModelLayer: ReadModelLayer.analytical,
   ),
   ToolDescriptor(
     name: 'get_fire_plan',
@@ -369,7 +326,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.small,
-    readModelLayer: ReadModelLayer.snapshot,
   ),
   ToolDescriptor(
     name: 'get_fire_buckets',
@@ -377,7 +333,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
-    readModelLayer: ReadModelLayer.analytical,
   ),
   ToolDescriptor(
     name: 'get_fire_stress_tests',
@@ -385,7 +340,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.suggest,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
-    readModelLayer: ReadModelLayer.analytical,
   ),
   ToolDescriptor(
     name: 'get_fire_review',
@@ -393,7 +347,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.suggest,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
-    readModelLayer: ReadModelLayer.analytical,
   ),
   ToolDescriptor(
     name: 'simulate_fire_plan',
@@ -401,7 +354,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.suggest,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
-    readModelLayer: ReadModelLayer.analytical,
   ),
   ToolDescriptor(
     name: 'propose_fire_plan_update',
@@ -426,7 +378,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.suggest,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
-    readModelLayer: ReadModelLayer.analytical,
   ),
   ToolDescriptor(
     name: 'get_options_strategy_profile',
@@ -434,7 +385,6 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.small,
-    readModelLayer: ReadModelLayer.snapshot,
   ),
   ToolDescriptor(
     name: 'propose_options_profile_update',

@@ -531,7 +531,6 @@ void main() {
             budgetTier: pack.budget.tier,
             routingReason: 'analyze_hybrid',
             usedCloud: true,
-            usedRawLedger: false,
             totalDurationMs: 0,
           );
           return (

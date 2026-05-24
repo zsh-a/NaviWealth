@@ -233,7 +233,6 @@ class IngestController {
         budgetTier: tier,
         routingReason: 'layer4_cloud_vision',
         usedCloud: true,
-        usedRawLedger: false,
         totalDurationMs: 0,
       );
       final parseEnd = DateTime.now().toUtc();

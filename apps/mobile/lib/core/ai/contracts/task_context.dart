@@ -163,7 +163,8 @@ class SemanticHit {
 class DateRange {
   const DateRange({required this.fromInclusive, required this.toExclusive});
 
-  /// ISO 8601 date or datetime; the cloud parses both forms.
+  /// ISO 8601 date or datetime; consumed by the device skill layer
+  /// (`finance_query_plan` / `query_plan_executor`).
   final String fromInclusive;
   final String toExclusive;
 
@@ -178,50 +179,6 @@ class DateRange {
     return DateRange(
       fromInclusive: f is String ? f : '1970-01-01',
       toExclusive: t is String ? t : '1970-01-01',
-    );
-  }
-}
-
-class ScopedAggregate {
-  const ScopedAggregate({
-    required this.label,
-    required this.amountMinor,
-    required this.currency,
-    required this.range,
-    this.rowCount,
-  });
-
-  final String label;
-  final String amountMinor;
-  final String currency;
-  final DateRange range;
-  final int? rowCount;
-
-  Map<String, Object?> toJson() => <String, Object?>{
-    'label': label,
-    'amount_minor': amountMinor,
-    'currency': currency,
-    'range': range.toJson(),
-    if (rowCount != null) 'row_count': rowCount,
-  };
-
-  factory ScopedAggregate.fromJson(Map<String, Object?> json) {
-    final lbl = json['label'];
-    final amt = json['amount_minor'];
-    final cur = json['currency'];
-    final rng = json['range'];
-    final rc = json['row_count'];
-    return ScopedAggregate(
-      label: lbl is String ? lbl : '',
-      amountMinor: amt is String ? amt : '0',
-      currency: cur is String ? cur : 'USD',
-      range: rng is Map
-          ? DateRange.fromJson(_strKeyed(rng))
-          : const DateRange(
-              fromInclusive: '1970-01-01',
-              toExclusive: '1970-01-01',
-            ),
-      rowCount: rc is int ? rc : null,
     );
   }
 }
@@ -276,8 +233,6 @@ class TaskContext {
     required this.route,
     required this.intent,
     this.signals = const <RecentSignal>[],
-    this.retrieved = const <SemanticHit>[],
-    this.aggregates = const <ScopedAggregate>[],
     this.analyticalUploads = const <AnalyticalUpload>[],
     this.deviceHlc,
   });
@@ -285,8 +240,6 @@ class TaskContext {
   final RouteContext route;
   final IntentHint intent;
   final List<RecentSignal> signals;
-  final List<SemanticHit> retrieved;
-  final List<ScopedAggregate> aggregates;
 
   /// 端侧 detector 信号（recurring_pattern / anomaly_flag / refund_link /
   /// transfer_link / subscription_change / investment_performance）预注入
@@ -303,8 +256,6 @@ class TaskContext {
     'route': route.toJson(),
     'intent': intent.toJson(),
     'signals': signals.map((s) => s.toJson()).toList(growable: false),
-    'retrieved': retrieved.map((h) => h.toJson()).toList(growable: false),
-    'aggregates': aggregates.map((a) => a.toJson()).toList(growable: false),
     if (analyticalUploads.isNotEmpty)
       'analytical_uploads':
           analyticalUploads.map((u) => u.toJson()).toList(growable: false),
@@ -326,8 +277,6 @@ class TaskContext {
               risk: RiskLevel.info,
             ),
       signals: _list(json['signals'], RecentSignal.fromJson),
-      retrieved: _list(json['retrieved'], SemanticHit.fromJson),
-      aggregates: _list(json['aggregates'], ScopedAggregate.fromJson),
       analyticalUploads: _list(
         json['analytical_uploads'],
         AnalyticalUpload.fromJson,

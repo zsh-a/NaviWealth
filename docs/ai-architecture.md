@@ -11,10 +11,19 @@
 > §4.2 freshness gate / §4.3 cloud read models / §6.2 backend AI / §8 Wave 1–32 等
 > **描述的是 W-D7 前已删除的云端协作架构**，仅为历史/编号锚点保留。
 >
-> **2026-05-24 boundary audit** 之后，freshness gate (`core/ai/freshness/` + 契约 +
-> `staleReadModelNames`)、router (`core/ai/router/`)、`RuntimeRegistry` /
-> `RuntimeId` / `AiRuntime` 抽象、`CloudProposal` 类、`ChatSyncGate` **全部已物理删除**
-> ——不仅是"device 路径不用"。详见 [`docs/ai-boundary-audit.md`](./ai-boundary-audit.md)。
+> **2026-05-24 boundary audit** 之后，下列结构**全部已物理删除**：
+> - freshness gate (`core/ai/freshness/` + 契约 + `staleReadModelNames`)
+> - router (`core/ai/router/`)
+> - `RuntimeRegistry` / `RuntimeId` / `AiRuntime` 抽象 / `CloudAnthropicRuntime` / `RulesDeviceRuntime`
+> - `CloudProposal` 类、`ChatSyncGate`、ChatTurnPhase.flushing
+> - disclosure 全链：`DisclosureRequest`/`DisclosureResponse`/`LedgerField`/`UserConsent`/
+>   `DisclosureSummary`/`AiTrace.disclosures`/`AiTrace.usedRawLedger`/`addDisclosure`
+> - `TaskContext.retrieved`/`TaskContext.aggregates`/`ScopedAggregate`
+> - `ToolDescriptor.readModelLayer`/`ReadModelLayer`
+> - `AnonymizationLevel`/`amountAnonymization` getter
+> - 3 个 l10n orphan keys
+>
+> 累计净删约 3 700 行。详见 [`docs/ai-boundary-audit.md`](./ai-boundary-audit.md)。
 >
 > 适用范围: `lib/core/ai/` 与 `lib/features/ai_chat/`、`lib/features/ingest/`（Flutter）。
 > 运行时事件契约见 [`docs/ai-protocol.md`](./ai-protocol.md)。
@@ -357,7 +366,7 @@ Chat → providers.dart _prepareChatTrace(ref, requestId)
 | AiTrace span 可观测性（Opik 瀑布树，取代旧 flat 格式，不向后兼容）| ✅ |
 | 多 provider profile + 切换 + 连通性测试（无 opt-in 开关）| ✅ |
 | §4.6 Device LLM Runtime（W-D1–W-D7：用户自带 key · 直连 provider · 工具读 Drift · 全原生平台含桌面 · 删除 cloud relay）| ✅ |
-| Boundary audit 2026-05-24：删 freshness/router/RuntimeRegistry/CloudProposal/ChatSyncGate（净删 ~1800 行）| ✅ |
+| Boundary audit 2026-05-24（三轮）：删 freshness/router/RuntimeRegistry/CloudProposal/ChatSyncGate/disclosure 全链/TaskContext 死字段/readModelLayer/AnonymizationLevel/l10n orphans（累计净删 ~3 700 行）| ✅ |
 
 **测试 gate**：`flutter analyze --fatal-infos` clean；`flutter test` 全绿（golden 按平台
 skip，known-failing 钉基线）；`tool/check-tool-descriptors.sh` / `check-enum-mirror.sh` /

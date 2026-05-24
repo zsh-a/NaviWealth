@@ -2035,7 +2035,6 @@
 
   "aiChatComposerHintIdle": "Ask NaviWealth, e.g. \"How much did I earn last month?\"",
   "aiChatComposerHintStreaming": "Generating answer…",
-  "aiChatComposerHintFlushing": "Syncing local data…",
   "aiChatComposerSendTooltip": "Send (⌘/Ctrl + Enter)",
   "aiChatComposerStopTooltip": "Stop generating",
   "aiChatThinking": "Thinking…",
@@ -2097,7 +2096,6 @@
   "@aiChatSessionsGroupThisMonth": { "description": "Section header — conversations within the past 30 days but not in the more recent buckets." },
   "aiChatSessionsGroupOlder": "Older",
   "@aiChatSessionsGroupOlder": { "description": "Section header — conversations older than 30 days." },
-  "aiChatStaleSyncNotice": "Local data hasn't finished syncing; answers may lag behind your most recent edits.",
 
   "aiChatTruncatedMaxTokens": "Reply was cut off — output length limit reached",
   "@aiChatTruncatedMaxTokens": { "description": "Footer shown when the model hit max_tokens and the visible reply is incomplete" },
@@ -3545,11 +3543,6 @@
   "aiTransparencyToolsCount": "Tools {count}",
   "@aiTransparencyToolsCount": {
     "description": "AI trace tool-count pill",
-    "placeholders": { "count": { "type": "int" } }
-  },
-  "aiTransparencyStaleCount": "Stale x{count}",
-  "@aiTransparencyStaleCount": {
-    "description": "AI trace stale read-model count pill",
     "placeholders": { "count": { "type": "int" } }
   },
   "aiTransparencyUnnamedTurn": "(unnamed turn)",

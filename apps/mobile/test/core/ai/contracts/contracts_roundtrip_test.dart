@@ -37,10 +37,6 @@ void main() {
       expect(decoded.task.intent.label, pack.task.intent.label);
       expect(decoded.task.signals, hasLength(pack.task.signals.length));
       expect(decoded.task.signals.first.kind, pack.task.signals.first.kind);
-      expect(
-        decoded.task.aggregates.first.amountMinor,
-        pack.task.aggregates.first.amountMinor,
-      );
     });
 
     test('snake_case wire keys are stable', () {
@@ -143,93 +139,6 @@ void main() {
     });
   });
 
-  group('DisclosureRequest / Response roundtrip', () {
-    test('request round-trips with all fields', () {
-      const req = DisclosureRequest(
-        requestId: 'req_42',
-        purpose: DisclosurePurpose.drillDownExpense,
-        fields: <LedgerField>[
-          LedgerField.amount,
-          LedgerField.date,
-          LedgerField.category,
-          LedgerField.merchantHashed,
-        ],
-        range: DateRange(
-          fromInclusive: '2026-04-01',
-          toExclusive: '2026-05-01',
-        ),
-        maxRows: 50,
-        anonymization: AnonymizationLevel.hash,
-        humanReasonZh: '查看 4 月餐饮支出明细以解释支出上升',
-      );
-      final encoded = jsonEncode(req.toJson());
-      final decoded = DisclosureRequest.fromJson(
-        jsonDecode(encoded) as Map<String, Object?>,
-      );
-      expect(decoded.requestId, req.requestId);
-      expect(decoded.purpose, req.purpose);
-      expect(decoded.fields, req.fields);
-      expect(decoded.range.fromInclusive, req.range.fromInclusive);
-      expect(decoded.maxRows, req.maxRows);
-      expect(decoded.anonymization, req.anonymization);
-      expect(decoded.humanReasonZh, req.humanReasonZh);
-    });
-
-    test(
-      'unknown LedgerField wire values are dropped, not parsed as default',
-      () {
-        final raw = <String, Object?>{
-          'request_id': 'req_1',
-          'purpose': 'drill_down_expense',
-          'fields': <Object?>['amount', 'ssn', 'iban', 'category'],
-          'range': <String, Object?>{
-            'from_inclusive': '2026-04-01',
-            'to_exclusive': '2026-05-01',
-          },
-          'max_rows': 10,
-          'anonymization': 'hash',
-          'human_reason_zh': '',
-        };
-        final req = DisclosureRequest.fromJson(raw);
-        expect(req.fields, <LedgerField>[
-          LedgerField.amount,
-          LedgerField.category,
-        ]);
-      },
-    );
-
-    test('response with rows round-trips', () {
-      const resp = DisclosureResponse(
-        requestId: 'req_42',
-        consent: UserConsent.session,
-        rows: <Map<String, Object?>>[
-          <String, Object?>{
-            'amount': '4500',
-            'currency': 'USD',
-            'date': '2026-04-15',
-            'category': 'food',
-          },
-          <String, Object?>{
-            'amount': '900',
-            'currency': 'USD',
-            'date': '2026-04-16',
-            'category': 'food',
-          },
-        ],
-        truncatedFrom: 87,
-      );
-      final encoded = jsonEncode(resp.toJson());
-      final decoded = DisclosureResponse.fromJson(
-        jsonDecode(encoded) as Map<String, Object?>,
-      );
-      expect(decoded.requestId, resp.requestId);
-      expect(decoded.consent, resp.consent);
-      expect(decoded.rows.length, 2);
-      expect(decoded.rows[0]['amount'], '4500');
-      expect(decoded.truncatedFrom, 87);
-    });
-  });
-
   group('ToolDescriptor roundtrip', () {
     test('descriptor round-trips with all axes', () {
       const desc = ToolDescriptor(
@@ -254,17 +163,8 @@ void main() {
       // + 4 Income Planner P1/P3 (docs/options-income.md §8.2).
       expect(allToolDescriptors, hasLength(34));
       expect(
-        lookupToolDescriptor('get_options_income_opportunities')
-            ?.readModelLayer,
-        ReadModelLayer.analytical,
-      );
-      expect(
         lookupToolDescriptor('propose_options_profile_update')?.sideEffect,
         SideEffect.deviceLocalWrite,
-      );
-      expect(
-        lookupToolDescriptor('get_holdings')?.readModelLayer,
-        ReadModelLayer.snapshot,
       );
       expect(
         lookupToolDescriptor('list_payment_accounts')?.allowedContextTier,
@@ -279,7 +179,7 @@ void main() {
   });
 
   group('AiTrace roundtrip', () {
-    test('trace with disclosures + tool calls round-trips', () {
+    test('trace with spans + tool calls round-trips', () {
       const trace = AiTrace(
         requestId: 'trace_1',
         startedAtIso: '2026-05-10T10:30:00Z',
@@ -292,16 +192,7 @@ void main() {
         budgetTier: BudgetTier.standard,
         routingReason: 'capability_analyze_online',
         usedCloud: true,
-        usedRawLedger: true,
         totalDurationMs: 3450,
-        disclosures: <DisclosureSummary>[
-          DisclosureSummary(
-            purpose: DisclosurePurpose.anomalyExplain,
-            fieldsCount: 4,
-            rowCount: 23,
-            consent: UserConsent.session,
-          ),
-        ],
         spans: <AiSpan>[
           AiSpan(
             id: 'turn',
@@ -323,7 +214,7 @@ void main() {
             id: 'tool:t1',
             parentId: 'r1',
             kind: AiSpanKind.tool,
-            name: 'tool:request_disclosure',
+            name: 'tool:get_holdings',
             startOffsetMs: 20,
             durationMs: 180,
           ),
@@ -335,14 +226,8 @@ void main() {
       expect(decoded.requestId, trace.requestId);
       expect(decoded.intent.label, trace.intent.label);
       expect(decoded.backend, Backend.hybrid);
-      expect(decoded.usedRawLedger, isTrue);
-      expect(decoded.disclosures, hasLength(1));
-      expect(
-        decoded.disclosures.first.purpose,
-        DisclosurePurpose.anomalyExplain,
-      );
       expect(decoded.spans, hasLength(3));
-      expect(decoded.toolSpans.single.name, 'tool:request_disclosure');
+      expect(decoded.toolSpans.single.name, 'tool:get_holdings');
       expect(decoded.llmRoundCount, 1);
       expect(decoded.tokenTotals.input, 40);
       // Wave 30: terminalReason defaults to done when not provided.
@@ -362,7 +247,6 @@ void main() {
           budgetTier: BudgetTier.small,
           routingReason: 'test',
           usedCloud: true,
-          usedRawLedger: false,
           totalDurationMs: 100,
         );
         // Build with the desired reason via copy through json.
@@ -387,7 +271,6 @@ void main() {
           budgetTier: BudgetTier.small,
           routingReason: 'capsule_explain',
           usedCloud: true,
-          usedRawLedger: false,
           totalDurationMs: 200,
           invocation: <String, Object?>{
             'source': 'expense_detail',
@@ -421,7 +304,6 @@ void main() {
         budgetTier: BudgetTier.small,
         routingReason: 'chat_typed',
         usedCloud: true,
-        usedRawLedger: false,
         totalDurationMs: 50,
       );
       final json = seed.toJson();
@@ -532,18 +414,6 @@ ContextPack _samplePack() => ContextPack(
         severity: SignalSeverity.warn,
         summaryZh: '本月餐饮支出环比 +37%',
         detailRef: 'anomaly:fr_2026_04',
-      ),
-    ],
-    aggregates: <ScopedAggregate>[
-      ScopedAggregate(
-        label: 'monthly_food_spend',
-        amountMinor: '128400',
-        currency: 'USD',
-        range: DateRange(
-          fromInclusive: '2026-04-01',
-          toExclusive: '2026-05-01',
-        ),
-        rowCount: 41,
       ),
     ],
   ),

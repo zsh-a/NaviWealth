@@ -55,37 +55,3 @@ class PrivacyBudget {
   }
 }
 
-/// How aggressively the device should anonymize ledger fields before
-/// returning them to the cloud planner via DisclosureResponse.
-enum AnonymizationLevel {
-  /// Verbatim. Only allowed for non-PII fields like amount / category.
-  none,
-
-  /// Bucketed (e.g. amounts to nearest 10, dates to week).
-  bucket,
-
-  /// One-way hash with per-session salt. Stable within a session for
-  /// correlation, opaque across sessions.
-  hash,
-
-  /// Replaced with a constant placeholder. Used when the cloud asked
-  /// for a field the privacy gate disagreed with.
-  redact,
-}
-
-extension AnonymizationLevelWire on AnonymizationLevel {
-  String get wire => switch (this) {
-    AnonymizationLevel.none => 'none',
-    AnonymizationLevel.bucket => 'bucket',
-    AnonymizationLevel.hash => 'hash',
-    AnonymizationLevel.redact => 'redact',
-  };
-
-  static AnonymizationLevel parse(String s) => switch (s) {
-    'none' => AnonymizationLevel.none,
-    'bucket' => AnonymizationLevel.bucket,
-    'hash' => AnonymizationLevel.hash,
-    'redact' => AnonymizationLevel.redact,
-    _ => AnonymizationLevel.redact,
-  };
-}
