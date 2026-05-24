@@ -12,7 +12,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'NaviWealth';
 
   @override
-  String get navHome => 'Overview';
+  String get navHome => 'Today';
+
+  @override
+  String get navToday => 'Today';
 
   @override
   String get navExpenses => 'Expenses';
@@ -24,10 +27,131 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navActivity => 'Activity';
 
   @override
-  String get navAccounts => 'Accounts';
+  String get navAccounts => 'Wealth';
+
+  @override
+  String get navWealth => 'Wealth';
+
+  @override
+  String get navPlan => 'Plan';
 
   @override
   String get navSearch => 'Search';
+
+  @override
+  String get navSettingsTooltip => 'Settings';
+
+  @override
+  String get planHubTitle => 'Plan';
+
+  @override
+  String get planHubSubtitle => 'Decisions, models, and goals.';
+
+  @override
+  String get planFireSectionTitle => 'FIRE';
+
+  @override
+  String get planFireSectionSubtitle => 'Years to financial independence';
+
+  @override
+  String get planRebalanceSectionTitle => 'Rebalance';
+
+  @override
+  String get planRebalanceSectionSubtitle => 'Drift from target allocation';
+
+  @override
+  String get planIncomeSectionTitle => 'Income strategy';
+
+  @override
+  String get planIncomeSectionSubtitle => 'Covered calls & cash-secured puts';
+
+  @override
+  String get planDcaSectionTitle => 'DCA simulator';
+
+  @override
+  String get planDcaSectionSubtitle => 'Recurring buy plan';
+
+  @override
+  String get planProjectionSectionTitle => 'Scenario analytics';
+
+  @override
+  String get planProjectionSectionSubtitle => 'Allocation & FIRE projection';
+
+  @override
+  String get planScenariosSectionTitle => 'Scenarios';
+
+  @override
+  String get planScenariosSectionSubtitle => 'Compare what-ifs';
+
+  @override
+  String get planScenariosComingSoon => 'Scenario builder is not yet wired up.';
+
+  @override
+  String get planGoalsSectionTitle => 'Goals';
+
+  @override
+  String get planGoalsSectionSubtitle => 'Saving targets & milestones';
+
+  @override
+  String get planGoalsComingSoon => 'Goal tracker is not yet wired up.';
+
+  @override
+  String get planHeroEmpty => 'Set up your FIRE plan to see progress here.';
+
+  @override
+  String planHeroYearsToFire(String years) {
+    return '$years years to FIRE';
+  }
+
+  @override
+  String get planHeroProgressLabel => 'Progress';
+
+  @override
+  String get planHeroNextRebalance => 'Next: review rebalance';
+
+  @override
+  String get planHeroSeePlan => 'See plan';
+
+  @override
+  String get wealthHubTitle => 'Wealth';
+
+  @override
+  String get wealthHubSubtitle => 'What you own, what you owe.';
+
+  @override
+  String get wealthAccountsSectionTitle => 'Accounts';
+
+  @override
+  String get wealthAccountsSectionSubtitle => 'Cash, banks, brokers, crypto';
+
+  @override
+  String get wealthHoldingsSectionTitle => 'Holdings';
+
+  @override
+  String get wealthHoldingsSectionSubtitle => 'Positions across all accounts';
+
+  @override
+  String get wealthWatchlistSectionTitle => 'Watchlist';
+
+  @override
+  String get wealthWatchlistSectionSubtitle => 'Symbols you\'re tracking';
+
+  @override
+  String get wealthLiabilitiesSectionTitle => 'Liabilities';
+
+  @override
+  String get wealthLiabilitiesSectionSubtitle => 'Loans, mortgages, credit';
+
+  @override
+  String get wealthIncomeProjectionTitle => 'Income projection';
+
+  @override
+  String get wealthIncomeProjectionSubtitle =>
+      'Projected yield from your holdings';
+
+  @override
+  String get wealthIncomeProjectionComingSoon =>
+      'Income projection from holdings is not yet wired up.';
 
   @override
   String get cashFlowTitle => 'Cash flow';

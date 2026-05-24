@@ -15,13 +15,14 @@ List<CommandPaletteEntry> rebalanceCommandPaletteEntries(
       label: l10n.rebalanceCommandOpen,
       icon: Icons.balance_outlined,
       keywords: <String>[
-        AppRoutes.accountsRebalance,
+        AppRoutes.planRebalance,
+        '/accounts/rebalance',
         'rebalance',
         'allocation',
         'portfolio drift',
         l10n.commandKeywordRebalanceCn,
       ],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.accountsRebalance),
+      run: (BuildContext ctx) => ctx.go(AppRoutes.planRebalance),
     ),
     CommandPaletteEntry(
       id: 'action.rebalance.targetAllocation',

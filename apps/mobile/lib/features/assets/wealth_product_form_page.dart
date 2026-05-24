@@ -36,7 +36,7 @@ class WealthProductFormPage extends ConsumerStatefulWidget {
 class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
     with FormDirtyGuard<WealthProductFormPage> {
   @override
-  String get leaveFallback => AppRoutes.accounts;
+  String get leaveFallback => AppRoutes.wealth;
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -174,7 +174,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
       if (!mounted) return;
       dirty.markPristine();
       Haptics.success();
-      popOrGo(context, fallback: AppRoutes.accounts);
+      popOrGo(context, fallback: AppRoutes.wealth);
     } finally {
       dirty.busy = false;
       if (mounted) setState(() => _busy = false);
@@ -200,7 +200,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
       dirty.markPristine();
-      popOrGo(context, fallback: AppRoutes.accounts);
+      popOrGo(context, fallback: AppRoutes.wealth);
     } finally {
       dirty.busy = false;
       if (mounted) setState(() => _busy = false);
@@ -283,7 +283,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
               const SizedBox(height: 12),
               FButton(
                 variant: FButtonVariant.outline,
-                onPress: () => context.go(AppRoutes.accountListNew),
+                onPress: () => context.go(AppRoutes.wealthAccountNew),
                 prefix: const Icon(Icons.add, size: 16),
                 child: Text(l10n.wealthProductCreateAccountAction),
               ),

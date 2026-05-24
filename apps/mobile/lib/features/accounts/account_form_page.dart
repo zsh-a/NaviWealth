@@ -40,7 +40,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
         OptimisticFormSubmit<AccountFormPage>,
         FormDirtyGuard<AccountFormPage> {
   @override
-  String get leaveFallback => AppRoutes.accountsList;
+  String get leaveFallback => AppRoutes.wealthAccounts;
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -141,7 +141,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
     // The record is being persisted — the post-save pop must not prompt.
     dirty.markPristine();
     await submitOptimisticAndLeave(
-      leaveFallback: AppRoutes.accountsList,
+      leaveFallback: AppRoutes.wealthAccounts,
       onBeforeLeave: Haptics.success,
       tag: 'account',
       failureMessage: (_) => l10n.commonSaveFailed,
@@ -203,7 +203,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
       dirty.markPristine();
-      popOrGo(context, fallback: AppRoutes.accountsList);
+      popOrGo(context, fallback: AppRoutes.wealthAccounts);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

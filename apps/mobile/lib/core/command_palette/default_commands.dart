@@ -28,7 +28,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       id: 'nav.home',
       label: l10n.commandPaletteGoOverview,
       icon: Icons.dashboard_outlined,
-      keywords: const <String>['/', 'overview', 'home', '总览'],
+      keywords: const <String>['/', 'today', 'overview', 'home', '今日', '总览'],
       run: (BuildContext ctx) => ctx.go(AppRoutes.home),
     ),
     CommandPaletteEntry(
@@ -46,11 +46,15 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       run: (BuildContext ctx) => ctx.go(AppRoutes.activity),
     ),
     CommandPaletteEntry(
-      id: 'nav.accounts',
-      label: l10n.navAccounts,
+      id: 'nav.wealth',
+      label: l10n.navWealth,
       icon: Icons.account_balance_wallet_outlined,
       keywords: const <String>[
-        AppRoutes.accounts,
+        AppRoutes.wealth,
+        // Legacy keyword kept so users typing "/accounts" still find the
+        // canonical Wealth tab.
+        '/accounts',
+        'wealth',
         'accounts',
         'assets',
         'liabilities',
@@ -59,7 +63,22 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
         '资产',
         '投资组合',
       ],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.accounts),
+      run: (BuildContext ctx) => ctx.go(AppRoutes.wealth),
+    ),
+    CommandPaletteEntry(
+      id: 'nav.plan',
+      label: l10n.navPlan,
+      icon: Icons.insights_outlined,
+      keywords: const <String>[
+        AppRoutes.plan,
+        'plan',
+        'fire',
+        'goals',
+        'scenarios',
+        '规划',
+        '计划',
+      ],
+      run: (BuildContext ctx) => ctx.go(AppRoutes.plan),
     ),
     CommandPaletteEntry(
       id: 'nav.expenses',
@@ -84,25 +103,36 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       run: (BuildContext ctx) => ctx.go(AppRoutes.cashflowDividends),
     ),
     CommandPaletteEntry(
-      id: 'nav.analytics',
+      id: 'nav.projection',
       label: l10n.planAnalyticsTitle,
       icon: Icons.pie_chart_outline,
-      keywords: const <String>[AppRoutes.accountsAnalytics, 'analytics', '分析'],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.accountsAnalytics),
+      keywords: const <String>[
+        AppRoutes.planProjection,
+        '/accounts/analytics',
+        'analytics',
+        'projection',
+        '分析',
+      ],
+      run: (BuildContext ctx) => ctx.go(AppRoutes.planProjection),
     ),
     CommandPaletteEntry(
       id: 'nav.fire',
       label: l10n.planFireTitle,
       icon: Icons.flag_outlined,
-      keywords: const <String>[AppRoutes.accountsFire, 'fire'],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.accountsFire),
+      keywords: const <String>[
+        AppRoutes.planFire,
+        '/accounts/fire',
+        'fire',
+      ],
+      run: (BuildContext ctx) => ctx.go(AppRoutes.planFire),
     ),
     CommandPaletteEntry(
       id: 'nav.incomePlanner',
       label: l10n.incomePlannerTitle,
       icon: Icons.candlestick_chart_outlined,
       keywords: <String>[
-        AppRoutes.accountsIncomePlanner,
+        AppRoutes.planIncome,
+        '/accounts/income',
         'income planner',
         'options',
         'sell put',
@@ -112,7 +142,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
         l10n.commandKeywordSellPutCn,
         l10n.commandKeywordCoveredCallCn,
       ],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.accountsIncomePlanner),
+      run: (BuildContext ctx) => ctx.go(AppRoutes.planIncome),
     ),
     ...rebalanceCommandPaletteEntries(l10n),
     CommandPaletteEntry(
@@ -120,7 +150,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       label: l10n.commandPaletteGoSettings,
       icon: Icons.settings_outlined,
       keywords: const <String>[AppRoutes.settings, 'settings', '设置'],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.settings),
+      run: (BuildContext ctx) => ctx.push(AppRoutes.settings),
     ),
 
     // ── Actions ──
@@ -142,7 +172,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       label: l10n.corpActionTypeCashDividend,
       icon: Icons.payments_outlined,
       keywords: <String>[
-        AppRoutes.accountCorporateAction,
+        AppRoutes.wealthCorporateAction,
         'dividend',
         'income',
         'withholding',
@@ -150,14 +180,14 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
         l10n.commandKeywordBonusDividendCn,
         l10n.commandKeywordWithholdingTaxCn,
       ],
-      run: (BuildContext ctx) => ctx.push(AppRoutes.accountCorporateAction),
+      run: (BuildContext ctx) => ctx.push(AppRoutes.wealthCorporateAction),
     ),
     CommandPaletteEntry(
       id: 'action.corporateAction',
       label: l10n.corpActionTitle,
       icon: Icons.account_tree_outlined,
       keywords: <String>[
-        AppRoutes.accountCorporateAction,
+        AppRoutes.wealthCorporateAction,
         'corporate action',
         'split',
         'drip',
@@ -166,7 +196,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
         l10n.commandKeywordSplitCn,
         l10n.commandKeywordRightsIssueCn,
       ],
-      run: (BuildContext ctx) => ctx.push(AppRoutes.accountCorporateAction),
+      run: (BuildContext ctx) => ctx.push(AppRoutes.wealthCorporateAction),
     ),
     CommandPaletteEntry(
       id: 'action.newExpense',

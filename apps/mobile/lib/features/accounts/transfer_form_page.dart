@@ -49,7 +49,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         OptimisticFormSubmit<TransferFormPage>,
         FormDirtyGuard<TransferFormPage> {
   @override
-  String get leaveFallback => AppRoutes.accounts;
+  String get leaveFallback => AppRoutes.wealth;
 
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
@@ -545,7 +545,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
     // The record is being persisted — the post-save pop must not prompt.
     dirty.markPristine();
     await submitOptimisticAndLeave(
-      leaveFallback: AppRoutes.accounts,
+      leaveFallback: AppRoutes.wealth,
       write: () => repo.create(entry: build.entry, postings: build.postings),
       failureMessage: (e) => switch (e) {
         JournalEntryUnbalancedException(:final message) =>

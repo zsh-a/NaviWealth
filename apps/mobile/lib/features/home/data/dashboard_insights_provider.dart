@@ -40,7 +40,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           icon: Icons.flag_outlined,
           kind: InsightKind.fireProgress,
           monthsToTarget: months,
-          route: AppRoutes.accountsFire,
+          route: AppRoutes.planFire,
         ),
       );
     } else if (months == 0) {
@@ -49,7 +49,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           icon: Icons.celebration_outlined,
           kind: InsightKind.fireReached,
           iconColor: Colors.green,
-          route: AppRoutes.accountsFire,
+          route: AppRoutes.planFire,
         ),
       );
     }
@@ -68,7 +68,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           icon: Icons.trending_up_outlined,
           kind: InsightKind.fireOsHighWithdrawalRate,
           iconColor: Colors.amber,
-          route: AppRoutes.accountsFire,
+          route: AppRoutes.planFire,
           fireOsWithdrawalRate: state.withdrawalRate,
           fireOsSafeWithdrawalRate: state.plan.safeWithdrawalRate,
         ),
@@ -81,7 +81,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           icon: Icons.account_balance_outlined,
           kind: InsightKind.fireOsLowCashBucket,
           iconColor: Colors.amber,
-          route: AppRoutes.accountsFire,
+          route: AppRoutes.planFire,
           fireOsCashBucketMonths: state.cashBucketMonths,
           fireOsTargetCashBucketMonths: state.plan.targetCashBucketMonths,
         ),
@@ -93,7 +93,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           icon: Icons.help_outline,
           kind: InsightKind.fireOsUnmappedHoldings,
           iconColor: Colors.amber,
-          route: AppRoutes.accountsFire,
+          route: AppRoutes.planFire,
           fireOsUnmappedCount: state.unmappedHoldings.length,
         ),
       );
@@ -115,7 +115,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
               : Icons.unfold_more,
           kind: InsightKind.fireOsBucketDeviation,
           iconColor: Colors.amber,
-          route: AppRoutes.accountsFire,
+          route: AppRoutes.planFire,
           fireOsBucketRoleLabel: _bucketRoleWire(worst.role),
           fireOsBucketCurrentLabel:
               fmt.format(worst.currentValue.amount.toDouble()).trim(),
@@ -135,7 +135,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         category: drift.category,
         driftPct: drift.deviation,
         iconColor: Colors.amber,
-        route: AppRoutes.accountsRebalance,
+        route: AppRoutes.planRebalance,
       ),
     );
   }
@@ -148,7 +148,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         kind: InsightKind.maturity,
         maturityCount: maturity.count,
         maturityDays: maturity.days,
-        route: AppRoutes.accounts,
+        route: AppRoutes.wealth,
       ),
     );
   }
@@ -192,7 +192,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         summaryMonth: summary.month,
         summaryDeltaMinor: summary.deltaMinor,
         summaryCurrency: summary.currency,
-        route: AppRoutes.accountsAnalytics,
+        route: AppRoutes.planProjection,
       ),
     );
   }

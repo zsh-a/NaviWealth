@@ -514,7 +514,7 @@ class _DcaSimulatorEntry extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return FCard.raw(
       child: FTile(
-        onPress: () => context.push(AppRoutes.accountsDcaSimulator),
+        onPress: () => context.push(AppRoutes.planDca),
         prefix: Icon(
           Icons.event_repeat_outlined,
           color: context.theme.colors.mutedForeground,
@@ -1079,7 +1079,7 @@ class _HoldingRowCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return FCard.raw(
       child: GestureDetector(
-        onTap: () => context.push(AppRoutes.accountAsset(holding.assetId)),
+        onTap: () => context.push(AppRoutes.wealthAsset(holding.assetId)),
         behavior: HitTestBehavior.opaque,
         child: Padding(
           padding: const EdgeInsets.all(14),

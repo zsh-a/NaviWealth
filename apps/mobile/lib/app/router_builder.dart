@@ -9,7 +9,6 @@ import 'package:go_router/go_router.dart';
 import '../core/logging/providers.dart';
 import '../core/logging/talker_route_observer.dart';
 import '../features/accounts/account_form_page.dart';
-import '../features/accounts/accounts_hub_page.dart';
 import '../features/accounts/accounts_page.dart';
 import '../features/accounts/journal_entry_list_page.dart';
 import '../features/accounts/transfer_form_page.dart';
@@ -52,6 +51,7 @@ import '../features/liabilities/ui/liability_detail_page.dart'
 import '../features/liabilities/ui/liability_form_page.dart';
 import '../features/options_income/presentation/income_planner_page.dart'
     deferred as income_planner_lib;
+import '../features/plan/ui/plan_hub_page.dart';
 import '../features/rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
 import '../features/settings/backup/backup_page.dart';
 import '../features/settings/fx_rates/fx_rates_page.dart';
@@ -64,6 +64,7 @@ import '../features/settings/ui/fire_stress_settings_page.dart';
 import '../features/settings/ui/monthly_expense_settings_page.dart';
 import '../features/settings/ui/risk_thresholds_page.dart';
 import '../features/settings/ui/sync_status_page.dart';
+import '../features/wealth/ui/wealth_hub_page.dart';
 import 'app_shell.dart';
 import 'deferred_route.dart';
 import 'page_transitions.dart';
@@ -97,9 +98,15 @@ Future<void> preloadDeferredRoutesForTest() async {
   ]);
 }
 
-/// Builds the app's [GoRouter]. Exposed (rather than inlined in the provider)
-/// so tests can construct a router seeded at an arbitrary deep-link location
-/// and inject their own observers / guards through the [Ref].
+/// Builds the app's [GoRouter].
+///
+/// IA structure (post-Phase A, see `apps/mobile/docs/design/00-information-architecture.md`):
+///
+/// - 4-branch [StatefulShellRoute]: Today / Activity / Wealth / Plan.
+///   Settings is no longer a shell branch — it lives as a top-level
+///   non-shell route reached from the Today header gear icon.
+/// - Legacy `/accounts/*` paths resolve via redirect-only top-level routes
+///   so external deep links and AI chat history continue working.
 GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
   return GoRouter(
     initialLocation: initialLocation,
@@ -121,14 +128,20 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
         name: AppRouteNames.onboarding,
         builder: (context, state) => const OnboardingPage(),
       ),
+      // Settings — global meta, accessed from Today's header gear. Lives
+      // outside the shell so it covers the full canvas while open and
+      // returns to whatever tab the user came from on pop.
+      _settingsRoute(),
+      // Legacy /accounts/* redirects (Phase A) — keep until Phase D.
+      ..._legacyAccountsRedirects(),
       // Main shell: 4-branch IndexedStack preserves tab state across switches.
-      // Order matches kPrimaryTabPaths: Home / Activity / Accounts / Settings.
+      // Order matches kPrimaryTabPaths: Today / Activity / Wealth / Plan.
       // The former `/ai` tab is gone (§5.10) — AI is now an overlay (command
       // palette) + inline capsules, not a destination.
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppRootShell(shell: shell),
         branches: [
-          // ── Branch 0: Home ───────────────────────────────────────────────
+          // ── Branch 0: Today (was "Home") ────────────────────────────────
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -238,28 +251,27 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               ),
             ],
           ),
-          // ── Branch 2: Accounts hub (assets + liabilities + bank list +
-          //              plan dashboards: FIRE / Rebalance / Analytics) ─────
+          // ── Branch 2: Wealth (owned objects + current state) ────────────
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: AppRoutes.accounts,
-                name: AppRouteNames.accounts,
-                builder: (context, state) => const AccountsHubPage(),
+                path: AppRoutes.wealth,
+                name: AppRouteNames.wealth,
+                builder: (context, state) => const WealthHubPage(),
                 routes: [
                   GoRoute(
-                    path: 'list',
-                    name: AppRouteNames.accountsList,
+                    path: 'accounts',
+                    name: AppRouteNames.wealthAccounts,
                     builder: (context, state) => const AccountsPage(),
                     routes: [
                       GoRoute(
                         path: 'new',
-                        name: AppRouteNames.accountListNew,
+                        name: AppRouteNames.wealthAccountNew,
                         builder: (context, state) => const AccountFormPage(),
                       ),
                       GoRoute(
                         path: ':accountId',
-                        name: AppRouteNames.accountListItem,
+                        name: AppRouteNames.wealthAccount,
                         pageBuilder: (context, state) =>
                             buildHeroAwareTransitionPage<void>(
                               context: context,
@@ -273,22 +285,22 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   ),
                   GoRoute(
                     path: 'new/cash',
-                    name: AppRouteNames.accountNewCash,
+                    name: AppRouteNames.wealthNewCash,
                     builder: (context, state) => const CashFormPage(),
                   ),
                   GoRoute(
                     path: 'new/deposit',
-                    name: AppRouteNames.accountNewDeposit,
+                    name: AppRouteNames.wealthNewDeposit,
                     builder: (context, state) => const DepositFormPage(),
                   ),
                   GoRoute(
                     path: 'new/wealth',
-                    name: AppRouteNames.accountNewWealth,
+                    name: AppRouteNames.wealthNewWealth,
                     builder: (context, state) => const WealthProductFormPage(),
                   ),
                   GoRoute(
                     path: 'corporate-action',
-                    name: AppRouteNames.accountCorporateAction,
+                    name: AppRouteNames.wealthCorporateAction,
                     builder: (context, state) => DeferredRoute(
                       load: corp_action_lib.loadLibrary,
                       builder: (_) =>
@@ -296,64 +308,30 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     ),
                   ),
                   GoRoute(
-                    path: 'fire',
-                    name: AppRouteNames.accountsFire,
-                    builder: (context, state) => DeferredRoute(
-                      load: fire_lib.loadLibrary,
-                      builder: (_) => fire_lib.FirePage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'rebalance',
-                    name: AppRouteNames.accountsRebalance,
-                    builder: (context, state) => DeferredRoute(
-                      load: rebalance_lib.loadLibrary,
-                      builder: (_) => rebalance_lib.RebalancePage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'income',
-                    name: AppRouteNames.accountsIncomePlanner,
-                    builder: (context, state) => DeferredRoute(
-                      load: income_planner_lib.loadLibrary,
-                      builder: (_) => income_planner_lib.IncomePlannerPage(),
-                    ),
-                  ),
-                  GoRoute(
                     path: 'portfolio',
-                    name: AppRouteNames.accountsPortfolioHub,
+                    name: AppRouteNames.wealthPortfolio,
                     builder: (context, state) => DeferredRoute(
                       load: portfolio_hub_lib.loadLibrary,
                       builder: (_) => portfolio_hub_lib.PortfolioHubPage(),
                     ),
                   ),
                   GoRoute(
-                    path: 'dca',
-                    name: AppRouteNames.accountsDcaSimulator,
-                    builder: (context, state) => DeferredRoute(
-                      load: dca_simulator_lib.loadLibrary,
-                      builder: (_) => dca_simulator_lib.DcaSimulatorPage(),
-                    ),
-                  ),
-                  GoRoute(
                     path: 'watchlist',
-                    name: AppRouteNames.accountsWatchlist,
+                    name: AppRouteNames.wealthWatchlist,
                     builder: (context, state) => DeferredRoute(
                       load: watchlist_lib.loadLibrary,
                       builder: (_) => watchlist_lib.WatchlistPage(),
                     ),
                   ),
                   GoRoute(
-                    path: 'analytics',
-                    name: AppRouteNames.accountsAnalytics,
-                    builder: (context, state) => DeferredRoute(
-                      load: analytics_lib.loadLibrary,
-                      builder: (_) => analytics_lib.AnalyticsPage(),
-                    ),
+                    path: 'income-projection',
+                    name: AppRouteNames.wealthIncomeProjection,
+                    builder: (context, state) =>
+                        const WealthIncomeProjectionPlaceholderPage(),
                   ),
                   GoRoute(
-                    path: 'asset/:assetId',
-                    name: AppRouteNames.accountAssetDetail,
+                    path: 'assets/:assetId',
+                    name: AppRouteNames.wealthAssetDetail,
                     pageBuilder: (context, state) =>
                         buildHeroAwareTransitionPage<void>(
                           context: context,
@@ -365,7 +343,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   ),
                   GoRoute(
                     path: 'physical/:id',
-                    name: AppRouteNames.physicalAssetDetail,
+                    name: AppRouteNames.wealthPhysicalDetail,
                     builder: (context, state) {
                       final id = state.pathParameters['id']!;
                       return DeferredRoute(
@@ -377,7 +355,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                   ),
                   GoRoute(
                     path: 'liabilities',
-                    name: AppRouteNames.liabilities,
+                    name: AppRouteNames.wealthLiabilities,
                     builder: (context, state) => DeferredRoute(
                       load: liabilities_lib.loadLibrary,
                       builder: (_) => liabilities_lib.LiabilitiesPage(),
@@ -385,12 +363,12 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     routes: [
                       GoRoute(
                         path: 'new',
-                        name: AppRouteNames.liabilityNew,
+                        name: AppRouteNames.wealthLiabilityNew,
                         builder: (context, state) => const LiabilityFormPage(),
                       ),
                       GoRoute(
                         path: ':id',
-                        name: AppRouteNames.liabilityDetail,
+                        name: AppRouteNames.wealthLiabilityDetail,
                         builder: (context, state) {
                           final id = state.pathParameters['id']!;
                           return DeferredRoute(
@@ -408,92 +386,65 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
               ),
             ],
           ),
-          // ── Branch 3: Settings ───────────────────────────────────────────
+          // ── Branch 3: Plan (decisions + future state) ───────────────────
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: AppRoutes.settings,
-                name: AppRouteNames.settings,
-                builder: (context, state) => DeferredRoute(
-                  load: settings_lib.loadLibrary,
-                  builder: (_) => settings_lib.SettingsPage(),
-                ),
+                path: AppRoutes.plan,
+                name: AppRouteNames.plan,
+                builder: (context, state) => const PlanHubPage(),
                 routes: [
                   GoRoute(
-                    path: 'devices',
-                    name: AppRouteNames.devices,
+                    path: 'fire',
+                    name: AppRouteNames.planFire,
                     builder: (context, state) => DeferredRoute(
-                      load: devices_lib.loadLibrary,
-                      builder: (_) => devices_lib.DevicesPage(),
+                      load: fire_lib.loadLibrary,
+                      builder: (_) => fire_lib.FirePage(),
                     ),
                   ),
                   GoRoute(
-                    path: 'fx-rates',
-                    name: AppRouteNames.fxRates,
-                    builder: (context, state) => const FxRatesPage(),
-                  ),
-                  GoRoute(
-                    path: 'backup',
-                    name: AppRouteNames.backup,
-                    builder: (context, state) => const BackupPage(),
-                  ),
-                  GoRoute(
-                    path: 'logs',
-                    name: AppRouteNames.logs,
-                    builder: (context, state) => const LogViewerPage(),
-                  ),
-                  GoRoute(
-                    path: 'sync',
-                    name: AppRouteNames.sync,
-                    builder: (context, state) => const SyncStatusPage(),
-                  ),
-                  GoRoute(
-                    path: 'ai-history',
-                    name: AppRouteNames.aiHistory,
+                    path: 'rebalance',
+                    name: AppRouteNames.planRebalance,
                     builder: (context, state) => DeferredRoute(
-                      load: ai_chat_lib.loadLibrary,
-                      builder: (_) => ai_chat_lib.AiChatPage(),
+                      load: rebalance_lib.loadLibrary,
+                      builder: (_) => rebalance_lib.RebalancePage(),
                     ),
                   ),
                   GoRoute(
-                    path: 'ai-privacy',
-                    name: AppRouteNames.aiPrivacy,
-                    builder: (context, state) => const AiPrivacyPage(),
+                    path: 'income',
+                    name: AppRouteNames.planIncome,
+                    builder: (context, state) => DeferredRoute(
+                      load: income_planner_lib.loadLibrary,
+                      builder: (_) => income_planner_lib.IncomePlannerPage(),
+                    ),
                   ),
                   GoRoute(
-                    path: 'ai-llm',
-                    name: AppRouteNames.aiLlm,
-                    builder: (context, state) => const AiLlmCredentialsPage(),
+                    path: 'dca',
+                    name: AppRouteNames.planDca,
+                    builder: (context, state) => DeferredRoute(
+                      load: dca_simulator_lib.loadLibrary,
+                      builder: (_) => dca_simulator_lib.DcaSimulatorPage(),
+                    ),
                   ),
                   GoRoute(
-                    path: 'risk-thresholds',
-                    name: AppRouteNames.riskThresholds,
-                    builder: (context, state) => const RiskThresholdsPage(),
+                    path: 'projection',
+                    name: AppRouteNames.planProjection,
+                    builder: (context, state) => DeferredRoute(
+                      load: analytics_lib.loadLibrary,
+                      builder: (_) => analytics_lib.AnalyticsPage(),
+                    ),
                   ),
                   GoRoute(
-                    path: 'stress-test',
-                    name: AppRouteNames.stressTest,
-                    builder: (context, state) => const FireStressSettingsPage(),
-                  ),
-                  GoRoute(
-                    path: 'monthly-expense',
-                    name: AppRouteNames.monthlyExpense,
+                    path: 'scenarios',
+                    name: AppRouteNames.planScenarios,
                     builder: (context, state) =>
-                        const MonthlyExpenseSettingsPage(),
+                        const PlanScenariosPlaceholderPage(),
                   ),
                   GoRoute(
-                    path: 'ai-transparency',
-                    name: AppRouteNames.aiTransparency,
-                    builder: (context, state) => const AiTransparencyPage(),
-                    routes: [
-                      GoRoute(
-                        path: ':requestId',
-                        name: AppRouteNames.aiTransparencyDetail,
-                        builder: (context, state) => AiTransparencyDetailPage(
-                          requestId: state.pathParameters['requestId'] ?? '',
-                        ),
-                      ),
-                    ],
+                    path: 'goals',
+                    name: AppRouteNames.planGoals,
+                    builder: (context, state) =>
+                        const PlanGoalsPlaceholderPage(),
                   ),
                 ],
               ),
@@ -503,6 +454,202 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
       ),
     ],
   );
+}
+
+/// Top-level settings sub-tree. Outside the shell so opening Settings
+/// covers the bottom nav and `pop` returns to whatever tab the user
+/// came from. See IA contract §1: Settings is global meta, not a tab.
+GoRoute _settingsRoute() {
+  return GoRoute(
+    path: AppRoutes.settings,
+    name: AppRouteNames.settings,
+    builder: (context, state) => DeferredRoute(
+      load: settings_lib.loadLibrary,
+      builder: (_) => settings_lib.SettingsPage(),
+    ),
+    routes: [
+      GoRoute(
+        path: 'devices',
+        name: AppRouteNames.devices,
+        builder: (context, state) => DeferredRoute(
+          load: devices_lib.loadLibrary,
+          builder: (_) => devices_lib.DevicesPage(),
+        ),
+      ),
+      GoRoute(
+        path: 'fx-rates',
+        name: AppRouteNames.fxRates,
+        builder: (context, state) => const FxRatesPage(),
+      ),
+      GoRoute(
+        path: 'backup',
+        name: AppRouteNames.backup,
+        builder: (context, state) => const BackupPage(),
+      ),
+      GoRoute(
+        path: 'logs',
+        name: AppRouteNames.logs,
+        builder: (context, state) => const LogViewerPage(),
+      ),
+      GoRoute(
+        path: 'sync',
+        name: AppRouteNames.sync,
+        builder: (context, state) => const SyncStatusPage(),
+      ),
+      GoRoute(
+        path: 'ai-history',
+        name: AppRouteNames.aiHistory,
+        builder: (context, state) => DeferredRoute(
+          load: ai_chat_lib.loadLibrary,
+          builder: (_) => ai_chat_lib.AiChatPage(),
+        ),
+      ),
+      GoRoute(
+        path: 'ai-privacy',
+        name: AppRouteNames.aiPrivacy,
+        builder: (context, state) => const AiPrivacyPage(),
+      ),
+      GoRoute(
+        path: 'ai-llm',
+        name: AppRouteNames.aiLlm,
+        builder: (context, state) => const AiLlmCredentialsPage(),
+      ),
+      GoRoute(
+        path: 'risk-thresholds',
+        name: AppRouteNames.riskThresholds,
+        builder: (context, state) => const RiskThresholdsPage(),
+      ),
+      GoRoute(
+        path: 'stress-test',
+        name: AppRouteNames.stressTest,
+        builder: (context, state) => const FireStressSettingsPage(),
+      ),
+      GoRoute(
+        path: 'monthly-expense',
+        name: AppRouteNames.monthlyExpense,
+        builder: (context, state) => const MonthlyExpenseSettingsPage(),
+      ),
+      GoRoute(
+        path: 'ai-transparency',
+        name: AppRouteNames.aiTransparency,
+        builder: (context, state) => const AiTransparencyPage(),
+        routes: [
+          GoRoute(
+            path: ':requestId',
+            name: AppRouteNames.aiTransparencyDetail,
+            builder: (context, state) => AiTransparencyDetailPage(
+              requestId: state.pathParameters['requestId'] ?? '',
+            ),
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+/// Phase A redirect routes: legacy `/accounts/*` URLs continue to resolve
+/// by redirecting to the canonical `/wealth/*` or `/plan/*` paths. Kept
+/// alive so external deep links and AI chat history (which embed full
+/// paths in `routeHint` payloads) don't break after the IA migration.
+///
+/// Delete in Phase D once telemetry shows no hits for 1+ release.
+List<GoRoute> _legacyAccountsRedirects() {
+  String redirect(String to) => to;
+  return <GoRoute>[
+    GoRoute(path: '/accounts', redirect: (_, _) => redirect(AppRoutes.wealth)),
+    GoRoute(
+      path: '/accounts/list',
+      redirect: (_, _) => redirect(AppRoutes.wealthAccounts),
+    ),
+    GoRoute(
+      path: '/accounts/list/new',
+      redirect: (_, _) => redirect(AppRoutes.wealthAccountNew),
+    ),
+    GoRoute(
+      path: '/accounts/list/:accountId',
+      redirect: (_, state) {
+        final id = state.pathParameters['accountId'] ?? '';
+        return AppRoutes.wealthAccount(id);
+      },
+    ),
+    GoRoute(
+      path: '/accounts/new/cash',
+      redirect: (_, _) => redirect(AppRoutes.wealthNewCash),
+    ),
+    GoRoute(
+      path: '/accounts/new/deposit',
+      redirect: (_, _) => redirect(AppRoutes.wealthNewDeposit),
+    ),
+    GoRoute(
+      path: '/accounts/new/wealth',
+      redirect: (_, _) => redirect(AppRoutes.wealthNewWealth),
+    ),
+    GoRoute(
+      path: '/accounts/corporate-action',
+      redirect: (_, _) => redirect(AppRoutes.wealthCorporateAction),
+    ),
+    GoRoute(
+      path: '/accounts/portfolio',
+      redirect: (_, _) => redirect(AppRoutes.wealthPortfolio),
+    ),
+    GoRoute(
+      path: '/accounts/watchlist',
+      redirect: (_, _) => redirect(AppRoutes.wealthWatchlist),
+    ),
+    GoRoute(
+      path: '/accounts/dividends',
+      redirect: (_, _) => redirect(AppRoutes.wealthIncomeProjection),
+    ),
+    GoRoute(
+      path: '/accounts/asset/:assetId',
+      redirect: (_, state) {
+        final id = state.pathParameters['assetId'] ?? '';
+        return AppRoutes.wealthAsset(id);
+      },
+    ),
+    GoRoute(
+      path: '/accounts/physical/:id',
+      redirect: (_, state) {
+        final id = state.pathParameters['id'] ?? '';
+        return AppRoutes.wealthPhysical(id);
+      },
+    ),
+    GoRoute(
+      path: '/accounts/liabilities',
+      redirect: (_, _) => redirect(AppRoutes.wealthLiabilities),
+    ),
+    GoRoute(
+      path: '/accounts/liabilities/new',
+      redirect: (_, _) => redirect(AppRoutes.wealthLiabilityNew),
+    ),
+    GoRoute(
+      path: '/accounts/liabilities/:id',
+      redirect: (_, state) {
+        final id = state.pathParameters['id'] ?? '';
+        return AppRoutes.wealthLiability(id);
+      },
+    ),
+    GoRoute(
+      path: '/accounts/fire',
+      redirect: (_, _) => redirect(AppRoutes.planFire),
+    ),
+    GoRoute(
+      path: '/accounts/rebalance',
+      redirect: (_, _) => redirect(AppRoutes.planRebalance),
+    ),
+    GoRoute(
+      path: '/accounts/analytics',
+      redirect: (_, _) => redirect(AppRoutes.planProjection),
+    ),
+    GoRoute(
+      path: '/accounts/income',
+      redirect: (_, _) => redirect(AppRoutes.planIncome),
+    ),
+    GoRoute(
+      path: '/accounts/dca',
+      redirect: (_, _) => redirect(AppRoutes.planDca),
+    ),
+  ];
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) => buildAppRouter(ref));

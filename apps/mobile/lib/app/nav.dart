@@ -10,7 +10,7 @@ import '../design_system/design_system.dart';
 /// belongs when there is no back stack at all" (typically the owning list
 /// or hub). All four precedence steps live in `smartPop`; keeping this
 /// wrapper means form save/delete handlers can read in one line as
-/// `popOrGo(context, fallback: AppRoutes.accountsList)`.
+/// `popOrGo(context, fallback: AppRoutes.wealthAccounts)`.
 void popOrGo(BuildContext context, {required String fallback}) =>
     smartPop(context, fallback: fallback);
 

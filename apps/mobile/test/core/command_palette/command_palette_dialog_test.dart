@@ -58,10 +58,10 @@ void main() {
         id: 'x',
         label: 'Go to Assets',
         icon: Icons.dashboard,
-        keywords: const [AppRoutes.accounts, '资产'],
+        keywords: const [AppRoutes.wealth, '资产'],
         run: (_) {},
       );
-      expect(entry.matches(AppRoutes.accounts), isTrue);
+      expect(entry.matches(AppRoutes.wealth), isTrue);
       expect(entry.matches('资产'), isTrue);
     });
   });
@@ -366,12 +366,13 @@ void main() {
         containsAll(<String>[
           'nav.home',
           'nav.activity',
-          'nav.accounts',
+          'nav.wealth',
+          'nav.plan',
           'nav.expenses',
           'nav.cashflow',
           'nav.cashflow.recurring',
           'nav.income',
-          'nav.analytics',
+          'nav.projection',
           'nav.fire',
           'nav.rebalance',
           'nav.settings',

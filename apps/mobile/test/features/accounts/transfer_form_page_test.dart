@@ -129,7 +129,7 @@ Widget _wrap(
             builder: (_, _) => const TransferFormPage(),
           ),
           GoRoute(
-            path: AppRoutes.accountsList,
+            path: AppRoutes.wealthAccounts,
             builder: (_, _) => const SizedBox(),
           ),
         ],

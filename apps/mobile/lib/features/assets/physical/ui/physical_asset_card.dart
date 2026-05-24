@@ -21,7 +21,7 @@ class PhysicalAssetCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () => context.goNamed(
-            AppRouteNames.physicalAssetDetail,
+            AppRouteNames.wealthPhysicalDetail,
             pathParameters: {'id': asset.id},
           ),
           child: Padding(

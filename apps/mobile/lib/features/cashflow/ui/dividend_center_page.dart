@@ -28,7 +28,7 @@ class DividendCenterPage extends ConsumerWidget {
         suffixes: [
           FHeaderAction(
             icon: const Icon(Icons.add_card_outlined),
-            onPress: () => context.push(AppRoutes.accountCorporateAction),
+            onPress: () => context.push(AppRoutes.wealthCorporateAction),
           ),
         ],
       ),
@@ -568,7 +568,7 @@ class _EmptyDividendState extends StatelessWidget {
           const SizedBox(height: AppSpacing.s16),
           FButton(
             key: const Key('dividend-center-record-cta'),
-            onPress: () => context.push(AppRoutes.accountCorporateAction),
+            onPress: () => context.push(AppRoutes.wealthCorporateAction),
             child: Text(l10n.dividendCenterRecordAction),
           ),
         ],

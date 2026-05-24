@@ -104,11 +104,17 @@ abstract class AppLocalizations {
   /// **'NaviWealth'**
   String get appTitle;
 
-  /// Bottom nav: dashboard / overview tab
+  /// Bottom nav: today / driver's-seat tab. Renamed from 'Overview' under the IA contract — Today is read-only operating dashboard.
   ///
   /// In en, this message translates to:
-  /// **'Overview'**
+  /// **'Today'**
   String get navHome;
+
+  /// Alias for navHome under the new IA. Prefer this in new code.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get navToday;
 
   /// Expense list label
   ///
@@ -116,29 +122,263 @@ abstract class AppLocalizations {
   /// **'Expenses'**
   String get navExpenses;
 
-  /// Bottom nav: settings tab
+  /// Global settings — accessed via Today top-right ⚙, not a tab (IA contract §1).
   ///
   /// In en, this message translates to:
   /// **'Settings'**
   String get navSettings;
 
-  /// Bottom nav: activity tab (single timeline)
+  /// Bottom nav: activity tab (single timeline of events)
   ///
   /// In en, this message translates to:
   /// **'Activity'**
   String get navActivity;
 
-  /// Bottom nav / More hub: accounts tab
+  /// Deprecated alias for navWealth. Renders the same label.
   ///
   /// In en, this message translates to:
-  /// **'Accounts'**
+  /// **'Wealth'**
   String get navAccounts;
+
+  /// Bottom nav: wealth tab (owned objects + current state)
+  ///
+  /// In en, this message translates to:
+  /// **'Wealth'**
+  String get navWealth;
+
+  /// Bottom nav: plan tab (decisions + future state — FIRE / rebalance / income / scenarios)
+  ///
+  /// In en, this message translates to:
+  /// **'Plan'**
+  String get navPlan;
 
   /// Bottom nav action that opens the command palette on touch shells
   ///
   /// In en, this message translates to:
   /// **'Search'**
   String get navSearch;
+
+  /// Tooltip on the Today header gear that opens /settings
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get navSettingsTooltip;
+
+  /// Plan hub page title (IA contract §1: decisions + future state)
+  ///
+  /// In en, this message translates to:
+  /// **'Plan'**
+  String get planHubTitle;
+
+  /// Plan hub subtitle / one-liner under the title
+  ///
+  /// In en, this message translates to:
+  /// **'Decisions, models, and goals.'**
+  String get planHubSubtitle;
+
+  /// Plan hub: FIRE section card title
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE'**
+  String get planFireSectionTitle;
+
+  /// Plan hub: FIRE section card subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Years to financial independence'**
+  String get planFireSectionSubtitle;
+
+  /// Plan hub: rebalance section card title
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalance'**
+  String get planRebalanceSectionTitle;
+
+  /// Plan hub: rebalance section card subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Drift from target allocation'**
+  String get planRebalanceSectionSubtitle;
+
+  /// Plan hub: options-income section card title
+  ///
+  /// In en, this message translates to:
+  /// **'Income strategy'**
+  String get planIncomeSectionTitle;
+
+  /// Plan hub: options-income section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Covered calls & cash-secured puts'**
+  String get planIncomeSectionSubtitle;
+
+  /// Plan hub: DCA simulator section title
+  ///
+  /// In en, this message translates to:
+  /// **'DCA simulator'**
+  String get planDcaSectionTitle;
+
+  /// Plan hub: DCA simulator section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring buy plan'**
+  String get planDcaSectionSubtitle;
+
+  /// Plan hub: scenario analytics / FIRE projection section title
+  ///
+  /// In en, this message translates to:
+  /// **'Scenario analytics'**
+  String get planProjectionSectionTitle;
+
+  /// Plan hub: scenario analytics subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Allocation & FIRE projection'**
+  String get planProjectionSectionSubtitle;
+
+  /// Plan hub: scenarios section title (Phase B+)
+  ///
+  /// In en, this message translates to:
+  /// **'Scenarios'**
+  String get planScenariosSectionTitle;
+
+  /// Plan hub: scenarios section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Compare what-ifs'**
+  String get planScenariosSectionSubtitle;
+
+  /// Empty-state body for the scenarios sub-page until the builder ships
+  ///
+  /// In en, this message translates to:
+  /// **'Scenario builder is not yet wired up.'**
+  String get planScenariosComingSoon;
+
+  /// Plan hub: goals section title (Phase B+)
+  ///
+  /// In en, this message translates to:
+  /// **'Goals'**
+  String get planGoalsSectionTitle;
+
+  /// Plan hub: goals section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Saving targets & milestones'**
+  String get planGoalsSectionSubtitle;
+
+  /// Empty-state body for the goals sub-page until the tracker ships
+  ///
+  /// In en, this message translates to:
+  /// **'Goal tracker is not yet wired up.'**
+  String get planGoalsComingSoon;
+
+  /// Plan hero shown when FIRE engine has no data yet
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your FIRE plan to see progress here.'**
+  String get planHeroEmpty;
+
+  /// Plan hero — years remaining to financial independence
+  ///
+  /// In en, this message translates to:
+  /// **'{years} years to FIRE'**
+  String planHeroYearsToFire(String years);
+
+  /// Plan hero — label for FIRE progress percent
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get planHeroProgressLabel;
+
+  /// Plan hero — secondary CTA hint when drift is detected
+  ///
+  /// In en, this message translates to:
+  /// **'Next: review rebalance'**
+  String get planHeroNextRebalance;
+
+  /// Plan hero primary CTA: deep-link to /plan/fire
+  ///
+  /// In en, this message translates to:
+  /// **'See plan'**
+  String get planHeroSeePlan;
+
+  /// Wealth hub page title (IA contract §1: owned objects + current state)
+  ///
+  /// In en, this message translates to:
+  /// **'Wealth'**
+  String get wealthHubTitle;
+
+  /// Wealth hub subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'What you own, what you owe.'**
+  String get wealthHubSubtitle;
+
+  /// Wealth hub: accounts section title
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get wealthAccountsSectionTitle;
+
+  /// Wealth hub: accounts section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Cash, banks, brokers, crypto'**
+  String get wealthAccountsSectionSubtitle;
+
+  /// Wealth hub: holdings section title (links into portfolio hub)
+  ///
+  /// In en, this message translates to:
+  /// **'Holdings'**
+  String get wealthHoldingsSectionTitle;
+
+  /// Wealth hub: holdings section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Positions across all accounts'**
+  String get wealthHoldingsSectionSubtitle;
+
+  /// Wealth hub: watchlist section title
+  ///
+  /// In en, this message translates to:
+  /// **'Watchlist'**
+  String get wealthWatchlistSectionTitle;
+
+  /// Wealth hub: watchlist section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Symbols you\'re tracking'**
+  String get wealthWatchlistSectionSubtitle;
+
+  /// Wealth hub: liabilities section title
+  ///
+  /// In en, this message translates to:
+  /// **'Liabilities'**
+  String get wealthLiabilitiesSectionTitle;
+
+  /// Wealth hub: liabilities section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Loans, mortgages, credit'**
+  String get wealthLiabilitiesSectionSubtitle;
+
+  /// Wealth hub / sub-page: income projection (yield derived from holdings)
+  ///
+  /// In en, this message translates to:
+  /// **'Income projection'**
+  String get wealthIncomeProjectionTitle;
+
+  /// Wealth hub: income projection section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Projected yield from your holdings'**
+  String get wealthIncomeProjectionSubtitle;
+
+  /// Empty-state body for /wealth/income-projection until the engine ships
+  ///
+  /// In en, this message translates to:
+  /// **'Income projection from holdings is not yet wired up.'**
+  String get wealthIncomeProjectionComingSoon;
 
   /// Cash-flow overview page title
   ///

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/dashboard_insights_provider.dart';
 import '../data/dashboard_providers.dart';
@@ -63,12 +65,23 @@ class HomeGreetingHeader extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            greeting,
-            style: context.theme.typography.xl.copyWith(
-              fontWeight: FontWeight.w600,
-              height: 1.1,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  greeting,
+                  style: context.theme.typography.xl.copyWith(
+                    fontWeight: FontWeight.w600,
+                    height: 1.1,
+                  ),
+                ),
+              ),
+              // IA contract §1: Settings is global meta — accessed from the
+              // Today header gear, not a tab. Pushes outside the shell so
+              // pop returns to whatever tab the user came from.
+              _SettingsGearButton(),
+            ],
           ),
           if (statusFragments.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -118,4 +131,36 @@ class _StatusFragment {
   const _StatusFragment({required this.text, required this.color});
   final String text;
   final Color color;
+}
+
+class _SettingsGearButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    return Semantics(
+      label: l10n.navSettingsTooltip,
+      button: true,
+      child: Tooltip(
+        message: l10n.navSettingsTooltip,
+        child: FTappable(
+          onPress: () => context.push(AppRoutes.settings),
+          child: Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: colors.foreground.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.settings_outlined,
+              size: 18,
+              color: colors.mutedForeground,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
