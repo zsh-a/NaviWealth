@@ -74,9 +74,9 @@
 
 > 是 Phase 2 报表的**前置条件**。先做,后面所有金额展示统一基于它。
 
-- `MoneyText` widget 支持原币 + 报表币双显示
-- Lint rule 禁止裸 `Decimal.toString()` 显示金额
-- FX curve 自动刷新(数据层)
+- ✅ **M1.1 widget 落地** (2026-05-24): `DualMoneyText` 在 `design_system/widgets/money_text.dart`,支持 inline / stacked 两种 layout;同币种自动隐藏 caption;a11y label 整合两个金额。5 个 widget test 覆盖。
+- ⏳ M1.2 全量替换调用点 — 当前 codebase 约 118 处裸 `.toStringAsFixed` 显示金额。**作为单独 PR 系列**按 feature 分批迁移,不在本次范围
+- ⏳ M1.3 Lint 脚本禁止裸金额显示 — **依赖 M1.2 完成**(否则 CI 直接红)
 - 详: [midterm 2.3 M1](./roadmap-midterm-execution.md)
 
 ### 3.2 Budget & Cashflow MVP(M1)
