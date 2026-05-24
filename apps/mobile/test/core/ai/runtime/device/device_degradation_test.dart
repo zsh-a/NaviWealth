@@ -95,28 +95,6 @@ void main() {
     });
   });
 
-  group('AiTrace.copyWith (W-D6)', () {
-    test('overrides only the runtime axes, preserves the rest', () {
-      final base = _trace(backend: Backend.cloud);
-      final dev = base.copyWith(
-        backend: Backend.device,
-        routingReason: kDeviceLlmDirectRoutingReason,
-        usedCloud: false,
-      );
-      expect(dev.backend, Backend.device);
-      expect(dev.routingReason, kDeviceLlmDirectRoutingReason);
-      expect(dev.usedCloud, isFalse);
-      expect(dev.requestId, base.requestId);
-      expect(dev.totalDurationMs, base.totalDurationMs);
-      // roundtrips through the wire
-      expect(
-        AiTrace.fromJson(dev.toJson()).routingReason,
-        kDeviceLlmDirectRoutingReason,
-      );
-      expect(AiTrace.fromJson(dev.toJson()).backend, Backend.device);
-    });
-  });
-
   group(
     'RuntimeRoutingAiChatApiClient — W-D7 device-only (no cloud relay)',
     () {

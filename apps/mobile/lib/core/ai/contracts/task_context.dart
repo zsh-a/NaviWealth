@@ -226,54 +226,6 @@ class ScopedAggregate {
   }
 }
 
-/// 端侧主动给云端的「这些 read model 落后我了，dispatch 前请重投」
-/// 提示。docs/ai-architecture.md §4.2 freshness gate Phase 2 闭环。
-///
-/// 触发路径：上一轮 chat 完结时，AiTrace 收集了 stale read_model 名 →
-/// `pendingFreshnessHintProvider` 累计 → 下一次 prep 注入此 hint →
-/// 云端 routes/ai.rs 在 dispatch 前 `clear_freshness_meta` 强制
-/// `ensure_fresh` 重算。Hint 单向、幂等、消费后清空。
-class FreshnessHint {
-  const FreshnessHint({
-    this.forceRefreshReadModels = const <String>[],
-    this.lastLocalHlc,
-  });
-
-  /// Read model 名（如 `monthly_spend_by_category`）。云端逐一失效
-  /// 对应 freshness_meta 行；不认识的名字直接忽略。
-  final List<String> forceRefreshReadModels;
-
-  /// Wave 32 — 端侧此次 chat 时的 localHlc 字符串。云端可用作 freshness
-  /// 比较的真值水位（之前依赖 TaskContext.deviceHlc，但语义上 HLC
-  /// 属于 freshness 协议，挪进来后 TaskContext.deviceHlc 仅作为
-  /// analytical_uploads 的批次戳）。
-  /// `null` = 端未提供（早期 client）。
-  final String? lastLocalHlc;
-
-  bool get isEmpty =>
-      forceRefreshReadModels.isEmpty && (lastLocalHlc == null);
-
-  Map<String, Object?> toJson() => <String, Object?>{
-    'force_refresh_read_models': forceRefreshReadModels,
-    if (lastLocalHlc != null) 'last_local_hlc': lastLocalHlc,
-  };
-
-  factory FreshnessHint.fromJson(Map<String, Object?> json) {
-    final raw = json['force_refresh_read_models'];
-    final names = <String>[];
-    if (raw is List) {
-      for (final e in raw) {
-        if (e is String && e.isNotEmpty) names.add(e);
-      }
-    }
-    final hlc = json['last_local_hlc'];
-    return FreshnessHint(
-      forceRefreshReadModels: names,
-      lastLocalHlc: hlc is String && hlc.isNotEmpty ? hlc : null,
-    );
-  }
-}
-
 /// 端→云单条分析上报。docs/ai-architecture.md §4.3.3 Analytical 层
 /// 的端侧投影：端是唯一计算者，云端只镜像 device 产物，避免 Dart/Rust
 /// 启发式逻辑双份漂移。
@@ -321,7 +273,6 @@ class TaskContext {
     this.signals = const <RecentSignal>[],
     this.retrieved = const <SemanticHit>[],
     this.aggregates = const <ScopedAggregate>[],
-    this.freshnessHint,
     this.analyticalUploads = const <AnalyticalUpload>[],
     this.deviceHlc,
   });
@@ -331,10 +282,11 @@ class TaskContext {
   final List<RecentSignal> signals;
   final List<SemanticHit> retrieved;
   final List<ScopedAggregate> aggregates;
-  final FreshnessHint? freshnessHint;
 
   /// 端侧 detector 上报：每条 kind=recurring_pattern/anomaly_flag/...
-  /// 后端镜像入对应 device-sourced read model。
+  /// 历史上后端镜像入对应 read model；W-D7 后端 AI 删除后这些 payload
+  /// 仍作为 prompt 预注入信号喂给端侧 LLM（参见 `docs/ai-boundary-audit.md`
+  /// §2.4 / 批 D — 是否保留需测量后再定）。
   final List<AnalyticalUpload> analyticalUploads;
 
   /// 端侧本地最新 HLC（同 syncLocalHlcProvider 的字符串形式），作为本
@@ -347,8 +299,6 @@ class TaskContext {
     'signals': signals.map((s) => s.toJson()).toList(growable: false),
     'retrieved': retrieved.map((h) => h.toJson()).toList(growable: false),
     'aggregates': aggregates.map((a) => a.toJson()).toList(growable: false),
-    if (freshnessHint != null && !freshnessHint!.isEmpty)
-      'freshness_hint': freshnessHint!.toJson(),
     if (analyticalUploads.isNotEmpty)
       'analytical_uploads':
           analyticalUploads.map((u) => u.toJson()).toList(growable: false),
@@ -358,7 +308,6 @@ class TaskContext {
   factory TaskContext.fromJson(Map<String, Object?> json) {
     final route = json['route'];
     final intent = json['intent'];
-    final hint = json['freshness_hint'];
     final dh = json['device_hlc'];
     return TaskContext(
       route: route is Map
@@ -373,9 +322,6 @@ class TaskContext {
       signals: _list(json['signals'], RecentSignal.fromJson),
       retrieved: _list(json['retrieved'], SemanticHit.fromJson),
       aggregates: _list(json['aggregates'], ScopedAggregate.fromJson),
-      freshnessHint: hint is Map
-          ? FreshnessHint.fromJson(_strKeyed(hint))
-          : null,
       analyticalUploads: _list(
         json['analytical_uploads'],
         AnalyticalUpload.fromJson,

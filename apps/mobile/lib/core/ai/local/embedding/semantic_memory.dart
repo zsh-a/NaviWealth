@@ -1,9 +1,13 @@
 /// User-facing wrapper over [Embedder] + [VectorStore].
 ///
-/// Plays the same role as the contracts' `SemanticHit` placeholder:
-/// transactions notes, manually-entered memos, scanned documents,
-/// tag descriptions all become memory entries the cloud planner can
-/// receive (at most top-K) inside [TaskContext.retrieved].
+/// Deliberate stub. The pipeline (embed → upsert → cosine search →
+/// excerpt) is in place but the production consumer is intentionally
+/// absent: post-W-D7 there is no cloud planner, and the device runtime
+/// has not yet been wired to pull `SemanticHit`s into prompts. This
+/// module is the natural seam for a future Memory Layer (see
+/// `docs/ai-boundary-audit.md` §3.1) — when that contract lands, swap
+/// [StubEmbedder] for an on-device model and replace [InMemoryVectorStore]
+/// with a persistent store; consumers will be wired then.
 library;
 
 import '../../contracts/contracts.dart' show SemanticHit;

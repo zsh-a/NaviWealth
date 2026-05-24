@@ -7,7 +7,7 @@
 library;
 
 import '../../../core/ai/contracts/contracts.dart'
-    show AiSpanKind, AiSpanStatus, Freshness, SpanTokens;
+    show AiSpanKind, AiSpanStatus, SpanTokens;
 
 sealed class AiChatEvent {
   const AiChatEvent();
@@ -56,12 +56,6 @@ class ToolResultEvent extends AiChatEvent {
   final String id;
   final String name;
   final Object? output;
-
-  /// Lazily extracted from `output.freshness` for tools backed by an
-  /// AI Read Model. Returns null for legacy tools that don't carry
-  /// freshness metadata. Derived so manually-constructed events in
-  /// tests automatically expose the field without a separate setter.
-  Freshness? get freshness => Freshness.tryFromOutput(output);
 }
 
 /// Anthropic emitted a text block in this round. Multiple frames may

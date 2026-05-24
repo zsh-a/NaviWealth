@@ -1,8 +1,10 @@
 /// Tiny vector index abstraction.
 ///
-/// Phase 4 ships [InMemoryVectorStore] (linear scan, fine up to a
-/// few thousand docs). A sqlite-vec or HNSW-backed implementation can
-/// drop in behind the same interface as the corpus grows.
+/// Today only [InMemoryVectorStore] exists — linear scan, fine up to a
+/// few thousand docs but not persistent. A sqlite-vec or HNSW-backed
+/// implementation can drop in behind the same interface; the model
+/// fingerprint discipline (see [StoredDocument.vector]) is still
+/// stub-grade and must tighten before swapping in a persistent store.
 library;
 
 import 'dart:math' as math;
@@ -27,8 +29,10 @@ class StoredDocument {
   final String body;
 
   /// L2-normalised embedding produced by the active [Embedder]. The
-  /// store treats it opaquely — there's no model fingerprint check
-  /// because Phase 4 has only one embedder; Phase 5 should add one.
+  /// store treats it opaquely — there is no model fingerprint check
+  /// today because only one embedder exists; a fingerprint must be
+  /// added before a real embedder ships (see `docs/ai-boundary-audit.md`
+  /// §3.1).
   final List<double> vector;
 }
 

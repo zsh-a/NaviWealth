@@ -120,7 +120,6 @@ class AiTrace {
     required this.usedRawLedger,
     required this.totalDurationMs,
     this.disclosures = const <DisclosureSummary>[],
-    this.staleReadModelNames = const <String>{},
     this.terminalReason = TerminalReason.done,
     this.invocation,
     this.spans = const <AiSpan>[],
@@ -146,12 +145,6 @@ class AiTrace {
   final int totalDurationMs;
   final List<DisclosureSummary> disclosures;
 
-  /// Read model names whose `source_hlc_watermark` was behind the
-  /// device's local HLC at tool_result time. Drives the transparency
-  /// badge count and feeds Phase 2's force-refresh hint on the next
-  /// chat request (lib/features/ai_chat/data/providers.dart).
-  final Set<String> staleReadModelNames;
-
   /// How the turn ended. Defaults to [TerminalReason.done] for
   /// callers that haven't been updated yet (Wave 30).
   final TerminalReason terminalReason;
@@ -170,9 +163,6 @@ class AiTrace {
   /// back to the flat timeline. Flat list + `parentId`; the tree is
   /// rebuilt in the UI.
   final List<AiSpan> spans;
-
-  /// Count form for UI / older callers.
-  int get staleReadModels => staleReadModelNames.length;
 
   /// True when this trace carries the new span model (drives the
   /// waterfall view vs. the legacy flat-timeline fallback).
@@ -215,8 +205,6 @@ class AiTrace {
     'used_raw_ledger': usedRawLedger,
     'total_duration_ms': totalDurationMs,
     'disclosures': disclosures.map((d) => d.toJson()).toList(growable: false),
-    if (staleReadModelNames.isNotEmpty)
-      'stale_read_model_names': staleReadModelNames.toList(growable: false),
     'terminal_reason': terminalReason.wire,
     if (invocation != null && invocation!.isNotEmpty)
       'invocation': invocation,
@@ -234,13 +222,6 @@ class AiTrace {
     final uc = json['used_cloud'];
     final ul = json['used_raw_ledger'];
     final td = json['total_duration_ms'];
-    final stale = json['stale_read_model_names'];
-    final staleNames = <String>{};
-    if (stale is List) {
-      for (final e in stale) {
-        if (e is String && e.isNotEmpty) staleNames.add(e);
-      }
-    }
     return AiTrace(
       requestId: id is String ? id : '',
       startedAtIso: ts is String ? ts : '',
@@ -259,7 +240,6 @@ class AiTrace {
       usedRawLedger: ul is bool ? ul : false,
       totalDurationMs: td is int ? td : 0,
       disclosures: _list(json['disclosures'], DisclosureSummary.fromJson),
-      staleReadModelNames: staleNames,
       terminalReason: switch (json['terminal_reason']) {
         final String s => TerminalReasonWire.parse(s),
         _ => TerminalReason.done,
@@ -271,32 +251,6 @@ class AiTrace {
       spans: _list(json['spans'], AiSpan.fromJson),
     );
   }
-
-  /// §4.6 W-D6 — needed so the trace can be made truthful about which
-  /// runtime actually ran (the router seeds `cloud`, but the device LLM
-  /// runtime may have handled the turn). Only overrides the few axes
-  /// that differ; all fields are already in [toJson] so this is no
-  /// wire-contract change.
-  AiTrace copyWith({
-    Backend? backend,
-    String? routingReason,
-    bool? usedCloud,
-  }) => AiTrace(
-    requestId: requestId,
-    startedAtIso: startedAtIso,
-    intent: intent,
-    backend: backend ?? this.backend,
-    budgetTier: budgetTier,
-    routingReason: routingReason ?? this.routingReason,
-    usedCloud: usedCloud ?? this.usedCloud,
-    usedRawLedger: usedRawLedger,
-    totalDurationMs: totalDurationMs,
-    disclosures: disclosures,
-    staleReadModelNames: staleReadModelNames,
-    terminalReason: terminalReason,
-    invocation: invocation,
-    spans: spans,
-  );
 }
 
 Map<String, Object?> _strKeyed(Map<Object?, Object?> raw) =>

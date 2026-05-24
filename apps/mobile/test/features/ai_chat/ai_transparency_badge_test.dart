@@ -56,19 +56,6 @@ void main() {
       );
     });
 
-    test('surfaces staleReadModels count when non-zero', () {
-      final trace = _trace(
-        backend: Backend.hybrid,
-        usedRawLedger: false,
-        toolCount: 2,
-        durationMs: 1200,
-        staleReadModels: 1,
-      );
-      expect(
-        formatAiTraceBadge(trace),
-        '本地数据 + 云端推理 · 未上传原始交易明细 · 2 个工具 · 1 项数据滞后 · 1.2s',
-      );
-    });
   });
 }
 
@@ -77,7 +64,6 @@ AiTrace _trace({
   required bool usedRawLedger,
   required int toolCount,
   required int durationMs,
-  int staleReadModels = 0,
 }) => AiTrace(
   requestId: 't',
   startedAtIso: '2026-05-10T10:00:00.000Z',
@@ -101,8 +87,5 @@ AiTrace _trace({
       startOffsetMs: i * 10,
       durationMs: 10,
     ),
-  ),
-  staleReadModelNames: Set<String>.from(
-    List<String>.generate(staleReadModels, (i) => 'rm_$i'),
   ),
 );

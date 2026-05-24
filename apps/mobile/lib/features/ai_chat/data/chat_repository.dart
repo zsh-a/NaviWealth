@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/ai/contracts/contracts.dart';
-import '../../../core/ai/freshness/freshness_gate.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../core/auth/providers.dart';
 import '../domain/chat_events.dart';
@@ -14,17 +13,13 @@ import 'ai_chat_api_client.dart';
 import 'chat_history_store.dart';
 import 'context_window.dart';
 
-/// Output of [ChatTracePrep]: the [ContextPack] sent on the wire,
+/// Output of [ChatTracePrep]: the [ContextPack] sent on the wire and
 /// the seed [AiTrace] that the repository finalises after the stream
-/// closes, and the local HLC snapshot taken at request start (used
-/// by the freshness gate when tool_result frames carry a
-/// [Freshness] watermark). Any field may be `null` if the caller
-/// chose not to wire AI tracing for this repository instance
-/// (legacy tests, etc.).
+/// closes. Any field may be `null` if the caller chose not to wire
+/// AI tracing for this repository instance (legacy tests, etc.).
 typedef ChatTracePrepResult = ({
   ContextPack? pack,
   AiTrace? traceSeed,
-  String? localHlcText,
   bool traceVerbose,
 });
 
@@ -221,7 +216,6 @@ class ChatRepository {
         : await _tracePrep.call(requestId: assistantId);
     final contextPack = prepResult?.pack;
     final traceSeed = prepResult?.traceSeed;
-    final localHlcText = prepResult?.localHlcText;
     final traceBuilder = traceSeed == null
         ? null
         : AiTraceBuilder.fromSeed(
@@ -330,7 +324,7 @@ class ChatRepository {
               textSegments: List<String>.unmodifiable(segments),
             );
             await _store.updateMessage(assistant);
-          case ToolResultEvent(:final id, :final output, :final freshness):
+          case ToolResultEvent(:final id, :final output):
             final existing = invocations[id];
             // A tool_result for an unseen id means the call was
             // synthesised server-side (e.g. proposal cap rejection).
@@ -348,22 +342,6 @@ class ChatRepository {
               textSegments: List<String>.unmodifiable(segments),
             );
             await _store.updateMessage(assistant);
-            if (traceBuilder != null) {
-              // Tool latency / ok now live on the loop-emitted tool
-              // `AiSpan` (see SpanEvent). Here we only keep the
-              // freshness gate, which `SpanEvent` doesn't carry.
-              // Freshness gate (docs/ai-architecture.md §4.2 Phase 2):
-              // when the read-model watermark is behind our local HLC,
-              // record the read_model name. The next prep closure
-              // picks these up off the finalised AiTrace and injects
-              // `force_refresh_read_models` into the next ContextPack
-              // so the cloud re-projects before dispatching.
-              if (freshness != null && localHlcText != null) {
-                if (isStale(cloud: freshness, localHlcText: localHlcText)) {
-                  traceBuilder.markStaleReadModel(freshness.readModel);
-                }
-              }
-            }
           case ErrorEvent(:final message):
             outcome = SendOutcome.errored;
             terminalReason = TerminalReason.streamError;

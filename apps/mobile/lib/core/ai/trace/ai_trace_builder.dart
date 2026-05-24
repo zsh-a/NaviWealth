@@ -30,7 +30,6 @@ class AiTraceBuilder {
   final DateTime _start;
   final List<DisclosureSummary> _disclosures = <DisclosureSummary>[];
   final List<AiSpan> _spans = <AiSpan>[];
-  final Set<String> _staleReadModelNames = <String>{};
   Map<String, Object?>? _invocation;
 
   /// Attach an `AiIntentInvocation.toTraceJson()` summary to this
@@ -88,15 +87,6 @@ class AiTraceBuilder {
     _disclosures.add(summary);
   }
 
-  /// Record a read model whose `source_hlc_watermark` was behind the
-  /// device's local HLC at tool_result time. Phase 2's prep closure
-  /// pulls these names out of the finalised trace and injects them
-  /// into the *next* request's `FreshnessHint.forceRefreshReadModels`
-  /// so the cloud re-projects before dispatching.
-  void markStaleReadModel(String readModel) {
-    if (readModel.isNotEmpty) _staleReadModelNames.add(readModel);
-  }
-
   /// Whether any disclosure has been recorded with a non-denied
   /// consent. Drives the `usedRawLedger` flag on the finalised trace
   /// (and the inverse user-facing badge).
@@ -120,7 +110,6 @@ class AiTraceBuilder {
       usedRawLedger: _anyConsentedDisclosure,
       totalDurationMs: total,
       disclosures: List<DisclosureSummary>.unmodifiable(_disclosures),
-      staleReadModelNames: Set<String>.unmodifiable(_staleReadModelNames),
       terminalReason: terminalReason,
       invocation: _invocation,
       spans: _spans.isEmpty
