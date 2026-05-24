@@ -37,7 +37,6 @@ import '../../investment/domain/models/holding_snapshot.dart';
 import '../../liabilities/data/providers.dart';
 import '../../settings/data/risk_appetite_preferences.dart';
 import '../domain/chat_models.dart';
-import '../state/chat_sync_gate.dart';
 import '../state/route_context_provider.dart';
 import 'ai_chat_api_client.dart';
 import 'chat_history_store.dart';
@@ -417,22 +416,6 @@ final chatMessagesStreamProvider =
       final repo = await ref.watch(chatRepositoryProvider.future);
       yield* repo.watchMessages(sessionId);
     });
-
-/// Pre-chat sync flush gate (FIR-71, partially obsolete).
-///
-/// The original motivation — "AI backend reads user data from D1, so
-/// flush local OpLog first" — went away with W-D7 (no cloud AI backend).
-/// Device tools read local Drift directly, so a single-device user never
-/// needs this gate. It still runs because `chat_controller.dart` awaits
-/// it, but its remaining value is the multi-device case (user records on
-/// device A, asks on device B before A's push lands). That justification
-/// is thin and worth a separate decision — see `docs/ai-boundary-audit.md`
-/// §4.2 / batch F.
-final chatSyncGateProvider = FutureProvider<ChatSyncGate?>((ref) async {
-  final engine = await ref.watch(syncEngineProvider.future);
-  if (engine == null) return null;
-  return ChatSyncGate(engine: engine);
-});
 
 /// FIR-67 — applier that turns a confirmed `propose_*` plan into the
 /// matching repository write. Pulled out as a Riverpod provider so

@@ -697,21 +697,15 @@ class _ConversationComposer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
     final turn = ref.watch(chatControllerProvider(sessionId));
     final routeCtx = ref.watch(aiRouteContextProvider);
     return ChatComposer(
       isStreaming: turn.isStreaming,
-      isFlushing: turn.isFlushing,
       initialText: prefill,
       onSend: (text) {
         ref
             .read(chatControllerProvider(sessionId).notifier)
-            .send(
-              text,
-              staleSyncNotice: l10n.aiChatStaleSyncNotice,
-              systemContext: routeCtx.toSystemContext(),
-            );
+            .send(text, systemContext: routeCtx.toSystemContext());
       },
       onCancel: () {
         ref.read(chatControllerProvider(sessionId).notifier).cancel();

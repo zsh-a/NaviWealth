@@ -18,6 +18,21 @@ import 'scoped_disclosure.dart'
 /// path so the transparency badge can say "未经我方服务器".
 const String kDeviceLlmDirectRoutingReason = 'device_llm_direct';
 
+/// Where the turn was executed.
+///
+/// **Live producers** (post-W-D7):
+///  - [Backend.device] — every chat turn, plus Layer 4 device Vision ingest.
+///
+/// **Fossil values**, kept only to:
+///  1. deserialize old AiTrace rows written before W-D7;
+///  2. let `features/ingest/data/providers.dart` tag its Vision trace
+///     (`layer4_cloud_vision`) — that flow predates W-D7 and is itself
+///     pending a separate audit (see ingest module).
+///  - [Backend.cloud] — has the ingest producer above; otherwise fossil.
+///  - [Backend.hybrid] — no live producer anywhere; only old DB rows.
+///
+/// Per `docs/ai-boundary-audit.md`, we don't add new "maybe useful"
+/// enum values; if a future runtime needs a new value, add it then.
 enum Backend { device, cloud, hybrid }
 
 extension BackendWire on Backend {

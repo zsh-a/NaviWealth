@@ -8,8 +8,13 @@
 > **怎么读这篇**: §1–§3 是当前架构（device-only），改 `lib/core/ai/` 前读这三节。
 > §4 是契约细节，其中 §4.6 是 device runtime 的落地决策（代码注释大量引用其编号，编号保持稳定）。
 > §5 是 AI 的 UI/UX 契约——**任何新 AI 入口/渲染/确认面必须满足 §5.8 + §5.10.7 硬约束**。
-> §4.2 freshness gate、§4.3 cloud read models、§6.2 backend AI、§8 Wave 1–32 等
-> **描述的是 W-D7 前已删除的云端协作架构**，仅为历史与代码注释锚点保留，标注「已删除」。
+> §4.2 freshness gate / §4.3 cloud read models / §6.2 backend AI / §8 Wave 1–32 等
+> **描述的是 W-D7 前已删除的云端协作架构**，仅为历史/编号锚点保留。
+>
+> **2026-05-24 boundary audit** 之后，freshness gate (`core/ai/freshness/` + 契约 +
+> `staleReadModelNames`)、router (`core/ai/router/`)、`RuntimeRegistry` /
+> `RuntimeId` / `AiRuntime` 抽象、`CloudProposal` 类、`ChatSyncGate` **全部已物理删除**
+> ——不仅是"device 路径不用"。详见 [`docs/ai-boundary-audit.md`](./ai-boundary-audit.md)。
 >
 > 适用范围: `lib/core/ai/` 与 `lib/features/ai_chat/`、`lib/features/ingest/`（Flutter）。
 > 运行时事件契约见 [`docs/ai-protocol.md`](./ai-protocol.md)。
@@ -77,7 +82,7 @@ ChatRepository
 
 ## 3. 工具与契约（`lib/core/ai/contracts/` + `runtime/device/tools/`）
 
-### 3.1 工具目录（`kDeviceTools`，22 个）
+### 3.1 工具目录（`kDeviceTools`，34 个）
 
 `device_tool_registry.dart` 的 `kDeviceTools` 是 dispatch allow-list；
 `contracts/tool_descriptor.dart` 为**这一组**携带元数据。两者一一对应，由
@@ -85,8 +90,10 @@ ChatRepository
 
 | 类 | 数量 | 工具 |
 |----|------|------|
-| Read | 17 | `list_payment_accounts` · `get_holdings` · `get_asset_allocation` · `get_cashflow_buckets` · `get_anomaly_flags` · `get_recurring_patterns` · `get_refund_links` · `get_transfer_links` · `get_investment_performance` · `get_net_worth_summary` · `get_subscription_changes` · `read_account_window` · `read_asset_window` · `read_category_window` · `get_industry_breakdown` · `get_geo_breakdown` · `get_market_cap_breakdown` |
-| Propose | 5 | `propose_expense` · `propose_account_create` · `propose_asset_valuation` · `propose_liability_payment` · `propose_trade` |
+| Read（基础） | 17 | `list_payment_accounts` · `get_holdings` · `get_asset_allocation` · `get_cashflow_buckets` · `get_anomaly_flags` · `get_recurring_patterns` · `get_refund_links` · `get_transfer_links` · `get_investment_performance` · `get_net_worth_summary` · `get_subscription_changes` · `read_account_window` · `read_asset_window` · `read_category_window` · `get_industry_breakdown` · `get_geo_breakdown` · `get_market_cap_breakdown` |
+| Propose（基础） | 5 | `propose_expense` · `propose_account_create` · `propose_asset_valuation` · `propose_liability_payment` · `propose_trade` |
+| FIRE OS Phase 5 | 8 | `get_fire_state` · `get_fire_plan` · `get_fire_buckets` · `get_fire_stress_tests` · `get_fire_review` · `simulate_fire_plan` · `propose_fire_plan_update` · `propose_fire_bucket_rule` |
+| Options Income | 4 | `get_options_income_opportunities` · `get_options_strategy_profile` · `propose_options_profile_update` · `propose_options_journal_entry` |
 
 数据源全部是**本机 Drift / 既有端侧 provider**（net worth / currency service /
 `holdingsSnapshotProvider` / `DriftQueryPlanExecutor` / 端侧 detector）。Scoped Detail
@@ -101,13 +108,14 @@ side effect、reads 必无 side effect、ScopedDetail 至少 `Standard` tier、�
 
 ### 3.3 ProposalEnvelope（确认通道，按副作用分级）
 
-`contracts/proposal_envelope.dart` — sealed，4 子类：
+`contracts/proposal_envelope.dart` — sealed，3 子类（W-D7 后端 AI 删除 + 2026-05-24
+boundary audit 中 `CloudProposal` 因零生产 producer 一并删除；device propose 工具
+直接进 `LocalProposal` 或 `ExternalSideEffect`）：
 
 | 子类 | 应用层 | 确认 |
 |------|--------|------|
 | `LocalImmediateWrite` | 端侧立即应用 + undo | 无 |
 | `LocalProposal` | 端侧 staged，用户 review | one-tap |
-| `CloudProposal` | 复用现有 `proposal_applier` 流（source 仅作 audit label） | one-tap |
 | `ExternalSideEffect` | 触达外部（broker/bank） | typed（**永不**由 LLM 自动触发） |
 
 `source`（device/cloud/hybrid）只是 audit label；确认 gate 对 source 不敏感。
@@ -126,27 +134,28 @@ side effect、reads 必无 side effect、ScopedDetail 至少 `Standard` tier、�
 
 ## 4. 契约细节（编号稳定——代码注释引用）
 
-> §4.1–§4.5 描述 W-D7 **前**的端云协作设计。`ContextPack` / `ScopedDisclosure` /
-> `freshness` / `router` 等类型文件仍在仓库内（向后兼容、未来可能复用），但
-> **device runtime 路径不再使用 freshness gate 与 ScopedDisclosure，也不存在 D1 read model**。
-> 此处保留概念与编号，使代码注释里的 `§4.2`/`§4.3` 等指针仍能落到正确概念。
+> §4.1–§4.5 描述 W-D7 **前**的端云协作设计。**编号保留**让代码注释里 `§4.2`/`§4.3`
+> 仍能落到正确概念，但**所述结构在 2026-05-24 boundary audit 之后已删除**——见每条
+> 状态。`ContextPack` / `ScopedDisclosure` 类型仍在仓库内（向后兼容）。
 
 - **§4.1 ContextPack**（`contracts/context_pack.dart`）：runtime-neutral 输入契约
   （BaseContext 偏好层 + TaskContext 任务层 + PrivacyBudget）。device runtime 仍构造
-  ContextPack 喂端侧 prompt；不再上传后端。
-- **§4.2 Freshness gate**（`freshness/freshness_gate.dart` 等）：**已删除于 device 路径**。
-  端侧是 local-first 真值源，无 read model stale 问题。类型保留为历史/兼容。
+  ContextPack 喂端侧 prompt；不再上传后端。`FreshnessHint` 字段已删；`AnalyticalUpload`
+  字段保留为 prompt 预注入信号（命名沿用历史，见 boundary audit 批 D）。
+- **§4.2 Freshness gate**（曾在 `freshness/freshness_gate.dart`）：**整模块物理删除**
+  （类型 + 调用点 + `AiTrace.staleReadModelNames` + `FreshnessHint`）。端侧是 local-first
+  真值源，无 read model stale 问题。
 - **§4.3 Cloud Read Models 三层访问模型**（Snapshot / Analytical / Scoped Detail）：
   **云端表已弃用**（backend `migrations/0006_ai_read_models.sql` 等仅作 schema 历史保留，
   不再投影/查询）。`ToolDescriptor.read_model_layer` 字段保留作分层语义标注；device
   工具直接读 Drift。
-- **§4.5 ProposalEnvelope**：见 §3.3（当前内容，未变）。
+- **§4.5 ProposalEnvelope**：见 §3.3（`CloudProposal` 子类已在 2026-05-24 audit 中删除）。
 - **§4.6 Device LLM Runtime（当前架构的落地决策——代码大量引用 W-D* / §4.6.N）**：
   1. **用户自带 key** — `SecureKeyStore`，绝不进 OpLog/同步/明文备份。
   2. **`DeviceLlmRuntime` 直连 provider** — 多 provider 客户端，统一 `LlmStreamEvent`；
      provider 由 active `LlmProfile.provider` 决定。
   3. **工具读 Drift 本地真源** — §4.2 freshness gate 与 ScopedDisclosure 在 device
-     路径整体消失。
+     路径整体消失（freshness 已物理删除）。
   4. **Vision 端侧直发** — 图像 base64 → content block，用户 key 直发 provider，
      原图不出设备（比已删除的 Worker 中转更私密）。
   5. **平台边界 = 全部原生平台，仅排除 Web**（门控 `!kIsWeb`，见 §2.3）。
@@ -269,9 +278,12 @@ AI 元素默认 surface tone（非 accent）；单色细线 sparkle（字号 ≤
 ```
 contracts/   intent · privacy_budget · base/task_context · context_pack ·
              scoped_disclosure · tool_descriptor · proposal_envelope ·
-             ai_span · ai_trace · privacy_mode_provider   (§4.1 兼容类型保留)
+             ai_span · ai_trace · privacy_mode_provider   (§4.1 兼容类型保留;
+             FreshnessHint / Freshness / CloudProposal 已删)
 runtime/
-  ai_runtime.dart                AiRuntime / RuntimeId / RuntimeRegistry
+  ai_runtime.dart                DeviceLlmRuntime + DeviceChatRunner
+                                 （boundary audit 删 RuntimeRegistry / RuntimeId /
+                                 AiRuntime / CloudAnthropicRuntime / RulesDeviceRuntime）
   device/
     device_agent_loop.dart       端侧 agent loop（W-D3）
     device_session.dart          per-turn session
@@ -281,25 +293,26 @@ runtime/
     llm_stream_event.dart        provider-neutral 事件
     anthropic/                   AnthropicClient + SSE decoder + wire
     openai/                      OpenAiClient + SSE decoder（Wave 46）
-    tools/                       device_tool_registry(kDeviceTools=22) +
-                                 22 工具 + propose/ + scoped/
+    tools/                       device_tool_registry(kDeviceTools=34) +
+                                 34 工具（17 基础 read + 5 基础 propose +
+                                 8 FIRE + 4 Options）+ propose/ + scoped/
 llm_credentials/                 LlmCredentials/LlmProfile + SecureKeyStore +
                                  连通性探测 + providers   (§2.2)
 trace/                           AiTraceStore / DriftAiTraceStore / builder /
                                  capture preference / providers
-write/                           ProposalEnvelope 应用 · InteractionMode ·
+write/                           ProposalEnvelope 应用（3 子类）· InteractionMode ·
                                  DriftUndoStack · DriftAiTouchedStore ·
                                  AiSourceMark · PersistentUndoBanner
 intent/                          AiIntentInvocation · intent_policy · chip scope
 visual/                          AiSparkle/Pill/Tone/Type/Motion · ai_json_view
-router/                          ai_router · routing_inputs/decision/policy
-                                 （RuntimeRegistry 选 device 或 device_unavailable）
 local/skills · local/embedding   端侧 detector（merchant_key / txn_classifier /
                                  recurring / transfer / refund / subscription /
                                  nl_to_query_plan / DriftQueryPlanExecutor）+
-                                 SemanticMemory（StubEmbedder）
+                                 SemanticMemory（StubEmbedder——LifeOS Memory Layer
+                                 的预留 stub，零生产 caller）
 regression/                      regression_corpus（静态契约测试）
-freshness/                       freshness_gate（§4.2，device 路径不用，历史保留）
+
+(已删除子目录: freshness/ · router/  —— 2026-05-24 boundary audit)
 ```
 
 `lib/features/ai_chat/`：`runtime_routing_api_client.dart`（→ DeviceLlmRuntime，无回落）·
@@ -337,13 +350,14 @@ Chat → providers.dart _prepareChatTrace(ref, requestId)
 
 | 范围 | 状态 |
 |------|------|
-| 端侧 contracts / router / trace / skills / NL→QueryPlan / SemanticMemory(stub) | ✅ |
+| 端侧 contracts / trace / skills / NL→QueryPlan / SemanticMemory(stub) | ✅ |
 | §5 Interaction Grammar（§5.1–5.9 契约 + 四层拓扑 + 命令栏主入口 + Layer 2/3）| ✅ |
 | §5.10 Layer 4 录入：CSV/paste 端侧解析 + 草稿队列 + 确认链 + 隐私门 + 文件/相机/拖拽/分享捕获 | ✅（iOS Share Extension Xcode target 待做）|
 | 端侧 Vision 直发（图片/PDF 摄取，`DeviceVisionIngestClient`，替代已删除的 Worker 中转）| ✅ |
 | AiTrace span 可观测性（Opik 瀑布树，取代旧 flat 格式，不向后兼容）| ✅ |
 | 多 provider profile + 切换 + 连通性测试（无 opt-in 开关）| ✅ |
 | §4.6 Device LLM Runtime（W-D1–W-D7：用户自带 key · 直连 provider · 工具读 Drift · 全原生平台含桌面 · 删除 cloud relay）| ✅ |
+| Boundary audit 2026-05-24：删 freshness/router/RuntimeRegistry/CloudProposal/ChatSyncGate（净删 ~1800 行）| ✅ |
 
 **测试 gate**：`flutter analyze --fatal-infos` clean；`flutter test` 全绿（golden 按平台
 skip，known-failing 钉基线）；`tool/check-tool-descriptors.sh` / `check-enum-mirror.sh` /

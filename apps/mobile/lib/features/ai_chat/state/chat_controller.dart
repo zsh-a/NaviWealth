@@ -4,14 +4,11 @@ import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../core/auth/providers.dart';
 import '../data/providers.dart';
-import 'chat_sync_gate.dart';
 
 /// Phases of the user's outgoing turn:
 ///  - [idle]: composer enabled, no work in flight
-///  - [flushing]: pre-chat sync gate is draining the OpLog before the
-///    device runtime reads local state.
 ///  - [streaming]: runtime events are being consumed.
-enum ChatTurnPhase { idle, flushing, streaming }
+enum ChatTurnPhase { idle, streaming }
 
 /// UI-side state for one chat session: where we are in the send pipeline,
 /// and the cancel handle for the in-flight turn.
@@ -27,7 +24,6 @@ class ChatTurnState {
   final CancelToken? cancelToken;
 
   bool get isIdle => phase == ChatTurnPhase.idle;
-  bool get isFlushing => phase == ChatTurnPhase.flushing;
   bool get isStreaming => phase == ChatTurnPhase.streaming;
   bool get isBusy => phase != ChatTurnPhase.idle;
 
@@ -48,14 +44,8 @@ class ChatController extends StateNotifier<ChatTurnState> {
   /// Send [content] as the next user turn. Concurrent calls are
   /// rejected — the UI disables the send button while the pipeline is
   /// running.
-  ///
-  /// [staleSyncNotice] is the localized message persisted into the
-  /// timeline if the pre-chat sync gate (FIR-71) drains in `degraded`
-  /// status. The UI passes the localized string so the controller does
-  /// not need a BuildContext to reach AppLocalizations.
   Future<void> send(
     String content, {
-    required String staleSyncNotice,
     String? systemContext,
   }) async {
     final trimmed = content.trim();
@@ -69,12 +59,6 @@ class ChatController extends StateNotifier<ChatTurnState> {
       return;
     }
 
-    state = state.copyWith(phase: ChatTurnPhase.flushing);
-
-    final gateOutcome = await _runSyncGate();
-
-    if (!mounted) return;
-
     final cancelToken = CancelToken();
     state = state.copyWith(
       phase: ChatTurnPhase.streaming,
@@ -83,13 +67,6 @@ class ChatController extends StateNotifier<ChatTurnState> {
 
     try {
       final repo = await ref.read(chatRepositoryProvider.future);
-      if (gateOutcome == ChatGateOutcome.degraded) {
-        await repo.insertSystemNotice(
-          sessionId: sessionId,
-          ownerUserId: session.userId,
-          content: staleSyncNotice,
-        );
-      }
       await repo.sendMessage(
         sessionId: sessionId,
         ownerUserId: session.userId,
@@ -104,24 +81,6 @@ class ChatController extends StateNotifier<ChatTurnState> {
     }
   }
 
-  /// Run the pre-chat sync gate. Catches all errors (including a missing
-  /// or unbuilt SyncEngine in early-dev / tests) and folds them into a
-  /// gate outcome — chat is never blocked by infrastructure failures.
-  Future<ChatGateOutcome> _runSyncGate() async {
-    try {
-      final gate = await ref.read(chatSyncGateProvider.future);
-      if (gate == null) return ChatGateOutcome.clean;
-      return await gate.awaitFlush();
-    } catch (_) {
-      // Sync infra not wired (early dev) or transient init failure: skip
-      // the gate rather than blocking the user. We deliberately do NOT
-      // surface a staleness warning here, because the more common cause
-      // is "auth token isn't issued yet" which would make the warning
-      // appear on every turn.
-      return ChatGateOutcome.clean;
-    }
-  }
-
   /// Branch-replace a past user turn: discards the message + every
   /// reply (and follow-up turn) after it, then sends [newContent] as
   /// a fresh user turn. No-op when a turn is in flight, the new
@@ -130,7 +89,6 @@ class ChatController extends StateNotifier<ChatTurnState> {
   Future<void> editAndResend({
     required String messageId,
     required String newContent,
-    required String staleSyncNotice,
     String? systemContext,
   }) async {
     if (state.isBusy) return;
@@ -142,11 +100,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
       messageId: messageId,
     );
     if (!ok) return;
-    await send(
-      trimmed,
-      staleSyncNotice: staleSyncNotice,
-      systemContext: systemContext,
-    );
+    await send(trimmed, systemContext: systemContext);
   }
 
   /// Re-run the last assistant turn. Discards both the assistant
@@ -155,18 +109,13 @@ class ChatController extends StateNotifier<ChatTurnState> {
   /// when there's nothing eligible to regenerate (no assistant message,
   /// no preceding user message, or the assistant is still streaming).
   Future<void> regenerateLast({
-    required String staleSyncNotice,
     String? systemContext,
   }) async {
     if (state.isBusy) return;
     final repo = await ref.read(chatRepositoryProvider.future);
     final priorContent = await repo.prepareRegenerateLastAssistant(sessionId);
     if (priorContent == null) return;
-    await send(
-      priorContent,
-      staleSyncNotice: staleSyncNotice,
-      systemContext: systemContext,
-    );
+    await send(priorContent, systemContext: systemContext);
   }
 
   /// Cancel the in-flight stream. Repository will mark the assistant

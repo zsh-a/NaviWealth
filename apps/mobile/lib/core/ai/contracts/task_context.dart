@@ -226,9 +226,14 @@ class ScopedAggregate {
   }
 }
 
-/// 端→云单条分析上报。docs/ai-architecture.md §4.3.3 Analytical 层
-/// 的端侧投影：端是唯一计算者，云端只镜像 device 产物，避免 Dart/Rust
-/// 启发式逻辑双份漂移。
+/// 端侧 detector 输出的单条分析信号。**类名沿用"Upload"是历史**：W-D7
+/// 前这是端→云上报、由后端镜像入 read model；W-D7 删除后端 AI 后，这些条目
+/// 现在的唯一用途是**预注入 device LLM 的 prompt**（在 LLM 调对应 device tool
+/// 之前给它一个聚合摘要，减少首轮 tool round）。
+///
+/// 保留 class/字段/wire key（`analytical_uploads`）只为序列化稳定；如果未来
+/// 改名应改成 `PromptAnalyticalSignal` 之类。是否保留这层预注入待测量
+/// （`docs/ai-boundary-audit.md` 批 D）。
 class AnalyticalUpload {
   const AnalyticalUpload({
     required this.kind,
@@ -237,10 +242,10 @@ class AnalyticalUpload {
   });
 
   /// 'recurring_pattern' / 'anomaly_flag' / 'refund_link' /
-  /// 'subscription_change' 等。后端按 kind 路由到对应 read model 表。
+  /// 'subscription_change' 等。LLM prompt 按 kind 渲染摘要。
   final String kind;
 
-  /// 设备约定的稳定 id —— 同 (kind, id) 重复上报视为 upsert。
+  /// 设备约定的稳定 id —— 同 (kind, id) 重复视为 upsert。
   /// 例如 recurring_pattern 用 `'<merchant_key>|<currency>'`.
   final String id;
 
@@ -283,14 +288,15 @@ class TaskContext {
   final List<SemanticHit> retrieved;
   final List<ScopedAggregate> aggregates;
 
-  /// 端侧 detector 上报：每条 kind=recurring_pattern/anomaly_flag/...
-  /// 历史上后端镜像入对应 read model；W-D7 后端 AI 删除后这些 payload
-  /// 仍作为 prompt 预注入信号喂给端侧 LLM（参见 `docs/ai-boundary-audit.md`
-  /// §2.4 / 批 D — 是否保留需测量后再定）。
+  /// 端侧 detector 信号（recurring_pattern / anomaly_flag / refund_link /
+  /// transfer_link / subscription_change / investment_performance）预注入
+  /// 到 device LLM 的 prompt。类名见 [AnalyticalUpload]——"Upload"是历史命名，
+  /// 已无 upload 行为。
   final List<AnalyticalUpload> analyticalUploads;
 
-  /// 端侧本地最新 HLC（同 syncLocalHlcProvider 的字符串形式），作为本
-  /// 批 analytical_uploads 的 source_hlc_watermark。Null = 没上报。
+  /// 端侧本地最新 HLC（同 syncLocalHlcProvider 的字符串形式），用作本批
+  /// analyticalUploads 的时戳，让 LLM 知道这批摘要是多久前的快照。
+  /// Null = 没上报或未取到 HLC。
   final String? deviceHlc;
 
   Map<String, Object?> toJson() => <String, Object?>{
