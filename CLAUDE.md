@@ -1,6 +1,8 @@
 # NaviWealth — Agent Guide
 
-Personal finance app: all asset classes, investment tracking, portfolio analysis, FIRE dashboard, rebalancing, AI assistant. Cross-platform iOS / Android / Web. Local-first + cloud sync.
+Personal Life OS (Phase D starting 2026-05-24). **FinanceOS** is the first domain — live on v0.5.x: all asset classes, investment tracking, portfolio analysis, FIRE dashboard, rebalancing, options income, device-only AI assistant. **HealthOS** is the second domain, in Phase D-2 (gated on shell foundation D-1). Cross-platform iOS / Android / Web (Web has no AI, no Health domain). Local-first + cloud sync.
+
+Before touching architecture, read `docs/lifeos-architecture-northstar.md` (boundaries), `docs/lifeos-shell.md` (cross-domain shell SSOT), and `docs/lifeos-decision-2026-05-24.md` (Phase D activation ADR).
 
 ## Quick Reference
 
@@ -270,6 +272,10 @@ test/
 
 | Doc | Description |
 |-----|-------------|
+| `docs/lifeos-architecture-northstar.md` | **Architecture boundary SSOT** — read before any `core/` change. Phase D §4 lists the 8 active shell-foundation items |
+| `docs/lifeos-shell.md` | **Cross-domain shell SSOT** — IA / Memory / sync namespace / auth scope / AI tool layering / Rust boundary / CI gates |
+| `docs/lifeos-decision-2026-05-24.md` | Phase D activation ADR (why HealthOS, why not parallel, constraints, consequences) |
+| `docs/healthos-domain.md` | HealthOS domain SSOT (scope, schema, AI tools, IA placement) — gated on shell D-1 |
 | `docs/sync-v2.md` | **Active** sync spec (v2, row-state): generic row store, `version`/`seq`, single `POST /sync` |
 | `docs/sync-protocol.md` | Superseded v1 OpLog spec — history only |
 | `docs/sync-protocol-tests.md` | 50+ protocol test cases |

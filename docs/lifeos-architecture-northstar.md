@@ -20,8 +20,9 @@ NaviWealth = LifeOS 的 **FinanceOS** 层（今天唯一存在的域）。
 LifeOS 的价值在**跨域基础设施**（Identity / Memory / Sync / AI Runtime / Agent / Storage）
 能被所有域共享，而每个域**只关心自己的业务**。
 
-> 但 **HealthOS / TimeOS / LivingOS 今天不进开发计划**。本文档只保证：
-> 当未来真要做时，我们不必先回头拆 NaviWealth。
+> **2026-05-24 起 Phase D 已启动**（详见 §4 / `lifeos-decision-2026-05-24.md`）：
+> HealthOS 已立项为第二域，跨域 shell SSOT 见 `lifeos-shell.md`，HealthOS 域 SSOT 见 `healthos-domain.md`。
+> TimeOS / KnowledgeOS / LivingOS 仍**不进开发计划**——HealthOS 稳定 dogfood ≥ 6 个月前不启动第三域。
 
 ---
 
@@ -36,7 +37,7 @@ LifeOS 的价值在**跨域基础设施**（Identity / Memory / Sync / AI Runtim
 | 5 | **不在 finance 模块里直接 import Health / Time / 未来域的实体** | 反过来也禁止；跨域依赖只能走基础设施层 |
 | 6 | **不为 LifeOS 改 sync-v2 的 row-state 形态** | `docs/sync-v2.md` 的"generic versioned blob + LWW"已经足够通用；不要升级成事件平台 / CRDT 框架 / 多 schema 协商 |
 | 7 | **不做大社交 / 高频内容 / 通用 SaaS / 企业协作 / ToC 娱乐** | 这些与 solo + FIRE lifestyle 冲突，运维和支持负担会摧毁北极星 |
-| 8 | **不写 LifeOS 路线图文档** | 包括"Phase 0–N"列表、季度目标、模块依赖图；这些只有在真的开始做时再写 |
+| 8 | **不写未触发域的路线图** | "Phase 0–N"列表、季度目标、跨多域模块依赖图，只对**已触发**域允许。2026-05-24 起 HealthOS 已触发：跨域 shell SSOT 见 `lifeos-shell.md`，HealthOS SSOT 见 `healthos-domain.md`。TimeOS / KnowledgeOS / LivingOS 仍属未触发，禁止规划 |
 
 ---
 
@@ -173,26 +174,28 @@ PR review 凡触及 `core/` 的，必须能口头答清"它在哪一层 + 是不
 
 ---
 
-## 4. Phase D 占位（未来才碰）
+## 4. Phase D（已启动 2026-05-24，HealthOS first）
 
-> 以下不是计划，不写时间。只是把"如果 Phase D 真要做"的最小必要变更列出来，
-> 让今天的人不会无意中关掉这扇门。
+> 2026-05-24 触发条件成立，详见 `lifeos-decision-2026-05-24.md`。
+> Phase D 工作的**调度与状态** SSOT 见 `lifeos-shell.md` §2；本节只记录 8 个必做项的当前状态。
+> 第三域（TimeOS / KnowledgeOS / LivingOS）仍未触发，禁止规划。
 
-**触发条件**：决定要做第二个域（Health / Time / Living）。
+| # | 必做项 | 当前状态 | shell 章节 |
+|---|---|---|---|
+| 1 | IA 重做（多域 shell 形态） | ⏳ D-1.8 | §3 |
+| 2 | `core/auth` 跨域权限模型 + 域级 opt-in | ⏳ D-1.5 | §5 |
+| 3 | `core/sync` row family 按域 namespace | ⏳ D-1.4 | §8 |
+| 4 | AI Intent 注册表加 `domain` 字段 | ⏳ D-1.3 | §7.2 |
+| 5 | `AiTrace.intent.capability` 允许非 finance | ⏳ D-1.3 | §7.2 |
+| 6 | `core/ai/runtime/device/tools/` Finance tool 迁出 | ⏳ D-1.2 | §7.1 |
+| 7 | `data/db/` → `core/persistence/` 改名 | ⏳ D-1.1 | §9 |
+| 8 | `ai_chat` cross-feature composition 上提 | ⏳ D-1.6 | §4 |
 
-**触发时的必做项（不在今天的范围）**：
+**新规则**：这 8 项是**当前的工作**，不再是"未来才碰"。但仍**禁止**：
 
-1. IA 重做：当前 Today / Activity / Wealth / Plan 是 Finance 视角，多域 shell 需要不同形态
-2. `core/auth` 增加跨域权限模型（今天是单 user / 全访问，未来可能要"域级 opt-in"）
-3. `core/sync` 的 row family 划分要按域 namespace
-4. AI Intent 注册表要加 `domain` 字段（今天 intent 全是 finance）
-5. Trace `AiTrace.intent.capability` 可能需要加非 finance 的值
-6. `core/ai/runtime/device/tools/` 里的 Finance tool 必须先迁到 `features/*/ai_tools/`
-7. `data/db/` 改名/移位以反映其跨域角色（§2.3）
-8. `features/ai_chat/data/providers.dart` 的 cross-feature composition 上提到 app/composition root（§2.4）
-
-**今天唯一需要做的事**：当某个 PR 想做以上 1-8 任何一项的"提前抽象"时，**拒绝**——
-援引本节"未来才碰"。
+- 对未触发域（TimeOS / KnowledgeOS / LivingOS）做以上任何一项的设计/规划
+- 同时启动 ≥ 2 个第二域
+- 借 Phase D 之名做 Flutter+Rust 全面 pivot（§1.3 仍然有效；Rust 边界见 `lifeos-shell.md` §10——只 Memory Layer embedder + tokenizer 入 Rust，单 crate 2–3 模块）
 
 ---
 
