@@ -100,42 +100,46 @@ void main() {
       expect(out.first.symbol, 'AAPL', reason: 'symbol is uppercased');
     });
 
-    test('second call within TTL hits the cache (no extra HTTP request)',
-        () async {
-      final harness = _build();
-      harness.adapter.enqueue(
-        '/chart/AAPL',
-        _chartBody(
-          dividends: <String, Object?>{
-            '$_divTs': <String, Object?>{'date': _divTs, 'amount': 0.24},
-          },
-        ),
-      );
+    test(
+      'second call within TTL hits the cache (no extra HTTP request)',
+      () async {
+        final harness = _build();
+        harness.adapter.enqueue(
+          '/chart/AAPL',
+          _chartBody(
+            dividends: <String, Object?>{
+              '$_divTs': <String, Object?>{'date': _divTs, 'amount': 0.24},
+            },
+          ),
+        );
 
-      await harness.service.getForSymbol('AAPL');
-      await harness.service.getForSymbol('AAPL');
-      // Single network call; the second resolved from cache.
-      expect(harness.adapter.calls, hasLength(1));
-    });
+        await harness.service.getForSymbol('AAPL');
+        await harness.service.getForSymbol('AAPL');
+        // Single network call; the second resolved from cache.
+        expect(harness.adapter.calls, hasLength(1));
+      },
+    );
 
-    test('concurrent calls for the same symbol dedupe to one HTTP fetch',
-        () async {
-      final harness = _build();
-      harness.adapter.enqueue(
-        '/chart/AAPL',
-        _chartBody(
-          dividends: <String, Object?>{
-            '$_divTs': <String, Object?>{'date': _divTs, 'amount': 0.24},
-          },
-        ),
-      );
+    test(
+      'concurrent calls for the same symbol dedupe to one HTTP fetch',
+      () async {
+        final harness = _build();
+        harness.adapter.enqueue(
+          '/chart/AAPL',
+          _chartBody(
+            dividends: <String, Object?>{
+              '$_divTs': <String, Object?>{'date': _divTs, 'amount': 0.24},
+            },
+          ),
+        );
 
-      final future1 = harness.service.getForSymbol('AAPL');
-      final future2 = harness.service.getForSymbol('AAPL');
-      await Future.wait<List<CorporateActionEvent>>([future1, future2]);
+        final future1 = harness.service.getForSymbol('AAPL');
+        final future2 = harness.service.getForSymbol('AAPL');
+        await Future.wait<List<CorporateActionEvent>>([future1, future2]);
 
-      expect(harness.adapter.calls, hasLength(1));
-    });
+        expect(harness.adapter.calls, hasLength(1));
+      },
+    );
 
     test('different symbols cache independently', () async {
       final harness = _build();
@@ -165,24 +169,26 @@ void main() {
       expect(msft.first.symbol, 'MSFT');
     });
 
-    test('HTTP failure returns empty list and caches the error briefly',
-        () async {
-      final harness = _build();
-      harness.adapter.enqueueRaw(
-        '/chart/AAPL',
-        CannedResponse('server error', status: 500),
-      );
+    test(
+      'HTTP failure returns empty list and caches the error briefly',
+      () async {
+        final harness = _build();
+        harness.adapter.enqueueRaw(
+          '/chart/AAPL',
+          CannedResponse('server error', status: 500),
+        );
 
-      final out = await harness.service.getForSymbol('AAPL');
-      expect(out, isEmpty);
+        final out = await harness.service.getForSymbol('AAPL');
+        expect(out, isEmpty);
 
-      // Second read within the error TTL should not re-fetch — the
-      // service caches the failure so it doesn't hammer Yahoo on
-      // transient outages.
-      final again = await harness.service.getForSymbol('AAPL');
-      expect(again, isEmpty);
-      expect(harness.adapter.calls, hasLength(1));
-    });
+        // Second read within the error TTL should not re-fetch — the
+        // service caches the failure so it doesn't hammer Yahoo on
+        // transient outages.
+        final again = await harness.service.getForSymbol('AAPL');
+        expect(again, isEmpty);
+        expect(harness.adapter.calls, hasLength(1));
+      },
+    );
 
     test('invalidate forces the next read to re-fetch', () async {
       final harness = _build();
@@ -213,37 +219,33 @@ void main() {
       expect(second.first.cashAmount.toString(), '0.3');
     });
 
-    test('empty symbol returns empty list without hitting the network',
-        () async {
-      final harness = _build();
-      final out = await harness.service.getForSymbol('   ');
-      expect(out, isEmpty);
-      expect(harness.adapter.calls, isEmpty);
-    });
+    test(
+      'empty symbol returns empty list without hitting the network',
+      () async {
+        final harness = _build();
+        final out = await harness.service.getForSymbol('   ');
+        expect(out, isEmpty);
+        expect(harness.adapter.calls, isEmpty);
+      },
+    );
 
     test('currency falls back when yfinance omits the meta tag', () async {
       final harness = _build();
-      harness.adapter.enqueue(
-        '/chart/BABA',
-        <String, Object?>{
-          'chart': <String, Object?>{
-            'result': <Object?>[
-              <String, Object?>{
-                // No meta.currency field.
-                'meta': <String, Object?>{'symbol': 'BABA'},
-                'events': <String, Object?>{
-                  'dividends': <String, Object?>{
-                    '$_divTs': <String, Object?>{
-                      'date': _divTs,
-                      'amount': 0.10,
-                    },
-                  },
+      harness.adapter.enqueue('/chart/BABA', <String, Object?>{
+        'chart': <String, Object?>{
+          'result': <Object?>[
+            <String, Object?>{
+              // No meta.currency field.
+              'meta': <String, Object?>{'symbol': 'BABA'},
+              'events': <String, Object?>{
+                'dividends': <String, Object?>{
+                  '$_divTs': <String, Object?>{'date': _divTs, 'amount': 0.10},
                 },
               },
-            ],
-          },
+            },
+          ],
         },
-      );
+      });
       final out = await harness.service.getForSymbol('BABA');
       // Default fallback is USD (the comment in `_defaultCurrencyFor`).
       expect(out.single.currency, 'USD');

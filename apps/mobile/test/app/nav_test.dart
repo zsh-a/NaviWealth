@@ -84,31 +84,29 @@ void main() {
       return router;
     }
 
-    testWidgets(
-      'clears ?selected= before falling back when stack is empty',
-      (tester) async {
-        final navKey = GlobalKey<NavigatorState>();
-        final router = await pumpRouter(
-          tester,
-          initialLocation: '/accounts/list?selected=abc&filter=active',
-          innerNavKey: navKey,
-          onTapBack: (context) =>
-              popOrGo(context, fallback: '/accounts'),
-        );
-        expect(
-          router.routeInformationProvider.value.uri.toString(),
-          '/accounts/list?selected=abc&filter=active',
-        );
+    testWidgets('clears ?selected= before falling back when stack is empty', (
+      tester,
+    ) async {
+      final navKey = GlobalKey<NavigatorState>();
+      final router = await pumpRouter(
+        tester,
+        initialLocation: '/accounts/list?selected=abc&filter=active',
+        innerNavKey: navKey,
+        onTapBack: (context) => popOrGo(context, fallback: '/accounts'),
+      );
+      expect(
+        router.routeInformationProvider.value.uri.toString(),
+        '/accounts/list?selected=abc&filter=active',
+      );
 
-        await tester.tap(find.byKey(const ValueKey('back')));
-        await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('back')));
+      await tester.pumpAndSettle();
 
-        final uri = router.routeInformationProvider.value.uri;
-        expect(uri.path, '/accounts/list');
-        expect(uri.queryParameters.containsKey('selected'), isFalse);
-        expect(uri.queryParameters['filter'], 'active');
-      },
-    );
+      final uri = router.routeInformationProvider.value.uri;
+      expect(uri.path, '/accounts/list');
+      expect(uri.queryParameters.containsKey('selected'), isFalse);
+      expect(uri.queryParameters['filter'], 'active');
+    });
 
     testWidgets(
       'falls back to logical parent when no stack and no ?selected=',
@@ -118,17 +116,13 @@ void main() {
           tester,
           initialLocation: '/accounts/list',
           innerNavKey: navKey,
-          onTapBack: (context) =>
-              popOrGo(context, fallback: '/accounts'),
+          onTapBack: (context) => popOrGo(context, fallback: '/accounts'),
         );
 
         await tester.tap(find.byKey(const ValueKey('back')));
         await tester.pumpAndSettle();
 
-        expect(
-          router.routeInformationProvider.value.uri.path,
-          '/accounts',
-        );
+        expect(router.routeInformationProvider.value.uri.path, '/accounts');
       },
     );
 

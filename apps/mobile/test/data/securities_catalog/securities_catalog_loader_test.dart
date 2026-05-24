@@ -30,16 +30,19 @@ void main() {
     expect(result.rowCount, greaterThan(0));
 
     final rows = await db.select(db.securitiesCatalog).get();
-    expect(rows.map((r) => r.id), containsAll([
-      'cn_a:600519',
-      'us_stock:AAPL',
-      'hk_stock:0700.HK',
-      'crypto:BTC-USD',
-    ]));
+    expect(
+      rows.map((r) => r.id),
+      containsAll([
+        'cn_a:600519',
+        'us_stock:AAPL',
+        'hk_stock:0700.HK',
+        'crypto:BTC-USD',
+      ]),
+    );
 
-    final meta = await (db.select(db.securitiesCatalogMeta)
-          ..where((t) => t.id.equals(1)))
-        .getSingle();
+    final meta = await (db.select(
+      db.securitiesCatalogMeta,
+    )..where((t) => t.id.equals(1))).getSingle();
     expect(meta.version, 'v-test-1');
     expect(meta.checksum, 'fixture-1');
     expect(meta.rowCount, rows.length);
@@ -51,8 +54,8 @@ void main() {
       bundleReader: makeReader(makeFixtureBundle()),
     );
     await loader.load();
-    final firstLoadedAt = (await db.select(db.securitiesCatalogMeta).getSingle())
-        .loadedAt;
+    final firstLoadedAt =
+        (await db.select(db.securitiesCatalogMeta).getSingle()).loadedAt;
 
     // Sleep a tick so a real reload would change `loaded_at` — the test
     // asserts the loader does NOT touch the row.
@@ -120,15 +123,17 @@ void main() {
     // Querying the FTS table by MATCH and joining back to the catalog
     // by rowid is the search service's hot path; we assert the join
     // returns a non-empty result for a well-known token.
-    final rows = await db.customSelect(
-      '''
+    final rows = await db
+        .customSelect(
+          '''
       SELECT c.id
       FROM securities_catalog_fts AS f
       JOIN securities_catalog AS c ON c.rowid = f.rowid
       WHERE securities_catalog_fts MATCH ?
       ''',
-      variables: [Variable.withString('"apple"*')],
-    ).get();
+          variables: [Variable.withString('"apple"*')],
+        )
+        .get();
     expect(rows.map((r) => r.read<String>('id')).toList(), ['us_stock:AAPL']);
   });
 
@@ -172,22 +177,24 @@ void main() {
   });
 
   test('parseBundle dedupes duplicate entries before insert', () async {
-    final bundle = makeFixtureBundle(rows: const [
-      {
-        's': 'AAPL',
-        'm': 'us_stock',
-        't': 'stock',
-        'c': 'USD',
-        'ne': 'Apple Inc.',
-      },
-      {
-        's': 'AAPL',
-        'm': 'us_stock',
-        't': 'stock',
-        'c': 'USD',
-        'ne': 'Apple Inc. duplicate',
-      },
-    ]);
+    final bundle = makeFixtureBundle(
+      rows: const [
+        {
+          's': 'AAPL',
+          'm': 'us_stock',
+          't': 'stock',
+          'c': 'USD',
+          'ne': 'Apple Inc.',
+        },
+        {
+          's': 'AAPL',
+          'm': 'us_stock',
+          't': 'stock',
+          'c': 'USD',
+          'ne': 'Apple Inc. duplicate',
+        },
+      ],
+    );
     final loader = SecuritiesCatalogLoader(
       db: db,
       bundleReader: makeReader(bundle),

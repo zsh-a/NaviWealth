@@ -83,9 +83,9 @@ class ScanOrchestrator {
     required OptionsChainProvider chainProvider,
     required OpportunityScorer scorer,
     required OptionsOpportunityCacheRepository cache,
-  })  : _chainProvider = chainProvider,
-        _scorer = scorer,
-        _cache = cache;
+  }) : _chainProvider = chainProvider,
+       _scorer = scorer,
+       _cache = cache;
 
   final OptionsChainProvider _chainProvider;
   final OpportunityScorer _scorer;
@@ -98,9 +98,11 @@ class ScanOrchestrator {
     final universe = <ApprovedUnderlying>[];
     for (final ap in inputs.approved) {
       final symbol = ap.symbol.toUpperCase();
-      final wantsPut = ap.allowPut &&
+      final wantsPut =
+          ap.allowPut &&
           allowedStrategies.contains(OptionsStrategyKind.cashSecuredPut);
-      final wantsCall = ap.allowCall &&
+      final wantsCall =
+          ap.allowCall &&
           allowedStrategies.contains(OptionsStrategyKind.coveredCall) &&
           (inputs.holdingsBySymbol[symbol] ?? 0) >= 100;
       if (wantsPut || wantsCall) universe.add(ap);

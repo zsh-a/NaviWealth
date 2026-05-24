@@ -132,7 +132,6 @@ class _ChatComposerState extends State<ChatComposer> {
       ),
     );
   }
-
 }
 
 /// Scoped trailing-button rebuild. Listens to the composer's

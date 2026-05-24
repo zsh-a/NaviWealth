@@ -56,9 +56,7 @@ void main() {
   testWidgets('tapping the banner opens the details sheet', (tester) async {
     await tester.pumpWidget(
       _wrap(
-        mismatches: const [
-          CurrencyMismatch(id: 'aapl', currency: 'USD'),
-        ],
+        mismatches: const [CurrencyMismatch(id: 'aapl', currency: 'USD')],
       ),
     );
     await tester.pumpAndSettle();

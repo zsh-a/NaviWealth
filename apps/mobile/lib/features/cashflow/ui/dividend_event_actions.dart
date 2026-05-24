@@ -82,7 +82,11 @@ Future<void> _viewInActivity(
     final accounts = await ref.read(allAccountsStreamProvider.future);
     if (entry == null) {
       if (context.mounted) {
-        AppMessenger.show(context, ToastKind.error, l10n.dividendEventOpenFailed);
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          l10n.dividendEventOpenFailed,
+        );
       }
       return;
     }

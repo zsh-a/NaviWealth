@@ -15,16 +15,15 @@ CorporateActionEvent _event({
   required DateTime scheduledFor,
   String cashAmount = '0.22',
   SplitRatio? ratio,
-}) =>
-    CorporateActionEvent(
-      id: id,
-      symbol: symbol,
-      kind: kind,
-      scheduledFor: scheduledFor,
-      cashAmount: Decimal.parse(cashAmount),
-      currency: 'USD',
-      ratio: ratio,
-    );
+}) => CorporateActionEvent(
+  id: id,
+  symbol: symbol,
+  kind: kind,
+  scheduledFor: scheduledFor,
+  cashAmount: Decimal.parse(cashAmount),
+  currency: 'USD',
+  ratio: ratio,
+);
 
 Future<void> _pump(
   WidgetTester tester,
@@ -34,9 +33,9 @@ Future<void> _pump(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        corporateActionEventsProvider(symbol).overrideWith(
-          (ref) async => events,
-        ),
+        corporateActionEventsProvider(
+          symbol,
+        ).overrideWith((ref) async => events),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -52,8 +51,9 @@ Future<void> _pump(
 }
 
 void main() {
-  testWidgets('renders empty state when provider has no events',
-      (tester) async {
+  testWidgets('renders empty state when provider has no events', (
+    tester,
+  ) async {
     await _pump(tester, 'AAPL', const []);
     expect(
       find.text('No upcoming dividends or splits in the next 90 days.'),
@@ -61,15 +61,12 @@ void main() {
     );
   });
 
-  testWidgets('renders a dividend row with amount in the suffix',
-      (tester) async {
+  testWidgets('renders a dividend row with amount in the suffix', (
+    tester,
+  ) async {
     final inFiveDays = DateTime.now().toUtc().add(const Duration(days: 5));
     await _pump(tester, 'AAPL', [
-      _event(
-        id: 'div-1',
-        scheduledFor: inFiveDays,
-        cashAmount: '0.24',
-      ),
+      _event(id: 'div-1', scheduledFor: inFiveDays, cashAmount: '0.24'),
     ]);
     expect(find.text('Dividend'), findsOneWidget);
     // MoneyText surfaces the amount with grouping.

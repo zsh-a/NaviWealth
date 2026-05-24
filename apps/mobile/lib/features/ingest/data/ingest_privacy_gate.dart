@@ -29,10 +29,7 @@ enum IngestGateVerdict {
   blockedByPrivacy,
 }
 
-IngestGateVerdict ingestPrivacyGate(
-  IngestSourceKind kind,
-  AiPrivacyMode mode,
-) {
+IngestGateVerdict ingestPrivacyGate(IngestSourceKind kind, AiPrivacyMode mode) {
   if (kind.isDeviceParsable) return IngestGateVerdict.deviceParse;
   return mode == AiPrivacyMode.amountsLocal
       ? IngestGateVerdict.blockedByPrivacy

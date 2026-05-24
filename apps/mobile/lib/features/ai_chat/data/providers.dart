@@ -179,11 +179,7 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
       traceVerbose: ref.read(aiTraceVerboseProvider),
     );
   } catch (_) {
-    return (
-      pack: null,
-      traceSeed: null,
-      traceVerbose: false,
-    );
+    return (pack: null, traceSeed: null, traceVerbose: false);
   }
 }
 
@@ -212,7 +208,8 @@ FireGoalSummary? _summarizeFireGoal(Ref ref) {
     if (view != null && view.scenarios.isNotEmpty) {
       // Prefer the live / neutral scenario over an outlier — matches
       // the heuristic the FIRE state provider uses elsewhere.
-      final scenario = view.scenarios.firstWhereOrNull(
+      final scenario =
+          view.scenarios.firstWhereOrNull(
             (s) => s.tier == FireScenarioTier.live,
           ) ??
           view.scenarios.firstWhereOrNull(
@@ -353,21 +350,21 @@ Future<void> _applyFirePlanUpdateProposal({
     monthlySurplus: d('monthly_surplus') ?? plan.monthlySurplus,
     inflationRate:
         (after['inflation_rate'] is num
-                ? (after['inflation_rate'] as num).toDouble()
-                : null) ??
-            plan.inflationRate,
+            ? (after['inflation_rate'] as num).toDouble()
+            : null) ??
+        plan.inflationRate,
     safeWithdrawalRate:
         (after['safe_withdrawal_rate'] is num
-                ? (after['safe_withdrawal_rate'] as num).toDouble()
-                : null) ??
-            plan.safeWithdrawalRate,
+            ? (after['safe_withdrawal_rate'] as num).toDouble()
+            : null) ??
+        plan.safeWithdrawalRate,
     targetCashBucketMonths:
         (after['target_cash_bucket_months'] is num
-                ? (after['target_cash_bucket_months'] as num).toInt()
-                : null) ??
-            plan.targetCashBucketMonths,
-    lifestyleMode: _parseLifestyle(after['lifestyle_mode']) ??
-        plan.lifestyleMode,
+            ? (after['target_cash_bucket_months'] as num).toInt()
+            : null) ??
+        plan.targetCashBucketMonths,
+    lifestyleMode:
+        _parseLifestyle(after['lifestyle_mode']) ?? plan.lifestyleMode,
   );
   await saveFirePlanWithRef(ref, updated);
 }

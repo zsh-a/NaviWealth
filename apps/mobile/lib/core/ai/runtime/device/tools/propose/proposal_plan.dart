@@ -46,6 +46,7 @@ const List<String> kProposalAccountTypes = [
   'cash',
   'other',
 ];
+
 /// **Deliberately distinct** from the feature-side
 /// `kManualValuationAssetTypes` (`data/domain/enums.dart`), which is a
 /// stricter set excluding realEstate/vehicle. The device

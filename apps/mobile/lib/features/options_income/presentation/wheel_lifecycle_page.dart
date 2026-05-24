@@ -54,8 +54,7 @@ class WheelLifecyclePage extends ConsumerWidget {
               AppSpacing.s24,
             ),
             itemCount: cycles.length,
-            separatorBuilder: (_, _) =>
-                const SizedBox(height: AppSpacing.s8),
+            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
             itemBuilder: (context, i) => _WheelTile(cycle: cycles[i]),
           );
         },
@@ -102,28 +101,28 @@ class _WheelTile extends StatelessWidget {
 }
 
 IconData _stageIcon(WheelStage stage) => switch (stage) {
-      WheelStage.between => Icons.circle_outlined,
-      WheelStage.cashWaiting => Icons.account_balance_wallet_outlined,
-      WheelStage.shortPut => Icons.south_west_outlined,
-      WheelStage.putExpired => Icons.check_circle_outline,
-      WheelStage.putAssigned => Icons.input_outlined,
-      WheelStage.sharesHeld => Icons.inventory_2_outlined,
-      WheelStage.shortCall => Icons.north_east_outlined,
-      WheelStage.callExpired => Icons.check_circle_outline,
-      WheelStage.callCalled => Icons.output_outlined,
-    };
+  WheelStage.between => Icons.circle_outlined,
+  WheelStage.cashWaiting => Icons.account_balance_wallet_outlined,
+  WheelStage.shortPut => Icons.south_west_outlined,
+  WheelStage.putExpired => Icons.check_circle_outline,
+  WheelStage.putAssigned => Icons.input_outlined,
+  WheelStage.sharesHeld => Icons.inventory_2_outlined,
+  WheelStage.shortCall => Icons.north_east_outlined,
+  WheelStage.callExpired => Icons.check_circle_outline,
+  WheelStage.callCalled => Icons.output_outlined,
+};
 
 /// Labels are pinned in code (not l10n) because the Wheel stages are a
 /// canonical strategy taxonomy — translating "short put" into a free
 /// rendering for each locale would lose the strategy semantics.
 String _stageLabel(WheelStage stage) => switch (stage) {
-      WheelStage.between => 'Between cycles',
-      WheelStage.cashWaiting => 'Cash waiting',
-      WheelStage.shortPut => 'Short put (open)',
-      WheelStage.putExpired => 'Put expired',
-      WheelStage.putAssigned => 'Put assigned',
-      WheelStage.sharesHeld => 'Shares held',
-      WheelStage.shortCall => 'Short call (open)',
-      WheelStage.callExpired => 'Call expired',
-      WheelStage.callCalled => 'Called away',
-    };
+  WheelStage.between => 'Between cycles',
+  WheelStage.cashWaiting => 'Cash waiting',
+  WheelStage.shortPut => 'Short put (open)',
+  WheelStage.putExpired => 'Put expired',
+  WheelStage.putAssigned => 'Put assigned',
+  WheelStage.sharesHeld => 'Shares held',
+  WheelStage.shortCall => 'Short call (open)',
+  WheelStage.callExpired => 'Call expired',
+  WheelStage.callCalled => 'Called away',
+};

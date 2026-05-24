@@ -76,11 +76,7 @@ void main() {
     test('returns auto-sourced fields when only the asset has values', () {
       final classifier = DefaultEquityClassifier();
       final classification = classifier.classify(
-        _asset(
-          id: 'a',
-          industry: 'Technology',
-          market: 'us',
-        ),
+        _asset(id: 'a', industry: 'Technology', market: 'us'),
       );
       expect(classification.sector.value, 'Technology');
       expect(classification.sector.source, ClassificationSource.auto);
@@ -113,11 +109,7 @@ void main() {
       });
       final classifier = DefaultEquityClassifier(overrides: overrides);
       final classification = classifier.classify(
-        _asset(
-          id: 'a',
-          industry: 'Technology',
-          market: 'us',
-        ),
+        _asset(id: 'a', industry: 'Technology', market: 'us'),
       );
       expect(classification.sector.value, 'Healthcare');
       expect(classification.sector.source, ClassificationSource.manual);
@@ -151,9 +143,7 @@ void main() {
 
     test('uses region hint when explicit region column is set', () {
       final classifier = DefaultEquityClassifier();
-      final classification = classifier.classify(
-        _asset(id: 'a', region: 'HK'),
-      );
+      final classification = classifier.classify(_asset(id: 'a', region: 'HK'));
       expect(classification.region.value, AssetMarket.hkStock);
     });
   });

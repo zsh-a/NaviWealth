@@ -63,15 +63,8 @@ class ResolvedPrice {
       other.note == note;
 
   @override
-  int get hashCode => Object.hash(
-    value,
-    currency,
-    confidence,
-    source,
-    asOf,
-    fetchedAt,
-    note,
-  );
+  int get hashCode =>
+      Object.hash(value, currency, confidence, source, asOf, fetchedAt, note);
 
   @override
   String toString() =>

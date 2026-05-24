@@ -152,11 +152,7 @@ class _ModeCard extends StatelessWidget {
               ],
             ),
           ),
-          Icon(
-            Icons.chevron_right,
-            color: colors.mutedForeground,
-            size: 20,
-          ),
+          Icon(Icons.chevron_right, color: colors.mutedForeground, size: 20),
         ],
       ),
     );

@@ -58,12 +58,16 @@ extension BackendWire on Backend {
 enum TerminalReason {
   /// Stream emitted the terminal `done` frame normally.
   done,
+
   /// Stream errored out mid-flight (network / upstream / parser).
   streamError,
+
   /// User explicitly cancelled (cancel button / navigated away).
   userCancel,
+
   /// Policy denied dispatch — synthesised `tool_result {error: policy_denied}`.
   policyDenied,
+
   /// Stream closed before the `done` frame and no error fired (peer
   /// reset, timeout, etc.). Less informative than `streamError`.
   closedEarly,
@@ -138,8 +142,7 @@ class AiTrace {
   /// waterfall view vs. the legacy flat-timeline fallback).
   bool get hasSpans => spans.isNotEmpty;
 
-  Iterable<AiSpan> get llmSpans =>
-      spans.where((s) => s.kind == AiSpanKind.llm);
+  Iterable<AiSpan> get llmSpans => spans.where((s) => s.kind == AiSpanKind.llm);
 
   Iterable<AiSpan> get toolSpans =>
       spans.where((s) => s.kind == AiSpanKind.tool);
@@ -173,8 +176,7 @@ class AiTrace {
     'routing_reason': routingReason,
     'total_duration_ms': totalDurationMs,
     'terminal_reason': terminalReason.wire,
-    if (invocation != null && invocation!.isNotEmpty)
-      'invocation': invocation,
+    if (invocation != null && invocation!.isNotEmpty) 'invocation': invocation,
     if (spans.isNotEmpty)
       'spans': spans.map((s) => s.toJson()).toList(growable: false),
   };
@@ -197,9 +199,7 @@ class AiTrace {
               risk: RiskLevel.info,
             ),
       backend: bk is String ? BackendWire.parse(bk) : Backend.device,
-      budgetTier: bt is String
-          ? BudgetTierWire.parse(bt)
-          : BudgetTier.standard,
+      budgetTier: bt is String ? BudgetTierWire.parse(bt) : BudgetTier.standard,
       routingReason: rr is String ? rr : '',
       totalDurationMs: td is int ? td : 0,
       terminalReason: switch (json['terminal_reason']) {

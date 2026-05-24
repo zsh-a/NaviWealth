@@ -79,10 +79,7 @@ class MemoryRuntime {
     if (prior != null) {
       final now = _clock();
       await memoryStore.writeMemoryWithoutVector(
-        prior.copyWith(
-          validUntil: now,
-          updatedAt: now,
-        ),
+        prior.copyWith(validUntil: now, updatedAt: now),
       );
     }
     await remember(newRecord);
@@ -162,10 +159,7 @@ class MemoryRuntime {
 
     // Update access timestamps (best-effort fire-and-forget would be
     // racy with tests; await but ignore failures).
-    await memoryStore.touchAccess(
-      cut.map((h) => h.record.id),
-      now,
-    );
+    await memoryStore.touchAccess(cut.map((h) => h.record.id), now);
 
     return cut;
   }
@@ -180,19 +174,18 @@ class MemoryRuntime {
     Set<String>? entityFilter,
     Duration window = const Duration(days: 30),
     int limit = 50,
-  }) =>
-      eventStore.recentEvents(
-        ownerUserId: ownerUserId,
-        source: source,
-        typeFilter: typeFilter,
-        entityFilter: entityFilter,
-        since: _clock().subtract(window),
-        limit: limit,
-      );
+  }) => eventStore.recentEvents(
+    ownerUserId: ownerUserId,
+    source: source,
+    typeFilter: typeFilter,
+    entityFilter: entityFilter,
+    since: _clock().subtract(window),
+    limit: limit,
+  );
 
   /// Drop every embedding whose fingerprint != current embedder's.
-  /// Call after swapping the embedder (e.g. Stub → Rust MiniLM); the
-  /// next indexer cycle re-embeds with the new model.
+  /// Call after swapping the embedder (e.g. Stub → Rust EmbeddingGemma);
+  /// the next indexer cycle re-embeds with the new model.
   Future<int> dropStaleVectors() =>
       memoryStore.dropOtherFingerprints(embedder.fingerprint);
 

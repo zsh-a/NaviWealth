@@ -189,7 +189,8 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
   void initState() {
     super.initState();
     _selected = widget.initialValue;
-    _market = widget.initialMarket ??
+    _market =
+        widget.initialMarket ??
         widget.initialValue?.market ??
         (widget.markets != null && widget.markets!.isNotEmpty
             ? widget.markets!.first
@@ -303,10 +304,8 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
   Future<void> _openManualSheet({String? prefillSymbol}) async {
     final result = await showGuardedFormSheet<LocalSecurityChoice>(
       context: context,
-      builder: (ctx, dirty) => ManualSecuritySheet(
-        prefillSymbol: prefillSymbol,
-        dirty: dirty,
-      ),
+      builder: (ctx, dirty) =>
+          ManualSecuritySheet(prefillSymbol: prefillSymbol, dirty: dirty),
     );
     if (result != null) {
       _selectManual(result);
@@ -373,15 +372,15 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
                   ),
                 )
               : _loading
-                  ? (ctx, style, variants) => const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: FCircularProgress(),
-                        ),
-                      )
-                  : null,
+              ? (ctx, style, variants) => const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: FCircularProgress(),
+                  ),
+                )
+              : null,
           onTap: () => setState(() {}),
           validator: (_) =>
               _selected == null ? l10n.localSecuritiesValidationRequired : null,
@@ -449,9 +448,7 @@ class _MarketSelector extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return FSelect<AssetMarket>(
       key: const Key('symbol-field-market'),
-      items: {
-        for (final m in markets) symbolFieldMarketLabel(l10n, m): m,
-      },
+      items: {for (final m in markets) symbolFieldMarketLabel(l10n, m): m},
       control: FSelectControl<AssetMarket>.managed(
         initial: value,
         onChange: onChanged,

@@ -39,8 +39,14 @@ void main() {
       // The oldest 7 are evicted; the surviving sample range starts at
       // index 7 of the input (the first of the last three).
       final survivors = collector.samples.toList();
-      expect(survivors.first.timestampInMicroseconds(FramePhase.vsyncStart), 7000);
-      expect(survivors.last.timestampInMicroseconds(FramePhase.vsyncStart), 9000);
+      expect(
+        survivors.first.timestampInMicroseconds(FramePhase.vsyncStart),
+        7000,
+      );
+      expect(
+        survivors.last.timestampInMicroseconds(FramePhase.vsyncStart),
+        9000,
+      );
     });
 
     test('empty stats report frameCount=0 without crashing', () {

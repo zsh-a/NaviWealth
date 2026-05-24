@@ -29,18 +29,16 @@ Future<MemoryRuntime> _newRuntime() async {
 }
 
 ProviderContainer _container(MemoryRuntime runtime) => ProviderContainer(
-      overrides: [
-        memoryRuntimeProvider.overrideWith((ref) async => runtime),
-        contextBuilderProvider
-            .overrideWith((ref) async => ContextBuilder(runtime: runtime)),
-        currentUserIdProvider.overrideWithValue(() async => _kOwner),
-      ],
-    );
+  overrides: [
+    memoryRuntimeProvider.overrideWith((ref) async => runtime),
+    contextBuilderProvider.overrideWith(
+      (ref) async => ContextBuilder(runtime: runtime),
+    ),
+    currentUserIdProvider.overrideWithValue(() async => _kOwner),
+  ],
+);
 
-Future<T> _withRef<T>(
-  ProviderContainer c,
-  Future<T> Function(Ref ref) body,
-) {
+Future<T> _withRef<T>(ProviderContainer c, Future<T> Function(Ref ref) body) {
   final probe = FutureProvider<T>((ref) => body(ref));
   c.listen(probe, (_, _) {});
   return c.read(probe.future);
@@ -70,22 +68,21 @@ MemoryRecord _mem({
   String title = '',
   String summary = '',
   Set<String> entities = const {},
-}) =>
-    MemoryRecord(
-      id: id,
-      kind: kind,
-      ownerUserId: _kOwner,
-      scope: scope,
-      source: 'test',
-      title: title.isEmpty ? id : title,
-      summary: summary.isEmpty ? id : summary,
-      payload: const {},
-      entities: entities,
-      importance: 0.6,
-      confidence: 0.85,
-      createdAt: DateTime.utc(2026, 5, 24),
-      updatedAt: DateTime.utc(2026, 5, 24),
-    );
+}) => MemoryRecord(
+  id: id,
+  kind: kind,
+  ownerUserId: _kOwner,
+  scope: scope,
+  source: 'test',
+  title: title.isEmpty ? id : title,
+  summary: summary.isEmpty ? id : summary,
+  payload: const {},
+  entities: entities,
+  importance: 0.6,
+  confidence: 0.85,
+  createdAt: DateTime.utc(2026, 5, 24),
+  updatedAt: DateTime.utc(2026, 5, 24),
+);
 
 void main() {
   group('BuildContextTool', () {
@@ -105,39 +102,40 @@ void main() {
       addTearDown(c.dispose);
 
       final out = await _invoke(c, const <String, Object?>{});
-      expect(out.keys, containsAll([
-        'user_preferences',
-        'applicable_rules',
-        'related_decisions',
-        'recent_events',
-        'related_events',
-      ]));
+      expect(
+        out.keys,
+        containsAll([
+          'user_preferences',
+          'applicable_rules',
+          'related_decisions',
+          'recent_events',
+          'related_events',
+        ]),
+      );
       expect(out['guidance'], isNotNull);
     });
 
     test('classifies records into the right slot', () async {
       final rt = await _newRuntime();
-      await rt.remember(_mem(
-        id: 'pref',
-        kind: MemoryKind.semantic,
-        scope: '*',
-      ));
+      await rt.remember(
+        _mem(id: 'pref', kind: MemoryKind.semantic, scope: '*'),
+      );
       await rt.remember(_mem(id: 'rule', kind: MemoryKind.procedural));
-      await rt.remember(_mem(
-        id: 'decision',
-        kind: MemoryKind.episodic,
-        summary: 'NVDA put',
-      ));
-      await rt.recordEvent(EventRecord(
-        id: 'event-1',
-        type: 'trade_closed',
-        timestamp: DateTime.utc(2026, 5, 23),
-        source: 'options_trade_journal',
-        ownerUserId: _kOwner,
-        summary: 'closed NVDA put',
-        payload: const {},
-        entities: const {'NVDA'},
-      ));
+      await rt.remember(
+        _mem(id: 'decision', kind: MemoryKind.episodic, summary: 'NVDA put'),
+      );
+      await rt.recordEvent(
+        EventRecord(
+          id: 'event-1',
+          type: 'trade_closed',
+          timestamp: DateTime.utc(2026, 5, 23),
+          source: 'options_trade_journal',
+          ownerUserId: _kOwner,
+          summary: 'closed NVDA put',
+          payload: const {},
+          entities: const {'NVDA'},
+        ),
+      );
 
       final c = _container(rt);
       addTearDown(c.dispose);
@@ -197,8 +195,10 @@ void main() {
         'scope': 'options_trading',
         'per_slot_limit': 999,
       });
-      expect((tooHigh['applicable_rules'] as List).length,
-          lessThanOrEqualTo(20));
+      expect(
+        (tooHigh['applicable_rules'] as List).length,
+        lessThanOrEqualTo(20),
+      );
 
       final tooLow = await _invoke(c, <String, Object?>{
         'scope': 'options_trading',

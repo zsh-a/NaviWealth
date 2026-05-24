@@ -65,8 +65,7 @@ class WealthHubPage extends ConsumerWidget {
             baseCurrency: snapshot?.baseCurrency ?? 'USD',
             netWorth: snapshot?.netWorth.amount ?? Decimal.zero,
             totalAssets: snapshot?.totalAssets.amount ?? Decimal.zero,
-            totalLiabilities:
-                snapshot?.totalLiabilities.amount ?? Decimal.zero,
+            totalLiabilities: snapshot?.totalLiabilities.amount ?? Decimal.zero,
           );
         },
       ),
@@ -98,9 +97,7 @@ class _WealthHubBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final hPad = Breakpoints.isMobile(width)
-        ? AppSpacing.s16
-        : AppSpacing.s24;
+    final hPad = Breakpoints.isMobile(width) ? AppSpacing.s16 : AppSpacing.s24;
     return ListView(
       padding: EdgeInsets.fromLTRB(
         hPad,

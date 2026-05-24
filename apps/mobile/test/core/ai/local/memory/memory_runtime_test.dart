@@ -53,16 +53,20 @@ void main() {
   group('MemoryRuntime.remember + recall', () {
     test('semantic recall ranks the exact-match doc first', () async {
       final rt = _runtime();
-      await rt.remember(_mem(
-        id: 'a',
-        title: 'renovation budget',
-        summary: 'renovation renovation budget renovation costs',
-      ));
-      await rt.remember(_mem(
-        id: 'b',
-        title: 'subscriptions',
-        summary: 'netflix spotify subscription monthly',
-      ));
+      await rt.remember(
+        _mem(
+          id: 'a',
+          title: 'renovation budget',
+          summary: 'renovation renovation budget renovation costs',
+        ),
+      );
+      await rt.remember(
+        _mem(
+          id: 'b',
+          title: 'subscriptions',
+          summary: 'netflix spotify subscription monthly',
+        ),
+      );
       final hits = await rt.recall(
         ownerUserId: _kOwner,
         queryText: 'renovation',
@@ -74,16 +78,12 @@ void main() {
 
     test('entity overlap boosts identical-text records', () async {
       final rt = _runtime();
-      await rt.remember(_mem(
-        id: 'matched',
-        summary: 'short put',
-        entities: const {'NVDA'},
-      ));
-      await rt.remember(_mem(
-        id: 'unmatched',
-        summary: 'short put',
-        entities: const {'AAPL'},
-      ));
+      await rt.remember(
+        _mem(id: 'matched', summary: 'short put', entities: const {'NVDA'}),
+      );
+      await rt.remember(
+        _mem(id: 'unmatched', summary: 'short put', entities: const {'AAPL'}),
+      );
       final hits = await rt.recall(
         ownerUserId: _kOwner,
         queryText: 'short put',
@@ -94,20 +94,9 @@ void main() {
 
     test('importance breaks ties when other signals are equal', () async {
       final rt = _runtime();
-      await rt.remember(_mem(
-        id: 'high',
-        summary: 'sample',
-        importance: 0.9,
-      ));
-      await rt.remember(_mem(
-        id: 'low',
-        summary: 'sample',
-        importance: 0.2,
-      ));
-      final hits = await rt.recall(
-        ownerUserId: _kOwner,
-        queryText: 'sample',
-      );
+      await rt.remember(_mem(id: 'high', summary: 'sample', importance: 0.9));
+      await rt.remember(_mem(id: 'low', summary: 'sample', importance: 0.2));
+      final hits = await rt.recall(ownerUserId: _kOwner, queryText: 'sample');
       expect(hits.first.record.id, 'high');
     });
 
@@ -140,10 +129,7 @@ void main() {
     test('recall touches last_accessed_at on hits', () async {
       final fixed = DateTime.utc(2026, 5, 24, 12);
       final rt = _runtime(clock: () => fixed);
-      await rt.remember(_mem(
-        id: 'a',
-        at: DateTime.utc(2026, 5, 1),
-      ));
+      await rt.remember(_mem(id: 'a', at: DateTime.utc(2026, 5, 1)));
       await rt.recall(ownerUserId: _kOwner, queryText: 'summary a');
       final back = await rt.memoryStore.readMemory('a');
       expect(back!.lastAccessedAt, fixed);
@@ -158,53 +144,62 @@ void main() {
       expect(await rt.memoryCount, 0);
     });
 
-    test('supersede stamps validUntil on the old record + writes new', () async {
-      final now = DateTime.utc(2026, 6, 1);
-      final rt = _runtime(clock: () => now);
-      await rt.remember(_mem(
-        id: 'old-pref',
-        kind: MemoryKind.semantic,
-        title: 'prefers SaaS',
-      ));
-      await rt.supersede(
-        'old-pref',
-        _mem(
-          id: 'new-pref',
-          kind: MemoryKind.semantic,
-          title: 'prefers local-first',
-        ),
-      );
-      final old = await rt.memoryStore.readMemory('old-pref');
-      expect(old!.validUntil, now);
-      final created = await rt.memoryStore.readMemory('new-pref');
-      expect(created, isNotNull);
-    });
+    test(
+      'supersede stamps validUntil on the old record + writes new',
+      () async {
+        final now = DateTime.utc(2026, 6, 1);
+        final rt = _runtime(clock: () => now);
+        await rt.remember(
+          _mem(
+            id: 'old-pref',
+            kind: MemoryKind.semantic,
+            title: 'prefers SaaS',
+          ),
+        );
+        await rt.supersede(
+          'old-pref',
+          _mem(
+            id: 'new-pref',
+            kind: MemoryKind.semantic,
+            title: 'prefers local-first',
+          ),
+        );
+        final old = await rt.memoryStore.readMemory('old-pref');
+        expect(old!.validUntil, now);
+        final created = await rt.memoryStore.readMemory('new-pref');
+        expect(created, isNotNull);
+      },
+    );
   });
 
   group('MemoryRuntime.recordEvent + recentEvents', () {
     test('events come back desc by timestamp + filtered by entity', () async {
       final fixed = DateTime.utc(2026, 5, 24, 12);
       final rt = _runtime(clock: () => fixed);
-      await rt.recordEvent(EventRecord(
-        id: 'e1',
-        type: 'trade_closed',
-        timestamp: DateTime.utc(2026, 5, 20),
-        source: 'options_trade_journal',
-        ownerUserId: _kOwner,
-        summary: 'closed NVDA',
-        payload: const {},
-        entities: const {'NVDA'},
-      ));
-      await rt.recordEvent(EventRecord(
-        id: 'e2',
-        type: 'trade_closed',
-        timestamp: DateTime.utc(2026, 5, 22),
-        source: 'options_trade_journal',
-        ownerUserId: _kOwner,
-        summary: 'closed AAPL',
-        payload: const {},
-        entities: const {'AAPL'},
-      ));
+      await rt.recordEvent(
+        EventRecord(
+          id: 'e1',
+          type: 'trade_closed',
+          timestamp: DateTime.utc(2026, 5, 20),
+          source: 'options_trade_journal',
+          ownerUserId: _kOwner,
+          summary: 'closed NVDA',
+          payload: const {},
+          entities: const {'NVDA'},
+        ),
+      );
+      await rt.recordEvent(
+        EventRecord(
+          id: 'e2',
+          type: 'trade_closed',
+          timestamp: DateTime.utc(2026, 5, 22),
+          source: 'options_trade_journal',
+          ownerUserId: _kOwner,
+          summary: 'closed AAPL',
+          payload: const {},
+          entities: const {'AAPL'},
+        ),
+      );
       final all = await rt.recentEvents(ownerUserId: _kOwner);
       expect(all.map((e) => e.id), ['e2', 'e1']);
       final nvdaOnly = await rt.recentEvents(

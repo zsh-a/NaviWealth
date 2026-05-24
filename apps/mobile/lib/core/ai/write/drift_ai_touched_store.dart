@@ -107,17 +107,19 @@ class DriftAiTouchedStore {
     String entityType,
     String entityId,
   ) async {
-    final rows = await _db.customSelect(
-      'SELECT touched_at, kind_label, trace_id '
-      'FROM ai_touched_entities '
-      'WHERE owner_user_id = ?1 AND entity_type = ?2 AND entity_id = ?3 '
-      'LIMIT 1',
-      variables: [
-        Variable.withString(_owner),
-        Variable.withString(entityType),
-        Variable.withString(entityId),
-      ],
-    ).get();
+    final rows = await _db
+        .customSelect(
+          'SELECT touched_at, kind_label, trace_id '
+          'FROM ai_touched_entities '
+          'WHERE owner_user_id = ?1 AND entity_type = ?2 AND entity_id = ?3 '
+          'LIMIT 1',
+          variables: [
+            Variable.withString(_owner),
+            Variable.withString(entityType),
+            Variable.withString(entityId),
+          ],
+        )
+        .get();
     if (rows.isEmpty) return null;
     final r = rows.first;
     final ts = r.read<String>('touched_at');

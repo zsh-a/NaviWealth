@@ -34,10 +34,7 @@ GoRouter _router(String? navigatedTo) {
         path: '/wealth/liabilities/:id',
         builder: (_, _) => const _Probe(),
       ),
-      GoRoute(
-        path: '/activity/entry/:id',
-        builder: (_, _) => const _Probe(),
-      ),
+      GoRoute(path: '/activity/entry/:id', builder: (_, _) => const _Probe()),
       GoRoute(path: '/plan/income', builder: (_, _) => const _Probe()),
     ],
     redirect: (_, state) {
@@ -52,8 +49,7 @@ ToolInvocation? _captured;
 class _Probe extends StatelessWidget {
   const _Probe();
   @override
-  Widget build(BuildContext context) =>
-      const Scaffold(body: SizedBox.shrink());
+  Widget build(BuildContext context) => const Scaffold(body: SizedBox.shrink());
 }
 
 Future<void> _pump(
@@ -79,8 +75,7 @@ Future<void> _pump(
 }
 
 void main() {
-  testWidgets('renders evidence chips for known entity_tables',
-      (tester) async {
+  testWidgets('renders evidence chips for known entity_tables', (tester) async {
     final invocation = _withEvidence([
       <String, Object?>{
         'entity_table': 'assets',
@@ -120,8 +115,9 @@ void main() {
     expect(find.text('Known asset'), findsOneWidget);
   });
 
-  testWidgets('falls back to legacy heuristic when no evidence array',
-      (tester) async {
+  testWidgets('falls back to legacy heuristic when no evidence array', (
+    tester,
+  ) async {
     // No evidence array; a bare `account_id` in the output triggers
     // the legacy walk so older tools keep their chip.
     const invocation = ToolInvocation(

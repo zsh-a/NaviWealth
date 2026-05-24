@@ -64,10 +64,7 @@ class RouteErrorPage extends StatelessWidget {
                       FButton(
                         variant: FButtonVariant.outline,
                         onPress: () => smartPop(context),
-                        prefix: const Icon(
-                          Icons.arrow_back_ios_new,
-                          size: 14,
-                        ),
+                        prefix: const Icon(Icons.arrow_back_ios_new, size: 14),
                         child: Text(l10n.routeGoBack),
                       ),
                       const SizedBox(width: 12),

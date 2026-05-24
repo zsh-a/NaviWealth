@@ -195,7 +195,9 @@ class _SchemeSelector extends ConsumerWidget {
     // simply reflects it. We write the appetite, then refresh the
     // target weights to the preset's defaults so the user sees the new
     // bars immediately.
-    await ref.read(riskAppetiteProvider.notifier).set(appetiteForScheme(preset));
+    await ref
+        .read(riskAppetiteProvider.notifier)
+        .set(appetiteForScheme(preset));
     await ref
         .read(targetAllocationProvider.notifier)
         .update(allocationScheme(preset));

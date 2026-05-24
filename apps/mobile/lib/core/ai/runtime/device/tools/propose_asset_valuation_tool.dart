@@ -80,8 +80,7 @@ class ProposeAssetValuationTool implements DeviceTool {
         _ => needsClarification(
           kind: 'asset_valuation',
           field: 'asset',
-          reason:
-              '未找到匹配的资产。如果是新资产，请先用 propose_account_create 建立资产 / 账户。',
+          reason: '未找到匹配的资产。如果是新资产，请先用 propose_account_create 建立资产 / 账户。',
           candidates: const [],
         ),
       };

@@ -30,10 +30,11 @@ import 'llm_stream_event.dart';
 /// One streaming round, injectable so tests can script
 /// [LlmStreamEvent]s without a network. Production passes
 /// `AnthropicClient.streamMessages`.
-typedef LlmStreamFn = Stream<LlmStreamEvent> Function(
-  AnthropicRequest request, {
-  CancelToken? cancelToken,
-});
+typedef LlmStreamFn =
+    Stream<LlmStreamEvent> Function(
+      AnthropicRequest request, {
+      CancelToken? cancelToken,
+    });
 
 class TurnBudget {
   const TurnBudget({
@@ -63,10 +64,7 @@ class DeviceAgentLoop {
   /// Drive one user turn to completion. The returned stream is finite —
   /// it always ends with exactly one terminal [DoneEvent] (mirroring
   /// the backend `Stop`), possibly preceded by an [ErrorEvent].
-  Stream<AiChatEvent> run(
-    DeviceSession session, {
-    CancelToken? cancelToken,
-  }) {
+  Stream<AiChatEvent> run(DeviceSession session, {CancelToken? cancelToken}) {
     final controller = StreamController<AiChatEvent>();
     var aborted = false;
     Timer? timer;
@@ -360,9 +358,7 @@ class DeviceAgentLoop {
           toolNames[id] = name;
           emit(ToolCallStartEvent(id: id, name: name));
         case LlmToolCallDelta(:final id, :final partialInputJson):
-          emit(
-            ToolCallDeltaEvent(id: id, partialInputJson: partialInputJson),
-          );
+          emit(ToolCallDeltaEvent(id: id, partialInputJson: partialInputJson));
         case LlmToolCallEnd(:final id, :final name, :final input):
           final resolved = name.isNotEmpty ? name : (toolNames[id] ?? '');
           assistantContent.add(<String, Object?>{
@@ -374,11 +370,11 @@ class DeviceAgentLoop {
           toolUses.add(_ToolUse(id: id, name: resolved, input: input));
           emit(ToolCallEvent(id: id, name: resolved, input: input));
         case LlmUsage(
-            :final inputTokens,
-            :final outputTokens,
-            :final cacheReadTokens,
-            :final cacheWriteTokens,
-          ):
+          :final inputTokens,
+          :final outputTokens,
+          :final cacheReadTokens,
+          :final cacheWriteTokens,
+        ):
           tokens = SpanTokens(
             input: inputTokens,
             output: outputTokens,
@@ -456,9 +452,7 @@ bool _toolOutputIsError(Object? output) =>
     output is Map && output['error'] is String;
 
 String? _toolErrorCode(Object? output) =>
-    output is Map && output['code'] is String
-    ? output['code'] as String
-    : null;
+    output is Map && output['code'] is String ? output['code'] as String : null;
 
 /// Port of `guardrails::count_existing_proposals`.
 int _countExistingProposals(List<AnthropicChatMessage> messages) {

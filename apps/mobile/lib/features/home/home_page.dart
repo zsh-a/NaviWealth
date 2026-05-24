@@ -108,7 +108,8 @@ class _DashboardBody extends ConsumerWidget {
                 vertical: AppSpacing.s24,
               );
         final padding = basePadding.copyWith(
-          bottom: basePadding.bottom +
+          bottom:
+              basePadding.bottom +
               MediaQuery.paddingOf(context).bottom +
               AppSpacing.s16,
         );

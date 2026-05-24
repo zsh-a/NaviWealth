@@ -77,10 +77,7 @@ class LocalImmediateWriteExecutor {
       summaryZh: summaryZh,
       // Wave 31: device-side executor → ProposalSource.device.
       source: ProposalSource.device,
-      undo: UndoToken(
-        token: token,
-        expiresAtIso: expiresAt.toIso8601String(),
-      ),
+      undo: UndoToken(token: token, expiresAtIso: expiresAt.toIso8601String()),
     );
   }
 

@@ -176,11 +176,7 @@ class _AccountAvatarButton extends ConsumerWidget {
               color: colors.primary.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.person_outline,
-              size: 18,
-              color: colors.primary,
-            ),
+            child: Icon(Icons.person_outline, size: 18, color: colors.primary),
           ),
         ),
       ),

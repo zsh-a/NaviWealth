@@ -15,11 +15,7 @@ void main() {
   setUp(() {
     db = makeTestDatabase();
     outbox = InMemoryOutboxStore();
-    repo = BudgetRepository(
-      db: db,
-      outbox: outbox,
-      stamper: makeStubStamper(),
-    );
+    repo = BudgetRepository(db: db, outbox: outbox, stamper: makeStubStamper());
   });
 
   tearDown(() => db.close());
@@ -87,22 +83,25 @@ void main() {
     expect(live?.amount, Decimal.parse('5500'));
   });
 
-  test('updateAmount applies partial diffs without touching unspecified fields', () async {
-    final created = await repo.create(
-      categoryId: 'cat-food',
-      periodMonth: '2026-05',
-      amount: Decimal.parse('1000'),
-      currency: 'CNY',
-      note: 'keep me',
-    );
-    final updated = await repo.updateAmount(
-      id: created.id,
-      amount: Decimal.parse('1200'),
-    );
-    expect(updated.amount, Decimal.parse('1200'));
-    expect(updated.note, 'keep me', reason: 'untouched field survives');
-    expect(updated.currency, 'CNY');
-  });
+  test(
+    'updateAmount applies partial diffs without touching unspecified fields',
+    () async {
+      final created = await repo.create(
+        categoryId: 'cat-food',
+        periodMonth: '2026-05',
+        amount: Decimal.parse('1000'),
+        currency: 'CNY',
+        note: 'keep me',
+      );
+      final updated = await repo.updateAmount(
+        id: created.id,
+        amount: Decimal.parse('1200'),
+      );
+      expect(updated.amount, Decimal.parse('1200'));
+      expect(updated.note, 'keep me', reason: 'untouched field survives');
+      expect(updated.currency, 'CNY');
+    },
+  );
 
   test('updateAmount clearNote removes the note', () async {
     final created = await repo.create(
@@ -112,10 +111,7 @@ void main() {
       currency: 'CNY',
       note: 'will be cleared',
     );
-    final updated = await repo.updateAmount(
-      id: created.id,
-      clearNote: true,
-    );
+    final updated = await repo.updateAmount(id: created.id, clearNote: true);
     expect(updated.note, isNull);
   });
 
@@ -193,9 +189,6 @@ void main() {
 
     final may = await repo.watchByMonth('2026-05').first;
     expect(may, hasLength(2));
-    expect(
-      may.map((b) => b.categoryId).toSet(),
-      {'cat-food', 'cat-rent'},
-    );
+    expect(may.map((b) => b.categoryId).toSet(), {'cat-food', 'cat-rent'});
   });
 }

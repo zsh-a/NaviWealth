@@ -28,10 +28,7 @@ class GetHoldingsTool implements DeviceTool {
   Map<String, Object?> get inputSchema => {
     'type': 'object',
     'properties': {
-      'as_of': {
-        'type': 'string',
-        'description': 'ISO-8601 截止时刻（含），不传则到当前时间。',
-      },
+      'as_of': {'type': 'string', 'description': 'ISO-8601 截止时刻（含），不传则到当前时间。'},
       'base_currency': {
         'type': 'string',
         'description': '希望返回的折算基准币种；snapshot 已带 base 值时会使用。',

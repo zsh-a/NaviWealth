@@ -85,11 +85,11 @@ enum TradeJournalStatus { open, closed, assigned, expired }
 
 extension TradeJournalStatusWire on TradeJournalStatus {
   String get wire => switch (this) {
-        TradeJournalStatus.open => 'open',
-        TradeJournalStatus.closed => 'closed',
-        TradeJournalStatus.assigned => 'assigned',
-        TradeJournalStatus.expired => 'expired',
-      };
+    TradeJournalStatus.open => 'open',
+    TradeJournalStatus.closed => 'closed',
+    TradeJournalStatus.assigned => 'assigned',
+    TradeJournalStatus.expired => 'expired',
+  };
 }
 
 TradeJournalStatus parseTradeJournalStatus(String wire) {

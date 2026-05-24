@@ -89,7 +89,8 @@ class IngestConfirmService {
     return ReadyProposalPlan(
       proposalId: draft.draftId,
       kind: ProposalKind.expense,
-      summaryZh: '记录支出 ${_shortDesc(draft.parsed.description)} '
+      summaryZh:
+          '记录支出 ${_shortDesc(draft.parsed.description)} '
           '${draft.parsed.currency} $amount',
       payload: <String, Object?>{
         'account_id': fromAccountId,

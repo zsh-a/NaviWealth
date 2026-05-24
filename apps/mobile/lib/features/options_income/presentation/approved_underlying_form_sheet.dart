@@ -74,9 +74,7 @@ class _ApprovedUnderlyingFormSheetState
     }
     setState(() => _busy = true);
     try {
-      final repo = await ref.read(
-        approvedUnderlyingsRepositoryProvider.future,
-      );
+      final repo = await ref.read(approvedUnderlyingsRepositoryProvider.future);
       final existing = widget.existing;
       if (existing == null) {
         await repo.add(
@@ -87,10 +85,7 @@ class _ApprovedUnderlyingFormSheetState
         );
       } else {
         await repo.update(
-          existing.copyWith(
-            allowPut: _allowPut,
-            allowCall: _allowCall,
-          ),
+          existing.copyWith(allowPut: _allowPut, allowCall: _allowCall),
         );
       }
       ref.invalidate(approvedUnderlyingsProvider);
@@ -112,9 +107,7 @@ class _ApprovedUnderlyingFormSheetState
     if (existing == null) return;
     setState(() => _busy = true);
     try {
-      final repo = await ref.read(
-        approvedUnderlyingsRepositoryProvider.future,
-      );
+      final repo = await ref.read(approvedUnderlyingsRepositoryProvider.future);
       await repo.remove(existing);
       ref.invalidate(approvedUnderlyingsProvider);
       if (!mounted) return;
@@ -201,12 +194,7 @@ class _SwitchRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              label,
-              style: context.theme.typography.sm,
-            ),
-          ),
+          Expanded(child: Text(label, style: context.theme.typography.sm)),
           const SizedBox(width: AppSpacing.s12),
           FSwitch(value: value, onChange: onChanged),
         ],

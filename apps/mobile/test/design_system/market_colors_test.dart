@@ -78,10 +78,7 @@ void main() {
         expect(upMutedHsl.hue, closeTo(upHsl.hue, 1.0));
         // Saturation drops by ~20%.
         expect(upMutedHsl.saturation, lessThan(upHsl.saturation));
-        expect(
-          upMutedHsl.saturation,
-          closeTo(upHsl.saturation * 0.8, 0.02),
-        );
+        expect(upMutedHsl.saturation, closeTo(upHsl.saturation * 0.8, 0.02));
 
         final downHsl = HSLColor.fromColor(m.down);
         final downMutedHsl = HSLColor.fromColor(m.downMuted);

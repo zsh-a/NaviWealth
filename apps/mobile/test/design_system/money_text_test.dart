@@ -115,23 +115,22 @@ void main() {
   // §3.1 multi-currency dual-display — [DualMoneyText] surfaces both the
   // base-currency value (primary) and the native-currency value (caption)
   // for journal entries that involve FX conversion.
-  testWidgets(
-    'DualMoneyText shows primary + caption when currencies differ',
-    (tester) async {
-      await tester.pumpWidget(
-        _wrap(
-          DualMoneyText(
-            primaryAmount: Money.parse('1000.00', 'USD'),
-            originalAmount: Money.parse('7240.00', 'CNY'),
-          ),
+  testWidgets('DualMoneyText shows primary + caption when currencies differ', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        DualMoneyText(
+          primaryAmount: Money.parse('1000.00', 'USD'),
+          originalAmount: Money.parse('7240.00', 'CNY'),
         ),
-      );
-      expect(find.textContaining('1,000'), findsOneWidget);
-      expect(find.textContaining('7,240'), findsOneWidget);
-      // ISO-code style on the caption surfaces the original currency.
-      expect(find.textContaining('CNY'), findsOneWidget);
-    },
-  );
+      ),
+    );
+    expect(find.textContaining('1,000'), findsOneWidget);
+    expect(find.textContaining('7,240'), findsOneWidget);
+    // ISO-code style on the caption surfaces the original currency.
+    expect(find.textContaining('CNY'), findsOneWidget);
+  });
 
   testWidgets(
     'DualMoneyText hides caption when original currency matches primary',
@@ -151,17 +150,14 @@ void main() {
     },
   );
 
-  testWidgets(
-    'DualMoneyText hides caption when original is null',
-    (tester) async {
-      await tester.pumpWidget(
-        _wrap(
-          DualMoneyText(primaryAmount: Money.parse('1000.00', 'USD')),
-        ),
-      );
-      expect(find.byType(Text), findsOneWidget);
-    },
-  );
+  testWidgets('DualMoneyText hides caption when original is null', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(DualMoneyText(primaryAmount: Money.parse('1000.00', 'USD'))),
+    );
+    expect(find.byType(Text), findsOneWidget);
+  });
 
   testWidgets(
     'DualMoneyText stacked layout renders primary on top, caption below',

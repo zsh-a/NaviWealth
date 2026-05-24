@@ -10,16 +10,15 @@ CorporateActionEvent _event({
   String cashAmount = '0',
   String currency = 'USD',
   SplitRatio? ratio,
-}) =>
-    CorporateActionEvent(
-      id: id,
-      symbol: symbol,
-      kind: kind,
-      scheduledFor: scheduledFor,
-      cashAmount: Decimal.parse(cashAmount),
-      currency: currency,
-      ratio: ratio,
-    );
+}) => CorporateActionEvent(
+  id: id,
+  symbol: symbol,
+  kind: kind,
+  scheduledFor: scheduledFor,
+  cashAmount: Decimal.parse(cashAmount),
+  currency: currency,
+  ratio: ratio,
+);
 
 void main() {
   group('buildEventTimeline', () {
@@ -53,10 +52,7 @@ void main() {
             id: 'old',
             scheduledFor: today.subtract(const Duration(days: 1)),
           ),
-          _event(
-            id: 'new',
-            scheduledFor: today.add(const Duration(days: 1)),
-          ),
+          _event(id: 'new', scheduledFor: today.add(const Duration(days: 1))),
         ],
         watchedSymbols: {'AAPL'},
         from: today,
@@ -76,18 +72,9 @@ void main() {
     test('excludes events outside the window (upper bound exclusive)', () {
       final out = buildEventTimeline(
         events: [
-          _event(
-            id: 'in',
-            scheduledFor: today.add(const Duration(days: 89)),
-          ),
-          _event(
-            id: 'edge',
-            scheduledFor: today.add(const Duration(days: 90)),
-          ),
-          _event(
-            id: 'out',
-            scheduledFor: today.add(const Duration(days: 91)),
-          ),
+          _event(id: 'in', scheduledFor: today.add(const Duration(days: 89))),
+          _event(id: 'edge', scheduledFor: today.add(const Duration(days: 90))),
+          _event(id: 'out', scheduledFor: today.add(const Duration(days: 91))),
         ],
         watchedSymbols: {'AAPL'},
         from: today,

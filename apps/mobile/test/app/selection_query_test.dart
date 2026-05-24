@@ -7,9 +7,7 @@ import 'package:naviwealth/app/selection_query.dart';
 GoRouter _router(String initialLocation) {
   return GoRouter(
     initialLocation: initialLocation,
-    routes: [
-      GoRoute(path: AppRoutes.wealth, builder: (_, _) => const _Host()),
-    ],
+    routes: [GoRoute(path: AppRoutes.wealth, builder: (_, _) => const _Host())],
   );
 }
 
@@ -92,18 +90,13 @@ void main() {
     await tester.tap(find.text('select'));
     await tester.pumpAndSettle();
 
-    expect(
-      _location(router),
-      '${AppRoutes.wealth}?range=1y&selected=asset-2',
-    );
+    expect(_location(router), '${AppRoutes.wealth}?range=1y&selected=asset-2');
   });
 
   testWidgets(
     'replaceSelectedQuery removes selected without dropping filters',
     (tester) async {
-      final router = _router(
-        '${AppRoutes.wealth}?range=1y&selected=asset-1',
-      );
+      final router = _router('${AppRoutes.wealth}?range=1y&selected=asset-1');
       addTearDown(router.dispose);
 
       await tester.pumpWidget(MaterialApp.router(routerConfig: router));

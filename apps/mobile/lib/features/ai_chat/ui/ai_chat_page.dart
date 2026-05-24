@@ -101,9 +101,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
       );
     }
 
-    final defaultAsync = ref.watch(
-      defaultChatSessionProvider(session.userId),
-    );
+    final defaultAsync = ref.watch(defaultChatSessionProvider(session.userId));
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -113,9 +111,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
         // active session — the master-detail surface follows
         // `?selected=`. Explicit selection wins; otherwise the
         // provider resolves the default thread.
-        final selectedFromQuery = isDesktop
-            ? selectedQueryOf(context)
-            : null;
+        final selectedFromQuery = isDesktop ? selectedQueryOf(context) : null;
         final activeId =
             _selectedSessionId ??
             selectedFromQuery ??
@@ -125,9 +121,8 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
           if (defaultAsync.hasError) {
             return _BootstrapErrorPane(
               error: defaultAsync.error!,
-              onRetry: () => ref.invalidate(
-                defaultChatSessionProvider(session.userId),
-              ),
+              onRetry: () =>
+                  ref.invalidate(defaultChatSessionProvider(session.userId)),
             );
           }
           return const _BootstrappingPane();
@@ -168,8 +163,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
             suffixes: [
               FHeaderAction(
                 icon: const Icon(Icons.history),
-                onPress: () =>
-                    _openSessionsSheet(session.userId, activeId),
+                onPress: () => _openSessionsSheet(session.userId, activeId),
               ),
               FHeaderAction(
                 icon: const Icon(Icons.add),
@@ -217,7 +211,11 @@ class _ChatPane extends ConsumerWidget {
     // conversation owns the screen. `false` while the stream is still
     // loading so an existing thread never flashes the chrome.
     final isBlank =
-        ref.watch(chatMessagesStreamProvider(sessionId)).asData?.value.isEmpty ??
+        ref
+            .watch(chatMessagesStreamProvider(sessionId))
+            .asData
+            ?.value
+            .isEmpty ??
         false;
 
     void send(String text) => ref
@@ -244,9 +242,8 @@ class _ChatPane extends ConsumerWidget {
             ChatComposer(
               isStreaming: turn.isStreaming,
               onSend: send,
-              onCancel: () => ref
-                  .read(chatControllerProvider(sessionId).notifier)
-                  .cancel(),
+              onCancel: () =>
+                  ref.read(chatControllerProvider(sessionId).notifier).cancel(),
             ),
           ],
         ),

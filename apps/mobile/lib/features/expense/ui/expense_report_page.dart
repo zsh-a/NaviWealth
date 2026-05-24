@@ -15,7 +15,10 @@ class ExpenseReportPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final reportAsync = ref.watch(expenseReportProvider);
     return FScaffold(
-      header: FHeader.nested(title: Text(l10n.expenseReportAppBarTitle), prefixes: [backHeaderAction(context)]),
+      header: FHeader.nested(
+        title: Text(l10n.expenseReportAppBarTitle),
+        prefixes: [backHeaderAction(context)],
+      ),
       childPad: false,
       child: Material(
         color: Colors.transparent,

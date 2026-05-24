@@ -191,8 +191,7 @@ void main() {
   });
 
   group('FxPnLCalculator.sum', () {
-    test('sums multiple breakdowns into a total in the same base currency',
-        () {
+    test('sums multiple breakdowns into a total in the same base currency', () {
       final converter = cny([
         MapEntry(DateTime.utc(2026, 1, 1), '7.00'),
         MapEntry(DateTime.utc(2026, 4, 1), '7.20'),
@@ -218,7 +217,10 @@ void main() {
         calc.unrealized(lot: lot2, marketPricePerUnit: d('110'), asOf: asOf),
       ];
       final total = calc.sum(parts);
-      expect(total.totalPnLInBase, parts[0].totalPnLInBase + parts[1].totalPnLInBase);
+      expect(
+        total.totalPnLInBase,
+        parts[0].totalPnLInBase + parts[1].totalPnLInBase,
+      );
       expect(total.baseCurrency, 'CNY');
     });
   });

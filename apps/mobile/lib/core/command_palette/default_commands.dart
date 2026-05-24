@@ -119,11 +119,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       id: 'nav.fire',
       label: l10n.planFireTitle,
       icon: Icons.flag_outlined,
-      keywords: const <String>[
-        AppRoutes.planFire,
-        '/accounts/fire',
-        'fire',
-      ],
+      keywords: const <String>[AppRoutes.planFire, '/accounts/fire', 'fire'],
       run: (BuildContext ctx) => ctx.go(AppRoutes.planFire),
     ),
     CommandPaletteEntry(

@@ -71,10 +71,10 @@ enum OpportunityRiskLevel { low, moderate, elevated }
 
 extension OpportunityRiskLevelWire on OpportunityRiskLevel {
   String get wire => switch (this) {
-        OpportunityRiskLevel.low => 'low',
-        OpportunityRiskLevel.moderate => 'moderate',
-        OpportunityRiskLevel.elevated => 'elevated',
-      };
+    OpportunityRiskLevel.low => 'low',
+    OpportunityRiskLevel.moderate => 'moderate',
+    OpportunityRiskLevel.elevated => 'elevated',
+  };
 }
 
 OpportunityRiskLevel parseOpportunityRiskLevel(String wire) {
@@ -91,10 +91,7 @@ OpportunityRiskLevel parseOpportunityRiskLevel(String wire) {
 
 /// Why a candidate was rejected by the hard-filter pass.
 class RejectedCandidate {
-  const RejectedCandidate({
-    required this.optionSymbol,
-    required this.reasons,
-  });
+  const RejectedCandidate({required this.optionSymbol, required this.reasons});
 
   final String optionSymbol;
   final List<String> reasons;

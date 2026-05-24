@@ -14,8 +14,11 @@ void main() {
 
   test('intent names are unique', () {
     final names = intentDescriptors.map((d) => d.name).toSet();
-    expect(names.length, intentDescriptors.length,
-        reason: 'duplicate intent name detected');
+    expect(
+      names.length,
+      intentDescriptors.length,
+      reason: 'duplicate intent name detected',
+    );
   });
 
   test('lookupIntent returns the matching descriptor', () {

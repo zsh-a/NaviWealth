@@ -274,9 +274,9 @@ void main() {
     // The v2 outbox is a pure dirty-pointer log — the row's icon / color
     // live in the materialised `accounts` row, which the sync engine reads
     // at push time.
-    final saved = await (h.db.select(h.db.accounts)
-          ..where((t) => t.name.equals('My Bank')))
-        .getSingle();
+    final saved = await (h.db.select(
+      h.db.accounts,
+    )..where((t) => t.name.equals('My Bank'))).getSingle();
     expect(saved.icon, 'savings');
     expect(saved.color, '#3B82F6');
 

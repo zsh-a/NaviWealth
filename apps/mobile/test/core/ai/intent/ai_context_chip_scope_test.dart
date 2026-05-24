@@ -82,10 +82,11 @@ void main() {
         ),
       );
       // Outer first, inner overrides 'route', and adds 'timeframe' last.
-      expect(
-        seen.map((c) => '${c.key}=${c.value}').toList(),
-        <String>['route=inner', 'currency=CNY', 'timeframe=last_30d'],
-      );
+      expect(seen.map((c) => '${c.key}=${c.value}').toList(), <String>[
+        'route=inner',
+        'currency=CNY',
+        'timeframe=last_30d',
+      ]);
     });
 
     testWidgets('contextMapOf flattens chips to a map', (tester) async {

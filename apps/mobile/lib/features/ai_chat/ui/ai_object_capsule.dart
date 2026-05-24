@@ -53,10 +53,7 @@ class AiObjectCapsule extends StatelessWidget {
     // invocation context. Explicit per-capsule context wins on key
     // collision so call sites can override what the scope advertises.
     final scopeContext = AiContextChipScope.contextMapOf(buildContext);
-    final mergedContext = <String, Object?>{
-      ...scopeContext,
-      ...context,
-    };
+    final mergedContext = <String, Object?>{...scopeContext, ...context};
     showAiSheet(
       buildContext,
       invocation: AiIntentInvocation(

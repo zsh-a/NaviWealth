@@ -15,11 +15,7 @@ import '../visual/visual.dart';
 import 'providers.dart';
 
 class AiSourceMark extends StatelessWidget {
-  const AiSourceMark({
-    super.key,
-    this.tooltipZh = '由 AI 提议修改',
-    this.size = 12,
-  });
+  const AiSourceMark({super.key, this.tooltipZh = '由 AI 提议修改', this.size = 12});
 
   final String tooltipZh;
   final double size;
@@ -65,9 +61,7 @@ class AiTouchMark extends ConsumerWidget {
     if (entityId.isEmpty) return const SizedBox.shrink();
     final touch = ref
         .watch(
-          aiTouchedAtProvider(
-            (entityType: entityType, entityId: entityId),
-          ),
+          aiTouchedAtProvider((entityType: entityType, entityId: entityId)),
         )
         .value;
     if (touch == null) return const SizedBox.shrink();

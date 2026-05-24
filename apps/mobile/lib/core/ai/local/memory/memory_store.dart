@@ -6,9 +6,9 @@
 /// - `memories`           — typed records, no vector
 /// - `memory_embeddings`  — vectors keyed by memory_id, fingerprint-tagged
 ///
-/// Why split: embedder swap (Stub → Rust MiniLM) only invalidates
-/// embeddings, not records. We can drop vectors + reindex without
-/// losing payload / lifecycle / entities.
+/// Why split: embedder swap (Stub → Rust EmbeddingGemma) only
+/// invalidates embeddings, not records. We can drop vectors +
+/// reindex without losing payload / lifecycle / entities.
 library;
 
 import 'dart:math' as math;
@@ -93,12 +93,7 @@ class SqliteMemoryStore implements MemoryStore {
         'INSERT OR REPLACE INTO memory_embeddings ('
         '  memory_id, fingerprint, dimension, vector_bytes'
         ') VALUES (?, ?, ?, ?)',
-        <Object?>[
-          record.id,
-          fingerprint,
-          vector.length,
-          packVector(vector),
-        ],
+        <Object?>[record.id, fingerprint, vector.length, packVector(vector)],
       );
     });
   }
@@ -140,10 +135,12 @@ class SqliteMemoryStore implements MemoryStore {
 
   @override
   Future<MemoryRecord?> readMemory(String id) async {
-    final row = await _db.customSelect(
-      'SELECT * FROM memories WHERE id = ?',
-      variables: [Variable.withString(id)],
-    ).getSingleOrNull();
+    final row = await _db
+        .customSelect(
+          'SELECT * FROM memories WHERE id = ?',
+          variables: [Variable.withString(id)],
+        )
+        .getSingleOrNull();
     if (row == null) return null;
     return _rowToMemory(row);
   }
@@ -151,10 +148,9 @@ class SqliteMemoryStore implements MemoryStore {
   @override
   Future<void> deleteMemory(String id) async {
     // FK CASCADE drops the embedding row too.
-    await _db.customStatement(
-      'DELETE FROM memories WHERE id = ?',
-      <Object?>[id],
-    );
+    await _db.customStatement('DELETE FROM memories WHERE id = ?', <Object?>[
+      id,
+    ]);
   }
 
   @override
@@ -229,7 +225,8 @@ class SqliteMemoryStore implements MemoryStore {
       vars.add(Variable.withString(fingerprint ?? ''));
     }
 
-    final sql = 'SELECT m.*, e.dimension AS emb_dimension, '
+    final sql =
+        'SELECT m.*, e.dimension AS emb_dimension, '
         '       e.vector_bytes AS emb_vector_bytes, '
         '       e.fingerprint AS emb_fingerprint '
         'FROM memories m $join '
@@ -263,9 +260,7 @@ class SqliteMemoryStore implements MemoryStore {
       'DELETE FROM memory_embeddings WHERE fingerprint != ?',
       <Object?>[keepFingerprint],
     );
-    final r = await _db
-        .customSelect('SELECT changes() AS n')
-        .getSingle();
+    final r = await _db.customSelect('SELECT changes() AS n').getSingle();
     return r.read<int>('n');
   }
 
@@ -279,26 +274,25 @@ class SqliteMemoryStore implements MemoryStore {
 }
 
 MemoryRecord _rowToMemory(QueryRow row) => MemoryRecord(
-      id: row.read<String>('id'),
-      kind: MemoryKindWire.parse(row.read<String>('kind')),
-      scope: row.read<String>('scope'),
-      ownerUserId: row.read<String>('owner_user_id'),
-      source: row.read<String?>('source'),
-      sourceId: row.read<String?>('source_id'),
-      sourceEventId: row.read<String?>('source_event_id'),
-      title: row.read<String>('title'),
-      summary: row.read<String>('summary'),
-      payload: MemoryRecord.decodePayload(row.read<String>('payload_json')),
-      entities:
-          MemoryRecord.decodeEntities(row.read<String>('entities_json')),
-      importance: row.read<double>('importance'),
-      confidence: row.read<double>('confidence'),
-      validFrom: _dt(row.read<int?>('valid_from')),
-      validUntil: _dt(row.read<int?>('valid_until')),
-      lastAccessedAt: _dt(row.read<int?>('last_accessed_at')),
-      createdAt: _dt(row.read<int>('created_at'))!,
-      updatedAt: _dt(row.read<int>('updated_at'))!,
-    );
+  id: row.read<String>('id'),
+  kind: MemoryKindWire.parse(row.read<String>('kind')),
+  scope: row.read<String>('scope'),
+  ownerUserId: row.read<String>('owner_user_id'),
+  source: row.read<String?>('source'),
+  sourceId: row.read<String?>('source_id'),
+  sourceEventId: row.read<String?>('source_event_id'),
+  title: row.read<String>('title'),
+  summary: row.read<String>('summary'),
+  payload: MemoryRecord.decodePayload(row.read<String>('payload_json')),
+  entities: MemoryRecord.decodeEntities(row.read<String>('entities_json')),
+  importance: row.read<double>('importance'),
+  confidence: row.read<double>('confidence'),
+  validFrom: _dt(row.read<int?>('valid_from')),
+  validUntil: _dt(row.read<int?>('valid_until')),
+  lastAccessedAt: _dt(row.read<int?>('last_accessed_at')),
+  createdAt: _dt(row.read<int>('created_at'))!,
+  updatedAt: _dt(row.read<int>('updated_at'))!,
+);
 
 DateTime? _dt(int? ms) =>
     ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);

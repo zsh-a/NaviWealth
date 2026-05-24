@@ -32,7 +32,10 @@ GoRouter _router({Widget child = const HomeGreetingHeader()}) {
   return GoRouter(
     initialLocation: '/',
     routes: [
-      GoRoute(path: '/', builder: (_, _) => Scaffold(body: child)),
+      GoRoute(
+        path: '/',
+        builder: (_, _) => Scaffold(body: child),
+      ),
       GoRoute(
         path: AppRoutes.settings,
         builder: (_, _) => const Scaffold(body: Text('settings-route')),
@@ -99,9 +102,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      _wrap(
-        metricsAsync: AsyncData(_metrics(monthlyPct: 0.025)),
-      ),
+      _wrap(metricsAsync: AsyncData(_metrics(monthlyPct: 0.025))),
     );
     await tester.pumpAndSettle();
 

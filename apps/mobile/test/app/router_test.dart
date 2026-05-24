@@ -569,10 +569,7 @@ void main() {
     testWidgets(
       'rebuilding at /portfolio lands on Portfolio with fresh state',
       (tester) async {
-        final first = await _pumpAt(
-          tester,
-          initialLocation: AppRoutes.wealth,
-        );
+        final first = await _pumpAt(tester, initialLocation: AppRoutes.wealth);
         expect(find.byType(WealthHubPage), findsOneWidget);
         first.dispose();
 
@@ -580,10 +577,7 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
 
-        final second = await _pumpAt(
-          tester,
-          initialLocation: AppRoutes.wealth,
-        );
+        final second = await _pumpAt(tester, initialLocation: AppRoutes.wealth);
         expect(find.byType(WealthHubPage), findsOneWidget);
         expect(_currentPath(second), AppRoutes.wealth);
       },

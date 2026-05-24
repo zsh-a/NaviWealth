@@ -12,10 +12,7 @@ void main() {
       // History on; console off — we only need a recordable in-memory
       // log sink for assertions.
       talker = Talker(
-        settings: TalkerSettings(
-          useConsoleLogs: false,
-          useHistory: true,
-        ),
+        settings: TalkerSettings(useConsoleLogs: false, useHistory: true),
       );
       reporter = LoggingCrashReporter(talker: talker);
     });
@@ -26,10 +23,7 @@ void main() {
       // talker.handle dispatches asynchronously in some versions, so we
       // assert on the count delta rather than scanning entries —
       // exact placement of the message string is talker-internal.
-      expect(
-        talker.history.length,
-        greaterThanOrEqualTo(before + 1),
-      );
+      expect(talker.history.length, greaterThanOrEqualTo(before + 1));
     });
 
     test('captureMessage level=info emits an info log', () {
@@ -60,7 +54,8 @@ void main() {
       reporter.recordBreadcrumb(message: 'tap', category: 'ui');
       expect(
         talker.history.any(
-          (e) => (e.message?.toString().contains('breadcrumb/ui: tap')) ?? false,
+          (e) =>
+              (e.message?.toString().contains('breadcrumb/ui: tap')) ?? false,
         ),
         isTrue,
       );
@@ -68,10 +63,7 @@ void main() {
 
     test('identifyUser is non-throwing for null + non-null userIds', () {
       expect(() => reporter.identifyUser(), returnsNormally);
-      expect(
-        () => reporter.identifyUser(userId: 'u-1'),
-        returnsNormally,
-      );
+      expect(() => reporter.identifyUser(userId: 'u-1'), returnsNormally);
     });
   });
 }

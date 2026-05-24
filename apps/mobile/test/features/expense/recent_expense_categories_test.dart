@@ -31,7 +31,9 @@ void main() {
   test('returns null when there are no recent expenses', () {
     final container = ProviderContainer(
       overrides: [
-        journalExpensesStreamProvider.overrideWith((_) => Stream.value(const [])),
+        journalExpensesStreamProvider.overrideWith(
+          (_) => Stream.value(const []),
+        ),
       ],
     );
     addTearDown(container.dispose);

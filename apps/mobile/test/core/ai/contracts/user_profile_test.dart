@@ -70,10 +70,11 @@ void main() {
         baseCurrency: 'CNY',
         topCategoryLimit: 3,
       );
-      expect(
-        profile.topCategories.map((c) => c.categoryId).toList(),
-        ['cat-rent', 'cat-food', 'cat-fun'],
-      );
+      expect(profile.topCategories.map((c) => c.categoryId).toList(), [
+        'cat-rent',
+        'cat-food',
+        'cat-fun',
+      ]);
       // rent / (rent + food + transit + fun + misc + extra)
       // = 5000 / 9550 ≈ 0.524
       expect(profile.topCategories.first.shareFraction, closeTo(0.524, 0.01));
@@ -93,7 +94,10 @@ void main() {
       expect(profile.topCategories, hasLength(2));
       expect(profile.topCategories.first.categoryId, 'cat-rent');
       expect(profile.topCategories[1].categoryId, 'cat-food');
-      expect(profile.topCategories[1].shareFraction, closeTo(3000 / 7000, 1e-9));
+      expect(
+        profile.topCategories[1].shareFraction,
+        closeTo(3000 / 7000, 1e-9),
+      );
     });
 
     test('negative amounts are treated as absolute outflows', () {
@@ -180,16 +184,19 @@ void main() {
         baseCurrency: 'CNY',
       );
       final json = profile.toJson();
-      expect(json.keys, containsAll(<String>[
-        'version',
-        'window_days',
-        'savings_rate',
-        'risk_appetite',
-        'top_categories',
-        'base_currency',
-      ]));
-      final cat = (json['top_categories']! as List).first
-          as Map<String, Object?>;
+      expect(
+        json.keys,
+        containsAll(<String>[
+          'version',
+          'window_days',
+          'savings_rate',
+          'risk_appetite',
+          'top_categories',
+          'base_currency',
+        ]),
+      );
+      final cat =
+          (json['top_categories']! as List).first as Map<String, Object?>;
       expect(cat.keys, containsAll(<String>['category_id', 'label', 'share']));
     });
   });

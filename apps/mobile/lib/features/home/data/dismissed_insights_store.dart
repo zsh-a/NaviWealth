@@ -94,10 +94,7 @@ class DismissedInsightsStore {
       final kind = _kindFromName(parts.first);
       if (kind == null) continue;
       out.add(
-        DismissedInsightKey(
-          kind: kind,
-          scopeHash: parts.sublist(1).join('|'),
-        ),
+        DismissedInsightKey(kind: kind, scopeHash: parts.sublist(1).join('|')),
       );
     }
     return out;
@@ -133,7 +130,8 @@ final dismissedInsightsStoreProvider = Provider<DismissedInsightsStore>(
 
 /// Live set of dismissed insight keys. Providers that compose the
 /// feed can filter against this snapshot.
-final dismissedInsightKeysProvider =
-    StreamProvider<Set<DismissedInsightKey>>((ref) {
+final dismissedInsightKeysProvider = StreamProvider<Set<DismissedInsightKey>>((
+  ref,
+) {
   return ref.watch(dismissedInsightsStoreProvider).watch();
 });

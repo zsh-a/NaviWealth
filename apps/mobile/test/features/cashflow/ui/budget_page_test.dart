@@ -19,20 +19,19 @@ BudgetRow _row({
   required String amount,
   String currency = 'CNY',
   String? note,
-}) =>
-    BudgetRow(
-      id: '$periodMonth/$categoryId',
-      categoryId: categoryId,
-      periodMonth: periodMonth,
-      amount: Decimal.parse(amount),
-      currency: currency,
-      note: note,
-      ownerUserId: 'u',
-      updatedAt: DateTime.utc(2026, 5, 24),
-      updatedByDevice: 'd',
-      hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'd'),
-      deletedAt: null,
-    );
+}) => BudgetRow(
+  id: '$periodMonth/$categoryId',
+  categoryId: categoryId,
+  periodMonth: periodMonth,
+  amount: Decimal.parse(amount),
+  currency: currency,
+  note: note,
+  ownerUserId: 'u',
+  updatedAt: DateTime.utc(2026, 5, 24),
+  updatedByDevice: 'd',
+  hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'd'),
+  deletedAt: null,
+);
 
 Future<void> _pump(WidgetTester tester, List<BudgetRow> rows) async {
   await tester.pumpWidget(
@@ -40,14 +39,11 @@ Future<void> _pump(WidgetTester tester, List<BudgetRow> rows) async {
       overrides: [
         // Replace the family stream with a single-shot stream that emits
         // the canned rows once. No Drift, no DB, no animation never-end.
-        budgetsForMonthProvider.overrideWith(
-          (ref, periodMonth) async* {
-            yield rows
-                .where((r) =>
-                    r.periodMonth == periodMonth && r.deletedAt == null)
-                .toList();
-          },
-        ),
+        budgetsForMonthProvider.overrideWith((ref, periodMonth) async* {
+          yield rows
+              .where((r) => r.periodMonth == periodMonth && r.deletedAt == null)
+              .toList();
+        }),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -73,20 +69,13 @@ void main() {
     expect(find.byIcon(Icons.savings_outlined), findsWidgets);
   });
 
-  testWidgets('renders budgets for the current UTC month + total roll-up',
-      (tester) async {
+  testWidgets('renders budgets for the current UTC month + total roll-up', (
+    tester,
+  ) async {
     final monthKey = _currentMonthKey();
     await _pump(tester, [
-      _row(
-        categoryId: 'cat-food',
-        periodMonth: monthKey,
-        amount: '1500',
-      ),
-      _row(
-        categoryId: 'cat-rent',
-        periodMonth: monthKey,
-        amount: '5000',
-      ),
+      _row(categoryId: 'cat-food', periodMonth: monthKey, amount: '1500'),
+      _row(categoryId: 'cat-rent', periodMonth: monthKey, amount: '5000'),
     ]);
 
     expect(find.text('cat-food'), findsOneWidget);
@@ -99,11 +88,7 @@ void main() {
     // Far-past month — the provider override filters by periodMonth and
     // returns empty for the page's current-month key.
     await _pump(tester, [
-      _row(
-        categoryId: 'cat-historical',
-        periodMonth: '2020-01',
-        amount: '999',
-      ),
+      _row(categoryId: 'cat-historical', periodMonth: '2020-01', amount: '999'),
     ]);
 
     expect(find.text('cat-historical'), findsNothing);

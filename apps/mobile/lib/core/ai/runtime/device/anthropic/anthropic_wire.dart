@@ -87,8 +87,7 @@ class AnthropicRequest {
 
   /// Body for the streaming call — `stream` forced true (mirrors the
   /// backend `serialize_streaming_payload`).
-  String encodeStreaming() =>
-      jsonEncode({...toJson(), 'stream': true});
+  String encodeStreaming() => jsonEncode({...toJson(), 'stream': true});
 
   /// Body for the one-shot Vision/ingest call — `stream` forced false
   /// (mirrors the backend `complete`).
@@ -141,10 +140,6 @@ abstract final class AnthropicBlocks {
     required String data,
   }) => {
     'type': 'image',
-    'source': {
-      'type': 'base64',
-      'media_type': mediaType,
-      'data': data,
-    },
+    'source': {'type': 'base64', 'media_type': mediaType, 'data': data},
   };
 }

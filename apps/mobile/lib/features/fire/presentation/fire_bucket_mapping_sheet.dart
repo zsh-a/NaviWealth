@@ -66,12 +66,12 @@ class _MappingSheetState extends ConsumerState<_MappingSheet> {
         busy: _saving,
       ),
       child: snapshotAsync.when(
-        loading: () =>
-            const Padding(padding: EdgeInsets.all(16), child: SizedBox.shrink()),
-        error: (e, _) => Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text('$e'),
+        loading: () => const Padding(
+          padding: EdgeInsets.all(16),
+          child: SizedBox.shrink(),
         ),
+        error: (e, _) =>
+            Padding(padding: const EdgeInsets.all(16), child: Text('$e')),
         data: (snapshot) {
           final items = _flattenItems(snapshot);
           _seed(rules, items);

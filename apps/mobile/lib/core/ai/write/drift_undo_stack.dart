@@ -103,15 +103,17 @@ class DriftUndoStack {
   /// undo-button taps can't both win.
   Future<PersistedUndoEntry?> take(String token) async {
     return _db.transaction(() async {
-      final rows = await _db.customSelect(
-        'SELECT token, created_at_iso, expires_at_iso, kind, payload_json '
-        'FROM ai_undo_stack '
-        'WHERE token = ?1 AND owner_user_id = ?2',
-        variables: [
-          Variable.withString(token),
-          Variable.withString(_owner),
-        ],
-      ).get();
+      final rows = await _db
+          .customSelect(
+            'SELECT token, created_at_iso, expires_at_iso, kind, payload_json '
+            'FROM ai_undo_stack '
+            'WHERE token = ?1 AND owner_user_id = ?2',
+            variables: [
+              Variable.withString(token),
+              Variable.withString(_owner),
+            ],
+          )
+          .get();
       if (rows.isEmpty) return null;
       final row = rows.first;
       await _db.customStatement(
@@ -126,17 +128,16 @@ class DriftUndoStack {
 
   /// Snapshot of currently-persisted entries, newest first.
   Future<List<PersistedUndoEntry>> all({int limit = 100}) async {
-    final rows = await _db.customSelect(
-      'SELECT token, created_at_iso, expires_at_iso, kind, payload_json '
-      'FROM ai_undo_stack '
-      'WHERE owner_user_id = ?1 '
-      'ORDER BY created_at_iso DESC '
-      'LIMIT ?2',
-      variables: [
-        Variable.withString(_owner),
-        Variable.withInt(limit),
-      ],
-    ).get();
+    final rows = await _db
+        .customSelect(
+          'SELECT token, created_at_iso, expires_at_iso, kind, payload_json '
+          'FROM ai_undo_stack '
+          'WHERE owner_user_id = ?1 '
+          'ORDER BY created_at_iso DESC '
+          'LIMIT ?2',
+          variables: [Variable.withString(_owner), Variable.withInt(limit)],
+        )
+        .get();
     return rows.map(_rowToEntry).toList(growable: false);
   }
 

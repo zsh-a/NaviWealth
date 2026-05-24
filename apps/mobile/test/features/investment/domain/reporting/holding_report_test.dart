@@ -54,10 +54,7 @@ void main() {
         costPerUnit: d('150'),
         // openedAt = 2026-01-01 via day=0 default
       );
-      final report = service.build(
-        lots: [lot],
-        asOf: DateTime.utc(2026, 4, 1),
-      );
+      final report = service.build(lots: [lot], asOf: DateTime.utc(2026, 4, 1));
 
       expect(report.assets, hasLength(1));
       final aapl = report.assets['AAPL']!;
@@ -86,10 +83,7 @@ void main() {
       // Portfolio rollup matches
       expect(report.totalMarketValueInBase, aapl.marketValueInBase);
       expect(report.totalCostBasisAtOpenFxInBase, aapl.costBasisAtOpenFxInBase);
-      expect(
-        report.totalPnlBreakdown.totalPnLInBase,
-        aapl.totalPnlInBase,
-      );
+      expect(report.totalPnlBreakdown.totalPnLInBase, aapl.totalPnlInBase);
     });
 
     test('aggregates lots from multiple accounts under one asset row', () {
@@ -201,10 +195,7 @@ void main() {
         originalQuantity: d('100'),
         costPerUnit: d('1500'),
       );
-      final report = service.build(
-        lots: [lot],
-        asOf: DateTime.utc(2026, 4, 1),
-      );
+      final report = service.build(lots: [lot], asOf: DateTime.utc(2026, 4, 1));
       final row = report.assets['600519']!;
       expect(row.pnlBreakdown.fxPnLInBase, Decimal.zero);
       expect(row.pnlBreakdown.marketPnLInBase, d('30000'));

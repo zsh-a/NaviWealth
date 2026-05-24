@@ -120,10 +120,9 @@ class _FireReviewCardState extends ConsumerState<FireReviewCard> {
     setState(() => _saving = true);
     try {
       await saveLiveReview(ref, _kind);
-      final review = ref.read(fireLiveReviewProvider(_kind)).maybeWhen(
-            data: (r) => r,
-            orElse: () => null,
-          );
+      final review = ref
+          .read(fireLiveReviewProvider(_kind))
+          .maybeWhen(data: (r) => r, orElse: () => null);
       if (!mounted) return;
       Haptics.success();
       setState(() => _savedKey = review?.periodKey);
@@ -216,7 +215,9 @@ class _DiffPanel extends StatelessWidget {
     final nwLine = _netWorthLine(l10n, formatters, diff);
     final safetyLine = diff.safetyLevelChanged
         ? l10n.fireOsReviewDiffSafetyChanged(
-            before.safetyLevel.name, diff.after.safetyLevel.name)
+            before.safetyLevel.name,
+            diff.after.safetyLevel.name,
+          )
         : l10n.fireOsReviewDiffSafetyHeld(diff.after.safetyLevel.name);
     return Container(
       padding: const EdgeInsets.all(10),
@@ -246,14 +247,8 @@ class _DiffPanel extends StatelessWidget {
                   : FontWeight.w400,
             ),
           ),
-          Text(
-            wrLine,
-            style: context.theme.typography.xs,
-          ),
-          Text(
-            nwLine,
-            style: context.theme.typography.xs,
-          ),
+          Text(wrLine, style: context.theme.typography.xs),
+          Text(nwLine, style: context.theme.typography.xs),
         ],
       ),
     );
@@ -396,9 +391,7 @@ String _findingText(AppLocalizations l10n, FireReviewFinding f) {
     case FireReviewFindingCode.unmappedHoldingsPresent:
       return l10n.fireOsReviewFindingUnmappedHoldings(f.months ?? 0);
     case FireReviewFindingCode.stressTestDanger:
-      return l10n.fireOsReviewFindingStressDanger(
-        f.scenarioCode ?? 'unknown',
-      );
+      return l10n.fireOsReviewFindingStressDanger(f.scenarioCode ?? 'unknown');
     case FireReviewFindingCode.stressTestCautious:
       return l10n.fireOsReviewFindingStressCautious(
         f.scenarioCode ?? 'unknown',

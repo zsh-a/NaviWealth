@@ -7,6 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/ai/local/embedding/embedder.dart';
+import '../core/ai/local/embedding/rust_gemma_embedder.dart';
+import '../core/ai/local/memory/providers.dart' as memory_providers;
 import '../core/auth/providers.dart' as core_auth;
 import '../core/config/app_config.dart';
 import '../core/format/formatters.dart';
@@ -91,6 +94,24 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         (ref) =>
             () => ref.read(authControllerProvider.notifier).refreshIfPossible(),
       ),
+      // D-1.7c (`docs/lifeos-shell.md` §6.6): swap in the Rust
+      // EmbeddingGemma embedder when the user has configured a model
+      // directory. Loading is async (FRB init + ONNX session warm-up
+      // takes a few seconds); the override returns a Future that the
+      // memoryRuntimeProvider awaits. On any failure (missing dylib,
+      // missing model, malformed config) we log and fall back to
+      // [StubEmbedder] so the app boots regardless.
+      if (effectiveConfig.hasRustEmbedder)
+        memory_providers.embedderProvider.overrideWith(
+          (ref) async => _loadRustEmbedderOrFallback(
+            modelDir: effectiveConfig.rustEmbedderModelDir,
+            ortDylibPath: effectiveConfig.rustEmbedderOrtDylibPath,
+            libraryPath: effectiveConfig.rustEmbedderLibraryPath.isEmpty
+                ? null
+                : effectiveConfig.rustEmbedderLibraryPath,
+            logger: ref.read(loggerProvider),
+          ),
+        ),
     ],
   );
   // Force eager creation so AppLogger.instance is ready before any error
@@ -159,6 +180,26 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // warming and FX refresh so dashboard valuations have one startup path.
   container.read(syncSchedulerBootstrapProvider);
   container.read(priceSyncCoordinatorBootstrapProvider);
+  // D-1.7c (`docs/lifeos-shell.md` §6.6): if the embedder changed
+  // since last run (e.g. swapping Stub ↔ Rust EmbeddingGemma), invalidate any
+  // memory_embeddings produced by a different fingerprint so the next
+  // indexer cycle re-embeds with the current model. Cheap when nothing
+  // changed.
+  try {
+    final runtime = await container.read(
+      memory_providers.memoryRuntimeProvider.future,
+    );
+    final dropped = await runtime.dropStaleVectors();
+    if (dropped > 0) {
+      logger.i('Memory Runtime dropped $dropped stale embeddings on boot');
+    }
+  } on Object catch (e, st) {
+    logger.w(
+      'Memory Runtime stale-vector sweep failed',
+      error: e,
+      stackTrace: st,
+    );
+  }
   // Eager-bind Memory Layer indexers (`docs/lifeos-shell.md` §6, D-1.7).
   // Reading this provider subscribes the trade-journal indexer (and any
   // future domain indexers) to their source streams so semantic memory
@@ -173,6 +214,36 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   }
 
   return container;
+}
+
+/// Construct the Rust EmbeddingGemma embedder, or log + fall back to
+/// [StubEmbedder]. Async because `RustGemmaEmbedder.load` is
+/// (FRB init + ONNX warm-up); centralised so the embedder override
+/// stays a single-expression in the Riverpod overrides list.
+Future<Embedder> _loadRustEmbedderOrFallback({
+  required String modelDir,
+  required String ortDylibPath,
+  required String? libraryPath,
+  required AppLogger logger,
+}) async {
+  try {
+    final embedder = await RustGemmaEmbedder.load(
+      modelDir: modelDir,
+      ortDylibPath: ortDylibPath,
+      libraryPath: libraryPath,
+    );
+    logger.i(
+      'Rust embedder loaded (${embedder.fingerprint}, dim=${embedder.dimension})',
+    );
+    return embedder;
+  } on RustEmbedderUnavailable catch (e, st) {
+    logger.w(
+      'Rust embedder unavailable; falling back to StubEmbedder',
+      error: e,
+      stackTrace: st,
+    );
+    return StubEmbedder();
+  }
 }
 
 /// Flutter can occasionally receive a duplicate platform KeyDown without an

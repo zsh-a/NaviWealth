@@ -64,7 +64,8 @@ void main() {
         expect(
           delta <= d('0.01'),
           isTrue,
-          reason: 'period ${i + 1} total ${rows[i].totalPayment} '
+          reason:
+              'period ${i + 1} total ${rows[i].totalPayment} '
               'differs from first $firstTotal',
         );
       }

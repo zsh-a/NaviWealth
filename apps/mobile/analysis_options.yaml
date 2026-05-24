@@ -11,6 +11,9 @@ analyzer:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
     - "build/**"
+    # `flutter_rust_bridge`-generated bindings (D-1.7c). Strict-inference
+    # noise here is upstream — we lint the wrapper, not the codegen output.
+    - "lib/src/rust/**"
   plugins:
     - custom_lint
 

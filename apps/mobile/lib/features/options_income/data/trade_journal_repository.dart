@@ -19,9 +19,9 @@ class TradeJournalRepository {
     required AppDatabase db,
     required OutboxStore outbox,
     required MutationStamper stamper,
-  })  : _db = db,
-        _outbox = outbox,
-        _stamper = stamper;
+  }) : _db = db,
+       _outbox = outbox,
+       _stamper = stamper;
 
   final AppDatabase _db;
   final OutboxStore _outbox;
@@ -34,17 +34,18 @@ class TradeJournalRepository {
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([(t) => OrderingTerm.desc(t.openedAt)]);
-    return query
-        .watch()
-        .map((rows) => rows.map(_rowToDomain).toList(growable: false));
+    return query.watch().map(
+      (rows) => rows.map(_rowToDomain).toList(growable: false),
+    );
   }
 
   Future<TradeJournalEntry?> get(String id) async {
-    final row = await (_db.select(_db.optionsTradeJournal)
-          ..where((t) => t.id.equals(id))
-          ..where((t) => t.deletedAt.isNull())
-          ..limit(1))
-        .getSingleOrNull();
+    final row =
+        await (_db.select(_db.optionsTradeJournal)
+              ..where((t) => t.id.equals(id))
+              ..where((t) => t.deletedAt.isNull())
+              ..limit(1))
+            .getSingleOrNull();
     return row == null ? null : _rowToDomain(row);
   }
 
@@ -159,7 +160,8 @@ class TradeJournalRepository {
 }
 
 TradeJournalEntry _rowToDomain(OptionsTradeJournalRow row) {
-  final strategy = parseOptionsStrategyKind(row.strategy) ??
+  final strategy =
+      parseOptionsStrategyKind(row.strategy) ??
       OptionsStrategyKind.cashSecuredPut;
   return TradeJournalEntry(
     id: row.id,
@@ -182,4 +184,3 @@ TradeJournalEntry _rowToDomain(OptionsTradeJournalRow row) {
     ),
   );
 }
-

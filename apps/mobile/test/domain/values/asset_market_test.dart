@@ -21,8 +21,11 @@ void main() {
     test('assetMarketFromWire returns null for unknown labels', () {
       expect(assetMarketFromWire(null), isNull);
       expect(assetMarketFromWire(''), isNull);
-      expect(assetMarketFromWire('cnA'), isNull,
-          reason: 'camelCase form must not parse — wire is snake_case');
+      expect(
+        assetMarketFromWire('cnA'),
+        isNull,
+        reason: 'camelCase form must not parse — wire is snake_case',
+      );
       expect(assetMarketFromWire('garbage'), isNull);
     });
   });
@@ -52,8 +55,11 @@ void main() {
 
     test('anything outside the rules → unknown', () {
       expect(inferAssetMarket('weird thing'), AssetMarket.unknown);
-      expect(inferAssetMarket('aapl'), AssetMarket.unknown,
-          reason: 'lowercase US ticker is not in the spec — fall back');
+      expect(
+        inferAssetMarket('aapl'),
+        AssetMarket.unknown,
+        reason: 'lowercase US ticker is not in the spec — fall back',
+      );
       expect(inferAssetMarket('  '), AssetMarket.unknown);
     });
   });

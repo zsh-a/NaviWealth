@@ -102,9 +102,7 @@ ProviderContainer _container({
 }) {
   return ProviderContainer(
     overrides: [
-      equityAssetsStreamProvider.overrideWith(
-        (_) => Stream.value(assets),
-      ),
+      equityAssetsStreamProvider.overrideWith((_) => Stream.value(assets)),
       holdingServiceProvider.overrideWith(
         (ref) async => _StubHoldingService(snapshots),
       ),
@@ -121,8 +119,9 @@ ProviderContainer _container({
       liabilitiesStreamProvider.overrideWith(
         (_) => Stream.value(const <Liability>[]),
       ),
-      benchmarkHistorySourceProvider
-          .overrideWith((_) async => _EmptyBenchmarkSource()),
+      benchmarkHistorySourceProvider.overrideWith(
+        (_) async => _EmptyBenchmarkSource(),
+      ),
     ],
   );
 }
@@ -156,7 +155,9 @@ void main() {
     addTearDown(container.dispose);
     await _pump(tester, container);
 
-    final l10n = AppLocalizations.of(tester.element(find.byType(AnalyticsPage)));
+    final l10n = AppLocalizations.of(
+      tester.element(find.byType(AnalyticsPage)),
+    );
     expect(find.text(l10n.analyticsEmptyTitle), findsOneWidget);
   });
 
@@ -166,7 +167,12 @@ void main() {
       final assets = [
         _equity(id: 'a', symbol: 'AAPL', industry: 'Technology', market: 'us'),
         _equity(id: 'b', symbol: 'MSFT', industry: 'Technology', market: 'us'),
-        _equity(id: 'c', symbol: '600519', industry: 'Beverages', market: 'sse'),
+        _equity(
+          id: 'c',
+          symbol: '600519',
+          industry: 'Beverages',
+          market: 'sse',
+        ),
       ];
       final snapshots = {
         'a': _snap('a', '500'),
@@ -200,10 +206,7 @@ void main() {
         _equity(id: 'a', symbol: 'AAPL', industry: 'Technology'),
         _equity(id: 'b', symbol: 'XYZ'),
       ];
-      final snapshots = {
-        'a': _snap('a', '900'),
-        'b': _snap('b', '100'),
-      };
+      final snapshots = {'a': _snap('a', '900'), 'b': _snap('b', '100')};
       final container = _container(snapshots: snapshots, assets: assets);
       addTearDown(container.dispose);
       await _pump(tester, container);

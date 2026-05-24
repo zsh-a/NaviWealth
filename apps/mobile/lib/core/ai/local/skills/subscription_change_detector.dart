@@ -93,9 +93,7 @@ List<SubscriptionChange> detectSubscriptionChanges(
 
   // Index txns by id for occurrence lookups; recurring_detector's
   // occurrenceIds preserves chronological order.
-  final byId = <String, TransactionInput>{
-    for (final t in txns) t.id: t,
-  };
+  final byId = <String, TransactionInput>{for (final t in txns) t.id: t};
 
   final out = <SubscriptionChange>[];
   for (final p in patterns) {
@@ -131,8 +129,7 @@ List<SubscriptionChange> detectSubscriptionChanges(
 
 int _medianSigned(List<TransactionInput> txns) {
   if (txns.isEmpty) return 0;
-  final amounts = <int>[
-    for (final t in txns) parseAmountMinor(t.amountMinor),
-  ]..sort();
+  final amounts = <int>[for (final t in txns) parseAmountMinor(t.amountMinor)]
+    ..sort();
   return amounts[amounts.length ~/ 2];
 }

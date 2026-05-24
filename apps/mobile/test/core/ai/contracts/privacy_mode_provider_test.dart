@@ -56,7 +56,10 @@ void main() {
       await c1
           .read(aiPrivacySettingsProvider.notifier)
           .setMode(AiPrivacyMode.amountsLocal);
-      expect(c1.read(aiPrivacySettingsProvider).mode, AiPrivacyMode.amountsLocal);
+      expect(
+        c1.read(aiPrivacySettingsProvider).mode,
+        AiPrivacyMode.amountsLocal,
+      );
       c1.dispose();
 
       // Fresh container — same shared prefs map — restores the choice.
@@ -64,14 +67,19 @@ void main() {
         overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
       );
       addTearDown(c2.dispose);
-      expect(c2.read(aiPrivacySettingsProvider).mode, AiPrivacyMode.amountsLocal);
+      expect(
+        c2.read(aiPrivacySettingsProvider).mode,
+        AiPrivacyMode.amountsLocal,
+      );
     });
 
     test('setMaskAccountNames toggles the flag', () async {
       final c = await _makeContainer();
       addTearDown(c.dispose);
       expect(c.read(aiPrivacySettingsProvider).maskAccountNames, isFalse);
-      await c.read(aiPrivacySettingsProvider.notifier).setMaskAccountNames(true);
+      await c
+          .read(aiPrivacySettingsProvider.notifier)
+          .setMaskAccountNames(true);
       expect(c.read(aiPrivacySettingsProvider).maskAccountNames, isTrue);
     });
   });
@@ -101,10 +109,7 @@ void main() {
     });
 
     test('parse falls back to amountsAllowed for unknown strings', () {
-      expect(
-        AiPrivacyModeWire.parse('nonsense'),
-        AiPrivacyMode.amountsAllowed,
-      );
+      expect(AiPrivacyModeWire.parse('nonsense'), AiPrivacyMode.amountsAllowed);
     });
   });
 }

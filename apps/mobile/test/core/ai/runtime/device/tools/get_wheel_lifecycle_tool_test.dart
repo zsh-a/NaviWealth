@@ -14,11 +14,11 @@ import 'package:naviwealth/features/options_income/domain/options_strategy_profi
 import 'package:naviwealth/features/options_income/domain/trade_journal_entry.dart';
 
 SyncMeta _meta() => SyncMeta(
-      ownerUserId: 'u',
-      updatedAt: DateTime.utc(2026, 5, 24),
-      updatedByDevice: 'd',
-      hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'd'),
-    );
+  ownerUserId: 'u',
+  updatedAt: DateTime.utc(2026, 5, 24),
+  updatedByDevice: 'd',
+  hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'd'),
+);
 
 TradeJournalEntry _entry({
   String id = 'e',
@@ -28,42 +28,36 @@ TradeJournalEntry _entry({
   String entryCredit = '0',
   String? exitDebit,
   String currency = 'USD',
-}) =>
-    TradeJournalEntry(
-      id: id,
-      strategy: strategy,
-      symbol: symbol,
-      optionSymbol: '$symbol-OPT',
-      openedAt: DateTime.utc(2026, 5, 1),
-      closedAt: status == TradeJournalStatus.open
-          ? null
-          : DateTime.utc(2026, 5, 15),
-      entryCredit: Decimal.parse(entryCredit),
-      exitDebit: exitDebit == null ? null : Decimal.parse(exitDebit),
-      realizedPnl: null,
-      currency: currency,
-      status: status,
-      notes: null,
-      sync: _meta(),
-    );
+}) => TradeJournalEntry(
+  id: id,
+  strategy: strategy,
+  symbol: symbol,
+  optionSymbol: '$symbol-OPT',
+  openedAt: DateTime.utc(2026, 5, 1),
+  closedAt: status == TradeJournalStatus.open
+      ? null
+      : DateTime.utc(2026, 5, 15),
+  entryCredit: Decimal.parse(entryCredit),
+  exitDebit: exitDebit == null ? null : Decimal.parse(exitDebit),
+  realizedPnl: null,
+  currency: currency,
+  status: status,
+  notes: null,
+  sync: _meta(),
+);
 
 ProviderContainer _container(List<TradeJournalEntry> entries) =>
     ProviderContainer(
       overrides: [
-        tradeJournalEntriesProvider.overrideWith(
-          (ref) async* {
-            yield entries;
-          },
-        ),
+        tradeJournalEntriesProvider.overrideWith((ref) async* {
+          yield entries;
+        }),
       ],
     );
 
 /// Runs [body] inside a probe so it gets a real Riverpod [Ref]. Mirrors
 /// the helper in `device_tools_test.dart`.
-Future<T> _withRef<T>(
-  ProviderContainer c,
-  Future<T> Function(Ref ref) body,
-) {
+Future<T> _withRef<T>(ProviderContainer c, Future<T> Function(Ref ref) body) {
   final probe = FutureProvider<T>((ref) => body(ref));
   c.listen(probe, (_, _) {});
   return c.read(probe.future);
@@ -101,10 +95,7 @@ void main() {
 
     test('descriptor matches the contract surface', () {
       expect(tool.name, 'get_wheel_lifecycle');
-      expect(
-        tool.inputSchema['properties'],
-        contains('symbol'),
-      );
+      expect(tool.inputSchema['properties'], contains('symbol'));
       expect(tool.inputSchema['additionalProperties'], isFalse);
     });
 
@@ -114,12 +105,10 @@ void main() {
       // null, exercising the guidance branch.
       final c = ProviderContainer(
         overrides: [
-          tradeJournalEntriesProvider.overrideWith(
-            (ref) async* {
-              // Never emits — pause indefinitely.
-              await Completer<void>().future;
-            },
-          ),
+          tradeJournalEntriesProvider.overrideWith((ref) async* {
+            // Never emits — pause indefinitely.
+            await Completer<void>().future;
+          }),
         ],
       );
       addTearDown(c.dispose);
@@ -159,28 +148,30 @@ void main() {
       expect(symbols, {'TSM', 'AAPL'});
     });
 
-    test('symbol filter narrows to one underlying (case-insensitive)',
-        () async {
-      final c = _container([
-        _entry(
-          id: 'tsm',
-          symbol: 'TSM',
-          strategy: OptionsStrategyKind.cashSecuredPut,
-          status: TradeJournalStatus.open,
-        ),
-        _entry(
-          id: 'aapl',
-          symbol: 'AAPL',
-          strategy: OptionsStrategyKind.coveredCall,
-          status: TradeJournalStatus.open,
-        ),
-      ]);
-      addTearDown(c.dispose);
-      final out = await _invoke(tool, c, const {'symbol': 'tsm'});
-      final cycles = out['cycles']! as List;
-      expect(cycles, hasLength(1));
-      expect((cycles.single as Map)['symbol'], 'TSM');
-    });
+    test(
+      'symbol filter narrows to one underlying (case-insensitive)',
+      () async {
+        final c = _container([
+          _entry(
+            id: 'tsm',
+            symbol: 'TSM',
+            strategy: OptionsStrategyKind.cashSecuredPut,
+            status: TradeJournalStatus.open,
+          ),
+          _entry(
+            id: 'aapl',
+            symbol: 'AAPL',
+            strategy: OptionsStrategyKind.coveredCall,
+            status: TradeJournalStatus.open,
+          ),
+        ]);
+        addTearDown(c.dispose);
+        final out = await _invoke(tool, c, const {'symbol': 'tsm'});
+        final cycles = out['cycles']! as List;
+        expect(cycles, hasLength(1));
+        expect((cycles.single as Map)['symbol'], 'TSM');
+      },
+    );
 
     test('symbol filter with no match returns empty + guidance', () async {
       final c = _container([
@@ -240,8 +231,9 @@ void main() {
       final out = await _invoke(tool, c, const <String, Object?>{});
       final evidence = out['evidence']! as List;
       expect(evidence, hasLength(2));
-      final ids =
-          evidence.map((e) => (e as Map)['entity_id'] as String).toSet();
+      final ids = evidence
+          .map((e) => (e as Map)['entity_id'] as String)
+          .toSet();
       expect(ids, {'tsm-1', 'tsm-2'});
       // Anchors point at the synced trade journal table — the chat UI
       // dispatches the deep-link from here.
@@ -250,25 +242,27 @@ void main() {
       }
     });
 
-    test('closed cycle has null open_position and reports cumulative income',
-        () async {
-      final c = _container([
-        _entry(
-          id: 'closed-put',
-          symbol: 'TSM',
-          strategy: OptionsStrategyKind.cashSecuredPut,
-          status: TradeJournalStatus.expired,
-          entryCredit: '120',
-          exitDebit: '0',
-        ),
-      ]);
-      addTearDown(c.dispose);
-      final out = await _invoke(tool, c, const <String, Object?>{});
-      final cycle = (out['cycles']! as List).single as Map;
-      expect(cycle['has_open_position'], isFalse);
-      expect(cycle['stage'], 'cash_waiting');
-      expect(cycle['open_position'], isNull);
-      expect(cycle['cumulative_income'], '120');
-    });
+    test(
+      'closed cycle has null open_position and reports cumulative income',
+      () async {
+        final c = _container([
+          _entry(
+            id: 'closed-put',
+            symbol: 'TSM',
+            strategy: OptionsStrategyKind.cashSecuredPut,
+            status: TradeJournalStatus.expired,
+            entryCredit: '120',
+            exitDebit: '0',
+          ),
+        ]);
+        addTearDown(c.dispose);
+        final out = await _invoke(tool, c, const <String, Object?>{});
+        final cycle = (out['cycles']! as List).single as Map;
+        expect(cycle['has_open_position'], isFalse);
+        expect(cycle['stage'], 'cash_waiting');
+        expect(cycle['open_position'], isNull);
+        expect(cycle['cumulative_income'], '120');
+      },
+    );
   });
 }

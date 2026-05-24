@@ -71,49 +71,49 @@ class OptionsOpportunityCacheRepository {
   }
 
   Future<List<OptionsOpportunity>> getLatest(String ownerUserId) async {
-    final rows = await _db.customSelect(
-      'SELECT * FROM options_opportunity_cache '
-      'WHERE owner_user_id = ? AND scan_id = ('
-      '  SELECT scan_id FROM options_opportunity_cache '
-      '  WHERE owner_user_id = ? '
-      '  ORDER BY scanned_at DESC LIMIT 1'
-      ') '
-      'ORDER BY score DESC',
-      variables: [
-        Variable.withString(ownerUserId),
-        Variable.withString(ownerUserId),
-      ],
-    ).get();
+    final rows = await _db
+        .customSelect(
+          'SELECT * FROM options_opportunity_cache '
+          'WHERE owner_user_id = ? AND scan_id = ('
+          '  SELECT scan_id FROM options_opportunity_cache '
+          '  WHERE owner_user_id = ? '
+          '  ORDER BY scanned_at DESC LIMIT 1'
+          ') '
+          'ORDER BY score DESC',
+          variables: [
+            Variable.withString(ownerUserId),
+            Variable.withString(ownerUserId),
+          ],
+        )
+        .get();
     return rows.map(_rowToDomain).toList(growable: false);
   }
 
   /// Metadata about the latest scan batch. Returns `null` when the user has
   /// no cached opportunities yet.
   Future<ScanCacheState?> latestScanState(String ownerUserId) async {
-    final row = await _db.customSelect(
-      'SELECT scan_id, scanned_at, COUNT(*) AS n '
-      'FROM options_opportunity_cache '
-      'WHERE owner_user_id = ? AND scan_id = ('
-      '  SELECT scan_id FROM options_opportunity_cache '
-      '  WHERE owner_user_id = ? '
-      '  ORDER BY scanned_at DESC LIMIT 1'
-      ') '
-      'GROUP BY scan_id',
-      variables: [
-        Variable.withString(ownerUserId),
-        Variable.withString(ownerUserId),
-      ],
-    ).getSingleOrNull();
+    final row = await _db
+        .customSelect(
+          'SELECT scan_id, scanned_at, COUNT(*) AS n '
+          'FROM options_opportunity_cache '
+          'WHERE owner_user_id = ? AND scan_id = ('
+          '  SELECT scan_id FROM options_opportunity_cache '
+          '  WHERE owner_user_id = ? '
+          '  ORDER BY scanned_at DESC LIMIT 1'
+          ') '
+          'GROUP BY scan_id',
+          variables: [
+            Variable.withString(ownerUserId),
+            Variable.withString(ownerUserId),
+          ],
+        )
+        .getSingleOrNull();
     if (row == null) return null;
     final scanId = row.read<String>('scan_id');
     final scannedAtRaw = row.read<String>('scanned_at');
     final count = row.read<int>('n');
     final scannedAt = DateTime.parse(scannedAtRaw).toUtc();
-    return ScanCacheState(
-      scanId: scanId,
-      scannedAt: scannedAt,
-      count: count,
-    );
+    return ScanCacheState(scanId: scanId, scannedAt: scannedAt, count: count);
   }
 
   Future<void> _insertOne(
@@ -191,7 +191,7 @@ OptionsOpportunity _rowToDomain(QueryRow row) {
   final type = parseOptionType(row.read<String>('type')) ?? OptionType.put;
   final strategy =
       parseOptionsStrategyKind(row.read<String>('strategy')) ??
-          OptionsStrategyKind.cashSecuredPut;
+      OptionsStrategyKind.cashSecuredPut;
   final scannedAt = DateTime.parse(row.read<String>('scanned_at')).toUtc();
   final expiration = DateTime.parse(row.read<String>('expiration')).toUtc();
   final explanation = OpportunityExplanation.decode(
@@ -212,7 +212,10 @@ OptionsOpportunity _rowToDomain(QueryRow row) {
     openInterest: row.read<int>('open_interest'),
     impliedVolatility: _decimalOrNull(row.read<String?>('implied_volatility')),
     delta: _decimalOrNull(row.read<String?>('delta')),
-    underlyingPrice: Money.parse(row.read<String>('underlying_price'), currency),
+    underlyingPrice: Money.parse(
+      row.read<String>('underlying_price'),
+      currency,
+    ),
     bidAskSpreadPct: Decimal.parse(row.read<String>('bid_ask_spread_pct')),
     fetchedAt: scannedAt,
   );

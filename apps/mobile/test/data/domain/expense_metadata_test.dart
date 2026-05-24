@@ -4,9 +4,7 @@ import 'package:naviwealth/data/domain/expense_metadata.dart';
 void main() {
   group('ExpenseMetadata', () {
     test('round-trips through encode/decode', () {
-      const original = ExpenseMetadata(
-        tags: ['lunch', 'team'],
-      );
+      const original = ExpenseMetadata(tags: ['lunch', 'team']);
 
       final decoded = ExpenseMetadata.decode(original.encode());
 
@@ -18,22 +16,18 @@ void main() {
       expect(meta.encode(), equals('{}'));
     });
 
-    test('decode returns null for missing / structurally invalid input',
-        () {
+    test('decode returns null for missing / structurally invalid input', () {
       expect(ExpenseMetadata.decode(null), isNull);
       expect(ExpenseMetadata.decode(''), isNull);
       expect(ExpenseMetadata.decode('"just a string"'), isNull);
     });
 
-    test('decode throws on invalid JSON — corruption is loud, not silent',
-        () {
+    test('decode throws on invalid JSON — corruption is loud, not silent', () {
       expect(() => ExpenseMetadata.decode('not json'), throwsFormatException);
     });
 
     test('decode tolerates non-string entries in tags', () {
-      final m = ExpenseMetadata.decode(
-        '{"tags":["ok",42,null,"also-ok"]}',
-      );
+      final m = ExpenseMetadata.decode('{"tags":["ok",42,null,"also-ok"]}');
       expect(m, isNotNull);
       expect(m!.tags, equals(['ok', 'also-ok']));
     });

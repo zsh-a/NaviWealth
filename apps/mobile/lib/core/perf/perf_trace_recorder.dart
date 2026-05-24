@@ -14,8 +14,8 @@ class PerfTraceRecorder {
     required this.collector,
     DateTime Function()? clock,
     Duration Function()? frameClock,
-  })  : _wallClock = clock ?? DateTime.now,
-        _frameClock = frameClock ?? _defaultFrameClock;
+  }) : _wallClock = clock ?? DateTime.now,
+       _frameClock = frameClock ?? _defaultFrameClock;
 
   final FrameTimingCollector collector;
   final DateTime Function() _wallClock;

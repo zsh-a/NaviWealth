@@ -18,11 +18,11 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 SyncMeta _meta() => SyncMeta(
-      ownerUserId: 'u',
-      updatedAt: DateTime.utc(2026, 5, 1),
-      updatedByDevice: 'dev',
-      hlc: Hlc.zero('dev'),
-    );
+  ownerUserId: 'u',
+  updatedAt: DateTime.utc(2026, 5, 1),
+  updatedByDevice: 'dev',
+  hlc: Hlc.zero('dev'),
+);
 
 Asset _security({
   required String symbol,
@@ -80,9 +80,12 @@ Widget _wrap({
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
-      manualAssetsStreamProvider.overrideWith((_) => Stream.value(manualAssets)),
-      securitiesAssetsStreamProvider
-          .overrideWith((_) => Stream.value(securities)),
+      manualAssetsStreamProvider.overrideWith(
+        (_) => Stream.value(manualAssets),
+      ),
+      securitiesAssetsStreamProvider.overrideWith(
+        (_) => Stream.value(securities),
+      ),
       physicalAssetsListProvider.overrideWith(
         (_) => Stream.value(physicalAssets),
       ),
@@ -103,10 +106,7 @@ void main() {
   testWidgets('renders securities section with name + market value when '
       'a holding snapshot is available', (tester) async {
     final prefs = await SharedPreferences.getInstance();
-    final aapl = _security(
-      symbol: 'AAPL',
-      name: 'Apple Inc.',
-    );
+    final aapl = _security(symbol: 'AAPL', name: 'Apple Inc.');
     await tester.pumpWidget(
       _wrap(
         prefs: prefs,
@@ -126,13 +126,11 @@ void main() {
     expect(find.textContaining('Apple Inc.'), findsWidgets);
   });
 
-  testWidgets('renders a security row without a holding snapshot',
-      (tester) async {
+  testWidgets('renders a security row without a holding snapshot', (
+    tester,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
-    final aapl = _security(
-      symbol: 'AAPL',
-      name: 'Apple Inc.',
-    );
+    final aapl = _security(symbol: 'AAPL', name: 'Apple Inc.');
     await tester.pumpWidget(
       _wrap(
         prefs: prefs,

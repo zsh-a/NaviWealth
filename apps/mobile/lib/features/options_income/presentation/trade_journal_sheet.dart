@@ -24,10 +24,8 @@ Future<void> showTradeJournalSheet(
 }) {
   return showAppFormSheet(
     context: context,
-    builder: (sheetCtx) => _TradeJournalForm(
-      existingId: existingId,
-      prefilled: prefilled,
-    ),
+    builder: (sheetCtx) =>
+        _TradeJournalForm(existingId: existingId, prefilled: prefilled),
   );
 }
 
@@ -58,10 +56,10 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
   void initState() {
     super.initState();
     final pre = widget.prefilled;
-    _symbolCtl =
-        TextEditingController(text: pre?.contract.underlying ?? '');
-    _optionSymbolCtl =
-        TextEditingController(text: pre?.contract.optionSymbol ?? '');
+    _symbolCtl = TextEditingController(text: pre?.contract.underlying ?? '');
+    _optionSymbolCtl = TextEditingController(
+      text: pre?.contract.optionSymbol ?? '',
+    );
     _creditCtl = TextEditingController(
       text: pre == null ? '' : pre.metrics.premium.amount.toString(),
     );
@@ -117,8 +115,9 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
       final repo = await ref.read(tradeJournalRepositoryProvider.future);
       if (_loaded != null) {
         final realized = (debit == null) ? null : credit - debit;
-        final closedAt =
-            _status == TradeJournalStatus.open ? null : DateTime.now().toUtc();
+        final closedAt = _status == TradeJournalStatus.open
+            ? null
+            : DateTime.now().toUtc();
         await repo.update(
           _loaded!.copyWith(
             strategy: _strategy,
@@ -188,16 +187,14 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             label: l10n.incomePlannerJournalCreditLabel,
             hint: l10n.incomePlannerJournalAmountHint,
             controller: _creditCtl,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
           const SizedBox(height: AppSpacing.s12),
           _LabeledTextField(
             label: l10n.incomePlannerJournalDebitLabel,
             hint: l10n.incomePlannerJournalAmountHint,
             controller: _debitCtl,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
           const SizedBox(height: AppSpacing.s12),
           _StatusSelect(

@@ -23,11 +23,7 @@ import '../../../design_system/preferences/theme_preferences.dart';
 import 'privacy_budget.dart';
 
 /// Three user-visible privacy postures the §5.10.5 spec calls out.
-enum AiPrivacyMode {
-  amountsAllowed,
-  amountsBucketed,
-  amountsLocal,
-}
+enum AiPrivacyMode { amountsAllowed, amountsBucketed, amountsLocal }
 
 extension AiPrivacyModeWire on AiPrivacyMode {
   String get wire => switch (this) {
@@ -46,10 +42,7 @@ extension AiPrivacyModeWire on AiPrivacyMode {
 
 @immutable
 class AiPrivacySettings {
-  const AiPrivacySettings({
-    required this.mode,
-    required this.maskAccountNames,
-  });
+  const AiPrivacySettings({required this.mode, required this.maskAccountNames});
 
   final AiPrivacyMode mode;
 
@@ -73,10 +66,7 @@ class AiPrivacySettings {
     AiPrivacyMode.amountsLocal => BudgetTier.small,
   };
 
-  AiPrivacySettings copyWith({
-    AiPrivacyMode? mode,
-    bool? maskAccountNames,
-  }) {
+  AiPrivacySettings copyWith({AiPrivacyMode? mode, bool? maskAccountNames}) {
     return AiPrivacySettings(
       mode: mode ?? this.mode,
       maskAccountNames: maskAccountNames ?? this.maskAccountNames,

@@ -16,8 +16,10 @@ enum IngestSourceKind { csv, pasteText, receiptImage, statementPdf, email }
 extension IngestSourceKindX on IngestSourceKind {
   String get wire => name;
 
-  static IngestSourceKind parse(String s) => IngestSourceKind.values
-      .firstWhere((k) => k.name == s, orElse: () => IngestSourceKind.csv);
+  static IngestSourceKind parse(String s) => IngestSourceKind.values.firstWhere(
+    (k) => k.name == s,
+    orElse: () => IngestSourceKind.csv,
+  );
 
   /// Whether the on-device deterministic parser can handle this kind.
   bool get isDeviceParsable =>
@@ -42,8 +44,10 @@ enum DedupVerdict {
 extension DedupVerdictX on DedupVerdict {
   String get wire => name;
 
-  static DedupVerdict parse(String s) => DedupVerdict.values
-      .firstWhere((v) => v.name == s, orElse: () => DedupVerdict.newTxn);
+  static DedupVerdict parse(String s) => DedupVerdict.values.firstWhere(
+    (v) => v.name == s,
+    orElse: () => DedupVerdict.newTxn,
+  );
 
   /// Whether a batch "confirm all" should skip this row by default.
   bool get skipByDefault => this != DedupVerdict.newTxn;
@@ -55,8 +59,10 @@ enum DraftStatus { pending, confirmed, dismissed }
 extension DraftStatusX on DraftStatus {
   String get wire => name;
 
-  static DraftStatus parse(String s) => DraftStatus.values
-      .firstWhere((v) => v.name == s, orElse: () => DraftStatus.pending);
+  static DraftStatus parse(String s) => DraftStatus.values.firstWhere(
+    (v) => v.name == s,
+    orElse: () => DraftStatus.pending,
+  );
 }
 
 /// A raw input batch handed to the pipeline. [payload] is the textual
@@ -179,10 +185,7 @@ class IngestDraft {
 
 /// Summary returned after a pipeline run, for the trace + a toast.
 class IngestResult {
-  const IngestResult({
-    required this.drafts,
-    this.rejectedReason,
-  });
+  const IngestResult({required this.drafts, this.rejectedReason});
 
   final List<IngestDraft> drafts;
 

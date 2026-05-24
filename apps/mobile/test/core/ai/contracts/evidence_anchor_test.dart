@@ -6,10 +6,7 @@ import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 void main() {
   group('EvidenceAnchor', () {
     test('toJson emits snake_case wire keys and omits null label', () {
-      const a = EvidenceAnchor(
-        entityTable: 'postings',
-        entityId: 'p_123',
-      );
+      const a = EvidenceAnchor(entityTable: 'postings', entityId: 'p_123');
       expect(a.toJson(), <String, Object?>{
         'entity_table': 'postings',
         'entity_id': 'p_123',
@@ -87,10 +84,7 @@ void main() {
           // Wrong type → dropped (defensive).
           'not-an-object',
           // Another valid one to make sure the iterator survives bad rows.
-          <String, Object?>{
-            'entity_table': 'assets',
-            'entity_id': 'a1',
-          },
+          <String, Object?>{'entity_table': 'assets', 'entity_id': 'a1'},
         ],
       };
       final out = readEvidence(envelope);

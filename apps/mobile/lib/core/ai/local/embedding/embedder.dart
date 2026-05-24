@@ -1,10 +1,11 @@
 /// Pure Dart embedding abstraction.
 ///
 /// `StubEmbedder` is the deterministic hash-based pseudo-embedder used by
-/// tests and dev builds. A real on-device embedder (MiniLM via Rust FFI —
-/// see `docs/lifeos-shell.md` §10) drops in behind the same interface; the
-/// [Embedder.fingerprint] discipline below lets the persistent vector
-/// store invalidate rows produced by a different model.
+/// tests and dev builds. A real on-device embedder (EmbeddingGemma-300M
+/// via Rust FFI + fastembed/ort — see `docs/lifeos-shell.md` §10) drops
+/// in behind the same interface; the [Embedder.fingerprint] discipline
+/// below lets the persistent vector store invalidate rows produced by
+/// a different model.
 library;
 
 import 'dart:math' as math;
@@ -18,7 +19,7 @@ abstract class Embedder {
   /// by a different embedder. Format is free-form but must change
   /// whenever the vector space changes (model swap, dimension change,
   /// normalisation rule change). Examples: `'stub-v1-d32'`,
-  /// `'minilm-l6-v2-d384'`.
+  /// `'embeddinggemma-300m-onnx-int8-d768'`.
   String get fingerprint;
 
   /// Embed a single text. The returned vector has length [dimension]

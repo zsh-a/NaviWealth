@@ -82,7 +82,10 @@ GoRouter _router({Widget child = const ActivityTimelinePreview()}) {
   return GoRouter(
     initialLocation: '/',
     routes: [
-      GoRoute(path: '/', builder: (_, _) => Scaffold(body: child)),
+      GoRoute(
+        path: '/',
+        builder: (_, _) => Scaffold(body: child),
+      ),
       GoRoute(
         path: AppRoutes.activity,
         builder: (_, _) => const Scaffold(body: Text('activity-route')),
@@ -235,9 +238,11 @@ void main() {
         reason: 'Entry $i should appear inside the preview cap',
       );
     }
-    for (var i = kHomeActivityPreviewCount;
-        i < kHomeActivityPreviewCount + 3;
-        i++) {
+    for (
+      var i = kHomeActivityPreviewCount;
+      i < kHomeActivityPreviewCount + 3;
+      i++
+    ) {
       expect(
         find.text('Entry $i'),
         findsNothing,

@@ -395,9 +395,11 @@ enum _JumpKind {
   asset,
   account,
   liability,
+
   /// Ledger journal entry (`activity_entry/<id>`). Comes from
   /// `evidence.entity_table == 'journal_entries'`.
   journalEntry,
+
   /// Options trade journal row. Deep-links to the Income Planner page
   /// since there's no dedicated detail route.
   tradeJournal,
@@ -499,8 +501,8 @@ _Jump? _jumpFromEvidence(AppLocalizations l10n, EvidenceAnchor anchor) {
   final fallbackId = _shortId(anchor.entityId);
   String labelFor(String templated) =>
       anchor.label != null && anchor.label!.isNotEmpty
-          ? anchor.label!
-          : templated;
+      ? anchor.label!
+      : templated;
 
   switch (anchor.entityTable) {
     case 'assets':

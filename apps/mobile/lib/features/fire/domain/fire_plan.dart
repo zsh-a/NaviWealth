@@ -134,8 +134,7 @@ class FireRiskSettings {
   };
 
   factory FireRiskSettings.fromJson(Map<String, Object?> json) {
-    double d(Object? v, double fallback) =>
-        v is num ? v.toDouble() : fallback;
+    double d(Object? v, double fallback) => v is num ? v.toDouble() : fallback;
     return FireRiskSettings(
       marketDrawdownPct: d(json['market_drawdown_pct'], 0.35),
       expenseShockPct: d(json['expense_shock_pct'], 0.20),

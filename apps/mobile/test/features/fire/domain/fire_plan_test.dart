@@ -102,10 +102,7 @@ void main() {
           ),
         ],
       );
-      expect(
-        plan.totalReserves,
-        Money(Decimal.parse('50000'), 'CNY'),
-      );
+      expect(plan.totalReserves, Money(Decimal.parse('50000'), 'CNY'));
     });
   });
 

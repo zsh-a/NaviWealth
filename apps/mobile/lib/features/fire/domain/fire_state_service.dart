@@ -27,8 +27,7 @@ FireState computeFireState({
   required DateTime computedAt,
   List<FireBucketState> buckets = const <FireBucketState>[],
   List<FireStressResult> stressTests = const <FireStressResult>[],
-  List<FireUnmappedHolding> unmappedHoldings =
-      const <FireUnmappedHolding>[],
+  List<FireUnmappedHolding> unmappedHoldings = const <FireUnmappedHolding>[],
 }) {
   final base = plan.baseCurrency;
   _requireBase(base, netWorth, 'netWorth');
@@ -155,8 +154,7 @@ FireSafetyLevel _safetyLevel({
   }
 
   // Caution gates — softer signals.
-  final wrCautious =
-      withdrawalRate.isFinite && withdrawalRate > swr;
+  final wrCautious = withdrawalRate.isFinite && withdrawalRate > swr;
   final cashLow = cashBucketMonths < targetMonths;
   final fxGap = currencyMismatchCount > 0;
   if (wrCautious || cashLow || fxGap) {
@@ -195,9 +193,9 @@ List<FireAction> _suggestedActions({
     Decimal.fromInt(plan.targetCashBucketMonths),
   );
   final cashShortfallAmount = cashTarget.amount - liquidAssets.amount;
-  if (cashShortfallAmount > Decimal.zero && monthlyExpense.amount > Decimal.zero) {
-    final critical =
-        cashBucketMonths < plan.targetCashBucketMonths * 0.5;
+  if (cashShortfallAmount > Decimal.zero &&
+      monthlyExpense.amount > Decimal.zero) {
+    final critical = cashBucketMonths < plan.targetCashBucketMonths * 0.5;
     actions.add(
       FireAction(
         kind: FireActionKind.topUpCashBucket,
@@ -305,8 +303,7 @@ FireState simulateFireState({
     monthlyExpenses: monthlyExpenses ?? baseline.plan.monthlyExpenses,
     monthlySurplus: monthlySurplus ?? baseline.plan.monthlySurplus,
     inflationRate: inflationRate ?? baseline.plan.inflationRate,
-    safeWithdrawalRate:
-        safeWithdrawalRate ?? baseline.plan.safeWithdrawalRate,
+    safeWithdrawalRate: safeWithdrawalRate ?? baseline.plan.safeWithdrawalRate,
     targetCashBucketMonths:
         targetCashBucketMonths ?? baseline.plan.targetCashBucketMonths,
   );

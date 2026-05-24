@@ -34,12 +34,27 @@ void main() {
     int? deletedAtMs,
   }) async {
     final now = DateTime.utc(2026, 1, 1).millisecondsSinceEpoch;
-    const hlc = Hlc(wallMillis: 1700000000000, counter: 0, nodeId: testDeviceId);
+    const hlc = Hlc(
+      wallMillis: 1700000000000,
+      counter: 0,
+      nodeId: testDeviceId,
+    );
     await db.customStatement(
       'INSERT INTO accounts '
       '(id, type, name, currency, owner_user_id, updated_at, updated_by_device, hlc, deleted_at, archived, category) '
       'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)',
-      [id, type, name, currency, 'user-1', now, testDeviceId, hlc.toString(), deletedAtMs, 'asset'],
+      [
+        id,
+        type,
+        name,
+        currency,
+        'user-1',
+        now,
+        testDeviceId,
+        hlc.toString(),
+        deletedAtMs,
+        'asset',
+      ],
     );
   }
 
@@ -50,7 +65,11 @@ void main() {
     String name = 'Test Tag',
   }) async {
     final now = DateTime.utc(2026, 1, 1).toIso8601String();
-    const hlc = Hlc(wallMillis: 1700000000001, counter: 0, nodeId: testDeviceId);
+    const hlc = Hlc(
+      wallMillis: 1700000000001,
+      counter: 0,
+      nodeId: testDeviceId,
+    );
     await db.customStatement(
       'INSERT INTO tags '
       '(id, name, kind, owner_user_id, updated_at, updated_by_device, hlc) '
@@ -61,8 +80,9 @@ void main() {
 
   /// Count rows in a table.
   Future<int> countRows(AppDatabase db, String table) async {
-    final row =
-        await db.customSelect('SELECT COUNT(*) AS c FROM $table').getSingle();
+    final row = await db
+        .customSelect('SELECT COUNT(*) AS c FROM $table')
+        .getSingle();
     return row.read<int>('c');
   }
 
@@ -81,47 +101,49 @@ void main() {
   }
 
   group('BackupService', () {
-    test('export produces valid envelope that decrypts to correct JSON',
-        () async {
-      final db = makeTestDatabase();
-      addTearDown(db.close);
+    test(
+      'export produces valid envelope that decrypts to correct JSON',
+      () async {
+        final db = makeTestDatabase();
+        addTearDown(db.close);
 
-      await insertTestAccount(db);
-      await insertTestTag(db);
+        await insertTestAccount(db);
+        await insertTestTag(db);
 
-      service = makeService(db);
-      final bytes = await service.exportBackup(
-        passphrase: testPassphrase,
-        overrideIterations: testIterations,
-      );
+        service = makeService(db);
+        final bytes = await service.exportBackup(
+          passphrase: testPassphrase,
+          overrideIterations: testIterations,
+        );
 
-      // Verify the bytes decode to a valid envelope.
-      final envelope = BackupEnvelope.decodeBytes(bytes);
-      expect(envelope.schemaVersion, db.schemaVersion);
+        // Verify the bytes decode to a valid envelope.
+        final envelope = BackupEnvelope.decodeBytes(bytes);
+        expect(envelope.schemaVersion, db.schemaVersion);
 
-      // Decrypt and parse the payload.
-      final plaintext = await codec.decrypt(
-        passphrase: testPassphrase,
-        envelope: envelope,
-      );
-      final json = jsonDecode(utf8.decode(plaintext)) as Map<String, Object?>;
+        // Decrypt and parse the payload.
+        final plaintext = await codec.decrypt(
+          passphrase: testPassphrase,
+          envelope: envelope,
+        );
+        final json = jsonDecode(utf8.decode(plaintext)) as Map<String, Object?>;
 
-      // Verify header.
-      final header = json['header'] as Map<String, Object?>;
-      expect(header['magic'], 'naviwealth.backup.v1');
-      expect(header['schemaVersion'], db.schemaVersion);
+        // Verify header.
+        final header = json['header'] as Map<String, Object?>;
+        expect(header['magic'], 'naviwealth.backup.v1');
+        expect(header['schemaVersion'], db.schemaVersion);
 
-      // Verify data contains our rows.
-      final data = json['data'] as Map<String, Object?>;
-      final accounts = data['accounts'] as List<Object?>;
-      expect(accounts.length, 1);
-      expect((accounts[0] as Map)['id'], 'acct-1');
-      expect((accounts[0] as Map)['name'], 'Test Account');
+        // Verify data contains our rows.
+        final data = json['data'] as Map<String, Object?>;
+        final accounts = data['accounts'] as List<Object?>;
+        expect(accounts.length, 1);
+        expect((accounts[0] as Map)['id'], 'acct-1');
+        expect((accounts[0] as Map)['name'], 'Test Account');
 
-      final tags = data['tags'] as List<Object?>;
-      expect(tags.length, 1);
-      expect((tags[0] as Map)['id'], 'tag-1');
-    });
+        final tags = data['tags'] as List<Object?>;
+        expect(tags.length, 1);
+        expect((tags[0] as Map)['id'], 'tag-1');
+      },
+    );
 
     test('round-trip: export then restore into fresh database', () async {
       final sourceDb = makeTestDatabase();
@@ -241,8 +263,7 @@ void main() {
 
       // Only the source account should exist.
       expect(await countRows(targetDb, 'accounts'), 1);
-      final rows =
-          await targetDb.customSelect('SELECT id FROM accounts').get();
+      final rows = await targetDb.customSelect('SELECT id FROM accounts').get();
       expect(rows.single.read<String>('id'), 'source-acct');
     });
 
@@ -283,12 +304,27 @@ void main() {
       // Insert tombstone using numeric timestamp (Drift stores DateTime as int).
       final deletedAtMs = DateTime.utc(2026, 6, 1).millisecondsSinceEpoch;
       final now = DateTime.utc(2026, 1, 1).toIso8601String();
-      const hlc = Hlc(wallMillis: 1700000000002, counter: 0, nodeId: testDeviceId);
+      const hlc = Hlc(
+        wallMillis: 1700000000002,
+        counter: 0,
+        nodeId: testDeviceId,
+      );
       await sourceDb.customStatement(
         'INSERT INTO accounts '
         '(id, type, name, currency, owner_user_id, updated_at, updated_by_device, hlc, deleted_at, archived, category) '
         'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)',
-        ['acct-deleted', 'cash', 'Deleted Account', 'CNY', 'user-1', now, testDeviceId, hlc.toString(), deletedAtMs, 'asset'],
+        [
+          'acct-deleted',
+          'cash',
+          'Deleted Account',
+          'CNY',
+          'user-1',
+          now,
+          testDeviceId,
+          hlc.toString(),
+          deletedAtMs,
+          'asset',
+        ],
       );
 
       service = makeService(sourceDb);
@@ -320,9 +356,7 @@ void main() {
 
       expect(await countRows(targetDb, 'accounts'), 2);
       final rows = await targetDb
-          .customSelect(
-            'SELECT id, deleted_at FROM accounts ORDER BY id',
-          )
+          .customSelect('SELECT id, deleted_at FROM accounts ORDER BY id')
           .get();
       expect(rows[0].read<String>('id'), 'acct-alive');
       expect(rows[0].readNullable<DateTime>('deleted_at'), isNull);
@@ -359,37 +393,39 @@ void main() {
       expect(resumeCalled, isTrue);
     });
 
-    test('resumeSync is NOT called when decryption fails before pause',
-        () async {
-      final sourceDb = makeTestDatabase();
-      addTearDown(sourceDb.close);
-      await insertTestAccount(sourceDb);
+    test(
+      'resumeSync is NOT called when decryption fails before pause',
+      () async {
+        final sourceDb = makeTestDatabase();
+        addTearDown(sourceDb.close);
+        await insertTestAccount(sourceDb);
 
-      service = makeService(sourceDb);
-      final bytes = await service.exportBackup(
-        passphrase: testPassphrase,
-        overrideIterations: testIterations,
-      );
-
-      var resumeCalled = false;
-
-      // Restore with wrong passphrase — decryption fails before pauseSync,
-      // so resumeSync should NOT be called.
-      final targetDb = makeTestDatabase();
-      addTearDown(targetDb.close);
-
-      final restoreService = makeService(targetDb);
-      try {
-        await restoreService.restoreBackup(
-          passphrase: 'wrong',
-          fileBytes: bytes,
-          resumeSync: () => resumeCalled = true,
+        service = makeService(sourceDb);
+        final bytes = await service.exportBackup(
+          passphrase: testPassphrase,
+          overrideIterations: testIterations,
         );
-      } catch (_) {
-        // Expected.
-      }
 
-      expect(resumeCalled, isFalse);
-    });
+        var resumeCalled = false;
+
+        // Restore with wrong passphrase — decryption fails before pauseSync,
+        // so resumeSync should NOT be called.
+        final targetDb = makeTestDatabase();
+        addTearDown(targetDb.close);
+
+        final restoreService = makeService(targetDb);
+        try {
+          await restoreService.restoreBackup(
+            passphrase: 'wrong',
+            fileBytes: bytes,
+            resumeSync: () => resumeCalled = true,
+          );
+        } catch (_) {
+          // Expected.
+        }
+
+        expect(resumeCalled, isFalse);
+      },
+    );
   });
 }

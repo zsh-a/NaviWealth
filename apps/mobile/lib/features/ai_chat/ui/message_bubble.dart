@@ -190,8 +190,7 @@ class _UserBubble extends ConsumerWidget {
           // Treat as destructive — saving discards the existing AI
           // reply (+ any later turns) before re-running the prompt.
           destructive: true,
-          onSubmit: () =>
-              Navigator.of(ctx).pop(controller.text.trim()),
+          onSubmit: () => Navigator.of(ctx).pop(controller.text.trim()),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -273,11 +272,7 @@ class _AssistantBubble extends StatelessWidget {
         if (_isError) ...[
           Row(
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 16,
-                color: colors.destructive,
-              ),
+              Icon(Icons.error_outline, size: 16, color: colors.destructive),
               const SizedBox(width: 6),
               Text(
                 l10n.aiChatSemanticsAssistantError,

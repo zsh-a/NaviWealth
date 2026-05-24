@@ -14,9 +14,7 @@ void main() {
       tester,
       name: 'settings_page',
       variant: variant,
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ],
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
       child: const SettingsPage(),
     );
   });

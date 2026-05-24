@@ -46,17 +46,17 @@ class OpportunityExplanation {
   final Map<String, Decimal> scoreBreakdown;
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'summary': summary,
-        'why_good': whyGood,
-        'why_risky': whyRisky,
-        'best_for': bestFor,
-        'avoid_if': avoidIf,
-        'worst_case': worstCase,
-        'score_breakdown': {
-          for (final entry in scoreBreakdown.entries)
-            entry.key: entry.value.toString(),
-        },
-      };
+    'summary': summary,
+    'why_good': whyGood,
+    'why_risky': whyRisky,
+    'best_for': bestFor,
+    'avoid_if': avoidIf,
+    'worst_case': worstCase,
+    'score_breakdown': {
+      for (final entry in scoreBreakdown.entries)
+        entry.key: entry.value.toString(),
+    },
+  };
 
   String encode() => jsonEncode(toJson());
 
@@ -80,9 +80,10 @@ class OpportunityExplanation {
     }
     return OpportunityExplanation(
       summary: (json['summary'] as String?) ?? '',
-      whyGood: (json['why_good'] as List?)?.whereType<String>().toList() ??
-          const [],
-      whyRisky: (json['why_risky'] as List?)?.whereType<String>().toList() ??
+      whyGood:
+          (json['why_good'] as List?)?.whereType<String>().toList() ?? const [],
+      whyRisky:
+          (json['why_risky'] as List?)?.whereType<String>().toList() ??
           const [],
       bestFor: (json['best_for'] as String?) ?? '',
       avoidIf: (json['avoid_if'] as String?) ?? '',

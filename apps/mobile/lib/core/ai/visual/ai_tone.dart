@@ -18,8 +18,7 @@ class AiTone {
   AiTone._();
 
   /// Default text on AI surfaces. Used for primary content.
-  static Color onSurface(BuildContext c) =>
-      Theme.of(c).colorScheme.onSurface;
+  static Color onSurface(BuildContext c) => Theme.of(c).colorScheme.onSurface;
 
   /// Secondary / metadata text. Most "label", "subtitle", "muted"
   /// strings live here. Replaces ad-hoc `onSurfaceVariant` lookups so
@@ -30,13 +29,11 @@ class AiTone {
   /// The **only** active / accent color allowed on AI surfaces.
   /// Reserved for "AI is alive" signals (streaming cursor, selected
   /// filter, active capsule). Don't use as a decoration tone.
-  static Color active(BuildContext c) =>
-      Theme.of(c).colorScheme.primary;
+  static Color active(BuildContext c) => Theme.of(c).colorScheme.primary;
 
   /// Failure / denied / policy violation. Use sparingly — most "warn"
   /// or "stale" signals should encode in iconography, not color.
-  static Color error(BuildContext c) =>
-      Theme.of(c).colorScheme.error;
+  static Color error(BuildContext c) => Theme.of(c).colorScheme.error;
 
   /// Hairline / divider tone. Stays subtle.
   static Color outline(BuildContext c) =>

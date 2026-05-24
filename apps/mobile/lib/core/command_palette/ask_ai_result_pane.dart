@@ -422,7 +422,8 @@ class _ResultRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final amountMinor = row.values['amount_minor'] ?? row.values['median_amount_minor'];
+    final amountMinor =
+        row.values['amount_minor'] ?? row.values['median_amount_minor'];
     final currency = row.values['currency'] as String?;
     return Row(
       children: <Widget>[

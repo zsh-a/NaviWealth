@@ -43,8 +43,7 @@ void main() {
       final s = visionParseToolSchema();
       expect(s.name, kVisionEmitTool);
       final req =
-          ((s.inputSchema['properties'] as Map)['transactions']
-                  as Map)['items']
+          ((s.inputSchema['properties'] as Map)['transactions'] as Map)['items']
               as Map;
       expect(
         (req['required'] as List).cast<String>(),
@@ -129,8 +128,12 @@ void main() {
     test('caps at kVisionMaxParsedDrafts and skips non-map rows', () {
       final many = [
         for (var i = 0; i < kVisionMaxParsedDrafts + 50; i++)
-          {'description': 'r$i', 'amount_minor': -1, 'currency': 'USD',
-            'occurred_at': '2026-01-01'},
+          {
+            'description': 'r$i',
+            'amount_minor': -1,
+            'currency': 'USD',
+            'occurred_at': '2026-01-01',
+          },
         'not-a-map',
       ];
       final rows = extractVisionDraftRows([

@@ -20,9 +20,9 @@ class GetOptionsStrategyProfileTool implements DeviceTool {
 
   @override
   Map<String, Object?> get inputSchema => const <String, Object?>{
-        'type': 'object',
-        'properties': <String, Object?>{},
-      };
+    'type': 'object',
+    'properties': <String, Object?>{},
+  };
 
   @override
   Future<Object?> invoke(
@@ -33,16 +33,13 @@ class GetOptionsStrategyProfileTool implements DeviceTool {
     if (profile == null) {
       return <String, Object?>{
         'is_configured': false,
-        'guidance':
-            '用户尚未填写期权策略偏好。请引导用户先在 Income Planner 页面完成 OCC 风险披露并配置偏好。',
+        'guidance': '用户尚未填写期权策略偏好。请引导用户先在 Income Planner 页面完成 OCC 风险披露并配置偏好。',
       };
     }
     return <String, Object?>{
       'is_configured': true,
       'mode': profile.mode.wire,
-      'allowed_strategies': [
-        for (final s in profile.allowedStrategies) s.wire,
-      ],
+      'allowed_strategies': [for (final s in profile.allowedStrategies) s.wire],
       'dte_range': <String, Object?>{
         'min': profile.minDte,
         'max': profile.maxDte,
@@ -56,8 +53,8 @@ class GetOptionsStrategyProfileTool implements DeviceTool {
         'max': profile.deltaCallMax.toString(),
       },
       'max_capital_per_trade_pct': profile.maxCapitalPerTradePct.toString(),
-      'max_underlying_exposure_pct':
-          profile.maxUnderlyingExposurePct.toString(),
+      'max_underlying_exposure_pct': profile.maxUnderlyingExposurePct
+          .toString(),
       'min_annualized_yield': profile.minAnnualizedYield.toString(),
       'min_open_interest': profile.minOpenInterest,
       'min_volume': profile.minVolume,
@@ -65,8 +62,9 @@ class GetOptionsStrategyProfileTool implements DeviceTool {
       'avoid_earnings': profile.avoidEarnings,
       'avoid_macro_events': profile.avoidMacroEvents,
       'only_on_approved_underlyings': profile.onlyOnApprovedUnderlyings,
-      'risk_disclosure_ack_at_iso':
-          profile.riskDisclosureAckAt?.toUtc().toIso8601String(),
+      'risk_disclosure_ack_at_iso': profile.riskDisclosureAckAt
+          ?.toUtc()
+          .toIso8601String(),
     };
   }
 }

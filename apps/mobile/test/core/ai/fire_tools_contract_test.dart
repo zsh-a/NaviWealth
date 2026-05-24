@@ -82,8 +82,7 @@ void main() {
       for (final intent in expectedIntents) {
         final descriptor = lookupIntent(intent)!;
         expect(
-          descriptor.allowedObjectTypes
-              .every((t) => t.startsWith('fire_')),
+          descriptor.allowedObjectTypes.every((t) => t.startsWith('fire_')),
           isTrue,
           reason:
               'intent $intent allows non-FIRE object types: ${descriptor.allowedObjectTypes}',

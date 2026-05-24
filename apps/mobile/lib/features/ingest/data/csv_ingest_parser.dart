@@ -195,8 +195,7 @@ DateTime? _parseDate(String? s) {
 int? _parseAmountMinor(String? s) {
   if (s == null || s.isEmpty) return null;
   var t = s.trim();
-  final negative =
-      t.startsWith('-') || (t.startsWith('(') && t.endsWith(')'));
+  final negative = t.startsWith('-') || (t.startsWith('(') && t.endsWith(')'));
   // Drop currency glyphs / letters / spaces / parens, keep digits, sign,
   // separators. Then treat comma as a thousands separator.
   t = t.replaceAll(RegExp(r'[^\d.,-]'), '');

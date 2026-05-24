@@ -29,27 +29,27 @@ class GetOptionsIncomeOpportunitiesTool implements DeviceTool {
 
   @override
   Map<String, Object?> get inputSchema => const <String, Object?>{
-        'type': 'object',
-        'properties': <String, Object?>{
-          'strategy': <String, Object?>{
-            'type': ['string', 'null'],
-            'enum': ['cash_secured_put', 'covered_call', null],
-            'description': 'Filter to one strategy (null = both)',
-          },
-          'max_results': <String, Object?>{
-            'type': 'integer',
-            'minimum': 1,
-            'maximum': 20,
-            'description': 'Cap on returned opportunities (default 5).',
-          },
-          'min_score': <String, Object?>{
-            'type': 'number',
-            'minimum': 0,
-            'maximum': 1,
-            'description': 'Soft-score floor (default 0.6).',
-          },
-        },
-      };
+    'type': 'object',
+    'properties': <String, Object?>{
+      'strategy': <String, Object?>{
+        'type': ['string', 'null'],
+        'enum': ['cash_secured_put', 'covered_call', null],
+        'description': 'Filter to one strategy (null = both)',
+      },
+      'max_results': <String, Object?>{
+        'type': 'integer',
+        'minimum': 1,
+        'maximum': 20,
+        'description': 'Cap on returned opportunities (default 5).',
+      },
+      'min_score': <String, Object?>{
+        'type': 'number',
+        'minimum': 0,
+        'maximum': 1,
+        'description': 'Soft-score floor (default 0.6).',
+      },
+    },
+  };
 
   @override
   Future<Object?> invoke(
@@ -57,8 +57,9 @@ class GetOptionsIncomeOpportunitiesTool implements DeviceTool {
     Map<String, Object?> input,
   ) async {
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final repo = await ctx.ref
-        .read(optionsOpportunityCacheRepositoryProvider.future);
+    final repo = await ctx.ref.read(
+      optionsOpportunityCacheRepositoryProvider.future,
+    );
     final scanState = await repo.latestScanState(ownerUserId);
     final all = await repo.getLatest(ownerUserId);
 
@@ -72,13 +73,15 @@ class GetOptionsIncomeOpportunitiesTool implements DeviceTool {
         .where((o) => o.score >= minScore)
         .toList();
     filtered.sort((a, b) => b.score.compareTo(a.score));
-    if (filtered.length > maxResults) filtered = filtered.sublist(0, maxResults);
+    if (filtered.length > maxResults) {
+      filtered = filtered.sublist(0, maxResults);
+    }
 
     final guidance = scanState == null
         ? '尚未扫描:请在 Income Planner 页面点击 "Refresh opportunities" 触发首次扫描。'
         : scanState.isStale
-            ? '缓存已超过 24 小时:建议用户在 Income Planner 页面手动刷新后再决策。'
-            : null;
+        ? '缓存已超过 24 小时:建议用户在 Income Planner 页面手动刷新后再决策。'
+        : null;
 
     return <String, Object?>{
       'opportunities': filtered.map(_toJson).toList(),
@@ -86,8 +89,9 @@ class GetOptionsIncomeOpportunitiesTool implements DeviceTool {
           ? null
           : <String, Object?>{
               'scan_id': scanState.scanId,
-              'last_scanned_at_iso':
-                  scanState.scannedAt.toUtc().toIso8601String(),
+              'last_scanned_at_iso': scanState.scannedAt
+                  .toUtc()
+                  .toIso8601String(),
               'is_stale': scanState.isStale,
               'count': scanState.count,
             },

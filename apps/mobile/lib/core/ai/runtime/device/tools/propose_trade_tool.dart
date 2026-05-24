@@ -44,7 +44,10 @@ class ProposeTradeTool implements DeviceTool {
     'properties': {
       'type': {'type': 'string', 'enum': _kTradeTypes},
       'asset_id': {'type': 'string'},
-      'asset_symbol': {'type': 'string', 'description': '如 AAPL / 600519 / BTC'},
+      'asset_symbol': {
+        'type': 'string',
+        'description': '如 AAPL / 600519 / BTC',
+      },
       'asset_name': {'type': 'string', 'description': '如 苹果 / 茅台'},
       'account_id': {'type': 'string'},
       'account_name': {'type': 'string'},
@@ -57,10 +60,7 @@ class ProposeTradeTool implements DeviceTool {
       'fee': {'type': 'number', 'minimum': 0, 'default': 0},
       'tax': {'type': 'number', 'minimum': 0, 'default': 0},
       'currency': {'type': 'string', 'description': 'ISO 4217；留空时取账户币种'},
-      'trade_date': {
-        'type': 'string',
-        'description': 'ISO-8601；相对日期请你先解析',
-      },
+      'trade_date': {'type': 'string', 'description': 'ISO-8601；相对日期请你先解析'},
       'note': {'type': 'string'},
     },
   };
@@ -154,8 +154,7 @@ class ProposeTradeTool implements DeviceTool {
     // Backend: explicit → account.currency → asset.currency → ('USD' +
     // warn). Device Account.currency is required non-null, so the
     // USD+warn arm is unreachable — faithfully no currency warning.
-    final currency =
-        proposalOptionalStr(input, 'currency') ?? account.currency;
+    final currency = proposalOptionalStr(input, 'currency') ?? account.currency;
 
     final tradeDate = proposalOptionalStr(input, 'trade_date');
     if (tradeDate == null) {
@@ -166,9 +165,7 @@ class ProposeTradeTool implements DeviceTool {
       );
     }
     if (price == null) {
-      warnings.add(
-        'price 未指定，前端将根据 MarketDataService 回填交易日收盘价（用户可覆盖）。',
-      );
+      warnings.add('price 未指定，前端将根据 MarketDataService 回填交易日收盘价（用户可覆盖）。');
     }
 
     final payload = <String, Object?>{
@@ -215,6 +212,7 @@ class ProposeTradeTool implements DeviceTool {
 
   /// Port of `format_args_qty`: integer → " {n} 股", else " {qty}"
   /// (note the leading space, matching the Rust format string).
-  static String _qty(double q) =>
-      q == q.roundToDouble() ? ' ${q.toInt()} 股' : ' ${formatProposalAmount(q)}';
+  static String _qty(double q) => q == q.roundToDouble()
+      ? ' ${q.toInt()} 股'
+      : ' ${formatProposalAmount(q)}';
 }

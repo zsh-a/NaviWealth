@@ -69,10 +69,7 @@ Asset _asset({
   String currency = 'USD',
   AssetType type = AssetType.stock,
 }) => Asset(
-  id: Asset.idFor(
-    assetMarketFromWire(market) ?? AssetMarket.unknown,
-    symbol,
-  ),
+  id: Asset.idFor(assetMarketFromWire(market) ?? AssetMarket.unknown, symbol),
   type: type,
   symbol: symbol,
   currency: currency,
@@ -139,48 +136,58 @@ void main() {
     expect(r!.value, Decimal.parse('200.00'));
     expect(r.confidence, PriceConfidence.manual);
     expect(r.source, 'manual');
-    expect(market.quoteCalls, 0, reason: 'ledger fresh-tier should short-circuit');
-  });
-
-  test('tier 3 wins on empty ledger and yields realTime on a fresh quote', () async {
-    final asset = _asset(market: 'us_stock', symbol: 'AAPL');
-    market.quotes['AAPL'] = MarketResponse(
-      data: Quote(
-        symbol: 'AAPL',
-        currency: 'USD',
-        price: Decimal.parse('250.00'),
-        asOf: clock.now(), // age = 0
-      ),
-      freshness: DataFreshness.live,
-      source: 'yfinance',
-      fetchedAt: clock.now(),
+    expect(
+      market.quoteCalls,
+      0,
+      reason: 'ledger fresh-tier should short-circuit',
     );
-
-    final r = await buildResolver().resolve(asset);
-
-    expect(r!.value, Decimal.parse('250.00'));
-    expect(r.confidence, PriceConfidence.realTime);
-    expect(r.source, 'yfinance');
   });
 
-  test('cachedFresh provider response maps to dailyClose, never realTime', () async {
-    final asset = _asset(market: 'us_stock', symbol: 'AAPL');
-    market.quotes['AAPL'] = MarketResponse(
-      data: Quote(
-        symbol: 'AAPL',
-        currency: 'USD',
-        price: Decimal.parse('250.00'),
-        asOf: clock.now(),
-      ),
-      freshness: DataFreshness.cachedFresh,
-      source: 'yfinance',
-      fetchedAt: clock.now(),
-    );
+  test(
+    'tier 3 wins on empty ledger and yields realTime on a fresh quote',
+    () async {
+      final asset = _asset(market: 'us_stock', symbol: 'AAPL');
+      market.quotes['AAPL'] = MarketResponse(
+        data: Quote(
+          symbol: 'AAPL',
+          currency: 'USD',
+          price: Decimal.parse('250.00'),
+          asOf: clock.now(), // age = 0
+        ),
+        freshness: DataFreshness.live,
+        source: 'yfinance',
+        fetchedAt: clock.now(),
+      );
 
-    final r = await buildResolver().resolve(asset);
+      final r = await buildResolver().resolve(asset);
 
-    expect(r!.confidence, PriceConfidence.dailyClose);
-  });
+      expect(r!.value, Decimal.parse('250.00'));
+      expect(r.confidence, PriceConfidence.realTime);
+      expect(r.source, 'yfinance');
+    },
+  );
+
+  test(
+    'cachedFresh provider response maps to dailyClose, never realTime',
+    () async {
+      final asset = _asset(market: 'us_stock', symbol: 'AAPL');
+      market.quotes['AAPL'] = MarketResponse(
+        data: Quote(
+          symbol: 'AAPL',
+          currency: 'USD',
+          price: Decimal.parse('250.00'),
+          asOf: clock.now(),
+        ),
+        freshness: DataFreshness.cachedFresh,
+        source: 'yfinance',
+        fetchedAt: clock.now(),
+      );
+
+      final r = await buildResolver().resolve(asset);
+
+      expect(r!.confidence, PriceConfidence.dailyClose);
+    },
+  );
 
   test('all live tiers fail + 30-day-old ledger → returned as stale', () async {
     final asset = _asset(market: 'us_stock', symbol: 'AAPL');
@@ -233,7 +240,11 @@ void main() {
     expect(r!.value, Decimal.parse('103.50'));
     expect(r.confidence, PriceConfidence.dailyClose);
     expect(r.source, startsWith('historical-bar:'));
-    expect(market.quoteCalls, 0, reason: 'live tier must be skipped for past asOf');
+    expect(
+      market.quoteCalls,
+      0,
+      reason: 'live tier must be skipped for past asOf',
+    );
   });
 
   test('manual-valuation assets skip the live tier entirely', () async {
@@ -251,51 +262,58 @@ void main() {
     expect(market.historyCalls, 0);
   });
 
-  test('resolveMany fires at most N quote calls and respects ledger tier', () async {
-    final assets = [
-      _asset(market: 'us_stock', symbol: 'AAPL'),
-      _asset(market: 'us_stock', symbol: 'GOOG'),
-      _asset(market: 'us_stock', symbol: 'MSFT'),
-    ];
-    // AAPL has fresh ledger row — should NOT hit provider.
-    await priceRepo.record(
-      unit: assets[0].id,
-      quoteCurrency: 'USD',
-      observedOn: clock.now().subtract(const Duration(minutes: 30)),
-      perUnit: Decimal.parse('200'),
-      source: 'manual',
-    );
-    market.quotes['GOOG'] = MarketResponse(
-      data: Quote(
-        symbol: 'GOOG',
-        currency: 'USD',
-        price: Decimal.parse('150'),
-        asOf: clock.now(),
-      ),
-      freshness: DataFreshness.live,
-      source: 'yfinance',
-      fetchedAt: clock.now(),
-    );
-    market.quotes['MSFT'] = MarketResponse(
-      data: Quote(
-        symbol: 'MSFT',
-        currency: 'USD',
-        price: Decimal.parse('400'),
-        asOf: clock.now(),
-      ),
-      freshness: DataFreshness.live,
-      source: 'yfinance',
-      fetchedAt: clock.now(),
-    );
+  test(
+    'resolveMany fires at most N quote calls and respects ledger tier',
+    () async {
+      final assets = [
+        _asset(market: 'us_stock', symbol: 'AAPL'),
+        _asset(market: 'us_stock', symbol: 'GOOG'),
+        _asset(market: 'us_stock', symbol: 'MSFT'),
+      ];
+      // AAPL has fresh ledger row — should NOT hit provider.
+      await priceRepo.record(
+        unit: assets[0].id,
+        quoteCurrency: 'USD',
+        observedOn: clock.now().subtract(const Duration(minutes: 30)),
+        perUnit: Decimal.parse('200'),
+        source: 'manual',
+      );
+      market.quotes['GOOG'] = MarketResponse(
+        data: Quote(
+          symbol: 'GOOG',
+          currency: 'USD',
+          price: Decimal.parse('150'),
+          asOf: clock.now(),
+        ),
+        freshness: DataFreshness.live,
+        source: 'yfinance',
+        fetchedAt: clock.now(),
+      );
+      market.quotes['MSFT'] = MarketResponse(
+        data: Quote(
+          symbol: 'MSFT',
+          currency: 'USD',
+          price: Decimal.parse('400'),
+          asOf: clock.now(),
+        ),
+        freshness: DataFreshness.live,
+        source: 'yfinance',
+        fetchedAt: clock.now(),
+      );
 
-    final out = await buildResolver().resolveMany(assets);
+      final out = await buildResolver().resolveMany(assets);
 
-    expect(out, hasLength(3));
-    expect(out[assets[0].id]!.confidence, PriceConfidence.manual);
-    expect(out[assets[1].id]!.value, Decimal.parse('150'));
-    expect(out[assets[2].id]!.value, Decimal.parse('400'));
-    expect(market.quoteCalls, 2, reason: 'AAPL served by ledger; GOOG+MSFT by provider');
-  });
+      expect(out, hasLength(3));
+      expect(out[assets[0].id]!.confidence, PriceConfidence.manual);
+      expect(out[assets[1].id]!.value, Decimal.parse('150'));
+      expect(out[assets[2].id]!.value, Decimal.parse('400'));
+      expect(
+        market.quoteCalls,
+        2,
+        reason: 'AAPL served by ledger; GOOG+MSFT by provider',
+      );
+    },
+  );
 
   test('live quote older than realTimeMaxAge downgrades to delayed', () async {
     final asset = _asset(market: 'us_stock', symbol: 'AAPL');

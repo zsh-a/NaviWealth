@@ -105,7 +105,10 @@ class FirePlanExtrasController extends StateNotifier<FirePlanExtras> {
         _kReserves,
         jsonEncode(extras.reserves.map((r) => r.toJson()).toList()),
       ),
-      _prefs.setString(_kRiskSettings, jsonEncode(extras.riskSettings.toJson())),
+      _prefs.setString(
+        _kRiskSettings,
+        jsonEncode(extras.riskSettings.toJson()),
+      ),
     ]);
   }
 
@@ -139,10 +142,13 @@ class FirePlanExtrasController extends StateNotifier<FirePlanExtras> {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! List) return const <FireReserve>[];
-      return decoded.whereType<Map<dynamic, dynamic>>().map((m) {
-        final coerced = Map<String, Object?>.from(m);
-        return FireReserve.fromJson(coerced, _bestEffortCurrency(coerced));
-      }).toList(growable: false);
+      return decoded
+          .whereType<Map<dynamic, dynamic>>()
+          .map((m) {
+            final coerced = Map<String, Object?>.from(m);
+            return FireReserve.fromJson(coerced, _bestEffortCurrency(coerced));
+          })
+          .toList(growable: false);
     } on FormatException {
       return const <FireReserve>[];
     }

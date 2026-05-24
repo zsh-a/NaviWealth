@@ -35,16 +35,16 @@ class EvidenceAnchor {
   final String? label;
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'entity_table': entityTable,
-        'entity_id': entityId,
-        if (label != null) 'label': label,
-      };
+    'entity_table': entityTable,
+    'entity_id': entityId,
+    if (label != null) 'label': label,
+  };
 
   factory EvidenceAnchor.fromJson(Map<String, Object?> json) => EvidenceAnchor(
-        entityTable: json['entity_table'] as String? ?? '',
-        entityId: json['entity_id'] as String? ?? '',
-        label: json['label'] as String?,
-      );
+    entityTable: json['entity_table'] as String? ?? '',
+    entityId: json['entity_id'] as String? ?? '',
+    label: json['label'] as String?,
+  );
 }
 
 /// Compose a tool result envelope that pairs [result] with a list of

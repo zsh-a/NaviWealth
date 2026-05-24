@@ -22,48 +22,40 @@ class ProposeOptionsProfileUpdateTool implements DeviceTool {
 
   @override
   Map<String, Object?> get inputSchema => const <String, Object?>{
-        'type': 'object',
-        'properties': <String, Object?>{
-          'mode': <String, Object?>{
-            'type': 'string',
-            'enum': ['conservative', 'balanced', 'aggressive', 'custom'],
-          },
-          'min_dte': <String, Object?>{
-            'type': 'integer',
-            'minimum': 0,
-            'maximum': 365,
-          },
-          'max_dte': <String, Object?>{
-            'type': 'integer',
-            'minimum': 0,
-            'maximum': 365,
-          },
-          'min_annualized_yield': <String, Object?>{
-            'type': 'number',
-            'minimum': 0,
-            'maximum': 1,
-          },
-          'min_open_interest': <String, Object?>{
-            'type': 'integer',
-            'minimum': 0,
-          },
-          'min_volume': <String, Object?>{
-            'type': 'integer',
-            'minimum': 0,
-          },
-          'max_capital_per_trade_pct': <String, Object?>{
-            'type': 'number',
-            'minimum': 0,
-            'maximum': 1,
-          },
-          'avoid_earnings': <String, Object?>{'type': 'boolean'},
-          'avoid_macro_events': <String, Object?>{'type': 'boolean'},
-          'only_on_approved_underlyings': <String, Object?>{
-            'type': 'boolean',
-          },
-          'note': <String, Object?>{'type': 'string'},
-        },
-      };
+    'type': 'object',
+    'properties': <String, Object?>{
+      'mode': <String, Object?>{
+        'type': 'string',
+        'enum': ['conservative', 'balanced', 'aggressive', 'custom'],
+      },
+      'min_dte': <String, Object?>{
+        'type': 'integer',
+        'minimum': 0,
+        'maximum': 365,
+      },
+      'max_dte': <String, Object?>{
+        'type': 'integer',
+        'minimum': 0,
+        'maximum': 365,
+      },
+      'min_annualized_yield': <String, Object?>{
+        'type': 'number',
+        'minimum': 0,
+        'maximum': 1,
+      },
+      'min_open_interest': <String, Object?>{'type': 'integer', 'minimum': 0},
+      'min_volume': <String, Object?>{'type': 'integer', 'minimum': 0},
+      'max_capital_per_trade_pct': <String, Object?>{
+        'type': 'number',
+        'minimum': 0,
+        'maximum': 1,
+      },
+      'avoid_earnings': <String, Object?>{'type': 'boolean'},
+      'avoid_macro_events': <String, Object?>{'type': 'boolean'},
+      'only_on_approved_underlyings': <String, Object?>{'type': 'boolean'},
+      'note': <String, Object?>{'type': 'string'},
+    },
+  };
 
   @override
   Future<Object?> invoke(
@@ -107,8 +99,7 @@ class ProposeOptionsProfileUpdateTool implements DeviceTool {
       'min_annualized_yield': current.minAnnualizedYield.toString(),
       'min_open_interest': current.minOpenInterest,
       'min_volume': current.minVolume,
-      'max_capital_per_trade_pct':
-          current.maxCapitalPerTradePct.toString(),
+      'max_capital_per_trade_pct': current.maxCapitalPerTradePct.toString(),
       'avoid_earnings': current.avoidEarnings,
       'avoid_macro_events': current.avoidMacroEvents,
       'only_on_approved_underlyings': current.onlyOnApprovedUnderlyings,

@@ -38,17 +38,16 @@ class AiJsonView extends StatelessWidget {
               Expanded(
                 child: Text(
                   label!,
-                  style: AiType.meta(context).copyWith(
-                    color: AiTone.muted(context),
-                  ),
+                  style: AiType.meta(
+                    context,
+                  ).copyWith(color: AiTone.muted(context)),
                 ),
               )
             else
               const Spacer(),
             FTappable(
-              onPress: () => Clipboard.setData(
-                ClipboardData(text: _pretty(value)),
-              ),
+              onPress: () =>
+                  Clipboard.setData(ClipboardData(text: _pretty(value))),
               child: Padding(
                 padding: const EdgeInsets.all(4),
                 child: Icon(
@@ -132,11 +131,7 @@ class _JsonNodeState extends State<_JsonNode> {
         count: v.length,
         children: [
           for (var i = 0; i < v.length; i++)
-            _JsonNode(
-              value: v[i],
-              depth: widget.depth + 1,
-              propertyKey: '$i',
-            ),
+            _JsonNode(value: v[i], depth: widget.depth + 1, propertyKey: '$i'),
         ],
       );
     }

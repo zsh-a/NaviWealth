@@ -38,18 +38,16 @@ void main() {
     });
 
     test('same amount + same calendar day with empty key → duplicate', () {
-      final r = classifyDedup(
-        _parsed(description: ''),
-        [_existing(description: '')],
-      );
+      final r = classifyDedup(_parsed(description: ''), [
+        _existing(description: ''),
+      ]);
       expect(r.verdict, DedupVerdict.duplicate);
     });
 
     test('same merchant + near amount within tolerance → likely', () {
-      final r = classifyDedup(
-        _parsed(amountMinor: -3800),
-        [_existing(amountMinor: '-3850')],
-      );
+      final r = classifyDedup(_parsed(amountMinor: -3800), [
+        _existing(amountMinor: '-3850'),
+      ]);
       expect(r.verdict, DedupVerdict.likelyDuplicate);
       expect(r.targetEntryId, 'e1');
     });
@@ -64,18 +62,16 @@ void main() {
     });
 
     test('outside the date window → newTxn', () {
-      final r = classifyDedup(
-        _parsed(at: DateTime.utc(2026, 5, 20)),
-        [_existing(at: DateTime.utc(2026, 5, 10))],
-      );
+      final r = classifyDedup(_parsed(at: DateTime.utc(2026, 5, 20)), [
+        _existing(at: DateTime.utc(2026, 5, 10)),
+      ]);
       expect(r.verdict, DedupVerdict.newTxn);
     });
 
     test('currency mismatch is never a duplicate', () {
-      final r = classifyDedup(
-        _parsed(currency: 'USD'),
-        [_existing(currency: 'CNY')],
-      );
+      final r = classifyDedup(_parsed(currency: 'USD'), [
+        _existing(currency: 'CNY'),
+      ]);
       expect(r.verdict, DedupVerdict.newTxn);
     });
 

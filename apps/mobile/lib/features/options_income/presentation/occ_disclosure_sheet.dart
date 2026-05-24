@@ -38,15 +38,13 @@ class _OccDisclosureSheetState extends ConsumerState<_OccDisclosureSheet> {
       final repo = await ref.read(
         optionsStrategyProfileRepositoryProvider.future,
       );
-      final existing = await ref.read(
-        optionsStrategyProfileProvider.future,
-      );
+      final existing = await ref.read(optionsStrategyProfileProvider.future);
       // First-run: seed a Balanced profile with the disclosure timestamp
       // set. Subsequent acks (e.g. legal text revision) re-upsert with
       // the same body.
-      final profile = (existing ??
-              defaultProfileForMode(OptionsStrategyMode.balanced))
-          .copyWith(riskDisclosureAckAt: DateTime.now().toUtc());
+      final profile =
+          (existing ?? defaultProfileForMode(OptionsStrategyMode.balanced))
+              .copyWith(riskDisclosureAckAt: DateTime.now().toUtc());
       await repo.upsert(profile);
       ref.invalidate(optionsStrategyProfileProvider);
       if (!mounted) return;
@@ -91,9 +89,7 @@ class _OccDisclosureSheetState extends ConsumerState<_OccDisclosureSheet> {
           // the help-center landing.
           Text(
             l10n.incomePlannerOccLearnMore,
-            style: context.theme.typography.xs.copyWith(
-              color: colors.primary,
-            ),
+            style: context.theme.typography.xs.copyWith(color: colors.primary),
           ),
         ],
       ),

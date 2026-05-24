@@ -49,7 +49,7 @@ const String kEventTradeExpired = 'trade_expired';
 
 class TradeJournalMemoryIndexer {
   TradeJournalMemoryIndexer({DateTime Function()? clock})
-      : _clock = clock ?? DateTime.now;
+    : _clock = clock ?? DateTime.now;
 
   final DateTime Function() _clock;
 
@@ -154,16 +154,18 @@ class TradeJournalMemoryIndexer {
   }
 
   String _eventType(TradeJournalStatus s) => switch (s) {
-        TradeJournalStatus.open => kEventTradeOpened,
-        TradeJournalStatus.closed => kEventTradeClosed,
-        TradeJournalStatus.assigned => kEventTradeAssigned,
-        TradeJournalStatus.expired => kEventTradeExpired,
-      };
+    TradeJournalStatus.open => kEventTradeOpened,
+    TradeJournalStatus.closed => kEventTradeClosed,
+    TradeJournalStatus.assigned => kEventTradeAssigned,
+    TradeJournalStatus.expired => kEventTradeExpired,
+  };
 
   String _eventSummary(TradeJournalEntry entry, String type) {
-    final base = '${entry.strategy.wire} on ${entry.symbol} (${entry.optionSymbol})';
-    final whenIso =
-        (entry.closedAt ?? entry.openedAt).toUtc().toIso8601String();
+    final base =
+        '${entry.strategy.wire} on ${entry.symbol} (${entry.optionSymbol})';
+    final whenIso = (entry.closedAt ?? entry.openedAt)
+        .toUtc()
+        .toIso8601String();
     switch (type) {
       case kEventTradeOpened:
         return '$base opened $whenIso for credit ${entry.entryCredit} ${entry.currency}.';
@@ -200,11 +202,11 @@ class TradeJournalMemoryIndexer {
       '${entry.strategy.wire} ${entry.optionSymbol} opened ${entry.openedAt.toUtc().toIso8601String()} for credit ${entry.entryCredit} ${entry.currency}.';
 
   Set<String> _entitiesFor(TradeJournalEntry entry) => <String>{
-        entry.symbol,
-        entry.optionSymbol,
-        entry.strategy.wire,
-        entry.currency,
-      };
+    entry.symbol,
+    entry.optionSymbol,
+    entry.strategy.wire,
+    entry.currency,
+  };
 
   double _eventImportance(TradeJournalEntry entry) {
     switch (entry.status) {
@@ -246,8 +248,9 @@ class TradeJournalMemoryIndexer {
 /// Subscribes at the repo layer (not the autoDispose stream provider)
 /// so subscription lifecycle is owned here, not by transient UI
 /// consumers.
-final tradeJournalMemoryIndexerProvider =
-    Provider<TradeJournalMemoryIndexer>((ref) {
+final tradeJournalMemoryIndexerProvider = Provider<TradeJournalMemoryIndexer>((
+  ref,
+) {
   final indexer = TradeJournalMemoryIndexer();
   var running = false;
 

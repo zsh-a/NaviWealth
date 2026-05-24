@@ -336,5 +336,4 @@ class PhysicalAssetRepository {
     );
     await jeRepo.create(entry: build.entry, postings: build.postings);
   }
-
 }

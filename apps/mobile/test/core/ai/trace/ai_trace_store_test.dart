@@ -11,10 +11,7 @@ void main() {
       await store.append(_trace('c', '2026-05-10T10:02:00Z'));
 
       final recent = await store.recent();
-      expect(
-        recent.map((t) => t.requestId).toList(),
-        <String>['c', 'b', 'a'],
-      );
+      expect(recent.map((t) => t.requestId).toList(), <String>['c', 'b', 'a']);
     });
 
     test('recent respects limit', () async {
@@ -34,25 +31,26 @@ void main() {
       }
       expect(store.debugLength, 3);
       final recent = await store.recent();
-      expect(
-        recent.map((t) => t.requestId).toList(),
-        <String>['t5', 't4', 't3'],
-      );
+      expect(recent.map((t) => t.requestId).toList(), <String>[
+        't5',
+        't4',
+        't3',
+      ]);
     });
 
-    test('pruneOlderThan drops only entries strictly older than cutoff', () async {
-      final store = InMemoryAiTraceStore();
-      await store.append(_trace('old', '2026-04-01T00:00:00Z'));
-      await store.append(_trace('mid', '2026-05-01T00:00:00Z'));
-      await store.append(_trace('new', '2026-05-09T00:00:00Z'));
+    test(
+      'pruneOlderThan drops only entries strictly older than cutoff',
+      () async {
+        final store = InMemoryAiTraceStore();
+        await store.append(_trace('old', '2026-04-01T00:00:00Z'));
+        await store.append(_trace('mid', '2026-05-01T00:00:00Z'));
+        await store.append(_trace('new', '2026-05-09T00:00:00Z'));
 
-      await store.pruneOlderThan(DateTime.utc(2026, 5, 1));
-      final recent = await store.recent();
-      expect(
-        recent.map((t) => t.requestId).toSet(),
-        <String>{'mid', 'new'},
-      );
-    });
+        await store.pruneOlderThan(DateTime.utc(2026, 5, 1));
+        final recent = await store.recent();
+        expect(recent.map((t) => t.requestId).toSet(), <String>{'mid', 'new'});
+      },
+    );
 
     test('recent on empty store is empty list, not null', () async {
       final store = InMemoryAiTraceStore();

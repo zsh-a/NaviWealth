@@ -30,10 +30,7 @@ final corporateActionsServiceProvider = Provider<CorporateActionsService>((
     clock: const market_clock.SystemClock(),
     metrics: ref.watch(marketMetricsProvider),
   );
-  return CorporateActionsService(
-    http: http,
-    logger: ref.watch(loggerProvider),
-  );
+  return CorporateActionsService(http: http, logger: ref.watch(loggerProvider));
 });
 
 /// Per-symbol corporate-action events (`docs/roadmap-next.md` §3.5).
@@ -47,9 +44,9 @@ final corporateActionsServiceProvider = Provider<CorporateActionsService>((
 /// Tests override this provider directly to inject canned events.
 final corporateActionEventsProvider = FutureProvider.autoDispose
     .family<List<CorporateActionEvent>, String>((ref, symbol) {
-  final service = ref.watch(corporateActionsServiceProvider);
-  return service.getForSymbol(symbol);
-});
+      final service = ref.watch(corporateActionsServiceProvider);
+      return service.getForSymbol(symbol);
+    });
 
 /// Filtered timeline projection for [symbol] over the next 90 days.
 /// Centralises the `buildEventTimeline` call so callers don't thread
@@ -61,11 +58,9 @@ final corporateActionEventsProvider = FutureProvider.autoDispose
 /// because corporate-action data is best-effort, not load-bearing.
 final upcomingEventsForSymbolProvider = Provider.autoDispose
     .family<AsyncValue<List<CorporateActionEvent>>, String>((ref, symbol) {
-  final eventsAsync = ref.watch(corporateActionEventsProvider(symbol));
-  return eventsAsync.whenData(
-    (raw) => buildEventTimeline(
-      events: raw,
-      watchedSymbols: <String>{symbol},
-    ),
-  );
-});
+      final eventsAsync = ref.watch(corporateActionEventsProvider(symbol));
+      return eventsAsync.whenData(
+        (raw) =>
+            buildEventTimeline(events: raw, watchedSymbols: <String>{symbol}),
+      );
+    });

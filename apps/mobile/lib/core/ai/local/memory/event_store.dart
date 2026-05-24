@@ -58,10 +58,12 @@ class SqliteEventStore implements EventStore {
 
   @override
   Future<EventRecord?> readEvent(String id) async {
-    final row = await _db.customSelect(
-      'SELECT * FROM events WHERE id = ?',
-      variables: [Variable.withString(id)],
-    ).getSingleOrNull();
+    final row = await _db
+        .customSelect(
+          'SELECT * FROM events WHERE id = ?',
+          variables: [Variable.withString(id)],
+        )
+        .getSingleOrNull();
     if (row == null) return null;
     return _rowToEvent(row);
   }
@@ -84,8 +86,10 @@ class SqliteEventStore implements EventStore {
       vars.add(Variable.withString(source));
     }
     if (typeFilter != null && typeFilter.isNotEmpty) {
-      final placeholders =
-          List<String>.filled(typeFilter.length, '?').join(', ');
+      final placeholders = List<String>.filled(
+        typeFilter.length,
+        '?',
+      ).join(', ');
       filters.add('type IN ($placeholders)');
       for (final t in typeFilter) {
         vars.add(Variable.withString(t));
@@ -103,11 +107,13 @@ class SqliteEventStore implements EventStore {
         ? (limit * 5).clamp(50, 500)
         : limit;
 
-    final rows = await _db.customSelect(
-      'SELECT * FROM events WHERE ${filters.join(' AND ')} '
-      'ORDER BY timestamp DESC LIMIT $pullLimit',
-      variables: vars,
-    ).get();
+    final rows = await _db
+        .customSelect(
+          'SELECT * FROM events WHERE ${filters.join(' AND ')} '
+          'ORDER BY timestamp DESC LIMIT $pullLimit',
+          variables: vars,
+        )
+        .get();
 
     final out = <EventRecord>[];
     for (final row in rows) {
@@ -132,18 +138,17 @@ class SqliteEventStore implements EventStore {
 }
 
 EventRecord _rowToEvent(QueryRow row) => EventRecord(
-      id: row.read<String>('id'),
-      type: row.read<String>('type'),
-      timestamp: DateTime.fromMillisecondsSinceEpoch(
-        row.read<int>('timestamp'),
-        isUtc: true,
-      ),
-      source: row.read<String>('source'),
-      ownerUserId: row.read<String>('owner_user_id'),
-      title: row.read<String?>('title'),
-      summary: row.read<String>('summary'),
-      payload: EventRecord.decodePayload(row.read<String>('payload_json')),
-      entities:
-          EventRecord.decodeEntities(row.read<String>('entities_json')),
-      importance: row.read<double>('importance'),
-    );
+  id: row.read<String>('id'),
+  type: row.read<String>('type'),
+  timestamp: DateTime.fromMillisecondsSinceEpoch(
+    row.read<int>('timestamp'),
+    isUtc: true,
+  ),
+  source: row.read<String>('source'),
+  ownerUserId: row.read<String>('owner_user_id'),
+  title: row.read<String?>('title'),
+  summary: row.read<String>('summary'),
+  payload: EventRecord.decodePayload(row.read<String>('payload_json')),
+  entities: EventRecord.decodeEntities(row.read<String>('entities_json')),
+  importance: row.read<double>('importance'),
+);

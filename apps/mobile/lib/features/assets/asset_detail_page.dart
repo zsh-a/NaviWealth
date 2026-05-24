@@ -77,7 +77,10 @@ class AssetDetailPage extends ConsumerWidget {
               AssetType.crypto ||
               AssetType.mutualFund => EquityAssetDetailPage(assetId: asset.id),
               _ => FScaffold(
-                header: FHeader.nested(title: Text(asset.name ?? asset.symbol), prefixes: [backHeaderAction(context)]),
+                header: FHeader.nested(
+                  title: Text(asset.name ?? asset.symbol),
+                  prefixes: [backHeaderAction(context)],
+                ),
                 childPad: false,
                 child: Material(
                   color: Colors.transparent,

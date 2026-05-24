@@ -72,8 +72,7 @@ class GetAnomalyFlagsTool implements DeviceTool {
       // Backend only honours the three enum values; anything else =
       // no filter (matches `.filter(matches!(...))`).
       final min = _rank.containsKey(severityMin) ? severityMin : null;
-      final passes =
-          min == null || (_rank[severity] ?? 0) >= (_rank[min] ?? 0);
+      final passes = min == null || (_rank[severity] ?? 0) >= (_rank[min] ?? 0);
       if (passes) {
         flags.add(<String, Object?>{
           'id': upload.id,

@@ -98,6 +98,5 @@ class FireAction {
       other.note == note;
 
   @override
-  int get hashCode =>
-      Object.hash(kind, severity, amount, months, pct, note);
+  int get hashCode => Object.hash(kind, severity, amount, months, pct, note);
 }

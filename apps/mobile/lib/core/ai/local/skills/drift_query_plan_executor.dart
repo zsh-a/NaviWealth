@@ -63,11 +63,13 @@ class DriftQueryPlanExecutor implements QueryPlanExecutor {
     }
     final from = DateTime.tryParse(plan.range.fromInclusive);
     final to = DateTime.tryParse(plan.range.toExclusive);
-    final points = trend.points.where((p) {
-      if (from != null && p.asOf.isBefore(from)) return false;
-      if (to != null && !p.asOf.isBefore(to)) return false;
-      return true;
-    }).toList(growable: false);
+    final points = trend.points
+        .where((p) {
+          if (from != null && p.asOf.isBefore(from)) return false;
+          if (to != null && !p.asOf.isBefore(to)) return false;
+          return true;
+        })
+        .toList(growable: false);
     final rows = points
         .map(
           (p) => QueryRow(
@@ -92,9 +94,7 @@ class DriftQueryPlanExecutor implements QueryPlanExecutor {
               currency: trend.baseCurrency,
               rowCount: rows.length,
             ),
-      note: rows.isEmpty
-          ? 'no net-worth samples in requested range'
-          : null,
+      note: rows.isEmpty ? 'no net-worth samples in requested range' : null,
     );
   }
 

@@ -37,8 +37,7 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
       // a Docker container locally) gets the expected `goldens/*.png`
       // files. Without the `autoUpdateGoldenFiles` clause, golden_toolkit
       // would short-circuit the matcher entirely and never emit a file.
-      skipGoldenAssertion: () =>
-          !Platform.isLinux && !autoUpdateGoldenFiles,
+      skipGoldenAssertion: () => !Platform.isLinux && !autoUpdateGoldenFiles,
       enableRealShadows: true,
     ),
   );

@@ -62,8 +62,10 @@ void main(List<String> args) {
   }
 
   if (violations.isEmpty && stale.isEmpty) {
-    stdout.writeln('cn-literal-check: ok (${scanned.length} files scanned, '
-        '${allowlist.length} allowlisted)');
+    stdout.writeln(
+      'cn-literal-check: ok (${scanned.length} files scanned, '
+      '${allowlist.length} allowlisted)',
+    );
     exit(0);
   }
 

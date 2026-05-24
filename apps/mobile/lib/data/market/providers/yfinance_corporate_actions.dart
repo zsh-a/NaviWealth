@@ -67,7 +67,11 @@ Map<String, Object?>? _firstResult(Map<String, Object?> body) {
   return first.cast<String, Object?>();
 }
 
-CorporateActionEvent? _parseDividend(Object? raw, String symbol, String currency) {
+CorporateActionEvent? _parseDividend(
+  Object? raw,
+  String symbol,
+  String currency,
+) {
   if (raw is! Map) return null;
   final date = _epochSecondsAsUtc(raw['date']);
   final amount = _decimal(raw['amount']);

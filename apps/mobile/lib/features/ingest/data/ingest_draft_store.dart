@@ -22,8 +22,7 @@ class IngestDraftStore {
 
   String get _owner => ownerUserId ?? '';
 
-  final StreamController<void> _changes =
-      StreamController<void>.broadcast();
+  final StreamController<void> _changes = StreamController<void>.broadcast();
 
   void _notify() {
     if (!_changes.isClosed) _changes.add(null);
@@ -59,9 +58,7 @@ class IngestDraftStore {
             Variable.withString(d.status.wire),
             d.expiresAt == null
                 ? const Variable<String>(null)
-                : Variable.withString(
-                    d.expiresAt!.toUtc().toIso8601String(),
-                  ),
+                : Variable.withString(d.expiresAt!.toUtc().toIso8601String()),
           ],
         );
       }
@@ -73,16 +70,18 @@ class IngestDraftStore {
     DraftStatus status, {
     int limit = 200,
   }) async {
-    final rows = await _db.customSelect(
-      'SELECT * FROM ingest_drafts '
-      'WHERE owner_user_id = ?1 AND status = ?2 '
-      'ORDER BY created_at_iso DESC LIMIT ?3',
-      variables: [
-        Variable.withString(_owner),
-        Variable.withString(status.wire),
-        Variable.withInt(limit),
-      ],
-    ).get();
+    final rows = await _db
+        .customSelect(
+          'SELECT * FROM ingest_drafts '
+          'WHERE owner_user_id = ?1 AND status = ?2 '
+          'ORDER BY created_at_iso DESC LIMIT ?3',
+          variables: [
+            Variable.withString(_owner),
+            Variable.withString(status.wire),
+            Variable.withInt(limit),
+          ],
+        )
+        .get();
     return rows.map(_rowToDraft).toList(growable: false);
   }
 
@@ -97,14 +96,16 @@ class IngestDraftStore {
   }
 
   Future<int> countByStatus(DraftStatus status) async {
-    final rows = await _db.customSelect(
-      'SELECT COUNT(*) AS n FROM ingest_drafts '
-      'WHERE owner_user_id = ?1 AND status = ?2',
-      variables: [
-        Variable.withString(_owner),
-        Variable.withString(status.wire),
-      ],
-    ).get();
+    final rows = await _db
+        .customSelect(
+          'SELECT COUNT(*) AS n FROM ingest_drafts '
+          'WHERE owner_user_id = ?1 AND status = ?2',
+          variables: [
+            Variable.withString(_owner),
+            Variable.withString(status.wire),
+          ],
+        )
+        .get();
     if (rows.isEmpty) return 0;
     return rows.first.read<int>('n');
   }

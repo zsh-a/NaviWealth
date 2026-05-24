@@ -114,9 +114,7 @@ WealthAggregation _byCategory(
       ),
     );
   }
-  buckets.sort(
-    (a, b) => b.valueInBase.amount.compareTo(a.valueInBase.amount),
-  );
+  buckets.sort((a, b) => b.valueInBase.amount.compareTo(a.valueInBase.amount));
   return WealthAggregation(
     perspective: WealthPerspective.byCategory,
     buckets: List.unmodifiable(buckets),
@@ -136,24 +134,25 @@ WealthAggregation _byCurrency(DashboardSnapshot snapshot) {
       // via data corruption; the [_byCategory] aggregator already
       // skipped the liability bucket above so anything here is an asset.
       final currency = item.nativeCurrency.toUpperCase();
-      bucketTotals[currency] = (bucketTotals[currency] ?? Decimal.zero) +
-          item.valueInBase.amount;
+      bucketTotals[currency] =
+          (bucketTotals[currency] ?? Decimal.zero) + item.valueInBase.amount;
       bucketCounts[currency] = (bucketCounts[currency] ?? 0) + 1;
       total += item.valueInBase.amount;
     }
   }
-  final buckets = bucketTotals.entries
-      .where((entry) => entry.value != Decimal.zero)
-      .map(
-        (entry) => WealthBucket(
-          key: entry.key,
-          label: entry.key,
-          valueInBase: Money(entry.value, base),
-          itemCount: bucketCounts[entry.key] ?? 0,
-        ),
-      )
-      .toList()
-    ..sort((a, b) => b.valueInBase.amount.compareTo(a.valueInBase.amount));
+  final buckets =
+      bucketTotals.entries
+          .where((entry) => entry.value != Decimal.zero)
+          .map(
+            (entry) => WealthBucket(
+              key: entry.key,
+              label: entry.key,
+              valueInBase: Money(entry.value, base),
+              itemCount: bucketCounts[entry.key] ?? 0,
+            ),
+          )
+          .toList()
+        ..sort((a, b) => b.valueInBase.amount.compareTo(a.valueInBase.amount));
   return WealthAggregation(
     perspective: WealthPerspective.byCurrency,
     buckets: List.unmodifiable(buckets),

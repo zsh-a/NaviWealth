@@ -139,10 +139,7 @@ class _Divider extends StatelessWidget {
 }
 
 class _WindowSlider extends StatefulWidget {
-  const _WindowSlider({
-    required this.windowMonths,
-    required this.onChanged,
-  });
+  const _WindowSlider({required this.windowMonths, required this.onChanged});
 
   final int windowMonths;
   final ValueChanged<int> onChanged;

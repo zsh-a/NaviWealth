@@ -73,9 +73,7 @@ Future<Widget> _wrap({
         (ref) => Stream<List<FxRate>>.value(const []),
       ),
       allAssetsStreamProvider.overrideWith((ref) => Stream.value(const [])),
-      allAccountsStreamProvider.overrideWith(
-        (ref) => Stream.value(const []),
-      ),
+      allAccountsStreamProvider.overrideWith((ref) => Stream.value(const [])),
       journalEntriesWithPostingsStreamProvider.overrideWith(
         (ref) => Stream.value(const <JournalEntryWithPostings>[]),
       ),

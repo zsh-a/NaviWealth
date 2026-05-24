@@ -39,34 +39,30 @@ MemoryRecord _mem({
   String? source,
   Set<String> entities = const {},
   double importance = 0.6,
-}) =>
-    MemoryRecord(
-      id: id,
-      kind: kind,
-      ownerUserId: _kOwner,
-      scope: scope,
-      source: source,
-      title: title.isEmpty ? id : title,
-      summary: summary.isEmpty ? id : summary,
-      payload: const {},
-      entities: entities,
-      importance: importance,
-      confidence: 0.85,
-      createdAt: DateTime.utc(2026, 5, 24),
-      updatedAt: DateTime.utc(2026, 5, 24),
-    );
+}) => MemoryRecord(
+  id: id,
+  kind: kind,
+  ownerUserId: _kOwner,
+  scope: scope,
+  source: source,
+  title: title.isEmpty ? id : title,
+  summary: summary.isEmpty ? id : summary,
+  payload: const {},
+  entities: entities,
+  importance: importance,
+  confidence: 0.85,
+  createdAt: DateTime.utc(2026, 5, 24),
+  updatedAt: DateTime.utc(2026, 5, 24),
+);
 
 ProviderContainer _container(MemoryRuntime runtime) => ProviderContainer(
-      overrides: [
-        memoryRuntimeProvider.overrideWith((ref) async => runtime),
-        currentUserIdProvider.overrideWithValue(() async => _kOwner),
-      ],
-    );
+  overrides: [
+    memoryRuntimeProvider.overrideWith((ref) async => runtime),
+    currentUserIdProvider.overrideWithValue(() async => _kOwner),
+  ],
+);
 
-Future<T> _withRef<T>(
-  ProviderContainer c,
-  Future<T> Function(Ref ref) body,
-) {
+Future<T> _withRef<T>(ProviderContainer c, Future<T> Function(Ref ref) body) {
   final probe = FutureProvider<T>((ref) => body(ref));
   c.listen(probe, (_, _) {});
   return c.read(probe.future);
@@ -165,8 +161,10 @@ void main() {
         'source': 'options_trade_journal',
       });
       final hits = out['hits'] as List<Object?>;
-      expect(hits.map((h) => (h as Map)['source']),
-          everyElement('options_trade_journal'));
+      expect(
+        hits.map((h) => (h as Map)['source']),
+        everyElement('options_trade_journal'),
+      );
     });
 
     test('kind filter restricts hits', () async {
@@ -190,8 +188,7 @@ void main() {
         'kind': 'procedural',
       });
       final hits = out['hits'] as List<Object?>;
-      expect(hits.map((h) => (h as Map)['kind']),
-          everyElement('procedural'));
+      expect(hits.map((h) => (h as Map)['kind']), everyElement('procedural'));
     });
 
     test('top_k is clamped to [1, 20]', () async {

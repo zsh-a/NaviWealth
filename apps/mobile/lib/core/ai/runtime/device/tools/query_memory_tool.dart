@@ -35,32 +35,31 @@ class QueryMemoryTool implements DeviceTool {
 
   @override
   Map<String, Object?> get inputSchema => const <String, Object?>{
-        'type': 'object',
-        'required': <String>['query'],
-        'properties': <String, Object?>{
-          'query': <String, Object?>{
-            'type': 'string',
-            'description': '自然语言查询;会被本地 embedder 编码后参与混合打分。',
-          },
-          'kind': <String, Object?>{
-            'type': 'string',
-            'enum': ['event', 'semantic', 'episodic', 'procedural'],
-            'description': '只检索此 kind 的 memory。不传则跨 kind。',
-          },
-          'source': <String, Object?>{
-            'type': 'string',
-            'description':
-                '只检索特定来源标签(例如 `options_trade_journal`)。不传则跨域。',
-          },
-          'top_k': <String, Object?>{
-            'type': 'integer',
-            'minimum': 1,
-            'maximum': 20,
-            'description': '返回的最大命中数,默认 5。',
-          },
-        },
-        'additionalProperties': false,
-      };
+    'type': 'object',
+    'required': <String>['query'],
+    'properties': <String, Object?>{
+      'query': <String, Object?>{
+        'type': 'string',
+        'description': '自然语言查询;会被本地 embedder 编码后参与混合打分。',
+      },
+      'kind': <String, Object?>{
+        'type': 'string',
+        'enum': ['event', 'semantic', 'episodic', 'procedural'],
+        'description': '只检索此 kind 的 memory。不传则跨 kind。',
+      },
+      'source': <String, Object?>{
+        'type': 'string',
+        'description': '只检索特定来源标签(例如 `options_trade_journal`)。不传则跨域。',
+      },
+      'top_k': <String, Object?>{
+        'type': 'integer',
+        'minimum': 1,
+        'maximum': 20,
+        'description': '返回的最大命中数,默认 5。',
+      },
+    },
+    'additionalProperties': false,
+  };
 
   @override
   Future<Object?> invoke(
@@ -107,33 +106,33 @@ class QueryMemoryTool implements DeviceTool {
       if (hits.isEmpty)
         'guidance':
             '记忆库里没有匹配条目。可能是该来源还没有索引,或者用户从未录入过相关内容;'
-                '请避免基于此结果做出"用户从未做过 X"的强断言。',
+            '请避免基于此结果做出"用户从未做过 X"的强断言。',
     };
   }
 
   static Map<String, Object?> _hitToWire(MemoryHit h) => <String, Object?>{
-        'id': h.record.id,
-        'kind': h.record.kind.wire,
-        'source': h.record.source ?? '',
-        'title': h.record.title,
-        'excerpt': _excerpt(h.record.summary),
-        'score': h.score,
-        if (h.semanticSim != null) 'semantic_sim': h.semanticSim,
-        'entity_overlap': h.entityOverlap,
-        'recency': h.recency,
-        'importance': h.record.importance,
-        'confidence': h.record.confidence,
-      };
+    'id': h.record.id,
+    'kind': h.record.kind.wire,
+    'source': h.record.source ?? '',
+    'title': h.record.title,
+    'excerpt': _excerpt(h.record.summary),
+    'score': h.score,
+    if (h.semanticSim != null) 'semantic_sim': h.semanticSim,
+    'entity_overlap': h.entityOverlap,
+    'recency': h.recency,
+    'importance': h.record.importance,
+    'confidence': h.record.confidence,
+  };
 
   /// Keep [SemanticHit] reachable so legacy consumers that already
   /// know the shape can still import it.
   // ignore: unused_element
   static SemanticHit _legacyHit(MemoryHit h) => SemanticHit(
-        source: h.record.source ?? '',
-        title: h.record.title,
-        excerpt: _excerpt(h.record.summary),
-        score: h.score,
-      );
+    source: h.record.source ?? '',
+    title: h.record.title,
+    excerpt: _excerpt(h.record.summary),
+    score: h.score,
+  );
 
   static String _excerpt(String s) {
     const window = 120;

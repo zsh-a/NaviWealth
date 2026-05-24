@@ -79,37 +79,43 @@ Asset _asset({
 );
 
 void main() {
-  test('triggerNow warms quotable assets and skips manual-valuation types',
-      () async {
-    final db = makeTestDatabase();
-    addTearDown(db.close);
-    final market = _RecordingMarket();
-    final fxRepo = FxRateRepository(db: db);
-    final fxSync = FxRateSyncService(marketData: market, fxRepo: fxRepo);
+  test(
+    'triggerNow warms quotable assets and skips manual-valuation types',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final market = _RecordingMarket();
+      final fxRepo = FxRateRepository(db: db);
+      final fxSync = FxRateSyncService(marketData: market, fxRepo: fxRepo);
 
-    final coordinator = PriceSyncCoordinator(
-      market: market,
-      fxSync: fxSync,
-      clock: FakeClock(),
-      heldAssets: () async => [
-        _asset(symbol: 'AAPL', type: AssetType.stock),
-        _asset(symbol: 'BTC-USD', type: AssetType.crypto, market: 'crypto'),
-        _asset(symbol: 'cash-cny', type: AssetType.cash, market: 'unknown'),
-        _asset(symbol: 'house-1', type: AssetType.realEstate, market: 'unknown'),
-      ],
-      fxInputs: () async =>
-          const FxSyncInputs(baseCurrency: 'USD', currencies: {'USD'}),
-    );
+      final coordinator = PriceSyncCoordinator(
+        market: market,
+        fxSync: fxSync,
+        clock: FakeClock(),
+        heldAssets: () async => [
+          _asset(symbol: 'AAPL', type: AssetType.stock),
+          _asset(symbol: 'BTC-USD', type: AssetType.crypto, market: 'crypto'),
+          _asset(symbol: 'cash-cny', type: AssetType.cash, market: 'unknown'),
+          _asset(
+            symbol: 'house-1',
+            type: AssetType.realEstate,
+            market: 'unknown',
+          ),
+        ],
+        fxInputs: () async =>
+            const FxSyncInputs(baseCurrency: 'USD', currencies: {'USD'}),
+      );
 
-    await coordinator.triggerNow();
+      await coordinator.triggerNow();
 
-    // Cash + real estate are skipped; only AAPL + BTC-USD warmed.
-    expect(market.quotedSymbols, contains('AAPL'));
-    expect(market.quotedSymbols, contains('BTC-USD'));
-    expect(market.quotedSymbols, isNot(contains('cash-cny')));
-    expect(market.quotedSymbols, isNot(contains('house-1')));
-    expect(coordinator.lastSuccessAt, isNotNull);
-  });
+      // Cash + real estate are skipped; only AAPL + BTC-USD warmed.
+      expect(market.quotedSymbols, contains('AAPL'));
+      expect(market.quotedSymbols, contains('BTC-USD'));
+      expect(market.quotedSymbols, isNot(contains('cash-cny')));
+      expect(market.quotedSymbols, isNot(contains('house-1')));
+      expect(coordinator.lastSuccessAt, isNotNull);
+    },
+  );
 
   test('concurrent triggerNow calls share the same in-flight cycle', () async {
     final db = makeTestDatabase();
@@ -136,40 +142,42 @@ void main() {
     expect(market.quotedSymbols, ['AAPL']);
   });
 
-  test('Phase E: writes one auto:<provider> snapshot per asset per UTC day',
-      () async {
-    final db = makeTestDatabase();
-    addTearDown(db.close);
-    final market = _RecordingMarket();
-    final fxRepo = FxRateRepository(db: db);
-    final fxSync = FxRateSyncService(marketData: market, fxRepo: fxRepo);
-    final outbox = InMemoryOutboxStore();
-    final priceRepo = PriceRepository(
-      db: db,
-      outbox: outbox,
-      stamper: makeStubStamper(),
-    );
-    final asset = _asset(symbol: 'AAPL', type: AssetType.stock);
-    final coordinator = PriceSyncCoordinator(
-      market: market,
-      fxSync: fxSync,
-      prices: priceRepo,
-      writeDailySnapshots: () => true,
-      clock: FakeClock(DateTime.utc(2026, 5, 14, 12)),
-      heldAssets: () async => [asset],
-      fxInputs: () async => null,
-    );
+  test(
+    'Phase E: writes one auto:<provider> snapshot per asset per UTC day',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final market = _RecordingMarket();
+      final fxRepo = FxRateRepository(db: db);
+      final fxSync = FxRateSyncService(marketData: market, fxRepo: fxRepo);
+      final outbox = InMemoryOutboxStore();
+      final priceRepo = PriceRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(),
+      );
+      final asset = _asset(symbol: 'AAPL', type: AssetType.stock);
+      final coordinator = PriceSyncCoordinator(
+        market: market,
+        fxSync: fxSync,
+        prices: priceRepo,
+        writeDailySnapshots: () => true,
+        clock: FakeClock(DateTime.utc(2026, 5, 14, 12)),
+        heldAssets: () async => [asset],
+        fxInputs: () async => null,
+      );
 
-    await coordinator.triggerNow();
-    final firstBatch = outbox.queued;
-    expect(firstBatch, hasLength(1));
-    expect(firstBatch.single.table, 'prices');
+      await coordinator.triggerNow();
+      final firstBatch = outbox.queued;
+      expect(firstBatch, hasLength(1));
+      expect(firstBatch.single.table, 'prices');
 
-    // Second cycle on same UTC day → no new row written.
-    await coordinator.triggerNow();
-    final secondBatch = outbox.queued;
-    expect(secondBatch, hasLength(1), reason: 'idempotent per day');
-  });
+      // Second cycle on same UTC day → no new row written.
+      await coordinator.triggerNow();
+      final secondBatch = outbox.queued;
+      expect(secondBatch, hasLength(1), reason: 'idempotent per day');
+    },
+  );
 
   test('Phase E: skipped when toggle is OFF', () async {
     final db = makeTestDatabase();

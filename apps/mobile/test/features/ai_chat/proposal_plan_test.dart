@@ -107,8 +107,11 @@ void main() {
           'summary_zh': 's',
           'payload': <String, Object?>{},
         });
-        expect(plan, isA<ReadyProposalPlan>(),
-            reason: 'kind $wire should parse');
+        expect(
+          plan,
+          isA<ReadyProposalPlan>(),
+          reason: 'kind $wire should parse',
+        );
         expect((plan! as ReadyProposalPlan).kind, isNot(ProposalKind.unknown));
       }
     });

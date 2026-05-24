@@ -41,8 +41,7 @@ class AiPill extends StatelessWidget {
       AiPillState.error => AiTone.error(context),
     };
     final Color bg = switch (state) {
-      AiPillState.neutral =>
-        AiTone.surfaceTint(context).withValues(alpha: 0.6),
+      AiPillState.neutral => AiTone.surfaceTint(context).withValues(alpha: 0.6),
       AiPillState.selected => tone.withValues(alpha: 0.16),
       AiPillState.error => tone.withValues(alpha: 0.12),
     };
@@ -68,14 +67,8 @@ class AiPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (leading != null) ...[
-            leading!,
-            const SizedBox(width: 6),
-          ],
-          Text(
-            label,
-            style: AiType.label(context).copyWith(color: fg),
-          ),
+          if (leading != null) ...[leading!, const SizedBox(width: 6)],
+          Text(label, style: AiType.label(context).copyWith(color: fg)),
         ],
       ),
     );

@@ -12,19 +12,18 @@ EventRecord _ev({
   DateTime? timestamp,
   Set<String> entities = const {'NVDA'},
   double importance = 0.6,
-}) =>
-    EventRecord(
-      id: id,
-      type: type,
-      timestamp: timestamp ?? DateTime.utc(2026, 5, 20),
-      source: source,
-      ownerUserId: ownerUserId,
-      title: 'NVDA put closed',
-      summary: 'cash_secured_put closed.',
-      payload: const {'symbol': 'NVDA'},
-      entities: entities,
-      importance: importance,
-    );
+}) => EventRecord(
+  id: id,
+  type: type,
+  timestamp: timestamp ?? DateTime.utc(2026, 5, 20),
+  source: source,
+  ownerUserId: ownerUserId,
+  title: 'NVDA put closed',
+  summary: 'cash_secured_put closed.',
+  payload: const {'symbol': 'NVDA'},
+  entities: entities,
+  importance: importance,
+);
 
 void main() {
   late SqliteEventStore store;
@@ -53,9 +52,11 @@ void main() {
 
     test('recentEvents returns desc by timestamp', () async {
       await store.writeEvent(
-          _ev(id: 'older', timestamp: DateTime.utc(2026, 5, 10)));
+        _ev(id: 'older', timestamp: DateTime.utc(2026, 5, 10)),
+      );
       await store.writeEvent(
-          _ev(id: 'newer', timestamp: DateTime.utc(2026, 5, 20)));
+        _ev(id: 'newer', timestamp: DateTime.utc(2026, 5, 20)),
+      );
       final out = await store.recentEvents(ownerUserId: 'u1');
       expect(out.map((e) => e.id), ['newer', 'older']);
     });
@@ -92,9 +93,11 @@ void main() {
 
     test('recentEvents respects time window', () async {
       await store.writeEvent(
-          _ev(id: 'old', timestamp: DateTime.utc(2026, 1, 1)));
+        _ev(id: 'old', timestamp: DateTime.utc(2026, 1, 1)),
+      );
       await store.writeEvent(
-          _ev(id: 'new', timestamp: DateTime.utc(2026, 5, 20)));
+        _ev(id: 'new', timestamp: DateTime.utc(2026, 5, 20)),
+      );
       final out = await store.recentEvents(
         ownerUserId: 'u1',
         since: DateTime.utc(2026, 5, 1),

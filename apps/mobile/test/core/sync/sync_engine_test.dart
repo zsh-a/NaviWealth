@@ -47,8 +47,7 @@ class FakePendingRows implements PendingRows {
   Future<int> depth() async => _pointers.length;
 
   @override
-  Future<List<PendingPointer>> pointers() async =>
-      List.unmodifiable(_pointers);
+  Future<List<PendingPointer>> pointers() async => List.unmodifiable(_pointers);
 
   @override
   Future<Map<String, Object?>?> readRow(String table, String rowId) async =>
@@ -173,7 +172,10 @@ void main() {
         RowChange(
           table: 'accounts',
           id: 'R1',
-          payload: _rowState(id: 'R1', hlc: _hlc(9, node: _otherDev)),
+          payload: _rowState(
+            id: 'R1',
+            hlc: _hlc(9, node: _otherDev),
+          ),
           version: _hlc(9, node: _otherDev),
           deleted: false,
         ),
@@ -214,7 +216,10 @@ void main() {
         RowChange(
           table: 'accounts',
           id: 'R1',
-          payload: _rowState(id: 'R1', hlc: _hlc(1, node: _otherDev)),
+          payload: _rowState(
+            id: 'R1',
+            hlc: _hlc(1, node: _otherDev),
+          ),
           version: _hlc(1, node: _otherDev),
           deleted: false,
         ),
@@ -248,7 +253,10 @@ void main() {
           RowChange(
             table: 'accounts',
             id: 'R$i',
-            payload: _rowState(id: 'R$i', hlc: _hlc(i + 1, node: _otherDev)),
+            payload: _rowState(
+              id: 'R$i',
+              hlc: _hlc(i + 1, node: _otherDev),
+            ),
             version: _hlc(i + 1, node: _otherDev),
             deleted: false,
           ),

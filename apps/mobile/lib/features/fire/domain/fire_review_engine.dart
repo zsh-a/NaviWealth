@@ -91,8 +91,7 @@ List<FireReviewFinding> _findings(
     findings.add(
       FireReviewFinding(
         code: FireReviewFindingCode.withdrawalRateAboveSwr,
-        severity: state.withdrawalRate >
-                state.plan.safeWithdrawalRate * 1.5
+        severity: state.withdrawalRate > state.plan.safeWithdrawalRate * 1.5
             ? FireActionSeverity.critical
             : FireActionSeverity.warning,
         pct: state.withdrawalRate - state.plan.safeWithdrawalRate,
@@ -113,8 +112,8 @@ List<FireReviewFinding> _findings(
     findings.add(
       FireReviewFinding(
         code: FireReviewFindingCode.belowTargetCashBucket,
-        severity: state.cashBucketMonths <
-                state.plan.targetCashBucketMonths * 0.5
+        severity:
+            state.cashBucketMonths < state.plan.targetCashBucketMonths * 0.5
             ? FireActionSeverity.critical
             : FireActionSeverity.warning,
         months: state.plan.targetCashBucketMonths,
@@ -222,10 +221,7 @@ String _scenarioCode(FireStressResult r) {
 /// Bucket-by-bucket diff between two reviews. Useful for the
 /// "what changed" callout in the UI and the AI explanation prompt.
 class FireReviewDiff {
-  const FireReviewDiff({
-    required this.before,
-    required this.after,
-  });
+  const FireReviewDiff({required this.before, required this.after});
 
   final FireReview? before;
   final FireReview after;

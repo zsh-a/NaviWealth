@@ -39,13 +39,10 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
             onPress: () {
               // Zero the dimensions this sheet owns. Kind selection
               // stays untouched — that's the inline row's domain.
-              final controller =
-                  ref.read(activityFeedQueryProvider.notifier);
+              final controller = ref.read(activityFeedQueryProvider.notifier);
               controller.mutateQuery(
-                (q) => q.copyWith(
-                  dateRange: null,
-                  accountIds: const <String>{},
-                ),
+                (q) =>
+                    q.copyWith(dateRange: null, accountIds: const <String>{}),
               );
             },
           ),
@@ -346,10 +343,7 @@ class _AccountFilterRow extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text(
-                account.name,
-                style: context.theme.typography.sm,
-              ),
+              child: Text(account.name, style: context.theme.typography.sm),
             ),
             FCheckbox(value: selected, onChange: (_) => onToggle()),
           ],

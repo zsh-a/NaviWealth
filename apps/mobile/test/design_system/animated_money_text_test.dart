@@ -3,10 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 
-Widget _wrap(
-  Widget child, {
-  bool disableAnimations = false,
-}) {
+Widget _wrap(Widget child, {bool disableAnimations = false}) {
   return MaterialApp(
     theme: AppTheme.light(),
     localizationsDelegates: const [
@@ -42,8 +39,9 @@ void main() {
     expect(_renderedText(tester), contains('1,000'));
   });
 
-  testWidgets('animates between two values over the configured duration',
-      (tester) async {
+  testWidgets('animates between two values over the configured duration', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _wrap(
         const AnimatedMoneyText(
@@ -74,8 +72,9 @@ void main() {
     expect(_renderedText(tester), contains('2,000'));
   });
 
-  testWidgets('skips animation when MediaQuery.disableAnimations is true',
-      (tester) async {
+  testWidgets('skips animation when MediaQuery.disableAnimations is true', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _wrap(
         const AnimatedMoneyText(
@@ -101,15 +100,12 @@ void main() {
     expect(_renderedText(tester), contains('2,000'));
   });
 
-  testWidgets('switching sign animates and the final string starts with -',
-      (tester) async {
+  testWidgets('switching sign animates and the final string starts with -', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _wrap(
-        const AnimatedMoneyText(
-          amount: 100,
-          currencyCode: 'USD',
-          symbol: '\$',
-        ),
+        const AnimatedMoneyText(amount: 100, currencyCode: 'USD', symbol: '\$'),
       ),
     );
     await tester.pumpWidget(
@@ -125,8 +121,9 @@ void main() {
     expect(_renderedText(tester), startsWith('-'));
   });
 
-  testWidgets('switching currency code rebuilds the tween cleanly',
-      (tester) async {
+  testWidgets('switching currency code rebuilds the tween cleanly', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _wrap(
         const AnimatedMoneyText(
@@ -138,11 +135,7 @@ void main() {
     );
     await tester.pumpWidget(
       _wrap(
-        const AnimatedMoneyText(
-          amount: 1000,
-          currencyCode: 'CNY',
-          symbol: '¥',
-        ),
+        const AnimatedMoneyText(amount: 1000, currencyCode: 'CNY', symbol: '¥'),
       ),
     );
     await tester.pumpAndSettle();
@@ -151,12 +144,11 @@ void main() {
     expect(settled, contains('1,000'));
   });
 
-  testWidgets('null amount falls back to the MoneyText placeholder',
-      (tester) async {
+  testWidgets('null amount falls back to the MoneyText placeholder', (
+    tester,
+  ) async {
     await tester.pumpWidget(
-      _wrap(
-        const AnimatedMoneyText(amount: null, currencyCode: 'CNY'),
-      ),
+      _wrap(const AnimatedMoneyText(amount: null, currencyCode: 'CNY')),
     );
     expect(find.textContaining('—'), findsOneWidget);
   });

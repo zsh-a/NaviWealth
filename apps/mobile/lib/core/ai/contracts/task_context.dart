@@ -115,9 +115,7 @@ class RecentSignal {
     final ref = json['detail_ref'];
     return RecentSignal(
       kind: k is String ? SignalKindWire.parse(k) : SignalKind.other,
-      severity: s is String
-          ? SignalSeverityWire.parse(s)
-          : SignalSeverity.info,
+      severity: s is String ? SignalSeverityWire.parse(s) : SignalSeverity.info,
       summaryZh: sum is String ? sum : '',
       detailRef: ref is String ? ref : null,
     );

@@ -70,4 +70,3 @@ class MasterPaneWidthController extends StateNotifier<double> {
     await _prefs.setDouble(_kMasterPaneWidthKey, clamped);
   }
 }
-

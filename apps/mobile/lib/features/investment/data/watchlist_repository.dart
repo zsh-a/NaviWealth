@@ -193,4 +193,3 @@ WatchlistItem _rowToDomain(WatchlistItemRow row) {
     ),
   );
 }
-

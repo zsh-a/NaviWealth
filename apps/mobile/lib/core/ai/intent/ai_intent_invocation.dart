@@ -95,10 +95,13 @@ class AiObjectRef {
 enum AiCapability {
   /// Streaming text answer (the always-on default).
   chat,
+
   /// Inline `propose_*` cards (LocalProposal / device propose tool output).
   proposal,
+
   /// Domain-specific visualisations (Wave 34 renderers).
   visualization,
+
   /// Reserved for Wave 36+ voice follow-up button.
   voiceFollowup,
 }

@@ -25,8 +25,7 @@ class _StrategyProfileSheet extends ConsumerStatefulWidget {
       _StrategyProfileSheetState();
 }
 
-class _StrategyProfileSheetState
-    extends ConsumerState<_StrategyProfileSheet> {
+class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
   OptionsStrategyProfile? _draft;
   bool _busy = false;
   bool _initialized = false;
@@ -165,15 +164,17 @@ class _StrategyProfileSheetState
           const SizedBox(height: AppSpacing.s8),
           _SwitchRow(
             label: l10n.incomePlannerProfileAllowPut,
-            value: draft.allowedStrategies
-                .contains(OptionsStrategyKind.cashSecuredPut),
+            value: draft.allowedStrategies.contains(
+              OptionsStrategyKind.cashSecuredPut,
+            ),
             onChanged: (v) =>
                 _toggleAllowed(OptionsStrategyKind.cashSecuredPut, v),
           ),
           _SwitchRow(
             label: l10n.incomePlannerProfileAllowCall,
-            value: draft.allowedStrategies
-                .contains(OptionsStrategyKind.coveredCall),
+            value: draft.allowedStrategies.contains(
+              OptionsStrategyKind.coveredCall,
+            ),
             onChanged: (v) =>
                 _toggleAllowed(OptionsStrategyKind.coveredCall, v),
           ),
@@ -234,17 +235,9 @@ class _SwitchRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              label,
-              style: context.theme.typography.sm,
-            ),
-          ),
+          Expanded(child: Text(label, style: context.theme.typography.sm)),
           const SizedBox(width: AppSpacing.s12),
-          FSwitch(
-            value: value,
-            onChange: onChanged,
-          ),
+          FSwitch(value: value, onChange: onChanged),
         ],
       ),
     );

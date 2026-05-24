@@ -134,9 +134,6 @@ void main() {
     await tester.pumpWidget(_wrap(snapshot: empty));
     await tester.pumpAndSettle();
 
-    expect(
-      find.textContaining('No holdings yet'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('No holdings yet'), findsOneWidget);
   });
 }

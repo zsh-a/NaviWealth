@@ -15,8 +15,10 @@ library;
 enum ProposalSource {
   /// Created by an on-device rules skill or device-LLM runtime.
   device,
+
   /// Created by the cloud planner (Anthropic / future cloud runtime).
   cloud,
+
   /// Joint: device skill plus cloud verification (Phase 5 rebalance).
   hybrid,
 }
@@ -148,8 +150,8 @@ final class BatchProposal extends ProposalEnvelope {
     required this.summaryZh,
     required List<ProposalEnvelope> children,
     required this.undo,
-  })  : assert(children.isNotEmpty, 'BatchProposal needs at least one child'),
-        children = List.unmodifiable(_rejectExternal(children));
+  }) : assert(children.isNotEmpty, 'BatchProposal needs at least one child'),
+       children = List.unmodifiable(_rejectExternal(children));
 
   final String summaryZh;
   final List<ProposalEnvelope> children;

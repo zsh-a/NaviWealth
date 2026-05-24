@@ -74,8 +74,7 @@ void main() {
       expect(budgetSignalFor(s), BudgetSignal.overBudget);
     });
 
-    test('boundary: exactly 80% → strained (inclusive at the lower edge)',
-        () {
+    test('boundary: exactly 80% → strained (inclusive at the lower edge)', () {
       final s = _summary([_cat('food', '1000', '800')]);
       expect(budgetSignalFor(s), BudgetSignal.strained);
     });

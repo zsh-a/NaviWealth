@@ -89,11 +89,13 @@ String makeFixtureBundle({
   List<Map<String, Object?>>? rows,
 }) {
   final buffer = StringBuffer()
-    ..writeln(jsonEncode({
-      'version': version,
-      'checksum': checksum,
-      'count': (rows ?? _kFixtureRows).length,
-    }));
+    ..writeln(
+      jsonEncode({
+        'version': version,
+        'checksum': checksum,
+        'count': (rows ?? _kFixtureRows).length,
+      }),
+    );
   for (final row in rows ?? _kFixtureRows) {
     buffer.writeln(jsonEncode(row));
   }
