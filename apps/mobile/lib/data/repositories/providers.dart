@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/sync/drift_sync_storage.dart';
 import '../../core/sync/op_outbox.dart';
 import '../../domain/entities/fx_rate.dart' as dom;
+import '../../domain/values/money.dart';
 import '../../features/auth/data/auth_controller.dart';
+import '../../features/cashflow/domain/budget_signal.dart';
+import '../../features/cashflow/domain/budget_summary.dart';
 import '../audit/domain_event.dart';
 import '../audit/event_log_reader.dart';
 import '../db/app_database.dart';
@@ -167,6 +170,34 @@ final budgetsForMonthProvider = StreamProvider.autoDispose
   final repo = await ref.watch(budgetRepositoryProvider.future);
   yield* repo.watchByMonth(periodMonth);
 });
+
+/// Pure derivation of the budget posture for a given month. FIRE engine
+/// / dashboard insights subscribe to this rather than to budgets +
+/// postings directly, so a future "budget overspend nudges
+/// safetyLevel" wire-up is one provider read.
+/// (`docs/roadmap-next.md` §3.2 — Budget × FIRE松耦合.)
+///
+/// Today the spend map is empty placeholder — the FX-converted spend
+/// integration ships in a follow-up. The signal therefore reduces to
+/// "budgets exist but no spend tracked yet" → [BudgetSignal.noData],
+/// which is the correct quiet state until the spend join lands.
+final monthlyBudgetSignalProvider =
+    Provider.autoDispose.family<AsyncValue<BudgetSignal>, String>(
+  (ref, periodMonth) {
+    final budgetsAsync = ref.watch(budgetsForMonthProvider(periodMonth));
+    return budgetsAsync.whenData((rows) {
+      final res = buildMonthlyBudgetSummary(
+        periodMonth: periodMonth,
+        budgets: rows,
+        spendByCategoryId: const <String, Money>{},
+        targetCurrency: rows.isEmpty
+            ? 'CNY'
+            : rows.first.currency.toUpperCase(),
+      );
+      return budgetSignalFor(res.summary);
+    });
+  },
+);
 
 /// Live stream of every recorded FX rate. The dashboard converter and the
 /// FX-rate management page both watch this so a manual rate insert

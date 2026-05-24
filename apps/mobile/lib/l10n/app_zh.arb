@@ -46,6 +46,15 @@
   "planWheelTitle": "Wheel 周期",
   "planWheelEmptyTitle": "暂无进行中的周期",
   "planWheelEmptyBody": "录入一次卖 put 或备兑 call 交易后，周期会显示在这里。",
+  "investmentEventTimelineTitle": "即将到来的事件",
+  "investmentEventTimelineEmpty": "未来 90 天内没有分红或拆股事件。",
+  "investmentEventDividend": "分红",
+  "investmentEventSplit": "拆股 {ratio}",
+  "@investmentEventSplit": {
+    "placeholders": { "ratio": { "type": "String" } }
+  },
+  "investmentEventRights": "配股",
+  "investmentEventDrip": "DRIP 红利再投",
   "planHeroEmpty": "完成 FIRE 设置后，进度会显示在这里。",
   "planHeroYearsToFire": "距离 FIRE 还有 {years} 年",
   "@planHeroYearsToFire": {
@@ -1266,6 +1275,9 @@
   "aiChatToolJumpAsset": "资产 {id}",
   "aiChatToolJumpAccount": "账户 {id}",
   "aiChatToolJumpLiability": "负债 {id}",
+  "aiChatToolJumpJournalEntry": "日记账 {id}",
+  "aiChatToolJumpTradeJournal": "交易记录 {id}",
+  "aiChatToolEvidenceLabel": "依据",
   "aiChatToolShowRawJson": "查看 raw JSON",
   "aiChatToolShowCompactView": "返回精简视图",
 

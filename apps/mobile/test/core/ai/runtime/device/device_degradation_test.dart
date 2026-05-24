@@ -203,6 +203,7 @@ void main() {
         'get_refund_links',
         'get_subscription_changes',
         'get_transfer_links',
+        'get_wheel_lifecycle',
         'list_payment_accounts',
         'propose_account_create',
         'propose_asset_valuation',

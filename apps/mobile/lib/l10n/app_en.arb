@@ -89,6 +89,21 @@
   "@planWheelEmptyTitle": { "description": "Empty state title on the Wheel page" },
   "planWheelEmptyBody": "Record a sell-put or covered-call trade and the cycle will surface here.",
   "@planWheelEmptyBody": { "description": "Empty state body explaining when cycles appear" },
+  "investmentEventTimelineTitle": "Upcoming events",
+  "@investmentEventTimelineTitle": { "description": "Holding detail tab title for upcoming corporate actions (roadmap-next.md §3.5)" },
+  "investmentEventTimelineEmpty": "No upcoming dividends or splits in the next 90 days.",
+  "@investmentEventTimelineEmpty": { "description": "Empty state body when no corporate actions are scheduled" },
+  "investmentEventDividend": "Dividend",
+  "@investmentEventDividend": { "description": "Label on a cash-dividend event row" },
+  "investmentEventSplit": "Split {ratio}",
+  "@investmentEventSplit": {
+    "description": "Label on a split event row, with the ratio (e.g. \"4-for-1\")",
+    "placeholders": { "ratio": { "type": "String" } }
+  },
+  "investmentEventRights": "Rights offering",
+  "@investmentEventRights": { "description": "Label on a rights-offering event row" },
+  "investmentEventDrip": "DRIP",
+  "@investmentEventDrip": { "description": "Label on a DRIP reinvestment event row" },
   "planHeroEmpty": "Set up your FIRE plan to see progress here.",
   "@planHeroEmpty": { "description": "Plan hero shown when FIRE engine has no data yet" },
   "planHeroYearsToFire": "{years} years to FIRE",
@@ -2280,6 +2295,18 @@
   "@aiChatToolJumpLiability": {
     "placeholders": { "id": { "type": "String" } }
   },
+  "aiChatToolJumpJournalEntry": "Entry {id}",
+  "@aiChatToolJumpJournalEntry": {
+    "description": "Evidence chip label deep-linking to a ledger journal entry (roadmap-next.md §3.4)",
+    "placeholders": { "id": { "type": "String" } }
+  },
+  "aiChatToolJumpTradeJournal": "Trade {id}",
+  "@aiChatToolJumpTradeJournal": {
+    "description": "Evidence chip label deep-linking to an options trade journal entry (roadmap-next.md §3.4)",
+    "placeholders": { "id": { "type": "String" } }
+  },
+  "aiChatToolEvidenceLabel": "Evidence",
+  "@aiChatToolEvidenceLabel": { "description": "Section header above the evidence chip strip in a tool invocation card" },
   "aiChatToolShowRawJson": "View raw JSON",
   "aiChatToolShowCompactView": "Back to compact view",
 
