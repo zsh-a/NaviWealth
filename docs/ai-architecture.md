@@ -113,9 +113,9 @@ ChatRepository
 ### 3.2 ToolDescriptor 元数据轴
 
 `name` · `access` · `risk` · `requires_confirmation` · `allowed_context_tier` ·
-`allowed_runtimes` · `side_effect` · `read_model_layer`。device runtime 只 dispatch
-标 `device`/`both` 的工具；invariant 测试保证：proposals 必有 `DeviceLocalWrite`
-side effect、reads 必无 side effect、ScopedDetail 至少 `Standard` tier、每条都允许 device。
+`side_effect`（boundary audit 删除了 `allowed_runtimes` / `read_model_layer`——
+device 是唯一 runtime，read-model 分层概念也已弃）。invariant 测试保证：proposals
+必有 `DeviceLocalWrite` side effect、reads 必无 side effect。
 
 ### 3.3 ProposalEnvelope（确认通道，按副作用分级）
 
@@ -129,8 +129,8 @@ boundary audit 中 `CloudProposal` 因零生产 producer 一并删除；device p
 | `LocalProposal` | 端侧 staged，用户 review | one-tap |
 | `ExternalSideEffect` | 触达外部（broker/bank） | typed（**永不**由 LLM 自动触发） |
 
-`source`（device/cloud/hybrid）只是 audit label；确认 gate 对 source 不敏感。
-**Privacy policy 永远优先于 source。**
+确认 gate 由 `(risk, side_effect)` 派生（见 §5.5）；不受任何 source / backend
+label 影响。**Privacy policy 永远优先于 source。**
 
 ### 3.4 Trace（`lib/core/ai/trace/` + `contracts/ai_span.dart`）
 
@@ -147,26 +147,30 @@ boundary audit 中 `CloudProposal` 因零生产 producer 一并删除；device p
 
 > §4.1–§4.5 描述 W-D7 **前**的端云协作设计。**编号保留**让代码注释里 `§4.2`/`§4.3`
 > 仍能落到正确概念，但**所述结构在 2026-05-24 boundary audit 之后已删除**——见每条
-> 状态。`ContextPack` / `ScopedDisclosure` 类型仍在仓库内（向后兼容）。
+> 状态。`ContextPack` 仍在仓库内（device runtime 喂 prompt 用）；`ScopedDisclosure`
+> 只剩 `DisclosurePurpose` enum（device window tool 参数校验用），其余协议类型
+> （`DisclosureRequest`/`DisclosureResponse`/`LedgerField`/`UserConsent`）已物理删除。
 
 - **§4.1 ContextPack**（`contracts/context_pack.dart`）：runtime-neutral 输入契约
   （BaseContext 偏好层 + TaskContext 任务层 + PrivacyBudget）。device runtime 仍构造
-  ContextPack 喂端侧 prompt；不再上传后端。`FreshnessHint` 字段已删；`AnalyticalUpload`
-  字段保留为 prompt 预注入信号（命名沿用历史，见 boundary audit 批 D）。
+  ContextPack 喂端侧 prompt；不再上传后端。`FreshnessHint` / `analyticalUploads` /
+  `deviceHlc` / `retrieved` / `aggregates` 字段均已删除；TaskContext 当前只剩
+  `route` / `intent` / `signals`。
 - **§4.2 Freshness gate**（曾在 `freshness/freshness_gate.dart`）：**整模块物理删除**
   （类型 + 调用点 + `AiTrace.staleReadModelNames` + `FreshnessHint`）。端侧是 local-first
   真值源，无 read model stale 问题。
 - **§4.3 Cloud Read Models 三层访问模型**（Snapshot / Analytical / Scoped Detail）：
   **云端表已弃用**（backend `migrations/0006_ai_read_models.sql` 等仅作 schema 历史保留，
-  不再投影/查询）。`ToolDescriptor.read_model_layer` 字段保留作分层语义标注；device
-  工具直接读 Drift。
+  不再投影/查询）。`ToolDescriptor.read_model_layer` 字段及 `ReadModelLayer` enum
+  **已删除**（boundary audit 批 K）；device 工具直接读 Drift，无分层概念。
 - **§4.5 ProposalEnvelope**：见 §3.3（`CloudProposal` 子类已在 2026-05-24 audit 中删除）。
 - **§4.6 Device LLM Runtime（当前架构的落地决策——代码大量引用 W-D* / §4.6.N）**：
   1. **用户自带 key** — `SecureKeyStore`，绝不进 OpLog/同步/明文备份。
   2. **`DeviceLlmRuntime` 直连 provider** — 多 provider 客户端，统一 `LlmStreamEvent`；
      provider 由 active `LlmProfile.provider` 决定。
-  3. **工具读 Drift 本地真源** — §4.2 freshness gate 与 ScopedDisclosure 在 device
-     路径整体消失（freshness 已物理删除）。
+  3. **工具读 Drift 本地真源** — §4.2 freshness gate 已物理删除；`ScopedDisclosure`
+     协议（DisclosureRequest/Response/LedgerField/UserConsent）也已删除，只保留
+     `DisclosurePurpose` enum 用作 window tool 参数校验。
   4. **Vision 端侧直发** — 图像 base64 → content block，用户 key 直发 provider，
      原图不出设备（比已删除的 Worker 中转更私密）。
   5. **平台边界 = 全部原生平台，仅排除 Web**（门控 `!kIsWeb`，见 §2.3）。
@@ -287,10 +291,13 @@ AI 元素默认 surface tone（非 accent）；单色细线 sparkle（字号 ≤
 ### 6.1 Mobile（`lib/core/ai/`，当前）
 
 ```
-contracts/   intent · privacy_budget · base/task_context · context_pack ·
-             scoped_disclosure · tool_descriptor · proposal_envelope ·
-             ai_span · ai_trace · privacy_mode_provider   (§4.1 兼容类型保留;
-             FreshnessHint / Freshness / CloudProposal 已删)
+contracts/   intent · privacy_budget · task_context(route/intent/signals) ·
+             base_context · context_pack · scoped_disclosure(DisclosurePurpose only) ·
+             tool_descriptor(no allowed_runtimes/read_model_layer) ·
+             proposal_envelope(3 subclasses, no CloudProposal) ·
+             ai_span · ai_trace(no usedCloud/usedRawLedger/disclosures/staleReadModelNames) ·
+             privacy_mode_provider(no amountAnonymization) ·
+             AnalyticalUpload(tool 输出 shape, not pre-injected)
 runtime/
   ai_runtime.dart                DeviceLlmRuntime + DeviceChatRunner
                                  （boundary audit 删 RuntimeRegistry / RuntimeId /
