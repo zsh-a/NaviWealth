@@ -22,7 +22,6 @@ AiTrace _trace({
   backend: backend,
   budgetTier: BudgetTier.small,
   routingReason: routingReason,
-  usedCloud: backend != Backend.device,
   totalDurationMs: 1200,
 );
 

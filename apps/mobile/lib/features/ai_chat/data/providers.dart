@@ -16,11 +16,9 @@ import '../../../core/ai/trace/trace.dart';
 import '../../../core/ai/write/write.dart';
 import '../../../core/auth/providers.dart';
 import '../../../core/logging/providers.dart';
-import '../../../core/sync/providers.dart';
 import '../../../data/db/providers.dart';
 import '../../../data/domain/account.dart';
 import '../../../data/domain/enums.dart';
-import '../../../data/domain/expense.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../data/repositories/mutation_context.dart';
 import '../../../data/repositories/providers.dart';
@@ -33,7 +31,6 @@ import '../../fire/domain/fire_plan.dart';
 import '../../fire/domain/fire_projection.dart' show FireScenarioTier;
 import '../../home/data/dashboard_providers.dart';
 import '../../investment/data/providers.dart';
-import '../../investment/domain/models/holding_snapshot.dart';
 import '../../liabilities/data/providers.dart';
 import '../../settings/data/risk_appetite_preferences.dart';
 import '../domain/chat_models.dart';
@@ -139,32 +136,10 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
     final metrics = metricsAsync.value;
     final anomaly = ref.read(expenseAnomalyInsightProvider);
     final maturity = ref.read(depositMaturityInsightProvider);
-
-    // Snapshot local HLC once: stamps the `analytical_uploads` batch in
-    // the ContextPack (device_hlc) so the LLM can reason about how
-    // fresh the inlined detector summaries are.
-    final localHlc = await ref.read(syncLocalHlcProvider.future);
-    final localHlcText = localHlc?.toString();
-
-    // Wave 11/15/16/17 — derive AnalyticalUpload list from end-side detector
-    // outputs. anomaly_flag comes from expenseAnomalyInsightProvider
-    // (Wave 11); recurring_pattern/refund_link/transfer_link from the
-    // skills detectors over the expense stream (Wave 15/16);
-    // investment_performance from holdingsSnapshotProvider (Wave 17).
-    final expenses = await _readExpensesForRecurring(ref);
-    final holdings = await _readHoldingsForPerformance(ref);
     final accountSummary = await _readAccountSummary(ref);
-    final analyticalUploads = _buildAnalyticalUploads(
-      anomaly: anomaly,
-      expenses: expenses,
-      holdings: holdings,
-    );
 
     // Pull the user's declared risk appetite (Settings SSOT) and
-    // project it onto the 3-value AI wire enum. The on-device LLM
-    // sees the user's actual tolerance instead of the hardcoded
-    // `moderate` placeholder the compressor used before W-D7's risk
-    // appetite SSOT landed.
+    // project it onto the 3-value AI wire enum.
     final riskAppetite = ref.read(riskAppetiteProvider);
 
     final fireGoal = _summarizeFireGoal(ref);
@@ -177,8 +152,6 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
       expenseAnomalyDelta: anomaly?.deltaRatio,
       depositMaturityCount: maturity?.count,
       depositMaturityDays: maturity?.days,
-      analyticalUploads: analyticalUploads,
-      deviceHlc: analyticalUploads.isEmpty ? null : localHlcText,
       riskPreference: riskAppetite.toWire(),
       fireGoal: fireGoal,
     );
@@ -197,7 +170,6 @@ Future<ChatTracePrepResult> _prepareChatTrace(Ref ref, String requestId) async {
       routingReason: deviceUsable
           ? kDeviceLlmDirectRoutingReason
           : 'device_unavailable',
-      usedCloud: false,
       totalDurationMs: 0,
     );
 
@@ -297,94 +269,6 @@ String _accountSummaryKind(Account account) => switch (account.type) {
   AccountCategory.asset => 'asset',
   AccountCategory.liability => 'liability',
 };
-
-/// One-shot read of the user's expenses for the recurring detector.
-/// `journalExpensesStreamProvider` is autoDispose; calling `.future`
-/// gets the first emission then unsubscribes. Returns `[]` on any
-/// failure so chat is never blocked by analytics infra.
-Future<List<Expense>> _readExpensesForRecurring(Ref ref) async {
-  try {
-    return await ref.read(journalExpensesStreamProvider.future);
-  } catch (_) {
-    return const <Expense>[];
-  }
-}
-
-/// One-shot read of the per-asset HoldingSnapshot map for the Wave 17
-/// `investment_performance` Analytical upload. Returns `{}` on any
-/// failure — chat must not be blocked when the portfolio computer can't
-/// converge (missing prices / fx rates / etc.).
-Future<Map<String, HoldingSnapshot>> _readHoldingsForPerformance(
-  Ref ref,
-) async {
-  try {
-    return await ref.read(holdingsSnapshotProvider.future);
-  } catch (_) {
-    return const <String, HoldingSnapshot>{};
-  }
-}
-
-/// Map end-side detector outputs into the wire-form
-/// `AnalyticalUpload` list (§4.3.3).
-///  - anomaly_flag: from `expenseAnomalyInsightProvider` (Wave 11)
-///  - recurring_pattern: from `detectRecurring()` over the expense
-///    stream (Wave 15) — converts Expense → TransactionInput then
-///    runs the rules detector
-///
-/// Future waves add subscription_changes / investment_performance over
-/// the same channel.
-List<AnalyticalUpload> _buildAnalyticalUploads({
-  ExpenseAnomalySummary? anomaly,
-  List<Expense> expenses = const <Expense>[],
-  Map<String, HoldingSnapshot> holdings = const <String, HoldingSnapshot>{},
-}) {
-  final out = <AnalyticalUpload>[];
-  // §4.3.3 — single source shared with the device get_anomaly_flags
-  // tool (W-D4.3) so cloud upload and device tool can't drift.
-  final anomalyUpload = analyticalAnomalyUpload(anomaly);
-  if (anomalyUpload != null) {
-    out.add(anomalyUpload);
-  }
-
-  // Wave 15: run recurring_detector on expenses, convert each pattern.
-  // Wave 16: run matchRefunds / matchTransfers over the same input set —
-  // both detectors are pure functions of TransactionInput and produce
-  // empty output when the input lacks the required pairing (refunds
-  // need an inflow paired with an outflow; transfers need cross-account
-  // flows). They will fire as the device feeds in more transaction
-  // sources in later waves.
-  // Empty list when there are no expenses / no detectable cadence.
-  if (expenses.isNotEmpty) {
-    final transactionInputs = expenses
-        .map(expenseToTransactionInput)
-        .toList(growable: false);
-    final patterns = detectRecurring(transactionInputs);
-    for (final p in patterns) {
-      out.add(recurringPatternToUpload(p));
-    }
-    final refunds = matchRefunds(transactionInputs);
-    for (final r in refunds) {
-      out.add(refundMatchToUpload(r));
-    }
-    final transfers = matchTransfers(transactionInputs);
-    for (final t in transfers) {
-      out.add(transferMatchToUpload(t));
-    }
-    // Wave 19: subscription price changes (stateless detection over the
-    // same input window).
-    final subChanges = detectSubscriptionChanges(transactionInputs);
-    for (final s in subChanges) {
-      out.add(subscriptionChangeToUpload(s));
-    }
-  }
-
-  // Wave 17: per-asset holding snapshot → investment_performance upload.
-  for (final snap in holdings.values) {
-    out.add(holdingSnapshotToUpload(snap));
-  }
-
-  return out;
-}
 
 String _routeAreaFromPath(String path) {
   if (path.startsWith('/expense')) return 'expense';

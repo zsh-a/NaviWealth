@@ -12,7 +12,6 @@ AiTrace _seed() => const AiTrace(
   backend: Backend.device,
   budgetTier: BudgetTier.standard,
   routingReason: 'device_llm_direct',
-  usedCloud: false,
   totalDurationMs: 0,
 );
 

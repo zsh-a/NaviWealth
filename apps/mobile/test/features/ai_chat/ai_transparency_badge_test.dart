@@ -56,7 +56,6 @@ AiTrace _trace({
   backend: backend,
   budgetTier: BudgetTier.standard,
   routingReason: 'test',
-  usedCloud: backend != Backend.device,
   totalDurationMs: durationMs,
   spans: List<AiSpan>.generate(
     toolCount,

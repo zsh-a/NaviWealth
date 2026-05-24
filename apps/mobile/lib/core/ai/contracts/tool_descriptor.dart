@@ -45,23 +45,6 @@ extension ConfirmationWire on Confirmation {
   };
 }
 
-/// Which runtimes are allowed to dispatch this tool. Wave 20 introduces
-/// the field to support the upcoming `AiRuntime` abstraction (Wave 22).
-enum AllowedRuntime { device, cloud }
-
-extension AllowedRuntimeWire on AllowedRuntime {
-  String get wire => switch (this) {
-    AllowedRuntime.device => 'device',
-    AllowedRuntime.cloud => 'cloud',
-  };
-
-  static AllowedRuntime parse(String s) => switch (s) {
-    'device' => AllowedRuntime.device,
-    'cloud' => AllowedRuntime.cloud,
-    _ => AllowedRuntime.cloud,
-  };
-}
-
 /// Side-effect classification (orthogonal to risk). Lets the dispatcher
 /// reject `externalCall` in routine chat without a special grant.
 enum SideEffect { none, deviceLocalWrite, externalCall }
@@ -88,12 +71,6 @@ class ToolDescriptor {
     required this.risk,
     required this.requiresConfirmation,
     required this.allowedContextTier,
-    // §4.6 W-D7 — the cloud AI backend was deleted; every tool now runs
-    // device-only. No descriptor overrides this, so the default *is*
-    // the reconciliation. Registry membership (`kDeviceTools`) remains
-    // the real dispatch gate; this field is now consistent metadata,
-    // not cloud-vs-device routing.
-    this.allowedRuntimes = const <AllowedRuntime>{AllowedRuntime.device},
     this.sideEffect = SideEffect.none,
   });
 
@@ -107,9 +84,6 @@ class ToolDescriptor {
   /// upstream of the model so prompt injection cannot escalate.
   final BudgetTier allowedContextTier;
 
-  /// Which runtimes may dispatch this tool. Empty set never matches.
-  final Set<AllowedRuntime> allowedRuntimes;
-
   /// Side-effect classification (orthogonal to risk level).
   final SideEffect sideEffect;
 
@@ -119,7 +93,6 @@ class ToolDescriptor {
     'risk': risk.wire,
     'requires_confirmation': requiresConfirmation.wire,
     'allowed_context_tier': allowedContextTier.wire,
-    'allowed_runtimes': <String>[for (final r in allowedRuntimes) r.wire],
     'side_effect': sideEffect.wire,
   };
 
@@ -129,7 +102,6 @@ class ToolDescriptor {
     final r = json['risk'];
     final c = json['requires_confirmation'];
     final t = json['allowed_context_tier'];
-    final ar = json['allowed_runtimes'];
     final se = json['side_effect'];
     return ToolDescriptor(
       name: n is String ? n : '',
@@ -141,12 +113,6 @@ class ToolDescriptor {
       allowedContextTier: t is String
           ? BudgetTierWire.parse(t)
           : BudgetTier.standard,
-      allowedRuntimes: ar is List
-          ? {
-              for (final s in ar.whereType<String>())
-                AllowedRuntimeWire.parse(s),
-            }
-          : const <AllowedRuntime>{AllowedRuntime.device},
       sideEffect: se is String ? SideEffectWire.parse(se) : SideEffect.none,
     );
   }

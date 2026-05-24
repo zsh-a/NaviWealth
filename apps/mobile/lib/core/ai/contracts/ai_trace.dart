@@ -96,7 +96,6 @@ class AiTrace {
     required this.backend,
     required this.budgetTier,
     required this.routingReason,
-    required this.usedCloud,
     required this.totalDurationMs,
     this.terminalReason = TerminalReason.done,
     this.invocation,
@@ -113,11 +112,6 @@ class AiTrace {
   /// (see [kDeviceLlmDirectRoutingReason]), `device_unavailable`, or
   /// `layer4_cloud_vision` (ingest). Free-form for now.
   final String routingReason;
-
-  /// True for old (pre-W-D7) trace rows that hit the cloud relay.
-  /// New rows from the device runtime always set this `false`; ingest
-  /// Vision trace still sets it `true` until that path is audited.
-  final bool usedCloud;
 
   final int totalDurationMs;
 
@@ -177,7 +171,6 @@ class AiTrace {
     'backend': backend.wire,
     'budget_tier': budgetTier.wire,
     'routing_reason': routingReason,
-    'used_cloud': usedCloud,
     'total_duration_ms': totalDurationMs,
     'terminal_reason': terminalReason.wire,
     if (invocation != null && invocation!.isNotEmpty)
@@ -193,7 +186,6 @@ class AiTrace {
     final bk = json['backend'];
     final bt = json['budget_tier'];
     final rr = json['routing_reason'];
-    final uc = json['used_cloud'];
     final td = json['total_duration_ms'];
     return AiTrace(
       requestId: id is String ? id : '',
@@ -209,7 +201,6 @@ class AiTrace {
           ? BudgetTierWire.parse(bt)
           : BudgetTier.standard,
       routingReason: rr is String ? rr : '',
-      usedCloud: uc is bool ? uc : false,
       totalDurationMs: td is int ? td : 0,
       terminalReason: switch (json['terminal_reason']) {
         final String s => TerminalReasonWire.parse(s),

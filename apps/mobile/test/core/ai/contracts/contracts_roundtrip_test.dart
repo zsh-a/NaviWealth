@@ -191,7 +191,6 @@ void main() {
         backend: Backend.hybrid,
         budgetTier: BudgetTier.standard,
         routingReason: 'capability_analyze_online',
-        usedCloud: true,
         totalDurationMs: 3450,
         spans: <AiSpan>[
           AiSpan(
@@ -246,7 +245,6 @@ void main() {
           backend: Backend.cloud,
           budgetTier: BudgetTier.small,
           routingReason: 'test',
-          usedCloud: true,
           totalDurationMs: 100,
         );
         // Build with the desired reason via copy through json.
@@ -270,7 +268,6 @@ void main() {
           backend: Backend.cloud,
           budgetTier: BudgetTier.small,
           routingReason: 'capsule_explain',
-          usedCloud: true,
           totalDurationMs: 200,
           invocation: <String, Object?>{
             'source': 'expense_detail',
@@ -303,7 +300,6 @@ void main() {
         backend: Backend.cloud,
         budgetTier: BudgetTier.small,
         routingReason: 'chat_typed',
-        usedCloud: true,
         totalDurationMs: 50,
       );
       final json = seed.toJson();
@@ -337,65 +333,26 @@ void main() {
     });
   });
 
-  group('AnalyticalUpload + TaskContext.analytical_uploads (Wave 10/11)', () {
-    test('round-trips a list of uploads with payload JSON shape', () {
-      const uploads = <AnalyticalUpload>[
-        AnalyticalUpload(
-          kind: 'anomaly_flag',
-          id: 'expense_monthly_spike|2026-05',
-          payload: <String, Object?>{
-            'category': 'all_expense',
-            'kind': 'monthly_spike',
-            'delta_pct': 42,
-            'severity': 'warn',
-          },
-        ),
-        AnalyticalUpload(
-          kind: 'recurring_pattern',
-          id: 'netflix|USD',
-          payload: <String, Object?>{
-            'merchant_key': 'netflix',
-            'cadence': 'monthly',
-            'median_amount_minor': '999',
-            'currency': 'USD',
-            'occurrences': 3,
-          },
-        ),
-      ];
-      const task = TaskContext(
-        route: RouteContext(path: '/', area: 'home'),
-        intent: IntentHint(
-          capability: Capability.analyze,
-          risk: RiskLevel.info,
-        ),
-        analyticalUploads: uploads,
-        deviceHlc: '00000001700000000000.0001-device',
+  group('AnalyticalUpload wire shape (tool output)', () {
+    test('round-trips a single upload with payload JSON shape', () {
+      const upload = AnalyticalUpload(
+        kind: 'anomaly_flag',
+        id: 'expense_monthly_spike|2026-05',
+        payload: <String, Object?>{
+          'category': 'all_expense',
+          'kind': 'monthly_spike',
+          'delta_pct': 42,
+          'severity': 'warn',
+        },
       );
-      final decoded = TaskContext.fromJson(
-        jsonDecode(jsonEncode(task.toJson())) as Map<String, Object?>,
+      final decoded = AnalyticalUpload.fromJson(
+        jsonDecode(jsonEncode(upload.toJson())) as Map<String, Object?>,
       );
-      expect(decoded.analyticalUploads, hasLength(2));
-      expect(decoded.analyticalUploads[0].kind, 'anomaly_flag');
-      expect(decoded.analyticalUploads[0].payload['delta_pct'], 42);
-      expect(decoded.analyticalUploads[1].kind, 'recurring_pattern');
-      expect(decoded.analyticalUploads[1].payload['occurrences'], 3);
-      expect(decoded.deviceHlc, '00000001700000000000.0001-device');
-    });
-
-    test('empty uploads + null deviceHlc are omitted from wire', () {
-      const task = TaskContext(
-        route: RouteContext(path: '/', area: 'home'),
-        intent: IntentHint(
-          capability: Capability.analyze,
-          risk: RiskLevel.info,
-        ),
-      );
-      final json = task.toJson();
-      expect(json.containsKey('analytical_uploads'), isFalse);
-      expect(json.containsKey('device_hlc'), isFalse);
+      expect(decoded.kind, 'anomaly_flag');
+      expect(decoded.id, upload.id);
+      expect(decoded.payload['delta_pct'], 42);
     });
   });
-
 }
 
 ContextPack _samplePack() => ContextPack(

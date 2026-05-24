@@ -530,7 +530,6 @@ void main() {
             backend: Backend.hybrid,
             budgetTier: pack.budget.tier,
             routingReason: 'analyze_hybrid',
-            usedCloud: true,
             totalDurationMs: 0,
           );
           return (
@@ -601,7 +600,6 @@ void main() {
       final trace = traces.single;
       expect(trace.intent.label, 'chat_turn');
       expect(trace.backend, Backend.hybrid);
-      expect(trace.usedCloud, isTrue);
       expect(trace.toolSpans, hasLength(1));
       expect(trace.toolSpans.single.name, 'tool:list_recent_expenses');
       expect(trace.toolSpans.single.isError, isFalse);

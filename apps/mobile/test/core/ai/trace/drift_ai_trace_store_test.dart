@@ -18,7 +18,6 @@ void main() {
     backend: Backend.cloud,
     budgetTier: BudgetTier.small,
     routingReason: 'test',
-    usedCloud: true,
     totalDurationMs: 12,
   );
 

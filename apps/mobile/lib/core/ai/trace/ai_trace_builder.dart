@@ -94,7 +94,6 @@ class AiTraceBuilder {
       backend: _seed.backend,
       budgetTier: _seed.budgetTier,
       routingReason: _seed.routingReason,
-      usedCloud: _seed.usedCloud,
       totalDurationMs: total,
       terminalReason: terminalReason,
       invocation: _invocation,
