@@ -40,6 +40,7 @@ const String defaultDbFileName = 'naviwealth.db';
     Tags,
     TagLinks,
     Categories,
+    Budgets,
     Goals,
     Devices,
     OpLogs,
@@ -57,7 +58,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -202,6 +203,20 @@ class AppDatabase extends _$AppDatabase {
         await customStatement(createOpOutbox);
         await customStatement(createOpOutboxIndex);
       }
+      // v14 → v15: monthly category budgets (`roadmap-next.md` §3.2). One
+      // row per (categoryId, periodMonth). Sync rides on the row-state
+      // protocol like every other SyncableTable — no special wiring.
+      if (from < 15) {
+        await m.createTable(budgets);
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_budgets_owner_hlc '
+          'ON budgets(owner_user_id, hlc)',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_budgets_category_period '
+          'ON budgets(category_id, period_month)',
+        );
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -280,6 +295,10 @@ Future<void> _createIndexes(AppDatabase db) async {
         'ON categories(owner_user_id, hlc)',
     'CREATE INDEX IF NOT EXISTS idx_goals_owner_hlc '
         'ON goals(owner_user_id, hlc)',
+    'CREATE INDEX IF NOT EXISTS idx_budgets_owner_hlc '
+        'ON budgets(owner_user_id, hlc)',
+    'CREATE INDEX IF NOT EXISTS idx_budgets_category_period '
+        'ON budgets(category_id, period_month)',
     'CREATE INDEX IF NOT EXISTS idx_devices_owner_hlc '
         'ON devices(owner_user_id, hlc)',
     'CREATE INDEX IF NOT EXISTS idx_amort_liability_period '

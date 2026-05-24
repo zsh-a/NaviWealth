@@ -83,38 +83,44 @@
 
 > 当前产品最大空白。无 budget 是 FIRE 路径上 cashflow 端的硬伤。
 
-- 月度预算数据模型(`budgets` 表 + repository)
-- 现金流预测视图(归位 **Plan tab**)
-- 与 FIRE engine 的接口:预算偏差影响 safety level(松耦合 — Budget 写 read-model,FIRE 订阅)
+- ✅ **数据层落地** (2026-05-24): `budgets` 表 (schema v15) + `BudgetRepository`,sync 走 row-state。9 个 repo 测试。
+- ⏳ 现金流预测视图(归位 **Plan tab**)— UI 集成,作为单独 PR
+- ⏳ 与 FIRE engine 的接口:预算偏差影响 safety level(松耦合 — Budget 写 read-model,FIRE 订阅)— 等 UI 之后
 - 详: [midterm 2.1 M1](./roadmap-midterm-execution.md)
 
 ### 3.3 Income Planner P4(Wheel/收益周期)
 
 > P0–P3 已完成。P4 是 state machine,纯设备端,**不**触碰后端。
 
-- Wheel 状态机:cash-secured put → 被 assigned → covered call → 被 called → 回到 cash
-- 单仓 lifecycle 视图(归位 **Plan tab**)
-- AI tool `get_wheel_lifecycle` 只读
+- ✅ **State machine 落地** (2026-05-24): `wheel_lifecycle.dart`,9 个 stage(between / cashWaiting / shortPut / putExpired / putAssigned / sharesHeld / shortCall / callExpired / callCalled)+ `buildWheelLifecycle` pure function 从 trade journal 派生。10 个测试覆盖完整状态转换。
+- ⏳ 单仓 lifecycle 视图(Plan tab)— UI 单独 PR
+- ⏳ AI tool `get_wheel_lifecycle` 只读 — 等 UI 之后
 - 详: [options-income P4](./options-income.md)
 
 ### 3.4 AI Copilot M1: user profile + evidence
 
 > 让 AI 回答时引用本地 trace 证据,而不是凭空生成数字。
 
-- `UserProfile` device tool(读)
-- 回复中带 evidence anchor(链到 trace span)
+- ✅ **UserProfile contract 落地** (2026-05-24): `core/ai/contracts/user_profile.dart`,`composeUserProfile` pure function (consumption concentration + savings rate + risk appetite),snake_case JSON 接口 + < 8KB roundtrip 验证。11 个测试。
+- ⏳ system prompt 注入 + 8KB 降级 — 等 chat 集成
+- ⏳ tool result evidence 字段 + UI 跳转 — 单独 PR
 - 详: [midterm 2.5 M1](./roadmap-midterm-execution.md)
 
 ### 3.5 Watchlist + Event timeline(M1/M2)
 
-- 投资 tab 的 watchlist 持久化
-- Earnings / Ex-div / 财报事件时间线(从 yfinance 抓,缓存)
+- ✅ **Watchlist** — 已有(`features/investment/data/watchlist_*`、`presentation/watchlist_page.dart`)
+- ✅ **Event timeline 域** (2026-05-24): `features/investment/domain/reporting/event_timeline.dart`,`CorporateActionEvent` + `buildEventTimeline`(symbol filter / 时间窗 / chronological sort / dedup)。9 个测试。
+- ⏳ Market-data provider 接入(yfinance dividend/split events 写入 timeline)— 单独 PR
+- ⏳ Holding detail 页 "事件" tab UI — 单独 PR
 - 详: [midterm 2.2 M1/M2](./roadmap-midterm-execution.md)
 
 ### 3.6 Crash reporting opt-in(M1)
 
 > Phase 2 后续 observability 工作的依赖项。**必须 opt-in**,默认关闭。
 
+- ✅ **Preference + gating** (2026-05-24): `core/logging/crash_reporting_preference.dart`。`crashReportingEnabledProvider` 默认 OFF,`OptInCrashReporter` wrapper 包装任意底层 reporter,disabled 时丢弃所有事件包括 breadcrumb。4 个测试。
+- ⏳ Settings 页开关 UI — 单独 PR
+- ⏳ Sentry 实际集成(替换 `NoopCrashReporter`)— 等 Sentry SDK 决策
 - 详: [midterm 2.6 M1](./roadmap-midterm-execution.md)
 
 ---

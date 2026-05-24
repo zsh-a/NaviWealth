@@ -22,6 +22,7 @@ void main() {
         'fx_rates',
         'tags',
         'tag_links',
+        'budgets',
         'goals',
         'devices',
         'amortization_entries',

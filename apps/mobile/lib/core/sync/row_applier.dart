@@ -13,6 +13,7 @@ const Set<String> kSyncableTables = {
   'liabilities',
   'fx_rates',
   'tags',
+  'budgets',
   'goals',
   'devices',
   'amortization_entries',
