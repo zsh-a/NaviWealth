@@ -56,6 +56,7 @@ lib/core/ai/runtime/device/device_agent_loop.dart
 lib/core/ai/runtime/device/device_session.dart
 lib/core/ai/runtime/device/device_system_prompt.dart
 lib/core/ai/runtime/device/device_tool_dispatcher.dart
+lib/core/ai/runtime/device/device_user_profile_prompt.dart
 lib/core/ai/runtime/device/tools/breakdown_tools.dart
 lib/core/ai/runtime/device/tools/device_tool_registry.dart
 lib/core/ai/runtime/device/tools/get_anomaly_flags_tool.dart

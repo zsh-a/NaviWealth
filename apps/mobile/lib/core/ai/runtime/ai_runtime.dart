@@ -23,6 +23,7 @@ import 'device/anthropic/anthropic_wire.dart';
 import 'device/device_agent_loop.dart';
 import 'device/device_session.dart';
 import 'device/device_tool_dispatcher.dart';
+import 'device/device_user_profile_prompt.dart';
 
 /// The slice of the device runtime the routing client (W-D3/W-D6
 /// failover history) depends on. An interface so tests can inject a
@@ -70,6 +71,11 @@ class DeviceLlmRuntime implements DeviceChatRunner {
           AnthropicChatMessage(role: m.role, content: m.content),
       ],
       portfolioSnapshot: portfolioSnapshot,
+      // MT-2.5.M1.2 — first turn injects a 1KB user-profile appendix so
+      // the model grounds its answers in the user's actual finance shape
+      // (risk preference / cashflow trend / FIRE progress) without having
+      // to call a tool first.
+      systemAppendix: renderContextPackSystemAppendix(contextPack),
     );
     final loop = DeviceAgentLoop(
       streamFn: client.streamMessages,
