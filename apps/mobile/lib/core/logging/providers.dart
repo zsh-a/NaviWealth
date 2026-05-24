@@ -39,18 +39,19 @@ final crashReporterProvider = Provider<CrashReporter>((ref) {
   return OptInCrashReporter(delegate: delegate, enabled: enabled);
 });
 
+/// Exposes the underlying [Talker] instance for downstream consumers
+/// (Dio interceptors, TalkerScreen, route observer).
+final talkerProvider = Provider<Talker>((ref) {
+  return createAppTalker();
+});
+
 /// Application logger. Forwards `warning`+ events to [crashReporterProvider].
 final loggerProvider = Provider<AppLogger>((ref) {
   final logger = AppLogger(
     environment: ref.watch(appConfigProvider).environment,
     crashReporter: ref.watch(crashReporterProvider),
+    talker: ref.watch(talkerProvider),
   );
   AppLogger.bootstrap(logger);
   return logger;
-});
-
-/// Exposes the underlying [Talker] instance for downstream consumers
-/// (Dio interceptors, TalkerScreen, route observer).
-final talkerProvider = Provider<Talker>((ref) {
-  return ref.watch(loggerProvider).talker;
 });
