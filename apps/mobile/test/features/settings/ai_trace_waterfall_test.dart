@@ -12,7 +12,6 @@ AiTrace _trace() => const AiTrace(
   budgetTier: BudgetTier.standard,
   routingReason: 'device_llm_direct',
   usedCloud: false,
-  usedRawLedger: false,
   totalDurationMs: 1500,
   spans: [
     AiSpan(

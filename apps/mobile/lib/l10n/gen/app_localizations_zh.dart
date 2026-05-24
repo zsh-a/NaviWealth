@@ -3662,9 +3662,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatComposerHintStreaming => '正在生成回答…';
 
   @override
-  String get aiChatComposerHintFlushing => '正在同步本地数据…';
-
-  @override
   String get aiChatComposerSendTooltip => '发送 (⌘/Ctrl + Enter)';
 
   @override
@@ -3751,9 +3748,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiChatSessionsGroupOlder => '更早';
-
-  @override
-  String get aiChatStaleSyncNotice => '本地数据未完成同步，回答可能滞后于你刚刚的录入。';
 
   @override
   String get aiChatTruncatedMaxTokens => '回复因长度上限被截断';
@@ -5859,11 +5853,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String aiTransparencyToolsCount(int count) {
     return '工具 $count';
-  }
-
-  @override
-  String aiTransparencyStaleCount(int count) {
-    return '过期 x$count';
   }
 
   @override

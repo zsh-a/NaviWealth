@@ -2,11 +2,10 @@
 ///
 /// Lifecycle:
 ///
-///  1. Router emits a *seed* trace via `AiRouter.seedTrace`.
+///  1. Caller constructs a seed [AiTrace] (post-W-D7: no router).
 ///  2. The execution layer wraps it in an [AiTraceBuilder].
 ///  3. Each finished LLM round / tool dispatch calls
-///     [AiTraceBuilder.addSpan] (Opik-style hierarchical model); each
-///     disclosure exchange calls [AiTraceBuilder.addDisclosure].
+///     [AiTraceBuilder.addSpan] (Opik-style hierarchical model).
 ///  4. On completion the builder produces the immutable [AiTrace] via
 ///     [AiTraceBuilder.finalize] which is then appended to
 ///     `AiTraceStore`.
@@ -28,7 +27,6 @@ class AiTraceBuilder {
   final AiTrace _seed;
   final bool _capturePayloads;
   final DateTime _start;
-  final List<DisclosureSummary> _disclosures = <DisclosureSummary>[];
   final List<AiSpan> _spans = <AiSpan>[];
   Map<String, Object?>? _invocation;
 
@@ -83,16 +81,6 @@ class AiTraceBuilder {
     _spans.add(_capturePayloads ? span : span.redacted());
   }
 
-  void addDisclosure(DisclosureSummary summary) {
-    _disclosures.add(summary);
-  }
-
-  /// Whether any disclosure has been recorded with a non-denied
-  /// consent. Drives the `usedRawLedger` flag on the finalised trace
-  /// (and the inverse user-facing badge).
-  bool get _anyConsentedDisclosure =>
-      _disclosures.any((d) => d.consent != UserConsent.denied);
-
   AiTrace finalize({
     required DateTime finishedAt,
     TerminalReason terminalReason = TerminalReason.done,
@@ -107,9 +95,7 @@ class AiTraceBuilder {
       budgetTier: _seed.budgetTier,
       routingReason: _seed.routingReason,
       usedCloud: _seed.usedCloud,
-      usedRawLedger: _anyConsentedDisclosure,
       totalDurationMs: total,
-      disclosures: List<DisclosureSummary>.unmodifiable(_disclosures),
       terminalReason: terminalReason,
       invocation: _invocation,
       spans: _spans.isEmpty

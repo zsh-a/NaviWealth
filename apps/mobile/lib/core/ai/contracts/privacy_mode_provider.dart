@@ -1,21 +1,14 @@
 /// §5.10.5 — runtime user-facing toggle for what the AI runtime is
 /// allowed to send to the cloud.
 ///
-/// [PrivacyBudget] / [AnonymizationLevel] already define the wire-side
-/// rules; this provider is the **end-user knob** that picks which
-/// tier those rules clamp to. The router reads the mode at request
-/// time and either:
+/// Post-W-D7 the chat path is device-only, so this setting now only
+/// gates the cloud-Vision ingest fallback (see `ingest_privacy_gate`).
+/// [maxBudgetTier] is also read by ingest to stamp the AiTrace tier.
 ///
-///   * `amountsAllowed`  — full PrivacyBudget.large is reachable;
-///                         account names go up verbatim. Default for
-///                         new installs.
-///   * `amountsBucketed` — cap any cloud request at PrivacyBudget.standard
-///                         and bucket amounts (`AnonymizationLevel.bucket`
-///                         on the disclosure path). Account names go
-///                         up only when [maskAccountNames] is false.
-///   * `amountsLocal`    — cloud requests cap at PrivacyBudget.small;
-///                         amounts never leave the device (numeric
-///                         fields are redacted on disclosure).
+///   * `amountsAllowed`  — default for new installs.
+///   * `amountsBucketed` — middle posture.
+///   * `amountsLocal`    — ingest layer 4 cloud Vision is refused for
+///                         payloads carrying amount-bearing fields.
 ///
 /// State is persisted via [SharedPreferences] so a setting picked on
 /// device A survives a relaunch. Cross-device sync of this preference
@@ -78,14 +71,6 @@ class AiPrivacySettings {
     AiPrivacyMode.amountsAllowed => BudgetTier.large,
     AiPrivacyMode.amountsBucketed => BudgetTier.standard,
     AiPrivacyMode.amountsLocal => BudgetTier.small,
-  };
-
-  /// Anonymization level applied to amount-bearing fields when the
-  /// disclosure path is taken.
-  AnonymizationLevel get amountAnonymization => switch (mode) {
-    AiPrivacyMode.amountsAllowed => AnonymizationLevel.none,
-    AiPrivacyMode.amountsBucketed => AnonymizationLevel.bucket,
-    AiPrivacyMode.amountsLocal => AnonymizationLevel.redact,
   };
 
   AiPrivacySettings copyWith({

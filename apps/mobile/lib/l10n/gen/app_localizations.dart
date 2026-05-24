@@ -6597,12 +6597,6 @@ abstract class AppLocalizations {
   /// **'Generating answer…'**
   String get aiChatComposerHintStreaming;
 
-  /// No description provided for @aiChatComposerHintFlushing.
-  ///
-  /// In en, this message translates to:
-  /// **'Syncing local data…'**
-  String get aiChatComposerHintFlushing;
-
   /// No description provided for @aiChatComposerSendTooltip.
   ///
   /// In en, this message translates to:
@@ -6770,12 +6764,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Older'**
   String get aiChatSessionsGroupOlder;
-
-  /// No description provided for @aiChatStaleSyncNotice.
-  ///
-  /// In en, this message translates to:
-  /// **'Local data hasn\'t finished syncing; answers may lag behind your most recent edits.'**
-  String get aiChatStaleSyncNotice;
 
   /// Footer shown when the model hit max_tokens and the visible reply is incomplete
   ///
@@ -10572,12 +10560,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tools {count}'**
   String aiTransparencyToolsCount(int count);
-
-  /// AI trace stale read-model count pill
-  ///
-  /// In en, this message translates to:
-  /// **'Stale x{count}'**
-  String aiTransparencyStaleCount(int count);
 
   /// Fallback title for an AI trace without an intent label
   ///

@@ -82,7 +82,6 @@ String formatAiTraceBadge(AiTrace trace) {
     case Backend.hybrid:
       parts.add('本地数据 + 云端推理');
   }
-  parts.add(trace.usedRawLedger ? '已授权使用明细数据' : '未上传原始交易明细');
   if (trace.toolSpans.isNotEmpty) {
     parts.add('${trace.toolSpans.length} 个工具');
   }

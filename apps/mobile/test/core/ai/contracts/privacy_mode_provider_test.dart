@@ -19,25 +19,22 @@ void main() {
       expect(s.mode, AiPrivacyMode.amountsAllowed);
       expect(s.maskAccountNames, isFalse);
       expect(s.maxBudgetTier, BudgetTier.large);
-      expect(s.amountAnonymization, AnonymizationLevel.none);
     });
 
-    test('amountsBucketed caps at standard tier with bucketed anonymization', () {
+    test('amountsBucketed caps at standard tier', () {
       const s = AiPrivacySettings(
         mode: AiPrivacyMode.amountsBucketed,
         maskAccountNames: false,
       );
       expect(s.maxBudgetTier, BudgetTier.standard);
-      expect(s.amountAnonymization, AnonymizationLevel.bucket);
     });
 
-    test('amountsLocal caps at small tier and redacts amounts', () {
+    test('amountsLocal caps at small tier', () {
       const s = AiPrivacySettings(
         mode: AiPrivacyMode.amountsLocal,
         maskAccountNames: true,
       );
       expect(s.maxBudgetTier, BudgetTier.small);
-      expect(s.amountAnonymization, AnonymizationLevel.redact);
     });
   });
 

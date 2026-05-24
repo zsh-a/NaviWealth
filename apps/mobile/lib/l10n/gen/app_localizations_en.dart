@@ -3812,9 +3812,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatComposerHintStreaming => 'Generating answer…';
 
   @override
-  String get aiChatComposerHintFlushing => 'Syncing local data…';
-
-  @override
   String get aiChatComposerSendTooltip => 'Send (⌘/Ctrl + Enter)';
 
   @override
@@ -3902,10 +3899,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiChatSessionsGroupOlder => 'Older';
-
-  @override
-  String get aiChatStaleSyncNotice =>
-      'Local data hasn\'t finished syncing; answers may lag behind your most recent edits.';
 
   @override
   String get aiChatTruncatedMaxTokens =>
@@ -6099,11 +6092,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String aiTransparencyToolsCount(int count) {
     return 'Tools $count';
-  }
-
-  @override
-  String aiTransparencyStaleCount(int count) {
-    return 'Stale x$count';
   }
 
   @override
