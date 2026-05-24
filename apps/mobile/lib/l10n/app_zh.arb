@@ -1398,7 +1398,13 @@
   "planSummaryTrades": "{count, plural, other {{count} 笔建议交易}}",
 
   "settingsAccountSection": "账户",
+  "settingsNumbersAndMoneySection": "货币与数字",
+  "settingsPlanningSection": "规划",
+  "settingsAiSection": "AI",
+  "settingsAboutSection": "关于",
   "settingsDataSection": "数据",
+  "settingsBadgeAuto": "自动",
+  "settingsBadgeCustom": "自定义",
   "settingsDataTitle": "备份与恢复",
   "settingsDataSubtitle": "导出或导入加密数据备份",
   "settingsAiPrivacyTitle": "AI 隐私",

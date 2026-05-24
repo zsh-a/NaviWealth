@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../data/fire_providers.dart';
 import '../domain/fire_state.dart';
 import '../domain/fire_state_service.dart';
@@ -31,22 +32,30 @@ class _FireSimulationsCardState extends ConsumerState<FireSimulationsCard> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final stateAsync = ref.watch(fireStateProvider);
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: stateAsync.when(
-          loading: () => const SizedBox.shrink(),
-          error: (e, _) => Text(
-            '$e',
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.destructive,
+    return AiHoverOverlay(
+      capsule: FireAiCapsule(
+        intent: 'simulate_fire_change',
+        source: 'fire_simulations_card',
+        objectType: 'fire_plan',
+        objectLabel: l10n.fireOsSimulationsTitle,
+      ),
+      child: FCard.raw(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: stateAsync.when(
+            loading: () => const SizedBox.shrink(),
+            error: (e, _) => Text(
+              '$e',
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.destructive,
+              ),
             ),
-          ),
-          data: (baseline) => _Body(
-            baseline: baseline,
-            selected: _selected,
-            onSelect: (i) => setState(() => _selected = i),
-            l10n: l10n,
+            data: (baseline) => _Body(
+              baseline: baseline,
+              selected: _selected,
+              onSelect: (i) => setState(() => _selected = i),
+              l10n: l10n,
+            ),
           ),
         ),
       ),
@@ -70,30 +79,13 @@ class _Body extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final presets = _presetsFor(l10n);
-    final results = [
-      for (final p in presets) p.apply(baseline),
-    ];
+    final results = [for (final p in presets) p.apply(baseline)];
     final preset = presets[selected];
     final result = results[selected];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                l10n.fireOsSimulationsTitle,
-                style: context.theme.typography.md,
-              ),
-            ),
-            FireAiCapsule(
-              intent: 'simulate_fire_change',
-              source: 'fire_simulations_card',
-              objectType: 'fire_plan',
-              objectLabel: l10n.fireOsSimulationsTitle,
-            ),
-          ],
-        ),
+        Text(l10n.fireOsSimulationsTitle, style: context.theme.typography.md),
         const SizedBox(height: 4),
         Text(
           l10n.fireOsSimulationsSubtitle,
@@ -175,9 +167,16 @@ class _DeltaPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final wrLabel = _wrDelta(l10n, baseline.withdrawalRate, result.withdrawalRate);
-    final cashLabel =
-        _cashDelta(l10n, baseline.cashBucketMonths, result.cashBucketMonths);
+    final wrLabel = _wrDelta(
+      l10n,
+      baseline.withdrawalRate,
+      result.withdrawalRate,
+    );
+    final cashLabel = _cashDelta(
+      l10n,
+      baseline.cashBucketMonths,
+      result.cashBucketMonths,
+    );
     final safetyChanged = baseline.safetyLevel != result.safetyLevel;
     return Container(
       padding: const EdgeInsets.all(12),
@@ -226,11 +225,7 @@ class _DeltaPanel extends StatelessWidget {
     );
   }
 
-  static String _wrDelta(
-    AppLocalizations l10n,
-    double before,
-    double after,
-  ) {
+  static String _wrDelta(AppLocalizations l10n, double before, double after) {
     if (!before.isFinite || !after.isFinite) {
       return l10n.fireOsSimulationsDeltaWrUnavailable;
     }
@@ -246,11 +241,7 @@ class _DeltaPanel extends StatelessWidget {
     );
   }
 
-  static String _cashDelta(
-    AppLocalizations l10n,
-    double before,
-    double after,
-  ) {
+  static String _cashDelta(AppLocalizations l10n, double before, double after) {
     if (!before.isFinite || !after.isFinite) {
       return l10n.fireOsSimulationsDeltaCashUnavailable;
     }
@@ -287,10 +278,7 @@ class _Preset {
 }
 
 List<_Preset> _presetsFor(AppLocalizations l10n) => <_Preset>[
-  _Preset(
-    label: l10n.fireOsSimulationsBaselineLabel,
-    apply: (b) => b,
-  ),
+  _Preset(label: l10n.fireOsSimulationsBaselineLabel, apply: (b) => b),
   _Preset(
     label: l10n.fireOsSimulationsPresetExpenseUp20,
     apply: (b) {
@@ -324,8 +312,7 @@ List<_Preset> _presetsFor(AppLocalizations l10n) => <_Preset>[
     label: l10n.fireOsSimulationsPresetHalfRetireIncome,
     apply: (b) => simulateFireState(
       baseline: b,
-      monthlySurplus:
-          b.plan.monthlySurplus + Decimal.fromInt(5000),
+      monthlySurplus: b.plan.monthlySurplus + Decimal.fromInt(5000),
     ),
   ),
   _Preset(
@@ -337,16 +324,10 @@ List<_Preset> _presetsFor(AppLocalizations l10n) => <_Preset>[
   ),
   _Preset(
     label: l10n.fireOsSimulationsPresetSwrTight,
-    apply: (b) => simulateFireState(
-      baseline: b,
-      safeWithdrawalRate: 0.035,
-    ),
+    apply: (b) => simulateFireState(baseline: b, safeWithdrawalRate: 0.035),
   ),
   _Preset(
     label: l10n.fireOsSimulationsPresetCashBucketUp24,
-    apply: (b) => simulateFireState(
-      baseline: b,
-      targetCashBucketMonths: 24,
-    ),
+    apply: (b) => simulateFireState(baseline: b, targetCashBucketMonths: 24),
   ),
 ];

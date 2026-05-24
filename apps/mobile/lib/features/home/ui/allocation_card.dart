@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/ai/intent/intent.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../../ai_chat/ui/ai_object_capsule.dart';
 import '../../liabilities/ui/liability_l10n.dart';
 import '../domain/dashboard_models.dart';
@@ -52,78 +53,75 @@ class AllocationCard extends StatelessWidget {
           value: snapshot.netWorth.currency,
         ),
       ],
-      child: FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= Breakpoints.mobile;
-            final chart = _AllocationSankeyChart(
-              assetAllocs: assetAllocs,
-              liabilityAlloc: liabilityAlloc,
-              snapshot: snapshot,
-              height: isWide ? 260 : 300,
-              onTap: (alloc) => _openDrillDown(context, alloc),
-            );
-            final legend = _Legend(
-              assetAllocs: assetAllocs,
-              liabilityAlloc: liabilityAlloc,
-              snapshot: snapshot,
-              onTap: (alloc) => _openDrillDown(context, alloc),
-            );
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        l10n.dashboardAllocationTitle,
-                        style: context.theme.typography.md,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: AiObjectCapsule(
-                        source: 'home_allocation_card',
-                        intent: 'explain_chart',
-                        object: const AiObjectRef(
-                          type: 'chart',
-                          id: 'asset_allocation',
-                        ),
-                        objectLabel: l10n.dashboardAllocationTitle,
-                      ),
-                    ),
-                    FTooltip(
-                      tipBuilder: (_, _) => Text(l10n.aiChatSheetExpandTooltip),
-                      child: FButton.icon(
-                        variant: FButtonVariant.ghost,
-                        onPress: () => _openFullscreen(context),
-                        child: const Icon(Icons.fullscreen, size: 20),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                if (isWide)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 6, child: chart),
-                      const SizedBox(width: 24),
-                      Expanded(flex: 5, child: legend),
-                    ],
-                  )
-                else ...[
-                  chart,
-                  const SizedBox(height: 12),
-                  legend,
-                ],
-              ],
-            );
-          },
+      child: AiHoverOverlay(
+        capsule: AiObjectCapsule(
+          source: 'home_allocation_card',
+          intent: 'explain_chart',
+          object: const AiObjectRef(type: 'chart', id: 'asset_allocation'),
+          objectLabel: l10n.dashboardAllocationTitle,
         ),
-      ),
+        child: FCard.raw(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= Breakpoints.mobile;
+                final chart = _AllocationSankeyChart(
+                  assetAllocs: assetAllocs,
+                  liabilityAlloc: liabilityAlloc,
+                  snapshot: snapshot,
+                  height: isWide ? 260 : 300,
+                  onTap: (alloc) => _openDrillDown(context, alloc),
+                );
+                final legend = _Legend(
+                  assetAllocs: assetAllocs,
+                  liabilityAlloc: liabilityAlloc,
+                  snapshot: snapshot,
+                  onTap: (alloc) => _openDrillDown(context, alloc),
+                );
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            l10n.dashboardAllocationTitle,
+                            style: context.theme.typography.md,
+                          ),
+                        ),
+                        FTooltip(
+                          tipBuilder: (_, _) =>
+                              Text(l10n.aiChatSheetExpandTooltip),
+                          child: FButton.icon(
+                            variant: FButtonVariant.ghost,
+                            onPress: () => _openFullscreen(context),
+                            child: const Icon(Icons.fullscreen, size: 20),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (isWide)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 6, child: chart),
+                          const SizedBox(width: 24),
+                          Expanded(flex: 5, child: legend),
+                        ],
+                      )
+                    else ...[
+                      chart,
+                      const SizedBox(height: 12),
+                      legend,
+                    ],
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
       ),
     );
   }

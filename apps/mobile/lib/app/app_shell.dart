@@ -305,22 +305,78 @@ class _TabletShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    // FSidebar is sliver-backed, so `Spacer` doesn't lay out inside it.
+    // Wrap it in a Column where the destinations sidebar takes the
+    // Expanded slot and the Settings rail item sits pinned below — same
+    // visual effect, valid layout.
     return FScaffold(
       childPad: false,
       sidebar: SizedBox(
         width: 80,
-        child: FSidebar(
+        child: Column(
           children: [
-            for (var i = 0; i < destinations.length; i++)
-              _TabletRailItem(
-                destination: destinations[i],
-                selected: i == selectedIndex,
-                onTap: () => onDestinationSelected(i),
+            Expanded(
+              child: FSidebar(
+                children: [
+                  for (var i = 0; i < destinations.length; i++)
+                    _TabletRailItem(
+                      destination: destinations[i],
+                      selected: i == selectedIndex,
+                      onTap: () => onDestinationSelected(i),
+                    ),
+                ],
               ),
+            ),
+            // Pinned Settings — mirrors the desktop sidebar's pinned
+            // bottom row. Not a destination, so [selectedIndex]
+            // semantics stay unaffected.
+            SafeArea(
+              top: false,
+              child: _TabletRailSettings(label: l10n.navSettings),
+            ),
           ],
         ),
       ),
       child: child,
+    );
+  }
+}
+
+class _TabletRailSettings extends StatelessWidget {
+  const _TabletRailSettings({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return FTappable(
+      onPress: () => GoRouter.of(context).push(AppRoutes.settings),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.settings_outlined,
+              color: colors.mutedForeground,
+              size: 22,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: context.theme.typography.xs.copyWith(
+                fontWeight: FontWeight.w500,
+                color: colors.foreground,
+              ),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -25,142 +25,135 @@ import 'inline_setting_row.dart';
 
 /// Settings landing page — iOS-style inset-grouped sections.
 ///
-/// Every selector is a single-line [InlineSettingRow] (icon + label +
-/// trailing value chip), giving the page roughly half the vertical
-/// footprint of the legacy stacked `FSelect` layout while keeping every
-/// option discoverable. Tap any row to open a dedicated picker sheet.
+/// Section order maps to user mental model (most-personal → least):
+///
+///   1. Account            cloud / device identity
+///   2. Numbers & Money    base currency, FX rates — formatting + financial semantics
+///   3. Appearance         theme / market color / language
+///   4. Planning           Plan-tab parameters (risk appetite, allocation, expense, thresholds, stress)
+///   5. AI                 privacy → LLM provider → transparency
+///   6. Data               sync + backup
+///   7. About              version / commit
+///   8. Developer          debug-only escape hatches
+///
+/// The previous `_AccountHeader` decorative tile is gone — the page
+/// title comes from `appSubPageHeader` in `settings_page.dart`, so the
+/// section list starts at the top with no redundant chrome.
 class SettingsOverview extends ConsumerWidget {
   const SettingsOverview({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final accountGroup = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _SectionHeader(title: l10n.settingsAccountSection),
-        SoftCard(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Column(children: [_AccountSection()]),
-        ),
-      ],
+
+    final accountGroup = _Section(
+      title: l10n.settingsAccountSection,
+      child: _AccountSection(),
     );
-    const appearanceGroup = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _AppearanceSectionHeader(),
-        SoftCard(
-          padding: EdgeInsets.symmetric(vertical: 4),
-          child: _AppearanceSection(),
-        ),
-      ],
+    final numbersGroup = _Section(
+      title: l10n.settingsNumbersAndMoneySection,
+      child: _NumbersAndMoneySection(),
     );
-    final riskGroup = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _SectionHeader(title: l10n.settingsRiskSection),
-        SoftCard(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Column(
-            children: [
-              const _RiskAppetiteRow(),
-              _SectionDivider(),
-              _TargetAllocationLink(
-                onTap: () => showTargetAllocationEditorSheet(context: context),
-              ),
-              _SectionDivider(),
-              _MonthlyExpenseLink(
-                onTap: () =>
-                    context.goNamed(AppRouteNames.monthlyExpense),
-              ),
-              _SectionDivider(),
-              _RiskThresholdsLink(
-                onTap: () => context.goNamed(AppRouteNames.riskThresholds),
-              ),
-              _SectionDivider(),
-              _StressTestLink(
-                onTap: () => context.goNamed(AppRouteNames.stressTest),
-              ),
-            ],
+    const appearanceGroup = _Section(
+      titleKey: _SectionTitleKey.appearance,
+      child: _AppearanceSection(),
+    );
+    final planningGroup = _Section(
+      title: l10n.settingsPlanningSection,
+      child: Column(
+        children: [
+          const _RiskAppetiteRow(),
+          _SectionDivider(),
+          _TargetAllocationLink(
+            onTap: () => showTargetAllocationEditorSheet(context: context),
           ),
-        ),
-      ],
+          _SectionDivider(),
+          _MonthlyExpenseLink(
+            onTap: () => context.goNamed(AppRouteNames.monthlyExpense),
+          ),
+          _SectionDivider(),
+          _RiskThresholdsLink(
+            onTap: () => context.goNamed(AppRouteNames.riskThresholds),
+          ),
+          _SectionDivider(),
+          _StressTestLink(
+            onTap: () => context.goNamed(AppRouteNames.stressTest),
+          ),
+        ],
+      ),
+    );
+    final aiGroup = _Section(
+      title: l10n.settingsAiSection,
+      child: Column(
+        children: [
+          InlineLinkRow(
+            icon: Icons.lock_outline,
+            label: l10n.settingsAiPrivacyTitle,
+            subtitle: l10n.settingsAiPrivacySubtitle,
+            onTap: () => context.goNamed(AppRouteNames.aiPrivacy),
+          ),
+          _SectionDivider(),
+          InlineLinkRow(
+            icon: Icons.key_outlined,
+            label: l10n.settingsAiLlmTitle,
+            subtitle: l10n.settingsAiLlmSubtitle,
+            onTap: () => context.goNamed(AppRouteNames.aiLlm),
+          ),
+          _SectionDivider(),
+          InlineLinkRow(
+            icon: Icons.visibility_outlined,
+            label: l10n.settingsAiTransparencyTitle,
+            subtitle: l10n.settingsAiTransparencySubtitle,
+            onTap: () => context.goNamed(AppRouteNames.aiTransparency),
+          ),
+        ],
+      ),
     );
     final isLocalOnly = ref.watch(authControllerProvider).value is AuthLocalOnly;
-    final dataGroup = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _SectionHeader(title: l10n.settingsDataSection),
-        SoftCard(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Column(
-            children: [
-              if (!isLocalOnly) ...[
-                InlineLinkRow(
-                  icon: Icons.cloud_sync_outlined,
-                  label: l10n.settingsSyncTitle,
-                  subtitle: l10n.settingsSyncSubtitle,
-                  onTap: () => context.goNamed(AppRouteNames.sync),
-                ),
-                _SectionDivider(),
-              ],
-              InlineLinkRow(
-                icon: Icons.backup_outlined,
-                label: l10n.settingsDataTitle,
-                subtitle: l10n.settingsDataSubtitle,
-                onTap: () => context.goNamed(AppRouteNames.backup),
-              ),
-              _SectionDivider(),
-              InlineLinkRow(
-                icon: Icons.lock_outline,
-                label: l10n.settingsAiPrivacyTitle,
-                subtitle: l10n.settingsAiPrivacySubtitle,
-                onTap: () => context.goNamed(AppRouteNames.aiPrivacy),
-              ),
-              _SectionDivider(),
-              InlineLinkRow(
-                icon: Icons.visibility_outlined,
-                label: l10n.settingsAiTransparencyTitle,
-                subtitle: l10n.settingsAiTransparencySubtitle,
-                onTap: () => context.goNamed(AppRouteNames.aiTransparency),
-              ),
-              _SectionDivider(),
-              InlineLinkRow(
-                icon: Icons.key_outlined,
-                label: l10n.settingsAiLlmTitle,
-                subtitle: l10n.settingsAiLlmSubtitle,
-                onTap: () => context.goNamed(AppRouteNames.aiLlm),
-              ),
-            ],
+    final dataGroup = _Section(
+      title: l10n.settingsDataSection,
+      child: Column(
+        children: [
+          if (!isLocalOnly) ...[
+            InlineLinkRow(
+              icon: Icons.cloud_sync_outlined,
+              label: l10n.settingsSyncTitle,
+              subtitle: l10n.settingsSyncSubtitle,
+              onTap: () => context.goNamed(AppRouteNames.sync),
+            ),
+            _SectionDivider(),
+          ],
+          InlineLinkRow(
+            icon: Icons.backup_outlined,
+            label: l10n.settingsDataTitle,
+            subtitle: l10n.settingsDataSubtitle,
+            onTap: () => context.goNamed(AppRouteNames.backup),
           ),
-        ),
-      ],
+        ],
+      ),
+    );
+    final aboutGroup = _Section(
+      title: l10n.settingsAboutSection,
+      child: const _AboutTile(),
     );
     final developerGroup = kDebugMode
-        ? Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _SectionHeader(title: l10n.settingsDeveloperSection),
-              SoftCard(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: InlineLinkRow(
-                  icon: Icons.bug_report_outlined,
-                  label: l10n.settingsLogsTitle,
-                  subtitle: l10n.settingsLogsSubtitle,
-                  onTap: () => context.goNamed(AppRouteNames.logs),
-                ),
-              ),
-            ],
+        ? _Section(
+            title: l10n.settingsDeveloperSection,
+            child: InlineLinkRow(
+              icon: Icons.bug_report_outlined,
+              label: l10n.settingsLogsTitle,
+              subtitle: l10n.settingsLogsSubtitle,
+              onTap: () => context.goNamed(AppRouteNames.logs),
+            ),
           )
         : const SizedBox.shrink();
-    const aboutGroup = SoftCard(
-      padding: EdgeInsets.symmetric(vertical: 4),
-      child: _AboutTile(),
-    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 1024;
+        // Two-column at ≥ 760dp instead of 1024dp — settings is
+        // list-heavy and benefits from horizontal density on phones in
+        // landscape, foldables, and small tablets.
+        final isWide = constraints.maxWidth >= 760;
         final basePadding = Breakpoints.isMobile(constraints.maxWidth)
             ? const EdgeInsets.all(16)
             : const EdgeInsets.all(24);
@@ -168,53 +161,70 @@ class SettingsOverview extends ConsumerWidget {
           bottom:
               basePadding.bottom + 64 + MediaQuery.paddingOf(context).bottom,
         );
+
+        final allGroupsSingleColumn = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            accountGroup,
+            const SizedBox(height: 16),
+            numbersGroup,
+            const SizedBox(height: 16),
+            appearanceGroup,
+            const SizedBox(height: 16),
+            planningGroup,
+            const SizedBox(height: 16),
+            aiGroup,
+            const SizedBox(height: 16),
+            dataGroup,
+            const SizedBox(height: 16),
+            aboutGroup,
+            if (kDebugMode) ...[
+              const SizedBox(height: 16),
+              developerGroup,
+            ],
+          ],
+        );
+
         return ListView(
           padding: EdgeInsets.zero,
           children: [
             AdaptiveContentFrame(
-              maxWidth: isDesktop
+              maxWidth: isWide
                   ? AdaptiveMaxWidth.page
                   : AdaptiveMaxWidth.narrow,
-              layout: isDesktop
+              layout: isWide
                   ? AdaptiveFrameLayout.twoColumn
                   : AdaptiveFrameLayout.singleColumn,
               primaryFlex: 1,
               secondaryFlex: 1,
               padding: padding,
-              header: const _AccountHeader(),
-              primary: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  accountGroup,
-                  const SizedBox(height: 16),
-                  appearanceGroup,
-                  if (!isDesktop) ...[
-                    const SizedBox(height: 16),
-                    riskGroup,
-                    const SizedBox(height: 16),
-                    dataGroup,
-                    if (kDebugMode) ...[
-                      const SizedBox(height: 16),
-                      developerGroup,
-                    ],
-                    const SizedBox(height: 16),
-                    aboutGroup,
-                  ],
-                ],
-              ),
-              secondary: isDesktop
+              primary: isWide
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        riskGroup,
+                        accountGroup,
+                        const SizedBox(height: 16),
+                        numbersGroup,
+                        const SizedBox(height: 16),
+                        appearanceGroup,
+                        const SizedBox(height: 16),
+                        planningGroup,
+                      ],
+                    )
+                  : allGroupsSingleColumn,
+              secondary: isWide
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        aiGroup,
                         const SizedBox(height: 16),
                         dataGroup,
+                        const SizedBox(height: 16),
+                        aboutGroup,
                         if (kDebugMode) ...[
                           const SizedBox(height: 16),
                           developerGroup,
                         ],
-                        const SizedBox(height: 16),
-                        aboutGroup,
                       ],
                     )
                   : null,
@@ -226,14 +236,41 @@ class SettingsOverview extends ConsumerWidget {
   }
 }
 
-class _AppearanceSectionHeader extends StatelessWidget {
-  const _AppearanceSectionHeader();
+/// Section title lookup for one historical key that lived under a
+/// dedicated widget. Most sections now pass `title:` directly.
+enum _SectionTitleKey { appearance }
+
+class _Section extends StatelessWidget {
+  const _Section({this.title, this.titleKey, required this.child})
+    : assert(
+        title != null || titleKey != null,
+        'A section needs either a literal title or a titleKey',
+      );
+
+  final String? title;
+  final _SectionTitleKey? titleKey;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return _SectionHeader(
-      title: AppLocalizations.of(context).settingsAppearanceSection,
+    final resolvedTitle = title ?? _resolveTitleKey(context, titleKey!);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionHeader(title: resolvedTitle),
+        SoftCard(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: child,
+        ),
+      ],
     );
+  }
+
+  static String _resolveTitleKey(BuildContext context, _SectionTitleKey key) {
+    final l10n = AppLocalizations.of(context);
+    return switch (key) {
+      _SectionTitleKey.appearance => l10n.settingsAppearanceSection,
+    };
   }
 }
 
@@ -275,83 +312,35 @@ class _SectionDivider extends StatelessWidget {
   }
 }
 
-class _AccountHeader extends StatelessWidget {
-  const _AccountHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              // Soft teal disc — matches the icon affordance used in
-              // SoftCard rows / AccountCategoryPicker so the avatar
-              // reads as part of the same visual family rather than a
-              // Material primaryContainer one-off.
-              color: colors.primary.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              Icons.account_circle_outlined,
-              color: colors.primary,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.settingsAccountTitle,
-                  style: context.theme.typography.xl,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  l10n.settingsAccountSubtitle,
-                  style: context.theme.typography.sm.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _AccountSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final baseCurrency = ref.watch(baseCurrencyProvider);
     final isLocalOnly = ref.watch(authControllerProvider).value is AuthLocalOnly;
+
+    if (isLocalOnly) {
+      return _LocalModeStatusRow(
+        label: l10n.settingsAccountLocalOnlyBadge,
+        subtitle: l10n.settingsAccountLocalOnlyHint,
+      );
+    }
+    return InlineLinkRow(
+      icon: Icons.devices_outlined,
+      label: l10n.settingsDevicesTitle,
+      subtitle: l10n.settingsDevicesSubtitle,
+      onTap: () => context.goNamed(AppRouteNames.devices),
+    );
+  }
+}
+
+class _NumbersAndMoneySection extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final baseCurrency = ref.watch(baseCurrencyProvider);
 
     return Column(
       children: [
-        if (isLocalOnly)
-          _LocalModeStatusRow(
-            label: l10n.settingsAccountLocalOnlyBadge,
-            subtitle: l10n.settingsAccountLocalOnlyHint,
-          )
-        else
-          InlineLinkRow(
-            icon: Icons.devices_outlined,
-            label: l10n.settingsDevicesTitle,
-            subtitle: l10n.settingsDevicesSubtitle,
-            onTap: () => context.goNamed(AppRouteNames.devices),
-          ),
-        _SectionDivider(),
         InlineSettingRow<String>(
           icon: Icons.currency_exchange,
           label: l10n.settingsBaseCurrencyTitle,
@@ -522,8 +511,8 @@ class _MarketColorPreview extends StatelessWidget {
 
 /// Risk appetite chip row — the single user-facing dial that drives
 /// rebalance preset, AI tone and (by default) concentration alert
-/// sensitivity. Sits at the top of the Investment Preferences card so
-/// it reads as the section's "main idea".
+/// sensitivity. Sits at the top of the Planning card so it reads as
+/// the section's "main idea".
 class _RiskAppetiteRow extends ConsumerWidget {
   const _RiskAppetiteRow();
 
@@ -632,20 +621,22 @@ class _TargetAllocationLink extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final appetite = ref.watch(riskAppetiteProvider);
-    final subtitle = appetite == RiskAppetite.custom
-        ? l10n.settingsTargetAllocationSubtitleCustom
-        : l10n.settingsTargetAllocationSubtitlePreset(
-            switch (appetite) {
-              RiskAppetite.conservative => l10n.settingsRiskAppetiteConservative,
-              RiskAppetite.moderate => l10n.settingsRiskAppetiteModerate,
-              RiskAppetite.aggressive => l10n.settingsRiskAppetiteAggressive,
-              RiskAppetite.custom => l10n.settingsRiskAppetiteCustom,
-            },
-          );
+    // Subtitle now carries the *preset name* (not the wordy "auto-tuned by
+    // your aggressive appetite" sentence) — the AUTO badge on the right
+    // already conveys the auto-tune state.
+    final subtitle = switch (appetite) {
+      RiskAppetite.conservative => l10n.settingsRiskAppetiteConservative,
+      RiskAppetite.moderate => l10n.settingsRiskAppetiteModerate,
+      RiskAppetite.aggressive => l10n.settingsRiskAppetiteAggressive,
+      RiskAppetite.custom => l10n.settingsRiskAppetiteCustom,
+    };
     return InlineLinkRow(
       icon: Icons.donut_small_outlined,
       label: l10n.settingsTargetAllocationLabel,
       subtitle: subtitle,
+      trailingBadge: appetite == RiskAppetite.custom
+          ? l10n.settingsBadgeCustom
+          : l10n.settingsBadgeAuto,
       onTap: onTap,
     );
   }
@@ -667,9 +658,9 @@ class _RiskThresholdsLink extends ConsumerWidget {
     return InlineLinkRow(
       icon: Icons.notifications_active_outlined,
       label: l10n.settingsRiskThresholdsLabel,
-      subtitle: isCustom
-          ? l10n.settingsRiskThresholdsSubtitleCustom
-          : l10n.settingsRiskThresholdsSubtitleAuto,
+      trailingBadge: isCustom
+          ? l10n.settingsBadgeCustom
+          : l10n.settingsBadgeAuto,
       onTap: onTap,
     );
   }
@@ -688,9 +679,9 @@ class _StressTestLink extends ConsumerWidget {
     return InlineLinkRow(
       icon: Icons.science_outlined,
       label: l10n.settingsStressTestLabel,
-      subtitle: isCustom
-          ? l10n.settingsStressTestSubtitleCustom
-          : l10n.settingsStressTestSubtitleAuto,
+      trailingBadge: isCustom
+          ? l10n.settingsBadgeCustom
+          : l10n.settingsBadgeAuto,
       onTap: onTap,
     );
   }
@@ -705,13 +696,17 @@ class _MonthlyExpenseLink extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final prefs = ref.watch(monthlyExpensePreferencesProvider);
-    final subtitle = prefs.override != null
+    final isOverride = prefs.override != null;
+    final subtitle = isOverride
         ? l10n.settingsMonthlyExpenseSubtitleOverride
         : l10n.settingsMonthlyExpenseSubtitleAuto(prefs.windowMonths);
     return InlineLinkRow(
       icon: Icons.calendar_view_month_outlined,
       label: l10n.settingsMonthlyExpenseLabel,
       subtitle: subtitle,
+      trailingBadge: isOverride
+          ? l10n.settingsBadgeCustom
+          : l10n.settingsBadgeAuto,
       onTap: onTap,
     );
   }

@@ -4456,7 +4456,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAccountSection => '账户';
 
   @override
+  String get settingsNumbersAndMoneySection => '货币与数字';
+
+  @override
+  String get settingsPlanningSection => '规划';
+
+  @override
+  String get settingsAiSection => 'AI';
+
+  @override
+  String get settingsAboutSection => '关于';
+
+  @override
   String get settingsDataSection => '数据';
+
+  @override
+  String get settingsBadgeAuto => '自动';
+
+  @override
+  String get settingsBadgeCustom => '自定义';
 
   @override
   String get settingsDataTitle => '备份与恢复';
