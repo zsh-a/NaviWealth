@@ -196,8 +196,11 @@ void main() {
       // caption Text label is suppressed to keep VoiceOver focused.
       final primary = tester.widget<Text>(find.textContaining('1,000'));
       expect(primary.semanticsLabel, contains('USD'));
-      expect(primary.semanticsLabel, contains('原币'));
       expect(primary.semanticsLabel, contains('CNY'));
+      // Both amounts must be readable in the same label so the screen
+      // reader speaks the dual-currency context in one breath.
+      expect(primary.semanticsLabel, contains('1000'));
+      expect(primary.semanticsLabel, contains('7240'));
     },
   );
 }

@@ -8049,6 +8049,18 @@ abstract class AppLocalizations {
   /// **'Export or import encrypted data backups'**
   String get settingsDataSubtitle;
 
+  /// Settings switch row label for opt-in anonymous crash + error telemetry
+  ///
+  /// In en, this message translates to:
+  /// **'Crash reporting'**
+  String get settingsCrashReportingTitle;
+
+  /// Settings switch row subtitle clarifying the opt-in default and what gets sent
+  ///
+  /// In en, this message translates to:
+  /// **'Send anonymous error reports to help fix bugs. Off by default.'**
+  String get settingsCrashReportingSubtitle;
+
   /// Settings tile that opens the AI privacy page
   ///
   /// In en, this message translates to:

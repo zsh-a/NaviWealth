@@ -84,6 +84,7 @@
 > 当前产品最大空白。无 budget 是 FIRE 路径上 cashflow 端的硬伤。
 
 - ✅ **数据层落地** (2026-05-24): `budgets` 表 (schema v15) + `BudgetRepository`,sync 走 row-state。9 个 repo 测试。
+- ✅ **Riverpod provider 接线** (2026-05-24): `budgetRepositoryProvider` / `budgetsStreamProvider` / `budgetsForMonthProvider` 在 `data/repositories/providers.dart`,可被任何 UI 消费。
 - ⏳ 现金流预测视图(归位 **Plan tab**)— UI 集成,作为单独 PR
 - ⏳ 与 FIRE engine 的接口:预算偏差影响 safety level(松耦合 — Budget 写 read-model,FIRE 订阅)— 等 UI 之后
 - 详: [midterm 2.1 M1](./roadmap-midterm-execution.md)
@@ -119,8 +120,8 @@
 > Phase 2 后续 observability 工作的依赖项。**必须 opt-in**,默认关闭。
 
 - ✅ **Preference + gating** (2026-05-24): `core/logging/crash_reporting_preference.dart`。`crashReportingEnabledProvider` 默认 OFF,`OptInCrashReporter` wrapper 包装任意底层 reporter,disabled 时丢弃所有事件包括 breadcrumb。4 个测试。
-- ⏳ Settings 页开关 UI — 单独 PR
-- ⏳ Sentry 实际集成(替换 `NoopCrashReporter`)— 等 Sentry SDK 决策
+- ✅ **Provider 接线 + Settings UI** (2026-05-24): `crashReporterProvider` 现在包装 delegate + opt-in 状态;Settings 页 Data section 加 `_CrashReportingRow`(`InlineSwitchRow`);新增 l10n key + zh 翻译。3 个集成测试(默认 OFF / 持久化 / opt-in 生效)。
+- ⏳ Sentry 实际集成(替换 `crashReporterDelegateProvider` 的 `NoopCrashReporter`)— 等 Sentry SDK 决策
 - 详: [midterm 2.6 M1](./roadmap-midterm-execution.md)
 
 ---

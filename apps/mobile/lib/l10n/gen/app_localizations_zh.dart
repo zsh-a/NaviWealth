@@ -4477,6 +4477,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDataSubtitle => '导出或导入加密数据备份';
 
   @override
+  String get settingsCrashReportingTitle => '崩溃报告';
+
+  @override
+  String get settingsCrashReportingSubtitle => '发送匿名错误报告以帮助修复问题。默认关闭。';
+
+  @override
   String get settingsAiPrivacyTitle => 'AI 隐私';
 
   @override

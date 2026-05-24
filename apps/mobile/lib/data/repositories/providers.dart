@@ -6,11 +6,13 @@ import '../../domain/entities/fx_rate.dart' as dom;
 import '../../features/auth/data/auth_controller.dart';
 import '../audit/domain_event.dart';
 import '../audit/event_log_reader.dart';
+import '../db/app_database.dart';
 import '../db/providers.dart';
 import '../domain/account.dart';
 import '../domain/asset.dart';
 import '../domain/enums.dart';
 import 'account_repository.dart';
+import 'budget_repository.dart';
 import 'fx_rate_repository.dart';
 import 'journal_entry_providers.dart';
 import 'manual_asset_repository.dart';
@@ -135,6 +137,35 @@ final priceRepositoryProvider = FutureProvider<PriceRepository>((ref) async {
   final outbox = await ref.watch(outboxStoreProvider.future);
   final stamper = await ref.watch(mutationStamperProvider.future);
   return PriceRepository(db: db, outbox: outbox, stamper: stamper);
+});
+
+/// Budget MVP (`roadmap-next.md` §3.2). Monthly category budgets backed
+/// by the `budgets` SyncableTable.
+final budgetRepositoryProvider = FutureProvider<BudgetRepository>((ref) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  final outbox = await ref.watch(outboxStoreProvider.future);
+  final stamper = await ref.watch(mutationStamperProvider.future);
+  return BudgetRepository(db: db, outbox: outbox, stamper: stamper);
+});
+
+/// Live stream of every non-deleted budget, ordered (periodMonth desc,
+/// categoryId asc). UIs that show "this month's budgets" subscribe via
+/// [budgetsForMonthProvider] instead; this raw stream powers the budget
+/// management list.
+final budgetsStreamProvider = StreamProvider.autoDispose<List<BudgetRow>>(
+  (ref) async* {
+    final repo = await ref.watch(budgetRepositoryProvider.future);
+    yield* repo.watchAll();
+  },
+);
+
+/// Live stream of budgets for a specific `YYYY-MM` calendar month. The
+/// family key is the month string — UIs key on the displayed month so
+/// switching months tears down the prior subscription cleanly.
+final budgetsForMonthProvider = StreamProvider.autoDispose
+    .family<List<BudgetRow>, String>((ref, periodMonth) async* {
+  final repo = await ref.watch(budgetRepositoryProvider.future);
+  yield* repo.watchByMonth(periodMonth);
 });
 
 /// Live stream of every recorded FX rate. The dashboard converter and the

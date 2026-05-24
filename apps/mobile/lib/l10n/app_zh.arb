@@ -1405,6 +1405,8 @@
   "settingsBadgeCustom": "自定义",
   "settingsDataTitle": "备份与恢复",
   "settingsDataSubtitle": "导出或导入加密数据备份",
+  "settingsCrashReportingTitle": "崩溃报告",
+  "settingsCrashReportingSubtitle": "发送匿名错误报告以帮助修复问题。默认关闭。",
   "settingsAiPrivacyTitle": "AI 隐私",
   "settingsAiPrivacySubtitle": "选择 AI 可以上传到云端的数据范围",
   "aiPrivacyTitle": "AI 隐私",
