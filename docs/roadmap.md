@@ -165,8 +165,8 @@
 **阶段拆分**：
 - **M1（月 1）— 金额组件 dual-display**
   - `design_system/widgets/money_text.dart`（新建或合并已有 money 组件）：默认显示 base，长按 / hover 切换原币；支持 caption 模式（小字双显）。
-  - 全量替换：所有页面金额组件迁移到统一 widget（覆盖 accounts / investment / expense / liabilities / fire / analytics）。
-  - Lint 规则（custom analyzer 或 grep PR check）：禁止直接拼接 `.toStringAsFixed` 显示 Money。
+  - 全量替换：所有页面金额组件迁移到统一 widget（覆盖 accounts / assets / investment / options / expense / cashflow / liabilities / fire / analytics / home / settings），作为单独 PR 系列按 feature group 拆分。
+  - Lint 规则（custom analyzer 或 grep PR check）：禁止直接拼接 `.toStringAsFixed` 显示 Money；依赖全量替换完成后再强制接入 CI，迁移期只允许 advisory/report 模式。
 - **M2（月 3）— 历史汇率 + 自动拉取**
   - `fx_rate_sync_service` 升级为周期任务（前台 + 进入相关页面时触发），存历史快照（按日，HLC 标记来源 = `auto`/`manual`）。
   - 历史曲线 mini chart（在 settings/fx_rates 页 + 资产折算溢价提示中复用）。

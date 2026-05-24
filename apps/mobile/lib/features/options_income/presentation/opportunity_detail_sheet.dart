@@ -57,33 +57,66 @@ class _DetailBody extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s12),
           _StatsGrid(
-            entries: <(String, String)>[
+            entries: <(String, Widget)>[
               (
                 l10n.incomePlannerMetricStrike,
-                '${opportunity.contract.strike.currency} '
-                    '${opportunity.contract.strike.amount.toStringAsFixed(2)}',
+                MoneyText(
+                  amount: opportunity.contract.strike.amount.toDouble(),
+                  currencyCode: opportunity.contract.strike.currency,
+                  symbolStyle: MoneySymbolStyle.isoCode,
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               (
                 l10n.incomePlannerMetricBreakeven,
-                '${metrics.breakeven.currency} '
-                    '${metrics.breakeven.amount.toStringAsFixed(2)}',
+                MoneyText(
+                  amount: metrics.breakeven.amount.toDouble(),
+                  currencyCode: metrics.breakeven.currency,
+                  symbolStyle: MoneySymbolStyle.isoCode,
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               (
                 l10n.incomePlannerMetricCash,
-                '${metrics.cashRequired.currency} '
-                    '${metrics.cashRequired.amount.toStringAsFixed(2)}',
+                MoneyText(
+                  amount: metrics.cashRequired.amount.toDouble(),
+                  currencyCode: metrics.cashRequired.currency,
+                  symbolStyle: MoneySymbolStyle.isoCode,
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               (
                 l10n.incomePlannerMetricAnnualized,
-                _pct(metrics.annualizedYield),
+                Text(
+                  _pct(metrics.annualizedYield),
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               (
                 l10n.incomePlannerMetricMargin,
-                _pct(metrics.marginOfSafety),
+                Text(
+                  _pct(metrics.marginOfSafety),
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               (
                 l10n.incomePlannerMetricDte,
-                '${opportunity.contract.dte}',
+                Text(
+                  '${opportunity.contract.dte}',
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           ),
@@ -157,7 +190,7 @@ class _Section extends StatelessWidget {
 class _StatsGrid extends StatelessWidget {
   const _StatsGrid({required this.entries});
 
-  final List<(String, String)> entries;
+  final List<(String, Widget)> entries;
 
   @override
   Widget build(BuildContext context) {
@@ -178,12 +211,7 @@ class _StatsGrid extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.s2),
-                Text(
-                  e.$2,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                e.$2,
               ],
             ),
           ),

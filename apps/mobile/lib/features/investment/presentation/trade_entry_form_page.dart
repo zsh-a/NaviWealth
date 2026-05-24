@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../app/route_paths.dart';
+import '../../../core/format/providers.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../data/domain/account.dart';
 import '../../../data/domain/enums.dart';
@@ -221,14 +222,13 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       if (!mounted) return;
       final resulting = currentBalance - cashOut;
       if (resulting < Decimal.zero) {
+        final resultingLabel = context
+            .formatters(ref)
+            .currency(resulting, code: currency);
         final confirmed = await showConfirmDialog(
           context: context,
           title: Text(l10n.tradeEntryCashOverdrawTitle),
-          body: Text(
-            l10n.tradeEntryCashOverdrawMessage(
-              '${resulting.toStringAsFixed(2)} $currency',
-            ),
-          ),
+          body: Text(l10n.tradeEntryCashOverdrawMessage(resultingLabel)),
           cancelLabel: l10n.commonCancel,
           confirmLabel: l10n.tradeEntryCashOverdrawProceed,
         );

@@ -139,10 +139,15 @@ deleted_at_hlc TEXT;
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
 | MT-2.3.M1.1 | P0 | M | `MoneyText` widget（默认 base，长按 / hover 切原币，caption 双显） | — | `design_system/widgets/money_text.dart` |
-| MT-2.3.M1.2 | P0 | L | 全量替换：accounts / investment / expense / liabilities / fire / analytics | MT-2.3.M1.1 | 跨多个 features |
-| MT-2.3.M1.3 | P0 | S | grep PR check：禁止直接 `.toStringAsFixed` 显示 Money | — | `tool/lint-money-display.sh`, `.github/workflows/mobile.yml` |
+| MT-2.3.M1.2 | P0 | L | 全量替换：accounts / assets → investment / options → expense / cashflow → liabilities / fire → analytics / home / settings | MT-2.3.M1.1 | 跨多个 features |
+| MT-2.3.M1.3 | P0 | S | grep PR check：禁止直接 `.toStringAsFixed` 显示 Money；M1.2 清零后再 fail CI | MT-2.3.M1.2 | `tool/lint-money-display.sh`, `.github/workflows/mobile.yml` |
 | MT-2.3.M1.4 | P1 | M | 单测：4 locale × RTL × 长货币代码 × 高精度小数 | MT-2.3.M1.1 | `test/design_system/widgets/money_text_test.dart` |
 | MT-2.3.M1.5 | P1 | S | Visual baseline：每个使用 page 加 1 个 golden | MT-2.3.M1.2 | `docs/visual-baseline/` |
+
+执行约束：
+- `MT-2.3.M1.2` 必须作为独立 PR 系列推进；每个 PR 只迁移一个 feature group,并在描述中列出迁移前后 `.toStringAsFixed` 剩余数量。
+- 非金额用途（百分比、耗时、token/cost、compact chart label、Decimal rounding）进入 lint allowlist,不要为了过 lint 改动业务含义。
+- `MT-2.3.M1.3` advisory 模式脚本已接入 mobile CI;只有在金额类调用点清零后才能切到 CI blocking。
 
 ### M2 — 历史汇率曲线 + 自动拉取增强
 

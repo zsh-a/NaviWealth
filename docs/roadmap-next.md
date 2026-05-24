@@ -75,8 +75,13 @@
 > 是 Phase 2 报表的**前置条件**。先做,后面所有金额展示统一基于它。
 
 - ✅ **M1.1 widget 落地** (2026-05-24): `DualMoneyText` 在 `design_system/widgets/money_text.dart`,支持 inline / stacked 两种 layout;同币种自动隐藏 caption;a11y label 整合两个金额。5 个 widget test 覆盖。
-- ⏳ M1.2 全量替换调用点 — 当前 codebase 约 118 处裸 `.toStringAsFixed` 显示金额。**作为单独 PR 系列**按 feature 分批迁移,不在本次范围
-- ⏳ M1.3 Lint 脚本禁止裸金额显示 — **依赖 M1.2 完成**(否则 CI 直接红)
+- ⏳ **M1.2 全量替换调用点** — 首批 options income / trade-entry 明确金额展示已迁移 (2026-05-24);当前 `apps/mobile/lib` 剩余约 84 处裸 `.toStringAsFixed`,其中包含百分比、耗时、图表缩写、Decimal rounding 等混合场景。后续仍作为单独 PR 系列按 feature 分批迁移。
+  - PR 拆分建议: accounts/assets → investment/options → expense/cashflow → liabilities/FIRE → analytics/home/settings。
+  - 每个 PR 只迁移明确的金额展示到 `DualMoneyText` / money formatter;百分比、耗时、AI cost、图表缩写进入 allowlist,避免误改业务语义。
+  - 每批迁移需补对应 widget/golden 或现有页面回归,并在 PR 描述列出剩余调用点数量。
+- ⏳ **M1.3 Lint 脚本禁止裸金额显示** — advisory 脚本已落地并接入 mobile CI (2026-05-24);**依赖 M1.2 完成后再切 strict CI**(否则当前存量会直接红)。
+  - M1.2 期间 `tool/lint-money-display.sh --advisory` 在 GitHub Actions 只警告不 fail;本地可用 `--strict` 验证疑似金额显示。
+  - M1.2 清零金额类调用点后,再把 `tool/lint-money-display.sh` 接入 mobile CI 并维护 allowlist。
 - 详: [midterm 2.3 M1](./roadmap-midterm-execution.md)
 
 ### 3.2 Budget & Cashflow MVP(M1)

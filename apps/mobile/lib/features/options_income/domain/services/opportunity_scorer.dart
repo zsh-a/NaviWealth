@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../domain/values/money.dart';
 import '../approved_underlying.dart';
@@ -251,8 +252,9 @@ class OpportunityScorer {
     } else {
       final centre = Decimal.parse('0.30');
       final delta = (iv - centre).abs();
-      final norm = (delta / Decimal.parse('0.50'))
-          .toDecimal(scaleOnInfinitePrecision: 4);
+      final norm = (delta / Decimal.parse('0.50')).toDecimal(
+        scaleOnInfinitePrecision: 4,
+      );
       ivScore = (Decimal.one - norm).clamp(Decimal.zero, Decimal.one);
     }
 
@@ -260,10 +262,9 @@ class OpportunityScorer {
     // for both strategies. Hook reserved for §10 ExposureChecker.
     final portfolioFitScore = Decimal.parse('0.50');
 
-    final eventSafetyScore =
-        (hasUpcomingEarnings || hasUpcomingMacroEvent)
-            ? Decimal.parse('0.20')
-            : Decimal.parse('0.95');
+    final eventSafetyScore = (hasUpcomingEarnings || hasUpcomingMacroEvent)
+        ? Decimal.parse('0.20')
+        : Decimal.parse('0.95');
 
     return <String, Decimal>{
       'yield': yieldScore,
@@ -303,22 +304,24 @@ class OpportunityScorer {
     }
     final staticReturn = cashRequired.amount <= Decimal.zero
         ? Decimal.zero
-        : (premium.amount / cashRequired.amount)
-            .toDecimal(scaleOnInfinitePrecision: 6);
+        : (premium.amount / cashRequired.amount).toDecimal(
+            scaleOnInfinitePrecision: 6,
+          );
     final dteRatio = contract.dte <= 0
         ? Decimal.zero
-        : (Decimal.fromInt(365) / Decimal.fromInt(contract.dte))
-            .toDecimal(scaleOnInfinitePrecision: 6);
+        : (Decimal.fromInt(365) / Decimal.fromInt(contract.dte)).toDecimal(
+            scaleOnInfinitePrecision: 6,
+          );
     final annualizedYield = staticReturn * dteRatio;
     final marginOfSafety = contract.underlyingPrice.amount <= Decimal.zero
         ? Decimal.zero
         : strategy == OptionsStrategyKind.cashSecuredPut
-            ? ((contract.underlyingPrice.amount - breakeven.amount) /
-                    contract.underlyingPrice.amount)
-                .toDecimal(scaleOnInfinitePrecision: 6)
-            : ((contract.strike.amount - contract.underlyingPrice.amount) /
-                    contract.underlyingPrice.amount)
-                .toDecimal(scaleOnInfinitePrecision: 6);
+        ? ((contract.underlyingPrice.amount - breakeven.amount) /
+                  contract.underlyingPrice.amount)
+              .toDecimal(scaleOnInfinitePrecision: 6)
+        : ((contract.strike.amount - contract.underlyingPrice.amount) /
+                  contract.underlyingPrice.amount)
+              .toDecimal(scaleOnInfinitePrecision: 6);
     return OpportunityMetrics(
       premium: premium,
       cashRequired: cashRequired,
@@ -384,8 +387,10 @@ class OpportunityScorer {
 
   // ---------- helpers ----------
 
-  Money _putCashRequired(OptionContract contract) =>
-      Money(contract.strike.amount * Decimal.fromInt(100), contract.strike.currency);
+  Money _putCashRequired(OptionContract contract) => Money(
+    contract.strike.amount * Decimal.fromInt(100),
+    contract.strike.currency,
+  );
 
   Decimal _saturate({
     required Decimal base,
@@ -395,16 +400,18 @@ class OpportunityScorer {
     if (ceiling <= floor) return Decimal.one;
     if (base <= floor) return Decimal.zero;
     if (base >= ceiling) return Decimal.one;
-    final fraction = ((base - floor) / (ceiling - floor))
-        .toDecimal(scaleOnInfinitePrecision: 4);
+    final fraction = ((base - floor) / (ceiling - floor)).toDecimal(
+      scaleOnInfinitePrecision: 4,
+    );
     return fraction.clamp(Decimal.zero, Decimal.one);
   }
 
   Decimal _avg(List<Decimal> values) {
     if (values.isEmpty) return Decimal.zero;
     final sum = values.fold<Decimal>(Decimal.zero, (a, b) => a + b);
-    return (sum / Decimal.fromInt(values.length))
-        .toDecimal(scaleOnInfinitePrecision: 4);
+    return (sum / Decimal.fromInt(values.length)).toDecimal(
+      scaleOnInfinitePrecision: 4,
+    );
   }
 
   String _strengthBullet(
@@ -460,9 +467,10 @@ class OpportunityScorer {
     required OptionContract contract,
     required OpportunityMetrics metrics,
   }) {
-    final action =
-        strategy == OptionsStrategyKind.cashSecuredPut ? '卖看跌' : '备兑看涨';
-    return '${contract.underlying} ${contract.dte}DTE $action @ ${contract.strike.currency} ${_fmt(contract.strike.amount)} —— 年化 ${_pct(metrics.annualizedYield)}，安全边际 ${_pct(metrics.marginOfSafety)}';
+    final action = strategy == OptionsStrategyKind.cashSecuredPut
+        ? '卖看跌'
+        : '备兑看涨';
+    return '${contract.underlying} ${contract.dte}DTE $action @ ${_fmt(contract.strike)} —— 年化 ${_pct(metrics.annualizedYield)}，安全边际 ${_pct(metrics.marginOfSafety)}';
   }
 
   String _bestForLine(OptionsStrategyKind strategy, OptionsStrategyMode mode) {
@@ -504,17 +512,17 @@ class OpportunityScorer {
     OptionContract contract,
     OpportunityMetrics metrics,
   ) {
-    final currency = contract.strike.currency;
     switch (strategy) {
       case OptionsStrategyKind.cashSecuredPut:
-        return '若 ${contract.underlying} 跌破 $currency ${_fmt(contract.strike.amount)}，'
-            '你将以实际成本 $currency ${_fmt(metrics.breakeven.amount)} 买入 100 股，'
-            '占用现金 $currency ${_fmt(metrics.cashRequired.amount)}';
+        return '若 ${contract.underlying} 跌破 ${_fmt(contract.strike)}，'
+            '你将以实际成本 ${_fmt(metrics.breakeven)} 买入 100 股，'
+            '占用现金 ${_fmt(metrics.cashRequired)}';
       case OptionsStrategyKind.coveredCall:
         final cap = contract.strike.amount + contract.mid.amount;
-        return '若 ${contract.underlying} 涨到 $currency ${_fmt(contract.strike.amount)}，'
-            '你将以 $currency ${_fmt(contract.strike.amount)} 卖出 100 股，'
-            '错过该价位以上的全部上涨；总收益上限为 $currency ${_fmt(cap)}';
+        final capMoney = Money(cap, contract.strike.currency);
+        return '若 ${contract.underlying} 涨到 ${_fmt(contract.strike)}，'
+            '你将以 ${_fmt(contract.strike)} 卖出 100 股，'
+            '错过该价位以上的全部上涨；总收益上限为 ${_fmt(capMoney)}';
     }
   }
 
@@ -523,7 +531,14 @@ class OpportunityScorer {
     return '$hundred%';
   }
 
-  String _fmt(Decimal value) => value.toStringAsFixed(2);
+  String _fmt(Money money) {
+    return NumberFormat.currency(
+      locale: 'en',
+      name: money.currency,
+      symbol: '${money.currency} ',
+      decimalDigits: 2,
+    ).format(money.amount.toDouble());
+  }
 }
 
 /// One scored candidate; the orchestrator collects these and persists them

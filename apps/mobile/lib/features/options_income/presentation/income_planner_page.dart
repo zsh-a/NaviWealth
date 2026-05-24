@@ -432,23 +432,43 @@ class _MetricsRow extends StatelessWidget {
       children: [
         _Metric(
           label: l10n.incomePlannerMetricStrike,
-          value:
-              '${contract.strike.currency} '
-              '${metrics.cashRequired.amount / Decimal.fromInt(100)}',
+          value: MoneyText(
+            amount: contract.strike.amount.toDouble(),
+            currencyCode: contract.strike.currency,
+            symbolStyle: MoneySymbolStyle.isoCode,
+            style: context.theme.typography.sm.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
         _Metric(
           label: l10n.incomePlannerMetricAnnualized,
-          value: _pct(metrics.annualizedYield),
+          value: Text(
+            _pct(metrics.annualizedYield),
+            style: context.theme.typography.sm.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
         _Metric(
           label: l10n.incomePlannerMetricMargin,
-          value: _pct(metrics.marginOfSafety),
+          value: Text(
+            _pct(metrics.marginOfSafety),
+            style: context.theme.typography.sm.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
         _Metric(
           label: l10n.incomePlannerMetricCash,
-          value:
-              '${metrics.cashRequired.currency} '
-              '${_fmtMoney(metrics.cashRequired.amount)}',
+          value: MoneyText(
+            amount: metrics.cashRequired.amount.toDouble(),
+            currencyCode: metrics.cashRequired.currency,
+            symbolStyle: MoneySymbolStyle.isoCode,
+            style: context.theme.typography.sm.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       ],
     );
@@ -540,7 +560,7 @@ class _Metric extends StatelessWidget {
   const _Metric({required this.label, required this.value});
 
   final String label;
-  final String value;
+  final Widget value;
 
   @override
   Widget build(BuildContext context) {
@@ -555,12 +575,7 @@ class _Metric extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.s2),
-        Text(
-          value,
-          style: context.theme.typography.sm.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        value,
       ],
     );
   }
@@ -1004,5 +1019,3 @@ String _pct(Decimal value) {
   final pct = (value * Decimal.fromInt(100)).toStringAsFixed(1);
   return '$pct%';
 }
-
-String _fmtMoney(Decimal value) => value.toStringAsFixed(2);
