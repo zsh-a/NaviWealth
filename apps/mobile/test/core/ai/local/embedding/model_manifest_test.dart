@@ -41,17 +41,9 @@ void main() {
     });
   });
 
-  group('onnxRuntimeBundle (platform-aware)', () {
-    test('returns a bundle on supported platforms, null on unsupported', () {
-      final b = onnxRuntimeBundle();
-      // Tests run on host (macOS / Linux) — either path is valid.
-      if (b != null) {
-        expect(b.id, startsWith('onnxruntime-'));
-        expect(b.files, hasLength(1));
-        expect(b.files.first.url, startsWith('https://'));
-      }
-    });
-  });
+  // ONNX Runtime is intentionally NOT in the Dart-side manifest —
+  // it's build-time managed by tool/fetch-onnxruntime.sh + discovered
+  // at runtime by _discoverBundledOrtDylib in bootstrap.dart.
 
   group('ModelBundle.totalSizeBytes', () {
     test('null when any file has unknown size', () {

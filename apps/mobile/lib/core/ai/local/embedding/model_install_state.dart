@@ -278,7 +278,11 @@ final modelInstallProvider = AsyncNotifierProvider.autoDispose
 /// Static list of bundles the app knows how to install. The UI
 /// iterates this. Extending: add another entry (e.g. for a future
 /// Whisper model) — no other touchpoints needed.
+///
+/// ONNX Runtime is **not** on this list — it's a Rust crate
+/// dependency managed at build time by `tool/fetch-onnxruntime.sh`,
+/// not user-installable data. See `lifeos-shell.md` §6.6 + the
+/// `_discoverBundledOrtDylib` resolver in `bootstrap.dart`.
 final knownModelBundlesProvider = Provider<List<ModelBundle>>((ref) {
-  final ort = onnxRuntimeBundle();
-  return [embeddingGemmaBundle(), ?ort];
+  return [embeddingGemmaBundle()];
 });

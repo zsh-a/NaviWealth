@@ -77,9 +77,21 @@ build_macos() {
     cp "$CRATE_DIR/target/release/${LIB_BASENAME}.dylib" \
       "$DIST_DIR/macos/${LIB_BASENAME}.dylib"
   fi
+
+  # Fetch the matching ORT dylib alongside (ort 2.0.0-rc.12 → ORT 1.24.2;
+  # `ort-load-dynamic` discovers via ORT_DYLIB_PATH at runtime).
+  local host_arch
+  host_arch="$(uname -m)"
+  case "$host_arch" in
+    arm64)  "$REPO_ROOT/tool/fetch-onnxruntime.sh" aarch64-apple-darwin "$DIST_DIR/macos" ;;
+    x86_64) "$REPO_ROOT/tool/fetch-onnxruntime.sh" x86_64-apple-darwin "$DIST_DIR/macos" ;;
+    *) echo "WARNING: unknown host arch $host_arch; skipping ORT fetch" >&2 ;;
+  esac
+
   echo
   echo "macOS dylib: $DIST_DIR/macos/${LIB_BASENAME}.dylib"
-  ls -lh "$DIST_DIR/macos/${LIB_BASENAME}.dylib"
+  ls -lh "$DIST_DIR/macos/${LIB_BASENAME}.dylib" \
+        "$DIST_DIR/macos/libonnxruntime.dylib"
 }
 
 build_ios() {

@@ -65,9 +65,9 @@ class _Hint extends StatelessWidget {
     return const SoftCard(
       padding: EdgeInsets.all(12),
       child: Text(
-        'AI 记忆检索默认走轻量 stub。下载 EmbeddingGemma + ONNX Runtime 后,'
-        '重启应用即可启用本地多语言句向量(768-d)。模型文件在本机保存,'
-        '不上传任何远端。',
+        'AI 记忆检索默认走轻量 stub。下载 EmbeddingGemma 模型后重启应用即可启用'
+        '本地多语言句向量(768-d)。文件保存在本机,不上传任何远端。'
+        '(ONNX Runtime 引擎已随 app 一起构建,无需单独管理。)',
         style: TextStyle(fontSize: 13),
       ),
     );

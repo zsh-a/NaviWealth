@@ -115,7 +115,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       // memoryRuntimeProvider awaits. On any failure (missing dylib,
       // missing model, malformed config) we log and fall back to
       // [StubEmbedder] so the app boots regardless.
-      if (resolvedEmbedderPaths != null)
+      if (resolvedEmbedderPaths.isComplete)
         memory_providers.embedderProvider.overrideWith(
           (ref) async => _loadRustEmbedderOrFallback(
             modelDir: resolvedEmbedderPaths.modelDir,
@@ -129,6 +129,19 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // Force eager creation so AppLogger.instance is ready before any error
   // handler fires.
   final logger = container.read(loggerProvider);
+  if (resolvedEmbedderPaths.isComplete) {
+    logger.i(
+      'Rust embedder path resolution complete '
+      '(modelDir=${resolvedEmbedderPaths.modelDir}, '
+      'ortDylibPath=${resolvedEmbedderPaths.ortDylibPath}, '
+      'libraryPath=${resolvedEmbedderPaths.libraryPath ?? '<plugin-loader>'})',
+    );
+  } else {
+    logger.i(
+      'Rust embedder not configured; using StubEmbedder '
+      '(missing: ${resolvedEmbedderPaths.missingInputs.join(', ')})',
+    );
+  }
   // Eager-init the frame timing collector so the addTimingsCallback
   // subscription is in place before the first frame ships. Otherwise
   // PerfTraceRecorder windows opened at startup would race the first
@@ -192,26 +205,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // warming and FX refresh so dashboard valuations have one startup path.
   container.read(syncSchedulerBootstrapProvider);
   container.read(priceSyncCoordinatorBootstrapProvider);
-  // D-1.7c (`docs/lifeos-shell.md` §6.6): if the embedder changed
-  // since last run (e.g. swapping Stub ↔ Rust EmbeddingGemma), invalidate any
-  // memory_embeddings produced by a different fingerprint so the next
-  // indexer cycle re-embeds with the current model. Cheap when nothing
-  // changed.
-  try {
-    final runtime = await container.read(
-      memory_providers.memoryRuntimeProvider.future,
-    );
-    final dropped = await runtime.dropStaleVectors();
-    if (dropped > 0) {
-      logger.i('Memory Runtime dropped $dropped stale embeddings on boot');
-    }
-  } on Object catch (e, st) {
-    logger.w(
-      'Memory Runtime stale-vector sweep failed',
-      error: e,
-      stackTrace: st,
-    );
-  }
+  _scheduleMemoryRuntimeStartupTasks(container: container, logger: logger);
   // Eager-bind Memory Layer indexers (`docs/lifeos-shell.md` §6, D-1.7).
   // Reading this provider subscribes the trade-journal indexer (and any
   // future domain indexers) to their source streams so semantic memory
@@ -228,11 +222,44 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   return container;
 }
 
+/// Kick off Memory Runtime maintenance without blocking first paint.
+///
+/// Real EmbeddingGemma startup includes FRB init + ONNX session warm-up,
+/// which can take long enough to look like a black screen if awaited
+/// before `runApp()`. These jobs are startup hygiene only; callers that
+/// need memory later still await [memoryRuntimeProvider] normally.
+void _scheduleMemoryRuntimeStartupTasks({
+  required ProviderContainer container,
+  required AppLogger logger,
+}) {
+  // D-1.7c (`docs/lifeos-shell.md` §6.6): if the embedder changed
+  // since last run (e.g. swapping Stub ↔ Rust EmbeddingGemma), invalidate
+  // any memory_embeddings produced by a different fingerprint so the next
+  // indexer cycle re-embeds with the current model.
+  unawaited(() async {
+    try {
+      final runtime = await container.read(
+        memory_providers.memoryRuntimeProvider.future,
+      );
+      final dropped = await runtime.dropStaleVectors();
+      if (dropped > 0) {
+        logger.i('Memory Runtime dropped $dropped stale embeddings on boot');
+      }
+    } on Object catch (e, st) {
+      logger.w(
+        'Memory Runtime stale-vector sweep failed',
+        error: e,
+        stackTrace: st,
+      );
+    }
+  }());
+}
+
 /// Resolved file paths the Rust embedder needs (D-1.7c). All three
 /// can come from either dart-define override or the in-app
 /// installer's directory.
-class _ResolvedEmbedderPaths {
-  const _ResolvedEmbedderPaths({
+class _EmbedderPathResolution {
+  const _EmbedderPathResolution({
     required this.modelDir,
     required this.ortDylibPath,
     this.libraryPath,
@@ -240,61 +267,100 @@ class _ResolvedEmbedderPaths {
   final String modelDir;
   final String ortDylibPath;
   final String? libraryPath;
+
+  bool get isComplete => modelDir.isNotEmpty && ortDylibPath.isNotEmpty;
+
+  List<String> get missingInputs => [
+    if (modelDir.isEmpty) 'EmbeddingGemma model dir',
+    if (ortDylibPath.isEmpty) 'ONNX Runtime dylib',
+  ];
 }
 
-/// Pick the active embedder paths. Returns `null` when not enough
-/// inputs are available to construct the Rust embedder — bootstrap
-/// then leaves the stub default in place, and the user can install
-/// missing bundles via Settings → AI Models.
+/// Pick the active embedder paths. When not enough inputs are
+/// available to construct the Rust embedder, [isComplete] is false —
+/// bootstrap then leaves the stub default in place, and the user can
+/// install the model bundle via Settings → AI Models.
 ///
 /// Precedence per field:
 ///   1. `--dart-define` override (dev / test path)
-///   2. on-disk installer artefact (`<app_support>/embedders/...`)
-Future<_ResolvedEmbedderPaths?> _resolveEmbedderPaths(AppConfig config) async {
+///   2. For `modelDir`: on-disk installer artefact (`<app_support>/embedders/`)
+///   3. For `ortDylibPath`: standard locations around the executable
+///      (build-time bundled by `tool/build-lifeos-native.sh` / cargokit)
+///
+/// ORT is build-time managed (not in the in-app installer) because
+/// it's a Rust crate dep, not user data; `tool/fetch-onnxruntime.sh`
+/// downloads + places it alongside `liblifeos_native.{dylib,so}`.
+Future<_EmbedderPathResolution> _resolveEmbedderPaths(AppConfig config) async {
   String modelDir = config.rustEmbedderModelDir;
   String ortDylibPath = config.rustEmbedderOrtDylibPath;
 
-  if (modelDir.isEmpty || ortDylibPath.isEmpty) {
-    // Inspect on-disk installer artefacts. Cheap (just File.existsSync)
-    // and runs only when at least one path is missing.
+  if (modelDir.isEmpty) {
     try {
       final support = await getApplicationSupportDirectory();
       final root = Directory(path.join(support.path, 'embedders'));
-
-      if (modelDir.isEmpty) {
-        final gemma = embeddingGemmaBundle();
-        final gemmaDir = Directory(path.join(root.path, gemma.id));
-        final paths = ModelInstallPaths.unsafeForDir(root);
-        if (await paths.isComplete(gemma)) {
-          modelDir = gemmaDir.path;
-        }
-      }
-
-      if (ortDylibPath.isEmpty) {
-        final ort = onnxRuntimeBundle();
-        if (ort != null) {
-          final ortDir = Directory(path.join(root.path, ort.id));
-          final paths = ModelInstallPaths.unsafeForDir(root);
-          if (await paths.isComplete(ort)) {
-            ortDylibPath = path.join(ortDir.path, ort.files.first.localName);
-          }
-        }
+      final gemma = embeddingGemmaBundle();
+      final gemmaDir = Directory(path.join(root.path, gemma.id));
+      final paths = ModelInstallPaths.unsafeForDir(root);
+      if (await paths.isComplete(gemma)) {
+        modelDir = gemmaDir.path;
       }
     } on Object {
-      // path_provider failure (rare, e.g. sandbox issues) → just
-      // bail out and keep the stub embedder.
-      return null;
+      // path_provider failure (rare, e.g. sandbox issues) → bail out
+      // and keep the stub embedder.
+      return _EmbedderPathResolution(
+        modelDir: modelDir,
+        ortDylibPath: ortDylibPath,
+        libraryPath: config.rustEmbedderLibraryPath.isEmpty
+            ? null
+            : config.rustEmbedderLibraryPath,
+      );
     }
   }
 
-  if (modelDir.isEmpty || ortDylibPath.isEmpty) return null;
-  return _ResolvedEmbedderPaths(
+  if (ortDylibPath.isEmpty) {
+    ortDylibPath = _discoverBundledOrtDylib() ?? '';
+  }
+
+  return _EmbedderPathResolution(
     modelDir: modelDir,
     ortDylibPath: ortDylibPath,
     libraryPath: config.rustEmbedderLibraryPath.isEmpty
         ? null
         : config.rustEmbedderLibraryPath,
   );
+}
+
+/// Look for the build-time-bundled `libonnxruntime.{dylib,so}` next
+/// to (or one level above) the running executable. Returns the first
+/// existing path, or `null` if none matches — caller falls back to
+/// the stub embedder.
+///
+/// Search order is platform-conventional:
+///
+/// - **macOS**: `<exec>/../Frameworks/libonnxruntime.dylib` (Pod-
+///   bundled location), then `<exec>/libonnxruntime.dylib`.
+/// - **Linux**: `<exec>/libonnxruntime.so`.
+/// - **Android / iOS**: not yet wired — needs a platform-specific
+///   bundling step (TODO when D-2 ships HealthOS on those targets).
+///
+String? _discoverBundledOrtDylib() {
+  if (!Platform.isMacOS && !Platform.isLinux) return null;
+  final exec = Platform.resolvedExecutable;
+  final execDir = File(exec).parent;
+  final dylibName = Platform.isMacOS
+      ? 'libonnxruntime.dylib'
+      : 'libonnxruntime.so';
+
+  final candidates = <String>[
+    if (Platform.isMacOS)
+      path.join(execDir.parent.path, 'Frameworks', dylibName),
+    path.join(execDir.path, dylibName),
+  ];
+  for (final p in candidates) {
+    final normalised = path.normalize(p);
+    if (File(normalised).existsSync()) return normalised;
+  }
+  return null;
 }
 
 /// Construct the Rust EmbeddingGemma embedder, or log + fall back to
@@ -307,19 +373,43 @@ Future<Embedder> _loadRustEmbedderOrFallback({
   required String? libraryPath,
   required AppLogger logger,
 }) async {
+  final started = Stopwatch()..start();
+  logger.i(
+    'Rust embedder loading started '
+    '(modelDir=$modelDir, ortDylibPath=$ortDylibPath, '
+    'libraryPath=${libraryPath ?? '<plugin-loader>'})',
+  );
   try {
     final embedder = await RustGemmaEmbedder.load(
       modelDir: modelDir,
       ortDylibPath: ortDylibPath,
       libraryPath: libraryPath,
-    );
+    ).timeout(const Duration(seconds: 90));
     logger.i(
-      'Rust embedder loaded (${embedder.fingerprint}, dim=${embedder.dimension})',
+      'Rust embedder loaded (${embedder.fingerprint}, '
+      'dim=${embedder.dimension}, elapsed=${started.elapsed})',
     );
     return embedder;
+  } on TimeoutException catch (e, st) {
+    logger.w(
+      'Rust embedder load timed out; falling back to StubEmbedder '
+      '(elapsed=${started.elapsed})',
+      error: e,
+      stackTrace: st,
+    );
+    return StubEmbedder();
   } on RustEmbedderUnavailable catch (e, st) {
     logger.w(
-      'Rust embedder unavailable; falling back to StubEmbedder',
+      'Rust embedder unavailable; falling back to StubEmbedder '
+      '(elapsed=${started.elapsed})',
+      error: e,
+      stackTrace: st,
+    );
+    return StubEmbedder();
+  } on Object catch (e, st) {
+    logger.w(
+      'Rust embedder load failed unexpectedly; falling back to StubEmbedder '
+      '(elapsed=${started.elapsed})',
       error: e,
       stackTrace: st,
     );

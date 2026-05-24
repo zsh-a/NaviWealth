@@ -156,30 +156,30 @@ for f in tokenizer.json config.json special_tokens_map.json tokenizer_config.jso
 done
 ```
 
-## ONNX Runtime (separate download — required)
+## ONNX Runtime (build-time managed — no user action)
 
 The crate uses **`ort-load-dynamic`** instead of statically linking
-ORT, to dodge the duplicate-symbol issue in ORT's prebuilt static
-archives (sub-libs each carry a copy of `onnx-ml.pb.cc.o`, surfacing
-as ~756 "duplicate symbol" linker errors when force-loaded into the
-Flutter app). The dylib ships separately and is discovered at
+ORT (the prebuilt static archives ship duplicate `.o` files across
+sub-libs, surfacing as ~756 "duplicate symbol" linker errors when
+force-loaded into the Flutter app). The dylib is discovered at
 runtime via `ORT_DYLIB_PATH`.
 
-Download `libonnxruntime` from the
-[Microsoft ONNX Runtime release page](https://github.com/microsoft/onnxruntime/releases)
-for your target platform (use the same major version that the `ort`
-crate expects — currently 1.20.x):
+**`tool/fetch-onnxruntime.sh`** downloads the correct
+`libonnxruntime` version for the cargo target and places it
+alongside `liblifeos_native.dylib`:
 
-```bash
-# macOS Apple Silicon (~6 MB)
-mkdir -p ~/models/onnxruntime
-curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.20.1/onnxruntime-osx-arm64-1.20.1.tgz \
-  | tar xz -C /tmp/
-cp /tmp/onnxruntime-osx-arm64-1.20.1/lib/libonnxruntime.1.20.1.dylib \
-   ~/models/onnxruntime/libonnxruntime.dylib
-```
+- `tool/build-lifeos-native.sh macos` calls it automatically — both
+  files end up in `apps/mobile/native/lifeos_native/dist/macos/`
+- `bootstrap.dart`'s `_discoverBundledOrtDylib` finds it at runtime
+  via path math around `Platform.resolvedExecutable` (no
+  `--dart-define` needed for the dev path)
+- ORT version is pinned to **1.24.2** to match what
+  `ort 2.0.0-rc.12` expects (the version `fastembed 5.13` brings
+  in); the script cache lives in `.cache/onnxruntime/`
 
-For iOS / Android binaries see the corresponding release archives.
+Downloading manually is only needed if `fetch-onnxruntime.sh` can't
+hit the network (firewalled CI). The script is small and easy to
+audit; see comments inside.
 
 The Rust loader also accepts other quantisation variants if you've
 already downloaded them: it picks the first match from
@@ -195,19 +195,24 @@ recommended path for end users is the **in-app installer** under
 **Settings → AI 模型**:
 
 1. Open the app, go to Settings → AI 模型
-2. Tap "下载" on EmbeddingGemma (~300 MB) and ONNX Runtime (~16 MB)
-3. Restart the app — bootstrap auto-detects installed bundles in
-   `<app_support>/embedders/<bundle-id>/` and swaps in the Rust
-   embedder; the Memory Runtime's `dropStaleVectors()` clears
-   embeddings from the prior fingerprint, and the next indexer
-   cycle re-embeds with EmbeddingGemma. Typed memory records
-   (events / episodic / etc.) are kept intact.
+2. Tap "下载" on EmbeddingGemma (~330 MB)
+3. Restart the app — bootstrap auto-detects:
+   - the in-app installer's model dir at
+     `<app_support>/embedders/embeddinggemma-300m-onnx/`
+   - the build-bundled `libonnxruntime.dylib` next to the executable
+     (placed there by `tool/fetch-onnxruntime.sh`)
+   then swaps in the Rust embedder. The Memory Runtime's
+   `dropStaleVectors()` clears embeddings from the prior fingerprint,
+   and the next indexer cycle re-embeds with EmbeddingGemma. Typed
+   memory records (events / episodic / etc.) are kept intact.
 
-No `--dart-define` needed. No manual curl. Files live in
-`getApplicationSupportDirectory() / 'embedders' /`:
+No `--dart-define` needed for the in-app installer + build-bundled
+ORT flow. Files live in:
 
-- `embeddinggemma-300m-onnx/` (6 files: `model_quantized.onnx` + `model_quantized.onnx_data` + 4 JSON files)
-- `onnxruntime-<os>/libonnxruntime.{dylib,so,dll}`
+- `<app_support>/embedders/embeddinggemma-300m-onnx/` — 6 files
+  (`model_quantized.onnx` + `model_quantized.onnx_data` + 4 JSON)
+- `<liblifeos_native dir>/libonnxruntime.dylib` — build-bundled by
+  cargokit / `tool/build-lifeos-native.sh`
 
 ### Developer overrides (`--dart-define`)
 

@@ -2,20 +2,22 @@
 /// (D-1.7c per `docs/lifeos-shell.md` §6.6).
 ///
 /// Each [ModelBundle] is a logical group of files that get
-/// downloaded together (e.g. the EmbeddingGemma weights + tokenizer
-/// JSON, or the platform's `libonnxruntime` binary). The Settings
-/// UI iterates registered bundles; the bootstrap auto-discovery
-/// checks each bundle for completeness before electing to use the
-/// Rust embedder over the stub.
+/// downloaded together via the in-app installer (Settings →
+/// AI Models). The Settings UI iterates registered bundles; the
+/// bootstrap auto-discovery checks each bundle for completeness
+/// before electing to use the Rust embedder over the stub.
+///
+/// **What's NOT in here**: ONNX Runtime. ORT is a Rust crate
+/// dependency built/fetched alongside `liblifeos_native` by
+/// `tool/fetch-onnxruntime.sh`, not user-installable data. See
+/// `lifeos-shell.md` §6.6 + the `_discoverBundledOrtDylib`
+/// resolver in `bootstrap.dart`.
 ///
 /// **Cross-domain neutral**: lives in `embedding/` because that's
 /// the only consumer today, but the types don't carry finance- or
 /// embedder-specific fields. A future HealthOS / TimeOS asset (e.g.
 /// a speech recogniser model) can reuse the same types.
 library;
-
-import 'dart:ffi' show Abi;
-import 'dart:io' show Platform;
 
 /// A single file inside a [ModelBundle]. Downloaded one-by-one with
 /// per-file progress / verification.
@@ -80,7 +82,7 @@ class ModelBundle {
 }
 
 // ---------------------------------------------------------------------
-// Concrete bundles
+// Concrete bundles (the in-app installer downloads these)
 // ---------------------------------------------------------------------
 
 /// EmbeddingGemma-300M (ONNX INT8 + tokenizer). Sourced from
@@ -140,76 +142,10 @@ ModelBundle embeddingGemmaBundle() {
   );
 }
 
-/// ONNX Runtime native lib for the current platform. We use
-/// `ort-load-dynamic` (see `Cargo.toml`) so this file is the
-/// dynamic library ORT discovers via `ORT_DYLIB_PATH`.
-///
-/// Returns `null` on platforms we don't have a binary for (the
-/// embedder loader will then surface a friendly "unsupported
-/// platform" message instead of crashing).
-ModelBundle? onnxRuntimeBundle() {
-  const ortVersion = '1.20.1';
-  const base =
-      'https://github.com/microsoft/onnxruntime/releases/download/v$ortVersion';
-
-  String? archiveUrl;
-  String? archiveSubpath;
-  String? localName;
-  int? sizeBytes;
-
-  // Use the ABI to pick the right artefact. Microsoft ships
-  // platform-specific archives that we'd normally extract; for an
-  // in-app downloader we point the URL at the archive and the
-  // installer decompresses to the bundle dir.
-  switch (Abi.current()) {
-    case Abi.macosArm64:
-      archiveUrl = '$base/onnxruntime-osx-arm64-$ortVersion.tgz';
-      archiveSubpath =
-          'onnxruntime-osx-arm64-$ortVersion/lib/libonnxruntime.$ortVersion.dylib';
-      localName = 'libonnxruntime.dylib';
-      sizeBytes = 16 * 1024 * 1024;
-      break;
-    case Abi.macosX64:
-      archiveUrl = '$base/onnxruntime-osx-x86_64-$ortVersion.tgz';
-      archiveSubpath =
-          'onnxruntime-osx-x86_64-$ortVersion/lib/libonnxruntime.$ortVersion.dylib';
-      localName = 'libonnxruntime.dylib';
-      sizeBytes = 18 * 1024 * 1024;
-      break;
-    case Abi.linuxX64:
-      archiveUrl = '$base/onnxruntime-linux-x64-$ortVersion.tgz';
-      archiveSubpath =
-          'onnxruntime-linux-x64-$ortVersion/lib/libonnxruntime.so.$ortVersion';
-      localName = 'libonnxruntime.so';
-      sizeBytes = 20 * 1024 * 1024;
-      break;
-    case Abi.androidArm64:
-      // Android: Microsoft ships an AAR with the .so inside. Skip
-      // for now; revisit when the app actually targets Android.
-      return null;
-    default:
-      return null;
-  }
-
-  // For MVP the downloader supports plain HTTPS downloads only. The
-  // .tgz archive workflow needs a decompress step we haven't built;
-  // until then, ORT install on macOS expects the user to drop a
-  // pre-extracted `libonnxruntime.dylib` into the install dir.
-  // We still surface the bundle to the UI as a manual install,
-  // pointing the user at the README's curl recipe.
-  // (Setting the URL to the archive page so the user knows where to look.)
-  return ModelBundle(
-    id: 'onnxruntime-${Platform.operatingSystem}',
-    displayName: 'ONNX Runtime $ortVersion',
-    description:
-        '推理引擎(`ort-load-dynamic`)。手动下载 + 解压一个文件;'
-        '详见 README。Archive: $archiveUrl,需提取 $archiveSubpath → $localName。',
-    files: [
-      ModelFile(
-        localName: localName,
-        url: archiveUrl,
-        sizeBytes: sizeBytes,
-      ),
-    ],
-  );
-}
+// NOTE: there is intentionally no `onnxRuntimeBundle()` function
+// here. ORT is fetched at build time by `tool/fetch-onnxruntime.sh`
+// and discovered at runtime by `_discoverBundledOrtDylib` in
+// `bootstrap.dart`. Keeping a Dart-side manifest for it would just
+// duplicate the version pin and trick the UI into showing a
+// downloadable bundle the in-app installer can't handle (the
+// upstream archive is a tar of multiple files, not a single dylib).

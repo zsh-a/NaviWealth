@@ -27,12 +27,12 @@
 
 use anyhow::{anyhow, Context, Result};
 use fastembed::{
-    InitOptionsUserDefined, Pooling, TextEmbedding, TokenizerFiles,
-    UserDefinedEmbeddingModel,
+    InitOptionsUserDefined, Pooling, TextEmbedding, TokenizerFiles, UserDefinedEmbeddingModel,
 };
 use flutter_rust_bridge::frb;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
+use std::time::Instant;
 
 /// Stable identifier for this model + version + quantisation. Persisted
 /// alongside every stored vector so the store can drop rows produced
@@ -64,10 +64,12 @@ impl GemmaEmbedder {
     /// force-loaded into the Flutter app). Pass an empty string to
     /// fall back to whatever `ORT_DYLIB_PATH` env var is already
     /// set in the process (useful for tests).
-    pub fn load(
-        model_dir: String,
-        ort_dylib_path: String,
-    ) -> Result<GemmaEmbedder> {
+    pub fn load(model_dir: String, ort_dylib_path: String) -> Result<GemmaEmbedder> {
+        let started = Instant::now();
+        eprintln!(
+            "[lifeos_native] GemmaEmbedder.load start model_dir={} ort_dylib_path={}",
+            model_dir, ort_dylib_path
+        );
         if !ort_dylib_path.is_empty() {
             // Must be set before ANY ort:: call; fastembed::TextEmbedding
             // touches the runtime in `try_new_from_user_defined` below.
@@ -77,30 +79,41 @@ impl GemmaEmbedder {
                 std::env::set_var("ORT_DYLIB_PATH", &ort_dylib_path);
             }
         }
+        eprintln!(
+            "[lifeos_native] ORT_DYLIB_PATH configured ({:?})",
+            started.elapsed()
+        );
         let dir = PathBuf::from(model_dir);
         if dir.as_os_str().is_empty() {
             return Err(anyhow!("model_dir is empty"));
         }
         let onnx_path = pick_onnx_path(&dir)?;
+        eprintln!(
+            "[lifeos_native] selected ONNX file {} ({:?})",
+            onnx_path.display(),
+            started.elapsed()
+        );
         let onnx_bytes = std::fs::read(&onnx_path)
             .with_context(|| format!("failed to read {}", onnx_path.display()))?;
+        eprintln!(
+            "[lifeos_native] read ONNX graph: {} bytes ({:?})",
+            onnx_bytes.len(),
+            started.elapsed()
+        );
 
         let tokenizer_files = TokenizerFiles {
             tokenizer_file: read_required(&dir, "tokenizer.json")?,
             config_file: read_required(&dir, "config.json")?,
-            special_tokens_map_file: read_required(
-                &dir,
-                "special_tokens_map.json",
-            )?,
-            tokenizer_config_file: read_required(
-                &dir,
-                "tokenizer_config.json",
-            )?,
+            special_tokens_map_file: read_required(&dir, "special_tokens_map.json")?,
+            tokenizer_config_file: read_required(&dir, "tokenizer_config.json")?,
         };
+        eprintln!(
+            "[lifeos_native] read tokenizer/config files ({:?})",
+            started.elapsed()
+        );
 
         let mut user_model =
-            UserDefinedEmbeddingModel::new(onnx_bytes, tokenizer_files)
-                .with_pooling(Pooling::Mean);
+            UserDefinedEmbeddingModel::new(onnx_bytes, tokenizer_files).with_pooling(Pooling::Mean);
 
         // EmbeddingGemma's quantized ONNX export splits weights into
         // an external `.onnx_data` blob (the .onnx itself is just the
@@ -122,22 +135,48 @@ impl GemmaEmbedder {
             p
         };
         if onnx_data_path.is_file() {
-            let blob = std::fs::read(&onnx_data_path).with_context(|| {
-                format!("failed to read {}", onnx_data_path.display())
-            })?;
+            eprintln!(
+                "[lifeos_native] reading external ONNX data {} ({:?})",
+                onnx_data_path.display(),
+                started.elapsed()
+            );
+            let blob = std::fs::read(&onnx_data_path)
+                .with_context(|| format!("failed to read {}", onnx_data_path.display()))?;
+            eprintln!(
+                "[lifeos_native] read external ONNX data: {} bytes ({:?})",
+                blob.len(),
+                started.elapsed()
+            );
             let file_name = onnx_data_path
                 .file_name()
                 .and_then(|n| n.to_str())
                 .map(String::from)
                 .ok_or_else(|| anyhow!("invalid onnx_data path"))?;
+            eprintln!(
+                "[lifeos_native] registering external initializer file_name={} ({:?})",
+                file_name,
+                started.elapsed()
+            );
             user_model = user_model.with_external_initializer(file_name, blob);
+        } else {
+            eprintln!(
+                "[lifeos_native] no external ONNX data file found at {} ({:?})",
+                onnx_data_path.display(),
+                started.elapsed()
+            );
         }
 
-        let inner = TextEmbedding::try_new_from_user_defined(
-            user_model,
-            InitOptionsUserDefined::default(),
-        )
-        .map_err(|e| anyhow!("fastembed init failed: {e}"))?;
+        eprintln!(
+            "[lifeos_native] starting fastembed/ORT session init ({:?})",
+            started.elapsed()
+        );
+        let inner =
+            TextEmbedding::try_new_from_user_defined(user_model, InitOptionsUserDefined::default())
+                .map_err(|e| anyhow!("fastembed init failed: {e}"))?;
+        eprintln!(
+            "[lifeos_native] fastembed/ORT session init complete ({:?})",
+            started.elapsed()
+        );
 
         Ok(GemmaEmbedder {
             inner: Mutex::new(inner),
@@ -252,19 +291,13 @@ mod tests {
         // instead of `unwrap_err()`.
         match GemmaEmbedder::load(String::new(), String::new()) {
             Ok(_) => panic!("expected load to fail on empty model_dir"),
-            Err(e) => assert!(
-                e.to_string().contains("empty"),
-                "got: {e}"
-            ),
+            Err(e) => assert!(e.to_string().contains("empty"), "got: {e}"),
         }
     }
 
     #[test]
     fn missing_model_dir_errors() {
-        match GemmaEmbedder::load(
-            "/definitely/does/not/exist".to_string(),
-            String::new(),
-        ) {
+        match GemmaEmbedder::load("/definitely/does/not/exist".to_string(), String::new()) {
             Ok(_) => panic!("expected load to fail on missing dir"),
             Err(e) => {
                 let msg = e.to_string();
