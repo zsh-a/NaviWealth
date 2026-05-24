@@ -118,28 +118,38 @@ tool/build-lifeos-native.sh android
 ## Model files
 
 The Rust embedder loads `EmbeddingGemma-300M` (INT8 ONNX) from a
-user-supplied directory containing five files from
-`onnx-community/embeddinggemma-300m-ONNX`:
+user-supplied directory. The in-app installer downloads these
+automatically; manual `curl` is only needed if you're staging the
+bundle for `--dart-define=RUST_EMBEDDER_MODEL_DIR=...` (dev/test).
 
-| File | Purpose |
-|---|---|
-| `model_int8.onnx`             | Quantised weights (~300 MB) |
-| `tokenizer.json`              | Gemma3 tokenizer |
-| `config.json`                 | Model architecture config |
-| `special_tokens_map.json`     | Tokenizer special tokens |
-| `tokenizer_config.json`       | Tokenizer metadata |
+| File | Size | Purpose |
+|---|---|---|
+| `model_quantized.onnx`        | ~568 KB | Graph topology only |
+| `model_quantized.onnx_data`   | ~309 MB | External weights blob (referenced from the .onnx) |
+| `tokenizer.json`              | ~20.3 MB | Gemma3 tokenizer |
+| `config.json`                 | ~1.7 KB | Model architecture config |
+| `special_tokens_map.json`     | ~662 B | Tokenizer special tokens |
+| `tokenizer_config.json`       | ~1.16 MB | Tokenizer metadata |
 
-Quick download (CLI):
+> **Why two `.onnx` files**: ONNX's external-data format lets large
+> models keep the graph topology (`.onnx`) separate from the weight
+> bytes (`.onnx_data`). The loader wires them together via fastembed's
+> `with_external_initializer`; both files must live in the same
+> directory.
+
+Manual download (CLI, fallback only):
 
 ```bash
 mkdir -p ~/models/embeddinggemma-300m-ONNX
 cd ~/models/embeddinggemma-300m-ONNX
 
-# ONNX INT8 weights (~300 MB)
-curl -L -o model_int8.onnx \
-  https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX/resolve/main/onnx/model_int8.onnx
+# ONNX graph + external weights (~310 MB combined)
+curl -L -o model_quantized.onnx \
+  https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX/resolve/main/onnx/model_quantized.onnx
+curl -L -o model_quantized.onnx_data \
+  https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX/resolve/main/onnx/model_quantized.onnx_data
 
-# Tokenizer + config (small JSON files)
+# Tokenizer + config (~21.5 MB combined)
 for f in tokenizer.json config.json special_tokens_map.json tokenizer_config.json; do
   curl -L -o "$f" \
     "https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX/resolve/main/$f"
@@ -173,36 +183,59 @@ For iOS / Android binaries see the corresponding release archives.
 
 The Rust loader also accepts other quantisation variants if you've
 already downloaded them: it picks the first match from
-`model_int8.onnx → model_quantized.onnx → model_uint8.onnx →
-model_q4.onnx → model.onnx`. INT8 is the recommended default
-(smallest while keeping cosine quality close to FP32).
+`model_quantized.onnx → model_int8.onnx → model_uint8.onnx →
+model_q4.onnx → model_fp16.onnx → model.onnx`. INT8 (`_quantized`
+in onnx-community's naming) is the recommended default — smallest
+while keeping cosine quality close to FP32.
 
 ## Enabling in the Flutter app
 
-The default embedder is the deterministic `StubEmbedder`. Switch to
-the Rust EmbeddingGemma embedder via `--dart-define`:
+The default embedder is the deterministic `StubEmbedder`. The
+recommended path for end users is the **in-app installer** under
+**Settings → AI 模型**:
+
+1. Open the app, go to Settings → AI 模型
+2. Tap "下载" on EmbeddingGemma (~300 MB) and ONNX Runtime (~16 MB)
+3. Restart the app — bootstrap auto-detects installed bundles in
+   `<app_support>/embedders/<bundle-id>/` and swaps in the Rust
+   embedder; the Memory Runtime's `dropStaleVectors()` clears
+   embeddings from the prior fingerprint, and the next indexer
+   cycle re-embeds with EmbeddingGemma. Typed memory records
+   (events / episodic / etc.) are kept intact.
+
+No `--dart-define` needed. No manual curl. Files live in
+`getApplicationSupportDirectory() / 'embedders' /`:
+
+- `embeddinggemma-300m-onnx/` (6 files: `model_quantized.onnx` + `model_quantized.onnx_data` + 4 JSON files)
+- `onnxruntime-<os>/libonnxruntime.{dylib,so,dll}`
+
+### Developer overrides (`--dart-define`)
+
+Still useful for tests + reproducing user issues without the in-app
+download:
 
 ```bash
-# Production path: cargokit bundles liblifeos_native via the
-# rust_builder plugin. ORT must be downloaded separately (see above)
-# and pointed at via RUST_EMBEDDER_ORT_DYLIB_PATH.
-flutter run \
+# Point at pre-staged bundles (skips the installer entirely).
+flutter run -d macos \
   --dart-define=RUST_EMBEDDER_MODEL_DIR=$HOME/models/embeddinggemma-300m-ONNX \
   --dart-define=RUST_EMBEDDER_ORT_DYLIB_PATH=$HOME/models/onnxruntime/libonnxruntime.dylib
 ```
 
 For `flutter test` on desktop (test harness doesn't go through the
-plugin loader):
+plugin loader, so the lifeos_native dylib also needs an explicit
+path):
 
 ```bash
-# Build the dylib outside Flutter first.
 tool/build-lifeos-native.sh macos
-
 flutter test \
   --dart-define=RUST_EMBEDDER_MODEL_DIR=$HOME/models/embeddinggemma-300m-ONNX \
   --dart-define=RUST_EMBEDDER_ORT_DYLIB_PATH=$HOME/models/onnxruntime/libonnxruntime.dylib \
   --dart-define=RUST_EMBEDDER_LIBRARY_PATH=$PWD/apps/mobile/native/lifeos_native/dist/macos/liblifeos_native.dylib
 ```
+
+Both `--dart-define` paths override the in-app installer artefact
+when set; either source can populate the path independently (e.g.
+manually-staged model + installed ORT).
 
 On first boot the [`MemoryRuntime`](../../lib/core/ai/local/memory/memory_runtime.dart)
 calls `dropStaleVectors()` automatically — any existing embeddings

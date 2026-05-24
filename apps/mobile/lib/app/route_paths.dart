@@ -155,6 +155,7 @@ abstract final class AppRouteNames {
   static const aiHistory = 'ai-history';
   static const aiPrivacy = 'ai-privacy';
   static const aiLlm = 'ai-llm';
+  static const aiModels = 'ai-models';
   static const riskThresholds = 'risk-thresholds';
   static const stressTest = 'stress-test';
   static const monthlyExpense = 'monthly-expense';

@@ -60,6 +60,7 @@ import '../features/settings/fx_rates/fx_rates_page.dart';
 import '../features/settings/log_viewer_page.dart';
 import '../features/settings/settings_page.dart' deferred as settings_lib;
 import '../features/settings/ui/ai_llm_credentials_page.dart';
+import '../features/settings/ui/ai_models_page.dart';
 import '../features/settings/ui/ai_privacy_page.dart';
 import '../features/settings/ui/ai_transparency_page.dart';
 import '../features/settings/ui/fire_stress_settings_page.dart';
@@ -524,6 +525,11 @@ GoRoute _settingsRoute() {
         path: 'ai-llm',
         name: AppRouteNames.aiLlm,
         builder: (context, state) => const AiLlmCredentialsPage(),
+      ),
+      GoRoute(
+        path: 'ai-models',
+        name: AppRouteNames.aiModels,
+        builder: (context, state) => const AiModelsPage(),
       ),
       GoRoute(
         path: 'risk-thresholds',
