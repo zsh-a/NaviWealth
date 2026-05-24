@@ -8,6 +8,8 @@
 // passes through: dirty pointer → push → server LWW + seq → pull → applier.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/sync/errors.dart';
+import 'package:naviwealth/data/domain/hlc.dart';
 
 import '_cluster.dart';
 
@@ -261,6 +263,150 @@ void main() {
           reason: 'no push batch over the spec cap',
         );
       }
+    });
+
+    // E2E-3 (phase1 P1-G): a row tombstoned and then recreated with the
+    // same id surfaces as the new version on peers — the tombstone must
+    // not block the resurrection write.
+    test('delete-then-recreate same id: peer materialises the new row', () async {
+      final cluster = SyncCluster();
+      addTearDown(cluster.disposeAll);
+      final iphone = cluster.addDevice('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+      final mac = cluster.addDevice('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb');
+
+      await iphone.writeRow(
+        table: 'accounts',
+        rowId: 'A1',
+        columns: _account(name: 'Cash'),
+      );
+      cluster.advanceAllClocks(const Duration(seconds: 30));
+      await cluster.syncAll();
+      expect((await mac.lookup('accounts', 'A1'))!['name'], 'Cash');
+
+      // Tombstone, propagate.
+      iphone.advanceClock(const Duration(minutes: 1));
+      await iphone.writeRow(
+        table: 'accounts',
+        rowId: 'A1',
+        columns: _account(name: 'Cash'),
+        deleted: true,
+      );
+      cluster.advanceAllClocks(const Duration(seconds: 30));
+      await cluster.syncAll();
+      expect(await mac.isVisible('accounts', 'A1'), isFalse);
+
+      // Recreate with same id, newer HLC.
+      iphone.advanceClock(const Duration(minutes: 1));
+      await iphone.writeRow(
+        table: 'accounts',
+        rowId: 'A1',
+        columns: _account(name: 'Cash (reopened)'),
+      );
+      cluster.advanceAllClocks(const Duration(seconds: 30));
+      await cluster.syncAll();
+
+      expect(await mac.isVisible('accounts', 'A1'), isTrue);
+      final macRow = await mac.lookup('accounts', 'A1');
+      expect(macRow!['name'], 'Cash (reopened)');
+      expect(macRow['deleted_at'], isNull);
+      expect(await cluster.isConverged('accounts'), isTrue);
+    });
+
+    // E2E-4 (phase1 P1-G): physical wall clock rewinds (device time was
+    // wrong, or NTP corrects backward) but HLC stays strictly monotonic,
+    // so a later write still wins LWW against an earlier one.
+    test('physical clock rewind: HLC stays monotonic and LWW resolves it', () async {
+      final cluster = SyncCluster();
+      addTearDown(cluster.disposeAll);
+      final iphone = cluster.addDevice('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+      final mac = cluster.addDevice('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb');
+
+      // First write at the initial wall clock.
+      await iphone.writeRow(
+        table: 'accounts',
+        rowId: 'A1',
+        columns: _account(name: 'before-rewind'),
+      );
+      final hlc1 = Hlc.parse(
+        (await iphone.lookup('accounts', 'A1'))!['hlc']! as String,
+      );
+
+      // Rewind the wall clock — way back, ten minutes.
+      iphone.advanceClock(const Duration(minutes: -10));
+
+      // Second write must still produce an HLC strictly greater than the
+      // first, despite the wall clock having gone backward.
+      await iphone.writeRow(
+        table: 'accounts',
+        rowId: 'A1',
+        columns: _account(name: 'after-rewind'),
+      );
+      final hlc2 = Hlc.parse(
+        (await iphone.lookup('accounts', 'A1'))!['hlc']! as String,
+      );
+
+      expect(
+        hlc2 > hlc1,
+        isTrue,
+        reason: 'HLC must be monotonic across a backward wall-clock jump',
+      );
+
+      // Both devices must converge on the second write.
+      cluster.advanceAllClocks(const Duration(seconds: 30));
+      await cluster.syncAll();
+      expect((await mac.lookup('accounts', 'A1'))!['name'], 'after-rewind');
+      expect(await cluster.isConverged('accounts'), isTrue);
+    });
+
+    // E2E-5 (phase1 P1-G): a transient push failure must not drop ops;
+    // the outbox retries on the next cycle and the peer eventually sees
+    // the write.
+    test('transient push failure: outbox survives and retries to convergence', () async {
+      final cluster = SyncCluster();
+      addTearDown(cluster.disposeAll);
+      final iphone = cluster.addDevice('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+      final mac = cluster.addDevice('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb');
+
+      await iphone.writeRow(
+        table: 'accounts',
+        rowId: 'A1',
+        columns: _account(name: 'Cash'),
+      );
+      await iphone.writeRow(
+        table: 'accounts',
+        rowId: 'A2',
+        columns: _account(name: 'Bank'),
+      );
+      expect(await iphone.pendingDepth(), 2);
+
+      // Script one transient server failure ahead of the next sync. The
+      // outbox must not consume the dirty pointer when the call throws.
+      cluster.api.programmedResponses.add(
+        SyncException(SyncErrorKind.network, message: 'transient'),
+      );
+
+      cluster.advanceAllClocks(const Duration(seconds: 30));
+      // Run iphone's cycle manually so we can observe the failure.
+      try {
+        await iphone.tickSync();
+      } on SyncException catch (_) {
+        // Expected — the cycle surfaces the network error.
+      }
+      expect(
+        await iphone.pendingDepth(),
+        2,
+        reason: 'outbox must not lose ops on a transient push failure',
+      );
+      expect(await mac.isVisible('accounts', 'A1'), isFalse);
+
+      // Next cycle succeeds — outbox drains and the peer materialises.
+      cluster.advanceAllClocks(const Duration(seconds: 30));
+      await cluster.syncAll();
+
+      expect(await iphone.pendingDepth(), 0);
+      expect((await mac.lookup('accounts', 'A1'))!['name'], 'Cash');
+      expect((await mac.lookup('accounts', 'A2'))!['name'], 'Bank');
+      expect(await cluster.isConverged('accounts'), isTrue);
     });
   });
 }

@@ -176,6 +176,88 @@ void main() {
       );
       expect(lookupToolDescriptor('get_journal_entries'), isNull);
     });
+
+    // Regression — 2026-05-24 boundary audit removed `allowed_runtimes`,
+    // `read_model_layer`, and `used_cloud` from ToolDescriptor's wire
+    // shape. Silent re-introduction would mean drift back toward the
+    // multi-runtime / freshness-gated design we deliberately deleted.
+    test('toJson emits exactly the six documented keys', () {
+      const desc = ToolDescriptor(
+        name: 'sentinel',
+        access: Access.read,
+        risk: RiskLevel.info,
+        requiresConfirmation: Confirmation.none,
+        allowedContextTier: BudgetTier.small,
+      );
+      final keys = desc.toJson().keys.toSet();
+      expect(keys, <String>{
+        'name',
+        'access',
+        'risk',
+        'requires_confirmation',
+        'allowed_context_tier',
+        'side_effect',
+      });
+    });
+
+    test('fromJson tolerates removed legacy keys', () {
+      // Persisted ToolDescriptor JSON from before the boundary audit
+      // would carry these fields. Decoding must succeed and the new
+      // fields must take their documented defaults.
+      final legacy = <String, Object?>{
+        'name': 'legacy_tool',
+        'access': 'read',
+        'risk': 'info',
+        'requires_confirmation': 'none',
+        'allowed_context_tier': 'small',
+        'allowed_runtimes': <String>['device', 'cloud'],
+        'read_model_layer': 'analytics',
+        'used_cloud': true,
+      };
+      final decoded = ToolDescriptor.fromJson(legacy);
+      expect(decoded.name, 'legacy_tool');
+      expect(decoded.sideEffect, SideEffect.none);
+    });
+
+    test('every propose_* descriptor is a deviceLocalWrite', () {
+      // §4.5 invariant: confirmation-gated proposals are local writes.
+      // A propose_* with sideEffect=none would bypass the confirm flow
+      // typing; a propose_* with externalCall would be unreachable.
+      final proposals = allToolDescriptors.where(
+        (d) => d.name.startsWith('propose_'),
+      );
+      expect(proposals, isNotEmpty);
+      for (final d in proposals) {
+        expect(
+          d.sideEffect,
+          SideEffect.deviceLocalWrite,
+          reason: '${d.name} must be deviceLocalWrite (§4.5)',
+        );
+        expect(
+          d.access,
+          Access.propose,
+          reason: '${d.name} must have access=propose',
+        );
+        expect(
+          d.requiresConfirmation,
+          isNot(Confirmation.none),
+          reason: '${d.name} must require confirmation',
+        );
+      }
+    });
+
+    test('no descriptor advertises externalCall', () {
+      // §4.5: externalCall side effects are never LLM-triggered. Such
+      // a descriptor would be rejected by the dispatcher anyway, so
+      // shipping one is a configuration bug, not a feature.
+      for (final d in allToolDescriptors) {
+        expect(
+          d.sideEffect,
+          isNot(SideEffect.externalCall),
+          reason: '${d.name} must not be externalCall',
+        );
+      }
+    });
   });
 
   group('AiTrace roundtrip', () {

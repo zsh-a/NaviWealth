@@ -4,15 +4,29 @@
 > 目标版本窗口：0.3.0 – 0.3.x
 > 阅读对象：实现这些工作的开发者；每个条目可以独立拆出 PR。
 
-## 核对修正（与 roadmap §1.1 的差异）
+## 状态注记（2026-05-24）
 
-实际仓库现状（`lib/app/route_paths.dart:99-104`）显示主 tab 是 Home / Portfolio / Activity / Plan。所以：
+本文档撰写时 IA 还是 Home / Portfolio / Activity / Plan,W-D7 也尚未发生。之后两件事改变了部分前提:
 
-- **`portfolio/`**（`portfolio_page.dart` 24 行）：是 Portfolio tab 容器，包了 `AssetsPage`。**不是要删除的薄壳，是需要扩展能力的 tab**。
-- **`plan/`**（`plan_page.dart` 20 行 + `ui/plan_overview.dart`）：是 Plan tab 容器，承载 FIRE/Analytics/Rebalance 三个子入口。**已是合理结构**。
-- **`me/` 与 `more/`**：完全空目录，未在路由中出现。**这两个才是真正的死目录**。
+1. **IA contract migration**(commits 3e37cfc / aacded4): 主 tab 改为 Today / Activity / Wealth / Plan。`features/portfolio/` 和 `features/me/` / `features/more/` 已删除,`features/wealth/` 接管原 Portfolio 职责。
+2. **W-D7** 删除后端 AI relay。`apps/backend/src/ai/tools.rs` 不再存在;持仓由端侧 `GetHoldingsTool` 计算。
+3. **E2E sync 5 case** (P1-G): 已在 `apps/mobile/test/e2e/sync_e2e_test.dart` 落地完毕(2026-05-24)。
 
-下文 spec 按此现状校正。
+因此下表中**已过时**的条目:
+
+| ID | 状态 | 原因 |
+|---|---|---|
+| P1-A 清理空目录 me/ 与 more/ | ✅ 完成 | IA contract migration 顺带删除 |
+| P1-B Dashboard Insights 4 类 | ✅ 完成 | `InsightKind` 当前已含 fireProgress / portfolioDrift / maturity / anomaly,plus 额外的 duplicateCharge / monthlySummary / ingestQueue / cashFlowDeficit / FIRE OS 系列 |
+| P1-C Activity Feed 分页 | ✅ 完成 | `activity_feed_provider.dart` 已支持 pagination + filter sheet |
+| P1-D Portfolio Tab 升级 | ⚠️ 重定义 | Portfolio 不存在,需要在新的 Wealth tab 上重新规划("多视角聚合"目标仍有效) |
+| P1-E 后端 AI 工具补全 | ❌ 作废 | 后端 AI relay 已删除;持仓对齐由端侧工具直接读 read-model 完成 |
+| P1-F Web 备份/恢复 | ✅ 完成 | `features/settings/backup/` 已经有 web/native split + `_WebBackupSecurityBanner` |
+| P1-G E2E sync 5 case | ✅ 完成 | `apps/mobile/test/e2e/sync_e2e_test.dart` |
+
+**仅剩 P1-H 仍是开放的近期工作**:测试覆盖空白补齐(codecov 60% 项目目标 / 70% patch 目标)。
+
+**结论**:Phase 1 收尾基本完成。下一程的重心应该转到 [`roadmap-next.md`](./roadmap-next.md) §3 中期项(多币种双显示 / Budget MVP / Income Planner P4 / AI Copilot M1 等)。
 
 ---
 

@@ -20,6 +20,8 @@ import 'package:uuid/uuid.dart';
 import '../../../core/ai/llm_credentials/llm_connectivity.dart';
 import '../../../core/ai/llm_credentials/llm_credentials.dart';
 import '../../../core/ai/llm_credentials/providers.dart';
+import '../../../core/ai/runtime/device/anthropic/anthropic_wire.dart'
+    show kDefaultDeviceModel;
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
@@ -582,7 +584,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
   };
 
   String _modelHint(LlmProvider provider) => switch (provider) {
-    LlmProvider.anthropic => 'claude-sonnet-4-6',
+    LlmProvider.anthropic => kDefaultDeviceModel,
     LlmProvider.openai => 'gpt-4o-mini',
   };
 }
