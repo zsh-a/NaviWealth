@@ -107,6 +107,13 @@ class SettingsOverview extends ConsumerWidget {
             subtitle: l10n.settingsAiTransparencySubtitle,
             onTap: () => context.goNamed(AppRouteNames.aiTransparency),
           ),
+          _SectionDivider(),
+          InlineLinkRow(
+            icon: Icons.download_outlined,
+            label: 'AI 模型',
+            subtitle: '下载 / 管理本地 embedder (EmbeddingGemma + ONNX Runtime)',
+            onTap: () => context.goNamed(AppRouteNames.aiModels),
+          ),
         ],
       ),
     );

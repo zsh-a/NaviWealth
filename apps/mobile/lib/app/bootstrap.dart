@@ -1,13 +1,18 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/ai/local/embedding/embedder.dart';
+import '../core/ai/local/embedding/model_install_paths.dart';
+import '../core/ai/local/embedding/model_manifest.dart';
 import '../core/ai/local/embedding/rust_gemma_embedder.dart';
 import '../core/ai/local/memory/providers.dart' as memory_providers;
 import '../core/auth/providers.dart' as core_auth;
@@ -44,6 +49,15 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
 
   final prefs = await SharedPreferences.getInstance();
   final effectiveConfig = config ?? AppConfig.dev;
+
+  // D-1.7c: resolve embedder asset paths before the container is built
+  // so the override list knows whether to wire the Rust embedder. Each
+  // path can come from either an `AppConfig` dart-define override (dev
+  // / test) or from the in-app installer's on-disk install dir. When
+  // any required path is missing we leave `embedderProvider` on its
+  // [StubEmbedder] default and let the user install the bundle from
+  // Settings → AI Models.
+  final resolvedEmbedderPaths = await _resolveEmbedderPaths(effectiveConfig);
 
   final container = ProviderContainer(
     overrides: [
@@ -101,14 +115,12 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       // memoryRuntimeProvider awaits. On any failure (missing dylib,
       // missing model, malformed config) we log and fall back to
       // [StubEmbedder] so the app boots regardless.
-      if (effectiveConfig.hasRustEmbedder)
+      if (resolvedEmbedderPaths != null)
         memory_providers.embedderProvider.overrideWith(
           (ref) async => _loadRustEmbedderOrFallback(
-            modelDir: effectiveConfig.rustEmbedderModelDir,
-            ortDylibPath: effectiveConfig.rustEmbedderOrtDylibPath,
-            libraryPath: effectiveConfig.rustEmbedderLibraryPath.isEmpty
-                ? null
-                : effectiveConfig.rustEmbedderLibraryPath,
+            modelDir: resolvedEmbedderPaths.modelDir,
+            ortDylibPath: resolvedEmbedderPaths.ortDylibPath,
+            libraryPath: resolvedEmbedderPaths.libraryPath,
             logger: ref.read(loggerProvider),
           ),
         ),
@@ -214,6 +226,75 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   }
 
   return container;
+}
+
+/// Resolved file paths the Rust embedder needs (D-1.7c). All three
+/// can come from either dart-define override or the in-app
+/// installer's directory.
+class _ResolvedEmbedderPaths {
+  const _ResolvedEmbedderPaths({
+    required this.modelDir,
+    required this.ortDylibPath,
+    this.libraryPath,
+  });
+  final String modelDir;
+  final String ortDylibPath;
+  final String? libraryPath;
+}
+
+/// Pick the active embedder paths. Returns `null` when not enough
+/// inputs are available to construct the Rust embedder — bootstrap
+/// then leaves the stub default in place, and the user can install
+/// missing bundles via Settings → AI Models.
+///
+/// Precedence per field:
+///   1. `--dart-define` override (dev / test path)
+///   2. on-disk installer artefact (`<app_support>/embedders/...`)
+Future<_ResolvedEmbedderPaths?> _resolveEmbedderPaths(AppConfig config) async {
+  String modelDir = config.rustEmbedderModelDir;
+  String ortDylibPath = config.rustEmbedderOrtDylibPath;
+
+  if (modelDir.isEmpty || ortDylibPath.isEmpty) {
+    // Inspect on-disk installer artefacts. Cheap (just File.existsSync)
+    // and runs only when at least one path is missing.
+    try {
+      final support = await getApplicationSupportDirectory();
+      final root = Directory(path.join(support.path, 'embedders'));
+
+      if (modelDir.isEmpty) {
+        final gemma = embeddingGemmaBundle();
+        final gemmaDir = Directory(path.join(root.path, gemma.id));
+        final paths = ModelInstallPaths.unsafeForDir(root);
+        if (await paths.isComplete(gemma)) {
+          modelDir = gemmaDir.path;
+        }
+      }
+
+      if (ortDylibPath.isEmpty) {
+        final ort = onnxRuntimeBundle();
+        if (ort != null) {
+          final ortDir = Directory(path.join(root.path, ort.id));
+          final paths = ModelInstallPaths.unsafeForDir(root);
+          if (await paths.isComplete(ort)) {
+            ortDylibPath = path.join(ortDir.path, ort.files.first.localName);
+          }
+        }
+      }
+    } on Object {
+      // path_provider failure (rare, e.g. sandbox issues) → just
+      // bail out and keep the stub embedder.
+      return null;
+    }
+  }
+
+  if (modelDir.isEmpty || ortDylibPath.isEmpty) return null;
+  return _ResolvedEmbedderPaths(
+    modelDir: modelDir,
+    ortDylibPath: ortDylibPath,
+    libraryPath: config.rustEmbedderLibraryPath.isEmpty
+        ? null
+        : config.rustEmbedderLibraryPath,
+  );
 }
 
 /// Construct the Rust EmbeddingGemma embedder, or log + fall back to

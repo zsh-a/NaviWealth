@@ -227,7 +227,9 @@ LLM 应**优先**调 `build_context`(回答涉及"以前 / 上次 / 我当时为
 | Bootstrap post-swap `runtime.dropStaleVectors()` | ✅ 切换后 fingerprint 不一致的 embeddings 自动清掉,indexer 下次 reindex | `lib/app/bootstrap.dart` |
 | **cargokit Flutter plugin** (`rust_builder/`) | ✅ `flutter_rust_bridge_codegen integrate` 产出;iOS/macOS podspec + Android gradle 钩子自动 invoke cargokit → cargo,**`flutter run` / `flutter build` 直接出产物**,无需手动脚本 | `apps/mobile/rust_builder/` |
 | Manual `tool/build-lifeos-native.sh`(optional) | ✅ 只用于 `flutter test` desktop + standalone artefact + Rust-only CI smoke | `tool/build-lifeos-native.sh` |
-| crate README + model 下载说明 | ✅ | `apps/mobile/native/lifeos_native/README.md` |
+| **In-app model installer** | ✅ ModelBundle + ModelDownloader (dio + progress + sha256 + atomic rename) + Riverpod 状态机 + Settings UI;`<app_support>/embedders/` 统一位置 | `core/ai/local/embedding/model_{manifest,install_paths,downloader,install_state}.dart` + `features/settings/ui/ai_models_page.dart` |
+| Bootstrap auto-discovery | ✅ 启动时检查 `--dart-define` overrides → 否则探测 installer 目录 → 都没有就停 stub | `lib/app/bootstrap.dart::_resolveEmbedderPaths` |
+| crate README + 用户安装步骤 | ✅ 重写为 in-app installer 主路径 | `apps/mobile/native/lifeos_native/README.md` |
 
 **为什么 fastembed 而不是 candle / llama.cpp / 原始 GGUF Q8_0**:
 
@@ -239,32 +241,26 @@ LLM 应**优先**调 `build_context`(回答涉及"以前 / 上次 / 我当时为
 
 **ONNX INT8 ≠ GGUF Q8_0,但 8-bit 量化质量等价**;cosine 召回 vs FP32 差 < 1%(EmbeddingGemma model card 数据)。
 
-**生产启用步骤** (用户机器):
+**生产启用步骤** (终端用户,无需 CLI):
 
-```bash
-# 1. 下载模型(~300 MB INT8 ONNX + 几 MB JSON,一次性)
-mkdir -p ~/models/embeddinggemma-300m-ONNX && cd ~/models/embeddinggemma-300m-ONNX
-curl -L -o model_int8.onnx \
-  https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX/resolve/main/onnx/model_int8.onnx
-for f in tokenizer.json config.json special_tokens_map.json tokenizer_config.json; do
-  curl -L -o "$f" \
-    "https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX/resolve/main/$f"
-done
+1. 打开 app → Settings → **AI 模型**
+2. 在 "EmbeddingGemma 300M" 卡片点击 "下载"(~300 MB,进度条显示)
+3. 在 "ONNX Runtime" 卡片点击 "下载"(~16 MB)
+4. 重启应用 — bootstrap 自动探测 `<app_support>/embedders/` 下的安装目录,切换到 Rust embedder
 
-# 2. 启动 app — flutter run 直接构建 Rust 并打包(经 rust_builder 插件 + cargokit
-#    自动调 cargo build);首次 ~3 分钟,后续 ~2s 增量。无需手动构建脚本。
-flutter run --dart-define=RUST_EMBEDDER_MODEL_DIR=$HOME/models/embeddinggemma-300m-ONNX
-```
+无 `--dart-define`,无 curl。模型存到 `getApplicationSupportDirectory()`,survives app update,不进 iCloud。
 
-> `flutter test` 在 desktop 上跑(非 device)时,test harness 不走插件加载,所以
-> 测试还需要先 `tool/build-lifeos-native.sh macos` + 额外传
-> `--dart-define=RUST_EMBEDDER_LIBRARY_PATH=...`。生产 `flutter run` / `flutter build`
-> 不需要。
+**`--dart-define` 仍可作开发者 override**(`RUST_EMBEDDER_{MODEL_DIR,ORT_DYLIB_PATH,LIBRARY_PATH}`),适合:
+- 测试 (`flutter test` 没有 plugin loader,需要 `--dart-define=RUST_EMBEDDER_LIBRARY_PATH=...`)
+- 复现用户问题不想走 installer
+- 预先 stage 的模型目录
 
 启动后 bootstrap 会:
-1. 读 `embedderProvider` → 加载 Rust EmbeddingGemma(失败回 stub,日志告警)
-2. 跑 `runtime.dropStaleVectors()`(stub fingerprint 或前一个模型的旧 embeddings 一次性删掉)
-3. 启动 indexers(`memoryLayerBootstrapProvider`) → trade journal 自动用 EmbeddingGemma 重 embed (768-d)
+1. 解析 embedder 路径:`--dart-define` overrides 优先,空时 fall back 到 `<app_support>/embedders/<bundle-id>/`
+2. 都缺时停留 `StubEmbedder`,UI 提示 "Settings → AI 模型 下载"
+3. 路径齐备时加载 Rust EmbeddingGemma(失败回 stub,日志告警)
+4. 跑 `runtime.dropStaleVectors()`(stub fingerprint 或前一个模型的旧 embeddings 一次性删掉)
+5. 启动 indexers(`memoryLayerBootstrapProvider`) → trade journal 自动用 EmbeddingGemma 重 embed (768-d)
 
 **没做**(用户机器或 follow-up):
 - ⏳ iOS 设备真编译(`flutter build ios` 触发 cargokit → cargo,自动;需要用户机器有 Xcode + iOS target)

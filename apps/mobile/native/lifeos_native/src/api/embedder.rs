@@ -98,9 +98,40 @@ impl GemmaEmbedder {
             )?,
         };
 
-        let user_model =
+        let mut user_model =
             UserDefinedEmbeddingModel::new(onnx_bytes, tokenizer_files)
                 .with_pooling(Pooling::Mean);
+
+        // EmbeddingGemma's quantized ONNX export splits weights into
+        // an external `.onnx_data` blob (the .onnx itself is just the
+        // graph). When fastembed feeds the .onnx bytes to ORT via
+        // `commit_from_memory`, ORT has no directory context to
+        // resolve relative external_data paths — we must register
+        // the blob explicitly through `with_external_initializer`.
+        // The `file_name` must match the relative path the .onnx
+        // references (just the filename when both files sit in the
+        // same dir, which is our installer convention).
+        let onnx_data_path = {
+            let mut p = onnx_path.clone();
+            let file_name = p
+                .file_name()
+                .and_then(|n| n.to_str())
+                .map(|n| format!("{n}_data"))
+                .ok_or_else(|| anyhow!("invalid onnx path"))?;
+            p.set_file_name(&file_name);
+            p
+        };
+        if onnx_data_path.is_file() {
+            let blob = std::fs::read(&onnx_data_path).with_context(|| {
+                format!("failed to read {}", onnx_data_path.display())
+            })?;
+            let file_name = onnx_data_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .map(String::from)
+                .ok_or_else(|| anyhow!("invalid onnx_data path"))?;
+            user_model = user_model.with_external_initializer(file_name, blob);
+        }
 
         let inner = TextEmbedding::try_new_from_user_defined(
             user_model,
@@ -156,15 +187,22 @@ impl GemmaEmbedder {
 }
 
 /// EmbeddingGemma's ONNX exports come in several quantisations.
-/// Prefer INT8 (smallest while keeping quality close to FP32); fall
-/// back to other available variants if the user picked a different
-/// one. `model.onnx` (FP32) is the last resort.
+/// Prefer the INT8 `model_quantized` variant (smallest while keeping
+/// quality close to FP32); fall back to other available variants if
+/// the user picked a different one. `model.onnx` (FP32) is the last
+/// resort.
+///
+/// `onnx-community/embeddinggemma-300m-ONNX` uses the
+/// `model_quantized.onnx` naming (matched by `optimum-exporter` for
+/// transformers ≥4.30). Older `model_int8.onnx` is kept as a
+/// fallback in case a future re-export uses that name.
 fn pick_onnx_path(model_dir: &Path) -> Result<PathBuf> {
     for name in [
-        "model_int8.onnx",
         "model_quantized.onnx",
+        "model_int8.onnx",
         "model_uint8.onnx",
         "model_q4.onnx",
+        "model_fp16.onnx",
         "model.onnx",
     ] {
         let candidate = model_dir.join(name);
@@ -173,7 +211,7 @@ fn pick_onnx_path(model_dir: &Path) -> Result<PathBuf> {
         }
     }
     Err(anyhow!(
-        "no ONNX weights found in {}; expected model_int8.onnx",
+        "no ONNX weights found in {}; expected model_quantized.onnx",
         model_dir.display()
     ))
 }
