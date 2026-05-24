@@ -131,3 +131,60 @@ class ExternalTarget {
   /// Opaque identifier — never a URL or PII.
   final String endpoint;
 }
+
+/// `roadmap-next.md` §4 M-2 — multiple local mutations the user wants
+/// to apply (and undo) as one gesture. Wraps a non-empty list of
+/// [LocalImmediateWrite] or [LocalProposal] children; mixing in any
+/// [ExternalSideEffect] is rejected at construction so a single Apply
+/// can never silently fire a broker order alongside memo edits.
+///
+/// The batch carries its own combined summary and a single
+/// [BatchUndoToken] that revokes every child in reverse order.
+final class BatchProposal extends ProposalEnvelope {
+  BatchProposal({
+    required super.proposalId,
+    required super.kindLabel,
+    super.source,
+    required this.summaryZh,
+    required List<ProposalEnvelope> children,
+    required this.undo,
+  })  : assert(children.isNotEmpty, 'BatchProposal needs at least one child'),
+        children = List.unmodifiable(_rejectExternal(children));
+
+  final String summaryZh;
+  final List<ProposalEnvelope> children;
+  final BatchUndoToken undo;
+
+  @override
+  String get envelopeKind => 'batch';
+
+  static Iterable<ProposalEnvelope> _rejectExternal(
+    List<ProposalEnvelope> children,
+  ) {
+    for (final child in children) {
+      if (child is ExternalSideEffect) {
+        throw ArgumentError(
+          'BatchProposal does not accept ExternalSideEffect children — '
+          'route each one through its own typed-confirm flow instead.',
+        );
+      }
+      if (child is BatchProposal) {
+        throw ArgumentError(
+          'BatchProposal does not nest — flatten before constructing.',
+        );
+      }
+    }
+    return children;
+  }
+}
+
+/// Packages multiple [UndoToken]s so the persistent undo banner can
+/// revoke a batched apply with a single tap. [tokens] is stored in the
+/// same order the children were applied; revert callers should walk it
+/// in reverse to honour the LIFO contract of the undo stack.
+class BatchUndoToken {
+  const BatchUndoToken({required this.tokens, required this.expiresAtIso});
+
+  final List<UndoToken> tokens;
+  final String expiresAtIso;
+}
