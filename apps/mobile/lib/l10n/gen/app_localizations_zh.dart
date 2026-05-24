@@ -96,6 +96,44 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planGoalsComingSoon => '目标追踪尚未上线。';
 
   @override
+  String get planBudgetSectionTitle => '预算';
+
+  @override
+  String get planBudgetSectionSubtitle => '按月按类别设定上限';
+
+  @override
+  String get planBudgetTitle => '预算';
+
+  @override
+  String get planBudgetEmptyTitle => '暂无预算';
+
+  @override
+  String get planBudgetEmptyBody => '为任意类别设定月度上限，本页会显示实际花销与上限的对比。';
+
+  @override
+  String planBudgetMonthHeader(String month) {
+    return '$month 预算';
+  }
+
+  @override
+  String get planBudgetTotalLabel => '月度预算合计';
+
+  @override
+  String get planWheelSectionTitle => 'Wheel 周期';
+
+  @override
+  String get planWheelSectionSubtitle => '卖 put + 备兑 call 复盘';
+
+  @override
+  String get planWheelTitle => 'Wheel 周期';
+
+  @override
+  String get planWheelEmptyTitle => '暂无进行中的周期';
+
+  @override
+  String get planWheelEmptyBody => '录入一次卖 put 或备兑 call 交易后，周期会显示在这里。';
+
+  @override
   String get planHeroEmpty => '完成 FIRE 设置后，进度会显示在这里。';
 
   @override

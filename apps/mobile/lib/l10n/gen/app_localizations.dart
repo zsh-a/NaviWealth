@@ -272,6 +272,78 @@ abstract class AppLocalizations {
   /// **'Goal tracker is not yet wired up.'**
   String get planGoalsComingSoon;
 
+  /// Plan hub: monthly category budget section title (roadmap-next.md §3.2)
+  ///
+  /// In en, this message translates to:
+  /// **'Budget'**
+  String get planBudgetSectionTitle;
+
+  /// Plan hub: budget section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly category caps'**
+  String get planBudgetSectionSubtitle;
+
+  /// Title shown on the /plan/budget page header
+  ///
+  /// In en, this message translates to:
+  /// **'Budget'**
+  String get planBudgetTitle;
+
+  /// Empty state title on the budget page
+  ///
+  /// In en, this message translates to:
+  /// **'No budgets yet'**
+  String get planBudgetEmptyTitle;
+
+  /// Empty state body on the budget page explaining the feature
+  ///
+  /// In en, this message translates to:
+  /// **'Set a monthly cap for any category to track spending against it here.'**
+  String get planBudgetEmptyBody;
+
+  /// Header above the list of budgets for the active month
+  ///
+  /// In en, this message translates to:
+  /// **'{month} budgets'**
+  String planBudgetMonthHeader(String month);
+
+  /// Label preceding the sum of all budgets for the active month
+  ///
+  /// In en, this message translates to:
+  /// **'Total monthly budget'**
+  String get planBudgetTotalLabel;
+
+  /// Plan hub: options Wheel lifecycle section title (roadmap-next.md §3.3)
+  ///
+  /// In en, this message translates to:
+  /// **'Wheel cycles'**
+  String get planWheelSectionTitle;
+
+  /// Plan hub: Wheel section subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Sell-put + covered-call review'**
+  String get planWheelSectionSubtitle;
+
+  /// Title shown on /plan/wheel page header
+  ///
+  /// In en, this message translates to:
+  /// **'Wheel cycles'**
+  String get planWheelTitle;
+
+  /// Empty state title on the Wheel page
+  ///
+  /// In en, this message translates to:
+  /// **'No active cycles'**
+  String get planWheelEmptyTitle;
+
+  /// Empty state body explaining when cycles appear
+  ///
+  /// In en, this message translates to:
+  /// **'Record a sell-put or covered-call trade and the cycle will surface here.'**
+  String get planWheelEmptyBody;
+
   /// Plan hero shown when FIRE engine has no data yet
   ///
   /// In en, this message translates to:

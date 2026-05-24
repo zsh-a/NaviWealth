@@ -31,6 +31,21 @@
   "planGoalsSectionTitle": "目标",
   "planGoalsSectionSubtitle": "储蓄目标与里程碑",
   "planGoalsComingSoon": "目标追踪尚未上线。",
+  "planBudgetSectionTitle": "预算",
+  "planBudgetSectionSubtitle": "按月按类别设定上限",
+  "planBudgetTitle": "预算",
+  "planBudgetEmptyTitle": "暂无预算",
+  "planBudgetEmptyBody": "为任意类别设定月度上限，本页会显示实际花销与上限的对比。",
+  "planBudgetMonthHeader": "{month} 预算",
+  "@planBudgetMonthHeader": {
+    "placeholders": { "month": { "type": "String" } }
+  },
+  "planBudgetTotalLabel": "月度预算合计",
+  "planWheelSectionTitle": "Wheel 周期",
+  "planWheelSectionSubtitle": "卖 put + 备兑 call 复盘",
+  "planWheelTitle": "Wheel 周期",
+  "planWheelEmptyTitle": "暂无进行中的周期",
+  "planWheelEmptyBody": "录入一次卖 put 或备兑 call 交易后，周期会显示在这里。",
   "planHeroEmpty": "完成 FIRE 设置后，进度会显示在这里。",
   "planHeroYearsToFire": "距离 FIRE 还有 {years} 年",
   "@planHeroYearsToFire": {

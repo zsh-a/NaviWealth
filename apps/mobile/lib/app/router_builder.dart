@@ -26,6 +26,7 @@ import '../features/auth/presentation/devices_page.dart'
     deferred as devices_lib;
 import '../features/auth/presentation/login_page.dart';
 import '../features/auth/presentation/onboarding_page.dart';
+import '../features/cashflow/ui/budget_page.dart';
 import '../features/cashflow/ui/cashflow_page.dart';
 import '../features/cashflow/ui/dividend_center_page.dart';
 import '../features/cashflow/ui/recurring_transactions_page.dart';
@@ -51,6 +52,7 @@ import '../features/liabilities/ui/liability_detail_page.dart'
 import '../features/liabilities/ui/liability_form_page.dart';
 import '../features/options_income/presentation/income_planner_page.dart'
     deferred as income_planner_lib;
+import '../features/options_income/presentation/wheel_lifecycle_page.dart';
 import '../features/plan/ui/plan_hub_page.dart';
 import '../features/rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
 import '../features/settings/backup/backup_page.dart';
@@ -444,6 +446,16 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
                     name: AppRouteNames.planGoals,
                     builder: (context, state) =>
                         const PlanGoalsPlaceholderPage(),
+                  ),
+                  GoRoute(
+                    path: 'budget',
+                    name: AppRouteNames.planBudget,
+                    builder: (context, state) => const PlanBudgetPage(),
+                  ),
+                  GoRoute(
+                    path: 'wheel',
+                    name: AppRouteNames.planWheel,
+                    builder: (context, state) => const WheelLifecyclePage(),
                   ),
                 ],
               ),

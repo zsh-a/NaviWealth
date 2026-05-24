@@ -79,6 +79,8 @@ abstract final class AppRoutes {
   static const planRebalance = '/plan/rebalance';
   static const planIncome = '/plan/income';
   static const planDca = '/plan/dca';
+  static const planBudget = '/plan/budget';
+  static const planWheel = '/plan/wheel';
   // §4 of IA contract: was "Analytics" (top-level dashboard); split per
   // object — this one is "Scenario Analytics / FIRE Projection".
   static const planProjection = '/plan/projection';
@@ -181,6 +183,8 @@ abstract final class AppRouteNames {
   static const planRebalance = 'plan-rebalance';
   static const planIncome = 'plan-income';
   static const planDca = 'plan-dca';
+  static const planBudget = 'plan-budget';
+  static const planWheel = 'plan-wheel';
   static const planProjection = 'plan-projection';
   static const planScenarios = 'plan-scenarios';
   static const planGoals = 'plan-goals';

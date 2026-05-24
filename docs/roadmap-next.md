@@ -86,8 +86,8 @@
 - ✅ **数据层落地** (2026-05-24): `budgets` 表 (schema v15) + `BudgetRepository`,sync 走 row-state。9 个 repo 测试。
 - ✅ **Riverpod provider 接线** (2026-05-24): `budgetRepositoryProvider` / `budgetsStreamProvider` / `budgetsForMonthProvider` 在 `data/repositories/providers.dart`,可被任何 UI 消费。
 - ✅ **读模型 `MonthlyBudgetSummary`** (2026-05-24): `features/cashflow/domain/budget_summary.dart`,`buildMonthlyBudgetSummary` pure 聚合器(joins budgets × spend by categoryId,过滤异币种 / 跨月 / tombstone),输出 `rankedByStrain`,total over/under flag。7 个测试。
-- ⏳ 现金流预测视图(归位 **Plan tab**)— UI 集成,作为单独 PR
-- ⏳ 与 FIRE engine 的接口:预算偏差影响 safety level(松耦合 — Budget 写 read-model,FIRE 订阅)— 等 UI 之后
+- ✅ **`/plan/budget` page 落地** (2026-05-24): `features/cashflow/ui/budget_page.dart` 接 `budgetsForMonthProvider`,Plan hub 加 Budget tile + 路由注册 + l10n 双语。4 个 widget 测试(empty / populated / 跨月过滤 / tombstone drop)。
+- ⏳ 与 FIRE engine 的接口:预算偏差影响 safety level(松耦合 — Budget 写 read-model,FIRE 订阅)— 等单独 PR
 - 详: [midterm 2.1 M1](./roadmap-midterm-execution.md)
 
 ### 3.3 Income Planner P4(Wheel/收益周期)
@@ -95,8 +95,8 @@
 > P0–P3 已完成。P4 是 state machine,纯设备端,**不**触碰后端。
 
 - ✅ **State machine 落地** (2026-05-24): `wheel_lifecycle.dart`,9 个 stage(between / cashWaiting / shortPut / putExpired / putAssigned / sharesHeld / shortCall / callExpired / callCalled)+ `buildWheelLifecycle` pure function 从 trade journal 派生。10 个测试覆盖完整状态转换。
-- ⏳ 单仓 lifecycle 视图(Plan tab)— UI 单独 PR
-- ⏳ AI tool `get_wheel_lifecycle` 只读 — 等 UI 之后
+- ✅ **`/plan/wheel` page 落地** (2026-05-24): `features/options_income/presentation/wheel_lifecycle_page.dart` 接 `wheelLifecyclesProvider`(纯派生自 trade journal stream);Plan hub 加 Wheel tile + 路由 + l10n。每个 cycle 显示 symbol / 阶段标签 / 累计收益。3 个 widget 测试(空状态 / 多个 cycle 渲染 / 开仓优先排序)。
+- ⏳ AI tool `get_wheel_lifecycle` 只读 — 单独 PR
 - 详: [options-income P4](./options-income.md)
 
 ### 3.4 AI Copilot M1: user profile + evidence
@@ -112,8 +112,8 @@
 
 - ✅ **Watchlist** — 已有(`features/investment/data/watchlist_*`、`presentation/watchlist_page.dart`)
 - ✅ **Event timeline 域** (2026-05-24): `features/investment/domain/reporting/event_timeline.dart`,`CorporateActionEvent` + `buildEventTimeline`(symbol filter / 时间窗 / chronological sort / dedup)。9 个测试。
-- ⏳ Market-data provider 接入(yfinance dividend/split events 写入 timeline)— 单独 PR
-- ⏳ Holding detail 页 "事件" tab UI — 单独 PR
+- ✅ **yfinance parser** (2026-05-24): `data/market/providers/yfinance_corporate_actions.dart` `parseYahooCorporateActions()` pure 函数,从 yfinance `chart.result[0].events.{dividends,splits}` JSON 提取 `CorporateActionEvent` 列表;defensive,malformed row 丢弃不抛;事件 id 稳定(`div_SYMBOL_YYYY-MM-DD` / `split_SYMBOL_YYYY-MM-DD`)。7 个测试。
+- ⏳ Holding detail 页 "事件" tab UI + yfinance 抓取 wire-up — 单独 PR
 - 详: [midterm 2.2 M1/M2](./roadmap-midterm-execution.md)
 
 ### 3.6 Crash reporting opt-in(M1)
@@ -122,7 +122,8 @@
 
 - ✅ **Preference + gating** (2026-05-24): `core/logging/crash_reporting_preference.dart`。`crashReportingEnabledProvider` 默认 OFF,`OptInCrashReporter` wrapper 包装任意底层 reporter,disabled 时丢弃所有事件包括 breadcrumb。4 个测试。
 - ✅ **Provider 接线 + Settings UI** (2026-05-24): `crashReporterProvider` 现在包装 delegate + opt-in 状态;Settings 页 Data section 加 `_CrashReportingRow`(`InlineSwitchRow`);新增 l10n key + zh 翻译。3 个集成测试(默认 OFF / 持久化 / opt-in 生效)。
-- ⏳ Sentry 实际集成(替换 `crashReporterDelegateProvider` 的 `NoopCrashReporter`)— 等 Sentry SDK 决策
+- ✅ **`LoggingCrashReporter`** (2026-05-24): `core/logging/logging_crash_reporter.dart` — dev/staging 用的 reporter,把 captureError/captureMessage/breadcrumb 路由到 `Talker`,让 opt-in pipeline 在没有 Sentry 依赖时也能端到端 visible(在 logs / TalkerScreen 里看到事件)。5 个测试。
+- ⏳ Sentry SDK 接入(`sentry_flutter` 依赖 + DSN secret + `SentryCrashReporter` 替换 `crashReporterDelegateProvider`)— 等用户决策 DSN/隐私政策后单独 PR
 - 详: [midterm 2.6 M1](./roadmap-midterm-execution.md)
 
 ---
