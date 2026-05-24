@@ -11,6 +11,7 @@ import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/entities/symbol_info.dart';
 import '../../../domain/values/asset_market.dart';
+import '../../../features/investment/ui/event_timeline_section.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'asset_detail_sections.dart';
 
@@ -25,6 +26,16 @@ class EquityAssetDetailPage extends ConsumerStatefulWidget {
   @override
   ConsumerState<EquityAssetDetailPage> createState() =>
       _EquityAssetDetailPageState();
+}
+
+/// Only call yfinance for markets it actually services. US + HK stocks
+/// have dividend/split coverage; CN A-shares go through sina and don't
+/// publish events through the chart endpoint; crypto / FX never carry
+/// corporate actions. Gating saves a wasted HTTP round-trip per detail
+/// page open for assets the fetcher can't usefully answer for.
+bool _supportsCorporateActions(Asset asset) {
+  final market = assetMarketFromWire(asset.market);
+  return market == AssetMarket.usStock || market == AssetMarket.hkStock;
 }
 
 class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
@@ -177,6 +188,10 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
                 AssetFxPnlCard(assetId: asset.id),
                 const SizedBox(height: 12),
                 AssetTrendMiniChartCard(asset: asset),
+                if (_supportsCorporateActions(asset)) ...[
+                  const SizedBox(height: 16),
+                  EventTimelineSection(symbol: asset.symbol),
+                ],
                 const SizedBox(height: 16),
                 FButton(
                   variant: FButtonVariant.primary,
