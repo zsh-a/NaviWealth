@@ -215,6 +215,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'Income projection from holdings is not yet wired up.';
 
   @override
+  String get wealthPerspectiveSectionTitle => 'Allocation';
+
+  @override
+  String get wealthPerspectiveByCategory => 'By category';
+
+  @override
+  String get wealthPerspectiveByCurrency => 'By currency';
+
+  @override
+  String wealthPerspectiveItemCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count holdings',
+      one: '1 holding',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get wealthPerspectiveEmpty =>
+      'No holdings yet. Add assets from the Wealth quick actions to see the breakdown.';
+
+  @override
   String get cashFlowTitle => 'Cash flow';
 
   @override

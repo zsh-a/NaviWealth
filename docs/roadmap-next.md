@@ -43,14 +43,14 @@
 
 ## 2. 进行中(Now,~v0.5.3–v0.5.5,2–3 周)
 
-> Phase 1 大部分条目实际上已经完成,仅剩两件事。完成后 v0.5.x 收尾,重心移到 §3。
+> Phase 1 全部条目已完成。v0.5.x 收尾,重心移到 §3 / §4。
 
 | ID | 轨道 | 说明 | 来源 |
 |---|---|---|---|
 | N-1 | AI runtime polish | ✅ 已落地 (2026-05-24):`ToolDescriptor` 4 个新回归测试 + LLM profile model hint 引用 `kDefaultDeviceModel` 常量 | recent commits db1d472 / a5fc6e3 |
 | N-2 | E2E sync 5 case 补齐 | ✅ 已落地 (2026-05-24):补足 phase1 P1-G 缺的 E2E-3 / E2E-4 / E2E-5 | `apps/mobile/test/e2e/sync_e2e_test.dart` |
-| N-3 | 测试覆盖率提升 | 项目 60% / patch 70%(codecov 目标)。当前主要空白:home widget tests、activity widget tests | [phase1 P1-H](./roadmap-phase1.md) |
-| N-4 | Wealth tab "多视角聚合" 重设计 | IA migration 后 Portfolio→Wealth,原 P1-D 多视角(按账户/币种/类别)需要在 Wealth 上重做 | [phase1 P1-D 注记](./roadmap-phase1.md#状态注记2026-05-24) |
+| N-3 | 测试覆盖率提升 | ✅ 已落地 (2026-05-24):home/activity 空白补齐 — `currency_mismatch_banner` (3) + `ai_insight_feed` (3) + `activity_timeline_preview` (3) + `home_greeting_header` (4) + `activity_feed_filter_sheet` (4) + `activity_page_kind_filter` (3),共 20 个新 widget test;`flutter test test/features/{home,activity}/` 全绿(47/47)。 | [phase1 P1-H](./roadmap-phase1.md) |
+| N-4 | Wealth tab "多视角聚合" 重设计 | ✅ 已落地 (2026-05-24):`features/wealth/domain/wealth_perspective.dart` — `WealthPerspective{byCategory, byCurrency}` + `buildWealthAggregation` pure 聚合器(liability 排除 / 同币种合并 / 大小写归一 / 排序);UI 段控 `WealthPerspectiveSection` + `wealthPerspectiveProvider` 接到 `WealthHubPage`,新 l10n 6 个键 EN/ZH。"by account" 维度由 `AccountsGroupedSections` 在同一页继续承担,不重复。10 个测试(7 聚合 + 3 widget)。 | [phase1 P1-D 注记](./roadmap-phase1.md#状态注记2026-05-24) |
 
 > 注 — 以下 phase1 条目在最近的工作中已完成或作废,不再开放:
 > - ✅ **P1-A** (`me/`/`more/` 清理) — IA contract migration (commits aacded4 / 3e37cfc)
@@ -62,7 +62,7 @@
 >
 > 已完成项的详细状态见 [phase1.md 顶部 status 注记](./roadmap-phase1.md#状态注记2026-05-24)。
 
-**Definition of done**: N-3 / N-4 落地或显式 defer 后,Phase 1 关闭,工作完全转入 §3。
+**Definition of done**: N-3 / N-4 已落地 (2026-05-24),Phase 1 关闭。工作完全转入 §3 / §4。
 
 ---
 
@@ -129,7 +129,8 @@
 - ✅ **Provider 接线 + Settings UI** (2026-05-24): `crashReporterProvider` 现在包装 delegate + opt-in 状态;Settings 页 Data section 加 `_CrashReportingRow`(`InlineSwitchRow`);新增 l10n key + zh 翻译。3 个集成测试(默认 OFF / 持久化 / opt-in 生效)。
 - ✅ **`LoggingCrashReporter`** (2026-05-24): `core/logging/logging_crash_reporter.dart` — dev/staging 用的 reporter,把 captureError/captureMessage/breadcrumb 路由到 `Talker`,让 opt-in pipeline 在没有 Sentry 依赖时也能端到端 visible(在 logs / TalkerScreen 里看到事件)。5 个测试。
 - ✅ **debug builds 默认装载 LoggingCrashReporter** (2026-05-24): `app/bootstrap.dart` 在 `kDebugMode` 时把 `crashReporterDelegateProvider` 重写为 `LoggingCrashReporter(talker)`。Release 仍是 `NoopCrashReporter` 默认,等 Sentry SDK 接入;opt-in gate 同时套着两者。这意味着开发者现在可以在 dev 里**直接验证 opt-in pipeline 端到端**:翻开 Settings → 启用 → 触发任意错误 → TalkerScreen 可见。
-- ⏳ Sentry SDK 实际接入(`sentry_flutter` 依赖 + DSN secret + `SentryCrashReporter` 替换 `crashReporterDelegateProvider`)— 等用户决策 DSN/隐私政策后单独 PR
+- ✅ **AppConfig DSN slot 已落地** (2026-05-24):`AppConfig.sentryDsn` 通过 `--dart-define=SENTRY_DSN=...` 注入,`hasSentryDsn` 提供布尔门;默认空 = NoopCrashReporter 不变。2 个 config 单测。
+- ⏳ Sentry SDK 实际接入(`sentry_flutter` 依赖 + `SentryCrashReporter` 在 `bootstrap.dart` 里替换 `crashReporterDelegateProvider`)— 决策门 (§8) 已选 **Sentry SaaS** (sentry.io managed),等用户提供 DSN secret + 同意添加 ~2MB SDK 依赖后单独 PR 接入
 - 详: [midterm 2.6 M1](./roadmap-midterm-execution.md)
 
 ---
@@ -140,10 +141,10 @@
 
 | ID | 轨道 | 说明 |
 |---|---|---|
-| M-1 | Desktop shell master-detail | 三联 master-detail 完成(macOS / Windows / Linux)。**不**改 IA |
+| M-1 | Desktop shell master-detail | ✅ **已基本落地**:`app/master_detail_layout.dart` 两栏带 splitter + URL-driven 选择 crossfade,接到 `_DesktopShell`(`AppRootShell` ≥ 1240dp 分支)+ accounts / assets / ai_chat master 列表;5 个 layout test。后续如出现新 master-list 域,直接复用该 widget,不再当 M-1 条目计 |
 | M-2 | AI Copilot M2 | Batch proposals + undo + 长任务进度条 |
 | M-3 | Income Planner P5 | Tradier OAuth + 真 greeks。**Backend proxy 必须 schema-agnostic**,走 `sync_rows`,不在 Worker 里写业务逻辑 |
-| M-4 | Investment advanced M2/M3 | Event timeline 完整、tax export(选项见决策门)、DCA simulator |
+| M-4 | Investment advanced M2/M3 | DCA simulator ✅ **已落地** (`features/investment/domain/dca/dca_simulator.dart` + `presentation/dca_simulator_page.dart`,挂在 `/plan/dca`,带 golden + engine 测试)。剩余:Event timeline 完整(超出 §3.5 MVP 的部分)、tax export(等决策门 §8) |
 | M-5 | Performance traces | 观测性 M2 |
 | M-6 | Command palette + 快捷键 | Desktop shell M1 + M3 |
 
@@ -217,15 +218,15 @@
 
 ## 8. 决策门(到点必须显式决定的事)
 
-> 不是阻塞,但拖延会让下一程模糊。每条都关联到一个 §3 任务。
+> 不是阻塞,但拖延会让下一程模糊。每条都关联到一个 §3 / §4 任务。
 
-| Gate | 关联 | 必须在何时之前决定 |
+| Gate | 关联 | 状态 / 决策 |
 |---|---|---|
-| `me/` 与 `more/` 的最终去留 | §2 N-3 | v0.5.5 发版前 |
-| Plan tab 内 FIRE / Budget / Cashflow / Income 的二级 IA(平铺还是分组) | §3.2 / §3.3 | Budget MVP 进入实现前 |
-| Tax export 格式优先级(IRS Schedule D / 中国个税 / 通用 CSV) | §4 M-4 | M-4 启动前 |
-| Crash reporter 后端(自托管 Sentry / Cloudflare D1 自存 / 第三方 SaaS) | §3.6 | crash reporting opt-in 启用前 |
-| Tradier OAuth 的 backend proxy 是否单独 Worker | §4 M-3 | P5 启动前 |
+| ~~`me/` 与 `more/` 的最终去留~~ | §2 N-3 | ✅ **已关闭** (2026-05-24):IA migration (commits aacded4 / 3e37cfc) 后两个目录均不再存在,功能已挪进 Today / Settings。无遗留 caller |
+| ~~Plan tab 内 FIRE / Budget / Cashflow / Income 的二级 IA(平铺还是分组)~~ | §3.2 / §3.3 | ✅ **已关闭** (2026-05-24):`features/plan/ui/plan_hub_page.dart` 已落 flat tile grid (`_PlanSectionGrid`),按"决策面" tile 罗列;不引入二级 tabs,避免 IA 三层嵌套 |
+| Tax export 格式优先级(IRS Schedule D / 中国个税 / 通用 CSV) | §4 M-4 | ⏳ 待决:M-4 启动前需选定 |
+| ~~Crash reporter 后端(自托管 Sentry / Cloudflare D1 自存 / 第三方 SaaS)~~ | §3.6 | ✅ **已决策** (2026-05-24):**Sentry SaaS** (sentry.io managed)。理由:`sentry_flutter` 是行业标配,opt-in 阀已在客户端把关(默认 OFF),不必为单用户 app 跑自托管基础设施;DSN 通过 `--dart-define=SENTRY_DSN=...` 注入。剩余工作:依赖添加 + `SentryCrashReporter` 实现,等 DSN secret |
+| Tradier OAuth 的 backend proxy 是否单独 Worker | §4 M-3 | ⏳ 待决:P5 启动前需选定 |
 
 ---
 

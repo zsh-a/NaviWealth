@@ -16,6 +16,7 @@ import '../../accounts/domain/account_balances.dart';
 import '../../accounts/ui/account_grouped_sections.dart';
 import '../../home/data/dashboard_providers.dart';
 import 'wealth_action_panel.dart';
+import 'wealth_perspective_section.dart';
 
 /// Wealth hub — landing page for the Wealth tab (IA contract §1).
 ///
@@ -116,6 +117,8 @@ class _WealthHubBody extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.s20),
         const _WealthSectionGrid(),
+        const SizedBox(height: AppSpacing.s20),
+        const WealthPerspectiveSection(),
         const SizedBox(height: AppSpacing.s20),
         AccountsGroupedSections(
           accounts: accounts,

@@ -488,6 +488,36 @@ abstract class AppLocalizations {
   /// **'Income projection from holdings is not yet wired up.'**
   String get wealthIncomeProjectionComingSoon;
 
+  /// Wealth tab: title for the multi-perspective allocation section
+  ///
+  /// In en, this message translates to:
+  /// **'Allocation'**
+  String get wealthPerspectiveSectionTitle;
+
+  /// Wealth perspective segmented control: group by asset category
+  ///
+  /// In en, this message translates to:
+  /// **'By category'**
+  String get wealthPerspectiveByCategory;
+
+  /// Wealth perspective segmented control: group by native currency
+  ///
+  /// In en, this message translates to:
+  /// **'By currency'**
+  String get wealthPerspectiveByCurrency;
+
+  /// Bucket-level subtitle: number of underlying holdings
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 holding} other{{count} holdings}}'**
+  String wealthPerspectiveItemCount(int count);
+
+  /// Empty-state body for the perspective section when no allocations exist
+  ///
+  /// In en, this message translates to:
+  /// **'No holdings yet. Add assets from the Wealth quick actions to see the breakdown.'**
+  String get wealthPerspectiveEmpty;
+
   /// Cash-flow overview page title
   ///
   /// In en, this message translates to:
