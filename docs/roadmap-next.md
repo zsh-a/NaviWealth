@@ -35,7 +35,7 @@
 - **AI 运行时**: 设备端 multi-profile,34 个 device tool,Opik 风格 trace,W-D7 云端代码彻底删除
 - **FIRE OS**: Phase 0–5 完成(安全等级、bucket、压力测试、Review、AI Copilot tools)
 - **Income Planner**: P0–P3 完成(profile、approved underlyings、covered call scanner、trade journal)
-- **Sync**: v1 OpLog + HLC,30s 轮询(v2 row-state 协议已设计,见 `sync-v2.md`)
+- **Sync**: v2 row-state 单端点 `POST /sync` 全量切换完成(client `SyncEngine` + backend `sync/store.rs`),v1 OpLog 代码已下线;30s 轮询保留。详见 `sync-v2.md`
 - **IA**: Today / Activity / Wealth / Plan 已迁移完成(commits aacded4 / 3e37cfc)
 - **AI 边界审计**: 2026-05-24 完成,清理 ~4.4k 行 phantom infrastructure
 
@@ -154,16 +154,18 @@
 
 > 这些**有设计**但**不进开发计划**。只有"触发条件"成立时才动。
 > 在触发之前出现"顺手做一点"的 PR,**拒绝**。
+>
+> **2026-05-24 现状盘点**:盘点 §5 各条在仓库的真实落地度后,**Sync v2 提前以"全量切换"形态落地**(见下表注释),其余条目仍是触发性。`features/ingest/` 的通用 CSV / 共享意图 / 云 OCR 通道也已构建完成,只是 provider-specific 解析器没做。其他条目均未启动。
 
-| 轨道 | 触发条件 | 设计参考 |
-|---|---|---|
-| **FIRE OS Phase 6 sync** | 出现 ≥1 例用户报告的跨端 FIRE plan 不一致 | [roadmap-fire-os.md Phase 6](./roadmap-fire-os.md),memory `fire_os_design.md` |
-| **Sync v2 切换** | v1 polling 在生产中出现可测量的延迟痛点(>10s 中位数);**或**多设备用户达到 ≥3 个 | [sync-v2.md](./sync-v2.md) |
-| **Sync v2 E2EE** | v2 切换完成 ≥1 个月稳定后 | [sync-v2.md](./sync-v2.md) §安全 |
-| **Memory Layer 落地** | 至少出现 1 个具名 Finance caller(例如 AI Copilot 需要长期偏好检索) | 北极星 §2.6 |
-| **数据导入生态(支付宝/微信/券商对账单)** | 用户实际反馈现有手工录入瓶颈 | [roadmap.md Phase 3](./roadmap.md) |
-| **i18n 扩展(ja/zh-Hant/ko)** | 出现非中文用户群 | [roadmap.md Phase 3](./roadmap.md) |
-| **多用户/家庭账本** | 用户实际请求 + 设计审 | [roadmap.md Phase 3](./roadmap.md) |
+| 轨道 | 触发条件 | 落地度 | 设计参考 |
+|---|---|---|---|
+| **FIRE OS Phase 6 sync** | 出现 ≥1 例用户报告的跨端 FIRE plan 不一致 | ❌ **未启动**(`features/fire/data/*_preferences.dart` 显式注释 "Phase 6 will migrate to a `fire_plans` table",当前 FIRE plan 留在 SharedPreferences 不走 sync) | [roadmap-fire-os.md Phase 6](./roadmap-fire-os.md),memory `fire_os_design.md` |
+| **Sync v2 切换** | v1 polling 在生产中出现可测量的延迟痛点(>10s 中位数);**或**多设备用户达到 ≥3 个 | ✅ **已全量切换**(触发前完成):`apps/backend/src/sync/store.rs` 是 v2 row-state 通用 store,`apps/mobile/lib/core/sync/sync_engine.dart` 是 v2 cycle(单 `POST /sync` push+pull),v1 OpLog 代码已全部下线(grep 不到任何 `/sync/push` / `/sync/pull` / `oplog`)。CLAUDE.md 也已标 v2 active。**§5 这条等同于历史档案,不再触发**| [sync-v2.md](./sync-v2.md) |
+| **Sync v2 E2EE** | v2 切换完成 ≥1 个月稳定后 | ❌ **未启动**(`core/sync/` 下无 encrypt / E2EE / libsodium 代码)。v2 已切换日期可作为窗口起点;若 ≥1 月生产稳定,可触发 | [sync-v2.md](./sync-v2.md) §安全 |
+| **Memory Layer 落地** | 至少出现 1 个具名 Finance caller(例如 AI Copilot 需要长期偏好检索) | ❌ **未启动**(只有 `core/ai/local/embedding/semantic_memory.dart` 显式自标 "Deliberate stub … production consumer is intentionally absent",pipeline 就绪但无 caller) | 北极星 §2.6 |
+| **数据导入生态(支付宝/微信/券商对账单)** | 用户实际反馈现有手工录入瓶颈 | ⚠️ **基础设施已就绪,provider-specific 解析器未做**:`features/ingest/` 已有 `csv_ingest_parser`(CJK 表头别名)/ `ingest_pipeline` / `ingest_dedup` / `ingest_draft_store` / 云 Vision (`cloud_ingest_client`) / `share_intent_service` / 隐私门 / Review 页 + 9 个 ingest test 文件。**待触发的是 alipay/wechat/券商对账单**的命名解析器层 | [roadmap.md Phase 3](./roadmap.md) |
+| **i18n 扩展(ja/zh-Hant/ko)** | 出现非中文用户群 | ❌ **未启动**(`lib/l10n/` 只有 `app_en.arb` + `app_zh.arb`) | [roadmap.md Phase 3](./roadmap.md) |
+| **多用户/家庭账本** | 用户实际请求 + 设计审 | ❌ **未启动**(`lib/features/` 下无 household / family / multi_user 目录) | [roadmap.md Phase 3](./roadmap.md) |
 
 ---
 
