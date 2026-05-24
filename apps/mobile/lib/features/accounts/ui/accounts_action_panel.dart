@@ -28,28 +28,28 @@ Future<void> showAccountsActionPanel(BuildContext context) {
           title: l10n.accountFormCreateTitle,
           subtitle: l10n.accountsActionAccountHint,
           onPress: () =>
-              _closeAndPush(sheetContext, context, AppRoutes.accountListNew),
+              _closeAndPush(sheetContext, context, AppRoutes.wealthAccountNew),
         ),
         AppActionSheetTile(
           icon: Icons.account_balance_wallet_outlined,
           title: l10n.assetsAddCashTitle,
           subtitle: l10n.assetsAddCashSubtitle,
           onPress: () =>
-              _closeAndPush(sheetContext, context, AppRoutes.accountNewCash),
+              _closeAndPush(sheetContext, context, AppRoutes.wealthNewCash),
         ),
         AppActionSheetTile(
           icon: Icons.savings_outlined,
           title: l10n.assetsAddDepositTitle,
           subtitle: l10n.assetsAddDepositSubtitle,
           onPress: () =>
-              _closeAndPush(sheetContext, context, AppRoutes.accountNewDeposit),
+              _closeAndPush(sheetContext, context, AppRoutes.wealthNewDeposit),
         ),
         AppActionSheetTile(
           icon: Icons.auto_graph_outlined,
           title: l10n.assetsAddWealthTitle,
           subtitle: l10n.assetsAddWealthSubtitle,
           onPress: () =>
-              _closeAndPush(sheetContext, context, AppRoutes.accountNewWealth),
+              _closeAndPush(sheetContext, context, AppRoutes.wealthNewWealth),
         ),
         AppActionSheetTile(
           icon: Icons.home_outlined,
@@ -73,7 +73,7 @@ Future<void> showAccountsActionPanel(BuildContext context) {
           title: l10n.superFabLiability,
           subtitle: l10n.accountsActionLiabilityHint,
           onPress: () =>
-              _closeAndPush(sheetContext, context, AppRoutes.liabilityNew),
+              _closeAndPush(sheetContext, context, AppRoutes.wealthLiabilityNew),
         ),
       ],
     ),
@@ -98,7 +98,7 @@ Future<void> _closeAndOpenPhysical(
   final created = await PhysicalAssetCreateSheet.show(routeContext, type: type);
   if (created != null && routeContext.mounted) {
     routeContext.goNamed(
-      AppRouteNames.physicalAssetDetail,
+      AppRouteNames.wealthPhysicalDetail,
       pathParameters: {'id': created.id},
     );
   }

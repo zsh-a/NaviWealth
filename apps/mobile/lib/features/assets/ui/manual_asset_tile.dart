@@ -88,11 +88,11 @@ class ManualAssetTile extends StatelessWidget {
     if (MasterDetailLayout.shouldUseMasterDetail(width)) {
       replaceSelectedQuery(
         context,
-        path: AppRoutes.accounts,
+        path: AppRoutes.wealth,
         selected: asset.id,
       );
     } else {
-      context.go(AppRoutes.accountAsset(asset.id));
+      context.go(AppRoutes.wealthAsset(asset.id));
     }
   }
 

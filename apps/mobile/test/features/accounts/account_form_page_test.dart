@@ -141,7 +141,7 @@ ProviderScope _wrap(_Harness h, {List<Account>? accounts, String? editingId}) {
             builder: (_, _) => AccountFormPage(accountId: editingId),
           ),
           GoRoute(
-            path: AppRoutes.accountsList,
+            path: AppRoutes.wealthAccounts,
             builder: (_, _) => const SizedBox(),
           ),
         ],

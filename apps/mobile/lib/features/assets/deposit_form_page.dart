@@ -35,7 +35,7 @@ class DepositFormPage extends ConsumerStatefulWidget {
 class _DepositFormPageState extends ConsumerState<DepositFormPage>
     with FormDirtyGuard<DepositFormPage> {
   @override
-  String get leaveFallback => AppRoutes.accounts;
+  String get leaveFallback => AppRoutes.wealth;
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -178,7 +178,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
       if (!mounted) return;
       dirty.markPristine();
       Haptics.success();
-      popOrGo(context, fallback: AppRoutes.accounts);
+      popOrGo(context, fallback: AppRoutes.wealth);
     } finally {
       dirty.busy = false;
       if (mounted) setState(() => _busy = false);
@@ -204,7 +204,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
       dirty.markPristine();
-      popOrGo(context, fallback: AppRoutes.accounts);
+      popOrGo(context, fallback: AppRoutes.wealth);
     } finally {
       dirty.busy = false;
       if (mounted) setState(() => _busy = false);
@@ -264,7 +264,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
         .toList(growable: false);
     if (eligible.isEmpty) {
       return _PromptCreateAccount(
-        onTap: () => context.go(AppRoutes.accountListNew),
+        onTap: () => context.go(AppRoutes.wealthAccountNew),
       );
     }
     if (!_hydratedFromList && !widget.isEdit) {

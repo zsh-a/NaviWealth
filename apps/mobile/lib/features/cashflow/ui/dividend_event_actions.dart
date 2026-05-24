@@ -53,7 +53,7 @@ Future<void> showDividendEventActions(
           subtitle: l10n.dividendEventEditHint,
           onPress: () {
             Navigator.of(sheetContext).pop();
-            context.push(AppRoutes.accountCorporateAction);
+            context.push(AppRoutes.wealthCorporateAction);
           },
         ),
         AppActionSheetTile(

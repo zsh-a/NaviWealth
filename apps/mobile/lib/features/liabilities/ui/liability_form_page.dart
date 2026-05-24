@@ -31,7 +31,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
         OptimisticFormSubmit<LiabilityFormPage>,
         FormDirtyGuard<LiabilityFormPage> {
   @override
-  String get leaveFallback => AppRoutes.liabilities;
+  String get leaveFallback => AppRoutes.wealthLiabilities;
 
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
@@ -347,7 +347,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
     // The record is being persisted — the post-save pop must not prompt.
     dirty.markPristine();
     await submitOptimisticAndLeave(
-      leaveFallback: AppRoutes.liabilities,
+      leaveFallback: AppRoutes.wealthLiabilities,
       onBeforeLeave: Haptics.success,
       tag: 'liability',
       failureMessage: (_) => l10n.commonSaveFailed,

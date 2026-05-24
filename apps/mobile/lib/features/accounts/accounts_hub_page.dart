@@ -131,7 +131,7 @@ class _AccountsHubBody extends StatelessWidget {
           balances: balances,
           allowExpansion: true,
           onAccountPressed: (context, account) =>
-              context.push(AppRoutes.accountListItem(account.id)),
+              context.push(AppRoutes.wealthAccount(account.id)),
         ),
         const SizedBox(height: 8),
         _BankAccountsLink(),
@@ -211,7 +211,7 @@ class _BankAccountsLink extends StatelessWidget {
     final colors = context.theme.colors;
     return FCard.raw(
       child: FTile(
-        onPress: () => context.push(AppRoutes.accountsList),
+        onPress: () => context.push(AppRoutes.wealthAccounts),
         prefix: Container(
           width: 36,
           height: 36,
@@ -245,7 +245,7 @@ class _PortfolioHubLink extends StatelessWidget {
     final colors = context.theme.colors;
     return FCard.raw(
       child: FTile(
-        onPress: () => context.push(AppRoutes.accountsPortfolioHub),
+        onPress: () => context.push(AppRoutes.wealthPortfolio),
         prefix: Container(
           width: 36,
           height: 36,
@@ -275,7 +275,7 @@ class _WatchlistLink extends StatelessWidget {
     final colors = context.theme.colors;
     return FCard.raw(
       child: FTile(
-        onPress: () => context.push(AppRoutes.accountsWatchlist),
+        onPress: () => context.push(AppRoutes.wealthWatchlist),
         prefix: Container(
           width: 36,
           height: 36,
@@ -305,7 +305,7 @@ class _IncomePlannerLink extends StatelessWidget {
     final colors = context.theme.colors;
     return FCard.raw(
       child: FTile(
-        onPress: () => context.push(AppRoutes.accountsIncomePlanner),
+        onPress: () => context.push(AppRoutes.planIncome),
         prefix: Container(
           width: 36,
           height: 36,
@@ -335,7 +335,7 @@ class _DcaSimulatorLink extends StatelessWidget {
     final colors = context.theme.colors;
     return FCard.raw(
       child: FTile(
-        onPress: () => context.push(AppRoutes.accountsDcaSimulator),
+        onPress: () => context.push(AppRoutes.planDca),
         prefix: Container(
           width: 36,
           height: 36,

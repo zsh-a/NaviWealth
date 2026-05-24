@@ -152,7 +152,7 @@ class _AlertRow extends ConsumerWidget {
       ),
       onPress: alert.assetIds.length == 1
           ? () => context.goNamed(
-              AppRouteNames.accountAssetDetail,
+              AppRouteNames.wealthAssetDetail,
               pathParameters: {'assetId': alert.assetIds.first},
             )
           : null,

@@ -85,7 +85,7 @@ class AccountsMaster extends ConsumerWidget {
     }
     replaceSelectedQuery(
       context,
-      path: AppRoutes.accountsList,
+      path: AppRoutes.wealthAccounts,
       selected: allIds[nextIndex],
     );
   }
@@ -126,7 +126,7 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
               child: const Icon(Icons.add_card_outlined),
             ),
             semanticsLabel: l10n.accountsCreateAction,
-            onPress: () => context.go(AppRoutes.accountListNew),
+            onPress: () => context.go(AppRoutes.wealthAccountNew),
           ),
           FHeaderAction(
             icon: Tooltip(
@@ -170,7 +170,7 @@ class _EmptyAccounts extends StatelessWidget {
             const SizedBox(height: 16),
             FButton(
               variant: FButtonVariant.primary,
-              onPress: () => context.go(AppRoutes.accountListNew),
+              onPress: () => context.go(AppRoutes.wealthAccountNew),
               prefix: const Icon(Icons.add_card_outlined),
               child: Text(l10n.accountFormCreateTitle),
             ),
@@ -222,11 +222,11 @@ class _AccountsByType extends StatelessWidget {
     if (MasterDetailLayout.shouldUseMasterDetail(width)) {
       replaceSelectedQuery(
         context,
-        path: AppRoutes.accountsList,
+        path: AppRoutes.wealthAccounts,
         selected: account.id,
       );
     } else {
-      context.go(AppRoutes.accountListItem(account.id));
+      context.go(AppRoutes.wealthAccount(account.id));
     }
   }
 }

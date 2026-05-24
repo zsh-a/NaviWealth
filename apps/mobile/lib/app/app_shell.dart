@@ -16,10 +16,14 @@ import 'desktop_sidebar.dart';
 import 'route_paths.dart';
 
 /// Root shell that hosts the 4-tab IndexedStack:
-///   Home / Activity / Accounts / Settings.
+///   Today / Activity / Wealth / Plan.
+///
+/// Per the IA contract (`apps/mobile/docs/design/00-information-architecture.md`),
+/// Settings is no longer a tab — it is reached from the Today header gear
+/// (mobile) or the desktop sidebar's pinned bottom row.
 ///
 /// Layout adapts at the breakpoints documented in
-/// `docs/design/01-responsive-layout.md`:
+/// `apps/mobile/docs/design/01-responsive-layout.md`:
 ///  - mobile (<600dp): bottom navigation bar.
 ///  - tablet (600-1240dp): slim icon rail on the left.
 ///  - desktop (>=1240dp): full sidebar via [DesktopSidebar].
@@ -195,7 +199,7 @@ List<_NavDestination> _navDestinations(AppLocalizations l10n) {
     _NavDestination(
       icon: Icons.dashboard_outlined,
       selectedIcon: Icons.dashboard,
-      label: l10n.navHome,
+      label: l10n.navToday,
     ),
     _NavDestination(
       icon: Icons.receipt_long_outlined,
@@ -205,12 +209,12 @@ List<_NavDestination> _navDestinations(AppLocalizations l10n) {
     _NavDestination(
       icon: Icons.account_balance_wallet_outlined,
       selectedIcon: Icons.account_balance_wallet,
-      label: l10n.navAccounts,
+      label: l10n.navWealth,
     ),
     _NavDestination(
-      icon: Icons.settings_outlined,
-      selectedIcon: Icons.settings,
-      label: l10n.navSettings,
+      icon: Icons.insights_outlined,
+      selectedIcon: Icons.insights,
+      label: l10n.navPlan,
     ),
   ];
 }

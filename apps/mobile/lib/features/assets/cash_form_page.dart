@@ -35,7 +35,7 @@ class CashFormPage extends ConsumerStatefulWidget {
 class _CashFormPageState extends ConsumerState<CashFormPage>
     with FormDirtyGuard<CashFormPage> {
   @override
-  String get leaveFallback => AppRoutes.accounts;
+  String get leaveFallback => AppRoutes.wealth;
 
   final _formKey = GlobalKey<FormState>();
   final _balanceController = TextEditingController();
@@ -114,7 +114,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
             confirmLabel: l10n.cashFormDuplicateEdit,
           );
           if (goEdit == true && mounted) {
-            context.go(AppRoutes.accountAsset(existing.id));
+            context.go(AppRoutes.wealthAsset(existing.id));
           }
           setState(() => _busy = false);
           return;
@@ -147,7 +147,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
       if (!mounted) return;
       dirty.markPristine();
       Haptics.success();
-      popOrGo(context, fallback: AppRoutes.accounts);
+      popOrGo(context, fallback: AppRoutes.wealth);
     } finally {
       dirty.busy = false;
       if (mounted) setState(() => _busy = false);
@@ -165,7 +165,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
       await repo.softDelete(_initial!.id);
       if (!mounted) return;
       dirty.markPristine();
-      popOrGo(context, fallback: AppRoutes.accounts);
+      popOrGo(context, fallback: AppRoutes.wealth);
     } finally {
       dirty.busy = false;
       if (mounted) setState(() => _busy = false);
@@ -229,7 +229,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
               const SizedBox(height: 12),
               FButton(
                 variant: FButtonVariant.outline,
-                onPress: () => context.go(AppRoutes.accountListNew),
+                onPress: () => context.go(AppRoutes.wealthAccountNew),
                 prefix: const Icon(Icons.add, size: 16),
                 child: Text(l10n.cashFormCreateAccountAction),
               ),

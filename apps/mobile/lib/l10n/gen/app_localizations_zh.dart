@@ -12,7 +12,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appTitle => 'NaviWealth';
 
   @override
-  String get navHome => '总览';
+  String get navHome => '今日';
+
+  @override
+  String get navToday => '今日';
 
   @override
   String get navExpenses => '支出';
@@ -24,10 +27,129 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navActivity => '流水';
 
   @override
-  String get navAccounts => '账户';
+  String get navAccounts => '资产';
+
+  @override
+  String get navWealth => '资产';
+
+  @override
+  String get navPlan => '规划';
 
   @override
   String get navSearch => '搜索';
+
+  @override
+  String get navSettingsTooltip => '设置';
+
+  @override
+  String get planHubTitle => '规划';
+
+  @override
+  String get planHubSubtitle => '决策、模型与目标。';
+
+  @override
+  String get planFireSectionTitle => 'FIRE';
+
+  @override
+  String get planFireSectionSubtitle => '距离财务自由还有几年';
+
+  @override
+  String get planRebalanceSectionTitle => '再平衡';
+
+  @override
+  String get planRebalanceSectionSubtitle => '偏离目标配置情况';
+
+  @override
+  String get planIncomeSectionTitle => '收入策略';
+
+  @override
+  String get planIncomeSectionSubtitle => '备兑认购与现金担保认沽';
+
+  @override
+  String get planDcaSectionTitle => 'DCA 模拟';
+
+  @override
+  String get planDcaSectionSubtitle => '定投计划';
+
+  @override
+  String get planProjectionSectionTitle => '情景分析';
+
+  @override
+  String get planProjectionSectionSubtitle => '资产配置与 FIRE 预测';
+
+  @override
+  String get planScenariosSectionTitle => '情景';
+
+  @override
+  String get planScenariosSectionSubtitle => '对比 what-if';
+
+  @override
+  String get planScenariosComingSoon => '情景构建器尚未上线。';
+
+  @override
+  String get planGoalsSectionTitle => '目标';
+
+  @override
+  String get planGoalsSectionSubtitle => '储蓄目标与里程碑';
+
+  @override
+  String get planGoalsComingSoon => '目标追踪尚未上线。';
+
+  @override
+  String get planHeroEmpty => '完成 FIRE 设置后，进度会显示在这里。';
+
+  @override
+  String planHeroYearsToFire(String years) {
+    return '距离 FIRE 还有 $years 年';
+  }
+
+  @override
+  String get planHeroProgressLabel => '进度';
+
+  @override
+  String get planHeroNextRebalance => '下一步：复盘再平衡';
+
+  @override
+  String get planHeroSeePlan => '查看规划';
+
+  @override
+  String get wealthHubTitle => '资产';
+
+  @override
+  String get wealthHubSubtitle => '你拥有什么，欠了什么。';
+
+  @override
+  String get wealthAccountsSectionTitle => '账户';
+
+  @override
+  String get wealthAccountsSectionSubtitle => '现金、银行、券商、加密';
+
+  @override
+  String get wealthHoldingsSectionTitle => '持仓';
+
+  @override
+  String get wealthHoldingsSectionSubtitle => '所有账户的持仓汇总';
+
+  @override
+  String get wealthWatchlistSectionTitle => '自选';
+
+  @override
+  String get wealthWatchlistSectionSubtitle => '你在跟踪的标的';
+
+  @override
+  String get wealthLiabilitiesSectionTitle => '负债';
+
+  @override
+  String get wealthLiabilitiesSectionSubtitle => '贷款、按揭、信用';
+
+  @override
+  String get wealthIncomeProjectionTitle => '收益展望';
+
+  @override
+  String get wealthIncomeProjectionSubtitle => '持仓推导的预期收益';
+
+  @override
+  String get wealthIncomeProjectionComingSoon => '由持仓推导的收益展望尚未上线。';
 
   @override
   String get cashFlowTitle => '现金流';

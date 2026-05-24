@@ -16,12 +16,16 @@ import 'shell_preferences.dart';
 
 /// Vim-style `g`+key → route path mapping.
 ///
-/// Mnemonics align with the 4-tab IA:
-///   g h → Home, g a → Activity, g n → Accounts, g s → Settings.
+/// Mnemonics align with the 4-tab IA (Today / Activity / Wealth / Plan):
+///   g h / g t → Today, g a → Activity, g n / g w → Wealth,
+///   g p → Plan, g s → Settings (off-nav global).
 const Map<String, String> _kVimGotoRoutes = <String, String>{
   'home': AppRoutes.home,
+  'today': AppRoutes.home,
   'activity': AppRoutes.activity,
-  'accounts': AppRoutes.accounts,
+  'accounts': AppRoutes.wealth,
+  'wealth': AppRoutes.wealth,
+  'plan': AppRoutes.plan,
   'settings': AppRoutes.settings,
 };
 

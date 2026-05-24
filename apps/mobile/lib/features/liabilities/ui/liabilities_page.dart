@@ -145,7 +145,7 @@ class _LiabilityListTile extends StatelessWidget {
                 ),
                 style: context.theme.typography.md,
               ),
-        onPress: () => context.push(AppRoutes.liability(liability.id)),
+        onPress: () => context.push(AppRoutes.wealthLiability(liability.id)),
       ),
     );
   }

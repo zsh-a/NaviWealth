@@ -22,7 +22,7 @@ void main() {
           builder: (_, _) => const DividendCenterPage(),
         ),
         GoRoute(
-          path: AppRoutes.accountCorporateAction,
+          path: AppRoutes.wealthCorporateAction,
           builder: (_, _) => const Scaffold(
             body: Center(child: Text('Corporate action target')),
           ),

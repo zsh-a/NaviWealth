@@ -83,9 +83,10 @@ void main() {
     );
     await _pumpFrames(tester);
 
-    // Home page localized title — "Overview" in en-US, "总览" in zh-CN.
-    // Test environment falls back to the first supported locale (en).
-    expect(find.text('Overview'), findsWidgets);
+    // Home page localized nav label — "Today" in en-US (renamed from
+    // "Overview" under the IA contract). Test environment falls back to
+    // the first supported locale (en).
+    expect(find.text('Today'), findsWidgets);
     expect(find.byType(FBottomNavigationBar), findsOneWidget);
   });
 }
