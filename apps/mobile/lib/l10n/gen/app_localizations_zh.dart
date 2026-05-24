@@ -210,6 +210,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wealthIncomeProjectionComingSoon => '由持仓推导的收益展望尚未上线。';
 
   @override
+  String get wealthPerspectiveSectionTitle => '资产分布';
+
+  @override
+  String get wealthPerspectiveByCategory => '按类别';
+
+  @override
+  String get wealthPerspectiveByCurrency => '按币种';
+
+  @override
+  String wealthPerspectiveItemCount(int count) {
+    return '$count项';
+  }
+
+  @override
+  String get wealthPerspectiveEmpty => '暂无资产。可从财富页右上角的「+」添加资产后查看分布。';
+
+  @override
   String get cashFlowTitle => '现金流';
 
   @override
