@@ -368,6 +368,14 @@ const allToolDescriptors = <ToolDescriptor>[
     allowedContextTier: BudgetTier.standard,
     sideEffect: SideEffect.deviceLocalWrite,
   ),
+  // Income Planner P4 — Wheel cycle lifecycle (`roadmap-next.md` §3.3).
+  ToolDescriptor(
+    name: 'get_wheel_lifecycle',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.standard,
+  ),
 ];
 
 ToolDescriptor? lookupToolDescriptor(String name) {

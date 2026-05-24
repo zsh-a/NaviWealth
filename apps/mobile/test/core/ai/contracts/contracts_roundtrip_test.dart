@@ -160,8 +160,9 @@ void main() {
 
     test('mobile descriptor catalog carries active device tools', () {
       // 22 baseline + 8 FIRE OS Phase 5 (docs/roadmap-fire-os.md §5.2)
-      // + 4 Income Planner P1/P3 (docs/options-income.md §8.2).
-      expect(allToolDescriptors, hasLength(34));
+      // + 4 Income Planner P1/P3 (docs/options-income.md §8.2)
+      // + 1 Income Planner P4 — `get_wheel_lifecycle` (roadmap-next §3.3).
+      expect(allToolDescriptors, hasLength(35));
       expect(
         lookupToolDescriptor('propose_options_profile_update')?.sideEffect,
         SideEffect.deviceLocalWrite,

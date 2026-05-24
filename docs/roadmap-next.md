@@ -87,7 +87,7 @@
 - ✅ **Riverpod provider 接线** (2026-05-24): `budgetRepositoryProvider` / `budgetsStreamProvider` / `budgetsForMonthProvider` 在 `data/repositories/providers.dart`,可被任何 UI 消费。
 - ✅ **读模型 `MonthlyBudgetSummary`** (2026-05-24): `features/cashflow/domain/budget_summary.dart`,`buildMonthlyBudgetSummary` pure 聚合器(joins budgets × spend by categoryId,过滤异币种 / 跨月 / tombstone),输出 `rankedByStrain`,total over/under flag。7 个测试。
 - ✅ **`/plan/budget` page 落地** (2026-05-24): `features/cashflow/ui/budget_page.dart` 接 `budgetsForMonthProvider`,Plan hub 加 Budget tile + 路由注册 + l10n 双语。4 个 widget 测试(empty / populated / 跨月过滤 / tombstone drop)。
-- ⏳ 与 FIRE engine 的接口:预算偏差影响 safety level(松耦合 — Budget 写 read-model,FIRE 订阅)— 等单独 PR
+- ✅ **Budget × FIRE 接口契约** (2026-05-24): `features/cashflow/domain/budget_signal.dart` — `BudgetSignal{noData, comfortable, strained, overBudget}` + `budgetSignalFor(summary)` pure 分类器(< 80% / 80–100% / > 100% bands + single-category overbudget bumps to strained);`monthlyBudgetSignalProvider(month)` family 让 FIRE / dashboard 单点订阅。8 个分类器测试。**FIRE service 改动作为单独 PR**(只需 watch 此 provider,无需引入 BudgetRepository 反向依赖)。
 - 详: [midterm 2.1 M1](./roadmap-midterm-execution.md)
 
 ### 3.3 Income Planner P4(Wheel/收益周期)
@@ -96,7 +96,7 @@
 
 - ✅ **State machine 落地** (2026-05-24): `wheel_lifecycle.dart`,9 个 stage(between / cashWaiting / shortPut / putExpired / putAssigned / sharesHeld / shortCall / callExpired / callCalled)+ `buildWheelLifecycle` pure function 从 trade journal 派生。10 个测试覆盖完整状态转换。
 - ✅ **`/plan/wheel` page 落地** (2026-05-24): `features/options_income/presentation/wheel_lifecycle_page.dart` 接 `wheelLifecyclesProvider`(纯派生自 trade journal stream);Plan hub 加 Wheel tile + 路由 + l10n。每个 cycle 显示 symbol / 阶段标签 / 累计收益。3 个 widget 测试(空状态 / 多个 cycle 渲染 / 开仓优先排序)。
-- ⏳ AI tool `get_wheel_lifecycle` 只读 — 单独 PR
+- ✅ **AI tool `get_wheel_lifecycle`** (2026-05-24): `core/ai/runtime/device/tools/get_wheel_lifecycle_tool.dart`,读 `wheelLifecyclesProvider`,可选 symbol filter,输出 cycle 数组 + evidence anchors(每个 journal entry 一个)。注册到 `kDeviceTools` + `allToolDescriptors`(catalog 35 → 含 P4)。8 个工具单元测试(descriptor / 未加载引导 / 全量 / symbol filter / 大小写不敏感 / 无匹配 / open vs closed 序列化 / evidence)。
 - 详: [options-income P4](./options-income.md)
 
 ### 3.4 AI Copilot M1: user profile + evidence
@@ -105,7 +105,8 @@
 
 - ✅ **UserProfile contract 落地** (2026-05-24): `core/ai/contracts/user_profile.dart`,`composeUserProfile` pure function (consumption concentration + savings rate + risk appetite),snake_case JSON 接口 + < 8KB roundtrip 验证。11 个测试。
 - ✅ **System prompt 注入** (2026-05-24): `core/ai/runtime/device/device_user_profile_prompt.dart` 的 `renderContextPackSystemAppendix(pack)` 把 `ContextPack.BaseContext` 渲染成 < 1KB 中文 appendix(风险偏好 + 报表币种 + 月均收支 + 趋势 + FIRE 进度);`DeviceLlmRuntime.run` 把它喂给 `DeviceSession.systemAppendix`。CN literal allowlist 已登记。8 个测试。
-- ⏳ tool result evidence 字段 + UI 跳转 — 单独 PR
+- ✅ **Evidence anchor 契约** (2026-05-24): `core/ai/contracts/evidence_anchor.dart` — `EvidenceAnchor({entity_table, entity_id, label?})` + `withEvidence()` helper + `readEvidence()` 解析器。Tools 可往返 `output.evidence` 数组,UI 用 entity_table+entity_id 做 deep-link dispatch。`get_wheel_lifecycle_tool` 已经率先把每个 journal entry 作为 evidence anchor 输出。7 个 contract 测试 + 1 个工具集成测试。
+- ✅ **Chat UI evidence chip 渲染** (2026-05-24): `features/ai_chat/ui/tool_invocation_card.dart` 现在先读 `output.evidence` 数组(`readEvidence()`),按 entity_table 映射到 5 个 JumpKind(assets / accounts / liabilities / journal_entries / options_trade_journal);anchor 自带 label 时优先用,否则用 l10n 模板。未识别 entity_table 静默丢弃。Legacy `asset_id` / `account_id` 启发式作为 fallback 保留。新 l10n 键 5 个 EN + ZH。5 个 widget 测试。
 - 详: [midterm 2.5 M1](./roadmap-midterm-execution.md)
 
 ### 3.5 Watchlist + Event timeline(M1/M2)
@@ -113,7 +114,8 @@
 - ✅ **Watchlist** — 已有(`features/investment/data/watchlist_*`、`presentation/watchlist_page.dart`)
 - ✅ **Event timeline 域** (2026-05-24): `features/investment/domain/reporting/event_timeline.dart`,`CorporateActionEvent` + `buildEventTimeline`(symbol filter / 时间窗 / chronological sort / dedup)。9 个测试。
 - ✅ **yfinance parser** (2026-05-24): `data/market/providers/yfinance_corporate_actions.dart` `parseYahooCorporateActions()` pure 函数,从 yfinance `chart.result[0].events.{dividends,splits}` JSON 提取 `CorporateActionEvent` 列表;defensive,malformed row 丢弃不抛;事件 id 稳定(`div_SYMBOL_YYYY-MM-DD` / `split_SYMBOL_YYYY-MM-DD`)。7 个测试。
-- ⏳ Holding detail 页 "事件" tab UI + yfinance 抓取 wire-up — 单独 PR
+- ✅ **EventTimelineSection embeddable widget + provider** (2026-05-24): `features/investment/ui/event_timeline_section.dart` 接 `upcomingEventsForSymbolProvider(symbol)` family(默认返回空,等待网络层),按时间排序渲染分红 / 拆股 / 配股 / DRIP 行。`data/event_timeline_providers.dart` 是单点 seam — 未来 yfinance 抓取 PR 替换 `corporateActionEventsProvider(symbol)` 即可填充。5 个 widget 测试 + 新 l10n。
+- ⏳ Holding detail page 嵌入 + yfinance 抓取 wire-up — 单独 PR(widget 已经可以直接 `EventTimelineSection(symbol: ...)` 嵌进任何 detail 页)
 - 详: [midterm 2.2 M1/M2](./roadmap-midterm-execution.md)
 
 ### 3.6 Crash reporting opt-in(M1)
@@ -123,7 +125,8 @@
 - ✅ **Preference + gating** (2026-05-24): `core/logging/crash_reporting_preference.dart`。`crashReportingEnabledProvider` 默认 OFF,`OptInCrashReporter` wrapper 包装任意底层 reporter,disabled 时丢弃所有事件包括 breadcrumb。4 个测试。
 - ✅ **Provider 接线 + Settings UI** (2026-05-24): `crashReporterProvider` 现在包装 delegate + opt-in 状态;Settings 页 Data section 加 `_CrashReportingRow`(`InlineSwitchRow`);新增 l10n key + zh 翻译。3 个集成测试(默认 OFF / 持久化 / opt-in 生效)。
 - ✅ **`LoggingCrashReporter`** (2026-05-24): `core/logging/logging_crash_reporter.dart` — dev/staging 用的 reporter,把 captureError/captureMessage/breadcrumb 路由到 `Talker`,让 opt-in pipeline 在没有 Sentry 依赖时也能端到端 visible(在 logs / TalkerScreen 里看到事件)。5 个测试。
-- ⏳ Sentry SDK 接入(`sentry_flutter` 依赖 + DSN secret + `SentryCrashReporter` 替换 `crashReporterDelegateProvider`)— 等用户决策 DSN/隐私政策后单独 PR
+- ✅ **debug builds 默认装载 LoggingCrashReporter** (2026-05-24): `app/bootstrap.dart` 在 `kDebugMode` 时把 `crashReporterDelegateProvider` 重写为 `LoggingCrashReporter(talker)`。Release 仍是 `NoopCrashReporter` 默认,等 Sentry SDK 接入;opt-in gate 同时套着两者。这意味着开发者现在可以在 dev 里**直接验证 opt-in pipeline 端到端**:翻开 Settings → 启用 → 触发任意错误 → TalkerScreen 可见。
+- ⏳ Sentry SDK 实际接入(`sentry_flutter` 依赖 + DSN secret + `SentryCrashReporter` 替换 `crashReporterDelegateProvider`)— 等用户决策 DSN/隐私政策后单独 PR
 - 详: [midterm 2.6 M1](./roadmap-midterm-execution.md)
 
 ---

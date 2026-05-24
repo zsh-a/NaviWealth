@@ -37,6 +37,7 @@ import 'get_recurring_patterns_tool.dart';
 import 'get_refund_links_tool.dart';
 import 'get_subscription_changes_tool.dart';
 import 'get_transfer_links_tool.dart';
+import 'get_wheel_lifecycle_tool.dart';
 import 'list_payment_accounts_tool.dart';
 import 'propose_account_create_tool.dart';
 import 'propose_asset_valuation_tool.dart';
@@ -97,6 +98,8 @@ const List<DeviceTool> kDeviceTools = <DeviceTool>[
   GetOptionsStrategyProfileTool(),
   ProposeOptionsProfileUpdateTool(),
   ProposeOptionsJournalEntryTool(),
+  // Income Planner P4 — Wheel lifecycle (`roadmap-next.md` §3.3).
+  GetWheelLifecycleTool(),
 ];
 
 DeviceToolRegistry defaultDeviceToolRegistry() =>

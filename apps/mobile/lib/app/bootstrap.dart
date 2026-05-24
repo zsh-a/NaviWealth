@@ -12,6 +12,7 @@ import '../core/config/app_config.dart';
 import '../core/format/formatters.dart';
 import '../core/logging/app_logger.dart';
 import '../core/logging/crash_reporter.dart';
+import '../core/logging/logging_crash_reporter.dart';
 import '../core/logging/providers.dart';
 import '../core/sync/providers.dart';
 import '../data/market/sync/price_sync_providers.dart';
@@ -43,6 +44,16 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
     overrides: [
       if (config != null) appConfigProvider.overrideWithValue(config),
       sharedPreferencesProvider.overrideWithValue(prefs),
+      // `roadmap-next.md` §3.6 — in debug builds, route captureError /
+      // recordBreadcrumb through TalkerScreen via [LoggingCrashReporter]
+      // so engineers see the opt-in pipeline fire end-to-end without
+      // taking on the `sentry_flutter` dependency. Release builds keep
+      // the [NoopCrashReporter] default until the Sentry SDK lands; the
+      // opt-in gate (`crashReportingEnabledProvider`) still wraps both.
+      if (kDebugMode)
+        crashReporterDelegateProvider.overrideWith(
+          (ref) => LoggingCrashReporter(talker: ref.watch(talkerProvider)),
+        ),
       // Plug the AuthRouteGuard into FIR-15's empty default. The guard
       // reads `authControllerProvider` per redirect; auth state changes
       // bump `routeRedirectVersionProvider` which makes go_router re-run

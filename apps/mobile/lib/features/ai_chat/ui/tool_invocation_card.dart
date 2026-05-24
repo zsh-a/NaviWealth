@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
+import '../../../core/ai/contracts/evidence_anchor.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
 import 'tool_invocation_renderers.dart';
@@ -156,6 +157,13 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
         context.go(AppRoutes.wealthAccount(jump.id));
       case _JumpKind.liability:
         context.go(AppRoutes.wealthLiability(jump.id));
+      case _JumpKind.journalEntry:
+        context.go(AppRoutes.activityEntry(jump.id));
+      case _JumpKind.tradeJournal:
+        // No per-entry detail page yet; Income Planner is the closest
+        // surface that lists the same rows. The chip still carries the
+        // id so a future detail route can swap in without reparsing.
+        context.go(AppRoutes.planIncome);
     }
   }
 
@@ -383,7 +391,17 @@ String _prettyJson(Object? value) {
   }
 }
 
-enum _JumpKind { asset, account, liability }
+enum _JumpKind {
+  asset,
+  account,
+  liability,
+  /// Ledger journal entry (`activity_entry/<id>`). Comes from
+  /// `evidence.entity_table == 'journal_entries'`.
+  journalEntry,
+  /// Options trade journal row. Deep-links to the Income Planner page
+  /// since there's no dedicated detail route.
+  tradeJournal,
+}
 
 class _Jump {
   const _Jump({
@@ -398,13 +416,34 @@ class _Jump {
   final IconData icon;
 }
 
-/// Walk the tool output looking for `asset_id` / `account_id` /
-/// `liability_id` fields (anywhere in the tree, including inside
-/// arrays). Surface up to four unique ids so the chip row stays
-/// readable.
+/// Build the chip list shown above the expanded output.
+///
+/// Source-of-truth order:
+/// 1. Structured `evidence` array on the output envelope
+///    (`docs/roadmap-next.md` §3.4 — `EvidenceAnchor` contract). Newer
+///    tools emit this and the mapping is exact (`entity_table` →
+///    `_JumpKind`).
+/// 2. Legacy heuristic walk that scrapes `asset_id` / `account_id` /
+///    `liability_id` keys anywhere in the JSON tree. Kept for tools
+///    that haven't migrated to evidence.
+///
+/// Surface up to four unique ids so the chip row stays readable.
 List<_Jump> _extractJumps(AppLocalizations l10n, Object? output) {
   final seen = <String>{};
   final out = <_Jump>[];
+
+  // (1) Structured evidence first — gives an exact entity_table mapping
+  // and avoids the heuristic walk's false positives.
+  if (output is Map) {
+    final envelope = output.cast<String, Object?>();
+    for (final anchor in readEvidence(envelope)) {
+      if (out.length >= 4) break;
+      final jump = _jumpFromEvidence(l10n, anchor);
+      if (jump != null && seen.add('${jump.kind}:${jump.id}')) {
+        out.add(jump);
+      }
+    }
+  }
   void visit(Object? node) {
     if (out.length >= 4) return;
     if (node is Map) {
@@ -449,3 +488,57 @@ List<_Jump> _extractJumps(AppLocalizations l10n, Object? output) {
 }
 
 String _shortId(String id) => id.length > 8 ? '${id.substring(0, 8)}…' : id;
+
+/// Map one [EvidenceAnchor] to a chip the card can render + navigate.
+/// Returns `null` for entity_tables that don't have a detail surface
+/// yet (those anchors are dropped — better than rendering a dead chip).
+_Jump? _jumpFromEvidence(AppLocalizations l10n, EvidenceAnchor anchor) {
+  // Anchor's own label wins over the templated id when it's supplied —
+  // tools that know a human label (e.g. "AAPL · cash_secured_put") have
+  // already crafted the most useful chip text.
+  final fallbackId = _shortId(anchor.entityId);
+  String labelFor(String templated) =>
+      anchor.label != null && anchor.label!.isNotEmpty
+          ? anchor.label!
+          : templated;
+
+  switch (anchor.entityTable) {
+    case 'assets':
+      return _Jump(
+        kind: _JumpKind.asset,
+        id: anchor.entityId,
+        label: labelFor(l10n.aiChatToolJumpAsset(fallbackId)),
+        icon: Icons.account_balance_wallet_outlined,
+      );
+    case 'accounts':
+      return _Jump(
+        kind: _JumpKind.account,
+        id: anchor.entityId,
+        label: labelFor(l10n.aiChatToolJumpAccount(fallbackId)),
+        icon: Icons.account_box_outlined,
+      );
+    case 'liabilities':
+      return _Jump(
+        kind: _JumpKind.liability,
+        id: anchor.entityId,
+        label: labelFor(l10n.aiChatToolJumpLiability(fallbackId)),
+        icon: Icons.credit_card_outlined,
+      );
+    case 'journal_entries':
+      return _Jump(
+        kind: _JumpKind.journalEntry,
+        id: anchor.entityId,
+        label: labelFor(l10n.aiChatToolJumpJournalEntry(fallbackId)),
+        icon: Icons.receipt_long_outlined,
+      );
+    case 'options_trade_journal':
+      return _Jump(
+        kind: _JumpKind.tradeJournal,
+        id: anchor.entityId,
+        label: labelFor(l10n.aiChatToolJumpTradeJournal(fallbackId)),
+        icon: Icons.candlestick_chart_outlined,
+      );
+    default:
+      return null;
+  }
+}

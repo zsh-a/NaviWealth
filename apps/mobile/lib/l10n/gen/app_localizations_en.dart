@@ -136,6 +136,27 @@ class AppLocalizationsEn extends AppLocalizations {
       'Record a sell-put or covered-call trade and the cycle will surface here.';
 
   @override
+  String get investmentEventTimelineTitle => 'Upcoming events';
+
+  @override
+  String get investmentEventTimelineEmpty =>
+      'No upcoming dividends or splits in the next 90 days.';
+
+  @override
+  String get investmentEventDividend => 'Dividend';
+
+  @override
+  String investmentEventSplit(String ratio) {
+    return 'Split $ratio';
+  }
+
+  @override
+  String get investmentEventRights => 'Rights offering';
+
+  @override
+  String get investmentEventDrip => 'DRIP';
+
+  @override
   String get planHeroEmpty => 'Set up your FIRE plan to see progress here.';
 
   @override
@@ -4226,6 +4247,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String aiChatToolJumpLiability(String id) {
     return 'Liability $id';
   }
+
+  @override
+  String aiChatToolJumpJournalEntry(String id) {
+    return 'Entry $id';
+  }
+
+  @override
+  String aiChatToolJumpTradeJournal(String id) {
+    return 'Trade $id';
+  }
+
+  @override
+  String get aiChatToolEvidenceLabel => 'Evidence';
 
   @override
   String get aiChatToolShowRawJson => 'View raw JSON';

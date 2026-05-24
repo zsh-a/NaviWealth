@@ -134,6 +134,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planWheelEmptyBody => '录入一次卖 put 或备兑 call 交易后，周期会显示在这里。';
 
   @override
+  String get investmentEventTimelineTitle => '即将到来的事件';
+
+  @override
+  String get investmentEventTimelineEmpty => '未来 90 天内没有分红或拆股事件。';
+
+  @override
+  String get investmentEventDividend => '分红';
+
+  @override
+  String investmentEventSplit(String ratio) {
+    return '拆股 $ratio';
+  }
+
+  @override
+  String get investmentEventRights => '配股';
+
+  @override
+  String get investmentEventDrip => 'DRIP 红利再投';
+
+  @override
   String get planHeroEmpty => '完成 FIRE 设置后，进度会显示在这里。';
 
   @override
@@ -4068,6 +4088,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String aiChatToolJumpLiability(String id) {
     return '负债 $id';
   }
+
+  @override
+  String aiChatToolJumpJournalEntry(String id) {
+    return '日记账 $id';
+  }
+
+  @override
+  String aiChatToolJumpTradeJournal(String id) {
+    return '交易记录 $id';
+  }
+
+  @override
+  String get aiChatToolEvidenceLabel => '依据';
 
   @override
   String get aiChatToolShowRawJson => '查看 raw JSON';

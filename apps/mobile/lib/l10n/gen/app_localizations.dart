@@ -344,6 +344,42 @@ abstract class AppLocalizations {
   /// **'Record a sell-put or covered-call trade and the cycle will surface here.'**
   String get planWheelEmptyBody;
 
+  /// Holding detail tab title for upcoming corporate actions (roadmap-next.md §3.5)
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming events'**
+  String get investmentEventTimelineTitle;
+
+  /// Empty state body when no corporate actions are scheduled
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming dividends or splits in the next 90 days.'**
+  String get investmentEventTimelineEmpty;
+
+  /// Label on a cash-dividend event row
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend'**
+  String get investmentEventDividend;
+
+  /// Label on a split event row, with the ratio (e.g. "4-for-1")
+  ///
+  /// In en, this message translates to:
+  /// **'Split {ratio}'**
+  String investmentEventSplit(String ratio);
+
+  /// Label on a rights-offering event row
+  ///
+  /// In en, this message translates to:
+  /// **'Rights offering'**
+  String get investmentEventRights;
+
+  /// Label on a DRIP reinvestment event row
+  ///
+  /// In en, this message translates to:
+  /// **'DRIP'**
+  String get investmentEventDrip;
+
   /// Plan hero shown when FIRE engine has no data yet
   ///
   /// In en, this message translates to:
@@ -7304,6 +7340,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Liability {id}'**
   String aiChatToolJumpLiability(String id);
+
+  /// Evidence chip label deep-linking to a ledger journal entry (roadmap-next.md §3.4)
+  ///
+  /// In en, this message translates to:
+  /// **'Entry {id}'**
+  String aiChatToolJumpJournalEntry(String id);
+
+  /// Evidence chip label deep-linking to an options trade journal entry (roadmap-next.md §3.4)
+  ///
+  /// In en, this message translates to:
+  /// **'Trade {id}'**
+  String aiChatToolJumpTradeJournal(String id);
+
+  /// Section header above the evidence chip strip in a tool invocation card
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence'**
+  String get aiChatToolEvidenceLabel;
 
   /// No description provided for @aiChatToolShowRawJson.
   ///
