@@ -96,6 +96,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planGoalsComingSoon => 'Goal tracker is not yet wired up.';
 
   @override
+  String get planBudgetSectionTitle => 'Budget';
+
+  @override
+  String get planBudgetSectionSubtitle => 'Monthly category caps';
+
+  @override
+  String get planBudgetTitle => 'Budget';
+
+  @override
+  String get planBudgetEmptyTitle => 'No budgets yet';
+
+  @override
+  String get planBudgetEmptyBody =>
+      'Set a monthly cap for any category to track spending against it here.';
+
+  @override
+  String planBudgetMonthHeader(String month) {
+    return '$month budgets';
+  }
+
+  @override
+  String get planBudgetTotalLabel => 'Total monthly budget';
+
+  @override
+  String get planWheelSectionTitle => 'Wheel cycles';
+
+  @override
+  String get planWheelSectionSubtitle => 'Sell-put + covered-call review';
+
+  @override
+  String get planWheelTitle => 'Wheel cycles';
+
+  @override
+  String get planWheelEmptyTitle => 'No active cycles';
+
+  @override
+  String get planWheelEmptyBody =>
+      'Record a sell-put or covered-call trade and the cycle will surface here.';
+
+  @override
   String get planHeroEmpty => 'Set up your FIRE plan to see progress here.';
 
   @override

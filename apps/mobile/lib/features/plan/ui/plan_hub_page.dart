@@ -231,6 +231,18 @@ class _PlanSectionGrid extends StatelessWidget {
         path: AppRoutes.planDca,
       ),
       _PlanSectionSpec(
+        icon: Icons.savings_outlined,
+        title: l10n.planBudgetSectionTitle,
+        subtitle: l10n.planBudgetSectionSubtitle,
+        path: AppRoutes.planBudget,
+      ),
+      _PlanSectionSpec(
+        icon: Icons.autorenew_outlined,
+        title: l10n.planWheelSectionTitle,
+        subtitle: l10n.planWheelSectionSubtitle,
+        path: AppRoutes.planWheel,
+      ),
+      _PlanSectionSpec(
         icon: Icons.show_chart_outlined,
         title: l10n.planProjectionSectionTitle,
         subtitle: l10n.planProjectionSectionSubtitle,
