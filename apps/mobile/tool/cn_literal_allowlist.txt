@@ -172,3 +172,16 @@ lib/features/options_income/domain/services/opportunity_scorer.dart
 # ARB in a focused AI-settings l10n pass.
 lib/features/settings/ui/ai_models_page.dart
 lib/features/settings/ui/settings_overview.dart
+# ─── D-1.7c Memory Runtime tool catalog (FIR-99 follow-up) ────────────
+# `build_context` and `query_memory` are device-AI tools; their CN
+# descriptions / parameter hints are read by the LLM (not the UI),
+# tuned for the Chinese-language prompts the agent receives. Worth
+# revisiting once the agent supports a bilingual catalog, but the
+# strings aren't user-visible chrome — different migration path than
+# typical ARB keys.
+lib/core/ai/runtime/device/tools/build_context_tool.dart
+lib/core/ai/runtime/device/tools/query_memory_tool.dart
+# model_manifest.dart has a single CN `description` string for the
+# bundled EmbeddingGemma manifest entry. Surface in the AI Models
+# settings card; migrate together with that page's ARB pass.
+lib/core/ai/local/embedding/model_manifest.dart
