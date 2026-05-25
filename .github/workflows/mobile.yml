@@ -213,7 +213,7 @@ jobs:
         if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
       - name: Download mobile web artifact
         if: env.HAS_CLOUDFLARE_API_TOKEN == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: mobile-web-build
           path: apps/mobile/build/web
