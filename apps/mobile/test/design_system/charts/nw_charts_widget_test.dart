@@ -10,7 +10,8 @@ Widget _wrap(Widget child, {Brightness brightness = Brightness.light}) {
   final baseFTheme = brightness == Brightness.dark
       ? FThemes.slate.dark.desktop
       : FThemes.slate.light.desktop;
-  final fTheme = baseFTheme.copyWith(
+  final fTheme = FThemeData(
+    touch: false,
     colors: baseFTheme.colors.copyWith(
       primary: AccentColors.primary(brightness),
       primaryForeground: AccentColors.onPrimary(brightness),

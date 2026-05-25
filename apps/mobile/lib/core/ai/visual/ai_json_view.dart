@@ -51,7 +51,7 @@ class AiJsonView extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(4),
                 child: Icon(
-                  FIcons.copy,
+                  FLucideIcons.copy,
                   size: 14,
                   color: AiTone.muted(context),
                 ),
@@ -170,7 +170,7 @@ class _JsonNodeState extends State<_JsonNode> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              _expanded ? FIcons.chevronDown : FIcons.chevronRight,
+              _expanded ? FLucideIcons.chevronDown : FLucideIcons.chevronRight,
               size: 13,
               color: AiTone.muted(context),
             ),

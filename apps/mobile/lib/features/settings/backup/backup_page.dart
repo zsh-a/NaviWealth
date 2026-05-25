@@ -14,7 +14,6 @@ import '../../../core/sync/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../ui/inline_setting_row.dart';
-import 'file_loader.dart';
 import 'file_saver.dart';
 
 class BackupPage extends ConsumerWidget {
@@ -142,7 +141,6 @@ class BackupPage extends ConsumerWidget {
       result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['bak'],
-        withData: true,
       );
     } catch (e, st) {
       logger.e('backup_ui: file picker threw', error: e, stackTrace: st);
@@ -157,23 +155,15 @@ class BackupPage extends ConsumerWidget {
 
     final pickedFile = result.files.first;
     logger.d(
-      'backup_ui: picked file name=${pickedFile.name} '
-      'size=${pickedFile.size} hasBytes=${pickedFile.bytes != null}',
+      'backup_ui: picked file name=${pickedFile.name} size=${pickedFile.size}',
     );
-    var fileBytes = pickedFile.bytes;
-
-    // On desktop, withData may not load bytes — fall back to reading from path.
-    if (fileBytes == null && pickedFile.path != null) {
-      logger.d('backup_ui: reading bytes from path=${pickedFile.path}');
-      try {
-        fileBytes = await readPickedFileBytes(pickedFile.path);
-      } catch (e, st) {
-        logger.e(
-          'backup_ui: failed to read file from path',
-          error: e,
-          stackTrace: st,
-        );
-      }
+    // file_picker 12: read bytes via XFile (handles both web blobs and
+    // desktop disk reads). Replaces the old `withData` + path-fallback dance.
+    Uint8List? fileBytes;
+    try {
+      fileBytes = await pickedFile.readAsBytes();
+    } catch (e, st) {
+      logger.e('backup_ui: failed to read file bytes', error: e, stackTrace: st);
     }
 
     if (fileBytes == null) {

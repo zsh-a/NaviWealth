@@ -20,15 +20,18 @@ Future<bool> saveBackupFileImpl(Uint8List bytes, String fileName) async {
 
   if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
     logger.d('file_saver: desktop platform, opening save dialog');
+    // file_picker 12: `saveFile` now requires `bytes` and writes them itself
+    // (see FilePickerUtils.saveBytesToFile in the platform impls); no manual
+    // writeAsBytes follow-up.
     final path = await FilePicker.saveFile(
       dialogTitle: 'Save backup',
       fileName: fileName,
       type: FileType.custom,
       allowedExtensions: ['bak'],
+      bytes: bytes,
     );
     logger.d('file_saver: saveFile returned path=$path');
     if (path == null) return false; // user cancelled
-    await File(path).writeAsBytes(bytes);
     logger.i('file_saver: wrote ${bytes.length} bytes to $path');
     return true;
   }

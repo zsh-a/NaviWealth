@@ -35,13 +35,13 @@ class FilePickerCaptureSource implements IngestCaptureSource {
   @override
   Future<IngestSource?> pickFile() async {
     final result = await FilePicker.pickFiles(
-      withData: true,
       type: FileType.custom,
       allowedExtensions: kIngestCaptureExtensions,
     );
     if (result == null || result.files.isEmpty) return null;
     final file = result.files.first;
-    return ingestSourceFromCapture(fileName: file.name, bytes: file.bytes);
+    final bytes = await file.readAsBytes();
+    return ingestSourceFromCapture(fileName: file.name, bytes: bytes);
   }
 }
 

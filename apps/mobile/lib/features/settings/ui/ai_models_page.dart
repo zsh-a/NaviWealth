@@ -243,24 +243,15 @@ class _BundleBody extends StatelessWidget {
   }
 
   Future<bool?> _confirmDelete(BuildContext context) {
-    return showDialog<bool>(
+    return showConfirmDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('删除模型?'),
-        content: const Text(
-          '删除后 AI 检索会自动回到 stub embedder。重新下载需要再走一次网络。',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('删除'),
-          ),
-        ],
+      title: const Text('删除模型?'),
+      body: const Text(
+        '删除后 AI 检索会自动回到 stub embedder。重新下载需要再走一次网络。',
       ),
+      confirmLabel: '删除',
+      cancelLabel: '取消',
+      destructive: true,
     );
   }
 }
