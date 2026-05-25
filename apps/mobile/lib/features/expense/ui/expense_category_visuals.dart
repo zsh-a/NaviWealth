@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
 import '../../../data/domain/account.dart';
 
@@ -6,37 +7,39 @@ import '../../../data/domain/account.dart';
 ///
 /// The account row stores `icon` (a string token) and `color` (a hex
 /// string) so they ride through sync as plain text. This helper resolves
-/// those tokens to Material icons / `Color`s for the picker, list, and
-/// report screens.
+/// those tokens to Lucide icons (via Forui's `FLucideIcons`) and `Color`s
+/// for the picker, list, and report screens. The token strings are the
+/// stable wire format; the IconData they resolve to may evolve as the
+/// design system swaps icon sets.
 const Map<String, IconData> kExpenseCategoryIcons = <String, IconData>{
-  'restaurant': Icons.restaurant,
-  'directions_car': Icons.directions_car,
-  'home': Icons.home,
-  'apartment': Icons.apartment,
-  'chair': Icons.chair,
-  'sports_esports': Icons.sports_esports,
-  'medical_services': Icons.medical_services,
-  'local_hospital': Icons.local_hospital,
-  'school': Icons.school,
-  'shopping_bag': Icons.shopping_bag,
-  'flight': Icons.flight,
-  'phone_android': Icons.phone_android,
-  'smartphone': Icons.smartphone,
-  'card_giftcard': Icons.card_giftcard,
-  'local_cafe': Icons.local_cafe,
-  'local_grocery_store': Icons.local_grocery_store,
-  'pets': Icons.pets,
-  'fitness_center': Icons.fitness_center,
-  'category': Icons.category,
-  'more_horiz': Icons.more_horiz,
+  'restaurant': FLucideIcons.utensils,
+  'directions_car': FLucideIcons.car,
+  'home': FLucideIcons.house,
+  'apartment': FLucideIcons.building,
+  'chair': FLucideIcons.armchair,
+  'sports_esports': FLucideIcons.gamepad2,
+  'medical_services': FLucideIcons.briefcaseMedical,
+  'local_hospital': FLucideIcons.hospital,
+  'school': FLucideIcons.school,
+  'shopping_bag': FLucideIcons.shoppingBag,
+  'flight': FLucideIcons.plane,
+  'phone_android': FLucideIcons.smartphone,
+  'smartphone': FLucideIcons.smartphone,
+  'card_giftcard': FLucideIcons.gift,
+  'local_cafe': FLucideIcons.coffee,
+  'local_grocery_store': FLucideIcons.shoppingCart,
+  'pets': FLucideIcons.pawPrint,
+  'fitness_center': FLucideIcons.dumbbell,
+  'category': FLucideIcons.layoutGrid,
+  'more_horiz': FLucideIcons.ellipsis,
 };
 
 /// Fallback glyph for unknown / missing icon tokens.
-const IconData kExpenseCategoryFallbackIcon = Icons.local_offer_outlined;
+const IconData kExpenseCategoryFallbackIcon = FLucideIcons.tag;
 
 extension ExpenseAccountVisuals on Account {
-  /// Material icon resolved from [icon]. Falls back to a generic glyph so
-  /// the picker never shows a missing-icon hole.
+  /// Icon resolved from [icon]. Falls back to a generic glyph so the
+  /// picker never shows a missing-icon hole.
   IconData get iconData =>
       kExpenseCategoryIcons[icon] ?? kExpenseCategoryFallbackIcon;
 
