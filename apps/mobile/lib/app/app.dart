@@ -70,8 +70,12 @@ class NaviWealthApp extends ConsumerWidget {
         // background off pure white into a cool gray (#F5F7F9) so soft
         // cards feel "lifted" against it — the previous near-white
         // background read as a bare canvas, washing out the SoftCard tint.
+        //
+        // Forui 0.22 dropped `colors` from `FThemeData.copyWith` — colour
+        // overrides now require rebuilding via the factory constructor.
         final brightness = isDark ? Brightness.dark : Brightness.light;
-        final fTheme = baseFTheme.copyWith(
+        final fTheme = FThemeData(
+          touch: isTouch,
           colors: baseFTheme.colors.copyWith(
             primary: AccentColors.primary(brightness),
             primaryForeground: AccentColors.onPrimary(brightness),

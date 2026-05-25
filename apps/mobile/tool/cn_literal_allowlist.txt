@@ -165,3 +165,10 @@ lib/features/ingest/data/providers.dart
 # at display time (plus a one-off cache wipe). Track as the same FIR-99
 # follow-up.
 lib/features/options_income/domain/services/opportunity_scorer.dart
+# ─── D-1.7c AI Models / LLM credentials settings (FIR-99 follow-up) ──
+# These two settings pages shipped with the D-1.7c device-AI work and
+# went straight to CN literals (~20 strings each: status chips,
+# explainer paragraphs, action labels). User-facing — should move to
+# ARB in a focused AI-settings l10n pass.
+lib/features/settings/ui/ai_models_page.dart
+lib/features/settings/ui/settings_overview.dart

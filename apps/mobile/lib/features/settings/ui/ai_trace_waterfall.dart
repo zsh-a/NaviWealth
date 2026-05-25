@@ -407,9 +407,9 @@ Color _kindTone(BuildContext context, AiSpan span) {
 }
 
 IconData _kindIcon(AiSpan span) => switch (span.kind) {
-  AiSpanKind.turn => FIcons.flag,
-  AiSpanKind.llm => FIcons.sparkles,
-  AiSpanKind.tool => FIcons.bolt,
+  AiSpanKind.turn => FLucideIcons.flag,
+  AiSpanKind.llm => FLucideIcons.sparkles,
+  AiSpanKind.tool => FLucideIcons.bolt,
 };
 
 String _shortName(AiSpan span) {

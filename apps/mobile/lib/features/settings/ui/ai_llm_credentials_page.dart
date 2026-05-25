@@ -315,8 +315,12 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
             ),
           ),
           const SizedBox(width: 6),
-          _iconAction(context, FIcons.pencil, () => _openEditor(profile: p)),
-          _iconAction(context, FIcons.trash2, () => _delete(p)),
+          _iconAction(
+            context,
+            FLucideIcons.pencil,
+            () => _openEditor(profile: p),
+          ),
+          _iconAction(context, FLucideIcons.trash2, () => _delete(p)),
         ],
       ),
     );
