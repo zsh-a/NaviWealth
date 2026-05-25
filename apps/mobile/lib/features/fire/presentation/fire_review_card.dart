@@ -96,7 +96,7 @@ class _FireReviewCardState extends ConsumerState<FireReviewCard> {
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: _saving ? null : _save,
-                  prefix: const Icon(Icons.save_outlined, size: 14),
+                  prefix: const Icon(FLucideIcons.save, size: 14),
                   child: Text(l10n.fireOsReviewSaveSnapshot),
                 ),
                 if (_savedKey != null) ...[

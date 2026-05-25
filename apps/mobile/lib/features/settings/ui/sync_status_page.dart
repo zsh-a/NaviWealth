@@ -26,7 +26,7 @@ class SyncStatusPage extends ConsumerWidget {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(FLucideIcons.refreshCw),
             onPress: () => _triggerSyncNow(ref),
           ),
         ],
@@ -225,7 +225,7 @@ class _StatGrid extends StatelessWidget {
           children: [
             tile(
               _StatTile(
-                icon: Icons.outbox_outlined,
+                icon: FLucideIcons.send,
                 value: pendingValue,
                 label: l10n.syncStatusStatPending,
                 accent: pendingHasItems ? context.theme.colors.primary : null,
@@ -233,14 +233,14 @@ class _StatGrid extends StatelessWidget {
             ),
             tile(
               _StatTile(
-                icon: Icons.storage_rounded,
+                icon: FLucideIcons.database,
                 value: localValue,
                 label: l10n.syncStatusStatLocal,
               ),
             ),
             tile(
               _StatTile(
-                icon: Icons.history_rounded,
+                icon: FLucideIcons.history,
                 value: lastSyncLabel,
                 label: l10n.syncStatusStatLastSync,
                 accent: lastSyncAt == null ? semantic.warning : null,
@@ -317,7 +317,7 @@ class _ErrorCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.warning_amber_rounded, color: semantic.danger, size: 20),
+          Icon(FLucideIcons.triangleAlert, color: semantic.danger, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: SelectableText(
@@ -573,11 +573,11 @@ class _StatusOrbState extends State<_StatusOrb>
   }
 
   IconData _statusIcon(SyncStatus s) => switch (s) {
-    SyncStatus.idle => Icons.cloud_outlined,
-    SyncStatus.syncing => Icons.sync,
-    SyncStatus.online => Icons.cloud_done_outlined,
-    SyncStatus.offline => Icons.cloud_off_outlined,
-    SyncStatus.failed => Icons.error_outline,
+    SyncStatus.idle => FLucideIcons.cloud,
+    SyncStatus.syncing => FLucideIcons.refreshCw,
+    SyncStatus.online => FLucideIcons.cloudCheck,
+    SyncStatus.offline => FLucideIcons.cloudOff,
+    SyncStatus.failed => FLucideIcons.circleAlert,
   };
 }
 

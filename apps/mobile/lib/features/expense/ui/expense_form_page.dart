@@ -254,7 +254,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
           suffixes: [
             if (widget.isEdit)
               FHeaderAction(
-                icon: const Icon(Icons.delete_outline),
+                icon: const Icon(FLucideIcons.trash2),
                 onPress: _busy ? null : _delete,
               ),
           ],
@@ -442,7 +442,7 @@ class _NoAccountsHint extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: Icon(
-              Icons.account_balance_wallet_outlined,
+              FLucideIcons.wallet,
               size: 18,
               color: semantic.warning,
             ),

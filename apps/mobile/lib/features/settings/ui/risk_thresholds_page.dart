@@ -89,7 +89,7 @@ class RiskThresholdSettings extends ConsumerWidget {
     return Column(
       children: [
         _ThresholdSlider(
-          icon: Icons.account_balance_wallet_outlined,
+          icon: FLucideIcons.wallet,
           label: l10n.settingsRiskAssetLabel,
           value: thresholds.assetWarning,
           onChanged: (v) =>
@@ -97,7 +97,7 @@ class RiskThresholdSettings extends ConsumerWidget {
         ),
         _Divider(),
         _ThresholdSlider(
-          icon: Icons.category_outlined,
+          icon: FLucideIcons.layoutGrid,
           label: l10n.settingsRiskSectorLabel,
           value: thresholds.sectorWarning,
           onChanged: (v) => ref
@@ -106,7 +106,7 @@ class RiskThresholdSettings extends ConsumerWidget {
         ),
         _Divider(),
         _ThresholdSlider(
-          icon: Icons.public,
+          icon: FLucideIcons.globe,
           label: l10n.settingsRiskRegionLabel,
           value: thresholds.regionWarning,
           onChanged: (v) => ref
@@ -115,7 +115,7 @@ class RiskThresholdSettings extends ConsumerWidget {
         ),
         _Divider(),
         _ThresholdSlider(
-          icon: Icons.currency_exchange,
+          icon: FLucideIcons.arrowLeftRight,
           label: l10n.settingsRiskCurrencyLabel,
           value: thresholds.currencyWarning,
           onChanged: (v) => ref

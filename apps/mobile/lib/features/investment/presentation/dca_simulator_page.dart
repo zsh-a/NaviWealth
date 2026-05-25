@@ -290,7 +290,7 @@ class _DcaControls extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.timeline_outlined, size: 18),
+                    const Icon(FLucideIcons.workflow, size: 18),
                     const SizedBox(width: 6),
                     Text(l10n.dcaSimulatorRunAction),
                   ],

@@ -37,7 +37,7 @@ class CurrencyMismatchBanner extends ConsumerWidget {
           child: Row(
             children: [
               Icon(
-                Icons.warning_amber_rounded,
+                FLucideIcons.triangleAlert,
                 color: theme.colorScheme.onErrorContainer,
               ),
               const SizedBox(width: 8),
@@ -87,9 +87,9 @@ class CurrencyMismatchBanner extends ConsumerWidget {
               for (final m in mismatches)
                 FTile(
                   title: Text('${m.currency} → $baseCurrency'),
-                  prefix: const Icon(Icons.currency_exchange),
+                  prefix: const Icon(FLucideIcons.arrowLeftRight),
                   subtitle: Text(m.id),
-                  suffix: const Icon(Icons.chevron_right),
+                  suffix: const Icon(FLucideIcons.chevronRight),
                   onPress: () {
                     Navigator.of(ctx).pop();
                     context.goNamed(AppRouteNames.fxRates);

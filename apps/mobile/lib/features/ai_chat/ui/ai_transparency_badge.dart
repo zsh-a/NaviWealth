@@ -5,7 +5,6 @@
 /// (legacy messages, in-flight messages, or failed prep).
 library;
 
-import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -50,7 +49,7 @@ class AiTransparencyBadge extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                Icon(Icons.chevron_right, size: 14, color: muted),
+                Icon(FLucideIcons.chevronRight, size: 14, color: muted),
               ],
             ),
           ),

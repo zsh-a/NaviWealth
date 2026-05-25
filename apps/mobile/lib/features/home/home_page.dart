@@ -486,7 +486,7 @@ class _ErrorBody extends ConsumerWidget {
       action: FButton(
         variant: FButtonVariant.outline,
         onPress: () => ref.invalidate(dashboardSnapshotProvider),
-        prefix: const Icon(Icons.refresh, size: AppIconSizes.sm),
+        prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.sm),
         child: Text(l10n.commonRetry),
       ),
     );

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../../../../design_system/charts/charts.dart';
 import '../../../../l10n/gen/app_localizations.dart';

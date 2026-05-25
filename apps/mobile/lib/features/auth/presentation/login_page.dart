@@ -300,12 +300,12 @@ class _Banner extends StatelessWidget {
       _BannerKind.info => (
         semantic.infoContainer,
         semantic.info,
-        Icons.info_outline,
+        FLucideIcons.info,
       ),
       _BannerKind.error => (
         semantic.dangerContainer,
         semantic.danger,
-        Icons.error_outline,
+        FLucideIcons.circleAlert,
       ),
     };
     return Container(

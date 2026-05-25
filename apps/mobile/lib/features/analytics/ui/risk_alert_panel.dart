@@ -45,7 +45,7 @@ class _AlertList extends StatelessWidget {
         Row(
           children: [
             Icon(
-              Icons.shield_outlined,
+              FLucideIcons.shield,
               size: 20,
               color: context.theme.colors.destructive,
             ),

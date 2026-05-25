@@ -314,7 +314,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 key: const Key('manual-security-import'),
                 variant: FButtonVariant.ghost,
                 onPress: _importing ? null : _importFromNetwork,
-                prefix: const Icon(Icons.cloud_download_outlined, size: 16),
+                prefix: const Icon(FLucideIcons.cloudDownload, size: 16),
                 child: Text(
                   _importing
                       ? l10n.manualSecurityImporting

@@ -231,7 +231,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                 child: Row(
                   children: [
                     Icon(
-                      Icons.currency_exchange,
+                      FLucideIcons.arrowLeftRight,
                       size: 16,
                       color: context.theme.colors.primary,
                     ),

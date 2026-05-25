@@ -201,55 +201,55 @@ class _PlanSectionGrid extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final sections = <_PlanSectionSpec>[
       _PlanSectionSpec(
-        icon: Icons.local_fire_department_outlined,
+        icon: FLucideIcons.flame,
         title: l10n.planFireSectionTitle,
         subtitle: l10n.planFireSectionSubtitle,
         path: AppRoutes.planFire,
       ),
       _PlanSectionSpec(
-        icon: Icons.balance,
+        icon: FLucideIcons.scale,
         title: l10n.planRebalanceSectionTitle,
         subtitle: l10n.planRebalanceSectionSubtitle,
         path: AppRoutes.planRebalance,
       ),
       _PlanSectionSpec(
-        icon: Icons.candlestick_chart_outlined,
+        icon: FLucideIcons.candlestickChart,
         title: l10n.planIncomeSectionTitle,
         subtitle: l10n.planIncomeSectionSubtitle,
         path: AppRoutes.planIncome,
       ),
       _PlanSectionSpec(
-        icon: Icons.event_repeat_outlined,
+        icon: FLucideIcons.calendarClock,
         title: l10n.planDcaSectionTitle,
         subtitle: l10n.planDcaSectionSubtitle,
         path: AppRoutes.planDca,
       ),
       _PlanSectionSpec(
-        icon: Icons.savings_outlined,
+        icon: FLucideIcons.piggyBank,
         title: l10n.planBudgetSectionTitle,
         subtitle: l10n.planBudgetSectionSubtitle,
         path: AppRoutes.planBudget,
       ),
       _PlanSectionSpec(
-        icon: Icons.autorenew_outlined,
+        icon: FLucideIcons.refreshCw,
         title: l10n.planWheelSectionTitle,
         subtitle: l10n.planWheelSectionSubtitle,
         path: AppRoutes.planWheel,
       ),
       _PlanSectionSpec(
-        icon: Icons.show_chart_outlined,
+        icon: FLucideIcons.chartLine,
         title: l10n.planProjectionSectionTitle,
         subtitle: l10n.planProjectionSectionSubtitle,
         path: AppRoutes.planProjection,
       ),
       _PlanSectionSpec(
-        icon: Icons.compare_arrows_outlined,
+        icon: FLucideIcons.arrowLeftRight,
         title: l10n.planScenariosSectionTitle,
         subtitle: l10n.planScenariosSectionSubtitle,
         path: AppRoutes.planScenarios,
       ),
       _PlanSectionSpec(
-        icon: Icons.flag_outlined,
+        icon: FLucideIcons.flag,
         title: l10n.planGoalsSectionTitle,
         subtitle: l10n.planGoalsSectionSubtitle,
         path: AppRoutes.planGoals,
@@ -338,7 +338,7 @@ class _PlanSectionCard extends StatelessWidget {
         ),
         title: Text(spec.title),
         subtitle: Text(spec.subtitle),
-        suffix: const Icon(Icons.chevron_right, size: 18),
+        suffix: const Icon(FLucideIcons.chevronRight, size: 18),
       ),
     );
   }
@@ -358,7 +358,7 @@ class PlanScenariosPlaceholderPage extends StatelessWidget {
       childPad: false,
       child: Center(
         child: AppEmptyState(
-          icon: Icons.compare_arrows_outlined,
+          icon: FLucideIcons.arrowLeftRight,
           title: l10n.planScenariosComingSoon,
         ),
       ),
@@ -378,7 +378,7 @@ class PlanGoalsPlaceholderPage extends StatelessWidget {
       childPad: false,
       child: Center(
         child: AppEmptyState(
-          icon: Icons.flag_outlined,
+          icon: FLucideIcons.flag,
           title: l10n.planGoalsComingSoon,
         ),
       ),

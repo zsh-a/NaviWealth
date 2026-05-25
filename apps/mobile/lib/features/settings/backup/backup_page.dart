@@ -44,7 +44,7 @@ class BackupPage extends ConsumerWidget {
           SoftCard(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: InlineLinkRow(
-              icon: Icons.upload_outlined,
+              icon: FLucideIcons.upload,
               label: l10n.backupExportTitle,
               subtitle: l10n.backupExportSubtitle,
               onTap: () => _exportBackup(context, ref),
@@ -54,7 +54,7 @@ class BackupPage extends ConsumerWidget {
           SoftCard(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: InlineLinkRow(
-              icon: Icons.download_outlined,
+              icon: FLucideIcons.download,
               label: l10n.backupImportTitle,
               subtitle: l10n.backupImportSubtitle,
               onTap: () => _importBackup(context, ref),
@@ -310,7 +310,7 @@ class _WebBackupSecurityBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.security_outlined, color: context.theme.colors.primary),
+          Icon(FLucideIcons.shieldCheck, color: context.theme.colors.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

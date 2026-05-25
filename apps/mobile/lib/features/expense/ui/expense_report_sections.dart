@@ -37,7 +37,7 @@ class ExpenseCategoryPieCard extends StatelessWidget {
               LayoutBuilder(
                 builder: (context, c) => AspectRatio(
                   aspectRatio: chartAspectFor(c.maxWidth),
-                  child: const EmptyChartPlaceholder(icon: Icons.donut_large),
+                  child: const EmptyChartPlaceholder(icon: FLucideIcons.chartPie),
                 ),
               )
             else
@@ -323,7 +323,7 @@ class _LegendRow extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Icon(
-              Icons.chevron_right,
+              FLucideIcons.chevronRight,
               size: 16,
               color: context.theme.colors.mutedForeground,
             ),
@@ -354,7 +354,7 @@ class _CategoryTile extends StatelessWidget {
       title: Text(category?.name ?? l10n.expenseReportUncategorized),
       prefix: CircleAvatar(
         backgroundColor: accent.withValues(alpha: 0.15),
-        child: Icon(category?.iconData ?? Icons.payment, color: accent),
+        child: Icon(category?.iconData ?? FLucideIcons.banknote, color: accent),
       ),
       subtitle: Text(l10n.expenseReportItemCount(breakdown.items.length)),
       suffix: MoneyText(
@@ -409,7 +409,7 @@ class _CategoryDrillDown extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    category?.iconData ?? Icons.payment,
+                    category?.iconData ?? FLucideIcons.banknote,
                     color: context.theme.colors.primary,
                   ),
                   const SizedBox(width: 8),

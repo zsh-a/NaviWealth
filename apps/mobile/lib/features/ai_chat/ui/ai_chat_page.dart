@@ -162,11 +162,11 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
             prefixes: [backHeaderAction(context)],
             suffixes: [
               FHeaderAction(
-                icon: const Icon(Icons.history),
+                icon: const Icon(FLucideIcons.history),
                 onPress: () => _openSessionsSheet(session.userId, activeId),
               ),
               FHeaderAction(
-                icon: const Icon(Icons.add),
+                icon: const Icon(FLucideIcons.plus),
                 onPress: () => _newSession(session.userId),
               ),
             ],
@@ -349,13 +349,13 @@ List<(String, IconData)> _composeSuggestions(
   if (pct != null && pct.isFinite) {
     out.add((
       l10n.aiChatEmptyDynamicNetWorth,
-      pct >= 0 ? Icons.trending_up_outlined : Icons.trending_down_outlined,
+      pct >= 0 ? FLucideIcons.trendingUp : FLucideIcons.trendingDown,
     ));
   }
   if (s.unusualExpensesCount > 0) {
     out.add((
       l10n.aiChatEmptyDynamicAnomaly(s.unusualExpensesCount),
-      Icons.bolt_outlined,
+      FLucideIcons.zap,
     ));
   }
   if (s.upcomingMaturitiesCount > 0) {
@@ -364,7 +364,7 @@ List<(String, IconData)> _composeSuggestions(
         s.upcomingMaturitiesCount,
         s.upcomingMaturitiesDays,
       ),
-      Icons.event_available_outlined,
+      FLucideIcons.calendarCheck,
     ));
   }
 
@@ -374,10 +374,10 @@ List<(String, IconData)> _composeSuggestions(
   if (out.length > 3) out.removeRange(3, out.length);
 
   final defaults = <(String, IconData)>[
-    (l10n.aiChatEmptySuggestion1, Icons.calendar_month_outlined),
-    (l10n.aiChatEmptySuggestion2, Icons.shield_outlined),
-    (l10n.aiChatEmptySuggestion3, Icons.donut_small_outlined),
-    (l10n.aiChatEmptySuggestion4, Icons.trending_up),
+    (l10n.aiChatEmptySuggestion1, FLucideIcons.calendar),
+    (l10n.aiChatEmptySuggestion2, FLucideIcons.shield),
+    (l10n.aiChatEmptySuggestion3, FLucideIcons.chartPie),
+    (l10n.aiChatEmptySuggestion4, FLucideIcons.trendingUp),
   ];
   final existing = {for (final s in out) s.$1};
   for (final d in defaults) {
@@ -428,7 +428,7 @@ class _SuggestionTile extends StatelessWidget {
                 ),
               ),
               Icon(
-                Icons.arrow_forward_ios,
+                FLucideIcons.chevronRight,
                 size: 12,
                 color: colors.mutedForeground,
               ),
@@ -480,7 +480,7 @@ class _BootstrapErrorPane extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.error_outline,
+              FLucideIcons.circleAlert,
               size: 36,
               color: context.theme.colors.destructive,
             ),
@@ -496,7 +496,7 @@ class _BootstrapErrorPane extends StatelessWidget {
             FButton(
               variant: FButtonVariant.primary,
               onPress: onRetry,
-              prefix: const Icon(Icons.refresh, size: 14),
+              prefix: const Icon(FLucideIcons.refreshCw, size: 14),
               child: Text(l10n.commonRetry),
             ),
           ],
@@ -519,7 +519,7 @@ class _LoginRequired extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.lock_outline,
+              FLucideIcons.lock,
               size: 36,
               color: context.theme.colors.mutedForeground,
             ),

@@ -31,9 +31,9 @@ class DimensionSegment extends StatelessWidget {
       EquityAllocationDimension.marketCap: l10n.analyticsDimensionMarketCap,
     };
     final icons = <EquityAllocationDimension, IconData>{
-      EquityAllocationDimension.sector: Icons.category_outlined,
-      EquityAllocationDimension.region: Icons.public,
-      EquityAllocationDimension.marketCap: Icons.bar_chart,
+      EquityAllocationDimension.sector: FLucideIcons.layoutGrid,
+      EquityAllocationDimension.region: FLucideIcons.globe,
+      EquityAllocationDimension.marketCap: FLucideIcons.chartColumn,
     };
 
     return Container(

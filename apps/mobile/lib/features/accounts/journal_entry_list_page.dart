@@ -62,7 +62,7 @@ class _EmptyJournal extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.history,
+              FLucideIcons.history,
               size: 48,
               color: context.theme.colors.mutedForeground,
             ),

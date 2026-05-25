@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' show Icons, showDatePicker;
+import 'package:flutter/material.dart' show showDatePicker;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -136,7 +136,7 @@ class _DateFieldState extends State<DateField> {
           ? Padding(
               padding: const EdgeInsetsDirectional.only(end: 8),
               child: Icon(
-                Icons.calendar_today_outlined,
+                FLucideIcons.calendarDays,
                 size: 18,
                 color: ctx.theme.colors.mutedForeground,
               ),
@@ -147,7 +147,7 @@ class _DateFieldState extends State<DateField> {
                 variant: FButtonVariant.ghost,
                 onPress: widget.required ? null : _clear,
                 child: Icon(
-                  Icons.clear,
+                  FLucideIcons.x,
                   size: 18,
                   semanticLabel: l10n.formDateFieldClearTooltip,
                 ),

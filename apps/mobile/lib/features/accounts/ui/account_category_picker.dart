@@ -71,14 +71,14 @@ class AccountCategoryPicker extends StatelessWidget {
 
   IconData _iconFor(AccountCategory c) {
     return switch (c) {
-      AccountCategory.cash => Icons.payments_outlined,
-      AccountCategory.bank => Icons.account_balance_outlined,
-      AccountCategory.broker => Icons.show_chart_outlined,
-      AccountCategory.crypto => Icons.currency_bitcoin,
-      AccountCategory.credit => Icons.credit_card_outlined,
-      AccountCategory.loan => Icons.request_quote_outlined,
-      AccountCategory.asset => Icons.inventory_2_outlined,
-      AccountCategory.liability => Icons.south_east_outlined,
+      AccountCategory.cash => FLucideIcons.banknote,
+      AccountCategory.bank => FLucideIcons.landmark,
+      AccountCategory.broker => FLucideIcons.chartLine,
+      AccountCategory.crypto => FLucideIcons.bitcoin,
+      AccountCategory.credit => FLucideIcons.creditCard,
+      AccountCategory.loan => FLucideIcons.fileText,
+      AccountCategory.asset => FLucideIcons.package,
+      AccountCategory.liability => FLucideIcons.arrowDownRight,
     };
   }
 }

@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/route_paths.dart';
@@ -37,7 +38,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
     if (months != null && months > 0) {
       insights.add(
         InsightItem(
-          icon: Icons.flag_outlined,
+          icon: FLucideIcons.flag,
           kind: InsightKind.fireProgress,
           monthsToTarget: months,
           route: AppRoutes.planFire,
@@ -46,7 +47,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
     } else if (months == 0) {
       insights.add(
         const InsightItem(
-          icon: Icons.celebration_outlined,
+          icon: FLucideIcons.partyPopper,
           kind: InsightKind.fireReached,
           iconColor: Colors.green,
           route: AppRoutes.planFire,
@@ -65,7 +66,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         state.withdrawalRate > state.plan.safeWithdrawalRate) {
       insights.add(
         InsightItem(
-          icon: Icons.trending_up_outlined,
+          icon: FLucideIcons.trendingUp,
           kind: InsightKind.fireOsHighWithdrawalRate,
           iconColor: Colors.amber,
           route: AppRoutes.planFire,
@@ -78,7 +79,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         state.cashBucketMonths < state.plan.targetCashBucketMonths) {
       insights.add(
         InsightItem(
-          icon: Icons.account_balance_outlined,
+          icon: FLucideIcons.landmark,
           kind: InsightKind.fireOsLowCashBucket,
           iconColor: Colors.amber,
           route: AppRoutes.planFire,
@@ -90,7 +91,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
     if (state.unmappedHoldings.isNotEmpty) {
       insights.add(
         InsightItem(
-          icon: Icons.help_outline,
+          icon: FLucideIcons.circleHelp,
           kind: InsightKind.fireOsUnmappedHoldings,
           iconColor: Colors.amber,
           route: AppRoutes.planFire,
@@ -111,8 +112,8 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
       insights.add(
         InsightItem(
           icon: worst.status == FireBucketStatus.overTarget
-              ? Icons.unfold_less
-              : Icons.unfold_more,
+              ? FLucideIcons.foldVertical
+              : FLucideIcons.unfoldVertical,
           kind: InsightKind.fireOsBucketDeviation,
           iconColor: Colors.amber,
           route: AppRoutes.planFire,
@@ -132,7 +133,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
   if (drift != null) {
     insights.add(
       InsightItem(
-        icon: Icons.tune_outlined,
+        icon: FLucideIcons.slidersHorizontal,
         kind: InsightKind.portfolioDrift,
         category: drift.category,
         driftPct: drift.deviation,
@@ -146,7 +147,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
   if (maturity != null) {
     insights.add(
       InsightItem(
-        icon: Icons.event_available_outlined,
+        icon: FLucideIcons.calendarCheck,
         kind: InsightKind.maturity,
         maturityCount: maturity.count,
         maturityDays: maturity.days,
@@ -159,7 +160,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
   if (anomaly != null) {
     insights.add(
       InsightItem(
-        icon: Icons.trending_up_outlined,
+        icon: FLucideIcons.trendingUp,
         kind: InsightKind.anomaly,
         anomalyPct: anomaly.deltaRatio,
         iconColor: anomaly.deltaRatio > 0 ? Colors.orange : null,
@@ -172,7 +173,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
   if (duplicate != null && !duplicate.isEmpty) {
     insights.add(
       InsightItem(
-        icon: Icons.copy_all_outlined,
+        icon: FLucideIcons.copy,
         kind: InsightKind.duplicateCharge,
         iconColor: Colors.deepOrange,
         duplicateChargeCount: duplicate.matches.length,
@@ -187,7 +188,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
   if (summary != null) {
     insights.add(
       InsightItem(
-        icon: Icons.calendar_month_outlined,
+        icon: FLucideIcons.calendar,
         kind: InsightKind.monthlySummary,
         iconColor: summary.deltaMinor >= 0 ? Colors.teal : Colors.redAccent,
         summaryYear: summary.year,
@@ -212,7 +213,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
     if (metrics.hasData && metrics.net.isNegative) {
       insights.add(
         InsightItem(
-          icon: Icons.account_balance_wallet_outlined,
+          icon: FLucideIcons.wallet,
           kind: InsightKind.cashFlowDeficit,
           iconColor: Colors.redAccent,
           cashFlowMonthKey: metrics.monthKey,
@@ -230,7 +231,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
   if (ingest != null && !ingest.isEmpty) {
     insights.add(
       InsightItem(
-        icon: Icons.move_to_inbox_outlined,
+        icon: FLucideIcons.inbox,
         kind: InsightKind.ingestQueue,
         ingestPendingCount: ingest.pendingCount,
         ingestFreshCount: ingest.freshCount,

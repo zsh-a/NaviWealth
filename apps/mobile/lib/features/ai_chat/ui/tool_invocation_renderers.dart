@@ -636,17 +636,17 @@ class _RiskAlertList extends StatelessWidget {
       'high' => (
         semantic.dangerContainer,
         semantic.onDangerContainer,
-        Icons.error_outline,
+        FLucideIcons.circleAlert,
       ),
       'low' => (
         semantic.infoContainer,
         semantic.onInfoContainer,
-        Icons.info_outline,
+        FLucideIcons.info,
       ),
       _ => (
         semantic.warningContainer,
         semantic.onWarningContainer,
-        Icons.warning_amber_outlined,
+        FLucideIcons.triangleAlert,
       ),
     };
     return Container(
@@ -724,7 +724,7 @@ class _EmptyResult extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            positive ? Icons.check_circle_outline : Icons.inbox_outlined,
+            positive ? FLucideIcons.circleCheck : FLucideIcons.inbox,
             size: 16,
             color: context.theme.colors.mutedForeground,
           ),
@@ -1176,7 +1176,7 @@ class SubscriptionChangesView extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            up ? Icons.trending_up : Icons.trending_down,
+            up ? FLucideIcons.trendingUp : FLucideIcons.trendingDown,
             size: 18,
             color: accent,
           ),
@@ -1281,7 +1281,7 @@ class RefundLinksView extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      Icons.south_west,
+                      FLucideIcons.arrowDownLeft,
                       size: 14,
                       color: cs.onSurfaceVariant,
                     ),
@@ -1302,7 +1302,7 @@ class RefundLinksView extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.north_east, size: 14, color: cs.primary),
+                    Icon(FLucideIcons.arrowUpRight, size: 14, color: cs.primary),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(

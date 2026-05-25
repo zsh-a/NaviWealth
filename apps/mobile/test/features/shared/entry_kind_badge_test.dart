@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/data/domain/entry_kind.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/shared/entry_kind_badge.dart';
@@ -56,7 +57,7 @@ void main() {
         ),
       ),
     );
-    expect(find.byIcon(Icons.trending_down), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.trendingDown), findsOneWidget);
     expect(find.text('Trade'), findsOneWidget);
   });
 
@@ -71,7 +72,7 @@ void main() {
         ),
       ),
     );
-    expect(find.byIcon(Icons.trending_up), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.trendingUp), findsOneWidget);
   });
 
   testWidgets('compact mode hides the label and tightens padding', (
@@ -85,7 +86,7 @@ void main() {
         ),
       ),
     );
-    expect(find.byIcon(Icons.north_east), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.arrowUpRight), findsOneWidget);
     expect(find.text('Expense'), findsNothing);
   });
 
@@ -104,7 +105,7 @@ void main() {
     expect(find.text('还款'), findsOneWidget);
     // Default 'Payment' is no longer surfaced.
     expect(find.text('Payment'), findsNothing);
-    expect(find.byIcon(Icons.payments), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.banknote), findsOneWidget);
   });
 
   testWidgets('every kind has a deterministic icon mapping', (tester) async {

@@ -32,7 +32,7 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
             data: (a) => a == null
                 ? const SizedBox.shrink()
                 : FHeaderAction(
-                    icon: const Icon(Icons.delete_outline),
+                    icon: const Icon(FLucideIcons.trash2),
                     onPress: () => _confirmDelete(context, ref, a.id),
                   ),
             orElse: () => const SizedBox.shrink(),
@@ -139,7 +139,7 @@ class _DetailBody extends ConsumerWidget {
                   variant: FButtonVariant.primary,
                   onPress: () =>
                       ValuationUpdateSheet.show(context, asset: asset),
-                  prefix: const Icon(Icons.edit_outlined, size: 16),
+                  prefix: const Icon(FLucideIcons.pencil, size: 16),
                   child: Text(l10n.physicalAssetUpdateValuationAction),
                 ),
               ],

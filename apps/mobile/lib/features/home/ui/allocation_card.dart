@@ -96,7 +96,7 @@ class AllocationCard extends StatelessWidget {
                           child: FButton.icon(
                             variant: FButtonVariant.ghost,
                             onPress: () => _openFullscreen(context),
-                            child: const Icon(Icons.fullscreen, size: 20),
+                            child: const Icon(FLucideIcons.maximize, size: 20),
                           ),
                         ),
                       ],
@@ -248,7 +248,7 @@ class _AllocationSankeyChart extends StatelessWidget {
     if (flows.isEmpty && liabilityValue == 0) {
       return SizedBox(
         height: height,
-        child: const EmptyChartPlaceholder(icon: Icons.account_tree_outlined),
+        child: const EmptyChartPlaceholder(icon: FLucideIcons.folderTree),
       );
     }
 
@@ -769,7 +769,7 @@ class _LegendRow extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Icon(
-                  Icons.chevron_right,
+                  FLucideIcons.chevronRight,
                   size: 16,
                   color: context.theme.colors.mutedForeground,
                 ),

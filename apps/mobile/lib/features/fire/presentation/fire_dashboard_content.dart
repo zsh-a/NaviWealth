@@ -24,14 +24,14 @@ class FireUnconfiguredBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AppEmptyState(
-      icon: Icons.flag_outlined,
+      icon: FLucideIcons.flag,
       iconSize: 64,
       title: l10n.fireEmptyTitle,
       message: l10n.fireEmptyHint,
       action: FButton(
         variant: FButtonVariant.primary,
         onPress: () => showFireGoalSheet(context),
-        prefix: const Icon(Icons.add, size: AppIconSizes.sm),
+        prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
         child: Text(l10n.fireEmptySetGoalCta),
       ),
     );
@@ -92,7 +92,7 @@ class FireConfiguredBody extends ConsumerWidget {
             FButton(
               variant: FButtonVariant.outline,
               onPress: () => showFireGoalSheet(context),
-              prefix: const Icon(Icons.edit_outlined, size: AppIconSizes.sm),
+              prefix: const Icon(FLucideIcons.pencil, size: AppIconSizes.sm),
               child: Text(l10n.fireEditGoal),
             ),
           ],

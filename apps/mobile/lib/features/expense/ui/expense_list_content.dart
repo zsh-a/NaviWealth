@@ -42,7 +42,7 @@ class ExpenseFiltersBar extends StatelessWidget {
             hint: l10n.expenseListSearchHint,
             prefixBuilder: (ctx, style, variants) => const Padding(
               padding: EdgeInsetsDirectional.only(start: 12, end: 8),
-              child: Icon(Icons.search, size: 18),
+              child: Icon(FLucideIcons.search, size: 18),
             ),
             suffixBuilder: keywordController.text.isEmpty
                 ? null
@@ -54,7 +54,7 @@ class ExpenseFiltersBar extends StatelessWidget {
                         keywordController.clear();
                         onChanged(filters.copyWith(keyword: ''));
                       },
-                      child: const Icon(Icons.clear, size: 18),
+                      child: const Icon(FLucideIcons.x, size: 18),
                     ),
                   ),
           ),
@@ -88,7 +88,7 @@ class ExpenseFiltersBar extends StatelessWidget {
                           children: [
                             FTile(
                               title: Text(l10n.expenseListAllCategories),
-                              prefix: const Icon(Icons.clear),
+                              prefix: const Icon(FLucideIcons.x),
                               onPress: () =>
                                   Navigator.of(ctx).pop<String?>(null),
                             ),
@@ -206,12 +206,12 @@ class _FilterChip<T> extends StatelessWidget {
     return FButton(
       variant: active ? FButtonVariant.secondary : FButtonVariant.outline,
       onPress: onPick,
-      prefix: active ? const Icon(Icons.check, size: 14) : null,
+      prefix: active ? const Icon(FLucideIcons.check, size: 14) : null,
       suffix: active
           ? FButton.icon(
               variant: FButtonVariant.ghost,
               onPress: onClear,
-              child: const Icon(Icons.close, size: 14),
+              child: const Icon(FLucideIcons.x, size: 14),
             )
           : null,
       child: Text(label),
@@ -322,7 +322,7 @@ class _ExpenseRow extends StatelessWidget {
       title: Text(account?.name ?? l10n.expenseListUncategorized),
       prefix: CircleAvatar(
         backgroundColor: accent.withValues(alpha: 0.15),
-        child: Icon(account?.iconData ?? Icons.payment, color: accent),
+        child: Icon(account?.iconData ?? FLucideIcons.banknote, color: accent),
       ),
       subtitle: Text(
         [
@@ -357,7 +357,7 @@ class EmptyExpenseList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.receipt_long_outlined, size: 48),
+            const Icon(FLucideIcons.receipt, size: 48),
             const SizedBox(height: 12),
             Text(
               filtered

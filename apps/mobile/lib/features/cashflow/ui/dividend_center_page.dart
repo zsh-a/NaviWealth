@@ -27,7 +27,7 @@ class DividendCenterPage extends ConsumerWidget {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
-            icon: const Icon(Icons.add_card_outlined),
+            icon: const Icon(FLucideIcons.creditCard),
             onPress: () => context.push(AppRoutes.wealthCorporateAction),
           ),
         ],
@@ -457,7 +457,7 @@ class _ForecastCard extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
         children: [
-          Icon(Icons.auto_graph_outlined, color: context.theme.colors.primary),
+          Icon(FLucideIcons.chartLine, color: context.theme.colors.primary),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: forecast.when(
@@ -541,7 +541,7 @@ class _EmptyDividendState extends StatelessWidget {
       child: Column(
         children: [
           Icon(
-            Icons.payments_outlined,
+            FLucideIcons.banknote,
             size: 56,
             color: context.theme.colors.primary,
           ),

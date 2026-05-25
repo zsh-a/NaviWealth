@@ -80,7 +80,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                     const SizedBox(height: 32),
                     _ModeCard(
                       key: const ValueKey('onboarding.cloud'),
-                      icon: Icons.cloud_outlined,
+                      icon: FLucideIcons.cloud,
                       title: l10n.onboardingCloudTitle,
                       description: l10n.onboardingCloudDescription,
                       onTap: _busy ? null : _pickCloud,
@@ -88,7 +88,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                     const SizedBox(height: 12),
                     _ModeCard(
                       key: const ValueKey('onboarding.local'),
-                      icon: Icons.smartphone_outlined,
+                      icon: FLucideIcons.smartphone,
                       title: l10n.onboardingLocalOnlyTitle,
                       description: l10n.onboardingLocalOnlyDescription,
                       onTap: _busy ? null : _pickLocal,
@@ -152,7 +152,7 @@ class _ModeCard extends StatelessWidget {
               ],
             ),
           ),
-          Icon(Icons.chevron_right, color: colors.mutedForeground, size: 20),
+          Icon(FLucideIcons.chevronRight, color: colors.mutedForeground, size: 20),
         ],
       ),
     );

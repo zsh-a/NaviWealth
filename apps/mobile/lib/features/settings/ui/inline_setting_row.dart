@@ -114,7 +114,7 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
               ),
               const SizedBox(width: 4),
               Icon(
-                Icons.unfold_more,
+                FLucideIcons.unfoldVertical,
                 size: 16,
                 color: colors.mutedForeground.withValues(alpha: 0.6),
               ),
@@ -199,7 +199,7 @@ class _OptionRow<T> extends StatelessWidget {
             SizedBox(
               width: 18,
               child: isSelected
-                  ? Icon(Icons.check, size: 16, color: accentColor)
+                  ? Icon(FLucideIcons.check, size: 16, color: accentColor)
                   : null,
             ),
             const SizedBox(width: 8),
@@ -371,7 +371,7 @@ class InlineLinkRow extends StatelessWidget {
             ],
             const SizedBox(width: 4),
             Icon(
-              Icons.chevron_right,
+              FLucideIcons.chevronRight,
               size: 16,
               color: colors.mutedForeground.withValues(alpha: 0.6),
             ),

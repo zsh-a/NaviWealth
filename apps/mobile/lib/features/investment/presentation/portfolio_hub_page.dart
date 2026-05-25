@@ -516,12 +516,12 @@ class _DcaSimulatorEntry extends StatelessWidget {
       child: FTile(
         onPress: () => context.push(AppRoutes.planDca),
         prefix: Icon(
-          Icons.event_repeat_outlined,
+          FLucideIcons.calendarClock,
           color: context.theme.colors.mutedForeground,
         ),
         title: Text(l10n.dcaSimulatorTitle),
         subtitle: Text(l10n.dcaSimulatorAccountsEntrySubtitle),
-        suffix: const Icon(Icons.chevron_right, size: 18),
+        suffix: const Icon(FLucideIcons.chevronRight, size: 18),
       ),
     );
   }
@@ -924,9 +924,9 @@ class PortfolioHubViewSegment extends StatelessWidget {
       PortfolioHubView.assetClass: l10n.portfolioHubViewAssetClass,
     };
     final icons = {
-      PortfolioHubView.account: Icons.account_balance_wallet_outlined,
-      PortfolioHubView.currency: Icons.payments_outlined,
-      PortfolioHubView.assetClass: Icons.category_outlined,
+      PortfolioHubView.account: FLucideIcons.wallet,
+      PortfolioHubView.currency: FLucideIcons.banknote,
+      PortfolioHubView.assetClass: FLucideIcons.layoutGrid,
     };
 
     return Container(

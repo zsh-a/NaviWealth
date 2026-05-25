@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
@@ -10,7 +11,7 @@ List<CommandPaletteEntry> cashFlowCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'nav.cashflow',
       label: l10n.cashFlowCommandOpen,
-      icon: Icons.waterfall_chart_outlined,
+      icon: FLucideIcons.chartColumnStacked,
       keywords: <String>[
         AppRoutes.cashflow,
         'cashflow',
@@ -26,7 +27,7 @@ List<CommandPaletteEntry> cashFlowCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'nav.income',
       label: l10n.cashFlowCommandViewIncome,
-      icon: Icons.filter_list_outlined,
+      icon: FLucideIcons.filter,
       keywords: <String>[
         'income',
         'salary',
@@ -41,7 +42,7 @@ List<CommandPaletteEntry> cashFlowCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'nav.cashflow.recurring',
       label: l10n.recurringCommandOpen,
-      icon: Icons.event_repeat_outlined,
+      icon: FLucideIcons.calendarClock,
       keywords: <String>[
         AppRoutes.cashflowRecurring,
         'recurring',

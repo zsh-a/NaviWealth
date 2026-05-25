@@ -224,7 +224,7 @@ void main() {
       // The catalogued icon shows up; the bullet-glyph fallback does
       // *not* as part of the title (otherwise the row reads as `• Bank`
       // which would duplicate the leading affordance).
-      expect(find.byIcon(Icons.account_balance), findsAtLeastNWidgets(1));
+      expect(find.byIcon(FLucideIcons.landmark), findsAtLeastNWidgets(1));
       expect(find.text('• Bank'), findsNothing);
     },
   );

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -68,11 +67,11 @@ class DevicesPage extends ConsumerWidget {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(FLucideIcons.refreshCw),
             onPress: () => ref.invalidate(devicesProvider),
           ),
           FHeaderAction(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(FLucideIcons.logOut),
             onPress: () => _confirmLogoutCurrent(context, ref),
           ),
         ],
@@ -134,7 +133,7 @@ class _DevicesList extends ConsumerWidget {
                 ? device.name!
                 : l10n.authDeviceUnnamed,
           ),
-          prefix: Icon(isCurrent ? Icons.verified_user : Icons.devices_other),
+          prefix: Icon(isCurrent ? FLucideIcons.badgeCheck : FLucideIcons.monitor),
           subtitle: Text(
             l10n.authDeviceLastSeen(
               formatters.dateTime(device.lastSeenAt.toLocal()),
@@ -147,7 +146,7 @@ class _DevicesList extends ConsumerWidget {
                   child: FButton.icon(
                     variant: FButtonVariant.ghost,
                     onPress: () => _confirmRevoke(context, ref, device),
-                    child: const Icon(Icons.logout, size: 18),
+                    child: const Icon(FLucideIcons.logOut, size: 18),
                   ),
                 ),
         );
@@ -201,7 +200,7 @@ class _ErrorView extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.error_outline,
+            FLucideIcons.circleAlert,
             size: 40,
             color: context.theme.colors.destructive,
           ),

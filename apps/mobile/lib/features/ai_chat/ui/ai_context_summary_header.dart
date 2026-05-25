@@ -72,8 +72,8 @@ class AiContextSummaryHeader extends ConsumerWidget {
       out.add(
         _SummaryLine(
           icon: pct >= 0
-              ? Icons.trending_up_outlined
-              : Icons.trending_down_outlined,
+              ? FLucideIcons.trendingUp
+              : FLucideIcons.trendingDown,
           accent: pct >= 0 ? colors.primary : colors.foreground,
           text: l10n.aiContextSummaryNetWorthLine('$sign$abs%'),
         ),
@@ -82,7 +82,7 @@ class AiContextSummaryHeader extends ConsumerWidget {
     if (s.unusualExpensesCount > 0) {
       out.add(
         _SummaryLine(
-          icon: Icons.bolt_outlined,
+          icon: FLucideIcons.zap,
           accent: colors.foreground,
           text: l10n.aiContextSummaryUnusualLine(s.unusualExpensesCount),
         ),
@@ -91,7 +91,7 @@ class AiContextSummaryHeader extends ConsumerWidget {
     if (s.upcomingMaturitiesCount > 0) {
       out.add(
         _SummaryLine(
-          icon: Icons.event_available_outlined,
+          icon: FLucideIcons.calendarCheck,
           accent: colors.foreground,
           text: l10n.aiContextSummaryUpcomingLine(
             s.upcomingMaturitiesCount,

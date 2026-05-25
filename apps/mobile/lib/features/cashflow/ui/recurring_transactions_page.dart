@@ -28,7 +28,7 @@ class RecurringTransactionsPage extends ConsumerWidget {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
-            icon: const Icon(Icons.add),
+            icon: const Icon(FLucideIcons.plus),
             onPress: () => showRecurringTransactionForm(context, ref),
           ),
         ],
@@ -51,7 +51,7 @@ class RecurringTransactionsPage extends ConsumerWidget {
             ),
             data: (rules) => rules.isEmpty
                 ? AppEmptyState(
-                    icon: Icons.event_repeat_outlined,
+                    icon: FLucideIcons.calendarClock,
                     iconSize: 56,
                     title: l10n.recurringEmptyTitle,
                     message: l10n.recurringEmptyBody,
@@ -162,7 +162,7 @@ class _RecurringRow extends ConsumerWidget {
           const SizedBox(width: AppSpacing.s8),
           FTappable(
             onPress: () => _showRowActions(context, ref, rule),
-            child: Icon(Icons.more_vert, size: 20, color: muted),
+            child: Icon(FLucideIcons.ellipsisVertical, size: 20, color: muted),
           ),
         ],
       ),
@@ -182,7 +182,7 @@ Future<void> _showRowActions(
     builder: (sheetContext) => AppActionSheetList(
       children: [
         AppActionSheetTile(
-          icon: Icons.edit_outlined,
+          icon: FLucideIcons.pencil,
           title: l10n.recurringActionEdit,
           subtitle: l10n.recurringActionEditHint,
           onPress: () {
@@ -191,7 +191,7 @@ Future<void> _showRowActions(
           },
         ),
         AppActionSheetTile(
-          icon: Icons.pause_circle_outline,
+          icon: FLucideIcons.circlePause,
           title: l10n.recurringActionDisable,
           subtitle: l10n.recurringActionDisableHint,
           onPress: () {
@@ -200,7 +200,7 @@ Future<void> _showRowActions(
           },
         ),
         AppActionSheetTile(
-          icon: Icons.delete_outline,
+          icon: FLucideIcons.trash2,
           title: l10n.commonDelete,
           subtitle: l10n.recurringActionDeleteHint,
           onPress: () {

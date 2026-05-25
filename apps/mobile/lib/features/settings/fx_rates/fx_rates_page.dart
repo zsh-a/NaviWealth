@@ -29,7 +29,7 @@ class FxRatesPage extends ConsumerWidget {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
-            icon: const Icon(Icons.sync),
+            icon: const Icon(FLucideIcons.refreshCw),
             onPress: () => _refresh(context, ref),
           ),
         ],
@@ -106,7 +106,7 @@ class _RateList extends ConsumerWidget {
             ),
             alignment: AlignmentDirectional.centerEnd,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Icon(Icons.delete_outline, color: semantic.danger),
+            child: Icon(FLucideIcons.trash2, color: semantic.danger),
           ),
           confirmDismiss: (_) async {
             final repo = await ref.read(fxRateRepositoryProvider.future);
@@ -130,7 +130,7 @@ class _RateList extends ConsumerWidget {
                   ),
                   alignment: Alignment.center,
                   child: Icon(
-                    Icons.currency_exchange,
+                    FLucideIcons.arrowLeftRight,
                     size: 18,
                     color: colors.mutedForeground,
                   ),

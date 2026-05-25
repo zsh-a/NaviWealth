@@ -246,7 +246,7 @@ class _JumpToBottomChip extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: Icon(
-              Icons.arrow_downward,
+              FLucideIcons.arrowDown,
               size: 18,
               color: colors.foreground,
             ),

@@ -219,7 +219,7 @@ void main() {
     // tint follows colorScheme.primary by default — we just verify
     // the icon appears as a positive smoke check; selection state
     // rendering is covered by the visual baseline goldens).
-    expect(find.byIcon(Icons.savings), findsAtLeastNWidgets(1));
+    expect(find.byIcon(FLucideIcons.piggyBank), findsAtLeastNWidgets(1));
   });
 
   testWidgets('color swatch selection persists through save', (tester) async {

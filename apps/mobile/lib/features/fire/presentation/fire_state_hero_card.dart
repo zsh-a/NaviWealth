@@ -112,7 +112,7 @@ class _HeroBody extends ConsumerWidget {
                 child: FButton(
                   variant: FButtonVariant.ghost,
                   onPress: onExplain,
-                  prefix: const Icon(Icons.auto_awesome, size: 14),
+                  prefix: const Icon(FLucideIcons.sparkles, size: 14),
                   child: const Text('Explain'),
                 ),
               ),
@@ -433,7 +433,7 @@ class _HeroErrorCard extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              Icons.error_outline,
+              FLucideIcons.circleAlert,
               color: context.theme.colors.destructive,
               size: 18,
             ),

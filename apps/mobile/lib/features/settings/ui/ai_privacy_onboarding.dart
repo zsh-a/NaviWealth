@@ -6,7 +6,6 @@
 /// flag on dismissal so re-opens never re-trigger it.
 library;
 
-import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -102,7 +101,7 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
             const SizedBox(height: 16),
             Row(
               children: <Widget>[
-                Icon(Icons.lock_outline, size: 20, color: colors.primary),
+                Icon(FLucideIcons.lock, size: 20, color: colors.primary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(

@@ -311,7 +311,7 @@ class _FileRow extends StatelessWidget {
 
   Widget _statusIcon(ModelFileStatus s) => switch (s) {
         ModelFileStatus.notInstalled => const Icon(
-            Icons.download_outlined,
+            FLucideIcons.download,
             size: 16,
             color: Colors.grey,
           ),
@@ -321,12 +321,12 @@ class _FileRow extends StatelessWidget {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ModelFileStatus.installed => const Icon(
-            Icons.check_circle,
+            FLucideIcons.circleCheck,
             size: 16,
             color: Colors.green,
           ),
         ModelFileStatus.failed => const Icon(
-            Icons.error_outline,
+            FLucideIcons.circleAlert,
             size: 16,
             color: Colors.redAccent,
           ),

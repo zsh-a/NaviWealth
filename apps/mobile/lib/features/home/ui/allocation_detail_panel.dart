@@ -174,7 +174,7 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
               FButton.icon(
                 variant: FButtonVariant.ghost,
                 onPress: () => Navigator.of(context).maybePop(),
-                child: const Icon(Icons.close, size: 18),
+                child: const Icon(FLucideIcons.x, size: 18),
               ),
             ],
           ),
@@ -238,8 +238,8 @@ class _DimensionSwitch extends StatelessWidget {
       _AllocationDimension.currency: l10n.portfolioViewCurrency,
     };
     final icons = {
-      _AllocationDimension.assetClass: Icons.category_outlined,
-      _AllocationDimension.currency: Icons.currency_exchange,
+      _AllocationDimension.assetClass: FLucideIcons.layoutGrid,
+      _AllocationDimension.currency: FLucideIcons.arrowLeftRight,
     };
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -615,7 +615,7 @@ List<_AllocationGroup> _groupsFor(
           ..sort(
             (a, b) => b.valueInBase.amount.compareTo(a.valueInBase.amount),
           ),
-        icon: Icons.currency_exchange,
+        icon: FLucideIcons.arrowLeftRight,
         color: paletteSeed.next(),
       ),
   ]..sort((a, b) => b.value.compareTo(a.value));

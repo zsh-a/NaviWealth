@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/write/providers.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/data/domain/account.dart';
@@ -182,7 +183,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('AI insight'), findsNothing);
-    expect(find.byIcon(Icons.auto_awesome_outlined), findsNothing);
+    expect(find.byIcon(FLucideIcons.sparkles), findsNothing);
     expect(find.text('No insight available for this entry.'), findsNothing);
     expect(find.text('Living'), findsOneWidget);
   });

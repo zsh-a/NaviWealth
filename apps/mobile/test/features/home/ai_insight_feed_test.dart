@@ -29,7 +29,7 @@ Widget _wrap(List<InsightItem> insights, {SharedPreferences? prefs}) {
 
 InsightItem _maturityInsight({int count = 2, int days = 7}) {
   return InsightItem(
-    icon: Icons.event_outlined,
+    icon: FLucideIcons.calendar,
     kind: InsightKind.maturity,
     maturityCount: count,
     maturityDays: days,
@@ -46,7 +46,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Empty feed renders an empty SizedBox — no icon, no headline.
-    expect(find.byIcon(Icons.event_outlined), findsNothing);
+    expect(find.byIcon(FLucideIcons.calendar), findsNothing);
   });
 
   testWidgets('renders the section header when at least one insight exists', (
@@ -61,7 +61,7 @@ void main() {
 
     // The localized section title ("AI Insights" / "AI 洞察") appears
     // above the feed.
-    expect(find.byIcon(Icons.event_outlined), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.calendar), findsOneWidget);
   });
 
   testWidgets('renders one card per insight', (tester) async {
@@ -78,6 +78,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.event_outlined), findsNWidgets(3));
+    expect(find.byIcon(FLucideIcons.calendar), findsNWidgets(3));
   });
 }

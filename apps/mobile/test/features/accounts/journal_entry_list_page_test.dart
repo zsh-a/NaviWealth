@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
@@ -148,12 +149,12 @@ void main() {
     expect(find.textContaining('¥1,000'), findsAtLeastNWidgets(1));
 
     // Transfer-classified badge surfaces.
-    expect(find.byIcon(Icons.swap_horiz), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.arrowLeftRight), findsOneWidget);
 
     // PostingsPreview is still hidden — its Σ-balance check icon
     // doesn't render in the collapsed row.
-    expect(find.byIcon(Icons.check_circle_outline), findsNothing);
-    expect(find.byIcon(Icons.error_outline), findsNothing);
+    expect(find.byIcon(FLucideIcons.circleCheck), findsNothing);
+    expect(find.byIcon(FLucideIcons.circleAlert), findsNothing);
   });
 
   testWidgets('tapping a row expands it to reveal PostingsPreview', (
@@ -244,7 +245,7 @@ void main() {
 
     expect(find.text('· Blue Bottle'), findsOneWidget);
     // Expense-classified badge.
-    expect(find.byIcon(Icons.north_east), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.arrowUpRight), findsOneWidget);
   });
 
   testWidgets('no headline amount renders when no asset/liability legs', (

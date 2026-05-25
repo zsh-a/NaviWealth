@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart' show Icons, IconData, Navigator;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -53,7 +52,7 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
       return _PanelShell(
         onNew: null,
         child: _PanelMessage(
-          icon: Icons.lock_outline,
+          icon: FLucideIcons.lock,
           message: l10n.aiChatLoginRequired,
         ),
       );
@@ -78,19 +77,19 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
           child: SizedBox(width: 24, height: 24, child: FCircularProgress()),
         ),
         error: (e, _) => _PanelMessage(
-          icon: Icons.error_outline,
+          icon: FLucideIcons.circleAlert,
           iconColor: context.theme.colors.destructive,
           message: l10n.commonLoadError(e.toString()),
         ),
         data: (sessions) {
           if (sessions.isEmpty) {
             return _PanelMessage(
-              icon: Icons.chat_bubble_outline,
+              icon: FLucideIcons.messageCircle,
               message: l10n.aiChatSessionsEmpty,
               action: FButton(
                 variant: FButtonVariant.primary,
                 onPress: widget.onNew,
-                prefix: const Icon(Icons.add, size: 14),
+                prefix: const Icon(FLucideIcons.plus, size: 14),
                 child: Text(l10n.aiChatNewSessionTooltip),
               ),
             );
@@ -103,7 +102,7 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
                     .toList(growable: false);
           if (filtered.isEmpty) {
             return _PanelMessage(
-              icon: Icons.search_off,
+              icon: FLucideIcons.searchX,
               message: l10n.aiChatSessionsSearchEmpty(_query),
             );
           }
@@ -246,7 +245,7 @@ class _PanelShell extends StatelessWidget {
                   child: Row(
                     children: [
                       Icon(
-                        Icons.history,
+                        FLucideIcons.history,
                         size: 18,
                         color: colors.mutedForeground,
                       ),
@@ -266,7 +265,7 @@ class _PanelShell extends StatelessWidget {
                           child: FButton.icon(
                             variant: FButtonVariant.secondary,
                             onPress: onNew,
-                            child: const Icon(Icons.add, size: 18),
+                            child: const Icon(FLucideIcons.plus, size: 18),
                           ),
                         ),
                     ],
@@ -468,7 +467,7 @@ class _SessionTile extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Icon(
-                  Icons.chat_bubble_outline,
+                  FLucideIcons.messageCircle,
                   size: 18,
                   color: selected ? colors.primary : colors.mutedForeground,
                 ),
@@ -504,7 +503,7 @@ class _SessionTile extends StatelessWidget {
                     variant: FButtonVariant.ghost,
                     onPress: () => _showActions(context, l10n),
                     child: Icon(
-                      Icons.more_horiz,
+                      FLucideIcons.ellipsis,
                       size: 18,
                       color: colors.mutedForeground,
                     ),
@@ -527,7 +526,7 @@ class _SessionTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _ActionRow(
-            icon: Icons.edit_outlined,
+            icon: FLucideIcons.pencil,
             label: l10n.aiChatSessionRenameAction,
             onTap: () {
               Navigator.of(ctx).pop();
@@ -536,7 +535,7 @@ class _SessionTile extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           _ActionRow(
-            icon: Icons.delete_outline,
+            icon: FLucideIcons.trash2,
             label: l10n.commonDelete,
             color: ctx.theme.colors.destructive,
             onTap: () {

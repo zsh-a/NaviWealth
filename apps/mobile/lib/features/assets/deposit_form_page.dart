@@ -238,7 +238,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
           suffixes: [
             if (widget.isEdit)
               FHeaderAction(
-                icon: const Icon(Icons.delete_outline),
+                icon: const Icon(FLucideIcons.trash2),
                 onPress: _busy ? null : _delete,
               ),
           ],
@@ -307,7 +307,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
                 children: [
                   Expanded(
                     child: _DepositKindChip(
-                      icon: Icons.lock_clock,
+                      icon: FLucideIcons.lock,
                       label: l10n.depositTypeTerm,
                       selected: _kind == AssetType.bankDepositTerm,
                       onTap: () {
@@ -321,7 +321,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
                   ),
                   Expanded(
                     child: _DepositKindChip(
-                      icon: Icons.savings_outlined,
+                      icon: FLucideIcons.piggyBank,
                       label: l10n.depositTypeDemand,
                       selected: _kind == AssetType.bankDepositDemand,
                       onTap: () {
@@ -460,7 +460,7 @@ class _PromptCreateAccount extends StatelessWidget {
             FButton(
               variant: FButtonVariant.outline,
               onPress: onTap,
-              prefix: const Icon(Icons.add, size: 16),
+              prefix: const Icon(FLucideIcons.plus, size: 16),
               child: Text(l10n.depositCreateAccountAction),
             ),
           ],

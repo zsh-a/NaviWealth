@@ -15,7 +15,6 @@
 /// text segments.
 library;
 
-import 'package:flutter/material.dart' show Icon, Icons;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -128,7 +127,7 @@ class _AttributionRow extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(2),
                 child: Icon(
-                  Icons.info_outline,
+                  FLucideIcons.info,
                   size: 12,
                   color: AiTone.muted(context),
                 ),
