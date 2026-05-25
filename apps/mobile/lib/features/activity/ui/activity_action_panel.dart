@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart' show Icons, Navigator;
 import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -22,28 +22,28 @@ Future<void> showActivityActionPanel(BuildContext context) {
     builder: (sheetContext) => AppActionSheetList(
       children: [
         AppActionSheetTile(
-          icon: Icons.add_card_outlined,
+          icon: FLucideIcons.creditCard,
           title: l10n.superFabExpense,
           subtitle: l10n.activityActionExpenseHint,
           onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.expenseNew),
         ),
         AppActionSheetTile(
-          icon: Icons.add_chart_outlined,
+          icon: FLucideIcons.chartLine,
           title: l10n.superFabTrade,
           subtitle: l10n.activityActionTradeHint,
           onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.tradeEntry),
         ),
         AppActionSheetTile(
-          icon: Icons.swap_horiz,
+          icon: FLucideIcons.arrowLeftRight,
           title: l10n.superFabTransfer,
           subtitle: l10n.activityActionTransferHint,
           onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.transfer),
         ),
         AppActionSheetTile(
-          icon: Icons.currency_exchange,
+          icon: FLucideIcons.arrowLeftRight,
           title: l10n.superFabConvert,
           subtitle: l10n.activityActionConvertHint,
           onPress: () => _closeAndPush(

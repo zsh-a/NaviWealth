@@ -189,7 +189,7 @@ class _EmptyFeed extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.timeline_outlined,
+              FLucideIcons.workflow,
               size: 48,
               color: context.theme.colors.mutedForeground.withValues(
                 alpha: 0.4,

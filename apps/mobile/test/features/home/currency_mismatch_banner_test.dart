@@ -33,7 +33,7 @@ void main() {
     await tester.pumpWidget(_wrap(mismatches: const []));
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.warning_amber_rounded), findsNothing);
+    expect(find.byIcon(FLucideIcons.triangleAlert), findsNothing);
   });
 
   testWidgets('renders warning when mismatches are present', (tester) async {
@@ -47,7 +47,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.triangleAlert), findsOneWidget);
     // Banner copy mentions the base currency code so the user knows what
     // the totals were expected to convert into.
     expect(find.textContaining('CNY'), findsOneWidget);
@@ -61,7 +61,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.warning_amber_rounded));
+    await tester.tap(find.byIcon(FLucideIcons.triangleAlert));
     await tester.pumpAndSettle();
 
     // The sheet renders the offending holding's id + the conversion arrow.

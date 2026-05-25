@@ -245,7 +245,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
           suffixes: [
             if (widget.isEdit)
               FHeaderAction(
-                icon: const Icon(Icons.delete_outline),
+                icon: const Icon(FLucideIcons.trash2),
                 onPress: _busy ? null : _delete,
               ),
           ],
@@ -284,7 +284,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
               FButton(
                 variant: FButtonVariant.outline,
                 onPress: () => context.go(AppRoutes.wealthAccountNew),
-                prefix: const Icon(Icons.add, size: 16),
+                prefix: const Icon(FLucideIcons.plus, size: 16),
                 child: Text(l10n.wealthProductCreateAccountAction),
               ),
             ],

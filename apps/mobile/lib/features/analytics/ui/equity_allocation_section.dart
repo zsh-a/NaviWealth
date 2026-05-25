@@ -252,7 +252,7 @@ class _UnclassifiedBanner extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              Icons.warning_amber_outlined,
+              FLucideIcons.triangleAlert,
               color: context.theme.colors.mutedForeground,
             ),
             const SizedBox(width: 8),
@@ -275,7 +275,7 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         children: [
           Icon(
-            Icons.donut_large_outlined,
+            FLucideIcons.chartPie,
             size: 48,
             color: context.theme.colors.mutedForeground,
           ),
@@ -339,7 +339,7 @@ class _ErrorState extends StatelessWidget {
       child: Column(
         children: [
           Icon(
-            Icons.error_outline,
+            FLucideIcons.circleAlert,
             color: context.theme.colors.destructive,
             size: 32,
           ),

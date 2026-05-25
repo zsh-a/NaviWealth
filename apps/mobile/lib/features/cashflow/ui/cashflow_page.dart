@@ -58,11 +58,11 @@ class _CashFlowPageState extends ConsumerState<CashFlowPage> {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
-            icon: const Icon(Icons.event_repeat_outlined),
+            icon: const Icon(FLucideIcons.calendarClock),
             onPress: () => context.push(kCashflowRecurringPath),
           ),
           FHeaderAction(
-            icon: const Icon(Icons.account_balance_wallet_outlined),
+            icon: const Icon(FLucideIcons.wallet),
             onPress: () => context.push(kDividendCenterPath),
           ),
         ],
@@ -468,7 +468,7 @@ class _CategoryPanel extends StatelessWidget {
               child: FButton(
                 variant: FButtonVariant.outline,
                 onPress: () => context.push(kDividendCenterPath),
-                prefix: const Icon(Icons.account_balance_wallet_outlined),
+                prefix: const Icon(FLucideIcons.wallet),
                 child: Text(l10n.cashFlowViewDividendCenter),
               ),
             ),
@@ -585,7 +585,7 @@ class _LoadError extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.error_outline,
+            FLucideIcons.circleAlert,
             color: context.theme.colors.destructive,
             size: 32,
           ),
@@ -616,7 +616,7 @@ class _EmptyState extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.account_balance_wallet_outlined,
+              FLucideIcons.wallet,
               size: 56,
               color: context.theme.colors.primary,
             ),

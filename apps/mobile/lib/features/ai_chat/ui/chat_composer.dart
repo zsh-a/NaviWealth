@@ -163,7 +163,7 @@ class _TrailingButton extends StatelessWidget {
           child: FButton.icon(
             variant: FButtonVariant.secondary,
             onPress: onCancel,
-            child: const Icon(Icons.stop),
+            child: const Icon(FLucideIcons.square),
           ),
         );
       }
@@ -173,7 +173,7 @@ class _TrailingButton extends StatelessWidget {
         child: FButton.icon(
           variant: FButtonVariant.primary,
           onPress: canSend ? onSend : null,
-          child: const Icon(Icons.arrow_upward),
+          child: const Icon(FLucideIcons.arrowUp),
         ),
       );
     }

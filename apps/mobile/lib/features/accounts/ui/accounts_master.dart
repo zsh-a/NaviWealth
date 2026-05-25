@@ -101,7 +101,7 @@ class AccountsDetailEmpty extends StatelessWidget {
       header: FHeader.nested(title: Text(l10n.navAccounts)),
       childPad: false,
       child: MasterDetailEmpty(
-        icon: Icons.account_balance_outlined,
+        icon: FLucideIcons.landmark,
         message: l10n.accountsDetailEmpty,
       ),
     );
@@ -124,7 +124,7 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
           FHeaderAction(
             icon: Tooltip(
               message: l10n.accountsCreateAction,
-              child: const Icon(Icons.add_card_outlined),
+              child: const Icon(FLucideIcons.creditCard),
             ),
             semanticsLabel: l10n.accountsCreateAction,
             onPress: () => context.go(AppRoutes.wealthAccountNew),
@@ -132,7 +132,7 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
           FHeaderAction(
             icon: Tooltip(
               message: l10n.accountsJournalAction,
-              child: const Icon(Icons.history),
+              child: const Icon(FLucideIcons.history),
             ),
             semanticsLabel: l10n.accountsJournalAction,
             onPress: () => context.go(AppRoutes.journalEntries),
@@ -140,7 +140,7 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
           FHeaderAction(
             icon: Tooltip(
               message: l10n.accountsTransferAction,
-              child: const Icon(Icons.swap_horiz),
+              child: const Icon(FLucideIcons.arrowLeftRight),
             ),
             semanticsLabel: l10n.accountsTransferAction,
             onPress: () => context.go(AppRoutes.transfer),
@@ -165,14 +165,14 @@ class _EmptyAccounts extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.account_balance_outlined, size: 48),
+            const Icon(FLucideIcons.landmark, size: 48),
             const SizedBox(height: 12),
             Text(l10n.accountsEmptyHint, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             FButton(
               variant: FButtonVariant.primary,
               onPress: () => context.go(AppRoutes.wealthAccountNew),
-              prefix: const Icon(Icons.add_card_outlined),
+              prefix: const Icon(FLucideIcons.creditCard),
               child: Text(l10n.accountFormCreateTitle),
             ),
           ],

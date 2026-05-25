@@ -35,7 +35,7 @@ class PlanBudgetPage extends ConsumerWidget {
         loading: () => const Center(child: FCircularProgress()),
         error: (_, _) => Center(
           child: AppEmptyState(
-            icon: Icons.savings_outlined,
+            icon: FLucideIcons.piggyBank,
             title: l10n.planBudgetEmptyTitle,
           ),
         ),
@@ -57,7 +57,7 @@ class _BudgetBody extends StatelessWidget {
     if (rows.isEmpty) {
       return Center(
         child: AppEmptyState(
-          icon: Icons.savings_outlined,
+          icon: FLucideIcons.piggyBank,
           title: l10n.planBudgetEmptyTitle,
           message: l10n.planBudgetEmptyBody,
         ),
@@ -175,7 +175,7 @@ class _BudgetTile extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: Icon(
-            Icons.savings_outlined,
+            FLucideIcons.piggyBank,
             size: 18,
             color: colors.mutedForeground,
           ),

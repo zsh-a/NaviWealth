@@ -77,7 +77,7 @@ void main() {
     await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.person_outline), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.user), findsOneWidget);
     // Some greeting is rendered — the exact text depends on local time.
     expect(find.byType(Text), findsWidgets);
   });
@@ -120,8 +120,8 @@ void main() {
       _wrap(
         metricsAsync: AsyncData(_metrics(monthlyPct: 0.01)),
         insights: const [
-          InsightItem(icon: Icons.event, kind: InsightKind.maturity),
-          InsightItem(icon: Icons.event, kind: InsightKind.maturity),
+          InsightItem(icon: FLucideIcons.calendar, kind: InsightKind.maturity),
+          InsightItem(icon: FLucideIcons.calendar, kind: InsightKind.maturity),
         ],
       ),
     );

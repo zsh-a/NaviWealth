@@ -318,7 +318,7 @@ class _ExpandedView extends StatelessWidget {
               FButton(
                 variant: FButtonVariant.primary,
                 onPress: isApplying ? null : onConfirm,
-                prefix: const Icon(Icons.check, size: 14),
+                prefix: const Icon(FLucideIcons.check, size: 14),
                 child: Text(
                   isApplying
                       ? l10n.aiChatProposalApplying
@@ -328,13 +328,13 @@ class _ExpandedView extends StatelessWidget {
               FButton(
                 variant: FButtonVariant.outline,
                 onPress: isApplying ? null : onCancel,
-                prefix: const Icon(Icons.close, size: 14),
+                prefix: const Icon(FLucideIcons.x, size: 14),
                 child: Text(l10n.commonCancel),
               ),
               FButton(
                 variant: FButtonVariant.ghost,
                 onPress: isApplying ? null : onEdit,
-                prefix: const Icon(Icons.edit_outlined, size: 14),
+                prefix: const Icon(FLucideIcons.pencil, size: 14),
                 child: Text(l10n.aiChatProposalEdit),
               ),
             ],
@@ -603,17 +603,17 @@ class _CollapsedView extends StatelessWidget {
     final String label;
     switch (applyState.status) {
       case ProposalApplyStatus.applied:
-        icon = Icons.check_circle;
+        icon = FLucideIcons.circleCheck;
         color = context.theme.colors.primary;
         label =
             applyState.shortLabel ??
             l10n.aiChatProposalAppliedFallback(plan.summaryZh);
       case ProposalApplyStatus.undone:
-        icon = Icons.undo;
+        icon = FLucideIcons.undo;
         color = context.theme.colors.mutedForeground;
         label = l10n.aiChatProposalUndoneLabel(plan.summaryZh);
       case ProposalApplyStatus.cancelled:
-        icon = Icons.cancel_outlined;
+        icon = FLucideIcons.circleX;
         color = context.theme.colors.mutedForeground;
         label = l10n.aiChatProposalCancelledLabel(plan.summaryZh);
       default:
@@ -727,7 +727,7 @@ class _UndoCountdownButtonState extends State<_UndoCountdownButton> {
     return FButton(
       variant: FButtonVariant.ghost,
       onPress: widget.onUndo,
-      prefix: const Icon(Icons.undo, size: 12),
+      prefix: const Icon(FLucideIcons.undo, size: 12),
       child: Text(l10n.aiChatProposalUndoCountdown(_secondsLeft)),
     );
   }
@@ -755,7 +755,7 @@ class _ClarificationView extends ConsumerWidget {
               Row(
                 children: [
                   Icon(
-                    Icons.help_outline,
+                    FLucideIcons.circleHelp,
                     size: 18,
                     color: colors.mutedForeground,
                   ),
@@ -1033,8 +1033,8 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
                     children: [
                       Icon(
                         _fullMode
-                            ? Icons.keyboard_arrow_up
-                            : Icons.keyboard_arrow_down,
+                            ? FLucideIcons.chevronUp
+                            : FLucideIcons.chevronDown,
                         size: 16,
                         color: AiTone.active(context),
                       ),
@@ -1273,14 +1273,14 @@ List<_Row> _rowsFor(
 }
 
 IconData _iconFor(ProposalKind kind) => switch (kind) {
-  ProposalKind.trade => Icons.trending_up,
-  ProposalKind.expense => Icons.receipt_long,
-  ProposalKind.liabilityPayment => Icons.payments_outlined,
-  ProposalKind.accountCreate => Icons.account_balance_outlined,
-  ProposalKind.assetValuation => Icons.update,
-  ProposalKind.firePlanUpdate => Icons.flag_outlined,
-  ProposalKind.fireBucketRule => Icons.tune_outlined,
-  ProposalKind.unknown => Icons.help_outline,
+  ProposalKind.trade => FLucideIcons.trendingUp,
+  ProposalKind.expense => FLucideIcons.receipt,
+  ProposalKind.liabilityPayment => FLucideIcons.banknote,
+  ProposalKind.accountCreate => FLucideIcons.landmark,
+  ProposalKind.assetValuation => FLucideIcons.refreshCw,
+  ProposalKind.firePlanUpdate => FLucideIcons.flag,
+  ProposalKind.fireBucketRule => FLucideIcons.slidersHorizontal,
+  ProposalKind.unknown => FLucideIcons.circleHelp,
 };
 
 String _tradeTypeLabel(AppLocalizations l10n, String wire) => switch (wire) {
@@ -1334,7 +1334,7 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
       ),
       child: Row(
         children: [
-          Icon(Icons.layers_outlined, size: 18, color: colors.primary),
+          Icon(FLucideIcons.layers, size: 18, color: colors.primary),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -1347,7 +1347,7 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
           FButton(
             variant: FButtonVariant.primary,
             onPress: _busy ? null : _confirmAll,
-            prefix: const Icon(Icons.done_all, size: 14),
+            prefix: const Icon(FLucideIcons.checkCheck, size: 14),
             child: Text(l10n.aiChatProposalBatchConfirmAll),
           ),
         ],
@@ -1463,7 +1463,7 @@ class _WarningCallout extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
-                  Icons.warning_amber_rounded,
+                  FLucideIcons.triangleAlert,
                   size: 16,
                   color: AiTone.onSurface(context),
                 ),

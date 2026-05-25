@@ -151,7 +151,7 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
                 if (tappable) ...[
                   const SizedBox(width: 8),
                   Icon(
-                    Icons.chevron_right,
+                    FLucideIcons.chevronRight,
                     size: 18,
                     color: colors.mutedForeground.withValues(alpha: 0.6),
                   ),
@@ -295,14 +295,14 @@ class _InsightOverlayActions extends StatelessWidget {
           children: [
             _OverlayIconButton(
               icon: expanded
-                  ? Icons.unfold_less_outlined
-                  : Icons.unfold_more_outlined,
+                  ? FLucideIcons.foldVertical
+                  : FLucideIcons.unfoldVertical,
               tooltip: l10n.dashboardInsightActionExpand,
               onTap: onExpand,
             ),
             askCapsule,
             _OverlayIconButton(
-              icon: Icons.close_outlined,
+              icon: FLucideIcons.x,
               tooltip: l10n.dashboardInsightActionDismiss,
               onTap: onDismiss,
             ),

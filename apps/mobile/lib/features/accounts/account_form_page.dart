@@ -248,7 +248,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
           suffixes: [
             if (widget.isEdit)
               FHeaderAction(
-                icon: const Icon(Icons.delete_outline),
+                icon: const Icon(FLucideIcons.trash2),
                 onPress: _busy ? null : _delete,
               ),
           ],
@@ -449,7 +449,7 @@ class _ParentAccountPickerSection extends ConsumerWidget {
             child: FButton.icon(
               variant: FButtonVariant.ghost,
               onPress: () => onChanged(null),
-              child: const Icon(Icons.clear, size: 18),
+              child: const Icon(FLucideIcons.x, size: 18),
             ),
           ),
       ],
@@ -531,7 +531,7 @@ class _IconPickerSection extends StatelessWidget {
                   onTap: () => onChanged(null),
                   tooltip: l10n.accountFormNoIconTooltip,
                   child: Icon(
-                    Icons.do_not_disturb_on_outlined,
+                    FLucideIcons.ban,
                     color: context.theme.colors.mutedForeground,
                   ),
                 );
@@ -627,7 +627,7 @@ class _ColorPickerSection extends StatelessWidget {
               fill: context.theme.colors.muted,
               border: context.theme.colors.border,
               child: Icon(
-                Icons.do_not_disturb_on_outlined,
+                FLucideIcons.ban,
                 size: 16,
                 color: context.theme.colors.mutedForeground,
               ),

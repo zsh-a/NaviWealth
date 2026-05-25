@@ -56,7 +56,7 @@ class _ErrorState extends StatelessWidget {
       child: Column(
         children: [
           Icon(
-            Icons.error_outline,
+            FLucideIcons.circleAlert,
             color: context.theme.colors.destructive,
             size: 32,
           ),

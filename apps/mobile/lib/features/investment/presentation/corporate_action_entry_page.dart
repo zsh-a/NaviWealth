@@ -314,12 +314,12 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
               FTile(
                 key: const Key('corp-action-date'),
                 title: Text(l10n.corpActionEffectiveDate),
-                prefix: const Icon(Icons.event),
+                prefix: const Icon(FLucideIcons.calendar),
                 subtitle: Text(dateFmt.format(_effectiveDate)),
                 suffix: FButton.icon(
                   variant: FButtonVariant.ghost,
                   onPress: _pickEffectiveDate,
-                  child: const Icon(Icons.edit_calendar, size: 20),
+                  child: const Icon(FLucideIcons.calendarPlus, size: 20),
                 ),
               ),
               const FDivider(),

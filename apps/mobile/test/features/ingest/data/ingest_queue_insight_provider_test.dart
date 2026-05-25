@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/features/home/data/dashboard_insights_provider.dart';
 import 'package:naviwealth/features/home/domain/insight_models.dart';
 import 'package:naviwealth/features/ingest/data/ingest_queue_insight_provider.dart';
@@ -59,7 +59,7 @@ void main() {
   test('insightScopeHash is stable for the ingestQueue kind', () {
     final hash = insightScopeHash(
       const InsightItem(
-        icon: Icons.move_to_inbox_outlined,
+        icon: FLucideIcons.inbox,
         kind: InsightKind.ingestQueue,
         ingestPendingCount: 7,
         ingestFreshCount: 3,

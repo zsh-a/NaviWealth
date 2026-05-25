@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
@@ -13,7 +14,7 @@ List<CommandPaletteEntry> rebalanceCommandPaletteEntries(
     CommandPaletteEntry(
       id: 'nav.rebalance',
       label: l10n.rebalanceCommandOpen,
-      icon: Icons.balance_outlined,
+      icon: FLucideIcons.scale,
       keywords: <String>[
         AppRoutes.planRebalance,
         '/accounts/rebalance',
@@ -27,7 +28,7 @@ List<CommandPaletteEntry> rebalanceCommandPaletteEntries(
     CommandPaletteEntry(
       id: 'action.rebalance.targetAllocation',
       label: l10n.rebalanceCommandAdjustTarget,
-      icon: Icons.tune_outlined,
+      icon: FLucideIcons.slidersHorizontal,
       keywords: <String>[
         'target allocation',
         'custom target',

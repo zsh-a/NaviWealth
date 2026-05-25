@@ -205,21 +205,21 @@ class _PreviewRow extends StatelessWidget {
 IconData _iconForKind(EntryKind kind) {
   switch (kind) {
     case EntryKind.income:
-      return Icons.south_west_outlined;
+      return FLucideIcons.arrowDownLeft;
     case EntryKind.expense:
-      return Icons.shopping_bag_outlined;
+      return FLucideIcons.shoppingBag;
     case EntryKind.payment:
-      return Icons.payments_outlined;
+      return FLucideIcons.banknote;
     case EntryKind.transfer:
-      return Icons.swap_horiz_outlined;
+      return FLucideIcons.arrowLeftRight;
     case EntryKind.trade:
-      return Icons.show_chart_outlined;
+      return FLucideIcons.chartLine;
     case EntryKind.adjustment:
-      return Icons.tune_outlined;
+      return FLucideIcons.slidersHorizontal;
     case EntryKind.opening:
-      return Icons.flag_outlined;
+      return FLucideIcons.flag;
     case EntryKind.other:
-      return Icons.receipt_long_outlined;
+      return FLucideIcons.receipt;
   }
 }
 

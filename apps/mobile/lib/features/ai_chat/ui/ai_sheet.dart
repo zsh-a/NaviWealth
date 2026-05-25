@@ -588,7 +588,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.lock_outline,
+                FLucideIcons.lock,
                 size: 32,
                 color: context.theme.colors.mutedForeground,
               ),
@@ -676,13 +676,13 @@ class _ConversationHeader extends StatelessWidget {
             child: FButton.icon(
               variant: FButtonVariant.ghost,
               onPress: onExpand,
-              child: const Icon(Icons.open_in_full, size: 20),
+              child: const Icon(FLucideIcons.maximize, size: 20),
             ),
           ),
           FButton.icon(
             variant: FButtonVariant.ghost,
             onPress: () => Navigator.of(context).pop(),
-            child: const Icon(Icons.close, size: 20),
+            child: const Icon(FLucideIcons.x, size: 20),
           ),
         ],
       ),
@@ -832,14 +832,14 @@ class _Footer extends StatelessWidget {
           FButton(
             variant: FButtonVariant.ghost,
             onPress: onDismiss,
-            prefix: const Icon(Icons.close, size: 16),
+            prefix: const Icon(FLucideIcons.x, size: 16),
             child: Text(l10n.commonClose),
           ),
           const Spacer(),
           FButton(
             variant: FButtonVariant.outline,
             onPress: onExpand,
-            prefix: const Icon(Icons.open_in_full, size: 16),
+            prefix: const Icon(FLucideIcons.maximize, size: 16),
             child: Text(l10n.aiChatSheetExpandTooltip),
           ),
         ],

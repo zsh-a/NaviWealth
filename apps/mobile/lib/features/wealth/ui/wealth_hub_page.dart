@@ -42,7 +42,7 @@ class WealthHubPage extends ConsumerWidget {
         title: Text(l10n.wealthHubTitle),
         suffixes: [
           FHeaderAction(
-            icon: const Icon(Icons.add_outlined),
+            icon: const Icon(FLucideIcons.plus),
             semanticsLabel: l10n.accountsActionsTitle,
             onPress: () => showWealthActionPanel(context),
           ),
@@ -208,31 +208,31 @@ class _WealthSectionGrid extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final sections = <_WealthSectionSpec>[
       _WealthSectionSpec(
-        icon: Icons.tune_outlined,
+        icon: FLucideIcons.slidersHorizontal,
         title: l10n.wealthAccountsSectionTitle,
         subtitle: l10n.wealthAccountsSectionSubtitle,
         path: AppRoutes.wealthAccounts,
       ),
       _WealthSectionSpec(
-        icon: Icons.stacked_line_chart,
+        icon: FLucideIcons.chartLine,
         title: l10n.wealthHoldingsSectionTitle,
         subtitle: l10n.wealthHoldingsSectionSubtitle,
         path: AppRoutes.wealthPortfolio,
       ),
       _WealthSectionSpec(
-        icon: Icons.notifications_active_outlined,
+        icon: FLucideIcons.bellRing,
         title: l10n.wealthWatchlistSectionTitle,
         subtitle: l10n.wealthWatchlistSectionSubtitle,
         path: AppRoutes.wealthWatchlist,
       ),
       _WealthSectionSpec(
-        icon: Icons.account_balance_outlined,
+        icon: FLucideIcons.landmark,
         title: l10n.wealthLiabilitiesSectionTitle,
         subtitle: l10n.wealthLiabilitiesSectionSubtitle,
         path: AppRoutes.wealthLiabilities,
       ),
       _WealthSectionSpec(
-        icon: Icons.payments_outlined,
+        icon: FLucideIcons.banknote,
         title: l10n.wealthIncomeProjectionTitle,
         subtitle: l10n.wealthIncomeProjectionSubtitle,
         path: AppRoutes.wealthIncomeProjection,
@@ -320,7 +320,7 @@ class _WealthSectionCard extends StatelessWidget {
         ),
         title: Text(spec.title),
         subtitle: Text(spec.subtitle),
-        suffix: const Icon(Icons.chevron_right, size: 18),
+        suffix: const Icon(FLucideIcons.chevronRight, size: 18),
       ),
     );
   }
@@ -341,7 +341,7 @@ class WealthIncomeProjectionPlaceholderPage extends StatelessWidget {
       childPad: false,
       child: Center(
         child: AppEmptyState(
-          icon: Icons.payments_outlined,
+          icon: FLucideIcons.banknote,
           title: l10n.wealthIncomeProjectionComingSoon,
         ),
       ),

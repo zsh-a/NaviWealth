@@ -62,15 +62,15 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
               // by design: a plain outlined inbox, no badge/glow; the
               // pending count lives inside the review page.
               FHeaderAction(
-                icon: const Icon(Icons.move_to_inbox_outlined),
+                icon: const Icon(FLucideIcons.inbox),
                 onPress: () => context.push(AppRoutes.activityIngest),
               ),
               FHeaderAction(
-                icon: const Icon(Icons.filter_list_outlined),
+                icon: const Icon(FLucideIcons.filter),
                 onPress: () => ActivityFeedFilterSheet.show(context),
               ),
               FHeaderAction(
-                icon: const Icon(Icons.add_outlined),
+                icon: const Icon(FLucideIcons.plus),
                 onPress: () => showActivityActionPanel(context),
               ),
             ],
@@ -191,7 +191,7 @@ class _ActivityRightRail extends ConsumerWidget {
                 child: FButton(
                   variant: FButtonVariant.primary,
                   onPress: onAdd,
-                  prefix: const Icon(Icons.add_outlined),
+                  prefix: const Icon(FLucideIcons.plus),
                   child: Text(l10n.activityAddAction),
                 ),
               ),
@@ -201,7 +201,7 @@ class _ActivityRightRail extends ConsumerWidget {
                 child: FButton(
                   variant: FButtonVariant.outline,
                   onPress: onFilter,
-                  prefix: const Icon(Icons.filter_list_outlined),
+                  prefix: const Icon(FLucideIcons.filter),
                   child: Text(l10n.activityFeedFilterTitle),
                 ),
               ),

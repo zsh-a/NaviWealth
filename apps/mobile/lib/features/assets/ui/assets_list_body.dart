@@ -25,7 +25,7 @@ class AssetsDetailEmpty extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: MasterDetailEmpty(
-          icon: Icons.account_balance_wallet_outlined,
+          icon: FLucideIcons.wallet,
           message: l10n.assetsDetailEmpty,
         ),
       ),
@@ -128,7 +128,7 @@ class _EmptyHint extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.account_balance_wallet_outlined, size: 48),
+            const Icon(FLucideIcons.wallet, size: 48),
             const SizedBox(height: 12),
             Text(l10n.assetsEmptyHint, textAlign: TextAlign.center),
           ],

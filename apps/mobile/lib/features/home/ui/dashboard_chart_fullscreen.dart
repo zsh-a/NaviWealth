@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' show Icons, MaterialPageRoute, Navigator;
+import 'package:flutter/material.dart' show MaterialPageRoute;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
@@ -54,7 +54,7 @@ class _DashboardChartFullscreenPageState
         title: Text(widget.title),
         prefixes: [
           FHeaderAction(
-            icon: const Icon(Icons.close),
+            icon: const Icon(FLucideIcons.x),
             onPress: () => Navigator.of(context).pop(),
           ),
         ],

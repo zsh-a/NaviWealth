@@ -81,7 +81,7 @@ class TrendCard extends ConsumerWidget {
                                 title: l10n.dashboardTrendTitle,
                                 child: const _TrendFullscreenContent(),
                               ),
-                        child: const Icon(Icons.fullscreen, size: 20),
+                        child: const Icon(FLucideIcons.maximize, size: 20),
                       ),
                     ),
                     orElse: () => const SizedBox(width: 48, height: 48),

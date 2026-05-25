@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 import 'package:naviwealth/data/domain/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -73,7 +74,7 @@ void main() {
     await _pump(tester, const []);
 
     expect(find.text('No active cycles'), findsOneWidget);
-    expect(find.byIcon(Icons.autorenew_outlined), findsWidgets);
+    expect(find.byIcon(FLucideIcons.refreshCw), findsWidgets);
   });
 
   testWidgets('lists cycles by underlying with stage label', (tester) async {

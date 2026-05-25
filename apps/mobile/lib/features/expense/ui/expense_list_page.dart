@@ -84,7 +84,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
-            icon: const Icon(Icons.insights_outlined),
+            icon: const Icon(FLucideIcons.lightbulb),
             onPress: () => context.go(AppRoutes.expenseReport),
           ),
         ],

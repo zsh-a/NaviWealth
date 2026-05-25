@@ -32,7 +32,7 @@ class WheelLifecyclePage extends ConsumerWidget {
         loading: () => const Center(child: FCircularProgress()),
         error: (_, _) => Center(
           child: AppEmptyState(
-            icon: Icons.autorenew_outlined,
+            icon: FLucideIcons.refreshCw,
             title: l10n.planWheelEmptyTitle,
           ),
         ),
@@ -40,7 +40,7 @@ class WheelLifecyclePage extends ConsumerWidget {
           if (cycles.isEmpty) {
             return Center(
               child: AppEmptyState(
-                icon: Icons.autorenew_outlined,
+                icon: FLucideIcons.refreshCw,
                 title: l10n.planWheelEmptyTitle,
                 message: l10n.planWheelEmptyBody,
               ),
@@ -101,15 +101,15 @@ class _WheelTile extends StatelessWidget {
 }
 
 IconData _stageIcon(WheelStage stage) => switch (stage) {
-  WheelStage.between => Icons.circle_outlined,
-  WheelStage.cashWaiting => Icons.account_balance_wallet_outlined,
-  WheelStage.shortPut => Icons.south_west_outlined,
-  WheelStage.putExpired => Icons.check_circle_outline,
-  WheelStage.putAssigned => Icons.input_outlined,
-  WheelStage.sharesHeld => Icons.inventory_2_outlined,
-  WheelStage.shortCall => Icons.north_east_outlined,
-  WheelStage.callExpired => Icons.check_circle_outline,
-  WheelStage.callCalled => Icons.output_outlined,
+  WheelStage.between => FLucideIcons.circle,
+  WheelStage.cashWaiting => FLucideIcons.wallet,
+  WheelStage.shortPut => FLucideIcons.arrowDownLeft,
+  WheelStage.putExpired => FLucideIcons.circleCheck,
+  WheelStage.putAssigned => FLucideIcons.logIn,
+  WheelStage.sharesHeld => FLucideIcons.package,
+  WheelStage.shortCall => FLucideIcons.arrowUpRight,
+  WheelStage.callExpired => FLucideIcons.circleCheck,
+  WheelStage.callCalled => FLucideIcons.logOut,
 };
 
 /// Labels are pinned in code (not l10n) because the Wheel stages are a

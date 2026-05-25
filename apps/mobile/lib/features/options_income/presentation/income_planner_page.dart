@@ -37,7 +37,7 @@ class IncomePlannerPage extends ConsumerWidget {
     final acked = profileAsync.value?.hasAcknowledgedRiskDisclosure ?? false;
     final FHeaderAction? settingsAction = acked
         ? FHeaderAction(
-            icon: const Icon(Icons.tune),
+            icon: const Icon(FLucideIcons.slidersHorizontal),
             onPress: () => showStrategyProfileSheet(context),
           )
         : null;
@@ -124,7 +124,7 @@ class _StartState extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.candlestick_chart_outlined,
+              FLucideIcons.candlestickChart,
               size: 48,
               color: colors.mutedForeground,
             ),

@@ -72,7 +72,7 @@ class _PassiveIncomeContent extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _CardHeader(
-              icon: Icons.savings_outlined,
+              icon: FLucideIcons.piggyBank,
               title: l10n.homePassiveIncomeTitle,
               color: Colors.teal,
             ),
@@ -231,7 +231,7 @@ class _CardHeader extends StatelessWidget {
           ),
         ),
         Icon(
-          Icons.chevron_right,
+          FLucideIcons.chevronRight,
           size: 18,
           color: context.theme.colors.mutedForeground.withValues(alpha: 0.6),
         ),

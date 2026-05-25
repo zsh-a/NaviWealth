@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart' show Icons, Navigator;
 import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -28,35 +28,35 @@ Future<void> showWealthActionPanel(BuildContext context) {
     builder: (sheetContext) => AppActionSheetList(
       children: [
         AppActionSheetTile(
-          icon: Icons.account_balance_outlined,
+          icon: FLucideIcons.landmark,
           title: l10n.accountFormCreateTitle,
           subtitle: l10n.accountsActionAccountHint,
           onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.wealthAccountNew),
         ),
         AppActionSheetTile(
-          icon: Icons.account_balance_wallet_outlined,
+          icon: FLucideIcons.wallet,
           title: l10n.assetsAddCashTitle,
           subtitle: l10n.assetsAddCashSubtitle,
           onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.wealthNewCash),
         ),
         AppActionSheetTile(
-          icon: Icons.savings_outlined,
+          icon: FLucideIcons.piggyBank,
           title: l10n.assetsAddDepositTitle,
           subtitle: l10n.assetsAddDepositSubtitle,
           onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.wealthNewDeposit),
         ),
         AppActionSheetTile(
-          icon: Icons.auto_graph_outlined,
+          icon: FLucideIcons.chartLine,
           title: l10n.assetsAddWealthTitle,
           subtitle: l10n.assetsAddWealthSubtitle,
           onPress: () =>
               _closeAndPush(sheetContext, context, AppRoutes.wealthNewWealth),
         ),
         AppActionSheetTile(
-          icon: Icons.home_outlined,
+          icon: FLucideIcons.house,
           title: l10n.physicalAssetAddRealEstate,
           subtitle: l10n.assetsAddRealEstateSubtitle,
           onPress: () => _closeAndOpenPhysical(
@@ -66,14 +66,14 @@ Future<void> showWealthActionPanel(BuildContext context) {
           ),
         ),
         AppActionSheetTile(
-          icon: Icons.directions_car_outlined,
+          icon: FLucideIcons.car,
           title: l10n.physicalAssetAddVehicle,
           subtitle: l10n.assetsAddVehicleSubtitle,
           onPress: () =>
               _closeAndOpenPhysical(sheetContext, context, AssetType.vehicle),
         ),
         AppActionSheetTile(
-          icon: Icons.payments_outlined,
+          icon: FLucideIcons.banknote,
           title: l10n.superFabLiability,
           subtitle: l10n.accountsActionLiabilityHint,
           onPress: () => _closeAndPush(

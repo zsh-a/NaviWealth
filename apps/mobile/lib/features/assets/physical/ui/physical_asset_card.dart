@@ -72,12 +72,12 @@ class PhysicalAssetCard extends StatelessWidget {
   static IconData _iconForType(AssetType type) {
     switch (type) {
       case AssetType.realEstate:
-        return Icons.home_outlined;
+        return FLucideIcons.house;
       case AssetType.vehicle:
-        return Icons.directions_car_outlined;
+        return FLucideIcons.car;
       // ignore: no_default_cases
       default:
-        return Icons.inventory_2_outlined;
+        return FLucideIcons.package;
     }
   }
 

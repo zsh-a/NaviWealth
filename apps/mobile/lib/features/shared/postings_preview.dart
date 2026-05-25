@@ -163,7 +163,7 @@ class _UnitBalanceRow extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            balanced ? Icons.check_circle_outline : Icons.error_outline,
+            balanced ? FLucideIcons.circleCheck : FLucideIcons.circleAlert,
             size: 14,
             color: tone,
           ),

@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/dashboard_models.dart';
@@ -34,21 +35,21 @@ class AssetCategoryVisuals {
   static IconData icon(AssetCategory category) {
     switch (category) {
       case AssetCategory.stock:
-        return Icons.show_chart;
+        return FLucideIcons.chartLine;
       case AssetCategory.etf:
-        return Icons.candlestick_chart_outlined;
+        return FLucideIcons.candlestickChart;
       case AssetCategory.bondsAndFunds:
-        return Icons.savings_outlined;
+        return FLucideIcons.piggyBank;
       case AssetCategory.cash:
-        return Icons.account_balance_wallet_outlined;
+        return FLucideIcons.wallet;
       case AssetCategory.crypto:
-        return Icons.currency_bitcoin;
+        return FLucideIcons.bitcoin;
       case AssetCategory.realEstate:
-        return Icons.home_outlined;
+        return FLucideIcons.house;
       case AssetCategory.vehicle:
-        return Icons.directions_car_outlined;
+        return FLucideIcons.car;
       case AssetCategory.liability:
-        return Icons.payments_outlined;
+        return FLucideIcons.banknote;
     }
   }
 }

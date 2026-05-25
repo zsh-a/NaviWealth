@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart' show Icons, Navigator;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -39,7 +39,7 @@ Future<void> showDividendEventActions(
     builder: (sheetContext) => AppActionSheetList(
       children: [
         AppActionSheetTile(
-          icon: Icons.receipt_long_outlined,
+          icon: FLucideIcons.receipt,
           title: l10n.dividendEventViewInActivity,
           subtitle: l10n.dividendEventViewInActivityHint,
           onPress: () {
@@ -48,7 +48,7 @@ Future<void> showDividendEventActions(
           },
         ),
         AppActionSheetTile(
-          icon: Icons.edit_outlined,
+          icon: FLucideIcons.pencil,
           title: l10n.dividendEventEdit,
           subtitle: l10n.dividendEventEditHint,
           onPress: () {
@@ -57,7 +57,7 @@ Future<void> showDividendEventActions(
           },
         ),
         AppActionSheetTile(
-          icon: Icons.delete_outline,
+          icon: FLucideIcons.trash2,
           title: l10n.commonDelete,
           subtitle: l10n.dividendEventDeleteHint,
           onPress: () {

@@ -98,7 +98,7 @@ class _FireBucketsCardState extends ConsumerState<FireBucketsCard> {
                   child: FButton(
                     variant: FButtonVariant.outline,
                     onPress: () => showFireBucketMappingSheet(context),
-                    prefix: const Icon(Icons.tune, size: 14),
+                    prefix: const Icon(FLucideIcons.slidersHorizontal, size: 14),
                     child: Text(l10n.fireOsBucketsManageCta),
                   ),
                 ),
@@ -173,7 +173,7 @@ class _BucketRow extends StatelessWidget {
               ),
               if (hasAssets)
                 Icon(
-                  expanded ? Icons.expand_less : Icons.expand_more,
+                  expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
                   size: 16,
                   color: colors.mutedForeground,
                 ),

@@ -64,8 +64,8 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                   children: [
                     Icon(
                       pending
-                          ? Icons.hourglass_empty
-                          : Icons.check_circle_outline,
+                          ? FLucideIcons.hourglass
+                          : FLucideIcons.circleCheck,
                       size: 16,
                       color: pending ? colors.mutedForeground : colors.primary,
                     ),
@@ -101,7 +101,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                       ),
                     ),
                     Icon(
-                      _expanded ? Icons.expand_less : Icons.expand_more,
+                      _expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
                       size: 18,
                       color: context.theme.colors.mutedForeground,
                     ),
@@ -317,38 +317,38 @@ class _CodeBlock extends StatelessWidget {
 IconData toolIcon(String wireName) {
   return switch (wireName) {
     // Portfolio / holdings reads
-    'get_holdings' => Icons.account_balance_wallet_outlined,
-    'read_account_window' => Icons.account_balance_outlined,
-    'read_asset_window' => Icons.show_chart_outlined,
-    'read_category_window' => Icons.category_outlined,
-    'list_payment_accounts' => Icons.payments_outlined,
+    'get_holdings' => FLucideIcons.wallet,
+    'read_account_window' => FLucideIcons.landmark,
+    'read_asset_window' => FLucideIcons.chartLine,
+    'read_category_window' => FLucideIcons.layoutGrid,
+    'list_payment_accounts' => FLucideIcons.banknote,
     // Aggregations / breakdowns
-    'compute_net_worth' || 'get_net_worth_summary' => Icons.savings_outlined,
-    'compute_xirr' || 'get_xirr_summary' => Icons.percent,
-    'get_investment_performance' => Icons.trending_up,
-    'get_asset_allocation' => Icons.pie_chart_outline,
-    'get_industry_breakdown' => Icons.donut_small_outlined,
-    'get_geo_breakdown' => Icons.public_outlined,
-    'get_market_cap_breakdown' => Icons.show_chart,
-    'get_risk_alerts' => Icons.warning_amber_outlined,
-    'get_anomaly_flags' => Icons.bolt_outlined,
-    'get_cashflow_buckets' => Icons.account_tree_outlined,
+    'compute_net_worth' || 'get_net_worth_summary' => FLucideIcons.piggyBank,
+    'compute_xirr' || 'get_xirr_summary' => FLucideIcons.percent,
+    'get_investment_performance' => FLucideIcons.trendingUp,
+    'get_asset_allocation' => FLucideIcons.chartPie,
+    'get_industry_breakdown' => FLucideIcons.chartPie,
+    'get_geo_breakdown' => FLucideIcons.globe,
+    'get_market_cap_breakdown' => FLucideIcons.chartLine,
+    'get_risk_alerts' => FLucideIcons.triangleAlert,
+    'get_anomaly_flags' => FLucideIcons.zap,
+    'get_cashflow_buckets' => FLucideIcons.folderTree,
     // Expense intelligence
-    'get_recurring_patterns' => Icons.repeat,
-    'get_subscription_changes' => Icons.subscriptions_outlined,
-    'get_refund_links' => Icons.assignment_return_outlined,
-    'get_transfer_links' => Icons.swap_horiz,
+    'get_recurring_patterns' => FLucideIcons.repeat,
+    'get_subscription_changes' => FLucideIcons.playSquare,
+    'get_refund_links' => FLucideIcons.undoDot,
+    'get_transfer_links' => FLucideIcons.arrowLeftRight,
     // FIRE
-    'get_fire_state' || 'get_fire_plan' => Icons.flag_outlined,
-    'get_fire_buckets' => Icons.account_tree_outlined,
-    'get_fire_review' => Icons.history,
-    'get_fire_stress_tests' || 'simulate_fire_plan' => Icons.science_outlined,
+    'get_fire_state' || 'get_fire_plan' => FLucideIcons.flag,
+    'get_fire_buckets' => FLucideIcons.folderTree,
+    'get_fire_review' => FLucideIcons.history,
+    'get_fire_stress_tests' || 'simulate_fire_plan' => FLucideIcons.flaskConical,
     // Options income
-    'get_options_income_opportunities' => Icons.savings,
-    'get_options_strategy_profile' => Icons.handshake_outlined,
+    'get_options_income_opportunities' => FLucideIcons.piggyBank,
+    'get_options_strategy_profile' => FLucideIcons.handshake,
     // Anything else — generic gear, never the AI sparkle (kept for
     // assistant-identity affordances elsewhere).
-    _ => Icons.settings_suggest_outlined,
+    _ => FLucideIcons.settings,
   };
 }
 
@@ -459,15 +459,15 @@ List<_Jump> _extractJumps(AppLocalizations l10n, Object? output) {
           switch (key) {
             case 'asset_id':
               kind = _JumpKind.asset;
-              icon = Icons.account_balance_wallet_outlined;
+              icon = FLucideIcons.wallet;
               label = l10n.aiChatToolJumpAsset(_shortId(value));
             case 'account_id':
               kind = _JumpKind.account;
-              icon = Icons.account_box_outlined;
+              icon = FLucideIcons.userCircle;
               label = l10n.aiChatToolJumpAccount(_shortId(value));
             case 'liability_id':
               kind = _JumpKind.liability;
-              icon = Icons.credit_card_outlined;
+              icon = FLucideIcons.creditCard;
               label = l10n.aiChatToolJumpLiability(_shortId(value));
           }
           if (kind != null && seen.add('$kind:$value')) {
@@ -510,35 +510,35 @@ _Jump? _jumpFromEvidence(AppLocalizations l10n, EvidenceAnchor anchor) {
         kind: _JumpKind.asset,
         id: anchor.entityId,
         label: labelFor(l10n.aiChatToolJumpAsset(fallbackId)),
-        icon: Icons.account_balance_wallet_outlined,
+        icon: FLucideIcons.wallet,
       );
     case 'accounts':
       return _Jump(
         kind: _JumpKind.account,
         id: anchor.entityId,
         label: labelFor(l10n.aiChatToolJumpAccount(fallbackId)),
-        icon: Icons.account_box_outlined,
+        icon: FLucideIcons.userCircle,
       );
     case 'liabilities':
       return _Jump(
         kind: _JumpKind.liability,
         id: anchor.entityId,
         label: labelFor(l10n.aiChatToolJumpLiability(fallbackId)),
-        icon: Icons.credit_card_outlined,
+        icon: FLucideIcons.creditCard,
       );
     case 'journal_entries':
       return _Jump(
         kind: _JumpKind.journalEntry,
         id: anchor.entityId,
         label: labelFor(l10n.aiChatToolJumpJournalEntry(fallbackId)),
-        icon: Icons.receipt_long_outlined,
+        icon: FLucideIcons.receipt,
       );
     case 'options_trade_journal':
       return _Jump(
         kind: _JumpKind.tradeJournal,
         id: anchor.entityId,
         label: labelFor(l10n.aiChatToolJumpTradeJournal(fallbackId)),
-        icon: Icons.candlestick_chart_outlined,
+        icon: FLucideIcons.candlestickChart,
       );
     default:
       return null;

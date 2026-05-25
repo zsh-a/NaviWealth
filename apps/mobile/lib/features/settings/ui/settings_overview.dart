@@ -88,28 +88,28 @@ class SettingsOverview extends ConsumerWidget {
       child: Column(
         children: [
           InlineLinkRow(
-            icon: Icons.lock_outline,
+            icon: FLucideIcons.lock,
             label: l10n.settingsAiPrivacyTitle,
             subtitle: l10n.settingsAiPrivacySubtitle,
             onTap: () => context.goNamed(AppRouteNames.aiPrivacy),
           ),
           _SectionDivider(),
           InlineLinkRow(
-            icon: Icons.key_outlined,
+            icon: FLucideIcons.key,
             label: l10n.settingsAiLlmTitle,
             subtitle: l10n.settingsAiLlmSubtitle,
             onTap: () => context.goNamed(AppRouteNames.aiLlm),
           ),
           _SectionDivider(),
           InlineLinkRow(
-            icon: Icons.visibility_outlined,
+            icon: FLucideIcons.eye,
             label: l10n.settingsAiTransparencyTitle,
             subtitle: l10n.settingsAiTransparencySubtitle,
             onTap: () => context.goNamed(AppRouteNames.aiTransparency),
           ),
           _SectionDivider(),
           InlineLinkRow(
-            icon: Icons.download_outlined,
+            icon: FLucideIcons.download,
             label: 'AI 模型',
             subtitle: '下载 / 管理本地 embedder 模型 (EmbeddingGemma)',
             onTap: () => context.goNamed(AppRouteNames.aiModels),
@@ -125,7 +125,7 @@ class SettingsOverview extends ConsumerWidget {
         children: [
           if (!isLocalOnly) ...[
             InlineLinkRow(
-              icon: Icons.cloud_sync_outlined,
+              icon: FLucideIcons.refreshCw,
               label: l10n.settingsSyncTitle,
               subtitle: l10n.settingsSyncSubtitle,
               onTap: () => context.goNamed(AppRouteNames.sync),
@@ -133,7 +133,7 @@ class SettingsOverview extends ConsumerWidget {
             _SectionDivider(),
           ],
           InlineLinkRow(
-            icon: Icons.backup_outlined,
+            icon: FLucideIcons.cloudUpload,
             label: l10n.settingsDataTitle,
             subtitle: l10n.settingsDataSubtitle,
             onTap: () => context.goNamed(AppRouteNames.backup),
@@ -151,7 +151,7 @@ class SettingsOverview extends ConsumerWidget {
         ? _Section(
             title: l10n.settingsDeveloperSection,
             child: InlineLinkRow(
-              icon: Icons.bug_report_outlined,
+              icon: FLucideIcons.bug,
               label: l10n.settingsLogsTitle,
               subtitle: l10n.settingsLogsSubtitle,
               onTap: () => context.goNamed(AppRouteNames.logs),
@@ -334,7 +334,7 @@ class _AccountSection extends ConsumerWidget {
       );
     }
     return InlineLinkRow(
-      icon: Icons.devices_outlined,
+      icon: FLucideIcons.monitor,
       label: l10n.settingsDevicesTitle,
       subtitle: l10n.settingsDevicesSubtitle,
       onTap: () => context.goNamed(AppRouteNames.devices),
@@ -351,7 +351,7 @@ class _NumbersAndMoneySection extends ConsumerWidget {
     return Column(
       children: [
         InlineSettingRow<String>(
-          icon: Icons.currency_exchange,
+          icon: FLucideIcons.arrowLeftRight,
           label: l10n.settingsBaseCurrencyTitle,
           value: baseCurrency,
           options: {
@@ -363,7 +363,7 @@ class _NumbersAndMoneySection extends ConsumerWidget {
         ),
         _SectionDivider(),
         InlineLinkRow(
-          icon: Icons.published_with_changes_outlined,
+          icon: FLucideIcons.refreshCw,
           label: l10n.settingsFxRatesTitle,
           subtitle: l10n.settingsFxRatesSubtitle,
           onTap: () => context.goNamed(AppRouteNames.fxRates),
@@ -386,7 +386,7 @@ class _AppearanceSection extends ConsumerWidget {
     return Column(
       children: [
         InlineSettingRow<ThemeMode>(
-          icon: Icons.brightness_6_outlined,
+          icon: FLucideIcons.sunMoon,
           label: l10n.settingsThemeModeTitle,
           value: themeMode,
           options: {
@@ -399,7 +399,7 @@ class _AppearanceSection extends ConsumerWidget {
         ),
         _SectionDivider(),
         InlineSettingRow<MarketColorMode>(
-          icon: Icons.swap_vert,
+          icon: FLucideIcons.arrowUpDown,
           label: l10n.settingsMarketColorTitle,
           value: marketMode,
           options: {
@@ -414,7 +414,7 @@ class _AppearanceSection extends ConsumerWidget {
         ),
         _SectionDivider(),
         InlineSettingRow<String>(
-          icon: Icons.translate_outlined,
+          icon: FLucideIcons.languages,
           label: l10n.settingsLanguageTitle,
           value: locale?.languageCode ?? '',
           options: {
@@ -474,7 +474,7 @@ class _AboutTile extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
-          Icon(Icons.info_outline, size: 18, color: colors.mutedForeground),
+          Icon(FLucideIcons.info, size: 18, color: colors.mutedForeground),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -532,7 +532,7 @@ class _CrashReportingRow extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final enabled = ref.watch(crashReportingEnabledProvider);
     return InlineSwitchRow(
-      icon: Icons.bug_report_outlined,
+      icon: FLucideIcons.bug,
       label: l10n.settingsCrashReportingTitle,
       subtitle: l10n.settingsCrashReportingSubtitle,
       value: enabled,
@@ -561,7 +561,7 @@ class _RiskAppetiteRow extends ConsumerWidget {
           Row(
             children: [
               Icon(
-                Icons.tune_outlined,
+                FLucideIcons.slidersHorizontal,
                 size: 18,
                 color: colors.mutedForeground,
               ),
@@ -663,7 +663,7 @@ class _TargetAllocationLink extends ConsumerWidget {
       RiskAppetite.custom => l10n.settingsRiskAppetiteCustom,
     };
     return InlineLinkRow(
-      icon: Icons.donut_small_outlined,
+      icon: FLucideIcons.chartPie,
       label: l10n.settingsTargetAllocationLabel,
       subtitle: subtitle,
       trailingBadge: appetite == RiskAppetite.custom
@@ -688,7 +688,7 @@ class _RiskThresholdsLink extends ConsumerWidget {
     // users sitting on the aggressive preset are still "auto-tuned".
     final isCustom = !isAtAnyAppetitePreset(thresholds);
     return InlineLinkRow(
-      icon: Icons.notifications_active_outlined,
+      icon: FLucideIcons.bellRing,
       label: l10n.settingsRiskThresholdsLabel,
       trailingBadge: isCustom
           ? l10n.settingsBadgeCustom
@@ -709,7 +709,7 @@ class _StressTestLink extends ConsumerWidget {
     final risk = ref.watch(firePlanExtrasProvider).riskSettings;
     final isCustom = risk != const FireRiskSettings();
     return InlineLinkRow(
-      icon: Icons.science_outlined,
+      icon: FLucideIcons.flaskConical,
       label: l10n.settingsStressTestLabel,
       trailingBadge: isCustom
           ? l10n.settingsBadgeCustom
@@ -733,7 +733,7 @@ class _MonthlyExpenseLink extends ConsumerWidget {
         ? l10n.settingsMonthlyExpenseSubtitleOverride
         : l10n.settingsMonthlyExpenseSubtitleAuto(prefs.windowMonths);
     return InlineLinkRow(
-      icon: Icons.calendar_view_month_outlined,
+      icon: FLucideIcons.calendarDays,
       label: l10n.settingsMonthlyExpenseLabel,
       subtitle: subtitle,
       trailingBadge: isOverride
@@ -760,7 +760,7 @@ class _LocalModeStatusRow extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            Icons.smartphone_outlined,
+            FLucideIcons.smartphone,
             size: 18,
             color: colors.mutedForeground,
           ),

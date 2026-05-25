@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
 import '../physical/ui/physical_asset_card.dart';

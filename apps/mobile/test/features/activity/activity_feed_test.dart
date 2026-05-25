@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
@@ -117,7 +118,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('No activity yet'), findsOneWidget);
-    expect(find.byIcon(Icons.timeline_outlined), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.workflow), findsOneWidget);
   });
 
   testWidgets('renders a dated journal row with payee and headline amount', (

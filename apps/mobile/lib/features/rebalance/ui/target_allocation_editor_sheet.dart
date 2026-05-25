@@ -272,8 +272,8 @@ class _TotalCard extends StatelessWidget {
           children: [
             Icon(
               valid
-                  ? Icons.check_circle_outline_rounded
-                  : Icons.error_outline_rounded,
+                  ? FLucideIcons.circleCheck
+                  : FLucideIcons.circleAlert,
               size: 20,
               color: fg,
             ),

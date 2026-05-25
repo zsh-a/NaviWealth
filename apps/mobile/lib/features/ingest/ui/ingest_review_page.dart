@@ -55,15 +55,15 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
-            icon: const Icon(Icons.photo_camera_outlined),
+            icon: const Icon(FLucideIcons.camera),
             onPress: _busy ? null : _captureCamera,
           ),
           FHeaderAction(
-            icon: const Icon(Icons.attach_file_outlined),
+            icon: const Icon(FLucideIcons.paperclip),
             onPress: _busy ? null : _pickFile,
           ),
           FHeaderAction(
-            icon: const Icon(Icons.content_paste_outlined),
+            icon: const Icon(FLucideIcons.clipboard),
             onPress: _busy ? null : _openPasteDialog,
           ),
         ],
@@ -457,7 +457,7 @@ class _EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.move_to_inbox_outlined,
+              FLucideIcons.inbox,
               size: 40,
               color: colors.mutedForeground.withValues(alpha: 0.5),
             ),
@@ -485,19 +485,19 @@ class _EmptyState extends StatelessWidget {
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: onCamera,
-                  prefix: const Icon(Icons.photo_camera_outlined),
+                  prefix: const Icon(FLucideIcons.camera),
                   child: Text(l10n.ingestCameraAction),
                 ),
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: onImport,
-                  prefix: const Icon(Icons.attach_file_outlined),
+                  prefix: const Icon(FLucideIcons.paperclip),
                   child: Text(l10n.ingestImportFileAction),
                 ),
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: onPaste,
-                  prefix: const Icon(Icons.content_paste_outlined),
+                  prefix: const Icon(FLucideIcons.clipboard),
                   child: Text(l10n.ingestPasteAction),
                 ),
               ],

@@ -160,7 +160,7 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
                         height: 18,
                         child: FCircularProgress(),
                       )
-                    : const Icon(Icons.cloud_sync_outlined),
+                    : const Icon(FLucideIcons.refreshCw),
                 onPress: _syncing ? null : () => _syncMetadata(asset),
               ),
             ],
@@ -197,7 +197,7 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
                   variant: FButtonVariant.primary,
                   onPress: () =>
                       context.push(AppRoutes.tradeForAsset(asset.id)),
-                  prefix: const Icon(Icons.add, size: 16),
+                  prefix: const Icon(FLucideIcons.plus, size: 16),
                   child: Text(l10n.assetDetailNewTradeLabel),
                 ),
               ],

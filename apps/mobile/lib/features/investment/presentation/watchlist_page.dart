@@ -59,7 +59,7 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
-            icon: const Icon(Icons.add_outlined),
+            icon: const Icon(FLucideIcons.plus),
             semanticsLabel: l10n.watchlistAddAction,
             onPress: () => showWatchlistItemSheet(context: context),
           ),
@@ -196,7 +196,7 @@ class _WatchlistEmpty extends StatelessWidget {
       child: Column(
         children: [
           Icon(
-            Icons.notifications_active_outlined,
+            FLucideIcons.bellRing,
             size: 42,
             color: context.theme.colors.mutedForeground,
           ),
@@ -559,11 +559,11 @@ String _marketLabel(AppLocalizations l10n, AssetMarket market) {
 
 IconData _marketIcon(AssetMarket market) {
   return switch (market) {
-    AssetMarket.crypto => Icons.currency_bitcoin_outlined,
-    AssetMarket.fx => Icons.currency_exchange_outlined,
+    AssetMarket.crypto => FLucideIcons.bitcoin,
+    AssetMarket.fx => FLucideIcons.arrowLeftRight,
     AssetMarket.cnA ||
     AssetMarket.hkStock ||
-    AssetMarket.usStock => Icons.show_chart_outlined,
-    AssetMarket.unknown => Icons.trending_up_outlined,
+    AssetMarket.usStock => FLucideIcons.chartLine,
+    AssetMarket.unknown => FLucideIcons.trendingUp,
   };
 }

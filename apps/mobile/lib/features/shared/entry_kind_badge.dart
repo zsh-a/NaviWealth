@@ -99,9 +99,9 @@ _BadgeVisuals _entryKindVisuals(EntryKindClassification c, ColorScheme scheme) {
       // generic chart icon — never seen in the canonical builders but
       // possible if an external import lands a malformed JE.
       final icon = switch (c.isInflow) {
-        true => Icons.trending_up,
-        false => Icons.trending_down,
-        null => Icons.show_chart,
+        true => FLucideIcons.trendingUp,
+        false => FLucideIcons.trendingDown,
+        null => FLucideIcons.chartLine,
       };
       return _BadgeVisuals(
         icon: icon,
@@ -111,49 +111,49 @@ _BadgeVisuals _entryKindVisuals(EntryKindClassification c, ColorScheme scheme) {
       );
     case EntryKind.transfer:
       return _BadgeVisuals(
-        icon: Icons.swap_horiz,
+        icon: FLucideIcons.arrowLeftRight,
         background: scheme.secondaryContainer,
         foreground: scheme.onSecondaryContainer,
         defaultLabel: 'Transfer',
       );
     case EntryKind.income:
       return _BadgeVisuals(
-        icon: Icons.south_west,
+        icon: FLucideIcons.arrowDownLeft,
         background: scheme.tertiaryContainer,
         foreground: scheme.onTertiaryContainer,
         defaultLabel: 'Income',
       );
     case EntryKind.expense:
       return _BadgeVisuals(
-        icon: Icons.north_east,
+        icon: FLucideIcons.arrowUpRight,
         background: scheme.errorContainer,
         foreground: scheme.onErrorContainer,
         defaultLabel: 'Expense',
       );
     case EntryKind.payment:
       return _BadgeVisuals(
-        icon: Icons.payments,
+        icon: FLucideIcons.banknote,
         background: scheme.secondaryContainer,
         foreground: scheme.onSecondaryContainer,
         defaultLabel: 'Payment',
       );
     case EntryKind.adjustment:
       return _BadgeVisuals(
-        icon: Icons.call_split,
+        icon: FLucideIcons.gitBranch,
         background: scheme.surfaceContainerHigh,
         foreground: scheme.onSurface,
         defaultLabel: 'Adjustment',
       );
     case EntryKind.opening:
       return _BadgeVisuals(
-        icon: Icons.flag_outlined,
+        icon: FLucideIcons.flag,
         background: scheme.surfaceContainerHigh,
         foreground: scheme.onSurfaceVariant,
         defaultLabel: 'Opening',
       );
     case EntryKind.other:
       return _BadgeVisuals(
-        icon: Icons.edit_note,
+        icon: FLucideIcons.fileEdit,
         background: scheme.secondaryContainer,
         foreground: scheme.onSecondaryContainer,
         defaultLabel: 'Entry',

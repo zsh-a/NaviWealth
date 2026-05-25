@@ -360,7 +360,7 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
           hint: effectiveHint,
           prefixBuilder: (ctx, style, variants) => const Padding(
             padding: EdgeInsetsDirectional.only(start: 12, end: 8),
-            child: Icon(Icons.search, size: 18),
+            child: Icon(FLucideIcons.search, size: 18),
           ),
           suffixBuilder: _selected != null
               ? (ctx, style, variants) => Padding(
@@ -368,7 +368,7 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
                   child: FButton.icon(
                     variant: FButtonVariant.ghost,
                     onPress: _clear,
-                    child: const Icon(Icons.clear, size: 18),
+                    child: const Icon(FLucideIcons.x, size: 18),
                   ),
                 )
               : _loading
@@ -409,7 +409,7 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
                       const FDivider(),
                       FTile(
                         key: const Key('symbol-field-manual'),
-                        prefix: const Icon(Icons.add),
+                        prefix: const Icon(FLucideIcons.plus),
                         title: Text(l10n.localSecuritiesManualAdd),
                         subtitle: _lastQuery.isEmpty
                             ? null

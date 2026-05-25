@@ -32,7 +32,7 @@ class RebalancePage extends ConsumerWidget {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
-            icon: const Icon(Icons.tune),
+            icon: const Icon(FLucideIcons.slidersHorizontal),
             onPress: () => _openSettings(context, ref),
           ),
         ],
@@ -67,7 +67,7 @@ class _EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.balance,
+              FLucideIcons.scale,
               size: 48,
               color: context.theme.colors.mutedForeground,
             ),
@@ -160,7 +160,7 @@ class _SchemeSelector extends ConsumerWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.edit_outlined, size: 16),
+                      const Icon(FLucideIcons.pencil, size: 16),
                       const SizedBox(width: 6),
                       Text(l10n.targetAllocationEditorEditAction),
                     ],
@@ -289,7 +289,7 @@ class _TradeList extends StatelessWidget {
           child: Column(
             children: [
               Icon(
-                Icons.check_circle_outline,
+                FLucideIcons.circleCheck,
                 size: 40,
                 color: context.theme.colors.primary,
               ),
@@ -377,7 +377,7 @@ class _TradeList extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.playlist_add_check, size: 18),
+                    const Icon(FLucideIcons.listChecks, size: 18),
                     const SizedBox(width: 6),
                     Text(l10n.rebalanceExecuteAction),
                   ],

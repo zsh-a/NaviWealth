@@ -195,7 +195,7 @@ class _AiInsightCard extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: Icon(
-                Icons.auto_awesome_outlined,
+                FLucideIcons.sparkles,
                 size: 16,
                 color: colors.primary,
               ),

@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
@@ -178,7 +179,7 @@ void main() {
     // USD is off by 1 → Σ row visible with the residual.
     expect(find.text('Σ USD'), findsOneWidget);
     expect(find.text('-\$1'), findsOneWidget);
-    expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.circleAlert), findsOneWidget);
   });
 
   testWidgets('balanced posting set renders without a Σ footer', (
@@ -200,8 +201,8 @@ void main() {
     await tester.pumpWidget(
       _wrap(PostingsPreview(postings: postings, accounts: accounts)),
     );
-    expect(find.byIcon(Icons.check_circle_outline), findsNothing);
-    expect(find.byIcon(Icons.error_outline), findsNothing);
+    expect(find.byIcon(FLucideIcons.circleCheck), findsNothing);
+    expect(find.byIcon(FLucideIcons.circleAlert), findsNothing);
     expect(find.text('Σ CNY'), findsNothing);
   });
 

@@ -62,7 +62,7 @@ class _CashflowCalendarContent extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _CardHeader(
-              icon: Icons.event_note_outlined,
+              icon: FLucideIcons.calendarDays,
               title: l10n.homeMonthlyCashFlowTitle,
               color: accent,
             ),
@@ -215,7 +215,7 @@ class _CardHeader extends StatelessWidget {
           ),
         ),
         Icon(
-          Icons.chevron_right,
+          FLucideIcons.chevronRight,
           size: 18,
           color: context.theme.colors.mutedForeground.withValues(alpha: 0.6),
         ),

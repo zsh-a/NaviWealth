@@ -167,7 +167,7 @@ class _UserBubble extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: _ActionButton(
-                icon: Icons.edit_outlined,
+                icon: FLucideIcons.pencil,
                 label: l10n.aiChatEditUserMessage,
                 onPressed: () => _editAndResend(context, ref),
               ),
@@ -272,7 +272,7 @@ class _AssistantBubble extends StatelessWidget {
         if (_isError) ...[
           Row(
             children: [
-              Icon(Icons.error_outline, size: 16, color: colors.destructive),
+              Icon(FLucideIcons.circleAlert, size: 16, color: colors.destructive),
               const SizedBox(width: 6),
               Text(
                 l10n.aiChatSemanticsAssistantError,
@@ -732,7 +732,7 @@ class _TruncationFooter extends ConsumerWidget {
           const SizedBox(height: 6),
           Row(
             children: [
-              Icon(Icons.content_cut, size: 14, color: muted),
+              Icon(FLucideIcons.scissors, size: 14, color: muted),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -789,7 +789,7 @@ class _ContinueButton extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 2),
-            Icon(Icons.arrow_forward, size: 14, color: color),
+            Icon(FLucideIcons.arrowRight, size: 14, color: color),
           ],
         ),
       ),
@@ -833,8 +833,8 @@ class _ReasoningPanelState extends State<_ReasoningPanel> {
                 const SizedBox(width: 4),
                 Icon(
                   _expanded
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
+                      ? FLucideIcons.chevronUp
+                      : FLucideIcons.chevronDown,
                   size: 16,
                   color: colors.mutedForeground,
                 ),
@@ -977,7 +977,7 @@ class _AssistantActions extends ConsumerWidget {
       children: [
         if (canCopy)
           _ActionButton(
-            icon: Icons.copy_outlined,
+            icon: FLucideIcons.copy,
             label: l10n.aiChatMessageCopy,
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: message.content));
@@ -993,7 +993,7 @@ class _AssistantActions extends ConsumerWidget {
           ),
         if (canRegenerate)
           _ActionButton(
-            icon: Icons.refresh,
+            icon: FLucideIcons.refreshCw,
             label: l10n.aiChatMessageRegenerate,
             // Disable while a turn is in flight so a double-tap doesn't
             // race against the on-going stream.

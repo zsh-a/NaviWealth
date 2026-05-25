@@ -41,7 +41,7 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(FLucideIcons.trash2),
             onPress: () {
               talker.cleanHistory();
               setState(() {});

@@ -86,7 +86,7 @@ class _LiabilitiesEmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.account_balance_outlined,
+              FLucideIcons.landmark,
               size: 48,
               color: context.theme.colors.mutedForeground,
             ),
@@ -154,12 +154,12 @@ class _LiabilityListTile extends StatelessWidget {
   }
 
   IconData _iconFor(LiabilityType t) => switch (t) {
-    LiabilityType.mortgage => Icons.home_outlined,
-    LiabilityType.carLoan => Icons.directions_car_outlined,
-    LiabilityType.creditCard => Icons.credit_card_outlined,
-    LiabilityType.consumerLoan => Icons.payments_outlined,
-    LiabilityType.studentLoan => Icons.school_outlined,
-    LiabilityType.marginLoan => Icons.show_chart_outlined,
-    LiabilityType.other => Icons.account_balance_outlined,
+    LiabilityType.mortgage => FLucideIcons.house,
+    LiabilityType.carLoan => FLucideIcons.car,
+    LiabilityType.creditCard => FLucideIcons.creditCard,
+    LiabilityType.consumerLoan => FLucideIcons.banknote,
+    LiabilityType.studentLoan => FLucideIcons.graduationCap,
+    LiabilityType.marginLoan => FLucideIcons.chartLine,
+    LiabilityType.other => FLucideIcons.landmark,
   };
 }
