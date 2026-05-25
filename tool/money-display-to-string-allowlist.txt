@@ -85,3 +85,7 @@ apps/mobile/lib/features/settings/ui/ai_trace_waterfall.dart	if (cost != null) A
 apps/mobile/lib/features/settings/ui/ai_trace_waterfall.dart	if (n < 1000000) return '${(n / 1000).toStringAsFixed(1)}k';	compact-token-label
 apps/mobile/lib/features/settings/ui/ai_trace_waterfall.dart	return '${(n / 1000000).toStringAsFixed(2)}M';	compact-token-label
 apps/mobile/lib/features/settings/ui/ai_transparency_page.dart	if (hasCost) AiPill(label: '≈¥${cost.toStringAsFixed(3)}'),	ai-cost-diagnostic
+apps/mobile/lib/features/settings/ui/ai_models_page.dart	'${(progress! * 100).toStringAsFixed(0)}%',	percent-display
+apps/mobile/lib/features/settings/ui/ai_models_page.dart	if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';	byte-size-label
+apps/mobile/lib/features/settings/ui/ai_models_page.dart	return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';	byte-size-label
+apps/mobile/lib/features/settings/ui/ai_models_page.dart	return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';	byte-size-label
