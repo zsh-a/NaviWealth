@@ -14,6 +14,11 @@ analyzer:
     # `flutter_rust_bridge`-generated bindings (D-1.7c). Strict-inference
     # noise here is upstream — we lint the wrapper, not the codegen output.
     - "lib/src/rust/**"
+    # Cargokit vendored build tool (D-1.7c). Standalone Dart package with
+    # its own pubspec.yaml; its deps aren't resolved by the parent
+    # `flutter pub get`, so every import shows as undefined.
+    # README.md inside says "Please ignore this folder."
+    - "rust_builder/**"
   plugins:
     - custom_lint
 

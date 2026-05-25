@@ -3,7 +3,6 @@
 /// stream → .partial → rename → SHA-verify pipeline end to end.
 library;
 
-import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
