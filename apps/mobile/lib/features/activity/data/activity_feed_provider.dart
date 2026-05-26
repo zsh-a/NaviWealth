@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
-import '../../../data/domain/account.dart';
-import '../../../data/repositories/journal_entry_providers.dart';
-import '../../../data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'activity_feed_query.dart';
 
 const int kActivityFeedPageSize = 50;

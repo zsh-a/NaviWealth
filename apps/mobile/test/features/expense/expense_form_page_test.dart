@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/data/domain/account.dart';
-import 'package:naviwealth/data/domain/enums.dart';
-import 'package:naviwealth/data/domain/hlc.dart';
-import 'package:naviwealth/data/domain/sync_meta.dart';
-import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/expense/ui/expense_form_page.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/hlc.dart';
+import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/intent/intent_policy.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
+import 'package:naviwealth/features/finance_ai_tools.dart';
 
 /// Static-contract test: every FIRE OS Phase-5 tool name must resolve in
 /// both the registry (dispatchable) and the descriptor table

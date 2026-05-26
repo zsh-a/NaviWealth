@@ -1,15 +1,15 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/data/domain/account.dart';
-import 'package:naviwealth/data/domain/enums.dart';
-import 'package:naviwealth/data/domain/hlc.dart';
-import 'package:naviwealth/data/domain/journal_entry.dart';
-import 'package:naviwealth/data/domain/posting.dart';
-import 'package:naviwealth/data/domain/sync_meta.dart';
-import 'package:naviwealth/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/cashflow/domain/cash_flow_event.dart';
 import 'package:naviwealth/features/cashflow/domain/cash_flow_kind.dart';
 import 'package:naviwealth/features/cashflow/domain/dividend_center.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/hlc.dart';
+import 'package:naviwealth/features/finance/data/domain/journal_entry.dart';
+import 'package:naviwealth/features/finance/data/domain/posting.dart';
+import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 
 void main() {

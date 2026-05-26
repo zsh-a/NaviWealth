@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 
-import '../../../data/domain/hlc.dart';
-import '../../../data/domain/sync_meta.dart';
+import 'package:naviwealth/features/finance/data/domain/hlc.dart';
+import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
 
 /// User's stance on options income strategies.
 ///

@@ -2,14 +2,14 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/manual_asset_metadata.dart';
+import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
 
 import '../../../app/master_detail_layout.dart';
 import '../../../app/route_paths.dart';
 import '../../../app/selection_query.dart';
-import '../../../data/domain/asset.dart';
-import '../../../data/domain/enums.dart';
-import '../../../data/domain/manual_asset_metadata.dart';
-import '../../../data/repositories/manual_asset_repository.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 

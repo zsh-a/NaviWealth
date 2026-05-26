@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/data/domain/entry_kind.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 import 'package:naviwealth/features/shared/entry_kind_badge.dart';
 import 'package:naviwealth/features/shared/entry_kind_labels.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';

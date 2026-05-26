@@ -1,13 +1,13 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../app/selection_query.dart';
 import '../../../core/shortcuts/master_detail_shortcuts.dart';
-import '../../../data/domain/account.dart';
-import '../../../data/domain/enums.dart';
-import '../../../data/repositories/providers.dart';
 import '../../home/data/dashboard_providers.dart';
 import '../../home/domain/dashboard_models.dart';
 import '../../investment/data/providers.dart';

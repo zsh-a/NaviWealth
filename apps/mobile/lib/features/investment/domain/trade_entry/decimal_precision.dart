@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 
-import '../../../../data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
 /// Per-[AssetType] scale rules used to validate trade-entry input.
 ///

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
 import '../../app/master_detail_layout.dart';
 import '../../app/selection_query.dart';
-import '../../data/domain/enums.dart';
 import 'account_form_page.dart';
 import 'ui/accounts_master.dart';
 

@@ -1,7 +1,8 @@
+import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/liability.dart';
+
 import '../../../app/route_paths.dart';
-import '../../../data/domain/asset.dart';
-import '../../../data/domain/enums.dart';
-import '../../../data/domain/liability.dart';
 import '../../../domain/entities/fx_rate.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';

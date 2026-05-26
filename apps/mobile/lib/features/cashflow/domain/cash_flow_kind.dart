@@ -1,5 +1,5 @@
-import '../../../data/domain/account.dart';
-import '../../../data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
 enum CashFlowKind {
   salary,

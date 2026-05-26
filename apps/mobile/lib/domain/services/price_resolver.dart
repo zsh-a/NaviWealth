@@ -1,4 +1,4 @@
-import '../../data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import '../values/resolved_price.dart';
 
 /// Unified entry point for "give me a price for this asset" across the

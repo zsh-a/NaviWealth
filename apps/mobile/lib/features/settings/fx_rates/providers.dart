@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/market/market_data_providers.dart';
-import '../../../data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import '../../../features/finance/data/market/market_data_providers.dart';
 import 'fx_rate_sync_service.dart';
 
 /// The [FxRateSyncService] instance, wired to the market data pipeline and

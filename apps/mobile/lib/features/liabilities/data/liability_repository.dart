@@ -1,18 +1,18 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
+import 'package:naviwealth/features/finance/data/domain/amortization_entry.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/hlc.dart';
+import 'package:naviwealth/features/finance/data/domain/liability.dart';
+import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
+import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
+import 'package:naviwealth/features/finance/data/repositories/mutation_context.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/persistence/app_database.dart';
 import '../../../core/sync/op_outbox.dart';
-import '../../../data/domain/amortization_entry.dart';
-import '../../../data/domain/enums.dart';
-import '../../../data/domain/hlc.dart';
-import '../../../data/domain/liability.dart';
-import '../../../data/domain/sync_meta.dart';
-import '../../../data/repositories/account_repository.dart';
-import '../../../data/repositories/journal_entry_builders.dart';
-import '../../../data/repositories/journal_entry_repository.dart';
-import '../../../data/repositories/mutation_context.dart';
 import '../domain/amortization_calculator.dart';
 
 /// Persistence + amortization-orchestration layer for liabilities.

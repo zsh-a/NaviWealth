@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
-import '../../../data/domain/account.dart';
-import '../../../data/domain/enums.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../account_icon_catalog.dart';

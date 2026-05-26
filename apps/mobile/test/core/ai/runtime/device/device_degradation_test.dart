@@ -2,12 +2,12 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/runtime/ai_runtime.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
 import 'package:naviwealth/features/ai_chat/data/runtime_routing_api_client.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_events.dart';
 import 'package:naviwealth/features/ai_chat/ui/ai_transparency_badge.dart';
+import 'package:naviwealth/features/finance_ai_tools.dart';
 
 AiTrace _trace({
   required Backend backend,

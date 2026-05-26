@@ -1,7 +1,7 @@
 import '../../../../core/logging/app_logger.dart';
-import '../../../../data/market/exceptions.dart';
 import '../../../../domain/entities/historical_bar.dart';
 import '../../../../domain/services/market_data_service.dart';
+import '../../../../features/finance/data/market/exceptions.dart';
 import '../../domain/benchmark/benchmark_comparison.dart';
 import '../../domain/benchmark/benchmark_index.dart';
 

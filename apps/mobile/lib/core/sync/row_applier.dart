@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
+import 'package:naviwealth/features/finance/data/domain/hlc.dart';
 
 import '../../core/persistence/app_database.dart';
-import '../../data/domain/hlc.dart';
 import '../logging/app_logger.dart';
 import 'domain_prefix.dart';
 import 'sync_api_client.dart';

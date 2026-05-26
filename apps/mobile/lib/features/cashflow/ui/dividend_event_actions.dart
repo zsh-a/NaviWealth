@@ -4,11 +4,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../core/format/providers.dart';
-import '../../../data/repositories/journal_entry_providers.dart';
-import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../activity/ui/activity_entry_detail_page.dart';

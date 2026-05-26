@@ -2,9 +2,9 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../design_system/preferences/theme_preferences.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';

@@ -1,4 +1,4 @@
-import '../../../data/repositories/journal_entry_repository.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 
 enum ActivityDateGroup { today, yesterday, thisWeek, earlier }
 

@@ -15,44 +15,44 @@ import 'package:naviwealth/core/ai/local/skills/skills.dart'
         subscriptionChangeToUpload,
         transferMatchToUpload;
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/breakdown_tools.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/get_anomaly_flags_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/get_asset_allocation_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/get_cashflow_buckets_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/get_holdings_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/get_investment_performance_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/get_net_worth_summary_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/get_recurring_patterns_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/get_refund_links_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/get_subscription_changes_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/get_transfer_links_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/list_payment_accounts_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/propose/proposal_plan.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/propose_account_create_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/propose_asset_valuation_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/propose_expense_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/propose_liability_payment_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/propose_trade_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/read_account_window_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/read_asset_window_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/read_category_window_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/scoped/scoped_window.dart';
-import 'package:naviwealth/data/domain/account.dart';
-import 'package:naviwealth/data/domain/asset.dart';
-import 'package:naviwealth/data/domain/enums.dart';
-import 'package:naviwealth/data/domain/hlc.dart';
-import 'package:naviwealth/data/domain/journal_entry.dart';
-import 'package:naviwealth/data/domain/liability.dart';
-import 'package:naviwealth/data/domain/posting.dart';
-import 'package:naviwealth/data/domain/sync_meta.dart';
-import 'package:naviwealth/data/repositories/journal_entry_repository.dart'
-    show JournalEntryWithPostings;
+import 'package:naviwealth/features/accounts/ai_tools/list_payment_accounts_tool.dart';
+import 'package:naviwealth/features/accounts/ai_tools/propose_account_create_tool.dart';
+import 'package:naviwealth/features/accounts/ai_tools/read_account_window_tool.dart';
+import 'package:naviwealth/features/cashflow/ai_tools/get_cashflow_buckets_tool.dart';
+import 'package:naviwealth/features/cashflow/ai_tools/get_refund_links_tool.dart';
+import 'package:naviwealth/features/cashflow/ai_tools/get_transfer_links_tool.dart';
+import 'package:naviwealth/features/expense/ai_tools/get_anomaly_flags_tool.dart';
+import 'package:naviwealth/features/expense/ai_tools/get_recurring_patterns_tool.dart';
+import 'package:naviwealth/features/expense/ai_tools/get_subscription_changes_tool.dart';
+import 'package:naviwealth/features/expense/ai_tools/propose_expense_tool.dart';
+import 'package:naviwealth/features/expense/ai_tools/read_category_window_tool.dart';
 import 'package:naviwealth/features/expense/data/expense_anomaly_insight_provider.dart';
+import 'package:naviwealth/features/finance/ai_tools/_shared/propose/proposal_plan.dart';
+import 'package:naviwealth/features/finance/ai_tools/_shared/scoped/scoped_window.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/hlc.dart';
+import 'package:naviwealth/features/finance/data/domain/journal_entry.dart';
+import 'package:naviwealth/features/finance/data/domain/liability.dart';
+import 'package:naviwealth/features/finance/data/domain/posting.dart';
+import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart'
+    show JournalEntryWithPostings;
+import 'package:naviwealth/features/home/ai_tools/get_net_worth_summary_tool.dart';
+import 'package:naviwealth/features/investment/ai_tools/breakdown_tools.dart';
+import 'package:naviwealth/features/investment/ai_tools/get_asset_allocation_tool.dart';
+import 'package:naviwealth/features/investment/ai_tools/get_holdings_tool.dart';
+import 'package:naviwealth/features/investment/ai_tools/get_investment_performance_tool.dart';
+import 'package:naviwealth/features/investment/ai_tools/propose_asset_valuation_tool.dart';
+import 'package:naviwealth/features/investment/ai_tools/propose_trade_tool.dart';
+import 'package:naviwealth/features/investment/ai_tools/read_asset_window_tool.dart';
 import 'package:naviwealth/features/investment/data/providers.dart'
     show holdingSnapshotToUpload;
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/liabilities/ai_tools/propose_liability_payment_tool.dart';
 
 SyncMeta _stamp() => SyncMeta(
   ownerUserId: 'u',

@@ -8,7 +8,7 @@ import 'package:naviwealth/features/options_income/domain/options_strategy_profi
 
 import '../../../core/persistence/test_database.dart';
 import '../../../core/sync/_outbox_test_ext.dart';
-import '../../../data/repositories/_stub_stamper.dart';
+import '../../../features/finance/data/repositories/_stub_stamper.dart';
 
 void main() {
   late AppDatabase db;

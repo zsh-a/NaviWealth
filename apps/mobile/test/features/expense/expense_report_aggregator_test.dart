@@ -1,12 +1,12 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/data/domain/expense.dart';
-import 'package:naviwealth/data/domain/hlc.dart';
-import 'package:naviwealth/data/domain/sync_meta.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
 import 'package:naviwealth/features/expense/domain/expense_report_aggregator.dart';
 import 'package:naviwealth/features/expense/domain/expense_report_range.dart';
+import 'package:naviwealth/features/finance/data/domain/expense.dart';
+import 'package:naviwealth/features/finance/data/domain/hlc.dart';
+import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
 
 SyncMeta _meta() => SyncMeta(
   ownerUserId: 'u',

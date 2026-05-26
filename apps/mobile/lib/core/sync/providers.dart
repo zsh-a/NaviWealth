@@ -1,11 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/features/finance/data/domain/hlc.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import '../../core/persistence/app_database.dart';
 import '../../core/persistence/providers.dart';
-import '../../data/domain/hlc.dart';
 import '../auth/providers.dart';
 import '../logging/providers.dart';
 import 'dio_sync_api_client.dart';

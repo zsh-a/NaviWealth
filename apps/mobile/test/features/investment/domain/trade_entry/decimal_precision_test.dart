@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/investment/domain/trade_entry/decimal_precision.dart';
 
 void main() {

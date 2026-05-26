@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
 import '../../../../app/route_paths.dart';
-import '../../../../data/domain/enums.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/physical_asset.dart';

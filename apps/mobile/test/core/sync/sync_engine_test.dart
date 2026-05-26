@@ -15,8 +15,8 @@ import 'package:naviwealth/core/sync/row_applier.dart';
 import 'package:naviwealth/core/sync/sync_api_client.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
-import 'package:naviwealth/data/domain/enums.dart';
-import 'package:naviwealth/data/domain/hlc.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/hlc.dart';
 
 import '../../core/persistence/test_database.dart';
 import '_fake_api.dart';

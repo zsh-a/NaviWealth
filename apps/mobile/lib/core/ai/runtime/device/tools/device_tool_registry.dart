@@ -1,8 +1,12 @@
 /// Device tool registry + Drift-backed dispatcher (§4.6 W-D4).
 ///
-/// The canonical id→tool map, a `schemas()` feed for the agent loop,
-/// a per-tool timeout, and stable error envelopes (`policy_denied` /
-/// `tool_timeout`) consumed by the model.
+/// D-1.2: the registry *class* and the dispatcher live here as
+/// domain-neutral runtime. The *tool list* is composed per-domain via
+/// [deviceToolsProvider] (`core/ai/composition/device_tools_provider.dart`)
+/// — each LifeOS domain registers its tools in
+/// `features/[domain]/ai_tools/`. The single shell exception is the Memory Layer pair
+/// (`build_context_tool.dart` / `query_memory_tool.dart`) which is
+/// cross-domain by design.
 ///
 /// **Allow-list decision** (see §11): registry *membership* is the
 /// device allow-list. `ToolDescriptor` is metadata for registered
@@ -18,99 +22,19 @@ import '../../../contracts/tool_descriptor.dart';
 import '../anthropic/anthropic_wire.dart';
 import '../device_session.dart';
 import '../device_tool_dispatcher.dart';
-import 'breakdown_tools.dart';
 import 'build_context_tool.dart';
 import 'device_tool.dart';
-import 'get_anomaly_flags_tool.dart';
-import 'get_asset_allocation_tool.dart';
-import 'get_cashflow_buckets_tool.dart';
-import 'get_fire_buckets_tool.dart';
-import 'get_fire_plan_tool.dart';
-import 'get_fire_review_tool.dart';
-import 'get_fire_state_tool.dart';
-import 'get_fire_stress_tests_tool.dart';
-import 'get_holdings_tool.dart';
-import 'get_investment_performance_tool.dart';
-import 'get_net_worth_summary_tool.dart';
-import 'get_options_income_opportunities_tool.dart';
-import 'get_options_strategy_profile_tool.dart';
-import 'get_recurring_patterns_tool.dart';
-import 'get_refund_links_tool.dart';
-import 'get_subscription_changes_tool.dart';
-import 'get_transfer_links_tool.dart';
-import 'get_wheel_lifecycle_tool.dart';
-import 'list_payment_accounts_tool.dart';
-import 'propose_account_create_tool.dart';
-import 'propose_asset_valuation_tool.dart';
-import 'propose_expense_tool.dart';
-import 'propose_fire_bucket_rule_tool.dart';
-import 'propose_fire_plan_update_tool.dart';
-import 'propose_liability_payment_tool.dart';
-import 'propose_options_journal_entry_tool.dart';
-import 'propose_options_profile_update_tool.dart';
-import 'propose_trade_tool.dart';
 import 'query_memory_tool.dart';
-import 'read_account_window_tool.dart';
-import 'read_asset_window_tool.dart';
-import 'read_category_window_tool.dart';
-import 'simulate_fire_plan_tool.dart';
 
 /// Mirrors backend `PER_TOOL_TIMEOUT_MS`.
 const Duration kPerToolTimeout = Duration(seconds: 15);
 
-/// Canonical device-dispatchable tool set. Registry membership *is* the
-/// device allow-list (§11): a tool runs on device iff a Drift-backed
-/// port is registered here. Single source for the provider and the
-/// W-D6 static-contract test (every name must resolve in the shared
-/// `tool_descriptor.dart` mirror).
-const List<DeviceTool> kDeviceTools = <DeviceTool>[
-  ListPaymentAccountsTool(),
-  GetHoldingsTool(),
-  GetAssetAllocationTool(),
-  GetCashflowBucketsTool(),
-  GetAnomalyFlagsTool(),
-  GetRecurringPatternsTool(),
-  GetRefundLinksTool(),
-  GetTransferLinksTool(),
-  GetInvestmentPerformanceTool(),
-  GetNetWorthSummaryTool(),
-  GetSubscriptionChangesTool(),
-  ProposeExpenseTool(),
-  ProposeAccountCreateTool(),
-  ProposeAssetValuationTool(),
-  ProposeLiabilityPaymentTool(),
-  ProposeTradeTool(),
-  ReadAccountWindowTool(),
-  ReadAssetWindowTool(),
-  ReadCategoryWindowTool(),
-  GetIndustryBreakdownTool(),
-  GetGeoBreakdownTool(),
-  GetMarketCapBreakdownTool(),
-  // FIRE OS Phase 5 tools — explain / simulate / confirm-to-apply.
-  GetFireStateTool(),
-  GetFirePlanTool(),
-  GetFireBucketsTool(),
-  GetFireStressTestsTool(),
-  GetFireReviewTool(),
-  SimulateFirePlanTool(),
-  ProposeFirePlanUpdateTool(),
-  ProposeFireBucketRuleTool(),
-  // Income Planner (`docs/options-income.md` §8).
-  GetOptionsIncomeOpportunitiesTool(),
-  GetOptionsStrategyProfileTool(),
-  ProposeOptionsProfileUpdateTool(),
-  ProposeOptionsJournalEntryTool(),
-  // Income Planner P4 — Wheel lifecycle (`roadmap-next.md` §3.3).
-  GetWheelLifecycleTool(),
-  // Memory Runtime (`lifeos-shell.md` §6, D-1.7b) — query_memory is the
-  // flat-hits back-compat surface; build_context returns the
-  // kind-classified ContextPack.
+/// Shell-only tools (cross-domain). Domain tool lists live under
+/// `features/<domain>/ai_tools/`.
+const List<DeviceTool> kShellDeviceToolsCore = <DeviceTool>[
   QueryMemoryTool(),
   BuildContextTool(),
 ];
-
-DeviceToolRegistry defaultDeviceToolRegistry() =>
-    DeviceToolRegistry(kDeviceTools);
 
 class DeviceToolRegistry {
   DeviceToolRegistry(Iterable<DeviceTool> tools)

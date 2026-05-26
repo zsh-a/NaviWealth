@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/domain/asset.dart';
-import '../../../data/domain/enums.dart';
-import '../../../data/domain/manual_asset_metadata.dart';
-import '../../../data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/manual_asset_metadata.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 const int kDepositMaturityWindowDays = 14;
 

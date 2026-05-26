@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
-import '../../../data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/entities/fx_rate.dart' as dom;
 import '../../../l10n/gen/app_localizations.dart';

@@ -257,9 +257,9 @@
 | D-1.4 Sync row family namespace (`fin:` / `health:`) | ✅ 完成 (2026-05-26) — client SyncEngine 加前缀;backend `0018_sync_row_namespace.sql` migration + 域 claim filter |
 | D-1.5 Auth domain scopes + 域级 opt-in | ✅ 完成 (2026-05-26) — JWT `domains` claim default `['finance']`;DomainOptIns 持久化;Settings UI Health opt-in 占位 (D-2 激活) |
 | D-1.6 ai_chat composition 上提 | 🟡 部分 (2026-05-26) — rail 上提 + `DomainContextProvider` 抽象 + Finance domain provider;`chat_repository` / `proposal_applier` 上提是 D-1.6b follow-up |
-| D-1.2 Finance AI tool 迁出 core | 🟡 部分 (2026-05-26) — composition root `deviceToolsProvider` + lint `lint-no-finance-in-core.sh`;现存 30+ tool 文件物理迁移是 follow-up |
+| D-1.2 Finance AI tool 迁出 core | ✅ 完成 (2026-05-26) — 35 个 Finance tool 物理迁移到 `features/<域>/ai_tools/`;composition root + `currentUserIdProvider` 提到 `core/auth/`;`core/ai/runtime/device/tools/` 只剩 4 个 shell 文件 |
 | D-1.8 Multi-domain IA shell | 🟡 seam (2026-05-26) — `DomainShellSpec` + `activeDomainShellsProvider` 抽象;UI dock 激活等 D-2 第二个域注册 |
-| D-1.1 data/db → core/persistence 改名 | 🟡 部分 (2026-05-26) — `data/db` 全树已迁;data/domain / audit / market / securities_catalog / repositories 拆分 follow-up |
+| D-1.1 data/db → core/persistence 改名 | ✅ 完成 (2026-05-26) — 全部 5 个子树迁出 `data/`:`db→core/persistence`, `audit→core/audit`, `domain/market/securities_catalog/repositories→features/finance/data/` |
 | CI gates (4 条 lint 脚本) | ✅ 完成 (2026-05-26) — `tool/lint-{no-finance-in-core,cross-feature-imports,row-family-prefix,domain-neutral-contracts}.sh` 落 `mobile.yml` |
 | D-2 HealthOS MVP | ⏳ 等 D-1 |
 | D-3+ TimeOS / KnowledgeOS / LivingOS | ❌ 触发性,未触发 |

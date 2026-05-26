@@ -1,9 +1,9 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/features/finance/data/domain/expense.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 
 import '../../../core/ai/contracts/task_context.dart' show AnalyticalUpload;
-import '../../../data/domain/expense.dart';
-import '../../../data/repositories/journal_entry_providers.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
 import '../../home/data/dashboard_providers.dart';

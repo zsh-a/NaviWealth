@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../app/nav.dart';
 import '../../app/route_paths.dart';
 import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
-import '../../data/domain/account.dart';
-import '../../data/domain/enums.dart';
-import '../../data/repositories/providers.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../settings/data/base_currency_preference.dart';

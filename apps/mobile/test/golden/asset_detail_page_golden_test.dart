@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/data/repositories/manual_asset_repository.dart';
-import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/assets/asset_detail_page.dart';
+import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '_golden_setup.dart';

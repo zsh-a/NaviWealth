@@ -187,8 +187,8 @@ PR review 凡触及 `core/` 的，必须能口头答清"它在哪一层 + 是不
 | 3 | `core/sync` row family 按域 namespace | ✅ D-1.4 (2026-05-26) | §8 |
 | 4 | AI Intent 注册表加 `domain` 字段 | ✅ D-1.3 (2026-05-26) | §7.2 |
 | 5 | `AiTrace.intent.capability` 允许非 finance | ✅ D-1.3 (2026-05-26) | §7.2 |
-| 6 | `core/ai/runtime/device/tools/` Finance tool 迁出 | 🟡 D-1.2 部分 (2026-05-26;composition root + lint 落地,物理移文件 follow-up) | §7.1 |
-| 7 | `data/db/` → `core/persistence/` 改名 | 🟡 D-1.1 部分 (2026-05-26;data/db 全树已迁,90 文件 import 路径机械化重写;data/domain / data/audit / data/market / data/securities_catalog / data/repositories 拆分 follow-up) | §9 |
+| 6 | `core/ai/runtime/device/tools/` Finance tool 迁出 | ✅ D-1.2 (2026-05-26) — 35 个 Finance tool 物理迁移到 `features/<域>/ai_tools/`;composition root 通过 `deviceToolsProvider`;`currentUserIdProvider` 提到 `core/auth/`;lint 通过 | §7.1 |
+| 7 | `data/db/` → `core/persistence/` 改名 | ✅ D-1.1 (2026-05-26) — 全部 5 个子树迁出 `data/`:`db→core/persistence`, `audit→core/audit`, `domain/market/securities_catalog/repositories→features/finance/data/` | §9 |
 | 8 | `ai_chat` cross-feature composition 上提 | 🟡 D-1.6 部分 (2026-05-26;`ai_action_cards_rail` 上提 + `DomainContextProvider` 抽象;`chat_repository` / `proposal_applier` 上提是 D-1.6b follow-up) | §4 |
 
 **新规则**：这 8 项是**当前的工作**，不再是"未来才碰"。但仍**禁止**：

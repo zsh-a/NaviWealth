@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 
-import '../../../../data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/domain/asset.dart';
 
 /// The three trade operations the trade-entry form supports.
 enum TradeType { buy, sell, valuationAdjust }

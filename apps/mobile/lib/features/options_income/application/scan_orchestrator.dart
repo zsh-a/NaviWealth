@@ -4,8 +4,8 @@ import 'package:decimal/decimal.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/logging/app_logger.dart';
-import '../../../data/market/providers/options/options_chain_provider.dart';
 import '../../../domain/values/money.dart';
+import '../../../features/finance/data/market/providers/options/options_chain_provider.dart';
 import '../data/options_opportunity_cache_repository.dart';
 import '../domain/approved_underlying.dart';
 import '../domain/option_contract.dart';

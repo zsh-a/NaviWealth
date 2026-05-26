@@ -49,8 +49,8 @@ LifeOS = 个人数字基础设施。当前活跃域:
 ```
 D-0  决策落地 + 文档基线                          (1 周)   ✅ 落地
 D-1  Shell foundation                            (4–6 周)
-  D-1.1  Naming refactor (data/db → core/persistence)   ⏳ 未动
-  D-1.2  AI tool relocation (Finance tool → features/ai_tools)  🟡 composition root + lint (2026-05-26);物理移文件 follow-up
+  D-1.1  Naming refactor (data/db → core/persistence)   ✅ 落地 (2026-05-26) — 5 个子树全部迁出 data/
+  D-1.2  AI tool relocation (Finance tool → features/ai_tools)  ✅ 落地 (2026-05-26) — 35 tool 物理迁移 + composition root + currentUserIdProvider 提到 core/auth/
   D-1.3  Intent/Trace domain 字段                       ✅ 落地 (2026-05-26)
   D-1.4  Sync row family namespace (fin:* / health:*)   ✅ 落地 (2026-05-26)
   D-1.5  Auth domain scopes + 域级 opt-in               ✅ 落地 (2026-05-26)
@@ -59,7 +59,6 @@ D-1  Shell foundation                            (4–6 周)
   D-1.7b Memory Runtime (typed + lifecycle + ContextBuilder)  ✅ 落地 (2026-05-24)
   D-1.7c Rust EmbeddingGemma-300M drop-in (fastembed/ort, ONNX INT8)  ✅ 落地 (2026-05-24, host build 验证;iOS/Android cross-compile + 模型 bytes 待用户机器执行)
   D-1.8  Multi-domain IA shell                          🟡 seam + spec abstraction (2026-05-26);UI dock 可见态等 D-2 第二个域注册后激活
-  D-1.1  Naming refactor (data/db → core/persistence)   🟡 data/db 已迁 (2026-05-26);data/domain / audit / market / securities_catalog / repositories 拆分 follow-up
   CI gates (§11)                                        ✅ 4 条 lint 脚本落地 (2026-05-26)
 D-2  HealthOS MVP                                (8–12 周)  详见 healthos-domain.md
 D-3+ 触发性 (TimeOS / Knowledge / Living)         不预排

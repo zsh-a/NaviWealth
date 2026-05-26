@@ -8,11 +8,11 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/features/finance/data/domain/expense.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 
 import '../../../core/ai/local/skills/duplicate_charge_detector.dart';
 import '../../../core/ai/local/skills/expense_to_transaction_input.dart';
-import '../../../data/domain/expense.dart';
-import '../../../data/repositories/journal_entry_providers.dart';
 
 class DuplicateChargeSummary {
   const DuplicateChargeSummary({
