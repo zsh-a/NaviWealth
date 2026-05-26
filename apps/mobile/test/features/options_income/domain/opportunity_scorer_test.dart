@@ -1,9 +1,9 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/domain/values/money.dart';
-import 'package:naviwealth/features/finance/data/domain/hlc.dart';
-import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
 import 'package:naviwealth/features/options_income/domain/approved_underlying.dart';
 import 'package:naviwealth/features/options_income/domain/option_contract.dart';
 import 'package:naviwealth/features/options_income/domain/options_strategy_profile.dart';

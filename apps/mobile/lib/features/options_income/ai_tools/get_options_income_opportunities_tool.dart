@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
-import 'package:naviwealth/features/finance/data/repositories/mutation_context.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/features/options_income/data/providers.dart';
 import 'package:naviwealth/features/options_income/domain/options_opportunity.dart';
 import 'package:naviwealth/features/options_income/domain/options_strategy_profile.dart';

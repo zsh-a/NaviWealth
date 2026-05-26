@@ -1,24 +1,16 @@
 /// HealthOS read / write API (`docs/healthos-domain.md` §3, D-2.1).
 ///
 /// Thin Drift wrapper over the `health_metrics` table. The caller is
-/// responsible for stamping sync metadata — the platform adapter in
-/// D-2.2 (HealthKit / Health Connect) and the AI tools in D-2.4 supply
-/// it. Keeping the stamping out of this class lets D-2.1 ship without
-/// dragging the Finance-side `MutationStamper` (which lives under
-/// `features/finance/data/repositories/`) across the domain boundary;
-/// the stamper is expected to move to `core/sync/` in a follow-up.
-///
-/// Known cross-feature import (northstar §2.4): `SyncMeta` + `Hlc`
-/// currently live under `features/finance/data/domain/`. Health rows
-/// reuse them because the sync envelope is genuinely cross-domain
-/// (`docs/lifeos-shell.md` §8 row-state). When those types relocate to
-/// `core/sync/`, this import can be cleaned up.
+/// responsible for stamping sync metadata via the cross-domain
+/// `mutationStamperProvider` in `core/sync/mutation_context.dart`; the
+/// platform adapter in D-2.2 (HealthKit / Health Connect) supplies
+/// the stamp on insert.
 library;
 
 import 'package:drift/drift.dart' hide Column;
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/op_outbox.dart';
-import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';

@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
 
 import 'enums.dart';
-import 'hlc.dart';
 
 part 'op_log.freezed.dart';
 

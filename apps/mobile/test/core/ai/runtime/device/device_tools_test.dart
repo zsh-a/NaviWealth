@@ -17,6 +17,8 @@ import 'package:naviwealth/core/ai/local/skills/skills.dart'
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/accounts/ai_tools/list_payment_accounts_tool.dart';
 import 'package:naviwealth/features/accounts/ai_tools/propose_account_create_tool.dart';
 import 'package:naviwealth/features/accounts/ai_tools/read_account_window_tool.dart';
@@ -34,11 +36,9 @@ import 'package:naviwealth/features/finance/ai_tools/_shared/scoped/scoped_windo
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import 'package:naviwealth/features/finance/data/domain/hlc.dart';
 import 'package:naviwealth/features/finance/data/domain/journal_entry.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
 import 'package:naviwealth/features/finance/data/domain/posting.dart';
-import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart'
     show JournalEntryWithPostings;
 import 'package:naviwealth/features/home/ai_tools/get_net_worth_summary_tool.dart';

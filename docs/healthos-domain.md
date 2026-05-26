@@ -72,7 +72,7 @@ class HealthMetrics extends Table with SyncableTable {
 - Schema v17 → **v18** (migration 在 `core/persistence/app_database.dart` 的 `onUpgrade if (from < 18)`)
 - 索引: `(owner_user_id, kind, captured_at)` 满足"最近 N 天 <kind>"的典型读;`(owner_user_id, hlc)` 跟 Finance 表一致服务 sync 扫描
 - Sync row_kind: `health:health_metrics` (D-1.4 row family namespace,触发 sync 时由 D-2.2 adapter 添加)
-- 域实体 `HealthMetric` (Freezed) 在 `features/health/domain/health_metric.dart`,内嵌 `SyncMeta` (跨域 sync 信封,northstar §2.4 已知例外:`SyncMeta` 当前住在 `features/finance/data/domain/`,待 D-1.x 后迁到 `core/sync/`)
+- 域实体 `HealthMetric` (Freezed) 在 `features/health/domain/health_metric.dart`,内嵌 `SyncMeta` (跨域 sync 信封,2026-05-27 起住在 `core/sync/sync_meta.dart`;`Hlc` / `MutationStamper` / `outboxStoreProvider` 同期上提到 `core/sync/`,Health 域无任何 `features/finance/` import)
 
 ---
 

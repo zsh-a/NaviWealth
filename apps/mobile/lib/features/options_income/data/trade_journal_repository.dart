@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
-import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
-import 'package:naviwealth/features/finance/data/repositories/mutation_context.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/persistence/app_database.dart';

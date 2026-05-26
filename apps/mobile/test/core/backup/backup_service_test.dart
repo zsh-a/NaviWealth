@@ -5,7 +5,7 @@ import 'package:naviwealth/core/backup/backup_codec.dart';
 import 'package:naviwealth/core/backup/backup_service.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/features/finance/data/domain/hlc.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
 
 import '../../core/persistence/test_database.dart';
 import '../sync/_outbox_test_ext.dart';

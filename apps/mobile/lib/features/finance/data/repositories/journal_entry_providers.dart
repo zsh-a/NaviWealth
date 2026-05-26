@@ -1,13 +1,13 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
 import 'package:naviwealth/features/finance/data/domain/invariants.dart';
 import 'package:naviwealth/features/settings/data/base_currency_preference.dart';
 
 import 'journal_entry_repository.dart';
-import 'mutation_context.dart';
 import 'providers.dart';
 
 /// Provider tree for the ledger write and read paths. Lives in its own

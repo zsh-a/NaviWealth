@@ -3,11 +3,10 @@ import 'package:naviwealth/core/audit/domain_event.dart';
 import 'package:naviwealth/core/audit/event_log_reader.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
-import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/core/sync/op_outbox.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart' as dom;
 import 'package:naviwealth/domain/values/money.dart';
-import 'package:naviwealth/features/auth/data/auth_controller.dart';
 import 'package:naviwealth/features/cashflow/domain/budget_signal.dart';
 import 'package:naviwealth/features/cashflow/domain/budget_summary.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
@@ -19,25 +18,11 @@ import 'budget_repository.dart';
 import 'fx_rate_repository.dart';
 import 'journal_entry_providers.dart';
 import 'manual_asset_repository.dart';
-import 'mutation_context.dart';
 import 'price_repository.dart';
 import 'securities_asset_repository.dart';
 
-/// FIFO outbox bound to the local database. Mirrors the engine's outbox so
-/// repos enqueue ops into the same row of the `op_outbox` table the
-/// SyncEngine drains on the next push.
-///
-/// In local-only mode the user opted out of sync entirely; the outbox
-/// becomes a no-op so repository writes don't accumulate ops that will
-/// never be drained.
-final outboxStoreProvider = FutureProvider<OutboxStore>((ref) async {
-  final auth = ref.watch(authControllerProvider).value;
-  if (auth is AuthLocalOnly) {
-    return const NoopOutboxStore();
-  }
-  final db = await ref.watch(appDatabaseProvider.future);
-  return DriftOutboxStore(db);
-});
+export 'package:naviwealth/core/sync/outbox_provider.dart'
+    show outboxStoreProvider;
 
 final accountRepositoryProvider = FutureProvider<AccountRepository>((
   ref,

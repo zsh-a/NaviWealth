@@ -1,4 +1,4 @@
-import 'package:naviwealth/features/finance/data/repositories/mutation_context.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/persistence/app_database.dart';

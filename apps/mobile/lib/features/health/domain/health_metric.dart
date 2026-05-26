@@ -7,7 +7,7 @@ library;
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 
 import 'health_metric_kind.dart';
 

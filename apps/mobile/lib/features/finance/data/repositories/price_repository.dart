@@ -1,12 +1,11 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/op_outbox.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/data/domain/price_observation.dart';
-import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
 import 'package:uuid/uuid.dart';
-
-import 'mutation_context.dart';
 
 /// DAO for the append-only `prices` time-series. Every price update
 /// is a new row; current price = MAX(observed_on) over the matching

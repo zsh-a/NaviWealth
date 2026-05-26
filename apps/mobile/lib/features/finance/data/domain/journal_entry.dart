@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 
 import 'enums.dart';
-import 'sync_meta.dart';
 
 part 'journal_entry.freezed.dart';
 

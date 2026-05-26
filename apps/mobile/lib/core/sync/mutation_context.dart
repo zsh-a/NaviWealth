@@ -2,11 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/local_hlc_stamper.dart';
 import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
 import 'package:naviwealth/features/auth/data/auth_controller.dart';
-import 'package:naviwealth/features/finance/data/domain/hlc.dart';
 
 export 'package:naviwealth/core/auth/current_user.dart'
     show currentUserIdProvider, kLocalOnlyUserId;
