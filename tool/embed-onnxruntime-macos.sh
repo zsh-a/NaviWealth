@@ -28,7 +28,11 @@ else
   ARCH_LIST=("$(uname -m)")
 fi
 
-TMP_DIR="${TARGET_TEMP_DIR:-$FRAMEWORKS_DIR/.onnxruntime-tmp}"
+if [[ -n "${TARGET_TEMP_DIR:-}" ]]; then
+  TMP_DIR="$TARGET_TEMP_DIR/onnxruntime-tmp"
+else
+  TMP_DIR="$FRAMEWORKS_DIR/.onnxruntime-tmp"
+fi
 rm -rf "$TMP_DIR"
 mkdir -p "$TMP_DIR"
 

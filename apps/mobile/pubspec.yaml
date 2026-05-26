@@ -71,6 +71,8 @@ flutter:
   assets:
     - assets/catalog/securities.v1.ndjson
     - assets/svg/logo.svg
+  config:
+    enable-swift-package-manager: false
 
   fonts:
     # Inter — primary fontFamily for the entire app. Subset to Latin +
