@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart' hide Column;
 
-import '../../../data/db/app_database.dart';
+import '../../../core/persistence/app_database.dart';
 import '../../../data/domain/asset.dart';
 import '../../../data/domain/sync_meta.dart';
 import '../domain/equity_allocation.dart';

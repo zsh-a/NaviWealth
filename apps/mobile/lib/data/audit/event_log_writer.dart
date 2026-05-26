@@ -1,6 +1,6 @@
 import 'package:uuid/uuid.dart';
 
-import '../db/app_database.dart';
+import '../../core/persistence/app_database.dart';
 import '../repositories/mutation_context.dart';
 import 'domain_event.dart';
 

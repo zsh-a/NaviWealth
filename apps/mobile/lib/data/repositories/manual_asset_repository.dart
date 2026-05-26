@@ -2,9 +2,9 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 
+import '../../core/persistence/app_database.dart';
 import '../../core/sync/op_outbox.dart';
 import '../audit/event_log_writer.dart';
-import '../db/app_database.dart';
 import '../domain/asset.dart';
 import '../domain/enums.dart';
 import '../domain/manual_asset_metadata.dart';

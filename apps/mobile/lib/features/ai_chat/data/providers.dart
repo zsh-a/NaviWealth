@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
+import '../../../core/ai/composition/device_tools_provider.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/llm_credentials/llm_credentials.dart';
 import '../../../core/ai/llm_credentials/providers.dart';
@@ -16,7 +17,7 @@ import '../../../core/ai/trace/trace.dart';
 import '../../../core/ai/write/write.dart';
 import '../../../core/auth/providers.dart';
 import '../../../core/logging/providers.dart';
-import '../../../data/db/providers.dart';
+import '../../../core/persistence/providers.dart';
 import '../../../data/domain/account.dart';
 import '../../../data/domain/enums.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
@@ -62,11 +63,14 @@ final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
       config: OpenAiConfig.fromProfile(profile),
     ),
   };
-  // §4.6.3 — registry membership is the device allow-list. The
-  // canonical set lives in `device_tool_registry.dart` (kDeviceTools)
-  // so the W-D6 static-contract test shares one source. Tools not yet
-  // ported simply aren't advertised, so the model never calls them.
-  final registry = defaultDeviceToolRegistry();
+  // §4.6.3 — registry membership is the device allow-list. The list
+  // itself is built by the cross-domain composition root
+  // ([deviceToolsProvider], `docs/lifeos-shell.md` §7.1 D-1.2): each
+  // active LifeOS domain registers its own tools via a Riverpod
+  // override in `bootstrap.dart`. Tools not yet ported simply aren't
+  // advertised, so the model never calls them.
+  final tools = ref.watch(deviceToolsProvider);
+  final registry = DeviceToolRegistry(tools);
   return DeviceLlmRuntime(
     client: client,
     dispatcher: DriftDeviceToolDispatcher(ref: ref, registry: registry),

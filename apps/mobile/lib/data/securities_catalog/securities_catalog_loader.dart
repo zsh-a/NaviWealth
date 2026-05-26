@@ -4,8 +4,8 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../../core/logging/app_logger.dart';
+import '../../core/persistence/app_database.dart';
 import '../../domain/values/asset_market.dart';
-import '../db/app_database.dart';
 import '../domain/asset.dart';
 import '../domain/enums.dart';
 

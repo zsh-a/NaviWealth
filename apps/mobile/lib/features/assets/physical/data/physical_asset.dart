@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 
-import '../../../../data/db/app_database.dart';
+import '../../../../core/persistence/app_database.dart';
 import '../../../../data/domain/enums.dart';
 import 'physical_asset_meta.dart';
 

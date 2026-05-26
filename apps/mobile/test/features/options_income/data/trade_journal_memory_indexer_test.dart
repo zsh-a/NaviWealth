@@ -11,7 +11,7 @@ import 'package:naviwealth/features/options_income/data/trade_journal_memory_ind
 import 'package:naviwealth/features/options_income/domain/options_strategy_profile.dart';
 import 'package:naviwealth/features/options_income/domain/trade_journal_entry.dart';
 
-import '../../../data/db/test_database.dart';
+import '../../../core/persistence/test_database.dart';
 
 SyncMeta _meta() => SyncMeta(
   ownerUserId: 'u1',

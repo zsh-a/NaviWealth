@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/persistence/app_database.dart';
+import '../../../core/persistence/providers.dart';
 import '../../../features/settings/data/base_currency_preference.dart';
 import '../../../features/settings/data/price_sync_preferences.dart';
 import '../../../features/settings/fx_rates/providers.dart';
-import '../../db/app_database.dart';
-import '../../db/providers.dart';
 import '../../domain/asset.dart';
 import '../../domain/sync_meta.dart';
 import '../../repositories/providers.dart';

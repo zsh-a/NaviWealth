@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/persistence/app_database.dart';
+import '../../core/persistence/providers.dart';
 import '../../core/sync/drift_sync_storage.dart';
 import '../../core/sync/op_outbox.dart';
 import '../../domain/entities/fx_rate.dart' as dom;
@@ -9,8 +11,6 @@ import '../../features/cashflow/domain/budget_signal.dart';
 import '../../features/cashflow/domain/budget_summary.dart';
 import '../audit/domain_event.dart';
 import '../audit/event_log_reader.dart';
-import '../db/app_database.dart';
-import '../db/providers.dart';
 import '../domain/account.dart';
 import '../domain/asset.dart';
 import '../domain/enums.dart';

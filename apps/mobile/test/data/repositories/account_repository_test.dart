@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/repositories/account_repository.dart';
 
+import '../../core/persistence/test_database.dart';
 import '../../core/sync/_outbox_test_ext.dart';
-import '../db/test_database.dart';
 import '_stub_stamper.dart';
 
 void main() {

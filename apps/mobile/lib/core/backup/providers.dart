@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/db/providers.dart';
+import '../../core/persistence/providers.dart';
 import '../auth/providers.dart';
 import '../logging/providers.dart';
 import '../sync/drift_sync_storage.dart';

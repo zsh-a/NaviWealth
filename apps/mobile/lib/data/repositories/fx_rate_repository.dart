@@ -2,8 +2,8 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 
+import '../../core/persistence/app_database.dart';
 import '../../domain/entities/fx_rate.dart' as dom;
-import '../db/app_database.dart';
 
 /// Read / write API for the local `fx_rates` table.
 ///

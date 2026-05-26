@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 
-import '../../../../data/db/test_database.dart';
+import '../../../../core/persistence/test_database.dart';
 
 const _kFp = 'stub-v1-d2';
 const _kOwner = 'u1';

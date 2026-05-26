@@ -1,7 +1,9 @@
 import 'package:drift/drift.dart';
 
-import '../../data/db/app_database.dart';
+import '../../core/persistence/app_database.dart';
 import '../../data/domain/hlc.dart';
+import '../logging/app_logger.dart';
+import 'domain_prefix.dart';
 import 'sync_api_client.dart';
 
 /// The closed set of tables that participate in sync (`docs/sync-v2.md` §4).
@@ -44,9 +46,11 @@ const Map<String, String> kSyncPkOverrides = {
 /// server's generic row store — one ~120-line class replaces v1's per-table
 /// op-appliers.
 class RowApplier {
-  RowApplier(this._db);
+  RowApplier(this._db, {AppLogger? logger})
+    : _logger = logger ?? AppLogger.instance;
 
   final AppDatabase _db;
+  final AppLogger _logger;
   final Map<String, Map<String, DriftSqlType<Object>>> _typeCache = {};
 
   Map<String, DriftSqlType<Object>> _columnTypes(String table) {
@@ -74,21 +78,39 @@ class RowApplier {
       // order; defer FK checks to commit so the page applies atomically.
       await _db.customStatement('PRAGMA defer_foreign_keys = ON');
       for (final row in rows) {
-        if (!kSyncableTables.contains(row.table)) continue;
-        if (await _apply(row)) written++;
+        final local = _resolveLocalTable(row.table);
+        if (local == null) continue;
+        if (await _apply(row, local)) written++;
       }
     });
     return written;
   }
 
-  Future<bool> _apply(RowChange row) async {
-    final types = _columnTypes(row.table);
-    final pk = kSyncPkOverrides[row.table] ?? 'id';
+  /// Strip the LifeOS domain prefix and confirm the resulting table is
+  /// syncable on this device. D-1.4 onward every wire row should carry a
+  /// prefix; a row without one is treated as an unknown sender and
+  /// dropped (legacy rows are migrated server-side in
+  /// `0018_sync_row_namespace.sql`).
+  String? _resolveLocalTable(String wireTable) {
+    final stripped = stripDomainPrefix(wireTable);
+    if (stripped == null) {
+      _logger.w(
+        'sync: dropping row with unknown domain prefix: $wireTable',
+      );
+      return null;
+    }
+    if (!kSyncableTables.contains(stripped)) return null;
+    return stripped;
+  }
+
+  Future<bool> _apply(RowChange row, String table) async {
+    final types = _columnTypes(table);
+    final pk = kSyncPkOverrides[table] ?? 'id';
 
     // LWW guard — keep local state when its version is newer-or-equal.
     final existing = await _db
         .customSelect(
-          'SELECT hlc FROM ${row.table} WHERE $pk = ?',
+          'SELECT hlc FROM $table WHERE $pk = ?',
           variables: [Variable.withString(row.id)],
         )
         .getSingleOrNull();
@@ -111,7 +133,7 @@ class RowApplier {
         .map((c) => _coerce(types[c], ordered[c]))
         .toList(growable: false);
     await _db.customStatement(
-      'INSERT OR REPLACE INTO ${row.table} (${cols.join(', ')}) '
+      'INSERT OR REPLACE INTO $table (${cols.join(', ')}) '
       'VALUES ($placeholders)',
       args,
     );

@@ -14,6 +14,10 @@ on:
       - 'tool/check-modal-helpers.sh'
       - 'tool/check-enum-mirror.sh'
       - 'tool/lint-money-display.sh'
+      - 'tool/lint-no-finance-in-core.sh'
+      - 'tool/lint-cross-feature-imports.sh'
+      - 'tool/lint-row-family-prefix.sh'
+      - 'tool/lint-domain-neutral-contracts.sh'
       - 'tool/money-display-to-string-allowlist.txt'
       - 'tool/fetch-onnxruntime.sh'
       - 'tool/embed-onnxruntime-android.sh'
@@ -31,6 +35,10 @@ on:
       - 'tool/check-modal-helpers.sh'
       - 'tool/check-enum-mirror.sh'
       - 'tool/lint-money-display.sh'
+      - 'tool/lint-no-finance-in-core.sh'
+      - 'tool/lint-cross-feature-imports.sh'
+      - 'tool/lint-row-family-prefix.sh'
+      - 'tool/lint-domain-neutral-contracts.sh'
       - 'tool/money-display-to-string-allowlist.txt'
       - 'tool/fetch-onnxruntime.sh'
       - 'tool/embed-onnxruntime-android.sh'
@@ -112,6 +120,20 @@ jobs:
         # via deep link / sibling nav can leave without the system
         # gesture (which doesn't exist on web).
         run: ./tool/check-back-nav-coverage.sh
+      - name: LifeOS boundaries — D-1 cross-domain shell gates
+        # `docs/lifeos-shell.md` §11. Four guard rails landed with the
+        # D-1 shell foundation:
+        #   - no Finance imports in core/ai/runtime/ (D-1.2)
+        #   - no cross-feature imports inside ai_chat/ (D-1.6)
+        #   - every sync RowChange producer carries a domain prefix (D-1.4)
+        #   - shell contracts (core/ai/contracts/, core/sync/) stay
+        #     domain-neutral (no Money/Account/SleepSession leakage)
+        working-directory: ${{ github.workspace }}
+        run: |
+          ./tool/lint-no-finance-in-core.sh
+          ./tool/lint-cross-feature-imports.sh
+          ./tool/lint-row-family-prefix.sh
+          ./tool/lint-domain-neutral-contracts.sh
       - name: Run tests + pin failure footprint (Wave 41)
         # We can't yet bring the failing-test footprint to zero (~50
         # files broken by design-system API drift unrelated to the AI

@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/ingest/data/ingest_draft_store.dart';
 import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
 
-import '../../../data/db/test_database.dart';
+import '../../../core/persistence/test_database.dart';
 
 IngestDraft _draft(
   String id, {

@@ -8,6 +8,11 @@ use crate::error::AppError;
 pub struct AuthContext {
     pub user_id: String,
     pub device_id: String,
+    /// Active LifeOS domains for this caller. D-1.5 carries the JWT
+    /// `domains` claim through to route handlers so per-domain filters
+    /// (e.g. sync row-family prefix) read it without re-parsing the
+    /// token. Defaults to `vec!["finance"]` for legacy tokens.
+    pub domains: Vec<String>,
 }
 
 #[derive(Deserialize)]
@@ -80,5 +85,6 @@ pub async fn require_auth(req: &Request, ctx: &RouteContext<()>) -> Result<AuthC
     Ok(AuthContext {
         user_id: claims.sub,
         device_id: claims.did,
+        domains: claims.domains,
     })
 }

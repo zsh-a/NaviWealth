@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 
-import '../../data/db/app_database.dart';
+import '../../core/persistence/app_database.dart';
 import '../auth/auth_session.dart';
 import 'op_outbox.dart';
 import 'row_applier.dart' show kSyncPkOverrides;

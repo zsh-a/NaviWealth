@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/trace/drift_ai_trace_store.dart';
 
-import '../../../data/db/test_database.dart';
+import '../../../core/persistence/test_database.dart';
 
 void main() {
   AiTrace trace({required String id, required DateTime startedAt}) => AiTrace(

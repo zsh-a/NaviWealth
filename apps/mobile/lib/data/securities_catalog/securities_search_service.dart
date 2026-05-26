@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart' hide Column;
 
+import '../../core/persistence/app_database.dart';
 import '../../domain/values/asset_market.dart';
-import '../db/app_database.dart';
 import '../domain/enums.dart';
 import 'asset_search_hit.dart';
 

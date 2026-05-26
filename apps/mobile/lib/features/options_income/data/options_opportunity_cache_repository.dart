@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
 
-import '../../../data/db/app_database.dart';
+import '../../../core/persistence/app_database.dart';
 import '../../../domain/values/asset_market.dart';
 import '../../../domain/values/money.dart';
 import '../domain/opportunity_explanation.dart';

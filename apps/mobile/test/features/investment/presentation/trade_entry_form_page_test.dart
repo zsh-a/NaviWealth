@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/data/db/providers.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
@@ -18,7 +18,7 @@ import 'package:naviwealth/features/investment/presentation/trade_entry_form_pag
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../data/db/test_database.dart';
+import '../../../core/persistence/test_database.dart';
 
 Account _account({
   required String id,

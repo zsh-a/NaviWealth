@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../core/async/isolate_runner.dart';
-import '../../../data/db/app_database.dart';
-import '../../../data/db/providers.dart';
+import '../../../core/persistence/app_database.dart';
+import '../../../core/persistence/providers.dart';
 import '../../../data/domain/amortization_entry.dart';
 import '../../../data/domain/asset.dart';
 import '../../../data/domain/enums.dart';

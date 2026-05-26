@@ -1,16 +1,16 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/data/audit/domain_event.dart';
 import 'package:naviwealth/data/audit/event_log_reader.dart';
 import 'package:naviwealth/data/audit/event_log_writer.dart';
-import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/repositories/account_repository.dart';
 import 'package:naviwealth/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/data/repositories/price_repository.dart';
 
-import '../db/test_database.dart';
+import '../../core/persistence/test_database.dart';
 import '../repositories/_stub_stamper.dart';
 
 void main() {

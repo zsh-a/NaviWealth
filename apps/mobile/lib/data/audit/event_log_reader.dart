@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart' show QueryRow, Variable;
 
-import '../db/app_database.dart';
+import '../../core/persistence/app_database.dart';
 import '../domain/hlc.dart';
 import 'domain_event.dart';
 

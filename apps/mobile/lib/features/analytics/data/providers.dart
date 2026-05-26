@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/db/providers.dart';
+import '../../../core/persistence/providers.dart';
 import '../../../data/domain/asset.dart';
 import '../../investment/data/providers.dart' show holdingsSnapshotProvider;
 import '../domain/concentration_risk.dart';

@@ -253,7 +253,14 @@
 | D-1.7 Memory Layer substrate (vector store + embedder seam) | ✅ 完成 (2026-05-24) |
 | D-1.7b Memory Runtime (typed records + lifecycle + ContextBuilder) | ✅ 完成 (2026-05-24) |
 | D-1.7c Rust EmbeddingGemma-300M drop-in (fastembed/ort, ONNX INT8, 768-d) | ✅ 落地 (2026-05-24) — fastembed-rs 5.13, 18 MB dylib (ORT bundled), AppConfig opt-in, host build 验证;iOS/Android cross-compile 待用户机器执行 (`lifeos-shell.md` §6.6) |
-| D-1.1 / 1.2 / 1.3 / 1.4 / 1.5 / 1.6 / 1.8 | ⏳ 未启动 |
+| D-1.3 Intent/Trace `domain` 字段 | ✅ 完成 (2026-05-26) |
+| D-1.4 Sync row family namespace (`fin:` / `health:`) | ✅ 完成 (2026-05-26) — client SyncEngine 加前缀;backend `0018_sync_row_namespace.sql` migration + 域 claim filter |
+| D-1.5 Auth domain scopes + 域级 opt-in | ✅ 完成 (2026-05-26) — JWT `domains` claim default `['finance']`;DomainOptIns 持久化;Settings UI Health opt-in 占位 (D-2 激活) |
+| D-1.6 ai_chat composition 上提 | 🟡 部分 (2026-05-26) — rail 上提 + `DomainContextProvider` 抽象 + Finance domain provider;`chat_repository` / `proposal_applier` 上提是 D-1.6b follow-up |
+| D-1.2 Finance AI tool 迁出 core | 🟡 部分 (2026-05-26) — composition root `deviceToolsProvider` + lint `lint-no-finance-in-core.sh`;现存 30+ tool 文件物理迁移是 follow-up |
+| D-1.8 Multi-domain IA shell | 🟡 seam (2026-05-26) — `DomainShellSpec` + `activeDomainShellsProvider` 抽象;UI dock 激活等 D-2 第二个域注册 |
+| D-1.1 data/db → core/persistence 改名 | 🟡 部分 (2026-05-26) — `data/db` 全树已迁;data/domain / audit / market / securities_catalog / repositories 拆分 follow-up |
+| CI gates (4 条 lint 脚本) | ✅ 完成 (2026-05-26) — `tool/lint-{no-finance-in-core,cross-feature-imports,row-family-prefix,domain-neutral-contracts}.sh` 落 `mobile.yml` |
 | D-2 HealthOS MVP | ⏳ 等 D-1 |
 | D-3+ TimeOS / KnowledgeOS / LivingOS | ❌ 触发性,未触发 |
 

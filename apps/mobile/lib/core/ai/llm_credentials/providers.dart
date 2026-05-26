@@ -10,7 +10,7 @@ library;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/db/providers.dart' show secureKeyStoreProvider;
+import '../../../core/persistence/providers.dart' show secureKeyStoreProvider;
 import '../../async/async_notifier_convention.dart';
 import 'llm_connectivity.dart';
 import 'llm_credential_store.dart';

@@ -7,8 +7,8 @@ import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/auth/token_store.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/security/in_memory_key_store.dart';
-import 'package:naviwealth/data/db/providers.dart';
 import 'package:naviwealth/features/auth/data/auth_controller.dart';
 import 'package:naviwealth/features/auth/data/auth_route_guard.dart';
 

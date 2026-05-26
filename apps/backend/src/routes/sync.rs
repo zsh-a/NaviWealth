@@ -13,6 +13,73 @@ use crate::error::AppError;
 use crate::routes::common::check_protocol_version;
 use crate::sync::store::{self, RowChange};
 
+/// Map of wire-prefix → JWT `domains` claim value. Mirrors
+/// `apps/mobile/lib/core/sync/domain_prefix.dart` (D-1.4); kept as a
+/// small constant set rather than parsing because the active LifeOS
+/// domain set is curated, not user-extensible. Note that the wire
+/// prefix is a *short tag* (`fin:`, `health:`) while the claim spells
+/// the domain in full (`finance`, `health`).
+const RECOGNISED_DOMAIN_PREFIXES: &[(&str, &str)] = &[("fin:", "finance"), ("health:", "health")];
+
+/// True when `wire_table` carries a domain prefix that's both recognised
+/// by the server and present in the caller's `domains` claim.
+/// Rows that fail the check are dropped at the sync boundary so a
+/// claim revocation (e.g. user disables HealthOS) takes effect on the
+/// next request without an additional `DELETE`.
+fn caller_owns_prefix(wire_table: &str, claim_domains: &[String]) -> bool {
+    for (prefix, domain) in RECOGNISED_DOMAIN_PREFIXES {
+        if wire_table.starts_with(prefix) {
+            return claim_domains.iter().any(|d| d == domain);
+        }
+    }
+    false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn s(v: &str) -> String {
+        v.to_string()
+    }
+
+    #[test]
+    fn finance_only_claim_accepts_fin_rows() {
+        let claim = vec![s("finance")];
+        assert!(caller_owns_prefix("fin:accounts", &claim));
+        assert!(caller_owns_prefix("fin:journal_entries", &claim));
+    }
+
+    #[test]
+    fn finance_only_claim_rejects_health_rows() {
+        let claim = vec![s("finance")];
+        assert!(!caller_owns_prefix("health:sleep_session", &claim));
+    }
+
+    #[test]
+    fn health_claim_accepts_health_rows() {
+        let claim = vec![s("finance"), s("health")];
+        assert!(caller_owns_prefix("health:hrv_daily", &claim));
+        assert!(caller_owns_prefix("fin:accounts", &claim));
+    }
+
+    #[test]
+    fn unprefixed_rows_are_always_rejected() {
+        let claim = vec![s("finance"), s("health")];
+        assert!(!caller_owns_prefix("accounts", &claim));
+        assert!(!caller_owns_prefix("", &claim));
+    }
+
+    #[test]
+    fn unknown_prefix_is_rejected_even_if_claim_contains_it() {
+        // The recognised-domain set is curated server-side; a claim
+        // can't grow it by listing a name that the server doesn't
+        // already accept.
+        let claim = vec![s("finance"), s("time")];
+        assert!(!caller_owns_prefix("time:slot", &claim));
+    }
+}
+
 const SYNC_BODY_LIMIT: usize = 1024 * 1024;
 const SYNC_MAX_CHANGES: usize = 500;
 const PER_ROW_PAYLOAD_LIMIT: usize = 64 * 1024;
@@ -98,11 +165,32 @@ async fn sync_inner(
     let user_id = &auth.user_id;
     let device_id = &auth.device_id;
 
+    // D-1.5: drop rows whose domain prefix is not in the caller's
+    // `domains` claim. Today every caller's claim is `["finance"]` so
+    // only `fin:*` rows flow; once a user opts into HealthOS the next
+    // token rotation expands the claim and `health:*` rows are
+    // accepted on subsequent requests.
+    let body_changes_len = body.changes.len();
+    let allowed_changes: Vec<RowChange> = body
+        .changes
+        .into_iter()
+        .filter(|c| caller_owns_prefix(&c.table, &auth.domains))
+        .collect();
+    metrics.dropped_push = body_changes_len.saturating_sub(allowed_changes.len());
+
     // Apply the caller's changes first, then pull — so a row the caller just
     // pushed and a peer's newer version of it resolve before the response is
     // built (docs/sync-v2.md §5.1).
-    let pushed = store::apply_changes(&db, user_id, device_id, &body.changes).await?;
-    let page = store::pull(&db, user_id, device_id, body.since, PULL_LIMIT).await?;
+    let pushed = store::apply_changes(&db, user_id, device_id, &allowed_changes).await?;
+    let mut page = store::pull(&db, user_id, device_id, body.since, PULL_LIMIT).await?;
+
+    // Pull-side filter: the server might have rows in domains the caller
+    // can no longer see (e.g. they revoked Health). Drop them here rather
+    // than at the client so revocation is server-enforced.
+    let before = page.changes.len();
+    page.changes
+        .retain(|c| caller_owns_prefix(&c.table, &auth.domains));
+    metrics.dropped_pull = before.saturating_sub(page.changes.len());
 
     metrics.pushed = pushed;
     metrics.pulled = page.changes.len();
@@ -131,19 +219,27 @@ struct SyncMetrics {
     pulled: usize,
     /// Whether the caller must sync again to drain.
     more: bool,
+    /// D-1.5 — rows the caller pushed but couldn't store because their
+    /// JWT `domains` claim didn't include the row's domain prefix.
+    dropped_push: usize,
+    /// D-1.5 — rows that exist server-side but the caller no longer has
+    /// the domain claim to pull.
+    dropped_pull: usize,
 }
 
 fn log_request(status: u16, code: &str, started_ms: i64, metrics: &SyncMetrics) {
     let dur_ms = (Utc::now().timestamp_millis() - started_ms).max(0);
     let slow = dur_ms > SLOW_REQUEST_THRESHOLD_MS;
     worker::console_log!(
-        "[SYNC] status={} code={} dur_ms={} pushed={} pulled={} more={} slow={}",
+        "[SYNC] status={} code={} dur_ms={} pushed={} pulled={} more={} slow={} dropped_push={} dropped_pull={}",
         status,
         code,
         dur_ms,
         metrics.pushed,
         metrics.pulled,
         metrics.more,
-        slow
+        slow,
+        metrics.dropped_push,
+        metrics.dropped_pull,
     );
 }

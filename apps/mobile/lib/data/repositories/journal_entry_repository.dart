@@ -4,8 +4,8 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 
+import '../../core/persistence/app_database.dart';
 import '../../core/sync/op_outbox.dart';
-import '../db/app_database.dart';
 import '../domain/entry_kind.dart';
 import '../domain/enums.dart';
 import '../domain/expense.dart';

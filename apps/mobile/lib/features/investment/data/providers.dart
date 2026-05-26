@@ -5,8 +5,8 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/contracts/task_context.dart' show AnalyticalUpload;
-import '../../../data/db/app_database.dart';
-import '../../../data/db/providers.dart';
+import '../../../core/persistence/app_database.dart';
+import '../../../core/persistence/providers.dart';
 import '../../../data/domain/asset.dart';
 import '../../../data/domain/sync_meta.dart';
 import '../../../data/market/market_data_providers.dart';

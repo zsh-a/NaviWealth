@@ -13,7 +13,7 @@ import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/query_memory_tool.dart';
 import 'package:naviwealth/data/repositories/mutation_context.dart';
 
-import '../../../../../data/db/test_database.dart';
+import '../../../../../core/persistence/test_database.dart';
 
 const _kOwner = 'u1';
 

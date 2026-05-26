@@ -4,7 +4,7 @@ use uuid::Uuid;
 use worker::{D1Database, D1Type, Request, Response, Result as WorkerResult, RouteContext};
 
 use crate::auth::{
-    jwt::{self, Claims},
+    jwt::{self, default_domains, Claims},
     middleware::{jwt_secret, require_auth},
     password, AuthContext, ACCESS_TOKEN_TTL_DAYS,
 };
@@ -96,6 +96,10 @@ fn issue_token(
         jti: jti.clone(),
         iat: now.timestamp(),
         exp: exp.timestamp(),
+        // D-1.5: Every freshly minted token starts FinanceOS-only.
+        // Health (and future) domain activation flips the row in
+        // `domain_opt_ins` and is reflected on the next token rotation.
+        domains: default_domains(),
     };
     let token = jwt::encode(&claims, secret)?;
     Ok((token, jti, exp))

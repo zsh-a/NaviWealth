@@ -9,7 +9,7 @@ import 'package:naviwealth/features/ai_chat/domain/chat_events.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_models.dart';
 import 'package:naviwealth/features/ai_chat/domain/proposal_apply_state.dart';
 
-import '../../data/db/test_database.dart';
+import '../../core/persistence/test_database.dart';
 
 class _NoopApi implements AiChatApiClient {
   @override

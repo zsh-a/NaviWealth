@@ -5,9 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/route_paths.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/data/db/app_database.dart';
-import 'package:naviwealth/data/db/providers.dart';
 import 'package:naviwealth/data/domain/account.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
@@ -21,8 +21,8 @@ import 'package:naviwealth/features/shared/account_tree_picker.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/persistence/test_database.dart';
 import '../../core/sync/_outbox_test_ext.dart';
-import '../../data/db/test_database.dart';
 import '../../data/repositories/_stub_stamper.dart';
 
 class _Harness {

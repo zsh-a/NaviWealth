@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
-import '../../data/db/app_database.dart';
+import '../../core/persistence/app_database.dart';
 import '../../data/domain/hlc.dart';
 import '../logging/app_logger.dart';
 import '../sync/op_outbox.dart';

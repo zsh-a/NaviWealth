@@ -8,7 +8,7 @@
 /// runtime.
 library;
 
-import 'intent.dart' show RiskLevel, RiskLevelWire;
+import 'intent.dart' show RiskLevel, RiskLevelWire, kDefaultDomain;
 import 'privacy_budget.dart' show BudgetTier, BudgetTierWire;
 
 enum Access { read, propose, externalWrite }
@@ -72,6 +72,7 @@ class ToolDescriptor {
     required this.requiresConfirmation,
     required this.allowedContextTier,
     this.sideEffect = SideEffect.none,
+    this.domain = kDefaultDomain,
   });
 
   final String name;
@@ -87,6 +88,12 @@ class ToolDescriptor {
   /// Side-effect classification (orthogonal to risk level).
   final SideEffect sideEffect;
 
+  /// LifeOS domain this tool belongs to. Cross-domain shell tools
+  /// (Memory Layer `query_memory` / `build_context`) use `shell`. All
+  /// Finance business tools use `finance` (default). Phase D-2 will
+  /// add `health` tools.
+  final String domain;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'name': name,
     'access': access.wire,
@@ -94,6 +101,7 @@ class ToolDescriptor {
     'requires_confirmation': requiresConfirmation.wire,
     'allowed_context_tier': allowedContextTier.wire,
     'side_effect': sideEffect.wire,
+    'domain': domain,
   };
 
   factory ToolDescriptor.fromJson(Map<String, Object?> json) {
@@ -103,6 +111,7 @@ class ToolDescriptor {
     final c = json['requires_confirmation'];
     final t = json['allowed_context_tier'];
     final se = json['side_effect'];
+    final domain = json['domain'];
     return ToolDescriptor(
       name: n is String ? n : '',
       access: a is String ? AccessWire.parse(a) : Access.read,
@@ -114,9 +123,15 @@ class ToolDescriptor {
           ? BudgetTierWire.parse(t)
           : BudgetTier.standard,
       sideEffect: se is String ? SideEffectWire.parse(se) : SideEffect.none,
+      domain: domain is String && domain.isNotEmpty ? domain : kDefaultDomain,
     );
   }
 }
+
+/// Cross-domain shell tools (Memory Layer). Distinguishes shell-level
+/// tools from any single domain so registry / lint can treat them
+/// separately from `kDomainFinance` / future `kDomainHealth`.
+const String kDomainShell = 'shell';
 
 const allToolDescriptors = <ToolDescriptor>[
   ToolDescriptor(
@@ -376,13 +391,14 @@ const allToolDescriptors = <ToolDescriptor>[
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
   ),
-  // Memory Runtime (`lifeos-shell.md` §6, D-1.7b).
+  // Memory Runtime (`lifeos-shell.md` §6, D-1.7b). Shell-level (cross-domain).
   ToolDescriptor(
     name: 'query_memory',
     access: Access.read,
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.small,
+    domain: kDomainShell,
   ),
   ToolDescriptor(
     name: 'build_context',
@@ -390,6 +406,7 @@ const allToolDescriptors = <ToolDescriptor>[
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
+    domain: kDomainShell,
   ),
 ];
 

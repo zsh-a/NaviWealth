@@ -1,9 +1,9 @@
 import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/data/db/app_database.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/data/securities_catalog/securities_catalog_loader.dart';
 
-import '../db/test_database.dart';
+import '../../core/persistence/test_database.dart';
 import '_catalog_fixtures.dart';
 
 void main() {

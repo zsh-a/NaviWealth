@@ -3,12 +3,12 @@ import 'dart:convert';
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
 
+import '../../../core/persistence/app_database.dart';
 import '../../../domain/entities/historical_bar.dart';
 import '../../../domain/entities/quote.dart';
 import '../../../domain/entities/symbol_info.dart';
 import '../../../domain/services/market_data_service.dart';
 import '../../../domain/values/asset_market.dart';
-import '../../db/app_database.dart';
 import '../http/clock.dart';
 import 'cache_policy.dart';
 

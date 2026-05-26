@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
+import '../../../core/persistence/app_database.dart';
 import '../../../core/sync/op_outbox.dart';
-import '../../../data/db/app_database.dart';
 import '../../../data/domain/sync_meta.dart';
 import '../../../data/repositories/mutation_context.dart';
 import '../domain/options_strategy_profile.dart';

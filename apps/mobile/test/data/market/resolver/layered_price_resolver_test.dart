@@ -16,7 +16,7 @@ import 'package:naviwealth/domain/services/price_resolver.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/domain/values/price_confidence.dart';
 
-import '../../db/test_database.dart';
+import '../../../core/persistence/test_database.dart';
 import '../../repositories/_stub_stamper.dart';
 import '../fake_clock.dart';
 

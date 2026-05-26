@@ -1,13 +1,13 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/repositories/budget_repository.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/cashflow/domain/budget_summary.dart';
 
-import '../../../data/db/test_database.dart';
+import '../../../core/persistence/test_database.dart';
 import '../../../data/repositories/_stub_stamper.dart';
 
 void main() {

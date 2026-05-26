@@ -184,7 +184,9 @@ void main() {
     // `read_model_layer`, and `used_cloud` from ToolDescriptor's wire
     // shape. Silent re-introduction would mean drift back toward the
     // multi-runtime / freshness-gated design we deliberately deleted.
-    test('toJson emits exactly the six documented keys', () {
+    // D-1.3 added `domain` so the catalog can partition shell vs
+    // finance tools — bumping the canonical key count from 6 → 7.
+    test('toJson emits exactly the seven documented keys', () {
       const desc = ToolDescriptor(
         name: 'sentinel',
         access: Access.read,
@@ -200,6 +202,7 @@ void main() {
         'requires_confirmation',
         'allowed_context_tier',
         'side_effect',
+        'domain',
       });
     });
 

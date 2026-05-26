@@ -14,6 +14,18 @@ pub struct Claims {
     pub jti: String,
     pub iat: i64,
     pub exp: i64,
+    /// LifeOS domains the caller is opted into (`docs/lifeos-shell.md`
+    /// §5, D-1.5). FinanceOS is the seed domain so legacy tokens emitted
+    /// before this claim landed decode as `["finance"]`.
+    #[serde(default = "default_domains")]
+    pub domains: Vec<String>,
+}
+
+/// Default for tokens that were issued before the `domains` claim
+/// landed (D-1.5). Every legacy token belongs to FinanceOS — the only
+/// domain that existed before Phase D.
+pub fn default_domains() -> Vec<String> {
+    vec!["finance".to_string()]
 }
 
 #[derive(Serialize)]
@@ -67,4 +79,60 @@ pub fn decode(token: &str, secret: &[u8]) -> Result<Claims, AppError> {
         .decode(p_b64)
         .map_err(|_| AppError::Unauthorized)?;
     serde_json::from_slice(&payload).map_err(|_| AppError::Unauthorized)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_claims() -> Claims {
+        Claims {
+            sub: "user-1".into(),
+            did: "device-1".into(),
+            jti: "jti-1".into(),
+            iat: 1_700_000_000,
+            exp: 1_700_000_000 + 86_400,
+            domains: default_domains(),
+        }
+    }
+
+    #[test]
+    fn encode_then_decode_roundtrips_default_domain() {
+        let secret = b"unit-test-secret";
+        let token = encode(&sample_claims(), secret).expect("encode");
+        let decoded = decode(&token, secret).expect("decode");
+        assert_eq!(decoded.domains, vec!["finance".to_string()]);
+    }
+
+    #[test]
+    fn encode_then_decode_preserves_multi_domain_claim() {
+        let secret = b"unit-test-secret";
+        let mut claims = sample_claims();
+        claims.domains = vec!["finance".to_string(), "health".to_string()];
+        let token = encode(&claims, secret).expect("encode");
+        let decoded = decode(&token, secret).expect("decode");
+        assert_eq!(
+            decoded.domains,
+            vec!["finance".to_string(), "health".to_string()],
+        );
+    }
+
+    #[test]
+    fn legacy_payload_without_domains_decodes_to_finance() {
+        // Construct a payload by hand the way a pre-D-1.5 token would
+        // look — no `domains` field. The serde default must kick in.
+        let header_b64 = URL_SAFE_NO_PAD.encode(b"{\"alg\":\"HS256\",\"typ\":\"JWT\"}");
+        let payload = "{\"sub\":\"u\",\"did\":\"d\",\"jti\":\"j\",\"iat\":1,\"exp\":2}";
+        let payload_b64 = URL_SAFE_NO_PAD.encode(payload.as_bytes());
+
+        let secret = b"unit-test-secret";
+        let signing_input = format!("{header_b64}.{payload_b64}");
+        let mut mac = HmacSha256::new_from_slice(secret).unwrap();
+        mac.update(signing_input.as_bytes());
+        let sig_b64 = URL_SAFE_NO_PAD.encode(mac.finalize().into_bytes());
+        let token = format!("{signing_input}.{sig_b64}");
+
+        let decoded = decode(&token, secret).expect("decode legacy");
+        assert_eq!(decoded.domains, vec!["finance".to_string()]);
+    }
 }
