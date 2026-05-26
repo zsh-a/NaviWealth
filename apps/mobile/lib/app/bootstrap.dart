@@ -10,6 +10,8 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/ai/agents/agent.dart';
+import '../core/ai/agents/agent_registry.dart';
 import '../core/ai/composition/ai_context_summary.dart';
 import '../core/ai/composition/chat_rail_provider.dart';
 import '../core/ai/composition/chat_trace_prep.dart';
@@ -44,6 +46,7 @@ import '../features/finance/composition/finance_proposal_applier.dart';
 import '../features/finance/data/market/sync/price_sync_providers.dart';
 import '../features/finance_ai_tools.dart';
 import '../features/finance_domain_shell.dart';
+import '../features/health/agents/morning_briefing_agent.dart';
 import '../features/health/composition/health_domain_shell.dart';
 import '../features/health_ai_tools.dart';
 import '../features/home/composition/finance_chat_rail_provider.dart';
@@ -146,6 +149,17 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           ...kShellDeviceTools,
           ...kFinanceDeviceTools,
           if (healthEnabled) ...kHealthDeviceTools,
+        ];
+      }),
+      // D-2.5 (`docs/lifeos-shell.md` §7.3 + `docs/healthos-domain.md`
+      // §8): register agents. The Morning Briefing agent ships only
+      // when Health is opted-in — it reads health events and would be
+      // a no-op without them.
+      agentRegistryProvider.overrideWith((ref) {
+        final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+        final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
+        return <Agent>[
+          if (healthEnabled) ref.watch(morningBriefingAgentProvider),
         ];
       }),
       // D-1.6b (`docs/lifeos-shell.md` §4): FinanceOS supplies the

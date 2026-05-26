@@ -68,7 +68,8 @@ D-2  HealthOS MVP                                (8–12 周)  详见 healthos-d
   D-2.3b Dock UI rendering (app_shell 改造)              ⏳ (dock 可见态等 dogfood)
   D-2.4a AI tools (read-only, 4 个)                      ✅ 落地 (2026-05-27)
   D-2.4b Memory Layer 第二 caller (sleep/hrv extractor)  ✅ 落地 (2026-05-27)
-  D-2.5 第一个 cross-domain agent (Morning Briefing)    ⏳
+  D-2.5 Morning Briefing agent (programmatic MVP)        ✅ 落地 (2026-05-27)
+  D-2.5b LLM 合成 + 平台 cron / notifications            ⏳
 D-3+ 触发性 (TimeOS / Knowledge / Living)         不预排
 ```
 
@@ -346,13 +347,20 @@ Plus updated descriptor/registry tests (catalog → 37 tools).
 - `ToolDescriptor.domain: String` (catalog 按域分组)
 - `AiTrace.intent.capability` 允许非 finance 值
 
-### 7.3 Agent runtime (D-4,D-2 之后)
+### 7.3 Agent runtime (D-2.5 framework 落地 2026-05-27)
 
-- 已有:device session + tool dispatcher + Opik 风格 trace
-- 加:`core/ai/agents/scheduled_agent.dart` (cron-driven autonomous agent)
-- 第一个跨域 agent: **Morning Briefing** (D-2.5,见 `healthos-domain.md`)
+**已有 (post-D-2.5)**:
 
-**反目标**: 不做"通用 agent 平台"。Agent runtime 服务 1–2 个具名 use case,不开 general API。
+- `core/ai/agents/agent.dart` — `Agent` interface + `AgentContext` + `AgentRunResult` (completed/skipped/failed)
+- `core/ai/agents/agent_schedule.dart` — interval + preferred-hour gate (jitter ±5min default);pure Dart 不依赖平台 cron
+- `core/ai/agents/agent_registry.dart` — `agentRegistryProvider` seam(默认空,bootstrap 按域 opt-in 拼)
+- `core/ai/agents/agent_runner.dart` — `runOnce(agent, ctx)` 手动触发 + `tick(agents, ctx)` 周期驱动,每次运行写一条 `EventRecord` (source `agent_run`)。In-memory `lastRunAt` map(平台 cron 持久化是 D-2.5b)
+
+**第一个跨域 agent**: `features/health/agents/morning_briefing_agent.dart` ✅ 落地。见 `healthos-domain.md` §8。
+
+**反目标**: 不做"通用 agent 平台"。Agent runtime 服务 1–2 个具名 use case,不开 general API。`runOnce` / `tick` 是 callers 唯一入口,不允许 agent 与 agent 互相调用。
+
+**D-2.5b 待办**: LLM-driven 合成、平台 background fetch (iOS) / WorkManager (Android)、`flutter_local_notifications` 接入。当前 MVP 依赖 app 开着时手动触发,够 dogfood。
 
 ---
 
