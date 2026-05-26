@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../data/db/app_database.dart';
+import '../../core/persistence/app_database.dart';
 import '../../data/domain/hlc.dart';
 import 'cursor_store.dart';
 import 'op_outbox.dart';

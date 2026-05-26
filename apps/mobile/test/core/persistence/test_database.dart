@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 
-import 'package:naviwealth/data/db/app_database.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 
 /// Builds an in-memory [AppDatabase] suitable for unit tests.
 ///

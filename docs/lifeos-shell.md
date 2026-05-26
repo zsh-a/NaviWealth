@@ -47,18 +47,20 @@ LifeOS = 个人数字基础设施。当前活跃域:
 详细工作项见下面各章。
 
 ```
-D-0  决策落地 + 文档基线                          (1 周)   ✅ 进行中
+D-0  决策落地 + 文档基线                          (1 周)   ✅ 落地
 D-1  Shell foundation                            (4–6 周)
-  D-1.1  Naming refactor (data/db → core/persistence)
-  D-1.2  AI tool relocation (Finance tool → features/ai_tools)
-  D-1.3  Intent/Trace domain 字段
-  D-1.4  Sync row family namespace (fin:* / health:*)
-  D-1.5  Auth domain scopes + 域级 opt-in
-  D-1.6  Cross-feature composition uplift (ai_chat)
+  D-1.1  Naming refactor (data/db → core/persistence)   ⏳ 未动
+  D-1.2  AI tool relocation (Finance tool → features/ai_tools)  🟡 composition root + lint (2026-05-26);物理移文件 follow-up
+  D-1.3  Intent/Trace domain 字段                       ✅ 落地 (2026-05-26)
+  D-1.4  Sync row family namespace (fin:* / health:*)   ✅ 落地 (2026-05-26)
+  D-1.5  Auth domain scopes + 域级 opt-in               ✅ 落地 (2026-05-26)
+  D-1.6  Cross-feature composition uplift (ai_chat)     🟡 rail 上提 + DomainContextProvider 抽象 (2026-05-26);chat_repository / proposal_applier 上提是 D-1.6b
   D-1.7  Memory Layer 通电 substrate                    ✅ 落地 (vector store + embedder seam)
   D-1.7b Memory Runtime (typed + lifecycle + ContextBuilder)  ✅ 落地 (2026-05-24)
   D-1.7c Rust EmbeddingGemma-300M drop-in (fastembed/ort, ONNX INT8)  ✅ 落地 (2026-05-24, host build 验证;iOS/Android cross-compile + 模型 bytes 待用户机器执行)
-  D-1.8  Multi-domain IA shell
+  D-1.8  Multi-domain IA shell                          🟡 seam + spec abstraction (2026-05-26);UI dock 可见态等 D-2 第二个域注册后激活
+  D-1.1  Naming refactor (data/db → core/persistence)   🟡 data/db 已迁 (2026-05-26);data/domain / audit / market / securities_catalog / repositories 拆分 follow-up
+  CI gates (§11)                                        ✅ 4 条 lint 脚本落地 (2026-05-26)
 D-2  HealthOS MVP                                (8–12 周)  详见 healthos-domain.md
 D-3+ 触发性 (TimeOS / Knowledge / Living)         不预排
 ```
@@ -368,12 +370,16 @@ Plus updated descriptor/registry tests (catalog → 37 tools).
 
 **Phase D-1.1 rename**:
 
-- `data/db/` → `core/persistence/` (跨域 storage adapter)
-- `data/domain/` → `features/finance/data/domain/` (Finance 业务实体)
-- `data/audit/` 跨域 → `core/audit/`
-- `data/market/` Finance 专属 → `features/finance/data/market/`
-- `data/securities_catalog/` Finance 专属 → `features/finance/data/securities_catalog/`
-- `data/repositories/providers.dart` 内 Finance providers 拆出去
+- ✅ `data/db/` → `core/persistence/` (跨域 storage adapter) — 2026-05-26 落地
+- ⏳ `data/domain/` → `features/finance/data/domain/` (Finance 业务实体)
+- ⏳ `data/audit/` 跨域 → `core/audit/`
+- ⏳ `data/market/` Finance 专属 → `features/finance/data/market/`
+- ⏳ `data/securities_catalog/` Finance 专属 → `features/finance/data/securities_catalog/`
+- ⏳ `data/repositories/providers.dart` 内 Finance providers 拆出去
+
+**完成的部分** (2026-05-26): `data/db/` 整树 (12 文件 + Drift `.g.dart` 96 万 byte) 迁到 `core/persistence/`,90 文件 import 路径机械化重写,`dart fix` 自动排序 48 文件 directives。`test/data/db/test_database.dart` 也对应迁到 `test/core/persistence/`。
+
+**剩余 5 项**: 都是 Finance-专属 reorganization,不阻塞 D-2 (HealthOS 不依赖 Finance-data 重组)。作为后续 batch PR。
 
 **风险**: 全仓 import path 改动。Mitigation:
 
@@ -443,16 +449,18 @@ apps/mobile/native/
 
 ---
 
-## 11. CI gates (Phase D-1 落地后强制)
+## 11. CI gates
 
-| 脚本 | 检查 |
-|---|---|
-| `tool/lint-no-finance-in-core.sh` | `core/ai/runtime/` 禁止 `import 'package:.../features/'` |
-| `tool/lint-cross-feature-imports.sh` | `features/<A>/` 禁止 import `features/<B>/`(`shared` 例外) |
-| `tool/lint-row-family-prefix.sh` | `sync_rows.row_kind` insert 必须带 `<domain>:` 前缀 |
-| `tool/lint-domain-neutral-contracts.sh` | `core/ai/contracts/` / `core/sync/` 不出现 finance/health 业务词 |
+四条 lint 脚本 2026-05-26 落地 (D-1.2 / D-1.4 / D-1.6 配套),挂在 `.github/workflows/mobile.yml` 的 `analyze-and-test` job 上,push + PR 都强制。
 
-详细脚本在 D-1 落地时添加到 `tool/`。
+| 脚本 | 检查 | 状态 |
+|---|---|---|
+| `tool/lint-no-finance-in-core.sh` | `core/ai/runtime/` 禁止 import `features/<domain>/`;`device/tools/` + 3 个已知 chat_events 借用点 grandfathered (northstar §2.2) | ✅ 落地 |
+| `tool/lint-cross-feature-imports.sh` | `features/ai_chat/` 禁止 import 兄弟 features (shared/ 除外);grandfathered: chat composition root 3 个文件,follow-up D-1.6b 清掉 | ✅ 落地 |
+| `tool/lint-row-family-prefix.sh` | `core/sync/` 内的 `RowChange(table: '<literal>')` 字面量必须带 `fin:` / `health:` 前缀 | ✅ 落地 |
+| `tool/lint-domain-neutral-contracts.sh` | `core/ai/contracts/` / `core/sync/` 不出现 Finance / Health 业务词 (`Money` / `Account[A-Z]` / `JournalEntry` / `Posting` / `Holding` / `Liability` / `FirePlan` / `FireBucket` / `TradeJournal` / `SleepSession` / `HrvDaily`) | ✅ 落地 |
+
+跨 features 全域强制 (即 settings / home / fire 等也禁止 cross-import) 是 D-1.6c+ follow-up;今天 lint scope 只锁 `features/ai_chat/`。
 
 ---
 

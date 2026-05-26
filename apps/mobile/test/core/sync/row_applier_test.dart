@@ -1,10 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/sync/domain_prefix.dart';
 import 'package:naviwealth/core/sync/row_applier.dart';
 import 'package:naviwealth/core/sync/sync_api_client.dart';
-import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 
-import '../../data/db/test_database.dart';
+import '../../core/persistence/test_database.dart';
 
 const _user = 'user-1';
 const _devA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
@@ -56,7 +57,7 @@ RowChange _accountChange({
   int? deletedAt,
 }) {
   return RowChange(
-    table: 'accounts',
+    table: prefixFinanceTable('accounts'),
     id: id,
     payload: _accountPayload(
       id: id,
@@ -151,9 +152,42 @@ void main() {
   test('skips rows that are not syncable tables', () async {
     final written = await applier.applyAll([
       RowChange(
-        table: 'not_a_table',
+        table: 'fin:not_a_table',
         id: 'x',
         payload: const {'id': 'x'},
+        version: _hlc(1_000),
+        deleted: false,
+        deviceId: _devA,
+      ),
+    ]);
+    expect(written, 0);
+  });
+
+  test('drops rows that arrive without a recognised domain prefix', () async {
+    // Legacy rows (pre-D-1.4) lose their prefix until the backend
+    // migration runs. Until then the applier refuses to write them.
+    final written = await applier.applyAll([
+      RowChange(
+        table: 'accounts',
+        id: 'account-1',
+        payload: _accountPayload(hlc: _hlc(1_000)),
+        version: _hlc(1_000),
+        deleted: false,
+        deviceId: _devA,
+      ),
+    ]);
+    expect(written, 0);
+  });
+
+  test('accepts inbound rows in the health namespace metadata-only', () async {
+    // The current device has no `health:*` syncable table — the row must
+    // be classified by domain prefix then dropped on the syncable-set
+    // check, not crash.
+    final written = await applier.applyAll([
+      RowChange(
+        table: 'health:sleep_session',
+        id: 's-1',
+        payload: const <String, Object?>{'id': 's-1'},
         version: _hlc(1_000),
         deleted: false,
         deviceId: _devA,

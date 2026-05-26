@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/backup/backup_codec.dart';
 import 'package:naviwealth/core/backup/backup_service.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 
-import '../../data/db/test_database.dart';
+import '../../core/persistence/test_database.dart';
 import '../sync/_outbox_test_ext.dart';
 
 void main() {

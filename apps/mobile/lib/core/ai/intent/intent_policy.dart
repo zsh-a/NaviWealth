@@ -23,10 +23,15 @@ class IntentDescriptor {
     required this.promptTemplate,
     this.preferredReadModels = const <String>[],
     this.requiresExplicitConfirmation = false,
+    this.domain = 'finance',
   });
 
   /// Stable identifier — `'explain_change'`, never renamed.
   final String name;
+
+  /// LifeOS domain this intent belongs to. Phase D-1.3 default
+  /// `finance`; Phase D-2 will introduce `health` intents.
+  final String domain;
 
   /// Capsule / button text shown to the user in Chinese ("为什么", "对比").
   /// Short — capsules are dense.

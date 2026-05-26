@@ -12,7 +12,7 @@ import 'package:naviwealth/features/ai_chat/data/chat_repository.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_events.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_models.dart';
 
-import '../../data/db/test_database.dart';
+import '../../core/persistence/test_database.dart';
 
 class _FakeApi implements AiChatApiClient {
   _FakeApi();

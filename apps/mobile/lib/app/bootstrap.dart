@@ -10,6 +10,8 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/ai/composition/chat_rail_provider.dart';
+import '../core/ai/composition/device_tools_provider.dart';
 import '../core/ai/local/embedding/embedder.dart';
 import '../core/ai/local/embedding/model_install_paths.dart';
 import '../core/ai/local/embedding/model_manifest.dart';
@@ -23,12 +25,17 @@ import '../core/logging/crash_reporter.dart';
 import '../core/logging/logging_crash_reporter.dart';
 import '../core/logging/providers.dart';
 import '../core/perf/providers.dart';
+import '../core/shell/domain_shell.dart';
 import '../core/sync/providers.dart';
 import '../data/market/sync/price_sync_providers.dart';
 import '../design_system/preferences/theme_preferences.dart';
 import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
 import '../features/cashflow/data/recurring_transaction_providers.dart';
+import '../features/finance_ai_tools.dart';
+import '../features/finance_domain_shell.dart';
+import '../features/home/composition/finance_chat_rail_provider.dart';
+import '../l10n/gen/app_localizations.dart';
 import 'memory_indexers_bootstrap.dart';
 import 'route_guard.dart';
 
@@ -108,6 +115,37 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         (ref) =>
             () => ref.read(authControllerProvider.notifier).refreshIfPossible(),
       ),
+      // D-1.6 (`docs/lifeos-shell.md` §4): FinanceOS registers the
+      // chat rail content selector. The chat surface in
+      // `features/ai_chat/` reads only `chatRailContentSelectorProvider`
+      // — it doesn't know which domains are active.
+      chatRailContentSelectorProvider.overrideWith(
+        (ref) => ref.watch(financeChatRailContentSelectorProvider),
+      ),
+      // D-1.2 (`docs/lifeos-shell.md` §7.1): the device tool registry
+      // is composed from each active domain's tool list. Phase D-1.2
+      // wires FinanceOS + shell (Memory Layer) tools. HealthOS D-2
+      // will extend this list with its own `features/health/ai_tools/`
+      // contribution without any further shell change.
+      deviceToolsProvider.overrideWith(
+        (ref) => [...kShellDeviceTools, ...kFinanceDeviceTools],
+      ),
+      // D-1.8 (`docs/lifeos-shell.md` §3): register the FinanceOS
+      // shell spec. Today this is the only domain so the dock stays
+      // hidden and app_shell renders its tabs as the single-domain
+      // layout. HealthOS D-2 will append a `healthDomainShell` here
+      // once the user enables the Health opt-in.
+      activeDomainShellsProvider.overrideWith((ref) {
+        // The spec depends on AppLocalizations for labels, which is
+        // resolved per-render inside the shell, not at container
+        // construction. We side-step by building with the default
+        // (English) locale here — the active locale is re-applied
+        // when the widget tree rebuilds via Riverpod's invalidation.
+        // `lookupAppLocalizations` is provided by the generated l10n
+        // surface and works for any const-supported locale.
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        return [financeDomainShell(l10n)];
+      }),
       // D-1.7c (`docs/lifeos-shell.md` §6.6): swap in the Rust
       // EmbeddingGemma embedder when the user has configured a model
       // directory. Loading is async (FRB init + ONNX session warm-up

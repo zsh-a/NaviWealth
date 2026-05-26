@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/core/auth/providers.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/clock.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/errors.dart';
@@ -13,12 +15,10 @@ import 'package:naviwealth/core/sync/row_applier.dart';
 import 'package:naviwealth/core/sync/sync_api_client.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
-import 'package:naviwealth/data/db/app_database.dart';
-import 'package:naviwealth/data/db/providers.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/domain/hlc.dart';
 
-import '../../data/db/test_database.dart';
+import '../../core/persistence/test_database.dart';
 import '_fake_api.dart';
 
 const _dev = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
@@ -142,6 +142,11 @@ void main() {
       expect(result.success, isTrue);
       expect(result.pushed, 2);
       expect(api.pushedBatches.single.map((c) => c.id), ['A1', 'A2']);
+      // D-1.4: outbound rows carry the LifeOS domain prefix.
+      expect(
+        api.pushedBatches.single.map((c) => c.table).toSet(),
+        <String>{'fin:accounts'},
+      );
       expect(await pending.depth(), 0, reason: 'pointers acknowledged');
     });
 

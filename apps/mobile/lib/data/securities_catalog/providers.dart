@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../db/providers.dart';
+import '../../core/persistence/providers.dart';
 import 'securities_catalog_loader.dart';
 import 'securities_search_service.dart';
 

@@ -1,14 +1,14 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/invariants.dart';
 import 'package:naviwealth/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/cashflow/data/recurring_transaction_repository.dart';
 
+import '../../../core/persistence/test_database.dart';
 import '../../../core/sync/_outbox_test_ext.dart';
-import '../../../data/db/test_database.dart';
 import '../../../data/repositories/_stub_stamper.dart';
 
 class _IdentityFx implements FxRateSource {

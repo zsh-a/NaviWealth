@@ -3,7 +3,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/db/providers.dart';
+import '../../../core/persistence/providers.dart';
 import '../contracts/contracts.dart';
 import 'ai_trace_store.dart';
 import 'drift_ai_trace_store.dart';

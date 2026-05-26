@@ -2,8 +2,8 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 
+import '../../core/persistence/app_database.dart';
 import '../../core/sync/op_outbox.dart';
-import '../db/app_database.dart';
 import 'mutation_context.dart';
 
 /// Read / write API for monthly category budgets

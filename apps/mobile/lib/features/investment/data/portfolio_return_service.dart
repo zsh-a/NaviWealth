@@ -2,7 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 
 import '../../../core/async/isolate_runner.dart';
-import '../../../data/db/app_database.dart';
+import '../../../core/persistence/app_database.dart';
 import '../../../data/domain/enums.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';

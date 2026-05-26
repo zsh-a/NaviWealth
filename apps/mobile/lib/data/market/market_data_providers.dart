@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import '../../core/logging/providers.dart';
+import '../../core/persistence/providers.dart';
 import '../../domain/services/market_data_service.dart';
 import '../../domain/services/price_resolver.dart';
-import '../db/providers.dart';
 import '../repositories/providers.dart';
 import 'cache/cache_policy.dart';
 import 'cache/quote_cache.dart';

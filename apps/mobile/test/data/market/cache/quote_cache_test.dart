@@ -8,7 +8,7 @@ import 'package:naviwealth/domain/entities/symbol_info.dart';
 import 'package:naviwealth/domain/services/market_data_service.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 
-import '../../db/test_database.dart';
+import '../../../core/persistence/test_database.dart';
 import '../fake_clock.dart';
 
 void main() {

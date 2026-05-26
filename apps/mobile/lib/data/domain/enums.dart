@@ -1,7 +1,7 @@
 /// All enum types used across NaviWealth domain models.
 ///
 /// Stored on disk via Drift's `EnumNameConverter`-style mapping (see
-/// `lib/data/db/converters.dart`), so adding a value at the **end** of an
+/// `lib/core/persistence/converters.dart`), so adding a value at the **end** of an
 /// enum is forward-compatible, but renaming or reordering existing values
 /// requires a migration that rewrites the persisted name.
 library;

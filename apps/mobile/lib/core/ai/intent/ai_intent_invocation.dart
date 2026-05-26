@@ -25,6 +25,7 @@ class AiIntentInvocation {
       AiCapability.proposal,
       AiCapability.visualization,
     },
+    this.domain = 'finance',
   });
 
   /// Free-form tag for the trigger location — `'expense_detail'`,
@@ -55,11 +56,18 @@ class AiIntentInvocation {
   /// intent never asks for charts).
   final Set<AiCapability> capabilities;
 
+  /// LifeOS domain the trigger surface belongs to. Phase D-1.3: passed
+  /// through to [IntentHint.domain] when the runtime constructs the
+  /// trace row. Defaults to 'finance' — Phase D-2 will set 'health' on
+  /// HealthOS surfaces.
+  final String domain;
+
   /// Serialised form for AiTrace — local-only, never crosses the wire
   /// unaltered. Keys are stable so the transparency page can render.
   Map<String, Object?> toTraceJson() => <String, Object?>{
     'source': source,
     'intent': intent,
+    'domain': domain,
     if (object != null) ...{
       'object_type': object!.type,
       'object_id': object!.id,

@@ -4,8 +4,8 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/domain/enums.dart';
 import 'package:naviwealth/data/market/http/market_http_client.dart';
 import 'package:naviwealth/data/market/http/rate_limiter.dart';
@@ -16,7 +16,7 @@ import 'package:naviwealth/data/securities_catalog/securities_catalog_loader.dar
 import 'package:naviwealth/data/securities_catalog/securities_search_service.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 
-import '../db/test_database.dart';
+import '../../core/persistence/test_database.dart';
 import '../repositories/_stub_stamper.dart';
 import '_catalog_fixtures.dart';
 

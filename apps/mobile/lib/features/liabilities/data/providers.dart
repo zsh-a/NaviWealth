@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/db/providers.dart';
+import '../../../core/persistence/providers.dart';
 import '../../../data/domain/amortization_entry.dart';
 import '../../../data/domain/liability.dart';
 import '../../../data/repositories/journal_entry_providers.dart';

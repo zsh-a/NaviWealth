@@ -6,7 +6,7 @@ library;
 
 import 'package:decimal/decimal.dart';
 
-import '../../../data/db/app_database.dart';
+import '../../../core/persistence/app_database.dart';
 import '../../../domain/values/money.dart';
 
 /// One category's budget posture: how much was set, how much was spent,

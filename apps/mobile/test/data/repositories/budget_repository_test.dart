@@ -1,10 +1,10 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/data/repositories/budget_repository.dart';
 
-import '../db/test_database.dart';
+import '../../core/persistence/test_database.dart';
 import '_stub_stamper.dart';
 
 void main() {

@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
 
-import '../domain/hlc.dart';
+import '../../data/domain/hlc.dart';
 
 /// Decimal stored as TEXT — base-10 precision is preserved exactly. We
 /// considered storing as INTEGER (smallest unit) per the design spec, but

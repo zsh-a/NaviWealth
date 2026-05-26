@@ -3,8 +3,8 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
-import '../../data/db/app_database.dart';
-import '../../data/db/providers.dart';
+import '../../core/persistence/app_database.dart';
+import '../../core/persistence/providers.dart';
 import '../../data/domain/hlc.dart';
 import '../auth/providers.dart';
 import '../logging/providers.dart';

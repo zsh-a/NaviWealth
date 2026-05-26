@@ -13,7 +13,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/db/providers.dart';
+import '../../../core/persistence/providers.dart';
 import '../../auth/providers.dart';
 import 'drift_ai_touched_store.dart';
 import 'drift_undo_stack.dart';

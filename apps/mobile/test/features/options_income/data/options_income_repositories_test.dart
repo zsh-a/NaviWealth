@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/data/db/app_database.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
 import 'package:naviwealth/features/options_income/data/approved_underlyings_repository.dart';
 import 'package:naviwealth/features/options_income/data/options_strategy_profile_repository.dart';
 import 'package:naviwealth/features/options_income/domain/options_strategy_profile.dart';
 
+import '../../../core/persistence/test_database.dart';
 import '../../../core/sync/_outbox_test_ext.dart';
-import '../../../data/db/test_database.dart';
 import '../../../data/repositories/_stub_stamper.dart';
 
 void main() {

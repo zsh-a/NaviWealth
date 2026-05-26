@@ -3,7 +3,7 @@ import 'package:naviwealth/features/ai_chat/data/chat_history_store.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_events.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_models.dart';
 
-import '../../data/db/test_database.dart';
+import '../../core/persistence/test_database.dart';
 
 void main() {
   group('ChatHistoryStore', () {

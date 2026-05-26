@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../core/ai/visual/visual.dart';
+import '../../../core/auth/domain_scope.dart';
+import '../../../core/auth/providers.dart' as auth_providers;
 import '../../../core/config/app_version.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../core/logging/crash_reporting_preference.dart';
@@ -143,6 +145,13 @@ class SettingsOverview extends ConsumerWidget {
         ],
       ),
     );
+    // D-1.5: per-user LifeOS domain opt-in. FinanceOS is always-on; future
+    // domains (HealthOS in D-2 onward) ship behind an explicit toggle so a
+    // new domain landing in the binary doesn't activate without consent.
+    const domainsGroup = _Section(
+      title: 'LifeOS 域',
+      child: _DomainsSection(),
+    );
     final aboutGroup = _Section(
       title: l10n.settingsAboutSection,
       child: const _AboutTile(),
@@ -188,6 +197,8 @@ class SettingsOverview extends ConsumerWidget {
             const SizedBox(height: 16),
             dataGroup,
             const SizedBox(height: 16),
+            domainsGroup,
+            const SizedBox(height: 16),
             aboutGroup,
             if (kDebugMode) ...[const SizedBox(height: 16), developerGroup],
           ],
@@ -227,6 +238,8 @@ class SettingsOverview extends ConsumerWidget {
                         aiGroup,
                         const SizedBox(height: 16),
                         dataGroup,
+                        const SizedBox(height: 16),
+                        domainsGroup,
                         const SizedBox(height: 16),
                         aboutGroup,
                         if (kDebugMode) ...[
@@ -788,3 +801,51 @@ class _LocalModeStatusRow extends StatelessWidget {
     );
   }
 }
+
+/// D-1.5 — LifeOS per-user domain opt-in section.
+///
+/// FinanceOS is the seed domain so its row reads as read-only "已启用".
+/// HealthOS is wired but the toggle is disabled until D-2 ships; the
+/// subtitle communicates that state instead of pretending the feature is
+/// ready. Once `features/health/` exists the disabled clause goes away.
+class _DomainsSection extends ConsumerWidget {
+  const _DomainsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final optIns = ref
+        .watch(auth_providers.domainOptInsProvider)
+        .value;
+
+    final healthEnabled =
+        optIns?.contains(DomainScope.health) ?? false;
+
+    return Column(
+      children: [
+        InlineLinkRow(
+          icon: FLucideIcons.wallet,
+          label: 'FinanceOS',
+          subtitle: '永远启用 (seed 域)',
+          trailingBadge: '已启用',
+          onTap: () {},
+        ),
+        _SectionDivider(),
+        InlineSwitchRow(
+          icon: FLucideIcons.heartPulse,
+          label: 'HealthOS',
+          // Disabled until Phase D-2 wires `features/health/`. The
+          // toggle state still persists so the user's intent survives
+          // into D-2 when HealthOS goes live.
+          subtitle: 'Phase D-2 即将启用 (HealthKit / Health Connect 接入)',
+          value: healthEnabled,
+          onChanged: (v) {
+            ref
+                .read(auth_providers.domainOptInsProvider.notifier)
+                .setEnabled(DomainScope.health, v);
+          },
+        ),
+      ],
+    );
+  }
+}
+

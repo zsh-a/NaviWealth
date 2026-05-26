@@ -1,7 +1,7 @@
 /// Drift-backed [MemoryStore] for the Memory Runtime
 /// (`docs/lifeos-shell.md` §6, D-1.7b).
 ///
-/// Storage layout (DDL in `data/db/local_only_tables.dart`):
+/// Storage layout (DDL in `core/persistence/local_only_tables.dart`):
 ///
 /// - `memories`           — typed records, no vector
 /// - `memory_embeddings`  — vectors keyed by memory_id, fingerprint-tagged
@@ -16,7 +16,7 @@ import 'dart:typed_data';
 
 import 'package:drift/drift.dart';
 
-import '../../../../data/db/app_database.dart';
+import '../../../../core/persistence/app_database.dart';
 import '../../contracts/memory_record.dart';
 
 /// One row pulled from a candidate scan. [semanticSim] is the cosine

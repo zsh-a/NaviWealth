@@ -126,6 +126,21 @@ extension SideEffectScopeWire on SideEffectScope {
   };
 }
 
+/// LifeOS domain identifier. Phase D-1.3 — every Intent / Trace /
+/// ToolDescriptor carries a domain so tools, intents, and trace rows
+/// can be partitioned per active domain (`finance`, `health`, ...).
+///
+/// Free-form string by design: the registry isn't a closed enum because
+/// 1) the active domain set evolves slowly (Phase D-2 = `health`); 2)
+/// trace rows written before Phase D-1.3 land with no `domain` field
+/// and must decode to `finance` for backward compat.
+const String kDomainFinance = 'finance';
+
+/// Default for legacy intents/traces/tools. Reading code outside
+/// `core/ai/contracts/` should reference this constant rather than
+/// hard-coding the string.
+const String kDefaultDomain = kDomainFinance;
+
 /// Typed input to the router. Every feature surface that wants AI help
 /// produces one of these.
 class IntentHint {
@@ -134,6 +149,7 @@ class IntentHint {
     required this.risk,
     this.sideEffect,
     this.label,
+    this.domain = kDefaultDomain,
   });
 
   final Capability capability;
@@ -148,11 +164,17 @@ class IntentHint {
   /// 'expense_search'). Free-form, not policy-bearing.
   final String? label;
 
+  /// LifeOS domain that owns this intent ('finance', 'health', ...).
+  /// Phase D-1.3: required for new code; defaults to `finance` to keep
+  /// pre-Phase-D trace rows decoding correctly.
+  final String domain;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'capability': capability.wire,
     'risk': risk.wire,
     if (sideEffect != null) 'side_effect': sideEffect!.wire,
     if (label != null) 'label': label,
+    'domain': domain,
   };
 
   factory IntentHint.fromJson(Map<String, Object?> json) {
@@ -160,6 +182,7 @@ class IntentHint {
     final risk = json['risk'];
     final se = json['side_effect'];
     final label = json['label'];
+    final domain = json['domain'];
     return IntentHint(
       capability: cap is String
           ? CapabilityWire.parse(cap)
@@ -167,6 +190,7 @@ class IntentHint {
       risk: risk is String ? RiskLevelWire.parse(risk) : RiskLevel.info,
       sideEffect: se is String ? SideEffectScopeWire.parse(se) : null,
       label: label is String ? label : null,
+      domain: domain is String && domain.isNotEmpty ? domain : kDefaultDomain,
     );
   }
 }

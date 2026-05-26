@@ -8,7 +8,7 @@ import 'package:naviwealth/core/ai/local/memory/event_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 
-import '../../../../data/db/test_database.dart';
+import '../../../../core/persistence/test_database.dart';
 
 const _kOwner = 'u1';
 

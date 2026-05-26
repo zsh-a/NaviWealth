@@ -1,9 +1,9 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/persistence/providers.dart';
 import '../../domain/services/currency_converter.dart';
 import '../../features/settings/data/base_currency_preference.dart';
-import '../db/providers.dart';
 import '../domain/expense.dart';
 import '../domain/invariants.dart';
 import 'journal_entry_repository.dart';

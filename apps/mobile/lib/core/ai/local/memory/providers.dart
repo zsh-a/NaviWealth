@@ -8,7 +8,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../data/db/providers.dart';
+import '../../../../core/persistence/providers.dart';
 import '../embedding/embedder.dart';
 import 'context_builder.dart';
 import 'event_store.dart';

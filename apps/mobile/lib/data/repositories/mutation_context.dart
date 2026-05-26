@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/providers.dart';
+import '../../core/persistence/providers.dart';
 import '../../core/sync/local_hlc_stamper.dart';
 import '../../core/sync/providers.dart';
 import '../../core/sync/sync_engine.dart';
 import '../../features/auth/data/auth_controller.dart';
-import '../db/providers.dart';
 import '../domain/hlc.dart';
 
 /// Per-mutation envelope of sync metadata.

@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credential_store.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/security/in_memory_key_store.dart';
 import 'package:naviwealth/core/security/secure_key_store.dart';
-import 'package:naviwealth/data/db/providers.dart';
 
 LlmProfile _p(
   String id, {

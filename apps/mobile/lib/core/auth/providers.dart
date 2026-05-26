@@ -2,13 +2,15 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
-import '../../data/db/providers.dart';
+import '../../core/persistence/providers.dart';
 import '../logging/providers.dart';
 import 'auth_api_client.dart';
 import 'auth_interceptor.dart';
 import 'auth_session.dart';
 import 'device_identity_store.dart';
 import 'dio_auth_api_client.dart';
+import 'domain_opt_in_store.dart';
+import 'domain_scope.dart';
 import 'token_store.dart';
 
 /// Synchronous read of the active session.
@@ -99,3 +101,32 @@ final authOnUnauthorizedProvider = Provider<AuthOnUnauthorized>(
   (ref) =>
       () async => false,
 );
+
+/// D-1.5: per-user opt-in store backing the Settings → Domains toggle and
+/// the next-issued JWT `domains` claim. Backed by `sync_meta`.
+final domainOptInStoreProvider = Provider<DomainOptInStore>(
+  (ref) => DomainOptInStore(ref.watch(appDatabaseProvider).requireValue),
+);
+
+/// D-1.5: reactive snapshot of the user's active LifeOS domains.
+///
+/// On first run / fresh install resolves to [DomainOptIns.financeOnly] —
+/// HealthOS stays OFF until D-2 ships and the user manually enables it
+/// (`lifeos-shell.md` §5).
+final domainOptInsProvider = AsyncNotifierProvider<_DomainOptInsNotifier, DomainOptIns>(
+  _DomainOptInsNotifier.new,
+);
+
+class _DomainOptInsNotifier extends AsyncNotifier<DomainOptIns> {
+  DomainOptInStore get _store => ref.read(domainOptInStoreProvider);
+
+  @override
+  Future<DomainOptIns> build() => _store.read();
+
+  Future<void> setEnabled(DomainScope scope, bool enabled) async {
+    final current = state.value ?? DomainOptIns.financeOnly;
+    final next = current.withScope(scope, enabled: enabled);
+    await _store.write(next);
+    state = AsyncData(next);
+  }
+}

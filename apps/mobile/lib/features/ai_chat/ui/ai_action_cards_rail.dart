@@ -3,27 +3,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ai/composition/chat_rail_content.dart';
+import '../../../core/ai/composition/chat_rail_provider.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../home/data/dashboard_insights_provider.dart';
-import '../../home/domain/insight_models.dart';
-import '../../home/ui/insight_feed_strings.dart';
 
 /// Horizontal rail of "next action" cards rendered between the AI
 /// context summary and the chat conversation.
 ///
-/// Reuses [dashboardInsightsProvider] (the same source the home
-/// AiInsightFeed renders vertically) so a recommendation only needs
-/// to be authored once. Each card is tappable; tapping deep-links
-/// into the relevant detail flow (FIRE, Rebalance, Expense report).
+/// Phase D-1.6 — the rail reads the cross-domain
+/// [chatRailContentProvider] rather than reaching into
+/// `features/home/`. Each domain (Finance today, HealthOS in D-2)
+/// overrides the provider in `bootstrap.dart`.
 class AiActionCardsRail extends ConsumerWidget {
   const AiActionCardsRail({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final insights = ref.watch(dashboardInsightsProvider);
-    if (insights.isEmpty) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
+    final selector = ref.watch(chatRailContentSelectorProvider);
+    final items = selector(l10n);
+    if (items.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
       child: Column(
@@ -44,10 +44,10 @@ class AiActionCardsRail extends ConsumerWidget {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: insights.length,
+              itemCount: items.length,
               separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (context, i) =>
-                  _ActionCard(item: insights[i], l10n: l10n),
+                  _ActionCard(item: items[i], l10n: l10n),
             ),
           ),
         ],
@@ -59,7 +59,7 @@ class AiActionCardsRail extends ConsumerWidget {
 class _ActionCard extends StatelessWidget {
   const _ActionCard({required this.item, required this.l10n});
 
-  final InsightItem item;
+  final ChatRailContent item;
   final AppLocalizations l10n;
 
   @override
@@ -90,7 +90,7 @@ class _ActionCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    insightHeadline(l10n, item),
+                    item.headline,
                     style: context.theme.typography.sm.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -103,7 +103,7 @@ class _ActionCard extends StatelessWidget {
             const SizedBox(height: 8),
             Expanded(
               child: Text(
-                insightDetail(l10n, item),
+                item.detail,
                 style: context.theme.typography.xs.copyWith(
                   color: colors.mutedForeground,
                   height: 1.4,

@@ -18,7 +18,7 @@ import '../../../core/ai/runtime/ai_runtime.dart';
 import '../../../core/ai/trace/ai_trace_builder.dart';
 import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/providers.dart';
-import '../../../data/db/providers.dart';
+import '../../../core/persistence/providers.dart';
 import '../../../data/repositories/journal_entry_providers.dart';
 import '../../ai_chat/data/providers.dart';
 import '../domain/ingest_models.dart';

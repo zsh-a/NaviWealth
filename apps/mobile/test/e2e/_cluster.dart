@@ -1,13 +1,13 @@
 import 'package:drift/drift.dart' show Variable;
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/clock.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/row_applier.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
-import 'package:naviwealth/data/db/app_database.dart';
 
+import '../core/persistence/test_database.dart';
 import '../core/sync/_fake_api.dart';
-import '../data/db/test_database.dart';
 
 /// One simulated device: a real in-memory Drift DB + the v2 SyncEngine.
 ///

@@ -2,8 +2,8 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
 
 import '../../core/sync/sync_tables.dart';
-import '../domain/enums.dart';
-import '../domain/hlc.dart';
+import '../../data/domain/enums.dart';
+import '../../data/domain/hlc.dart';
 import 'connection.dart';
 import 'converters.dart';
 import 'event_log_tables.dart';

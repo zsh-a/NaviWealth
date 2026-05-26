@@ -1,4 +1,4 @@
-import '../../data/db/app_database.dart';
+import '../../core/persistence/app_database.dart';
 import '../../data/domain/hlc.dart';
 import 'drift_sync_storage.dart';
 

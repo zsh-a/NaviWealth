@@ -2,8 +2,8 @@ import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/persistence/app_database.dart';
 import '../../../../core/sync/op_outbox.dart';
-import '../../../../data/db/app_database.dart';
 import '../../../../data/domain/enums.dart';
 import '../../../../data/repositories/account_repository.dart';
 import '../../../../data/repositories/journal_entry_builders.dart';
