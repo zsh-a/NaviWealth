@@ -62,10 +62,30 @@ In CI:
 If you need to regenerate from a non-Linux machine, use Docker:
 
 ```bash
-docker run --rm -v "$(pwd):/work" -w /work/apps/mobile \
+# Run from the repository root. The container mirrors CI's Linux rasteriser.
+# It installs python3.12-venv because the font-subset scripts create local
+# fonttools virtualenvs, then chowns generated files back to the host user.
+docker run --rm \
+  -e HOME=/root \
+  -e HOST_UID="$(id -u)" \
+  -e HOST_GID="$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work/apps/mobile \
   ghcr.io/cirruslabs/flutter:stable \
-  flutter test test/golden --tags=golden --update-goldens
+  bash -lc 'trap "chown -R $HOST_UID:$HOST_GID /work/apps/mobile/.dart_tool /work/apps/mobile/assets/fonts /work/apps/mobile/test/golden 2>/dev/null || true" EXIT; \
+    git config --global --add safe.directory /sdks/flutter && \
+    git config --global --add safe.directory /work/apps/mobile && \
+    apt-get update && \
+    apt-get install -y python3.12-venv && \
+    rm -rf .dart_tool/cn_fonts/venv .dart_tool/latin_fonts/venv && \
+    flutter pub get && \
+    tool/build-cn-fonts.sh && \
+    tool/build-latin-fonts.sh && \
+    flutter test test/golden --tags=golden --update-goldens --reporter=expanded'
 ```
+
+Do not commit goldens generated directly on macOS or Windows; those platforms
+skip byte comparison locally and do not match CI's Linux PNG output.
 
 ---
 
