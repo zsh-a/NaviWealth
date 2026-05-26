@@ -21,6 +21,8 @@ import '../core/ai/local/embedding/model_install_paths.dart';
 import '../core/ai/local/embedding/model_manifest.dart';
 import '../core/ai/local/embedding/rust_gemma_embedder.dart';
 import '../core/ai/local/memory/providers.dart' as memory_providers;
+import '../core/ai/runtime/device/tools/device_tool.dart';
+import '../core/auth/domain_scope.dart';
 import '../core/auth/providers.dart' as core_auth;
 import '../core/config/app_config.dart';
 import '../core/format/formatters.dart';
@@ -42,6 +44,7 @@ import '../features/finance/composition/finance_proposal_applier.dart';
 import '../features/finance/data/market/sync/price_sync_providers.dart';
 import '../features/finance_ai_tools.dart';
 import '../features/finance_domain_shell.dart';
+import '../features/health_ai_tools.dart';
 import '../features/home/composition/finance_chat_rail_provider.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'memory_indexers_bootstrap.dart';
@@ -130,14 +133,20 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       chatRailContentSelectorProvider.overrideWith(
         (ref) => ref.watch(financeChatRailContentSelectorProvider),
       ),
-      // D-1.2 (`docs/lifeos-shell.md` §7.1): the device tool registry
-      // is composed from each active domain's tool list. Phase D-1.2
-      // wires FinanceOS + shell (Memory Layer) tools. HealthOS D-2
-      // will extend this list with its own `features/health/ai_tools/`
-      // contribution without any further shell change.
-      deviceToolsProvider.overrideWith(
-        (ref) => [...kShellDeviceTools, ...kFinanceDeviceTools],
-      ),
+      // D-1.2 (`docs/lifeos-shell.md` §7.1) + D-2.4
+      // (`docs/healthos-domain.md` §4): the device tool registry is
+      // composed from each active domain's tool list. Shell + Finance
+      // always ship; HealthOS tools ship only when the user has opted
+      // into the Health domain (`domainOptInsProvider`).
+      deviceToolsProvider.overrideWith((ref) {
+        final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+        final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
+        return <DeviceTool>[
+          ...kShellDeviceTools,
+          ...kFinanceDeviceTools,
+          if (healthEnabled) ...kHealthDeviceTools,
+        ];
+      }),
       // D-1.6b (`docs/lifeos-shell.md` §4): FinanceOS supplies the
       // concrete proposal applier the chat surface dispatches confirmed
       // `propose_*` plans through. Without this override the shell

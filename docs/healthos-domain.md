@@ -13,9 +13,10 @@
 D-2 子阶段进度:
 
 - ✅ **D-2.1 域骨架 + Drift tables** (2026-05-26) — `health_metrics` 表 (schema v18) + `HealthMetric` Freezed 实体 + `HealthMetricKind` 枚举 + `HealthMetricRepository` (upsert / listByKind / watchRecent / findById) + 7 个仓库测试通过
+- ✅ **D-2.4a AI tools (read-only)** (2026-05-27) — 4 个 device tool 落地 (`get_recent_sleep_summary` / `get_hrv_trend` / `get_activity_summary` / `get_recovery_signal`) + 22 个测试通过 + `kHealthDeviceTools` barrel + bootstrap 域级 opt-in gate (`domainOptInsProvider`)。Memory Layer 第二 caller 留作 D-2.4b。
 - ⏳ D-2.2 HealthKit / Health Connect 适配
 - ⏳ D-2.3 IA 接入(shell §3 决定的 domain shell 形态)
-- ⏳ D-2.4 AI tools (read-only) + Memory Layer 第二个 caller
+- ⏳ D-2.4b Memory Layer 第二个 caller(sleep / hrv extractor)
 - ⏳ D-2.5 第一个 cross-domain agent (Morning Briefing)
 
 ---
@@ -76,22 +77,28 @@ class HealthMetrics extends Table with SyncableTable {
 
 ---
 
-## 4. AI tools (D-2.4 落地)
+## 4. AI tools (D-2.4a 已落地 2026-05-27)
 
-**Read tool 优先,无 write tool**(健康数据隐私敏感,不让 AI 改):
+**Read tool 优先,无 write tool**(健康数据隐私敏感,不让 AI 改)。位置:`features/health/ai_tools/`。注册:`features/health_ai_tools.dart::kHealthDeviceTools` → bootstrap `deviceToolsProvider` override (仅在 `domainOptInsProvider.contains(DomainScope.health)` 时拼入,Health 默认 OFF)。
 
-- `get_recent_sleep_summary` — 最近 N 天睡眠时长 / 阶段分布
-- `get_hrv_trend` — 30 / 90 天 HRV 趋势
-- `get_activity_summary` — 步数 / 卡路里 / 训练负荷
-- `get_recovery_signal` — 综合恢复评分(基于 HRV + 睡眠 + RHR)
+| 工具 | 输入 | 输出 | 用途 |
+|---|---|---|---|
+| `get_recent_sleep_summary` | `days_back` (1–90, 默认 7) | `{from, to, sessions[{started_at, duration_hours, source_device?}], summary{session_count, total_hours, average_hours}, note?}` | 睡眠时长趋势,seconds/min/h 自适应换算 |
+| `get_hrv_trend` | `window_days` (枚举 7/14/30/60/90, 默认 30) | `{window_days, from, to, points[{date, hrv_ms}], summary{latest_ms, average_ms, first_half_average_ms, second_half_average_ms, delta_pct}?, note?}` | HRV 序列 + 前后半 delta,< 4 样本时不算 delta |
+| `get_activity_summary` | `days_back` (1–90, 默认 7) | `{from, to, days[{date, steps, active_kcal}], summary{total_steps, average_steps, total_active_kcal, average_active_kcal, step_day_count, kcal_day_count}, note?}` | 按日 join steps/kcal,缺一边时另一边返回 null |
+| `get_recovery_signal` | 无入参 | `{score (0–100 或 null), verdict (rested/balanced/strained/insufficient_data), inputs{latest_hrv_ms, avg_sleep_hours, latest_rhr_bpm}}` | 综合恢复评分:recent (7d) vs baseline (7–28d) HRV/RHR + 睡眠对 7h 锚点 |
 
-位置:`features/health/ai_tools/`。注册到 `DeviceToolRegistry` (shell §7.1)。
+**算法约定**:
+- baseline 窗口是 7–28 天前(**排除最近 7 天**),避免近期改善被自己稀释
+- 每项子分数 0–100,arithmetic mean → score。HRV/RHR 用 baseline 偏差;sleep 用绝对小时
+- score < 40 strained / 40 ≤ score < 70 balanced / ≥ 70 rested
+- 基线 < 5 天 OR 最近无任何信号 → `insufficient_data` (模型回避建议)
 
 **不做** (MVP):
-
 - AI 写健康数据
-- AI 自动训练计划生成(超出 MVP scope)
-- 真实时检测(MVP 是日级聚合)
+- AI 自动训练计划生成
+- 真实时检测(MVP 日级聚合)
+- 跨工具复合 prompt 自动判定(Morning Briefing agent 是 D-2.5)
 
 ---
 
