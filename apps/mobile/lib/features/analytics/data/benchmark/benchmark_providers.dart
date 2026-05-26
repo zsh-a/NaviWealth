@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
-import '../../../../data/domain/liability.dart';
-import '../../../../data/market/market_data_providers.dart';
+import 'package:naviwealth/features/finance/data/domain/liability.dart';
+import '../../../../features/finance/data/market/market_data_providers.dart';
 import '../../../assets/physical/data/physical_asset.dart';
 import '../../../assets/physical/data/providers.dart';
 import '../../../home/data/dashboard_providers.dart';

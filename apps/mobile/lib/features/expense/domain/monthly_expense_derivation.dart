@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../../data/domain/expense.dart';
+import 'package:naviwealth/features/finance/data/domain/expense.dart';
 import '../../../domain/services/currency_converter.dart';
 import '../../../domain/values/money.dart';
 

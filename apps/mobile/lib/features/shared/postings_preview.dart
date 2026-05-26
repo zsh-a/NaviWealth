@@ -1,10 +1,10 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/posting.dart';
 
 import '../../core/format/formatters.dart';
-import '../../data/domain/account.dart';
-import '../../data/domain/posting.dart';
 import '../../design_system/design_system.dart';
 
 /// FIR-128 §1.3 — read-only ledger card that mirrors the Beancount

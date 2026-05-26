@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../../../data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../asset_detail_providers.dart';

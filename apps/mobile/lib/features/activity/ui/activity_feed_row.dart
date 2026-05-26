@@ -2,14 +2,14 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/posting.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../core/format/formatters.dart';
-import '../../../data/domain/account.dart';
-import '../../../data/domain/entry_kind.dart';
-import '../../../data/domain/enums.dart';
-import '../../../data/domain/posting.dart';
-import '../../../data/repositories/journal_entry_repository.dart';
 import '../../../design_system/design_system.dart';
 import 'activity_entry_detail_page.dart';
 

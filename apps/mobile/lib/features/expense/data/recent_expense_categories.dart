@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 
 /// Window used to compute the "most-used recently" expense account that
 /// the form pre-selects on first open. A short window keeps the default

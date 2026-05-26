@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/mutation_context.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../core/persistence/providers.dart';
-import '../../../data/repositories/journal_entry_providers.dart';
-import '../../../data/repositories/mutation_context.dart';
-import '../../../data/repositories/providers.dart';
 import '../domain/recurrence_engine.dart';
 import '../domain/recurring_transaction.dart';
 import 'recurring_transaction_repository.dart';

@@ -1,8 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../../data/domain/asset.dart';
-import '../../../data/repositories/journal_entry_repository.dart';
+import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import '../../../domain/values/money.dart';
 import 'cash_flow_event.dart';
 import 'cash_flow_kind.dart';

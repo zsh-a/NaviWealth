@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/features/finance/data/domain/amortization_entry.dart';
+import 'package:naviwealth/features/finance/data/domain/liability.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/mutation_context.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../core/persistence/providers.dart';
-import '../../../data/domain/amortization_entry.dart';
-import '../../../data/domain/liability.dart';
-import '../../../data/repositories/journal_entry_providers.dart';
-import '../../../data/repositories/mutation_context.dart';
-import '../../../data/repositories/providers.dart';
 import '../domain/amortization_calculator.dart';
 import '../domain/liability_summary.dart';
 import 'liability_repository.dart';

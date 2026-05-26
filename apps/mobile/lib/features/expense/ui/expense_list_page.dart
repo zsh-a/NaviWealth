@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/expense.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../app/route_paths.dart';
-import '../../../data/domain/account.dart';
-import '../../../data/domain/enums.dart';
-import '../../../data/domain/expense.dart';
-import '../../../data/repositories/journal_entry_providers.dart';
-import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'expense_list_content.dart';

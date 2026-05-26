@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../core/ai/write/write.dart';
-import '../../../data/domain/asset.dart';
-import '../../../data/market/market_data_providers.dart';
-import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/entities/symbol_info.dart';
 import '../../../domain/values/asset_market.dart';
+import '../../../features/finance/data/market/market_data_providers.dart';
 import '../../../features/investment/ui/event_timeline_section.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'asset_detail_sections.dart';

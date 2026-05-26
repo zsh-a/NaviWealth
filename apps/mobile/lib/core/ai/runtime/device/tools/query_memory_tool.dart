@@ -12,7 +12,7 @@
 /// `features/options_income/data/trade_journal_memory_indexer.dart`).
 library;
 
-import '../../../../../data/repositories/mutation_context.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
 import '../../../contracts/contracts.dart' show SemanticHit;
 import '../../../contracts/memory_record.dart';
 import '../../../local/memory/memory_runtime.dart';

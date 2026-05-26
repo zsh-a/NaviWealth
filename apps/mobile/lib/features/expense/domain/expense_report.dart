@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import '../../../data/domain/expense.dart';
+import 'package:naviwealth/features/finance/data/domain/expense.dart';
 import '../../../domain/values/money.dart';
 import 'expense_report_range.dart';
 

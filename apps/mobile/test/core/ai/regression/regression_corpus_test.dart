@@ -15,7 +15,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/intent/intent.dart';
 import 'package:naviwealth/core/ai/regression/regression_corpus.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
+import 'package:naviwealth/features/finance_ai_tools.dart';
 
 /// Tool names that have an inline domain renderer in
 /// `tool_invocation_renderers.dart`. Extracted at test-time so adding

@@ -2,10 +2,10 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/asset.dart';
 
 import '../../../app/master_detail_layout.dart';
-import '../../../data/domain/account.dart';
-import '../../../data/domain/asset.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../investment/domain/models/holding_snapshot.dart';

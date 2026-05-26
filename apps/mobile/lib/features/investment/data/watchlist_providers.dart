@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/features/finance/data/repositories/mutation_context.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../core/persistence/providers.dart';
-import '../../../data/market/market_data_providers.dart';
-import '../../../data/repositories/mutation_context.dart';
-import '../../../data/repositories/providers.dart';
 import '../../../domain/entities/quote.dart';
 import '../../../domain/services/market_data_service.dart';
+import '../../../features/finance/data/market/market_data_providers.dart';
 import 'watchlist_repository.dart';
 
 final watchlistRepositoryProvider = FutureProvider<WatchlistRepository>((

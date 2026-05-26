@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
-import '../../../data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
 
 class AssetSectionHeader extends StatelessWidget {
   const AssetSectionHeader({super.key, required this.title});

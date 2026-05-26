@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 
-import '../../data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'converters.dart';
 
 /// Mixin for sync metadata columns shared by every replicable table.

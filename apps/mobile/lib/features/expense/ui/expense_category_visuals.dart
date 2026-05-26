@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
-import '../../../data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
 
 /// UI-side visual lookup for expense [Account]s.
 ///

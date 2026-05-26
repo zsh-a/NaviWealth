@@ -2,9 +2,9 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../core/persistence/app_database.dart';
-import '../../../data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/values/money.dart';
 import '../../../l10n/gen/app_localizations.dart';

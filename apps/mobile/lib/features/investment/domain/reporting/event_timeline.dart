@@ -4,7 +4,7 @@
 /// MT-2.2.M2.1 (`docs/roadmap-midterm-execution.md`). Pure domain:
 /// callers hand in a flat list of observed/announced events, the builder
 /// filters by symbol set, sorts, and trims to a window. Market-data
-/// providers are out of scope here — they sit in `data/market/` and feed
+/// providers are out of scope here — they sit in `features/finance/data/market/` and feed
 /// this layer the events they discover.
 library;
 

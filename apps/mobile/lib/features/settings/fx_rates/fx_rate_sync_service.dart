@@ -1,8 +1,7 @@
 import 'package:decimal/decimal.dart';
+import 'package:naviwealth/features/finance/data/repositories/fx_rate_repository.dart';
 
 import '../../../core/logging/app_logger.dart';
-
-import '../../../data/repositories/fx_rate_repository.dart';
 import '../../../domain/services/market_data_service.dart';
 import '../../../domain/values/asset_market.dart';
 

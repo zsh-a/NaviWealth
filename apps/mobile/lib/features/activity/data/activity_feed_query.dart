@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../data/domain/account.dart';
-import '../../../data/domain/entry_kind.dart';
-import '../../../data/repositories/journal_entry_repository.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 
 enum ActivityKind {
   expense,

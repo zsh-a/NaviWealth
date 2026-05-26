@@ -1,8 +1,8 @@
 import 'package:decimal/decimal.dart';
 
-import '../../../data/domain/account.dart';
-import '../../../data/domain/enums.dart';
-import '../../../data/repositories/journal_entry_repository.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'cash_flow_event.dart';
 import 'cash_flow_kind.dart';
 

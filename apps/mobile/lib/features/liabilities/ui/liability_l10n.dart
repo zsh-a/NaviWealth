@@ -1,4 +1,4 @@
-import '../../../data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 /// Resolves [LiabilityType] / [RepaymentMethod] / [LiabilityRateType] enum

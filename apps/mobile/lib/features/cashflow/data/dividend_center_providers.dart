@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/repositories/journal_entry_providers.dart';
-import '../../../data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import '../../../domain/values/money.dart';
 import '../../investment/data/providers.dart';
 import '../domain/cash_flow_kind.dart';

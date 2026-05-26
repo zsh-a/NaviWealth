@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/features/finance/data/repositories/mutation_context.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../core/persistence/providers.dart';
-import '../../../data/market/market_data_providers.dart';
-import '../../../data/repositories/mutation_context.dart';
-import '../../../data/repositories/providers.dart';
+import '../../../features/finance/data/market/market_data_providers.dart';
 import '../application/scan_orchestrator.dart';
 import '../domain/approved_underlying.dart';
 import '../domain/options_opportunity.dart';

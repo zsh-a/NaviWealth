@@ -2,11 +2,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/logging/providers.dart';
-import '../../../data/market/http/clock.dart' as market_clock;
-import '../../../data/market/http/market_http_client.dart';
-import '../../../data/market/http/rate_limiter.dart';
-import '../../../data/market/market_data_providers.dart';
-import '../../../data/market/services/corporate_actions_service.dart';
+import '../../../features/finance/data/market/http/clock.dart' as market_clock;
+import '../../../features/finance/data/market/http/market_http_client.dart';
+import '../../../features/finance/data/market/http/rate_limiter.dart';
+import '../../../features/finance/data/market/market_data_providers.dart';
+import '../../../features/finance/data/market/services/corporate_actions_service.dart';
 import '../domain/reporting/event_timeline.dart';
 
 /// Underlying corporate-actions fetcher. One instance per app — the

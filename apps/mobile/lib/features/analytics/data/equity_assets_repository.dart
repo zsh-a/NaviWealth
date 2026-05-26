@@ -1,8 +1,8 @@
 import 'package:drift/drift.dart' hide Column;
+import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
 
 import '../../../core/persistence/app_database.dart';
-import '../../../data/domain/asset.dart';
-import '../../../data/domain/sync_meta.dart';
 import '../domain/equity_allocation.dart';
 
 /// Read-only accessor for equity-class assets (`stock` / `etf` / `mutualFund`).

@@ -1,8 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../../data/domain/asset.dart';
-import '../../../data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import '../../../domain/values/money.dart';
 import '../../../domain/values/price_confidence.dart';
 

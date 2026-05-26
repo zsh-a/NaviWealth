@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 
-import '../../../data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import '../../investment/domain/models/holding_snapshot.dart';
 import 'equity_allocation.dart';
 import 'equity_classification.dart';

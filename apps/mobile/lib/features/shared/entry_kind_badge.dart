@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
-import '../../data/domain/entry_kind.dart';
+import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'entry_kind_labels.dart';
 

@@ -1,9 +1,9 @@
 import 'package:decimal/decimal.dart';
-import 'package:naviwealth/data/domain/hlc.dart';
-import 'package:naviwealth/data/domain/sync_meta.dart';
 import 'package:naviwealth/domain/entities/quote.dart';
 import 'package:naviwealth/domain/services/market_data_service.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
+import 'package:naviwealth/features/finance/data/domain/hlc.dart';
+import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
 import 'package:naviwealth/features/investment/data/watchlist_providers.dart';
 import 'package:naviwealth/features/investment/data/watchlist_repository.dart';
 import 'package:naviwealth/features/investment/presentation/watchlist_page.dart';

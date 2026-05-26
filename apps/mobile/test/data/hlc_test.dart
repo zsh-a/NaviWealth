@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/data/domain/hlc.dart';
+import 'package:naviwealth/features/finance/data/domain/hlc.dart';
 
 void main() {
   group('Hlc', () {

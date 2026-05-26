@@ -16,22 +16,20 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUNTIME="$ROOT/apps/mobile/lib/core/ai/runtime"
 
 # Grandfathered paths — see northstar §2.2.
-# 1) `core/ai/runtime/device/tools/*` — Finance tool implementations
-#    still live here pending the D-1.2 physical-move follow-up. The
-#    composition root + lint protect against NEW shell code violating
-#    the boundary.
-# 2) `core/ai/runtime/{ai_runtime,device/device_agent_loop,device/
-#    llm_stream_event}.dart` — historically import `features/ai_chat/
-#    domain/chat_events.dart` (the shell-level chat event taxonomy).
-#    `chat_events.dart` belongs in `core/ai/contracts/` and will move
-#    in a D-1.6b follow-up; today the inverse imports are catalogued
-#    here so the lint stays green.
-GRANDFATHERED='core/ai/runtime/device/tools/|core/ai/runtime/ai_runtime\.dart|core/ai/runtime/device/device_agent_loop\.dart|core/ai/runtime/device/llm_stream_event\.dart'
+# After D-1.2 (2026-05-26) the only remaining exception is the chat
+# events import: `core/ai/runtime/{ai_runtime, device/
+# device_agent_loop, device/llm_stream_event}.dart` import
+# `features/ai_chat/domain/chat_events.dart` (the shell-level chat
+# event taxonomy). `chat_events.dart` belongs in `core/ai/contracts/`
+# and will move in a D-1.6b follow-up; until then the inverse imports
+# are catalogued here so the lint stays green.
+GRANDFATHERED='core/ai/runtime/ai_runtime\.dart|core/ai/runtime/device/device_agent_loop\.dart|core/ai/runtime/device/llm_stream_event\.dart'
 
 # Search `core/ai/runtime/` for any feature-domain import. Strip the
 # grandfathered subtree first so today's existing files don't fail
-# the check.
-violations="$(grep -rnE --include='*.dart' "features/[a-z_]+/" "$RUNTIME" \
+# the check. Only `import` statements count — doc-comment mentions are
+# explicitly excluded so contextual references don't trigger the lint.
+violations="$(grep -rnE --include='*.dart' "^import\s+['\"][^'\"]*features/[a-z_]+/" "$RUNTIME" \
   | grep -vE "$GRANDFATHERED" \
   || true)"
 

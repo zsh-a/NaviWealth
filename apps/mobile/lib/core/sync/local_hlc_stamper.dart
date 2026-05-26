@@ -1,5 +1,6 @@
+import 'package:naviwealth/features/finance/data/domain/hlc.dart';
+
 import '../../core/persistence/app_database.dart';
-import '../../data/domain/hlc.dart';
 import 'drift_sync_storage.dart';
 
 /// Account-less HLC stamper used by the local-only mode.

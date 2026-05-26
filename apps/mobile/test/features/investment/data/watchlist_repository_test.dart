@@ -3,15 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
-import 'package:naviwealth/data/repositories/mutation_context.dart';
-import 'package:naviwealth/data/repositories/providers.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
+import 'package:naviwealth/features/finance/data/repositories/mutation_context.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/investment/data/watchlist_providers.dart';
 import 'package:naviwealth/features/investment/data/watchlist_repository.dart';
 
 import '../../../core/persistence/test_database.dart';
 import '../../../core/sync/_outbox_test_ext.dart';
-import '../../../data/repositories/_stub_stamper.dart';
+import '../../../features/finance/data/repositories/_stub_stamper.dart';
 
 void main() {
   test(

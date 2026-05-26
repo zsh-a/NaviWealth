@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 
-import '../../../data/domain/sync_meta.dart';
+import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
 import '../../../domain/values/asset_market.dart';
 
 /// An underlying symbol the user has explicitly approved for options income

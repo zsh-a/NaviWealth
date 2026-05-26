@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
 import '../../../../core/persistence/app_database.dart';
-import '../../../../data/domain/enums.dart';
 import 'physical_asset_meta.dart';
 
 /// View model joining an [AssetRow] with its parsed [PhysicalAssetMeta].

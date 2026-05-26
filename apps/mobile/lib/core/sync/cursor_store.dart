@@ -1,4 +1,4 @@
-import '../../data/domain/hlc.dart';
+import 'package:naviwealth/features/finance/data/domain/hlc.dart';
 
 /// Persists the SyncEngine's two pieces of state (`docs/sync-v2.md` §7.5).
 ///

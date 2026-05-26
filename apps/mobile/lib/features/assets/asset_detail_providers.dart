@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/market/market_data_providers.dart';
 import '../../domain/entities/historical_bar.dart';
 import '../../domain/services/market_data_service.dart';
 import '../../domain/values/asset_market.dart';
+import '../../features/finance/data/market/market_data_providers.dart';
 import '../investment/data/providers.dart';
 import '../investment/domain/models/holding_snapshot.dart';
 

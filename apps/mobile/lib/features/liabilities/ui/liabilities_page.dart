@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/domain/liability.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
-import '../../../data/domain/enums.dart';
-import '../../../data/domain/liability.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
