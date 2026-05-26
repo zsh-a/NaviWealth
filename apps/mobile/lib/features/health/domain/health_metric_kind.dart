@@ -1,0 +1,74 @@
+/// Discriminator for rows in the `health_metrics` table
+/// (`docs/healthos-domain.md` §1 + §3, D-2.1).
+///
+/// Stored as a free-text column on the Drift side so a new kind can
+/// land without a schema bump; the enum here is the canonical client
+/// surface. Wire names use `snake_case` and match the column literal
+/// (`'sleep_session'`, `'hrv_daily'`, …) — never rename a wire name
+/// without a migration.
+library;
+
+enum HealthMetricKind {
+  /// One sleep session (capturedAt = session start, value = duration
+  /// in seconds, payloadJson holds the per-stage histogram).
+  sleepSession,
+
+  /// One HRV reading aggregated to a calendar day (capturedAt = local
+  /// day start in UTC, value = HRV in ms, unit = `'ms'`).
+  hrvDaily,
+
+  /// Daily step count (value = count, unit = `'count'`).
+  stepsDaily,
+
+  /// Daily resting heart rate (value = bpm, unit = `'bpm'`).
+  rhrDaily,
+
+  /// Daily active energy burned (value = kcal, unit = `'kcal'`).
+  activeEnergyDaily,
+
+  /// One body-weight measurement (value = kg, unit = `'kg'`).
+  weight,
+
+  /// One body-fat measurement (value = fraction 0.0–1.0, unit =
+  /// `'fraction'`).
+  bodyFat,
+
+  /// Sentinel for wire kinds the client doesn't recognise. Callers
+  /// should drop rows with this kind rather than crash.
+  unknown,
+}
+
+extension HealthMetricKindX on HealthMetricKind {
+  /// Stable wire / column name. Used as the `kind` column literal.
+  String get wire => switch (this) {
+    HealthMetricKind.sleepSession => 'sleep_session',
+    HealthMetricKind.hrvDaily => 'hrv_daily',
+    HealthMetricKind.stepsDaily => 'steps_daily',
+    HealthMetricKind.rhrDaily => 'rhr_daily',
+    HealthMetricKind.activeEnergyDaily => 'active_energy_daily',
+    HealthMetricKind.weight => 'weight',
+    HealthMetricKind.bodyFat => 'body_fat',
+    HealthMetricKind.unknown => 'unknown',
+  };
+
+  /// Conventional unit string for the [HealthMetricKind]. Callers
+  /// should still write the unit they actually have on the row —
+  /// this is a default to use when the platform didn't supply one.
+  String get defaultUnit => switch (this) {
+    HealthMetricKind.sleepSession => 's',
+    HealthMetricKind.hrvDaily => 'ms',
+    HealthMetricKind.stepsDaily => 'count',
+    HealthMetricKind.rhrDaily => 'bpm',
+    HealthMetricKind.activeEnergyDaily => 'kcal',
+    HealthMetricKind.weight => 'kg',
+    HealthMetricKind.bodyFat => 'fraction',
+    HealthMetricKind.unknown => '',
+  };
+
+  static HealthMetricKind parse(String wire) {
+    for (final k in HealthMetricKind.values) {
+      if (k.wire == wire) return k;
+    }
+    return HealthMetricKind.unknown;
+  }
+}

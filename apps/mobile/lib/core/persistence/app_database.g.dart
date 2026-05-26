@@ -20160,6 +20160,774 @@ class SecuritiesCatalogMetaCompanion
   }
 }
 
+class $HealthMetricsTable extends HealthMetrics
+    with TableInfo<$HealthMetricsTable, HealthMetricRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $HealthMetricsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($HealthMetricsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _capturedAtMeta = const VerificationMeta(
+    'capturedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> capturedAt = GeneratedColumn<DateTime>(
+    'captured_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<double> value = GeneratedColumn<double>(
+    'value',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _unitMeta = const VerificationMeta('unit');
+  @override
+  late final GeneratedColumn<String> unit = GeneratedColumn<String>(
+    'unit',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadJsonMeta = const VerificationMeta(
+    'payloadJson',
+  );
+  @override
+  late final GeneratedColumn<String> payloadJson = GeneratedColumn<String>(
+    'payload_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceDeviceMeta = const VerificationMeta(
+    'sourceDevice',
+  );
+  @override
+  late final GeneratedColumn<String> sourceDevice = GeneratedColumn<String>(
+    'source_device',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    capturedAt,
+    kind,
+    value,
+    unit,
+    payloadJson,
+    sourceDevice,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'health_metrics';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<HealthMetricRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('captured_at')) {
+      context.handle(
+        _capturedAtMeta,
+        capturedAt.isAcceptableOrUnknown(data['captured_at']!, _capturedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_capturedAtMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    if (data.containsKey('unit')) {
+      context.handle(
+        _unitMeta,
+        unit.isAcceptableOrUnknown(data['unit']!, _unitMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_unitMeta);
+    }
+    if (data.containsKey('payload_json')) {
+      context.handle(
+        _payloadJsonMeta,
+        payloadJson.isAcceptableOrUnknown(
+          data['payload_json']!,
+          _payloadJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('source_device')) {
+      context.handle(
+        _sourceDeviceMeta,
+        sourceDevice.isAcceptableOrUnknown(
+          data['source_device']!,
+          _sourceDeviceMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  HealthMetricRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return HealthMetricRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $HealthMetricsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      capturedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}captured_at'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}value'],
+      )!,
+      unit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}unit'],
+      )!,
+      payloadJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload_json'],
+      ),
+      sourceDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_device'],
+      ),
+    );
+  }
+
+  @override
+  $HealthMetricsTable createAlias(String alias) {
+    return $HealthMetricsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+}
+
+class HealthMetricRow extends DataClass implements Insertable<HealthMetricRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+
+  /// String UUID. Same convention as Finance tables — primitive ints
+  /// don't survive multi-device sync.
+  final String id;
+
+  /// Wall-time the measurement is *about*. For a sleep session this
+  /// is the session start; for a daily summary it is the start of the
+  /// local calendar day, captured in UTC.
+  final DateTime capturedAt;
+
+  /// Discriminator: `'sleep_session'`, `'hrv_daily'`, `'steps_daily'`,
+  /// `'rhr_daily'`, `'active_energy_daily'`, `'weight'`, `'body_fat'`,
+  /// ... Stored as text rather than an int enum so a future kind can
+  /// land without an Drift schema bump.
+  final String kind;
+
+  /// Numeric value. Sleep sessions store duration in seconds; HRV in
+  /// ms; steps as a count; energy in kcal; weight in kg; body fat as
+  /// a fraction (0.0–1.0). The semantic is keyed by [kind] + [unit].
+  final double value;
+
+  /// SI-style unit string (`'s'`, `'ms'`, `'count'`, `'kcal'`,
+  /// `'kg'`, `'fraction'`). Kept explicit so a unit mistake never
+  /// silently corrupts a trend chart.
+  final String unit;
+
+  /// Optional payload for kind-specific extra fields (sleep stages
+  /// histogram, HRV averaging window, source app etc.) JSON-encoded.
+  /// Keeping it loose at the schema level so [kind]-specific projections
+  /// can evolve without column churn.
+  final String? payloadJson;
+
+  /// Best-effort attribution. iPhone / Apple Watch / Garmin / manual.
+  /// Free-text so the on-device adapter can pass through whatever
+  /// HealthKit / Health Connect surfaces.
+  final String? sourceDevice;
+  const HealthMetricRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.capturedAt,
+    required this.kind,
+    required this.value,
+    required this.unit,
+    this.payloadJson,
+    this.sourceDevice,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $HealthMetricsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['captured_at'] = Variable<DateTime>(capturedAt);
+    map['kind'] = Variable<String>(kind);
+    map['value'] = Variable<double>(value);
+    map['unit'] = Variable<String>(unit);
+    if (!nullToAbsent || payloadJson != null) {
+      map['payload_json'] = Variable<String>(payloadJson);
+    }
+    if (!nullToAbsent || sourceDevice != null) {
+      map['source_device'] = Variable<String>(sourceDevice);
+    }
+    return map;
+  }
+
+  HealthMetricsCompanion toCompanion(bool nullToAbsent) {
+    return HealthMetricsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      capturedAt: Value(capturedAt),
+      kind: Value(kind),
+      value: Value(value),
+      unit: Value(unit),
+      payloadJson: payloadJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(payloadJson),
+      sourceDevice: sourceDevice == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceDevice),
+    );
+  }
+
+  factory HealthMetricRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return HealthMetricRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      capturedAt: serializer.fromJson<DateTime>(json['capturedAt']),
+      kind: serializer.fromJson<String>(json['kind']),
+      value: serializer.fromJson<double>(json['value']),
+      unit: serializer.fromJson<String>(json['unit']),
+      payloadJson: serializer.fromJson<String?>(json['payloadJson']),
+      sourceDevice: serializer.fromJson<String?>(json['sourceDevice']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'capturedAt': serializer.toJson<DateTime>(capturedAt),
+      'kind': serializer.toJson<String>(kind),
+      'value': serializer.toJson<double>(value),
+      'unit': serializer.toJson<String>(unit),
+      'payloadJson': serializer.toJson<String?>(payloadJson),
+      'sourceDevice': serializer.toJson<String?>(sourceDevice),
+    };
+  }
+
+  HealthMetricRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    DateTime? capturedAt,
+    String? kind,
+    double? value,
+    String? unit,
+    Value<String?> payloadJson = const Value.absent(),
+    Value<String?> sourceDevice = const Value.absent(),
+  }) => HealthMetricRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    capturedAt: capturedAt ?? this.capturedAt,
+    kind: kind ?? this.kind,
+    value: value ?? this.value,
+    unit: unit ?? this.unit,
+    payloadJson: payloadJson.present ? payloadJson.value : this.payloadJson,
+    sourceDevice: sourceDevice.present ? sourceDevice.value : this.sourceDevice,
+  );
+  HealthMetricRow copyWithCompanion(HealthMetricsCompanion data) {
+    return HealthMetricRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      capturedAt: data.capturedAt.present
+          ? data.capturedAt.value
+          : this.capturedAt,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      value: data.value.present ? data.value.value : this.value,
+      unit: data.unit.present ? data.unit.value : this.unit,
+      payloadJson: data.payloadJson.present
+          ? data.payloadJson.value
+          : this.payloadJson,
+      sourceDevice: data.sourceDevice.present
+          ? data.sourceDevice.value
+          : this.sourceDevice,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HealthMetricRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('capturedAt: $capturedAt, ')
+          ..write('kind: $kind, ')
+          ..write('value: $value, ')
+          ..write('unit: $unit, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('sourceDevice: $sourceDevice')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    capturedAt,
+    kind,
+    value,
+    unit,
+    payloadJson,
+    sourceDevice,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is HealthMetricRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.capturedAt == this.capturedAt &&
+          other.kind == this.kind &&
+          other.value == this.value &&
+          other.unit == this.unit &&
+          other.payloadJson == this.payloadJson &&
+          other.sourceDevice == this.sourceDevice);
+}
+
+class HealthMetricsCompanion extends UpdateCompanion<HealthMetricRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<DateTime> capturedAt;
+  final Value<String> kind;
+  final Value<double> value;
+  final Value<String> unit;
+  final Value<String?> payloadJson;
+  final Value<String?> sourceDevice;
+  final Value<int> rowid;
+  const HealthMetricsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.capturedAt = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.value = const Value.absent(),
+    this.unit = const Value.absent(),
+    this.payloadJson = const Value.absent(),
+    this.sourceDevice = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  HealthMetricsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required DateTime capturedAt,
+    required String kind,
+    required double value,
+    required String unit,
+    this.payloadJson = const Value.absent(),
+    this.sourceDevice = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       capturedAt = Value(capturedAt),
+       kind = Value(kind),
+       value = Value(value),
+       unit = Value(unit);
+  static Insertable<HealthMetricRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<DateTime>? capturedAt,
+    Expression<String>? kind,
+    Expression<double>? value,
+    Expression<String>? unit,
+    Expression<String>? payloadJson,
+    Expression<String>? sourceDevice,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (capturedAt != null) 'captured_at': capturedAt,
+      if (kind != null) 'kind': kind,
+      if (value != null) 'value': value,
+      if (unit != null) 'unit': unit,
+      if (payloadJson != null) 'payload_json': payloadJson,
+      if (sourceDevice != null) 'source_device': sourceDevice,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  HealthMetricsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<DateTime>? capturedAt,
+    Value<String>? kind,
+    Value<double>? value,
+    Value<String>? unit,
+    Value<String?>? payloadJson,
+    Value<String?>? sourceDevice,
+    Value<int>? rowid,
+  }) {
+    return HealthMetricsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      capturedAt: capturedAt ?? this.capturedAt,
+      kind: kind ?? this.kind,
+      value: value ?? this.value,
+      unit: unit ?? this.unit,
+      payloadJson: payloadJson ?? this.payloadJson,
+      sourceDevice: sourceDevice ?? this.sourceDevice,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $HealthMetricsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (capturedAt.present) {
+      map['captured_at'] = Variable<DateTime>(capturedAt.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<double>(value.value);
+    }
+    if (unit.present) {
+      map['unit'] = Variable<String>(unit.value);
+    }
+    if (payloadJson.present) {
+      map['payload_json'] = Variable<String>(payloadJson.value);
+    }
+    if (sourceDevice.present) {
+      map['source_device'] = Variable<String>(sourceDevice.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HealthMetricsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('capturedAt: $capturedAt, ')
+          ..write('kind: $kind, ')
+          ..write('value: $value, ')
+          ..write('unit: $unit, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('sourceDevice: $sourceDevice, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -20200,6 +20968,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $SecuritiesCatalogTable(this);
   late final $SecuritiesCatalogMetaTable securitiesCatalogMeta =
       $SecuritiesCatalogMetaTable(this);
+  late final $HealthMetricsTable healthMetrics = $HealthMetricsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -20233,6 +21002,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     marketSymbolSearches,
     securitiesCatalog,
     securitiesCatalogMeta,
+    healthMetrics,
   ];
 }
 
@@ -29712,6 +30482,350 @@ typedef $$SecuritiesCatalogMetaTableProcessedTableManager =
       SecuritiesCatalogMetaRow,
       PrefetchHooks Function()
     >;
+typedef $$HealthMetricsTableCreateCompanionBuilder =
+    HealthMetricsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required DateTime capturedAt,
+      required String kind,
+      required double value,
+      required String unit,
+      Value<String?> payloadJson,
+      Value<String?> sourceDevice,
+      Value<int> rowid,
+    });
+typedef $$HealthMetricsTableUpdateCompanionBuilder =
+    HealthMetricsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<DateTime> capturedAt,
+      Value<String> kind,
+      Value<double> value,
+      Value<String> unit,
+      Value<String?> payloadJson,
+      Value<String?> sourceDevice,
+      Value<int> rowid,
+    });
+
+class $$HealthMetricsTableFilterComposer
+    extends Composer<_$AppDatabase, $HealthMetricsTable> {
+  $$HealthMetricsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get capturedAt => $composableBuilder(
+    column: $table.capturedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceDevice => $composableBuilder(
+    column: $table.sourceDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$HealthMetricsTableOrderingComposer
+    extends Composer<_$AppDatabase, $HealthMetricsTable> {
+  $$HealthMetricsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get capturedAt => $composableBuilder(
+    column: $table.capturedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceDevice => $composableBuilder(
+    column: $table.sourceDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$HealthMetricsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $HealthMetricsTable> {
+  $$HealthMetricsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get capturedAt => $composableBuilder(
+    column: $table.capturedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<double> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+
+  GeneratedColumn<String> get unit =>
+      $composableBuilder(column: $table.unit, builder: (column) => column);
+
+  GeneratedColumn<String> get payloadJson => $composableBuilder(
+    column: $table.payloadJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceDevice => $composableBuilder(
+    column: $table.sourceDevice,
+    builder: (column) => column,
+  );
+}
+
+class $$HealthMetricsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $HealthMetricsTable,
+          HealthMetricRow,
+          $$HealthMetricsTableFilterComposer,
+          $$HealthMetricsTableOrderingComposer,
+          $$HealthMetricsTableAnnotationComposer,
+          $$HealthMetricsTableCreateCompanionBuilder,
+          $$HealthMetricsTableUpdateCompanionBuilder,
+          (
+            HealthMetricRow,
+            BaseReferences<_$AppDatabase, $HealthMetricsTable, HealthMetricRow>,
+          ),
+          HealthMetricRow,
+          PrefetchHooks Function()
+        > {
+  $$HealthMetricsTableTableManager(_$AppDatabase db, $HealthMetricsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$HealthMetricsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$HealthMetricsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$HealthMetricsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<DateTime> capturedAt = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<double> value = const Value.absent(),
+                Value<String> unit = const Value.absent(),
+                Value<String?> payloadJson = const Value.absent(),
+                Value<String?> sourceDevice = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => HealthMetricsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                capturedAt: capturedAt,
+                kind: kind,
+                value: value,
+                unit: unit,
+                payloadJson: payloadJson,
+                sourceDevice: sourceDevice,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required DateTime capturedAt,
+                required String kind,
+                required double value,
+                required String unit,
+                Value<String?> payloadJson = const Value.absent(),
+                Value<String?> sourceDevice = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => HealthMetricsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                capturedAt: capturedAt,
+                kind: kind,
+                value: value,
+                unit: unit,
+                payloadJson: payloadJson,
+                sourceDevice: sourceDevice,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$HealthMetricsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $HealthMetricsTable,
+      HealthMetricRow,
+      $$HealthMetricsTableFilterComposer,
+      $$HealthMetricsTableOrderingComposer,
+      $$HealthMetricsTableAnnotationComposer,
+      $$HealthMetricsTableCreateCompanionBuilder,
+      $$HealthMetricsTableUpdateCompanionBuilder,
+      (
+        HealthMetricRow,
+        BaseReferences<_$AppDatabase, $HealthMetricsTable, HealthMetricRow>,
+      ),
+      HealthMetricRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -29775,4 +30889,6 @@ class $AppDatabaseManager {
       $$SecuritiesCatalogTableTableManager(_db, _db.securitiesCatalog);
   $$SecuritiesCatalogMetaTableTableManager get securitiesCatalogMeta =>
       $$SecuritiesCatalogMetaTableTableManager(_db, _db.securitiesCatalogMeta);
+  $$HealthMetricsTableTableManager get healthMetrics =>
+      $$HealthMetricsTableTableManager(_db, _db.healthMetrics);
 }

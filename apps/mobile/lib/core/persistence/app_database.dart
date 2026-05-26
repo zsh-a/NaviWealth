@@ -7,6 +7,7 @@ import '../../core/sync/sync_tables.dart';
 import 'connection.dart';
 import 'converters.dart';
 import 'event_log_tables.dart';
+import 'health_tables.dart';
 import 'local_only_tables.dart';
 import 'tables.dart';
 
@@ -49,6 +50,8 @@ const String defaultDbFileName = 'naviwealth.db';
     MarketSymbolSearches,
     SecuritiesCatalog,
     SecuritiesCatalogMeta,
+    // HealthOS (D-2.1): single wide-flat table keyed by `kind`.
+    HealthMetrics,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -58,7 +61,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => 18;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -233,6 +236,21 @@ class AppDatabase extends _$AppDatabase {
         await customStatement('DROP TABLE IF EXISTS memory_documents');
         await _createMemoryRuntime(this);
       }
+      // v17 → v18: HealthOS domain skeleton (`docs/healthos-domain.md`
+      // §3, D-2.1). Single flat `health_metrics` table keyed by `kind`.
+      // No data yet — adapters land in D-2.2; the table is just the
+      // sync target and AI tool read surface.
+      if (from < 18) {
+        await m.createTable(healthMetrics);
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_health_metrics_owner_kind_captured '
+          'ON health_metrics(owner_user_id, kind, captured_at)',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_health_metrics_owner_hlc '
+          'ON health_metrics(owner_user_id, hlc)',
+        );
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -327,6 +345,12 @@ Future<void> _createIndexes(AppDatabase db) async {
         'ON op_logs(synced_at, hlc) WHERE synced_at IS NULL',
     'CREATE INDEX IF NOT EXISTS idx_op_logs_owner_hlc '
         'ON op_logs(owner_user_id, hlc)',
+    // HealthOS (D-2.1): typical reads are "give me the last N rows
+    // of <kind> for this user" plus the standard owner+hlc sync scan.
+    'CREATE INDEX IF NOT EXISTS idx_health_metrics_owner_kind_captured '
+        'ON health_metrics(owner_user_id, kind, captured_at)',
+    'CREATE INDEX IF NOT EXISTS idx_health_metrics_owner_hlc '
+        'ON health_metrics(owner_user_id, hlc)',
     ..._securitiesAssetIndexStmts,
     ..._journalEntryIndexStmts,
   ];

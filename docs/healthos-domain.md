@@ -8,15 +8,15 @@
 
 ## 0. 状态
 
-**当前阶段**: D-1 等待中(shell foundation 未完成)。
+**当前阶段**: D-2.1 已落地 (2026-05-26)。D-1 shell foundation 7 项全部完工 (D-1.6/D-1.6b 同日合并),D-1.8 的 UI dock 等 D-2 第二域真正运行后激活。
 
-D-1 完成后启动 D-2 (HealthOS MVP):
+D-2 子阶段进度:
 
-- D-2.1 域骨架 + Drift tables
-- D-2.2 HealthKit / Health Connect 适配
-- D-2.3 IA 接入(shell §3 决定的 domain shell 形态)
-- D-2.4 AI tools (read-only) + Memory Layer 第二个 caller
-- D-2.5 第一个 cross-domain agent (Morning Briefing)
+- ✅ **D-2.1 域骨架 + Drift tables** (2026-05-26) — `health_metrics` 表 (schema v18) + `HealthMetric` Freezed 实体 + `HealthMetricKind` 枚举 + `HealthMetricRepository` (upsert / listByKind / watchRecent / findById) + 7 个仓库测试通过
+- ⏳ D-2.2 HealthKit / Health Connect 适配
+- ⏳ D-2.3 IA 接入(shell §3 决定的 domain shell 形态)
+- ⏳ D-2.4 AI tools (read-only) + Memory Layer 第二个 caller
+- ⏳ D-2.5 第一个 cross-domain agent (Morning Briefing)
 
 ---
 
@@ -51,24 +51,28 @@ D-1 完成后启动 D-2 (HealthOS MVP):
 
 ---
 
-## 3. Drift schema (草稿,D-2.1 定稿)
+## 3. Drift schema (D-2.1 定稿,2026-05-26)
+
+实际定义: `apps/mobile/lib/core/persistence/health_tables.dart` (跟 Finance 表共用 `core/persistence/` 是 Drift 单库的约束,不是设计意图;长期目标是按域拆 `features/<domain>/data/db/`,D-1 follow-up)。
 
 ```dart
-// 草稿 — 实际定义在 features/health/data/db/tables/
-class HealthMetrics extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  DateTimeColumn get capturedAt => dateTime()();
-  TextColumn get kind => text()();            // 'sleep_session' | 'hrv_daily' | 'steps_daily' | ...
+@DataClassName('HealthMetricRow')
+class HealthMetrics extends Table with SyncableTable {
+  TextColumn get id => text()();                        // UUID PK
+  DateTimeColumn get capturedAt => dateTime()();        // session start / day start UTC
+  TextColumn get kind => text()();                      // 'sleep_session' | 'hrv_daily' | …
   RealColumn get value => real()();
-  TextColumn get unit => text()();
+  TextColumn get unit => text()();                      // 's' | 'ms' | 'bpm' | 'kg' | …
+  TextColumn get payloadJson => text().nullable()();    // 阶段直方图 / 平均窗口 / …
   TextColumn get sourceDevice => text().nullable()();
-  // sync metadata (跟 Finance 一致的 row-state)
-  IntColumn get version => integer()();
-  DateTimeColumn get deletedAt => dateTime().nullable()();
+  // SyncableTable mixin → ownerUserId / updatedAt / updatedByDevice / hlc / deletedAt
 }
 ```
 
-Sync row_kind: `health:health_metrics`。
+- Schema v17 → **v18** (migration 在 `core/persistence/app_database.dart` 的 `onUpgrade if (from < 18)`)
+- 索引: `(owner_user_id, kind, captured_at)` 满足"最近 N 天 <kind>"的典型读;`(owner_user_id, hlc)` 跟 Finance 表一致服务 sync 扫描
+- Sync row_kind: `health:health_metrics` (D-1.4 row family namespace,触发 sync 时由 D-2.2 adapter 添加)
+- 域实体 `HealthMetric` (Freezed) 在 `features/health/domain/health_metric.dart`,内嵌 `SyncMeta` (跨域 sync 信封,northstar §2.4 已知例外:`SyncMeta` 当前住在 `features/finance/data/domain/`,待 D-1.x 后迁到 `core/sync/`)
 
 ---
 
