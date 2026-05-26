@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
@@ -7,9 +8,8 @@ import 'package:naviwealth/features/ai_chat/data/chat_history_store.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_repository.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_events.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_models.dart';
-import 'package:naviwealth/features/ai_chat/domain/proposal_apply_state.dart';
 
-import '../../core/persistence/test_database.dart';
+import '../../persistence/test_database.dart';
 
 class _NoopApi implements AiChatApiClient {
   @override

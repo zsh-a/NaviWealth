@@ -1,44 +1,47 @@
-/// Dispatch a confirmed [ReadyProposalPlan] to the matching repository
-/// write, and reverse it again on undo. One central place so the propose
-/// card UI doesn't have to know about TradeEntryService / ExpenseRepository
-/// / etc. — it only deals in [ProposalApplyState] handles.
+/// FinanceOS implementation of [ProposalApplier]
+/// (`docs/lifeos-shell.md` §4, D-1.6b).
 ///
-/// Each `apply` returns a state stamped with `applied`, the entity id, and
-/// (for asset_valuation, where the row already exists) the previous value
-/// the undo path needs to restore. `undo` reads that state and runs the
-/// compensating write.
+/// Dispatches a confirmed [ReadyProposalPlan] to the matching Finance
+/// repository write, and reverses it again on undo. The chat UI in
+/// `features/ai_chat/` only depends on the core `ProposalApplier`
+/// interface — this concrete class is registered via
+/// [financeProposalApplierProvider] in `bootstrap.dart`.
 library;
 
 import 'package:decimal/decimal.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart' show AccountCategory, AssetType;
 import 'package:naviwealth/features/finance/data/domain/hlc.dart';
 import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
+import '../../../core/ai/composition/proposal_applier.dart';
+import '../../../core/ai/composition/proposal_apply_state.dart';
+import '../../../core/ai/composition/proposal_plan.dart';
 import '../../../core/ai/write/drift_ai_touched_store.dart';
+import '../../../core/ai/write/providers.dart';
+import '../../../core/auth/current_user.dart';
+import '../../fire/data/fire_bucket_rules_preferences.dart';
+import '../../fire/data/fire_providers.dart';
+import '../../fire/domain/fire_bucket.dart';
+import '../../fire/domain/fire_plan.dart';
+import '../../investment/data/providers.dart';
 import '../../investment/domain/models/lot.dart';
 import '../../investment/domain/trade_entry/trade_draft.dart'
     show TradeDraft, TradeType;
 import '../../investment/domain/trade_entry/trade_entry_service.dart';
 import '../../liabilities/data/liability_repository.dart';
-import '../domain/proposal_apply_state.dart';
-import '../domain/proposal_plan.dart';
+import '../../liabilities/data/providers.dart';
 
-class ProposalApplyException implements Exception {
-  ProposalApplyException(this.message);
-  final String message;
-
-  @override
-  String toString() => 'ProposalApplyException: $message';
-}
-
-class ProposalApplier {
-  ProposalApplier({
+class FinanceProposalApplier implements ProposalApplier {
+  FinanceProposalApplier({
     required this.tradeEntryService,
     required this.journalEntryRepo,
     required this.priceRepo,
@@ -87,6 +90,7 @@ class ProposalApplier {
 
   /// Run the compensating write encoded in [state]. No-op if [state] isn't
   /// in the `applied` status.
+  @override
   Future<void> undo(ProposalApplyState state) async {
     if (state.status != ProposalApplyStatus.applied) return;
     final id = state.appliedEntityId;
@@ -108,6 +112,7 @@ class ProposalApplier {
   /// `applied` with the produced entity id. Throws [ProposalApplyException]
   /// (after wrapping the underlying error) if the write fails — the caller
   /// surfaces the message to the user instead of swallowing.
+  @override
   Future<ProposalApplyState> apply(ReadyProposalPlan plan) async {
     try {
       final at = DateTime.now().toUtc();
@@ -623,5 +628,126 @@ class ProposalApplier {
       appliedAt: at,
       shortLabel: '已绑定${plan.summaryZh}',
     );
+  }
+}
+
+/// FIR-67 — Finance-domain applier wiring. Resolves all repositories +
+/// fire writers once and instantiates [FinanceProposalApplier]. Used by
+/// `bootstrap.dart` to override `proposalApplierProvider`.
+final financeProposalApplierProvider = FutureProvider<ProposalApplier>(
+  (ref) async {
+    final tradeService = await ref.watch(tradeEntryServiceProvider.future);
+    final journalEntryRepo = await ref.watch(
+      journalEntryRepositoryProvider.future,
+    );
+    final priceRepo = await ref.watch(priceRepositoryProvider.future);
+    final accountRepo = await ref.watch(accountRepositoryProvider.future);
+    final manualAssetRepo = await ref.watch(manualAssetRepositoryProvider.future);
+    final liabilityRepo = await ref.watch(liabilityRepositoryProvider.future);
+    final currentUserId = ref.watch(currentUserIdProvider);
+    final touched = ref.watch(aiTouchedStoreProvider);
+    return FinanceProposalApplier(
+      tradeEntryService: tradeService,
+      journalEntryRepo: journalEntryRepo,
+      priceRepo: priceRepo,
+      accountRepo: accountRepo,
+      manualAssetRepo: manualAssetRepo,
+      liabilityRepo: liabilityRepo,
+      currentUserId: currentUserId,
+      aiTouchedStore: touched,
+      firePlanWriter: (after) =>
+          _applyFirePlanUpdateProposal(ref: ref, after: after),
+      fireBucketRuleWriter: (payload) =>
+          _applyFireBucketRuleProposal(ref: ref, payload: payload),
+    );
+  },
+);
+
+Future<void> _applyFirePlanUpdateProposal({
+  required Ref ref,
+  required Map<String, Object?> after,
+}) async {
+  final plan = ref.read(firePlanProvider);
+  Decimal? d(String key) {
+    final raw = after[key];
+    if (raw is num) return Decimal.parse(raw.toDouble().toStringAsFixed(2));
+    if (raw is String) return Decimal.tryParse(raw);
+    return null;
+  }
+
+  final updated = plan.copyWith(
+    targetNetWorth: d('target_net_worth') ?? plan.targetNetWorth,
+    monthlyExpenses: d('monthly_expenses') ?? plan.monthlyExpenses,
+    monthlySurplus: d('monthly_surplus') ?? plan.monthlySurplus,
+    inflationRate:
+        (after['inflation_rate'] is num
+            ? (after['inflation_rate'] as num).toDouble()
+            : null) ??
+        plan.inflationRate,
+    safeWithdrawalRate:
+        (after['safe_withdrawal_rate'] is num
+            ? (after['safe_withdrawal_rate'] as num).toDouble()
+            : null) ??
+        plan.safeWithdrawalRate,
+    targetCashBucketMonths:
+        (after['target_cash_bucket_months'] is num
+            ? (after['target_cash_bucket_months'] as num).toInt()
+            : null) ??
+        plan.targetCashBucketMonths,
+    lifestyleMode:
+        _parseLifestyle(after['lifestyle_mode']) ?? plan.lifestyleMode,
+  );
+  await saveFirePlanWithRef(ref, updated);
+}
+
+FireLifestyleMode? _parseLifestyle(Object? raw) {
+  if (raw is! String) return null;
+  for (final m in FireLifestyleMode.values) {
+    if (m.name == raw) return m;
+  }
+  return null;
+}
+
+Future<String> _applyFireBucketRuleProposal({
+  required Ref ref,
+  required Map<String, Object?> payload,
+}) async {
+  final roleRaw = payload['role'] as String? ?? '';
+  final role = FireBucketRole.values.firstWhere(
+    (r) => _wireForRole(r) == roleRaw,
+    orElse: () => FireBucketRole.cash,
+  );
+  final targetId = payload['target_id'] as String? ?? '';
+  if (targetId.isEmpty) {
+    throw StateError('fire_bucket_rule payload missing target_id');
+  }
+  final pct = (payload['allocation_pct'] is num)
+      ? (payload['allocation_pct'] as num).toDouble()
+      : null;
+  final note = payload['note'] as String?;
+  final rule = FireBucketRule(
+    id: targetId,
+    role: role,
+    targetTable: (payload['target_table'] as String?) ?? 'assets',
+    targetId: targetId,
+    allocationPct: pct,
+    note: note,
+  );
+  await ref.read(fireBucketRulesProvider.notifier).upsert(rule);
+  return targetId;
+}
+
+String _wireForRole(FireBucketRole role) {
+  switch (role) {
+    case FireBucketRole.cash:
+      return 'cash';
+    case FireBucketRole.defensive:
+      return 'defensive';
+    case FireBucketRole.growth:
+      return 'growth';
+    case FireBucketRole.riskReserve:
+      return 'risk_reserve';
+    case FireBucketRole.dream:
+      return 'dream';
   }
 }

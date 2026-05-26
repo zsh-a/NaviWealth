@@ -3,31 +3,16 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/ai/composition/chat_trace_prep.dart';
+import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../core/auth/providers.dart';
 import '../domain/chat_events.dart';
 import '../domain/chat_models.dart';
-import '../domain/proposal_apply_state.dart';
 import 'ai_chat_api_client.dart';
 import 'chat_history_store.dart';
 import 'context_window.dart';
-
-/// Output of [ChatTracePrep]: the [ContextPack] sent on the wire and
-/// the seed [AiTrace] that the repository finalises after the stream
-/// closes. Any field may be `null` if the caller chose not to wire
-/// AI tracing for this repository instance (legacy tests, etc.).
-typedef ChatTracePrepResult = ({
-  ContextPack? pack,
-  AiTrace? traceSeed,
-  bool traceVerbose,
-});
-
-/// Closure that builds the per-request ContextPack + AiTrace seed.
-/// Lives in providers.dart so it can capture Riverpod `Ref` without
-/// pulling provider state into the repository's constructor surface.
-typedef ChatTracePrep =
-    Future<ChatTracePrepResult> Function({required String requestId});
 
 /// Sentinel value for new session titles. UI layer should resolve to
 /// localized string when displaying.

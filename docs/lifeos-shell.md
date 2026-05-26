@@ -54,7 +54,7 @@ D-1  Shell foundation                            (4–6 周)
   D-1.3  Intent/Trace domain 字段                       ✅ 落地 (2026-05-26)
   D-1.4  Sync row family namespace (fin:* / health:*)   ✅ 落地 (2026-05-26)
   D-1.5  Auth domain scopes + 域级 opt-in               ✅ 落地 (2026-05-26)
-  D-1.6  Cross-feature composition uplift (ai_chat)     🟡 rail 上提 + DomainContextProvider 抽象 (2026-05-26);chat_repository / proposal_applier 上提是 D-1.6b
+  D-1.6  Cross-feature composition uplift (ai_chat)     ✅ 落地 (rail + DomainContextProvider 2026-05-26, D-1.6b 同日;5 个新 seam:chat_trace_prep / proposal_applier / ai_context_summary / portfolio_snapshot / chat_rail;ai_chat 零 sibling-feature import,lint grandfather 清空)
   D-1.7  Memory Layer 通电 substrate                    ✅ 落地 (vector store + embedder seam)
   D-1.7b Memory Runtime (typed + lifecycle + ContextBuilder)  ✅ 落地 (2026-05-24)
   D-1.7c Rust EmbeddingGemma-300M drop-in (fastembed/ort, ONNX INT8)  ✅ 落地 (2026-05-24, host build 验证;iOS/Android cross-compile + 模型 bytes 待用户机器执行)
@@ -99,22 +99,23 @@ Option C — 单一 cross-domain Today + 其它 tabs 加 domain filter
 
 ## 4. Cross-domain composition
 
-**今天**: `features/ai_chat/data/providers.dart` 直接 import 7+ sibling features 做 chat context composition(northstar §2.4 已知例外)。
+**今天 (2026-05-26)**: D-1.6 + D-1.6b 全部落地。`features/ai_chat/` 下 `grep "features/[^/]*/"` 零命中(`features/shared/` 除外),lint `tool/lint-cross-feature-imports.sh` 的 grandfather list 清空。
 
-**目标 (D-1.6)**: 上提到 `core/ai/composition/chat_context_composer.dart`。每个域**注册**自己的 provider:
+**落地形态**: 不是单一的 `DomainContextProvider` 抽象,而是**多个细粒度的 Riverpod seams** —— 每个跨域关注点一个 seam,各域分别 override。最终代码体量比一个大接口少,而且每个 seam 可以独立演进。
 
-```dart
-abstract class DomainContextProvider {
-  String get domain;                          // 'finance' | 'health' | ...
-  Future<DomainContext> compose(ContextScope scope);
-}
-```
+| Seam (`core/ai/composition/`) | 默认 | FinanceOS override |
+|---|---|---|
+| `chat_rail_provider.dart` (selector) | 空列表 | `features/home/composition/finance_chat_rail_provider.dart` |
+| `device_tools_provider.dart` | 空列表 | `kFinanceDeviceTools` + `kShellDeviceTools` 拼接 (D-1.2) |
+| `chat_trace_prep.dart` | `null` (跳过 trace) | `features/finance/composition/finance_chat_trace_preparer.dart` |
+| `proposal_applier.dart` (abstract + `proposalApplierProvider`) | no-op 总抛 `ProposalApplyException` | `features/finance/composition/finance_proposal_applier.dart` (`FinanceProposalApplier implements ProposalApplier`) |
+| `ai_context_summary.dart` | `AiContextSummary.empty` | `features/finance/composition/finance_ai_context_summary_provider.dart` |
+| `portfolio_snapshot.dart` (`PortfolioSnapshotReader?`) | `null` (无 snapshot) | `features/finance/composition/finance_portfolio_snapshot.dart` |
+| `proposal_plan.dart` / `proposal_apply_state.dart` (shell types) | — | shell-level 协议数据类型,跨域共享 |
 
-- `features/finance/composition/finance_context_provider.dart` 注册 finance
-- `features/health/composition/health_context_provider.dart` 注册 health
-- `ai_chat` 不再 import 任何 feature
+**接入第二个域 (D-2 HealthOS)**: `features/health/composition/health_*.dart` 写自己的实现 → 在 `bootstrap.dart` 用 `override` 与 Finance 合并(rail 选择器 concat,tool 列表 concat,trace prep 改成多 provider 合并)。Memory Layer indexers 已经走类似套路(见 §6.7)。
 
-**完工标准**: `features/ai_chat/` 下 `grep "features/[^/]*/"` 零命中(`features/shared/` 除外)。
+**完工标准已满足** (2026-05-26): `tool/lint-cross-feature-imports.sh` 通过,grandfather 列表为空;`flutter analyze --fatal-infos` 干净;targeted test 118 通过;全量 test 与 clean main 同等结果(6 个已知 router_test 失败 + 1 ai_trace_waterfall 失败,与本次改动无关)。
 
 ---
 
@@ -367,20 +368,18 @@ Plus updated descriptor/registry tests (catalog → 37 tools).
 
 ## 9. Persistence
 
-**Phase D-1.1 rename**:
+**Phase D-1.1 rename — 全部 5 项落地 (2026-05-26)**:
 
-- ✅ `data/db/` → `core/persistence/` (跨域 storage adapter) — 2026-05-26 落地
-- ⏳ `data/domain/` → `features/finance/data/domain/` (Finance 业务实体)
-- ⏳ `data/audit/` 跨域 → `core/audit/`
-- ⏳ `data/market/` Finance 专属 → `features/finance/data/market/`
-- ⏳ `data/securities_catalog/` Finance 专属 → `features/finance/data/securities_catalog/`
-- ⏳ `data/repositories/providers.dart` 内 Finance providers 拆出去
+- ✅ `data/db/` → `core/persistence/` (跨域 storage adapter)
+- ✅ `data/audit/` → `core/audit/` (跨域 event log)
+- ✅ `data/domain/` → `features/finance/data/domain/` (Finance 业务实体)
+- ✅ `data/market/` → `features/finance/data/market/` (Finance 专属)
+- ✅ `data/securities_catalog/` → `features/finance/data/securities_catalog/`
+- ✅ `data/repositories/` → `features/finance/data/repositories/` (Finance providers)
 
-**完成的部分** (2026-05-26): `data/db/` 整树 (12 文件 + Drift `.g.dart` 96 万 byte) 迁到 `core/persistence/`,90 文件 import 路径机械化重写,`dart fix` 自动排序 48 文件 directives。`test/data/db/test_database.dart` 也对应迁到 `test/core/persistence/`。
+`apps/mobile/lib/data/` 整目录已清空。Drift `.g.dart` (~96 万 byte) 跟随主表迁移,所有 import path 机械化重写并经 `dart fix` 排序。后续 D-2 HealthOS 直接落 `features/health/data/` 与 Finance 同结构。
 
-**剩余 5 项**: 都是 Finance-专属 reorganization,不阻塞 D-2 (HealthOS 不依赖 Finance-data 重组)。作为后续 batch PR。
-
-**风险**: 全仓 import path 改动。Mitigation:
+**风险**: 全仓 import path 改动。Mitigation 已生效:
 
 - 单次机械化 PR + 全量 test + golden 保护
 - `dart fix` + 手工脚本批量改 import
@@ -455,7 +454,7 @@ apps/mobile/native/
 | 脚本 | 检查 | 状态 |
 |---|---|---|
 | `tool/lint-no-finance-in-core.sh` | `core/ai/runtime/` 禁止 import `features/<domain>/`;`device/tools/` + 3 个已知 chat_events 借用点 grandfathered (northstar §2.2) | ✅ 落地 |
-| `tool/lint-cross-feature-imports.sh` | `features/ai_chat/` 禁止 import 兄弟 features (shared/ 除外);grandfathered: chat composition root 3 个文件,follow-up D-1.6b 清掉 | ✅ 落地 |
+| `tool/lint-cross-feature-imports.sh` | `features/ai_chat/` 禁止 import 兄弟 features (shared/ 除外);grandfather list 已于 D-1.6b 清空 (2026-05-26) | ✅ 落地 |
 | `tool/lint-row-family-prefix.sh` | `core/sync/` 内的 `RowChange(table: '<literal>')` 字面量必须带 `fin:` / `health:` 前缀 | ✅ 落地 |
 | `tool/lint-domain-neutral-contracts.sh` | `core/ai/contracts/` / `core/sync/` 不出现 Finance / Health 业务词 (`Money` / `Account[A-Z]` / `JournalEntry` / `Posting` / `Holding` / `Liability` / `FirePlan` / `FireBucket` / `TradeJournal` / `SleepSession` / `HrvDaily`) | ✅ 落地 |
 

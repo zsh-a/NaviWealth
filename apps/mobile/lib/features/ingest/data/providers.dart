@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/ai/composition/proposal_applier.dart';
 import '../../../core/ai/contracts/ai_span.dart';
 import '../../../core/ai/contracts/ai_trace.dart';
 import '../../../core/ai/contracts/intent.dart';
@@ -20,7 +21,7 @@ import '../../../core/ai/trace/ai_trace_builder.dart';
 import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/providers.dart';
 import '../../../core/persistence/providers.dart';
-import '../../ai_chat/data/providers.dart';
+import '../../ai_chat/data/providers.dart' show deviceLlmRuntimeProvider;
 import '../domain/ingest_models.dart';
 import 'cloud_ingest_client.dart';
 import 'device_ingest_client.dart';

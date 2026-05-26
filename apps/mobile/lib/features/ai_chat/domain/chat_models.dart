@@ -1,7 +1,7 @@
 import 'dart:convert';
 
+import '../../../core/ai/composition/proposal_apply_state.dart';
 import 'chat_events.dart' show TokenUsage;
-import 'proposal_apply_state.dart';
 
 /// Roles understood by the chat runtime.
 ///

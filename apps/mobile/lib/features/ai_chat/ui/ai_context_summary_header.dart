@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/ai/composition/ai_context_summary.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../state/ai_context_summary_provider.dart';
 
 /// "Monthly summary" pulse rendered above the AI chat surface.
 ///

@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/ai/composition/proposal_apply_state.dart';
+import '../../../core/ai/composition/proposal_plan.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
-import '../domain/proposal_apply_state.dart';
-import '../domain/proposal_plan.dart';
 import '../state/chat_controller.dart';
 import 'ai_transparency_badge.dart';
 import 'propose_card.dart';
