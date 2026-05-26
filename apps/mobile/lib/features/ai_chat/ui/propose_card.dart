@@ -4,16 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/ai/composition/proposal_applier.dart';
+import '../../../core/ai/composition/proposal_apply_state.dart';
+import '../../../core/ai/composition/proposal_plan.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/ai/write/interaction_mode.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../data/proposal_applier.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
-import '../domain/proposal_apply_state.dart';
-import '../domain/proposal_plan.dart';
 import '../state/chat_controller.dart';
 
 /// Wave 38 — bridge between mobile enum and the snake_case

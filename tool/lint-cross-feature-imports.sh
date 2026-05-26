@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Boundary lint: `features/<A>/` may not import `features/<B>/`
-# (`docs/lifeos-shell.md` §4 + northstar §2.4, D-1.6).
+# (`docs/lifeos-shell.md` §4 + northstar §2.4, D-1.6 + D-1.6b).
 #
 # Scope today: only `features/ai_chat/` is enforced — Phase D-1.6
 # targets the chat-context composition root. The rest of the
@@ -11,26 +11,21 @@
 # composition pattern proven by ai_chat will be extended to other
 # features in follow-up cleanup waves.
 #
-# Exceptions inside `features/ai_chat/`:
-#   - features/shared/ is the cross-feature design-system shim and is
-#     allowed everywhere.
-#   - features/ai_chat/data/{providers.dart,proposal_applier.dart}
-#     and features/ai_chat/state/ai_context_summary_provider.dart are
-#     the historical chat-context composition root (northstar §2.4).
-#     They are grandfathered until the D-1.6b cross-feature
-#     composition uplift lands.
+# `features/shared/` is the cross-feature design-system shim and is
+# allowed everywhere.
+#
+# D-1.6b (2026-05-26) cleared all grandfathered files: the chat
+# trace preparer + ai context summary + proposal applier + portfolio
+# snapshot all moved to `features/finance/composition/` behind
+# `core/ai/composition/` seams. `features/ai_chat/` no longer
+# imports any sibling feature.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FEATURES="$ROOT/apps/mobile/lib/features/ai_chat"
 
-# Files allowed to keep cross-feature imports until the D-1.6b
-# follow-up. Shrink this list to zero to complete D-1.6.
-read -r -d '' GRANDFATHERED_REGEX <<'EOF' || true
-features/ai_chat/data/providers\.dart$
-features/ai_chat/data/proposal_applier\.dart$
-features/ai_chat/state/ai_context_summary_provider\.dart$
-EOF
+# No grandfathered files remain after D-1.6b.
+GRANDFATHERED_REGEX=""
 
 violations=""
 # Only an `../../<X>/` (exactly two-up, no more `..`) from a file in

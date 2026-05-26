@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/ai_chat/domain/proposal_plan.dart';
+import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
 import 'package:naviwealth/features/ingest/data/ingest_confirm_service.dart';
 import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
 

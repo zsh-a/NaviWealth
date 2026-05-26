@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/ai_chat/domain/proposal_plan.dart';
+import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
 
 void main() {
   group('ProposalPlan.tryParse', () {

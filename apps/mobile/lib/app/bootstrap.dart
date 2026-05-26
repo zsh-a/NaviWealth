@@ -10,8 +10,12 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/ai/composition/ai_context_summary.dart';
 import '../core/ai/composition/chat_rail_provider.dart';
+import '../core/ai/composition/chat_trace_prep.dart';
 import '../core/ai/composition/device_tools_provider.dart';
+import '../core/ai/composition/portfolio_snapshot.dart';
+import '../core/ai/composition/proposal_applier.dart';
 import '../core/ai/local/embedding/embedder.dart';
 import '../core/ai/local/embedding/model_install_paths.dart';
 import '../core/ai/local/embedding/model_manifest.dart';
@@ -31,6 +35,10 @@ import '../design_system/preferences/theme_preferences.dart';
 import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
 import '../features/cashflow/data/recurring_transaction_providers.dart';
+import '../features/finance/composition/finance_ai_context_summary_provider.dart';
+import '../features/finance/composition/finance_chat_trace_preparer.dart';
+import '../features/finance/composition/finance_portfolio_snapshot.dart';
+import '../features/finance/composition/finance_proposal_applier.dart';
 import '../features/finance/data/market/sync/price_sync_providers.dart';
 import '../features/finance_ai_tools.dart';
 import '../features/finance_domain_shell.dart';
@@ -129,6 +137,31 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       // contribution without any further shell change.
       deviceToolsProvider.overrideWith(
         (ref) => [...kShellDeviceTools, ...kFinanceDeviceTools],
+      ),
+      // D-1.6b (`docs/lifeos-shell.md` §4): FinanceOS supplies the
+      // concrete proposal applier the chat surface dispatches confirmed
+      // `propose_*` plans through. Without this override the shell
+      // default no-op applier throws on every apply.
+      proposalApplierProvider.overrideWith(
+        (ref) => ref.watch(financeProposalApplierProvider.future),
+      ),
+      // D-1.6b (`docs/lifeos-shell.md` §4): FinanceOS supplies the
+      // per-chat-turn ContextPack + AiTrace seed. Default (no domain
+      // registered) leaves `chatTracePrepProvider` returning null, in
+      // which case `ChatRepository` skips the trace seam entirely.
+      chatTracePrepProvider.overrideWith(
+        (ref) => ref.watch(financeChatTracePrepProvider),
+      ),
+      // D-1.6b (`docs/lifeos-shell.md` §4): FinanceOS supplies the AI
+      // page header summary chip. Default returns the empty summary,
+      // which renders as a collapsed chip.
+      aiContextSummaryProvider.overrideWith(
+        (ref) => ref.watch(financeAiContextSummaryProvider),
+      ),
+      // D-1.6b (`docs/lifeos-shell.md` §4): FinanceOS supplies the
+      // portfolio snapshot the chat surface attaches to each turn.
+      portfolioSnapshotReaderProvider.overrideWith(
+        (ref) => ref.watch(financePortfolioSnapshotReaderProvider),
       ),
       // D-1.8 (`docs/lifeos-shell.md` §3): register the FinanceOS
       // shell spec. Today this is the only domain so the dock stays

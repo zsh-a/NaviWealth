@@ -12,9 +12,9 @@ library;
 
 import 'package:decimal/decimal.dart';
 
-import '../../ai_chat/data/proposal_applier.dart';
-import '../../ai_chat/domain/proposal_apply_state.dart';
-import '../../ai_chat/domain/proposal_plan.dart';
+import '../../../core/ai/composition/proposal_applier.dart';
+import '../../../core/ai/composition/proposal_apply_state.dart';
+import '../../../core/ai/composition/proposal_plan.dart';
 import '../domain/ingest_models.dart';
 import 'ingest_draft_store.dart';
 
