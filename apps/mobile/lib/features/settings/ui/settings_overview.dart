@@ -833,10 +833,13 @@ class _DomainsSection extends ConsumerWidget {
         InlineSwitchRow(
           icon: FLucideIcons.heartPulse,
           label: 'HealthOS',
-          // Disabled until Phase D-2 wires `features/health/`. The
-          // toggle state still persists so the user's intent survives
-          // into D-2 when HealthOS goes live.
-          subtitle: 'Phase D-2 即将启用 (HealthKit / Health Connect 接入)',
+          // D-2.3 (2026-05-27): AI tools + Memory Layer indexer + IA
+          // shell spec all live. Real Today/Trend/Plan pages land in
+          // D-2.2 once the HealthKit / Health Connect adapter is in;
+          // the toggle gates the AI tool list + memory indexing today.
+          subtitle: healthEnabled
+              ? '预览中 — AI 工具 + Memory 索引已启用 (Today/Trend/Plan 页面 D-2.2 落地)'
+              : '预览版 — 打开后 AI 工具 + Memory 索引会启用',
           value: healthEnabled,
           onChanged: (v) {
             ref
@@ -844,6 +847,15 @@ class _DomainsSection extends ConsumerWidget {
                 .setEnabled(DomainScope.health, v);
           },
         ),
+        if (healthEnabled) ...[
+          _SectionDivider(),
+          InlineLinkRow(
+            icon: FLucideIcons.eye,
+            label: 'HealthOS · Today',
+            subtitle: '预览页面 (D-2.3 placeholder)',
+            onTap: () => context.goNamed(AppRouteNames.healthToday),
+          ),
+        ],
       ],
     );
   }

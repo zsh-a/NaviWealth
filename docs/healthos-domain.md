@@ -13,10 +13,11 @@
 D-2 子阶段进度:
 
 - ✅ **D-2.1 域骨架 + Drift tables** (2026-05-26) — `health_metrics` 表 (schema v18) + `HealthMetric` Freezed 实体 + `HealthMetricKind` 枚举 + `HealthMetricRepository` (upsert / listByKind / watchRecent / findById) + 7 个仓库测试通过
-- ✅ **D-2.4a AI tools (read-only)** (2026-05-27) — 4 个 device tool 落地 (`get_recent_sleep_summary` / `get_hrv_trend` / `get_activity_summary` / `get_recovery_signal`) + 22 个测试通过 + `kHealthDeviceTools` barrel + bootstrap 域级 opt-in gate (`domainOptInsProvider`)。Memory Layer 第二 caller 留作 D-2.4b。
+- ✅ **D-2.4a AI tools (read-only)** (2026-05-27) — 4 个 device tool 落地 (`get_recent_sleep_summary` / `get_hrv_trend` / `get_activity_summary` / `get_recovery_signal`) + 22 个测试通过 + `kHealthDeviceTools` barrel + bootstrap 域级 opt-in gate (`domainOptInsProvider`)
+- ✅ **D-2.4b Memory Layer 第二 caller** (2026-05-27) — `HealthMetricMemoryIndexer` 落地:每条 `health_metrics` 行写一个 `EventRecord`(7 种 type:sleep/hrv/steps/rhr/active_energy/weight/body_fat);notable 睡眠会话(< 5h / > 9h / 带 `payloadJson` 注释)额外写 `episodic MemoryRecord` 进 `scope='health'`,带 `short_sleep` / `long_sleep` / `noted_sleep` entity 便于跨域召回。Bootstrap 经 `memory_indexers_bootstrap.dart` 接入;indexer 内部读 `domainOptInsProvider` 域级 opt-in,Health OFF 时不订阅。9 个 indexer 测试通过(event emission 3 + episodic 5 + idempotency 1)
+- ✅ **D-2.3 IA 接入(seam + 直链)** (2026-05-27) — `healthDomainShell(l10n)` (3 tabs: Today/Trend/Plan) + `AppRoutes.healthToday`/`.healthTrend`/`.healthPlan` + 3 个 placeholder 页(`HealthPlaceholderPage`)+ `bootstrap.dart` 在 Health 域 opt-in 时 append spec 到 `activeDomainShellsProvider`(`domainDockVisibleProvider` 自动翻 true)+ Settings → LifeOS 域 加 HealthOS 入口直链。3 个 shell-spec 测试通过。**dock UI 渲染**(改 `app_shell.dart` 的 StatefulShellRoute 让 dock 可视)留作 D-2.3b — 当前 Health 页面经 Settings 直链或直接 URL 访问,蚪自己 dogfood 验 Option B 是否顺手再决定全量切换
 - ⏳ D-2.2 HealthKit / Health Connect 适配
-- ⏳ D-2.3 IA 接入(shell §3 决定的 domain shell 形态)
-- ⏳ D-2.4b Memory Layer 第二个 caller(sleep / hrv extractor)
+- ⏳ D-2.3b dock UI 渲染(改 `app_shell.dart` 让 `domainDockVisibleProvider=true` 时显示左侧 dock)
 - ⏳ D-2.5 第一个 cross-domain agent (Morning Briefing)
 
 ---
@@ -125,14 +126,41 @@ HealthOS 通过 shell §4 的 `DomainContextProvider` 注册自己,供 cross-dom
 
 ---
 
-## 7. Memory Layer 接入
+## 7. Memory Layer 接入 (D-2.4b 已落地 2026-05-27)
 
-Health 域作为 Memory Layer 第二个 caller(shell §6):
+Health 域是 Memory Layer 第二个 caller(shell §6),首个非 Finance 域接入。位置:`features/health/data/health_metric_memory_indexer.dart`。
 
-- 每日 sleep summary / HRV 趋势作为 `MemoryEntry` (sourceTable=`'health:summary_daily'`) 写入
-- AI Chat 跨域检索时拉历史相似时段
+**Event 发射(每条 row 都发)**:
 
-Shell §6 contract 保持中立,无 health-specific 字段。
+| `HealthMetricKind` | Event type | Importance |
+|---|---|---|
+| `sleepSession` | `sleep_session_ended` | 0.7 if outlier (< 5h / > 9h) else 0.5 |
+| `hrvDaily` | `hrv_recorded` | 0.55 |
+| `rhrDaily` | `rhr_recorded` | 0.55 |
+| `stepsDaily` | `steps_recorded` | 0.45 |
+| `activeEnergyDaily` | `active_energy_recorded` | 0.45 |
+| `weight` | `weight_recorded` | 0.5 |
+| `bodyFat` | `body_fat_recorded` | 0.5 |
+| `unknown` | (skipped) | — |
+
+事件 ID 格式 `health:health_metrics:<type>:<rowId>` 确保再 indexing 幂等。
+
+**Episodic memory 发射(仅 sleep session 选择性发)**:
+
+| 触发条件 | Entity | Importance | Confidence |
+|---|---|---|---|
+| 时长 < 5h | `short_sleep` | 0.7 | 0.7(无 note)/ 0.85(有 note) |
+| 时长 > 9h | `long_sleep` | 0.6 | 同上 |
+| 含 `payloadJson` 注释 | `noted_sleep` | 0.65 | 同上 |
+| 普通时长 + 无 note | — | — | — |
+
+`scope='health'`,memory ID `health:health_metrics:episodic:<rowId>`,payload 用 episodic 约定 `{context, decision (null), reasoning (note), outcome{value, unit, duration_hours, shape}}`。
+
+**HRV / 步数 / RHR 等不发 episodic**:这些需要跨多行的模式判断(例如"HRV 连续 5 天下降"),由 D-2.5 Morning Briefing agent 在更高抽象层做,不在逐行 indexer 范围。
+
+**Subscription 形态**:`healthMetricMemoryIndexerProvider` 在 Health 域 opt-in 时订阅 `watchRecent(sleepSession, 60)` + `watchRecent(hrvDaily, 90)`,流变化触发全量 re-index(stable id ⇒ 上游 store 幂等)。OFF 时不订阅,零开销。
+
+Shell §6 contract 保持跨域中立:`EventRecord` / `MemoryRecord` 没有 health-specific 字段;`source` 和 `entities` 是 free-text。AI Chat 调 `build_context` / `query_memory` 时可按 `scope='health'` / `entityFilter={'short_sleep'}` 召回。
 
 ---
 
