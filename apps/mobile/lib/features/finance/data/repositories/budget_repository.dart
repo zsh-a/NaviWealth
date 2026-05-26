@@ -1,10 +1,9 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/op_outbox.dart';
 import 'package:uuid/uuid.dart';
-
-import 'mutation_context.dart';
 
 /// Read / write API for monthly category budgets
 /// (`docs/roadmap-next.md` §3.2 — Budget MVP).

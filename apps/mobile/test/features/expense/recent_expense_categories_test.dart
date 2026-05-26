@@ -1,10 +1,10 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/expense/data/recent_expense_categories.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
-import 'package:naviwealth/features/finance/data/domain/hlc.dart';
-import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 
 Expense _expense({

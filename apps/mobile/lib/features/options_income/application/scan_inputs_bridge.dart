@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:naviwealth/features/finance/data/repositories/mutation_context.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 import '../../../domain/values/money.dart';
 import '../../investment/data/providers.dart';
 

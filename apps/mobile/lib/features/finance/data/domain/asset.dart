@@ -1,8 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-
+import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/domain/values/asset_market.dart';
+
 import 'enums.dart';
-import 'sync_meta.dart';
 
 part 'asset.freezed.dart';
 

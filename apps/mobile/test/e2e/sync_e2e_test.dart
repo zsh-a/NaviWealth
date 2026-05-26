@@ -9,7 +9,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/errors.dart';
-import 'package:naviwealth/features/finance/data/domain/hlc.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
 
 import '_cluster.dart';
 

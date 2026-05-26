@@ -26,7 +26,7 @@ library;
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:naviwealth/features/finance/data/repositories/mutation_context.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 
 import '../../../core/ai/contracts/event_record.dart';
 import '../../../core/ai/contracts/memory_record.dart';

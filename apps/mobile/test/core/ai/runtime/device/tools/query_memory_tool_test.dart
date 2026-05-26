@@ -11,7 +11,7 @@ import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart'
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/query_memory_tool.dart';
-import 'package:naviwealth/features/finance/data/repositories/mutation_context.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 
 import '../../../../../core/persistence/test_database.dart';
 

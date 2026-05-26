@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/activity/data/activity_feed_provider.dart';
 import 'package:naviwealth/features/activity/data/activity_feed_query.dart';
 import 'package:naviwealth/features/activity/ui/activity_feed_filter_sheet.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import 'package:naviwealth/features/finance/data/domain/hlc.dart';
-import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 

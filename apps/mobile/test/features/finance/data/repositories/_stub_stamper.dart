@@ -1,5 +1,5 @@
-import 'package:naviwealth/features/finance/data/domain/hlc.dart';
-import 'package:naviwealth/features/finance/data/repositories/mutation_context.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 
 /// Deterministic [MutationStamper] for tests. Wall-millis is incremented
 /// by one on every call so HLC ordering is stable and counter logic is

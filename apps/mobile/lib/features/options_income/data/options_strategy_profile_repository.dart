@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
-import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
-import 'package:naviwealth/features/finance/data/repositories/mutation_context.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 
 import '../../../core/persistence/app_database.dart';
 import '../../../core/sync/op_outbox.dart';

@@ -1,10 +1,10 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import 'package:naviwealth/features/finance/data/domain/hlc.dart';
 import 'package:naviwealth/features/finance/data/domain/posting.dart';
-import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
 
 const _hlc = Hlc(wallMillis: 1700000000000, counter: 0, nodeId: 'dev');
 final _sync = SyncMeta(

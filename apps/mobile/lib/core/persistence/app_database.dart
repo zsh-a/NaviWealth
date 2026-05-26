@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import 'package:naviwealth/features/finance/data/domain/hlc.dart';
 
 import '../../core/sync/sync_tables.dart';
 import 'connection.dart';

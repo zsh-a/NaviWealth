@@ -384,6 +384,17 @@ Plus updated descriptor/registry tests (catalog → 37 tools).
 
 `apps/mobile/lib/data/` 整目录已清空。Drift `.g.dart` (~96 万 byte) 跟随主表迁移,所有 import path 机械化重写并经 `dart fix` 排序。后续 D-2 HealthOS 直接落 `features/health/data/` 与 Finance 同结构。
 
+**Phase D-1.1b sync 信封上提 — 落地 (2026-05-27)**:
+
+D-2.1 暴露的 D-1.x 债已清:`SyncMeta` / `Hlc` / `MutationStamper` / `outboxStoreProvider` 全部从 `features/finance/` 迁到 `core/sync/`,Health 域以及未来的 HealthOS / TimeOS / ... 直接消费,不再绕道 Finance:
+
+- ✅ `features/finance/data/domain/hlc.dart` → `core/sync/hlc.dart`
+- ✅ `features/finance/data/domain/sync_meta.dart` (+ `.freezed.dart`) → `core/sync/sync_meta.dart`
+- ✅ `features/finance/data/repositories/mutation_context.dart` (`MutationStamp` + `MutationStamper` + `mutationStamperProvider`) → `core/sync/mutation_context.dart`
+- ✅ `outboxStoreProvider` 从 `features/finance/data/repositories/providers.dart` 抽到 `core/sync/outbox_provider.dart`(finance providers.dart 保留 `export ... show outboxStoreProvider` 作 back-compat)
+- 范围:~150 个 package import 机械重写 + `domain/domain.dart` barrel 改用 `package:` 路径 + 16 个 finance domain 文件 / 8 个 finance repositories 文件的相对 import 改包 import + `dart fix --code=directives_ordering` 99 个文件;全套 1873 tests pass / 0 new fail
+- Health repo (`features/health/data/`) 现在不再写"已知跨域例外"注释 —— 它的所有 sync 信封类型都从 `core/sync/` 直接进来
+
 **风险**: 全仓 import path 改动。Mitigation 已生效:
 
 - 单次机械化 PR + 全量 test + golden 保护

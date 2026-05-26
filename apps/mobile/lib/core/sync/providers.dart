@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:naviwealth/features/finance/data/domain/hlc.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import '../../core/persistence/app_database.dart';

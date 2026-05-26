@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
 
-import 'package:naviwealth/features/finance/data/domain/sync_meta.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'options_strategy_profile.dart';
 
 /// One row of the user's options trade journal.

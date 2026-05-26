@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'sync_meta.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
 
 part 'user.freezed.dart';
 

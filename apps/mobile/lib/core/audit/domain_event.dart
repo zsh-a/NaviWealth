@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:naviwealth/features/finance/data/domain/hlc.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
 
 /// Kind of state transition recorded by the audit ledger.
 ///
