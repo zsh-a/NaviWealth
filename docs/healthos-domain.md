@@ -16,9 +16,10 @@ D-2 子阶段进度:
 - ✅ **D-2.4a AI tools (read-only)** (2026-05-27) — 4 个 device tool 落地 (`get_recent_sleep_summary` / `get_hrv_trend` / `get_activity_summary` / `get_recovery_signal`) + 22 个测试通过 + `kHealthDeviceTools` barrel + bootstrap 域级 opt-in gate (`domainOptInsProvider`)
 - ✅ **D-2.4b Memory Layer 第二 caller** (2026-05-27) — `HealthMetricMemoryIndexer` 落地:每条 `health_metrics` 行写一个 `EventRecord`(7 种 type:sleep/hrv/steps/rhr/active_energy/weight/body_fat);notable 睡眠会话(< 5h / > 9h / 带 `payloadJson` 注释)额外写 `episodic MemoryRecord` 进 `scope='health'`,带 `short_sleep` / `long_sleep` / `noted_sleep` entity 便于跨域召回。Bootstrap 经 `memory_indexers_bootstrap.dart` 接入;indexer 内部读 `domainOptInsProvider` 域级 opt-in,Health OFF 时不订阅。9 个 indexer 测试通过(event emission 3 + episodic 5 + idempotency 1)
 - ✅ **D-2.3 IA 接入(seam + 直链)** (2026-05-27) — `healthDomainShell(l10n)` (3 tabs: Today/Trend/Plan) + `AppRoutes.healthToday`/`.healthTrend`/`.healthPlan` + 3 个 placeholder 页(`HealthPlaceholderPage`)+ `bootstrap.dart` 在 Health 域 opt-in 时 append spec 到 `activeDomainShellsProvider`(`domainDockVisibleProvider` 自动翻 true)+ Settings → LifeOS 域 加 HealthOS 入口直链。3 个 shell-spec 测试通过。**dock UI 渲染**(改 `app_shell.dart` 的 StatefulShellRoute 让 dock 可视)留作 D-2.3b — 当前 Health 页面经 Settings 直链或直接 URL 访问,蚪自己 dogfood 验 Option B 是否顺手再决定全量切换
+- ✅ **D-2.5 Morning Briefing agent (programmatic MVP)** (2026-05-27) — `core/ai/agents/{agent,agent_schedule,agent_registry,agent_runner}.dart` 通用框架 + `features/health/agents/morning_briefing_agent.dart` 第一个具名 agent。每日 07:00 (jitter ±5min) 触发,读取过去 24h Memory Layer 跨域 events,程序化合成 sleep/HRV/finance 三段摘要写为 `episodic MemoryRecord` (`scope='*'`,entity `morning_briefing` + dayKey)。Agent runner 通过 `EventRecord` 记录每次运行 (`source='agent_run'`,3 种 type:completed/skipped/failed)。Bootstrap 在 Health opt-in 时注册到 `agentRegistryProvider`。19 个测试通过 (schedule 8 + runner 6 + briefing 5)。**LLM 合成 + 平台原生 cron** 留作 D-2.5b follow-up。
 - ⏳ D-2.2 HealthKit / Health Connect 适配
 - ⏳ D-2.3b dock UI 渲染(改 `app_shell.dart` 让 `domainDockVisibleProvider=true` 时显示左侧 dock)
-- ⏳ D-2.5 第一个 cross-domain agent (Morning Briefing)
+- ⏳ D-2.5b LLM-driven 合成 + 平台 cron / 后台调度 (iOS Background Fetch / Android WorkManager / 通知)
 
 ---
 
@@ -164,14 +165,35 @@ Shell §6 contract 保持跨域中立:`EventRecord` / `MemoryRecord` 没有 heal
 
 ---
 
-## 8. 第一个 cross-domain agent: Morning Briefing (D-2.5)
+## 8. 第一个 cross-domain agent: Morning Briefing (D-2.5 落地 2026-05-27)
 
-每日凌晨 / 早晨 autonomous run:
+每日 07:00 local (±5min jitter) autonomous run。**当前**为 programmatic MVP — D-2.5b 会换 LLM 合成 + 平台 cron。
 
-- **读**: 隔夜市场(Finance)+ 昨日睡眠 + 今日 HRV(Health)
-- **产**: 一条 push notification + Today 顶部卡片
-- 架构: `core/ai/agents/scheduled_agent.dart` + 各域 `DomainContextProvider`
-- 这是 roadmap §4 M-2 BatchProposal + long-task progress 的真实首个 use case
+**Read**: `MemoryRuntime.recentEvents(window=24h)` 拉过去一天的 cross-domain events;按 source 分两堆:
+- `source.startsWith('health')` → Health 信号 (sleep / hrv / steps / ...)
+- `source != 'agent_run' && !startsWith('agent:')` → Finance 信号 (trade_opened / closed / ...)
+
+**Compose** (deterministic, 在 `morning_briefing_agent.dart::synthesize`):
+- Sleep: 取最近一条 `sleep_session_ended` event,换算成 hours,如果 indexer 标了 `short_sleep` / `long_sleep` entity 就追加 `(short)` / `(long)`
+- HRV: 取最近一条 `hrv_recorded` event 的 ms 值
+- Finance: 按 type 计数 ("2 trade opened, 1 trade closed")
+- 三段用 ` · ` 拼成 summary
+
+**Write**:
+- 一条 `episodic MemoryRecord` (id `agent:morning_briefing:<dayKey>`,upsert 幂等)。`scope='*'` (跨域可被 build_context 召回),entities `{morning_briefing, briefing, <dayKey>}`
+- 一条 `EventRecord` (id `agent_run:morning_briefing:<startedAtIso>`) 经 agent_runner 自动写,供"显示最近 agent 运行"surface
+
+**Skip 条件**:
+- 24h 内无任何 health event → `AgentRunResult.skipped(reason: 'no health signals')`
+- 有 health event 但都是 unknown kind → skipped
+
+**未做** (D-2.5b):
+- LLM-driven 合成 (programmatic 现在够 dogfood,真要"今天该不该重训"再换)
+- Push notification (需 `flutter_local_notifications` + 平台权限)
+- Background fetch / WorkManager (需平台 plugin,目前依赖 app 开着 + 手动触发)
+- Today 顶部卡片 UI
+
+**架构**: `core/ai/agents/` 通用框架 + `features/health/agents/morning_briefing_agent.dart` 具名 impl。Bootstrap 在 Health opt-in 时 `agentRegistryProvider` append `morningBriefingAgentProvider`。Manual trigger 经 `AgentRunner.runOnce(agent, ctx)`,可从 Settings 触发(follow-up UI)。
 
 ---
 
