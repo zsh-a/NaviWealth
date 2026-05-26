@@ -44,6 +44,7 @@ import '../features/finance/composition/finance_proposal_applier.dart';
 import '../features/finance/data/market/sync/price_sync_providers.dart';
 import '../features/finance_ai_tools.dart';
 import '../features/finance_domain_shell.dart';
+import '../features/health/composition/health_domain_shell.dart';
 import '../features/health_ai_tools.dart';
 import '../features/home/composition/finance_chat_rail_provider.dart';
 import '../l10n/gen/app_localizations.dart';
@@ -172,21 +173,23 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       portfolioSnapshotReaderProvider.overrideWith(
         (ref) => ref.watch(financePortfolioSnapshotReaderProvider),
       ),
-      // D-1.8 (`docs/lifeos-shell.md` §3): register the FinanceOS
-      // shell spec. Today this is the only domain so the dock stays
-      // hidden and app_shell renders its tabs as the single-domain
-      // layout. HealthOS D-2 will append a `healthDomainShell` here
-      // once the user enables the Health opt-in.
+      // D-1.8 + D-2.3 (`docs/lifeos-shell.md` §3): register the
+      // FinanceOS shell spec; append HealthOS when the user has opted
+      // into the Health domain. The dock visibility flips on as soon
+      // as a second spec lands (see `domainDockVisibleProvider`).
       activeDomainShellsProvider.overrideWith((ref) {
         // The spec depends on AppLocalizations for labels, which is
         // resolved per-render inside the shell, not at container
         // construction. We side-step by building with the default
         // (English) locale here — the active locale is re-applied
         // when the widget tree rebuilds via Riverpod's invalidation.
-        // `lookupAppLocalizations` is provided by the generated l10n
-        // surface and works for any const-supported locale.
         final l10n = lookupAppLocalizations(const Locale('en'));
-        return [financeDomainShell(l10n)];
+        final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+        final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
+        return <DomainShellSpec>[
+          financeDomainShell(l10n),
+          if (healthEnabled) healthDomainShell(l10n),
+        ];
       }),
       // D-1.7c (`docs/lifeos-shell.md` §6.6): swap in the Rust
       // EmbeddingGemma embedder when the user has configured a model

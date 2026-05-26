@@ -42,6 +42,12 @@ abstract final class AppRoutes {
   static const wealth = '/wealth';
   static const plan = '/plan';
 
+  // ── HealthOS (Phase D-2.3) — gated by domain opt-in (Health OFF by
+  // default). Tabs mirror healthos-domain.md §5: Today / Trend / Plan.
+  static const healthToday = '/health';
+  static const healthTrend = '/health/trend';
+  static const healthPlan = '/health/plan';
+
   // ── Global meta (not a tab) ────────────────────────────────────────────
   static const settings = '/settings';
 
@@ -177,6 +183,11 @@ abstract final class AppRouteNames {
   static const wealthPortfolio = 'wealth-portfolio';
   static const wealthWatchlist = 'wealth-watchlist';
   static const wealthIncomeProjection = 'wealth-income-projection';
+
+  // ── HealthOS (Phase D-2.3 placeholder, real pages in D-2.2) ────────────
+  static const healthToday = 'health-today';
+  static const healthTrend = 'health-trend';
+  static const healthPlan = 'health-plan';
 
   // ── Plan ────────────────────────────────────────────────────────────────
   static const plan = 'plan';

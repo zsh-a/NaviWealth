@@ -34,6 +34,7 @@ import '../features/expense/ui/expense_form_page.dart';
 import '../features/expense/ui/expense_list_page.dart';
 import '../features/expense/ui/expense_report_page.dart';
 import '../features/fire/presentation/fire_page.dart' deferred as fire_lib;
+import '../features/health/ui/health_placeholder_page.dart';
 import '../features/home/home_page.dart';
 import '../features/ingest/ui/ingest_review_page.dart';
 import '../features/investment/presentation/corporate_action_entry_route.dart'
@@ -463,6 +464,31 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
             ],
           ),
         ],
+      ),
+      // ── HealthOS top-level routes (`docs/healthos-domain.md` §5,
+      // D-2.3). Lives outside the StatefulShellRoute since HealthOS
+      // is gated by domain opt-in and rendered through the multi-
+      // domain dock (Option B) — not the existing 4-tab IndexedStack.
+      // Until the dock UI lands, these are reachable via direct URL /
+      // deep-link from the Settings → Domains opt-in toggle, which is
+      // the dogfood path during the §3 decision-gate window.
+      GoRoute(
+        path: AppRoutes.healthToday,
+        name: AppRouteNames.healthToday,
+        builder: (context, state) =>
+            const HealthPlaceholderPage(tab: HealthTab.today),
+      ),
+      GoRoute(
+        path: AppRoutes.healthTrend,
+        name: AppRouteNames.healthTrend,
+        builder: (context, state) =>
+            const HealthPlaceholderPage(tab: HealthTab.trend),
+      ),
+      GoRoute(
+        path: AppRoutes.healthPlan,
+        name: AppRouteNames.healthPlan,
+        builder: (context, state) =>
+            const HealthPlaceholderPage(tab: HealthTab.plan),
       ),
     ],
   );
