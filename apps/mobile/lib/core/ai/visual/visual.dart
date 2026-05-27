@@ -8,6 +8,7 @@
 library;
 
 export 'ai_json_view.dart';
+export 'ai_markdown.dart';
 export 'ai_motion.dart';
 export 'ai_pill.dart';
 export 'ai_sparkle.dart';
