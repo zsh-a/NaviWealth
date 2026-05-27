@@ -2,10 +2,12 @@
 // `docs/healthos-domain.md` §0.
 //
 // Two invariants:
-//   1. Finance-only (default): the dock chrome is *not* rendered;
-//      the layout is identical to the pre-D-2.3b single-shell baseline.
-//   2. Health opt-in: the dock chrome is rendered with both domain
-//      icons; tapping the HealthOS chip lands on the Health placeholder.
+//   1. Finance-only (default): no switcher UI surfaces at all;
+//      layout is identical to the pre-D-2.3b single-shell baseline.
+//   2. Health opt-in: a per-page DomainSwitcherTitle / chip is the
+//      switch surface on mobile (no always-visible top dock row), and
+//      tapping it shows a sheet that routes to the picked domain.
+//      Desktop keeps the always-visible left dock at ≥ 600 px.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -97,20 +99,24 @@ void main() {
   });
 
   group('Multi-domain dock (Health opt-in)', () {
-    testWidgets('mobile renders both domain chips when ≥ 2 specs active', (
-      tester,
-    ) async {
-      final l10n = lookupAppLocalizations(const Locale('en'));
-      await _pumpAt(
-        tester,
-        domains: <DomainShellSpec>[
-          financeDomainShell(l10n),
-          healthDomainShell(l10n),
-        ],
-      );
-      expect(find.text('FinanceOS'), findsOneWidget);
-      expect(find.text('HealthOS'), findsOneWidget);
-    });
+    testWidgets(
+      'mobile: no always-visible top dock row — long-press on nav is the only entry',
+      (tester) async {
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        await _pumpAt(
+          tester,
+          domains: <DomainShellSpec>[
+            financeDomainShell(l10n),
+            healthDomainShell(l10n),
+          ],
+        );
+        // No persistent "FinanceOS"/"HealthOS" label anywhere — the
+        // labels only appear inside the long-press sheet.
+        expect(find.text('FinanceOS'), findsNothing);
+        expect(find.text('HealthOS'), findsNothing);
+        expect(find.byType(HomePage), findsOneWidget);
+      },
+    );
 
     testWidgets('desktop renders left dock icons + Finance tabs', (
       tester,
@@ -131,7 +137,7 @@ void main() {
       expect(find.byType(HomePage), findsOneWidget);
     });
 
-    testWidgets('/health renders HealthTodayPage inside the dock shell',
+    testWidgets('/health renders HealthTodayPage with plain title (no chevron)',
         (tester) async {
       final l10n = lookupAppLocalizations(const Locale('en'));
       final container = await _pumpAt(
@@ -144,12 +150,14 @@ void main() {
       );
       expect(_currentPath(container), AppRoutes.healthToday);
       expect(find.byType(HealthTodayPage), findsOneWidget);
-      // Dock chrome is still visible.
-      expect(find.text('HealthOS'), findsOneWidget);
-      expect(find.text('FinanceOS'), findsOneWidget);
+      // Plain title — switcher lives in bottom nav long-press only.
+      expect(find.text('Today · HealthOS'), findsOneWidget);
+      expect(find.text('FinanceOS'), findsNothing);
+      expect(find.text('HealthOS'), findsNothing);
     });
 
-    testWidgets('tapping HealthOS chip routes to /health', (tester) async {
+    testWidgets('long-press on bottom nav opens the domain switcher sheet',
+        (tester) async {
       final l10n = lookupAppLocalizations(const Locale('en'));
       final container = await _pumpAt(
         tester,
@@ -158,10 +166,21 @@ void main() {
           healthDomainShell(l10n),
         ],
       );
-      expect(_currentPath(container), AppRoutes.home);
+      // Long-press the first nav item (Home). Any tab works — the
+      // sheet is the same.
+      await tester.longPress(find.text(l10n.navToday));
+      // Drive the sheet animation manually; pumpAndSettle never
+      // settles because the home dashboard owns a periodic ticker.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      // Sheet exposes both domain labels.
+      expect(find.text('FinanceOS'), findsOneWidget);
+      expect(find.text('HealthOS'), findsOneWidget);
+
+      // Tapping HealthOS in the sheet navigates to /health.
       await tester.tap(find.text('HealthOS'));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 400));
       expect(_currentPath(container), AppRoutes.healthToday);
       expect(find.byType(HealthTodayPage), findsOneWidget);
     });

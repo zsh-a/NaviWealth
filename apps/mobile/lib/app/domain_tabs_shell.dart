@@ -9,6 +9,7 @@ import '../core/shortcuts/shortcut_intents.dart';
 import '../design_system/design_system.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'desktop_sidebar.dart';
+import 'domain_switcher.dart';
 import 'route_paths.dart';
 
 /// Per-domain shell builder. One [DomainTabsShell] per LifeOS domain;
@@ -115,7 +116,7 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
   }
 }
 
-class _MobileLayout extends StatelessWidget {
+class _MobileLayout extends ConsumerWidget {
   const _MobileLayout({
     required this.tabs,
     required this.selectedIndex,
@@ -131,7 +132,7 @@ class _MobileLayout extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     // Search lives between tab 2 and tab 3 (Wealth) on Finance; domains
     // without enough tabs to make the middle meaningful skip it.
@@ -171,6 +172,14 @@ class _MobileLayout extends StatelessWidget {
       );
     }
 
+    // Long-press on the bottom nav opens the cross-domain switcher
+    // (`docs/lifeos-shell.md` §3 dogfood note). Tap behaviour is
+    // untouched — GestureDetector only intercepts long-press, taps
+    // pass through to the inner FBottomNavigationBar via the default
+    // hit-test behaviour.
+    final specs = ref.watch(activeDomainShellsProvider);
+    final hasSwitcher = specs.length >= 2;
+
     return FScaffold(
       childPad: false,
       footer: Column(
@@ -179,11 +188,17 @@ class _MobileLayout extends StatelessWidget {
           // Wave 35 — persistent undo banner sits between content and
           // the bottom nav. Hidden when the stack is empty.
           const PersistentUndoBanner(),
-          FBottomNavigationBar(
-            index: navIndex,
-            onChange: onNavChange,
-            safeAreaBottom: true,
-            children: children,
+          GestureDetector(
+            behavior: HitTestBehavior.deferToChild,
+            onLongPress: hasSwitcher
+                ? () => showDomainSwitcherSheet(context, specs)
+                : null,
+            child: FBottomNavigationBar(
+              index: navIndex,
+              onChange: onNavChange,
+              safeAreaBottom: true,
+              children: children,
+            ),
           ),
         ],
       ),

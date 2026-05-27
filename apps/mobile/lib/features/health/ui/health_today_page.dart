@@ -201,7 +201,7 @@ class _ActiveEnergyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _MetricCard(
       icon: Icons.local_fire_department_outlined,
-      label: 'Active energy',
+      label: 'Energy',
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -284,9 +284,14 @@ class _MetricCard extends StatelessWidget {
               children: [
                 Icon(icon, size: 16, color: scheme.onSurfaceVariant),
                 const SizedBox(width: AppSpacing.s4),
-                Text(
-                  label,
-                  style: textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
+                Expanded(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.labelMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
                 ),
               ],
             ),

@@ -25,8 +25,10 @@ import 'route_paths.dart';
 ///   * share-intent lifecycle (mounts once, survives domain switches)
 ///   * `aiRouteContextProvider` sync (location-driven, global)
 ///   * root-level system back handling (pop → jump-to-home → exit-arm)
-///   * domain dock chrome (only rendered when ≥ 2 specs are registered;
-///     [domainDockVisibleProvider] drives visibility)
+///   * domain dock chrome — desktop side dock only (≥ 600 px). Mobile
+///     swaps the always-visible chip row for a per-page chevron in the
+///     title; see `domain_switcher.dart`. [domainDockVisibleProvider]
+///     still gates whether either presentation is rendered at all.
 class AppDockShell extends ConsumerStatefulWidget {
   const AppDockShell({super.key, required this.child});
 
@@ -142,15 +144,9 @@ class _DockChrome extends StatelessWidget {
         final isCompact =
             constraints.maxWidth < AppDockShell._tabletBreakpoint;
         if (isCompact) {
-          return Column(
-            children: [
-              _MobileDomainSwitcher(
-                specs: specs,
-                activePath: activePath,
-              ),
-              Expanded(child: child),
-            ],
-          );
+          // Mobile: the per-page DomainSwitcherTitle (AppBar / FHeader)
+          // is the only switch surface — keeps vertical space free.
+          return child;
         }
         return Row(
           children: [
@@ -254,87 +250,3 @@ class _DockIcon extends StatelessWidget {
   }
 }
 
-class _MobileDomainSwitcher extends StatelessWidget {
-  const _MobileDomainSwitcher({required this.specs, required this.activePath});
-
-  final List<DomainShellSpec> specs;
-  final String activePath;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.background,
-        border: Border(bottom: BorderSide(color: colors.border, width: 1)),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: Row(
-            children: [
-              for (final spec in specs)
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: _MobileSwitchChip(
-                    spec: spec,
-                    selected: _specOwnsPath(spec, activePath),
-                    onTap: () => _switchToDomain(context, spec),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MobileSwitchChip extends StatelessWidget {
-  const _MobileSwitchChip({
-    required this.spec,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final DomainShellSpec spec;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final fill =
-        selected ? colors.primary.withValues(alpha: 0.10) : Colors.transparent;
-    final fg = selected ? colors.primary : colors.mutedForeground;
-    return FTappable(
-      onPress: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: fill,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              selected ? spec.selectedIcon : spec.icon,
-              size: 16,
-              color: fg,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              spec.label,
-              style: context.theme.typography.xs.copyWith(
-                fontWeight: FontWeight.w500,
-                color: fg,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
