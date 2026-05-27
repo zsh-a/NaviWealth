@@ -844,9 +844,13 @@ class _ReasoningPanelState extends State<_ReasoningPanel> {
         if (_expanded)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: SelectableText(
-              widget.text,
-              style: context.theme.typography.xs.copyWith(
+            // Reasoning is free-form LLM prose — frequently contains
+            // headings, lists, inline code (especially for tool-call
+            // explanations), so we render through AiMarkdown so the
+            // panel matches the visual language of the main bubble.
+            child: AiMarkdown(
+              text: widget.text,
+              baseStyle: context.theme.typography.xs.copyWith(
                 height: 1.45,
                 color: colors.mutedForeground,
               ),
