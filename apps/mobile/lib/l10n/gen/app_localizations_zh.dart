@@ -3760,6 +3760,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatMessageCopied => '已复制到剪贴板';
 
   @override
+  String get aiChatLinkConfirmTitle => '打开链接？';
+
+  @override
+  String get aiChatLinkConfirmBody => '请先确认目标地址——AI 输出的链接不可信，可能不是你预期的地址。';
+
+  @override
+  String get aiChatLinkOpen => '打开';
+
+  @override
+  String get aiChatLinkOpenFailed => '无法打开链接。';
+
+  @override
   String get aiChatMessageRegenerate => '重新生成';
 
   @override

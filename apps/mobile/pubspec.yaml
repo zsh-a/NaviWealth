@@ -54,6 +54,10 @@ dependencies:
   sqlite3: ^3.3.1
   talker: ^5.1.17
   talker_dio_logger: ^5.1.17
+  # Clickable markdown links in AI chat. Used behind a confirm dialog
+  # so the user always sees the full URL before the OS hands it off —
+  # AI replies are an untrusted surface (prompt-injection vector).
+  url_launcher: ^6.3.0
   uuid: ^4.5.1
   web: ^1.1.1
   # D-2.5b: cross-platform background task scheduler (Android
