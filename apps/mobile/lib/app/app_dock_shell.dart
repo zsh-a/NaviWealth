@@ -144,12 +144,9 @@ class _DockChrome extends StatelessWidget {
         if (isCompact) {
           return Column(
             children: [
-              SafeArea(
-                bottom: false,
-                child: _MobileDomainSwitcher(
-                  specs: specs,
-                  activePath: activePath,
-                ),
+              _MobileDomainSwitcher(
+                specs: specs,
+                activePath: activePath,
               ),
               Expanded(child: child),
             ],
@@ -266,24 +263,29 @@ class _MobileDomainSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.background,
         border: Border(bottom: BorderSide(color: colors.border, width: 1)),
       ),
-      child: Row(
-        children: [
-          for (final spec in specs)
-            Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: _MobileSwitchChip(
-                spec: spec,
-                selected: _specOwnsPath(spec, activePath),
-                onTap: () => _switchToDomain(context, spec),
-              ),
-            ),
-        ],
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Row(
+            children: [
+              for (final spec in specs)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: _MobileSwitchChip(
+                    spec: spec,
+                    selected: _specOwnsPath(spec, activePath),
+                    onTap: () => _switchToDomain(context, spec),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
