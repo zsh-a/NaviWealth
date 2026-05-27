@@ -13,7 +13,12 @@
 /// | weight                | `WEIGHT`                                 | `WEIGHT`                                            |
 /// | bodyFat               | `BODY_FAT_PERCENTAGE` (0–100 → /100)     | `BODY_FAT_PERCENTAGE` (0–100 → /100)                |
 /// | workoutSession        | `WORKOUT`                                | `WORKOUT`                                           |
+/// | distanceWalkingRunning| `DISTANCE_WALKING_RUNNING`               | `DISTANCE_WALKING_RUNNING`*                         |
 /// | vo2Max                | *not yet exposed by `package:health@13.3.1`* — list stays empty until plugin support lands or a native channel is added |
+///
+/// *On Health Connect this maps to the generic `DistanceRecord`. The
+/// plugin returns meters in both cases (we still bucket per UTC day and
+/// sum, matching the steps/active-energy pipeline).
 ///
 /// **iOS sleep MVP caveat**: HealthKit returns per-segment
 /// `SLEEP_ASLEEP` entries — one nightly sleep can become 3–7 segments
@@ -55,6 +60,7 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
         HealthDataType.WEIGHT,
         HealthDataType.BODY_FAT_PERCENTAGE,
         HealthDataType.WORKOUT,
+        HealthDataType.DISTANCE_WALKING_RUNNING,
       ];
     }
     if (Platform.isAndroid) {
@@ -67,6 +73,7 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
         HealthDataType.WEIGHT,
         HealthDataType.BODY_FAT_PERCENTAGE,
         HealthDataType.WORKOUT,
+        HealthDataType.DISTANCE_WALKING_RUNNING,
       ];
     }
     return const <HealthDataType>[];
@@ -170,6 +177,13 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
       kindWire: 'active_energy',
       platformPrefix: platformPrefix,
     );
+    final distanceWalkRun = _aggregateDailySum(
+      points: points.where(
+        (p) => p.type == HealthDataType.DISTANCE_WALKING_RUNNING,
+      ),
+      kindWire: 'distance_walking_running',
+      platformPrefix: platformPrefix,
+    );
 
     final weight = points
         .where((p) => p.type == HealthDataType.WEIGHT)
@@ -206,6 +220,7 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
       bodyFat: bodyFat,
       workouts: workouts,
       vo2Max: vo2Max,
+      distanceWalkingRunning: distanceWalkRun,
     );
   }
 

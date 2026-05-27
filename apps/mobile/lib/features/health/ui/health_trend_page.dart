@@ -51,6 +51,18 @@ class HealthTrendPage extends ConsumerWidget {
               subtitle: 'Minutes per day (last 30 days)',
               kind: HealthMetricKind.workoutSession,
             ),
+            SizedBox(height: AppSpacing.s12),
+            _TrendCard(
+              title: 'Steps',
+              subtitle: 'Steps per day (last 30 days)',
+              kind: HealthMetricKind.stepsDaily,
+            ),
+            SizedBox(height: AppSpacing.s12),
+            _TrendCard(
+              title: 'Walking distance',
+              subtitle: 'Kilometers per day (last 30 days)',
+              kind: HealthMetricKind.distanceWalkingRunningDaily,
+            ),
           ],
         ),
       ),
@@ -174,6 +186,18 @@ List<ChartPoint> _projectToPoints(
         pts.add(ChartPoint(
           x: r.capturedAt.toUtc().millisecondsSinceEpoch.toDouble(),
           y: r.value,
+        ));
+      }
+      pts.sort((a, b) => a.x.compareTo(b.x));
+      return pts;
+    case HealthMetricKind.distanceWalkingRunningDaily:
+      // value = meters → km for readability.
+      final pts = <ChartPoint>[];
+      for (final r in rows) {
+        if (r.capturedAt.isBefore(cutoff)) continue;
+        pts.add(ChartPoint(
+          x: r.capturedAt.toUtc().millisecondsSinceEpoch.toDouble(),
+          y: r.value / 1000.0,
         ));
       }
       pts.sort((a, b) => a.x.compareTo(b.x));

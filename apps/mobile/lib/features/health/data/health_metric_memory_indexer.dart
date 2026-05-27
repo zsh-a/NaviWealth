@@ -48,6 +48,8 @@ const String kEventWeightRecorded = 'weight_recorded';
 const String kEventBodyFatRecorded = 'body_fat_recorded';
 const String kEventWorkoutCompleted = 'workout_completed';
 const String kEventVo2MaxRecorded = 'vo2_max_recorded';
+const String kEventDistanceWalkingRunningRecorded =
+    'distance_walking_running_recorded';
 
 /// Sleep duration boundaries (hours) for an episodic memory. Outside
 /// this range a session is "notable" — either deficit or recovery.
@@ -180,6 +182,8 @@ class HealthMetricMemoryIndexer {
     HealthMetricKind.bodyFat => kEventBodyFatRecorded,
     HealthMetricKind.workoutSession => kEventWorkoutCompleted,
     HealthMetricKind.vo2Max => kEventVo2MaxRecorded,
+    HealthMetricKind.distanceWalkingRunningDaily =>
+      kEventDistanceWalkingRunningRecorded,
     HealthMetricKind.unknown => 'health_unknown',
   };
 
@@ -205,6 +209,8 @@ class HealthMetricMemoryIndexer {
         'Workout ${_round(_secondsToHours(metric.value, metric.unit))}h · $whenIso',
       HealthMetricKind.vo2Max =>
         'VO₂max ${_round(metric.value)} ${metric.unit} · $whenIso',
+      HealthMetricKind.distanceWalkingRunningDaily =>
+        'Walk/run ${_round(metric.value / 1000.0)} km · $whenIso',
       HealthMetricKind.unknown => 'Health row · $whenIso',
     };
   }
@@ -230,6 +236,8 @@ class HealthMetricMemoryIndexer {
         'Workout lasting ${_round(_secondsToHours(metric.value, metric.unit))}h starting $whenIso.',
       HealthMetricKind.vo2Max =>
         'VO₂max ${_round(metric.value)} ${metric.unit} on $whenIso.',
+      HealthMetricKind.distanceWalkingRunningDaily =>
+        'Walked/ran ${_round(metric.value / 1000.0)} km on $whenIso.',
       HealthMetricKind.unknown => 'Health metric on $whenIso.',
     };
   }
@@ -270,6 +278,7 @@ class HealthMetricMemoryIndexer {
         return 0.55;
       case HealthMetricKind.stepsDaily:
       case HealthMetricKind.activeEnergyDaily:
+      case HealthMetricKind.distanceWalkingRunningDaily:
         return 0.45;
       case HealthMetricKind.weight:
       case HealthMetricKind.bodyFat:

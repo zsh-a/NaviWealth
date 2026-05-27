@@ -62,6 +62,51 @@ final latestWorkoutProvider =
   return rows.isEmpty ? null : rows.first;
 });
 
+/// Newest daily step count row.
+final latestStepsProvider =
+    FutureProvider.autoDispose<HealthMetric?>((ref) async {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final userId = await ref.read(currentUserIdProvider)();
+  final rows = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.stepsDaily,
+    limit: 1,
+  );
+  return rows.isEmpty ? null : rows.first;
+});
+
+/// Newest daily walking + running distance row (meters).
+final latestWalkingDistanceProvider =
+    FutureProvider.autoDispose<HealthMetric?>((ref) async {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final userId = await ref.read(currentUserIdProvider)();
+  final rows = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.distanceWalkingRunningDaily,
+    limit: 1,
+  );
+  return rows.isEmpty ? null : rows.first;
+});
+
+/// Newest daily active-energy row (kcal burned through activity).
+final latestActiveEnergyProvider =
+    FutureProvider.autoDispose<HealthMetric?>((ref) async {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final userId = await ref.read(currentUserIdProvider)();
+  final rows = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.activeEnergyDaily,
+    limit: 1,
+  );
+  return rows.isEmpty ? null : rows.first;
+});
+
 /// Recovery signal output, computed off the same shaper the AI tool
 /// uses. Returned `null` when HealthOS is off so the UI can render an
 /// empty state instead of confusing zeros.
