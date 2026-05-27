@@ -9,18 +9,18 @@
 # CI run, which keeps the list shrinking instead of bit-rotting.
 
 # ─── ai_chat persisted-data layer (FIR-99 follow-up) ─────────────────
-# proposal_applier.dart writes shortLabel and exception messages that
-# are persisted into the chat timeline (DB). Migrating requires
+# finance_proposal_applier.dart writes shortLabel and exception messages
+# that are persisted into the chat timeline (DB). Migrating requires
 # either re-rendering at display time from a structured handle, or a
 # data migration of historical rows.
-lib/features/ai_chat/data/proposal_applier.dart
+lib/features/finance/composition/finance_proposal_applier.dart
 # chat_repository.dart owns the autotitle fallback ("新对话") and the
 # in-band system notice content stored in the messages table.
 lib/features/ai_chat/data/chat_repository.dart
 # proposal_plan.dart hosts the ProposalKind.zhLabel extension used by
 # tests; its UI consumers already route through AppLocalizations via
 # `proposalKindLabel(l10n, kind)` in propose_card.dart.
-lib/features/ai_chat/domain/proposal_plan.dart
+lib/core/ai/composition/proposal_plan.dart
 # tool_invocation_renderers.dart landed on main via FIR-83 (per-tool
 # renderers). ~38 UI strings spread across const widgets and helper
 # switches; migration wants its own focused PR so the renderer test
@@ -57,47 +57,57 @@ lib/core/ai/runtime/device/device_session.dart
 lib/core/ai/runtime/device/device_system_prompt.dart
 lib/core/ai/runtime/device/device_tool_dispatcher.dart
 lib/core/ai/runtime/device/device_user_profile_prompt.dart
-lib/core/ai/runtime/device/tools/get_wheel_lifecycle_tool.dart
-lib/core/ai/runtime/device/tools/breakdown_tools.dart
 lib/core/ai/runtime/device/tools/device_tool_registry.dart
-lib/core/ai/runtime/device/tools/get_anomaly_flags_tool.dart
-lib/core/ai/runtime/device/tools/get_asset_allocation_tool.dart
-lib/core/ai/runtime/device/tools/get_cashflow_buckets_tool.dart
-lib/core/ai/runtime/device/tools/get_holdings_tool.dart
-lib/core/ai/runtime/device/tools/get_investment_performance_tool.dart
-lib/core/ai/runtime/device/tools/get_net_worth_summary_tool.dart
-lib/core/ai/runtime/device/tools/get_recurring_patterns_tool.dart
-lib/core/ai/runtime/device/tools/get_refund_links_tool.dart
-lib/core/ai/runtime/device/tools/get_subscription_changes_tool.dart
-lib/core/ai/runtime/device/tools/get_transfer_links_tool.dart
-lib/core/ai/runtime/device/tools/list_payment_accounts_tool.dart
-lib/core/ai/runtime/device/tools/propose/proposal_plan.dart
-lib/core/ai/runtime/device/tools/propose_account_create_tool.dart
-lib/core/ai/runtime/device/tools/propose_asset_valuation_tool.dart
-lib/core/ai/runtime/device/tools/propose_expense_tool.dart
-lib/core/ai/runtime/device/tools/propose_liability_payment_tool.dart
-lib/core/ai/runtime/device/tools/propose_trade_tool.dart
-lib/core/ai/runtime/device/tools/read_account_window_tool.dart
-lib/core/ai/runtime/device/tools/read_asset_window_tool.dart
-lib/core/ai/runtime/device/tools/read_category_window_tool.dart
+# Per-feature AI device tools (moved out of core/ai/runtime/device/tools
+# into lib/features/<feature>/ai_tools/ during the Phase D feature-first
+# split). LLM-facing schemas + JSON descriptions + short proposal labels
+# persisted via the proposal_applier path; same FIR-99 follow-up applies
+# (restructure to enum codes + structured args rendered through
+# AppLocalizations at display time).
+lib/features/accounts/ai_tools/list_payment_accounts_tool.dart
+lib/features/accounts/ai_tools/propose_account_create_tool.dart
+lib/features/accounts/ai_tools/read_account_window_tool.dart
+lib/features/cashflow/ai_tools/get_cashflow_buckets_tool.dart
+lib/features/cashflow/ai_tools/get_refund_links_tool.dart
+lib/features/cashflow/ai_tools/get_transfer_links_tool.dart
+lib/features/expense/ai_tools/get_anomaly_flags_tool.dart
+lib/features/expense/ai_tools/get_recurring_patterns_tool.dart
+lib/features/expense/ai_tools/get_subscription_changes_tool.dart
+lib/features/expense/ai_tools/propose_expense_tool.dart
+lib/features/expense/ai_tools/read_category_window_tool.dart
+lib/features/finance/ai_tools/_shared/propose/proposal_plan.dart
+lib/features/home/ai_tools/get_net_worth_summary_tool.dart
+lib/features/investment/ai_tools/breakdown_tools.dart
+lib/features/investment/ai_tools/get_asset_allocation_tool.dart
+lib/features/investment/ai_tools/get_holdings_tool.dart
+lib/features/investment/ai_tools/get_investment_performance_tool.dart
+lib/features/investment/ai_tools/propose_asset_valuation_tool.dart
+lib/features/investment/ai_tools/propose_trade_tool.dart
+lib/features/investment/ai_tools/read_asset_window_tool.dart
+lib/features/liabilities/ai_tools/propose_liability_payment_tool.dart
 # FIRE OS (roadmap-fire-os.md) + Income Planner (options-income.md) AI
 # device tools landed 2026-05-20 / 05-21. Identical category to the
-# device-tool entries above: LLM-facing schemas, JSON descriptions, and
-# short proposal labels persisted via the proposal_applier path; same
-# FIR-99 follow-up applies (restructure to enum codes + structured args
-# rendered through AppLocalizations at display time).
-lib/core/ai/runtime/device/tools/get_fire_buckets_tool.dart
-lib/core/ai/runtime/device/tools/get_fire_plan_tool.dart
-lib/core/ai/runtime/device/tools/get_fire_review_tool.dart
-lib/core/ai/runtime/device/tools/get_fire_state_tool.dart
-lib/core/ai/runtime/device/tools/get_fire_stress_tests_tool.dart
-lib/core/ai/runtime/device/tools/get_options_income_opportunities_tool.dart
-lib/core/ai/runtime/device/tools/get_options_strategy_profile_tool.dart
-lib/core/ai/runtime/device/tools/propose_fire_bucket_rule_tool.dart
-lib/core/ai/runtime/device/tools/propose_fire_plan_update_tool.dart
-lib/core/ai/runtime/device/tools/propose_options_journal_entry_tool.dart
-lib/core/ai/runtime/device/tools/propose_options_profile_update_tool.dart
-lib/core/ai/runtime/device/tools/simulate_fire_plan_tool.dart
+# device-tool entries above.
+lib/features/fire/ai_tools/get_fire_buckets_tool.dart
+lib/features/fire/ai_tools/get_fire_plan_tool.dart
+lib/features/fire/ai_tools/get_fire_review_tool.dart
+lib/features/fire/ai_tools/get_fire_state_tool.dart
+lib/features/fire/ai_tools/get_fire_stress_tests_tool.dart
+lib/features/fire/ai_tools/propose_fire_bucket_rule_tool.dart
+lib/features/fire/ai_tools/propose_fire_plan_update_tool.dart
+lib/features/fire/ai_tools/simulate_fire_plan_tool.dart
+lib/features/options_income/ai_tools/get_options_income_opportunities_tool.dart
+lib/features/options_income/ai_tools/get_options_strategy_profile_tool.dart
+lib/features/options_income/ai_tools/get_wheel_lifecycle_tool.dart
+lib/features/options_income/ai_tools/propose_options_journal_entry_tool.dart
+lib/features/options_income/ai_tools/propose_options_profile_update_tool.dart
+# HealthOS D-2.4 device tools landed 2026-05-27. Same category as the
+# device-tool entries above: LLM-facing schemas + CN descriptions tuned
+# for the agent prompt. Track as the same FIR-99 follow-up.
+lib/features/health/ai_tools/get_activity_summary_tool.dart
+lib/features/health/ai_tools/get_hrv_trend_tool.dart
+lib/features/health/ai_tools/get_recent_sleep_summary_tool.dart
+lib/features/health/ai_tools/get_recovery_signal_tool.dart
 
 # ─── seed data (intentional) ─────────────────────────────────────────
 # FIR-126: system account seed names ('系统收入账户', '系统支出账户',
@@ -107,7 +117,7 @@ lib/core/ai/runtime/device/tools/simulate_fire_plan_tool.dart
 # fallback row name surfaced only when l10n isn't available (e.g. AI
 # assistant referring to the row in raw chat). Will be revisited
 # when i18n-aware seeding lands.
-lib/data/repositories/account_repository.dart
+lib/features/finance/data/repositories/account_repository.dart
 
 # ─── command palette search keywords (intentional) ──────────────────
 # default_commands.dart ships bilingual search aliases for the Cmd+K
