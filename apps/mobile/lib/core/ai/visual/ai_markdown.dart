@@ -30,6 +30,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../design_system/tokens/dimens_tokens.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -199,7 +200,14 @@ class _MdHeading extends _MdBlock {
     );
     final spans = _InlineParser.parse(text, style, context);
     if (trailing != null) spans.add(trailing);
-    return _selectableRich(spans, selectable: selectable);
+    // Heading semantics so TalkBack / VoiceOver announce "Heading,
+    // level N" instead of just reading the text inline. Flutter's
+    // `header` flag is the cross-platform-friendly equivalent; the
+    // level itself is mostly conveyed via font weight + size.
+    return Semantics(
+      header: true,
+      child: _selectableRich(spans, selectable: selectable),
+    );
   }
 }
 
@@ -250,13 +258,18 @@ class _MdQuote extends _MdBlock {
 }
 
 class _MdListItem {
-  const _MdListItem(this.text, this.marker, {this.checkbox});
+  const _MdListItem(this.text, this.marker, {this.level = 0, this.checkbox});
   final String text;
 
   /// `null` for unordered (bullet); otherwise the displayed prefix
   /// ("1.", "2.", …). Pre-rendered by the parser so we keep the model's
   /// own numbering rather than re-numbering.
   final String? marker;
+
+  /// Nesting depth derived from leading-whitespace (every two spaces
+  /// is one level). Renderer indents the row by `level * 16` px so
+  /// multi-level outlines read as a tree rather than a flat list.
+  final int level;
 
   /// GFM task-list state. `null` = regular list item, `false` = `[ ]`
   /// unchecked, `true` = `[x]` / `[X]` checked. When set, the bullet /
@@ -265,9 +278,8 @@ class _MdListItem {
 }
 
 class _MdList extends _MdBlock {
-  const _MdList(this.items, this.ordered);
+  const _MdList(this.items);
   final List<_MdListItem> items;
-  final bool ordered;
 
   @override
   Widget build(
@@ -292,7 +304,10 @@ class _MdList extends _MdBlock {
       if (isLast && trailing != null) spans.add(trailing);
       rows.add(
         Padding(
-          padding: EdgeInsets.only(bottom: isLast ? 0 : AppSpacing.s2),
+          padding: EdgeInsets.only(
+            left: item.level * AppSpacing.s16,
+            bottom: isLast ? 0 : AppSpacing.s2,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -430,7 +445,13 @@ class _MdCode extends _MdBlock {
       color: AiTone.onSurface(context),
     );
 
-    final spans = <InlineSpan>[TextSpan(text: code, style: mono)];
+    // Subtle syntax tinting: strings/comments/numbers get muted +
+    // tinted variants of `mono`. Zero-dep — `flutter_highlight` would
+    // add ~100KB to the web bundle for a feature we use sparingly.
+    // The lexer is language-agnostic on strings/numbers and accepts
+    // `//` / `#` / `--` line comments + `/* */` block comments,
+    // which covers Dart / Python / SQL / JS / Rust / Go.
+    final spans = _CodeTinter.tint(code, mono, context);
     if (trailing != null) spans.add(trailing);
 
     return Container(
@@ -576,12 +597,19 @@ class _MdTable extends _MdBlock {
           TextAlign.center => Alignment.center,
           _ => Alignment.centerLeft,
         },
-        child: selectable
-            ? SelectableText.rich(
-                TextSpan(children: spans),
-                textAlign: align,
-              )
-            : Text.rich(TextSpan(children: spans), textAlign: align),
+        // Min column width: a 4-column table with one-character cells
+        // would otherwise crush every column down to a single char's
+        // width. 80 px reads as "a real cell", and the outer
+        // SingleChildScrollView still lets wide cells expand past it.
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 80),
+          child: selectable
+              ? SelectableText.rich(
+                  TextSpan(children: spans),
+                  textAlign: align,
+                )
+              : Text.rich(TextSpan(children: spans), textAlign: align),
+        ),
       );
     }
 
@@ -614,13 +642,21 @@ class _MdTable extends _MdBlock {
       ],
     );
 
-    final wrapped = ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.sm),
-      // Wide tables stay readable: scroll horizontally rather than
-      // squeezing cells past their intrinsic width.
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: table,
+    final wrapped = Semantics(
+      // Screen readers announce "Table with N rows, M columns" before
+      // descending into cells, so the user can decide whether to skim
+      // the structure or skip past it.
+      container: true,
+      label:
+          'Table, ${normalizedRows.length + 1} rows, $cols columns',
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        // Wide tables stay readable: scroll horizontally rather than
+        // squeezing cells past their intrinsic width.
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: table,
+        ),
       ),
     );
 
@@ -807,23 +843,27 @@ class _MdParser {
       final isUnord = _unordered.hasMatch(line);
       final isOrd = _ordered.hasMatch(line);
       if (isUnord || isOrd) {
-        final ordered = isOrd;
+        // A list block can now mix ordered / unordered children — GFM
+        // allows `1. parent` ↘ `  - child`. The outer block is opened
+        // by the first qualifying line and stays open until either a
+        // blank line or a non-list line.
         final items = <_MdListItem>[];
         var j = i;
         while (j < lines.length) {
           final l = lines[j];
           if (l.trim().isEmpty) break;
+          final mOrd = _ordered.firstMatch(l);
+          final mUn = _unordered.firstMatch(l);
+          if (mOrd == null && mUn == null) break;
+          final indent = (mOrd?.group(1) ?? mUn!.group(1))!.length;
+          final level = indent ~/ 2;
           String body;
           String? marker;
-          if (ordered) {
-            final m = _ordered.firstMatch(l);
-            if (m == null) break;
-            body = m.group(3)!;
-            marker = '${m.group(2)}.';
+          if (mOrd != null) {
+            body = mOrd.group(3)!;
+            marker = '${mOrd.group(2)}.';
           } else {
-            final m = _unordered.firstMatch(l);
-            if (m == null) break;
-            body = m.group(2)!;
+            body = mUn!.group(2)!;
             marker = null;
           }
           final task = _task.firstMatch(body);
@@ -835,14 +875,19 @@ class _MdParser {
             // naturally.
             final checked = task.group(1)! != ' ';
             items.add(
-              _MdListItem(task.group(2)!, marker, checkbox: checked),
+              _MdListItem(
+                task.group(2)!,
+                marker,
+                level: level,
+                checkbox: checked,
+              ),
             );
           } else {
-            items.add(_MdListItem(body, marker));
+            items.add(_MdListItem(body, marker, level: level));
           }
           j++;
         }
-        blocks.add(_MdList(items, ordered));
+        blocks.add(_MdList(items));
         i = j;
         continue;
       }
@@ -1021,13 +1066,21 @@ class _InlineParser {
           final paren = text.indexOf(')', close + 2);
           if (paren != -1) {
             final label = text.substring(i + 1, close);
+            final url = text.substring(close + 2, paren);
             flush();
             final linkStyle = base.copyWith(
               color: AiTone.active(context),
               decoration: TextDecoration.underline,
               decorationColor: AiTone.active(context).withValues(alpha: 0.4),
             );
-            _walk(label, linkStyle, context, out);
+            // The label is rendered inside a tappable WidgetSpan so we
+            // don't need to wire a TapGestureRecognizer (which would
+            // need lifecycle management). The trade-off: link text
+            // isn't part of the surrounding SelectableText selection.
+            // That's an acceptable cost — copying the assistant turn
+            // already uses the message-level "Copy" affordance, and
+            // selection across hostile URLs is a rare need.
+            out.add(_LinkSpan.build(label, url, linkStyle, context));
             i = paren + 1;
             continue;
           }
@@ -1082,6 +1135,275 @@ class _InlineParser {
     if (code >= 0x61 && code <= 0x7a) return true;
     return false;
   }
+}
+
+/// Tappable link span. Hosted in a `WidgetSpan` so we don't have to
+/// manage `TapGestureRecognizer` lifecycles — `SelectableText.rich`
+/// would otherwise leak them on rebuild. Confirms the destination
+/// with the user before handing the URL to the OS, because AI replies
+/// are an untrusted surface (prompt-injection vector).
+class _LinkSpan {
+  static InlineSpan build(
+    String label,
+    String url,
+    TextStyle style,
+    BuildContext context,
+  ) {
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.baseline,
+      baseline: TextBaseline.alphabetic,
+      child: _LinkTappable(label: label, url: url, style: style),
+    );
+  }
+}
+
+class _LinkTappable extends StatelessWidget {
+  const _LinkTappable({
+    required this.label,
+    required this.url,
+    required this.style,
+  });
+
+  final String label;
+  final String url;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      link: true,
+      label: label,
+      hint: url,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () => _confirmAndOpen(context, url),
+          child: Text(label, style: style),
+        ),
+      ),
+    );
+  }
+}
+
+/// Shared confirm dialog — surfaces the *full URL* in a non-editable
+/// SelectableText so the user can verify (and copy) the destination
+/// before opening it. Returns silently on cancel; shows a snackbar if
+/// `launchUrl` reports failure (no installed handler / blocked).
+Future<void> _confirmAndOpen(BuildContext context, String url) async {
+  final l10n = AppLocalizations.of(context);
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.aiChatLinkConfirmTitle),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            l10n.aiChatLinkConfirmBody,
+            style: AiType.meta(ctx).copyWith(color: AiTone.muted(ctx)),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s8,
+              vertical: AppSpacing.s6,
+            ),
+            decoration: BoxDecoration(
+              color: AiTone.surfaceTint(ctx).withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(AppRadius.xs),
+              border: Border.all(color: AiTone.outline(ctx)),
+            ),
+            child: SelectableText(
+              url,
+              style: AiType.body(ctx).copyWith(
+                fontFamily: 'monospace',
+                fontFamilyFallback: const ['Menlo', 'Consolas', 'monospace'],
+              ),
+              maxLines: 4,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: Text(l10n.commonCancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: Text(l10n.aiChatLinkOpen),
+        ),
+      ],
+    ),
+  );
+  if (ok != true) return;
+  if (!context.mounted) return;
+  Uri? uri;
+  try {
+    uri = Uri.parse(url);
+  } on FormatException {
+    uri = null;
+  }
+  if (uri == null) return;
+  final launched = await launchUrl(
+    uri,
+    mode: LaunchMode.externalApplication,
+  );
+  if (!launched && context.mounted) {
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context).aiChatLinkOpenFailed),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+}
+
+/// Zero-dep code tinter. Walks `code` once and emits a list of
+/// TextSpans, colouring strings + comments + numbers with derived
+/// shades of the base mono style. Keywords are intentionally NOT
+/// highlighted — keyword sets are language-specific and we don't
+/// want to ship a multi-language dictionary.
+///
+/// Behaviour:
+///   - `"..."` / `'...'` / `` `...` ``  → string tone
+///   - `// … \n` / `# … \n` / `-- … \n` → line comment (muted)
+///   - `/* … */`                        → block comment (muted)
+///   - integers / floats / hex literals → number tone
+///   - everything else                  → base style
+class _CodeTinter {
+  static List<InlineSpan> tint(
+    String code,
+    TextStyle base,
+    BuildContext context,
+  ) {
+    final stringStyle = base.copyWith(
+      color: AiTone.active(context).withValues(alpha: 0.85),
+    );
+    final commentStyle = base.copyWith(
+      color: AiTone.muted(context),
+      fontStyle: FontStyle.italic,
+    );
+    final numberStyle = base.copyWith(
+      color: AiTone.active(context).withValues(alpha: 0.7),
+    );
+    final spans = <InlineSpan>[];
+    final buf = StringBuffer();
+    void flushPlain() {
+      if (buf.isEmpty) return;
+      spans.add(TextSpan(text: buf.toString(), style: base));
+      buf.clear();
+    }
+
+    var i = 0;
+    while (i < code.length) {
+      final ch = code[i];
+      final next = i + 1 < code.length ? code[i + 1] : '';
+
+      // Block comment `/* ... */`
+      if (ch == '/' && next == '*') {
+        flushPlain();
+        final end = code.indexOf('*/', i + 2);
+        final last = end == -1 ? code.length : end + 2;
+        spans.add(TextSpan(text: code.substring(i, last), style: commentStyle));
+        i = last;
+        continue;
+      }
+      // Line comment: `//`, `#`, `--` (avoid stray `--` inside words by
+      // requiring a non-word character before — for `#` we accept any
+      // position since shell + Python comments often start the line).
+      bool startsLineComment() {
+        if (ch == '/' && next == '/') return true;
+        if (ch == '#') return true;
+        if (ch == '-' && next == '-') return true;
+        return false;
+      }
+
+      if (startsLineComment()) {
+        flushPlain();
+        final eol = code.indexOf('\n', i);
+        final last = eol == -1 ? code.length : eol;
+        spans.add(TextSpan(text: code.substring(i, last), style: commentStyle));
+        i = last;
+        continue;
+      }
+
+      // Quoted string — match `"`, `'`, or `` ` ``. Honours `\\` escapes
+      // so `"a\"b"` doesn't terminate on the inner quote.
+      if (ch == '"' || ch == "'" || ch == '`') {
+        flushPlain();
+        var j = i + 1;
+        while (j < code.length) {
+          final c = code[j];
+          if (c == '\\' && j + 1 < code.length) {
+            j += 2;
+            continue;
+          }
+          if (c == ch) {
+            j++;
+            break;
+          }
+          // Don't run strings across newlines — most languages don't
+          // allow them and unclosed quotes would otherwise paint the
+          // entire rest of the file as one string.
+          if (c == '\n') break;
+          j++;
+        }
+        spans.add(TextSpan(text: code.substring(i, j), style: stringStyle));
+        i = j;
+        continue;
+      }
+
+      // Numeric literal — int, float, hex. Require a non-word char
+      // before to skip e.g. `x10` (identifier).
+      if (_isDigit(ch.codeUnitAt(0))) {
+        final prevOk = buf.isEmpty || !_isIdentChar(buf.toString().codeUnitAt(buf.length - 1));
+        if (prevOk) {
+          flushPlain();
+          var j = i;
+          // Hex?
+          if (ch == '0' && (next == 'x' || next == 'X')) {
+            j = i + 2;
+            while (j < code.length && _isHex(code.codeUnitAt(j))) {
+              j++;
+            }
+          } else {
+            while (j < code.length && _isDigit(code.codeUnitAt(j))) {
+              j++;
+            }
+            // Optional decimal portion.
+            if (j < code.length && code[j] == '.' && j + 1 < code.length &&
+                _isDigit(code.codeUnitAt(j + 1))) {
+              j++;
+              while (j < code.length && _isDigit(code.codeUnitAt(j))) {
+                j++;
+              }
+            }
+          }
+          spans.add(TextSpan(text: code.substring(i, j), style: numberStyle));
+          i = j;
+          continue;
+        }
+      }
+
+      buf.write(ch);
+      i++;
+    }
+    flushPlain();
+    return spans;
+  }
+
+  static bool _isDigit(int code) => code >= 0x30 && code <= 0x39;
+  static bool _isHex(int code) =>
+      _isDigit(code) ||
+      (code >= 0x41 && code <= 0x46) ||
+      (code >= 0x61 && code <= 0x66);
+  static bool _isIdentChar(int code) =>
+      _isDigit(code) ||
+      (code >= 0x41 && code <= 0x5a) ||
+      (code >= 0x61 && code <= 0x7a) ||
+      code == 0x5f;
 }
 
 InlineSpan _codeSpan(String text, TextStyle base, BuildContext context) {

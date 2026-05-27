@@ -6777,6 +6777,30 @@ abstract class AppLocalizations {
   /// **'Copied to clipboard'**
   String get aiChatMessageCopied;
 
+  /// Title of the confirmation dialog shown before opening a link rendered from AI markdown output.
+  ///
+  /// In en, this message translates to:
+  /// **'Open link?'**
+  String get aiChatLinkConfirmTitle;
+
+  /// Body text of the confirmation dialog shown before opening a link from AI output.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the destination — AI replies are untrusted and may contain unexpected URLs.'**
+  String get aiChatLinkConfirmBody;
+
+  /// Confirm button on the AI-link open dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get aiChatLinkOpen;
+
+  /// Snackbar shown if launchUrl returns false (no installed handler / blocked by OS).
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the link.'**
+  String get aiChatLinkOpenFailed;
+
   /// Inline action under the last assistant message — discards the turn and re-runs the prompt.
   ///
   /// In en, this message translates to:

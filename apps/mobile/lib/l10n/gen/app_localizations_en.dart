@@ -3920,6 +3920,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatMessageCopied => 'Copied to clipboard';
 
   @override
+  String get aiChatLinkConfirmTitle => 'Open link?';
+
+  @override
+  String get aiChatLinkConfirmBody =>
+      'Confirm the destination — AI replies are untrusted and may contain unexpected URLs.';
+
+  @override
+  String get aiChatLinkOpen => 'Open';
+
+  @override
+  String get aiChatLinkOpenFailed => 'Could not open the link.';
+
+  @override
   String get aiChatMessageRegenerate => 'Regenerate';
 
   @override
