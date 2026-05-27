@@ -5,12 +5,14 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
+import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as auth_providers;
 import '../../../core/config/app_version.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../core/logging/crash_reporting_preference.dart';
+import '../../../core/notifications/providers.dart' as notif_providers;
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../analytics/data/risk_threshold_preferences.dart';
@@ -18,6 +20,7 @@ import '../../auth/data/auth_controller.dart';
 import '../../expense/data/expense_report_providers.dart';
 import '../../fire/data/fire_plan_preferences.dart';
 import '../../fire/domain/fire_plan.dart';
+import '../../health/agents/providers.dart' as health_agent_providers;
 import '../../health/data/health_sync_service.dart';
 import '../../health/data/providers.dart' as health_data;
 import '../../rebalance/data/rebalance_providers.dart';
@@ -859,6 +862,8 @@ class _DomainsSection extends ConsumerWidget {
           ),
           _SectionDivider(),
           const _HealthPlatformSyncRow(),
+          _SectionDivider(),
+          const _MorningBriefingRunRow(),
         ],
       ],
     );
@@ -925,6 +930,81 @@ class _HealthPlatformSyncRowState
     return InlineLinkRow(
       icon: FLucideIcons.refreshCcw,
       label: 'Sync from HealthKit / Health Connect',
+      subtitle: _subtitle(),
+      onTap: _running ? () {} : _run,
+    );
+  }
+}
+
+/// D-2.5b — manual "Run morning briefing now" trigger + notification
+/// permission status.
+///
+/// The user usually doesn't need to tap this — the workmanager
+/// background task fires the agent daily and posts a local
+/// notification. The button exists for dogfood + first-run flows
+/// (initial permission grant, "did it work?" sanity check).
+class _MorningBriefingRunRow extends ConsumerStatefulWidget {
+  const _MorningBriefingRunRow();
+
+  @override
+  ConsumerState<_MorningBriefingRunRow> createState() =>
+      _MorningBriefingRunRowState();
+}
+
+class _MorningBriefingRunRowState
+    extends ConsumerState<_MorningBriefingRunRow> {
+  bool _running = false;
+  AgentRunResult? _lastResult;
+  String? _errorMessage;
+
+  Future<void> _run() async {
+    if (_running) return;
+    setState(() {
+      _running = true;
+      _errorMessage = null;
+    });
+    try {
+      // First-time runs need notification permission so the toast
+      // ever actually reaches the user; request it before kicking off
+      // the agent so the prompt and the run are paired.
+      final notifier = ref.read(notif_providers.notificationServiceProvider);
+      if (await notifier.isAvailable() && !await notifier.hasPermissions()) {
+        await notifier.requestPermissions();
+      }
+      // `refresh` re-runs the autoDispose provider even if it was
+      // already in the cache from an earlier invocation. We await the
+      // future directly so the result lands in our local state.
+      final result = await ref.refresh(
+        health_agent_providers.manualMorningBriefingRunProvider.future,
+      );
+      setState(() => _lastResult = result);
+    } on Object catch (e) {
+      setState(() => _errorMessage = e.toString());
+    } finally {
+      if (mounted) setState(() => _running = false);
+    }
+  }
+
+  String _subtitle() {
+    if (_running) return '正在运行 Morning Briefing…';
+    final err = _errorMessage;
+    if (err != null) return 'Briefing failed: $err';
+    final r = _lastResult;
+    if (r == null) {
+      return '后台每日 07:00 自动跑;点这里手动触发并发通知';
+    }
+    return switch (r.status) {
+      AgentRunStatus.completed => 'Last run: ${r.summary ?? "completed"}',
+      AgentRunStatus.skipped => 'Last run skipped: ${r.summary ?? "no signal"}',
+      AgentRunStatus.failed => 'Last run failed: ${r.error ?? "unknown"}',
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InlineLinkRow(
+      icon: FLucideIcons.sunrise,
+      label: 'Run Morning Briefing now',
       subtitle: _subtitle(),
       onTap: _running ? () {} : _run,
     );

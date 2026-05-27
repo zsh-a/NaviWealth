@@ -32,10 +32,12 @@ import '../core/logging/app_logger.dart';
 import '../core/logging/crash_reporter.dart';
 import '../core/logging/logging_crash_reporter.dart';
 import '../core/logging/providers.dart';
+import '../core/notifications/providers.dart' as notif_providers;
 import '../core/perf/providers.dart';
 import '../core/shell/domain_shell.dart';
 import '../core/sync/providers.dart';
 import '../design_system/preferences/theme_preferences.dart';
+import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
 import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
 import '../features/cashflow/data/recurring_transaction_providers.dart';
@@ -46,7 +48,9 @@ import '../features/finance/composition/finance_proposal_applier.dart';
 import '../features/finance/data/market/sync/price_sync_providers.dart';
 import '../features/finance_ai_tools.dart';
 import '../features/finance_domain_shell.dart';
+import '../features/health/agents/briefing_synthesizer.dart';
 import '../features/health/agents/morning_briefing_agent.dart';
+import '../features/health/agents/providers.dart' as health_agent_providers;
 import '../features/health/composition/health_domain_shell.dart';
 import '../features/health_ai_tools.dart';
 import '../features/home/composition/finance_chat_rail_provider.dart';
@@ -161,6 +165,23 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         return <Agent>[
           if (healthEnabled) ref.watch(morningBriefingAgentProvider),
         ];
+      }),
+      // D-2.5b — wire the Morning Briefing with the LLM synthesizer
+      // (falling back to programmatic when no device LLM is configured)
+      // and the local notification service so each successful run can
+      // surface a toast even when the app is backgrounded. The agent
+      // itself stays composition-blind; this is the seam where the
+      // shell decides "use which synthesis + which notifier".
+      morningBriefingAgentProvider.overrideWith((ref) {
+        final runtime = ref.watch(ai_chat_providers.deviceLlmRuntimeProvider);
+        final notifier = ref.watch(notif_providers.notificationServiceProvider);
+        final BriefingSynthesizer synth = runtime != null
+            ? LlmBriefingSynthesizer(client: runtime.client)
+            : const ProgrammaticBriefingSynthesizer();
+        return MorningBriefingAgent(
+          synthesizer: synth,
+          notifier: notifier,
+        );
       }),
       // D-1.6b (`docs/lifeos-shell.md` §4): FinanceOS supplies the
       // concrete proposal applier the chat surface dispatches confirmed
@@ -308,6 +329,18 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // future domain indexers) to their source streams so semantic memory
   // stays current without UI involvement.
   container.read(memoryLayerBootstrapProvider);
+  // D-2.5b — drive the platform background scheduler from the
+  // Health domain opt-in. Eager-read so the provider mounts now
+  // and reacts to subsequent toggles (workmanager register / cancel
+  // happens inside the provider build, see `morningBriefingCronProvider`).
+  container.read(health_agent_providers.morningBriefingCronProvider);
+  // D-2.5b — when the workmanager callback fired while the app was
+  // backgrounded it stamped `kMorningBriefingDueAtKey`. Kick off the
+  // in-process run so the freshest summary lands in Memory + the
+  // notification gets refined to the actual content.
+  unawaited(
+    container.read(health_agent_providers.pendingBriefingRunProvider.future),
+  );
   if (container.read(core_auth.authSessionProvider) != null) {
     unawaited(
       container.read(
@@ -318,6 +351,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
 
   return container;
 }
+
 
 /// Kick off Memory Runtime maintenance without blocking first paint.
 ///
