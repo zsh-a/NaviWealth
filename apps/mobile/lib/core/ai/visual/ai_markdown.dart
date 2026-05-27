@@ -18,6 +18,7 @@
 ///   - `- ` / `* ` / `+ ` unordered lists, `1. ` ordered lists
 ///   - `> ` blockquotes (multiline)
 ///   - `---` / `***` / `___` horizontal rule
+///   - GFM tables with `:---`/`:---:`/`---:` alignment
 ///   - `[label](url)` links (styled, non-clickable — url_launcher isn't
 ///     a dependency; SelectableText lets the user copy)
 ///
@@ -40,7 +41,14 @@ import 'ai_typography.dart';
 /// [baseStyle] defaults to [AiType.body]. [trailing] is appended at the
 /// end of the last text block — typically a streaming caret widget —
 /// and is dropped silently when the text is empty.
-class AiMarkdown extends StatelessWidget {
+///
+/// `AiMarkdown` is stateful so each instance can memoize its last
+/// parsed AST: a streaming bubble rebuilds ~10× / second as new tokens
+/// arrive, and re-parsing every byte on every rebuild is wasted work.
+/// The cache is keyed on the *exact* text string; a single-character
+/// change invalidates it (parsing 4KB is sub-millisecond, so this is
+/// only meaningful at the build-frequency scale).
+class AiMarkdown extends StatefulWidget {
   const AiMarkdown({
     super.key,
     required this.text,
@@ -55,14 +63,35 @@ class AiMarkdown extends StatelessWidget {
   final bool selectable;
 
   @override
+  State<AiMarkdown> createState() => _AiMarkdownState();
+}
+
+class _AiMarkdownState extends State<AiMarkdown> {
+  String? _cachedText;
+  List<_MdBlock>? _cachedBlocks;
+
+  List<_MdBlock> _blocks() {
+    if (_cachedText == widget.text && _cachedBlocks != null) {
+      return _cachedBlocks!;
+    }
+    final next = _MdParser.parse(widget.text);
+    _cachedText = widget.text;
+    _cachedBlocks = next;
+    return next;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final blocks = _MdParser.parse(text);
+    final blocks = _blocks();
+    final trailing = widget.trailing;
+    final baseStyle = widget.baseStyle;
+    final selectable = widget.selectable;
     if (blocks.isEmpty) {
       // Empty input + a streaming caret still wants the caret visible
       // so the bubble doesn't collapse to zero height while waiting for
       // the first token after a tool call.
       if (trailing != null) {
-        return Text.rich(TextSpan(children: [trailing!]));
+        return Text.rich(TextSpan(children: [trailing]));
       }
       return const SizedBox.shrink();
     }
@@ -90,12 +119,13 @@ class AiMarkdown extends StatelessWidget {
   }
 
   /// Gap between two adjacent blocks. Tighter between list rows so a
-  /// 4-item list reads as one unit, wider around code/quote so they
-  /// breathe.
+  /// 4-item list reads as one unit, wider around code/quote/table so
+  /// they breathe.
   double _gapAfter(_MdBlock a, _MdBlock b) {
     if (a is _MdList && b is _MdList) return AppSpacing.s4;
     if (a is _MdCode || b is _MdCode) return AppSpacing.s8;
     if (a is _MdQuote || b is _MdQuote) return AppSpacing.s8;
+    if (a is _MdTable || b is _MdTable) return AppSpacing.s8;
     if (a is _MdHeading || b is _MdHeading) return AppSpacing.s8;
     if (a is _MdHr || b is _MdHr) return AppSpacing.s4;
     return AppSpacing.s6;
@@ -368,6 +398,133 @@ class _MdCode extends _MdBlock {
   }
 }
 
+/// GFM table. Header row + body rows; column alignment carried in
+/// [aligns] (from the `:---`/`:---:`/`---:` separator). The block is
+/// only emitted once the separator line has actually arrived so a
+/// half-streamed header still reads as a paragraph and resolves into
+/// a table on the next chunk.
+class _MdTable extends _MdBlock {
+  const _MdTable({
+    required this.header,
+    required this.aligns,
+    required this.rows,
+  });
+
+  final List<String> header;
+  final List<TextAlign> aligns;
+  final List<List<String>> rows;
+
+  @override
+  Widget build(
+    BuildContext context, {
+    required TextStyle base,
+    required InlineSpan? trailing,
+    required bool selectable,
+  }) {
+    final cols = header.length;
+    final outline = AiTone.outline(context);
+    final headerStyle = base.copyWith(
+      fontWeight: FontWeight.w600,
+      color: AiTone.onSurface(context),
+    );
+    final headerBg = AiTone.surfaceTint(context).withValues(alpha: 0.4);
+
+    // Pad short rows / clip long rows so every row has exactly `cols`
+    // cells — `Table` throws if rows differ in length.
+    final normalizedRows = <List<String>>[];
+    for (final row in rows) {
+      if (row.length == cols) {
+        normalizedRows.add(row);
+      } else if (row.length > cols) {
+        normalizedRows.add(row.sublist(0, cols));
+      } else {
+        normalizedRows.add([...row, ...List.filled(cols - row.length, '')]);
+      }
+    }
+
+    Widget cell(
+      String text,
+      TextStyle style,
+      TextAlign align, {
+      Color? background,
+    }) {
+      final spans = _InlineParser.parse(text, style, context);
+      return Container(
+        color: background,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s8,
+          vertical: AppSpacing.s6,
+        ),
+        alignment: switch (align) {
+          TextAlign.right => Alignment.centerRight,
+          TextAlign.center => Alignment.center,
+          _ => Alignment.centerLeft,
+        },
+        child: selectable
+            ? SelectableText.rich(
+                TextSpan(children: spans),
+                textAlign: align,
+              )
+            : Text.rich(TextSpan(children: spans), textAlign: align),
+      );
+    }
+
+    final table = Table(
+      border: TableBorder.all(color: outline, width: 1),
+      defaultColumnWidth: const IntrinsicColumnWidth(),
+      children: [
+        TableRow(
+          decoration: BoxDecoration(color: headerBg),
+          children: [
+            for (var i = 0; i < cols; i++)
+              cell(
+                header[i],
+                headerStyle,
+                i < aligns.length ? aligns[i] : TextAlign.left,
+              ),
+          ],
+        ),
+        for (final row in normalizedRows)
+          TableRow(
+            children: [
+              for (var i = 0; i < cols; i++)
+                cell(
+                  row[i],
+                  base,
+                  i < aligns.length ? aligns[i] : TextAlign.left,
+                ),
+            ],
+          ),
+      ],
+    );
+
+    final wrapped = ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      // Wide tables stay readable: scroll horizontally rather than
+      // squeezing cells past their intrinsic width.
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: table,
+      ),
+    );
+
+    // Trailing caret on a table: parsed tables are virtually always
+    // complete (the separator-line gate prevents partial parses), but
+    // if this block ends up last *and* trailing is set, hang the caret
+    // in a small row below so the bubble still reads "live".
+    if (trailing == null) return wrapped;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        wrapped,
+        const SizedBox(height: AppSpacing.s4),
+        Text.rich(TextSpan(children: [trailing])),
+      ],
+    );
+  }
+}
+
 class _CopyButton extends StatefulWidget {
   const _CopyButton({
     required this.text,
@@ -425,6 +582,19 @@ class _MdParser {
   static final RegExp _quote = RegExp(r'^\s*>\s?(.*)$');
   static final RegExp _hr = RegExp(r'^\s*(?:-{3,}|\*{3,}|_{3,})\s*$');
   static final RegExp _fence = RegExp(r'^(\s*)(```+)\s*([\w+\-.]*)\s*$');
+
+  /// Candidate table row: at least one internal pipe, whitespace
+  /// tolerant. We only commit it to a table once the following line
+  /// matches [_tableSep] — otherwise it falls back to paragraph (so a
+  /// half-streamed header still reads naturally before the separator
+  /// arrives).
+  static final RegExp _tableRow = RegExp(r'^\s*\|?[^\n]*\|[^\n]*$');
+
+  /// Separator under the header. Each column must be ≥3 dashes with
+  /// an optional leading/trailing `:` for alignment.
+  static final RegExp _tableSep = RegExp(
+    r'^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$',
+  );
 
   static List<_MdBlock> parse(String input) {
     final lines = input.split('\n');
@@ -487,6 +657,30 @@ class _MdParser {
         continue;
       }
 
+      // Table — only when the next line is a `|---|---|` separator.
+      // Without that gate, any line with a `|` (e.g. shell paths like
+      // `foo|bar`) would tip the parser into table mode.
+      if (i + 1 < lines.length &&
+          _tableRow.hasMatch(line) &&
+          _tableSep.hasMatch(lines[i + 1])) {
+        final header = _splitRow(line);
+        final aligns = _splitRow(lines[i + 1]).map(_alignFromMarker).toList();
+        final rows = <List<String>>[];
+        var j = i + 2;
+        while (j < lines.length) {
+          final l = lines[j];
+          if (l.trim().isEmpty || !_tableRow.hasMatch(l)) break;
+          // Treat a separator-looking line inside the body as the end
+          // of the table (rare; protects against malformed input).
+          if (_tableSep.hasMatch(l)) break;
+          rows.add(_splitRow(l));
+          j++;
+        }
+        blocks.add(_MdTable(header: header, aligns: aligns, rows: rows));
+        i = j;
+        continue;
+      }
+
       // List (consecutive items, mix of types not allowed — switching
       // type opens a new list block).
       final isUnord = _unordered.hasMatch(line);
@@ -544,6 +738,14 @@ class _MdParser {
             _fence.hasMatch(l)) {
           break;
         }
+        // Stop one line before a table starts (header + separator on
+        // the *next* line). Otherwise the table header gets eaten by
+        // the paragraph above.
+        if (j + 1 < lines.length &&
+            _tableRow.hasMatch(l) &&
+            _tableSep.hasMatch(lines[j + 1])) {
+          break;
+        }
         buf.write('\n');
         buf.write(l);
         j++;
@@ -552,6 +754,25 @@ class _MdParser {
       i = j;
     }
     return blocks;
+  }
+
+  /// Split a table row into cells. Strips the optional leading +
+  /// trailing pipe so `| a | b |` and `a | b` both produce `["a","b"]`.
+  static List<String> _splitRow(String line) {
+    var s = line.trim();
+    if (s.startsWith('|')) s = s.substring(1);
+    if (s.endsWith('|')) s = s.substring(0, s.length - 1);
+    return s.split('|').map((c) => c.trim()).toList(growable: false);
+  }
+
+  /// `:---` left, `:---:` center, `---:` right. Default left.
+  static TextAlign _alignFromMarker(String cell) {
+    final c = cell.trim();
+    final left = c.startsWith(':');
+    final right = c.endsWith(':');
+    if (left && right) return TextAlign.center;
+    if (right) return TextAlign.right;
+    return TextAlign.left;
   }
 }
 
