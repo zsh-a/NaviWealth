@@ -104,9 +104,17 @@ final authOnUnauthorizedProvider = Provider<AuthOnUnauthorized>(
 
 /// D-1.5: per-user opt-in store backing the Settings → Domains toggle and
 /// the next-issued JWT `domains` claim. Backed by `sync_meta`.
-final domainOptInStoreProvider = Provider<DomainOptInStore>(
-  (ref) => DomainOptInStore(ref.watch(appDatabaseProvider).requireValue),
-);
+///
+/// `FutureProvider` (not `Provider`) so the store waits for
+/// `appDatabaseProvider` to resolve — `requireValue` would throw during
+/// the brief window between app start and the DB being open, and any
+/// early read (e.g. `activeDomainShellsProvider` in `bootstrap.dart`)
+/// would then latch the notifier into `AsyncError` and make the
+/// persisted opt-in look like the default on every restart.
+final domainOptInStoreProvider = FutureProvider<DomainOptInStore>((ref) async {
+  final db = await ref.watch(appDatabaseProvider.future);
+  return DomainOptInStore(db);
+});
 
 /// D-1.5: reactive snapshot of the user's active LifeOS domains.
 ///
@@ -118,15 +126,17 @@ final domainOptInsProvider = AsyncNotifierProvider<_DomainOptInsNotifier, Domain
 );
 
 class _DomainOptInsNotifier extends AsyncNotifier<DomainOptIns> {
-  DomainOptInStore get _store => ref.read(domainOptInStoreProvider);
-
   @override
-  Future<DomainOptIns> build() => _store.read();
+  Future<DomainOptIns> build() async {
+    final store = await ref.watch(domainOptInStoreProvider.future);
+    return store.read();
+  }
 
   Future<void> setEnabled(DomainScope scope, bool enabled) async {
     final current = state.value ?? DomainOptIns.financeOnly;
     final next = current.withScope(scope, enabled: enabled);
-    await _store.write(next);
+    final store = await ref.read(domainOptInStoreProvider.future);
+    await store.write(next);
     state = AsyncData(next);
   }
 }
