@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/nav.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/providers.dart';

@@ -25,6 +25,7 @@ export 'widgets/app_form_scaffold_body.dart';
 export 'widgets/app_sheet.dart';
 export 'widgets/app_toast.dart';
 export 'widgets/back_header_action.dart';
+export 'widgets/back_navigation.dart';
 export 'widgets/delta_chip.dart';
 export 'widgets/delta_text.dart';
 export 'widgets/form_dirty_controller.dart';

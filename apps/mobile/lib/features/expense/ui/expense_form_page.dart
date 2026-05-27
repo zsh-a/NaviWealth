@@ -11,7 +11,6 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_prov
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../../app/nav.dart';
 import '../../../app/route_paths.dart';
 import '../../../core/ai/intent/intent.dart';
 import '../../../core/ai/write/write.dart';

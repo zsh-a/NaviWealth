@@ -61,20 +61,20 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
     super.dispose();
   }
 
-  /// Root back-button strategy. Same precedence as the pre-Plan-B
-  /// `AppRootShell`:
-  ///  1. an inner pushed page exists → normal `GoRouter.pop`;
-  ///  2. at any primary tab root other than Finance Home → jump to /
+  /// Root back-button strategy. Defers steps 1–3 ("pop a pushed page /
+  /// dismiss a modal / clear `?selected=`") to the shared [attemptBack]
+  /// primitive so system back, the toolbar arrow, and the Esc shortcut
+  /// stay in lockstep; only the app-shell-specific tail (tab-root jump,
+  /// double-back-to-exit) lives here:
+  ///  1–3. delegated to [attemptBack];
+  ///  4. at any primary tab root other than Finance Home → jump to /
   ///     (treats Health tabs as primary roots; back from /health goes
   ///     to /home, matching the single-app exit model);
-  ///  3. at Finance Home → double-back-to-exit.
+  ///  5. at Finance Home → double-back-to-exit.
   void _onSystemBack(bool didPop) {
     if (didPop) return;
+    if (attemptBack(context)) return;
     final goRouter = GoRouter.of(context);
-    if (goRouter.canPop()) {
-      goRouter.pop();
-      return;
-    }
     final loc = goRouter.routeInformationProvider.value.uri.path;
     if (loc != AppRoutes.home && kPrimaryTabPaths.contains(loc)) {
       goRouter.go(AppRoutes.home);
