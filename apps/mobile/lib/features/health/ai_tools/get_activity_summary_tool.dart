@@ -6,6 +6,8 @@
 /// over the requested window.
 library;
 
+import 'dart:convert';
+
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
@@ -21,12 +23,14 @@ class GetActivitySummaryTool implements DeviceTool {
 
   @override
   String get description =>
-      '返回最近 N 天的每日活动汇总:步数 + 主动消耗卡路里 (active energy)。'
-      '数据来自端侧 `health_metrics` 表的 `steps_daily` 和 `active_energy_daily` 类型,'
-      '按日期 join。'
-      '适合场景:"最近一周走了多少步" / "周末和工作日的活动差异" / "今天步数够不够"。'
-      '当 HealthOS 未启用或缺少其中一类数据时,对应字段会留为 null;'
-      '完全空 (两类都空) 时返回空 `days` + `note`,建议用户启用 Health。';
+      '返回最近 N 天的每日活动汇总:步数 + 主动消耗卡路里 (active energy) + workout 汇总 '
+      '(条数 / 总时长 / 总距离)。'
+      '数据来自端侧 `health_metrics` 表的 `steps_daily` / `active_energy_daily` / `workout_session`,'
+      '按日期 join (workout 按 capturedAt 落到所在 UTC 日)。'
+      '适合场景:"最近一周走了多少步" / "周末和工作日的活动差异" / "今天步数够不够" / '
+      '"上周训练多少次"。'
+      '当 HealthOS 未启用或缺少某一类数据时,对应字段会留为 null;'
+      '完全空时返回空 `days` + `note`,建议用户启用 Health。';
 
   @override
   Map<String, Object?> get inputSchema => <String, Object?>{
@@ -63,10 +67,19 @@ class GetActivitySummaryTool implements DeviceTool {
       kind: HealthMetricKind.activeEnergyDaily,
       limit: daysBack + 5,
     );
+    // A heavy user might log 3–5 workouts/day; pull a generous buffer
+    // so we don't crop the window short. listByKind orders newest
+    // first, the shaper filters by window.
+    final workoutRows = await repo.listByKind(
+      ownerUserId: ownerUserId,
+      kind: HealthMetricKind.workoutSession,
+      limit: daysBack * 5 + 10,
+    );
     final now = DateTime.now().toUtc();
     return shape(
       steps: stepRows,
       energy: energyRows,
+      workouts: workoutRows,
       daysBack: daysBack,
       now: now,
     );
@@ -76,6 +89,7 @@ class GetActivitySummaryTool implements DeviceTool {
   static Map<String, Object?> shape({
     required List<HealthMetric> steps,
     required List<HealthMetric> energy,
+    List<HealthMetric> workouts = const <HealthMetric>[],
     required int daysBack,
     required DateTime now,
   }) {
@@ -111,7 +125,44 @@ class GetActivitySummaryTool implements DeviceTool {
       }
     }
 
-    final allDays = <String>{...stepsByDay.keys, ...kcalByDay.keys}.toList()
+    // Workouts: aggregate per day (sum count / duration / distance from
+    // payload). Unlike steps/energy daily rollups, each session is its
+    // own row; multiple per day is normal so we keep all of them.
+    final workoutSecondsByDay = <String, double>{};
+    final workoutCountByDay = <String, int>{};
+    final workoutDistanceByDay = <String, double>{};
+    var workoutTotalSeconds = 0.0;
+    var workoutTotalCount = 0;
+    var workoutTotalDistance = 0.0;
+    for (final m in workouts) {
+      if (!inWindow(m.capturedAt)) continue;
+      if (m.kind != HealthMetricKind.workoutSession) continue;
+      final key = dayKey(m.capturedAt);
+      final seconds = m.value; // duration seconds
+      workoutSecondsByDay.update(
+        key,
+        (v) => v + seconds,
+        ifAbsent: () => seconds,
+      );
+      workoutCountByDay.update(key, (v) => v + 1, ifAbsent: () => 1);
+      workoutTotalSeconds += seconds;
+      workoutTotalCount += 1;
+      final distance = _distanceMetersFromPayload(m.payloadJson);
+      if (distance != null) {
+        workoutDistanceByDay.update(
+          key,
+          (v) => v + distance,
+          ifAbsent: () => distance,
+        );
+        workoutTotalDistance += distance;
+      }
+    }
+
+    final allDays = <String>{
+      ...stepsByDay.keys,
+      ...kcalByDay.keys,
+      ...workoutCountByDay.keys,
+    }.toList()
       ..sort();
     final days = <Map<String, Object?>>[];
     var stepTotal = 0.0;
@@ -129,10 +180,19 @@ class GetActivitySummaryTool implements DeviceTool {
         kcalTotal += kcal;
         kcalDayCount += 1;
       }
+      final workoutCount = workoutCountByDay[d];
+      final workoutSeconds = workoutSecondsByDay[d];
+      final workoutDistance = workoutDistanceByDay[d];
       days.add(<String, Object?>{
         'date': d,
         'steps': steps?.round(),
         'active_kcal': kcal == null ? null : _round(kcal),
+        'workout_count': workoutCount,
+        'workout_minutes':
+            workoutSeconds == null ? null : _round(workoutSeconds / 60.0),
+        'workout_distance_km': workoutDistance == null
+            ? null
+            : _round(workoutDistance / 1000.0),
       });
     }
 
@@ -150,12 +210,35 @@ class GetActivitySummaryTool implements DeviceTool {
             kcalDayCount == 0 ? null : _round(kcalTotal / kcalDayCount),
         'step_day_count': stepDayCount,
         'kcal_day_count': kcalDayCount,
+        'workout_count': workoutTotalCount,
+        'workout_total_minutes':
+            workoutTotalCount == 0 ? 0 : _round(workoutTotalSeconds / 60.0),
+        'workout_total_distance_km': workoutTotalDistance == 0
+            ? 0
+            : _round(workoutTotalDistance / 1000.0),
       },
       if (days.isEmpty)
         'note':
-            'HealthOS 域尚无步数 / 主动消耗数据。建议用户在 Settings → Domains 启用 Health,'
+            'HealthOS 域尚无活动数据。建议用户在 Settings → Domains 启用 Health,'
             '然后从 HealthKit / Health Connect 导入。',
     };
+  }
+
+  /// Returns the distance the platform recorded for a workout, in
+  /// meters, or `null` if the payload is missing / malformed / not a
+  /// distance activity. Soft-fails on every error path — the AI tool
+  /// shouldn't blow up the response over a single weird payload row.
+  static double? _distanceMetersFromPayload(String? payloadJson) {
+    if (payloadJson == null || payloadJson.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(payloadJson);
+      if (decoded is! Map) return null;
+      final v = decoded['total_distance_meters'];
+      if (v is num) return v.toDouble();
+      return null;
+    } on FormatException {
+      return null;
+    }
   }
 
   static double _round(double v) => (v * 100).round() / 100.0;

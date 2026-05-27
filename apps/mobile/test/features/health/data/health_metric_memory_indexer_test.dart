@@ -126,6 +126,8 @@ void main() {
         HealthMetricKind.activeEnergyDaily,
         HealthMetricKind.weight,
         HealthMetricKind.bodyFat,
+        HealthMetricKind.workoutSession,
+        HealthMetricKind.vo2Max,
       ];
       final metrics = [
         for (var i = 0; i < knownKinds.length; i++)
@@ -146,6 +148,49 @@ void main() {
       );
       // Every event type unique
       expect(events.map((e) => e.type).toSet().length, knownKinds.length);
+    });
+  });
+
+  group('HealthMetricMemoryIndexer.reindex — workout / vo2max events', () {
+    test('workout row emits workout_completed event, no episodic', () async {
+      final rt = _runtime();
+      final indexer = HealthMetricMemoryIndexer(clock: () => now);
+      final out = await indexer.reindex(rt, [
+        _metric(
+          id: 'workout-1',
+          kind: HealthMetricKind.workoutSession,
+          value: 45 * 60.0,
+          capturedAt: now.subtract(const Duration(days: 1)),
+        ),
+      ], ownerUserId: 'u1');
+      expect(out.events, 1);
+      expect(out.memories, 0);
+      final events = await rt.recentEvents(
+        ownerUserId: 'u1',
+        window: const Duration(days: 9999),
+      );
+      expect(events.single.type, kEventWorkoutCompleted);
+    });
+
+    test('vo2 max row emits vo2_max_recorded event, no episodic', () async {
+      final rt = _runtime();
+      final indexer = HealthMetricMemoryIndexer(clock: () => now);
+      final out = await indexer.reindex(rt, [
+        _metric(
+          id: 'vo2-1',
+          kind: HealthMetricKind.vo2Max,
+          value: 42.5,
+          unit: 'ml_kg_min',
+          capturedAt: now.subtract(const Duration(days: 1)),
+        ),
+      ], ownerUserId: 'u1');
+      expect(out.events, 1);
+      expect(out.memories, 0);
+      final events = await rt.recentEvents(
+        ownerUserId: 'u1',
+        window: const Duration(days: 9999),
+      );
+      expect(events.single.type, kEventVo2MaxRecorded);
     });
   });
 

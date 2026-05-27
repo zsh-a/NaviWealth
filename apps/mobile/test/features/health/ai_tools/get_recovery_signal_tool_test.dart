@@ -229,6 +229,53 @@ void main() {
       final score = out['score'] as int;
       expect(score, inInclusiveRange(40, 69));
     });
+
+    test('vo2max improvement contributes to the score', () {
+      // No HRV / RHR — only sleep + VO2max so we can isolate the new
+      // sub-score's effect.
+      final sleep = <HealthMetric>[
+        for (var i = 1; i <= 5; i++)
+          _m(
+            kind: HealthMetricKind.sleepSession,
+            at: now.subtract(Duration(days: i, hours: 1)),
+            value: 7 * 3600.0, // neutral 7h
+            unit: 's',
+          ),
+      ];
+      final vo2 = <HealthMetric>[];
+      // baseline: 7 days at 40 ml/kg/min (8..14 days ago)
+      for (var i = 8; i <= 14; i++) {
+        vo2.add(_m(
+          kind: HealthMetricKind.vo2Max,
+          at: now.subtract(Duration(days: i)),
+          value: 40,
+          unit: 'ml_kg_min',
+        ));
+      }
+      // recent: 7 days at 48 ml/kg/min (+20%)
+      for (var i = 1; i <= 7; i++) {
+        vo2.add(_m(
+          kind: HealthMetricKind.vo2Max,
+          at: now.subtract(Duration(days: i)),
+          value: 48,
+          unit: 'ml_kg_min',
+        ));
+      }
+
+      final out = GetRecoverySignalTool.shape(
+        hrv: const <HealthMetric>[],
+        sleep: sleep,
+        rhr: const <HealthMetric>[],
+        vo2Max: vo2,
+        now: now,
+      );
+      // Sub-score from sleep = 50 (neutral), from VO2max = 50 + 0.20*125 = 75.
+      // Mean ≈ 62 → balanced verdict, score > 50.
+      expect(out['verdict'], 'balanced');
+      final inputs = out['inputs'] as Map<String, Object?>;
+      expect(inputs['latest_vo2_max'], 48);
+      expect(out['score'] as int, greaterThan(55));
+    });
   });
 
   test('tool advertises the contract', () {

@@ -31,10 +31,10 @@ class GetRecoverySignalTool implements DeviceTool {
   @override
   String get description =>
       '返回综合恢复信号 (0–100 分) + 等级 (rested / balanced / strained / '
-      'insufficient_data) + 三个原始输入 (最近 HRV / 最近平均睡眠时长 / 最近 RHR)。'
-      '算法:取过去 7 天 (recent) 和过去 28 天 (baseline) 的 HRV / sleep / RHR 均值,'
-      '每项按 recent vs baseline 偏离度评分 (HRV ↑ 加分, RHR ↑ 扣分, 睡眠 ≥ 7h 加分),'
-      '三项算术平均后裁剪到 0–100。'
+      'insufficient_data) + 原始输入 (最近 HRV / 最近平均睡眠时长 / 最近 RHR / 最近 VO₂max)。'
+      '算法:取过去 7 天 (recent) 和过去 7-28 天 (baseline) 的 HRV / sleep / RHR / VO₂max 均值,'
+      '每项按 recent vs baseline 偏离度评分 (HRV ↑ 加分, RHR ↑ 扣分, VO₂max ↑ 加分, 睡眠 ≥ 7h 加分),'
+      '可用项算术平均后裁剪到 0–100。'
       '基线 < 5 天数据时返回 insufficient_data,模型应回避"推 / 减"建议。'
       '适合场景:"今天该不该重训"/"我恢复怎么样"/"我状态可以做高强度吗"。'
       '不是医学诊断,仅供日常作息判断。';
@@ -68,9 +68,14 @@ class GetRecoverySignalTool implements DeviceTool {
       kind: HealthMetricKind.rhrDaily,
       limit: 35,
     );
+    final vo2 = await repo.listByKind(
+      ownerUserId: ownerUserId,
+      kind: HealthMetricKind.vo2Max,
+      limit: 35,
+    );
 
     final now = DateTime.now().toUtc();
-    return shape(hrv: hrv, sleep: sleep, rhr: rhr, now: now);
+    return shape(hrv: hrv, sleep: sleep, rhr: rhr, vo2Max: vo2, now: now);
   }
 
   /// Pure shaper — exposed for unit tests so the scoring math runs
@@ -79,6 +84,7 @@ class GetRecoverySignalTool implements DeviceTool {
     required List<HealthMetric> hrv,
     required List<HealthMetric> sleep,
     required List<HealthMetric> rhr,
+    List<HealthMetric> vo2Max = const <HealthMetric>[],
     required DateTime now,
   }) {
     // Recent = last 7 days; baseline = 7–28 days ago, **excluding**
@@ -103,18 +109,27 @@ class GetRecoverySignalTool implements DeviceTool {
     final sleepBaselineN =
         _countInWindow(sleep, baselineFrom, baselineTo);
 
+    final vo2Recent = _avgInWindow(vo2Max, recentFrom, now);
+    final vo2Baseline = _avgInWindow(vo2Max, baselineFrom, baselineTo);
+    final vo2BaselineN = _countInWindow(vo2Max, baselineFrom, baselineTo);
+
     final inputs = <String, Object?>{
       'latest_hrv_ms': hrvRecent == null ? null : _round(hrvRecent),
       'avg_sleep_hours': sleepHoursRecent == null
           ? null
           : _round(sleepHoursRecent),
       'latest_rhr_bpm': rhrRecent == null ? null : _round(rhrRecent),
+      'latest_vo2_max': vo2Recent == null ? null : _round(vo2Recent),
     };
 
-    final haveBaseline =
-        hrvBaselineN >= 5 || sleepBaselineN >= 5 || rhrBaselineN >= 5;
-    final haveRecent =
-        hrvRecent != null || sleepHoursRecent != null || rhrRecent != null;
+    final haveBaseline = hrvBaselineN >= 5 ||
+        sleepBaselineN >= 5 ||
+        rhrBaselineN >= 5 ||
+        vo2BaselineN >= 5;
+    final haveRecent = hrvRecent != null ||
+        sleepHoursRecent != null ||
+        rhrRecent != null ||
+        vo2Recent != null;
 
     if (!haveBaseline || !haveRecent) {
       return <String, Object?>{
@@ -122,7 +137,7 @@ class GetRecoverySignalTool implements DeviceTool {
         'verdict': 'insufficient_data',
         'inputs': inputs,
         'note':
-            'Health 数据不足以判定恢复:需要至少 5 天基线 + 最近 7 天的 HRV / 睡眠 / RHR 任一信号。',
+            'Health 数据不足以判定恢复:需要至少 5 天基线 + 最近 7 天的 HRV / 睡眠 / RHR / VO₂max 任一信号。',
       };
     }
 
@@ -145,13 +160,18 @@ class GetRecoverySignalTool implements DeviceTool {
       // Score = 50 + (hours - 7) * 20 → 7h → 50, 8h → 70, 6h → 30.
       subScores.add(_clamp(50 + (sleepHoursRecent - 7.0) * 20, 0, 100));
     }
+    if (vo2Recent != null && vo2Baseline != null && vo2Baseline > 0) {
+      // VO₂max ↑ is good. Same ±20%-maps-to-±25-points scaling as HRV.
+      final ratio = (vo2Recent - vo2Baseline) / vo2Baseline;
+      subScores.add(_clamp(50 + ratio * 125, 0, 100));
+    }
 
     if (subScores.isEmpty) {
       return <String, Object?>{
         'score': null,
         'verdict': 'insufficient_data',
         'inputs': inputs,
-        'note': '基线齐备,但最近 7 天没有任何 HRV / 睡眠 / RHR 读数。',
+        'note': '基线齐备,但最近 7 天没有任何 HRV / 睡眠 / RHR / VO₂max 读数。',
       };
     }
 

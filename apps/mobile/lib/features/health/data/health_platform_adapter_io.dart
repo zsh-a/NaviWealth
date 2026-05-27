@@ -12,6 +12,8 @@
 /// | activeEnergyDaily     | `ACTIVE_ENERGY_BURNED`                   | `ACTIVE_ENERGY_BURNED`                              |
 /// | weight                | `WEIGHT`                                 | `WEIGHT`                                            |
 /// | bodyFat               | `BODY_FAT_PERCENTAGE` (0–100 → /100)     | `BODY_FAT_PERCENTAGE` (0–100 → /100)                |
+/// | workoutSession        | `WORKOUT`                                | `WORKOUT`                                           |
+/// | vo2Max                | *not yet exposed by `package:health@13.3.1`* — list stays empty until plugin support lands or a native channel is added |
 ///
 /// **iOS sleep MVP caveat**: HealthKit returns per-segment
 /// `SLEEP_ASLEEP` entries — one nightly sleep can become 3–7 segments
@@ -52,6 +54,7 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
         HealthDataType.ACTIVE_ENERGY_BURNED,
         HealthDataType.WEIGHT,
         HealthDataType.BODY_FAT_PERCENTAGE,
+        HealthDataType.WORKOUT,
       ];
     }
     if (Platform.isAndroid) {
@@ -63,6 +66,7 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
         HealthDataType.ACTIVE_ENERGY_BURNED,
         HealthDataType.WEIGHT,
         HealthDataType.BODY_FAT_PERCENTAGE,
+        HealthDataType.WORKOUT,
       ];
     }
     return const <HealthDataType>[];
@@ -175,6 +179,17 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
         .whereType<RawPointValue>()
         .toList(growable: false);
 
+    final workouts = points
+        .where((p) => p.type == HealthDataType.WORKOUT)
+        .map((p) => _workoutFrom(p, platformPrefix))
+        .whereType<RawWorkoutSession>()
+        .toList(growable: false);
+
+    // VO2 max is intentionally empty — see the docstring at the top of
+    // this file. The day `package:health` exposes it (or we add a
+    // native MethodChannel) it lands here.
+    const vo2Max = <RawDailyValue>[];
+
     return HealthPlatformSnapshot(
       sleepSessions: sleepSessions,
       hrv: hrv,
@@ -183,6 +198,8 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
       activeEnergy: active,
       weight: weight,
       bodyFat: bodyFat,
+      workouts: workouts,
+      vo2Max: vo2Max,
     );
   }
 
@@ -193,6 +210,50 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
       externalId: 'hk:sleep:${p.uuid}',
       startedAt: p.dateFrom.toUtc(),
       duration: duration,
+      sourceDevice: _sourceLabel(p),
+    );
+  }
+
+  RawWorkoutSession? _workoutFrom(HealthDataPoint p, String platformPrefix) {
+    final v = p.value;
+    if (v is! WorkoutHealthValue) return null;
+    final duration = p.dateTo.difference(p.dateFrom);
+    if (duration <= Duration.zero) return null;
+
+    final energy = v.totalEnergyBurned;
+    double? energyKcal;
+    if (energy != null) {
+      final eUnit = v.totalEnergyBurnedUnit;
+      // package:health emits KILOCALORIE by default for HK workouts;
+      // guard against JOULE just in case the platform-specific path
+      // changes.
+      energyKcal = switch (eUnit) {
+        HealthDataUnit.JOULE => energy / 4184.0,
+        _ => energy.toDouble(),
+      };
+    }
+
+    final distance = v.totalDistance;
+    double? distanceMeters;
+    if (distance != null) {
+      final dUnit = v.totalDistanceUnit;
+      distanceMeters = switch (dUnit) {
+        HealthDataUnit.MILE => distance * 1609.344,
+        HealthDataUnit.FOOT => distance * 0.3048,
+        HealthDataUnit.YARD => distance * 0.9144,
+        HealthDataUnit.INCH => distance * 0.0254,
+        HealthDataUnit.CENTIMETER => distance / 100.0,
+        _ => distance.toDouble(), // METER + anything unknown
+      };
+    }
+
+    return RawWorkoutSession(
+      externalId: '$platformPrefix:workout:${p.uuid}',
+      startedAt: p.dateFrom.toUtc(),
+      duration: duration,
+      activityType: v.workoutActivityType.name.toLowerCase(),
+      totalEnergyKcal: energyKcal,
+      totalDistanceMeters: distanceMeters,
       sourceDevice: _sourceLabel(p),
     );
   }
