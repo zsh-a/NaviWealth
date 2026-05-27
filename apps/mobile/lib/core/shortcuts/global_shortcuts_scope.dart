@@ -234,8 +234,7 @@ class _DismissOverlayAction extends ContextAction<DismissOverlayIntent> {
     final router = GoRouter.maybeOf(context);
     if (router == null) return false;
     if (router.canPop()) return true;
-    return router.routeInformationProvider.value.uri.queryParameters
-        .containsKey('selected');
+    return hasSelectedDetail(context);
   }
 
   @override
