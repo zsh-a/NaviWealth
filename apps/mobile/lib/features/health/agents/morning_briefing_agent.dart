@@ -28,6 +28,7 @@ import '../../../core/ai/local/memory/memory_runtime.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/notifications/notification_service.dart';
+import '../data/morning_briefing_preferences.dart';
 import 'briefing_synthesizer.dart';
 
 const String kMorningBriefingAgentId = 'morning_briefing';
@@ -37,6 +38,7 @@ class MorningBriefingAgent implements Agent {
   const MorningBriefingAgent({
     this.synthesizer = const ProgrammaticBriefingSynthesizer(),
     this.notifier,
+    this.hourLocal = kDefaultMorningBriefingHourLocal,
   });
 
   /// Pluggable synthesis step. `bootstrap.dart` injects
@@ -49,6 +51,10 @@ class MorningBriefingAgent implements Agent {
   /// the briefing summary after each successful run.
   final NotificationService? notifier;
 
+  /// User-configurable preferred local-time hour (0–23). Sourced from
+  /// [morningBriefingHourProvider] via the bootstrap override.
+  final int hourLocal;
+
   @override
   String get id => kMorningBriefingAgentId;
 
@@ -56,7 +62,7 @@ class MorningBriefingAgent implements Agent {
   String get name => 'Morning Briefing';
 
   @override
-  AgentSchedule get schedule => AgentSchedule.daily(hourLocal: 7);
+  AgentSchedule get schedule => AgentSchedule.daily(hourLocal: hourLocal);
 
   @override
   Future<AgentRunResult> run(AgentContext ctx) async {

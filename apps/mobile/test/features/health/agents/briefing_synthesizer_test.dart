@@ -55,7 +55,7 @@ EventRecord _financeEvent({
   required DateTime when,
   required String type,
 }) => EventRecord(
-  id: 'fin-${type}-${when.toIso8601String()}',
+  id: 'fin-$type-${when.toIso8601String()}',
   type: type,
   timestamp: when,
   source: 'options_trade_journal',
@@ -68,9 +68,9 @@ EventRecord _financeEvent({
 );
 
 class _FakeLlmConfig implements DeviceLlmConfig {
-  const _FakeLlmConfig({this.model = 'fake-model'});
+  const _FakeLlmConfig();
   @override
-  final String model;
+  String get model => 'fake-model';
 }
 
 class _FakeLlmClient implements DeviceLlmClient {
@@ -118,10 +118,10 @@ void main() {
 
     test('returns empty output when there is no usable signal', () async {
       final out = await synth.synthesize(
-        BriefingInputs(
+        const BriefingInputs(
           dayKey: '2026-05-27',
-          healthEvents: const <EventRecord>[],
-          financeEvents: const <EventRecord>[],
+          healthEvents: <EventRecord>[],
+          financeEvents: <EventRecord>[],
         ),
       );
       expect(out.isEmpty, isTrue);
@@ -214,10 +214,10 @@ void main() {
       final client = _FakeLlmClient(scriptedText: 'something');
       final synth = LlmBriefingSynthesizer(client: client);
       final out = await synth.synthesize(
-        BriefingInputs(
+        const BriefingInputs(
           dayKey: '2026-05-27',
-          healthEvents: const <EventRecord>[],
-          financeEvents: const <EventRecord>[],
+          healthEvents: <EventRecord>[],
+          financeEvents: <EventRecord>[],
         ),
       );
       expect(out.isEmpty, isTrue);

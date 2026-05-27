@@ -17,7 +17,7 @@ import 'package:naviwealth/core/shell/domain_shell.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance_domain_shell.dart';
 import 'package:naviwealth/features/health/composition/health_domain_shell.dart';
-import 'package:naviwealth/features/health/ui/health_placeholder_page.dart';
+import 'package:naviwealth/features/health/ui/health_today_page.dart';
 import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -131,7 +131,7 @@ void main() {
       expect(find.byType(HomePage), findsOneWidget);
     });
 
-    testWidgets('/health renders HealthPlaceholderPage inside the dock shell',
+    testWidgets('/health renders HealthTodayPage inside the dock shell',
         (tester) async {
       final l10n = lookupAppLocalizations(const Locale('en'));
       final container = await _pumpAt(
@@ -143,7 +143,7 @@ void main() {
         ],
       );
       expect(_currentPath(container), AppRoutes.healthToday);
-      expect(find.byType(HealthPlaceholderPage), findsOneWidget);
+      expect(find.byType(HealthTodayPage), findsOneWidget);
       // Dock chrome is still visible.
       expect(find.text('HealthOS'), findsOneWidget);
       expect(find.text('FinanceOS'), findsOneWidget);
@@ -163,7 +163,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(_currentPath(container), AppRoutes.healthToday);
-      expect(find.byType(HealthPlaceholderPage), findsOneWidget);
+      expect(find.byType(HealthTodayPage), findsOneWidget);
     });
   });
 }
