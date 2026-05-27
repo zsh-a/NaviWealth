@@ -33,6 +33,16 @@ enum HealthMetricKind {
   /// `'fraction'`).
   bodyFat,
 
+  /// One workout session (capturedAt = session start, value = duration
+  /// in seconds, unit = `'s'`). `payloadJson` carries
+  /// `{activityType, totalEnergyKcal, totalDistanceMeters}` when the
+  /// platform supplies them.
+  workoutSession,
+
+  /// Daily VO2 max reading (capturedAt = local day start UTC,
+  /// value = ml/(kg·min), unit = `'ml_kg_min'`).
+  vo2Max,
+
   /// Sentinel for wire kinds the client doesn't recognise. Callers
   /// should drop rows with this kind rather than crash.
   unknown,
@@ -48,6 +58,8 @@ extension HealthMetricKindX on HealthMetricKind {
     HealthMetricKind.activeEnergyDaily => 'active_energy_daily',
     HealthMetricKind.weight => 'weight',
     HealthMetricKind.bodyFat => 'body_fat',
+    HealthMetricKind.workoutSession => 'workout_session',
+    HealthMetricKind.vo2Max => 'vo2_max_daily',
     HealthMetricKind.unknown => 'unknown',
   };
 
@@ -62,6 +74,8 @@ extension HealthMetricKindX on HealthMetricKind {
     HealthMetricKind.activeEnergyDaily => 'kcal',
     HealthMetricKind.weight => 'kg',
     HealthMetricKind.bodyFat => 'fraction',
+    HealthMetricKind.workoutSession => 's',
+    HealthMetricKind.vo2Max => 'ml_kg_min',
     HealthMetricKind.unknown => '',
   };
 

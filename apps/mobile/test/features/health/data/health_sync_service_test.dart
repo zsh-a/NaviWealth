@@ -274,6 +274,103 @@ void main() {
     },
   );
 
+  test(
+    'maps workout sessions into workout_session rows with payload JSON',
+    () async {
+      final adapter = _FakeAdapter(
+        snapshot: HealthPlatformSnapshot(
+          workouts: <RawWorkoutSession>[
+            RawWorkoutSession(
+              externalId: 'hk:workout:w1',
+              startedAt: DateTime.utc(2026, 5, 26, 7),
+              duration: const Duration(minutes: 45),
+              activityType: 'running',
+              totalEnergyKcal: 380.5,
+              totalDistanceMeters: 7200,
+              sourceDevice: 'Apple Watch',
+            ),
+          ],
+        ),
+      );
+      final svc = HealthSyncService(
+        adapter: adapter,
+        repository: repo,
+        stamper: _fakeStamper(),
+      );
+      final r = await svc.syncRange();
+      expect(r.ok, isTrue);
+      expect(r.totalFetched, 1);
+      expect(r.upserted, 1);
+
+      final row = await repo.findById('hk:workout:w1');
+      expect(row, isNotNull);
+      expect(row!.kind, HealthMetricKind.workoutSession);
+      expect(row.value, 45 * 60); // seconds
+      expect(row.unit, 's');
+      expect(row.sourceDevice, 'Apple Watch');
+      // Payload is a JSON object with the three optional fields.
+      expect(row.payloadJson, isNotNull);
+      expect(row.payloadJson, contains('"activity_type":"running"'));
+      expect(row.payloadJson, contains('"total_energy_kcal":380.5'));
+      expect(row.payloadJson, contains('"total_distance_meters":7200'));
+    },
+  );
+
+  test('maps vo2Max daily values into vo2_max_daily rows', () async {
+    final adapter = _FakeAdapter(
+      snapshot: HealthPlatformSnapshot(
+        vo2Max: <RawDailyValue>[
+          RawDailyValue(
+            externalId: 'hk:vo2:2026-05-25',
+            day: DateTime.utc(2026, 5, 25),
+            value: 42.3,
+            sourceDevice: 'Apple Watch',
+          ),
+        ],
+      ),
+    );
+    final svc = HealthSyncService(
+      adapter: adapter,
+      repository: repo,
+      stamper: _fakeStamper(),
+    );
+    final r = await svc.syncRange();
+    expect(r.upserted, 1);
+
+    final row = await repo.findById('hk:vo2:2026-05-25');
+    expect(row, isNotNull);
+    expect(row!.kind, HealthMetricKind.vo2Max);
+    expect(row.value, closeTo(42.3, 1e-6));
+    expect(row.unit, 'ml_kg_min');
+  });
+
+  test(
+    'workout with no payload fields → row has null payloadJson',
+    () async {
+      final adapter = _FakeAdapter(
+        snapshot: HealthPlatformSnapshot(
+          workouts: <RawWorkoutSession>[
+            RawWorkoutSession(
+              externalId: 'hk:workout:bare',
+              startedAt: DateTime.utc(2026, 5, 26, 7),
+              duration: const Duration(minutes: 30),
+              // no activityType / energy / distance — happens on
+              // manual-entry workouts without classification
+            ),
+          ],
+        ),
+      );
+      final svc = HealthSyncService(
+        adapter: adapter,
+        repository: repo,
+        stamper: _fakeStamper(),
+      );
+      await svc.syncRange();
+      final row = await repo.findById('hk:workout:bare');
+      expect(row!.payloadJson, isNull);
+    },
+  );
+
   test('honours explicit from / to window', () async {
     final adapter = _FakeAdapter();
     final svc = HealthSyncService(

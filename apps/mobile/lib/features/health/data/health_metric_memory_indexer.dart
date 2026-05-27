@@ -46,6 +46,8 @@ const String kEventRhrRecorded = 'rhr_recorded';
 const String kEventActiveEnergyRecorded = 'active_energy_recorded';
 const String kEventWeightRecorded = 'weight_recorded';
 const String kEventBodyFatRecorded = 'body_fat_recorded';
+const String kEventWorkoutCompleted = 'workout_completed';
+const String kEventVo2MaxRecorded = 'vo2_max_recorded';
 
 /// Sleep duration boundaries (hours) for an episodic memory. Outside
 /// this range a session is "notable" — either deficit or recovery.
@@ -176,6 +178,8 @@ class HealthMetricMemoryIndexer {
     HealthMetricKind.activeEnergyDaily => kEventActiveEnergyRecorded,
     HealthMetricKind.weight => kEventWeightRecorded,
     HealthMetricKind.bodyFat => kEventBodyFatRecorded,
+    HealthMetricKind.workoutSession => kEventWorkoutCompleted,
+    HealthMetricKind.vo2Max => kEventVo2MaxRecorded,
     HealthMetricKind.unknown => 'health_unknown',
   };
 
@@ -197,6 +201,10 @@ class HealthMetricMemoryIndexer {
         'Weight ${_round(metric.value)} ${metric.unit} · $whenIso',
       HealthMetricKind.bodyFat =>
         'Body fat ${_round(metric.value * 100)}% · $whenIso',
+      HealthMetricKind.workoutSession =>
+        'Workout ${_round(_secondsToHours(metric.value, metric.unit))}h · $whenIso',
+      HealthMetricKind.vo2Max =>
+        'VO₂max ${_round(metric.value)} ${metric.unit} · $whenIso',
       HealthMetricKind.unknown => 'Health row · $whenIso',
     };
   }
@@ -218,6 +226,10 @@ class HealthMetricMemoryIndexer {
         'Weight ${_round(metric.value)} ${metric.unit} on $whenIso.',
       HealthMetricKind.bodyFat =>
         'Body fat ${_round(metric.value * 100)}% on $whenIso.',
+      HealthMetricKind.workoutSession =>
+        'Workout lasting ${_round(_secondsToHours(metric.value, metric.unit))}h starting $whenIso.',
+      HealthMetricKind.vo2Max =>
+        'VO₂max ${_round(metric.value)} ${metric.unit} on $whenIso.',
       HealthMetricKind.unknown => 'Health metric on $whenIso.',
     };
   }
@@ -262,6 +274,15 @@ class HealthMetricMemoryIndexer {
       case HealthMetricKind.weight:
       case HealthMetricKind.bodyFat:
         return 0.5;
+      case HealthMetricKind.workoutSession:
+        // Long sessions (>60min) or high-kcal sessions get a small
+        // bump; the rest sit at the activity baseline. Reading the
+        // payload here would couple the indexer to wire-format strings,
+        // so we just lean on duration as the signal.
+        final hours = _secondsToHours(metric.value, metric.unit);
+        return hours > 1.0 ? 0.6 : 0.5;
+      case HealthMetricKind.vo2Max:
+        return 0.55;
       case HealthMetricKind.unknown:
         return 0.4;
     }

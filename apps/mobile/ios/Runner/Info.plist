@@ -28,7 +28,7 @@
 	     `NSHealthUpdateUsageDescription` is omitted — HealthOS never
 	     writes back to HealthKit (`healthos-domain.md` §10 反目标). -->
 	<key>NSHealthShareUsageDescription</key>
-	<string>用于读取你的睡眠、心率变异性、步数等健康数据，在 HealthOS 中本地呈现趋势与恢复信号（不上传服务器，也不写回 HealthKit）。</string>
+	<string>用于读取你的睡眠、心率变异性、步数、训练 / Workout 等健康数据，在 HealthOS 中本地呈现趋势与恢复信号（不上传服务器，也不写回 HealthKit）。</string>
 	<!-- D-2.5b (`docs/healthos-domain.md` §8) — background fetch +
 	     BGTaskScheduler for Morning Briefing agent. iOS only fires the
 	     periodic task when the OS opportunistically wakes the app;

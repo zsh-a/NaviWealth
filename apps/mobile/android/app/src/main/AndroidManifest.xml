@@ -13,6 +13,13 @@
     <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"/>
     <uses-permission android:name="android.permission.health.READ_WEIGHT"/>
     <uses-permission android:name="android.permission.health.READ_BODY_FAT"/>
+    <!-- D-2.6 — workout sessions (`HealthDataType.WORKOUT` →
+         `ExerciseSessionRecord` on Health Connect). VO₂max
+         (`READ_VO2_MAX`) intentionally NOT requested yet: `package:health`
+         13.3.1 does not expose VO2_MAX through its enum, so even if the
+         user grants it we have no way to pull data. Add the permission
+         alongside the platform wiring when that lands. -->
+    <uses-permission android:name="android.permission.health.READ_EXERCISE"/>
     <!-- D-2.5b (`docs/healthos-domain.md` §8) — local notifications +
          workmanager. POST_NOTIFICATIONS is the Android 13+ runtime
          permission; `RECEIVE_BOOT_COMPLETED` lets workmanager re-

@@ -55,6 +55,8 @@ class HealthPlatformSnapshot {
     this.activeEnergy = const <RawDailyValue>[],
     this.weight = const <RawPointValue>[],
     this.bodyFat = const <RawPointValue>[],
+    this.workouts = const <RawWorkoutSession>[],
+    this.vo2Max = const <RawDailyValue>[],
   });
 
   const HealthPlatformSnapshot.empty()
@@ -64,7 +66,9 @@ class HealthPlatformSnapshot {
         steps = const <RawDailyValue>[],
         activeEnergy = const <RawDailyValue>[],
         weight = const <RawPointValue>[],
-        bodyFat = const <RawPointValue>[];
+        bodyFat = const <RawPointValue>[],
+        workouts = const <RawWorkoutSession>[],
+        vo2Max = const <RawDailyValue>[];
 
   /// One [RawSleepSession] per ended sleep session (HealthKit
   /// `HKCategoryTypeIdentifierSleepAnalysis` of stage `asleep*`;
@@ -92,6 +96,21 @@ class HealthPlatformSnapshot {
   /// Per-measurement body fat fraction (0.0–1.0).
   final List<RawPointValue> bodyFat;
 
+  /// Workout sessions (HK `HKWorkout` / HC `ExerciseSessionRecord`).
+  /// One entry per session; the adapter fills in [RawWorkoutSession]
+  /// activity / energy / distance fields from whatever the platform
+  /// reports — any may be missing.
+  final List<RawWorkoutSession> workouts;
+
+  /// Daily VO2 max (ml/(kg·min)). HK `HKQuantityTypeIdentifierVO2Max`
+  /// / HC `Vo2MaxRecord`. **NOTE**: as of `package:health@13.3.1` the
+  /// plugin does not expose VO2 max — adapters keep this list empty
+  /// until either the plugin gains VO2 max support or a native
+  /// MethodChannel is added. The rest of the pipeline (repo / sync /
+  /// indexer / AI tools) is wired so the day VO2 starts flowing only
+  /// the adapter needs to change.
+  final List<RawDailyValue> vo2Max;
+
   /// Total number of raw readings across every list — handy for
   /// "fetched N readings" status text without re-summing in the UI.
   int get totalCount =>
@@ -101,7 +120,9 @@ class HealthPlatformSnapshot {
       steps.length +
       activeEnergy.length +
       weight.length +
-      bodyFat.length;
+      bodyFat.length +
+      workouts.length +
+      vo2Max.length;
 }
 
 /// One sleep session that has already ended (no in-progress sessions).
@@ -154,6 +175,40 @@ class RawDailyValue {
   final DateTime day;
 
   final double value;
+
+  final String? sourceDevice;
+}
+
+/// One workout session that has already ended. Most fields are
+/// optional because HealthKit / Health Connect both surface workouts
+/// without (some of) `totalEnergyBurned` / `totalDistance`.
+class RawWorkoutSession {
+  const RawWorkoutSession({
+    required this.externalId,
+    required this.startedAt,
+    required this.duration,
+    this.activityType,
+    this.totalEnergyKcal,
+    this.totalDistanceMeters,
+    this.sourceDevice,
+  });
+
+  /// Platform-stable id (`hk:workout:<uuid>` / `hc:workout:<uuid>`).
+  final String externalId;
+  final DateTime startedAt;
+  final Duration duration;
+
+  /// Platform-reported activity label, lowercased free text
+  /// (`'running'`, `'cycling'`, `'strength_training'`, …). Null when
+  /// the platform didn't classify the session.
+  final String? activityType;
+
+  /// Total active kilocalories spent. Null when missing.
+  final double? totalEnergyKcal;
+
+  /// Total distance in meters (HK + HC both report distance in meters
+  /// via the plugin). Null when not a distance activity.
+  final double? totalDistanceMeters;
 
   final String? sourceDevice;
 }

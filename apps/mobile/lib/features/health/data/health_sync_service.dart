@@ -14,6 +14,8 @@
 ///   * sleep-segment grouping on iOS (one row per asleep segment)
 library;
 
+import 'dart:convert';
+
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
@@ -162,6 +164,16 @@ class HealthSyncService {
       final r = await _upsertIfChanged(m);
       r == _WriteOutcome.upserted ? upserted++ : unchanged++;
     }
+    for (final w in snapshot.workouts) {
+      final m = _workoutMetric(w);
+      final r = await _upsertIfChanged(m);
+      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
+    }
+    for (final d in snapshot.vo2Max) {
+      final m = _dailyMetric(d, HealthMetricKind.vo2Max);
+      final r = await _upsertIfChanged(m);
+      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
+    }
 
     return HealthSyncResult(
       startedAt: startedAt,
@@ -235,6 +247,29 @@ class HealthSyncService {
         sourceDevice: p.sourceDevice,
         sync: _placeholderSync,
       );
+
+  HealthMetric _workoutMetric(RawWorkoutSession w) {
+    // Stable, canonical payload so `_payloadEquivalent` can rely on
+    // string equality. Keep fields in a fixed order via the literal
+    // map and only include non-null values to avoid string churn when
+    // the platform omits a field.
+    final payload = <String, Object?>{
+      if (w.activityType != null) 'activity_type': w.activityType,
+      if (w.totalEnergyKcal != null) 'total_energy_kcal': w.totalEnergyKcal,
+      if (w.totalDistanceMeters != null)
+        'total_distance_meters': w.totalDistanceMeters,
+    };
+    return HealthMetric(
+      id: w.externalId,
+      capturedAt: w.startedAt,
+      kind: HealthMetricKind.workoutSession,
+      value: w.duration.inSeconds.toDouble(),
+      unit: HealthMetricKind.workoutSession.defaultUnit,
+      payloadJson: payload.isEmpty ? null : jsonEncode(payload),
+      sourceDevice: w.sourceDevice,
+      sync: _placeholderSync,
+    );
+  }
 
   /// Sync meta is replaced via [HealthMetric.copyWith] in
   /// [_upsertIfChanged] right before the write — we only call
