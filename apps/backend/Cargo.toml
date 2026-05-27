@@ -1,6 +1,6 @@
 [package]
 name = "naviwealth-backend"
-version = "0.5.7"
+version = "0.5.8"
 edition = "2021"
 authors = ["NaviWealth"]
 description = "NaviWealth backend on Cloudflare Workers (Rust)"
