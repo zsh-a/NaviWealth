@@ -22,6 +22,7 @@ import '../../fire/data/fire_plan_preferences.dart';
 import '../../fire/domain/fire_plan.dart';
 import '../../health/agents/providers.dart' as health_agent_providers;
 import '../../health/data/health_sync_service.dart';
+import '../../health/data/morning_briefing_preferences.dart';
 import '../../health/data/providers.dart' as health_data;
 import '../../rebalance/data/rebalance_providers.dart';
 import '../../rebalance/domain/allocation_schemes.dart';
@@ -857,13 +858,15 @@ class _DomainsSection extends ConsumerWidget {
           InlineLinkRow(
             icon: FLucideIcons.eye,
             label: 'HealthOS · Today',
-            subtitle: '预览页面 (D-2.3 placeholder)',
+            subtitle: '查看每日 Morning Briefing 卡片',
             onTap: () => context.goNamed(AppRouteNames.healthToday),
           ),
           _SectionDivider(),
           const _HealthPlatformSyncRow(),
           _SectionDivider(),
           const _MorningBriefingRunRow(),
+          _SectionDivider(),
+          const _MorningBriefingHourRow(),
         ],
       ],
     );
@@ -1007,6 +1010,43 @@ class _MorningBriefingRunRowState
       label: 'Run Morning Briefing now',
       subtitle: _subtitle(),
       onTap: _running ? () {} : _run,
+    );
+  }
+}
+
+/// D-2.5b follow-up — user-configurable preferred local hour for the
+/// daily briefing. Defaults to 07:00. Background workmanager fires at
+/// OS discretion (≈24h period) so the hour is honoured strictly only
+/// by in-process scheduling; the value is still surfaced through the
+/// `AgentSchedule` so the briefing's documented intent matches the
+/// user's preference.
+class _MorningBriefingHourRow extends ConsumerWidget {
+  const _MorningBriefingHourRow();
+
+  Future<void> _pick(BuildContext context, WidgetRef ref, int current) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: current, minute: 0),
+      helpText: 'Morning Briefing 时间',
+      builder: (ctx, child) => MediaQuery(
+        data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+        child: child ?? const SizedBox.shrink(),
+      ),
+    );
+    if (picked == null) return;
+    await ref.read(morningBriefingHourProvider.notifier).set(picked.hour);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hour = ref.watch(morningBriefingHourProvider);
+    final label = hour.toString().padLeft(2, '0');
+    return InlineLinkRow(
+      icon: FLucideIcons.clock,
+      label: 'Briefing 时间',
+      subtitle: '每日大约 $label:00 触发 (后台调度窗口浮动)',
+      trailingValue: '$label:00',
+      onTap: () => _pick(context, ref, hour),
     );
   }
 }

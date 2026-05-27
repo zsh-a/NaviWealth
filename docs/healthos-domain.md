@@ -195,9 +195,12 @@ Shell §6 contract 保持跨域中立:`EventRecord` / `MemoryRecord` 没有 heal
 - ✅ Background fetch / WorkManager(`package:workmanager`,顶层 `lifeosBackgroundCallback` 设 `kMorningBriefingDueAtKey` flag + 占位通知;前台 cold-start 读 flag 跑完整 agent → 写终态通知替换)
 
 **未做**:
-- Today 顶部卡片 UI(briefing 现在只通过通知 + Memory 访问)
-- 用户可配通知时段(硬编码 07:00 ±5min)
 - 跨域 agent 编排框架(单个 Briefing 暂够用,多 agent 时再抽)
+- iOS sleep segment→session 合并(同晚 3-7 行 caveat)
+
+**已落地** (2026-05-27, D-2 wrap-up 批次):
+- ✅ Today 顶部卡片 UI(`features/health/ui/health_today_page.dart`):读 `latestMorningBriefingProvider`(`recall(source: kMorningBriefingMemorySource)`)渲染最新 briefing summary + 相对时间 + LLM/auto 来源 pill;空态时显示 "Run briefing now" 按钮直接调 `manualMorningBriefingRunProvider`。
+- ✅ 用户可配通知时段(`features/health/data/morning_briefing_preferences.dart`):`morningBriefingHourProvider` (0–23,SharedPreferences `lifeos.health.briefing.hourLocal`,默认 7);`MorningBriefingAgent` 接 `hourLocal` 参数,bootstrap override 注入;Settings → HealthOS 加 "Briefing 时间" 行(`showTimePicker` 24h 模式选小时)。背景 workmanager 仍按 OS 窗口触发,hour 主要影响 `AgentSchedule.preferredHourLocal`(in-process tick)+ 用户意图记录。
 
 **架构**: `core/ai/agents/` 通用框架 + `features/health/agents/morning_briefing_agent.dart` 具名 impl。Bootstrap 在 Health opt-in 时 `agentRegistryProvider` append `morningBriefingAgentProvider`。Manual trigger 经 `AgentRunner.runOnce(agent, ctx)`,可从 Settings 触发(follow-up UI)。
 

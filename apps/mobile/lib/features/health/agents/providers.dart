@@ -13,6 +13,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_runner.dart';
+import '../../../core/ai/contracts/memory_record.dart';
+import '../../../core/ai/local/memory/providers.dart' as memory_providers;
+import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../../../core/background/background_scheduler.dart';
@@ -80,3 +83,30 @@ Future<AgentRunResult> runMorningBriefingNow(Ref ref) async {
     AgentContext(ref: ref, now: DateTime.now().toUtc()),
   );
 }
+
+/// Most recent `morning_briefing` memory record, or `null` when none
+/// have been produced yet (or HealthOS is off). Used by the HealthOS
+/// Today page to render the briefing card.
+///
+/// Re-fires whenever [manualMorningBriefingRunProvider] or
+/// [pendingBriefingRunProvider] complete so the card refreshes after a
+/// run without a manual invalidate.
+final latestMorningBriefingProvider =
+    FutureProvider.autoDispose<MemoryRecord?>((ref) async {
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+      // Re-run when a manual/pending briefing run completes so the
+      // card picks up the new memory id without an extra refresh.
+      ref.watch(manualMorningBriefingRunProvider);
+      ref.watch(pendingBriefingRunProvider);
+      final runtime = await ref.watch(memory_providers.memoryRuntimeProvider.future);
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      final hits = await runtime.recall(
+        ownerUserId: ownerUserId,
+        source: kMorningBriefingMemorySource,
+        kinds: const <MemoryKind>{MemoryKind.episodic},
+        topK: 1,
+      );
+      if (hits.isEmpty) return null;
+      return hits.first.record;
+    });

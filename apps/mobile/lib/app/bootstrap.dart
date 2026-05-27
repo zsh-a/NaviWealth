@@ -52,6 +52,7 @@ import '../features/health/agents/briefing_synthesizer.dart';
 import '../features/health/agents/morning_briefing_agent.dart';
 import '../features/health/agents/providers.dart' as health_agent_providers;
 import '../features/health/composition/health_domain_shell.dart';
+import '../features/health/data/morning_briefing_preferences.dart';
 import '../features/health_ai_tools.dart';
 import '../features/home/composition/finance_chat_rail_provider.dart';
 import '../l10n/gen/app_localizations.dart';
@@ -175,12 +176,14 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       morningBriefingAgentProvider.overrideWith((ref) {
         final runtime = ref.watch(ai_chat_providers.deviceLlmRuntimeProvider);
         final notifier = ref.watch(notif_providers.notificationServiceProvider);
+        final hourLocal = ref.watch(morningBriefingHourProvider);
         final BriefingSynthesizer synth = runtime != null
             ? LlmBriefingSynthesizer(client: runtime.client)
             : const ProgrammaticBriefingSynthesizer();
         return MorningBriefingAgent(
           synthesizer: synth,
           notifier: notifier,
+          hourLocal: hourLocal,
         );
       }),
       // D-1.6b (`docs/lifeos-shell.md` §4): FinanceOS supplies the
