@@ -84,7 +84,7 @@ class _TrendCard extends ConsumerWidget {
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: textTheme.bodySmall?.copyWith(color: scheme.outline),
+              style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSpacing.s12),
             SizedBox(
@@ -105,7 +105,7 @@ class _TrendCard extends ConsumerWidget {
                       child: Text(
                         'Not enough data yet.',
                         style: textTheme.bodySmall
-                            ?.copyWith(color: scheme.outline),
+                            ?.copyWith(color: scheme.onSurfaceVariant),
                       ),
                     );
                   }

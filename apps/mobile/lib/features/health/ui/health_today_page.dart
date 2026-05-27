@@ -187,9 +187,9 @@ class _RecoveryCard extends StatelessWidget {
 
   static Color _verdictColor(String v, ColorScheme scheme) => switch (v) {
         'rested' => scheme.primary,
-        'balanced' => scheme.outline,
+        'balanced' => scheme.onSurfaceVariant,
         'strained' => scheme.error,
-        _ => scheme.outline,
+        _ => scheme.onSurfaceVariant,
       };
 }
 
@@ -215,11 +215,11 @@ class _MetricCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(icon, size: 16, color: scheme.outline),
+                Icon(icon, size: 16, color: scheme.onSurfaceVariant),
                 const SizedBox(width: AppSpacing.s4),
                 Text(
                   label,
-                  style: textTheme.labelMedium?.copyWith(color: scheme.outline),
+                  style: textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -250,7 +250,7 @@ class _ValueBig extends StatelessWidget {
         Text(
           sub,
           style: textTheme.bodySmall
-              ?.copyWith(color: subColor ?? scheme.outline),
+              ?.copyWith(color: subColor ?? scheme.onSurfaceVariant),
         ),
       ],
     );
@@ -267,11 +267,11 @@ class _ValueDash extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('—', style: textTheme.titleLarge?.copyWith(color: scheme.outline)),
+        Text('—', style: textTheme.titleLarge?.copyWith(color: scheme.onSurfaceVariant)),
         const SizedBox(height: 2),
         Text(
           'no data',
-          style: textTheme.bodySmall?.copyWith(color: scheme.outline),
+          style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
         ),
       ],
     );
@@ -379,7 +379,7 @@ class _BriefingCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.s8),
             Text(
               _formatRelative(r.updatedAt),
-              style: textTheme.bodySmall?.copyWith(color: scheme.outline),
+              style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -400,7 +400,7 @@ class _BriefingEmpty extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Row(
           children: [
-            Icon(Icons.wb_twilight_outlined, color: scheme.outline),
+            Icon(Icons.wb_twilight_outlined, color: scheme.onSurfaceVariant),
             const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Column(
@@ -411,7 +411,7 @@ class _BriefingEmpty extends StatelessWidget {
                   Text(
                     'Tap Run now below to generate today\'s briefing.',
                     style: textTheme.bodySmall?.copyWith(
-                      color: scheme.outline,
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
                 ],

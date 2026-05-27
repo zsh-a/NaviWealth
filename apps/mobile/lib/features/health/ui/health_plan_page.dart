@@ -87,11 +87,11 @@ class _RecoveryCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.s8),
               Text(
                 out['note'] as String,
-                style: textTheme.bodySmall?.copyWith(color: scheme.outline),
+                style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
               ),
             ],
             const Divider(height: AppSpacing.s24),
-            Text('Inputs', style: textTheme.labelMedium?.copyWith(color: scheme.outline)),
+            Text('Inputs', style: textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant)),
             const SizedBox(height: AppSpacing.s8),
             _InputRow(
               label: 'HRV (recent avg)',
@@ -124,9 +124,9 @@ class _RecoveryCard extends StatelessWidget {
 
   static Color _verdictColor(String v, ColorScheme scheme) => switch (v) {
         'rested' => scheme.primary,
-        'balanced' => scheme.outline,
+        'balanced' => scheme.onSurfaceVariant,
         'strained' => scheme.error,
-        _ => scheme.outline,
+        _ => scheme.onSurfaceVariant,
       };
 
   static String _verdictHeadline(String v) => switch (v) {
@@ -166,7 +166,7 @@ class _InputRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: textTheme.bodySmall?.copyWith(color: scheme.outline),
+              style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ),
           Text(value, style: textTheme.bodyMedium),
@@ -203,7 +203,7 @@ class _OffCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Row(
           children: [
-            Icon(Icons.info_outline, color: scheme.outline),
+            Icon(Icons.info_outline, color: scheme.onSurfaceVariant),
             const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Text(
@@ -249,7 +249,7 @@ class _DisclaimerCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
       child: Text(
         '不是医学诊断,仅供日常作息判断。HealthOS 不会自动调整你的日程。',
-        style: textTheme.bodySmall?.copyWith(color: scheme.outline),
+        style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
       ),
     );
   }
