@@ -136,11 +136,17 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
 
     final platformPrefix = Platform.isIOS ? 'hk' : 'hc';
 
-    final sleepSessions = points
+    final rawSleep = points
         .where((p) => p.type == sleepType)
         .map(_sleepFrom)
         .whereType<RawSleepSession>()
         .toList(growable: false);
+    // iOS emits per-segment SLEEP_ASLEEP rows (3–7 per night). Merge
+    // them into one row per night so the Today UI + AI tools don't have
+    // to count segments. On Android the gap threshold guarantees this
+    // is a no-op (whole sessions don't fall within 30 min of each
+    // other unless the source recorded them that way).
+    final sleepSessions = mergeSleepSegments(rawSleep);
 
     final hrv = _aggregateDailyAverage(
       points: points.where((p) => p.type == hrvType),

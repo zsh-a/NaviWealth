@@ -125,6 +125,102 @@ class HealthPlatformSnapshot {
       vo2Max.length;
 }
 
+/// Default gap (≤ this much time between two `asleep` segments → same
+/// night). Empirically Apple Watch can split a single night into 3–7
+/// `SLEEP_ASLEEP` segments separated by awake-in-bed gaps; 30 minutes
+/// captures the typical awakening / bathroom break without collapsing
+/// genuinely separate sleeps (e.g. an afternoon nap).
+const Duration kSleepSegmentMergeGap = Duration(minutes: 30);
+
+/// Coalesce per-segment sleep rows into one row per night.
+///
+/// iOS HealthKit exports `HKCategoryTypeIdentifierSleepAnalysis` as
+/// per-segment values; one calendar night with a couple of awakenings
+/// arrives as 3–7 [RawSleepSession] entries. Android Health Connect
+/// already supplies whole sessions so on that platform this is a no-op
+/// (no segments will be within `gap` of each other unless the source
+/// recorded them that way).
+///
+/// **Inputs**: any iterable of segments (may be in any order).
+/// **Output**: list of merged sessions, ordered by [RawSleepSession.startedAt].
+///
+/// Merging rule: two consecutive segments collapse when the second's
+/// `startedAt` is at most [gap] after the first's end. Merged session
+/// duration = sum of all segments' durations (not span end-start —
+/// that would double-count awake gaps). Merged `externalId` is keyed
+/// on the first segment's UTC start so repeated syncs of the same
+/// segment set hit the same row.
+///
+/// `sourceDevice` is the first segment's device; an honest "merged from
+/// N segments" provenance hint goes into `stageHistogramJson` when
+/// already-null, otherwise the first segment's payload wins (no merge
+/// loss for the rare case where the user already attached a note).
+List<RawSleepSession> mergeSleepSegments(
+  Iterable<RawSleepSession> segments, {
+  Duration gap = kSleepSegmentMergeGap,
+}) {
+  final sorted = segments.toList()
+    ..sort((a, b) => a.startedAt.compareTo(b.startedAt));
+  if (sorted.length < 2) return List<RawSleepSession>.unmodifiable(sorted);
+
+  final merged = <RawSleepSession>[];
+  var bucket = <RawSleepSession>[sorted.first];
+  var bucketEnd = sorted.first.startedAt.add(sorted.first.duration);
+
+  RawSleepSession flush(List<RawSleepSession> b) {
+    final first = b.first;
+    if (b.length == 1) return first;
+    final totalDuration = b.fold<Duration>(
+      Duration.zero,
+      (acc, s) => acc + s.duration,
+    );
+    final device = b
+        .firstWhere(
+          (s) => s.sourceDevice != null,
+          orElse: () => first,
+        )
+        .sourceDevice;
+    final existingPayload = b
+        .firstWhere(
+          (s) => s.stageHistogramJson != null,
+          orElse: () => first,
+        )
+        .stageHistogramJson;
+    // Keep the prefix of the underlying segments so the merged id stays
+    // `hk:…` on iOS and `hc:…` on Android (Android shouldn't actually
+    // produce merged buckets, but be defensive). Falls back to `hk` for
+    // synthetic test inputs that don't use a prefix.
+    final firstId = first.externalId;
+    final prefix = firstId.contains(':')
+        ? firstId.substring(0, firstId.indexOf(':'))
+        : 'hk';
+    return RawSleepSession(
+      externalId:
+          '$prefix:sleep:merged:${first.startedAt.toIso8601String()}',
+      startedAt: first.startedAt,
+      duration: totalDuration,
+      sourceDevice: device,
+      stageHistogramJson:
+          existingPayload ?? '{"merged_segments":${b.length}}',
+    );
+  }
+
+  for (var i = 1; i < sorted.length; i++) {
+    final s = sorted[i];
+    if (s.startedAt.difference(bucketEnd) <= gap) {
+      bucket.add(s);
+      final sEnd = s.startedAt.add(s.duration);
+      if (sEnd.isAfter(bucketEnd)) bucketEnd = sEnd;
+    } else {
+      merged.add(flush(bucket));
+      bucket = <RawSleepSession>[s];
+      bucketEnd = s.startedAt.add(s.duration);
+    }
+  }
+  merged.add(flush(bucket));
+  return List<RawSleepSession>.unmodifiable(merged);
+}
+
 /// One sleep session that has already ended (no in-progress sessions).
 class RawSleepSession {
   const RawSleepSession({
