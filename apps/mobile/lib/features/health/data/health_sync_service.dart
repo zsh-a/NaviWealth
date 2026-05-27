@@ -174,6 +174,11 @@ class HealthSyncService {
       final r = await _upsertIfChanged(m);
       r == _WriteOutcome.upserted ? upserted++ : unchanged++;
     }
+    for (final d in snapshot.distanceWalkingRunning) {
+      final m = _dailyMetric(d, HealthMetricKind.distanceWalkingRunningDaily);
+      final r = await _upsertIfChanged(m);
+      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
+    }
 
     return HealthSyncResult(
       startedAt: startedAt,

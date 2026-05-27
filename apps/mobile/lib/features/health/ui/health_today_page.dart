@@ -56,6 +56,8 @@ class _MetricGrid extends ConsumerWidget {
     final hrv = ref.watch(latestHrvProvider);
     final workout = ref.watch(latestWorkoutProvider);
     final recovery = ref.watch(recoverySignalProvider);
+    final steps = ref.watch(latestStepsProvider);
+    final energy = ref.watch(latestActiveEnergyProvider);
 
     return Column(
       children: [
@@ -72,6 +74,14 @@ class _MetricGrid extends ConsumerWidget {
             Expanded(child: _RecoveryCard(async: recovery)),
             const SizedBox(width: AppSpacing.s8),
             Expanded(child: _WorkoutCard(async: workout)),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        Row(
+          children: [
+            Expanded(child: _StepsCard(async: steps)),
+            const SizedBox(width: AppSpacing.s8),
+            Expanded(child: _ActiveEnergyCard(async: energy)),
           ],
         ),
       ],
@@ -142,6 +152,63 @@ class _WorkoutCard extends StatelessWidget {
           final minutes = (m.value / 60).round();
           return _ValueBig(
             value: '${minutes}min',
+            sub: _ago(m.capturedAt),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _StepsCard extends ConsumerWidget {
+  const _StepsCard({required this.async});
+  final AsyncValue<HealthMetric?> async;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final walking = ref.watch(latestWalkingDistanceProvider);
+    return _MetricCard(
+      icon: Icons.directions_walk,
+      label: 'Steps',
+      child: async.when(
+        loading: () => const _ValueSkeleton(),
+        error: (e, _) => const _ValueDash(),
+        data: (m) {
+          if (m == null) return const _ValueDash();
+          // Pair the distance line with steps when both refer to the
+          // same UTC day; otherwise fall back to the time-ago line so
+          // we don't show a stale-day distance next to today's steps.
+          final stepsDay = _utcDayKey(m.capturedAt);
+          final wm = walking.asData?.value;
+          final sub = wm != null && _utcDayKey(wm.capturedAt) == stepsDay
+              ? '${(wm.value / 1000.0).toStringAsFixed(1)} km · ${_ago(m.capturedAt)}'
+              : _ago(m.capturedAt);
+          return _ValueBig(
+            value: _formatSteps(m.value),
+            sub: sub,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ActiveEnergyCard extends StatelessWidget {
+  const _ActiveEnergyCard({required this.async});
+  final AsyncValue<HealthMetric?> async;
+
+  @override
+  Widget build(BuildContext context) {
+    return _MetricCard(
+      icon: Icons.local_fire_department_outlined,
+      label: 'Active energy',
+      child: async.when(
+        loading: () => const _ValueSkeleton(),
+        error: (e, _) => const _ValueDash(),
+        data: (m) {
+          if (m == null) return const _ValueDash();
+          return _ValueBig(
+            value: '${m.value.round()} kcal',
             sub: _ago(m.capturedAt),
           );
         },
@@ -317,6 +384,20 @@ double _secondsToHours(double value, String unit) => switch (unit) {
     };
 
 double _round(double v) => (v * 100).round() / 100.0;
+
+String _utcDayKey(DateTime t) =>
+    t.toUtc().toIso8601String().substring(0, 10);
+
+String _formatSteps(double v) {
+  final n = v.round();
+  final s = n.toString();
+  final buf = StringBuffer();
+  for (var i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
+    buf.write(s[i]);
+  }
+  return buf.toString();
+}
 
 String _ago(DateTime when) {
   final now = DateTime.now();

@@ -57,6 +57,7 @@ class HealthPlatformSnapshot {
     this.bodyFat = const <RawPointValue>[],
     this.workouts = const <RawWorkoutSession>[],
     this.vo2Max = const <RawDailyValue>[],
+    this.distanceWalkingRunning = const <RawDailyValue>[],
   });
 
   const HealthPlatformSnapshot.empty()
@@ -68,7 +69,8 @@ class HealthPlatformSnapshot {
         weight = const <RawPointValue>[],
         bodyFat = const <RawPointValue>[],
         workouts = const <RawWorkoutSession>[],
-        vo2Max = const <RawDailyValue>[];
+        vo2Max = const <RawDailyValue>[],
+        distanceWalkingRunning = const <RawDailyValue>[];
 
   /// One [RawSleepSession] per ended sleep session (HealthKit
   /// `HKCategoryTypeIdentifierSleepAnalysis` of stage `asleep*`;
@@ -111,6 +113,12 @@ class HealthPlatformSnapshot {
   /// the adapter needs to change.
   final List<RawDailyValue> vo2Max;
 
+  /// Daily walking + running distance (meters). HK
+  /// `HKQuantityTypeIdentifierDistanceWalkingRunning` / HC
+  /// `DistanceRecord`. Independent of `workouts` — captures background
+  /// strolls + commute that don't get recorded as a session.
+  final List<RawDailyValue> distanceWalkingRunning;
+
   /// Total number of raw readings across every list — handy for
   /// "fetched N readings" status text without re-summing in the UI.
   int get totalCount =>
@@ -122,7 +130,8 @@ class HealthPlatformSnapshot {
       weight.length +
       bodyFat.length +
       workouts.length +
-      vo2Max.length;
+      vo2Max.length +
+      distanceWalkingRunning.length;
 }
 
 /// Default gap (≤ this much time between two `asleep` segments → same

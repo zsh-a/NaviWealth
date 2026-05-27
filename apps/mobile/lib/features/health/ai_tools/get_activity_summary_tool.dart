@@ -23,12 +23,13 @@ class GetActivitySummaryTool implements DeviceTool {
 
   @override
   String get description =>
-      '返回最近 N 天的每日活动汇总:步数 + 主动消耗卡路里 (active energy) + workout 汇总 '
-      '(条数 / 总时长 / 总距离)。'
-      '数据来自端侧 `health_metrics` 表的 `steps_daily` / `active_energy_daily` / `workout_session`,'
-      '按日期 join (workout 按 capturedAt 落到所在 UTC 日)。'
+      '返回最近 N 天的每日活动汇总:步数 + 全天步行/跑步距离 (walking_distance_km) + '
+      '主动消耗卡路里 (active energy) + workout 汇总 (条数 / 总时长 / workout 距离)。'
+      '数据来自端侧 `health_metrics` 表的 `steps_daily` / `distance_walking_running_daily` / '
+      '`active_energy_daily` / `workout_session`,按日期 join (workout 按 capturedAt 落到所在 UTC 日)。'
+      'walking_distance_km 是全天步行+跑步距离(包含通勤/散步),workout_distance_km 只算运动 session。'
       '适合场景:"最近一周走了多少步" / "周末和工作日的活动差异" / "今天步数够不够" / '
-      '"上周训练多少次"。'
+      '"上周训练多少次" / "这周走了多少公里"。'
       '当 HealthOS 未启用或缺少某一类数据时,对应字段会留为 null;'
       '完全空时返回空 `days` + `note`,建议用户启用 Health。';
 
@@ -67,6 +68,11 @@ class GetActivitySummaryTool implements DeviceTool {
       kind: HealthMetricKind.activeEnergyDaily,
       limit: daysBack + 5,
     );
+    final walkRows = await repo.listByKind(
+      ownerUserId: ownerUserId,
+      kind: HealthMetricKind.distanceWalkingRunningDaily,
+      limit: daysBack + 5,
+    );
     // A heavy user might log 3–5 workouts/day; pull a generous buffer
     // so we don't crop the window short. listByKind orders newest
     // first, the shaper filters by window.
@@ -80,6 +86,7 @@ class GetActivitySummaryTool implements DeviceTool {
       steps: stepRows,
       energy: energyRows,
       workouts: workoutRows,
+      walkingDistance: walkRows,
       daysBack: daysBack,
       now: now,
     );
@@ -90,6 +97,7 @@ class GetActivitySummaryTool implements DeviceTool {
     required List<HealthMetric> steps,
     required List<HealthMetric> energy,
     List<HealthMetric> workouts = const <HealthMetric>[],
+    List<HealthMetric> walkingDistance = const <HealthMetric>[],
     required int daysBack,
     required DateTime now,
   }) {
@@ -122,6 +130,20 @@ class GetActivitySummaryTool implements DeviceTool {
       if (prevAt == null || m.capturedAt.isAfter(prevAt)) {
         kcalByDay[key] = m.value;
         kcalCapturedAt[key] = m.capturedAt;
+      }
+    }
+
+    // Walking + running distance (meters). Same latest-wins-per-day rule
+    // as steps/energy; the platform writes one daily aggregate row.
+    final walkMetersByDay = <String, double>{};
+    final walkCapturedAt = <String, DateTime>{};
+    for (final m in walkingDistance) {
+      if (!inWindow(m.capturedAt)) continue;
+      final key = dayKey(m.capturedAt);
+      final prevAt = walkCapturedAt[key];
+      if (prevAt == null || m.capturedAt.isAfter(prevAt)) {
+        walkMetersByDay[key] = m.value;
+        walkCapturedAt[key] = m.capturedAt;
       }
     }
 
@@ -161,6 +183,7 @@ class GetActivitySummaryTool implements DeviceTool {
     final allDays = <String>{
       ...stepsByDay.keys,
       ...kcalByDay.keys,
+      ...walkMetersByDay.keys,
       ...workoutCountByDay.keys,
     }.toList()
       ..sort();
@@ -169,9 +192,12 @@ class GetActivitySummaryTool implements DeviceTool {
     var stepDayCount = 0;
     var kcalTotal = 0.0;
     var kcalDayCount = 0;
+    var walkMetersTotal = 0.0;
+    var walkDayCount = 0;
     for (final d in allDays) {
       final steps = stepsByDay[d];
       final kcal = kcalByDay[d];
+      final walkMeters = walkMetersByDay[d];
       if (steps != null) {
         stepTotal += steps;
         stepDayCount += 1;
@@ -180,12 +206,18 @@ class GetActivitySummaryTool implements DeviceTool {
         kcalTotal += kcal;
         kcalDayCount += 1;
       }
+      if (walkMeters != null) {
+        walkMetersTotal += walkMeters;
+        walkDayCount += 1;
+      }
       final workoutCount = workoutCountByDay[d];
       final workoutSeconds = workoutSecondsByDay[d];
       final workoutDistance = workoutDistanceByDay[d];
       days.add(<String, Object?>{
         'date': d,
         'steps': steps?.round(),
+        'walking_distance_km':
+            walkMeters == null ? null : _round(walkMeters / 1000.0),
         'active_kcal': kcal == null ? null : _round(kcal),
         'workout_count': workoutCount,
         'workout_minutes':
@@ -205,6 +237,12 @@ class GetActivitySummaryTool implements DeviceTool {
         'average_steps': stepDayCount == 0
             ? null
             : (stepTotal / stepDayCount).round(),
+        'total_walking_distance_km':
+            walkDayCount == 0 ? null : _round(walkMetersTotal / 1000.0),
+        'average_walking_distance_km': walkDayCount == 0
+            ? null
+            : _round((walkMetersTotal / walkDayCount) / 1000.0),
+        'walking_day_count': walkDayCount,
         'total_active_kcal': _round(kcalTotal),
         'average_active_kcal':
             kcalDayCount == 0 ? null : _round(kcalTotal / kcalDayCount),
