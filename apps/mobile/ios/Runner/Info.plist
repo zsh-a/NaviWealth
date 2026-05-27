@@ -22,6 +22,13 @@
 	<string>用于拍摄收据/账单照片，自动解析为待确认的交易草稿。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>用于选择收据/账单图片，自动解析为待确认的交易草稿。</string>
+	<!-- D-2.2 (`docs/healthos-domain.md` §2) — HealthKit read-only access
+	     for睡眠 / HRV / 静息心率 / 步数 / 体重 / 体脂 / 活动卡路里.
+	     iOS terminates the app on first HealthKit access without these.
+	     `NSHealthUpdateUsageDescription` is omitted — HealthOS never
+	     writes back to HealthKit (`healthos-domain.md` §10 反目标). -->
+	<key>NSHealthShareUsageDescription</key>
+	<string>用于读取你的睡眠、心率变异性、步数等健康数据，在 HealthOS 中本地呈现趋势与恢复信号（不上传服务器，也不写回 HealthKit）。</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

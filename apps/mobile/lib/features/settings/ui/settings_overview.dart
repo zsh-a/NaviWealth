@@ -18,6 +18,8 @@ import '../../auth/data/auth_controller.dart';
 import '../../expense/data/expense_report_providers.dart';
 import '../../fire/data/fire_plan_preferences.dart';
 import '../../fire/domain/fire_plan.dart';
+import '../../health/data/health_sync_service.dart';
+import '../../health/data/providers.dart' as health_data;
 import '../../rebalance/data/rebalance_providers.dart';
 import '../../rebalance/domain/allocation_schemes.dart';
 import '../../rebalance/ui/target_allocation_editor_sheet.dart';
@@ -855,8 +857,76 @@ class _DomainsSection extends ConsumerWidget {
             subtitle: '预览页面 (D-2.3 placeholder)',
             onTap: () => context.goNamed(AppRouteNames.healthToday),
           ),
+          _SectionDivider(),
+          const _HealthPlatformSyncRow(),
         ],
       ],
+    );
+  }
+}
+
+/// D-2.2 — manual "Sync from HealthKit / Health Connect" trigger.
+///
+/// Shown only when HealthOS is opt-in. Tapping requests permissions on
+/// first use, then pulls the last 30 days into `health_metrics`.
+/// Background fetch / WorkManager scheduling lands in D-2.5b; this is
+/// the dogfood path until then.
+class _HealthPlatformSyncRow extends ConsumerStatefulWidget {
+  const _HealthPlatformSyncRow();
+
+  @override
+  ConsumerState<_HealthPlatformSyncRow> createState() =>
+      _HealthPlatformSyncRowState();
+}
+
+class _HealthPlatformSyncRowState
+    extends ConsumerState<_HealthPlatformSyncRow> {
+  bool _running = false;
+  HealthSyncResult? _lastResult;
+
+  Future<void> _run() async {
+    if (_running) return;
+    setState(() => _running = true);
+    try {
+      final service = await ref.read(
+        health_data.healthSyncServiceProvider.future,
+      );
+      // Permissions are a precondition — request them if missing so the
+      // user doesn't have to remember to do a separate "Connect" step.
+      if (!await service.hasPermissions()) {
+        final granted = await service.requestPermissions();
+        if (!granted) {
+          setState(() {
+            _lastResult = HealthSyncResult.skipped(
+              startedAt: DateTime.now().toUtc(),
+              errorMessage: '权限被拒绝 — 在系统 Health 设置里再试',
+            );
+          });
+          return;
+        }
+      }
+      final result = await service.syncRange();
+      setState(() => _lastResult = result);
+    } finally {
+      if (mounted) setState(() => _running = false);
+    }
+  }
+
+  String _subtitle() {
+    final r = _lastResult;
+    if (_running) return '正在拉取…';
+    if (r == null) return '从 HealthKit / Health Connect 拉取最近 30 天数据';
+    if (!r.ok) return r.errorMessage ?? '上次同步失败';
+    return '上次同步: ${r.upserted} 新写入 / ${r.unchanged} 未变 · 拉取 ${r.totalFetched} 项';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InlineLinkRow(
+      icon: FLucideIcons.refreshCcw,
+      label: 'Sync from HealthKit / Health Connect',
+      subtitle: _subtitle(),
+      onTap: _running ? () {} : _run,
     );
   }
 }

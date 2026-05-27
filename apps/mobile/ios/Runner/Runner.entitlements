@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- D-2.2 — HealthKit entitlement. After this file is created, open
+	     Runner.xcodeproj in Xcode and add "HealthKit" under Signing &
+	     Capabilities for the Runner target so the file is wired into
+	     CODE_SIGN_ENTITLEMENTS. The framework auto-links once the
+	     capability is on. We don't request `health-records` (read-only
+	     metrics; medical records are not part of HealthOS scope). -->
+	<key>com.apple.developer.healthkit</key>
+	<true/>
+	<key>com.apple.developer.healthkit.access</key>
+	<array/>
+</dict>
+</plist>

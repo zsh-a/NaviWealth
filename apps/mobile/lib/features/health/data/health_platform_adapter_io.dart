@@ -1,0 +1,322 @@
+/// Native (iOS / Android) implementation of [HealthPlatformAdapter]
+/// backed by `package:health` (`docs/healthos-domain.md` §2, D-2.2).
+///
+/// HealthKit / Health Connect type mapping:
+///
+/// | HealthOS kind         | iOS HK type                              | Android HC type                                    |
+/// |-----------------------|------------------------------------------|----------------------------------------------------|
+/// | sleepSession          | `SLEEP_ASLEEP` (per segment)             | `SLEEP_SESSION` (per session)                       |
+/// | hrvDaily              | `HEART_RATE_VARIABILITY_SDNN`            | `HEART_RATE_VARIABILITY_RMSSD`                      |
+/// | rhrDaily              | `RESTING_HEART_RATE`                     | `RESTING_HEART_RATE`                                |
+/// | stepsDaily            | `STEPS`                                  | `STEPS`                                             |
+/// | activeEnergyDaily     | `ACTIVE_ENERGY_BURNED`                   | `ACTIVE_ENERGY_BURNED`                              |
+/// | weight                | `WEIGHT`                                 | `WEIGHT`                                            |
+/// | bodyFat               | `BODY_FAT_PERCENTAGE` (0–100 → /100)     | `BODY_FAT_PERCENTAGE` (0–100 → /100)                |
+///
+/// **iOS sleep MVP caveat**: HealthKit returns per-segment
+/// `SLEEP_ASLEEP` entries — one nightly sleep can become 3–7 segments
+/// depending on awakenings. We emit one [RawSleepSession] per segment
+/// for now; the Memory indexer downstream tolerates extra rows because
+/// the AI tools aggregate by day anyway. Proper segment→session
+/// merging is a follow-up.
+library;
+
+import 'dart:io';
+
+import 'package:health/health.dart';
+
+import 'health_platform_adapter.dart';
+
+HealthPlatformAdapter createHealthPlatformAdapter() =>
+    _HealthPackageAdapter();
+
+class _HealthPackageAdapter implements HealthPlatformAdapter {
+  _HealthPackageAdapter();
+
+  final Health _health = Health();
+  bool _configured = false;
+
+  Future<void> _ensureConfigured() async {
+    if (_configured) return;
+    await _health.configure();
+    _configured = true;
+  }
+
+  List<HealthDataType> get _types {
+    if (Platform.isIOS) {
+      return const <HealthDataType>[
+        HealthDataType.SLEEP_ASLEEP,
+        HealthDataType.HEART_RATE_VARIABILITY_SDNN,
+        HealthDataType.RESTING_HEART_RATE,
+        HealthDataType.STEPS,
+        HealthDataType.ACTIVE_ENERGY_BURNED,
+        HealthDataType.WEIGHT,
+        HealthDataType.BODY_FAT_PERCENTAGE,
+      ];
+    }
+    if (Platform.isAndroid) {
+      return const <HealthDataType>[
+        HealthDataType.SLEEP_SESSION,
+        HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
+        HealthDataType.RESTING_HEART_RATE,
+        HealthDataType.STEPS,
+        HealthDataType.ACTIVE_ENERGY_BURNED,
+        HealthDataType.WEIGHT,
+        HealthDataType.BODY_FAT_PERCENTAGE,
+      ];
+    }
+    return const <HealthDataType>[];
+  }
+
+  List<HealthDataAccess> _readOnlyPermissions(List<HealthDataType> types) =>
+      List<HealthDataAccess>.filled(types.length, HealthDataAccess.READ);
+
+  @override
+  Future<bool> isAvailable() async {
+    if (!Platform.isIOS && !Platform.isAndroid) return false;
+    await _ensureConfigured();
+    if (Platform.isAndroid) {
+      // On Android the Health Connect app must be installed.
+      try {
+        return await _health.isHealthConnectAvailable();
+      } on Object {
+        return false;
+      }
+    }
+    // iOS: HealthKit is always present on real devices; the simulator
+    // also reports availability but returns empty data.
+    return true;
+  }
+
+  @override
+  Future<bool> hasPermissions() async {
+    if (!await isAvailable()) return false;
+    final types = _types;
+    final result = await _health.hasPermissions(
+      types,
+      permissions: _readOnlyPermissions(types),
+    );
+    return result ?? false;
+  }
+
+  @override
+  Future<bool> requestPermissions() async {
+    if (!await isAvailable()) return false;
+    final types = _types;
+    return _health.requestAuthorization(
+      types,
+      permissions: _readOnlyPermissions(types),
+    );
+  }
+
+  @override
+  Future<HealthPlatformSnapshot> fetchRange({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    if (!await isAvailable()) return const HealthPlatformSnapshot.empty();
+    await _ensureConfigured();
+
+    final List<HealthDataPoint> points = await _health.getHealthDataFromTypes(
+      types: _types,
+      startTime: from,
+      endTime: to,
+    );
+
+    final hrvType = Platform.isIOS
+        ? HealthDataType.HEART_RATE_VARIABILITY_SDNN
+        : HealthDataType.HEART_RATE_VARIABILITY_RMSSD;
+    final sleepType = Platform.isIOS
+        ? HealthDataType.SLEEP_ASLEEP
+        : HealthDataType.SLEEP_SESSION;
+
+    final platformPrefix = Platform.isIOS ? 'hk' : 'hc';
+
+    final sleepSessions = points
+        .where((p) => p.type == sleepType)
+        .map(_sleepFrom)
+        .whereType<RawSleepSession>()
+        .toList(growable: false);
+
+    final hrv = _aggregateDailyAverage(
+      points: points.where((p) => p.type == hrvType),
+      kindWire: 'hrv',
+      platformPrefix: platformPrefix,
+    );
+    final rhr = _aggregateDailyAverage(
+      points: points.where((p) => p.type == HealthDataType.RESTING_HEART_RATE),
+      kindWire: 'rhr',
+      platformPrefix: platformPrefix,
+    );
+    final steps = _aggregateDailySum(
+      points: points.where((p) => p.type == HealthDataType.STEPS),
+      kindWire: 'steps',
+      platformPrefix: platformPrefix,
+    );
+    final active = _aggregateDailySum(
+      points: points.where(
+        (p) => p.type == HealthDataType.ACTIVE_ENERGY_BURNED,
+      ),
+      kindWire: 'active_energy',
+      platformPrefix: platformPrefix,
+    );
+
+    final weight = points
+        .where((p) => p.type == HealthDataType.WEIGHT)
+        .map((p) => _pointFrom(p, platformPrefix, scale: 1.0))
+        .whereType<RawPointValue>()
+        .toList(growable: false);
+
+    // Body fat: health package reports PERCENT (0–100); our domain
+    // uses fraction (0.0–1.0). Scale once at the boundary.
+    final bodyFat = points
+        .where((p) => p.type == HealthDataType.BODY_FAT_PERCENTAGE)
+        .map((p) => _pointFrom(p, platformPrefix, scale: 0.01))
+        .whereType<RawPointValue>()
+        .toList(growable: false);
+
+    return HealthPlatformSnapshot(
+      sleepSessions: sleepSessions,
+      hrv: hrv,
+      rhr: rhr,
+      steps: steps,
+      activeEnergy: active,
+      weight: weight,
+      bodyFat: bodyFat,
+    );
+  }
+
+  RawSleepSession? _sleepFrom(HealthDataPoint p) {
+    final duration = p.dateTo.difference(p.dateFrom);
+    if (duration <= Duration.zero) return null;
+    return RawSleepSession(
+      externalId: 'hk:sleep:${p.uuid}',
+      startedAt: p.dateFrom.toUtc(),
+      duration: duration,
+      sourceDevice: _sourceLabel(p),
+    );
+  }
+
+  RawPointValue? _pointFrom(
+    HealthDataPoint p,
+    String platformPrefix, {
+    required double scale,
+  }) {
+    final v = _numericValue(p);
+    if (v == null) return null;
+    return RawPointValue(
+      externalId: '$platformPrefix:${p.type.name.toLowerCase()}:${p.uuid}',
+      measuredAt: p.dateFrom.toUtc(),
+      value: v * scale,
+      sourceDevice: _sourceLabel(p),
+    );
+  }
+
+  /// Group [points] by UTC day and average the numeric values. The
+  /// synthetic [externalId] is `'<prefix>:<kindWire>:<yyyy-mm-dd>'` so
+  /// subsequent syncs replace the same row instead of duplicating.
+  List<RawDailyValue> _aggregateDailyAverage({
+    required Iterable<HealthDataPoint> points,
+    required String kindWire,
+    required String platformPrefix,
+  }) {
+    final buckets = <String, _DailyBucket>{};
+    for (final p in points) {
+      final v = _numericValue(p);
+      if (v == null) continue;
+      final dayKey = _dayKeyUtc(p.dateFrom);
+      final bucket = buckets.putIfAbsent(
+        dayKey,
+        () => _DailyBucket(dayKey: dayKey, source: _sourceLabel(p)),
+      );
+      bucket.add(v);
+    }
+    return buckets.values
+        .map((b) => b.toDaily(
+              externalId: '$platformPrefix:$kindWire:${b.dayKey}',
+              reduce: _Reduce.average,
+            ))
+        .toList(growable: false);
+  }
+
+  List<RawDailyValue> _aggregateDailySum({
+    required Iterable<HealthDataPoint> points,
+    required String kindWire,
+    required String platformPrefix,
+  }) {
+    final buckets = <String, _DailyBucket>{};
+    for (final p in points) {
+      final v = _numericValue(p);
+      if (v == null) continue;
+      final dayKey = _dayKeyUtc(p.dateFrom);
+      final bucket = buckets.putIfAbsent(
+        dayKey,
+        () => _DailyBucket(dayKey: dayKey, source: _sourceLabel(p)),
+      );
+      bucket.add(v);
+    }
+    return buckets.values
+        .map((b) => b.toDaily(
+              externalId: '$platformPrefix:$kindWire:${b.dayKey}',
+              reduce: _Reduce.sum,
+            ))
+        .toList(growable: false);
+  }
+
+  static double? _numericValue(HealthDataPoint p) {
+    final v = p.value;
+    if (v is NumericHealthValue) return v.numericValue.toDouble();
+    return null;
+  }
+
+  static String? _sourceLabel(HealthDataPoint p) {
+    final candidate = p.deviceModel ?? p.sourceName;
+    if (candidate.trim().isEmpty) return null;
+    return candidate;
+  }
+
+  static String _dayKeyUtc(DateTime t) {
+    final utc = t.toUtc();
+    final y = utc.year.toString().padLeft(4, '0');
+    final m = utc.month.toString().padLeft(2, '0');
+    final d = utc.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
+  }
+}
+
+enum _Reduce { sum, average }
+
+class _DailyBucket {
+  _DailyBucket({required this.dayKey, required this.source});
+  final String dayKey;
+  final String? source;
+  double _sum = 0.0;
+  int _count = 0;
+
+  void add(double v) {
+    _sum += v;
+    _count++;
+  }
+
+  RawDailyValue toDaily({
+    required String externalId,
+    required _Reduce reduce,
+  }) {
+    final parts = dayKey.split('-');
+    final day = DateTime.utc(
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+      int.parse(parts[2]),
+    );
+    final value = switch (reduce) {
+      _Reduce.sum => _sum,
+      _Reduce.average => _count == 0 ? 0.0 : _sum / _count,
+    };
+    return RawDailyValue(
+      externalId: externalId,
+      day: day,
+      value: value,
+      sourceDevice: source,
+    );
+  }
+}
