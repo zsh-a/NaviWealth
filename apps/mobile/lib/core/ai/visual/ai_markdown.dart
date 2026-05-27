@@ -33,6 +33,7 @@ import 'package:forui/forui.dart';
 
 import '../../../design_system/tokens/dimens_tokens.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'ai_motion.dart';
 import 'ai_tone.dart';
 import 'ai_typography.dart';
 
@@ -111,10 +112,21 @@ class _AiMarkdownState extends State<AiMarkdown> {
         children.add(SizedBox(height: _gapAfter(blocks[i], blocks[i + 1])));
       }
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: children,
+    // Streaming causes the block list to *restructure* mid-flight —
+    // a "| a | b |" paragraph flips to a Table when the separator
+    // arrives, a new fenced code block opens, etc. Without smoothing,
+    // the bubble snaps between layouts and reads as jittery; with
+    // AnimatedSize keyed off the parsed AST shape, the height change
+    // glides on the AI motion curve.
+    return AnimatedSize(
+      duration: AiMotion.short,
+      curve: AiMotion.standard,
+      alignment: Alignment.topLeft,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: children,
+      ),
     );
   }
 
@@ -238,13 +250,18 @@ class _MdQuote extends _MdBlock {
 }
 
 class _MdListItem {
-  const _MdListItem(this.text, this.marker);
+  const _MdListItem(this.text, this.marker, {this.checkbox});
   final String text;
 
   /// `null` for unordered (bullet); otherwise the displayed prefix
   /// ("1.", "2.", …). Pre-rendered by the parser so we keep the model's
   /// own numbering rather than re-numbering.
   final String? marker;
+
+  /// GFM task-list state. `null` = regular list item, `false` = `[ ]`
+  /// unchecked, `true` = `[x]` / `[X]` checked. When set, the bullet /
+  /// marker is replaced with a checkbox glyph.
+  final bool? checkbox;
 }
 
 class _MdList extends _MdBlock {
@@ -263,7 +280,15 @@ class _MdList extends _MdBlock {
     for (var i = 0; i < items.length; i++) {
       final isLast = i == items.length - 1;
       final item = items[i];
-      final spans = _InlineParser.parse(item.text, base, context);
+      // Completed tasks read with a muted strikethrough so the eye
+      // can sweep the list and see at a glance what is still pending.
+      final lineStyle = item.checkbox == true
+          ? base.copyWith(
+              color: AiTone.muted(context),
+              decoration: TextDecoration.lineThrough,
+            )
+          : base;
+      final spans = _InlineParser.parse(item.text, lineStyle, context);
       if (isLast && trailing != null) spans.add(trailing);
       rows.add(
         Padding(
@@ -271,7 +296,7 @@ class _MdList extends _MdBlock {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _bullet(context, base, item.marker),
+              _marker(context, base, item),
               Expanded(child: _selectableRich(spans, selectable: selectable)),
             ],
           ),
@@ -285,14 +310,44 @@ class _MdList extends _MdBlock {
     );
   }
 
-  Widget _bullet(BuildContext context, TextStyle base, String? marker) {
+  Widget _marker(BuildContext context, TextStyle base, _MdListItem item) {
+    // Checkbox (GFM task list). Drawn as a 14×14 stroked square so it
+    // sits on the AiTone outline scale rather than introducing a new
+    // hue. Checked state fills with the active tone + check glyph.
+    if (item.checkbox != null) {
+      final box = Padding(
+        padding: const EdgeInsets.only(right: AppSpacing.s8, top: 2),
+        child: _TaskCheckbox(checked: item.checkbox!),
+      );
+      // Ordered task items (`1. [x] step`) keep their number so the
+      // outline still reads as a numbered sequence — the checkbox
+      // sits between the number and the text.
+      final marker = item.marker;
+      if (marker != null) {
+        final style = base.copyWith(color: AiTone.muted(context));
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.s4),
+              child: SizedBox(
+                width: 18,
+                child: Text(marker, style: style, textAlign: TextAlign.right),
+              ),
+            ),
+            box,
+          ],
+        );
+      }
+      return box;
+    }
     final style = base.copyWith(color: AiTone.muted(context));
-    if (marker != null) {
+    if (item.marker != null) {
       return Padding(
         padding: const EdgeInsets.only(right: AppSpacing.s8),
         child: SizedBox(
           width: 18,
-          child: Text(marker, style: style, textAlign: TextAlign.right),
+          child: Text(item.marker!, style: style, textAlign: TextAlign.right),
         ),
       );
     }
@@ -310,6 +365,39 @@ class _MdList extends _MdBlock {
           color: AiTone.muted(context),
         ),
       ),
+    );
+  }
+}
+
+/// Read-only GFM task-list checkbox. Non-interactive on purpose: the
+/// state lives in the chat history, not in widget state — toggling
+/// would imply the user could edit the AI's reply, which is not the
+/// contract here.
+class _TaskCheckbox extends StatelessWidget {
+  const _TaskCheckbox({required this.checked});
+  final bool checked;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 14,
+      height: 14,
+      decoration: BoxDecoration(
+        color: checked ? AiTone.active(context) : Colors.transparent,
+        border: Border.all(
+          color: checked ? AiTone.active(context) : AiTone.outline(context),
+          width: 1.2,
+        ),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      alignment: Alignment.center,
+      child: checked
+          ? Icon(
+              FLucideIcons.check,
+              size: 10,
+              color: Theme.of(context).colorScheme.onPrimary,
+            )
+          : null,
     );
   }
 }
@@ -383,17 +471,45 @@ class _MdCode extends _MdBlock {
                 ],
               ),
             ),
-          Padding(
+          // Horizontal scroll: code is structural — soft-wrap mangles
+          // indentation and turns one logical line into two visual
+          // lines, so we let long lines extend off-screen and the
+          // user scrolls. The padding lives *inside* the scroll view
+          // so left/right padding moves with the content (standard
+          // GitHub/IDE behaviour).
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
             padding: EdgeInsets.fromLTRB(
               AppSpacing.s12,
               (lang.isNotEmpty || closed) ? AppSpacing.s2 : AppSpacing.s8,
               AppSpacing.s12,
               AppSpacing.s8,
             ),
-            child: _selectableRich(spans, selectable: selectable),
+            child: _NoSoftWrap(
+              child: _selectableRich(spans, selectable: selectable),
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Disables soft-wrap inside its child by wrapping the descendant
+/// `Text` / `SelectableText` in an unbounded width. Without this, a
+/// `SelectableText` inside a `SingleChildScrollView(horizontal)` still
+/// honours the *outer* viewport width as a soft-wrap hint and the
+/// long lines get broken anyway.
+class _NoSoftWrap extends StatelessWidget {
+  const _NoSoftWrap({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return UnconstrainedBox(
+      constrainedAxis: Axis.vertical,
+      alignment: Alignment.topLeft,
+      child: child,
     );
   }
 }
@@ -583,6 +699,11 @@ class _MdParser {
   static final RegExp _hr = RegExp(r'^\s*(?:-{3,}|\*{3,}|_{3,})\s*$');
   static final RegExp _fence = RegExp(r'^(\s*)(```+)\s*([\w+\-.]*)\s*$');
 
+  /// GFM task-list checkbox prefix inside a list item body. The
+  /// surrounding `- ` / `1. ` is matched by [_unordered]/[_ordered] —
+  /// this regex only consumes the `[ ]` / `[x]` token that follows.
+  static final RegExp _task = RegExp(r'^\[([ xX])\]\s+(.*)$');
+
   /// Candidate table row: at least one internal pipe, whitespace
   /// tolerant. We only commit it to a table once the following line
   /// matches [_tableSep] — otherwise it falls back to paragraph (so a
@@ -692,14 +813,32 @@ class _MdParser {
         while (j < lines.length) {
           final l = lines[j];
           if (l.trim().isEmpty) break;
+          String body;
+          String? marker;
           if (ordered) {
             final m = _ordered.firstMatch(l);
             if (m == null) break;
-            items.add(_MdListItem(m.group(3)!, '${m.group(2)}.'));
+            body = m.group(3)!;
+            marker = '${m.group(2)}.';
           } else {
             final m = _unordered.firstMatch(l);
             if (m == null) break;
-            items.add(_MdListItem(m.group(2)!, null));
+            body = m.group(2)!;
+            marker = null;
+          }
+          final task = _task.firstMatch(body);
+          if (task != null) {
+            // Strip the `[ ]` / `[x]` from the body — the renderer
+            // surfaces it as a checkbox glyph instead. Unordered task
+            // items drop the bullet (checkbox replaces it); ordered
+            // task items keep their number so `1. [x] step` reads
+            // naturally.
+            final checked = task.group(1)! != ' ';
+            items.add(
+              _MdListItem(task.group(2)!, marker, checkbox: checked),
+            );
+          } else {
+            items.add(_MdListItem(body, marker));
           }
           j++;
         }
@@ -830,6 +969,27 @@ class _InlineParser {
         final end = text.indexOf(marker, i + 2);
         flush();
         final childStyle = base.copyWith(fontWeight: FontWeight.w600);
+        final inner = end == -1
+            ? text.substring(i + 2)
+            : text.substring(i + 2, end);
+        _walk(inner, childStyle, context, out);
+        i = end == -1 ? text.length : end + 2;
+        continue;
+      }
+
+      // Strikethrough ~~…~~ (GFM). We keep the existing decoration
+      // (e.g. completed task lines combine line-through + underline?
+      // → no, just override) and toggle line-through on top so nested
+      // `~~**bold gone**~~` works too.
+      if (ch == '~' && i + 1 < text.length && text[i + 1] == '~') {
+        final end = text.indexOf('~~', i + 2);
+        flush();
+        final childStyle = base.copyWith(
+          decoration: TextDecoration.combine([
+            if (base.decoration != null) base.decoration!,
+            TextDecoration.lineThrough,
+          ]),
+        );
         final inner = end == -1
             ? text.substring(i + 2)
             : text.substring(i + 2, end);
