@@ -12,8 +12,9 @@ import 'package:go_router/go_router.dart';
 import '../../../app/domain_tabs_shell.dart';
 import '../../../app/route_paths.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../ui/health_placeholder_page.dart';
+import '../ui/health_plan_page.dart';
 import '../ui/health_today_page.dart';
+import '../ui/health_trend_page.dart';
 import 'health_domain_shell.dart';
 
 /// HealthOS `StatefulShellRoute`: 3 branches (Today / Trend / Plan)
@@ -40,8 +41,7 @@ StatefulShellRoute healthShellRoute() {
           GoRoute(
             path: AppRoutes.healthTrend,
             name: AppRouteNames.healthTrend,
-            builder: (context, state) =>
-                const HealthPlaceholderPage(tab: HealthTab.trend),
+            builder: (context, state) => const HealthTrendPage(),
           ),
         ],
       ),
@@ -50,8 +50,7 @@ StatefulShellRoute healthShellRoute() {
           GoRoute(
             path: AppRoutes.healthPlan,
             name: AppRouteNames.healthPlan,
-            builder: (context, state) =>
-                const HealthPlaceholderPage(tab: HealthTab.plan),
+            builder: (context, state) => const HealthPlanPage(),
           ),
         ],
       ),

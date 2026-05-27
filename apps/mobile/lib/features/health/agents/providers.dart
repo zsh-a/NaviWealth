@@ -21,6 +21,7 @@ import '../../../core/auth/providers.dart' as core_auth;
 import '../../../core/background/background_scheduler.dart';
 import '../../../core/background/providers.dart' as background_providers;
 import '../../../design_system/preferences/theme_preferences.dart';
+import '../data/providers.dart';
 import 'morning_briefing_agent.dart';
 
 /// D-2.5b side-effecting provider — watches the Health domain opt-in
@@ -75,7 +76,23 @@ final manualMorningBriefingRunProvider =
 /// Shared run-now path used by both [pendingBriefingRunProvider] and
 /// [manualMorningBriefingRunProvider]. Public so test scaffolds can
 /// drive the agent without going through workmanager.
+///
+/// **Pulls fresh platform data first** so the briefing reflects last
+/// night's sleep / HRV that the workmanager wakeup couldn't fetch from
+/// the background isolate (Drift + SQLCipher would be expensive there).
+/// Sync errors are swallowed — a stale snapshot is better than no
+/// briefing.
 Future<AgentRunResult> runMorningBriefingNow(Ref ref) async {
+  // Best-effort sync so the agent reads the night that just happened.
+  // Wrapped so a missing service / permissions / network error doesn't
+  // block the briefing from running on whatever data is already in the
+  // local DB.
+  try {
+    final svc = await ref.read(healthSyncServiceProvider.future);
+    await svc.syncRange();
+  } on Object {
+    // Best-effort — sync failure here surfaces in the next manual sync.
+  }
   final runner = await ref.watch(agentRunnerProvider.future);
   final agent = ref.read(morningBriefingAgentProvider);
   return runner.runOnce(

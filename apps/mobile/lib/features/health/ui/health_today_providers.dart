@@ -1,0 +1,101 @@
+/// Today-page state plumbing (`docs/healthos-domain.md` §5, D-2.7).
+///
+/// Each provider exposes a single signal the Today UI renders as a card.
+/// Kept in `features/health/ui/` rather than `data/providers.dart`
+/// because the shapes here are UI-flavoured (recovery `inputs` map,
+/// pre-rounded hours, …) — `data/providers.dart` stays close to the
+/// raw repository.
+library;
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/auth/current_user.dart';
+import '../../../core/auth/domain_scope.dart';
+import '../../../core/auth/providers.dart' as core_auth;
+import '../ai_tools/get_recovery_signal_tool.dart';
+import '../data/providers.dart';
+import '../domain/health_metric.dart';
+import '../domain/health_metric_kind.dart';
+
+/// Newest sleep session row, or `null` when HealthOS is off / no data.
+final latestSleepSessionProvider =
+    FutureProvider.autoDispose<HealthMetric?>((ref) async {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final userId = await ref.read(currentUserIdProvider)();
+  final rows = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.sleepSession,
+    limit: 1,
+  );
+  return rows.isEmpty ? null : rows.first;
+});
+
+/// Newest HRV daily row.
+final latestHrvProvider =
+    FutureProvider.autoDispose<HealthMetric?>((ref) async {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final userId = await ref.read(currentUserIdProvider)();
+  final rows = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.hrvDaily,
+    limit: 1,
+  );
+  return rows.isEmpty ? null : rows.first;
+});
+
+/// Newest workout session row.
+final latestWorkoutProvider =
+    FutureProvider.autoDispose<HealthMetric?>((ref) async {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final userId = await ref.read(currentUserIdProvider)();
+  final rows = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.workoutSession,
+    limit: 1,
+  );
+  return rows.isEmpty ? null : rows.first;
+});
+
+/// Recovery signal output, computed off the same shaper the AI tool
+/// uses. Returned `null` when HealthOS is off so the UI can render an
+/// empty state instead of confusing zeros.
+final recoverySignalProvider =
+    FutureProvider.autoDispose<Map<String, Object?>?>((ref) async {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final userId = await ref.read(currentUserIdProvider)();
+  final hrv = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.hrvDaily,
+    limit: 35,
+  );
+  final sleep = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.sleepSession,
+    limit: 50,
+  );
+  final rhr = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.rhrDaily,
+    limit: 35,
+  );
+  final vo2 = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.vo2Max,
+    limit: 35,
+  );
+  return GetRecoverySignalTool.shape(
+    hrv: hrv,
+    sleep: sleep,
+    rhr: rhr,
+    vo2Max: vo2,
+    now: DateTime.now().toUtc(),
+  );
+});
