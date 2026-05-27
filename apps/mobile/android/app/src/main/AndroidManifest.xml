@@ -1,5 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- D-2.2 (`docs/healthos-domain.md` §2) — Health Connect read-only
+         access. WRITE permissions intentionally omitted: HealthOS never
+         writes back (§10 反目标). ACTIVITY_RECOGNITION is required by
+         Health Connect for step / active-energy reads even though we
+         don't subscribe to live activity events. -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/>
+    <uses-permission android:name="android.permission.health.READ_STEPS"/>
+    <uses-permission android:name="android.permission.health.READ_SLEEP"/>
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE_VARIABILITY"/>
+    <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE"/>
+    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"/>
+    <uses-permission android:name="android.permission.health.READ_WEIGHT"/>
+    <uses-permission android:name="android.permission.health.READ_BODY_FAT"/>
     <application
         android:label="naviwealth"
         android:name="${applicationName}"
@@ -42,7 +55,29 @@
                 <data android:mimeType="image/*"/>
                 <data android:mimeType="application/pdf"/>
             </intent-filter>
+            <!-- D-2.2 — Health Connect permission-rationale entry point.
+                 The Health Connect app launches this intent when the user
+                 taps "Privacy policy" from the permissions sheet. We just
+                 route back into MainActivity; the in-app UI handles the
+                 actual rationale. -->
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
         </activity>
+        <!-- D-2.2 — Android 14+ requires this alias so Health Connect can
+             open our in-app privacy policy when the user requests it from
+             the permission usage screen. Same target as MainActivity for
+             now; can be split later if we add a dedicated policy page. -->
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:targetActivity=".MainActivity"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
@@ -58,6 +93,11 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- D-2.2 — Health Connect package visibility (Android 11+). -->
+        <package android:name="com.google.android.apps.healthdata" />
+        <intent>
+            <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
         </intent>
     </queries>
 </manifest>

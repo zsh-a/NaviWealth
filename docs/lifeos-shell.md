@@ -62,7 +62,7 @@ D-1  Shell foundation                            (4–6 周)
   CI gates (§11)                                        ✅ 4 条 lint 脚本落地 (2026-05-26)
 D-2  HealthOS MVP                                (8–12 周)  详见 healthos-domain.md
   D-2.1 域骨架 + Drift tables (schema v18)              ✅ 落地 (2026-05-26)
-  D-2.2 HealthKit / Health Connect 适配                 ⏳
+  D-2.2 HealthKit / Health Connect 适配 (health pkg)    ✅ 落地 (2026-05-27)
   D-2.3 IA 接入 (shell §3 dock 形态)                     ⏳
   D-2.3 IA seam + 直链 (shell spec + 3 routes)            ✅ 落地 (2026-05-27)
   D-2.3b Dock UI rendering (Plan B 双层 shell)            ✅ 落地 (2026-05-27)

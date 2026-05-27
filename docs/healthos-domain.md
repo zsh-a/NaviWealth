@@ -18,7 +18,7 @@ D-2 子阶段进度:
 - ✅ **D-2.3 IA 接入(seam + 直链)** (2026-05-27) — `healthDomainShell(l10n)` (3 tabs: Today/Trend/Plan) + `AppRoutes.healthToday`/`.healthTrend`/`.healthPlan` + 3 个 placeholder 页(`HealthPlaceholderPage`)+ `bootstrap.dart` 在 Health 域 opt-in 时 append spec 到 `activeDomainShellsProvider`(`domainDockVisibleProvider` 自动翻 true)+ Settings → LifeOS 域 加 HealthOS 入口直链。3 个 shell-spec 测试通过。**dock UI 渲染**(改 `app_shell.dart` 的 StatefulShellRoute 让 dock 可视)留作 D-2.3b — 当前 Health 页面经 Settings 直链或直接 URL 访问,蚪自己 dogfood 验 Option B 是否顺手再决定全量切换
 - ✅ **D-2.5 Morning Briefing agent (programmatic MVP)** (2026-05-27) — `core/ai/agents/{agent,agent_schedule,agent_registry,agent_runner}.dart` 通用框架 + `features/health/agents/morning_briefing_agent.dart` 第一个具名 agent。每日 07:00 (jitter ±5min) 触发,读取过去 24h Memory Layer 跨域 events,程序化合成 sleep/HRV/finance 三段摘要写为 `episodic MemoryRecord` (`scope='*'`,entity `morning_briefing` + dayKey)。Agent runner 通过 `EventRecord` 记录每次运行 (`source='agent_run'`,3 种 type:completed/skipped/failed)。Bootstrap 在 Health opt-in 时注册到 `agentRegistryProvider`。19 个测试通过 (schedule 8 + runner 6 + briefing 5)。**LLM 合成 + 平台原生 cron** 留作 D-2.5b follow-up。
 - ✅ **D-2.3b dock UI 渲染** (2026-05-27) — Plan B 双层 shell 落地:外层 `ShellRoute(AppDockShell)` 承担 share-intent / AI route-context / system-back / 域 dock chrome(`domainDockVisibleProvider=true` 时渲染:tablet/desktop 左侧 56dp 竖 dock + tooltip,mobile 顶部 switcher chip 横条);两个内层 `StatefulShellRoute` 各域自洽 —— `features/finance/composition/finance_routes.dart` (4 branches) + `features/health/composition/health_routes.dart` (3 branches),均由通用 `DomainTabsShell` 渲染(消费 `DomainShellSpec`,Finance 走 `showMobileSearchSlot: true`)。删除 `app_shell.dart`,Finance 路由从 `router_builder.dart` 迁出,Health 三条 top-level GoRoute 进 StatefulShellRoute。`kPrimaryTabPaths` 扩 Finance + Health 七条。5 个新 widget test (Finance-only dock 隐藏 / 双域 chip 显示 / desktop dock / `/health` 渲染 / 点击切换) + 既有 3 个 shell-spec 测试通过。**第三个域(TimeOS / Knowledge)接入只需新建 `<domain>_routes.dart`**,outer shell 零改动。
-- ⏳ D-2.2 HealthKit / Health Connect 适配
+- ✅ **D-2.2 HealthKit / Health Connect 适配** (2026-05-27) — 走 `package:health: ^13.3.1`。`HealthPlatformAdapter` 抽象接口 + `HealthPlatformSnapshot`/`RawSleepSession`/`RawDailyValue`/`RawPointValue` 平台无关数据形状(`features/health/data/health_platform_adapter.dart`)。`_io.dart` 实现走 health 包(iOS:`SLEEP_ASLEEP` + `HEART_RATE_VARIABILITY_SDNN`;Android:`SLEEP_SESSION` + `HEART_RATE_VARIABILITY_RMSSD`;两边 RHR/STEPS/ACTIVE_ENERGY/WEIGHT/BODY_FAT 共用,body fat 自动 PERCENT→fraction `*0.01`);`_stub.dart` web/desktop 返回 not-supported。`dart.library.io` 条件导出 `_factory.dart`。`HealthSyncService` (testable orchestrator):`syncRange({window=30d, from?, to?})` → adapter fetch → 转 `HealthMetric` → `repo.findById` 比内容差异 → 仅在变化时 `MutationStamper.stamp` + `repo.upsert`,**幂等不刷 outbox**(unchanged 不入队)。Stable id 用 `'hk:<type>:<uuid>'` / `'hc:<type>:<uuid>'` 或合成 `'<prefix>:<kind>:<yyyy-mm-dd>'` (daily 聚合)。Settings → HealthOS 加 "Sync from HealthKit / Health Connect" 按钮(请权限→拉数据→显示 "N 新写入 / M 未变 · 拉取 K 项")。iOS:`Info.plist` 加 `NSHealthShareUsageDescription` + 创建 `Runner.entitlements`(用户需在 Xcode Signing & Capabilities 加 HealthKit capability 完成绑定);Android:`AndroidManifest.xml` 加 `READ_STEPS/SLEEP/HEART_RATE_VARIABILITY/RESTING_HEART_RATE/ACTIVE_CALORIES_BURNED/WEIGHT/BODY_FAT` + `ACTIVITY_RECOGNITION` + Health Connect package queries + `ViewPermissionUsageActivity` activity-alias + `androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE` intent-filter。`dependency_overrides: device_info_plus: ^13.0.0` 解 health → win32 链冲突。6 个 sync service 测试通过(unavailable / permissions denied / snapshot→rows mapping / 幂等 / value mutation 重写 / explicit from/to)。**iOS 已知 caveat**: SLEEP_ASLEEP 按 segment 发,一晚会出 3–7 行;下游 AI tool 按日聚合所以不破。**未做**:背景刷新 / WorkManager / 写回 HealthKit (§10 反目标) / iOS sleep segment→session 合并。
 - ⏳ D-2.5b LLM-driven 合成 + 平台 cron / 后台调度 (iOS Background Fetch / Android WorkManager / 通知)
 
 ---
@@ -46,11 +46,13 @@ D-2 子阶段进度:
 
 | 平台 | API | 模式 |
 |---|---|---|
-| iOS | HealthKit | read-only;按日 / 按 session 聚合 |
-| Android | Health Connect | 同上 |
+| iOS | HealthKit (`package:health`) | read-only;按日 / 按 session 聚合 |
+| Android | Health Connect (`package:health`) | 同上 |
 | Web | — | **不支持**(local-first;Health 不上 web) |
 
 **不主动上传到 backend**。默认本地。用户在 Settings 显式开启 Health domain opt-in 后,走 `health:*` row family 同步。
+
+**D-2.2 接入路径**: `package:health: ^13.3.1` → `HealthPlatformAdapter` 抽象 (`features/health/data/health_platform_adapter.dart`,`_io.dart` 走 native 插件, `_stub.dart` web fallback,`dart.library.io` 条件导出) → `HealthSyncService.syncRange()` 转 `HealthMetric` + `HealthMetricRepository.upsert`(只在内容变化时 stamper + outbox,unchanged 跳过)。手动触发自 Settings → HealthOS → "Sync from HealthKit / Health Connect" 按钮;背景调度在 D-2.5b。iOS Sleep MVP 按 segment 发(同晚会出多行);下游 AI tool 按日聚合所以不破,follow-up 改 segment→session 合并。
 
 ---
 
