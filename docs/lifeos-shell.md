@@ -65,7 +65,7 @@ D-2  HealthOS MVP                                (8–12 周)  详见 healthos-d
   D-2.2 HealthKit / Health Connect 适配                 ⏳
   D-2.3 IA 接入 (shell §3 dock 形态)                     ⏳
   D-2.3 IA seam + 直链 (shell spec + 3 routes)            ✅ 落地 (2026-05-27)
-  D-2.3b Dock UI rendering (app_shell 改造)              ⏳ (dock 可见态等 dogfood)
+  D-2.3b Dock UI rendering (Plan B 双层 shell)            ✅ 落地 (2026-05-27)
   D-2.4a AI tools (read-only, 4 个)                      ✅ 落地 (2026-05-27)
   D-2.4b Memory Layer 第二 caller (sleep/hrv extractor)  ✅ 落地 (2026-05-27)
   D-2.5 Morning Briefing agent (programmatic MVP)        ✅ 落地 (2026-05-27)

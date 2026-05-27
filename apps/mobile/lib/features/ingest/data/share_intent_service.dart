@@ -30,7 +30,7 @@ class ShareIntentService {
   StreamSubscription<List<SharedMediaFile>>? _sub;
   bool _started = false;
 
-  /// Idempotent. Safe to call from `AppRootShell.initState`.
+  /// Idempotent. Safe to call from `AppDockShell.initState`.
   void start() {
     if (_started) return;
     _started = true;

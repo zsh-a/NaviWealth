@@ -75,10 +75,10 @@ class DomainShellSpec {
 
 /// Active LifeOS domain shells, in render order.
 ///
-/// Default: empty — a build with no domain registered shows only the
-/// fallback UI in `app_shell.dart`. `bootstrap.dart` overrides this
-/// with the union of every domain that the user has opted into via
-/// [domainOptInsProvider].
+/// Default: empty — a build with no domain registered renders without
+/// the dock chrome (see `app_dock_shell.dart`). `bootstrap.dart`
+/// overrides this with the union of every domain the user has opted
+/// into via [domainOptInsProvider].
 ///
 /// Phase D-1.8: only FinanceOS is ever registered, so the dock is
 /// always 1-entry and stays hidden. Phase D-2 will append a HealthOS
