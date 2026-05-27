@@ -567,23 +567,22 @@ class _AssistantBody extends StatelessWidget {
         ],
       );
     }
-    return SelectableText.rich(
-      TextSpan(
-        children: [
-          TextSpan(
-            text: text,
-            style: context.theme.typography.sm.copyWith(color: textColor),
-          ),
-          if (isStreaming)
-            WidgetSpan(
+    final base = context.theme.typography.sm.copyWith(
+      color: textColor,
+      height: 1.5,
+    );
+    return AiMarkdown(
+      text: text,
+      baseStyle: base,
+      trailing: isStreaming
+          ? WidgetSpan(
               alignment: PlaceholderAlignment.middle,
               child: Padding(
                 padding: const EdgeInsets.only(left: 4),
                 child: _StreamingCaret(color: textColor),
               ),
-            ),
-        ],
-      ),
+            )
+          : null,
     );
   }
 }
