@@ -243,6 +243,68 @@ void main() {
       // Language label is a small `Text` (not selectable).
       expect(find.text('dart'), findsOneWidget);
     });
+
+    testWidgets('fenced code block scrolls horizontally instead of wrapping', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        const AiMarkdown(
+          text:
+              '```dart\nvoid main() => print("a very long single line that '
+              'will definitely overflow the bubble width on any reasonable '
+              'phone screen size");\n```',
+        ),
+      );
+      // The code block must live inside a horizontal SingleChildScrollView
+      // so long lines scroll instead of soft-wrapping.
+      final scroll = tester
+          .widgetList<SingleChildScrollView>(find.byType(SingleChildScrollView))
+          .where((s) => s.scrollDirection == Axis.horizontal)
+          .toList();
+      expect(scroll, isNotEmpty);
+    });
+  });
+
+  group('AiMarkdown — task lists', () {
+    testWidgets('parses `- [ ] todo` as unchecked task', (tester) async {
+      await _pump(
+        tester,
+        const AiMarkdown(text: '- [ ] pending step\n- [x] done step'),
+      );
+      // Two list rows.
+      expect(find.byType(SelectableText), findsNWidgets(2));
+      // The `[ ]` / `[x]` token is consumed by the parser — it must
+      // NOT appear in the rendered text.
+      final txt = _allText(tester);
+      expect(txt, contains('pending step'));
+      expect(txt, contains('done step'));
+      expect(txt, isNot(contains('[ ]')));
+      expect(txt, isNot(contains('[x]')));
+    });
+
+    testWidgets('checked task gets line-through styling', (tester) async {
+      await _pump(tester, const AiMarkdown(text: '- [x] complete'));
+      final st = tester.widget<SelectableText>(find.byType(SelectableText));
+      final flat = _flatten(st.textSpan!);
+      final completeSpan = flat.firstWhere((p) => p.$1 == 'complete');
+      expect(completeSpan.$2!.decoration, TextDecoration.lineThrough);
+    });
+
+    testWidgets('ordered task items keep their number + checkbox', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        const AiMarkdown(text: '1. [ ] first\n2. [x] second'),
+      );
+      // Numeric markers still render alongside the checkboxes.
+      expect(find.text('1.'), findsOneWidget);
+      expect(find.text('2.'), findsOneWidget);
+      final txt = _allText(tester);
+      expect(txt, contains('first'));
+      expect(txt, contains('second'));
+    });
   });
 
   group('AiMarkdown — inline formatting', () {
@@ -277,6 +339,17 @@ void main() {
       await _pump(tester, const AiMarkdown(text: 'use `make build` here'));
       // The inline-code child is rendered inside a non-selectable Text.
       expect(find.text('make build'), findsOneWidget);
+    });
+
+    testWidgets('strikethrough emits a line-through span', (tester) async {
+      await _pump(
+        tester,
+        const AiMarkdown(text: 'keep ~~drop this~~ rest'),
+      );
+      final st = tester.widget<SelectableText>(find.byType(SelectableText));
+      final flat = _flatten(st.textSpan!);
+      final drop = flat.firstWhere((p) => p.$1 == 'drop this');
+      expect(drop.$2!.decoration, TextDecoration.lineThrough);
     });
 
     testWidgets('links style label in the active tone with underline', (
