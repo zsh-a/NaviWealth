@@ -2,60 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-// Tabs other than home are split into their own dart2js part files; each part
-// is loaded the first time the user navigates to that route. Home ships in
-// main.dart.js to avoid a part-file fetch on first paint. See
-// docs/web-bundle.md for the resulting bundle layout.
 import '../core/logging/providers.dart';
 import '../core/logging/talker_route_observer.dart';
-import '../features/accounts/account_form_page.dart';
-import '../features/accounts/accounts_page.dart';
-import '../features/accounts/journal_entry_list_page.dart';
-import '../features/accounts/transfer_form_page.dart';
-import '../features/activity/activity_page.dart';
-import '../features/activity/ui/activity_entry_detail_page.dart';
 import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
-import '../features/analytics/analytics_page.dart' deferred as analytics_lib;
-import '../features/assets/asset_detail_page.dart';
-import '../features/assets/cash_form_page.dart';
-import '../features/assets/deposit_form_page.dart';
-import '../features/assets/physical/ui/physical_asset_detail_page.dart'
-    deferred as physical_detail_lib;
-import '../features/assets/wealth_product_form_page.dart';
 import '../features/auth/presentation/devices_page.dart'
     deferred as devices_lib;
 import '../features/auth/presentation/login_page.dart';
 import '../features/auth/presentation/onboarding_page.dart';
-import '../features/cashflow/ui/budget_page.dart';
-import '../features/cashflow/ui/cashflow_page.dart';
-import '../features/cashflow/ui/dividend_center_page.dart';
-import '../features/cashflow/ui/recurring_transactions_page.dart';
-import '../features/expense/ui/expense_form_page.dart';
-import '../features/expense/ui/expense_list_page.dart';
-import '../features/expense/ui/expense_report_page.dart';
-import '../features/fire/presentation/fire_page.dart' deferred as fire_lib;
-import '../features/health/ui/health_placeholder_page.dart';
-import '../features/home/home_page.dart';
-import '../features/ingest/ui/ingest_review_page.dart';
-import '../features/investment/presentation/corporate_action_entry_route.dart'
-    deferred as corp_action_lib;
-import '../features/investment/presentation/dca_simulator_page.dart'
-    deferred as dca_simulator_lib;
-import '../features/investment/presentation/portfolio_hub_page.dart'
-    deferred as portfolio_hub_lib;
-import '../features/investment/presentation/trade_entry_form_page.dart';
-import '../features/investment/presentation/watchlist_page.dart'
-    deferred as watchlist_lib;
-import '../features/liabilities/ui/liabilities_page.dart'
-    deferred as liabilities_lib;
-import '../features/liabilities/ui/liability_detail_page.dart'
-    deferred as liability_detail_lib;
-import '../features/liabilities/ui/liability_form_page.dart';
-import '../features/options_income/presentation/income_planner_page.dart'
-    deferred as income_planner_lib;
-import '../features/options_income/presentation/wheel_lifecycle_page.dart';
-import '../features/plan/ui/plan_hub_page.dart';
-import '../features/rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
+import '../features/finance/composition/finance_routes.dart';
+import '../features/health/composition/health_routes.dart';
 import '../features/settings/backup/backup_page.dart';
 import '../features/settings/fx_rates/fx_rates_page.dart';
 import '../features/settings/log_viewer_page.dart';
@@ -68,10 +23,8 @@ import '../features/settings/ui/fire_stress_settings_page.dart';
 import '../features/settings/ui/monthly_expense_settings_page.dart';
 import '../features/settings/ui/risk_thresholds_page.dart';
 import '../features/settings/ui/sync_status_page.dart';
-import '../features/wealth/ui/wealth_hub_page.dart';
-import 'app_shell.dart';
+import 'app_dock_shell.dart';
 import 'deferred_route.dart';
-import 'page_transitions.dart';
 import 'route_analytics_observer.dart';
 import 'route_error_page.dart';
 import 'route_guard.dart';
@@ -82,36 +35,34 @@ import 'route_paths.dart';
 /// `loadLibrary()` future. Without this, widget tests sit on the loading
 /// spinner — `loadLibrary()` is real-async and the fake test clock can't
 /// drive it. Call from `setUpAll` inside a `runAsync` block.
+///
+/// Each domain owns its own deferred preloader (Plan B isolation); this
+/// helper just fans out to them plus the settings tree's own deferred
+/// libs.
 @visibleForTesting
 Future<void> preloadDeferredRoutesForTest() async {
   await Future.wait<void>(<Future<void>>[
-    analytics_lib.loadLibrary(),
+    preloadFinanceDeferredRoutesForTest(),
     settings_lib.loadLibrary(),
-    fire_lib.loadLibrary(),
-    income_planner_lib.loadLibrary(),
-    liabilities_lib.loadLibrary(),
-    liability_detail_lib.loadLibrary(),
-    physical_detail_lib.loadLibrary(),
-    corp_action_lib.loadLibrary(),
-    dca_simulator_lib.loadLibrary(),
-    portfolio_hub_lib.loadLibrary(),
-    watchlist_lib.loadLibrary(),
     devices_lib.loadLibrary(),
-    rebalance_lib.loadLibrary(),
     ai_chat_lib.loadLibrary(),
   ]);
 }
 
 /// Builds the app's [GoRouter].
 ///
-/// IA structure (post-Phase D, see `apps/mobile/docs/design/00-information-architecture.md`):
+/// IA structure (D-2.3b, Plan B multi-domain shell — see
+/// `docs/lifeos-shell.md` §3):
 ///
-/// - 4-branch [StatefulShellRoute]: Today / Activity / Wealth / Plan.
-///   Settings is no longer a shell branch — it lives as a top-level
-///   non-shell route reached from the Today header gear icon.
-/// - Legacy `/accounts/*` paths no longer exist. Phase A's redirect
-///   safety net was removed in Phase D; external callers must use the
-///   canonical `/wealth/*` and `/plan/*` paths.
+/// - Outer [ShellRoute] mounts [AppDockShell]: share-intent lifecycle,
+///   AI route-context sync, root system-back handling, and the domain
+///   dock chrome (visible only when ≥ 2 domains are registered).
+/// - Each domain provides its own [StatefulShellRoute] under the dock —
+///   currently `financeShellRoute()` (4 branches) and `healthShellRoute()`
+///   (3 branches). Adding a third domain is a single sibling import.
+/// - Settings, login, onboarding stay outside the dock shell — they
+///   cover the full canvas while open and pop back into whatever
+///   domain the user came from.
 GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
   return GoRouter(
     initialLocation: initialLocation,
@@ -134,361 +85,18 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
         builder: (context, state) => const OnboardingPage(),
       ),
       // Settings — global meta, accessed from Today's header gear. Lives
-      // outside the shell so it covers the full canvas while open and
+      // outside the dock shell so it covers the full canvas while open and
       // returns to whatever tab the user came from on pop.
       _settingsRoute(),
-      // Main shell: 4-branch IndexedStack preserves tab state across switches.
-      // Order matches kPrimaryTabPaths: Today / Activity / Wealth / Plan.
-      // The former `/ai` tab is gone (§5.10) — AI is now an overlay (command
-      // palette) + inline capsules, not a destination.
-      StatefulShellRoute.indexedStack(
-        builder: (context, state, shell) => AppRootShell(shell: shell),
-        branches: [
-          // ── Branch 0: Today (was "Home") ────────────────────────────────
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.home,
-                name: AppRouteNames.home,
-                builder: (context, state) => const HomePage(),
-              ),
-            ],
-          ),
-          // ── Branch 1: Activity (timeline + per-entry sub-flows) ─────────
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.activity,
-                name: AppRouteNames.activity,
-                builder: (context, state) => const ActivityPage(),
-                routes: [
-                  GoRoute(
-                    path: 'expenses',
-                    name: AppRouteNames.expenses,
-                    builder: (context, state) => const ExpenseListPage(),
-                    routes: [
-                      GoRoute(
-                        path: 'new',
-                        name: AppRouteNames.expenseNew,
-                        builder: (context, state) => const ExpenseFormPage(),
-                      ),
-                      GoRoute(
-                        path: 'report',
-                        name: AppRouteNames.expenseReport,
-                        builder: (context, state) => const ExpenseReportPage(),
-                      ),
-                      GoRoute(
-                        path: ':expenseId',
-                        name: AppRouteNames.expenseDetail,
-                        builder: (context, state) => ExpenseFormPage(
-                          expenseId: state.pathParameters['expenseId'],
-                        ),
-                      ),
-                    ],
-                  ),
-                  GoRoute(
-                    path: 'cashflow/dividends',
-                    name: AppRouteNames.cashflowDividends,
-                    builder: (context, state) => const DividendCenterPage(),
-                  ),
-                  GoRoute(
-                    path: 'trade',
-                    name: AppRouteNames.tradeEntry,
-                    pageBuilder: (context, state) {
-                      final assetId = state.uri.queryParameters['assetId'];
-                      final accountId = state.uri.queryParameters['accountId'];
-                      return buildHeroAwareTransitionPage<void>(
-                        context: context,
-                        state: state,
-                        child: TradeEntryFormPage(
-                          assetId: assetId,
-                          accountId: accountId,
-                        ),
-                      );
-                    },
-                  ),
-                  GoRoute(
-                    path: 'transfer',
-                    name: AppRouteNames.transfer,
-                    builder: (context, state) => const TransferFormPage(),
-                  ),
-                  GoRoute(
-                    path: 'entry/:entryId',
-                    name: AppRouteNames.activityEntryDetail,
-                    builder: (context, state) {
-                      final extra = state.extra;
-                      if (extra is ActivityEntryDetailArgs) {
-                        return ActivityEntryDetailPage(
-                          entry: extra.entry,
-                          accountsById: extra.accountsById,
-                        );
-                      }
-                      return RouteErrorPage(state: state);
-                    },
-                  ),
-                  GoRoute(
-                    path: 'journal',
-                    name: AppRouteNames.journalEntries,
-                    builder: (context, state) => const JournalEntryListPage(),
-                  ),
-                  // §5.10.10 / S5a — Layer 4 ingest review queue.
-                  GoRoute(
-                    path: 'ingest',
-                    name: AppRouteNames.activityIngest,
-                    builder: (context, state) => const IngestReviewPage(),
-                  ),
-                ],
-              ),
-              GoRoute(
-                path: AppRoutes.cashflow,
-                name: AppRouteNames.cashflow,
-                builder: (context, state) => const CashFlowPage(),
-                routes: [
-                  GoRoute(
-                    path: 'recurring',
-                    name: AppRouteNames.cashflowRecurring,
-                    builder: (context, state) =>
-                        const RecurringTransactionsPage(),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          // ── Branch 2: Wealth (owned objects + current state) ────────────
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.wealth,
-                name: AppRouteNames.wealth,
-                builder: (context, state) => const WealthHubPage(),
-                routes: [
-                  GoRoute(
-                    path: 'accounts',
-                    name: AppRouteNames.wealthAccounts,
-                    builder: (context, state) => const AccountsPage(),
-                    routes: [
-                      GoRoute(
-                        path: 'new',
-                        name: AppRouteNames.wealthAccountNew,
-                        builder: (context, state) => const AccountFormPage(),
-                      ),
-                      GoRoute(
-                        path: ':accountId',
-                        name: AppRouteNames.wealthAccount,
-                        pageBuilder: (context, state) =>
-                            buildHeroAwareTransitionPage<void>(
-                              context: context,
-                              state: state,
-                              child: AccountFormPage(
-                                accountId: state.pathParameters['accountId'],
-                              ),
-                            ),
-                      ),
-                    ],
-                  ),
-                  GoRoute(
-                    path: 'new/cash',
-                    name: AppRouteNames.wealthNewCash,
-                    builder: (context, state) => const CashFormPage(),
-                  ),
-                  GoRoute(
-                    path: 'new/deposit',
-                    name: AppRouteNames.wealthNewDeposit,
-                    builder: (context, state) => const DepositFormPage(),
-                  ),
-                  GoRoute(
-                    path: 'new/wealth',
-                    name: AppRouteNames.wealthNewWealth,
-                    builder: (context, state) => const WealthProductFormPage(),
-                  ),
-                  GoRoute(
-                    path: 'corporate-action',
-                    name: AppRouteNames.wealthCorporateAction,
-                    builder: (context, state) => DeferredRoute(
-                      load: corp_action_lib.loadLibrary,
-                      builder: (_) =>
-                          corp_action_lib.CorporateActionEntryRoute(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'portfolio',
-                    name: AppRouteNames.wealthPortfolio,
-                    builder: (context, state) => DeferredRoute(
-                      load: portfolio_hub_lib.loadLibrary,
-                      builder: (_) => portfolio_hub_lib.PortfolioHubPage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'watchlist',
-                    name: AppRouteNames.wealthWatchlist,
-                    builder: (context, state) => DeferredRoute(
-                      load: watchlist_lib.loadLibrary,
-                      builder: (_) => watchlist_lib.WatchlistPage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'income-projection',
-                    name: AppRouteNames.wealthIncomeProjection,
-                    builder: (context, state) =>
-                        const WealthIncomeProjectionPlaceholderPage(),
-                  ),
-                  GoRoute(
-                    path: 'assets/:assetId',
-                    name: AppRouteNames.wealthAssetDetail,
-                    pageBuilder: (context, state) =>
-                        buildHeroAwareTransitionPage<void>(
-                          context: context,
-                          state: state,
-                          child: AssetDetailPage(
-                            assetId: state.pathParameters['assetId']!,
-                          ),
-                        ),
-                  ),
-                  GoRoute(
-                    path: 'physical/:id',
-                    name: AppRouteNames.wealthPhysicalDetail,
-                    builder: (context, state) {
-                      final id = state.pathParameters['id']!;
-                      return DeferredRoute(
-                        load: physical_detail_lib.loadLibrary,
-                        builder: (_) =>
-                            physical_detail_lib.PhysicalAssetDetailPage(id: id),
-                      );
-                    },
-                  ),
-                  GoRoute(
-                    path: 'liabilities',
-                    name: AppRouteNames.wealthLiabilities,
-                    builder: (context, state) => DeferredRoute(
-                      load: liabilities_lib.loadLibrary,
-                      builder: (_) => liabilities_lib.LiabilitiesPage(),
-                    ),
-                    routes: [
-                      GoRoute(
-                        path: 'new',
-                        name: AppRouteNames.wealthLiabilityNew,
-                        builder: (context, state) => const LiabilityFormPage(),
-                      ),
-                      GoRoute(
-                        path: ':id',
-                        name: AppRouteNames.wealthLiabilityDetail,
-                        builder: (context, state) {
-                          final id = state.pathParameters['id']!;
-                          return DeferredRoute(
-                            load: liability_detail_lib.loadLibrary,
-                            builder: (_) =>
-                                liability_detail_lib.LiabilityDetailPage(
-                                  id: id,
-                                ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-          // ── Branch 3: Plan (decisions + future state) ───────────────────
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.plan,
-                name: AppRouteNames.plan,
-                builder: (context, state) => const PlanHubPage(),
-                routes: [
-                  GoRoute(
-                    path: 'fire',
-                    name: AppRouteNames.planFire,
-                    builder: (context, state) => DeferredRoute(
-                      load: fire_lib.loadLibrary,
-                      builder: (_) => fire_lib.FirePage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'rebalance',
-                    name: AppRouteNames.planRebalance,
-                    builder: (context, state) => DeferredRoute(
-                      load: rebalance_lib.loadLibrary,
-                      builder: (_) => rebalance_lib.RebalancePage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'income',
-                    name: AppRouteNames.planIncome,
-                    builder: (context, state) => DeferredRoute(
-                      load: income_planner_lib.loadLibrary,
-                      builder: (_) => income_planner_lib.IncomePlannerPage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'dca',
-                    name: AppRouteNames.planDca,
-                    builder: (context, state) => DeferredRoute(
-                      load: dca_simulator_lib.loadLibrary,
-                      builder: (_) => dca_simulator_lib.DcaSimulatorPage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'projection',
-                    name: AppRouteNames.planProjection,
-                    builder: (context, state) => DeferredRoute(
-                      load: analytics_lib.loadLibrary,
-                      builder: (_) => analytics_lib.AnalyticsPage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'scenarios',
-                    name: AppRouteNames.planScenarios,
-                    builder: (context, state) =>
-                        const PlanScenariosPlaceholderPage(),
-                  ),
-                  GoRoute(
-                    path: 'goals',
-                    name: AppRouteNames.planGoals,
-                    builder: (context, state) =>
-                        const PlanGoalsPlaceholderPage(),
-                  ),
-                  GoRoute(
-                    path: 'budget',
-                    name: AppRouteNames.planBudget,
-                    builder: (context, state) => const PlanBudgetPage(),
-                  ),
-                  GoRoute(
-                    path: 'wheel',
-                    name: AppRouteNames.planWheel,
-                    builder: (context, state) => const WheelLifecyclePage(),
-                  ),
-                ],
-              ),
-            ],
-          ),
+      // Multi-domain dock shell (D-2.3b). Wraps every per-domain
+      // StatefulShellRoute so the dock chrome + global lifecycle hooks
+      // stay mounted across domain switches.
+      ShellRoute(
+        builder: (context, state, child) => AppDockShell(child: child),
+        routes: [
+          financeShellRoute(),
+          healthShellRoute(),
         ],
-      ),
-      // ── HealthOS top-level routes (`docs/healthos-domain.md` §5,
-      // D-2.3). Lives outside the StatefulShellRoute since HealthOS
-      // is gated by domain opt-in and rendered through the multi-
-      // domain dock (Option B) — not the existing 4-tab IndexedStack.
-      // Until the dock UI lands, these are reachable via direct URL /
-      // deep-link from the Settings → Domains opt-in toggle, which is
-      // the dogfood path during the §3 decision-gate window.
-      GoRoute(
-        path: AppRoutes.healthToday,
-        name: AppRouteNames.healthToday,
-        builder: (context, state) =>
-            const HealthPlaceholderPage(tab: HealthTab.today),
-      ),
-      GoRoute(
-        path: AppRoutes.healthTrend,
-        name: AppRouteNames.healthTrend,
-        builder: (context, state) =>
-            const HealthPlaceholderPage(tab: HealthTab.trend),
-      ),
-      GoRoute(
-        path: AppRoutes.healthPlan,
-        name: AppRouteNames.healthPlan,
-        builder: (context, state) =>
-            const HealthPlaceholderPage(tab: HealthTab.plan),
       ),
     ],
   );

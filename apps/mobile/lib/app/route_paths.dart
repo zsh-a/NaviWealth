@@ -217,13 +217,21 @@ abstract final class AppRouteNames {
   static const activityIngest = 'activity-ingest';
 }
 
-/// Primary shell tab paths in display order. See `app_shell.dart` for the
-/// visual treatment. Settings is no longer a tab (IA contract §1).
+/// Primary shell tab paths in display order across all active domains.
+/// Used by the system-back handler in `app_dock_shell.dart` to detect
+/// "at a primary tab root" (where back jumps to Home instead of popping
+/// up). Settings is not a tab (IA contract §1). D-2.3b: Health paths
+/// join Finance — they're equally "primary" inside the dock shell.
 const List<String> kPrimaryTabPaths = <String>[
+  // Finance
   AppRoutes.home,
   AppRoutes.activity,
   AppRoutes.wealth,
   AppRoutes.plan,
+  // Health (D-2.3b)
+  AppRoutes.healthToday,
+  AppRoutes.healthTrend,
+  AppRoutes.healthPlan,
 ];
 
 const String kCashflowPath = AppRoutes.cashflow;
