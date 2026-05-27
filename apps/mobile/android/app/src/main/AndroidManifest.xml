@@ -13,6 +13,13 @@
     <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"/>
     <uses-permission android:name="android.permission.health.READ_WEIGHT"/>
     <uses-permission android:name="android.permission.health.READ_BODY_FAT"/>
+    <!-- D-2.5b (`docs/healthos-domain.md` §8) — local notifications +
+         workmanager. POST_NOTIFICATIONS is the Android 13+ runtime
+         permission; `RECEIVE_BOOT_COMPLETED` lets workmanager re-
+         schedule periodic work after reboot. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <application
         android:label="naviwealth"
         android:name="${applicationName}"

@@ -69,7 +69,7 @@ D-2  HealthOS MVP                                (8–12 周)  详见 healthos-d
   D-2.4a AI tools (read-only, 4 个)                      ✅ 落地 (2026-05-27)
   D-2.4b Memory Layer 第二 caller (sleep/hrv extractor)  ✅ 落地 (2026-05-27)
   D-2.5 Morning Briefing agent (programmatic MVP)        ✅ 落地 (2026-05-27)
-  D-2.5b LLM 合成 + 平台 cron / notifications            ⏳
+  D-2.5b LLM 合成 + workmanager cron + local notifications ✅ 落地 (2026-05-27)
 D-3+ 触发性 (TimeOS / Knowledge / Living)         不预排
 ```
 
