@@ -18,3 +18,12 @@ const List<DeviceTool> kHealthDeviceTools = <DeviceTool>[
   GetActivitySummaryTool(),
   GetRecoverySignalTool(),
 ];
+
+/// HealthOS system-prompt block. Appended onto [kDeviceSystemPromptBase]
+/// by `systemPromptBlocksProvider` only when the user has opted into
+/// the Health domain (`domainOptInsProvider`).
+const String kHealthSystemPromptBlock =
+    '[HealthOS 域]\n'
+    '- 健康域当前只有读取工具（get_recent_sleep_summary / get_hrv_trend / get_activity_summary / get_recovery_signal），没有 propose_health_* 写工具——不要试图直接修改睡眠 / HRV / 活动数据。\n'
+    '- 解读趋势时使用工具返回的实际数值；不要凭体感推断「最近睡得好不好」。\n'
+    '- HRV / 恢复评分有窗口期，工具会返回 window_days；引用结论时一并说明窗口长度，便于用户判断信号强度。';

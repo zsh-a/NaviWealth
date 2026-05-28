@@ -22,6 +22,7 @@ import 'device/anthropic/anthropic_client.dart';
 import 'device/anthropic/anthropic_wire.dart';
 import 'device/device_agent_loop.dart';
 import 'device/device_session.dart';
+import 'device/device_system_prompt.dart';
 import 'device/device_tool_dispatcher.dart';
 import 'device/device_user_profile_prompt.dart';
 
@@ -50,12 +51,18 @@ class DeviceLlmRuntime implements DeviceChatRunner {
     this.dispatcher = const UnavailableToolDispatcher(),
     this.toolSchemas = const [],
     this.budget = const TurnBudget(),
+    this.basePrompt = kDeviceSystemPromptBase,
   });
 
   final DeviceLlmClient client;
   final DeviceToolDispatcher dispatcher;
   final List<AnthropicToolSchema> toolSchemas;
   final TurnBudget budget;
+
+  /// Pre-assembled prompt (base + active-domain blocks) built by
+  /// `assembledSystemPromptProvider`. Default is the bare base for tests
+  /// / shell-only builds.
+  final String basePrompt;
 
   @override
   Stream<AiChatEvent> run({
@@ -76,6 +83,7 @@ class DeviceLlmRuntime implements DeviceChatRunner {
       // (risk preference / cashflow trend / FIRE progress) without having
       // to call a tool first.
       systemAppendix: renderContextPackSystemAppendix(contextPack),
+      basePrompt: basePrompt,
     );
     final loop = DeviceAgentLoop(
       streamFn: client.streamMessages,

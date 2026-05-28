@@ -3,7 +3,7 @@
 /// `docs/roadmap-midterm-execution.md`).
 ///
 /// The appendix is rendered in Chinese to match
-/// [kDeviceSystemPrompt]'s register and keeps to a tight byte budget:
+/// [kDeviceSystemPromptBase]'s register and keeps to a tight byte budget:
 /// the model already pays for the static prompt + tool schemas, so every
 /// additional byte here is felt on the first turn.
 ///

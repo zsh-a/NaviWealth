@@ -18,6 +18,7 @@ import '../core/ai/composition/chat_trace_prep.dart';
 import '../core/ai/composition/device_tools_provider.dart';
 import '../core/ai/composition/portfolio_snapshot.dart';
 import '../core/ai/composition/proposal_applier.dart';
+import '../core/ai/composition/system_prompt_blocks.dart';
 import '../core/ai/local/embedding/embedder.dart';
 import '../core/ai/local/embedding/model_install_paths.dart';
 import '../core/ai/local/embedding/model_manifest.dart';
@@ -161,6 +162,22 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           ...kFinanceDeviceTools,
           if (healthEnabled) ...kHealthDeviceTools,
           if (knowledgeEnabled) ...kKnowledgeDeviceTools,
+        ];
+      }),
+      // Domain-aware system prompt (`docs/lifeos-shell.md` §4): the
+      // shell base prompt carries only cross-domain invariants; each
+      // active domain contributes its own block in lockstep with its
+      // tool list above so the model never sees instructions for tools
+      // it doesn't have.
+      systemPromptBlocksProvider.overrideWith((ref) {
+        final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+        final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
+        final knowledgeEnabled =
+            optIns?.contains(DomainScope.knowledge) ?? false;
+        return <String>[
+          kFinanceSystemPromptBlock,
+          if (healthEnabled) kHealthSystemPromptBlock,
+          if (knowledgeEnabled) kKnowledgeSystemPromptBlock,
         ];
       }),
       // D-2.5 (`docs/lifeos-shell.md` §7.3 + `docs/healthos-domain.md`

@@ -5,6 +5,7 @@ import 'package:talker_dio_logger/talker_dio_logger.dart';
 import '../../../core/ai/composition/chat_trace_prep.dart';
 import '../../../core/ai/composition/device_tools_provider.dart';
 import '../../../core/ai/composition/portfolio_snapshot.dart';
+import '../../../core/ai/composition/system_prompt_blocks.dart';
 import '../../../core/ai/llm_credentials/llm_credentials.dart';
 import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../core/ai/runtime/ai_runtime.dart';
@@ -50,10 +51,14 @@ final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
   // advertised, so the model never calls them.
   final tools = ref.watch(deviceToolsProvider);
   final registry = DeviceToolRegistry(tools);
+  // Phase D domain-aware prompt: base + each active domain's block,
+  // assembled by the composition seam in lockstep with the tool list.
+  final basePrompt = ref.watch(assembledSystemPromptProvider);
   return DeviceLlmRuntime(
     client: client,
     dispatcher: DriftDeviceToolDispatcher(ref: ref, registry: registry),
     toolSchemas: registry.schemas(),
+    basePrompt: basePrompt,
   );
 });
 

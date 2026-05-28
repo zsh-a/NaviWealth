@@ -351,12 +351,20 @@ void main() {
   });
 
   group('DeviceSession.systemPrompt', () {
-    test('starts with the ported SYSTEM_PROMPT and carries an appendix', () {
+    test('starts with the base prompt and carries an appendix', () {
       final s = DeviceSession(messages: [], systemAppendix: '\n[ctx]');
       final p = s.systemPrompt();
-      expect(p.startsWith(kDeviceSystemPrompt), isTrue);
+      expect(p.startsWith(kDeviceSystemPromptBase), isTrue);
       expect(p.contains('当前时间:'), isTrue);
       expect(p.endsWith('[ctx]'), isTrue);
+    });
+
+    test('basePrompt override is honored (domain blocks injected)', () {
+      const composed = '$kDeviceSystemPromptBase\n\n[TestOS 域]\n- hello.';
+      final s = DeviceSession(messages: [], basePrompt: composed);
+      final p = s.systemPrompt();
+      expect(p.startsWith(composed), isTrue);
+      expect(p.contains('[TestOS 域]'), isTrue);
     });
   });
 
