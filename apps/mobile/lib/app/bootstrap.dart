@@ -45,6 +45,7 @@ import '../features/health/agents/briefing_synthesizer.dart';
 import '../features/health/agents/morning_briefing_agent.dart';
 import '../features/health/agents/providers.dart' as health_agent_providers;
 import '../features/health/data/morning_briefing_preferences.dart';
+import '../features/knowledge/composition/knowledge_bootstrap.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'domain_packs.dart';
 import 'memory_indexers_bootstrap.dart';
@@ -131,6 +132,12 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       // domain's `<domain>_bootstrap.dart` returns its own bundle;
       // bootstrap spreads them in turn.
       ...financeCompositionOverrides(),
+      // KnowledgeOS shell-seam bundle (`docs/knowledgeos-domain.md` §15.6):
+      // sole owner of the composite `proposalApplierProvider` + unioned
+      // `proposalKindRegistryProvider` (Finance bundle intentionally no
+      // longer overrides them — Riverpod 3 forbids double-override). Routes
+      // `knowledge_*` proposals to the KnowledgeOS applier, rest to Finance.
+      ...knowledgeCompositionOverrides(),
       // LifeOS domain inventory (`docs/lifeos-shell.md` §4): one
       // [DomainPack] per known domain. The four aggregators below
       // derive from `activeDomainPacksProvider` — adding a new domain
