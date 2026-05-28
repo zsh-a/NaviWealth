@@ -1,9 +1,13 @@
 /// KnowledgeOS Riverpod wiring (`docs/knowledgeos-domain.md` §3).
 library;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/ai/llm_credentials/providers.dart'
+    show llmCredentialsProvider;
+import '../../../core/logging/providers.dart' show loggerProvider;
 import '../../../core/persistence/providers.dart';
 import '../../../core/sync/outbox_provider.dart';
 import '../../ai_chat/data/providers.dart' show deviceLlmRuntimeProvider;
@@ -40,10 +44,57 @@ final inboxTriageRepositoryProvider =
 /// CaptureSheet + `propose_capture` tool both read this provider, so
 /// the AI-native upgrade UX and the AI tool surface share one
 /// classifier instance — matching the §4 "tools mirror UI" contract.
+///
+/// Build-time logs (tag `[capture]`) record which implementation was
+/// chosen so the user can grep the Talker history to confirm whether
+/// LLM is actually engaged.
 final captureClassifierProvider = Provider<CaptureClassifier>((ref) {
+  final logger = ref.watch(loggerProvider);
   final runtime = ref.watch(deviceLlmRuntimeProvider);
   if (runtime == null) {
+    // Drill into the gate chain so the log line tells the user which of
+    // the 4 possible reasons fired (web platform / credentials still
+    // loading / no active profile / active profile has empty key).
+    final reason = _diagnoseLlmUnavailable(ref);
+    logger.i('[capture] classifier=heuristic — $reason');
     return const HeuristicCaptureClassifier();
   }
-  return LlmCaptureClassifier(client: runtime.client);
+  logger.i(
+    '[capture] classifier=llm '
+    'model=${runtime.client.config.model}',
+  );
+  return LlmCaptureClassifier(client: runtime.client, logger: logger);
 });
+
+String _diagnoseLlmUnavailable(Ref ref) {
+  if (kIsWeb) {
+    return 'platform=web (LLM gated to native by deviceLlmPlatformSupportedProvider)';
+  }
+  final credsAsync = ref.watch(llmCredentialsProvider);
+  if (credsAsync.isLoading) {
+    return 'credentials still loading from secure storage '
+        '(reopen the sheet after a moment)';
+  }
+  if (credsAsync.hasError) {
+    return 'credentials load errored: ${credsAsync.error}';
+  }
+  final creds = credsAsync.asData?.value;
+  if (creds == null) {
+    return 'credentials store returned null (unexpected — check llmCredentialStoreProvider)';
+  }
+  final active = creds.active;
+  if (active == null) {
+    return 'no active profile selected '
+        '(profiles configured: ${creds.profiles.length}, '
+        'activeId=${creds.activeId ?? "(null)"}) — '
+        'go to Settings → AI 一键选一个';
+  }
+  if (!active.hasKey) {
+    final keyLen = active.apiKey.length;
+    return 'active profile "${active.id}" (${active.provider.name}) '
+        'has empty apiKey (raw length=$keyLen, trim is empty) — '
+        '回 Settings 把 API key 填一下并保存';
+  }
+  return 'unknown reason (runtime null but credentials look usable — '
+      'likely a transient build race; rebuild should fix)';
+}

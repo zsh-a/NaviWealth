@@ -24,6 +24,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/logging/providers.dart' show loggerProvider;
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
@@ -128,7 +129,18 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
         });
       }
       final classifier = widget.ref.read(captureClassifierProvider);
+      final logger = widget.ref.read(loggerProvider);
+      logger.d(
+        '[capture-sheet] classify start impl=${classifier.runtimeType} '
+        'text_len=${text.length}',
+      );
       final classification = await classifier.classify(text: text);
+      logger.i(
+        '[capture-sheet] classify done kind=${classification.kind.wire} '
+        'confidence=${classification.confidence.toStringAsFixed(2)} '
+        'hasSuggestion=${classification.hasSuggestion} '
+        '(isUpgrade=${classification.isUpgrade} hasPolish=${classification.hasPolish})',
+      );
       if (!mounted) return;
       if (classification.hasSuggestion) {
         setState(() {
@@ -136,6 +148,9 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
           _stage = _CaptureStage.suggesting;
         });
       } else {
+        logger.d(
+          '[capture-sheet] no suggestion (Note kept as-is), closing sheet',
+        );
         Navigator.of(context).pop();
       }
     } catch (_) {
@@ -311,7 +326,15 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
             titleController: _titleCtrl,
             bodyController: _bodyCtrl,
           ),
-        _CaptureStage.classifying => const _ClassifyingBody(),
+        _CaptureStage.classifying => _ClassifyingBody(
+            onSkip: () {
+              // The Note is already persisted from `_saveAndClassify` →
+              // popping here just abandons the in-flight classifier.
+              // The `mounted` guard after the await drops whatever the
+              // LLM returns once it eventually lands.
+              if (mounted) Navigator.of(context).pop();
+            },
+          ),
         _CaptureStage.suggesting ||
         _CaptureStage.applying =>
           _SuggestionBody(
@@ -328,7 +351,15 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
 }
 
 class _ClassifyingBody extends StatelessWidget {
-  const _ClassifyingBody();
+  const _ClassifyingBody({required this.onSkip});
+
+  /// Bail out of the wait — the Note is already saved, the in-flight
+  /// classifier becomes an orphan and its eventual result is dropped
+  /// by the sheet's `mounted` guard. Useful for slow thinking models
+  /// (mimo / Claude extended thinking) where the round-trip can take
+  /// 20-30 s.
+  final VoidCallback onSkip;
+
   @override
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
@@ -339,7 +370,7 @@ class _ClassifyingBody extends StatelessWidget {
     // AppSheet's AnimatedSize. Column with `stretch` keeps width
     // bounded by the sheet.
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s24),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -347,9 +378,18 @@ class _ClassifyingBody extends StatelessWidget {
           const FProgress(),
           const SizedBox(height: AppSpacing.s12),
           Text(
-            '保留为 Note 也行 — 可关闭此面板',
+            '推理模型可能需要 20-30 秒。Note 已经保存,等不及可以直接跳过。',
             textAlign: TextAlign.center,
             style: typography.sm.copyWith(color: colors.mutedForeground),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          Align(
+            alignment: Alignment.center,
+            child: FButton(
+              variant: FButtonVariant.outline,
+              onPress: onSkip,
+              child: const Text('保留为 Note,不等了'),
+            ),
           ),
         ],
       ),

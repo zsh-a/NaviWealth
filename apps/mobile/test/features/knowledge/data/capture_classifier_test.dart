@@ -62,6 +62,25 @@ void main() {
       expect(r.kind, CaptureKind.routine);
       expect(r.statement!.length, lessThanOrEqualTo(61));
     });
+
+    test('"每个月定投1000 \$IBIT" — 每个X form + investing scope', () async {
+      final r = await c.classify(text: '每个月定投1000 \$IBIT');
+      expect(r.kind, CaptureKind.routine);
+      expect(r.intervalDays, 30);
+      expect(r.scope, 'finance/investing');
+    });
+
+    test('"每个星期 review" — weekly via 每个 prefix', () async {
+      final r = await c.classify(text: '每个星期做一次 portfolio review');
+      expect(r.kind, CaptureKind.routine);
+      expect(r.intervalDays, 7);
+    });
+
+    test('"每个年" rare form still parses', () async {
+      final r = await c.classify(text: '每个年做一次大复盘');
+      expect(r.kind, CaptureKind.routine);
+      expect(r.intervalDays, 365);
+    });
   });
 
   group('HeuristicCaptureClassifier — note fallback', () {

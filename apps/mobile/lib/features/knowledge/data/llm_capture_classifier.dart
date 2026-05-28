@@ -21,21 +21,32 @@ import 'package:dio/dio.dart';
 
 import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_wire.dart';
+import '../../../core/logging/app_logger.dart';
 import 'capture_classifier.dart';
 import 'capture_kind.dart';
+
+/// Log channel used by every checkpoint in this file. Grep the talker
+/// history for `[capture-llm]` to trace one classify() call end-to-end.
+const String _kLogTag = '[capture-llm]';
 
 class LlmCaptureClassifier implements CaptureClassifier {
   const LlmCaptureClassifier({
     required this.client,
     this.fallback = const HeuristicCaptureClassifier(),
-    this.maxTokens = 400,
-    this.requestTimeout = const Duration(seconds: 8),
+    this.maxTokens = 2000,
+    this.requestTimeout = const Duration(seconds: 30),
+    this.logger,
   });
 
   final DeviceLlmClient client;
   final CaptureClassifier fallback;
   final int maxTokens;
   final Duration requestTimeout;
+
+  /// Optional structured logger — null means silent (test default).
+  /// Production wiring injects [loggerProvider]'s instance so the run
+  /// shows up in the Talker history alongside Dio + agent logs.
+  final AppLogger? logger;
 
   /// System prompt is kept short and load-bearing — the LLM gets the
   /// 7-kind taxonomy + a strict JSON schema, plus the "if uncertain
@@ -84,8 +95,18 @@ class LlmCaptureClassifier implements CaptureClassifier {
   @override
   Future<CaptureClassification> classify({required String text}) async {
     final trimmed = text.trim();
-    if (trimmed.isEmpty) return fallback.classify(text: text);
+    if (trimmed.isEmpty) {
+      logger?.d('$_kLogTag empty input, deferring to fallback');
+      return fallback.classify(text: text);
+    }
 
+    final preview = _preview(trimmed);
+    logger?.i(
+      '$_kLogTag start model=${client.config.model} '
+      'text_len=${trimmed.length} preview="$preview"',
+    );
+
+    final stopwatch = Stopwatch()..start();
     try {
       final request = AnthropicRequest(
         model: client.config.model,
@@ -99,19 +120,85 @@ class LlmCaptureClassifier implements CaptureClassifier {
       final completion = await client
           .complete(request, cancelToken: CancelToken())
           .timeout(requestTimeout);
+      final elapsed = stopwatch.elapsedMilliseconds;
+      logger?.i(
+        '$_kLogTag response ${elapsed}ms '
+        'content_blocks=${completion.content.length} '
+        'stop_reason=${completion.stopReason ?? "(null)"}',
+      );
+
       final body = _extractText(completion);
-      if (body == null) return fallback.classify(text: text);
+      if (body == null) {
+        // Detect the "thinking-only" failure mode: extended-thinking
+        // models (Claude with thinking enabled, mimo, etc.) burn the
+        // token budget on internal reasoning and never reach the text
+        // block. Make this case loud so the user knows to raise their
+        // provider's token budget or switch to a non-thinking model.
+        final blockTypes = completion.content
+            .whereType<Map<Object?, Object?>>()
+            .map((b) => b['type']?.toString() ?? '?')
+            .toList(growable: false);
+        final thinkingOnly =
+            blockTypes.isNotEmpty && blockTypes.every((t) => t == 'thinking');
+        if (thinkingOnly && completion.stopReason == 'max_tokens') {
+          logger?.w(
+            '$_kLogTag response had only thinking blocks (stop_reason=max_tokens, '
+            'maxTokens=$maxTokens) — provider model burned all tokens on extended '
+            'reasoning. Raise maxTokens or pick a non-thinking model. '
+            'Falling back to heuristic.',
+          );
+        } else {
+          logger?.w(
+            '$_kLogTag no text block in response (block_types=$blockTypes, '
+            'stop_reason=${completion.stopReason ?? "(null)"}), falling back',
+          );
+        }
+        return fallback.classify(text: text);
+      }
+      logger?.d('$_kLogTag text body len=${body.length}');
 
       final json = _extractJsonObject(body);
-      if (json == null) return fallback.classify(text: text);
+      if (json == null) {
+        logger?.w(
+          '$_kLogTag JSON extract failed, falling back. body preview="${_preview(body)}"',
+        );
+        return fallback.classify(text: text);
+      }
 
       final parsed = _parseClassification(json);
-      if (parsed == null) return fallback.classify(text: text);
+      if (parsed == null) {
+        logger?.w(
+          '$_kLogTag JSON parse rejected (missing kind/reason/unknown kind), '
+          'falling back. keys=${json.keys.toList()}',
+        );
+        return fallback.classify(text: text);
+      }
 
+      logger?.i(
+        '$_kLogTag parsed kind=${parsed.kind.wire} '
+        'confidence=${parsed.confidence.toStringAsFixed(2)} '
+        'isUpgrade=${parsed.isUpgrade} hasPolish=${parsed.hasPolish} '
+        'interval=${parsed.intervalDays} scope=${parsed.scope}',
+      );
       return parsed;
-    } on Object {
+    } on Object catch (err, st) {
+      final elapsed = stopwatch.elapsedMilliseconds;
+      logger?.w(
+        '$_kLogTag exception after ${elapsed}ms (${err.runtimeType}: $err), '
+        'falling back to heuristic',
+        error: err,
+        stackTrace: st,
+      );
       return fallback.classify(text: text);
     }
+  }
+
+  /// 80-char text preview for log lines. Strips newlines so the log
+  /// stays one row per call.
+  static String _preview(String s) {
+    final flat = s.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (flat.length <= 80) return flat;
+    return '${flat.substring(0, 80)}…';
   }
 
   static String? _extractText(AnthropicCompletion completion) {
