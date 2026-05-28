@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ai/agents/agent.dart';
 import 'assumption_agent.dart';
 import 'contradiction_agent.dart';
+import 'inbox_triage_agent.dart';
 import 'review_agent.dart';
 
 final reviewAgentProvider = Provider<ReviewAgent>(
@@ -24,6 +25,10 @@ final contradictionAgentProvider = Provider<ContradictionAgent>(
   (ref) => const ContradictionAgent(),
 );
 
+final inboxTriageAgentProvider = Provider<InboxTriageAgent>(
+  (ref) => const InboxTriageAgent(),
+);
+
 /// Aggregated list — bootstrap composes this into the cross-domain
 /// `agentRegistryProvider` only when Knowledge is opt-in.
 final knowledgeAgentsProvider = Provider<List<Agent>>((ref) {
@@ -31,5 +36,6 @@ final knowledgeAgentsProvider = Provider<List<Agent>>((ref) {
     ref.watch(reviewAgentProvider),
     ref.watch(assumptionAgentProvider),
     ref.watch(contradictionAgentProvider),
+    ref.watch(inboxTriageAgentProvider),
   ];
 });
