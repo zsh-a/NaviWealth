@@ -71,7 +71,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 21;
+  int get schemaVersion => 22;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -301,6 +301,18 @@ class AppDatabase extends _$AppDatabase {
           'CREATE INDEX IF NOT EXISTS idx_knowledge_routines_due '
           'ON knowledge_routines(owner_user_id, status, next_due_at) '
           'WHERE deleted_at IS NULL',
+        );
+      }
+      // v21 → v22: KnowledgeOS dedupe pointer (`docs/knowledgeos-domain.md`
+      // §15.3). `merged_into_id` on Notes + Concepts records where a
+      // soft-deleted duplicate's content went after `propose_merge`.
+      // Additive nullable columns — no rewrite of existing rows.
+      if (from < 22) {
+        await customStatement(
+          'ALTER TABLE knowledge_notes ADD COLUMN merged_into_id TEXT',
+        );
+        await customStatement(
+          'ALTER TABLE knowledge_concepts ADD COLUMN merged_into_id TEXT',
         );
       }
     },

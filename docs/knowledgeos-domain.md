@@ -353,12 +353,13 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - ✅ Schema v18→v19 + 6 张 Drift 表（`core/persistence/knowledge_tables.dart`）：notes / principles / assumptions / decisions / concepts / experiments；全部 SyncableTable，含索引
 - ✅ Schema v19→v20 + `knowledge_inbox_triage` 侧表（`core/persistence/local_only_tables.dart`，DDL raw SQL）：**local-only / never-sync**，1 行/note，`proposals_json` 内联三类 envelope（§5 异步 triage 流图所需）
 - ✅ Schema v20→v21 + `knowledge_routines` Drift 表（2026-05-29）：`statement / interval_days / last_done_at / next_due_at / scope / status` + sync 列；索引 `(owner, status, next_due_at)` 给 `listDueRoutines`
-- ✅ `KnowledgeRepository`（`features/knowledge/data/knowledge_repository.dart`）：7 类对象 CRUD + status 过滤 + due-review / due-routine query
+- ✅ Schema v21→v22 + `merged_into_id` 列（notes + concepts，§15.3 去重指针；2026-05-29）：additive nullable ALTER，被合并的重复条目软删 + 记保留方 id
+- ✅ `KnowledgeRepository`（`features/knowledge/data/knowledge_repository.dart`）：7 类对象 CRUD + status 过滤 + due-review / due-routine query + `mergeNotes` / `mergeConcepts`（§15.3 事务内并集 + tombstone + concept 入边重指）+ `listConcepts`
 - ✅ `InboxTriageRepository`（`features/knowledge/data/inbox_triage_repository.dart`）：侧表 upsert / resolve / pending feed；dismissed 合并保护
 
 **AI tools**（`features/knowledge_ai_tools.dart` → `kKnowledgeDeviceTools`）
-- ✅ Read：`recall_decision`、`list_open_assumptions`、`list_due_reviews`、`list_due_routines`（2026-05-29）、`search_notes`（hybrid via `MemoryRuntime.recall(source='know:notes')` + tag/project 后过滤；cold start 或空 query 回落 substring 扫）、`summarize_topic_evolution`
-- ✅ Write（全部 ProposalEnvelope，§4 行为契约）：`propose_concept_link`、`propose_inbox_classification`、`propose_inbox_tags`、`propose_link_to_decision`、`propose_routine`（2026-05-29）、`propose_capture`（2026-05-29，统一 7 类分类器，目前 routine heuristic 稳定，其余走 note 兜底）
+- ✅ Read：`recall_decision`、`list_open_assumptions`、`list_due_reviews`、`list_due_routines`（2026-05-29）、`search_notes`（hybrid via `MemoryRuntime.recall(source='know:notes')` + tag/project 后过滤；cold start 或空 query 回落 substring 扫）、`summarize_topic_evolution`、`find_similar_knowledge`（2026-05-29，§15.3 去重读：遍历 `kKnowledgeMemorySources` 具体 source + cosine + Jaccard token 复核）
+- ✅ Write（全部 ProposalEnvelope，§4 行为契约）：`propose_concept_link`、`propose_inbox_classification`、`propose_inbox_tags`、`propose_link_to_decision`、`propose_routine`（2026-05-29）、`propose_capture`（2026-05-29，统一 7 类分类器，目前 routine heuristic 稳定，其余走 note 兜底）、`propose_merge`（2026-05-29，§15.3 去重写：`knowledge_merge` envelope + diff，note/concept；chat-apply 接线待办见 §15.6）
 - ✅ `propose_inbox_*` 三件套同时持久化到 `knowledge_inbox_triage` —— §5 异步 triage 的 LLM 写端口
 - ✅ 通过 `deviceToolsProvider` 在 bootstrap 拼入，gated on `domainOptInsProvider.contains(DomainScope.knowledge)`
 
@@ -536,9 +537,9 @@ in:  { primary_id, duplicate_ids:[...], merged:{ title?, body_md?, tags?, links?
 ### 15.6 分期（可独立合并、随时可停）
 
 - **P0 — 去重闭环**：`find_similar_knowledge` + `propose_merge` + schema v22 + 录入后自动查重卡。（填补唯一能力空白，价值最高）
-  - [ ] schema v22 + `mergeEntities` / `findSimilar`
-  - [ ] `find_similar_knowledge` + `propose_merge` + descriptors + system prompt
-  - [ ] `propose_merge` 接入 `featureProposalApplier`（参照 §14.2 `propose_concept_link` 的 applier 待办）
+  - [x] schema v22（`merged_into_id` on notes + concepts，迁移 + 1 条 ALTER ×2）+ `KnowledgeRepository.mergeNotes` / `mergeConcepts`（事务内并集 + tombstone + concept 入边重指）+ 聚合 `kKnowledgeMemorySources`（2026-05-29）
+  - [x] `find_similar_knowledge`（read，遍历具体 source + cosine + Jaccard token 复核）+ `propose_merge`（write，`knowledge_merge` envelope + diff，Confirmation.oneTap）+ descriptors + system prompt（2026-05-29）。测试:`knowledge_merge_repository_test`(8) + `knowledge_dedupe_tools_test`(8);更新 `contracts_roundtrip`(55) + `device_degradation` canonical 列表(顺带补全此前漏登的 routine/capture)
+  - [ ] `propose_merge` 接入 chat-apply：需要 `KnowledgeProposalApplier`(repo.mergeNotes/mergeConcepts)+ 一个 composite/dispatch，让 chat propose-card 的 confirm 能落 knowledge envelope。**这是全部 knowledge propose 工具共用的缺口**(propose_concept_link / propose_routine / propose_capture 目前从 chat 确认都会撞 finance applier 的 "unknown kind")，与 §14.2 `propose_concept_link` applier 待办合并处理。当前 `propose_merge` 仅产出 envelope;Review tab 的 inline apply 路径(`_ai_suggestions_card`)仅认 note-bound triage envelope,不含 merge。
 - **P1 — 统一入口**：Inbox 录入面升格为 knowledge-scoped 会话面 + 快捷 chips，复用 ai_chat 引擎；无 runtime 回落 heuristic。
   - [ ] `knowledgeScope` preset + `AiIntentInvocation` 打开 surface
   - [ ] 三个 chip 意图预设

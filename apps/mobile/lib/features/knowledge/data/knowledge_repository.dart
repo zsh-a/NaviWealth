@@ -88,6 +88,7 @@ class KnowledgeRepository {
       tagsJson: Value(encodeStringList(note.tags)),
       projectTag: Value(note.projectTag),
       createdAt: note.createdAt,
+      mergedIntoId: Value(note.mergedIntoId),
       ownerUserId: note.sync.ownerUserId,
       updatedAt: note.sync.updatedAt,
       updatedByDevice: note.sync.updatedByDevice,
@@ -337,6 +338,7 @@ class KnowledgeRepository {
       summaryMd: Value(c.summaryMd),
       relatedConceptIdsJson: Value(encodeStringList(c.relatedConceptIds)),
       createdAt: c.createdAt,
+      mergedIntoId: Value(c.mergedIntoId),
       ownerUserId: c.sync.ownerUserId,
       updatedAt: c.sync.updatedAt,
       updatedByDevice: c.sync.updatedByDevice,
@@ -457,6 +459,185 @@ class KnowledgeRepository {
     );
   }
 
+  // ---------- Dedupe / merge (§15.3) ----------
+
+  Future<List<KnowledgeConcept>> listConcepts({
+    required String ownerUserId,
+    int limit = 1000,
+  }) async {
+    final q = _db.select(_db.knowledgeConcepts)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([(t) => OrderingTerm(expression: t.name)])
+      ..limit(limit);
+    final rows = await q.get();
+    return rows.map(_conceptFromRow).toList();
+  }
+
+  /// Merge [duplicates] into [primary] (`docs/knowledgeos-domain.md`
+  /// §15.3). Unions tags onto the survivor, optionally overrides its
+  /// title/body, then tombstones each duplicate stamped with
+  /// `mergedIntoId = primary.id`. [stamp] mints one fresh [SyncMeta] per
+  /// touched row (so each carries its own HLC); all stamps are minted
+  /// **before** the transaction opens so the factory never re-enters the
+  /// DB zone. One transaction → primary-update + duplicate-tombstones land
+  /// together (the two-row-update sync story in §15.3). Returns the
+  /// surviving note. Notes carry no inbound id references, so there is
+  /// nothing to re-point.
+  Future<KnowledgeNote> mergeNotes({
+    required KnowledgeNote primary,
+    required List<KnowledgeNote> duplicates,
+    required Future<SyncMeta> Function() stamp,
+    String? mergedTitle,
+    String? mergedBody,
+  }) async {
+    final dups = duplicates
+        .where((d) => d.id != primary.id)
+        .toList(growable: false);
+    final mergedTags = <String>{...primary.tags};
+    for (final d in dups) {
+      mergedTags.addAll(d.tags);
+    }
+    final survivorMeta = await stamp();
+    final tombMetas = <SyncMeta>[for (var i = 0; i < dups.length; i++) await stamp()];
+
+    final survivor = KnowledgeNote(
+      id: primary.id,
+      title: (mergedTitle != null && mergedTitle.trim().isNotEmpty)
+          ? mergedTitle.trim()
+          : primary.title,
+      bodyMd: (mergedBody != null && mergedBody.trim().isNotEmpty)
+          ? mergedBody.trim()
+          : primary.bodyMd,
+      sourceUrl: primary.sourceUrl,
+      tags: mergedTags.toList(growable: false),
+      projectTag: primary.projectTag,
+      createdAt: primary.createdAt,
+      sync: survivorMeta,
+    );
+
+    await _db.transaction(() async {
+      await upsertNote(survivor);
+      for (var i = 0; i < dups.length; i++) {
+        final d = dups[i];
+        final meta = tombMetas[i];
+        await upsertNote(
+          KnowledgeNote(
+            id: d.id,
+            title: d.title,
+            bodyMd: d.bodyMd,
+            sourceUrl: d.sourceUrl,
+            tags: d.tags,
+            projectTag: d.projectTag,
+            createdAt: d.createdAt,
+            mergedIntoId: primary.id,
+            sync: meta.copyWith(deletedAt: meta.updatedAt),
+          ),
+        );
+      }
+    });
+    return survivor;
+  }
+
+  /// Merge [duplicates] into [primary] concept (§15.3). Beyond the note
+  /// behaviour it also (a) folds each duplicate's name into the survivor's
+  /// aliases so the old name still resolves, (b) unions related-concept
+  /// ids, and (c) **re-points inbound links** — any other live concept
+  /// whose `relatedConceptIds` referenced a duplicate now references the
+  /// primary. All in one transaction. Returns the surviving concept.
+  Future<KnowledgeConcept> mergeConcepts({
+    required KnowledgeConcept primary,
+    required List<KnowledgeConcept> duplicates,
+    required Future<SyncMeta> Function() stamp,
+    String? mergedName,
+    String? mergedSummary,
+  }) async {
+    final dups = duplicates
+        .where((d) => d.id != primary.id)
+        .toList(growable: false);
+    final dupIds = dups.map((d) => d.id).toSet();
+
+    final aliases = <String>{...primary.aliases};
+    final related = <String>{...primary.relatedConceptIds};
+    for (final d in dups) {
+      aliases.addAll(d.aliases);
+      aliases.add(d.name);
+      related.addAll(d.relatedConceptIds);
+    }
+    related.removeAll(dupIds);
+    related.remove(primary.id);
+    aliases.remove(primary.name);
+
+    // Re-point inbound related links across other live concepts.
+    final ownerUserId = primary.sync.ownerUserId;
+    final all = await listConcepts(ownerUserId: ownerUserId);
+    final repoints = <(KnowledgeConcept, List<String>)>[];
+    for (final c in all) {
+      if (c.id == primary.id || dupIds.contains(c.id)) continue;
+      if (!c.relatedConceptIds.any(dupIds.contains)) continue;
+      final next = <String>{
+        for (final r in c.relatedConceptIds) dupIds.contains(r) ? primary.id : r,
+      }..remove(c.id);
+      repoints.add((c, next.toList(growable: false)));
+    }
+
+    final survivorMeta = await stamp();
+    final tombMetas = <SyncMeta>[for (var i = 0; i < dups.length; i++) await stamp()];
+    final repointMetas = <SyncMeta>[
+      for (var i = 0; i < repoints.length; i++) await stamp(),
+    ];
+
+    final survivor = KnowledgeConcept(
+      id: primary.id,
+      name: (mergedName != null && mergedName.trim().isNotEmpty)
+          ? mergedName.trim()
+          : primary.name,
+      aliases: aliases.toList(growable: false),
+      summaryMd: (mergedSummary != null && mergedSummary.trim().isNotEmpty)
+          ? mergedSummary.trim()
+          : primary.summaryMd,
+      relatedConceptIds: related.toList(growable: false),
+      createdAt: primary.createdAt,
+      sync: survivorMeta,
+    );
+
+    await _db.transaction(() async {
+      await upsertConcept(survivor);
+      for (var i = 0; i < dups.length; i++) {
+        final d = dups[i];
+        final meta = tombMetas[i];
+        await upsertConcept(
+          KnowledgeConcept(
+            id: d.id,
+            name: d.name,
+            aliases: d.aliases,
+            summaryMd: d.summaryMd,
+            relatedConceptIds: d.relatedConceptIds,
+            createdAt: d.createdAt,
+            mergedIntoId: primary.id,
+            sync: meta.copyWith(deletedAt: meta.updatedAt),
+          ),
+        );
+      }
+      for (var i = 0; i < repoints.length; i++) {
+        final (c, next) = repoints[i];
+        await upsertConcept(
+          KnowledgeConcept(
+            id: c.id,
+            name: c.name,
+            aliases: c.aliases,
+            summaryMd: c.summaryMd,
+            relatedConceptIds: next,
+            createdAt: c.createdAt,
+            mergedIntoId: c.mergedIntoId,
+            sync: repointMetas[i],
+          ),
+        );
+      }
+    });
+    return survivor;
+  }
+
   // ---------- Row → model ----------
 
   KnowledgeNote _noteFromRow(KnowledgeNoteRow r) => KnowledgeNote(
@@ -467,6 +648,7 @@ class KnowledgeRepository {
     tags: decodeStringList(r.tagsJson),
     projectTag: r.projectTag,
     createdAt: r.createdAt,
+    mergedIntoId: r.mergedIntoId,
     sync: SyncMeta(
       ownerUserId: r.ownerUserId,
       updatedAt: r.updatedAt,
@@ -544,6 +726,7 @@ class KnowledgeRepository {
     summaryMd: r.summaryMd,
     relatedConceptIds: decodeStringList(r.relatedConceptIdsJson),
     createdAt: r.createdAt,
+    mergedIntoId: r.mergedIntoId,
     sync: SyncMeta(
       ownerUserId: r.ownerUserId,
       updatedAt: r.updatedAt,

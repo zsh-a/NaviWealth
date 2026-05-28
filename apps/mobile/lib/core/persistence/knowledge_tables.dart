@@ -26,6 +26,13 @@ class KnowledgeNotes extends Table with SyncableTable {
   TextColumn get projectTag => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
 
+  /// Dedupe pointer (`docs/knowledgeos-domain.md` §15.3). When this note
+  /// is merged into another note via `propose_merge`, it is soft-deleted
+  /// (`deletedAt` set) AND stamped with the surviving note's id here, so
+  /// a future un-merge / audit can find where the content went. NULL for
+  /// every live note.
+  TextColumn get mergedIntoId => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
@@ -99,6 +106,11 @@ class KnowledgeConcepts extends Table with SyncableTable {
   TextColumn get relatedConceptIdsJson =>
       text().withDefault(const Constant('[]'))();
   DateTimeColumn get createdAt => dateTime()();
+
+  /// Dedupe pointer — see [KnowledgeNotes.mergedIntoId]. When this concept
+  /// is merged into another, it is soft-deleted and stamped with the
+  /// survivor's id; the survivor unions aliases + relatedConceptIds.
+  TextColumn get mergedIntoId => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

@@ -29,6 +29,8 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../domain/knowledge_models.dart';
+import 'knowledge_decision_memory_indexer.dart'
+    show kKnowledgeDecisionMemorySource;
 import 'knowledge_repository.dart';
 import 'providers.dart';
 
@@ -37,6 +39,20 @@ const String kKnowledgePrincipleMemorySource = 'know:principles';
 const String kKnowledgeAssumptionMemorySource = 'know:assumptions';
 const String kKnowledgeConceptMemorySource = 'know:concepts';
 const String kKnowledgeExperimentMemorySource = 'know:experiments';
+
+/// Every KnowledgeOS Memory source keyed by a short type token
+/// (`docs/knowledgeos-domain.md` §15.3). The dedupe / cross-type search
+/// tools iterate this because `MemoryRuntime.recall(source:)` is an exact
+/// match — there is no `know:*` wildcard. Decision's source lives in its
+/// own indexer file; re-exported here so this is the single catalogue.
+const Map<String, String> kKnowledgeMemorySources = <String, String>{
+  'note': kKnowledgeNoteMemorySource,
+  'principle': kKnowledgePrincipleMemorySource,
+  'assumption': kKnowledgeAssumptionMemorySource,
+  'concept': kKnowledgeConceptMemorySource,
+  'experiment': kKnowledgeExperimentMemorySource,
+  'decision': kKnowledgeDecisionMemorySource,
+};
 
 String _truncate(String s, [int n = 280]) =>
     s.length > n ? '${s.substring(0, n)}…' : s;
