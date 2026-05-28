@@ -24,11 +24,14 @@ class CaptureClassification {
     this.intervalDays,
     this.scope,
     this.statement,
+    this.polishedTitle,
+    this.polishedBody,
   });
 
   /// `note` is the default fallback — the caller should *not* prompt
-  /// the user when this comes back; the saved note is the right
-  /// representation as-is.
+  /// the user when this comes back **unless** a polish suggestion is
+  /// present; the sheet uses [hasSuggestion] to decide whether to
+  /// surface the inline card at all.
   final CaptureKind kind;
   final double confidence;
   final String reasonZh;
@@ -40,7 +43,25 @@ class CaptureClassification {
   final String? scope;
   final String? statement;
 
+  /// Optional AI rewrite of the user's title / body. Same meaning, just
+  /// clearer / fixes typos / restructures Markdown. The LLM populates
+  /// these when it sees room to improve; the heuristic leaves them
+  /// null. Empty / whitespace-only strings are normalised to null at
+  /// the parse boundary so the sheet can rely on `!= null` as the
+  /// "polish exists" gate.
+  final String? polishedTitle;
+  final String? polishedBody;
+
   bool get isUpgrade => kind != CaptureKind.note;
+
+  bool get hasPolish =>
+      (polishedTitle != null && polishedTitle!.isNotEmpty) ||
+      (polishedBody != null && polishedBody!.isNotEmpty);
+
+  /// The sheet enters its suggestion stage when this is true — either
+  /// the kind warrants an upgrade, or the polished version differs
+  /// enough from the raw input to be worth showing.
+  bool get hasSuggestion => isUpgrade || hasPolish;
 }
 
 /// Common interface so the Sheet + the `propose_capture` tool can swap

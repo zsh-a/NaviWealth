@@ -69,7 +69,8 @@ class ProposeCaptureTool implements DeviceTool {
     final classifier = ctx.ref.read(captureClassifierProvider);
     final classification = await classifier.classify(text: text);
 
-    if (classification.kind == CaptureKind.note) {
+    if (classification.kind == CaptureKind.note &&
+        !classification.hasPolish) {
       return <String, Object?>{
         'proposal_id': kKnowledgeUuid.v4(),
         'kind': 'capture_no_upgrade',
@@ -93,15 +94,22 @@ class ProposeCaptureTool implements DeviceTool {
       if (classification.intervalDays != null)
         'interval_days': classification.intervalDays,
       if (classification.scope != null) 'scope': classification.scope,
+      if (classification.polishedTitle != null)
+        'polished_title': classification.polishedTitle,
+      if (classification.polishedBody != null)
+        'polished_body': classification.polishedBody,
     };
 
+    final polishHint = classification.hasPolish ? ' [含 AI 润色]' : '';
     final summary = switch (classification.kind) {
       CaptureKind.routine =>
         '检出周期事项:"${classification.statement ?? text}",'
             '建议升级为 Routine(每 ${classification.intervalDays} 天) — '
-            '${classification.reasonZh}',
+            '${classification.reasonZh}$polishHint',
+      CaptureKind.note when classification.hasPolish =>
+        '保留为 Note,AI 提议润色文本 — ${classification.reasonZh}',
       _ =>
-        '检出 ${classification.kind.wire},建议升级 — ${classification.reasonZh}',
+        '检出 ${classification.kind.wire},建议升级 — ${classification.reasonZh}$polishHint',
     };
 
     return <String, Object?>{

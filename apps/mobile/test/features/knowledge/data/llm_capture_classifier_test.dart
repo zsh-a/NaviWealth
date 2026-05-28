@@ -170,6 +170,89 @@ Sure, here's the classification:
       expect(r.kind, CaptureKind.note);
       expect(r.reasonZh, contains('置信度'));
     });
+
+    test('low-confidence downgrade still carries polish fields', () async {
+      final fake = FakeDeviceLlmClient(
+        behavior: _ReturnsText('''
+{"kind":"routine","confidence":0.3,"reason_zh":"勉强像","interval_days":180,
+ "polished_title":"清理后的标题","polished_body":"清理后的正文"}'''),
+      );
+      final c = LlmCaptureClassifier(client: fake);
+      final r = await c.classify(text: '可能要定期 xxx');
+      expect(r.kind, CaptureKind.note);
+      expect(r.hasPolish, isTrue);
+      expect(r.polishedTitle, '清理后的标题');
+      expect(r.polishedBody, '清理后的正文');
+    });
+  });
+
+  group('LlmCaptureClassifier — polish', () {
+    test('routine envelope carries polished title + body', () async {
+      final fake = FakeDeviceLlmClient(
+        behavior: _ReturnsText('''
+{
+  "kind": "routine",
+  "confidence": 0.9,
+  "reason_zh": "周期事项",
+  "statement": "港卡定期活跃",
+  "interval_days": 180,
+  "polished_title": "港卡定期活跃",
+  "polished_body": "港卡每 6 个月做一次活跃交易，否则会休眠。"
+}'''),
+      );
+      final c = LlmCaptureClassifier(client: fake);
+      final r = await c.classify(text: 'gangka每6個月活躍。。。');
+      expect(r.kind, CaptureKind.routine);
+      expect(r.hasPolish, isTrue);
+      expect(r.polishedTitle, '港卡定期活跃');
+      expect(r.polishedBody, contains('港卡每 6 个月'));
+      expect(r.hasSuggestion, isTrue);
+    });
+
+    test('kind=note + polish only — hasSuggestion is true', () async {
+      final fake = FakeDeviceLlmClient(
+        behavior: _ReturnsText('''
+{
+  "kind": "note",
+  "confidence": 0.4,
+  "reason_zh": "无明显结构,只润色",
+  "polished_title": "清晨想到的一句",
+  "polished_body": "清理后的正文。"
+}'''),
+      );
+      final c = LlmCaptureClassifier(client: fake);
+      final r = await c.classify(text: '清晨..想到的，一句，  乱七八糟');
+      expect(r.kind, CaptureKind.note);
+      expect(r.isUpgrade, isFalse);
+      expect(r.hasPolish, isTrue);
+      expect(r.hasSuggestion, isTrue, reason: 'polish alone triggers UI');
+    });
+
+    test('empty polish strings normalize to null (no suggestion)', () async {
+      final fake = FakeDeviceLlmClient(
+        behavior: _ReturnsText('''
+{"kind":"note","confidence":0.5,"reason_zh":"无结构",
+ "polished_title":"","polished_body":"   "}'''),
+      );
+      final c = LlmCaptureClassifier(client: fake);
+      final r = await c.classify(text: '今天读了一本书');
+      expect(r.kind, CaptureKind.note);
+      expect(r.hasPolish, isFalse);
+      expect(r.hasSuggestion, isFalse);
+    });
+
+    test('missing polish fields → null, no false positive', () async {
+      final fake = FakeDeviceLlmClient(
+        behavior: _ReturnsText(
+          '{"kind":"note","confidence":0.5,"reason_zh":"无结构"}',
+        ),
+      );
+      final c = LlmCaptureClassifier(client: fake);
+      final r = await c.classify(text: '今天读了一本书');
+      expect(r.polishedTitle, isNull);
+      expect(r.polishedBody, isNull);
+      expect(r.hasSuggestion, isFalse);
+    });
   });
 
   group('LlmCaptureClassifier — fallback to heuristic', () {
