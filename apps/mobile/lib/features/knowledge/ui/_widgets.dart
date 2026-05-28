@@ -24,7 +24,9 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../design_system/design_system.dart';
+import '_segmented_row.dart';
 
 /// SoftCard with optional title and a children column.
 ///
@@ -111,6 +113,101 @@ class KnowledgeSection extends StatelessWidget {
           ...children,
         ],
       ),
+    );
+  }
+}
+
+/// Edit/Preview toggle for a Markdown text field.
+///
+/// Use anywhere a user authors free-form markdown that the rest of the
+/// app will render via [AiMarkdown] — the toggle lets them check the
+/// rendered output before submitting. Currently driving the Note body,
+/// Decision rationale, Principle rationale, Concept summary and
+/// Experiment method fields; that's the entire markdown-write surface
+/// in KnowledgeOS.
+///
+/// Owns the segmented control's mode state; the caller owns the
+/// text [controller].
+class MarkdownEditorWithPreview extends StatefulWidget {
+  const MarkdownEditorWithPreview({
+    super.key,
+    required this.controller,
+    this.label,
+    this.hint,
+    this.minLines = 3,
+    this.maxLines = 6,
+  });
+
+  final TextEditingController controller;
+
+  /// Optional label rendered above the toggle. Pass `null` when the
+  /// surrounding sheet already labels the field.
+  final String? label;
+
+  final String? hint;
+  final int minLines;
+  final int maxLines;
+
+  @override
+  State<MarkdownEditorWithPreview> createState() =>
+      _MarkdownEditorWithPreviewState();
+}
+
+enum _MarkdownMode { edit, preview }
+
+class _MarkdownEditorWithPreviewState
+    extends State<MarkdownEditorWithPreview> {
+  _MarkdownMode _mode = _MarkdownMode.edit;
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = context.theme.typography;
+    final colors = context.theme.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (widget.label != null) ...[
+          Text(
+            widget.label!,
+            style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: AppSpacing.s4),
+        ],
+        KnowledgeSegmentedRow<_MarkdownMode>(
+          options: _MarkdownMode.values,
+          value: _mode,
+          labelOf: (m) => switch (m) {
+            _MarkdownMode.edit => 'Edit',
+            _MarkdownMode.preview => 'Preview',
+          },
+          onChanged: (m) => setState(() => _mode = m),
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        if (_mode == _MarkdownMode.edit)
+          FTextField(
+            control: FTextFieldControl.managed(controller: widget.controller),
+            hint: widget.hint,
+            minLines: widget.minLines,
+            maxLines: widget.maxLines,
+          )
+        else
+          Container(
+            constraints: const BoxConstraints(minHeight: 96),
+            padding: const EdgeInsets.all(AppSpacing.s12),
+            decoration: BoxDecoration(
+              color: colors.muted,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: colors.border),
+            ),
+            child: widget.controller.text.trim().isEmpty
+                ? Text(
+                    'Nothing to preview — switch back to Edit and type.',
+                    style: typography.sm
+                        .copyWith(color: colors.mutedForeground),
+                  )
+                : AiMarkdown(text: widget.controller.text),
+          ),
+      ],
     );
   }
 }

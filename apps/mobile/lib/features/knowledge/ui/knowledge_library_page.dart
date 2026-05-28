@@ -232,17 +232,34 @@ class _LibraryList extends ConsumerWidget {
           loading: () => const Center(child: FProgress()),
           error: (e, _) => Text('加载失败:$e'),
           data: (repo) => switch (segment) {
-            _LibrarySegment.decisions => _DecisionsList(
+            _LibrarySegment.decisions => _SegmentList<KnowledgeDecision>(
               stream: repo.watchDecisions(ownerUserId: owner),
+              emptyIcon: Icons.alt_route_outlined,
+              emptyTitle: '还没有决策记录',
+              emptyMessage:
+                  '点右下角 + New decision，记录第一条值得复盘的判断。',
+              tileBuilder: _buildDecisionTile,
             ),
-            _LibrarySegment.notes => _NotesList(
+            _LibrarySegment.notes => _SegmentList<KnowledgeNote>(
               stream: repo.watchNotes(ownerUserId: owner),
+              emptyIcon: Icons.notes_outlined,
+              emptyTitle: 'Library 里还没有笔记',
+              emptyMessage: '笔记在 Inbox 写；这里只做浏览。',
+              tileBuilder: _buildNoteTile,
             ),
-            _LibrarySegment.concepts => _ConceptsList(
+            _LibrarySegment.concepts => _SegmentList<KnowledgeConcept>(
               stream: repo.watchConcepts(ownerUserId: owner),
+              emptyIcon: Icons.account_tree_outlined,
+              emptyTitle: '还没有 concept 节点',
+              emptyMessage: 'Concepts 给 [[soft links]] 和 AI 建联用。',
+              tileBuilder: _buildConceptTile,
             ),
-            _LibrarySegment.experiments => _ExperimentsList(
+            _LibrarySegment.experiments => _SegmentList<KnowledgeExperiment>(
               stream: repo.watchExperiments(ownerUserId: owner),
+              emptyIcon: Icons.science_outlined,
+              emptyTitle: '没有进行中的 experiment',
+              emptyMessage: 'Experiment 通常挂在一条要验证的 assumption 上。',
+              tileBuilder: _buildExperimentTile,
             ),
           },
         );
@@ -251,240 +268,131 @@ class _LibraryList extends ConsumerWidget {
   }
 }
 
-class _DecisionsList extends StatelessWidget {
-  const _DecisionsList({required this.stream});
-  final Stream<List<KnowledgeDecision>> stream;
+/// Generic Library segment list. Collapses the 4 per-type list
+/// widgets that all did the same StreamBuilder → empty → ListView
+/// dance, differing only in row layout (which is the [tileBuilder]
+/// callback). Adding a 5th segment (Principle / Assumption browse)
+/// is now a one-liner.
+class _SegmentList<T> extends StatelessWidget {
+  const _SegmentList({
+    required this.stream,
+    required this.emptyIcon,
+    required this.emptyTitle,
+    required this.emptyMessage,
+    required this.tileBuilder,
+  });
+
+  final Stream<List<T>> stream;
+  final IconData emptyIcon;
+  final String emptyTitle;
+  final String emptyMessage;
+  final Widget Function(BuildContext, T) tileBuilder;
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<KnowledgeDecision>>(
+    return StreamBuilder<List<T>>(
       stream: stream,
       builder: (context, snap) {
-        final items = snap.data ?? const <KnowledgeDecision>[];
+        final items = snap.data ?? const [];
         if (items.isEmpty) {
-          return const AppEmptyState(
-            icon: Icons.alt_route_outlined,
-            title: '还没有决策记录',
-            message: '点右下角 + New decision，记录第一条值得复盘的判断。',
+          return AppEmptyState(
+            icon: emptyIcon,
+            title: emptyTitle,
+            message: emptyMessage,
           );
         }
         return ListView.separated(
           itemCount: items.length,
           separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
-          itemBuilder: (context, i) {
-            final d = items[i];
-            final typography = context.theme.typography;
-            final colors = context.theme.colors;
-            return GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => context.pushNamed(
-                AppRouteNames.knowledgeDecisionDetail,
-                pathParameters: {'id': d.id},
-              ),
-              child: SoftCard(
-                padding: const EdgeInsets.all(AppSpacing.s12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            d.question,
-                            style: typography.md.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.s8),
-                        KnowledgeStatusBadge(label: d.status.wire),
-                        const SizedBox(width: AppSpacing.s4),
-                        Icon(
-                          FLucideIcons.chevronRight,
-                          size: 14,
-                          color: colors.mutedForeground,
-                        ),
-                      ],
-                    ),
-                    if (d.selectedLabel.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.s4),
-                      Text(
-                        d.selectedLabel,
-                        style:
-                            typography.sm.copyWith(color: colors.primary),
-                      ),
-                    ],
-                    if (d.rationaleMd.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.s4),
-                      Text(
-                        d.rationaleMd.length > 200
-                            ? '${d.rationaleMd.substring(0, 200)}…'
-                            : d.rationaleMd,
-                        style: typography.sm
-                            .copyWith(color: colors.mutedForeground),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            );
-          },
+          itemBuilder: (context, i) => tileBuilder(context, items[i]),
         );
       },
     );
   }
 }
 
-class _NotesList extends StatelessWidget {
-  const _NotesList({required this.stream});
-  final Stream<List<KnowledgeNote>> stream;
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<List<KnowledgeNote>>(
-      stream: stream,
-      builder: (context, snap) {
-        final items = snap.data ?? const <KnowledgeNote>[];
-        if (items.isEmpty) {
-          return const AppEmptyState(
-            icon: Icons.notes_outlined,
-            title: 'Library 里还没有笔记',
-            message: '笔记在 Inbox 写；这里只做浏览。',
-          );
-        }
-        return ListView.separated(
-          itemCount: items.length,
-          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
-          itemBuilder: (context, i) {
-            final n = items[i];
-            final typography = context.theme.typography;
-            final colors = context.theme.colors;
-            return SoftCard(
-              padding: const EdgeInsets.all(AppSpacing.s12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    n.title.isEmpty ? '(untitled)' : n.title,
-                    style: typography.md
-                        .copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  if (n.bodyMd.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.s4),
-                    Text(
-                      n.bodyMd.length > 200
-                          ? '${n.bodyMd.substring(0, 200)}…'
-                          : n.bodyMd,
-                      style: typography.sm
-                          .copyWith(color: colors.mutedForeground),
-                    ),
-                  ],
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+Widget _buildDecisionTile(BuildContext context, KnowledgeDecision d) {
+  final typography = context.theme.typography;
+  final colors = context.theme.colors;
+  return GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onTap: () => context.pushNamed(
+      AppRouteNames.knowledgeDecisionDetail,
+      pathParameters: {'id': d.id},
+    ),
+    child: KnowledgeSection.item(
+      title: d.question,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          KnowledgeStatusBadge(label: d.status.wire),
+          const SizedBox(width: AppSpacing.s4),
+          Icon(
+            FLucideIcons.chevronRight,
+            size: 14,
+            color: colors.mutedForeground,
+          ),
+        ],
+      ),
+      children: [
+        if (d.selectedLabel.isNotEmpty)
+          Text(
+            d.selectedLabel,
+            style: typography.sm.copyWith(color: colors.primary),
+          ),
+        if (d.rationaleMd.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            d.rationaleMd.length > 200
+                ? '${d.rationaleMd.substring(0, 200)}…'
+                : d.rationaleMd,
+            style: typography.sm.copyWith(color: colors.mutedForeground),
+          ),
+        ],
+      ],
+    ),
+  );
 }
 
-class _ConceptsList extends StatelessWidget {
-  const _ConceptsList({required this.stream});
-  final Stream<List<KnowledgeConcept>> stream;
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<List<KnowledgeConcept>>(
-      stream: stream,
-      builder: (context, snap) {
-        final items = snap.data ?? const <KnowledgeConcept>[];
-        if (items.isEmpty) {
-          return const AppEmptyState(
-            icon: Icons.account_tree_outlined,
-            title: '还没有 concept 节点',
-            message: 'Concepts 给 [[soft links]] 和 AI 建联用。',
-          );
-        }
-        return ListView.separated(
-          itemCount: items.length,
-          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
-          itemBuilder: (context, i) {
-            final c = items[i];
-            final typography = context.theme.typography;
-            final colors = context.theme.colors;
-            return SoftCard(
-              padding: const EdgeInsets.all(AppSpacing.s12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    c.name,
-                    style: typography.md
-                        .copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  if (c.summaryMd.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.s4),
-                    Text(
-                      c.summaryMd.length > 200
-                          ? '${c.summaryMd.substring(0, 200)}…'
-                          : c.summaryMd,
-                      style: typography.sm
-                          .copyWith(color: colors.mutedForeground),
-                    ),
-                  ],
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+Widget _buildNoteTile(BuildContext context, KnowledgeNote n) {
+  final typography = context.theme.typography;
+  final colors = context.theme.colors;
+  return KnowledgeSection.item(
+    title: n.title.isEmpty ? '(untitled)' : n.title,
+    children: [
+      if (n.bodyMd.isNotEmpty)
+        Text(
+          n.bodyMd.length > 200
+              ? '${n.bodyMd.substring(0, 200)}…'
+              : n.bodyMd,
+          style: typography.sm.copyWith(color: colors.mutedForeground),
+        ),
+    ],
+  );
 }
 
-class _ExperimentsList extends StatelessWidget {
-  const _ExperimentsList({required this.stream});
-  final Stream<List<KnowledgeExperiment>> stream;
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<List<KnowledgeExperiment>>(
-      stream: stream,
-      builder: (context, snap) {
-        final items = snap.data ?? const <KnowledgeExperiment>[];
-        if (items.isEmpty) {
-          return const AppEmptyState(
-            icon: Icons.science_outlined,
-            title: '没有进行中的 experiment',
-            message: 'Experiment 通常挂在一条要验证的 assumption 上。',
-          );
-        }
-        return ListView.separated(
-          itemCount: items.length,
-          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
-          itemBuilder: (context, i) {
-            final e = items[i];
-            final typography = context.theme.typography;
-            return SoftCard(
-              padding: const EdgeInsets.all(AppSpacing.s12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      e.hypothesis,
-                      style: typography.md
-                          .copyWith(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s8),
-                  KnowledgeStatusBadge(label: e.status.wire),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+Widget _buildConceptTile(BuildContext context, KnowledgeConcept c) {
+  final typography = context.theme.typography;
+  final colors = context.theme.colors;
+  return KnowledgeSection.item(
+    title: c.name,
+    children: [
+      if (c.summaryMd.isNotEmpty)
+        Text(
+          c.summaryMd.length > 200
+              ? '${c.summaryMd.substring(0, 200)}…'
+              : c.summaryMd,
+          style: typography.sm.copyWith(color: colors.mutedForeground),
+        ),
+    ],
+  );
+}
+
+Widget _buildExperimentTile(BuildContext context, KnowledgeExperiment e) {
+  return KnowledgeSection.item(
+    title: e.hypothesis,
+    trailing: KnowledgeStatusBadge(label: e.status.wire),
+    children: const [],
+  );
 }
 

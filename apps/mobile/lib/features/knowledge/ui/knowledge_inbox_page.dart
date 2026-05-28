@@ -11,17 +11,12 @@ import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:uuid/uuid.dart';
-
-import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
-import '_segmented_row.dart';
-
-const _kUuid = Uuid();
+import '_widgets.dart';
 
 class KnowledgeInboxPage extends ConsumerWidget {
   const KnowledgeInboxPage({super.key});
@@ -162,8 +157,6 @@ Future<void> _showNewNoteSheet(BuildContext context, WidgetRef ref) {
   );
 }
 
-enum _NoteEditMode { edit, preview }
-
 class _NewNoteSheet extends StatefulWidget {
   const _NewNoteSheet({required this.ref});
   final WidgetRef ref;
@@ -175,7 +168,6 @@ class _NewNoteSheet extends StatefulWidget {
 class _NewNoteSheetState extends State<_NewNoteSheet> {
   final _titleController = TextEditingController();
   final _bodyController = TextEditingController();
-  _NoteEditMode _mode = _NoteEditMode.edit;
   bool _saving = false;
 
   @override
@@ -195,7 +187,7 @@ class _NewNoteSheetState extends State<_NewNoteSheet> {
       final stamper = await widget.ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
       final note = KnowledgeNote(
-        id: _kUuid.v4(),
+        id: kKnowledgeUuid.v4(),
         title: _titleController.text.trim(),
         bodyMd: _bodyController.text,
         tags: const <String>[],
@@ -216,8 +208,6 @@ class _NewNoteSheetState extends State<_NewNoteSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
-    final colors = context.theme.colors;
     return AppSheet(
       title: 'New note',
       footer: AppSheetFooter(
@@ -235,42 +225,13 @@ class _NewNoteSheetState extends State<_NewNoteSheet> {
             hint: 'Note title',
           ),
           const SizedBox(height: AppSpacing.s12),
-          KnowledgeSegmentedRow<_NoteEditMode>(
-            options: _NoteEditMode.values,
-            value: _mode,
-            labelOf: (m) => switch (m) {
-              _NoteEditMode.edit => 'Edit',
-              _NoteEditMode.preview => 'Preview',
-            },
-            onChanged: (m) => setState(() => _mode = m),
+          MarkdownEditorWithPreview(
+            controller: _bodyController,
+            label: 'Body (Markdown)',
+            hint: 'Free-form markdown — `#` 标题 / `**bold**` / 列表 等',
+            minLines: 4,
+            maxLines: 8,
           ),
-          const SizedBox(height: AppSpacing.s8),
-          if (_mode == _NoteEditMode.edit)
-            FTextField(
-              control: FTextFieldControl.managed(controller: _bodyController),
-              label: const Text('Body (Markdown)'),
-              hint: 'Free-form markdown — `#` 标题 / `**bold**` / 列表 等',
-              maxLines: 8,
-              minLines: 4,
-            )
-          else
-            Container(
-              constraints: const BoxConstraints(minHeight: 120),
-              padding: const EdgeInsets.all(AppSpacing.s12),
-              decoration: BoxDecoration(
-                color: colors.muted,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: colors.border),
-              ),
-              child: _bodyController.text.trim().isEmpty
-                  ? Text(
-                      'Nothing to preview — switch back to Edit and type.',
-                      style: typography.sm.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    )
-                  : AiMarkdown(text: _bodyController.text),
-            ),
         ],
       ),
     );

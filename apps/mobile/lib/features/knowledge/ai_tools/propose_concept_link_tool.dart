@@ -10,11 +10,8 @@ library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
-import 'package:uuid/uuid.dart';
 
 import '../data/providers.dart';
-
-const _kUuid = Uuid();
 
 class ProposeConceptLinkTool implements DeviceTool {
   const ProposeConceptLinkTool();
@@ -94,7 +91,7 @@ class ProposeConceptLinkTool implements DeviceTool {
     }
 
     return <String, Object?>{
-      'proposal_id': _kUuid.v4(),
+      'proposal_id': kKnowledgeUuid.v4(),
       'kind': 'knowledge_concept_link',
       'status': 'ready',
       'summary_zh':

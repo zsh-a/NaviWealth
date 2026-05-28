@@ -2,11 +2,17 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/persistence/providers.dart';
 import '../../../core/sync/outbox_provider.dart';
 import 'inbox_triage_repository.dart';
 import 'knowledge_repository.dart';
+
+/// Single Uuid instance shared by every KnowledgeOS writer / tool.
+/// Replaces a handful of per-file `_kUuid` / `kInboxTriageUuid`
+/// declarations — Uuid is stateless, no reason to hold several.
+const Uuid kKnowledgeUuid = Uuid();
 
 final knowledgeRepositoryProvider = FutureProvider<KnowledgeRepository>((
   ref,

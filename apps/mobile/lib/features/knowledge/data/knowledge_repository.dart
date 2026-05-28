@@ -22,6 +22,23 @@ class KnowledgeRepository {
   final AppDatabase _db;
   final OutboxStore _outbox;
 
+  /// Shared write path for the 6 typed KnowledgeOS tables: open a
+  /// transaction, upsert via `insertOrReplace`, then enqueue the
+  /// dirty-pointer outbox entry for sync. The previous version of
+  /// this file repeated that 4-line dance in every `upsertX` —
+  /// mechanical and identical across types, so collapsed here.
+  Future<void> _upsertAndEnqueue<R>(
+    TableInfo<Table, R> table,
+    Insertable<R> companion, {
+    required String tableName,
+    required String rowId,
+  }) async {
+    await _db.transaction(() async {
+      await _db.into(table).insert(companion, mode: InsertMode.insertOrReplace);
+      await _outbox.enqueue(table: tableName, rowId: rowId);
+    });
+  }
+
   // ---------- Notes ----------
 
   static const String _notesTable = 'knowledge_notes';
@@ -77,12 +94,12 @@ class KnowledgeRepository {
       hlc: note.sync.hlc,
       deletedAt: Value(note.sync.deletedAt),
     );
-    await _db.transaction(() async {
-      await _db
-          .into(_db.knowledgeNotes)
-          .insert(companion, mode: InsertMode.insertOrReplace);
-      await _outbox.enqueue(table: _notesTable, rowId: note.id);
-    });
+    await _upsertAndEnqueue(
+      _db.knowledgeNotes,
+      companion,
+      tableName: _notesTable,
+      rowId: note.id,
+    );
   }
 
   // ---------- Principles ----------
@@ -126,12 +143,12 @@ class KnowledgeRepository {
       hlc: p.sync.hlc,
       deletedAt: Value(p.sync.deletedAt),
     );
-    await _db.transaction(() async {
-      await _db
-          .into(_db.knowledgePrinciples)
-          .insert(companion, mode: InsertMode.insertOrReplace);
-      await _outbox.enqueue(table: _principlesTable, rowId: p.id);
-    });
+    await _upsertAndEnqueue(
+      _db.knowledgePrinciples,
+      companion,
+      tableName: _principlesTable,
+      rowId: p.id,
+    );
   }
 
   // ---------- Assumptions ----------
@@ -183,12 +200,12 @@ class KnowledgeRepository {
       hlc: a.sync.hlc,
       deletedAt: Value(a.sync.deletedAt),
     );
-    await _db.transaction(() async {
-      await _db
-          .into(_db.knowledgeAssumptions)
-          .insert(companion, mode: InsertMode.insertOrReplace);
-      await _outbox.enqueue(table: _assumptionsTable, rowId: a.id);
-    });
+    await _upsertAndEnqueue(
+      _db.knowledgeAssumptions,
+      companion,
+      tableName: _assumptionsTable,
+      rowId: a.id,
+    );
   }
 
   // ---------- Decisions ----------
@@ -285,12 +302,12 @@ class KnowledgeRepository {
       hlc: d.sync.hlc,
       deletedAt: Value(d.sync.deletedAt),
     );
-    await _db.transaction(() async {
-      await _db
-          .into(_db.knowledgeDecisions)
-          .insert(companion, mode: InsertMode.insertOrReplace);
-      await _outbox.enqueue(table: _decisionsTable, rowId: d.id);
-    });
+    await _upsertAndEnqueue(
+      _db.knowledgeDecisions,
+      companion,
+      tableName: _decisionsTable,
+      rowId: d.id,
+    );
   }
 
   // ---------- Concepts ----------
@@ -326,12 +343,12 @@ class KnowledgeRepository {
       hlc: c.sync.hlc,
       deletedAt: Value(c.sync.deletedAt),
     );
-    await _db.transaction(() async {
-      await _db
-          .into(_db.knowledgeConcepts)
-          .insert(companion, mode: InsertMode.insertOrReplace);
-      await _outbox.enqueue(table: _conceptsTable, rowId: c.id);
-    });
+    await _upsertAndEnqueue(
+      _db.knowledgeConcepts,
+      companion,
+      tableName: _conceptsTable,
+      rowId: c.id,
+    );
   }
 
   // ---------- Experiments ----------
@@ -368,12 +385,12 @@ class KnowledgeRepository {
       hlc: e.sync.hlc,
       deletedAt: Value(e.sync.deletedAt),
     );
-    await _db.transaction(() async {
-      await _db
-          .into(_db.knowledgeExperiments)
-          .insert(companion, mode: InsertMode.insertOrReplace);
-      await _outbox.enqueue(table: _experimentsTable, rowId: e.id);
-    });
+    await _upsertAndEnqueue(
+      _db.knowledgeExperiments,
+      companion,
+      tableName: _experimentsTable,
+      rowId: e.id,
+    );
   }
 
   // ---------- Row → model ----------

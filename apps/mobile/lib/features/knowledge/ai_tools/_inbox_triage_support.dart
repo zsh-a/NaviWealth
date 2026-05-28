@@ -10,13 +10,10 @@ library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
-import 'package:uuid/uuid.dart';
 
 import '../data/inbox_triage_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
-
-const Uuid kInboxTriageUuid = Uuid();
 
 /// Look up the target note + verify owner. Returns either the note or
 /// a `bad_request` envelope to short-circuit the tool.
@@ -105,7 +102,7 @@ Map<String, Object?> proposalEnvelope({
   String note =
       '前端必须显示 summary_zh 给用户确认；只有用户明确点确认后才走 Repository。',
 }) => <String, Object?>{
-  'proposal_id': kInboxTriageUuid.v4(),
+  'proposal_id': kKnowledgeUuid.v4(),
   'kind': kind,
   'status': 'ready',
   'summary_zh': summaryZh,
