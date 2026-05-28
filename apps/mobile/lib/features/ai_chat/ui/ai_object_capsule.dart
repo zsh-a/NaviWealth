@@ -6,17 +6,20 @@
 /// invocation.
 ///
 /// §5.8 hard constraint: label text comes from `intent_policy.dart`,
-/// not free-form. No "Ask AI" / glow / generic chat icon.
+/// not free-form. No "Ask AI" / glow / generic chat icon. Domain is
+/// auto-derived from the current route via [askAi]; capsules never
+/// hard-code which OS they live in.
 library;
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/intent/intent.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import 'ai_sheet.dart';
+import 'ask_ai.dart';
 
-class AiObjectCapsule extends StatelessWidget {
+class AiObjectCapsule extends ConsumerWidget {
   const AiObjectCapsule({
     super.key,
     required this.source,
@@ -35,7 +38,7 @@ class AiObjectCapsule extends StatelessWidget {
   final String? fallbackLabel;
 
   @override
-  Widget build(BuildContext buildContext) {
+  Widget build(BuildContext buildContext, WidgetRef ref) {
     final descriptor = lookupIntent(intent);
     final label =
         fallbackLabel ??
@@ -44,25 +47,24 @@ class AiObjectCapsule extends StatelessWidget {
     return AiPill(
       leading: const AiSparkle(),
       label: label,
-      onTap: () => _open(buildContext),
+      onTap: () => _open(buildContext, ref),
     );
   }
 
-  void _open(BuildContext buildContext) {
+  void _open(BuildContext buildContext, WidgetRef ref) {
     // §5.10 Layer 2 — merge surrounding scope chips into the
     // invocation context. Explicit per-capsule context wins on key
     // collision so call sites can override what the scope advertises.
     final scopeContext = AiContextChipScope.contextMapOf(buildContext);
     final mergedContext = <String, Object?>{...scopeContext, ...context};
-    showAiSheet(
+    askAi(
       buildContext,
-      invocation: AiIntentInvocation(
-        source: source,
-        intent: intent,
-        object: object,
-        context: mergedContext,
-      ),
+      ref,
+      source: source,
+      intent: intent,
+      object: object,
       objectLabel: objectLabel,
+      attrs: mergedContext,
     );
   }
 }

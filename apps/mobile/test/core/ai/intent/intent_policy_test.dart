@@ -1,6 +1,7 @@
 // Wave 33 — IntentDescriptor registry invariants.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/contracts/intent.dart' show kDomainFinance;
 import 'package:naviwealth/core/ai/intent/intent.dart';
 
 void main() {
@@ -62,6 +63,7 @@ void main() {
       intent: 'explain_change',
       object: AiObjectRef(type: 'expense', id: 'e1'),
       context: {'timeframe': '本月'},
+      domain: kDomainFinance,
     );
     final prompt = renderPromptFor(inv, objectLabel: 'Netflix 订阅');
     expect(prompt, contains('Netflix 订阅'));
@@ -73,6 +75,7 @@ void main() {
       source: 'x',
       intent: 'explain_change',
       object: AiObjectRef(type: 'expense', id: 'e1'),
+      domain: kDomainFinance,
     );
     final prompt = renderPromptFor(inv);
     expect(prompt, contains('最近 30 天'));
@@ -84,6 +87,7 @@ void main() {
       intent: 'explain_insight',
       object: AiObjectRef(type: 'insight', id: 'anom_2026'),
       context: {'severity': 'warn'},
+      domain: kDomainFinance,
     );
     final json = inv.toTraceJson();
     expect(json['source'], 'home_insight_card');

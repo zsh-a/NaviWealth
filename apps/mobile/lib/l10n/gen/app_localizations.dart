@@ -3704,11 +3704,17 @@ abstract class AppLocalizations {
   /// **'New expense'**
   String get commandPaletteNewExpense;
 
-  /// Command palette: open the AI chat page
+  /// Command palette: open a new AI chat (via askAi helper, routes through aiContextProvider)
   ///
   /// In en, this message translates to:
-  /// **'Open AI assistant'**
+  /// **'Ask AI'**
   String get commandPaletteOpenAi;
+
+  /// Command palette: open the read-only AI session history under Settings
+  ///
+  /// In en, this message translates to:
+  /// **'AI history'**
+  String get commandPaletteAiHistory;
 
   /// Command palette: cycle between light and dark theme
   ///

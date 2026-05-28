@@ -7,7 +7,7 @@ import '../core/command_palette/command_palette.dart';
 import '../core/pwa/pwa_update_banner.dart';
 import '../core/shortcuts/shortcuts.dart';
 import '../design_system/design_system.dart';
-import '../features/ai_chat/ui/ai_sheet.dart';
+import '../features/ai_chat/ui/ask_ai.dart';
 import '../features/shared/forms/optimistic_form_submit.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'route_paths.dart';
@@ -127,15 +127,16 @@ class NaviWealthApp extends ConsumerWidget {
                       onToggleLanguage: () {
                         ref.read(localeProvider.notifier).cycle();
                       },
+                      onAskAi: (BuildContext ctx) => askAi(ctx, ref),
                     ),
                     onAskAi: (String query) =>
-                        showAiSheet(invokeCtx, prefill: query),
+                        askAi(invokeCtx, ref, prefill: query),
                   );
                 },
                 onToggleSidebar: () =>
                     ref.read(sidebarCollapsedProvider.notifier).toggle(),
                 onOpenAiChat: (BuildContext invokeCtx) =>
-                    showAiSheet(invokeCtx),
+                    askAi(invokeCtx, ref),
                 onVimGoto: (String target) {
                   final path = _kVimGotoRoutes[target];
                   if (path != null) router.go(path);

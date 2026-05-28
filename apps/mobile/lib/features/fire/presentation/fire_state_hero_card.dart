@@ -8,7 +8,7 @@ import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/ui/ai_hover_overlay.dart';
-import '../../ai_chat/ui/ai_sheet.dart';
+import '../../ai_chat/ui/ask_ai.dart';
 import '../data/fire_providers.dart';
 import '../domain/fire_action.dart';
 import '../domain/fire_state.dart';
@@ -32,14 +32,13 @@ class FireStateHeroCard extends ConsumerWidget {
     VoidCallback? explain;
     if (aiAvailable) {
       explain = () {
-        showAiSheet(
+        askAi(
           context,
-          invocation: const AiIntentInvocation(
-            source: 'fire_os_hero',
-            intent: 'explain_fire_state',
-            object: AiObjectRef(type: 'fire_state', id: 'default'),
-            context: <String, Object?>{'surface': 'fire_os_hero'},
-          ),
+          ref,
+          source: 'fire_os_hero',
+          intent: 'explain_fire_state',
+          object: const AiObjectRef(type: 'fire_state', id: 'default'),
+          attrs: const <String, Object?>{'surface': 'fire_os_hero'},
           objectLabel: l10n.fireOsHeroTitle,
         );
       };

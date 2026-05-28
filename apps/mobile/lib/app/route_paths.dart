@@ -1,3 +1,5 @@
+import '../core/auth/domain_scope.dart';
+
 /// Canonical route paths for NaviWealth's information architecture.
 ///
 /// **IA authority lives in `apps/mobile/docs/design/00-information-architecture.md`.**
@@ -230,6 +232,29 @@ abstract final class AppRouteNames {
   static const transfer = 'transfer';
   static const journalEntries = 'journal-entries';
   static const activityIngest = 'activity-ingest';
+}
+
+/// Resolve a route path to its owning LifeOS domain. Returns `null` for
+/// shell-level routes (login, onboarding, /settings/*) that don't belong
+/// to a single domain — callers that need a concrete domain default
+/// should fall back to [DomainScope.finance] (the always-on seed
+/// domain) at the call site.
+///
+/// Used by `aiContextProvider` so any AI invocation can derive its
+/// domain from the current route without each call site re-implementing
+/// the rule. Tabs already register canonically here, so adding a new
+/// domain is one prefix line.
+DomainScope? domainForRoute(String path) {
+  if (path.startsWith('/health')) return DomainScope.health;
+  if (path.startsWith('/knowledge')) return DomainScope.knowledge;
+  if (path == AppRoutes.home ||
+      path.startsWith('/activity') ||
+      path.startsWith('/wealth') ||
+      path.startsWith('/plan') ||
+      path.startsWith('/cashflow')) {
+    return DomainScope.finance;
+  }
+  return null;
 }
 
 /// Primary shell tab paths in display order across all active domains.

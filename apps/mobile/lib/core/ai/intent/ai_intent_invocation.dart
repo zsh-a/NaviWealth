@@ -1,9 +1,11 @@
-/// Wave 33 — `AiIntentInvocation`: the single entry point for *all*
-/// AI surfaces.
+/// Wave 33 — `AiIntentInvocation`: the typed envelope every AI trigger
+/// surface carries through to the runtime.
 ///
-/// Every site that triggers AI — capsule, command palette, home insight
-/// tap, future voice / drag-to-AI — **must** construct an
-/// [AiIntentInvocation] and route through `showAiSheet`. Direct
+/// The supported entry point is the `askAi()` helper
+/// (`features/ai_chat/ui/ask_ai.dart`); it builds this invocation,
+/// fills `domain` from `aiContextProvider`, and dispatches to
+/// `showAiSheet`. Capsules, command palette, home insight taps, future
+/// voice / drag-to-AI surfaces all converge there. Direct
 /// `Navigator.push(ChatPage(...))` style is forbidden by the §5.8
 /// hard-constraint checklist.
 ///
@@ -25,7 +27,7 @@ class AiIntentInvocation {
       AiCapability.proposal,
       AiCapability.visualization,
     },
-    this.domain = 'finance',
+    required this.domain,
   });
 
   /// Free-form tag for the trigger location — `'expense_detail'`,
@@ -56,10 +58,11 @@ class AiIntentInvocation {
   /// intent never asks for charts).
   final Set<AiCapability> capabilities;
 
-  /// LifeOS domain the trigger surface belongs to. Phase D-1.3: passed
-  /// through to [IntentHint.domain] when the runtime constructs the
-  /// trace row. Defaults to 'finance' — Phase D-2 will set 'health' on
-  /// HealthOS surfaces.
+  /// LifeOS domain the trigger surface belongs to. Required so trace
+  /// attribution is unambiguous; populated by `askAi()` from
+  /// `aiContextProvider.domain` (which the shell keeps in sync with
+  /// the current route). Use one of `kDomainFinance` / `kDomainHealth`
+  /// / `kDomainKnowledge`.
   final String domain;
 
   /// Serialised form for AiTrace — local-only, never crosses the wire

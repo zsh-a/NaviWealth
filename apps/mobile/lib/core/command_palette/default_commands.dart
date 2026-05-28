@@ -21,6 +21,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
   VoidCallback? onToggleTheme,
   VoidCallback? onToggleColorMode,
   VoidCallback? onToggleLanguage,
+  void Function(BuildContext ctx)? onAskAi,
 }) {
   return <CommandPaletteEntry>[
     // ── Navigation ──
@@ -207,17 +208,32 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       ],
       run: (BuildContext ctx) => ctx.push(AppRoutes.expenseNew),
     ),
+    if (onAskAi != null)
+      CommandPaletteEntry(
+        id: 'action.askAi',
+        label: l10n.commandPaletteOpenAi,
+        icon: Icons.auto_awesome_outlined,
+        keywords: const <String>[
+          'ai',
+          'ask',
+          'assistant',
+          'chat',
+          '问',
+          '助手',
+        ],
+        run: onAskAi,
+      ),
     CommandPaletteEntry(
-      id: 'action.openAi',
-      label: l10n.commandPaletteOpenAi,
+      id: 'action.aiHistory',
+      label: l10n.commandPaletteAiHistory,
       icon: Icons.smart_toy_outlined,
       keywords: const <String>[
         AppRoutes.settingsAiHistory,
         'ai',
-        'assistant',
         'history',
-        '助手',
+        'sessions',
         '历史',
+        '会话',
       ],
       run: (BuildContext ctx) => ctx.push(AppRoutes.settingsAiHistory),
     ),
