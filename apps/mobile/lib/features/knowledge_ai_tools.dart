@@ -13,6 +13,7 @@ import '../core/ai/runtime/device/tools/device_tool.dart';
 import 'knowledge/ai_tools/list_due_reviews_tool.dart';
 import 'knowledge/ai_tools/list_due_routines_tool.dart';
 import 'knowledge/ai_tools/list_open_assumptions_tool.dart';
+import 'knowledge/ai_tools/propose_capture_tool.dart';
 import 'knowledge/ai_tools/propose_concept_link_tool.dart';
 import 'knowledge/ai_tools/propose_inbox_classification_tool.dart';
 import 'knowledge/ai_tools/propose_inbox_tags_tool.dart';
@@ -40,6 +41,7 @@ const List<DeviceTool> kKnowledgeDeviceTools = <DeviceTool>[
   ProposeInboxTagsTool(),
   ProposeLinkToDecisionTool(),
   ProposeRoutineTool(),
+  ProposeCaptureTool(),
   SummarizeTopicEvolutionTool(),
 ];
 
@@ -143,6 +145,15 @@ const Map<String, ToolDescriptor> kKnowledgeToolDescriptors =
     sideEffect: SideEffect.deviceLocalWrite,
     domain: kDomainKnowledge,
   ),
+  'propose_capture': ToolDescriptor(
+    name: 'propose_capture',
+    access: Access.propose,
+    risk: RiskLevel.propose,
+    requiresConfirmation: Confirmation.oneTap,
+    allowedContextTier: BudgetTier.small,
+    sideEffect: SideEffect.deviceLocalWrite,
+    domain: kDomainKnowledge,
+  ),
 };
 
 /// KnowledgeOS system-prompt block. Appended onto [kDeviceSystemPromptBase]
@@ -155,6 +166,8 @@ const String kKnowledgeSystemPromptBlock =
     '  • propose_concept_link（在两个概念 / 笔记之间建立关联）\n'
     '  • propose_routine（用户表达「每 X 时间做一次 Y」/「需要定期活跃 / 续期 / 缴费」时调用，'
     'AI 选择合理 interval_days，由用户在 UI 一键确认）\n'
+    '  • propose_capture（用户问「这条该归到哪里 / 是不是个 Routine」、'
+    '或想让 AI 评估一段自由文本的合适落点时调用；kind == note 表示无需升级）\n'
     '- 用户问「我以前对 X 的判断是什么」时优先调用 recall_decision；不要凭记忆复述决策内容。\n'
     '- 跨主题演变 / 历史观点对比用 summarize_topic_evolution，时间线以工具返回为准。\n'
     '- 「我现在有什么定期事项要做 / 本周到期」用 list_due_routines，结合 list_due_reviews 给出综合提醒。';
