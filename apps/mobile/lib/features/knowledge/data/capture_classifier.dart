@@ -1,16 +1,17 @@
-/// Heuristic classifier for unified Capture input
+/// Capture classifier interface + pure-Dart heuristic
 /// (`docs/knowledgeos-domain.md` §3 + §4 + §14.2 P1).
 ///
-/// Pure-Dart, no LLM dependency. Same approach as
-/// `InboxTriageAgent._heuristicProposals`: regex / keyword rules over
-/// the raw capture text + a single-result envelope. Used by:
+/// Two-step layering matches the InboxTriageAgent pattern:
 ///
-/// - `propose_capture` device tool (AI surface)
-/// - `KnowledgeCaptureSheet` (after-save inline upgrade card)
+/// - [HeuristicCaptureClassifier] — deterministic, dependency-free.
+///   The safe fallback when no LLM is configured and the structural
+///   baseline the LLM classifier can degrade to on any failure.
+/// - The LLM-driven implementation lives in
+///   `llm_capture_classifier.dart` so this file stays free of network
+///   / provider imports. Both implement [CaptureClassifier].
 ///
-/// LLM-augmented classification replaces the heuristic in the same
-/// call sites once the on-device LLM round-trip is plumbed — the public
-/// API ([classify]) stays the same so the swap is local.
+/// `classify` is async so the LLM path is the same shape; the
+/// heuristic returns synchronously inside the future.
 library;
 
 import 'capture_kind.dart';
@@ -32,8 +33,9 @@ class CaptureClassification {
   final double confidence;
   final String reasonZh;
 
-  // Kind-specific extracted fields. Only routine fills these today;
-  // decision / assumption / etc. arrive when their heuristics land.
+  // Kind-specific extracted fields. The heuristic only fills these for
+  // routines; the LLM may fill them for any kind it confidently
+  // matches.
   final int? intervalDays;
   final String? scope;
   final String? statement;
@@ -41,13 +43,19 @@ class CaptureClassification {
   bool get isUpgrade => kind != CaptureKind.note;
 }
 
-/// Pure-Dart classifier. Stateless on purpose — every call independent
-/// so the same instance can be used from the sheet and the AI tool
-/// without coordination.
-class CaptureClassifier {
-  const CaptureClassifier();
+/// Common interface so the Sheet + the `propose_capture` tool can swap
+/// heuristic ↔ LLM without changing call sites.
+abstract class CaptureClassifier {
+  Future<CaptureClassification> classify({required String text});
+}
 
-  CaptureClassification classify({required String text}) {
+/// Stateless pure-Dart classifier — every call independent so the same
+/// instance can be used from anywhere without coordination.
+class HeuristicCaptureClassifier implements CaptureClassifier {
+  const HeuristicCaptureClassifier();
+
+  @override
+  Future<CaptureClassification> classify({required String text}) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) {
       return CaptureClassification(
@@ -58,10 +66,12 @@ class CaptureClassifier {
     }
     final routine = _detectRoutine(trimmed);
     if (routine != null) return routine;
-    // Future hooks: decision / assumption / principle / concept /
-    // experiment heuristics. Slice A ships only the routine path
-    // because that's the user-stated MVP need; the rest stay on
-    // §14.2 P1 alongside the LLM swap.
+    // Other kinds (decision / assumption / principle / concept /
+    // experiment) currently fall through to note. The LLM classifier
+    // covers them; the heuristic intentionally stays minimal so a
+    // user without an LLM profile still gets the routine case
+    // (highest-leverage real-world use) without any false positives
+    // from naive keyword matching against the other 5 types.
     return CaptureClassification(
       kind: CaptureKind.note,
       confidence: 0.0,
@@ -75,9 +85,6 @@ class CaptureClassifier {
   CaptureClassification? _detectRoutine(String text) {
     final lower = text.toLowerCase();
 
-    // Strong direct markers: "定期 X" / "每 N 天" / "需要 X 活跃" / etc.
-    // We match the most specific form first so we can pull the interval
-    // out of the same sentence.
     final intervalMatch =
         _everyN.firstMatch(text) ?? _everyMonthDay.firstMatch(text);
     final routineLike = _routineMarkers.hasMatch(lower);
@@ -98,13 +105,9 @@ class CaptureClassifier {
       };
       reason = '检出周期模式 "${intervalMatch.group(0)}"';
     } else {
-      // Routine markers without an explicit interval → guess 180 days
-      // (covers the prototypical 港卡 case). User adjusts in the upgrade
-      // card if 6 months is wrong.
       intervalDays = 180;
       reason = '检出 "定期 / 活跃 / 续期 / 缴费" 等定期关键词,默认每 6 个月';
     }
-    // Clamp absurd values produced by typos / unit confusion.
     if (intervalDays < 1) intervalDays = 1;
     if (intervalDays > 3650) intervalDays = 3650;
 
@@ -120,8 +123,6 @@ class CaptureClassifier {
   }
 
   static String _statementFromText(String text) {
-    // First non-empty line, trimmed and length-capped — Routine
-    // statements are short user-facing labels, not the full free-text.
     final line = text.split(RegExp(r'[\n。]')).firstWhere(
           (s) => s.trim().isNotEmpty,
           orElse: () => text,
@@ -132,9 +133,6 @@ class CaptureClassifier {
   }
 
   static String? _scopeGuess(String lower) {
-    // Tiny dictionary — same idea as `_suggestTags` in InboxTriageAgent.
-    // Routine scope is free-form so we only emit a guess when the input
-    // hits a clear bucket.
     if (lower.contains('港卡') ||
         lower.contains('信用卡') ||
         lower.contains('debit') ||
@@ -167,10 +165,7 @@ class CaptureClassifier {
     r'每(?<n>)(?<unit>日|天|周|月|年)(?!\d)',
   );
 
-  // Routine markers without explicit interval. "定期 / 活跃 / 续期 /
-  // 缴费 / 体检 / 缴税 / 提醒我 / 记得每…"
-  // English: "every N months/years/weeks/days" (any count, including
-  // single-word form like "every month").
+  // Routine markers without explicit interval.
   static final RegExp _routineMarkers = RegExp(
     r'(定期|需要.*活跃|需要.*续期|需要.*缴费|每.*提醒|提醒我每|periodically|recurring|every\s+(?:\d+\s+)?(?:months?|years?|weeks?|days?))',
     caseSensitive: false,

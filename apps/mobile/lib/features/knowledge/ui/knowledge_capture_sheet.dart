@@ -1,20 +1,23 @@
 /// Unified KnowledgeOS Capture sheet
-/// (`docs/knowledgeos-domain.md` §3 + §5 + §14.2 P1).
+/// (`docs/knowledgeos-domain.md` §3 + §5 + §14).
 ///
 /// One sheet, one textarea, one Save. Replaces the old Inbox-only
 /// `_NewNoteSheet`. The capture always lands as a `KnowledgeNote` —
-/// zero-latency, never blocks on AI. After save, [CaptureClassifier]
-/// runs a synchronous heuristic over the same text; when it spots a
-/// stronger fit (today: Routine), the sheet swaps its body for an
-/// inline "AI 建议升级" card with ✓ / ✗:
+/// zero-latency, never blocks on AI. After save, the sheet awaits a
+/// single LLM round-trip via [captureClassifierProvider] (LLM when a
+/// device profile is configured, deterministic heuristic otherwise).
+/// When the classifier returns a non-Note kind the sheet swaps its
+/// body for an inline "AI 建议升级" card with ✓ / ✗:
 ///
-/// - ✓ promotes: writes the structured target row + soft-deletes the
-///   temp Note in a single transaction (`upsertRoutine` + `upsertNote
-///   (deletedAt = now)`). Sheet closes.
-/// - ✗ keeps the Note. Sheet closes.
-///
-/// LLM-augmented classification is the §14.2 P1 swap; the public seam
-/// is [CaptureClassifier.classify] and changes nothing about the sheet.
+/// - ✓ promotes:
+///   * `routine` → writes a [KnowledgeRoutine] + soft-deletes the
+///     temp Note. RoutineDueAgent picks it up from the next tick.
+///   * other kinds (decision / principle / assumption / concept /
+///     experiment) → tags the Note with `kind:<x>_candidate` and a
+///     possibly-extracted `scope:<...>` tag, same shape as
+///     `propose_inbox_classification` produces. The Library typed
+///     writers can later promote from the tagged Note.
+/// - ✗ keeps the Note unchanged. Sheet closes.
 library;
 
 import 'package:flutter/widgets.dart';
@@ -47,10 +50,10 @@ class _KnowledgeCaptureSheet extends StatefulWidget {
 }
 
 /// Sheet drives a small state machine. `composing` → user typing.
-/// `saving` → upsertNote in flight. `suggesting` → note saved,
-/// classification said "upgrade", waiting for ✓ / ✗. `applying` →
-/// promote in flight.
-enum _CaptureStage { composing, saving, suggesting, applying }
+/// `saving` → upsertNote in flight (sync). `classifying` → note saved,
+/// awaiting LLM classifier. `suggesting` → classifier returned an
+/// upgrade, waiting for ✓ / ✗. `applying` → promote in flight.
+enum _CaptureStage { composing, saving, classifying, suggesting, applying }
 
 class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
   final _titleCtrl = TextEditingController();
@@ -110,17 +113,25 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
 
       // Classify against title + body together — the routine signal
       // sometimes lives in the title ("港卡活跃") and sometimes in the
-      // body. Joining keeps the heuristic simple.
+      // body. The classifier provider returns the LLM impl when a
+      // device profile is configured; otherwise the pure-Dart
+      // heuristic. Either path is async + degrades to "note" on any
+      // failure, so we never block the sheet.
       final text = <String>[
         if (_titleCtrl.text.trim().isNotEmpty) _titleCtrl.text.trim(),
         _bodyCtrl.text.trim(),
       ].join('\n');
-      final classification =
-          const CaptureClassifier().classify(text: text);
+      if (mounted) {
+        setState(() {
+          _savedNote = note;
+          _stage = _CaptureStage.classifying;
+        });
+      }
+      final classifier = widget.ref.read(captureClassifierProvider);
+      final classification = await classifier.classify(text: text);
       if (!mounted) return;
       if (classification.isUpgrade) {
         setState(() {
-          _savedNote = note;
           _suggestion = classification;
           _stage = _CaptureStage.suggesting;
         });
@@ -146,11 +157,11 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
       final stamper =
           await widget.ref.read(mutationStamperProvider.future);
 
-      // Write the target row + soft-delete the temp Note. Same stamp
-      // is fine: both writes belong to the same logical "promotion"
-      // event from the user's perspective.
       switch (suggestion.kind) {
         case CaptureKind.routine:
+          // Full structured promotion: write the Routine row, then
+          // soft-delete the temp Note. Same stamp domain — both
+          // writes are the same logical "promotion" event.
           final stamp = await stamper.stamp();
           final intervalDays = suggestion.intervalDays ?? 180;
           await repo.upsertRoutine(
@@ -170,38 +181,65 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
               ),
             ),
           );
-        case CaptureKind.note:
+          final tomb = await stamper.stamp();
+          await repo.upsertNote(
+            KnowledgeNote(
+              id: note.id,
+              title: note.title,
+              bodyMd: note.bodyMd,
+              sourceUrl: note.sourceUrl,
+              tags: note.tags,
+              projectTag: note.projectTag,
+              createdAt: note.createdAt,
+              sync: SyncMeta(
+                ownerUserId: tomb.ownerUserId,
+                updatedAt: tomb.now,
+                updatedByDevice: tomb.deviceId,
+                hlc: tomb.hlc,
+                deletedAt: tomb.now,
+              ),
+            ),
+          );
         case CaptureKind.decision:
         case CaptureKind.principle:
         case CaptureKind.assumption:
         case CaptureKind.concept:
         case CaptureKind.experiment:
-          // Other kinds aren't classified yet (heuristics land in §14.2
-          // P1). Treat as no-op so the sheet still closes cleanly even
-          // if a future heuristic accidentally reaches this branch.
-          break;
-      }
-
-      if (suggestion.kind != CaptureKind.note) {
-        final tomb = await stamper.stamp();
-        await repo.upsertNote(
-          KnowledgeNote(
-            id: note.id,
-            title: note.title,
-            bodyMd: note.bodyMd,
-            sourceUrl: note.sourceUrl,
-            tags: note.tags,
-            projectTag: note.projectTag,
-            createdAt: note.createdAt,
-            sync: SyncMeta(
-              ownerUserId: tomb.ownerUserId,
-              updatedAt: tomb.now,
-              updatedByDevice: tomb.deviceId,
-              hlc: tomb.hlc,
-              deletedAt: tomb.now,
+          // Tag-only promotion (no structured writer for these kinds
+          // yet from the Capture path). Mirrors
+          // `propose_inbox_classification`'s shape: the Note stays as
+          // source of truth, gains `kind:<x>_candidate` + optional
+          // `scope:<...>` tags, and the user can later promote from
+          // the Library typed FAB. This means the AI suggestion is
+          // never lossy — the tag survives to the Review tab.
+          final stamp = await stamper.stamp();
+          final tagSet = note.tags.toSet();
+          tagSet.add('kind:${suggestion.kind.wire}_candidate');
+          if (suggestion.scope != null) {
+            tagSet.add('scope:${suggestion.scope}');
+          }
+          await repo.upsertNote(
+            KnowledgeNote(
+              id: note.id,
+              title: note.title,
+              bodyMd: note.bodyMd,
+              sourceUrl: note.sourceUrl,
+              tags: tagSet.toList(growable: false),
+              projectTag: note.projectTag,
+              createdAt: note.createdAt,
+              sync: SyncMeta(
+                ownerUserId: stamp.ownerUserId,
+                updatedAt: stamp.now,
+                updatedByDevice: stamp.deviceId,
+                hlc: stamp.hlc,
+              ),
             ),
-          ),
-        );
+          );
+        case CaptureKind.note:
+          // Defensive: classifier said "note" but `isUpgrade` already
+          // routed us here, so this is unreachable. No-op keeps the
+          // sheet from sticking on `applying` if it ever does.
+          break;
       }
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
@@ -221,22 +259,28 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
   @override
   Widget build(BuildContext context) {
     final stage = _stage;
+    final isSuggestStage = stage == _CaptureStage.suggesting ||
+        stage == _CaptureStage.applying;
     return AppSheet(
-      title: stage == _CaptureStage.suggesting
+      title: isSuggestStage
           ? 'AI 建议升级'
-          : '写一条想法',
-      subtitle: stage == _CaptureStage.suggesting
+          : stage == _CaptureStage.classifying
+              ? '已保存 · AI 思考中'
+              : '写一条想法',
+      subtitle: isSuggestStage
           ? '一段输入就够 — 类型 / 字段由 AI 抽取，你一键确认'
-          : '自由格式 Markdown — AI 会在保存后建议升级为 Routine / Decision 等',
-      footer: stage == _CaptureStage.suggesting
-          ? null
-          : AppSheetFooter(
+          : stage == _CaptureStage.classifying
+              ? 'Note 已经落库，AI 正在判断是否值得升级为 Routine / Decision 等'
+              : '自由格式 Markdown — AI 会在保存后建议升级为 Routine / Decision 等',
+      footer: stage == _CaptureStage.composing || stage == _CaptureStage.saving
+          ? AppSheetFooter(
               submitLabel: stage == _CaptureStage.saving ? '保存中…' : '保存',
               busy: !_canSave,
               onSubmit: () {
                 _saveAndClassify();
               },
-            ),
+            )
+          : null,
       child: switch (stage) {
         _CaptureStage.composing ||
         _CaptureStage.saving =>
@@ -244,6 +288,7 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
             titleController: _titleCtrl,
             bodyController: _bodyCtrl,
           ),
+        _CaptureStage.classifying => const _ClassifyingBody(),
         _CaptureStage.suggesting ||
         _CaptureStage.applying =>
           _SuggestionBody(
@@ -253,6 +298,32 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
             onDismiss: _dismissSuggestion,
           ),
       },
+    );
+  }
+}
+
+class _ClassifyingBody extends StatelessWidget {
+  const _ClassifyingBody();
+  @override
+  Widget build(BuildContext context) {
+    final typography = context.theme.typography;
+    final colors = context.theme.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const FProgress(),
+          const SizedBox(width: AppSpacing.s12),
+          Flexible(
+            child: Text(
+              '保留为 Note 也行 — 可关闭此面板',
+              style: typography.sm
+                  .copyWith(color: colors.mutedForeground),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
