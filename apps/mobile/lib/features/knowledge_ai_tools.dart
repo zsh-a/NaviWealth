@@ -10,6 +10,7 @@ import '../core/ai/contracts/intent.dart' show RiskLevel, kDomainKnowledge;
 import '../core/ai/contracts/privacy_budget.dart' show BudgetTier;
 import '../core/ai/contracts/tool_descriptor.dart';
 import '../core/ai/runtime/device/tools/device_tool.dart';
+import 'knowledge/ai_tools/find_similar_knowledge_tool.dart';
 import 'knowledge/ai_tools/list_due_reviews_tool.dart';
 import 'knowledge/ai_tools/list_due_routines_tool.dart';
 import 'knowledge/ai_tools/list_open_assumptions_tool.dart';
@@ -18,12 +19,13 @@ import 'knowledge/ai_tools/propose_concept_link_tool.dart';
 import 'knowledge/ai_tools/propose_inbox_classification_tool.dart';
 import 'knowledge/ai_tools/propose_inbox_tags_tool.dart';
 import 'knowledge/ai_tools/propose_link_to_decision_tool.dart';
+import 'knowledge/ai_tools/propose_merge_tool.dart';
 import 'knowledge/ai_tools/propose_routine_tool.dart';
 import 'knowledge/ai_tools/recall_decision_tool.dart';
 import 'knowledge/ai_tools/search_notes_tool.dart';
 import 'knowledge/ai_tools/summarize_topic_evolution_tool.dart';
 
-/// All KnowledgeOS device tools. Read-only except for the four
+/// All KnowledgeOS device tools. Read-only except for the
 /// `propose_*` tools, each of which returns a ProposalEnvelope and
 /// never writes directly to the synced KnowledgeOS tables.
 /// The `propose_inbox_*` trio additionally persists its envelope into
@@ -36,7 +38,9 @@ const List<DeviceTool> kKnowledgeDeviceTools = <DeviceTool>[
   ListDueReviewsTool(),
   ListDueRoutinesTool(),
   SearchNotesTool(),
+  FindSimilarKnowledgeTool(),
   ProposeConceptLinkTool(),
+  ProposeMergeTool(),
   ProposeInboxClassificationTool(),
   ProposeInboxTagsTool(),
   ProposeLinkToDecisionTool(),
@@ -92,6 +96,14 @@ const Map<String, ToolDescriptor> kKnowledgeToolDescriptors =
     allowedContextTier: BudgetTier.small,
     domain: kDomainKnowledge,
   ),
+  'find_similar_knowledge': ToolDescriptor(
+    name: 'find_similar_knowledge',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.small,
+    domain: kDomainKnowledge,
+  ),
   'summarize_topic_evolution': ToolDescriptor(
     name: 'summarize_topic_evolution',
     access: Access.read,
@@ -102,6 +114,15 @@ const Map<String, ToolDescriptor> kKnowledgeToolDescriptors =
   ),
   'propose_concept_link': ToolDescriptor(
     name: 'propose_concept_link',
+    access: Access.propose,
+    risk: RiskLevel.propose,
+    requiresConfirmation: Confirmation.oneTap,
+    allowedContextTier: BudgetTier.standard,
+    sideEffect: SideEffect.deviceLocalWrite,
+    domain: kDomainKnowledge,
+  ),
+  'propose_merge': ToolDescriptor(
+    name: 'propose_merge',
     access: Access.propose,
     risk: RiskLevel.propose,
     requiresConfirmation: Confirmation.oneTap,
@@ -168,6 +189,9 @@ const String kKnowledgeSystemPromptBlock =
     'AI 选择合理 interval_days，由用户在 UI 一键确认）\n'
     '  • propose_capture（用户问「这条该归到哪里 / 是不是个 Routine」、'
     '或想让 AI 评估一段自由文本的合适落点时调用；kind == note 表示无需升级）\n'
+    '  • propose_merge（去重：发现重复条目时建议合并，仅支持 note / concept）\n'
+    '- 录入 / 查重场景：先用 find_similar_knowledge 找近似条目；'
+    'similarity ≥ 阈值说明可能重复，再用 propose_merge 建议合并（保留一条、其余软删）。\n'
     '- 用户问「我以前对 X 的判断是什么」时优先调用 recall_decision；不要凭记忆复述决策内容。\n'
     '- 跨主题演变 / 历史观点对比用 summarize_topic_evolution，时间线以工具返回为准。\n'
     '- 「我现在有什么定期事项要做 / 本周到期」用 list_due_routines，结合 list_due_reviews 给出综合提醒。';

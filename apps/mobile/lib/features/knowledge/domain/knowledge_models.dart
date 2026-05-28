@@ -111,6 +111,7 @@ class KnowledgeNote {
     required this.tags,
     this.projectTag,
     required this.createdAt,
+    this.mergedIntoId,
     required this.sync,
   });
 
@@ -121,6 +122,10 @@ class KnowledgeNote {
   final List<String> tags;
   final String? projectTag;
   final DateTime createdAt;
+
+  /// Non-null only on a note that was merged into another (`§15.3`).
+  /// Live notes are always null here. See [KnowledgeRepository.mergeNotes].
+  final String? mergedIntoId;
   final SyncMeta sync;
 }
 
@@ -254,6 +259,7 @@ class KnowledgeConcept {
     required this.summaryMd,
     required this.relatedConceptIds,
     required this.createdAt,
+    this.mergedIntoId,
     required this.sync,
   });
 
@@ -263,6 +269,9 @@ class KnowledgeConcept {
   final String summaryMd;
   final List<String> relatedConceptIds;
   final DateTime createdAt;
+
+  /// Non-null only on a concept merged into another (`§15.3`).
+  final String? mergedIntoId;
   final SyncMeta sync;
 }
 

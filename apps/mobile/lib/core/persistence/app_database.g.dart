@@ -21059,6 +21059,17 @@ class $KnowledgeNotesTable extends KnowledgeNotes
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _mergedIntoIdMeta = const VerificationMeta(
+    'mergedIntoId',
+  );
+  @override
+  late final GeneratedColumn<String> mergedIntoId = GeneratedColumn<String>(
+    'merged_into_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -21073,6 +21084,7 @@ class $KnowledgeNotesTable extends KnowledgeNotes
     tagsJson,
     projectTag,
     createdAt,
+    mergedIntoId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -21169,6 +21181,15 @@ class $KnowledgeNotesTable extends KnowledgeNotes
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('merged_into_id')) {
+      context.handle(
+        _mergedIntoIdMeta,
+        mergedIntoId.isAcceptableOrUnknown(
+          data['merged_into_id']!,
+          _mergedIntoIdMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -21228,6 +21249,10 @@ class $KnowledgeNotesTable extends KnowledgeNotes
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      mergedIntoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}merged_into_id'],
+      ),
     );
   }
 
@@ -21269,6 +21294,13 @@ class KnowledgeNoteRow extends DataClass
   final String tagsJson;
   final String? projectTag;
   final DateTime createdAt;
+
+  /// Dedupe pointer (`docs/knowledgeos-domain.md` §15.3). When this note
+  /// is merged into another note via `propose_merge`, it is soft-deleted
+  /// (`deletedAt` set) AND stamped with the surviving note's id here, so
+  /// a future un-merge / audit can find where the content went. NULL for
+  /// every live note.
+  final String? mergedIntoId;
   const KnowledgeNoteRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -21282,6 +21314,7 @@ class KnowledgeNoteRow extends DataClass
     required this.tagsJson,
     this.projectTag,
     required this.createdAt,
+    this.mergedIntoId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -21308,6 +21341,9 @@ class KnowledgeNoteRow extends DataClass
       map['project_tag'] = Variable<String>(projectTag);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || mergedIntoId != null) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId);
+    }
     return map;
   }
 
@@ -21331,6 +21367,9 @@ class KnowledgeNoteRow extends DataClass
           ? const Value.absent()
           : Value(projectTag),
       createdAt: Value(createdAt),
+      mergedIntoId: mergedIntoId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mergedIntoId),
     );
   }
 
@@ -21352,6 +21391,7 @@ class KnowledgeNoteRow extends DataClass
       tagsJson: serializer.fromJson<String>(json['tagsJson']),
       projectTag: serializer.fromJson<String?>(json['projectTag']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
     );
   }
   @override
@@ -21370,6 +21410,7 @@ class KnowledgeNoteRow extends DataClass
       'tagsJson': serializer.toJson<String>(tagsJson),
       'projectTag': serializer.toJson<String?>(projectTag),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
     };
   }
 
@@ -21386,6 +21427,7 @@ class KnowledgeNoteRow extends DataClass
     String? tagsJson,
     Value<String?> projectTag = const Value.absent(),
     DateTime? createdAt,
+    Value<String?> mergedIntoId = const Value.absent(),
   }) => KnowledgeNoteRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -21399,6 +21441,7 @@ class KnowledgeNoteRow extends DataClass
     tagsJson: tagsJson ?? this.tagsJson,
     projectTag: projectTag.present ? projectTag.value : this.projectTag,
     createdAt: createdAt ?? this.createdAt,
+    mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
   );
   KnowledgeNoteRow copyWithCompanion(KnowledgeNotesCompanion data) {
     return KnowledgeNoteRow(
@@ -21420,6 +21463,9 @@ class KnowledgeNoteRow extends DataClass
           ? data.projectTag.value
           : this.projectTag,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      mergedIntoId: data.mergedIntoId.present
+          ? data.mergedIntoId.value
+          : this.mergedIntoId,
     );
   }
 
@@ -21437,7 +21483,8 @@ class KnowledgeNoteRow extends DataClass
           ..write('sourceUrl: $sourceUrl, ')
           ..write('tagsJson: $tagsJson, ')
           ..write('projectTag: $projectTag, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('mergedIntoId: $mergedIntoId')
           ..write(')'))
         .toString();
   }
@@ -21456,6 +21503,7 @@ class KnowledgeNoteRow extends DataClass
     tagsJson,
     projectTag,
     createdAt,
+    mergedIntoId,
   );
   @override
   bool operator ==(Object other) =>
@@ -21472,7 +21520,8 @@ class KnowledgeNoteRow extends DataClass
           other.sourceUrl == this.sourceUrl &&
           other.tagsJson == this.tagsJson &&
           other.projectTag == this.projectTag &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.mergedIntoId == this.mergedIntoId);
 }
 
 class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
@@ -21488,6 +21537,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
   final Value<String> tagsJson;
   final Value<String?> projectTag;
   final Value<DateTime> createdAt;
+  final Value<String?> mergedIntoId;
   final Value<int> rowid;
   const KnowledgeNotesCompanion({
     this.ownerUserId = const Value.absent(),
@@ -21502,6 +21552,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
     this.tagsJson = const Value.absent(),
     this.projectTag = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   KnowledgeNotesCompanion.insert({
@@ -21517,6 +21568,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
     this.tagsJson = const Value.absent(),
     this.projectTag = const Value.absent(),
     required DateTime createdAt,
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -21539,6 +21591,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
     Expression<String>? tagsJson,
     Expression<String>? projectTag,
     Expression<DateTime>? createdAt,
+    Expression<String>? mergedIntoId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -21554,6 +21607,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
       if (tagsJson != null) 'tags_json': tagsJson,
       if (projectTag != null) 'project_tag': projectTag,
       if (createdAt != null) 'created_at': createdAt,
+      if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -21571,6 +21625,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
     Value<String>? tagsJson,
     Value<String?>? projectTag,
     Value<DateTime>? createdAt,
+    Value<String?>? mergedIntoId,
     Value<int>? rowid,
   }) {
     return KnowledgeNotesCompanion(
@@ -21586,6 +21641,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
       tagsJson: tagsJson ?? this.tagsJson,
       projectTag: projectTag ?? this.projectTag,
       createdAt: createdAt ?? this.createdAt,
+      mergedIntoId: mergedIntoId ?? this.mergedIntoId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -21631,6 +21687,9 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (mergedIntoId.present) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -21652,6 +21711,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
           ..write('tagsJson: $tagsJson, ')
           ..write('projectTag: $projectTag, ')
           ..write('createdAt: $createdAt, ')
+          ..write('mergedIntoId: $mergedIntoId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -24382,6 +24442,17 @@ class $KnowledgeConceptsTable extends KnowledgeConcepts
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _mergedIntoIdMeta = const VerificationMeta(
+    'mergedIntoId',
+  );
+  @override
+  late final GeneratedColumn<String> mergedIntoId = GeneratedColumn<String>(
+    'merged_into_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -24395,6 +24466,7 @@ class $KnowledgeConceptsTable extends KnowledgeConcepts
     summaryMd,
     relatedConceptIdsJson,
     createdAt,
+    mergedIntoId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -24489,6 +24561,15 @@ class $KnowledgeConceptsTable extends KnowledgeConcepts
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('merged_into_id')) {
+      context.handle(
+        _mergedIntoIdMeta,
+        mergedIntoId.isAcceptableOrUnknown(
+          data['merged_into_id']!,
+          _mergedIntoIdMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -24544,6 +24625,10 @@ class $KnowledgeConceptsTable extends KnowledgeConcepts
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      mergedIntoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}merged_into_id'],
+      ),
     );
   }
 
@@ -24584,6 +24669,11 @@ class KnowledgeConceptRow extends DataClass
   final String summaryMd;
   final String relatedConceptIdsJson;
   final DateTime createdAt;
+
+  /// Dedupe pointer — see [KnowledgeNotes.mergedIntoId]. When this concept
+  /// is merged into another, it is soft-deleted and stamped with the
+  /// survivor's id; the survivor unions aliases + relatedConceptIds.
+  final String? mergedIntoId;
   const KnowledgeConceptRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -24596,6 +24686,7 @@ class KnowledgeConceptRow extends DataClass
     required this.summaryMd,
     required this.relatedConceptIdsJson,
     required this.createdAt,
+    this.mergedIntoId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -24617,6 +24708,9 @@ class KnowledgeConceptRow extends DataClass
     map['summary_md'] = Variable<String>(summaryMd);
     map['related_concept_ids_json'] = Variable<String>(relatedConceptIdsJson);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || mergedIntoId != null) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId);
+    }
     return map;
   }
 
@@ -24635,6 +24729,9 @@ class KnowledgeConceptRow extends DataClass
       summaryMd: Value(summaryMd),
       relatedConceptIdsJson: Value(relatedConceptIdsJson),
       createdAt: Value(createdAt),
+      mergedIntoId: mergedIntoId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mergedIntoId),
     );
   }
 
@@ -24657,6 +24754,7 @@ class KnowledgeConceptRow extends DataClass
         json['relatedConceptIdsJson'],
       ),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
     );
   }
   @override
@@ -24674,6 +24772,7 @@ class KnowledgeConceptRow extends DataClass
       'summaryMd': serializer.toJson<String>(summaryMd),
       'relatedConceptIdsJson': serializer.toJson<String>(relatedConceptIdsJson),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
     };
   }
 
@@ -24689,6 +24788,7 @@ class KnowledgeConceptRow extends DataClass
     String? summaryMd,
     String? relatedConceptIdsJson,
     DateTime? createdAt,
+    Value<String?> mergedIntoId = const Value.absent(),
   }) => KnowledgeConceptRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -24701,6 +24801,7 @@ class KnowledgeConceptRow extends DataClass
     summaryMd: summaryMd ?? this.summaryMd,
     relatedConceptIdsJson: relatedConceptIdsJson ?? this.relatedConceptIdsJson,
     createdAt: createdAt ?? this.createdAt,
+    mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
   );
   KnowledgeConceptRow copyWithCompanion(KnowledgeConceptsCompanion data) {
     return KnowledgeConceptRow(
@@ -24723,6 +24824,9 @@ class KnowledgeConceptRow extends DataClass
           ? data.relatedConceptIdsJson.value
           : this.relatedConceptIdsJson,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      mergedIntoId: data.mergedIntoId.present
+          ? data.mergedIntoId.value
+          : this.mergedIntoId,
     );
   }
 
@@ -24739,7 +24843,8 @@ class KnowledgeConceptRow extends DataClass
           ..write('aliasesJson: $aliasesJson, ')
           ..write('summaryMd: $summaryMd, ')
           ..write('relatedConceptIdsJson: $relatedConceptIdsJson, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('mergedIntoId: $mergedIntoId')
           ..write(')'))
         .toString();
   }
@@ -24757,6 +24862,7 @@ class KnowledgeConceptRow extends DataClass
     summaryMd,
     relatedConceptIdsJson,
     createdAt,
+    mergedIntoId,
   );
   @override
   bool operator ==(Object other) =>
@@ -24772,7 +24878,8 @@ class KnowledgeConceptRow extends DataClass
           other.aliasesJson == this.aliasesJson &&
           other.summaryMd == this.summaryMd &&
           other.relatedConceptIdsJson == this.relatedConceptIdsJson &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.mergedIntoId == this.mergedIntoId);
 }
 
 class KnowledgeConceptsCompanion extends UpdateCompanion<KnowledgeConceptRow> {
@@ -24787,6 +24894,7 @@ class KnowledgeConceptsCompanion extends UpdateCompanion<KnowledgeConceptRow> {
   final Value<String> summaryMd;
   final Value<String> relatedConceptIdsJson;
   final Value<DateTime> createdAt;
+  final Value<String?> mergedIntoId;
   final Value<int> rowid;
   const KnowledgeConceptsCompanion({
     this.ownerUserId = const Value.absent(),
@@ -24800,6 +24908,7 @@ class KnowledgeConceptsCompanion extends UpdateCompanion<KnowledgeConceptRow> {
     this.summaryMd = const Value.absent(),
     this.relatedConceptIdsJson = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   KnowledgeConceptsCompanion.insert({
@@ -24814,6 +24923,7 @@ class KnowledgeConceptsCompanion extends UpdateCompanion<KnowledgeConceptRow> {
     this.summaryMd = const Value.absent(),
     this.relatedConceptIdsJson = const Value.absent(),
     required DateTime createdAt,
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -24834,6 +24944,7 @@ class KnowledgeConceptsCompanion extends UpdateCompanion<KnowledgeConceptRow> {
     Expression<String>? summaryMd,
     Expression<String>? relatedConceptIdsJson,
     Expression<DateTime>? createdAt,
+    Expression<String>? mergedIntoId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -24849,6 +24960,7 @@ class KnowledgeConceptsCompanion extends UpdateCompanion<KnowledgeConceptRow> {
       if (relatedConceptIdsJson != null)
         'related_concept_ids_json': relatedConceptIdsJson,
       if (createdAt != null) 'created_at': createdAt,
+      if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -24865,6 +24977,7 @@ class KnowledgeConceptsCompanion extends UpdateCompanion<KnowledgeConceptRow> {
     Value<String>? summaryMd,
     Value<String>? relatedConceptIdsJson,
     Value<DateTime>? createdAt,
+    Value<String?>? mergedIntoId,
     Value<int>? rowid,
   }) {
     return KnowledgeConceptsCompanion(
@@ -24880,6 +24993,7 @@ class KnowledgeConceptsCompanion extends UpdateCompanion<KnowledgeConceptRow> {
       relatedConceptIdsJson:
           relatedConceptIdsJson ?? this.relatedConceptIdsJson,
       createdAt: createdAt ?? this.createdAt,
+      mergedIntoId: mergedIntoId ?? this.mergedIntoId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -24924,6 +25038,9 @@ class KnowledgeConceptsCompanion extends UpdateCompanion<KnowledgeConceptRow> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (mergedIntoId.present) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -24944,6 +25061,7 @@ class KnowledgeConceptsCompanion extends UpdateCompanion<KnowledgeConceptRow> {
           ..write('summaryMd: $summaryMd, ')
           ..write('relatedConceptIdsJson: $relatedConceptIdsJson, ')
           ..write('createdAt: $createdAt, ')
+          ..write('mergedIntoId: $mergedIntoId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -36560,6 +36678,7 @@ typedef $$KnowledgeNotesTableCreateCompanionBuilder =
       Value<String> tagsJson,
       Value<String?> projectTag,
       required DateTime createdAt,
+      Value<String?> mergedIntoId,
       Value<int> rowid,
     });
 typedef $$KnowledgeNotesTableUpdateCompanionBuilder =
@@ -36576,6 +36695,7 @@ typedef $$KnowledgeNotesTableUpdateCompanionBuilder =
       Value<String> tagsJson,
       Value<String?> projectTag,
       Value<DateTime> createdAt,
+      Value<String?> mergedIntoId,
       Value<int> rowid,
     });
 
@@ -36648,6 +36768,11 @@ class $$KnowledgeNotesTableFilterComposer
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$KnowledgeNotesTableOrderingComposer
@@ -36718,6 +36843,11 @@ class $$KnowledgeNotesTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$KnowledgeNotesTableAnnotationComposer
@@ -36770,6 +36900,11 @@ class $$KnowledgeNotesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => column,
+  );
 }
 
 class $$KnowledgeNotesTableTableManager
@@ -36821,6 +36956,7 @@ class $$KnowledgeNotesTableTableManager
                 Value<String> tagsJson = const Value.absent(),
                 Value<String?> projectTag = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgeNotesCompanion(
                 ownerUserId: ownerUserId,
@@ -36835,6 +36971,7 @@ class $$KnowledgeNotesTableTableManager
                 tagsJson: tagsJson,
                 projectTag: projectTag,
                 createdAt: createdAt,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -36851,6 +36988,7 @@ class $$KnowledgeNotesTableTableManager
                 Value<String> tagsJson = const Value.absent(),
                 Value<String?> projectTag = const Value.absent(),
                 required DateTime createdAt,
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgeNotesCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -36865,6 +37003,7 @@ class $$KnowledgeNotesTableTableManager
                 tagsJson: tagsJson,
                 projectTag: projectTag,
                 createdAt: createdAt,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -38129,6 +38268,7 @@ typedef $$KnowledgeConceptsTableCreateCompanionBuilder =
       Value<String> summaryMd,
       Value<String> relatedConceptIdsJson,
       required DateTime createdAt,
+      Value<String?> mergedIntoId,
       Value<int> rowid,
     });
 typedef $$KnowledgeConceptsTableUpdateCompanionBuilder =
@@ -38144,6 +38284,7 @@ typedef $$KnowledgeConceptsTableUpdateCompanionBuilder =
       Value<String> summaryMd,
       Value<String> relatedConceptIdsJson,
       Value<DateTime> createdAt,
+      Value<String?> mergedIntoId,
       Value<int> rowid,
     });
 
@@ -38211,6 +38352,11 @@ class $$KnowledgeConceptsTableFilterComposer
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$KnowledgeConceptsTableOrderingComposer
@@ -38276,6 +38422,11 @@ class $$KnowledgeConceptsTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$KnowledgeConceptsTableAnnotationComposer
@@ -38327,6 +38478,11 @@ class $$KnowledgeConceptsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => column,
+  );
 }
 
 class $$KnowledgeConceptsTableTableManager
@@ -38380,6 +38536,7 @@ class $$KnowledgeConceptsTableTableManager
                 Value<String> summaryMd = const Value.absent(),
                 Value<String> relatedConceptIdsJson = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgeConceptsCompanion(
                 ownerUserId: ownerUserId,
@@ -38393,6 +38550,7 @@ class $$KnowledgeConceptsTableTableManager
                 summaryMd: summaryMd,
                 relatedConceptIdsJson: relatedConceptIdsJson,
                 createdAt: createdAt,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -38408,6 +38566,7 @@ class $$KnowledgeConceptsTableTableManager
                 Value<String> summaryMd = const Value.absent(),
                 Value<String> relatedConceptIdsJson = const Value.absent(),
                 required DateTime createdAt,
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgeConceptsCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -38421,6 +38580,7 @@ class $$KnowledgeConceptsTableTableManager
                 summaryMd: summaryMd,
                 relatedConceptIdsJson: relatedConceptIdsJson,
                 createdAt: createdAt,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
