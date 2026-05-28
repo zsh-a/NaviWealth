@@ -6,6 +6,7 @@ import 'package:forui/forui.dart';
 
 import '../../../core/ai/composition/proposal_applier.dart';
 import '../../../core/ai/composition/proposal_apply_state.dart';
+import '../../../core/ai/composition/proposal_kind_registry.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/ai/write/interaction_mode.dart';
@@ -16,31 +17,20 @@ import '../data/providers.dart';
 import '../domain/chat_models.dart';
 import '../state/chat_controller.dart';
 
-/// Wave 38 — bridge between mobile enum and the snake_case
-/// `kindLabel` strings used by `interactionModeForKindLabel`. Must
-/// stay in sync with `policy/tool_policy.rs` propose entries.
-String _kindLabel(ProposalKind kind) => switch (kind) {
-  ProposalKind.trade => 'trade',
-  ProposalKind.expense => 'expense',
-  ProposalKind.liabilityPayment => 'liability_payment',
-  ProposalKind.accountCreate => 'account_create',
-  ProposalKind.assetValuation => 'asset_valuation',
-  ProposalKind.firePlanUpdate => 'fire_plan_update',
-  ProposalKind.fireBucketRule => 'fire_bucket_rule',
-  ProposalKind.unknown => '',
-};
+/// Localised label for a proposal kind, resolved via
+/// [proposalKindRegistryProvider]. Falls back to the "unknown"
+/// label so renders never crash on a domain-less build.
+String proposalKindLabel(
+  AppLocalizations l10n,
+  List<ProposalKindMeta> registry,
+  String kind,
+) {
+  return registry.metaFor(kind)?.label(l10n) ?? l10n.aiChatProposalKindUnknown;
+}
 
-String proposalKindLabel(AppLocalizations l10n, ProposalKind kind) =>
-    switch (kind) {
-      ProposalKind.trade => l10n.aiChatProposalKindTrade,
-      ProposalKind.expense => l10n.aiChatProposalKindExpense,
-      ProposalKind.liabilityPayment => l10n.aiChatProposalKindLiabilityPayment,
-      ProposalKind.accountCreate => l10n.aiChatProposalKindAccountCreate,
-      ProposalKind.assetValuation => l10n.aiChatProposalKindAssetValuation,
-      ProposalKind.firePlanUpdate => l10n.aiChatProposalKindFirePlanUpdate,
-      ProposalKind.fireBucketRule => l10n.aiChatProposalKindFireBucketRule,
-      ProposalKind.unknown => l10n.aiChatProposalKindUnknown,
-    };
+IconData _iconFor(List<ProposalKindMeta> registry, String kind) {
+  return registry.metaFor(kind)?.icon ?? FLucideIcons.circleHelp;
+}
 
 /// FIR-67 — confirmation card rendered for `propose_*` tool calls.
 ///
@@ -109,7 +99,11 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
         // field; everything else keeps the full diff/Confirm card.
         // `swipe` is treated as `confirmDiff` for now — a real
         // swipe-to-apply gesture is its own future wave.
-        final mode = interactionModeForKindLabel(_kindLabel(plan.kind));
+        //
+        // `plan.kind` is the snake_case wire string emitted by the
+        // tool (`'trade'`, `'expense'`, …) so it feeds straight into
+        // `interactionModeForKindLabel` without translation.
+        final mode = interactionModeForKindLabel(plan.kind);
         return switch (mode) {
           InteractionMode.oneTap => _OneTapView(
             plan: plan,
@@ -228,7 +222,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
   }
 }
 
-class _ExpandedView extends StatelessWidget {
+class _ExpandedView extends ConsumerWidget {
   const _ExpandedView({
     required this.plan,
     required this.applyState,
@@ -246,9 +240,10 @@ class _ExpandedView extends StatelessWidget {
   final VoidCallback onEdit;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
+    final registry = ref.watch(proposalKindRegistryProvider);
     final isApplying = applyState.status == ProposalApplyStatus.applying;
     final isErrored = applyState.status == ProposalApplyStatus.errored;
     final summary = overrides == null
@@ -268,11 +263,15 @@ class _ExpandedView extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(_iconFor(plan.kind), size: 18, color: colors.foreground),
+              Icon(
+                _iconFor(registry, plan.kind),
+                size: 18,
+                color: colors.foreground,
+              ),
               const SizedBox(width: 8),
               Text(
                 l10n.aiChatProposalPendingHeader(
-                  proposalKindLabel(l10n, plan.kind),
+                  proposalKindLabel(l10n, registry, plan.kind),
                 ),
                 style: context.theme.typography.xs.copyWith(
                   color: colors.mutedForeground,
@@ -354,7 +353,7 @@ class _ExpandedView extends StatelessWidget {
 // still fall back to the full ExpandedView wording so users can read
 // what went wrong.
 // ───────────────────────────────────────────────────────────────────────────
-class _OneTapView extends StatelessWidget {
+class _OneTapView extends ConsumerWidget {
   const _OneTapView({
     required this.plan,
     required this.applyState,
@@ -373,8 +372,9 @@ class _OneTapView extends StatelessWidget {
   bool get _isErrored => applyState.status == ProposalApplyStatus.errored;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final registry = ref.watch(proposalKindRegistryProvider);
     return Container(
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
@@ -390,7 +390,7 @@ class _OneTapView extends StatelessWidget {
               const AiSparkle(),
               const SizedBox(width: 6),
               Text(
-                proposalKindLabel(l10n, plan.kind),
+                proposalKindLabel(l10n, registry, plan.kind),
                 style: AiType.meta(context),
               ),
               const Spacer(),
@@ -743,6 +743,7 @@ class _ClarificationView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
+    final registry = ref.watch(proposalKindRegistryProvider);
     final turn = ref.watch(chatControllerProvider(sessionId));
     return Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -762,7 +763,7 @@ class _ClarificationView extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Text(
                     l10n.aiChatProposalNeedsClarificationHeader(
-                      proposalKindLabel(l10n, plan.kind),
+                      proposalKindLabel(l10n, registry, plan.kind),
                     ),
                     style: context.theme.typography.xs.copyWith(
                       color: context.theme.colors.foreground,
@@ -821,16 +822,19 @@ class _ClarificationView extends ConsumerWidget {
 /// asset/account, amount, date, note) — anything the model included that
 /// doesn't fit those slots stays inside the raw plan, accessible via the
 /// edit sheet's "完整编辑" follow-up.
-class ProposalPayloadDetails extends StatelessWidget {
+class ProposalPayloadDetails extends ConsumerWidget {
   const ProposalPayloadDetails({super.key, required this.plan, this.overrides});
 
   final ReadyProposalPlan plan;
   final Map<String, Object?>? overrides;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final rows = _rowsFor(l10n, plan, overrides);
+    final registry = ref.watch(proposalKindRegistryProvider);
+    final rows =
+        registry.metaFor(plan.kind)?.previewRows?.call(l10n, plan, overrides) ??
+        const <ProposalKindRow>[];
     if (rows.isEmpty) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -881,22 +885,22 @@ class ProposalPayloadDetails extends StatelessWidget {
 /// (amount / price / note / date) before they confirm. Anything beyond
 /// these flows back to the full FIR-44 / FIR-63 / FIR-64 entry pages —
 /// surfaced as a compact Forui action at the bottom of the sheet.
-class ProposalEditSheet extends StatefulWidget {
+class ProposalEditSheet extends ConsumerStatefulWidget {
   const ProposalEditSheet({super.key, required this.plan, this.initial});
 
   final ReadyProposalPlan plan;
   final Map<String, Object?>? initial;
 
   @override
-  State<ProposalEditSheet> createState() => _ProposalEditSheetState();
+  ConsumerState<ProposalEditSheet> createState() => _ProposalEditSheetState();
 }
 
-class _ProposalEditSheetState extends State<ProposalEditSheet> {
+class _ProposalEditSheetState extends ConsumerState<ProposalEditSheet> {
   /// Lazy controller bag — populated as fields become visible. Keeping
   /// the values across mode toggles means typing in standard mode,
   /// flipping to full, and flipping back doesn't reset edits.
   final Map<String, TextEditingController> _controllers = {};
-  List<_EditableField> _curated = const <_EditableField>[];
+  List<ProposalKindEditField> _curated = const <ProposalKindEditField>[];
   bool _fullMode = false;
   bool _initialized = false;
 
@@ -907,7 +911,10 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
   void _ensureInitialized(AppLocalizations l10n) {
     if (_initialized) return;
     _initialized = true;
-    _curated = _editableFieldsFor(l10n, widget.plan.kind);
+    final registry = ref.read(proposalKindRegistryProvider);
+    _curated =
+        registry.metaFor(widget.plan.kind)?.editableFields?.call(l10n) ??
+        const <ProposalKindEditField>[];
     for (final f in _curated) {
       _controllers[f.payloadKey] = TextEditingController(
         text: _initialFor(f.payloadKey),
@@ -922,10 +929,10 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
   /// Curated + extras (when in full mode), preserving the curated order
   /// at the top so the most-frequent fields stay where users expect
   /// them after toggling.
-  List<_EditableField> _currentFields() {
+  List<ProposalKindEditField> _currentFields() {
     if (!_fullMode) return _curated;
     final covered = <String>{for (final f in _curated) f.payloadKey};
-    final extras = <_EditableField>[];
+    final extras = <ProposalKindEditField>[];
     for (final key in widget.plan.payload.keys) {
       if (covered.contains(key)) continue;
       if (_internalKeys.contains(key) || key.startsWith('_')) continue;
@@ -933,7 +940,7 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
         key,
         () => TextEditingController(text: _initialFor(key)),
       );
-      extras.add(_EditableField(payloadKey: key, label: _humanize(key)));
+      extras.add(ProposalKindEditField(payloadKey: key, label: _humanize(key)));
     }
     return [..._curated, ...extras];
   }
@@ -985,6 +992,7 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final registry = ref.watch(proposalKindRegistryProvider);
     _ensureInitialized(l10n);
     final fields = _currentFields();
     // Toggle is meaningful only when both modes have content. If the
@@ -994,7 +1002,7 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
     final showToggle = _curated.isNotEmpty && _hasExtraFields;
     return AppSheet(
       title: l10n.aiChatProposalEditKindTitle(
-        proposalKindLabel(l10n, widget.plan.kind),
+        proposalKindLabel(l10n, registry, widget.plan.kind),
       ),
       footer: AppSheetFooter(
         submitLabel: l10n.aiChatProposalSaveEdits,
@@ -1057,240 +1065,6 @@ class _ProposalEditSheetState extends State<ProposalEditSheet> {
     );
   }
 }
-
-class _EditableField {
-  const _EditableField({
-    required this.payloadKey,
-    required this.label,
-    this.hint,
-    this.numeric = false,
-  });
-  final String payloadKey;
-  final String label;
-  final String? hint;
-  final bool numeric;
-}
-
-List<_EditableField> _editableFieldsFor(
-  AppLocalizations l10n,
-  ProposalKind kind,
-) {
-  switch (kind) {
-    case ProposalKind.trade:
-      return [
-        _EditableField(
-          payloadKey: 'quantity',
-          label: l10n.aiChatFieldQuantity,
-          numeric: true,
-        ),
-        _EditableField(
-          payloadKey: 'price',
-          label: l10n.aiChatFieldPrice,
-          numeric: true,
-        ),
-        _EditableField(
-          payloadKey: 'fee',
-          label: l10n.aiChatFieldFee,
-          numeric: true,
-        ),
-        _EditableField(
-          payloadKey: 'tax',
-          label: l10n.aiChatFieldTax,
-          numeric: true,
-        ),
-        _EditableField(payloadKey: 'note', label: l10n.aiChatFieldNote),
-      ];
-    case ProposalKind.expense:
-      return [
-        _EditableField(
-          payloadKey: 'amount',
-          label: l10n.aiChatFieldAmount,
-          numeric: true,
-        ),
-        _EditableField(
-          payloadKey: 'date',
-          label: l10n.aiChatFieldDate,
-          hint: l10n.aiChatFieldDateHint,
-        ),
-        _EditableField(payloadKey: 'note', label: l10n.aiChatFieldNote),
-      ];
-    case ProposalKind.liabilityPayment:
-      return [
-        _EditableField(
-          payloadKey: 'amount',
-          label: l10n.aiChatFieldAmount,
-          numeric: true,
-        ),
-        _EditableField(
-          payloadKey: 'date',
-          label: l10n.aiChatFieldDate,
-          hint: l10n.aiChatFieldDateHint,
-        ),
-        _EditableField(payloadKey: 'note', label: l10n.aiChatFieldNote),
-      ];
-    case ProposalKind.accountCreate:
-      return [
-        _EditableField(payloadKey: 'name', label: l10n.aiChatFieldAccountName),
-        _EditableField(
-          payloadKey: 'institution',
-          label: l10n.aiChatFieldInstitution,
-        ),
-        _EditableField(payloadKey: 'note', label: l10n.aiChatFieldNote),
-      ];
-    case ProposalKind.assetValuation:
-      return [
-        _EditableField(
-          payloadKey: 'new_value',
-          label: l10n.aiChatFieldNewValuation,
-          numeric: true,
-        ),
-        _EditableField(
-          payloadKey: 'date',
-          label: l10n.aiChatFieldDate,
-          hint: l10n.aiChatFieldDateHint,
-        ),
-        _EditableField(payloadKey: 'note', label: l10n.aiChatFieldNote),
-      ];
-    case ProposalKind.firePlanUpdate:
-    case ProposalKind.fireBucketRule:
-      // FIRE OS proposals don't expose payload fields for inline edit;
-      // the diff is rendered via the existing `payload.before` /
-      // `payload.after` shape and applied verbatim on confirm.
-      return const [];
-    case ProposalKind.unknown:
-      return const [];
-  }
-}
-
-class _Row {
-  const _Row(this.label, this.value);
-  final String label;
-  final String value;
-}
-
-List<_Row> _rowsFor(
-  AppLocalizations l10n,
-  ReadyProposalPlan plan,
-  Map<String, Object?>? overrides,
-) {
-  String? read(String key) {
-    final ov = overrides?[key];
-    if (ov is String && ov.isNotEmpty) return ov;
-    final v = plan.payload[key];
-    if (v == null) return null;
-    final s = v is String ? v : v.toString();
-    return s.isEmpty ? null : s;
-  }
-
-  switch (plan.kind) {
-    case ProposalKind.trade:
-      return [
-        if (read('type') != null)
-          _Row(l10n.aiChatRowOperation, _tradeTypeLabel(l10n, read('type')!)),
-        if (read('asset_symbol') != null || read('asset_name') != null)
-          _Row(
-            l10n.aiChatRowAsset,
-            read('asset_name') != null && read('asset_symbol') != null
-                ? '${read('asset_name')} (${read('asset_symbol')})'
-                : (read('asset_name') ?? read('asset_symbol')!),
-          ),
-        if (read('account_name') != null)
-          _Row(l10n.aiChatRowAccount, read('account_name')!),
-        if (read('quantity') != null)
-          _Row(l10n.aiChatRowQuantity, read('quantity')!),
-        if (read('price') != null)
-          _Row(
-            l10n.aiChatRowPrice,
-            '${read('price')} ${read('currency') ?? ''}'.trim(),
-          ),
-        if (read('fee') != null && read('fee') != '0' && read('fee') != '0.0')
-          _Row(l10n.aiChatRowFee, read('fee')!),
-        if (read('trade_date') != null)
-          _Row(l10n.aiChatRowDate, read('trade_date')!),
-        if (read('note') != null) _Row(l10n.aiChatRowNote, read('note')!),
-      ];
-    case ProposalKind.expense:
-      return [
-        if (read('amount') != null)
-          _Row(
-            l10n.aiChatRowAmount,
-            '${read('amount')} ${read('currency') ?? ''}'.trim(),
-          ),
-        if (read('category') != null)
-          _Row(l10n.aiChatRowCategory, read('category')!),
-        if (read('account_name') != null)
-          _Row(l10n.aiChatRowAccount, read('account_name')!),
-        if (read('date') != null) _Row(l10n.aiChatRowDate, read('date')!),
-        if (read('note') != null) _Row(l10n.aiChatRowNote, read('note')!),
-      ];
-    case ProposalKind.liabilityPayment:
-      return [
-        if (read('liability_name') != null)
-          _Row(l10n.aiChatRowLiability, read('liability_name')!),
-        if (read('amount') != null)
-          _Row(
-            l10n.aiChatRowAmount,
-            '${read('amount')} ${read('currency') ?? ''}'.trim(),
-          ),
-        if (read('from_account_name') != null)
-          _Row(l10n.aiChatRowRepayAccount, read('from_account_name')!),
-        if (read('date') != null) _Row(l10n.aiChatRowDate, read('date')!),
-        if (read('note') != null) _Row(l10n.aiChatRowNote, read('note')!),
-      ];
-    case ProposalKind.accountCreate:
-      return [
-        if (read('name') != null) _Row(l10n.aiChatRowName, read('name')!),
-        if (read('type') != null) _Row(l10n.aiChatRowType, read('type')!),
-        if (read('currency') != null)
-          _Row(l10n.aiChatRowCurrency, read('currency')!),
-        if (read('institution') != null)
-          _Row(l10n.aiChatRowInstitution, read('institution')!),
-        if (read('note') != null) _Row(l10n.aiChatRowNote, read('note')!),
-      ];
-    case ProposalKind.assetValuation:
-      return [
-        if (read('asset_name') != null)
-          _Row(l10n.aiChatRowAsset, read('asset_name')!),
-        if (read('new_value') != null)
-          _Row(
-            l10n.aiChatRowNewValue,
-            '${read('new_value')} ${read('currency') ?? ''}'.trim(),
-          ),
-        if (read('date') != null) _Row(l10n.aiChatRowDate, read('date')!),
-        if (read('note') != null) _Row(l10n.aiChatRowNote, read('note')!),
-      ];
-    case ProposalKind.firePlanUpdate:
-      // The applier reads `payload.after`; surface it as a single row
-      // so the confirm card still shows what's about to change.
-      return [_Row(l10n.aiChatRowNote, plan.summaryZh)];
-    case ProposalKind.fireBucketRule:
-      return [
-        if (read('role') != null) _Row(l10n.aiChatRowNote, plan.summaryZh),
-      ];
-    case ProposalKind.unknown:
-      return const [];
-  }
-}
-
-IconData _iconFor(ProposalKind kind) => switch (kind) {
-  ProposalKind.trade => FLucideIcons.trendingUp,
-  ProposalKind.expense => FLucideIcons.receipt,
-  ProposalKind.liabilityPayment => FLucideIcons.banknote,
-  ProposalKind.accountCreate => FLucideIcons.landmark,
-  ProposalKind.assetValuation => FLucideIcons.refreshCw,
-  ProposalKind.firePlanUpdate => FLucideIcons.flag,
-  ProposalKind.fireBucketRule => FLucideIcons.slidersHorizontal,
-  ProposalKind.unknown => FLucideIcons.circleHelp,
-};
-
-String _tradeTypeLabel(AppLocalizations l10n, String wire) => switch (wire) {
-  'buy' => l10n.tradeTypeBuy,
-  'sell' => l10n.tradeTypeSell,
-  'transferIn' => l10n.tradeTypeTransferIn,
-  'transferOut' => l10n.tradeTypeTransferOut,
-  'valuationAdjust' => l10n.tradeTypeValuationAdjust,
-  _ => wire,
-};
 
 /// Batch action row shown above multiple pending propose cards in the
 /// same assistant turn. Hidden when there's only zero or one ready

@@ -30,7 +30,7 @@ void main() {
       expect(plan, isA<ReadyProposalPlan>());
       final ready = plan! as ReadyProposalPlan;
       expect(ready.proposalId, 'p-1');
-      expect(ready.kind, ProposalKind.trade);
+      expect(ready.kind, 'trade');
       expect(ready.summaryZh, '买入 AAPL 100 股 @ 180（盈透）');
       expect(ready.warnings, hasLength(1));
       expect(ready.get('asset_id'), 'aapl-id');
@@ -66,17 +66,33 @@ void main() {
       expect(c.ambiguousField, 'asset');
     });
 
-    test('returns null for unknown kind', () {
+    test('returns null for empty kind', () {
       expect(
         ProposalPlan.tryParse(<String, Object?>{
           'proposal_id': 'x',
-          'kind': 'wat',
+          'kind': '',
           'status': 'ready',
           'summary_zh': '',
           'payload': <String, Object?>{},
         }),
         isNull,
       );
+    });
+
+    test('accepts an unfamiliar wire kind — registry resolves at render', () {
+      // Shell no longer validates against a closed set; new domains can
+      // emit their own kinds and the propose card looks them up via
+      // `proposalKindRegistryProvider`. Unknown kinds still parse here,
+      // and the renderer falls back to the "unknown" label/icon.
+      final plan = ProposalPlan.tryParse(<String, Object?>{
+        'proposal_id': 'y',
+        'kind': 'sleep_target_adjust',
+        'status': 'ready',
+        'summary_zh': '',
+        'payload': <String, Object?>{},
+      });
+      expect(plan, isA<ReadyProposalPlan>());
+      expect((plan! as ReadyProposalPlan).kind, 'sleep_target_adjust');
     });
 
     test('returns null for non-map output', () {
@@ -112,7 +128,7 @@ void main() {
           isA<ReadyProposalPlan>(),
           reason: 'kind $wire should parse',
         );
-        expect((plan! as ReadyProposalPlan).kind, isNot(ProposalKind.unknown));
+        expect((plan! as ReadyProposalPlan).kind, wire);
       }
     });
   });

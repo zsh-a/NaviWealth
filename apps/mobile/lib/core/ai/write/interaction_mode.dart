@@ -94,9 +94,9 @@ InteractionMode _modeForRank(int rank) {
 
 /// Public counterpart to [deriveInteractionMode] for callers that
 /// already know the kind string but don't have a full envelope (e.g.
-/// `propose_card.dart` derives from `ProposalKind.name`). Keeps the
-/// mapping single-sourced — the docstring table in this file is
-/// authoritative.
+/// `propose_card.dart` passes `plan.kind`, the wire identifier).
+/// Keeps the mapping single-sourced — the docstring table in this
+/// file is authoritative.
 InteractionMode interactionModeForKindLabel(String kindLabel) {
   return switch (kindLabel) {
     'broker_order' || 'bulk_delete' => InteractionMode.typed,

@@ -1,70 +1,87 @@
-/// Cross-domain seam for the AI chat page header summary chip
-/// (`docs/lifeos-shell.md` §4, D-1.6b).
+/// Cross-domain seam for the AI chat header summary chip + the
+/// empty-state suggestion tiles (`docs/lifeos-shell.md` §4, D-1.6b).
 ///
-/// The header chip on the AI chat page shows a compact rolling pulse
-/// of the user's life signals — today net-worth direction, expense
-/// anomalies, deposit maturities for Finance; analogous health signals
-/// for HealthOS once D-2 lands. Each domain provides its own summary
-/// composer via a Riverpod provider; bootstrap registers the active
-/// build's contributor.
+/// The chip renders a rolling pulse of facts about whatever life
+/// signals the active domain considers worth surfacing — net-worth
+/// direction / expense anomalies / deposit maturities for Finance;
+/// sleep streak / HRV trend etc. for HealthOS once D-2 lands. Each
+/// fact carries its own localised one-liner so the renderer is
+/// fully domain-neutral.
 ///
-/// **Relationship to memory layer**: this is intentionally a display-
-/// only summary (no AI context input). The ContextPack pipeline used
-/// for chat turns is `chat_trace_prep.dart`. The two surfaces share
-/// the same upstream providers but project them differently.
+/// **Why a builder closure rather than a typed payload Provider**:
+/// fact text is `AppLocalizations`-formatted (e.g. "Net worth +2.3%
+/// this month"), but Riverpod providers cannot depend on
+/// `BuildContext`. The domain provider therefore returns a
+/// `Function(AppLocalizations) → AiContextSummary` that captures
+/// the raw data and formats lazily at render time.
+///
+/// **Relationship to memory layer**: this is intentionally a
+/// display-only summary (no AI context input). The ContextPack
+/// pipeline used for chat turns is `chat_trace_prep.dart`.
 library;
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../l10n/gen/app_localizations.dart';
 
 @immutable
 class AiContextSummary {
-  const AiContextSummary({
-    required this.baseCurrency,
-    required this.monthlyChangePct,
-    required this.todaysChange,
-    required this.unusualExpensesCount,
-    required this.upcomingMaturitiesCount,
-    required this.upcomingMaturitiesDays,
-  });
+  const AiContextSummary({this.facts = const <AiContextFact>[]});
 
-  /// Shell-only default — used when no domain has registered a
-  /// summary. Renders as `isEmpty == true`, so the chip collapses.
-  static const AiContextSummary empty = AiContextSummary(
-    baseCurrency: 'USD',
-    monthlyChangePct: null,
-    todaysChange: 0,
-    unusualExpensesCount: 0,
-    upcomingMaturitiesCount: 0,
-    upcomingMaturitiesDays: 0,
-  );
+  static const AiContextSummary empty = AiContextSummary();
 
-  final String baseCurrency;
+  /// In render order. The header chip shows every fact; the chat
+  /// empty-state shows up to three of those that carry a non-null
+  /// [AiContextFact.suggestion] (see `ai_chat_page.dart`).
+  final List<AiContextFact> facts;
 
-  /// Month-to-date net-worth change as a fraction (e.g. 0.034 = +3.4%).
-  /// `null` when no metrics are available yet (cold-start, no data).
-  final double? monthlyChangePct;
-
-  /// Today's net-worth change in base currency. May be zero.
-  final double todaysChange;
-
-  /// Number of expense anomalies detected this period (0 if none).
-  final int unusualExpensesCount;
-
-  /// Number of deposit maturities upcoming inside [upcomingMaturitiesDays]
-  /// days. Both fields are zero when no maturities are imminent.
-  final int upcomingMaturitiesCount;
-  final int upcomingMaturitiesDays;
-
-  bool get isEmpty =>
-      monthlyChangePct == null &&
-      todaysChange == 0 &&
-      unusualExpensesCount == 0 &&
-      upcomingMaturitiesCount == 0;
+  bool get isEmpty => facts.isEmpty;
 }
 
-/// Active summary for the current build. Default is the empty
-/// summary; bootstrap overrides with the active domain's composer.
-final aiContextSummaryProvider = Provider<AiContextSummary>(
-  (ref) => AiContextSummary.empty,
+/// A single observation worth surfacing on the AI page. Each fact is
+/// localised + formatted by the producing domain — the shell renderer
+/// only knows how to draw it (icon + text + tone color).
+@immutable
+class AiContextFact {
+  const AiContextFact({
+    required this.id,
+    required this.icon,
+    required this.tone,
+    required this.text,
+    this.suggestion,
+  });
+
+  /// Stable identifier, e.g. `fin:networth_pct`. Domain prefix is
+  /// encouraged so a Health fact never clashes with a Finance fact.
+  final String id;
+  final IconData icon;
+  final AiContextTone tone;
+
+  /// Localised one-line summary, e.g. "Net worth +2.3% this month".
+  final String text;
+
+  /// Optional localised tile prompt used by the chat empty-state.
+  /// When present and tapped, the tile sends [suggestion] as the next
+  /// user turn. Facts without a suggestion still render in the header
+  /// chip but never appear as a tile.
+  final String? suggestion;
+}
+
+/// Semantic colour bucket the renderer maps to a theme token.
+/// Kept small on purpose — shell shouldn't pick HEX values.
+enum AiContextTone { positive, neutral, attention }
+
+/// Builds the summary at render time so domain producers can capture
+/// raw upstream data without committing to a locale.
+typedef AiContextSummaryBuilder = AiContextSummary Function(
+  AppLocalizations l10n,
+);
+
+/// Active builder for the current build. Default returns
+/// [AiContextSummary.empty] for every locale, so a domain-less build
+/// renders nothing (the header chip and empty-state tiles collapse).
+/// Bootstrap overrides this with the active domain's composer.
+final aiContextSummaryProvider = Provider<AiContextSummaryBuilder>(
+  (ref) => (_) => AiContextSummary.empty,
 );

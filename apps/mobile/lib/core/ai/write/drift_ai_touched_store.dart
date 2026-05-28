@@ -40,8 +40,8 @@ class AiTouchedEntity {
 
   final DateTime touchedAt;
 
-  /// Optional `ProposalKind.name` so tooltips can read "AI 提议的支出"
-  /// vs "AI 提议的交易" rather than a generic message.
+  /// Optional proposal-kind wire identifier so tooltips can read
+  /// "AI 提议的支出" vs "AI 提议的交易" rather than a generic message.
   final String? kindLabel;
 
   /// `AiTrace.requestId` of the turn that applied this proposal. Lets

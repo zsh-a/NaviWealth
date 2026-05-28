@@ -117,16 +117,14 @@ class FinanceProposalApplier implements ProposalApplier {
     try {
       final at = DateTime.now().toUtc();
       final state = switch (plan.kind) {
-        ProposalKind.trade => await _applyTrade(plan, at),
-        ProposalKind.expense => await _applyExpense(plan, at),
-        ProposalKind.liabilityPayment => await _applyLiabilityPayment(plan, at),
-        ProposalKind.accountCreate => await _applyAccountCreate(plan, at),
-        ProposalKind.assetValuation => await _applyAssetValuation(plan, at),
-        ProposalKind.firePlanUpdate => await _applyFirePlanUpdate(plan, at),
-        ProposalKind.fireBucketRule => await _applyFireBucketRule(plan, at),
-        ProposalKind.unknown => throw ProposalApplyException(
-          'unknown proposal kind',
-        ),
+        'trade' => await _applyTrade(plan, at),
+        'expense' => await _applyExpense(plan, at),
+        'liability_payment' => await _applyLiabilityPayment(plan, at),
+        'account_create' => await _applyAccountCreate(plan, at),
+        'asset_valuation' => await _applyAssetValuation(plan, at),
+        'fire_plan_update' => await _applyFirePlanUpdate(plan, at),
+        'fire_bucket_rule' => await _applyFireBucketRule(plan, at),
+        _ => throw ProposalApplyException('unknown proposal kind: ${plan.kind}'),
       };
       // Wave 39 — when an apply succeeds, record the AI touch keyed by
       // (entityType, entityId). Detail pages surface a tiny sparkle
@@ -158,7 +156,7 @@ class FinanceProposalApplier implements ProposalApplier {
           entityType: entityType,
           entityId: entityId,
           touchedAt: at,
-          kindLabel: plan.kind.name,
+          kindLabel: plan.kind,
         ),
       );
     } catch (_) {

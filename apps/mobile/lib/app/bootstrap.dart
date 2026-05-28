@@ -17,6 +17,7 @@ import '../core/ai/composition/chat_trace_prep.dart';
 import '../core/ai/composition/device_tools_provider.dart';
 import '../core/ai/composition/portfolio_snapshot.dart';
 import '../core/ai/composition/proposal_applier.dart';
+import '../core/ai/composition/proposal_kind_registry.dart';
 import '../core/ai/composition/system_prompt_blocks.dart';
 import '../core/ai/local/embedding/embedder.dart';
 import '../core/ai/local/embedding/model_install_paths.dart';
@@ -46,6 +47,7 @@ import '../features/finance/composition/finance_ai_context_summary_provider.dart
 import '../features/finance/composition/finance_chat_trace_preparer.dart';
 import '../features/finance/composition/finance_portfolio_snapshot.dart';
 import '../features/finance/composition/finance_proposal_applier.dart';
+import '../features/finance/composition/finance_proposal_kinds.dart';
 import '../features/finance/data/market/sync/price_sync_providers.dart';
 import '../features/finance_ai_tools.dart';
 import '../features/health/agents/briefing_synthesizer.dart';
@@ -221,6 +223,13 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       // portfolio snapshot the chat surface attaches to each turn.
       portfolioSnapshotReaderProvider.overrideWith(
         (ref) => ref.watch(financePortfolioSnapshotReaderProvider),
+      ),
+      // FinanceOS contributes its `propose_*` kind metadata (label /
+      // icon / editable fields / preview rows) to the shell propose
+      // card via `proposalKindRegistryProvider`. Other domains
+      // (HealthOS, KnowledgeOS, …) concat their own metas here.
+      proposalKindRegistryProvider.overrideWithValue(
+        kFinanceProposalKinds,
       ),
       // D-1.8 + D-2.3 (`docs/lifeos-shell.md` §3): each active pack
       // contributes its localised shell spec. The dock visibility

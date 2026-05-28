@@ -1,13 +1,11 @@
-/// Typed view over a `propose_*` tool result emitted by the FIR-66 backend.
+/// Typed view over a `propose_*` tool result.
 ///
-/// The wire shape is stable across the five propose tools (see
-/// `apps/backend/src/ai/proposals.rs`):
+/// The wire shape is stable across domains:
 ///
 /// ```jsonc
 /// {
 ///   "proposal_id": "uuid",
-///   "kind":        "trade" | "expense" | "liability_payment"
-///                | "account_create" | "asset_valuation",
+///   "kind":        "trade" | "expense" | "sleep_target_adjust" | ...
 ///   "status":      "ready" | "needs_clarification",
 ///   "summary_zh":  "买入 AAPL 100 股 @ $180（盈透）",
 ///   // status=ready
@@ -21,30 +19,37 @@
 /// }
 /// ```
 ///
-/// Anything that doesn't parse cleanly returns `null` — the caller falls back
-/// to the generic `ToolInvocationCard`, which is the right behaviour for
-/// non-propose tool calls and for malformed propose outputs we'd rather not
-/// crash on.
+/// [kind] is the raw wire string — shell does **not** validate it
+/// against a closed set. Every domain registers its kinds (with
+/// label / icon / edit-field metadata) into
+/// `proposalKindRegistryProvider`; the propose card looks them up
+/// there at render time. Anything that doesn't parse cleanly returns
+/// `null`, so the caller falls back to the generic
+/// `ToolInvocationCard` — that is the right behaviour for non-propose
+/// tool calls and for malformed propose outputs we'd rather not crash
+/// on.
 library;
 
 sealed class ProposalPlan {
   const ProposalPlan({required this.proposalId, required this.kind});
 
   final String proposalId;
-  final ProposalKind kind;
+
+  /// Raw wire kind. Match against
+  /// `proposalKindRegistryProvider`'s entries for presentation.
+  final String kind;
 
   /// Best-effort parser for a tool result `output` payload.
   static ProposalPlan? tryParse(Object? toolOutput) {
     if (toolOutput is! Map) return null;
     final m = toolOutput.map((k, v) => MapEntry(k.toString(), v));
     final id = m['proposal_id'];
-    final kindStr = m['kind'];
+    final kind = m['kind'];
     final status = m['status'];
-    if (id is! String || kindStr is! String || status is! String) {
+    if (id is! String || kind is! String || status is! String) {
       return null;
     }
-    final kind = ProposalKindX.parse(kindStr);
-    if (kind == ProposalKind.unknown) return null;
+    if (kind.isEmpty) return null;
 
     switch (status) {
       case 'ready':
@@ -121,67 +126,6 @@ final class ClarificationProposalPlan extends ProposalPlan {
   final String ambiguousField;
   final String reason;
   final List<ProposalCandidate> candidates;
-}
-
-/// Discriminator for the union of `propose_*` tools.
-enum ProposalKind {
-  trade,
-  expense,
-  liabilityPayment,
-  accountCreate,
-  assetValuation,
-  // FIRE OS Phase 5 — update the planning inputs.
-  firePlanUpdate,
-  // FIRE OS Phase 5 — assign an asset/account to a bucket role.
-  fireBucketRule,
-  unknown,
-}
-
-extension ProposalKindX on ProposalKind {
-  static ProposalKind parse(String wire) {
-    switch (wire) {
-      case 'trade':
-        return ProposalKind.trade;
-      case 'expense':
-        return ProposalKind.expense;
-      case 'liability_payment':
-        return ProposalKind.liabilityPayment;
-      case 'account_create':
-        return ProposalKind.accountCreate;
-      case 'asset_valuation':
-        return ProposalKind.assetValuation;
-      case 'fire_plan_update':
-        return ProposalKind.firePlanUpdate;
-      case 'fire_bucket_rule':
-        return ProposalKind.fireBucketRule;
-      default:
-        return ProposalKind.unknown;
-    }
-  }
-
-  String get zhLabel => switch (this) {
-    ProposalKind.trade => '交易',
-    ProposalKind.expense => '支出',
-    ProposalKind.liabilityPayment => '还款',
-    ProposalKind.accountCreate => '新账户',
-    ProposalKind.assetValuation => '估值更新',
-    ProposalKind.firePlanUpdate => 'FIRE 计划更新',
-    ProposalKind.fireBucketRule => 'FIRE 桶规则',
-    ProposalKind.unknown => '未知',
-  };
-
-  /// Wire name used by `propose_*` tool calls. Used to match a
-  /// [ToolInvocation.name] back to its kind.
-  String get toolName => switch (this) {
-    ProposalKind.trade => 'propose_trade',
-    ProposalKind.expense => 'propose_expense',
-    ProposalKind.liabilityPayment => 'propose_liability_payment',
-    ProposalKind.accountCreate => 'propose_account_create',
-    ProposalKind.assetValuation => 'propose_asset_valuation',
-    ProposalKind.firePlanUpdate => 'propose_fire_plan_update',
-    ProposalKind.fireBucketRule => 'propose_fire_bucket_rule',
-    ProposalKind.unknown => '',
-  };
 }
 
 /// A single disambiguation candidate. Fields beyond `id` / `label` are

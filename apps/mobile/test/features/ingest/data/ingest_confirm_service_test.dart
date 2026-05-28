@@ -1,6 +1,5 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
 import 'package:naviwealth/features/ingest/data/ingest_confirm_service.dart';
 import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
 
@@ -29,7 +28,7 @@ void main() {
         fromAccountId: 'acct-cash',
       );
 
-      expect(plan.kind, ProposalKind.expense);
+      expect(plan.kind, 'expense');
       expect(plan.proposalId, 'd1');
       expect(plan.payload['account_id'], 'acct-cash');
       expect(plan.payload['currency'], 'CNY');
