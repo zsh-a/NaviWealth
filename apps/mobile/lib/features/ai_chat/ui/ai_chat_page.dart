@@ -261,7 +261,7 @@ class _EmptyConversation extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    final summary = ref.watch(aiContextSummaryProvider);
+    final summary = ref.watch(aiContextSummaryProvider)(l10n);
     final suggestions = _composeSuggestions(l10n, summary);
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -334,38 +334,21 @@ class _EmptyConversation extends ConsumerWidget {
 }
 
 /// Build the 4 empty-state tiles. Dynamic suggestions sourced from
-/// [AiContextSummary] take priority (up to 3 slots) so the first thing
-/// the user sees reflects what's actually happening in their portfolio
-/// right now; static fallbacks fill the rest so the surface never
-/// shrinks below 4 tiles.
+/// [AiContextSummary.facts] take priority (up to 3 slots) so the
+/// first thing the user sees reflects what's actually happening
+/// across the active domains right now; static fallbacks fill the
+/// rest so the surface never shrinks below 4 tiles.
 List<(String, IconData)> _composeSuggestions(
   AppLocalizations l10n,
   AiContextSummary s,
 ) {
   final out = <(String, IconData)>[];
 
-  // Sign-aware net worth movement — most timely signal a user has.
-  final pct = s.monthlyChangePct;
-  if (pct != null && pct.isFinite) {
-    out.add((
-      l10n.aiChatEmptyDynamicNetWorth,
-      pct >= 0 ? FLucideIcons.trendingUp : FLucideIcons.trendingDown,
-    ));
-  }
-  if (s.unusualExpensesCount > 0) {
-    out.add((
-      l10n.aiChatEmptyDynamicAnomaly(s.unusualExpensesCount),
-      FLucideIcons.zap,
-    ));
-  }
-  if (s.upcomingMaturitiesCount > 0) {
-    out.add((
-      l10n.aiChatEmptyDynamicMaturity(
-        s.upcomingMaturitiesCount,
-        s.upcomingMaturitiesDays,
-      ),
-      FLucideIcons.calendarCheck,
-    ));
+  for (final fact in s.facts) {
+    final suggestion = fact.suggestion;
+    if (suggestion != null) {
+      out.add((suggestion, fact.icon));
+    }
   }
 
   // Cap dynamic suggestions at 3 so a static "evergreen" question is

@@ -88,7 +88,7 @@ class IngestConfirmService {
     final amount = _minorToDecimalString(draft.parsed.amountMinor.abs());
     return ReadyProposalPlan(
       proposalId: draft.draftId,
-      kind: ProposalKind.expense,
+      kind: 'expense',
       summaryZh:
           '记录支出 ${_shortDesc(draft.parsed.description)} '
           '${draft.parsed.currency} $amount',
