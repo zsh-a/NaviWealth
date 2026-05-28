@@ -106,12 +106,16 @@ ADR-2026-05-24 拒绝 KnowledgeOS 的理由是 "Memory Layer 通电 ≠ 独立�
 | `search_notes` | `query / tags? / project?` | `notes[{id, title, excerpt, score}]` | 全文 + 语义混合（复用 hybridScore） |
 | `propose_concept_link` ⚠ write | `from_concept_id, to_concept_id, relation, reason` | proposal envelope | LLM 提议建联，需用户确认（northstar 行为契约） |
 | `summarize_topic_evolution` | `concept_or_topic, time_range` | `timeline[{ts, source, change_summary}]` | "我对 X 的看法这半年怎么变" |
+| `propose_inbox_classification` ⚠ write | `note_id` | proposal envelope `{kind: note\|decision_candidate\|concept_candidate, confidence}` | InboxTriageAgent 用,建议归类——见 §5 异步 triage |
+| `propose_inbox_tags` ⚠ write | `note_id` | proposal envelope `{tags[], project_tag?}` | InboxTriageAgent 用,建议标签 |
+| `propose_link_to_decision` ⚠ write | `note_id` | proposal envelope `{related_decision_ids[], reason}` | InboxTriageAgent 用,挂到现有 Decision |
 
 **写 tool 全部走 ProposalEnvelope**（northstar / ai-architecture.md 行为契约）；read tool 默认可调。
 
 **不做**（MVP）：
 - AI 自动生成 Note / Decision（用户自己写 / dictate；AI 只**整理** / **关联** / **质疑**）
 - AI 直接改用户笔记内容（只能 propose）
+- **保存时同步 LLM**——Inbox 写入零延迟、零网络成本；所有 AI 建议走 §7 异步 InboxTriageAgent 落到 Review tab（理由：保护"无摩擦捕获"体验,见 §5）
 
 ---
 
@@ -119,9 +123,39 @@ ADR-2026-05-24 拒绝 KnowledgeOS 的理由是 "Memory Layer 通电 ≠ 独立�
 
 匹配 shell §3 的 Option B 双层 shell + `DomainShellSpec`（与 HealthOS Today/Trend/Plan 同模式）：
 
-- **Inbox** — Quick capture（语音 / 粘贴 / 分享 intent）→ 自动归类 placeholder（Note / Decision draft / Concept candidate），LLM 建议但用户确认
+- **Inbox** — Quick capture（语音 / 粘贴 / 分享 intent）→ 原文直存 `knowledge_notes`,**保存路径不调 LLM**(零延迟、零成本、零失败模式)。归类 / 标签 / 挂决策建议由 §7 `InboxTriageAgent` 异步产出
 - **Library** — Notes / Decisions / Concepts / Experiments 四 segmented control；list + detail；最高优先级是 Decision 视图（含 status badge：active / verified / falsified / overdue-review）
-- **Review** — Weekly Review 卡片：to-review decisions / unverified assumptions / contradictions detected / recent agent runs
+- **Review** — Weekly Review 卡片：to-review decisions / unverified assumptions / contradictions detected / **inbox triage suggestions**(InboxTriageAgent 输出的 ProposalEnvelope 列表,每条 ✓/✗) / recent agent runs
+
+**Inbox triage flow**(异步设计,2026-05-28 定):
+
+```
+用户保存 Note  ─►  repo.upsertNote  ─►  EventStore: know:notes inserted
+                                              │
+                                              │ (cadence: 15min/手动 Run)
+                                              ▼
+                                       InboxTriageAgent
+                                       (§7) reads untriaged
+                                              │
+                                              ├─► propose_inbox_classification
+                                              ├─► propose_inbox_tags
+                                              └─► propose_link_to_decision
+                                              │
+                                              ▼
+                                       ProposalEnvelope 列表
+                                              │
+                                              ▼
+                                       Review tab "AI 建议" 卡片
+                                              │
+                              ✓ accept  ─────►─────  ✗ dismiss
+                                  │                    │
+                                  ▼                    ▼
+                         走 Repository           记 dismissed_at,
+                         (升级为 Decision /        InboxTriageAgent
+                         加 tag / 挂关联)         下次不再提议
+```
+
+零保存延迟;LLM 失败不影响原文落库;用户始终可不看建议直接 dogfood。
 
 共用全局 Settings（Data section 加 Knowledge opt-in）+ Search。**不**单独建 `/inbox` `/notes` `/decisions` `/projects` 一堆 top-level 路由——那是 Notion 范式，与 LifeOS 4-tab IA 哲学不符。
 
@@ -141,15 +175,18 @@ KnowledgeOS 注册自己的 shell §4 seam（与 Finance / Health 并列）：
 
 ---
 
-## 7. 三个核心 agent（complement 已有 Morning Briefing）
+## 7. 四个核心 agent（complement 已有 Morning Briefing）
 
 | Agent | Schedule | 读 | 写 |
 |---|---|---|---|
 | **ReviewAgent** | 每周日 09:00 local | `list_due_reviews` | Episodic memory（"X 决策已到 review 期"）+ 通知（复用 health 的 `lifeos.knowledge.review` channel） |
 | **AssumptionAgent** | 月初 + 任何决策被新事件触及时 | `list_open_assumptions` + 跨域 events | Episodic memory + Review tab 卡片（不直接通知避免噪音） |
 | **ContradictionAgent** | 每次新 Decision / Note 落库 | 该对象 vs 最近 90 天同 scope memories + **当前 active Principles** + 引用的 Assumptions（cosine + LLM judge） | 若检出冲突（事实/价值观偏离），写 `kind='semantic'` memory + Review tab 提示。**不**自动覆盖原对象 |
+| **InboxTriageAgent** | 15min cadence + 手动 Run + 可选每条 Note insert 触发 | 未 triage 的 `knowledge_notes`（用 side-table `knowledge_inbox_triage` 记 last_triaged_at，**local-only never-sync**）+ 现有 Decisions/Concepts/tags | 调用 `propose_inbox_classification` / `propose_inbox_tags` / `propose_link_to_decision`，输出 ProposalEnvelope 列表落到 Review tab。**永不改 `body_md`**(§8) |
 
 复用 shell §7.3 的 `Agent` / `AgentRunner` 框架。**反目标**：不做 "Agent 之间相互调用"（northstar §1.1 边界 / shell §7.3 反目标）。
+
+**InboxTriageAgent 工程约束(完整流图见 §5)**：单次 Note ≤ 1 LLM round-trip(3 个 propose 工具批量调);无 LLM 配置时 skip,不报错;side-table `knowledge_inbox_triage(note_id, last_triaged_at, dismissed_at?)` 是 local-only,never-sync;dismissed 提议不再重提。
 
 ---
 
@@ -288,7 +325,7 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - ❌ ~~不在 `features/` 下提前创建 `knowledge/` 空目录~~ → 已实现，目录非空。回滚 = 整目录删除 + 撤回 §11 enum 行
 - ❌ 不在 `core/ai/contracts/` 加任何 knowledge-specific 字段（northstar §2.5）— **仍生效**
 - ❌ 不为本文档写 detail 子文档（`knowledgeos-*.md`）；先 dogfood 再拆 — **仍生效**
-- ❌ 本文档目标长度：**< 400 行**（override 后含 §14 落地快照）。改本文档前自问：是不是 dogfood 真发现需要改，而不是"完善设计"
+- ❌ 本文档目标长度：**< 450 行**（override 后含 §14 落地快照 + §5 Inbox triage 流图）。改本文档前自问：是不是 dogfood 真发现需要改，而不是"完善设计"
 
 ---
 
@@ -339,6 +376,8 @@ class KnowledgeExperiments extends Table with SyncableTable {
 
 **P0 — 影响 MVP 可用性**
 - [ ] **Inbox quick capture pipeline**：§5 列出 share-intent / 语音 / 粘贴 / AI chat 片段，目前只有手写 New Note。share-intent 可直接复用 `features/ingest/data/share_intent_service.dart`
+- [ ] **InboxTriageAgent + 3 个 propose_* 写 tool**（§7 新 + §4 新增 3 行）：异步分类 / 标签 / 挂决策建议;side-table `knowledge_inbox_triage`(local-only);提议落 Review tab 的 "AI 建议" 卡片。**这是 §5 Inbox 异步 triage 设计的核心**——保存路径不动 LLM
+- [ ] **Review tab "AI 建议" 卡片**：渲染 InboxTriageAgent 输出的 ProposalEnvelope 列表,每条 ✓/✗;✓ 走 `ProposalApplier`(分类升级 / tag 写入 / 关联建立);✗ 写 `dismissed_at`
 - [ ] **Decision 创建表单**：当前只有 Note 有写入 UI；Decision 是最高优先级 affordance（§1），必须能在 Library Decisions tab 里 `+ New decision`。Principles / Assumptions / Experiments / Concepts 也需要
 - [ ] **Library detail pages**：列表项现在不可点击；至少 Decision 需要 detail view（含 supersede chain / referenced assumptions）
 
@@ -374,6 +413,7 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - ❌ 自动双链 / backlinks 生成（§8 第 4 条；坚持 `[[concept]]` 软链 + AI 建联 user-confirm）
 - ❌ RSS / Read Later 抓取 pipeline（§1 KnowledgeOS 是消化层不是获取层）
 - ❌ AI 自动生成 Note / Decision 内容（§4 / §8 第 7 条；AI 只整理、关联、质疑）
+- ❌ Inbox 保存时同步调 LLM(同步分类 / 摘要 / 改写) — §5 异步 triage 是显式决策(2026-05-28);零延迟保存是 inbox 的不可妥协约束。"想做 ChatGPT 即时整理"=回头看 §5 这段
 
 ### 14.4 sunset 信号（命中即按 §12 回滚）
 
