@@ -18,6 +18,8 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../contracts/intent.dart' show RiskLevel;
+import '../../../contracts/privacy_budget.dart' show BudgetTier;
 import '../../../contracts/tool_descriptor.dart';
 import '../anthropic/anthropic_wire.dart';
 import '../device_session.dart';
@@ -35,6 +37,29 @@ const List<DeviceTool> kShellDeviceToolsCore = <DeviceTool>[
   QueryMemoryTool(),
   BuildContextTool(),
 ];
+
+/// Shell-only tool descriptors. Co-located with [kShellDeviceToolsCore]
+/// so adding a shell tool is a single-file change. Merged into
+/// [allToolDescriptors] alongside each LifeOS domain's contribution.
+const Map<String, ToolDescriptor> kShellToolDescriptors =
+    <String, ToolDescriptor>{
+  'query_memory': ToolDescriptor(
+    name: 'query_memory',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.small,
+    domain: kDomainShell,
+  ),
+  'build_context': ToolDescriptor(
+    name: 'build_context',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.standard,
+    domain: kDomainShell,
+  ),
+};
 
 class DeviceToolRegistry {
   DeviceToolRegistry(Iterable<DeviceTool> tools)

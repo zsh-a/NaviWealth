@@ -159,12 +159,12 @@ void main() {
     });
 
     test('mobile descriptor catalog carries active device tools', () {
-      // 22 baseline + 8 FIRE OS Phase 5 (docs/roadmap-fire-os.md §5.2)
-      // + 4 Income Planner P1/P3 (docs/options-income.md §8.2)
-      // + 1 Income Planner P4 — `get_wheel_lifecycle` (roadmap-next §3.3)
-      // + 2 Memory Runtime — `query_memory` + `build_context`
-      //   (lifeos-shell.md §6, D-1.7b).
-      expect(allToolDescriptors, hasLength(37));
+      // 2 Memory Runtime (shell) + 35 FinanceOS + 4 HealthOS + 9 KnowledgeOS
+      // = 50. Each LifeOS domain co-locates its descriptors with its tool
+      // barrel (`kShellToolDescriptors`, `kFinanceToolDescriptors`,
+      // `kHealthToolDescriptors`, `kKnowledgeToolDescriptors`); the
+      // union here is derived in `tool_descriptor_catalog.dart`.
+      expect(allToolDescriptors, hasLength(50));
       expect(
         lookupToolDescriptor('propose_options_profile_update')?.sideEffect,
         SideEffect.deviceLocalWrite,

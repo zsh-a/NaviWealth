@@ -135,6 +135,8 @@ extension SideEffectScopeWire on SideEffectScope {
 /// trace rows written before Phase D-1.3 land with no `domain` field
 /// and must decode to `finance` for backward compat.
 const String kDomainFinance = 'finance';
+const String kDomainHealth = 'health';
+const String kDomainKnowledge = 'knowledge';
 
 /// Default for legacy intents/traces/tools. Reading code outside
 /// `core/ai/contracts/` should reference this constant rather than
