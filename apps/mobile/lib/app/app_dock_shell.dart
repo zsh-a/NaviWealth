@@ -8,7 +8,8 @@ import 'package:go_router/go_router.dart';
 
 import '../core/shell/domain_shell.dart';
 import '../design_system/design_system.dart';
-import '../features/ai_chat/state/route_context_provider.dart';
+import '../features/ai_chat/state/ai_context.dart';
+import '../features/ai_chat/ui/ask_ai.dart';
 import '../features/ingest/data/share_intent_service.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'route_paths.dart';
@@ -24,12 +25,15 @@ import 'route_paths.dart';
 ///
 /// Responsibilities the inner per-domain shells should *not* duplicate:
 ///   * share-intent lifecycle (mounts once, survives domain switches)
-///   * `aiRouteContextProvider` sync (location-driven, global)
+///   * `aiContextProvider` sync (route + domain, location-driven, global)
 ///   * root-level system back handling (pop → jump-to-home → exit-arm)
 ///   * domain dock chrome — desktop side dock only (≥ 600 px). Mobile
 ///     swaps the always-visible chip row for a per-page chevron in the
 ///     title; see `domain_switcher.dart`. [domainDockVisibleProvider]
 ///     still gates whether either presentation is rendered at all.
+///   * `aiContextProvider.domain` — derived from the active route via
+///     `domainForRoute`; the `askAi` helper reads this so no call site
+///     needs to know which OS it's invoked from.
 class AppDockShell extends ConsumerStatefulWidget {
   const AppDockShell({super.key, required this.child});
 
@@ -106,10 +110,12 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
       context,
     ).routeInformationProvider.value.uri.path;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final current = ref.read(aiRouteContextProvider);
-      if (current.path != location) {
-        ref.read(aiRouteContextProvider.notifier).state = AiRouteContext(
+      final current = ref.read(aiContextProvider);
+      final nextDomain = domainForRoute(location);
+      if (current.path != location || current.domain != nextDomain) {
+        ref.read(aiContextProvider.notifier).state = AiContext(
           path: location,
+          domain: nextDomain,
         );
       }
     });
@@ -175,7 +181,7 @@ void _switchToDomain(BuildContext context, DomainShellSpec spec) {
   GoRouter.of(context).go(target);
 }
 
-class _DesktopDock extends StatelessWidget {
+class _DesktopDock extends ConsumerWidget {
   const _DesktopDock({required this.specs, required this.activePath});
 
   final List<DomainShellSpec> specs;
@@ -184,7 +190,7 @@ class _DesktopDock extends StatelessWidget {
   static const double _width = 56;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     return Container(
       width: _width,
@@ -203,7 +209,46 @@ class _DesktopDock extends StatelessWidget {
                 selected: _specOwnsPath(spec, activePath),
                 onTap: () => _switchToDomain(context, spec),
               ),
+            const Spacer(),
+            _AskAiDockButton(onPress: () => askAi(context, ref)),
+            const SizedBox(height: 12),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shell-level "Ask AI" affordance docked at the bottom of the desktop
+/// rail. Always visible (not gated on multi-domain) so HealthOS /
+/// KnowledgeOS users get the same one-tap entry FinanceOS has.
+class _AskAiDockButton extends StatelessWidget {
+  const _AskAiDockButton({required this.onPress});
+
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return FTooltip(
+      tipBuilder: (_, _) =>
+          Text(AppLocalizations.of(context).commandPaletteOpenAi),
+      child: FTappable(
+        onPress: onPress,
+        child: Container(
+          width: 40,
+          height: 40,
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: colors.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: colors.primary.withValues(alpha: 0.25),
+              width: 1,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Icon(FLucideIcons.sparkles, color: colors.primary, size: 20),
         ),
       ),
     );

@@ -115,6 +115,7 @@ void main() {
       const invocation = AiIntentInvocation(
         source: 'expense_detail',
         intent: 'explain_change',
+        domain: kDomainFinance,
       );
       expect(invocation.domain, kDomainFinance);
       expect(invocation.toTraceJson()['domain'], kDomainFinance);
@@ -122,9 +123,9 @@ void main() {
       const healthInv = AiIntentInvocation(
         source: 'sleep_card',
         intent: 'explain_recovery',
-        domain: 'health',
+        domain: kDomainHealth,
       );
-      expect(healthInv.toTraceJson()['domain'], 'health');
+      expect(healthInv.toTraceJson()['domain'], kDomainHealth);
     });
 
     test('IntentDescriptor defaults to finance, accepts non-finance', () {

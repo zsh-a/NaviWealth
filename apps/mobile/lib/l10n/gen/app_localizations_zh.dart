@@ -1985,7 +1985,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commandPaletteNewExpense => '新增支出';
 
   @override
-  String get commandPaletteOpenAi => '打开 AI 助手';
+  String get commandPaletteOpenAi => '问 AI';
+
+  @override
+  String get commandPaletteAiHistory => 'AI 历史会话';
 
   @override
   String get commandPaletteToggleTheme => '切换主题（亮色 / 暗色）';

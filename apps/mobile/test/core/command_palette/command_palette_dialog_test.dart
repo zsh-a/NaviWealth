@@ -381,7 +381,7 @@ void main() {
           'action.corporateAction',
           'action.newExpense',
           'action.rebalance.targetAllocation',
-          'action.openAi',
+          'action.aiHistory',
           'action.shortcutHelp',
         ]),
       );

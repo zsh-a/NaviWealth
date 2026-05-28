@@ -12,7 +12,7 @@
 ///
 ///   * The context is **per subtree**, not global. Two charts visible
 ///     at the same time both want to advertise their own timeframe;
-///     the global `aiRouteContextProvider` would race.
+///     the global `aiContextProvider` would race.
 ///   * Lookups happen at the moment the capsule fires — not on every
 ///     scope rebuild. InheritedWidget gives O(depth) ancestor walk
 ///     without any state-management ceremony.

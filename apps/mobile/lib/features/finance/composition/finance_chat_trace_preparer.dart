@@ -19,7 +19,7 @@ import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../core/ai/local/skills/skills.dart';
 import '../../../core/ai/trace/trace.dart';
-import '../../ai_chat/state/route_context_provider.dart';
+import '../../ai_chat/state/ai_context.dart';
 import '../../assets/data/deposit_maturity_insight_provider.dart';
 import '../../expense/data/expense_anomaly_insight_provider.dart';
 import '../../fire/data/fire_providers.dart';
@@ -47,7 +47,7 @@ Future<ChatTracePrepResult> _prepareChatTrace(
 ) async {
   try {
     final compressor = ref.read(contextCompressorProvider);
-    final routeCtx = ref.read(aiRouteContextProvider);
+    final routeCtx = ref.read(aiContextProvider);
     final route = RouteContext(
       path: routeCtx.path,
       area: _routeAreaFromPath(routeCtx.path),

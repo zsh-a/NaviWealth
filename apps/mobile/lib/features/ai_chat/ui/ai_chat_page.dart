@@ -11,9 +11,9 @@ import '../../../core/auth/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
+import '../state/ai_context.dart';
 import '../state/chat_controller.dart';
 import '../state/chat_session_scope.dart';
-import '../state/route_context_provider.dart';
 import 'ai_action_cards_rail.dart';
 import 'ai_context_summary_header.dart';
 import 'chat_composer.dart';
@@ -202,7 +202,7 @@ class _ChatPane extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final turn = ref.watch(chatControllerProvider(sessionId));
-    final routeCtx = ref.watch(aiRouteContextProvider);
+    final routeCtx = ref.watch(aiContextProvider);
     final systemContext = routeCtx.toSystemContext();
 
     // "Discovery" chrome (this-month summary + next-action rail) belongs

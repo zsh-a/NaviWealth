@@ -2054,7 +2054,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commandPaletteNewExpense => 'New expense';
 
   @override
-  String get commandPaletteOpenAi => 'Open AI assistant';
+  String get commandPaletteOpenAi => 'Ask AI';
+
+  @override
+  String get commandPaletteAiHistory => 'AI history';
 
   @override
   String get commandPaletteToggleTheme => 'Toggle theme (light / dark)';
