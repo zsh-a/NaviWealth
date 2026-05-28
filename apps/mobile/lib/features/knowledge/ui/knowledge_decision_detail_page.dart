@@ -127,6 +127,8 @@ class _BodyState extends ConsumerState<_Body> {
                 d.question,
                 style: typography.lg
                     .copyWith(fontWeight: FontWeight.w600),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: AppSpacing.s8),
@@ -135,12 +137,12 @@ class _BodyState extends ConsumerState<_Body> {
         ),
         const SizedBox(height: AppSpacing.s4),
         Text(
-          'Decided ${d.decidedAt.toLocal().toIso8601String().substring(0, 10)}'
-          '${d.reviewDate != null ? '  ·  review ${d.reviewDate!.toLocal().toIso8601String().substring(0, 10)}' : ''}',
+          '决策于 ${d.decidedAt.toLocal().toIso8601String().substring(0, 10)}'
+          '${d.reviewDate != null ? '  ·  复盘 ${d.reviewDate!.toLocal().toIso8601String().substring(0, 10)}' : ''}',
           style: typography.xs.copyWith(color: colors.mutedForeground),
         ),
         const SizedBox(height: AppSpacing.s16),
-        KnowledgeSection.group(title: 'Options', children: [
+        KnowledgeSection.group(title: '选项', children: [
           for (final opt in d.options)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s4),
@@ -168,6 +170,8 @@ class _BodyState extends ConsumerState<_Body> {
                                 ? FontWeight.w600
                                 : FontWeight.w400,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         if (opt.rationale != null &&
                             opt.rationale!.isNotEmpty)
@@ -176,6 +180,8 @@ class _BodyState extends ConsumerState<_Body> {
                             style: typography.xs.copyWith(
                               color: colors.mutedForeground,
                             ),
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
                           ),
                       ],
                     ),
@@ -187,29 +193,36 @@ class _BodyState extends ConsumerState<_Body> {
         if (d.rationaleMd.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
           KnowledgeSection.group(
-            title: 'Rationale',
+            title: '理由',
             children: [AiMarkdown(text: d.rationaleMd)],
           ),
         ],
         if (_principles.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
-          KnowledgeSection.group(title: 'Principles 引用', children: [
+          KnowledgeSection.group(title: '引用的 Principle', children: [
             for (final p in _principles)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Text('· ${p.statement}', style: typography.sm),
+                child: Text(
+                  '· ${p.statement}',
+                  style: typography.sm,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
           ]),
         ],
         if (_assumptions.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
-          KnowledgeSection.group(title: 'Assumptions 引用', children: [
+          KnowledgeSection.group(title: '引用的 Assumption', children: [
             for (final a in _assumptions)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 2),
                 child: Text(
-                  '· ${a.statement} (conf ${a.confidence.toStringAsFixed(2)})',
+                  '· ${a.statement}（conf ${a.confidence.toStringAsFixed(2)}）',
                   style: typography.sm,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
           ]),
@@ -217,14 +230,14 @@ class _BodyState extends ConsumerState<_Body> {
         if (d.expectedOutcome != null && d.expectedOutcome!.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
           KnowledgeSection.group(
-            title: 'Expected outcome',
+            title: '预期结果',
             children: [Text(d.expectedOutcome!, style: typography.sm)],
           ),
         ],
         if (d.actualOutcomeMd != null && d.actualOutcomeMd!.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
           KnowledgeSection.group(
-            title: 'Actual outcome',
+            title: '实际结果',
             children: [AiMarkdown(text: d.actualOutcomeMd!)],
           ),
         ],
@@ -250,8 +263,10 @@ class _BodyState extends ConsumerState<_Body> {
                     const SizedBox(width: AppSpacing.s8),
                     Expanded(
                       child: Text(
-                        '${_chain[i].question} (${_chain[i].status.wire})',
+                        '${_chain[i].question}（${_chain[i].status.wire}）',
                         style: typography.sm,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -285,7 +300,7 @@ class _ContextSnapshotSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.s4),
           child: Text(
-            'Captured ${capturedAt.substring(0, 10)} · window ${window ?? "—"}d',
+            '采样于 ${capturedAt.substring(0, 10)} · 窗口 ${window ?? "—"} 天',
             style:
                 typography.xs.copyWith(color: colors.mutedForeground),
           ),
@@ -344,6 +359,8 @@ class _SnapshotRow extends StatelessWidget {
             child: Text(
               title.isEmpty ? summary : '$title — $summary',
               style: typography.sm,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

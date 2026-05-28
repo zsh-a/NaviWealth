@@ -100,6 +100,8 @@ class KnowledgeSection extends StatelessWidget {
                     t,
                     style: titleStyle ??
                         typography.md.copyWith(fontWeight: FontWeight.w600),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (trailing != null) ...[
@@ -177,8 +179,8 @@ class _MarkdownEditorWithPreviewState
           options: _MarkdownMode.values,
           value: _mode,
           labelOf: (m) => switch (m) {
-            _MarkdownMode.edit => 'Edit',
-            _MarkdownMode.preview => 'Preview',
+            _MarkdownMode.edit => '编辑',
+            _MarkdownMode.preview => '预览',
           },
           onChanged: (m) => setState(() => _mode = m),
         ),
@@ -201,7 +203,7 @@ class _MarkdownEditorWithPreviewState
             ),
             child: widget.controller.text.trim().isEmpty
                 ? Text(
-                    'Nothing to preview — switch back to Edit and type.',
+                    '暂无内容预览 — 切回编辑模式输入。',
                     style: typography.sm
                         .copyWith(color: colors.mutedForeground),
                   )

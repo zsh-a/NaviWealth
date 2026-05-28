@@ -157,7 +157,7 @@ void main() {
       expect(_currentPath(container), AppRoutes.healthToday);
       expect(find.byType(HealthTodayPage), findsOneWidget);
       // Plain title — switcher lives in bottom nav long-press only.
-      expect(find.text('Today · HealthOS'), findsOneWidget);
+      expect(find.text('今日 · HealthOS'), findsOneWidget);
       expect(find.text('FinanceOS'), findsNothing);
       expect(find.text('HealthOS'), findsNothing);
     });

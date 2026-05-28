@@ -20,7 +20,7 @@ class HealthPlanPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(recoverySignalProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Plan · HealthOS')),
+      appBar: AppBar(title: const Text('计划 · HealthOS')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.s16),
@@ -62,7 +62,7 @@ class _RecoveryCard extends StatelessWidget {
               children: [
                 Icon(_verdictIcon(verdict), color: _verdictColor(verdict, scheme)),
                 const SizedBox(width: AppSpacing.s8),
-                Text('Recovery', style: textTheme.titleSmall),
+                Text('恢复', style: textTheme.titleSmall),
                 const Spacer(),
                 if (score != null)
                   Text(
@@ -77,11 +77,15 @@ class _RecoveryCard extends StatelessWidget {
               _verdictHeadline(verdict),
               style: textTheme.titleLarge
                   ?.copyWith(color: _verdictColor(verdict, scheme)),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: AppSpacing.s4),
             Text(
               _verdictSuggestion(verdict),
               style: textTheme.bodyMedium,
+              maxLines: 5,
+              overflow: TextOverflow.ellipsis,
             ),
             if (out['note'] is String) ...[
               const SizedBox(height: AppSpacing.s8),
@@ -91,22 +95,22 @@ class _RecoveryCard extends StatelessWidget {
               ),
             ],
             const Divider(height: AppSpacing.s24),
-            Text('Inputs', style: textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant)),
+            Text('输入指标', style: textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant)),
             const SizedBox(height: AppSpacing.s8),
             _InputRow(
-              label: 'HRV (recent avg)',
+              label: 'HRV（近期均值）',
               value: _format(inputs['latest_hrv_ms'], unit: 'ms'),
             ),
             _InputRow(
-              label: 'Sleep (recent avg)',
+              label: '睡眠（近期均值）',
               value: _format(inputs['avg_sleep_hours'], unit: 'h'),
             ),
             _InputRow(
-              label: 'Resting HR (recent avg)',
+              label: '静息心率（近期均值）',
               value: _format(inputs['latest_rhr_bpm'], unit: 'bpm'),
             ),
             _InputRow(
-              label: 'VO₂max (recent avg)',
+              label: 'VO₂max（近期均值）',
               value: _format(inputs['latest_vo2_max'], unit: 'ml/(kg·min)'),
             ),
           ],
@@ -130,10 +134,10 @@ class _RecoveryCard extends StatelessWidget {
       };
 
   static String _verdictHeadline(String v) => switch (v) {
-        'rested' => 'Rested',
-        'balanced' => 'Balanced',
-        'strained' => 'Strained',
-        _ => 'Not enough data',
+        'rested' => '充分恢复',
+        'balanced' => '平衡',
+        'strained' => '过载',
+        _ => '数据不足',
       };
 
   static String _verdictSuggestion(String v) => switch (v) {
@@ -207,7 +211,7 @@ class _OffCard extends StatelessWidget {
             const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Text(
-                'Enable HealthOS in Settings → Domains to see recovery suggestions.',
+                '请在 设置 → Domains 中启用 HealthOS，才能查看恢复建议。',
                 style: textTheme.bodyMedium,
               ),
             ),
@@ -231,7 +235,13 @@ class _ErrorCard extends StatelessWidget {
           children: [
             Icon(Icons.error_outline, color: scheme.error),
             const SizedBox(width: AppSpacing.s12),
-            Expanded(child: Text('Plan unavailable: $message')),
+            Expanded(
+              child: Text(
+                'Plan 加载失败：$message',
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
       ),

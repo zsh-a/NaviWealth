@@ -24,7 +24,7 @@ class KnowledgeInboxPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return FScaffold(
-      header: const FHeader.nested(title: Text('Inbox · KnowledgeOS')),
+      header: const FHeader.nested(title: Text('收件箱 · KnowledgeOS')),
       childPad: false,
       child: Stack(
         children: [
@@ -35,7 +35,7 @@ class KnowledgeInboxPage extends ConsumerWidget {
             child: FButton(
               prefix: const Icon(FLucideIcons.plus, size: 16),
               onPress: () => _showNewNoteSheet(context, ref),
-              child: const Text('New note'),
+              child: const Text('新建 Note'),
             ),
           ),
         ],
@@ -100,8 +100,10 @@ class _NoteCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            note.title.isEmpty ? '(untitled)' : note.title,
+            note.title.isEmpty ? '(无标题)' : note.title,
             style: typography.md.copyWith(fontWeight: FontWeight.w600),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           if (note.bodyMd.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.s4),
@@ -125,7 +127,7 @@ class _EmptyState extends StatelessWidget {
     return const AppEmptyState(
       icon: Icons.inbox_outlined,
       title: '收件箱空空如也',
-      message: '点击右下角 + 写一条第一性思考、网页摘录或灵感片段。'
+      message: '点击右下角 + 写一条第一性思考、网页摘录或灵感片段，'
           '或者从浏览器分享链接 / 文本进来。',
     );
   }
@@ -137,7 +139,7 @@ class _ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppEmptyState.error(
-      title: 'Inbox 加载失败',
+      title: '收件箱加载失败',
       message: message,
     );
   }
@@ -209,9 +211,9 @@ class _NewNoteSheetState extends State<_NewNoteSheet> {
   @override
   Widget build(BuildContext context) {
     return AppSheet(
-      title: 'New note',
+      title: '新建 Note',
       footer: AppSheetFooter(
-        submitLabel: _saving ? 'Saving…' : 'Save',
+        submitLabel: _saving ? '保存中…' : '保存',
         busy: _saving,
         onSubmit: _save,
       ),
@@ -221,14 +223,14 @@ class _NewNoteSheetState extends State<_NewNoteSheet> {
         children: [
           FTextField(
             control: FTextFieldControl.managed(controller: _titleController),
-            label: const Text('Title'),
-            hint: 'Note title',
+            label: const Text('标题'),
+            hint: 'Note 标题',
           ),
           const SizedBox(height: AppSpacing.s12),
           MarkdownEditorWithPreview(
             controller: _bodyController,
-            label: 'Body (Markdown)',
-            hint: 'Free-form markdown — `#` 标题 / `**bold**` / 列表 等',
+            label: '正文（Markdown）',
+            hint: '自由格式 Markdown — `#` 标题 / `**bold**` / 列表 等',
             minLines: 4,
             maxLines: 8,
           ),

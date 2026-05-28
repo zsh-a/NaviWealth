@@ -107,10 +107,10 @@ class _PrincipleWriterState extends State<_PrincipleWriter> {
 
   @override
   Widget build(BuildContext context) => AppSheet(
-    title: 'New principle',
-    subtitle: 'Long-term worldview primitive — not falsifiable',
+    title: '新建 Principle',
+    subtitle: '长期世界观原语 — 不可证伪',
     footer: AppSheetFooter(
-      submitLabel: _saving ? 'Saving…' : 'Save',
+      submitLabel: _saving ? '保存中…' : '保存',
       busy: _saving || _stmtCtrl.text.trim().isEmpty,
       onSubmit: () {
         _save();
@@ -122,21 +122,21 @@ class _PrincipleWriterState extends State<_PrincipleWriter> {
       children: [
         FTextField(
           control: FTextFieldControl.managed(controller: _stmtCtrl),
-          label: const Text('Statement'),
+          label: const Text('陈述'),
           hint: '"默认 edge-first" / "避免高维护成本系统"',
             ),
         const SizedBox(height: AppSpacing.s12),
         MarkdownEditorWithPreview(
           controller: _rationaleCtrl,
-          label: 'Rationale (Markdown)',
-          hint: '为什么把这个 worldview 定为 principle',
+          label: '理由（Markdown）',
+          hint: '为什么把这个世界观定为 Principle',
           minLines: 2,
           maxLines: 4,
         ),
         const SizedBox(height: AppSpacing.s12),
         FTextField(
           control: FTextFieldControl.managed(controller: _scopeCtrl),
-          label: const Text('Scope'),
+          label: const Text('适用范围'),
           hint: '"*" / "investing" / "life"',
         ),
       ],
@@ -213,10 +213,10 @@ class _AssumptionWriterState extends State<_AssumptionWriter> {
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     return AppSheet(
-      title: 'New assumption',
-      subtitle: 'Falsifiable — confidence preset, will be reviewed',
+      title: '新建 Assumption',
+      subtitle: '可证伪 — 设置置信度，后续会被复盘',
       footer: AppSheetFooter(
-        submitLabel: _saving ? 'Saving…' : 'Save',
+        submitLabel: _saving ? '保存中…' : '保存',
         busy: _saving || _stmtCtrl.text.trim().isEmpty,
         onSubmit: () {
           _save();
@@ -228,12 +228,12 @@ class _AssumptionWriterState extends State<_AssumptionWriter> {
         children: [
           FTextField(
             control: FTextFieldControl.managed(controller: _stmtCtrl),
-            label: const Text('Statement'),
+            label: const Text('陈述'),
             hint: '"长期指数增长高于通胀"',
           ),
           const SizedBox(height: AppSpacing.s12),
           Text(
-            'Confidence: ${_confidence.toStringAsFixed(2)}',
+            '置信度：${_confidence.toStringAsFixed(2)}',
             style: typography.sm,
           ),
           const SizedBox(height: AppSpacing.s4),
@@ -261,7 +261,7 @@ class _AssumptionWriterState extends State<_AssumptionWriter> {
           const SizedBox(height: AppSpacing.s12),
           FTextField(
             control: FTextFieldControl.managed(controller: _scopeCtrl),
-            label: const Text('Scope'),
+            label: const Text('适用范围'),
             hint: '"*" / "investing" / "fire"',
           ),
         ],
@@ -339,10 +339,10 @@ class _ConceptWriterState extends State<_ConceptWriter> {
 
   @override
   Widget build(BuildContext context) => AppSheet(
-    title: 'New concept',
-    subtitle: 'Anchor for [[soft links]] and AI-proposed cross-refs',
+    title: '新建 Concept',
+    subtitle: '用于 [[soft links]] 和 AI 提示交叉引用的锚点',
     footer: AppSheetFooter(
-      submitLabel: _saving ? 'Saving…' : 'Save',
+      submitLabel: _saving ? '保存中…' : '保存',
       busy: _saving || _nameCtrl.text.trim().isEmpty,
       onSubmit: () {
         _save();
@@ -354,20 +354,20 @@ class _ConceptWriterState extends State<_ConceptWriter> {
       children: [
         FTextField(
           control: FTextFieldControl.managed(controller: _nameCtrl),
-          label: const Text('Name'),
-          hint: 'Concept name (e.g. "edge-first")',
+          label: const Text('名称'),
+          hint: 'Concept 名称（例如 "edge-first"）',
             ),
         const SizedBox(height: AppSpacing.s12),
         FTextField(
           control: FTextFieldControl.managed(controller: _aliasesCtrl),
-          label: const Text('Aliases'),
-          hint: 'Comma-separated synonyms',
+          label: const Text('别名'),
+          hint: '逗号分隔的同义词',
         ),
         const SizedBox(height: AppSpacing.s12),
         MarkdownEditorWithPreview(
           controller: _summaryCtrl,
-          label: 'Summary (Markdown)',
-          hint: '1–2 sentence definition for the [[soft link]] tooltip',
+          label: '摘要（Markdown）',
+          hint: '1–2 句定义，用作 [[soft link]] 的 tooltip',
           minLines: 2,
           maxLines: 4,
         ),
@@ -447,10 +447,10 @@ class _ExperimentWriterState extends State<_ExperimentWriter> {
 
   @override
   Widget build(BuildContext context) => AppSheet(
-    title: 'New experiment',
-    subtitle: 'Test a hypothesis — typically targets an assumption',
+    title: '新建 Experiment',
+    subtitle: '验证一个假设 — 通常挂在一条 Assumption 上',
     footer: AppSheetFooter(
-      submitLabel: _saving ? 'Saving…' : 'Save',
+      submitLabel: _saving ? '保存中…' : '保存',
       busy: _saving || _hypoCtrl.text.trim().isEmpty,
       onSubmit: () {
         _save();
@@ -462,13 +462,13 @@ class _ExperimentWriterState extends State<_ExperimentWriter> {
       children: [
         FTextField(
           control: FTextFieldControl.managed(controller: _hypoCtrl),
-          label: const Text('Hypothesis'),
+          label: const Text('假设'),
           hint: '"covered call 60 DTE on QQQ 优于 30 DTE"',
             ),
         const SizedBox(height: AppSpacing.s12),
         MarkdownEditorWithPreview(
           controller: _methodCtrl,
-          label: 'Method (Markdown)',
+          label: '方法（Markdown）',
           hint: '怎么做、跑多久、用什么数据',
           minLines: 2,
           maxLines: 4,
@@ -476,8 +476,8 @@ class _ExperimentWriterState extends State<_ExperimentWriter> {
         const SizedBox(height: AppSpacing.s12),
         FTextField(
           control: FTextFieldControl.managed(controller: _metricsCtrl),
-          label: const Text('Metrics'),
-          hint: 'Comma-separated (e.g. "yield, drawdown, sharpe")',
+          label: const Text('指标'),
+          hint: '逗号分隔（例如 "yield, drawdown, sharpe"）',
         ),
         const SizedBox(height: AppSpacing.s12),
         _AssumptionTargetPicker(
@@ -519,7 +519,7 @@ class _AssumptionTargetPicker extends ConsumerWidget {
                   .toList(growable: false);
               if (all.isEmpty) {
                 return Text(
-                  '没有 active assumption 可挂(留空也可以)',
+                  '没有 active 的 Assumption 可挂（留空也可以）',
                   style: context.theme.typography.xs.copyWith(
                     color: context.theme.colors.mutedForeground,
                   ),
@@ -530,7 +530,7 @@ class _AssumptionTargetPicker extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Target assumption (optional)',
+                    '目标 Assumption（可选）',
                     style: typography.sm
                         .copyWith(fontWeight: FontWeight.w600),
                   ),
@@ -556,6 +556,8 @@ class _AssumptionTargetPicker extends ConsumerWidget {
                               child: Text(
                                 a.statement,
                                 style: typography.sm,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],

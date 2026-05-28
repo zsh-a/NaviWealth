@@ -155,10 +155,10 @@ class _DecisionWriterState extends State<_DecisionWriter> {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
     return AppSheet(
-      title: 'New decision',
-      subtitle: '决策即记忆 — question / options / rationale / review',
+      title: '新建 Decision',
+      subtitle: '决策即记忆 — 问题 / 选项 / 理由 / 复盘',
       footer: AppSheetFooter(
-        submitLabel: _saving ? 'Saving…' : 'Save',
+        submitLabel: _saving ? '保存中…' : '保存',
         busy: _saving || !_canSave,
         onSubmit: () {
           _save();
@@ -170,12 +170,12 @@ class _DecisionWriterState extends State<_DecisionWriter> {
         children: [
           FTextField(
             control: FTextFieldControl.managed(controller: _questionCtrl),
-            label: const Text('Question'),
+            label: const Text('问题'),
             hint: '"是否升级到 QQQ + BOXX 动态对冲?"',
           ),
           const SizedBox(height: AppSpacing.s12),
           Text(
-            'Options',
+            '选项',
             style: typography.sm.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: AppSpacing.s4),
@@ -207,14 +207,14 @@ class _DecisionWriterState extends State<_DecisionWriter> {
                 draft.labelCtrl.addListener(_onAnyChange);
                 _options.add(draft);
               }),
-              child: const Text('Add option'),
+              child: const Text('添加选项'),
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
           MarkdownEditorWithPreview(
             controller: _rationaleCtrl,
-            label: 'Rationale (Markdown)',
-            hint: '为什么选这个 option — 限制条件、当时的判断',
+            label: '理由（Markdown）',
+            hint: '为什么选这个选项 — 限制条件、当时的判断',
             minLines: 3,
             maxLines: 6,
           ),
@@ -237,7 +237,7 @@ class _DecisionWriterState extends State<_DecisionWriter> {
           const SizedBox(height: AppSpacing.s12),
           FTextField(
             control: FTextFieldControl.managed(controller: _expectedCtrl),
-            label: const Text('Expected outcome (optional)'),
+            label: const Text('预期结果（可选）'),
             hint: '如何判断成功 — 用什么指标 / 信号',
             maxLines: 3,
             minLines: 1,
@@ -248,8 +248,8 @@ class _DecisionWriterState extends State<_DecisionWriter> {
               Expanded(
                 child: Text(
                   _reviewDate == null
-                      ? 'Review date (optional)'
-                      : 'Review on ${_reviewDate!.toLocal().toIso8601String().substring(0, 10)}',
+                      ? '复盘日期（可选）'
+                      : '复盘于 ${_reviewDate!.toLocal().toIso8601String().substring(0, 10)}',
                   style: typography.sm
                       .copyWith(color: colors.mutedForeground),
                 ),
@@ -262,14 +262,14 @@ class _DecisionWriterState extends State<_DecisionWriter> {
                     setState(() => _reviewDate = picked);
                   }
                 },
-                child: Text(_reviewDate == null ? 'Pick' : 'Change'),
+                child: Text(_reviewDate == null ? '选择' : '修改'),
               ),
               if (_reviewDate != null) ...[
                 const SizedBox(width: AppSpacing.s8),
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: () => setState(() => _reviewDate = null),
-                  child: const Text('Clear'),
+                  child: const Text('清除'),
                 ),
               ],
             ],
@@ -352,7 +352,7 @@ class _OptionEditorTile extends StatelessWidget {
                     control: FTextFieldControl.managed(
                       controller: draft.labelCtrl,
                     ),
-                    hint: 'Option ${index + 1}',
+                    hint: '选项 ${index + 1}',
                   ),
                 ),
                 if (onRemove != null) ...[
@@ -370,7 +370,7 @@ class _OptionEditorTile extends StatelessWidget {
               control: FTextFieldControl.managed(
                 controller: draft.rationaleCtrl,
               ),
-              hint: 'Why this option (optional)',
+              hint: '为什么选这个选项（可选）',
               maxLines: 2,
               minLines: 1,
             ),
@@ -424,8 +424,8 @@ class _PrincipleAssumptionPicker extends ConsumerWidget {
                     final typography = context.theme.typography;
                     final colors = context.theme.colors;
                     return Text(
-                      '还没声明 Principles / Assumptions — Decision 可以先存,'
-                      '之后回来挂引用',
+                      '还没声明 Principle / Assumption — Decision 可以先存，'
+                      '之后回来挂引用。',
                       style: typography.xs
                           .copyWith(color: colors.mutedForeground),
                     );
@@ -434,7 +434,7 @@ class _PrincipleAssumptionPicker extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (principles.isNotEmpty) ...[
-                        const _SectionLabel(text: 'Principles 引用'),
+                        const _SectionLabel(text: '引用的 Principle'),
                         _CheckboxList(
                           items: principles
                               .map(
@@ -451,14 +451,14 @@ class _PrincipleAssumptionPicker extends ConsumerWidget {
                       if (assumptions.isNotEmpty) ...[
                         if (principles.isNotEmpty)
                           const SizedBox(height: AppSpacing.s8),
-                        const _SectionLabel(text: 'Assumptions 引用'),
+                        const _SectionLabel(text: '引用的 Assumption'),
                         _CheckboxList(
                           items: assumptions
                               .map(
                                 (a) => _CheckboxItem(
                                   id: a.id,
                                   label:
-                                      '${a.statement} (conf ${a.confidence.toStringAsFixed(2)})',
+                                      '${a.statement}（conf ${a.confidence.toStringAsFixed(2)}）',
                                   selected:
                                       assumptionIds.contains(a.id),
                                 ),
@@ -530,7 +530,12 @@ class _CheckboxList extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSpacing.s8),
                   Expanded(
-                    child: Text(item.label, style: typography.sm),
+                    child: Text(
+                      item.label,
+                      style: typography.sm,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
@@ -564,18 +569,18 @@ class _ReviewDateSheet extends StatelessWidget {
       child: Text(label),
     );
     return AppSheet(
-      title: 'Review date',
+      title: '复盘日期',
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          choice(30, '+30 days'),
+          choice(30, '+30 天'),
           const SizedBox(height: AppSpacing.s8),
-          choice(90, '+90 days'),
+          choice(90, '+90 天'),
           const SizedBox(height: AppSpacing.s8),
-          choice(180, '+180 days'),
+          choice(180, '+180 天'),
           const SizedBox(height: AppSpacing.s8),
-          choice(365, '+1 year'),
+          choice(365, '+1 年'),
         ],
       ),
     );

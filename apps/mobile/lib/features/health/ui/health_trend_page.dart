@@ -29,38 +29,38 @@ class HealthTrendPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Trend · HealthOS')),
+      appBar: AppBar(title: const Text('趋势 · HealthOS')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.s16),
           children: const [
             _TrendCard(
               title: 'HRV',
-              subtitle: 'Heart rate variability (last 30 days)',
+              subtitle: '心率变异性（近 30 天）',
               kind: HealthMetricKind.hrvDaily,
             ),
             SizedBox(height: AppSpacing.s12),
             _TrendCard(
-              title: 'Sleep',
-              subtitle: 'Hours per night (last 30 days)',
+              title: '睡眠',
+              subtitle: '每晚小时数（近 30 天）',
               kind: HealthMetricKind.sleepSession,
             ),
             SizedBox(height: AppSpacing.s12),
             _TrendCard(
-              title: 'Workout',
-              subtitle: 'Minutes per day (last 30 days)',
+              title: '运动',
+              subtitle: '每天分钟数（近 30 天）',
               kind: HealthMetricKind.workoutSession,
             ),
             SizedBox(height: AppSpacing.s12),
             _TrendCard(
-              title: 'Steps',
-              subtitle: 'Steps per day (last 30 days)',
+              title: '步数',
+              subtitle: '每天步数（近 30 天）',
               kind: HealthMetricKind.stepsDaily,
             ),
             SizedBox(height: AppSpacing.s12),
             _TrendCard(
-              title: 'Walking distance',
-              subtitle: 'Kilometers per day (last 30 days)',
+              title: '步行距离',
+              subtitle: '每天公里数（近 30 天）',
               kind: HealthMetricKind.distanceWalkingRunningDaily,
             ),
           ],
@@ -92,11 +92,18 @@ class _TrendCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: textTheme.titleSmall),
+            Text(
+              title,
+              style: textTheme.titleSmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             const SizedBox(height: 2),
             Text(
               subtitle,
               style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: AppSpacing.s12),
             SizedBox(
@@ -106,16 +113,18 @@ class _TrendCard extends ConsumerWidget {
                     const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(
                   child: Text(
-                    'Couldn\'t load: $e',
+                    '加载失败：$e',
                     style: textTheme.bodySmall
                         ?.copyWith(color: scheme.error),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 data: (points) {
                   if (points.length < 2) {
                     return Center(
                       child: Text(
-                        'Not enough data yet.',
+                        '数据还不够。',
                         style: textTheme.bodySmall
                             ?.copyWith(color: scheme.onSurfaceVariant),
                       ),

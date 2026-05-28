@@ -21,7 +21,7 @@ class KnowledgeReviewPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return FScaffold(
-      header: const FHeader.nested(title: Text('Review · KnowledgeOS')),
+      header: const FHeader.nested(title: Text('复盘 · KnowledgeOS')),
       childPad: false,
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
@@ -51,8 +51,14 @@ class _DueReviewsCard extends ConsumerWidget {
         return repoAsync.when(
           loading: () => const SizedBox.shrink(),
           error: (e, _) => KnowledgeSection.group(
-            title: 'To-review decisions',
-            children: [Text('加载失败:$e')],
+            title: '待复盘的 Decision',
+            children: [
+              Text(
+                '加载失败：$e',
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
           data: (repo) {
             return FutureBuilder(
@@ -65,11 +71,11 @@ class _DueReviewsCard extends ConsumerWidget {
                 final typography = context.theme.typography;
                 final colors = context.theme.colors;
                 return KnowledgeSection.group(
-                  title: 'To-review decisions',
+                  title: '待复盘的 Decision',
                   children: [
                     if (list.isEmpty)
                       Text(
-                        '当前无到期 decision。',
+                        '当前没有到期的 Decision。',
                         style: typography.sm
                             .copyWith(color: colors.mutedForeground),
                       )
@@ -89,10 +95,13 @@ class _DueReviewsCard extends ConsumerWidget {
                                     child: Text(
                                       d.question,
                                       style: typography.sm,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
+                                  const SizedBox(width: AppSpacing.s4),
                                   Text(
-                                    '${d.daysOverdue(DateTime.now().toUtc()) ?? 0}d',
+                                    '${d.daysOverdue(DateTime.now().toUtc()) ?? 0} 天',
                                     style: typography.xs.copyWith(
                                       color: colors.mutedForeground,
                                     ),
@@ -140,11 +149,11 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                 final typography = context.theme.typography;
                 final colors = context.theme.colors;
                 return KnowledgeSection.group(
-                  title: 'Unverified assumptions',
+                  title: '未校验的 Assumption',
                   children: [
                     if (stale.isEmpty)
                       Text(
-                        '所有 active 假设都在 $kAssumptionStaleDays 天内校验过。',
+                        '所有 active 的 Assumption 都在 $kAssumptionStaleDays 天内校验过。',
                         style: typography.sm
                             .copyWith(color: colors.mutedForeground),
                       )
@@ -153,8 +162,10 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                             (a) => Padding(
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               child: Text(
-                                '· ${a.statement} (${a.daysSinceVerify(now)}d, conf ${a.confidence.toStringAsFixed(2)})',
+                                '· ${a.statement}（${a.daysSinceVerify(now)} 天, conf ${a.confidence.toStringAsFixed(2)}）',
                                 style: typography.sm,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ),

@@ -52,7 +52,13 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
           loading: () => const SizedBox.shrink(),
           error: (e, _) => KnowledgeSection.group(
             title: 'AI 建议',
-            children: [Text('加载失败:$e')],
+            children: [
+              Text(
+                '加载失败：$e',
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
           data: (triage) => FutureBuilder<List<InboxTriageRecord>>(
             // `tick` ensures invalidate-after-resolve refetches.
@@ -67,7 +73,7 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
                   title: 'AI 建议',
                   children: [
                     Text(
-                      '当前无待处理的 AI 建议。新写的 note 会在 15 分钟内被 triage。',
+                      '当前无待处理的 AI 建议。新写的 Note 会在 15 分钟内被 triage。',
                       style: typography.sm
                           .copyWith(color: colors.mutedForeground),
                     ),
@@ -134,8 +140,10 @@ class _NoteSuggestionGroupState
     final note = _note;
     if (note == null) {
       return Text(
-        'note ${widget.record.noteId} 已删除',
+        'Note ${widget.record.noteId} 已删除',
         style: typography.xs.copyWith(color: colors.mutedForeground),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       );
     }
     final pending =
@@ -152,8 +160,10 @@ class _NoteSuggestionGroupState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            note.title.isEmpty ? '(untitled)' : note.title,
+            note.title.isEmpty ? '(无标题)' : note.title,
             style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: AppSpacing.s4),
           for (final p in pending)
@@ -223,6 +233,8 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
           child: Text(
             widget.proposal.summaryZh,
             style: typography.sm.copyWith(color: colors.mutedForeground),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         const SizedBox(width: AppSpacing.s8),

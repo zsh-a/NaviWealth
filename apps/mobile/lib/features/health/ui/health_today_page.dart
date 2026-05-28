@@ -26,7 +26,7 @@ class HealthTodayPage extends ConsumerWidget {
       health_agent_providers.latestMorningBriefingProvider,
     );
     return Scaffold(
-      appBar: AppBar(title: const Text('Today · HealthOS')),
+      appBar: AppBar(title: const Text('今日 · HealthOS')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.s16),
@@ -97,7 +97,7 @@ class _SleepCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _MetricCard(
       icon: Icons.nightlight_outlined,
-      label: 'Sleep',
+      label: '睡眠',
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -143,7 +143,7 @@ class _WorkoutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _MetricCard(
       icon: Icons.directions_run,
-      label: 'Workout',
+      label: '运动',
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -169,7 +169,7 @@ class _StepsCard extends ConsumerWidget {
     final walking = ref.watch(latestWalkingDistanceProvider);
     return _MetricCard(
       icon: Icons.directions_walk,
-      label: 'Steps',
+      label: '步数',
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -201,7 +201,7 @@ class _ActiveEnergyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _MetricCard(
       icon: Icons.local_fire_department_outlined,
-      label: 'Energy',
+      label: '能量',
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -226,7 +226,7 @@ class _RecoveryCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return _MetricCard(
       icon: Icons.bolt_outlined,
-      label: 'Recovery',
+      label: '恢复',
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -246,10 +246,10 @@ class _RecoveryCard extends StatelessWidget {
   }
 
   static String _verdictLabel(String v) => switch (v) {
-        'rested' => 'Rested',
-        'balanced' => 'Balanced',
-        'strained' => 'Strained',
-        _ => 'Not enough data',
+        'rested' => '充分恢复',
+        'balanced' => '平衡',
+        'strained' => '过载',
+        _ => '数据不足',
       };
 
   static Color _verdictColor(String v, ColorScheme scheme) => switch (v) {
@@ -342,7 +342,7 @@ class _ValueDash extends StatelessWidget {
         Text('—', style: textTheme.titleLarge?.copyWith(color: scheme.onSurfaceVariant)),
         const SizedBox(height: 2),
         Text(
-          'no data',
+          '暂无数据',
           style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
         ),
       ],
@@ -407,12 +407,12 @@ String _formatSteps(double v) {
 String _ago(DateTime when) {
   final now = DateTime.now();
   final diff = now.difference(when.toLocal());
-  if (diff.inMinutes < 1) return 'just now';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-  if (diff.inHours < 24) return '${diff.inHours}h ago';
+  if (diff.inMinutes < 1) return '刚刚';
+  if (diff.inMinutes < 60) return '${diff.inMinutes} 分钟前';
+  if (diff.inHours < 24) return '${diff.inHours} 小时前';
   final days = diff.inDays;
-  if (days == 1) return 'yesterday';
-  if (days < 7) return '${days}d ago';
+  if (days == 1) return '昨天';
+  if (days < 7) return '$days 天前';
   final local = when.toLocal();
   final mm = local.month.toString().padLeft(2, '0');
   final dd = local.day.toString().padLeft(2, '0');
@@ -449,7 +449,7 @@ class _BriefingCard extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.s8),
                 Text(
-                  'Morning Briefing',
+                  '早间简报',
                   style: textTheme.titleSmall,
                 ),
                 const Spacer(),
@@ -461,6 +461,8 @@ class _BriefingCard extends StatelessWidget {
             Text(
               r.summary,
               style: textTheme.bodyLarge,
+              maxLines: 8,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: AppSpacing.s8),
             Text(
@@ -492,10 +494,10 @@ class _BriefingEmpty extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('No briefing yet', style: textTheme.titleSmall),
+                  Text('暂无简报', style: textTheme.titleSmall),
                   const SizedBox(height: AppSpacing.s4),
                   Text(
-                    'Tap Run now below to generate today\'s briefing.',
+                    '点击下方"立即生成简报"以生成今日简报。',
                     style: textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -526,7 +528,7 @@ class _BriefingSkeleton extends StatelessWidget {
               child: LinearProgressIndicator(minHeight: 2),
             ),
             SizedBox(height: AppSpacing.s12),
-            Text('Loading…'),
+            Text('加载中…'),
           ],
         ),
       ),
@@ -551,8 +553,10 @@ class _BriefingError extends StatelessWidget {
             const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Text(
-                'Briefing unavailable: $message',
+                '简报加载失败：$message',
                 style: Theme.of(context).textTheme.bodySmall,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -570,7 +574,7 @@ class _SourcePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final label = source == 'llm' ? 'LLM' : 'auto';
+    final label = source == 'llm' ? 'LLM' : '自动';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
@@ -633,7 +637,7 @@ class _RunNowSectionState extends ConsumerState<_RunNowSection> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.refresh),
-          label: Text(_running ? 'Running…' : 'Run briefing now'),
+          label: Text(_running ? '生成中…' : '立即生成简报'),
         ),
         if (_errorMessage != null) ...[
           const SizedBox(height: AppSpacing.s8),
@@ -652,12 +656,12 @@ class _RunNowSectionState extends ConsumerState<_RunNowSection> {
 String _formatRelative(DateTime when) {
   final now = DateTime.now();
   final diff = now.difference(when.toLocal());
-  if (diff.inMinutes < 1) return 'Just now';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-  if (diff.inHours < 24) return '${diff.inHours}h ago';
+  if (diff.inMinutes < 1) return '刚刚';
+  if (diff.inMinutes < 60) return '${diff.inMinutes} 分钟前';
+  if (diff.inHours < 24) return '${diff.inHours} 小时前';
   final days = diff.inDays;
-  if (days == 1) return 'Yesterday';
-  if (days < 7) return '${days}d ago';
+  if (days == 1) return '昨天';
+  if (days < 7) return '$days 天前';
   final local = when.toLocal();
   final mm = local.month.toString().padLeft(2, '0');
   final dd = local.day.toString().padLeft(2, '0');
