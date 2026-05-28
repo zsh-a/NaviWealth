@@ -11,11 +11,13 @@ import '../core/ai/contracts/privacy_budget.dart' show BudgetTier;
 import '../core/ai/contracts/tool_descriptor.dart';
 import '../core/ai/runtime/device/tools/device_tool.dart';
 import 'knowledge/ai_tools/list_due_reviews_tool.dart';
+import 'knowledge/ai_tools/list_due_routines_tool.dart';
 import 'knowledge/ai_tools/list_open_assumptions_tool.dart';
 import 'knowledge/ai_tools/propose_concept_link_tool.dart';
 import 'knowledge/ai_tools/propose_inbox_classification_tool.dart';
 import 'knowledge/ai_tools/propose_inbox_tags_tool.dart';
 import 'knowledge/ai_tools/propose_link_to_decision_tool.dart';
+import 'knowledge/ai_tools/propose_routine_tool.dart';
 import 'knowledge/ai_tools/recall_decision_tool.dart';
 import 'knowledge/ai_tools/search_notes_tool.dart';
 import 'knowledge/ai_tools/summarize_topic_evolution_tool.dart';
@@ -31,11 +33,13 @@ const List<DeviceTool> kKnowledgeDeviceTools = <DeviceTool>[
   RecallDecisionTool(),
   ListOpenAssumptionsTool(),
   ListDueReviewsTool(),
+  ListDueRoutinesTool(),
   SearchNotesTool(),
   ProposeConceptLinkTool(),
   ProposeInboxClassificationTool(),
   ProposeInboxTagsTool(),
   ProposeLinkToDecisionTool(),
+  ProposeRoutineTool(),
   SummarizeTopicEvolutionTool(),
 ];
 
@@ -64,6 +68,14 @@ const Map<String, ToolDescriptor> kKnowledgeToolDescriptors =
   ),
   'list_due_reviews': ToolDescriptor(
     name: 'list_due_reviews',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.small,
+    domain: kDomainKnowledge,
+  ),
+  'list_due_routines': ToolDescriptor(
+    name: 'list_due_routines',
     access: Access.read,
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
@@ -122,6 +134,15 @@ const Map<String, ToolDescriptor> kKnowledgeToolDescriptors =
     sideEffect: SideEffect.deviceLocalWrite,
     domain: kDomainKnowledge,
   ),
+  'propose_routine': ToolDescriptor(
+    name: 'propose_routine',
+    access: Access.propose,
+    risk: RiskLevel.propose,
+    requiresConfirmation: Confirmation.oneTap,
+    allowedContextTier: BudgetTier.small,
+    sideEffect: SideEffect.deviceLocalWrite,
+    domain: kDomainKnowledge,
+  ),
 };
 
 /// KnowledgeOS system-prompt block. Appended onto [kDeviceSystemPromptBase]
@@ -132,5 +153,8 @@ const String kKnowledgeSystemPromptBlock =
     '- 编辑知识库条目时调用 propose_* 工具，工具返回「待确认计划」：\n'
     '  • propose_inbox_classification / propose_inbox_tags / propose_link_to_decision（收件箱分诊与归档）\n'
     '  • propose_concept_link（在两个概念 / 笔记之间建立关联）\n'
+    '  • propose_routine（用户表达「每 X 时间做一次 Y」/「需要定期活跃 / 续期 / 缴费」时调用，'
+    'AI 选择合理 interval_days，由用户在 UI 一键确认）\n'
     '- 用户问「我以前对 X 的判断是什么」时优先调用 recall_decision；不要凭记忆复述决策内容。\n'
-    '- 跨主题演变 / 历史观点对比用 summarize_topic_evolution，时间线以工具返回为准。';
+    '- 跨主题演变 / 历史观点对比用 summarize_topic_evolution，时间线以工具返回为准。\n'
+    '- 「我现在有什么定期事项要做 / 本周到期」用 list_due_routines，结合 list_due_reviews 给出综合提醒。';

@@ -19,10 +19,11 @@ import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_decision_writer.dart';
 import '_object_writers.dart';
+import '_routine_writer.dart';
 import '_segmented_row.dart';
 import '_widgets.dart';
 
-enum _LibrarySegment { decisions, notes, concepts, experiments }
+enum _LibrarySegment { decisions, notes, concepts, experiments, routines }
 
 class KnowledgeLibraryPage extends ConsumerStatefulWidget {
   const KnowledgeLibraryPage({super.key});
@@ -61,6 +62,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                       _LibrarySegment.notes => 'Notes',
                       _LibrarySegment.concepts => 'Concepts',
                       _LibrarySegment.experiments => 'Experiments',
+                      _LibrarySegment.routines => 'Routines',
                     },
                     onChanged: (s) => setState(() => _segment = s),
                   ),
@@ -96,6 +98,7 @@ class _NewObjectButton extends ConsumerWidget {
       _LibrarySegment.notes => '新建 Note',
       _LibrarySegment.concepts => '新建 Concept',
       _LibrarySegment.experiments => '新建 Experiment',
+      _LibrarySegment.routines => '新建 Routine',
     };
     return FButton(
       prefix: const Icon(FLucideIcons.plus, size: 16),
@@ -120,6 +123,8 @@ class _NewObjectButton extends ConsumerWidget {
         await showNewConceptSheet(context, ref);
       case _LibrarySegment.experiments:
         await showNewExperimentSheet(context, ref);
+      case _LibrarySegment.routines:
+        await showNewRoutineSheet(context, ref);
     }
   }
 }
@@ -265,6 +270,14 @@ class _LibraryList extends ConsumerWidget {
               emptyMessage: 'Experiment 通常挂在一条待验证的 Assumption 上。',
               tileBuilder: _buildExperimentTile,
             ),
+            _LibrarySegment.routines => _SegmentList<KnowledgeRoutine>(
+              stream: repo.watchRoutines(ownerUserId: owner),
+              emptyIcon: Icons.event_repeat_outlined,
+              emptyTitle: '还没有 Routine',
+              emptyMessage:
+                  '定期提醒（例如「港卡每 6 个月活跃一次」）。新建后 AI 会在到期前主动提示。',
+              tileBuilder: _buildRoutineTile,
+            ),
           },
         );
       },
@@ -397,6 +410,29 @@ Widget _buildExperimentTile(BuildContext context, KnowledgeExperiment e) {
     title: e.hypothesis,
     trailing: KnowledgeStatusBadge(label: e.status.wire),
     children: const [],
+  );
+}
+
+Widget _buildRoutineTile(BuildContext context, KnowledgeRoutine r) {
+  final typography = context.theme.typography;
+  final colors = context.theme.colors;
+  final now = DateTime.now();
+  final days = r.daysUntilDue(now);
+  final dueLabel = days < 0
+      ? '已逾期 ${-days} 天'
+      : days == 0
+          ? '今日到期'
+          : '$days 天后到期';
+  final dueColor = days < 0 ? colors.destructive : colors.mutedForeground;
+  return KnowledgeSection.item(
+    title: r.statement,
+    trailing: KnowledgeStatusBadge(label: r.status.wire),
+    children: [
+      Text(
+        '$dueLabel · 每 ${r.intervalDays} 天 · ${r.scope}',
+        style: typography.sm.copyWith(color: dueColor),
+      ),
+    ],
   );
 }
 

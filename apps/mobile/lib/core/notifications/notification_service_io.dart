@@ -33,20 +33,26 @@ class _LocalNotificationService implements NotificationService {
         iOS: darwinInit,
       ),
     );
-    // Android needs a channel created up-front so the first showNow()
-    // doesn't fall through to the default low-priority channel.
+    // Android needs every channel created up-front so the first
+    // showNow() on any channel doesn't fall through to the default
+    // low-priority bucket. Walks the enum so adding a new channel is
+    // one-line at the spec site.
     final android = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
-    await android?.createNotificationChannel(
-      const AndroidNotificationChannel(
-        HealthNotifications.channelId,
-        HealthNotifications.channelName,
-        description: HealthNotifications.channelDescription,
-        importance: Importance.defaultImportance,
-      ),
-    );
+    if (android != null) {
+      for (final spec in NotificationChannelSpec.values) {
+        await android.createNotificationChannel(
+          AndroidNotificationChannel(
+            spec.id,
+            spec.name,
+            description: spec.description,
+            importance: Importance.defaultImportance,
+          ),
+        );
+      }
+    }
     _initialized = true;
   }
 
@@ -101,18 +107,19 @@ class _LocalNotificationService implements NotificationService {
     required String title,
     required String body,
     String? payload,
+    NotificationChannelSpec channel = NotificationChannelSpec.healthBriefing,
   }) async {
     if (!await isAvailable()) return;
     await _ensureInitialized();
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: AndroidNotificationDetails(
-        HealthNotifications.channelId,
-        HealthNotifications.channelName,
-        channelDescription: HealthNotifications.channelDescription,
+        channel.id,
+        channel.name,
+        channelDescription: channel.description,
         importance: Importance.defaultImportance,
         priority: Priority.defaultPriority,
       ),
-      iOS: DarwinNotificationDetails(
+      iOS: const DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: false,
         presentSound: false,

@@ -27,6 +27,7 @@ class _UnsupportedNotificationService implements NotificationService {
     required String title,
     required String body,
     String? payload,
+    NotificationChannelSpec channel = NotificationChannelSpec.healthBriefing,
   }) async {}
 
   @override

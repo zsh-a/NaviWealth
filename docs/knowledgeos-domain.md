@@ -85,8 +85,9 @@ ADR-2026-05-24 拒绝 KnowledgeOS 的理由是 "Memory Layer 通电 ≠ 独立�
 | **Assumption** ⭐ | 新增 `knowledge_assumptions` 表——从 Decision payload **提升为一等公民**。理由：单条假设跨 Decision 复用（例："长期指数增长高于通胀"同时影响 FIRE / Allocation / Withdrawal / Housing），失效时所有引用决策需联动重审。**可证伪** | `features/knowledge/data/` |
 | **Decision** | 新增 `knowledge_decisions` 表（id / question / options[] / selected / rationale / **principle_ids[]** / **assumption_ids[]** / expected_outcome / review_date / result? / **status (7 态，见 §9)** / **context_snapshot_json**） + 镜像为 `kind='episodic'` memory | `features/knowledge/data/` + Memory Layer |
 | **Experiment** | 新增 `knowledge_experiments` 表（id / hypothesis / method / metrics[] / status / result? / conclusion? / **target_assumption_id?**） | `features/knowledge/data/` |
+| **Routine** ⭐ (2026-05-29) | 新增 `knowledge_routines` 表（id / statement / interval_days / last_done_at? / next_due_at / scope / status `active\|paused\|archived` / created_at）——用户定义的定期提醒（"港卡每 6 个月活跃一次"）。**不是** Note（Note 一次性）也不是 Decision（不是判断）；它的独立性来自 `nextDueAt` 必须是一行能 advance 的 state。`markDone` → `lastDoneAt = now`, `nextDueAt = now + intervalDays`。RoutineDueAgent 扫 `nextDueAt <= now + 7d` 每日提醒 | `features/knowledge/data/` |
 
-**Drift schema**：六张表都 `with SyncableTable`，row_kind `know:{notes,concepts,principles,assumptions,decisions,experiments}`。Memory 仍走 Memory Layer 表，零新增。
+**Drift schema**：七张表都 `with SyncableTable`，row_kind `know:{notes,concepts,principles,assumptions,decisions,experiments,routines}`。Memory 仍走 Memory Layer 表，零新增。
 
 **Decision.context_snapshot_json**：决策落库时跨域抓"当时状态"（HRV / 睡眠 / market regime / 当周交易计数），让"为什么当时做错"可解释。Memory Layer 现成 events 直接读，无新 pipeline——Finance + Health 域不存在这列写不了，存在了几乎免费。
 
@@ -109,6 +110,8 @@ ADR-2026-05-24 拒绝 KnowledgeOS 的理由是 "Memory Layer 通电 ≠ 独立�
 | `propose_inbox_classification` ⚠ write | `note_id` | proposal envelope `{kind: note\|decision_candidate\|concept_candidate, confidence}` | InboxTriageAgent 用,建议归类——见 §5 异步 triage |
 | `propose_inbox_tags` ⚠ write | `note_id` | proposal envelope `{tags[], project_tag?}` | InboxTriageAgent 用,建议标签 |
 | `propose_link_to_decision` ⚠ write | `note_id` | proposal envelope `{related_decision_ids[], reason}` | InboxTriageAgent 用,挂到现有 Decision |
+| `list_due_routines` | `as_of?` (默认 now+7d) | `routines[{id, statement, interval_days, next_due_at, last_done_at, days_until_due}]` | RoutineDueAgent + Review tab + "我现在有什么定期事项要做" |
+| `propose_routine` ⚠ write | `statement, interval_days, scope?, next_due_at?, reason` | proposal envelope `{statement, interval_days, scope, next_due_at}` | 用户表达「每 X 时间做一次 Y」/「需要定期续期 / 活跃」时由 AI 提议,一键确认 |
 
 **写 tool 全部走 ProposalEnvelope**（northstar / ai-architecture.md 行为契约）；read tool 默认可调。
 
@@ -183,6 +186,7 @@ KnowledgeOS 注册自己的 shell §4 seam（与 Finance / Health 并列）：
 | **AssumptionAgent** | 月初 + 任何决策被新事件触及时 | `list_open_assumptions` + 跨域 events | Episodic memory + Review tab 卡片（不直接通知避免噪音） |
 | **ContradictionAgent** | 每次新 Decision / Note 落库 | 该对象 vs 最近 90 天同 scope memories + **当前 active Principles** + 引用的 Assumptions（cosine + LLM judge） | 若检出冲突（事实/价值观偏离），写 `kind='semantic'` memory + Review tab 提示。**不**自动覆盖原对象 |
 | **InboxTriageAgent** | 15min cadence + 手动 Run + 可选每条 Note insert 触发 | 未 triage 的 `knowledge_notes`（用 side-table `knowledge_inbox_triage` 记 last_triaged_at，**local-only never-sync**）+ 现有 Decisions/Concepts/tags | 调用 `propose_inbox_classification` / `propose_inbox_tags` / `propose_link_to_decision`，输出 ProposalEnvelope 列表落到 Review tab。**永不改 `body_md`**(§8) |
+| **RoutineDueAgent** | 每日 08:00 local | `list_due_routines(as_of = now + 7d)` | Episodic memory + 单次 local notification（`NotificationChannelSpec.knowledgeReview` 通道,复用 HealthOS `flutter_local_notifications` 通道矩阵）。Review tab "本周到期的 Routine" 卡片同源（StreamBuilder 直读 repo）。**通知通道与 ReviewAgent 共用** "Knowledge Review" 通道,用户只需一个 mute 开关 |
 
 复用 shell §7.3 的 `Agent` / `AgentRunner` 框架。**反目标**：不做 "Agent 之间相互调用"（northstar §1.1 边界 / shell §7.3 反目标）。
 
@@ -348,12 +352,13 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - ✅ Sync v2 row family `know:` 前缀注册（`core/sync/domain_prefix.dart` + `kSyncableTables`）
 - ✅ Schema v18→v19 + 6 张 Drift 表（`core/persistence/knowledge_tables.dart`）：notes / principles / assumptions / decisions / concepts / experiments；全部 SyncableTable，含索引
 - ✅ Schema v19→v20 + `knowledge_inbox_triage` 侧表（`core/persistence/local_only_tables.dart`，DDL raw SQL）：**local-only / never-sync**，1 行/note，`proposals_json` 内联三类 envelope（§5 异步 triage 流图所需）
-- ✅ `KnowledgeRepository`（`features/knowledge/data/knowledge_repository.dart`）：6 类对象 CRUD + status 过滤 + due-review query
+- ✅ Schema v20→v21 + `knowledge_routines` Drift 表（2026-05-29）：`statement / interval_days / last_done_at / next_due_at / scope / status` + sync 列；索引 `(owner, status, next_due_at)` 给 `listDueRoutines`
+- ✅ `KnowledgeRepository`（`features/knowledge/data/knowledge_repository.dart`）：7 类对象 CRUD + status 过滤 + due-review / due-routine query
 - ✅ `InboxTriageRepository`（`features/knowledge/data/inbox_triage_repository.dart`）：侧表 upsert / resolve / pending feed；dismissed 合并保护
 
 **AI tools**（`features/knowledge_ai_tools.dart` → `kKnowledgeDeviceTools`）
-- ✅ Read：`recall_decision`、`list_open_assumptions`、`list_due_reviews`、`search_notes`（hybrid via `MemoryRuntime.recall(source='know:notes')` + tag/project 后过滤；cold start 或空 query 回落 substring 扫）、`summarize_topic_evolution`
-- ✅ Write（全部 ProposalEnvelope，§4 行为契约）：`propose_concept_link`、`propose_inbox_classification`、`propose_inbox_tags`、`propose_link_to_decision`
+- ✅ Read：`recall_decision`、`list_open_assumptions`、`list_due_reviews`、`list_due_routines`（2026-05-29）、`search_notes`（hybrid via `MemoryRuntime.recall(source='know:notes')` + tag/project 后过滤；cold start 或空 query 回落 substring 扫）、`summarize_topic_evolution`
+- ✅ Write（全部 ProposalEnvelope，§4 行为契约）：`propose_concept_link`、`propose_inbox_classification`、`propose_inbox_tags`、`propose_link_to_decision`、`propose_routine`（2026-05-29）
 - ✅ `propose_inbox_*` 三件套同时持久化到 `knowledge_inbox_triage` —— §5 异步 triage 的 LLM 写端口
 - ✅ 通过 `deviceToolsProvider` 在 bootstrap 拼入，gated on `domainOptInsProvider.contains(DomainScope.knowledge)`
 
@@ -362,6 +367,7 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - ✅ `AssumptionAgent`（30d cadence，扫 > 90d 未校验 active 假设）
 - ✅ `ContradictionAgent`（每 6h，principle mismatch + assumption invalidation 启发式）
 - ✅ `InboxTriageAgent`（15min cadence，§5/§7 核心）：heuristic-only MVP —— 分类（长文 + 选项语言 → decision_candidate；短定义 → concept_candidate）、tag 词典命中、token-overlap 决策建联；每 run ≤ `kInboxTriageMaxNotesPerRun` (10) 条；输出落 `knowledge_inbox_triage`；dismissed kind 永不重提。LLM round-trip 替换 heuristic 是 §14.2 P1 一项，不阻塞 dogfood
+- ✅ `RoutineDueAgent`（daily 08:00 local，2026-05-29）：扫 `next_due_at <= now + 7d` 的 active routines，写 episodic memory + 单次 local notification（`NotificationChannelSpec.knowledgeReview` 通道，与 ReviewAgent 共用）。Review tab "本周到期的 Routine" 卡片 + 单按钮"已处理"（`lastDoneAt = now`, `nextDueAt = now + intervalDays`）
 
 **Memory Layer 接入**（§3 "写一份，索引两次"）
 - ✅ `KnowledgeDecisionMemoryIndexer`：Decision → `kind='episodic'` Memory，跟 trade journal indexer 同模式；接入 `memoryLayerBootstrapProvider`
@@ -370,7 +376,7 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - ✅ `DecisionContextSnapper`（`features/knowledge/data/decision_context_snapper.dart`）：Decision 写入路径预读最近 7 天 EventStore (source `fin:*` / `health:*`)，按 importance 抽 top 5 拼 `contextSnapshot`。非阻塞（任何失败 → null，列保持 NULL）。**不**写进 `KnowledgeRepository.upsertDecision`，保持 repo 为纯 Drift wrapper；UI / 未来 AI 写入器主动调 snapper。Decision detail 页新增 "当时的跨域状态" section 渲染
 
 **IA Shell**（§5 Option B dock，与 HealthOS 同模式）
-- ✅ 3 tabs：Inbox / Library / Review (`/knowledge`, `/knowledge/library`, `/knowledge/review`)
+- ✅ 3 tabs：Inbox / Library / Review (`/knowledge`, `/knowledge/library`, `/knowledge/review`)；Library 加 Routines 段（5th segment, 2026-05-29）+ 新建 Routine sheet（statement + 4 档 interval 预设 + scope tag）
 - ✅ `knowledgeDomainShell()` + `knowledgeShellRoute()`，注入 router 顶层 ShellRoute
 - ✅ Settings → Domains 加 KnowledgeOS 开关 + Inbox 深链
 - ✅ 全 Forui 实现（无 Material 组件依赖）；New Note 含 Edit/Preview toggle（用 `AiMarkdown` 渲染）
@@ -396,7 +402,7 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - [ ] **非 Decision 类型 detail pages**：Concept / Experiment / Principle / Assumption 卡片当前不可点击。Decision detail 是基础底盘可参考；按 dogfood 哪个先被点拍开实现顺序
 - [ ] **Decision lifecycle 编辑**：detail 页是 read-only，缺 status 变更 / actual_outcome 填写 / `supersededByDecisionId` 设置入口。后两条是 §3 "认知演化"链能成立的必要条件
 - [ ] **Review tab "recent agent runs"**：§5 spec 列出但未渲染；需要 Agent 历史读 API
-- [ ] **`lifeos.knowledge.review` 通知 channel**：§7 ReviewAgent 表里有提到，目前只写 Memory 没发通知（HealthOS 有 morning briefing 通知的实现可参考）
+- [x] **`lifeos.knowledge.review` 通知 channel**（2026-05-29）：`NotificationChannelSpec.knowledgeReview` enum 落地；`NotificationService.showNow` 接受 `channel` 参数；RoutineDueAgent 首批使用。ReviewAgent / AssumptionAgent 接入同通道仅一行改动，按 dogfood 反馈再开
 - [ ] **`ai_context_summary` override**：§6 列了，但现有 slot (`AiContextSummary`) 是 Finance-shaped；要么扩 slot 形态，要么换成独立的 prompt 拼接 seam
 - [ ] **`propose_concept_link` 真正落地路径**：write tool 已经返回 ProposalEnvelope，但 `ProposalApplier` 还没认这个 kind。需要在 `featureProposalApplier` 里加 `knowledge_concept_link` 分支
 - [ ] **Knowledge opt-out 清理**：关闭 opt-in 时 indexer 停止订阅，但已写入的 episodic memories 不清。需要明确策略（保留 vs prune），shell §5 应该有相关约定
