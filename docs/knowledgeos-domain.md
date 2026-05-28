@@ -377,7 +377,8 @@ class KnowledgeExperiments extends Table with SyncableTable {
 
 **IA Shell**（§5 Option B dock，与 HealthOS 同模式）
 - ✅ 3 tabs：Inbox / Library / Review (`/knowledge`, `/knowledge/library`, `/knowledge/review`)；Library 加 Routines 段（5th segment, 2026-05-29）+ 新建 Routine sheet（statement + 4 档 interval 预设 + scope tag）
-- ✅ Unified Capture sheet（2026-05-29，slice B v1）：Inbox FAB 现在打开 `KnowledgeCaptureSheet` — 单 textarea，保存即落 Note（零延迟），保存后同步跑 `CaptureClassifier` heuristic，命中 routine 模式时在同一 sheet 内显示「✓ 应用建议 / 保留为 Note」内嵌升级卡片。✓ → 写 Routine + 软删 temp Note；✗ → 保留 Note。Library 的 typed FABs（Decision / Concept / Experiment / Routine）保留作为「我知道自己要写什么」直接通道。LLM 替换 heuristic 是 §14.2 P1 同档（与 InboxTriageAgent 共用 swap）
+- ✅ Unified Capture sheet（2026-05-29，slice B v1）：Inbox FAB 现在打开 `KnowledgeCaptureSheet` — 单 textarea，保存即落 Note（零延迟），保存后同步跑 `CaptureClassifier` heuristic，命中 routine 模式时在同一 sheet 内显示「✓ 应用建议 / 保留为 Note」内嵌升级卡片。✓ → 写 Routine + 软删 temp Note；✗ → 保留 Note。Library 的 typed FABs（Decision / Concept / Experiment / Routine）保留作为「我知道自己要写什么」直接通道
+- ✅ `LlmCaptureClassifier`（2026-05-29，slice B v2）：抽象出 `CaptureClassifier` interface + `HeuristicCaptureClassifier` 实现 + `LlmCaptureClassifier`。后者走用户配置的 `DeviceLlmClient.complete`（system prompt 描述 7-类 + JSON schema，输出纯 JSON），8s 超时；任意失败（无 profile / 网络 / 解析 / 置信度 < 0.6）silent fallback 到 heuristic。`captureClassifierProvider` 是 Sheet + `propose_capture` 工具共用的 seam。Sheet 增加 `classifying` 中间态显示「AI 思考中」；apply 路径扩展：routine 直写结构化行，decision/principle/assumption/concept/experiment 用 tag-only 提升（给 Note 加 `kind:<x>_candidate` + `scope:<...>` tag，与 `propose_inbox_classification` 同形状）
 - ✅ `knowledgeDomainShell()` + `knowledgeShellRoute()`，注入 router 顶层 ShellRoute
 - ✅ Settings → Domains 加 KnowledgeOS 开关 + Inbox 深链
 - ✅ 全 Forui 实现（无 Material 组件依赖）；New Note 含 Edit/Preview toggle（用 `AiMarkdown` 渲染）
@@ -397,8 +398,9 @@ class KnowledgeExperiments extends Table with SyncableTable {
 **P1 — 影响 §0 定位的关键功能**
 - [ ] **AssumptionAgent 事件触发**：§7 spec 说 "月初 + **任何决策被新事件触及时**"。当前只有月初 cadence，事件触发需要 `EventStore` listener
 - [ ] **ContradictionAgent cosine + LLM judge 路径**：MVP 是纯启发式 token 匹配，§7 spec 要语义比对。等 Knowledge Memory 全量化后切换
-- [ ] **InboxTriageAgent + CaptureClassifier LLM round-trip 替换 heuristic**：§7 spec "单次 Note ≤ 1 LLM round-trip(3 个 propose 工具批量调)"。MVP 是规则启发式（词典 + token overlap + 2026-05-29 的 routine regex），LLM 路径上线后切换到调用 `propose_inbox_*` 三件套 + `propose_capture` 单调；无 LLM 配置时 fallback 回 heuristic（不报错，§7 工程约束）。`CaptureClassifier.classify` 公开签名是 swap 边界
-- [ ] **CaptureClassifier 扩展到 decision / assumption / principle / concept / experiment**：slice B v1 只稳定 routine 检测，其余 5 类走 note 兜底（test 已 pin 这个 scope）。LLM 路径先上的话这一项可能直接被吃掉
+- [x] **CaptureClassifier LLM 替换 heuristic**（2026-05-29 完成）：`LlmCaptureClassifier` 走 user-configured `DeviceLlmClient.complete`，全 7 类 JSON 抽取；heuristic 作为 silent fallback 保留无 profile / 失败场景。`CaptureClassifier.classify` 抽象成 interface 作为 swap 边界（LLM / Heuristic 实现等价）
+- [ ] **InboxTriageAgent LLM round-trip 替换 heuristic**：§7 spec "单次 Note ≤ 1 LLM round-trip(3 个 propose 工具批量调)"。MVP 是规则启发式（词典 + token overlap）。可参考 `LlmCaptureClassifier` 的 prompt-engineered JSON 模式 / 失败兜底 / 置信度门槛实现；3 件套 tool 形态稍有不同（每条 Note 输出多 envelope）但骨架共用
+- [ ] **从 Note 提升到 typed row（decision / assumption / principle / concept / experiment）**：当前 Capture sheet 对这 5 类用 tag-only 提升（`kind:<x>_candidate` + 可选 `scope:<...>` tag），未直接写结构化行。Library typed FABs + Review tab 的 AI 建议卡可以一键应用，但 sheet 内一步到位的 "Promote with extracted fields" 路径尚未串联
 
 **P2 — Dogfood 改进**
 - [ ] **非 Decision 类型 detail pages**：Concept / Experiment / Principle / Assumption 卡片当前不可点击。Decision detail 是基础底盘可参考；按 dogfood 哪个先被点拍开实现顺序

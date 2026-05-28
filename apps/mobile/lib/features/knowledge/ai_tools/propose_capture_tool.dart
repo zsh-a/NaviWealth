@@ -14,7 +14,6 @@ library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 
-import '../data/capture_classifier.dart';
 import '../data/capture_kind.dart';
 import '../data/providers.dart';
 
@@ -32,7 +31,9 @@ class ProposeCaptureTool implements DeviceTool {
       '前端显示 summary_zh 让用户一键确认升级。'
       '适用:Capture sheet 保存后 / 用户问「这条该归到哪里」/「这是不是一个 Routine」。'
       'kind == note 时表示无需升级,envelope.status == "no_upgrade"。'
-      'MVP 只稳定识别 routine(每 N 周期 / 定期 / 续期 / 活跃),其它类别走 note 兜底。';
+      '内部走 captureClassifierProvider:有 LLM profile 时调 LLM(全 7 类抽取),'
+      '否则走纯 Dart heuristic(目前稳定识别 routine,其余兜底 note)。'
+      '任意失败(网络 / 解析)都退守 heuristic,前端永远拿到合法 envelope。';
 
   @override
   Map<String, Object?> get inputSchema => <String, Object?>{
@@ -65,7 +66,8 @@ class ProposeCaptureTool implements DeviceTool {
       };
     }
 
-    final classification = const CaptureClassifier().classify(text: text);
+    final classifier = ctx.ref.read(captureClassifierProvider);
+    final classification = await classifier.classify(text: text);
 
     if (classification.kind == CaptureKind.note) {
       return <String, Object?>{
