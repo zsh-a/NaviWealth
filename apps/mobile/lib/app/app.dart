@@ -101,8 +101,9 @@ class NaviWealthApp extends ConsumerWidget {
             child: AppMessenger.init(
               child: GlobalShortcutsScope(
                 onSwitchPrimaryTab: (int index) {
-                  if (index < 0 || index >= kPrimaryTabPaths.length) return;
-                  router.go(kPrimaryTabPaths[index]);
+                  final paths = ref.read(primaryTabPathsProvider);
+                  if (index < 0 || index >= paths.length) return;
+                  router.go(paths[index]);
                 },
                 onOpenCommandPalette: (BuildContext invokeCtx) {
                   showCommandPalette(

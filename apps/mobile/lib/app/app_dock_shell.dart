@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/lifeos/domain_pack.dart';
 import '../core/shell/domain_shell.dart';
 import '../design_system/design_system.dart';
 import '../features/ai_chat/state/ai_context.dart';
@@ -83,7 +84,8 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
     if (attemptBack(context)) return;
     final goRouter = GoRouter.of(context);
     final loc = goRouter.routeInformationProvider.value.uri.path;
-    if (loc != AppRoutes.home && kPrimaryTabPaths.contains(loc)) {
+    if (loc != AppRoutes.home &&
+        ref.read(primaryTabPathsProvider).contains(loc)) {
       goRouter.go(AppRoutes.home);
       return;
     }
@@ -111,7 +113,10 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
     ).routeInformationProvider.value.uri.path;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final current = ref.read(aiContextProvider);
-      final nextDomain = domainForRoute(location);
+      final nextDomain = domainForRoute(
+        ref.read(domainPackRegistryProvider),
+        location,
+      );
       if (current.path != location || current.domain != nextDomain) {
         ref.read(aiContextProvider.notifier).state = AiContext(
           path: location,

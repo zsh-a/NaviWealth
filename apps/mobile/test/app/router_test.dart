@@ -20,9 +20,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/desktop_sidebar.dart';
+import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/app/route_error_page.dart';
 import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/app/router.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/analytics/analytics_page.dart';
@@ -98,6 +100,9 @@ Future<ProviderContainer> _pumpAt(
   final container = ProviderContainer(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
+      // Register the production domain inventory so the router has the
+      // full per-domain shell route tree to mount.
+      domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
       appRouterProvider.overrideWith(
         (ref) => buildAppRouter(ref, initialLocation: initialLocation),
       ),

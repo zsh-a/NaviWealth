@@ -13,8 +13,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/app.dart';
+import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/app/router.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance_domain_shell.dart';
@@ -42,6 +44,10 @@ Future<ProviderContainer> _pumpAt(
   final container = ProviderContainer(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
+      // Register the production pack inventory so the router has routes
+      // to mount under the dock shell. Tests still control dock UI by
+      // overriding `activeDomainShellsProvider` below.
+      domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
       appRouterProvider.overrideWith(
         (ref) => buildAppRouter(ref, initialLocation: initialLocation),
       ),
