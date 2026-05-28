@@ -70,7 +70,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 19;
+  int get schemaVersion => 20;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -88,6 +88,7 @@ class AppDatabase extends _$AppDatabase {
       await _createIngestTables(this);
       await _createOptionsOpportunityCache(this);
       await _createMemoryRuntime(this);
+      await _createKnowledgeInboxTriage(this);
     },
     onUpgrade: (m, from, to) async {
       // v1 → v2: capture the AI stream's `stop_reason` on chat messages
@@ -276,6 +277,14 @@ class AppDatabase extends _$AppDatabase {
         for (final stmt in knowledgeIndexStmts) {
           await customStatement(stmt);
         }
+      }
+      // v19 → v20: KnowledgeOS inbox triage side-table
+      // (`docs/knowledgeos-domain.md` §7 + §5 异步 triage flow).
+      // Local-only, never-sync — InboxTriageAgent uses it to skip
+      // already-proposed notes and the Review tab reads pending
+      // envelopes from it.
+      if (from < 20) {
+        await _createKnowledgeInboxTriage(this);
       }
     },
     beforeOpen: (details) async {
@@ -496,6 +505,12 @@ Future<void> _createMemoryDocuments(AppDatabase db) async {
 
 Future<void> _createMemoryRuntime(AppDatabase db) async {
   for (final stmt in memoryRuntimeDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
+Future<void> _createKnowledgeInboxTriage(AppDatabase db) async {
+  for (final stmt in knowledgeInboxTriageDdl) {
     await db.customStatement(stmt);
   }
 }

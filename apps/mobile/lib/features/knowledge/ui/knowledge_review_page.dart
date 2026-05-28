@@ -12,6 +12,7 @@ import '../../../core/sync/mutation_context.dart';
 import '../../../design_system/design_system.dart';
 import '../agents/assumption_agent.dart';
 import '../data/providers.dart';
+import '_ai_suggestions_card.dart';
 
 class KnowledgeReviewPage extends ConsumerWidget {
   const KnowledgeReviewPage({super.key});
@@ -24,6 +25,8 @@ class KnowledgeReviewPage extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
         children: const <Widget>[
+          KnowledgeAiSuggestionsCard(),
+          SizedBox(height: AppSpacing.s16),
           _DueReviewsCard(),
           SizedBox(height: AppSpacing.s16),
           _StaleAssumptionsCard(),

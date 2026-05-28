@@ -183,3 +183,32 @@ const List<String> memoryRuntimeDdl = [
   createEventsOwnerTypeIndex,
   createEventsOwnerSourceIndex,
 ];
+
+// ----------------------------------------------------------------------
+// KnowledgeOS inbox triage side-table
+// (`docs/knowledgeos-domain.md` §7 + §5 异步 triage flow)
+// ----------------------------------------------------------------------
+//
+// One row per Note that the InboxTriageAgent has looked at. Holds the
+// proposal envelopes the agent emitted (classification / tags / link),
+// each with its own resolution state so the user can accept one and
+// dismiss another. Local-only — proposals are device-derived signals;
+// they re-materialise from the note itself on any device.
+const String createKnowledgeInboxTriage = '''
+CREATE TABLE IF NOT EXISTS knowledge_inbox_triage (
+  note_id         TEXT PRIMARY KEY,
+  owner_user_id   TEXT NOT NULL,
+  last_triaged_at INTEGER NOT NULL,        -- millis since epoch (UTC)
+  proposals_json  TEXT NOT NULL            -- JSON array of envelopes (+status)
+)
+''';
+
+const String createKnowledgeInboxTriageOwnerTriagedIndex = '''
+CREATE INDEX IF NOT EXISTS idx_knowledge_inbox_triage_owner_triaged
+  ON knowledge_inbox_triage(owner_user_id, last_triaged_at DESC)
+''';
+
+const List<String> knowledgeInboxTriageDdl = [
+  createKnowledgeInboxTriage,
+  createKnowledgeInboxTriageOwnerTriagedIndex,
+];

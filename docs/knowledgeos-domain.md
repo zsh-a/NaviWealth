@@ -347,17 +347,21 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - ✅ `DomainScope.knowledge` enum (`core/auth/domain_scope.dart`)
 - ✅ Sync v2 row family `know:` 前缀注册（`core/sync/domain_prefix.dart` + `kSyncableTables`）
 - ✅ Schema v18→v19 + 6 张 Drift 表（`core/persistence/knowledge_tables.dart`）：notes / principles / assumptions / decisions / concepts / experiments；全部 SyncableTable，含索引
+- ✅ Schema v19→v20 + `knowledge_inbox_triage` 侧表（`core/persistence/local_only_tables.dart`，DDL raw SQL）：**local-only / never-sync**，1 行/note，`proposals_json` 内联三类 envelope（§5 异步 triage 流图所需）
 - ✅ `KnowledgeRepository`（`features/knowledge/data/knowledge_repository.dart`）：6 类对象 CRUD + status 过滤 + due-review query
+- ✅ `InboxTriageRepository`（`features/knowledge/data/inbox_triage_repository.dart`）：侧表 upsert / resolve / pending feed；dismissed 合并保护
 
 **AI tools**（`features/knowledge_ai_tools.dart` → `kKnowledgeDeviceTools`）
-- ✅ `recall_decision`、`list_open_assumptions`、`list_due_reviews`、`search_notes`、`summarize_topic_evolution`
-- ✅ `propose_concept_link`（写 tool → ProposalEnvelope，§4 行为契约）
+- ✅ Read：`recall_decision`、`list_open_assumptions`、`list_due_reviews`、`search_notes`、`summarize_topic_evolution`
+- ✅ Write（全部 ProposalEnvelope，§4 行为契约）：`propose_concept_link`、`propose_inbox_classification`、`propose_inbox_tags`、`propose_link_to_decision`
+- ✅ `propose_inbox_*` 三件套同时持久化到 `knowledge_inbox_triage` —— §5 异步 triage 的 LLM 写端口
 - ✅ 通过 `deviceToolsProvider` 在 bootstrap 拼入，gated on `domainOptInsProvider.contains(DomainScope.knowledge)`
 
 **Agents**（`features/knowledge/agents/`，复用 shell §7.3）
 - ✅ `ReviewAgent`（每周日 09:00 local）
 - ✅ `AssumptionAgent`（30d cadence，扫 > 90d 未校验 active 假设）
 - ✅ `ContradictionAgent`（每 6h，principle mismatch + assumption invalidation 启发式）
+- ✅ `InboxTriageAgent`（15min cadence，§5/§7 核心）：heuristic-only MVP —— 分类（长文 + 选项语言 → decision_candidate；短定义 → concept_candidate）、tag 词典命中、token-overlap 决策建联；每 run ≤ `kInboxTriageMaxNotesPerRun` (10) 条；输出落 `knowledge_inbox_triage`；dismissed kind 永不重提。LLM round-trip 替换 heuristic 是 §14.2 P1 一项，不阻塞 dogfood
 
 **Memory Layer 接入**（§3 "写一份，索引两次"）
 - ✅ `KnowledgeDecisionMemoryIndexer`：Decision → `kind='episodic'` Memory，跟 trade journal indexer 同模式；接入 `memoryLayerBootstrapProvider`
@@ -368,6 +372,7 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - ✅ `knowledgeDomainShell()` + `knowledgeShellRoute()`，注入 router 顶层 ShellRoute
 - ✅ Settings → Domains 加 KnowledgeOS 开关 + Inbox 深链
 - ✅ 全 Forui 实现（无 Material 组件依赖）；New Note 含 Edit/Preview toggle（用 `AiMarkdown` 渲染）
+- ✅ Review tab "AI 建议" 卡片（`_ai_suggestions_card.dart`）：渲染 pending envelopes，每条 ✓/✗。✓ 走轻量 apply —— merge `kind:*` / tag / `decision:<id>` 软链 → `upsertNote`；✗ 标 dismissed。MVP inline apply，不抽 `ProposalApplier`（符合 §12 反扩条款；如果后续 P2 `propose_concept_link` apply 路径要落，再统一抽）
 
 **Cross-domain hooks**（§6）
 - ✅ `knowledgeChatRailContentProvider`：projects 最近 3 条 Decision 进 AI chat rail
@@ -376,8 +381,6 @@ class KnowledgeExperiments extends Table with SyncableTable {
 
 **P0 — 影响 MVP 可用性**
 - [ ] **Inbox quick capture pipeline**：§5 列出 share-intent / 语音 / 粘贴 / AI chat 片段，目前只有手写 New Note。share-intent 可直接复用 `features/ingest/data/share_intent_service.dart`
-- [ ] **InboxTriageAgent + 3 个 propose_* 写 tool**（§7 新 + §4 新增 3 行）：异步分类 / 标签 / 挂决策建议;side-table `knowledge_inbox_triage`(local-only);提议落 Review tab 的 "AI 建议" 卡片。**这是 §5 Inbox 异步 triage 设计的核心**——保存路径不动 LLM
-- [ ] **Review tab "AI 建议" 卡片**：渲染 InboxTriageAgent 输出的 ProposalEnvelope 列表,每条 ✓/✗;✓ 走 `ProposalApplier`(分类升级 / tag 写入 / 关联建立);✗ 写 `dismissed_at`
 - [ ] **Decision 创建表单**：当前只有 Note 有写入 UI；Decision 是最高优先级 affordance（§1），必须能在 Library Decisions tab 里 `+ New decision`。Principles / Assumptions / Experiments / Concepts 也需要
 - [ ] **Library detail pages**：列表项现在不可点击；至少 Decision 需要 detail view（含 supersede chain / referenced assumptions）
 
@@ -387,6 +390,7 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - [ ] **`Decision.context_snapshot_json` 自动抓拍**：列存在但未自动写入。需要在 `upsertDecision` 路径下读最近 Finance / Health events 拼 snapshot（不阻塞写）
 - [ ] **AssumptionAgent 事件触发**：§7 spec 说 "月初 + **任何决策被新事件触及时**"。当前只有月初 cadence，事件触发需要 `EventStore` listener
 - [ ] **ContradictionAgent cosine + LLM judge 路径**：MVP 是纯启发式 token 匹配，§7 spec 要语义比对。等 Knowledge Memory 全量化后切换
+- [ ] **InboxTriageAgent LLM round-trip 替换 heuristic**：§7 spec "单次 Note ≤ 1 LLM round-trip(3 个 propose 工具批量调)"。MVP 是规则启发式（词典 + token overlap），LLM 路径上线后切换到调用三件套 `propose_inbox_*` 工具；无 LLM 配置时 fallback 回 heuristic（不报错，§7 工程约束）
 
 **P2 — Dogfood 改进**
 - [ ] **Review tab "recent agent runs"**：§5 spec 列出但未渲染；需要 Agent 历史读 API
