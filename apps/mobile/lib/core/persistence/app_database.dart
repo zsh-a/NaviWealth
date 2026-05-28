@@ -61,6 +61,7 @@ const String defaultDbFileName = 'naviwealth.db';
     KnowledgeDecisions,
     KnowledgeConcepts,
     KnowledgeExperiments,
+    KnowledgeRoutines,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -70,7 +71,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 20;
+  int get schemaVersion => 21;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -285,6 +286,22 @@ class AppDatabase extends _$AppDatabase {
       // envelopes from it.
       if (from < 20) {
         await _createKnowledgeInboxTriage(this);
+      }
+      // v20 → v21: KnowledgeOS routines (`docs/knowledgeos-domain.md`
+      // §3 + §9). Recurring user-defined reminders ("港卡每 6 个月做一次
+      //活跃交易") — a typed row that records cadence + last-done state
+      // so RoutineDueAgent can advance `next_due_at` reliably.
+      if (from < 21) {
+        await m.createTable(knowledgeRoutines);
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_knowledge_routines_owner_hlc '
+          'ON knowledge_routines(owner_user_id, hlc)',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_knowledge_routines_due '
+          'ON knowledge_routines(owner_user_id, status, next_due_at) '
+          'WHERE deleted_at IS NULL',
+        );
       }
     },
     beforeOpen: (details) async {

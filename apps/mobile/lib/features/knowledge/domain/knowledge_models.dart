@@ -84,6 +84,24 @@ enum ExperimentStatus {
   }
 }
 
+/// Status of a [KnowledgeRoutine]. `paused` is a soft off-switch the
+/// user can flip from the tile; `archived` is "this routine is done
+/// forever" (kept for memory, no longer surfaced).
+enum RoutineStatus {
+  active,
+  paused,
+  archived;
+
+  String get wire => name;
+
+  static RoutineStatus parse(String s) {
+    for (final v in values) {
+      if (v.name == s) return v;
+    }
+    return RoutineStatus.active;
+  }
+}
+
 class KnowledgeNote {
   KnowledgeNote({
     required this.id,
@@ -274,6 +292,39 @@ class KnowledgeExperiment {
   final DateTime startedAt;
   final DateTime? endedAt;
   final SyncMeta sync;
+}
+
+/// Recurring user-defined reminder. `nextDueAt` is the single source of
+/// truth for "when does this surface again" — bumped to `now + intervalDays`
+/// on `markDone`. RoutineDueAgent scans `nextDueAt <= now + 7d` daily and
+/// emits a memory + local notification.
+class KnowledgeRoutine {
+  KnowledgeRoutine({
+    required this.id,
+    required this.statement,
+    required this.intervalDays,
+    required this.nextDueAt,
+    this.lastDoneAt,
+    required this.scope,
+    required this.status,
+    required this.createdAt,
+    required this.sync,
+  });
+
+  final String id;
+  final String statement;
+  final int intervalDays;
+  final DateTime? lastDoneAt;
+  final DateTime nextDueAt;
+  final String scope;
+  final RoutineStatus status;
+  final DateTime createdAt;
+  final SyncMeta sync;
+
+  int daysUntilDue(DateTime now) =>
+      nextDueAt.toUtc().difference(now.toUtc()).inDays;
+
+  bool isDue(DateTime now) => !nextDueAt.toUtc().isAfter(now.toUtc());
 }
 
 /// JSON helpers — every list/map column in §9 is stored as JSON text.

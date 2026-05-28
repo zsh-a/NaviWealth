@@ -123,6 +123,28 @@ class KnowledgeExperiments extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Recurring user-defined reminder ("港卡每 6 个月做一次活跃交易"). A first-class
+/// type alongside Decision / Assumption / ... because the cadence + last-done
+/// state needs a stable row to advance against — a plain Note can carry the
+/// text but has no place to record "lastDoneAt → nextDueAt". RoutineDueAgent
+/// scans `next_due_at <= now + 7d` daily and emits a memory + local
+/// notification on the `lifeos.knowledge.review` channel.
+/// `status: active | paused | archived`.
+@DataClassName('KnowledgeRoutineRow')
+class KnowledgeRoutines extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get statement => text()();
+  IntColumn get intervalDays => integer()();
+  DateTimeColumn get lastDoneAt => dateTime().nullable()();
+  DateTimeColumn get nextDueAt => dateTime()();
+  TextColumn get scope => text().withDefault(const Constant('*'))();
+  TextColumn get status => text().withDefault(const Constant('active'))();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 /// Indexes & DDL companions for the KnowledgeOS tables. Mirrors the
 /// HealthOS pattern in `app_database.dart`.
 const List<String> knowledgeIndexStmts = [
@@ -155,5 +177,10 @@ const List<String> knowledgeIndexStmts = [
       'ON knowledge_experiments(owner_user_id, hlc)',
   'CREATE INDEX IF NOT EXISTS idx_knowledge_experiments_status '
       'ON knowledge_experiments(owner_user_id, status) '
+      'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_knowledge_routines_owner_hlc '
+      'ON knowledge_routines(owner_user_id, hlc)',
+  'CREATE INDEX IF NOT EXISTS idx_knowledge_routines_due '
+      'ON knowledge_routines(owner_user_id, status, next_due_at) '
       'WHERE deleted_at IS NULL',
 ];

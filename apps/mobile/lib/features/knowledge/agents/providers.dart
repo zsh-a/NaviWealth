@@ -8,10 +8,12 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/notifications/providers.dart' as notif_providers;
 import 'assumption_agent.dart';
 import 'contradiction_agent.dart';
 import 'inbox_triage_agent.dart';
 import 'review_agent.dart';
+import 'routine_due_agent.dart';
 
 final reviewAgentProvider = Provider<ReviewAgent>(
   (ref) => const ReviewAgent(),
@@ -29,6 +31,16 @@ final inboxTriageAgentProvider = Provider<InboxTriageAgent>(
   (ref) => const InboxTriageAgent(),
 );
 
+/// RoutineDueAgent is wired with the shared notification service so the
+/// daily run can post a local toast on the Knowledge Review channel. The
+/// provider stays Knowledge-local — bootstrap doesn't need a special
+/// override the way MorningBriefingAgent does because we don't swap in
+/// an LLM synthesizer here.
+final routineDueAgentProvider = Provider<RoutineDueAgent>((ref) {
+  final notifier = ref.watch(notif_providers.notificationServiceProvider);
+  return RoutineDueAgent(notifier: notifier);
+});
+
 /// Aggregated list — bootstrap composes this into the cross-domain
 /// `agentRegistryProvider` only when Knowledge is opt-in.
 final knowledgeAgentsProvider = Provider<List<Agent>>((ref) {
@@ -37,5 +49,6 @@ final knowledgeAgentsProvider = Provider<List<Agent>>((ref) {
     ref.watch(assumptionAgentProvider),
     ref.watch(contradictionAgentProvider),
     ref.watch(inboxTriageAgentProvider),
+    ref.watch(routineDueAgentProvider),
   ];
 });

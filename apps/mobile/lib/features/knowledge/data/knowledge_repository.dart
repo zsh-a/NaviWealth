@@ -393,6 +393,70 @@ class KnowledgeRepository {
     );
   }
 
+  // ---------- Routines ----------
+
+  static const String _routinesTable = 'knowledge_routines';
+
+  Stream<List<KnowledgeRoutine>> watchRoutines({
+    required String ownerUserId,
+  }) {
+    final q = _db.select(_db.knowledgeRoutines)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([(t) => OrderingTerm(expression: t.nextDueAt)]);
+    return q.watch().map((rows) => rows.map(_routineFromRow).toList());
+  }
+
+  /// Routines whose `nextDueAt <= asOf` and status == active. Ordered by
+  /// nextDueAt ascending so the most-overdue is first. The caller decides
+  /// the look-ahead window (e.g. `asOf = now + 7d` for "due this week").
+  Future<List<KnowledgeRoutine>> listDueRoutines({
+    required String ownerUserId,
+    required DateTime asOf,
+    int limit = 50,
+  }) async {
+    final q = _db.select(_db.knowledgeRoutines)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..where((t) => t.status.equals(RoutineStatus.active.wire))
+      ..where((t) => t.nextDueAt.isSmallerOrEqualValue(asOf))
+      ..orderBy([(t) => OrderingTerm(expression: t.nextDueAt)])
+      ..limit(limit);
+    final rows = await q.get();
+    return rows.map(_routineFromRow).toList();
+  }
+
+  Future<KnowledgeRoutine?> findRoutine(String id) async {
+    final row = await (_db.select(
+      _db.knowledgeRoutines,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+    return row == null ? null : _routineFromRow(row);
+  }
+
+  Future<void> upsertRoutine(KnowledgeRoutine r) async {
+    final companion = KnowledgeRoutinesCompanion.insert(
+      id: r.id,
+      statement: r.statement,
+      intervalDays: r.intervalDays,
+      lastDoneAt: Value(r.lastDoneAt),
+      nextDueAt: r.nextDueAt,
+      scope: Value(r.scope),
+      status: Value(r.status.wire),
+      createdAt: r.createdAt,
+      ownerUserId: r.sync.ownerUserId,
+      updatedAt: r.sync.updatedAt,
+      updatedByDevice: r.sync.updatedByDevice,
+      hlc: r.sync.hlc,
+      deletedAt: Value(r.sync.deletedAt),
+    );
+    await _upsertAndEnqueue(
+      _db.knowledgeRoutines,
+      companion,
+      tableName: _routinesTable,
+      rowId: r.id,
+    );
+  }
+
   // ---------- Row → model ----------
 
   KnowledgeNote _noteFromRow(KnowledgeNoteRow r) => KnowledgeNote(
@@ -479,6 +543,24 @@ class KnowledgeRepository {
     aliases: decodeStringList(r.aliasesJson),
     summaryMd: r.summaryMd,
     relatedConceptIds: decodeStringList(r.relatedConceptIdsJson),
+    createdAt: r.createdAt,
+    sync: SyncMeta(
+      ownerUserId: r.ownerUserId,
+      updatedAt: r.updatedAt,
+      updatedByDevice: r.updatedByDevice,
+      hlc: r.hlc,
+      deletedAt: r.deletedAt,
+    ),
+  );
+
+  KnowledgeRoutine _routineFromRow(KnowledgeRoutineRow r) => KnowledgeRoutine(
+    id: r.id,
+    statement: r.statement,
+    intervalDays: r.intervalDays,
+    lastDoneAt: r.lastDoneAt,
+    nextDueAt: r.nextDueAt,
+    scope: r.scope,
+    status: RoutineStatus.parse(r.status),
     createdAt: r.createdAt,
     sync: SyncMeta(
       ownerUserId: r.ownerUserId,
