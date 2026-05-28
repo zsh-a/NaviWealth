@@ -1,22 +1,22 @@
 /// KnowledgeOS Inbox tab (`docs/knowledgeos-domain.md` §5).
 ///
-/// MVP: a Forui-only surface with a "New note" affordance. Notes are
-/// markdown — input via [FTextField], preview via [AiMarkdown] (the
-/// codebase's tuned renderer, see `lib/core/ai/visual/ai_markdown.dart`).
-/// No 3rd-party markdown editor library: §8 反目标 bans block / WYSIWYG
-/// editors ("AI Notion" trap) and the existing renderer covers display.
+/// Renders captured Notes. The FAB opens [showKnowledgeCaptureSheet] —
+/// a unified AI-native capture (single textarea + post-save inline
+/// upgrade suggestion). The old typed `_NewNoteSheet` is gone; promoting
+/// a capture to Decision / Routine / etc. happens through the inline
+/// upgrade card in the sheet itself, not by picking the type up front.
 library;
 
 import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+
 import '../../../core/sync/mutation_context.dart';
-import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
-import '_widgets.dart';
+import 'knowledge_capture_sheet.dart';
 
 class KnowledgeInboxPage extends ConsumerWidget {
   const KnowledgeInboxPage({super.key});
@@ -34,8 +34,8 @@ class KnowledgeInboxPage extends ConsumerWidget {
             bottom: AppSpacing.s16,
             child: FButton(
               prefix: const Icon(FLucideIcons.plus, size: 16),
-              onPress: () => _showNewNoteSheet(context, ref),
-              child: const Text('新建 Note'),
+              onPress: () => showKnowledgeCaptureSheet(context, ref),
+              child: const Text('新建捕获'),
             ),
           ),
         ],
@@ -127,8 +127,8 @@ class _EmptyState extends StatelessWidget {
     return const AppEmptyState(
       icon: Icons.inbox_outlined,
       title: '收件箱空空如也',
-      message: '点击右下角 + 写一条第一性思考、网页摘录或灵感片段，'
-          '或者从浏览器分享链接 / 文本进来。',
+      message: '点击右下角 + 写一条想法 — AI 会判断它是 Note / Routine / Decision，'
+          '一键确认升级。',
     );
   }
 }
@@ -150,92 +150,4 @@ class _Centered extends StatelessWidget {
   final Widget child;
   @override
   Widget build(BuildContext context) => Center(child: child);
-}
-
-Future<void> _showNewNoteSheet(BuildContext context, WidgetRef ref) {
-  return showAppFormSheet<void>(
-    context: context,
-    builder: (sheetContext) => _NewNoteSheet(ref: ref),
-  );
-}
-
-class _NewNoteSheet extends StatefulWidget {
-  const _NewNoteSheet({required this.ref});
-  final WidgetRef ref;
-
-  @override
-  State<_NewNoteSheet> createState() => _NewNoteSheetState();
-}
-
-class _NewNoteSheetState extends State<_NewNoteSheet> {
-  final _titleController = TextEditingController();
-  final _bodyController = TextEditingController();
-  bool _saving = false;
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _bodyController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    if (_saving) return;
-    setState(() => _saving = true);
-    try {
-      final repo = await widget.ref.read(
-        knowledgeRepositoryProvider.future,
-      );
-      final stamper = await widget.ref.read(mutationStamperProvider.future);
-      final stamp = await stamper.stamp();
-      final note = KnowledgeNote(
-        id: kKnowledgeUuid.v4(),
-        title: _titleController.text.trim(),
-        bodyMd: _bodyController.text,
-        tags: const <String>[],
-        createdAt: stamp.now,
-        sync: SyncMeta(
-          ownerUserId: stamp.ownerUserId,
-          updatedAt: stamp.now,
-          updatedByDevice: stamp.deviceId,
-          hlc: stamp.hlc,
-        ),
-      );
-      await repo.upsertNote(note);
-      if (mounted) Navigator.of(context).pop();
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AppSheet(
-      title: '新建 Note',
-      footer: AppSheetFooter(
-        submitLabel: _saving ? '保存中…' : '保存',
-        busy: _saving,
-        onSubmit: _save,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          FTextField(
-            control: FTextFieldControl.managed(controller: _titleController),
-            label: const Text('标题'),
-            hint: 'Note 标题',
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          MarkdownEditorWithPreview(
-            controller: _bodyController,
-            label: '正文（Markdown）',
-            hint: '自由格式 Markdown — `#` 标题 / `**bold**` / 列表 等',
-            minLines: 4,
-            maxLines: 8,
-          ),
-        ],
-      ),
-    );
-  }
 }
