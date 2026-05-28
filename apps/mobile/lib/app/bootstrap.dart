@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/ai/agents/agent_registry.dart';
 import '../core/ai/composition/device_tools_provider.dart';
 import '../core/ai/composition/system_prompt_blocks.dart';
+import '../core/ai/llm_credentials/providers.dart' as llm_credentials;
 import '../core/ai/local/embedding/embedder.dart';
 import '../core/ai/local/embedding/model_install_paths.dart';
 import '../core/ai/local/embedding/model_manifest.dart';
@@ -241,6 +242,16 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // PerfTraceRecorder windows opened at startup would race the first
   // few frames and miss them. `roadmap-next.md` §4 M-5.
   container.read(frameTimingCollectorProvider);
+
+  // Warm up the LLM credentials FutureProvider so the secure-storage
+  // load runs in parallel with the first frame instead of cold-starting
+  // when the user first taps an AI surface. The Capture sheet
+  // (`KnowledgeCaptureSheet`) reads `captureClassifierProvider`
+  // synchronously via `ref.read` — if credentials were still loading,
+  // it would fall back to the heuristic classifier and never recover
+  // for that one save. Fire-and-forget: the actual value is consumed
+  // through `ref.watch` chains; we just need the future to start.
+  unawaited(container.read(llm_credentials.llmCredentialsProvider.future));
 
   FlutterError.onError = (details) {
     if (isBenignDuplicateKeyDownAssertion(details)) {

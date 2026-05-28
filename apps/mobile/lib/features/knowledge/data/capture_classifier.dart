@@ -115,11 +115,14 @@ class HeuristicCaptureClassifier implements CaptureClassifier {
     int intervalDays;
     String reason;
     if (intervalMatch != null) {
-      final raw = int.tryParse(intervalMatch.namedGroup('n') ?? '1') ?? 1;
+      // `n` may be empty when the input is "每月" / "每个月" / "每年" —
+      // implicit single-unit cadence.
+      final nText = intervalMatch.namedGroup('n')?.trim() ?? '';
+      final raw = int.tryParse(nText) ?? 1;
       final unit = intervalMatch.namedGroup('unit') ?? '';
       intervalDays = switch (unit) {
         '日' || '天' || 'd' => raw,
-        '周' || 'w' => raw * 7,
+        '周' || '星期' || 'w' => raw * 7,
         '月' || 'mo' => raw * 30,
         '年' || 'y' => raw * 365,
         _ => raw * 30,
@@ -165,6 +168,12 @@ class HeuristicCaptureClassifier implements CaptureClassifier {
         lower.contains('tax')) {
       return 'finance/tax';
     }
+    if (lower.contains('定投') ||
+        lower.contains('dca') ||
+        lower.contains('基金') ||
+        lower.contains('rebalance')) {
+      return 'finance/investing';
+    }
     if (lower.contains('体检') ||
         lower.contains('health') ||
         lower.contains('医院') ||
@@ -178,12 +187,15 @@ class HeuristicCaptureClassifier implements CaptureClassifier {
   // The optional `个` between digit and unit is the common Chinese measure
   // word ("6 个月" reads "six months" with the implicit classifier).
   static final RegExp _everyN = RegExp(
-    r'每(?:隔)?\s*(?<n>\d+)\s*个?\s*(?<unit>日|天|周|月|年)',
+    r'每(?:隔)?\s*(?<n>\d+)\s*个?\s*(?<unit>日|天|周|星期|月|年)',
   );
 
-  // "每月" / "每年" / "每周" — n defaults to 1.
+  // Implicit n=1 cadence: "每月" / "每年" / "每周" / "每天" /
+  // "每个月" / "每个星期". The optional `个` after 每 is the Chinese
+  // measure word — colloquial Mandarin often inserts it before the
+  // time unit even when no explicit count follows.
   static final RegExp _everyMonthDay = RegExp(
-    r'每(?<n>)(?<unit>日|天|周|月|年)(?!\d)',
+    r'每个?(?<n>)(?<unit>日|天|周|星期|月|年)(?!\d)',
   );
 
   // Routine markers without explicit interval.
