@@ -30,6 +30,14 @@ const Set<String> kSyncableTables = {
   'options_strategy_profile',
   'approved_underlyings',
   'options_trade_journal',
+  // KnowledgeOS (`docs/knowledgeos-domain.md` §9). All six tables ride
+  // the row-state protocol with the `know:` row family prefix.
+  'knowledge_notes',
+  'knowledge_principles',
+  'knowledge_assumptions',
+  'knowledge_decisions',
+  'knowledge_concepts',
+  'knowledge_experiments',
 };
 
 /// Primary-key column for the tables whose PK is not `id`.
