@@ -35,3 +35,14 @@ const List<DeviceTool> kKnowledgeDeviceTools = <DeviceTool>[
   ProposeLinkToDecisionTool(),
   SummarizeTopicEvolutionTool(),
 ];
+
+/// KnowledgeOS system-prompt block. Appended onto [kDeviceSystemPromptBase]
+/// by `systemPromptBlocksProvider` only when the user has opted into
+/// the Knowledge domain (`domainOptInsProvider`).
+const String kKnowledgeSystemPromptBlock =
+    '[KnowledgeOS 域]\n'
+    '- 编辑知识库条目时调用 propose_* 工具，工具返回「待确认计划」：\n'
+    '  • propose_inbox_classification / propose_inbox_tags / propose_link_to_decision（收件箱分诊与归档）\n'
+    '  • propose_concept_link（在两个概念 / 笔记之间建立关联）\n'
+    '- 用户问「我以前对 X 的判断是什么」时优先调用 recall_decision；不要凭记忆复述决策内容。\n'
+    '- 跨主题演变 / 历史观点对比用 summarize_topic_evolution，时间线以工具返回为准。';

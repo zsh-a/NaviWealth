@@ -106,3 +106,19 @@ const List<DeviceTool> kDeviceTools = <DeviceTool>[
 /// Back-compat factory matching the pre-D-1.2 surface.
 DeviceToolRegistry defaultDeviceToolRegistry() =>
     DeviceToolRegistry(kDeviceTools);
+
+/// FinanceOS system-prompt block. Appended onto [kDeviceSystemPromptBase]
+/// by `systemPromptBlocksProvider` when FinanceOS is active (always on
+/// today). Keeps domain-specific tool guidance out of the shell prompt.
+const String kFinanceSystemPromptBlock =
+    '[FinanceOS 域]\n'
+    '- 录入财务数据时调用 propose_* 工具，工具返回「待确认计划」，由前端确认页落库：\n'
+    '  • propose_trade（证券、加密买卖 / 转入转出）\n'
+    '  • propose_expense（日常消费 / 支出）\n'
+    '  • propose_liability_payment（房贷 / 信用卡 / 消费贷还款）\n'
+    '  • propose_account_create（新建账户）\n'
+    '  • propose_asset_valuation（房产 / 车 / 存款等手工估值资产更新）\n'
+    '  • propose_fire_plan_update / propose_fire_bucket_rule（FIRE 计划与桶规则调整）\n'
+    '  • propose_options_journal_entry / propose_options_profile_update（期权 wheel 流水与策略画像）\n'
+    '- 记录支出时，若用户没有指定支付账户，先调用 list_payment_accounts 看候选；只有工具返回空时才提示「没有可用支付账户，是否新建」。\n'
+    '- 期权 / 投资类问题优先用 get_holdings / get_asset_allocation / get_investment_performance，不要凭印象推断仓位与收益。';
