@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/lifeos/domain_pack.dart';
 import '../core/logging/providers.dart';
 import '../core/logging/talker_route_observer.dart';
 import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
@@ -9,9 +10,6 @@ import '../features/auth/presentation/devices_page.dart'
     deferred as devices_lib;
 import '../features/auth/presentation/login_page.dart';
 import '../features/auth/presentation/onboarding_page.dart';
-import '../features/finance/composition/finance_routes.dart';
-import '../features/health/composition/health_routes.dart';
-import '../features/knowledge/composition/knowledge_routes.dart';
 import '../features/settings/backup/backup_page.dart';
 import '../features/settings/fx_rates/fx_rates_page.dart';
 import '../features/settings/log_viewer_page.dart';
@@ -26,24 +24,29 @@ import '../features/settings/ui/risk_thresholds_page.dart';
 import '../features/settings/ui/sync_status_page.dart';
 import 'app_dock_shell.dart';
 import 'deferred_route.dart';
+import 'domain_packs.dart';
 import 'route_analytics_observer.dart';
 import 'route_error_page.dart';
 import 'route_guard.dart';
 import 'route_paths.dart';
 
-/// Test-only: eagerly resolve every deferred-as library the router maps to
-/// a tab so subsequent [DeferredRoute] mounts see an already-completed
+/// Test-only: eagerly resolve every deferred-as library the router maps
+/// to a tab so subsequent [DeferredRoute] mounts see an already-completed
 /// `loadLibrary()` future. Without this, widget tests sit on the loading
 /// spinner — `loadLibrary()` is real-async and the fake test clock can't
 /// drive it. Call from `setUpAll` inside a `runAsync` block.
 ///
-/// Each domain owns its own deferred preloader (Plan B isolation); this
-/// helper just fans out to them plus the settings tree's own deferred
-/// libs.
+/// Iterates [packs] (defaults to [kAllDomainPacks]) plus the settings
+/// tree's own deferred libs — each domain owns its own preloader (Plan B
+/// isolation), so adding a new domain with deferred routes is a single
+/// `deferredPreloader` field on its [DomainPack].
 @visibleForTesting
-Future<void> preloadDeferredRoutesForTest() async {
+Future<void> preloadDeferredRoutesForTest({
+  List<DomainPack> packs = kAllDomainPacks,
+}) async {
   await Future.wait<void>(<Future<void>>[
-    preloadFinanceDeferredRoutesForTest(),
+    for (final p in packs)
+      if (p.deferredPreloader != null) p.deferredPreloader!(),
     settings_lib.loadLibrary(),
     devices_lib.loadLibrary(),
     ai_chat_lib.loadLibrary(),
@@ -58,13 +61,19 @@ Future<void> preloadDeferredRoutesForTest() async {
 /// - Outer [ShellRoute] mounts [AppDockShell]: share-intent lifecycle,
 ///   AI route-context sync, root system-back handling, and the domain
 ///   dock chrome (visible only when ≥ 2 domains are registered).
-/// - Each domain provides its own [StatefulShellRoute] under the dock —
-///   currently `financeShellRoute()` (4 branches) and `healthShellRoute()`
-///   (3 branches). Adding a third domain is a single sibling import.
+/// - Each domain provides its own [StatefulShellRoute] under the dock
+///   via [DomainPack.shellRouteBuilder]. Routes for every registered
+///   pack mount unconditionally so deep links survive opt-in toggles;
+///   the dock chrome already hides inactive domains.
 /// - Settings, login, onboarding stay outside the dock shell — they
 ///   cover the full canvas while open and pop back into whatever
 ///   domain the user came from.
 GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
+  final packs = ref.read(domainPackRegistryProvider);
+  final shellRoutes = <RouteBase>[
+    for (final p in packs)
+      if (p.shellRouteBuilder != null) p.shellRouteBuilder!(),
+  ];
   return GoRouter(
     initialLocation: initialLocation,
     observers: <NavigatorObserver>[
@@ -91,15 +100,14 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
       _settingsRoute(),
       // Multi-domain dock shell (D-2.3b). Wraps every per-domain
       // StatefulShellRoute so the dock chrome + global lifecycle hooks
-      // stay mounted across domain switches.
-      ShellRoute(
-        builder: (context, state, child) => AppDockShell(child: child),
-        routes: [
-          financeShellRoute(),
-          healthShellRoute(),
-          knowledgeShellRoute(),
-        ],
-      ),
+      // stay mounted across domain switches. Skipped when no pack
+      // contributed a route (defensive — `ShellRoute` asserts non-empty
+      // `routes`; a domain-less test build should still boot).
+      if (shellRoutes.isNotEmpty)
+        ShellRoute(
+          builder: (context, state, child) => AppDockShell(child: child),
+          routes: shellRoutes,
+        ),
     ],
   );
 }

@@ -1,4 +1,7 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../core/auth/domain_scope.dart';
+import '../core/lifeos/domain_pack.dart';
 
 /// Canonical route paths for NaviWealth's information architecture.
 ///
@@ -240,43 +243,37 @@ abstract final class AppRouteNames {
 /// should fall back to [DomainScope.finance] (the always-on seed
 /// domain) at the call site.
 ///
-/// Used by `aiContextProvider` so any AI invocation can derive its
-/// domain from the current route without each call site re-implementing
-/// the rule. Tabs already register canonically here, so adding a new
-/// domain is one prefix line.
-DomainScope? domainForRoute(String path) {
-  if (path.startsWith('/health')) return DomainScope.health;
-  if (path.startsWith('/knowledge')) return DomainScope.knowledge;
-  if (path == AppRoutes.home ||
-      path.startsWith('/activity') ||
-      path.startsWith('/wealth') ||
-      path.startsWith('/plan') ||
-      path.startsWith('/cashflow')) {
-    return DomainScope.finance;
+/// Iterates [packs] (typically [domainPackRegistryProvider]) and
+/// returns the first pack whose [DomainPack.tabPaths] or
+/// [DomainPack.additionalPathPrefixes] owns [path]. Adding a new
+/// domain therefore touches only `domain_packs.dart` — this function
+/// stays domain-blind.
+DomainScope? domainForRoute(List<DomainPack> packs, String path) {
+  bool ownedBy(String prefix) =>
+      path == prefix || path.startsWith('$prefix/');
+  for (final p in packs) {
+    for (final tab in p.tabPaths) {
+      if (ownedBy(tab)) return p.scope;
+    }
+    for (final extra in p.additionalPathPrefixes) {
+      if (ownedBy(extra)) return p.scope;
+    }
   }
   return null;
 }
 
-/// Primary shell tab paths in display order across all active domains.
-/// Used by the system-back handler in `app_dock_shell.dart` to detect
-/// "at a primary tab root" (where back jumps to Home instead of popping
-/// up). Settings is not a tab (IA contract §1). D-2.3b: Health paths
-/// join Finance — they're equally "primary" inside the dock shell.
-const List<String> kPrimaryTabPaths = <String>[
-  // Finance
-  AppRoutes.home,
-  AppRoutes.activity,
-  AppRoutes.wealth,
-  AppRoutes.plan,
-  // Health (D-2.3b)
-  AppRoutes.healthToday,
-  AppRoutes.healthTrend,
-  AppRoutes.healthPlan,
-  // KnowledgeOS
-  AppRoutes.knowledgeInbox,
-  AppRoutes.knowledgeLibrary,
-  AppRoutes.knowledgeReview,
-];
+/// Primary shell tab paths in display order across all registered
+/// domains. Used by the system-back handler in `app_dock_shell.dart` to
+/// detect "at a primary tab root" (where back jumps to Home instead of
+/// popping up) and by the global Cmd-1..N tab switcher in `app.dart`.
+/// Settings is not a tab (IA contract §1).
+///
+/// Reads [domainPackRegistryProvider] so the list rebuilds automatically
+/// when a new pack lands.
+final primaryTabPathsProvider = Provider<List<String>>((ref) {
+  final packs = ref.watch(domainPackRegistryProvider);
+  return [for (final p in packs) ...p.tabPaths];
+});
 
 const String kCashflowPath = AppRoutes.cashflow;
 const String kCashflowRecurringPath = AppRoutes.cashflowRecurring;

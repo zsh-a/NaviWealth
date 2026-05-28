@@ -10,6 +10,7 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../ai/agents/agent.dart';
 import '../ai/runtime/device/tools/device_tool.dart';
@@ -22,6 +23,15 @@ import '../shell/domain_shell.dart';
 /// on runtime services like the LLM client or notification service).
 typedef DomainAgentBuilder = List<Agent> Function(Ref ref);
 
+/// Returns the top-level [StatefulShellRoute] the domain mounts under
+/// the dock shell. Called once during router construction.
+typedef DomainShellRouteBuilder = StatefulShellRoute Function();
+
+/// Eagerly resolves every `deferred as` library reachable from this
+/// domain's routes — see `preloadFinanceDeferredRoutesForTest`. Domains
+/// that ship every page in the main bundle leave this `null`.
+typedef DomainDeferredPreloader = Future<void> Function();
+
 /// Static description of one LifeOS domain's shell contributions. Held
 /// as a `const` value next to the domain's tool barrel, so the inventory
 /// list in `lib/app/domain_packs.dart` is the single grep-able answer to
@@ -32,6 +42,10 @@ class DomainPack {
     this.deviceTools = const <DeviceTool>[],
     this.systemPromptBlock = '',
     this.shellSpecBuilder,
+    this.shellRouteBuilder,
+    this.deferredPreloader,
+    this.tabPaths = const <String>[],
+    this.additionalPathPrefixes = const <String>[],
     this.agentBuilder,
   });
 
@@ -48,6 +62,30 @@ class DomainPack {
   /// Localised shell spec (4-tab IA, color, dock placement). Null when
   /// the domain has no top-level shell presence yet.
   final DomainShellSpecBuilder? shellSpecBuilder;
+
+  /// Constructs the domain's `StatefulShellRoute` (mounted under the
+  /// outer `AppDockShell` in `router_builder.dart`). Null when the
+  /// domain has no routable surface yet.
+  final DomainShellRouteBuilder? shellRouteBuilder;
+
+  /// Test-only preloader for every `deferred as` library this domain's
+  /// routes can reach. Null when the domain ships no deferred libs.
+  final DomainDeferredPreloader? deferredPreloader;
+
+  /// Top-level tab paths the domain claims. Used by
+  /// `domainForRoute` to map an active path back to its [scope] and
+  /// by `primaryTabPathsProvider` to drive the system back handler
+  /// + Cmd-1..4 tab switcher. Kept as a `const` `List<String>` (the
+  /// l10n-bound [shellSpecBuilder] still owns labels + icons).
+  final List<String> tabPaths;
+
+  /// Extra route prefixes the domain owns that are **not** top-level
+  /// tabs (and therefore don't belong in [tabPaths]). Used only by
+  /// `domainForRoute` for owner lookup; the system back handler does
+  /// not treat these as primary roots. FinanceOS uses this for
+  /// `/cashflow*` which lives under the Finance shell but isn't a
+  /// 4-tab destination.
+  final List<String> additionalPathPrefixes;
 
   /// Builds the per-turn list of [Agent]s. Null when the domain has no
   /// agents (e.g. FinanceOS today). Non-null builders typically read
