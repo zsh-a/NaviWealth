@@ -8,6 +8,7 @@ import '../core/pwa/pwa_update_banner.dart';
 import '../core/shortcuts/shortcuts.dart';
 import '../design_system/design_system.dart';
 import '../features/ai_chat/ui/ask_ai.dart';
+import '../features/finance/composition/finance_command_palette.dart';
 import '../features/shared/forms/optimistic_form_submit.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'route_paths.dart';
@@ -128,6 +129,9 @@ class NaviWealthApp extends ConsumerWidget {
                         ref.read(localeProvider.notifier).cycle();
                       },
                       onAskAi: (BuildContext ctx) => askAi(ctx, ref),
+                      domainEntries: financeCommandPaletteEntries(
+                        AppLocalizations.of(invokeCtx),
+                      ),
                     ),
                     onAskAi: (String query) =>
                         askAi(invokeCtx, ref, prefill: query),

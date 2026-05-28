@@ -26,7 +26,7 @@ Future<void> showDomainSwitcherSheet(
   if (specs.length < 2) return;
   final activePath =
       GoRouter.of(context).routeInformationProvider.value.uri.path;
-  final active = _activeSpec(specs, activePath);
+  final active = activeSpecForPath(specs, activePath);
   await showAppSheet<void>(
     context: context,
     title: 'Switch domain',
@@ -53,20 +53,6 @@ Future<void> showDomainSwitcherSheet(
       );
     },
   );
-}
-
-DomainShellSpec _activeSpec(
-  List<DomainShellSpec> specs,
-  String activePath,
-) {
-  for (final s in specs) {
-    if (s.tabs.any(
-      (t) => activePath == t.routePath || activePath.startsWith('${t.routePath}/'),
-    )) {
-      return s;
-    }
-  }
-  return specs.first;
 }
 
 class _DomainRow extends StatelessWidget {

@@ -137,18 +137,15 @@ boundary audit 已经把 chat composition 体积大幅压缩，进一步重构�
 | `core/sync/` 协议层 | row-state generic blob，不感知 row 是 finance 还是其它 |
 | `core/auth/` 协议层 | JWT + user id；与域无关 |
 
-### 2.6 Memory Layer：当前唯一一个"无 caller 但保留"的例外
+### 2.6 "无 caller 但保留" 的两个登记例外
 
-`core/ai/local/embedding/` 今天是 `StubEmbedder` + `InMemoryVectorStore` + `SemanticMemory`，
-**零生产 caller**。docstring 标注"deliberate dormant"。
+下列子系统当前**无生产读路径**，作为已知例外保留。新增"dormant infrastructure"
+**禁止**沿用此特例——必须在本节先登记。
 
-**Rule**：其它子系统**禁止**沿用此特例。Memory Layer 是唯一可以接受"无 caller 但保留"
-的原因是：它跨域价值最高、下一步落地概率最大，并且 contract 重写有非平凡设计成本。
-
-**Exit direction**：未来要把 Memory Layer 做实时：
-- **MUST** 先定义 contract（`MemoryEntry / Chunk / EmbeddingModel / SearchQuery / SearchHit`）
-- **MUST** contract 跨域中立（不写 "finance memory" 这种类型）
-- **MUST** 至少有一个 Finance 域 caller 才合并实现（不空转）
+| 子系统 | 状态 | 保留原因 / Exit direction |
+|---|---|---|
+| `core/ai/local/embedding/` Memory Layer 早期形态 | 已落地 + 已通电（D-1.7b/c） | 跨域价值最高、contract 重写非平凡。**MUST** 接入 caller 时先定义跨域中立 contract（`MemoryEntry / Chunk / EmbeddingModel / SearchQuery / SearchHit`），并至少有一个 Finance 域 caller 才合并实现 |
+| `core/perf/{frame_timing_collector,perf_trace_recorder,refresh_rate,providers}.dart` | bootstrap 仅 `attach` collector；`PerfTraceRecorder` 仅在 unit test 中使用 | Observability M-5（`docs/roadmap-next.md` §4）显式预订。所有公共面已经实现 + 测试齐备；M-5 着陆时直接接入诊断 UI / Sentry breadcrumb，不必再写一遍。**Exit direction**：M-5 落地后 `frameTimingCollectorProvider` 必须出现至少一个非 bootstrap 的真实读 caller，否则降级为"删除"
 
 ---
 

@@ -166,14 +166,6 @@ class _DockChrome extends StatelessWidget {
   }
 }
 
-bool _specOwnsPath(DomainShellSpec spec, String path) {
-  return spec.tabs.any(
-    (t) =>
-        path == t.routePath ||
-        path.startsWith('${t.routePath}/'),
-  );
-}
-
 void _switchToDomain(BuildContext context, DomainShellSpec spec) {
   final target = spec.tabs.isNotEmpty
       ? spec.tabs.first.routePath
@@ -206,7 +198,7 @@ class _DesktopDock extends ConsumerWidget {
             for (final spec in specs)
               _DockIcon(
                 spec: spec,
-                selected: _specOwnsPath(spec, activePath),
+                selected: specOwnsPath(spec, activePath),
                 onTap: () => _switchToDomain(context, spec),
               ),
             const Spacer(),
