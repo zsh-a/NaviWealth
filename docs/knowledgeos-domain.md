@@ -439,3 +439,117 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - ContradictionAgent / ReviewAgent 累计 false positive 噪音 > 真信号 3 倍且无法靠阈值收敛
 - KnowledgeOS-only 代码持续增长但跨域 Recall 命中率 < 5%（说明本质是 silo，违背 §1）
 - 任何一条 §8 反目标被破（即使是 "顺手加一下"），但 dogfood 又确认有价值——这是要立 ADR 而不是默默扩
+
+---
+
+## 15. Knowledge Agent — 统一会话式入口（设计，2026-05-29）
+
+> 目标（用户原话）：把 KnowledgeOS 用户交互入口做成一个**完善的 AI agent**，支持**增加 / 查询 / 去重 / 内容建议**。本节是设计 SSOT，落地状态待 §15.6 勾选。
+
+### 15.0 定位：一个 agent loop，四个动词，零新运行时
+
+今天入口是**碎片化**的——增（Capture Sheet）、查（全局 AI chat）、建议（5 个后台 agent 各喂 Review tab），而**去重根本不存在**。本方案不另起 chat 引擎，而是把 Inbox 录入面**升格为一个 knowledge-scoped 会话助理**，直接复用既有 `DeviceAgentLoop` + ai_chat 渲染组件，只做两件事：(1) 补齐缺失的**工具**（去重 + 统一建议），(2) 用一段 knowledge preamble + 快捷 chips 把入口收敛成一个门面。
+
+所有写仍走 `ProposalEnvelope`（§4 行为契约），所有调用进 `AiSpan` trace（ai-architecture.md）。
+
+### 15.1 形态决策：会话式助理 —— 与零延迟快存的边界（不可妥协）
+
+⚠ **本节是 §14.3 红线（"❌ Inbox 保存时同步调 LLM"）的边界澄清，落地时必须守住：**
+
+存在**两条独立路径**，永不混淆：
+
+1. **快存（FAB → Capture Sheet）** —— 维持现状。保存即落 Note、**零延迟、零网络**；分类走 §5 异步 triage / 同步 heuristic。本路径**不**变。
+2. **会话助理（本节新增）** —— 用户**主动发一条消息**才触发的 surface。此时 LLM round-trip 是用户显式发起的、被预期的，不违反"无摩擦捕获"——因为它不在快存的关键路径上。
+
+判定准则：**LLM 是否在"用户敲完就想立刻消失"的保存路径上？** 快存 = 是 → 禁止同步 LLM；会话 = 否（用户在等回复）→ 允许。
+
+入口 UI（Inbox tab 顶部录入面，复用 ai_chat surface）：
+
+```
+┌─────────────────────────────────────────┐
+│  💭 记点什么 / 问点什么…           [🎤]  │  单一输入（文字 / 语音）
+├─────────────────────────────────────────┤
+│  [查重]  [本周建议]  [搜我的知识]         │  空态 chips = 三个意图预设
+└─────────────────────────────────────────┘
+   发送 → DeviceAgentLoop(knowledge scope)
+   流式文本 + 内联 ProposalEnvelope 卡片（升级 / 合并 / 链接 / Routine，复用现有交互语法）
+```
+
+- **有 LLM runtime** → 多轮 agentic，可追问（"两条都留" / "归到 Concept X"）。
+- **无 runtime（Web / 无 key / 无 profile）** → 录入面回落今天的 `HeuristicCaptureClassifier` + 升级卡（非会话），同一个框两种深度。
+- 实现：用 `AiIntentInvocation{ source: knowledgeInbox, intent, object }` 打开 ai_chat surface，传 `knowledgeScope` preset（只挂 `kKnowledgeDeviceTools` + `kKnowledgeSystemPromptBlock` + capture preamble）。**不新建 chat 引擎**。
+
+### 15.2 四动词 → 工具映射
+
+| 动词 | 工具 | 状态 |
+|---|---|---|
+| **增加** | `propose_capture`（已存在，7 类分类 + 润色）+ 录入后**自动查重** | 复用 + 增强 |
+| **查询** | `recall_decision` / `search_notes` / `summarize_topic_evolution` / `list_*` + 新增 `search_knowledge`（跨 7 类统一语义检索） | 复用 + 1 新工具 |
+| **去重** | 新增 `find_similar_knowledge`（read）+ `propose_merge`（write） | **全新（主菜）** |
+| **建议** | 新增 `review_knowledge_health`（把 5 个 agent 信号聚成一个 pull 工具） | **新整合** |
+
+后台 5 个 agent **不动**，继续 push ambient 卡片；新工具是"主动问"的 pull 版本，与 push 互补。
+
+### 15.3 新工具规格（全部遵守 §4 ProposalEnvelope / read-default 契约）
+
+**① `find_similar_knowledge`（read · info）**
+```
+in:  { text? | entity_ref?, types?: [note|concept|decision|...], threshold?=0.82, top_k?=5 }
+out: [{ id, kind, title, similarity, overlapping_fields:[title|body|tags], why_zh }]
+```
+实现：EmbeddingGemma 768-d cosine + token-overlap 复核（避免纯向量误判，沿用 `search_notes` 的 hybrid 思路）。
+⚠ **`MemoryRuntime.recall(source:)` 是精确匹配**（`memory_store.dart` → `m.source = ?`），**不支持 `know:*` 通配**；Knowledge indexer 写的是具体 source（`know:notes` / `know:concepts` / `know:decisions` …）。两种落法二选一：
+- **MVP（默认，零 core 改动，合 §12 反扩）**：在工具内**遍历具体 source 列表**，各调一次 `recall` 后合并 + 去重排序。具体常量已存在并分散（`kKnowledgeNoteMemorySource='know:notes'`、`kKnowledgeConceptMemorySource='know:concepts'`、`kKnowledgeDecisionMemorySource='know:decisions'` …，散落于 `knowledge_object_memory_indexers.dart` / `knowledge_decision_memory_indexer.dart`）；P0 顺手收敛出一个聚合 `kKnowledgeMemorySources` 列表，按 `types` 入参取子集。
+- **可选增强（跨域受益）**：给 `recall` 加 `sourcePrefix` / `sources[]` 过滤（`memory_store` 改 `m.source LIKE ?` 或 `IN (...)`），一次查完。改动小但触 core，按 dogfood 是否需要再做。
+
+会话录入后由 agent 自动调；chip「查重」触发全库聚类扫。
+
+**② `propose_merge`（write · ProposalEnvelope）** —— 展示合并 diff，用户确认后才写
+```
+in:  { primary_id, duplicate_ids:[...], merged:{ title?, body_md?, tags?, links? } }
+→ ProposalEnvelope
+确认后 KnowledgeRepository.mergeEntities():
+  - 保留 primary，union tags / aliases / related_ids
+  - duplicate 软删（deleted_at）+ 写 merged_into_id 指针
+  - 回指引用：concept.related_concept_ids、[[concept]] 反链
+```
+- **MVP 只合并 Note↔Note、Concept↔Concept**（入边少）；Decision / Assumption 引用重定向标 P1。
+- ⚠ **Confirmation policy**：`Confirmation` enum 当前只有 `none / oneTap / typed`（`tool_descriptor.dart`），**没有 `confirmDiff`**——架构文档的交互语法里的 confirmDiff 是 UI 渲染模式，不是该 enum 值。MVP 用 **`Confirmation.oneTap`**，把合并 diff（保留/删除/union 字段）**渲染在 ProposalEnvelope 卡片内**（diff 是渲染关注点，与 confirmation policy 解耦）。merge 软删可逆（`deleted_at` + `merged_into_id` 可还原），oneTap 风险可接受。若 dogfood 发现误触多，P1 再正式新增 `confirmDiff` enum 值（enum + wire + applier UI 三处）。
+- Sync 友好：合并 = 两条 row update（primary 改 + duplicate tombstone），天然走 row-state LWW（sync-v2）。
+
+**③ `search_knowledge`（read · info）** —— 补齐跨类型检索（今天 `search_notes` 只查 note、`recall_decision` 只查 decision）。
+
+**④ `review_knowledge_health`（read · info）** —— 一次性聚合：过期 assumption / 到期 review·routine / 未分诊 inbox / 孤儿 note（无 tag·link）/ 矛盾 / **重复簇**，返回优先级列表。这是 chip「本周建议」与"给我建议"的后端；只读不写，建议项再由 agent 转成 propose 工具。
+
+四个工具登记进 `kKnowledgeToolDescriptors`，`./tool/check-tool-descriptors.sh` 守恒；`propose_merge` 标 `Access.propose / RiskLevel.propose / Confirmation.oneTap`（diff 在卡片内渲染，见 ② 注），其余 read 标 `Access.read / RiskLevel.info`。`kKnowledgeSystemPromptBlock` 补：录入先 `find_similar_knowledge` 查重再决定 capture / merge；"给我建议"走 `review_knowledge_health`。
+
+### 15.4 Schema / Repo 改动
+
+- **Schema v21→v22 迁移**：可合并表（`knowledge_notes`、`knowledge_concepts`）加 `merged_into_id TEXT?`（软删 `deleted_at` 已有）。1 条迁移。
+- **`KnowledgeRepository`** 加 `mergeEntities(...)` + `findSimilar(...)`（薄包一层 `MemoryRuntime`）。
+- 本地优先：录入后查重在**保存之后**异步跑（不阻塞 §15.1 路径 1 的零延迟约束）。
+
+### 15.5 Agent 改动（不新增 agent，保持简洁）
+
+- 把 `InboxTriageAgent` 扩成也跑**近重检测** → 给 Review tab 出「疑似重复」卡（复用 `knowledge_inbox_triage` 侧表，不碰 save 路径）。会话 surface 的查重是 pull 版，后台 agent 是 push 版。
+
+### 15.6 分期（可独立合并、随时可停）
+
+- **P0 — 去重闭环**：`find_similar_knowledge` + `propose_merge` + schema v22 + 录入后自动查重卡。（填补唯一能力空白，价值最高）
+  - [ ] schema v22 + `mergeEntities` / `findSimilar`
+  - [ ] `find_similar_knowledge` + `propose_merge` + descriptors + system prompt
+  - [ ] `propose_merge` 接入 `featureProposalApplier`（参照 §14.2 `propose_concept_link` 的 applier 待办）
+- **P1 — 统一入口**：Inbox 录入面升格为 knowledge-scoped 会话面 + 快捷 chips，复用 ai_chat 引擎；无 runtime 回落 heuristic。
+  - [ ] `knowledgeScope` preset + `AiIntentInvocation` 打开 surface
+  - [ ] 三个 chip 意图预设
+- **P2 — 建议聚合**：`search_knowledge` + `review_knowledge_health` + `InboxTriageAgent` 近重检测。
+
+每期遵守：本地优先永不阻塞 save、写必经 ProposalEnvelope、Web 优雅降级、trace 全覆盖。
+
+### 15.7 反目标对照（确认不破 §8 / §14.3）
+
+- ✅ **不**违反 §14.3 "保存时同步 LLM"：会话是 path-2 显式发起，快存 path-1 不变（§15.1）。
+- ✅ **不**做 AI 自动生成内容（§14.3）：merge 只是 union 既有字段 + 用户卡片内确认 diff，不无中生有。
+- ✅ **不**做自动双链 / 知识图谱可视化（§8）：查重/建联仍 user-confirm 单条。
+- ✅ **不**新增运行时 / chat 引擎：复用 `DeviceAgentLoop` + ai_chat（§15.0）。
+- ⚠ sunset 信号沿用 §14.4；若 `propose_merge` 误合并噪音 > 真信号 3 倍且阈值收敛不住，按 §12 回滚去重工具。
