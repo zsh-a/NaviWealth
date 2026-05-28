@@ -11,6 +11,7 @@ import '../features/auth/presentation/login_page.dart';
 import '../features/auth/presentation/onboarding_page.dart';
 import '../features/finance/composition/finance_routes.dart';
 import '../features/health/composition/health_routes.dart';
+import '../features/knowledge/composition/knowledge_routes.dart';
 import '../features/settings/backup/backup_page.dart';
 import '../features/settings/fx_rates/fx_rates_page.dart';
 import '../features/settings/log_viewer_page.dart';
@@ -96,6 +97,7 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
         routes: [
           financeShellRoute(),
           healthShellRoute(),
+          knowledgeShellRoute(),
         ],
       ),
     ],

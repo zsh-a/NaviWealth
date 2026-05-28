@@ -18,18 +18,21 @@ library;
 /// invite premature UI / sync wiring.
 enum DomainScope {
   finance,
-  health;
+  health,
+  knowledge;
 
   /// Wire / storage form. Matches the JWT `domains` claim value and
   /// the row-family prefix `<scope>:`.
   String get wire => switch (this) {
     DomainScope.finance => 'finance',
     DomainScope.health => 'health',
+    DomainScope.knowledge => 'knowledge',
   };
 
   static DomainScope? tryParse(String value) => switch (value) {
     'finance' => DomainScope.finance,
     'health' => DomainScope.health,
+    'knowledge' => DomainScope.knowledge,
     _ => null,
   };
 }

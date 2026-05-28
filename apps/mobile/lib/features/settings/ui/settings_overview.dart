@@ -825,6 +825,8 @@ class _DomainsSection extends ConsumerWidget {
 
     final healthEnabled =
         optIns?.contains(DomainScope.health) ?? false;
+    final knowledgeEnabled =
+        optIns?.contains(DomainScope.knowledge) ?? false;
 
     return Column(
       children: [
@@ -867,6 +869,29 @@ class _DomainsSection extends ConsumerWidget {
           const _MorningBriefingRunRow(),
           _SectionDivider(),
           const _MorningBriefingHourRow(),
+        ],
+        _SectionDivider(),
+        InlineSwitchRow(
+          icon: FLucideIcons.brain,
+          label: 'KnowledgeOS',
+          subtitle: knowledgeEnabled
+              ? '预览中 — Inbox/Library/Review + AI tools + Memory 索引已启用'
+              : '预览版 — 个人决策与认知演化记忆库 (Decision Log / Recall / Review)',
+          value: knowledgeEnabled,
+          onChanged: (v) {
+            ref
+                .read(auth_providers.domainOptInsProvider.notifier)
+                .setEnabled(DomainScope.knowledge, v);
+          },
+        ),
+        if (knowledgeEnabled) ...[
+          _SectionDivider(),
+          InlineLinkRow(
+            icon: FLucideIcons.inbox,
+            label: 'KnowledgeOS · Inbox',
+            subtitle: '捕获笔记 / 写决策 / 查看 Library 与 Review',
+            onTap: () => context.goNamed(AppRouteNames.knowledgeInbox),
+          ),
         ],
       ],
     );

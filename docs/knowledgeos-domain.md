@@ -1,13 +1,12 @@
-# KnowledgeOS 域 SSOT（草案 — 未触发）
+# KnowledgeOS 域 SSOT
 
-> **Status**: 未触发（2026-05-27）。本文档是 **触发前的 scope sketch**，**不进开发计划、不参与排期、不允许提前实现**。
+> **Status**: **已实现 — 用户显式 override 落地（2026-05-28）**。原 2026-05-27 版本标记 "未触发 + 不允许提前实现"；用户在 §10 触发条件 0/5 成立、§12 反规划条款仍在的前提下，明确授权按 §3-§9 全量实现。
 >
-> 上位文档：`lifeos-architecture-northstar.md`（§1.8 + §4）/ `lifeos-shell.md`（shell 复用面）/ `lifeos-decision-2026-05-24.md`（Phase D 启动 ADR，明确列 KnowledgeOS 为未触发域）。
+> 历史 Status 行（2026-05-27）：未触发；触发前置为 HealthOS D-2 稳定 dogfood ≥ 6 个月 + §10 全部成立 + 单独 ADR。保留 §10 / §12 作为**回滚契约**：如果 dogfood 6 个月后发现 KnowledgeOS 已偏离 §0 定位，按 §8 反目标逐项 sunset。
 >
-> 触发前置：**HealthOS（D-2）稳定 dogfood ≥ 6 个月** + 下方 §10 触发条件全部成立 + 单独 ADR 通过。在那之前本文档只用于：
-> - 让 shell 演进时不至于把未来 KnowledgeOS 的路堵死
-> - 用户每次提 "知识系统怎么做" 时有一份共识可对齐
-> - 避免在 Memory Layer / Finance / Health 域里偷偷长出 "其实是 KnowledgeOS" 的代码
+> 实现进度 / TODO 见 §14（2026-05-28 落地快照）。
+>
+> 上位文档：`lifeos-architecture-northstar.md`（§1.8 + §4）/ `lifeos-shell.md`（shell 复用面）/ `lifeos-decision-2026-05-24.md`（Phase D 启动 ADR）。
 
 ---
 
@@ -283,11 +282,13 @@ class KnowledgeExperiments extends Table with SyncableTable {
 
 ## 12. 反规划条款（自我约束）
 
-- ❌ 不写 "KnowledgeOS Phase 0–N" 任务列表（northstar §1.8）
-- ❌ 不在 `features/` 下提前创建 `knowledge/` 空目录（northstar §1.1 / roadmap-next §6.1）
-- ❌ 不在 `core/ai/contracts/` 加任何 knowledge-specific 字段（northstar §2.5）
-- ❌ 不为本文档写 detail 子文档（`knowledgeos-*.md`）；触发 ADR 通过后再拆
-- ❌ 本文档目标长度：**< 300 行**（当前在限内）。改本文档前自问：是不是触发条件 §10 真的有变化？只是想"完善设计"不算
+> **2026-05-28 override note**: 用户显式授权 override，下列前 2 条已经被打破（`features/knowledge/` 目录已存在 + 实现已落地）。保留这一节的目的是**回滚契约**——如果未来要 sunset，按这里逐条反向执行；以及**防扩**——下列其余条款仍生效，新增工作前对照核对。
+
+- ❌ ~~不写 "KnowledgeOS Phase 0–N" 任务列表~~ → §14 现在维护一个**已落地快照** + TODO，不是 Phase 0-N。新增条目前自问：是不是 dogfood 真发现该补，而不是"完善设计"
+- ❌ ~~不在 `features/` 下提前创建 `knowledge/` 空目录~~ → 已实现，目录非空。回滚 = 整目录删除 + 撤回 §11 enum 行
+- ❌ 不在 `core/ai/contracts/` 加任何 knowledge-specific 字段（northstar §2.5）— **仍生效**
+- ❌ 不为本文档写 detail 子文档（`knowledgeos-*.md`）；先 dogfood 再拆 — **仍生效**
+- ❌ 本文档目标长度：**< 400 行**（override 后含 §14 落地快照）。改本文档前自问：是不是 dogfood 真发现需要改，而不是"完善设计"
 
 ---
 
@@ -296,3 +297,87 @@ class KnowledgeExperiments extends Table with SyncableTable {
 > KnowledgeOS = 面向长期生活决策的 AI-native 第二大脑——记忆、整理、**质疑**、复盘、辅助决策；长期沉淀形成 **Personal Cognitive Infrastructure**：你的认知模型本身。
 
 只有当 Memory Layer + Agent + 跨域 shell 都已被 HealthOS 充分压测后，让这个愿景**少写代码就能成真**，KnowledgeOS 才值得做。在那之前最大价值是**给 shell 演进当北极星**——任何 shell 决策不能堵死本文档复用路径。
+
+---
+
+## 14. 实现进度 / TODO（2026-05-28 override 落地快照）
+
+> 本节是**已落地状态 + 未完成条目**的现实快照，不是 Phase 0-N 任务列表（见 §12 注）。新增条目前先问：dogfood 是否真发现需要？
+
+### 14.1 已落地（MVP 闭环）
+
+**Shell / Schema**
+- ✅ `DomainScope.knowledge` enum (`core/auth/domain_scope.dart`)
+- ✅ Sync v2 row family `know:` 前缀注册（`core/sync/domain_prefix.dart` + `kSyncableTables`）
+- ✅ Schema v18→v19 + 6 张 Drift 表（`core/persistence/knowledge_tables.dart`）：notes / principles / assumptions / decisions / concepts / experiments；全部 SyncableTable，含索引
+- ✅ `KnowledgeRepository`（`features/knowledge/data/knowledge_repository.dart`）：6 类对象 CRUD + status 过滤 + due-review query
+
+**AI tools**（`features/knowledge_ai_tools.dart` → `kKnowledgeDeviceTools`）
+- ✅ `recall_decision`、`list_open_assumptions`、`list_due_reviews`、`search_notes`、`summarize_topic_evolution`
+- ✅ `propose_concept_link`（写 tool → ProposalEnvelope，§4 行为契约）
+- ✅ 通过 `deviceToolsProvider` 在 bootstrap 拼入，gated on `domainOptInsProvider.contains(DomainScope.knowledge)`
+
+**Agents**（`features/knowledge/agents/`，复用 shell §7.3）
+- ✅ `ReviewAgent`（每周日 09:00 local）
+- ✅ `AssumptionAgent`（30d cadence，扫 > 90d 未校验 active 假设）
+- ✅ `ContradictionAgent`（每 6h，principle mismatch + assumption invalidation 启发式）
+
+**Memory Layer 接入**（§3 "写一份，索引两次"）
+- ✅ `KnowledgeDecisionMemoryIndexer`：Decision → `kind='episodic'` Memory，跟 trade journal indexer 同模式；接入 `memoryLayerBootstrapProvider`
+- ✅ Agent 输出 → `kind='episodic'` / `'semantic'` Memory（Review / Assumption / Contradiction）
+
+**IA Shell**（§5 Option B dock，与 HealthOS 同模式）
+- ✅ 3 tabs：Inbox / Library / Review (`/knowledge`, `/knowledge/library`, `/knowledge/review`)
+- ✅ `knowledgeDomainShell()` + `knowledgeShellRoute()`，注入 router 顶层 ShellRoute
+- ✅ Settings → Domains 加 KnowledgeOS 开关 + Inbox 深链
+- ✅ 全 Forui 实现（无 Material 组件依赖）；New Note 含 Edit/Preview toggle（用 `AiMarkdown` 渲染）
+
+**Cross-domain hooks**（§6）
+- ✅ `knowledgeChatRailContentProvider`：projects 最近 3 条 Decision 进 AI chat rail
+
+### 14.2 待办（按价值 / 紧急度排序）
+
+**P0 — 影响 MVP 可用性**
+- [ ] **Inbox quick capture pipeline**：§5 列出 share-intent / 语音 / 粘贴 / AI chat 片段，目前只有手写 New Note。share-intent 可直接复用 `features/ingest/data/share_intent_service.dart`
+- [ ] **Decision 创建表单**：当前只有 Note 有写入 UI；Decision 是最高优先级 affordance（§1），必须能在 Library Decisions tab 里 `+ New decision`。Principles / Assumptions / Experiments / Concepts 也需要
+- [ ] **Library detail pages**：列表项现在不可点击；至少 Decision 需要 detail view（含 supersede chain / referenced assumptions）
+
+**P1 — 影响 §0 定位的关键功能**
+- [ ] **`search_notes` 接入 hybridScore**：§4 spec 要 "全文 + 语义混合"，MVP 是 substring 扫。Notes Memory indexer + 接 Memory Layer `hybridScore` 之后启用
+- [ ] **Notes / Principles / Assumptions / Experiments / Concepts Memory indexer**：当前只有 Decision 被 mirror 进 Memory；其它类型仍只在 Drift 表中，跨域 Recall 召不回
+- [ ] **`Decision.context_snapshot_json` 自动抓拍**：列存在但未自动写入。需要在 `upsertDecision` 路径下读最近 Finance / Health events 拼 snapshot（不阻塞写）
+- [ ] **AssumptionAgent 事件触发**：§7 spec 说 "月初 + **任何决策被新事件触及时**"。当前只有月初 cadence，事件触发需要 `EventStore` listener
+- [ ] **ContradictionAgent cosine + LLM judge 路径**：MVP 是纯启发式 token 匹配，§7 spec 要语义比对。等 Knowledge Memory 全量化后切换
+
+**P2 — Dogfood 改进**
+- [ ] **Review tab "recent agent runs"**：§5 spec 列出但未渲染；需要 Agent 历史读 API
+- [ ] **`lifeos.knowledge.review` 通知 channel**：§7 ReviewAgent 表里有提到，目前只写 Memory 没发通知（HealthOS 有 morning briefing 通知的实现可参考）
+- [ ] **`ai_context_summary` override**：§6 列了，但现有 slot (`AiContextSummary`) 是 Finance-shaped；要么扩 slot 形态，要么换成独立的 prompt 拼接 seam
+- [ ] **`propose_concept_link` 真正落地路径**：write tool 已经返回 ProposalEnvelope，但 `ProposalApplier` 还没认这个 kind。需要在 `featureProposalApplier` 里加 `knowledge_concept_link` 分支
+- [ ] **Knowledge opt-out 清理**：关闭 opt-in 时 indexer 停止订阅，但已写入的 episodic memories 不清。需要明确策略（保留 vs prune），shell §5 应该有相关约定
+
+**P3 — 工程债**
+- [ ] **测试**：`test/features/knowledge/` 目录尚未建立。至少需要 repository 单测 + AI tool 单测 + agent 单测（参考 `health/test/`）
+- [ ] **l10n**：所有 UI 文案当前是字面量（中/英混排）；触发 dogfood feedback 收敛后入 `.arb`
+- [ ] **Sync wire prefix 修复**：`SyncEngine._toRowChange` 硬编码 `prefixFinanceTable(table)`；KnowledgeOS 表上车后 outbound 仍走 `fin:` 前缀。HealthOS 也踩这个雷（health_metrics 目前本地 only）。需要按表名查 domain → 选 prefix 的 dispatch
+- [ ] **`kPrimaryTabPaths` / dock 可视性**：dock 现在 3 域全开会很挤；need responsive collapse 策略（HealthOS D-2.3b 的 ≥ 600 px 桌面 dock 已经实现，移动端 chevron 也是）
+- [ ] **图标**：当前 `Icons.psychology` (Material) 还在 domain shell；HealthOS 同样用 Material icon glyph，convention 一致但 long-term 应该用 `FLucideIcons.brain` 等
+- [ ] **AppFlowy/Quill 编辑器调研**：§8 反目标明确拒绝 block editor，但 dogfood 可能发现 "Markdown 也太裸了"。如果出现这种声音，先按 `AiMarkdown` 渲染面加 toolbar（list / quote / code），**不**引入 block tree
+
+### 14.3 显式不做（防 "AI Notion" 漂移）
+
+下列条目 dogfood 中可能"想加但不应该加"，写在这里是为了后人对照 §8 反目标时省一次决策：
+
+- ❌ flutter_quill / appflowy_editor / super_editor（block editor → §8 第一条）
+- ❌ Notion / Obsidian / Logseq 导入（§1 不包含 + §8 第 9 条）
+- ❌ 知识图谱可视化（force-directed graph → §1 不包含 + §8 第 8 条；§8 第 9 条说 > 100k 节点再说）
+- ❌ 自动双链 / backlinks 生成（§8 第 4 条；坚持 `[[concept]]` 软链 + AI 建联 user-confirm）
+- ❌ RSS / Read Later 抓取 pipeline（§1 KnowledgeOS 是消化层不是获取层）
+- ❌ AI 自动生成 Note / Decision 内容（§4 / §8 第 7 条；AI 只整理、关联、质疑）
+
+### 14.4 sunset 信号（命中即按 §12 回滚）
+
+- 用户停止 dogfood ≥ 30 天且无重启意图
+- ContradictionAgent / ReviewAgent 累计 false positive 噪音 > 真信号 3 倍且无法靠阈值收敛
+- KnowledgeOS-only 代码持续增长但跨域 Recall 命中率 < 5%（说明本质是 silo，违背 §1）
+- 任何一条 §8 反目标被破（即使是 "顺手加一下"），但 dogfood 又确认有价值——这是要立 ADR 而不是默默扩

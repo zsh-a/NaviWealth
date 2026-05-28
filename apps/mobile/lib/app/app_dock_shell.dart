@@ -18,8 +18,9 @@ import 'route_paths.dart';
 /// Lives one layer above each domain's `StatefulShellRoute`:
 ///
 ///   ShellRoute (this)
-///   ├── financeShellRoute  (4 branches → DomainTabsShell)
-///   └── healthShellRoute   (3 branches → DomainTabsShell)
+///   ├── financeShellRoute    (4 branches → DomainTabsShell)
+///   ├── healthShellRoute     (3 branches → DomainTabsShell)
+///   └── knowledgeShellRoute  (3 branches → DomainTabsShell)
 ///
 /// Responsibilities the inner per-domain shells should *not* duplicate:
 ///   * share-intent lifecycle (mounts once, survives domain switches)

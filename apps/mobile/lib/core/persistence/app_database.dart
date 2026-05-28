@@ -8,6 +8,7 @@ import 'connection.dart';
 import 'converters.dart';
 import 'event_log_tables.dart';
 import 'health_tables.dart';
+import 'knowledge_tables.dart';
 import 'local_only_tables.dart';
 import 'tables.dart';
 
@@ -52,6 +53,14 @@ const String defaultDbFileName = 'naviwealth.db';
     SecuritiesCatalogMeta,
     // HealthOS (D-2.1): single wide-flat table keyed by `kind`.
     HealthMetrics,
+    // KnowledgeOS (`docs/knowledgeos-domain.md` §9): six typed tables —
+    // Memory itself reuses the cross-domain `memories` table per §3.
+    KnowledgeNotes,
+    KnowledgePrinciples,
+    KnowledgeAssumptions,
+    KnowledgeDecisions,
+    KnowledgeConcepts,
+    KnowledgeExperiments,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -61,7 +70,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 19;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -251,6 +260,23 @@ class AppDatabase extends _$AppDatabase {
           'ON health_metrics(owner_user_id, hlc)',
         );
       }
+      // v18 → v19: KnowledgeOS domain skeleton
+      // (`docs/knowledgeos-domain.md` §9). Six typed tables — Memory
+      // itself reuses the cross-domain `memories` table per §3, so no
+      // new Memory schema. Gated at runtime by the Knowledge opt-in;
+      // creating the tables unconditionally is fine because they stay
+      // empty until the first write.
+      if (from < 19) {
+        await m.createTable(knowledgeNotes);
+        await m.createTable(knowledgePrinciples);
+        await m.createTable(knowledgeAssumptions);
+        await m.createTable(knowledgeDecisions);
+        await m.createTable(knowledgeConcepts);
+        await m.createTable(knowledgeExperiments);
+        for (final stmt in knowledgeIndexStmts) {
+          await customStatement(stmt);
+        }
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -353,6 +379,7 @@ Future<void> _createIndexes(AppDatabase db) async {
         'ON health_metrics(owner_user_id, hlc)',
     ..._securitiesAssetIndexStmts,
     ..._journalEntryIndexStmts,
+    ...knowledgeIndexStmts,
   ];
   for (final stmt in stmts) {
     await db.customStatement(stmt);

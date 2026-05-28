@@ -18,11 +18,15 @@ const String kFinanceDomainPrefix = 'fin:';
 /// Reserved for Phase D-2 HealthOS rows.
 const String kHealthDomainPrefix = 'health:';
 
+/// KnowledgeOS rows (`docs/knowledgeos-domain.md` §2, §11).
+const String kKnowledgeDomainPrefix = 'know:';
+
 /// All prefixes the applier is willing to accept inbound. Adding a
 /// prefix here is a Phase D milestone, not a hotfix.
 const Set<String> kSyncDomainPrefixes = <String>{
   kFinanceDomainPrefix,
   kHealthDomainPrefix,
+  kKnowledgeDomainPrefix,
 };
 
 /// Add the FinanceOS prefix to a Drift table name. Every Finance

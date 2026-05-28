@@ -55,6 +55,10 @@ import '../features/health/composition/health_domain_shell.dart';
 import '../features/health/data/morning_briefing_preferences.dart';
 import '../features/health_ai_tools.dart';
 import '../features/home/composition/finance_chat_rail_provider.dart';
+import '../features/knowledge/agents/providers.dart'
+    as knowledge_agent_providers;
+import '../features/knowledge/composition/knowledge_domain_shell.dart';
+import '../features/knowledge_ai_tools.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'memory_indexers_bootstrap.dart';
 import 'route_guard.dart';
@@ -150,10 +154,13 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       deviceToolsProvider.overrideWith((ref) {
         final optIns = ref.watch(core_auth.domainOptInsProvider).value;
         final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
+        final knowledgeEnabled =
+            optIns?.contains(DomainScope.knowledge) ?? false;
         return <DeviceTool>[
           ...kShellDeviceTools,
           ...kFinanceDeviceTools,
           if (healthEnabled) ...kHealthDeviceTools,
+          if (knowledgeEnabled) ...kKnowledgeDeviceTools,
         ];
       }),
       // D-2.5 (`docs/lifeos-shell.md` §7.3 + `docs/healthos-domain.md`
@@ -163,8 +170,12 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       agentRegistryProvider.overrideWith((ref) {
         final optIns = ref.watch(core_auth.domainOptInsProvider).value;
         final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
+        final knowledgeEnabled =
+            optIns?.contains(DomainScope.knowledge) ?? false;
         return <Agent>[
           if (healthEnabled) ref.watch(morningBriefingAgentProvider),
+          if (knowledgeEnabled)
+            ...ref.watch(knowledge_agent_providers.knowledgeAgentsProvider),
         ];
       }),
       // D-2.5b — wire the Morning Briefing with the LLM synthesizer
@@ -224,9 +235,12 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         final l10n = lookupAppLocalizations(const Locale('en'));
         final optIns = ref.watch(core_auth.domainOptInsProvider).value;
         final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
+        final knowledgeEnabled =
+            optIns?.contains(DomainScope.knowledge) ?? false;
         return <DomainShellSpec>[
           financeDomainShell(l10n),
           if (healthEnabled) healthDomainShell(l10n),
+          if (knowledgeEnabled) knowledgeDomainShell(l10n),
         ];
       }),
       // D-1.7c (`docs/lifeos-shell.md` §6.6): swap in the Rust

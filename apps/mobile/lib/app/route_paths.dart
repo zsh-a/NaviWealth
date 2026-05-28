@@ -48,6 +48,12 @@ abstract final class AppRoutes {
   static const healthTrend = '/health/trend';
   static const healthPlan = '/health/plan';
 
+  // ── KnowledgeOS (`docs/knowledgeos-domain.md` §5) — gated by domain
+  // opt-in. 3 tabs: Inbox / Library / Review.
+  static const knowledgeInbox = '/knowledge';
+  static const knowledgeLibrary = '/knowledge/library';
+  static const knowledgeReview = '/knowledge/review';
+
   // ── Global meta (not a tab) ────────────────────────────────────────────
   static const settings = '/settings';
 
@@ -189,6 +195,11 @@ abstract final class AppRouteNames {
   static const healthTrend = 'health-trend';
   static const healthPlan = 'health-plan';
 
+  // ── KnowledgeOS — gated by opt-in. 3 tabs per knowledgeos-domain.md §5.
+  static const knowledgeInbox = 'knowledge-inbox';
+  static const knowledgeLibrary = 'knowledge-library';
+  static const knowledgeReview = 'knowledge-review';
+
   // ── Plan ────────────────────────────────────────────────────────────────
   static const plan = 'plan';
   static const planFire = 'plan-fire';
@@ -232,6 +243,10 @@ const List<String> kPrimaryTabPaths = <String>[
   AppRoutes.healthToday,
   AppRoutes.healthTrend,
   AppRoutes.healthPlan,
+  // KnowledgeOS
+  AppRoutes.knowledgeInbox,
+  AppRoutes.knowledgeLibrary,
+  AppRoutes.knowledgeReview,
 ];
 
 const String kCashflowPath = AppRoutes.cashflow;
