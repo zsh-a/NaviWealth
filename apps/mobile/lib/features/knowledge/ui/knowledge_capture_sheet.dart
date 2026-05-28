@@ -333,19 +333,23 @@ class _ClassifyingBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
+    // FProgress is a linear track that wants `constraints.maxWidth` from
+    // its parent (no intrinsic horizontal size). Putting it in a Row
+    // would hand it unbounded width → layout fails inside
+    // AppSheet's AnimatedSize. Column with `stretch` keeps width
+    // bounded by the sheet.
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const FProgress(),
-          const SizedBox(width: AppSpacing.s12),
-          Flexible(
-            child: Text(
-              '保留为 Note 也行 — 可关闭此面板',
-              style: typography.sm
-                  .copyWith(color: colors.mutedForeground),
-            ),
+          const SizedBox(height: AppSpacing.s12),
+          Text(
+            '保留为 Note 也行 — 可关闭此面板',
+            textAlign: TextAlign.center,
+            style: typography.sm.copyWith(color: colors.mutedForeground),
           ),
         ],
       ),
