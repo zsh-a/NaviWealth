@@ -10,7 +10,6 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../core/ai/agents/agent.dart';
 import '../core/ai/agents/agent_registry.dart';
 import '../core/ai/composition/ai_context_summary.dart';
 import '../core/ai/composition/chat_rail_provider.dart';
@@ -25,10 +24,10 @@ import '../core/ai/local/embedding/model_manifest.dart';
 import '../core/ai/local/embedding/rust_gemma_embedder.dart';
 import '../core/ai/local/memory/providers.dart' as memory_providers;
 import '../core/ai/runtime/device/tools/device_tool.dart';
-import '../core/auth/domain_scope.dart';
 import '../core/auth/providers.dart' as core_auth;
 import '../core/config/app_config.dart';
 import '../core/format/formatters.dart';
+import '../core/lifeos/domain_pack.dart';
 import '../core/logging/app_logger.dart';
 import '../core/logging/crash_reporter.dart';
 import '../core/logging/logging_crash_reporter.dart';
@@ -48,19 +47,13 @@ import '../features/finance/composition/finance_portfolio_snapshot.dart';
 import '../features/finance/composition/finance_proposal_applier.dart';
 import '../features/finance/data/market/sync/price_sync_providers.dart';
 import '../features/finance_ai_tools.dart';
-import '../features/finance_domain_shell.dart';
 import '../features/health/agents/briefing_synthesizer.dart';
 import '../features/health/agents/morning_briefing_agent.dart';
 import '../features/health/agents/providers.dart' as health_agent_providers;
-import '../features/health/composition/health_domain_shell.dart';
 import '../features/health/data/morning_briefing_preferences.dart';
-import '../features/health_ai_tools.dart';
 import '../features/home/composition/finance_chat_rail_provider.dart';
-import '../features/knowledge/agents/providers.dart'
-    as knowledge_agent_providers;
-import '../features/knowledge/composition/knowledge_domain_shell.dart';
-import '../features/knowledge_ai_tools.dart';
 import '../l10n/gen/app_localizations.dart';
+import 'domain_packs.dart';
 import 'memory_indexers_bootstrap.dart';
 import 'route_guard.dart';
 
@@ -147,21 +140,20 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       chatRailContentSelectorProvider.overrideWith(
         (ref) => ref.watch(financeChatRailContentSelectorProvider),
       ),
+      // LifeOS domain inventory (`docs/lifeos-shell.md` §4): one
+      // [DomainPack] per known domain. The four aggregators below
+      // derive from `activeDomainPacksProvider` — adding a new domain
+      // means landing its barrel + shell + agents under `features/`
+      // and appending one line to `kAllDomainPacks`.
+      domainPackRegistryProvider.overrideWith((ref) => kAllDomainPacks),
       // D-1.2 (`docs/lifeos-shell.md` §7.1) + D-2.4
-      // (`docs/healthos-domain.md` §4): the device tool registry is
-      // composed from each active domain's tool list. Shell + Finance
-      // always ship; HealthOS tools ship only when the user has opted
-      // into the Health domain (`domainOptInsProvider`).
+      // (`docs/healthos-domain.md` §4): device tool registry = shell
+      // tools (always-on) + each active domain's tool list.
       deviceToolsProvider.overrideWith((ref) {
-        final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-        final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
-        final knowledgeEnabled =
-            optIns?.contains(DomainScope.knowledge) ?? false;
+        final packs = ref.watch(activeDomainPacksProvider);
         return <DeviceTool>[
           ...kShellDeviceTools,
-          ...kFinanceDeviceTools,
-          if (healthEnabled) ...kHealthDeviceTools,
-          if (knowledgeEnabled) ...kKnowledgeDeviceTools,
+          for (final p in packs) ...p.deviceTools,
         ];
       }),
       // Domain-aware system prompt (`docs/lifeos-shell.md` §4): the
@@ -169,32 +161,22 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       // active domain contributes its own block in lockstep with its
       // tool list above so the model never sees instructions for tools
       // it doesn't have.
-      systemPromptBlocksProvider.overrideWith((ref) {
-        final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-        final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
-        final knowledgeEnabled =
-            optIns?.contains(DomainScope.knowledge) ?? false;
-        return <String>[
-          kFinanceSystemPromptBlock,
-          if (healthEnabled) kHealthSystemPromptBlock,
-          if (knowledgeEnabled) kKnowledgeSystemPromptBlock,
-        ];
-      }),
+      systemPromptBlocksProvider.overrideWith(
+        (ref) => [
+          for (final p in ref.watch(activeDomainPacksProvider))
+            if (p.systemPromptBlock.isNotEmpty) p.systemPromptBlock,
+        ],
+      ),
       // D-2.5 (`docs/lifeos-shell.md` §7.3 + `docs/healthos-domain.md`
-      // §8): register agents. The Morning Briefing agent ships only
-      // when Health is opted-in — it reads health events and would be
-      // a no-op without them.
-      agentRegistryProvider.overrideWith((ref) {
-        final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-        final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
-        final knowledgeEnabled =
-            optIns?.contains(DomainScope.knowledge) ?? false;
-        return <Agent>[
-          if (healthEnabled) ref.watch(morningBriefingAgentProvider),
-          if (knowledgeEnabled)
-            ...ref.watch(knowledge_agent_providers.knowledgeAgentsProvider),
-        ];
-      }),
+      // §8): each pack contributes zero or more agents via its
+      // `agentBuilder`; the builders run with `ref` so agents stay
+      // composition-blind.
+      agentRegistryProvider.overrideWith(
+        (ref) => [
+          for (final p in ref.watch(activeDomainPacksProvider))
+            if (p.agentBuilder != null) ...p.agentBuilder!(ref),
+        ],
+      ),
       // D-2.5b — wire the Morning Briefing with the LLM synthesizer
       // (falling back to programmatic when no device LLM is configured)
       // and the local notification service so each successful run can
@@ -239,10 +221,10 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       portfolioSnapshotReaderProvider.overrideWith(
         (ref) => ref.watch(financePortfolioSnapshotReaderProvider),
       ),
-      // D-1.8 + D-2.3 (`docs/lifeos-shell.md` §3): register the
-      // FinanceOS shell spec; append HealthOS when the user has opted
-      // into the Health domain. The dock visibility flips on as soon
-      // as a second spec lands (see `domainDockVisibleProvider`).
+      // D-1.8 + D-2.3 (`docs/lifeos-shell.md` §3): each active pack
+      // contributes its localised shell spec. The dock visibility
+      // flips on as soon as a second spec lands (see
+      // `domainDockVisibleProvider`).
       activeDomainShellsProvider.overrideWith((ref) {
         // The spec depends on AppLocalizations for labels, which is
         // resolved per-render inside the shell, not at container
@@ -250,14 +232,9 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         // (English) locale here — the active locale is re-applied
         // when the widget tree rebuilds via Riverpod's invalidation.
         final l10n = lookupAppLocalizations(const Locale('en'));
-        final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-        final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
-        final knowledgeEnabled =
-            optIns?.contains(DomainScope.knowledge) ?? false;
-        return <DomainShellSpec>[
-          financeDomainShell(l10n),
-          if (healthEnabled) healthDomainShell(l10n),
-          if (knowledgeEnabled) knowledgeDomainShell(l10n),
+        return [
+          for (final p in ref.watch(activeDomainPacksProvider))
+            if (p.shellSpecBuilder != null) p.shellSpecBuilder!(l10n),
         ];
       }),
       // D-1.7c (`docs/lifeos-shell.md` §6.6): swap in the Rust
