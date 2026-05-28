@@ -130,7 +130,7 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
       final classifier = widget.ref.read(captureClassifierProvider);
       final classification = await classifier.classify(text: text);
       if (!mounted) return;
-      if (classification.isUpgrade) {
+      if (classification.hasSuggestion) {
         setState(() {
           _suggestion = classification;
           _stage = _CaptureStage.suggesting;
@@ -157,17 +157,25 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
       final stamper =
           await widget.ref.read(mutationStamperProvider.future);
 
+      // Resolved title / body that downstream writes use. When the LLM
+      // produced a polish, that's the authoritative version going
+      // forward — the raw input was always the temp lossy form.
+      final resolvedTitle = suggestion.polishedTitle ?? note.title;
+      final resolvedBody = suggestion.polishedBody ?? note.bodyMd;
+
       switch (suggestion.kind) {
         case CaptureKind.routine:
-          // Full structured promotion: write the Routine row, then
-          // soft-delete the temp Note. Same stamp domain — both
-          // writes are the same logical "promotion" event.
+          // Routine promotion: write the structured row, then
+          // soft-delete the temp Note. Polished title/body don't
+          // travel onto a Routine (its surface is `statement`), but
+          // we still tombstone with whatever the Note last held — the
+          // user may have already saved a polish via a separate accept.
           final stamp = await stamper.stamp();
           final intervalDays = suggestion.intervalDays ?? 180;
           await repo.upsertRoutine(
             KnowledgeRoutine(
               id: kKnowledgeUuid.v4(),
-              statement: suggestion.statement ?? note.title,
+              statement: suggestion.statement ?? resolvedTitle,
               intervalDays: intervalDays,
               nextDueAt: stamp.now.add(Duration(days: intervalDays)),
               scope: suggestion.scope ?? '*',
@@ -205,13 +213,10 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
         case CaptureKind.assumption:
         case CaptureKind.concept:
         case CaptureKind.experiment:
-          // Tag-only promotion (no structured writer for these kinds
-          // yet from the Capture path). Mirrors
-          // `propose_inbox_classification`'s shape: the Note stays as
-          // source of truth, gains `kind:<x>_candidate` + optional
-          // `scope:<...>` tags, and the user can later promote from
-          // the Library typed FAB. This means the AI suggestion is
-          // never lossy — the tag survives to the Review tab.
+          // Tag-only promotion: gain `kind:<x>_candidate` + optional
+          // `scope:<...>` tags. If the LLM produced polished text we
+          // write it in the same stamp — applying polish and category
+          // tag is one logical "I accept the AI's read".
           final stamp = await stamper.stamp();
           final tagSet = note.tags.toSet();
           tagSet.add('kind:${suggestion.kind.wire}_candidate');
@@ -221,8 +226,8 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
           await repo.upsertNote(
             KnowledgeNote(
               id: note.id,
-              title: note.title,
-              bodyMd: note.bodyMd,
+              title: resolvedTitle,
+              bodyMd: resolvedBody,
               sourceUrl: note.sourceUrl,
               tags: tagSet.toList(growable: false),
               projectTag: note.projectTag,
@@ -236,10 +241,28 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
             ),
           );
         case CaptureKind.note:
-          // Defensive: classifier said "note" but `isUpgrade` already
-          // routed us here, so this is unreachable. No-op keeps the
-          // sheet from sticking on `applying` if it ever does.
-          break;
+          // Polish-only path: classifier said "note" but produced a
+          // rewrite worth showing. Apply just the polish in place.
+          if (suggestion.hasPolish) {
+            final stamp = await stamper.stamp();
+            await repo.upsertNote(
+              KnowledgeNote(
+                id: note.id,
+                title: resolvedTitle,
+                bodyMd: resolvedBody,
+                sourceUrl: note.sourceUrl,
+                tags: note.tags,
+                projectTag: note.projectTag,
+                createdAt: note.createdAt,
+                sync: SyncMeta(
+                  ownerUserId: stamp.ownerUserId,
+                  updatedAt: stamp.now,
+                  updatedByDevice: stamp.deviceId,
+                  hlc: stamp.hlc,
+                ),
+              ),
+            );
+          }
       }
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
@@ -293,6 +316,8 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
         _CaptureStage.applying =>
           _SuggestionBody(
             suggestion: _suggestion!,
+            originalTitle: _savedNote?.title ?? '',
+            originalBody: _savedNote?.bodyMd ?? '',
             applying: stage == _CaptureStage.applying,
             onAccept: _acceptUpgrade,
             onDismiss: _dismissSuggestion,
@@ -363,14 +388,170 @@ class _ComposeBody extends StatelessWidget {
 class _SuggestionBody extends StatelessWidget {
   const _SuggestionBody({
     required this.suggestion,
+    required this.originalTitle,
+    required this.originalBody,
     required this.applying,
     required this.onAccept,
     required this.onDismiss,
   });
   final CaptureClassification suggestion;
+  final String originalTitle;
+  final String originalBody;
   final bool applying;
   final VoidCallback onAccept;
   final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final acceptLabel = applying
+        ? '应用中…'
+        : (suggestion.isUpgrade ? '✓ 应用建议' : '✓ 应用润色');
+    final dismissLabel = suggestion.isUpgrade ? '保留原文' : '保留原文';
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (suggestion.hasPolish)
+          _PolishPanel(
+            suggestion: suggestion,
+            originalTitle: originalTitle,
+            originalBody: originalBody,
+          ),
+        if (suggestion.hasPolish && suggestion.isUpgrade)
+          const SizedBox(height: AppSpacing.s8),
+        if (suggestion.isUpgrade) _UpgradePanel(suggestion: suggestion),
+        if (!suggestion.isUpgrade && suggestion.hasPolish)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.s8),
+            child: Text(
+              'AI 判定 kind = note,只润色不升级。原因:${suggestion.reasonZh}',
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+            ),
+          ),
+        const SizedBox(height: AppSpacing.s12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FButton(
+              variant: FButtonVariant.outline,
+              onPress: applying ? null : onDismiss,
+              child: Text(dismissLabel),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            FButton(
+              onPress: applying ? null : onAccept,
+              child: Text(acceptLabel),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _PolishPanel extends StatelessWidget {
+  const _PolishPanel({
+    required this.suggestion,
+    required this.originalTitle,
+    required this.originalBody,
+  });
+  final CaptureClassification suggestion;
+  final String originalTitle;
+  final String originalBody;
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = context.theme.typography;
+    final colors = context.theme.colors;
+    final titleChanged = suggestion.polishedTitle != null &&
+        suggestion.polishedTitle != originalTitle;
+    final bodyChanged = suggestion.polishedBody != null &&
+        suggestion.polishedBody != originalBody;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      decoration: BoxDecoration(
+        color: colors.muted,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(FLucideIcons.wand, size: 14, color: colors.primary),
+              const SizedBox(width: AppSpacing.s4),
+              Text(
+                'AI 润色后的版本',
+                style: typography.sm
+                    .copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          if (titleChanged) ...[
+            _DiffRow(
+              label: '标题',
+              before: originalTitle.isEmpty ? '(空)' : originalTitle,
+              after: suggestion.polishedTitle!,
+            ),
+            if (bodyChanged) const SizedBox(height: AppSpacing.s8),
+          ],
+          if (bodyChanged)
+            _DiffRow(
+              label: '正文',
+              before: originalBody.isEmpty ? '(空)' : originalBody,
+              after: suggestion.polishedBody!,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DiffRow extends StatelessWidget {
+  const _DiffRow({
+    required this.label,
+    required this.before,
+    required this.after,
+  });
+  final String label;
+  final String before;
+  final String after;
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = context.theme.typography;
+    final colors = context.theme.colors;
+    String trim(String s) => s.length > 240 ? '${s.substring(0, 240)}…' : s;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: typography.xs
+              .copyWith(color: colors.mutedForeground, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          '原:${trim(before)}',
+          style: typography.sm.copyWith(color: colors.mutedForeground),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          '→ ${trim(after)}',
+          style: typography.sm.copyWith(color: colors.primary),
+        ),
+      ],
+    );
+  }
+}
+
+class _UpgradePanel extends StatelessWidget {
+  const _UpgradePanel({required this.suggestion});
+  final CaptureClassification suggestion;
 
   @override
   Widget build(BuildContext context) {
@@ -392,67 +573,39 @@ class _SuggestionBody extends StatelessWidget {
             'AI 会在到期前 7 天自动提醒。',
       _ => suggestion.reasonZh,
     };
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(AppSpacing.s12),
-          decoration: BoxDecoration(
-            color: colors.muted,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(color: colors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      decoration: BoxDecoration(
+        color: colors.muted,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Icon(
-                    FLucideIcons.sparkles,
-                    size: 14,
-                    color: colors.primary,
-                  ),
-                  const SizedBox(width: AppSpacing.s4),
-                  Text(
-                    headline,
-                    style: typography.sm
-                        .copyWith(fontWeight: FontWeight.w600),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s4),
+              Icon(FLucideIcons.sparkles, size: 14, color: colors.primary),
+              const SizedBox(width: AppSpacing.s4),
               Text(
-                detail,
-                style: typography.sm.copyWith(color: colors.mutedForeground),
-              ),
-              const SizedBox(height: AppSpacing.s4),
-              Text(
-                '原因:${suggestion.reasonZh} · 置信度 ${suggestion.confidence.toStringAsFixed(2)}',
-                style: typography.xs
-                    .copyWith(color: colors.mutedForeground),
+                headline,
+                style: typography.sm
+                    .copyWith(fontWeight: FontWeight.w600),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FButton(
-              variant: FButtonVariant.outline,
-              onPress: applying ? null : onDismiss,
-              child: const Text('保留为 Note'),
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            FButton(
-              onPress: applying ? null : onAccept,
-              child: Text(applying ? '应用中…' : '✓ 应用建议'),
-            ),
-          ],
-        ),
-      ],
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            detail,
+            style: typography.sm.copyWith(color: colors.mutedForeground),
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            '原因:${suggestion.reasonZh} · 置信度 ${suggestion.confidence.toStringAsFixed(2)}',
+            style: typography.xs.copyWith(color: colors.mutedForeground),
+          ),
+        ],
+      ),
     );
   }
 }
