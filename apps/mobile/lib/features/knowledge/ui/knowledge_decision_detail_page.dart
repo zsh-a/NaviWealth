@@ -15,6 +15,7 @@ import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../design_system/design_system.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '_widgets.dart';
 
 class KnowledgeDecisionDetailPage extends ConsumerWidget {
   const KnowledgeDecisionDetailPage({super.key, required this.decisionId});
@@ -129,7 +130,7 @@ class _BodyState extends ConsumerState<_Body> {
               ),
             ),
             const SizedBox(width: AppSpacing.s8),
-            _Badge(label: d.status.wire),
+            KnowledgeStatusBadge(label: d.status.wire),
           ],
         ),
         const SizedBox(height: AppSpacing.s4),
@@ -139,7 +140,7 @@ class _BodyState extends ConsumerState<_Body> {
           style: typography.xs.copyWith(color: colors.mutedForeground),
         ),
         const SizedBox(height: AppSpacing.s16),
-        _Section(title: 'Options', children: [
+        KnowledgeSection.group(title: 'Options', children: [
           for (final opt in d.options)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s4),
@@ -185,14 +186,14 @@ class _BodyState extends ConsumerState<_Body> {
         ]),
         if (d.rationaleMd.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
-          _Section(
+          KnowledgeSection.group(
             title: 'Rationale',
             children: [AiMarkdown(text: d.rationaleMd)],
           ),
         ],
         if (_principles.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
-          _Section(title: 'Principles 引用', children: [
+          KnowledgeSection.group(title: 'Principles 引用', children: [
             for (final p in _principles)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 2),
@@ -202,7 +203,7 @@ class _BodyState extends ConsumerState<_Body> {
         ],
         if (_assumptions.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
-          _Section(title: 'Assumptions 引用', children: [
+          KnowledgeSection.group(title: 'Assumptions 引用', children: [
             for (final a in _assumptions)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 2),
@@ -215,14 +216,14 @@ class _BodyState extends ConsumerState<_Body> {
         ],
         if (d.expectedOutcome != null && d.expectedOutcome!.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
-          _Section(
+          KnowledgeSection.group(
             title: 'Expected outcome',
             children: [Text(d.expectedOutcome!, style: typography.sm)],
           ),
         ],
         if (d.actualOutcomeMd != null && d.actualOutcomeMd!.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
-          _Section(
+          KnowledgeSection.group(
             title: 'Actual outcome',
             children: [AiMarkdown(text: d.actualOutcomeMd!)],
           ),
@@ -233,7 +234,7 @@ class _BodyState extends ConsumerState<_Body> {
         ],
         if (_chain.length > 1) ...[
           const SizedBox(height: AppSpacing.s12),
-          _Section(title: '认知演化链', children: [
+          KnowledgeSection.group(title: '认知演化链', children: [
             for (var i = 0; i < _chain.length; i++)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 2),
@@ -279,7 +280,7 @@ class _ContextSnapshotSection extends StatelessWidget {
     final health = (snapshot['recent_health_events'] as List?) ?? const [];
     final capturedAt = snapshot['captured_at'] as String?;
     final window = snapshot['window_days'];
-    return _Section(title: '当时的跨域状态', children: [
+    return KnowledgeSection.group(title: '当时的跨域状态', children: [
       if (capturedAt != null)
         Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.s4),
@@ -351,51 +352,3 @@ class _SnapshotRow extends StatelessWidget {
   }
 }
 
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.children});
-  final String title;
-  final List<Widget> children;
-  @override
-  Widget build(BuildContext context) {
-    final typography = context.theme.typography;
-    return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          ...children,
-        ],
-      ),
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge({required this.label});
-  final String label;
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        color: colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: colors.border),
-      ),
-      child: Text(
-        label,
-        style: context.theme.typography.xs
-            .copyWith(color: colors.mutedForeground),
-      ),
-    );
-  }
-}

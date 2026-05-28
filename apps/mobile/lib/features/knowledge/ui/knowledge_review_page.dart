@@ -13,6 +13,7 @@ import '../../../design_system/design_system.dart';
 import '../agents/assumption_agent.dart';
 import '../data/providers.dart';
 import '_ai_suggestions_card.dart';
+import '_widgets.dart';
 
 class KnowledgeReviewPage extends ConsumerWidget {
   const KnowledgeReviewPage({super.key});
@@ -49,7 +50,7 @@ class _DueReviewsCard extends ConsumerWidget {
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         return repoAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (e, _) => _CardShell(
+          error: (e, _) => KnowledgeSection.group(
             title: 'To-review decisions',
             children: [Text('加载失败:$e')],
           ),
@@ -63,7 +64,7 @@ class _DueReviewsCard extends ConsumerWidget {
                 final list = snap.data ?? const [];
                 final typography = context.theme.typography;
                 final colors = context.theme.colors;
-                return _CardShell(
+                return KnowledgeSection.group(
                   title: 'To-review decisions',
                   children: [
                     if (list.isEmpty)
@@ -138,7 +139,7 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                     .toList();
                 final typography = context.theme.typography;
                 final colors = context.theme.colors;
-                return _CardShell(
+                return KnowledgeSection.group(
                   title: 'Unverified assumptions',
                   children: [
                     if (stale.isEmpty)
@@ -168,26 +169,3 @@ class _StaleAssumptionsCard extends ConsumerWidget {
   }
 }
 
-class _CardShell extends StatelessWidget {
-  const _CardShell({required this.title, required this.children});
-  final String title;
-  final List<Widget> children;
-  @override
-  Widget build(BuildContext context) {
-    final typography = context.theme.typography;
-    return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: typography.md.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          ...children,
-        ],
-      ),
-    );
-  }
-}

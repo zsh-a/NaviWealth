@@ -7,6 +7,7 @@
 /// editors ("AI Notion" trap) and the existing renderer covers display.
 library;
 
+import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -126,26 +127,11 @@ class _EmptyState extends StatelessWidget {
   const _EmptyState();
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
-    final colors = context.theme.colors;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(FLucideIcons.inbox, size: 48, color: colors.mutedForeground),
-            const SizedBox(height: AppSpacing.s8),
-            Text('收件箱空空如也', style: typography.lg),
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              '点击右下角 + 写一条第一性思考、网页摘录或灵感片段。',
-              textAlign: TextAlign.center,
-              style: typography.sm.copyWith(color: colors.mutedForeground),
-            ),
-          ],
-        ),
-      ),
+    return const AppEmptyState(
+      icon: Icons.inbox_outlined,
+      title: '收件箱空空如也',
+      message: '点击右下角 + 写一条第一性思考、网页摘录或灵感片段。'
+          '或者从浏览器分享链接 / 文本进来。',
     );
   }
 }
@@ -155,11 +141,9 @@ class _ErrorState extends StatelessWidget {
   final String message;
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s24),
-        child: Text('Inbox 加载失败:$message'),
-      ),
+    return AppEmptyState.error(
+      title: 'Inbox 加载失败',
+      message: message,
     );
   }
 }
