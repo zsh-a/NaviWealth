@@ -28,6 +28,7 @@ import '../../../design_system/design_system.dart';
 import '../data/inbox_triage_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '_widgets.dart';
 
 /// Bumped on each accept / dismiss so the parent FutureBuilder refetches.
 /// Side-table writes don't hit Drift streams (raw SQL via
@@ -49,7 +50,7 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
         final triageAsync = ref.watch(inboxTriageRepositoryProvider);
         return triageAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (e, _) => _Shell(
+          error: (e, _) => KnowledgeSection.group(
             title: 'AI 建议',
             children: [Text('加载失败:$e')],
           ),
@@ -62,7 +63,7 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
               if (list.isEmpty) {
                 final typography = context.theme.typography;
                 final colors = context.theme.colors;
-                return _Shell(
+                return KnowledgeSection.group(
                   title: 'AI 建议',
                   children: [
                     Text(
@@ -73,7 +74,7 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
                   ],
                 );
               }
-              return _Shell(
+              return KnowledgeSection.group(
                 title: 'AI 建议 (${_pendingCount(list)})',
                 children: [
                   for (final rec in list)
@@ -305,27 +306,3 @@ Future<void> _applyAccept(
   await repo.upsertNote(updated);
 }
 
-class _Shell extends StatelessWidget {
-  const _Shell({required this.title, required this.children});
-  final String title;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    final typography = context.theme.typography;
-    return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: typography.md.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          ...children,
-        ],
-      ),
-    );
-  }
-}

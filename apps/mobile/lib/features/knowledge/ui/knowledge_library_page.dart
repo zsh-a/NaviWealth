@@ -6,6 +6,7 @@
 /// scope without a Material ancestor.
 library;
 
+import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -19,6 +20,7 @@ import '../domain/knowledge_models.dart';
 import '_decision_writer.dart';
 import '_object_writers.dart';
 import '_segmented_row.dart';
+import '_widgets.dart';
 
 enum _LibrarySegment { decisions, notes, concepts, experiments }
 
@@ -259,7 +261,13 @@ class _DecisionsList extends StatelessWidget {
       stream: stream,
       builder: (context, snap) {
         final items = snap.data ?? const <KnowledgeDecision>[];
-        if (items.isEmpty) return const _Empty(label: '还没有决策记录');
+        if (items.isEmpty) {
+          return const AppEmptyState(
+            icon: Icons.alt_route_outlined,
+            title: '还没有决策记录',
+            message: '点右下角 + New decision，记录第一条值得复盘的判断。',
+          );
+        }
         return ListView.separated(
           itemCount: items.length,
           separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
@@ -290,7 +298,13 @@ class _DecisionsList extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: AppSpacing.s8),
-                        _StatusBadge(label: d.status.wire),
+                        KnowledgeStatusBadge(label: d.status.wire),
+                        const SizedBox(width: AppSpacing.s4),
+                        Icon(
+                          FLucideIcons.chevronRight,
+                          size: 14,
+                          color: colors.mutedForeground,
+                        ),
                       ],
                     ),
                     if (d.selectedLabel.isNotEmpty) ...[
@@ -331,7 +345,13 @@ class _NotesList extends StatelessWidget {
       stream: stream,
       builder: (context, snap) {
         final items = snap.data ?? const <KnowledgeNote>[];
-        if (items.isEmpty) return const _Empty(label: 'Library 里还没有笔记');
+        if (items.isEmpty) {
+          return const AppEmptyState(
+            icon: Icons.notes_outlined,
+            title: 'Library 里还没有笔记',
+            message: '笔记在 Inbox 写；这里只做浏览。',
+          );
+        }
         return ListView.separated(
           itemCount: items.length,
           separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
@@ -378,7 +398,13 @@ class _ConceptsList extends StatelessWidget {
       stream: stream,
       builder: (context, snap) {
         final items = snap.data ?? const <KnowledgeConcept>[];
-        if (items.isEmpty) return const _Empty(label: '还没有 concept 节点');
+        if (items.isEmpty) {
+          return const AppEmptyState(
+            icon: Icons.account_tree_outlined,
+            title: '还没有 concept 节点',
+            message: 'Concepts 给 [[soft links]] 和 AI 建联用。',
+          );
+        }
         return ListView.separated(
           itemCount: items.length,
           separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
@@ -425,7 +451,13 @@ class _ExperimentsList extends StatelessWidget {
       stream: stream,
       builder: (context, snap) {
         final items = snap.data ?? const <KnowledgeExperiment>[];
-        if (items.isEmpty) return const _Empty(label: '没有进行中的 experiment');
+        if (items.isEmpty) {
+          return const AppEmptyState(
+            icon: Icons.science_outlined,
+            title: '没有进行中的 experiment',
+            message: 'Experiment 通常挂在一条要验证的 assumption 上。',
+          );
+        }
         return ListView.separated(
           itemCount: items.length,
           separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
@@ -445,7 +477,7 @@ class _ExperimentsList extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.s8),
-                  _StatusBadge(label: e.status.wire),
+                  KnowledgeStatusBadge(label: e.status.wire),
                 ],
               ),
             );
@@ -456,43 +488,3 @@ class _ExperimentsList extends StatelessWidget {
   }
 }
 
-class _Empty extends StatelessWidget {
-  const _Empty({required this.label});
-  final String label;
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Center(
-      child: Text(
-        label,
-        style: context.theme.typography.sm
-            .copyWith(color: colors.mutedForeground),
-      ),
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.label});
-  final String label;
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        color: colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: colors.border),
-      ),
-      child: Text(
-        label,
-        style: context.theme.typography.xs
-            .copyWith(color: colors.mutedForeground),
-      ),
-    );
-  }
-}
