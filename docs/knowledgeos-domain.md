@@ -352,7 +352,7 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - ✅ `InboxTriageRepository`（`features/knowledge/data/inbox_triage_repository.dart`）：侧表 upsert / resolve / pending feed；dismissed 合并保护
 
 **AI tools**（`features/knowledge_ai_tools.dart` → `kKnowledgeDeviceTools`）
-- ✅ Read：`recall_decision`、`list_open_assumptions`、`list_due_reviews`、`search_notes`、`summarize_topic_evolution`
+- ✅ Read：`recall_decision`、`list_open_assumptions`、`list_due_reviews`、`search_notes`（hybrid via `MemoryRuntime.recall(source='know:notes')` + tag/project 后过滤；cold start 或空 query 回落 substring 扫）、`summarize_topic_evolution`
 - ✅ Write（全部 ProposalEnvelope，§4 行为契约）：`propose_concept_link`、`propose_inbox_classification`、`propose_inbox_tags`、`propose_link_to_decision`
 - ✅ `propose_inbox_*` 三件套同时持久化到 `knowledge_inbox_triage` —— §5 异步 triage 的 LLM 写端口
 - ✅ 通过 `deviceToolsProvider` 在 bootstrap 拼入，gated on `domainOptInsProvider.contains(DomainScope.knowledge)`
@@ -365,7 +365,9 @@ class KnowledgeExperiments extends Table with SyncableTable {
 
 **Memory Layer 接入**（§3 "写一份，索引两次"）
 - ✅ `KnowledgeDecisionMemoryIndexer`：Decision → `kind='episodic'` Memory，跟 trade journal indexer 同模式；接入 `memoryLayerBootstrapProvider`
+- ✅ `knowledge_object_memory_indexers.dart`：Note / Concept / Experiment → `kind='episodic'`（带 createdAt 锚的时间事件），Principle / Assumption → `kind='semantic'`（worldview / belief）。importance 按 status 与 confidence 调整(falsified assumption 留在库里但 importance 0.2,让 ContradictionAgent 仍可见)。全部 gate 在 Knowledge opt-in
 - ✅ Agent 输出 → `kind='episodic'` / `'semantic'` Memory（Review / Assumption / Contradiction）
+- ✅ `DecisionContextSnapper`（`features/knowledge/data/decision_context_snapper.dart`）：Decision 写入路径预读最近 7 天 EventStore (source `fin:*` / `health:*`)，按 importance 抽 top 5 拼 `contextSnapshot`。非阻塞（任何失败 → null，列保持 NULL）。**不**写进 `KnowledgeRepository.upsertDecision`，保持 repo 为纯 Drift wrapper；UI / 未来 AI 写入器主动调 snapper。Decision detail 页新增 "当时的跨域状态" section 渲染
 
 **IA Shell**（§5 Option B dock，与 HealthOS 同模式）
 - ✅ 3 tabs：Inbox / Library / Review (`/knowledge`, `/knowledge/library`, `/knowledge/review`)
@@ -373,26 +375,26 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - ✅ Settings → Domains 加 KnowledgeOS 开关 + Inbox 深链
 - ✅ 全 Forui 实现（无 Material 组件依赖）；New Note 含 Edit/Preview toggle（用 `AiMarkdown` 渲染）
 - ✅ Review tab "AI 建议" 卡片（`_ai_suggestions_card.dart`）：渲染 pending envelopes，每条 ✓/✗。✓ 走轻量 apply —— merge `kind:*` / tag / `decision:<id>` 软链 → `upsertNote`；✗ 标 dismissed。MVP inline apply，不抽 `ProposalApplier`（符合 §12 反扩条款；如果后续 P2 `propose_concept_link` apply 路径要落，再统一抽）
+- ✅ Library FAB + writers（§1 最高优先级 affordance）：Decision sheet（`_decision_writer.dart`） — question / 动态 options / selected / rationale / Principle+Assumption picker / review date 预设；Principle / Assumption / Concept / Experiment sheets（`_object_writers.dart`） — 每个 ~150 行紧凑表单。Decision 段的 FAB 弹 family chooser（Decision / Principle / Assumption 共享 author flow），其它段直达对应 sheet；Notes 段引导回 Inbox。Assumption confidence 用 5 档预设按钮（Forui slider 控制器路径成本不抵价值）
+- ✅ Decision detail page（`knowledge_decision_detail_page.dart` + route `/knowledge/library/decision/:id`）：Library Decisions 卡片 tap → 详情；渲染 status / 全部 options（高亮 selected）/ rationale（AiMarkdown）/ 引用的 Principles & Assumptions / expected & actual outcome / **supersede chain 反向遍历**（§9 "认知演化"）
 
 **Cross-domain hooks**（§6）
 - ✅ `knowledgeChatRailContentProvider`：projects 最近 3 条 Decision 进 AI chat rail
+- ✅ Share-intent 双轨调度（`features/ingest/data/share_intent_service.dart` 内联 — Knowledge opt-in 时 text/url 写 `KnowledgeNote(tags=['source:share'])` 并跳 `/knowledge`，image/file 仍走 Finance ingest）。临时跨 feature 直引,P3 抽 dispatcher 解耦
 
 ### 14.2 待办（按价值 / 紧急度排序）
 
 **P0 — 影响 MVP 可用性**
-- [ ] **Inbox quick capture pipeline**：§5 列出 share-intent / 语音 / 粘贴 / AI chat 片段，目前只有手写 New Note。share-intent 可直接复用 `features/ingest/data/share_intent_service.dart`
-- [ ] **Decision 创建表单**：当前只有 Note 有写入 UI；Decision 是最高优先级 affordance（§1），必须能在 Library Decisions tab 里 `+ New decision`。Principles / Assumptions / Experiments / Concepts 也需要
-- [ ] **Library detail pages**：列表项现在不可点击；至少 Decision 需要 detail view（含 supersede chain / referenced assumptions）
+- [ ] **Inbox quick capture: 语音 / 截屏 OCR / AI chat 片段**：share-intent 已通；剩余三条入口待落（语音转写、截屏 OCR、从 AI chat 一键存为 note）。每条独立小项，按 dogfood 频率决定顺序
 
 **P1 — 影响 §0 定位的关键功能**
-- [ ] **`search_notes` 接入 hybridScore**：§4 spec 要 "全文 + 语义混合"，MVP 是 substring 扫。Notes Memory indexer + 接 Memory Layer `hybridScore` 之后启用
-- [ ] **Notes / Principles / Assumptions / Experiments / Concepts Memory indexer**：当前只有 Decision 被 mirror 进 Memory；其它类型仍只在 Drift 表中，跨域 Recall 召不回
-- [ ] **`Decision.context_snapshot_json` 自动抓拍**：列存在但未自动写入。需要在 `upsertDecision` 路径下读最近 Finance / Health events 拼 snapshot（不阻塞写）
 - [ ] **AssumptionAgent 事件触发**：§7 spec 说 "月初 + **任何决策被新事件触及时**"。当前只有月初 cadence，事件触发需要 `EventStore` listener
 - [ ] **ContradictionAgent cosine + LLM judge 路径**：MVP 是纯启发式 token 匹配，§7 spec 要语义比对。等 Knowledge Memory 全量化后切换
 - [ ] **InboxTriageAgent LLM round-trip 替换 heuristic**：§7 spec "单次 Note ≤ 1 LLM round-trip(3 个 propose 工具批量调)"。MVP 是规则启发式（词典 + token overlap），LLM 路径上线后切换到调用三件套 `propose_inbox_*` 工具；无 LLM 配置时 fallback 回 heuristic（不报错，§7 工程约束）
 
 **P2 — Dogfood 改进**
+- [ ] **非 Decision 类型 detail pages**：Concept / Experiment / Principle / Assumption 卡片当前不可点击。Decision detail 是基础底盘可参考；按 dogfood 哪个先被点拍开实现顺序
+- [ ] **Decision lifecycle 编辑**：detail 页是 read-only，缺 status 变更 / actual_outcome 填写 / `supersededByDecisionId` 设置入口。后两条是 §3 "认知演化"链能成立的必要条件
 - [ ] **Review tab "recent agent runs"**：§5 spec 列出但未渲染；需要 Agent 历史读 API
 - [ ] **`lifeos.knowledge.review` 通知 channel**：§7 ReviewAgent 表里有提到，目前只写 Memory 没发通知（HealthOS 有 morning briefing 通知的实现可参考）
 - [ ] **`ai_context_summary` override**：§6 列了，但现有 slot (`AiContextSummary`) 是 Finance-shaped；要么扩 slot 形态，要么换成独立的 prompt 拼接 seam
@@ -403,6 +405,7 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - [ ] **测试**：`test/features/knowledge/` 目录尚未建立。至少需要 repository 单测 + AI tool 单测 + agent 单测（参考 `health/test/`）
 - [ ] **l10n**：所有 UI 文案当前是字面量（中/英混排）；触发 dogfood feedback 收敛后入 `.arb`
 - [ ] **Sync wire prefix 修复**：`SyncEngine._toRowChange` 硬编码 `prefixFinanceTable(table)`；KnowledgeOS 表上车后 outbound 仍走 `fin:` 前缀。HealthOS 也踩这个雷（health_metrics 目前本地 only）。需要按表名查 domain → 选 prefix 的 dispatch
+- [ ] **Share-intent dispatcher 解耦**：当前 `share_intent_service.dart` 内联 Knowledge 写入路径，违反 feature 边界（Finance ingest feature 直接 import Knowledge repo）。抽一个 `ShareIntentDispatcher` 接口，让 Knowledge / Finance 各注册自己的 handler；第三个分发目标出现时强制收敛
 - [ ] **`kPrimaryTabPaths` / dock 可视性**：dock 现在 3 域全开会很挤；need responsive collapse 策略（HealthOS D-2.3b 的 ≥ 600 px 桌面 dock 已经实现，移动端 chevron 也是）
 - [ ] **图标**：当前 `Icons.psychology` (Material) 还在 domain shell；HealthOS 同样用 Material icon glyph，convention 一致但 long-term 应该用 `FLucideIcons.brain` 等
 - [ ] **AppFlowy/Quill 编辑器调研**：§8 反目标明确拒绝 block editor，但 dogfood 可能发现 "Markdown 也太裸了"。如果出现这种声音，先按 `AiMarkdown` 渲染面加 toolbar（list / quote / code），**不**引入 block tree

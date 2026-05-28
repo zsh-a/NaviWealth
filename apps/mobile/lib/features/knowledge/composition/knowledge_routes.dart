@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/domain_tabs_shell.dart';
 import '../../../app/route_paths.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../ui/knowledge_decision_detail_page.dart';
 import '../ui/knowledge_inbox_page.dart';
 import '../ui/knowledge_library_page.dart';
 import '../ui/knowledge_review_page.dart';
@@ -37,6 +38,15 @@ StatefulShellRoute knowledgeShellRoute() {
             path: AppRoutes.knowledgeLibrary,
             name: AppRouteNames.knowledgeLibrary,
             builder: (context, state) => const KnowledgeLibraryPage(),
+            routes: [
+              GoRoute(
+                path: 'decision/:id',
+                name: AppRouteNames.knowledgeDecisionDetail,
+                builder: (context, state) => KnowledgeDecisionDetailPage(
+                  decisionId: state.pathParameters['id'] ?? '',
+                ),
+              ),
+            ],
           ),
         ],
       ),
