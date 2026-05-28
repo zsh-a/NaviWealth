@@ -84,7 +84,7 @@ void main() {
       expect(ToolDescriptor.fromJson(legacy).domain, kDomainFinance);
     });
 
-    test('built-in catalog tags Memory tools as shell, rest as finance', () {
+    test('built-in catalog tags each tool with the right LifeOS domain', () {
       ToolDescriptor lookup(String name) =>
           allToolDescriptors.firstWhere((t) => t.name == name);
       expect(lookup('query_memory').domain, kDomainShell);
@@ -92,9 +92,19 @@ void main() {
       expect(lookup('get_holdings').domain, kDomainFinance);
       expect(lookup('propose_fire_plan_update').domain, kDomainFinance);
       expect(lookup('get_wheel_lifecycle').domain, kDomainFinance);
+      expect(lookup('get_hrv_trend').domain, kDomainHealth);
+      expect(lookup('get_recovery_signal').domain, kDomainHealth);
+      expect(lookup('recall_decision').domain, kDomainKnowledge);
+      expect(lookup('propose_inbox_classification').domain, kDomainKnowledge);
+      const validDomains = <String>{
+        kDomainFinance,
+        kDomainShell,
+        kDomainHealth,
+        kDomainKnowledge,
+      };
       for (final t in allToolDescriptors) {
         expect(
-          <String>{kDomainFinance, kDomainShell}.contains(t.domain),
+          validDomains.contains(t.domain),
           isTrue,
           reason: 'tool ${t.name} has unexpected domain ${t.domain}',
         );

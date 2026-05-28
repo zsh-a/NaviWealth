@@ -5,6 +5,9 @@
 /// opted into the Health domain (`domainOptInsProvider`).
 library;
 
+import '../core/ai/contracts/intent.dart' show RiskLevel, kDomainHealth;
+import '../core/ai/contracts/privacy_budget.dart' show BudgetTier;
+import '../core/ai/contracts/tool_descriptor.dart';
 import '../core/ai/runtime/device/tools/device_tool.dart';
 import 'health/ai_tools/get_activity_summary_tool.dart';
 import 'health/ai_tools/get_hrv_trend_tool.dart';
@@ -18,6 +21,47 @@ const List<DeviceTool> kHealthDeviceTools = <DeviceTool>[
   GetActivitySummaryTool(),
   GetRecoverySignalTool(),
 ];
+
+/// HealthOS device-tool descriptors. Co-located with [kHealthDeviceTools]
+/// — adding a Health tool means one new file under
+/// `features/health/ai_tools/`, one new line in [kHealthDeviceTools],
+/// and one new entry here. Merged into [allToolDescriptors] by the
+/// cross-domain catalog.
+const Map<String, ToolDescriptor> kHealthToolDescriptors =
+    <String, ToolDescriptor>{
+  'get_recent_sleep_summary': ToolDescriptor(
+    name: 'get_recent_sleep_summary',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.small,
+    domain: kDomainHealth,
+  ),
+  'get_hrv_trend': ToolDescriptor(
+    name: 'get_hrv_trend',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.small,
+    domain: kDomainHealth,
+  ),
+  'get_activity_summary': ToolDescriptor(
+    name: 'get_activity_summary',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.small,
+    domain: kDomainHealth,
+  ),
+  'get_recovery_signal': ToolDescriptor(
+    name: 'get_recovery_signal',
+    access: Access.read,
+    risk: RiskLevel.suggest,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.small,
+    domain: kDomainHealth,
+  ),
+};
 
 /// HealthOS system-prompt block. Appended onto [kDeviceSystemPromptBase]
 /// by `systemPromptBlocksProvider` only when the user has opted into

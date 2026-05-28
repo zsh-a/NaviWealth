@@ -1,15 +1,22 @@
 /// Code-level metadata for an AI tool.
 ///
-/// Metadata for the active device-dispatchable AI tools.
-///
 /// W-D7 removed the cloud AI backend, so this catalog no longer mirrors
-/// a Rust registry. Keep it aligned with `kDeviceTools`: a descriptor
-/// here means the tool can be advertised and dispatched by the device
-/// runtime.
+/// a Rust registry. Phase D: each LifeOS domain co-locates its
+/// descriptors with its tool barrel — see `kShellToolDescriptors`,
+/// `kFinanceToolDescriptors`, `kHealthToolDescriptors`,
+/// `kKnowledgeToolDescriptors`. The derived union [allToolDescriptors]
+/// and [lookupToolDescriptor] live in `tool_descriptor_catalog.dart`
+/// (kept separate to avoid a cycle: contracts ← features).
 library;
 
 import 'intent.dart' show RiskLevel, RiskLevelWire, kDefaultDomain;
 import 'privacy_budget.dart' show BudgetTier, BudgetTierWire;
+
+// Re-export the derived catalog so existing callers can keep their
+// `import 'tool_descriptor.dart'` and still see `allToolDescriptors` /
+// `lookupToolDescriptor`. The actual union is built in the catalog
+// file to avoid a contracts ← features import cycle.
+export 'tool_descriptor_catalog.dart';
 
 enum Access { read, propose, externalWrite }
 
@@ -88,10 +95,8 @@ class ToolDescriptor {
   /// Side-effect classification (orthogonal to risk level).
   final SideEffect sideEffect;
 
-  /// LifeOS domain this tool belongs to. Cross-domain shell tools
-  /// (Memory Layer `query_memory` / `build_context`) use `shell`. All
-  /// Finance business tools use `finance` (default). Phase D-2 will
-  /// add `health` tools.
+  /// LifeOS domain this tool belongs to (`finance` / `health` /
+  /// `knowledge` / `shell` for cross-domain).
   final String domain;
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -129,290 +134,5 @@ class ToolDescriptor {
 }
 
 /// Cross-domain shell tools (Memory Layer). Distinguishes shell-level
-/// tools from any single domain so registry / lint can treat them
-/// separately from `kDomainFinance` / future `kDomainHealth`.
+/// tools from any single LifeOS domain.
 const String kDomainShell = 'shell';
-
-const allToolDescriptors = <ToolDescriptor>[
-  ToolDescriptor(
-    name: 'get_anomaly_flags',
-    access: Access.read,
-    risk: RiskLevel.suggest,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-  ),
-  ToolDescriptor(
-    name: 'get_asset_allocation',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-  ),
-  ToolDescriptor(
-    name: 'get_cashflow_buckets',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-  ),
-  ToolDescriptor(
-    name: 'get_geo_breakdown',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-  ),
-  ToolDescriptor(
-    name: 'get_holdings',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-  ),
-  ToolDescriptor(
-    name: 'get_industry_breakdown',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-  ),
-  ToolDescriptor(
-    name: 'get_investment_performance',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-  ),
-  ToolDescriptor(
-    name: 'get_market_cap_breakdown',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-  ),
-  ToolDescriptor(
-    name: 'get_net_worth_summary',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-  ),
-  ToolDescriptor(
-    name: 'get_recurring_patterns',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-  ),
-  ToolDescriptor(
-    name: 'get_refund_links',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-  ),
-  ToolDescriptor(
-    name: 'get_subscription_changes',
-    access: Access.read,
-    risk: RiskLevel.suggest,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-  ),
-  ToolDescriptor(
-    name: 'get_transfer_links',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-  ),
-  ToolDescriptor(
-    name: 'list_payment_accounts',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-  ),
-  ToolDescriptor(
-    name: 'propose_account_create',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-  ),
-  ToolDescriptor(
-    name: 'propose_asset_valuation',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-  ),
-  ToolDescriptor(
-    name: 'propose_expense',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.small,
-    sideEffect: SideEffect.deviceLocalWrite,
-  ),
-  ToolDescriptor(
-    name: 'propose_liability_payment',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-  ),
-  ToolDescriptor(
-    name: 'propose_trade',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-  ),
-  ToolDescriptor(
-    name: 'read_account_window',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-  ),
-  ToolDescriptor(
-    name: 'read_asset_window',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-  ),
-  ToolDescriptor(
-    name: 'read_category_window',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-  ),
-  // FIRE OS Phase 5 tools — see docs/roadmap-fire-os.md §5.
-  ToolDescriptor(
-    name: 'get_fire_state',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-  ),
-  ToolDescriptor(
-    name: 'get_fire_plan',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-  ),
-  ToolDescriptor(
-    name: 'get_fire_buckets',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-  ),
-  ToolDescriptor(
-    name: 'get_fire_stress_tests',
-    access: Access.read,
-    risk: RiskLevel.suggest,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-  ),
-  ToolDescriptor(
-    name: 'get_fire_review',
-    access: Access.read,
-    risk: RiskLevel.suggest,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-  ),
-  ToolDescriptor(
-    name: 'simulate_fire_plan',
-    access: Access.read,
-    risk: RiskLevel.suggest,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-  ),
-  ToolDescriptor(
-    name: 'propose_fire_plan_update',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-  ),
-  ToolDescriptor(
-    name: 'propose_fire_bucket_rule',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-  ),
-  // Options Income Planner — see docs/options-income.md §8.2.
-  ToolDescriptor(
-    name: 'get_options_income_opportunities',
-    access: Access.read,
-    risk: RiskLevel.suggest,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-  ),
-  ToolDescriptor(
-    name: 'get_options_strategy_profile',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-  ),
-  ToolDescriptor(
-    name: 'propose_options_profile_update',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-  ),
-  ToolDescriptor(
-    name: 'propose_options_journal_entry',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-  ),
-  // Income Planner P4 — Wheel cycle lifecycle (`roadmap-next.md` §3.3).
-  ToolDescriptor(
-    name: 'get_wheel_lifecycle',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-  ),
-  // Memory Runtime (`lifeos-shell.md` §6, D-1.7b). Shell-level (cross-domain).
-  ToolDescriptor(
-    name: 'query_memory',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainShell,
-  ),
-  ToolDescriptor(
-    name: 'build_context',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainShell,
-  ),
-];
-
-ToolDescriptor? lookupToolDescriptor(String name) {
-  for (final descriptor in allToolDescriptors) {
-    if (descriptor.name == name) return descriptor;
-  }
-  return null;
-}

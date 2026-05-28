@@ -10,7 +10,6 @@ on:
       - '.github/workflows/mobile.yml'
       - 'codecov.yml'
       - 'docs/ai-protocol.md'
-      - 'tool/check-tool-descriptors.sh'
       - 'tool/check-modal-helpers.sh'
       - 'tool/check-enum-mirror.sh'
       - 'tool/lint-money-display.sh'
@@ -31,7 +30,6 @@ on:
       - '.github/workflows/mobile.yml'
       - 'codecov.yml'
       - 'docs/ai-protocol.md'
-      - 'tool/check-tool-descriptors.sh'
       - 'tool/check-modal-helpers.sh'
       - 'tool/check-enum-mirror.sh'
       - 'tool/lint-money-display.sh'
@@ -76,9 +74,6 @@ jobs:
           touch assets/fonts/inter-regular.woff2 assets/fonts/inter-medium.woff2 \
                 assets/fonts/inter-semibold.woff2 assets/fonts/inter-bold.woff2 \
                 assets/fonts/outfit-bold.woff2
-      - name: Check mobile tool descriptors match backend
-        working-directory: ${{ github.workspace }}
-        run: tool/check-tool-descriptors.sh
       - run: flutter analyze --fatal-infos
       - name: Lint — no Chinese literals in source (FIR-99)
         run: dart tool/check_cn_literals.dart

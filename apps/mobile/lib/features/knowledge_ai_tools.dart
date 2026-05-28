@@ -6,6 +6,9 @@
 /// opted into the Knowledge domain (`domainOptInsProvider`).
 library;
 
+import '../core/ai/contracts/intent.dart' show RiskLevel, kDomainKnowledge;
+import '../core/ai/contracts/privacy_budget.dart' show BudgetTier;
+import '../core/ai/contracts/tool_descriptor.dart';
 import '../core/ai/runtime/device/tools/device_tool.dart';
 import 'knowledge/ai_tools/list_due_reviews_tool.dart';
 import 'knowledge/ai_tools/list_open_assumptions_tool.dart';
@@ -35,6 +38,91 @@ const List<DeviceTool> kKnowledgeDeviceTools = <DeviceTool>[
   ProposeLinkToDecisionTool(),
   SummarizeTopicEvolutionTool(),
 ];
+
+/// KnowledgeOS device-tool descriptors. Co-located with
+/// [kKnowledgeDeviceTools] — adding a Knowledge tool means one new
+/// file under `features/knowledge/ai_tools/`, one new line in
+/// [kKnowledgeDeviceTools], and one new entry here. Merged into
+/// [allToolDescriptors] by the cross-domain catalog.
+const Map<String, ToolDescriptor> kKnowledgeToolDescriptors =
+    <String, ToolDescriptor>{
+  'recall_decision': ToolDescriptor(
+    name: 'recall_decision',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.small,
+    domain: kDomainKnowledge,
+  ),
+  'list_open_assumptions': ToolDescriptor(
+    name: 'list_open_assumptions',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.small,
+    domain: kDomainKnowledge,
+  ),
+  'list_due_reviews': ToolDescriptor(
+    name: 'list_due_reviews',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.small,
+    domain: kDomainKnowledge,
+  ),
+  'search_notes': ToolDescriptor(
+    name: 'search_notes',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.small,
+    domain: kDomainKnowledge,
+  ),
+  'summarize_topic_evolution': ToolDescriptor(
+    name: 'summarize_topic_evolution',
+    access: Access.read,
+    risk: RiskLevel.suggest,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.standard,
+    domain: kDomainKnowledge,
+  ),
+  'propose_concept_link': ToolDescriptor(
+    name: 'propose_concept_link',
+    access: Access.propose,
+    risk: RiskLevel.propose,
+    requiresConfirmation: Confirmation.oneTap,
+    allowedContextTier: BudgetTier.standard,
+    sideEffect: SideEffect.deviceLocalWrite,
+    domain: kDomainKnowledge,
+  ),
+  'propose_inbox_classification': ToolDescriptor(
+    name: 'propose_inbox_classification',
+    access: Access.propose,
+    risk: RiskLevel.propose,
+    requiresConfirmation: Confirmation.oneTap,
+    allowedContextTier: BudgetTier.small,
+    sideEffect: SideEffect.deviceLocalWrite,
+    domain: kDomainKnowledge,
+  ),
+  'propose_inbox_tags': ToolDescriptor(
+    name: 'propose_inbox_tags',
+    access: Access.propose,
+    risk: RiskLevel.propose,
+    requiresConfirmation: Confirmation.oneTap,
+    allowedContextTier: BudgetTier.small,
+    sideEffect: SideEffect.deviceLocalWrite,
+    domain: kDomainKnowledge,
+  ),
+  'propose_link_to_decision': ToolDescriptor(
+    name: 'propose_link_to_decision',
+    access: Access.propose,
+    risk: RiskLevel.propose,
+    requiresConfirmation: Confirmation.oneTap,
+    allowedContextTier: BudgetTier.small,
+    sideEffect: SideEffect.deviceLocalWrite,
+    domain: kDomainKnowledge,
+  ),
+};
 
 /// KnowledgeOS system-prompt block. Appended onto [kDeviceSystemPromptBase]
 /// by `systemPromptBlocksProvider` only when the user has opted into
