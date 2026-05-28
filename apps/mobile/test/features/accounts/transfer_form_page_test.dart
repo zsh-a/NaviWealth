@@ -10,6 +10,7 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';

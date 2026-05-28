@@ -5,12 +5,9 @@
 /// root. Shell ships only the runtime + Memory Layer tools
 /// (`build_context`, `query_memory`). Each LifeOS domain registers
 /// its own tool list via a Riverpod provider; bootstrap merges them.
-///
-/// During the migration the existing finance tools still live under
-/// `core/ai/runtime/device/tools/` (northstar §2.2 known exception).
-/// The composition root pattern is in place so HealthOS D-2 lands its
-/// tools in `features/health/ai_tools/` without any further shell
-/// change.
+/// Finance tools live in `features/finance/ai_tools/`, Health tools in
+/// `features/health/ai_tools/`, etc. — no Finance tool remains under
+/// `core/ai/runtime/device/tools/`.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';

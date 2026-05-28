@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
 import 'package:naviwealth/features/finance/data/domain/invariants.dart';

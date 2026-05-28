@@ -21,9 +21,6 @@ import 'manual_asset_repository.dart';
 import 'price_repository.dart';
 import 'securities_asset_repository.dart';
 
-export 'package:naviwealth/core/sync/outbox_provider.dart'
-    show outboxStoreProvider;
-
 final accountRepositoryProvider = FutureProvider<AccountRepository>((
   ref,
 ) async {

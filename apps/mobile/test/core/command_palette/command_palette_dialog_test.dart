@@ -8,6 +8,7 @@ import 'package:naviwealth/core/ai/local/skills/query_plan_executor.dart';
 import 'package:naviwealth/core/command_palette/command_palette.dart';
 import 'package:naviwealth/core/command_palette/command_palette_dialog.dart'
     show resetCommandPaletteForTest;
+import 'package:naviwealth/features/finance/composition/finance_command_palette.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(Widget child) {
@@ -353,7 +354,11 @@ void main() {
         _wrap(
           Builder(
             builder: (ctx) {
-              entries = defaultCommandPaletteEntries(AppLocalizations.of(ctx));
+              final l10n = AppLocalizations.of(ctx);
+              entries = defaultCommandPaletteEntries(
+                l10n,
+                domainEntries: financeCommandPaletteEntries(l10n),
+              );
               return const SizedBox.shrink();
             },
           ),

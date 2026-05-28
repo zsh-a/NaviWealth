@@ -1,14 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:talker/talker.dart';
 
-import '../config/app_config.dart';
+import '../config/providers.dart';
 import 'app_logger.dart';
 import 'crash_reporter.dart';
 import 'crash_reporting_preference.dart';
-
-/// Active app config. Override at the root `ProviderScope` to switch envs
-/// in flavor builds (e.g. staging entrypoint).
-final appConfigProvider = Provider<AppConfig>((ref) => AppConfig.dev);
 
 /// Underlying crash reporter implementation. Defaults to [NoopCrashReporter];
 /// the Sentry wiring task overrides this with a real sink. Direct consumers

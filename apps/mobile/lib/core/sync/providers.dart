@@ -7,6 +7,7 @@ import 'package:talker_dio_logger/talker_dio_logger.dart';
 import '../../core/persistence/app_database.dart';
 import '../../core/persistence/providers.dart';
 import '../auth/providers.dart';
+import '../config/providers.dart';
 import '../logging/providers.dart';
 import 'dio_sync_api_client.dart';
 import 'drift_sync_storage.dart';
@@ -91,45 +92,6 @@ final syncOutboxDepthProvider = FutureProvider<int>((ref) async {
   ref.watch(syncStatusEventStreamProvider);
   final db = await ref.watch(appDatabaseProvider.future);
   return DriftOutboxStore(db).depth();
-});
-
-/// Per-table row counts from the local tables, for the Sync Status page.
-typedef LocalTableCounts = Map<String, int>;
-
-/// Wire identifiers for the diagnostic counters, in display order.
-const List<String> kSyncLocalCountIds = [
-  'accounts_user',
-  'accounts_system',
-  'journal_entries',
-  'postings',
-  'assets',
-  'prices',
-  'watchlist_items',
-  'recurring_transactions',
-  'liabilities',
-  'tags',
-];
-
-const String _kLocalCountsSql = '''
-  SELECT 'accounts_user'   AS t, COUNT(*) AS c FROM accounts          WHERE id NOT LIKE 'system-account:%' AND deleted_at IS NULL
-  UNION ALL SELECT 'accounts_system',  COUNT(*) FROM accounts         WHERE id LIKE 'system-account:%' AND deleted_at IS NULL
-  UNION ALL SELECT 'journal_entries',  COUNT(*) FROM journal_entries  WHERE deleted_at IS NULL
-  UNION ALL SELECT 'postings',         COUNT(*) FROM postings         WHERE deleted_at IS NULL
-  UNION ALL SELECT 'assets',           COUNT(*) FROM assets           WHERE deleted_at IS NULL
-  UNION ALL SELECT 'prices',           COUNT(*) FROM prices           WHERE deleted_at IS NULL
-  UNION ALL SELECT 'watchlist_items',  COUNT(*) FROM watchlist_items  WHERE deleted_at IS NULL
-  UNION ALL SELECT 'recurring_transactions', COUNT(*) FROM recurring_transactions WHERE deleted_at IS NULL
-  UNION ALL SELECT 'liabilities',      COUNT(*) FROM liabilities      WHERE deleted_at IS NULL
-  UNION ALL SELECT 'tags',             COUNT(*) FROM tags             WHERE deleted_at IS NULL
-''';
-
-final syncLocalTableCountsProvider = FutureProvider<LocalTableCounts>((
-  ref,
-) async {
-  ref.watch(syncStatusEventStreamProvider);
-  final db = await ref.watch(appDatabaseProvider.future);
-  final rows = await db.customSelect(_kLocalCountsSql).get();
-  return {for (final r in rows) r.read<String>('t'): r.read<int>('c')};
 });
 
 final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {

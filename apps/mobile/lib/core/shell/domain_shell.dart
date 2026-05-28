@@ -117,3 +117,33 @@ DomainOptIns currentOptIns(Ref ref) =>
 /// rather than enforced because Finance currently builds its spec
 /// inline in `bootstrap.dart`.
 typedef DomainShellSpecBuilder = DomainShellSpec Function(AppLocalizations l10n);
+
+// ─── Path → domain spec helpers ───
+//
+// Used by both the desktop dock (active highlight) and the long-press
+// switcher sheet (current selection). Keeping the predicate in one
+// place stops the two call sites from drifting on what "this domain
+// owns the active route" means.
+
+/// True when [path] equals one of [spec]'s tab routes or sits below it.
+bool specOwnsPath(DomainShellSpec spec, String path) {
+  for (final t in spec.tabs) {
+    if (path == t.routePath || path.startsWith('${t.routePath}/')) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// First spec in [specs] that owns [activePath]; falls back to the
+/// first registered spec when nothing matches (e.g. cross-domain root
+/// route like `/today`).
+DomainShellSpec activeSpecForPath(
+  List<DomainShellSpec> specs,
+  String activePath,
+) {
+  for (final s in specs) {
+    if (specOwnsPath(s, activePath)) return s;
+  }
+  return specs.first;
+}

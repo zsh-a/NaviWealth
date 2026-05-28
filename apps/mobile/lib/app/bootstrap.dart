@@ -26,6 +26,7 @@ import '../core/ai/local/memory/providers.dart' as memory_providers;
 import '../core/ai/runtime/device/tools/device_tool.dart';
 import '../core/auth/providers.dart' as core_auth;
 import '../core/config/app_config.dart';
+import '../core/config/providers.dart';
 import '../core/format/formatters.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/logging/app_logger.dart';

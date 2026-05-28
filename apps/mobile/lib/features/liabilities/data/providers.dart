@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/features/finance/data/domain/amortization_entry.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
-import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../core/persistence/providers.dart';
 import '../domain/amortization_calculator.dart';
