@@ -14,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/health/data/health_metric_memory_indexer.dart';
 import '../features/knowledge/data/knowledge_decision_memory_indexer.dart';
+import '../features/knowledge/data/knowledge_object_memory_indexers.dart';
 import '../features/options_income/data/trade_journal_memory_indexer.dart';
 
 /// Eager bootstrap for every Memory Layer indexer. `bootstrap.dart`
@@ -29,4 +30,10 @@ final memoryLayerBootstrapProvider = Provider<void>((ref) {
   ref.watch(tradeJournalMemoryIndexerProvider);
   ref.watch(healthMetricMemoryIndexerProvider);
   ref.watch(knowledgeDecisionMemoryIndexerProvider);
+  // KnowledgeOS non-Decision indexers (§3 "写一份,索引两次").
+  ref.watch(knowledgeNoteMemoryIndexerProvider);
+  ref.watch(knowledgePrincipleMemoryIndexerProvider);
+  ref.watch(knowledgeAssumptionMemoryIndexerProvider);
+  ref.watch(knowledgeConceptMemoryIndexerProvider);
+  ref.watch(knowledgeExperimentMemoryIndexerProvider);
 });
