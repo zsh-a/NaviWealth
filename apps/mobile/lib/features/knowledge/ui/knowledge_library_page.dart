@@ -38,7 +38,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   @override
   Widget build(BuildContext context) {
     return FScaffold(
-      header: const FHeader.nested(title: Text('Library · KnowledgeOS')),
+      header: const FHeader.nested(title: Text('资料库 · KnowledgeOS')),
       childPad: false,
       child: Stack(
         children: [
@@ -92,10 +92,10 @@ class _NewObjectButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final label = switch (segment) {
-      _LibrarySegment.decisions => 'New decision',
-      _LibrarySegment.notes => 'New note',
-      _LibrarySegment.concepts => 'New concept',
-      _LibrarySegment.experiments => 'New experiment',
+      _LibrarySegment.decisions => '新建 Decision',
+      _LibrarySegment.notes => '新建 Note',
+      _LibrarySegment.concepts => '新建 Concept',
+      _LibrarySegment.experiments => '新建 Experiment',
     };
     return FButton(
       prefix: const Icon(FLucideIcons.plus, size: 16),
@@ -169,17 +169,17 @@ class _DecisionFamilyChooser extends StatelessWidget {
       ),
     );
     return AppSheet(
-      title: 'New …',
-      subtitle: 'Decision / Principle / Assumption 共享同一个 author flow',
+      title: '新建…',
+      subtitle: 'Decision / Principle / Assumption 共用同一套录入流程',
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           tile('Decision', '主路径 — question / options / rationale',
               () => showNewDecisionSheet(context, ref)),
-          tile('Principle', 'Worldview primitive (e.g. "edge-first")',
+          tile('Principle', '世界观原语（例如 "edge-first"）',
               () => showNewPrincipleSheet(context, ref)),
-          tile('Assumption', 'Falsifiable belief with confidence',
+          tile('Assumption', '可证伪的信念 + 置信度',
               () => showNewAssumptionSheet(context, ref)),
         ],
       ),
@@ -193,20 +193,20 @@ Future<void> _showNotesHint(BuildContext context) async {
   await showAppFormSheet<void>(
     context: context,
     builder: (sheetContext) => AppSheet(
-      title: 'Notes 在 Inbox 写',
+      title: 'Note 在收件箱录入',
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Library 的 Notes 段是浏览面;捕获走 Inbox。'
-            '关闭这个面板,切到 Inbox tab,点右下角 + 即可。',
+            '资料库的 Note 段是浏览面；录入走收件箱。'
+            '关闭这个面板，切到收件箱标签页，点右下角 + 即可。',
             style: context.theme.typography.sm,
           ),
           const SizedBox(height: AppSpacing.s12),
           FButton(
             onPress: () => Navigator.of(sheetContext).pop(),
-            child: const Text('OK'),
+            child: const Text('好的'),
           ),
         ],
       ),
@@ -230,35 +230,39 @@ class _LibraryList extends ConsumerWidget {
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         return repoAsync.when(
           loading: () => const Center(child: FProgress()),
-          error: (e, _) => Text('加载失败:$e'),
+          error: (e, _) => Text(
+            '加载失败：$e',
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
           data: (repo) => switch (segment) {
             _LibrarySegment.decisions => _SegmentList<KnowledgeDecision>(
               stream: repo.watchDecisions(ownerUserId: owner),
               emptyIcon: Icons.alt_route_outlined,
-              emptyTitle: '还没有决策记录',
+              emptyTitle: '还没有 Decision',
               emptyMessage:
-                  '点右下角 + New decision，记录第一条值得复盘的判断。',
+                  '点右下角 + 新建 Decision，记录第一条值得复盘的判断。',
               tileBuilder: _buildDecisionTile,
             ),
             _LibrarySegment.notes => _SegmentList<KnowledgeNote>(
               stream: repo.watchNotes(ownerUserId: owner),
               emptyIcon: Icons.notes_outlined,
-              emptyTitle: 'Library 里还没有笔记',
-              emptyMessage: '笔记在 Inbox 写；这里只做浏览。',
+              emptyTitle: '资料库里还没有 Note',
+              emptyMessage: 'Note 在收件箱录入；这里只做浏览。',
               tileBuilder: _buildNoteTile,
             ),
             _LibrarySegment.concepts => _SegmentList<KnowledgeConcept>(
               stream: repo.watchConcepts(ownerUserId: owner),
               emptyIcon: Icons.account_tree_outlined,
-              emptyTitle: '还没有 concept 节点',
-              emptyMessage: 'Concepts 给 [[soft links]] 和 AI 建联用。',
+              emptyTitle: '还没有 Concept 节点',
+              emptyMessage: 'Concept 用于 [[soft links]] 和 AI 关联。',
               tileBuilder: _buildConceptTile,
             ),
             _LibrarySegment.experiments => _SegmentList<KnowledgeExperiment>(
               stream: repo.watchExperiments(ownerUserId: owner),
               emptyIcon: Icons.science_outlined,
-              emptyTitle: '没有进行中的 experiment',
-              emptyMessage: 'Experiment 通常挂在一条要验证的 assumption 上。',
+              emptyTitle: '没有进行中的 Experiment',
+              emptyMessage: 'Experiment 通常挂在一条待验证的 Assumption 上。',
               tileBuilder: _buildExperimentTile,
             ),
           },
@@ -358,7 +362,7 @@ Widget _buildNoteTile(BuildContext context, KnowledgeNote n) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
   return KnowledgeSection.item(
-    title: n.title.isEmpty ? '(untitled)' : n.title,
+    title: n.title.isEmpty ? '(无标题)' : n.title,
     children: [
       if (n.bodyMd.isNotEmpty)
         Text(

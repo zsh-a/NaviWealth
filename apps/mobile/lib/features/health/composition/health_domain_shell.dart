@@ -30,19 +30,19 @@ DomainShellSpec healthDomainShell(AppLocalizations l10n) {
       DomainShellTab(
         icon: Icons.wb_sunny_outlined,
         selectedIcon: Icons.wb_sunny,
-        label: 'Today',
+        label: '今日',
         routePath: AppRoutes.healthToday,
       ),
       DomainShellTab(
         icon: Icons.show_chart_outlined,
         selectedIcon: Icons.show_chart,
-        label: 'Trend',
+        label: '趋势',
         routePath: AppRoutes.healthTrend,
       ),
       DomainShellTab(
         icon: Icons.insights_outlined,
         selectedIcon: Icons.insights,
-        label: 'Plan',
+        label: '计划',
         routePath: AppRoutes.healthPlan,
       ),
     ],

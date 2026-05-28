@@ -23,19 +23,19 @@ DomainShellSpec knowledgeDomainShell(AppLocalizations l10n) {
       DomainShellTab(
         icon: Icons.inbox_outlined,
         selectedIcon: Icons.inbox,
-        label: 'Inbox',
+        label: '收件箱',
         routePath: AppRoutes.knowledgeInbox,
       ),
       DomainShellTab(
         icon: Icons.library_books_outlined,
         selectedIcon: Icons.library_books,
-        label: 'Library',
+        label: '资料库',
         routePath: AppRoutes.knowledgeLibrary,
       ),
       DomainShellTab(
         icon: Icons.fact_check_outlined,
         selectedIcon: Icons.fact_check,
-        label: 'Review',
+        label: '复盘',
         routePath: AppRoutes.knowledgeReview,
       ),
     ],
