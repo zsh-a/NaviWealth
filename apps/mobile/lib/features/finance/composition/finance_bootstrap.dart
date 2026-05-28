@@ -16,14 +16,10 @@ import '../../../core/ai/composition/ai_context_summary.dart';
 import '../../../core/ai/composition/chat_rail_provider.dart';
 import '../../../core/ai/composition/chat_trace_prep.dart';
 import '../../../core/ai/composition/portfolio_snapshot.dart';
-import '../../../core/ai/composition/proposal_applier.dart';
-import '../../../core/ai/composition/proposal_kind_registry.dart';
 import '../../home/composition/finance_chat_rail_provider.dart';
 import 'finance_ai_context_summary_provider.dart';
 import 'finance_chat_trace_preparer.dart';
 import 'finance_portfolio_snapshot.dart';
-import 'finance_proposal_applier.dart';
-import 'finance_proposal_kinds.dart';
 
 /// Every FinanceOS shell-seam override in one place. Each entry maps a
 /// `core/ai/composition/` provider to its Finance implementation; the
@@ -35,11 +31,6 @@ List<Override> financeCompositionOverrides() => [
   // Finance provider directly.
   chatRailContentSelectorProvider.overrideWith(
     (ref) => ref.watch(financeChatRailContentSelectorProvider),
-  ),
-  // D-1.6b: concrete proposal applier dispatched by the chat surface
-  // after a `propose_*` plan is confirmed.
-  proposalApplierProvider.overrideWith(
-    (ref) => ref.watch(financeProposalApplierProvider.future),
   ),
   // D-1.6b: per-chat-turn ContextPack + AiTrace seed; the chat
   // repository skips the trace seam when this is null.
@@ -55,7 +46,10 @@ List<Override> financeCompositionOverrides() => [
   portfolioSnapshotReaderProvider.overrideWith(
     (ref) => ref.watch(financePortfolioSnapshotReaderProvider),
   ),
-  // FinanceOS contributes `propose_*` kind metadata (label / icon /
-  // editable fields / preview rows) for the propose card.
-  proposalKindRegistryProvider.overrideWithValue(kFinanceProposalKinds),
+  // NOTE: `proposalApplierProvider` + `proposalKindRegistryProvider` are
+  // composed across domains in `knowledge_bootstrap.dart`
+  // (`docs/knowledgeos-domain.md` §15.6) — Riverpod 3 throws on a
+  // double-override, so the cross-domain composite owns these two seams.
+  // FinanceOS still exposes `financeProposalApplierProvider` +
+  // `kFinanceProposalKinds` as plain providers for that composite to read.
 ];
