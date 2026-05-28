@@ -29,6 +29,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../domain/knowledge_models.dart';
+import 'knowledge_repository.dart';
 import 'providers.dart';
 
 const String kKnowledgeNoteMemorySource = 'know:notes';
@@ -39,6 +40,44 @@ const String kKnowledgeExperimentMemorySource = 'know:experiments';
 
 String _truncate(String s, [int n = 280]) =>
     s.length > n ? '${s.substring(0, n)}…' : s;
+
+/// Shared subscribe-then-reindex plumbing for the 5 non-Decision
+/// indexer providers (`docs/knowledgeos-domain.md` §3).
+///
+/// Each indexer used to repeat ~15 lines of identical Riverpod
+/// boilerplate: opt-in gate → resolve repo/userId/runtime → re-entrance
+/// guard → subscribe → reindex on emit → dispose. The varying parts
+/// are only the stream factory and the reindex callback, so they're
+/// the only parameters; everything else is enforced here.
+void _subscribeKnowledgeIndexer<T>(
+  Ref ref, {
+  required Stream<List<T>> Function(KnowledgeRepository repo, String userId)
+      streamOf,
+  required Future<void> Function(
+    MemoryRuntime runtime,
+    List<T> rows, {
+    required String ownerUserId,
+  }) reindex,
+}) {
+  () async {
+    final opt = await ref.read(core_auth.domainOptInsProvider.future);
+    if (!opt.contains(DomainScope.knowledge)) return;
+    final repo = await ref.read(knowledgeRepositoryProvider.future);
+    final userId = await ref.read(currentUserIdProvider)();
+    final runtime = await ref.read(memoryRuntimeProvider.future);
+    var running = false;
+    final sub = streamOf(repo, userId).listen((rows) async {
+      if (running || rows.isEmpty) return;
+      running = true;
+      try {
+        await reindex(runtime, rows, ownerUserId: userId);
+      } finally {
+        running = false;
+      }
+    });
+    ref.onDispose(sub.cancel);
+  }();
+}
 
 // ── Notes ────────────────────────────────────────────────────────────────
 
@@ -85,26 +124,11 @@ Future<void> _reindexNotes(
 }
 
 final knowledgeNoteMemoryIndexerProvider = Provider<void>((ref) {
-  () async {
-    final opt = await ref.read(core_auth.domainOptInsProvider.future);
-    if (!opt.contains(DomainScope.knowledge)) return;
-    final repo = await ref.read(knowledgeRepositoryProvider.future);
-    final userId = await ref.read(currentUserIdProvider)();
-    final runtime = await ref.read(memoryRuntimeProvider.future);
-    var running = false;
-    final sub = repo
-        .watchNotes(ownerUserId: userId, limit: 200)
-        .listen((rows) async {
-      if (running || rows.isEmpty) return;
-      running = true;
-      try {
-        await _reindexNotes(runtime, rows, ownerUserId: userId);
-      } finally {
-        running = false;
-      }
-    });
-    ref.onDispose(sub.cancel);
-  }();
+  _subscribeKnowledgeIndexer<KnowledgeNote>(
+    ref,
+    streamOf: (r, uid) => r.watchNotes(ownerUserId: uid, limit: 200),
+    reindex: _reindexNotes,
+  );
 });
 
 // ── Principles ───────────────────────────────────────────────────────────
@@ -150,24 +174,11 @@ Future<void> _reindexPrinciples(
 }
 
 final knowledgePrincipleMemoryIndexerProvider = Provider<void>((ref) {
-  () async {
-    final opt = await ref.read(core_auth.domainOptInsProvider.future);
-    if (!opt.contains(DomainScope.knowledge)) return;
-    final repo = await ref.read(knowledgeRepositoryProvider.future);
-    final userId = await ref.read(currentUserIdProvider)();
-    final runtime = await ref.read(memoryRuntimeProvider.future);
-    var running = false;
-    final sub = repo.watchPrinciples(ownerUserId: userId).listen((rows) async {
-      if (running || rows.isEmpty) return;
-      running = true;
-      try {
-        await _reindexPrinciples(runtime, rows, ownerUserId: userId);
-      } finally {
-        running = false;
-      }
-    });
-    ref.onDispose(sub.cancel);
-  }();
+  _subscribeKnowledgeIndexer<KnowledgePrinciple>(
+    ref,
+    streamOf: (r, uid) => r.watchPrinciples(ownerUserId: uid),
+    reindex: _reindexPrinciples,
+  );
 });
 
 // ── Assumptions ──────────────────────────────────────────────────────────
@@ -217,25 +228,11 @@ Future<void> _reindexAssumptions(
 }
 
 final knowledgeAssumptionMemoryIndexerProvider = Provider<void>((ref) {
-  () async {
-    final opt = await ref.read(core_auth.domainOptInsProvider.future);
-    if (!opt.contains(DomainScope.knowledge)) return;
-    final repo = await ref.read(knowledgeRepositoryProvider.future);
-    final userId = await ref.read(currentUserIdProvider)();
-    final runtime = await ref.read(memoryRuntimeProvider.future);
-    var running = false;
-    final sub =
-        repo.watchAssumptions(ownerUserId: userId).listen((rows) async {
-      if (running || rows.isEmpty) return;
-      running = true;
-      try {
-        await _reindexAssumptions(runtime, rows, ownerUserId: userId);
-      } finally {
-        running = false;
-      }
-    });
-    ref.onDispose(sub.cancel);
-  }();
+  _subscribeKnowledgeIndexer<KnowledgeAssumption>(
+    ref,
+    streamOf: (r, uid) => r.watchAssumptions(ownerUserId: uid),
+    reindex: _reindexAssumptions,
+  );
 });
 
 // ── Concepts ─────────────────────────────────────────────────────────────
@@ -281,24 +278,11 @@ Future<void> _reindexConcepts(
 }
 
 final knowledgeConceptMemoryIndexerProvider = Provider<void>((ref) {
-  () async {
-    final opt = await ref.read(core_auth.domainOptInsProvider.future);
-    if (!opt.contains(DomainScope.knowledge)) return;
-    final repo = await ref.read(knowledgeRepositoryProvider.future);
-    final userId = await ref.read(currentUserIdProvider)();
-    final runtime = await ref.read(memoryRuntimeProvider.future);
-    var running = false;
-    final sub = repo.watchConcepts(ownerUserId: userId).listen((rows) async {
-      if (running || rows.isEmpty) return;
-      running = true;
-      try {
-        await _reindexConcepts(runtime, rows, ownerUserId: userId);
-      } finally {
-        running = false;
-      }
-    });
-    ref.onDispose(sub.cancel);
-  }();
+  _subscribeKnowledgeIndexer<KnowledgeConcept>(
+    ref,
+    streamOf: (r, uid) => r.watchConcepts(ownerUserId: uid),
+    reindex: _reindexConcepts,
+  );
 });
 
 // ── Experiments ──────────────────────────────────────────────────────────
@@ -357,23 +341,9 @@ Future<void> _reindexExperiments(
 }
 
 final knowledgeExperimentMemoryIndexerProvider = Provider<void>((ref) {
-  () async {
-    final opt = await ref.read(core_auth.domainOptInsProvider.future);
-    if (!opt.contains(DomainScope.knowledge)) return;
-    final repo = await ref.read(knowledgeRepositoryProvider.future);
-    final userId = await ref.read(currentUserIdProvider)();
-    final runtime = await ref.read(memoryRuntimeProvider.future);
-    var running = false;
-    final sub =
-        repo.watchExperiments(ownerUserId: userId).listen((rows) async {
-      if (running || rows.isEmpty) return;
-      running = true;
-      try {
-        await _reindexExperiments(runtime, rows, ownerUserId: userId);
-      } finally {
-        running = false;
-      }
-    });
-    ref.onDispose(sub.cancel);
-  }();
+  _subscribeKnowledgeIndexer<KnowledgeExperiment>(
+    ref,
+    streamOf: (r, uid) => r.watchExperiments(ownerUserId: uid),
+    reindex: _reindexExperiments,
+  );
 });

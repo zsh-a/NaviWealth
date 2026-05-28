@@ -10,15 +10,12 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:uuid/uuid.dart';
-
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
-
-const _kUuid = Uuid();
+import '_widgets.dart';
 
 Future<void> showNewPrincipleSheet(BuildContext context, WidgetRef ref) =>
     showAppFormSheet<void>(
@@ -86,7 +83,7 @@ class _PrincipleWriterState extends State<_PrincipleWriter> {
       final stamp = await stamper.stamp();
       await repo.upsertPrinciple(
         KnowledgePrinciple(
-          id: _kUuid.v4(),
+          id: kKnowledgeUuid.v4(),
           statement: _stmtCtrl.text.trim(),
           rationaleMd: _rationaleCtrl.text,
           scope: _scopeCtrl.text.trim().isEmpty
@@ -129,12 +126,12 @@ class _PrincipleWriterState extends State<_PrincipleWriter> {
           hint: '"默认 edge-first" / "避免高维护成本系统"',
             ),
         const SizedBox(height: AppSpacing.s12),
-        FTextField(
-          control: FTextFieldControl.managed(controller: _rationaleCtrl),
-          label: const Text('Rationale (Markdown)'),
+        MarkdownEditorWithPreview(
+          controller: _rationaleCtrl,
+          label: 'Rationale (Markdown)',
           hint: '为什么把这个 worldview 定为 principle',
-          maxLines: 4,
           minLines: 2,
+          maxLines: 4,
         ),
         const SizedBox(height: AppSpacing.s12),
         FTextField(
@@ -188,7 +185,7 @@ class _AssumptionWriterState extends State<_AssumptionWriter> {
       final stamp = await stamper.stamp();
       await repo.upsertAssumption(
         KnowledgeAssumption(
-          id: _kUuid.v4(),
+          id: kKnowledgeUuid.v4(),
           statement: _stmtCtrl.text.trim(),
           confidence: _confidence,
           scope: _scopeCtrl.text.trim().isEmpty
@@ -320,7 +317,7 @@ class _ConceptWriterState extends State<_ConceptWriter> {
           .toList(growable: false);
       await repo.upsertConcept(
         KnowledgeConcept(
-          id: _kUuid.v4(),
+          id: kKnowledgeUuid.v4(),
           name: _nameCtrl.text.trim(),
           aliases: aliases,
           summaryMd: _summaryCtrl.text,
@@ -367,12 +364,12 @@ class _ConceptWriterState extends State<_ConceptWriter> {
           hint: 'Comma-separated synonyms',
         ),
         const SizedBox(height: AppSpacing.s12),
-        FTextField(
-          control: FTextFieldControl.managed(controller: _summaryCtrl),
-          label: const Text('Summary (Markdown)'),
+        MarkdownEditorWithPreview(
+          controller: _summaryCtrl,
+          label: 'Summary (Markdown)',
           hint: '1–2 sentence definition for the [[soft link]] tooltip',
-          maxLines: 4,
           minLines: 2,
+          maxLines: 4,
         ),
       ],
     ),
@@ -427,7 +424,7 @@ class _ExperimentWriterState extends State<_ExperimentWriter> {
           .toList(growable: false);
       await repo.upsertExperiment(
         KnowledgeExperiment(
-          id: _kUuid.v4(),
+          id: kKnowledgeUuid.v4(),
           hypothesis: _hypoCtrl.text.trim(),
           methodMd: _methodCtrl.text,
           metrics: metrics,
@@ -469,12 +466,12 @@ class _ExperimentWriterState extends State<_ExperimentWriter> {
           hint: '"covered call 60 DTE on QQQ 优于 30 DTE"',
             ),
         const SizedBox(height: AppSpacing.s12),
-        FTextField(
-          control: FTextFieldControl.managed(controller: _methodCtrl),
-          label: const Text('Method (Markdown)'),
+        MarkdownEditorWithPreview(
+          controller: _methodCtrl,
+          label: 'Method (Markdown)',
           hint: '怎么做、跑多久、用什么数据',
-          maxLines: 4,
           minLines: 2,
+          maxLines: 4,
         ),
         const SizedBox(height: AppSpacing.s12),
         FTextField(

@@ -19,23 +19,13 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:uuid/uuid.dart';
-
-import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../data/decision_context_snapper.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
-import '_segmented_row.dart';
-
-const _kUuid = Uuid();
-
-/// Two-mode toggle for the Decision rationale field — matches the
-/// New Note sheet (`knowledge_inbox_page.dart`) so the author sees
-/// rendered markdown before committing.
-enum _RationaleMode { edit, preview }
+import '_widgets.dart';
 
 Future<void> showNewDecisionSheet(BuildContext context, WidgetRef ref) {
   return showAppFormSheet<void>(
@@ -64,7 +54,6 @@ class _DecisionWriterState extends State<_DecisionWriter> {
   final Set<String> _assumptionIds = <String>{};
   DateTime? _reviewDate;
   bool _saving = false;
-  _RationaleMode _rationaleMode = _RationaleMode.edit;
 
   @override
   void initState() {
@@ -133,7 +122,7 @@ class _DecisionWriterState extends State<_DecisionWriter> {
         now: stamp.now,
       );
       final decision = KnowledgeDecision(
-        id: _kUuid.v4(),
+        id: kKnowledgeUuid.v4(),
         question: _questionCtrl.text.trim(),
         options: activeOptions,
         selectedLabel: selected,
@@ -222,46 +211,13 @@ class _DecisionWriterState extends State<_DecisionWriter> {
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
-          Text(
-            'Rationale (Markdown)',
-            style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+          MarkdownEditorWithPreview(
+            controller: _rationaleCtrl,
+            label: 'Rationale (Markdown)',
+            hint: '为什么选这个 option — 限制条件、当时的判断',
+            minLines: 3,
+            maxLines: 6,
           ),
-          const SizedBox(height: AppSpacing.s4),
-          KnowledgeSegmentedRow<_RationaleMode>(
-            options: _RationaleMode.values,
-            value: _rationaleMode,
-            labelOf: (m) => switch (m) {
-              _RationaleMode.edit => 'Edit',
-              _RationaleMode.preview => 'Preview',
-            },
-            onChanged: (m) => setState(() => _rationaleMode = m),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          if (_rationaleMode == _RationaleMode.edit)
-            FTextField(
-              control:
-                  FTextFieldControl.managed(controller: _rationaleCtrl),
-              hint: '为什么选这个 option — 限制条件、当时的判断',
-              maxLines: 6,
-              minLines: 3,
-            )
-          else
-            Container(
-              constraints: const BoxConstraints(minHeight: 96),
-              padding: const EdgeInsets.all(AppSpacing.s12),
-              decoration: BoxDecoration(
-                color: colors.muted,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(color: colors.border),
-              ),
-              child: _rationaleCtrl.text.trim().isEmpty
-                  ? Text(
-                      'Nothing to preview — switch back to Edit and type.',
-                      style: typography.sm
-                          .copyWith(color: colors.mutedForeground),
-                    )
-                  : AiMarkdown(text: _rationaleCtrl.text),
-            ),
           const SizedBox(height: AppSpacing.s12),
           _PrincipleAssumptionPicker(
             ref: widget.ref,
