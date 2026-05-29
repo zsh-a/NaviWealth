@@ -20,7 +20,6 @@ import '../domain/knowledge_models.dart';
 import '_decision_writer.dart';
 import '_object_writers.dart';
 import '_routine_writer.dart';
-import '_segmented_row.dart';
 import '_widgets.dart';
 
 enum _LibrarySegment { decisions, notes, concepts, experiments, routines }
@@ -53,7 +52,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  KnowledgeSegmentedRow<_LibrarySegment>(
+                  SegmentedRow<_LibrarySegment>(
                     options: _LibrarySegment.values,
                     value: _segment,
                     labelOf: (s) => switch (s) {

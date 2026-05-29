@@ -36,6 +36,7 @@ export 'widgets/object_detail_scaffold.dart';
 export 'widgets/optional_hero.dart';
 export 'widgets/responsive_two_column.dart';
 export 'widgets/section_header.dart';
+export 'widgets/segmented_row.dart';
 export 'widgets/skeleton.dart';
 export 'widgets/skeletons/page_skeletons.dart';
 export 'widgets/soft_card.dart';

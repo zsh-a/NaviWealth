@@ -1,20 +1,27 @@
-/// Forui-based segmented control reused across KnowledgeOS UI.
-///
-/// Mirrors the local `_SegmentedRow` in
-/// `features/options_income/presentation/trade_journal_sheet.dart`: a
-/// row of equal-width `FButton`s where the selected one is
-/// `primary` and the rest are `outline`. Material's `SegmentedButton`
-/// needs a Material ancestor and breaks inside Forui sheets, so this
-/// file replaces it everywhere KnowledgeOS needs a segmented picker.
-library;
-
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
-import '../../../design_system/design_system.dart';
+import '../tokens/dimens_tokens.dart';
 
-class KnowledgeSegmentedRow<T> extends StatelessWidget {
-  const KnowledgeSegmentedRow({
+/// Shared Forui-based segmented control: a row of equal-width `FButton`s
+/// where the selected option is `primary` and the rest are `outline`.
+///
+/// The single segmented picker for every domain. It replaces three
+/// hand-rolled copies that had drifted apart — KnowledgeOS's
+/// `KnowledgeSegmentedRow`, OptionsIncome's local `_SegmentedRow`, and
+/// the WealthOS perspective toggle — only one of which carried the
+/// overflow-safe layout. Material's `SegmentedButton` needs a Material
+/// ancestor and breaks inside Forui sheets, so this is the portable
+/// replacement.
+///
+/// Layout: when each segment can be at least [_minSegmentWidth] wide the
+/// buttons split the row equally (labels ellipsize within their slot —
+/// FButton lays its child in a `MainAxisSize.max` Row without a Flexible,
+/// so the wrap below is what stops a wide label from overflowing). Below
+/// that the row falls back to a horizontally scrollable strip of
+/// intrinsic-width buttons so labels stay legible on narrow screens.
+class SegmentedRow<T> extends StatelessWidget {
+  const SegmentedRow({
     super.key,
     required this.options,
     required this.value,
@@ -27,10 +34,6 @@ class KnowledgeSegmentedRow<T> extends StatelessWidget {
   final String Function(T) labelOf;
   final ValueChanged<T> onChanged;
 
-  /// Below this comfortable per-segment width the equal-split Row would
-  /// clip labels (e.g. 5 segments on a 360-dp phone). At/under it we fall
-  /// back to a horizontally scrollable row of intrinsic-width buttons so
-  /// text never overflows.
   static const double _minSegmentWidth = 96;
 
   @override
@@ -53,8 +56,6 @@ class KnowledgeSegmentedRow<T> extends StatelessWidget {
           mainAxisSize: fits ? MainAxisSize.max : MainAxisSize.min,
           children: children,
         );
-        // Equal-width fill when there's room; otherwise scroll horizontally
-        // so every label stays legible on a narrow screen.
         return fits
             ? row
             : SingleChildScrollView(
@@ -76,12 +77,12 @@ class KnowledgeSegmentedRow<T> extends StatelessWidget {
           ? FButtonVariant.primary
           : FButtonVariant.outline,
       onPress: () => onChanged(option),
-      // In the equal-split (expand) layout the button has a bounded
-      // width, but FButton lays its child in a `MainAxisSize.max` Row
-      // without a Flexible — so a label wider than the slot overflows
-      // instead of ellipsizing. Wrap it so it shrinks to fit. The scroll
-      // fallback keeps the bare Text: there the Row is unbounded and a
-      // Flexible would assert.
+      // In the equal-split (expand) layout the button has a bounded width,
+      // but FButton lays its child in a `MainAxisSize.max` Row without a
+      // Flexible — so a label wider than the slot overflows instead of
+      // ellipsizing. Wrap it so it shrinks to fit. The scroll fallback
+      // keeps the bare Text: there the Row is unbounded and a Flexible
+      // would assert.
       child: expand ? Flexible(child: label) : label,
     );
     return expand ? Expanded(child: button) : button;
