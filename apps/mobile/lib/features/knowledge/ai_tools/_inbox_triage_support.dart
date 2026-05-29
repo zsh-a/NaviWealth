@@ -14,19 +14,19 @@ import 'package:naviwealth/core/auth/current_user.dart';
 import '../data/inbox_triage_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '_tool_support.dart';
+
+// The generic envelope / error / preview helpers live in `_tool_support.dart`;
+// re-exported here so the inbox `propose_*` trio that already imports this
+// file keeps a single import.
+export '_tool_support.dart' show proposalEnvelope, badRequest, notePreview;
 
 /// Look up the target note + verify owner. Returns either the note or
 /// a `bad_request` envelope to short-circuit the tool.
 Future<({KnowledgeNote? note, Map<String, Object?>? error})>
 loadOwnedNote(DeviceToolContext ctx, String noteId) async {
   if (noteId.isEmpty) {
-    return (
-      note: null,
-      error: <String, Object?>{
-        'error': 'note_id 必填。',
-        'code': 'bad_request',
-      },
-    );
+    return (note: null, error: badRequest('note_id 必填。'));
   }
   final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
   final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
@@ -34,10 +34,7 @@ loadOwnedNote(DeviceToolContext ctx, String noteId) async {
   if (note == null || note.sync.ownerUserId != ownerUserId) {
     return (
       note: null,
-      error: <String, Object?>{
-        'error': 'note_id $noteId 不存在或不属于当前用户。',
-        'code': 'bad_request',
-      },
+      error: badRequest('note_id $noteId 不存在或不属于当前用户。'),
     );
   }
   return (note: note, error: null);
@@ -92,23 +89,3 @@ Future<void> persistEnvelope({
     ),
   );
 }
-
-/// Cross-domain `propose_*` envelope shape (matches
-/// `ProposeConceptLinkTool`).
-Map<String, Object?> proposalEnvelope({
-  required String kind,
-  required String summaryZh,
-  required Map<String, Object?> payload,
-  String note =
-      '前端必须显示 summary_zh 给用户确认；只有用户明确点确认后才走 Repository。',
-}) => <String, Object?>{
-  'proposal_id': kKnowledgeUuid.v4(),
-  'kind': kind,
-  'status': 'ready',
-  'summary_zh': summaryZh,
-  'payload': payload,
-  'warnings': const <String>[],
-  'missing': const <String>[],
-  'candidates': null,
-  'note': note,
-};

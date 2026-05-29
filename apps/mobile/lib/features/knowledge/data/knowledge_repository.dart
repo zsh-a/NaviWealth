@@ -119,6 +119,21 @@ class KnowledgeRepository {
     return q.watch().map((rows) => rows.map(_principleFromRow).toList());
   }
 
+  Future<List<KnowledgePrinciple>> listPrinciples({
+    required String ownerUserId,
+    int limit = 1000,
+  }) async {
+    final q = _db.select(_db.knowledgePrinciples)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.declaredAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    final rows = await q.get();
+    return rows.map(_principleFromRow).toList();
+  }
+
   Future<List<KnowledgePrinciple>> listActivePrinciples({
     required String ownerUserId,
   }) async {
@@ -128,6 +143,13 @@ class KnowledgeRepository {
       ..where((t) => t.status.equals(PrincipleStatus.active.wire));
     final rows = await q.get();
     return rows.map(_principleFromRow).toList();
+  }
+
+  Future<KnowledgePrinciple?> findPrinciple(String id) async {
+    final row = await (_db.select(
+      _db.knowledgePrinciples,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+    return row == null ? null : _principleFromRow(row);
   }
 
   Future<void> upsertPrinciple(KnowledgePrinciple p) async {
@@ -166,6 +188,28 @@ class KnowledgeRepository {
         (t) => OrderingTerm(expression: t.declaredAt, mode: OrderingMode.desc),
       ]);
     return q.watch().map((rows) => rows.map(_assumptionFromRow).toList());
+  }
+
+  Future<List<KnowledgeAssumption>> listAssumptions({
+    required String ownerUserId,
+    int limit = 1000,
+  }) async {
+    final q = _db.select(_db.knowledgeAssumptions)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.declaredAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    final rows = await q.get();
+    return rows.map(_assumptionFromRow).toList();
+  }
+
+  Future<KnowledgeAssumption?> findAssumption(String id) async {
+    final row = await (_db.select(
+      _db.knowledgeAssumptions,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+    return row == null ? null : _assumptionFromRow(row);
   }
 
   /// Open == status == active. Optionally filter by confidence ceiling
@@ -369,6 +413,28 @@ class KnowledgeRepository {
     return q.watch().map((rows) => rows.map(_experimentFromRow).toList());
   }
 
+  Future<List<KnowledgeExperiment>> listExperiments({
+    required String ownerUserId,
+    int limit = 1000,
+  }) async {
+    final q = _db.select(_db.knowledgeExperiments)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.startedAt, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    final rows = await q.get();
+    return rows.map(_experimentFromRow).toList();
+  }
+
+  Future<KnowledgeExperiment?> findExperiment(String id) async {
+    final row = await (_db.select(
+      _db.knowledgeExperiments,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+    return row == null ? null : _experimentFromRow(row);
+  }
+
   Future<void> upsertExperiment(KnowledgeExperiment e) async {
     final companion = KnowledgeExperimentsCompanion.insert(
       id: e.id,
@@ -422,6 +488,19 @@ class KnowledgeRepository {
       ..where((t) => t.deletedAt.isNull())
       ..where((t) => t.status.equals(RoutineStatus.active.wire))
       ..where((t) => t.nextDueAt.isSmallerOrEqualValue(asOf))
+      ..orderBy([(t) => OrderingTerm(expression: t.nextDueAt)])
+      ..limit(limit);
+    final rows = await q.get();
+    return rows.map(_routineFromRow).toList();
+  }
+
+  Future<List<KnowledgeRoutine>> listRoutines({
+    required String ownerUserId,
+    int limit = 1000,
+  }) async {
+    final q = _db.select(_db.knowledgeRoutines)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
       ..orderBy([(t) => OrderingTerm(expression: t.nextDueAt)])
       ..limit(limit);
     final rows = await q.get();

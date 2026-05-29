@@ -360,9 +360,7 @@ Widget _buildDecisionTile(BuildContext context, KnowledgeDecision d) {
         if (d.rationaleMd.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s4),
           Text(
-            d.rationaleMd.length > 200
-                ? '${d.rationaleMd.substring(0, 200)}…'
-                : d.rationaleMd,
+            knowledgeExcerpt(d.rationaleMd),
             style: typography.sm.copyWith(color: colors.mutedForeground),
           ),
         ],
@@ -379,9 +377,7 @@ Widget _buildNoteTile(BuildContext context, KnowledgeNote n) {
     children: [
       if (n.bodyMd.isNotEmpty)
         Text(
-          n.bodyMd.length > 200
-              ? '${n.bodyMd.substring(0, 200)}…'
-              : n.bodyMd,
+          knowledgeExcerpt(n.bodyMd),
           style: typography.sm.copyWith(color: colors.mutedForeground),
         ),
     ],
@@ -396,9 +392,7 @@ Widget _buildConceptTile(BuildContext context, KnowledgeConcept c) {
     children: [
       if (c.summaryMd.isNotEmpty)
         Text(
-          c.summaryMd.length > 200
-              ? '${c.summaryMd.substring(0, 200)}…'
-              : c.summaryMd,
+          knowledgeExcerpt(c.summaryMd),
           style: typography.sm.copyWith(color: colors.mutedForeground),
         ),
     ],

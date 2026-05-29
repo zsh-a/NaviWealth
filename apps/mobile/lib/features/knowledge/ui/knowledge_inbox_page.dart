@@ -17,6 +17,7 @@ import '../../../design_system/design_system.dart';
 import '../../ai_chat/ui/ask_ai.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '_widgets.dart';
 import 'knowledge_capture_sheet.dart';
 
 class KnowledgeInboxPage extends ConsumerWidget {
@@ -241,9 +242,7 @@ class _NoteCard extends StatelessWidget {
           if (note.bodyMd.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.s4),
             Text(
-              note.bodyMd.length > 200
-                  ? '${note.bodyMd.substring(0, 200)}…'
-                  : note.bodyMd,
+              knowledgeExcerpt(note.bodyMd),
               style: typography.sm.copyWith(color: colors.mutedForeground),
             ),
           ],

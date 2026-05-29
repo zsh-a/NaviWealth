@@ -12,6 +12,7 @@ import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
 import '../data/providers.dart';
+import '_tool_support.dart';
 
 class ProposeConceptLinkTool implements DeviceTool {
   const ProposeConceptLinkTool();
@@ -60,17 +61,12 @@ class ProposeConceptLinkTool implements DeviceTool {
     final reason = (input['reason'] as String?)?.trim() ?? '';
 
     if (fromId.isEmpty || toId.isEmpty || relation.isEmpty || reason.isEmpty) {
-      return <String, Object?>{
-        'error':
-            'from_concept_id / to_concept_id / relation / reason 全部必填。',
-        'code': 'bad_request',
-      };
+      return badRequest(
+        'from_concept_id / to_concept_id / relation / reason 全部必填。',
+      );
     }
     if (fromId == toId) {
-      return <String, Object?>{
-        'error': '不能为同一个 concept 建立到自己的关联。',
-        'code': 'bad_request',
-      };
+      return badRequest('不能为同一个 concept 建立到自己的关联。');
     }
 
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
@@ -78,25 +74,17 @@ class ProposeConceptLinkTool implements DeviceTool {
     final from = await repo.findConcept(fromId);
     final to = await repo.findConcept(toId);
     if (from == null || from.sync.ownerUserId != ownerUserId) {
-      return <String, Object?>{
-        'error': 'from_concept_id $fromId 不存在',
-        'code': 'bad_request',
-      };
+      return badRequest('from_concept_id $fromId 不存在');
     }
     if (to == null || to.sync.ownerUserId != ownerUserId) {
-      return <String, Object?>{
-        'error': 'to_concept_id $toId 不存在',
-        'code': 'bad_request',
-      };
+      return badRequest('to_concept_id $toId 不存在');
     }
 
-    return <String, Object?>{
-      'proposal_id': kKnowledgeUuid.v4(),
-      'kind': 'knowledge_concept_link',
-      'status': 'ready',
-      'summary_zh':
+    return proposalEnvelope(
+      kind: 'knowledge_concept_link',
+      summaryZh:
           '在 "${from.name}" 和 "${to.name}" 之间建立 "$relation" 关联 — $reason',
-      'payload': <String, Object?>{
+      payload: <String, Object?>{
         'from_concept_id': fromId,
         'from_concept_name': from.name,
         'to_concept_id': toId,
@@ -104,11 +92,6 @@ class ProposeConceptLinkTool implements DeviceTool {
         'relation': relation,
         'reason': reason,
       },
-      'warnings': const <String>[],
-      'missing': const <String>[],
-      'candidates': null,
-      'note':
-          '前端必须显示 summary_zh 给用户确认；只有用户明确点确认后才走 Repository。',
-    };
+    );
   }
 }

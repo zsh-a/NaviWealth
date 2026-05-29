@@ -28,6 +28,19 @@ import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../design_system/design_system.dart';
 import '_segmented_row.dart';
 
+/// Max items a Review-tab summary card lists per section. Kept here so the
+/// three cards (Routines / Decisions / Assumptions) stay in agreement.
+const int kReviewCardMaxItems = 5;
+
+/// Max chars shown for a body / summary / rationale excerpt in a list card.
+const int kKnowledgeExcerptMaxChars = 200;
+
+/// Truncate [text] to [max] chars with a trailing ellipsis. Shared by the
+/// Library + Inbox list cards (was an inline `length > 200 ? substring …`
+/// repeated per card type).
+String knowledgeExcerpt(String text, {int max = kKnowledgeExcerptMaxChars}) =>
+    text.length > max ? '${text.substring(0, max)}…' : text;
+
 /// SoftCard with optional title and a children column.
 ///
 /// Use [KnowledgeSection.item] for dense list rows and

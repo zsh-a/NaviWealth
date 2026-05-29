@@ -16,6 +16,7 @@ import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 
 import '../data/capture_kind.dart';
 import '../data/providers.dart';
+import '_tool_support.dart';
 
 class ProposeCaptureTool implements DeviceTool {
   const ProposeCaptureTool();
@@ -60,10 +61,7 @@ class ProposeCaptureTool implements DeviceTool {
     final noteId = (input['note_id'] as String?)?.trim();
 
     if (text.isEmpty) {
-      return <String, Object?>{
-        'error': 'text 必填且不能为空。',
-        'code': 'bad_request',
-      };
+      return badRequest('text 必填且不能为空。');
     }
 
     final classifier = ctx.ref.read(captureClassifierProvider);
@@ -112,18 +110,13 @@ class ProposeCaptureTool implements DeviceTool {
         '检出 ${classification.kind.wire},建议升级 — ${classification.reasonZh}$polishHint',
     };
 
-    return <String, Object?>{
-      'proposal_id': kKnowledgeUuid.v4(),
-      'kind': 'capture_upgrade',
-      'status': 'ready',
-      'summary_zh': summary,
-      'payload': payload,
-      'warnings': const <String>[],
-      'missing': const <String>[],
-      'candidates': null,
-      'note':
+    return proposalEnvelope(
+      kind: 'capture_upgrade',
+      summaryZh: summary,
+      payload: payload,
+      note:
           '前端在 CaptureSheet 内嵌升级卡片,用户 ✓ 才落地;✗ 保留 Note。'
           '若 note_id 已传,apply 流程负责删 Note + 写目标行(transactional)。',
-    };
+    );
   }
 }

@@ -65,10 +65,7 @@ class ProposeInboxTagsTool implements DeviceTool {
               .toList(growable: false)
         : const <String>[];
     if (tags.isEmpty || reason.isEmpty) {
-      return <String, Object?>{
-        'error': 'tags 不能为空; reason 必填。',
-        'code': 'bad_request',
-      };
+      return badRequest('tags 不能为空; reason 必填。');
     }
 
     final loaded = await loadOwnedNote(ctx, noteId);
@@ -76,8 +73,8 @@ class ProposeInboxTagsTool implements DeviceTool {
     final note = loaded.note!;
 
     final summary = projectTag != null && projectTag.isNotEmpty
-        ? '为 "${_preview(note.title, note.bodyMd)}" 建议 tags ${tags.join("/")},project=$projectTag — $reason'
-        : '为 "${_preview(note.title, note.bodyMd)}" 建议 tags ${tags.join("/")} — $reason';
+        ? '为 "${notePreview(note.title, note.bodyMd)}" 建议 tags ${tags.join("/")},project=$projectTag — $reason'
+        : '为 "${notePreview(note.title, note.bodyMd)}" 建议 tags ${tags.join("/")} — $reason';
 
     final payload = <String, Object?>{
       'note_id': noteId,
@@ -101,11 +98,5 @@ class ProposeInboxTagsTool implements DeviceTool {
       summaryZh: summary,
       payload: payload,
     );
-  }
-
-  static String _preview(String title, String body) {
-    if (title.isNotEmpty) return title;
-    if (body.isEmpty) return '(untitled)';
-    return body.length > 30 ? '${body.substring(0, 30)}…' : body;
   }
 }

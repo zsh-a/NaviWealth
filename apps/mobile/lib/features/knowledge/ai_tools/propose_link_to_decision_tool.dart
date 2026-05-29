@@ -65,10 +65,7 @@ class ProposeLinkToDecisionTool implements DeviceTool {
               .toList(growable: false)
         : const <String>[];
     if (ids.isEmpty || reason.isEmpty) {
-      return <String, Object?>{
-        'error': 'related_decision_ids 不能为空; reason 必填。',
-        'code': 'bad_request',
-      };
+      return badRequest('related_decision_ids 不能为空; reason 必填。');
     }
 
     final loaded = await loadOwnedNote(ctx, noteId);
@@ -90,15 +87,13 @@ class ProposeLinkToDecisionTool implements DeviceTool {
       }
     }
     if (valid.isEmpty) {
-      return <String, Object?>{
-        'error':
-            '提供的 decision id 都找不到或不属于当前用户:${invalid.join(", ")}',
-        'code': 'bad_request',
-      };
+      return badRequest(
+        '提供的 decision id 都找不到或不属于当前用户:${invalid.join(", ")}',
+      );
     }
 
     final summary =
-        '把 "${_preview(note.title, note.bodyMd)}" 关联到 ${valid.length} 条 decision — $reason';
+        '把 "${notePreview(note.title, note.bodyMd)}" 关联到 ${valid.length} 条 decision — $reason';
     final payload = <String, Object?>{
       'note_id': noteId,
       'related_decision_ids': valid,
@@ -120,11 +115,5 @@ class ProposeLinkToDecisionTool implements DeviceTool {
       summaryZh: summary,
       payload: payload,
     );
-  }
-
-  static String _preview(String title, String body) {
-    if (title.isNotEmpty) return title;
-    if (body.isEmpty) return '(untitled)';
-    return body.length > 30 ? '${body.substring(0, 30)}…' : body;
   }
 }

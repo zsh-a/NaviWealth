@@ -9,6 +9,19 @@ import 'dart:convert';
 
 import 'package:naviwealth/core/sync/sync_meta.dart';
 
+/// Shared enum parser: returns the member whose [Enum.name] matches [s],
+/// else [fallback]. Tolerates legacy / unknown wire values without
+/// throwing. Every KnowledgeOS status enum routes its `parse` through
+/// this so the lookup behaviour is identical across types; the
+/// per-enum [fallback] differs only because each enum's natural default
+/// differs (e.g. Experiment has no `active`).
+T parseEnumByName<T extends Enum>(List<T> values, String s, T fallback) {
+  for (final v in values) {
+    if (v.name == s) return v;
+  }
+  return fallback;
+}
+
 /// Status of a [KnowledgePrinciple]. Principles are *not* falsifiable;
 /// they can only be retired or paused when the user explicitly drops
 /// the worldview primitive.
@@ -19,12 +32,8 @@ enum PrincipleStatus {
 
   String get wire => name;
 
-  static PrincipleStatus parse(String s) {
-    for (final v in values) {
-      if (v.name == s) return v;
-    }
-    return PrincipleStatus.active;
-  }
+  static PrincipleStatus parse(String s) =>
+      parseEnumByName(values, s, PrincipleStatus.active);
 }
 
 /// Status of a [KnowledgeAssumption]. Assumptions *are* falsifiable —
@@ -38,12 +47,8 @@ enum AssumptionStatus {
 
   String get wire => name;
 
-  static AssumptionStatus parse(String s) {
-    for (final v in values) {
-      if (v.name == s) return v;
-    }
-    return AssumptionStatus.active;
-  }
+  static AssumptionStatus parse(String s) =>
+      parseEnumByName(values, s, AssumptionStatus.active);
 }
 
 /// 7-state lifecycle from §3. `superseded` is the key state — it carries
@@ -60,12 +65,8 @@ enum DecisionStatus {
 
   String get wire => name;
 
-  static DecisionStatus parse(String s) {
-    for (final v in values) {
-      if (v.name == s) return v;
-    }
-    return DecisionStatus.active;
-  }
+  static DecisionStatus parse(String s) =>
+      parseEnumByName(values, s, DecisionStatus.active);
 }
 
 enum ExperimentStatus {
@@ -76,12 +77,8 @@ enum ExperimentStatus {
 
   String get wire => name;
 
-  static ExperimentStatus parse(String s) {
-    for (final v in values) {
-      if (v.name == s) return v;
-    }
-    return ExperimentStatus.planned;
-  }
+  static ExperimentStatus parse(String s) =>
+      parseEnumByName(values, s, ExperimentStatus.planned);
 }
 
 /// Status of a [KnowledgeRoutine]. `paused` is a soft off-switch the
@@ -94,12 +91,8 @@ enum RoutineStatus {
 
   String get wire => name;
 
-  static RoutineStatus parse(String s) {
-    for (final v in values) {
-      if (v.name == s) return v;
-    }
-    return RoutineStatus.active;
-  }
+  static RoutineStatus parse(String s) =>
+      parseEnumByName(values, s, RoutineStatus.active);
 }
 
 class KnowledgeNote {

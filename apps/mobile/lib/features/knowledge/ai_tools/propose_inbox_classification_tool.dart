@@ -65,11 +65,9 @@ class ProposeInboxClassificationTool implements DeviceTool {
     final confidence = (input['confidence'] as num?)?.toDouble() ?? 0.6;
 
     if (!_kClassifications.contains(kind) || reason.isEmpty) {
-      return <String, Object?>{
-        'error':
-            'kind 必须是 note / decision_candidate / concept_candidate; reason 必填。',
-        'code': 'bad_request',
-      };
+      return badRequest(
+        'kind 必须是 note / decision_candidate / concept_candidate; reason 必填。',
+      );
     }
 
     final loaded = await loadOwnedNote(ctx, noteId);
@@ -77,7 +75,7 @@ class ProposeInboxClassificationTool implements DeviceTool {
     final note = loaded.note!;
 
     final summary =
-        '建议将 "${_titlePreview(note.title, note.bodyMd)}" 归为 $kind — $reason';
+        '建议将 "${notePreview(note.title, note.bodyMd)}" 归为 $kind — $reason';
     final payload = <String, Object?>{
       'note_id': noteId,
       'kind': kind,
@@ -99,11 +97,5 @@ class ProposeInboxClassificationTool implements DeviceTool {
       summaryZh: summary,
       payload: payload,
     );
-  }
-
-  static String _titlePreview(String title, String body) {
-    if (title.isNotEmpty) return title;
-    if (body.isEmpty) return '(untitled)';
-    return body.length > 30 ? '${body.substring(0, 30)}…' : body;
   }
 }

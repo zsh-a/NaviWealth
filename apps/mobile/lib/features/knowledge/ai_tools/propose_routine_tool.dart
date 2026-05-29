@@ -13,7 +13,7 @@ library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 
-import '../data/providers.dart';
+import '_tool_support.dart';
 
 class ProposeRoutineTool implements DeviceTool {
   const ProposeRoutineTool();
@@ -74,16 +74,10 @@ class ProposeRoutineTool implements DeviceTool {
     final nextDueRaw = (input['next_due_at'] as String?)?.trim() ?? '';
 
     if (statement.isEmpty || reason.isEmpty || intervalDays <= 0) {
-      return <String, Object?>{
-        'error': 'statement / reason 必填,interval_days 必须 > 0。',
-        'code': 'bad_request',
-      };
+      return badRequest('statement / reason 必填,interval_days 必须 > 0。');
     }
     if (intervalDays > 3650) {
-      return <String, Object?>{
-        'error': 'interval_days 上限 3650(约 10 年)。',
-        'code': 'bad_request',
-      };
+      return badRequest('interval_days 上限 3650(约 10 年)。');
     }
 
     final now = DateTime.now().toUtc();
@@ -94,24 +88,19 @@ class ProposeRoutineTool implements DeviceTool {
     final summary =
         '建议新建 Routine:"$statement" 每 $humanInterval 一次 — $reason';
 
-    return <String, Object?>{
-      'proposal_id': kKnowledgeUuid.v4(),
-      'kind': 'knowledge_routine',
-      'status': 'ready',
-      'summary_zh': summary,
-      'payload': <String, Object?>{
+    return proposalEnvelope(
+      kind: 'knowledge_routine',
+      summaryZh: summary,
+      payload: <String, Object?>{
         'statement': statement,
         'interval_days': intervalDays,
         'scope': scope,
         'next_due_at': nextDue.toUtc().toIso8601String(),
         'reason': reason,
       },
-      'warnings': const <String>[],
-      'missing': const <String>[],
-      'candidates': null,
-      'note':
+      note:
           '前端必须显示 summary_zh 给用户确认；只有用户明确点确认后才走 Repository.upsertRoutine。',
-    };
+    );
   }
 
   static String _humanInterval(int days) {

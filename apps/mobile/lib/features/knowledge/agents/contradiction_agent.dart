@@ -21,6 +21,7 @@ import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '_agent_memory.dart';
 
 const String kKnowledgeContradictionAgentId = 'knowledge_contradiction';
 const String kKnowledgeContradictionMemorySource =
@@ -116,20 +117,17 @@ class ContradictionAgent implements Agent {
       );
     }
 
-    final dayKey = start.toUtc().toIso8601String().substring(0, 10);
-    final memoryId = '$kKnowledgeContradictionMemorySource:$dayKey';
     final firstIssue = issues.first;
     final summary = issues.length == 1
         ? '检出 1 处 ${firstIssue.kind}:${firstIssue.detail}'
         : '检出 ${issues.length} 处冲突,首条:${firstIssue.kind} → ${firstIssue.detail}';
 
-    final memory = MemoryRecord(
-      id: memoryId,
+    final built = buildAgentMemory(
+      source: kKnowledgeContradictionMemorySource,
       kind: MemoryKind.semantic,
       ownerUserId: ownerUserId,
-      scope: '*',
-      source: kKnowledgeContradictionMemorySource,
-      sourceId: dayKey,
+      start: start,
+      finished: finished,
       title: 'Decision contradictions detected',
       summary: summary,
       payload: <String, Object?>{
@@ -151,11 +149,8 @@ class ContradictionAgent implements Agent {
       },
       importance: 0.7,
       confidence: 0.6,
-      validFrom: start.toUtc(),
-      createdAt: start.toUtc(),
-      updatedAt: finished,
     );
-    await runtime.remember(memory);
+    await runtime.remember(built.record);
 
     return AgentRunResult(
       agentId: kKnowledgeContradictionAgentId,
@@ -164,7 +159,7 @@ class ContradictionAgent implements Agent {
       finishedAt: finished,
       summary: summary,
       payload: <String, Object?>{'issue_count': issues.length},
-      memoryId: memoryId,
+      memoryId: built.memoryId,
     );
   }
 

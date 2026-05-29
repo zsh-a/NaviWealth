@@ -5,6 +5,8 @@
 /// wire-stable strings without one importing the other's heuristic body.
 library;
 
+import '../domain/knowledge_models.dart' show parseEnumByName;
+
 enum CaptureKind {
   note,
   routine,
@@ -16,10 +18,6 @@ enum CaptureKind {
 
   String get wire => name;
 
-  static CaptureKind parse(String s) {
-    for (final v in values) {
-      if (v.name == s) return v;
-    }
-    return CaptureKind.note;
-  }
+  static CaptureKind parse(String s) =>
+      parseEnumByName(values, s, CaptureKind.note);
 }
