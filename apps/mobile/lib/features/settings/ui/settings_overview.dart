@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -162,17 +161,19 @@ class SettingsOverview extends ConsumerWidget {
       title: l10n.settingsAboutSection,
       child: const _AboutTile(),
     );
-    final developerGroup = kDebugMode
-        ? _Section(
-            title: l10n.settingsDeveloperSection,
-            child: InlineLinkRow(
-              icon: FLucideIcons.bug,
-              label: l10n.settingsLogsTitle,
-              subtitle: l10n.settingsLogsSubtitle,
-              onTap: () => context.goNamed(AppRouteNames.logs),
-            ),
-          )
-        : const SizedBox.shrink();
+    // Logs viewer is exposed in release as well — the talker history is
+    // already kept in memory in every build, and dogfood users need a
+    // way to copy diagnostics out (e.g. Health Connect permission flow)
+    // without a debug attach.
+    final developerGroup = _Section(
+      title: l10n.settingsDeveloperSection,
+      child: InlineLinkRow(
+        icon: FLucideIcons.bug,
+        label: l10n.settingsLogsTitle,
+        subtitle: l10n.settingsLogsSubtitle,
+        onTap: () => context.goNamed(AppRouteNames.logs),
+      ),
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -206,7 +207,8 @@ class SettingsOverview extends ConsumerWidget {
             domainsGroup,
             const SizedBox(height: 16),
             aboutGroup,
-            if (kDebugMode) ...[const SizedBox(height: 16), developerGroup],
+            const SizedBox(height: 16),
+            developerGroup,
           ],
         );
 
@@ -248,10 +250,8 @@ class SettingsOverview extends ConsumerWidget {
                         domainsGroup,
                         const SizedBox(height: 16),
                         aboutGroup,
-                        if (kDebugMode) ...[
-                          const SizedBox(height: 16),
-                          developerGroup,
-                        ],
+                        const SizedBox(height: 16),
+                        developerGroup,
                       ],
                     )
                   : null,

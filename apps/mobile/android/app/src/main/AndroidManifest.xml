@@ -13,6 +13,11 @@
     <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"/>
     <uses-permission android:name="android.permission.health.READ_WEIGHT"/>
     <uses-permission android:name="android.permission.health.READ_BODY_FAT"/>
+    <!-- `HealthDataType.DISTANCE_WALKING_RUNNING` → `DistanceRecord` on
+         Health Connect. Must be declared or Health Connect silently omits
+         it from the consent sheet and `hasPermissions()` returns false
+         for the whole batch, blocking sync. -->
+    <uses-permission android:name="android.permission.health.READ_DISTANCE"/>
     <!-- D-2.6 — workout sessions (`HealthDataType.WORKOUT` →
          `ExerciseSessionRecord` on Health Connect). VO₂max
          (`READ_VO2_MAX`) intentionally NOT requested yet: `package:health`
