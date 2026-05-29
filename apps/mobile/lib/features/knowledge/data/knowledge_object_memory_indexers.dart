@@ -29,22 +29,25 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../domain/knowledge_models.dart';
-import 'knowledge_decision_memory_indexer.dart'
-    show kKnowledgeDecisionMemorySource;
 import 'knowledge_repository.dart';
 import 'providers.dart';
 
+// ── KnowledgeOS Memory sources (single catalogue) ──────────────────────────
+// `MemoryRuntime.recall(source:)` is an exact match — there is no `know:*`
+// wildcard — so every type's source string is declared here, and the
+// dedupe / cross-type search tools iterate [kKnowledgeMemorySources].
+// The Decision indexer lives in its own file but imports its source from
+// here so this stays the one place a new type is registered.
 const String kKnowledgeNoteMemorySource = 'know:notes';
 const String kKnowledgePrincipleMemorySource = 'know:principles';
 const String kKnowledgeAssumptionMemorySource = 'know:assumptions';
 const String kKnowledgeConceptMemorySource = 'know:concepts';
 const String kKnowledgeExperimentMemorySource = 'know:experiments';
+const String kKnowledgeDecisionMemorySource = 'know:decisions';
 
 /// Every KnowledgeOS Memory source keyed by a short type token
-/// (`docs/knowledgeos-domain.md` §15.3). The dedupe / cross-type search
-/// tools iterate this because `MemoryRuntime.recall(source:)` is an exact
-/// match — there is no `know:*` wildcard. Decision's source lives in its
-/// own indexer file; re-exported here so this is the single catalogue.
+/// (`docs/knowledgeos-domain.md` §15.3). Iterated by the dedupe /
+/// cross-type search tools. Add a new type's source above and here.
 const Map<String, String> kKnowledgeMemorySources = <String, String>{
   'note': kKnowledgeNoteMemorySource,
   'principle': kKnowledgePrincipleMemorySource,
@@ -57,15 +60,15 @@ const Map<String, String> kKnowledgeMemorySources = <String, String>{
 String _truncate(String s, [int n = 280]) =>
     s.length > n ? '${s.substring(0, n)}…' : s;
 
-/// Shared subscribe-then-reindex plumbing for the 5 non-Decision
-/// indexer providers (`docs/knowledgeos-domain.md` §3).
+/// Shared subscribe-then-reindex plumbing for every KnowledgeOS indexer
+/// provider, Decision included (`docs/knowledgeos-domain.md` §3).
 ///
 /// Each indexer used to repeat ~15 lines of identical Riverpod
 /// boilerplate: opt-in gate → resolve repo/userId/runtime → re-entrance
 /// guard → subscribe → reindex on emit → dispose. The varying parts
 /// are only the stream factory and the reindex callback, so they're
 /// the only parameters; everything else is enforced here.
-void _subscribeKnowledgeIndexer<T>(
+void subscribeKnowledgeIndexer<T>(
   Ref ref, {
   required Stream<List<T>> Function(KnowledgeRepository repo, String userId)
       streamOf,
@@ -140,7 +143,7 @@ Future<void> _reindexNotes(
 }
 
 final knowledgeNoteMemoryIndexerProvider = Provider<void>((ref) {
-  _subscribeKnowledgeIndexer<KnowledgeNote>(
+  subscribeKnowledgeIndexer<KnowledgeNote>(
     ref,
     streamOf: (r, uid) => r.watchNotes(ownerUserId: uid, limit: 200),
     reindex: _reindexNotes,
@@ -190,7 +193,7 @@ Future<void> _reindexPrinciples(
 }
 
 final knowledgePrincipleMemoryIndexerProvider = Provider<void>((ref) {
-  _subscribeKnowledgeIndexer<KnowledgePrinciple>(
+  subscribeKnowledgeIndexer<KnowledgePrinciple>(
     ref,
     streamOf: (r, uid) => r.watchPrinciples(ownerUserId: uid),
     reindex: _reindexPrinciples,
@@ -244,7 +247,7 @@ Future<void> _reindexAssumptions(
 }
 
 final knowledgeAssumptionMemoryIndexerProvider = Provider<void>((ref) {
-  _subscribeKnowledgeIndexer<KnowledgeAssumption>(
+  subscribeKnowledgeIndexer<KnowledgeAssumption>(
     ref,
     streamOf: (r, uid) => r.watchAssumptions(ownerUserId: uid),
     reindex: _reindexAssumptions,
@@ -294,7 +297,7 @@ Future<void> _reindexConcepts(
 }
 
 final knowledgeConceptMemoryIndexerProvider = Provider<void>((ref) {
-  _subscribeKnowledgeIndexer<KnowledgeConcept>(
+  subscribeKnowledgeIndexer<KnowledgeConcept>(
     ref,
     streamOf: (r, uid) => r.watchConcepts(ownerUserId: uid),
     reindex: _reindexConcepts,
@@ -357,7 +360,7 @@ Future<void> _reindexExperiments(
 }
 
 final knowledgeExperimentMemoryIndexerProvider = Provider<void>((ref) {
-  _subscribeKnowledgeIndexer<KnowledgeExperiment>(
+  subscribeKnowledgeIndexer<KnowledgeExperiment>(
     ref,
     streamOf: (r, uid) => r.watchExperiments(ownerUserId: uid),
     reindex: _reindexExperiments,

@@ -16,6 +16,7 @@ library;
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 
 import '../data/providers.dart';
+import '_tool_support.dart';
 
 class ProposeMergeTool implements DeviceTool {
   const ProposeMergeTool();
@@ -82,10 +83,12 @@ class ProposeMergeTool implements DeviceTool {
     final reason = (input['reason'] as String?)?.trim() ?? '';
 
     if (entityType != 'note' && entityType != 'concept') {
-      return _bad('entity_type 只支持 note / concept。');
+      return badRequest('entity_type 只支持 note / concept。');
     }
     if (primaryId.isEmpty || reason.isEmpty || duplicateIds.isEmpty) {
-      return _bad('primary_id / reason 必填,duplicate_ids 至少一个(且不等于 primary_id)。');
+      return badRequest(
+        'primary_id / reason 必填,duplicate_ids 至少一个(且不等于 primary_id)。',
+      );
     }
 
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
@@ -136,11 +139,7 @@ class ProposeMergeTool implements DeviceTool {
     }
 
     if (missing.isNotEmpty) {
-      return <String, Object?>{
-        'error': '以下 id 不存在或已删除: ${missing.join(', ')}',
-        'code': 'not_found',
-        'missing': missing,
-      };
+      return notFound('以下 id 不存在或已删除: ${missing.join(', ')}', missing);
     }
 
     final kept = keptLabel['title'] as String? ?? primaryId;
@@ -148,12 +147,10 @@ class ProposeMergeTool implements DeviceTool {
         '建议合并 ${duplicateIds.length} 条${entityType == 'note' ? '笔记' : '概念'}'
         '到「$kept」— $reason';
 
-    return <String, Object?>{
-      'proposal_id': kKnowledgeUuid.v4(),
-      'kind': 'knowledge_merge',
-      'status': 'ready',
-      'summary_zh': summary,
-      'payload': <String, Object?>{
+    return proposalEnvelope(
+      kind: 'knowledge_merge',
+      summaryZh: summary,
+      payload: <String, Object?>{
         'entity_type': entityType,
         'primary_id': primaryId,
         'duplicate_ids': duplicateIds,
@@ -170,17 +167,9 @@ class ProposeMergeTool implements DeviceTool {
           'merged_tags': mergedTags.toList(growable: false),
         },
       },
-      'warnings': const <String>[],
-      'missing': const <String>[],
-      'candidates': null,
-      'note':
+      note:
           '前端必须显示 summary_zh + diff 给用户确认；只有用户明确点确认后才走 '
           'KnowledgeRepository.mergeNotes / mergeConcepts。合并可逆(被合并条目软删并记 mergedIntoId)。',
-    };
+    );
   }
-
-  static Map<String, Object?> _bad(String msg) => <String, Object?>{
-    'error': msg,
-    'code': 'bad_request',
-  };
 }

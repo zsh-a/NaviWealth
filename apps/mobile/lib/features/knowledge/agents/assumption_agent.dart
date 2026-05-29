@@ -14,6 +14,7 @@ import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../data/providers.dart';
+import '_agent_memory.dart';
 
 const String kKnowledgeAssumptionAgentId = 'knowledge_assumption';
 const String kKnowledgeAssumptionMemorySource = 'agent:knowledge_assumption';
@@ -62,15 +63,12 @@ class AssumptionAgent implements Agent {
     }
 
     final summary = _summarize(stale.length, stale.first.statement);
-    final dayKey = start.toUtc().toIso8601String().substring(0, 10);
-    final memoryId = '$kKnowledgeAssumptionMemorySource:$dayKey';
-    final memory = MemoryRecord(
-      id: memoryId,
+    final built = buildAgentMemory(
+      source: kKnowledgeAssumptionMemorySource,
       kind: MemoryKind.episodic,
       ownerUserId: ownerUserId,
-      scope: '*',
-      source: kKnowledgeAssumptionMemorySource,
-      sourceId: dayKey,
+      start: start,
+      finished: finished,
       title: '本月待校验假设',
       summary: summary,
       payload: <String, Object?>{
@@ -81,11 +79,8 @@ class AssumptionAgent implements Agent {
       entities: <String>{'knowledge_assumption', 'assumption_review'},
       importance: 0.6,
       confidence: 0.9,
-      validFrom: start.toUtc(),
-      createdAt: start.toUtc(),
-      updatedAt: finished,
     );
-    await runtime.remember(memory);
+    await runtime.remember(built.record);
 
     return AgentRunResult(
       agentId: kKnowledgeAssumptionAgentId,
@@ -94,7 +89,7 @@ class AssumptionAgent implements Agent {
       finishedAt: finished,
       summary: summary,
       payload: <String, Object?>{'stale_count': stale.length},
-      memoryId: memoryId,
+      memoryId: built.memoryId,
     );
   }
 

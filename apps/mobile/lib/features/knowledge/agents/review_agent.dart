@@ -14,6 +14,7 @@ import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../data/providers.dart';
+import '_agent_memory.dart';
 
 const String kKnowledgeReviewAgentId = 'knowledge_review';
 const String kKnowledgeReviewMemorySource = 'agent:knowledge_review';
@@ -58,15 +59,12 @@ class ReviewAgent implements Agent {
     }
 
     final summary = _summarize(due.length, due.first.question);
-    final dayKey = start.toUtc().toIso8601String().substring(0, 10);
-    final memoryId = '$kKnowledgeReviewMemorySource:$dayKey';
-    final memory = MemoryRecord(
-      id: memoryId,
+    final built = buildAgentMemory(
+      source: kKnowledgeReviewMemorySource,
       kind: MemoryKind.episodic,
       ownerUserId: ownerUserId,
-      scope: '*',
-      source: kKnowledgeReviewMemorySource,
-      sourceId: dayKey,
+      start: start,
+      finished: finished,
       title: '本周 Decision 复盘',
       summary: summary,
       payload: <String, Object?>{
@@ -76,11 +74,8 @@ class ReviewAgent implements Agent {
       entities: <String>{'knowledge_review', 'weekly_review'},
       importance: 0.7,
       confidence: 0.95,
-      validFrom: start.toUtc(),
-      createdAt: start.toUtc(),
-      updatedAt: finished,
     );
-    await runtime.remember(memory);
+    await runtime.remember(built.record);
 
     return AgentRunResult(
       agentId: kKnowledgeReviewAgentId,
@@ -89,7 +84,7 @@ class ReviewAgent implements Agent {
       finishedAt: finished,
       summary: summary,
       payload: <String, Object?>{'due_count': due.length},
-      memoryId: memoryId,
+      memoryId: built.memoryId,
     );
   }
 

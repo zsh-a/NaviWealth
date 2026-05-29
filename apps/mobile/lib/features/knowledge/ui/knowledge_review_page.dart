@@ -94,7 +94,7 @@ class _DueRoutinesCard extends ConsumerWidget {
                             .copyWith(color: colors.mutedForeground),
                       )
                     else
-                      ...due.take(5).map(
+                      ...due.take(kReviewCardMaxItems).map(
                             (r) => _DueRoutineRow(routine: r),
                           ),
                   ],
@@ -244,7 +244,7 @@ class _DueReviewsCard extends ConsumerWidget {
                             .copyWith(color: colors.mutedForeground),
                       )
                     else
-                      ...list.take(5).map(
+                      ...list.take(kReviewCardMaxItems).map(
                             (d) => Padding(
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               child: Row(
@@ -322,7 +322,7 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                             .copyWith(color: colors.mutedForeground),
                       )
                     else
-                      ...stale.take(5).map(
+                      ...stale.take(kReviewCardMaxItems).map(
                             (a) => Padding(
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               child: Text(

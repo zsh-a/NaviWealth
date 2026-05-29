@@ -20,6 +20,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/notifications/notification_service.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '_agent_memory.dart';
 
 const String kKnowledgeRoutineAgentId = 'knowledge_routine_due';
 const String kKnowledgeRoutineMemorySource = 'agent:knowledge_routine_due';
@@ -88,15 +89,12 @@ class RoutineDueAgent implements Agent {
       now: start,
     );
 
-    final dayKey = start.toUtc().toIso8601String().substring(0, 10);
-    final memoryId = '$kKnowledgeRoutineMemorySource:$dayKey';
-    final memory = MemoryRecord(
-      id: memoryId,
+    final built = buildAgentMemory(
+      source: kKnowledgeRoutineMemorySource,
       kind: MemoryKind.episodic,
       ownerUserId: ownerUserId,
-      scope: '*',
-      source: kKnowledgeRoutineMemorySource,
-      sourceId: dayKey,
+      start: start,
+      finished: finished,
       title: '本周到期的 Routine',
       summary: summary,
       payload: <String, Object?>{
@@ -110,11 +108,8 @@ class RoutineDueAgent implements Agent {
       entities: <String>{'knowledge_routine', 'routine_due'},
       importance: overdue.isNotEmpty ? 0.75 : 0.5,
       confidence: 0.95,
-      validFrom: start.toUtc(),
-      createdAt: start.toUtc(),
-      updatedAt: finished,
     );
-    await runtime.remember(memory);
+    await runtime.remember(built.record);
 
     final n = notifier;
     if (n != null) {
@@ -131,7 +126,7 @@ class RoutineDueAgent implements Agent {
         'overdue_count': overdue.length,
         'upcoming_count': upcoming.length,
       },
-      memoryId: memoryId,
+      memoryId: built.memoryId,
     );
   }
 

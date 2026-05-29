@@ -7,20 +7,13 @@
 /// special-casing KnowledgeOS.
 library;
 
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
-import '../../../core/ai/local/memory/providers.dart';
-import '../../../core/auth/current_user.dart';
-import '../../../core/auth/domain_scope.dart';
-import '../../../core/auth/providers.dart' as core_auth;
 import '../domain/knowledge_models.dart';
-import 'providers.dart';
-
-const String kKnowledgeDecisionMemorySource = 'know:decisions';
+import 'knowledge_object_memory_indexers.dart'
+    show kKnowledgeDecisionMemorySource, subscribeKnowledgeIndexer;
 
 class KnowledgeDecisionMemoryIndexer {
   const KnowledgeDecisionMemoryIndexer();
@@ -99,39 +92,14 @@ class KnowledgeDecisionMemoryIndexer {
   }
 }
 
-/// Wires the indexer to the decisions stream. Gated on the Knowledge
-/// opt-in: stays inert when Knowledge is OFF.
-final knowledgeDecisionMemoryIndexerProvider =
-    Provider<KnowledgeDecisionMemoryIndexer>((ref) {
+/// Wires the indexer to the decisions stream via the shared
+/// [subscribeKnowledgeIndexer] plumbing (opt-in gate + re-entrance guard
+/// + dispose all enforced there). Stays inert when Knowledge is OFF.
+final knowledgeDecisionMemoryIndexerProvider = Provider<void>((ref) {
   const indexer = KnowledgeDecisionMemoryIndexer();
-  var running = false;
-
-  Future<void> reindexNow(List<KnowledgeDecision> rows) async {
-    if (running || rows.isEmpty) return;
-    running = true;
-    try {
-      final runtime = await ref.read(memoryRuntimeProvider.future);
-      final userId = await ref.read(currentUserIdProvider)();
-      await indexer.reindex(runtime, rows, ownerUserId: userId);
-    } finally {
-      running = false;
-    }
-  }
-
-  () async {
-    final resolved = await ref.read(core_auth.domainOptInsProvider.future);
-    if (!resolved.contains(DomainScope.knowledge)) return;
-
-    final repo = await ref.read(knowledgeRepositoryProvider.future);
-    final userId = await ref.read(currentUserIdProvider)();
-    final sub = repo
-        .watchDecisions(ownerUserId: userId, limit: 200)
-        .listen((rows) {
-      // ignore: discarded_futures
-      reindexNow(rows);
-    });
-    ref.onDispose(sub.cancel);
-  }();
-
-  return indexer;
+  subscribeKnowledgeIndexer<KnowledgeDecision>(
+    ref,
+    streamOf: (repo, uid) => repo.watchDecisions(ownerUserId: uid, limit: 200),
+    reindex: indexer.reindex,
+  );
 });
