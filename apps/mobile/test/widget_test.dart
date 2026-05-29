@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/app/app.dart';
+import 'package:naviwealth/app/domain_packs.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/domain/values/money.dart';
@@ -37,6 +39,12 @@ void main() {
       ProviderScope(
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
+          // Routing now mounts per-domain shell routes contributed by the
+          // DomainPack registry (D-1.8 / D-2.3b). bootstrap.dart populates
+          // it with kAllDomainPacks in production; the registry defaults to
+          // empty, so without this override the home route `/` has no match
+          // and the app boots to the "Page not found" error page.
+          domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
           // The dashboard subscribes to live DB streams. With no real
           // database in the test environment, short-circuit the streams
           // so the home page resolves to its empty state.
