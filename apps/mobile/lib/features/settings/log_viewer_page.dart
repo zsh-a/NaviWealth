@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:talker/talker.dart';
 
 import '../../core/logging/providers.dart';
@@ -30,6 +32,36 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
     super.dispose();
   }
 
+  Future<void> _copyAll(BuildContext context, Talker talker) async {
+    final text = _serialize(talker);
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!context.mounted) return;
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      const SnackBar(
+        content: Text('日志已复制 / Logs copied'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _shareAll(Talker talker) async {
+    final text = _serialize(talker);
+    if (text.isEmpty) return;
+    await SharePlus.instance.share(
+      ShareParams(text: text, subject: 'NaviWealth diagnostic logs'),
+    );
+  }
+
+  /// Flatten the in-memory history to a copyable text block. Order
+  /// matches what the user sees on screen.
+  static String _serialize(Talker talker) {
+    final buf = StringBuffer();
+    for (final entry in talker.history) {
+      buf.writeln(entry.generateTextMessage());
+    }
+    return buf.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -40,6 +72,14 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
         title: Text(l10n.settingsLogsTitle),
         prefixes: [backHeaderAction(context)],
         suffixes: [
+          FHeaderAction(
+            icon: const Icon(FLucideIcons.copy),
+            onPress: () => _copyAll(context, talker),
+          ),
+          FHeaderAction(
+            icon: const Icon(FLucideIcons.share2),
+            onPress: () => _shareAll(talker),
+          ),
           FHeaderAction(
             icon: const Icon(FLucideIcons.trash2),
             onPress: () {
