@@ -514,7 +514,7 @@ in:  { primary_id, duplicate_ids:[...], merged:{ title?, body_md?, tags?, links?
   - duplicate 软删（deleted_at）+ 写 merged_into_id 指针
   - 回指引用：concept.related_concept_ids、[[concept]] 反链
 ```
-- **MVP 只合并 Note↔Note、Concept↔Concept**（入边少）；Decision / Assumption 引用重定向标 P1。
+- ~~**MVP 只合并 Note↔Note、Concept↔Concept**（入边少）；Decision / Assumption 引用重定向标 P1。~~ **P1 已落地（2026-05-29）**：schema v22→v23 给 principles / assumptions / decisions / experiments 加 `merged_into_id`；`mergeAssumptions`（重定向 Decision.assumptionIds + Experiment.targetAssumptionId + 并集 evidence）、`mergePrinciples`（重定向 Decision.principleIds）、`mergeDecisions`（重定向其它 Decision 的 supersededByDecisionId）、`mergeExperiments`（并集 metrics,无入边）。`propose_merge` entity_type 扩到 6 类,applier 路由全 6 类。测试 `knowledge_merge_redirect_test`(4)。
 - ⚠ **Confirmation policy**：`Confirmation` enum 当前只有 `none / oneTap / typed`（`tool_descriptor.dart`），**没有 `confirmDiff`**——架构文档的交互语法里的 confirmDiff 是 UI 渲染模式，不是该 enum 值。MVP 用 **`Confirmation.oneTap`**，把合并 diff（保留/删除/union 字段）**渲染在 ProposalEnvelope 卡片内**（diff 是渲染关注点，与 confirmation policy 解耦）。merge 软删可逆（`deleted_at` + `merged_into_id` 可还原），oneTap 风险可接受。若 dogfood 发现误触多，P1 再正式新增 `confirmDiff` enum 值（enum + wire + applier UI 三处）。
 - Sync 友好：合并 = 两条 row update（primary 改 + duplicate tombstone），天然走 row-state LWW（sync-v2）。
 
