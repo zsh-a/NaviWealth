@@ -21840,6 +21840,17 @@ class $KnowledgePrinciplesTable extends KnowledgePrinciples
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _mergedIntoIdMeta = const VerificationMeta(
+    'mergedIntoId',
+  );
+  @override
+  late final GeneratedColumn<String> mergedIntoId = GeneratedColumn<String>(
+    'merged_into_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -21853,6 +21864,7 @@ class $KnowledgePrinciplesTable extends KnowledgePrinciples
     scope,
     status,
     declaredAt,
+    mergedIntoId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -21944,6 +21956,15 @@ class $KnowledgePrinciplesTable extends KnowledgePrinciples
     } else if (isInserting) {
       context.missing(_declaredAtMeta);
     }
+    if (data.containsKey('merged_into_id')) {
+      context.handle(
+        _mergedIntoIdMeta,
+        mergedIntoId.isAcceptableOrUnknown(
+          data['merged_into_id']!,
+          _mergedIntoIdMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -21999,6 +22020,10 @@ class $KnowledgePrinciplesTable extends KnowledgePrinciples
         DriftSqlType.dateTime,
         data['${effectivePrefix}declared_at'],
       )!,
+      mergedIntoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}merged_into_id'],
+      ),
     );
   }
 
@@ -22039,6 +22064,11 @@ class KnowledgePrincipleRow extends DataClass
   final String scope;
   final String status;
   final DateTime declaredAt;
+
+  /// Dedupe pointer — see [KnowledgeNotes.mergedIntoId]. A principle merged
+  /// into another is soft-deleted and stamped with the survivor's id; any
+  /// Decision referencing it is re-pointed to the survivor (§15.3 P1).
+  final String? mergedIntoId;
   const KnowledgePrincipleRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -22051,6 +22081,7 @@ class KnowledgePrincipleRow extends DataClass
     required this.scope,
     required this.status,
     required this.declaredAt,
+    this.mergedIntoId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -22072,6 +22103,9 @@ class KnowledgePrincipleRow extends DataClass
     map['scope'] = Variable<String>(scope);
     map['status'] = Variable<String>(status);
     map['declared_at'] = Variable<DateTime>(declaredAt);
+    if (!nullToAbsent || mergedIntoId != null) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId);
+    }
     return map;
   }
 
@@ -22090,6 +22124,9 @@ class KnowledgePrincipleRow extends DataClass
       scope: Value(scope),
       status: Value(status),
       declaredAt: Value(declaredAt),
+      mergedIntoId: mergedIntoId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mergedIntoId),
     );
   }
 
@@ -22110,6 +22147,7 @@ class KnowledgePrincipleRow extends DataClass
       scope: serializer.fromJson<String>(json['scope']),
       status: serializer.fromJson<String>(json['status']),
       declaredAt: serializer.fromJson<DateTime>(json['declaredAt']),
+      mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
     );
   }
   @override
@@ -22127,6 +22165,7 @@ class KnowledgePrincipleRow extends DataClass
       'scope': serializer.toJson<String>(scope),
       'status': serializer.toJson<String>(status),
       'declaredAt': serializer.toJson<DateTime>(declaredAt),
+      'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
     };
   }
 
@@ -22142,6 +22181,7 @@ class KnowledgePrincipleRow extends DataClass
     String? scope,
     String? status,
     DateTime? declaredAt,
+    Value<String?> mergedIntoId = const Value.absent(),
   }) => KnowledgePrincipleRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -22154,6 +22194,7 @@ class KnowledgePrincipleRow extends DataClass
     scope: scope ?? this.scope,
     status: status ?? this.status,
     declaredAt: declaredAt ?? this.declaredAt,
+    mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
   );
   KnowledgePrincipleRow copyWithCompanion(KnowledgePrinciplesCompanion data) {
     return KnowledgePrincipleRow(
@@ -22176,6 +22217,9 @@ class KnowledgePrincipleRow extends DataClass
       declaredAt: data.declaredAt.present
           ? data.declaredAt.value
           : this.declaredAt,
+      mergedIntoId: data.mergedIntoId.present
+          ? data.mergedIntoId.value
+          : this.mergedIntoId,
     );
   }
 
@@ -22192,7 +22236,8 @@ class KnowledgePrincipleRow extends DataClass
           ..write('rationaleMd: $rationaleMd, ')
           ..write('scope: $scope, ')
           ..write('status: $status, ')
-          ..write('declaredAt: $declaredAt')
+          ..write('declaredAt: $declaredAt, ')
+          ..write('mergedIntoId: $mergedIntoId')
           ..write(')'))
         .toString();
   }
@@ -22210,6 +22255,7 @@ class KnowledgePrincipleRow extends DataClass
     scope,
     status,
     declaredAt,
+    mergedIntoId,
   );
   @override
   bool operator ==(Object other) =>
@@ -22225,7 +22271,8 @@ class KnowledgePrincipleRow extends DataClass
           other.rationaleMd == this.rationaleMd &&
           other.scope == this.scope &&
           other.status == this.status &&
-          other.declaredAt == this.declaredAt);
+          other.declaredAt == this.declaredAt &&
+          other.mergedIntoId == this.mergedIntoId);
 }
 
 class KnowledgePrinciplesCompanion
@@ -22241,6 +22288,7 @@ class KnowledgePrinciplesCompanion
   final Value<String> scope;
   final Value<String> status;
   final Value<DateTime> declaredAt;
+  final Value<String?> mergedIntoId;
   final Value<int> rowid;
   const KnowledgePrinciplesCompanion({
     this.ownerUserId = const Value.absent(),
@@ -22254,6 +22302,7 @@ class KnowledgePrinciplesCompanion
     this.scope = const Value.absent(),
     this.status = const Value.absent(),
     this.declaredAt = const Value.absent(),
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   KnowledgePrinciplesCompanion.insert({
@@ -22268,6 +22317,7 @@ class KnowledgePrinciplesCompanion
     this.scope = const Value.absent(),
     this.status = const Value.absent(),
     required DateTime declaredAt,
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -22288,6 +22338,7 @@ class KnowledgePrinciplesCompanion
     Expression<String>? scope,
     Expression<String>? status,
     Expression<DateTime>? declaredAt,
+    Expression<String>? mergedIntoId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -22302,6 +22353,7 @@ class KnowledgePrinciplesCompanion
       if (scope != null) 'scope': scope,
       if (status != null) 'status': status,
       if (declaredAt != null) 'declared_at': declaredAt,
+      if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -22318,6 +22370,7 @@ class KnowledgePrinciplesCompanion
     Value<String>? scope,
     Value<String>? status,
     Value<DateTime>? declaredAt,
+    Value<String?>? mergedIntoId,
     Value<int>? rowid,
   }) {
     return KnowledgePrinciplesCompanion(
@@ -22332,6 +22385,7 @@ class KnowledgePrinciplesCompanion
       scope: scope ?? this.scope,
       status: status ?? this.status,
       declaredAt: declaredAt ?? this.declaredAt,
+      mergedIntoId: mergedIntoId ?? this.mergedIntoId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -22374,6 +22428,9 @@ class KnowledgePrinciplesCompanion
     if (declaredAt.present) {
       map['declared_at'] = Variable<DateTime>(declaredAt.value);
     }
+    if (mergedIntoId.present) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -22394,6 +22451,7 @@ class KnowledgePrinciplesCompanion
           ..write('scope: $scope, ')
           ..write('status: $status, ')
           ..write('declaredAt: $declaredAt, ')
+          ..write('mergedIntoId: $mergedIntoId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -22546,6 +22604,17 @@ class $KnowledgeAssumptionsTable extends KnowledgeAssumptions
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _mergedIntoIdMeta = const VerificationMeta(
+    'mergedIntoId',
+  );
+  @override
+  late final GeneratedColumn<String> mergedIntoId = GeneratedColumn<String>(
+    'merged_into_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -22561,6 +22630,7 @@ class $KnowledgeAssumptionsTable extends KnowledgeAssumptions
     status,
     lastVerifiedAt,
     declaredAt,
+    mergedIntoId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -22667,6 +22737,15 @@ class $KnowledgeAssumptionsTable extends KnowledgeAssumptions
     } else if (isInserting) {
       context.missing(_declaredAtMeta);
     }
+    if (data.containsKey('merged_into_id')) {
+      context.handle(
+        _mergedIntoIdMeta,
+        mergedIntoId.isAcceptableOrUnknown(
+          data['merged_into_id']!,
+          _mergedIntoIdMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -22730,6 +22809,10 @@ class $KnowledgeAssumptionsTable extends KnowledgeAssumptions
         DriftSqlType.dateTime,
         data['${effectivePrefix}declared_at'],
       )!,
+      mergedIntoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}merged_into_id'],
+      ),
     );
   }
 
@@ -22772,6 +22855,12 @@ class KnowledgeAssumptionRow extends DataClass
   final String status;
   final DateTime? lastVerifiedAt;
   final DateTime declaredAt;
+
+  /// Dedupe pointer — see [KnowledgeNotes.mergedIntoId]. An assumption merged
+  /// into another is soft-deleted and stamped with the survivor's id; any
+  /// Decision (`assumptionIds`) or Experiment (`targetAssumptionId`)
+  /// referencing it is re-pointed to the survivor (§15.3 P1).
+  final String? mergedIntoId;
   const KnowledgeAssumptionRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -22786,6 +22875,7 @@ class KnowledgeAssumptionRow extends DataClass
     required this.status,
     this.lastVerifiedAt,
     required this.declaredAt,
+    this.mergedIntoId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -22811,6 +22901,9 @@ class KnowledgeAssumptionRow extends DataClass
       map['last_verified_at'] = Variable<DateTime>(lastVerifiedAt);
     }
     map['declared_at'] = Variable<DateTime>(declaredAt);
+    if (!nullToAbsent || mergedIntoId != null) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId);
+    }
     return map;
   }
 
@@ -22833,6 +22926,9 @@ class KnowledgeAssumptionRow extends DataClass
           ? const Value.absent()
           : Value(lastVerifiedAt),
       declaredAt: Value(declaredAt),
+      mergedIntoId: mergedIntoId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mergedIntoId),
     );
   }
 
@@ -22855,6 +22951,7 @@ class KnowledgeAssumptionRow extends DataClass
       status: serializer.fromJson<String>(json['status']),
       lastVerifiedAt: serializer.fromJson<DateTime?>(json['lastVerifiedAt']),
       declaredAt: serializer.fromJson<DateTime>(json['declaredAt']),
+      mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
     );
   }
   @override
@@ -22874,6 +22971,7 @@ class KnowledgeAssumptionRow extends DataClass
       'status': serializer.toJson<String>(status),
       'lastVerifiedAt': serializer.toJson<DateTime?>(lastVerifiedAt),
       'declaredAt': serializer.toJson<DateTime>(declaredAt),
+      'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
     };
   }
 
@@ -22891,6 +22989,7 @@ class KnowledgeAssumptionRow extends DataClass
     String? status,
     Value<DateTime?> lastVerifiedAt = const Value.absent(),
     DateTime? declaredAt,
+    Value<String?> mergedIntoId = const Value.absent(),
   }) => KnowledgeAssumptionRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -22907,6 +23006,7 @@ class KnowledgeAssumptionRow extends DataClass
         ? lastVerifiedAt.value
         : this.lastVerifiedAt,
     declaredAt: declaredAt ?? this.declaredAt,
+    mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
   );
   KnowledgeAssumptionRow copyWithCompanion(KnowledgeAssumptionsCompanion data) {
     return KnowledgeAssumptionRow(
@@ -22935,6 +23035,9 @@ class KnowledgeAssumptionRow extends DataClass
       declaredAt: data.declaredAt.present
           ? data.declaredAt.value
           : this.declaredAt,
+      mergedIntoId: data.mergedIntoId.present
+          ? data.mergedIntoId.value
+          : this.mergedIntoId,
     );
   }
 
@@ -22953,7 +23056,8 @@ class KnowledgeAssumptionRow extends DataClass
           ..write('evidenceIdsJson: $evidenceIdsJson, ')
           ..write('status: $status, ')
           ..write('lastVerifiedAt: $lastVerifiedAt, ')
-          ..write('declaredAt: $declaredAt')
+          ..write('declaredAt: $declaredAt, ')
+          ..write('mergedIntoId: $mergedIntoId')
           ..write(')'))
         .toString();
   }
@@ -22973,6 +23077,7 @@ class KnowledgeAssumptionRow extends DataClass
     status,
     lastVerifiedAt,
     declaredAt,
+    mergedIntoId,
   );
   @override
   bool operator ==(Object other) =>
@@ -22990,7 +23095,8 @@ class KnowledgeAssumptionRow extends DataClass
           other.evidenceIdsJson == this.evidenceIdsJson &&
           other.status == this.status &&
           other.lastVerifiedAt == this.lastVerifiedAt &&
-          other.declaredAt == this.declaredAt);
+          other.declaredAt == this.declaredAt &&
+          other.mergedIntoId == this.mergedIntoId);
 }
 
 class KnowledgeAssumptionsCompanion
@@ -23008,6 +23114,7 @@ class KnowledgeAssumptionsCompanion
   final Value<String> status;
   final Value<DateTime?> lastVerifiedAt;
   final Value<DateTime> declaredAt;
+  final Value<String?> mergedIntoId;
   final Value<int> rowid;
   const KnowledgeAssumptionsCompanion({
     this.ownerUserId = const Value.absent(),
@@ -23023,6 +23130,7 @@ class KnowledgeAssumptionsCompanion
     this.status = const Value.absent(),
     this.lastVerifiedAt = const Value.absent(),
     this.declaredAt = const Value.absent(),
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   KnowledgeAssumptionsCompanion.insert({
@@ -23039,6 +23147,7 @@ class KnowledgeAssumptionsCompanion
     this.status = const Value.absent(),
     this.lastVerifiedAt = const Value.absent(),
     required DateTime declaredAt,
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -23061,6 +23170,7 @@ class KnowledgeAssumptionsCompanion
     Expression<String>? status,
     Expression<DateTime>? lastVerifiedAt,
     Expression<DateTime>? declaredAt,
+    Expression<String>? mergedIntoId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -23077,6 +23187,7 @@ class KnowledgeAssumptionsCompanion
       if (status != null) 'status': status,
       if (lastVerifiedAt != null) 'last_verified_at': lastVerifiedAt,
       if (declaredAt != null) 'declared_at': declaredAt,
+      if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -23095,6 +23206,7 @@ class KnowledgeAssumptionsCompanion
     Value<String>? status,
     Value<DateTime?>? lastVerifiedAt,
     Value<DateTime>? declaredAt,
+    Value<String?>? mergedIntoId,
     Value<int>? rowid,
   }) {
     return KnowledgeAssumptionsCompanion(
@@ -23111,6 +23223,7 @@ class KnowledgeAssumptionsCompanion
       status: status ?? this.status,
       lastVerifiedAt: lastVerifiedAt ?? this.lastVerifiedAt,
       declaredAt: declaredAt ?? this.declaredAt,
+      mergedIntoId: mergedIntoId ?? this.mergedIntoId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -23159,6 +23272,9 @@ class KnowledgeAssumptionsCompanion
     if (declaredAt.present) {
       map['declared_at'] = Variable<DateTime>(declaredAt.value);
     }
+    if (mergedIntoId.present) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -23181,6 +23297,7 @@ class KnowledgeAssumptionsCompanion
           ..write('status: $status, ')
           ..write('lastVerifiedAt: $lastVerifiedAt, ')
           ..write('declaredAt: $declaredAt, ')
+          ..write('mergedIntoId: $mergedIntoId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -23403,6 +23520,17 @@ class $KnowledgeDecisionsTable extends KnowledgeDecisions
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _mergedIntoIdMeta = const VerificationMeta(
+    'mergedIntoId',
+  );
+  @override
+  late final GeneratedColumn<String> mergedIntoId = GeneratedColumn<String>(
+    'merged_into_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -23424,6 +23552,7 @@ class $KnowledgeDecisionsTable extends KnowledgeDecisions
     supersededByDecisionId,
     contextSnapshotJson,
     decidedAt,
+    mergedIntoId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -23587,6 +23716,15 @@ class $KnowledgeDecisionsTable extends KnowledgeDecisions
     } else if (isInserting) {
       context.missing(_decidedAtMeta);
     }
+    if (data.containsKey('merged_into_id')) {
+      context.handle(
+        _mergedIntoIdMeta,
+        mergedIntoId.isAcceptableOrUnknown(
+          data['merged_into_id']!,
+          _mergedIntoIdMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -23674,6 +23812,10 @@ class $KnowledgeDecisionsTable extends KnowledgeDecisions
         DriftSqlType.dateTime,
         data['${effectivePrefix}decided_at'],
       )!,
+      mergedIntoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}merged_into_id'],
+      ),
     );
   }
 
@@ -23722,6 +23864,14 @@ class KnowledgeDecisionRow extends DataClass
   final String? supersededByDecisionId;
   final String? contextSnapshotJson;
   final DateTime decidedAt;
+
+  /// Dedupe pointer — see [KnowledgeNotes.mergedIntoId]. A decision merged
+  /// into another is soft-deleted and stamped with the survivor's id; any
+  /// other decision whose `supersededByDecisionId` pointed at it is
+  /// re-pointed to the survivor (§15.3 P1). Distinct from `superseded`
+  /// status — merge is "these were the same decision", supersede is
+  /// "a later decision replaced this one".
+  final String? mergedIntoId;
   const KnowledgeDecisionRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -23742,6 +23892,7 @@ class KnowledgeDecisionRow extends DataClass
     this.supersededByDecisionId,
     this.contextSnapshotJson,
     required this.decidedAt,
+    this.mergedIntoId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -23783,6 +23934,9 @@ class KnowledgeDecisionRow extends DataClass
       map['context_snapshot_json'] = Variable<String>(contextSnapshotJson);
     }
     map['decided_at'] = Variable<DateTime>(decidedAt);
+    if (!nullToAbsent || mergedIntoId != null) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId);
+    }
     return map;
   }
 
@@ -23819,6 +23973,9 @@ class KnowledgeDecisionRow extends DataClass
           ? const Value.absent()
           : Value(contextSnapshotJson),
       decidedAt: Value(decidedAt),
+      mergedIntoId: mergedIntoId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mergedIntoId),
     );
   }
 
@@ -23851,6 +24008,7 @@ class KnowledgeDecisionRow extends DataClass
         json['contextSnapshotJson'],
       ),
       decidedAt: serializer.fromJson<DateTime>(json['decidedAt']),
+      mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
     );
   }
   @override
@@ -23878,6 +24036,7 @@ class KnowledgeDecisionRow extends DataClass
       ),
       'contextSnapshotJson': serializer.toJson<String?>(contextSnapshotJson),
       'decidedAt': serializer.toJson<DateTime>(decidedAt),
+      'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
     };
   }
 
@@ -23901,6 +24060,7 @@ class KnowledgeDecisionRow extends DataClass
     Value<String?> supersededByDecisionId = const Value.absent(),
     Value<String?> contextSnapshotJson = const Value.absent(),
     DateTime? decidedAt,
+    Value<String?> mergedIntoId = const Value.absent(),
   }) => KnowledgeDecisionRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -23929,6 +24089,7 @@ class KnowledgeDecisionRow extends DataClass
         ? contextSnapshotJson.value
         : this.contextSnapshotJson,
     decidedAt: decidedAt ?? this.decidedAt,
+    mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
   );
   KnowledgeDecisionRow copyWithCompanion(KnowledgeDecisionsCompanion data) {
     return KnowledgeDecisionRow(
@@ -23975,6 +24136,9 @@ class KnowledgeDecisionRow extends DataClass
           ? data.contextSnapshotJson.value
           : this.contextSnapshotJson,
       decidedAt: data.decidedAt.present ? data.decidedAt.value : this.decidedAt,
+      mergedIntoId: data.mergedIntoId.present
+          ? data.mergedIntoId.value
+          : this.mergedIntoId,
     );
   }
 
@@ -23999,7 +24163,8 @@ class KnowledgeDecisionRow extends DataClass
           ..write('status: $status, ')
           ..write('supersededByDecisionId: $supersededByDecisionId, ')
           ..write('contextSnapshotJson: $contextSnapshotJson, ')
-          ..write('decidedAt: $decidedAt')
+          ..write('decidedAt: $decidedAt, ')
+          ..write('mergedIntoId: $mergedIntoId')
           ..write(')'))
         .toString();
   }
@@ -24025,6 +24190,7 @@ class KnowledgeDecisionRow extends DataClass
     supersededByDecisionId,
     contextSnapshotJson,
     decidedAt,
+    mergedIntoId,
   );
   @override
   bool operator ==(Object other) =>
@@ -24048,7 +24214,8 @@ class KnowledgeDecisionRow extends DataClass
           other.status == this.status &&
           other.supersededByDecisionId == this.supersededByDecisionId &&
           other.contextSnapshotJson == this.contextSnapshotJson &&
-          other.decidedAt == this.decidedAt);
+          other.decidedAt == this.decidedAt &&
+          other.mergedIntoId == this.mergedIntoId);
 }
 
 class KnowledgeDecisionsCompanion
@@ -24072,6 +24239,7 @@ class KnowledgeDecisionsCompanion
   final Value<String?> supersededByDecisionId;
   final Value<String?> contextSnapshotJson;
   final Value<DateTime> decidedAt;
+  final Value<String?> mergedIntoId;
   final Value<int> rowid;
   const KnowledgeDecisionsCompanion({
     this.ownerUserId = const Value.absent(),
@@ -24093,6 +24261,7 @@ class KnowledgeDecisionsCompanion
     this.supersededByDecisionId = const Value.absent(),
     this.contextSnapshotJson = const Value.absent(),
     this.decidedAt = const Value.absent(),
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   KnowledgeDecisionsCompanion.insert({
@@ -24115,6 +24284,7 @@ class KnowledgeDecisionsCompanion
     this.supersededByDecisionId = const Value.absent(),
     this.contextSnapshotJson = const Value.absent(),
     required DateTime decidedAt,
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -24143,6 +24313,7 @@ class KnowledgeDecisionsCompanion
     Expression<String>? supersededByDecisionId,
     Expression<String>? contextSnapshotJson,
     Expression<DateTime>? decidedAt,
+    Expression<String>? mergedIntoId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -24167,6 +24338,7 @@ class KnowledgeDecisionsCompanion
       if (contextSnapshotJson != null)
         'context_snapshot_json': contextSnapshotJson,
       if (decidedAt != null) 'decided_at': decidedAt,
+      if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -24191,6 +24363,7 @@ class KnowledgeDecisionsCompanion
     Value<String?>? supersededByDecisionId,
     Value<String?>? contextSnapshotJson,
     Value<DateTime>? decidedAt,
+    Value<String?>? mergedIntoId,
     Value<int>? rowid,
   }) {
     return KnowledgeDecisionsCompanion(
@@ -24214,6 +24387,7 @@ class KnowledgeDecisionsCompanion
           supersededByDecisionId ?? this.supersededByDecisionId,
       contextSnapshotJson: contextSnapshotJson ?? this.contextSnapshotJson,
       decidedAt: decidedAt ?? this.decidedAt,
+      mergedIntoId: mergedIntoId ?? this.mergedIntoId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -24284,6 +24458,9 @@ class KnowledgeDecisionsCompanion
     if (decidedAt.present) {
       map['decided_at'] = Variable<DateTime>(decidedAt.value);
     }
+    if (mergedIntoId.present) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -24312,6 +24489,7 @@ class KnowledgeDecisionsCompanion
           ..write('supersededByDecisionId: $supersededByDecisionId, ')
           ..write('contextSnapshotJson: $contextSnapshotJson, ')
           ..write('decidedAt: $decidedAt, ')
+          ..write('mergedIntoId: $mergedIntoId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -25236,6 +25414,17 @@ class $KnowledgeExperimentsTable extends KnowledgeExperiments
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _mergedIntoIdMeta = const VerificationMeta(
+    'mergedIntoId',
+  );
+  @override
+  late final GeneratedColumn<String> mergedIntoId = GeneratedColumn<String>(
+    'merged_into_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -25253,6 +25442,7 @@ class $KnowledgeExperimentsTable extends KnowledgeExperiments
     targetAssumptionId,
     startedAt,
     endedAt,
+    mergedIntoId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -25374,6 +25564,15 @@ class $KnowledgeExperimentsTable extends KnowledgeExperiments
         endedAt.isAcceptableOrUnknown(data['ended_at']!, _endedAtMeta),
       );
     }
+    if (data.containsKey('merged_into_id')) {
+      context.handle(
+        _mergedIntoIdMeta,
+        mergedIntoId.isAcceptableOrUnknown(
+          data['merged_into_id']!,
+          _mergedIntoIdMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -25445,6 +25644,10 @@ class $KnowledgeExperimentsTable extends KnowledgeExperiments
         DriftSqlType.dateTime,
         data['${effectivePrefix}ended_at'],
       ),
+      mergedIntoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}merged_into_id'],
+      ),
     );
   }
 
@@ -25489,6 +25692,11 @@ class KnowledgeExperimentRow extends DataClass
   final String? targetAssumptionId;
   final DateTime startedAt;
   final DateTime? endedAt;
+
+  /// Dedupe pointer — see [KnowledgeNotes.mergedIntoId]. Experiments carry no
+  /// inbound id references, so a merge only unions metrics onto the survivor
+  /// and tombstones the duplicate (no re-pointing needed).
+  final String? mergedIntoId;
   const KnowledgeExperimentRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -25505,6 +25713,7 @@ class KnowledgeExperimentRow extends DataClass
     this.targetAssumptionId,
     required this.startedAt,
     this.endedAt,
+    this.mergedIntoId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -25538,6 +25747,9 @@ class KnowledgeExperimentRow extends DataClass
     if (!nullToAbsent || endedAt != null) {
       map['ended_at'] = Variable<DateTime>(endedAt);
     }
+    if (!nullToAbsent || mergedIntoId != null) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId);
+    }
     return map;
   }
 
@@ -25568,6 +25780,9 @@ class KnowledgeExperimentRow extends DataClass
       endedAt: endedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(endedAt),
+      mergedIntoId: mergedIntoId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mergedIntoId),
     );
   }
 
@@ -25594,6 +25809,7 @@ class KnowledgeExperimentRow extends DataClass
       ),
       startedAt: serializer.fromJson<DateTime>(json['startedAt']),
       endedAt: serializer.fromJson<DateTime?>(json['endedAt']),
+      mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
     );
   }
   @override
@@ -25615,6 +25831,7 @@ class KnowledgeExperimentRow extends DataClass
       'targetAssumptionId': serializer.toJson<String?>(targetAssumptionId),
       'startedAt': serializer.toJson<DateTime>(startedAt),
       'endedAt': serializer.toJson<DateTime?>(endedAt),
+      'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
     };
   }
 
@@ -25634,6 +25851,7 @@ class KnowledgeExperimentRow extends DataClass
     Value<String?> targetAssumptionId = const Value.absent(),
     DateTime? startedAt,
     Value<DateTime?> endedAt = const Value.absent(),
+    Value<String?> mergedIntoId = const Value.absent(),
   }) => KnowledgeExperimentRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -25652,6 +25870,7 @@ class KnowledgeExperimentRow extends DataClass
         : this.targetAssumptionId,
     startedAt: startedAt ?? this.startedAt,
     endedAt: endedAt.present ? endedAt.value : this.endedAt,
+    mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
   );
   KnowledgeExperimentRow copyWithCompanion(KnowledgeExperimentsCompanion data) {
     return KnowledgeExperimentRow(
@@ -25682,6 +25901,9 @@ class KnowledgeExperimentRow extends DataClass
           : this.targetAssumptionId,
       startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
       endedAt: data.endedAt.present ? data.endedAt.value : this.endedAt,
+      mergedIntoId: data.mergedIntoId.present
+          ? data.mergedIntoId.value
+          : this.mergedIntoId,
     );
   }
 
@@ -25702,7 +25924,8 @@ class KnowledgeExperimentRow extends DataClass
           ..write('conclusionMd: $conclusionMd, ')
           ..write('targetAssumptionId: $targetAssumptionId, ')
           ..write('startedAt: $startedAt, ')
-          ..write('endedAt: $endedAt')
+          ..write('endedAt: $endedAt, ')
+          ..write('mergedIntoId: $mergedIntoId')
           ..write(')'))
         .toString();
   }
@@ -25724,6 +25947,7 @@ class KnowledgeExperimentRow extends DataClass
     targetAssumptionId,
     startedAt,
     endedAt,
+    mergedIntoId,
   );
   @override
   bool operator ==(Object other) =>
@@ -25743,7 +25967,8 @@ class KnowledgeExperimentRow extends DataClass
           other.conclusionMd == this.conclusionMd &&
           other.targetAssumptionId == this.targetAssumptionId &&
           other.startedAt == this.startedAt &&
-          other.endedAt == this.endedAt);
+          other.endedAt == this.endedAt &&
+          other.mergedIntoId == this.mergedIntoId);
 }
 
 class KnowledgeExperimentsCompanion
@@ -25763,6 +25988,7 @@ class KnowledgeExperimentsCompanion
   final Value<String?> targetAssumptionId;
   final Value<DateTime> startedAt;
   final Value<DateTime?> endedAt;
+  final Value<String?> mergedIntoId;
   final Value<int> rowid;
   const KnowledgeExperimentsCompanion({
     this.ownerUserId = const Value.absent(),
@@ -25780,6 +26006,7 @@ class KnowledgeExperimentsCompanion
     this.targetAssumptionId = const Value.absent(),
     this.startedAt = const Value.absent(),
     this.endedAt = const Value.absent(),
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   KnowledgeExperimentsCompanion.insert({
@@ -25798,6 +26025,7 @@ class KnowledgeExperimentsCompanion
     this.targetAssumptionId = const Value.absent(),
     required DateTime startedAt,
     this.endedAt = const Value.absent(),
+    this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -25822,6 +26050,7 @@ class KnowledgeExperimentsCompanion
     Expression<String>? targetAssumptionId,
     Expression<DateTime>? startedAt,
     Expression<DateTime>? endedAt,
+    Expression<String>? mergedIntoId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -25841,6 +26070,7 @@ class KnowledgeExperimentsCompanion
         'target_assumption_id': targetAssumptionId,
       if (startedAt != null) 'started_at': startedAt,
       if (endedAt != null) 'ended_at': endedAt,
+      if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -25861,6 +26091,7 @@ class KnowledgeExperimentsCompanion
     Value<String?>? targetAssumptionId,
     Value<DateTime>? startedAt,
     Value<DateTime?>? endedAt,
+    Value<String?>? mergedIntoId,
     Value<int>? rowid,
   }) {
     return KnowledgeExperimentsCompanion(
@@ -25879,6 +26110,7 @@ class KnowledgeExperimentsCompanion
       targetAssumptionId: targetAssumptionId ?? this.targetAssumptionId,
       startedAt: startedAt ?? this.startedAt,
       endedAt: endedAt ?? this.endedAt,
+      mergedIntoId: mergedIntoId ?? this.mergedIntoId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -25933,6 +26165,9 @@ class KnowledgeExperimentsCompanion
     if (endedAt.present) {
       map['ended_at'] = Variable<DateTime>(endedAt.value);
     }
+    if (mergedIntoId.present) {
+      map['merged_into_id'] = Variable<String>(mergedIntoId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -25957,6 +26192,7 @@ class KnowledgeExperimentsCompanion
           ..write('targetAssumptionId: $targetAssumptionId, ')
           ..write('startedAt: $startedAt, ')
           ..write('endedAt: $endedAt, ')
+          ..write('mergedIntoId: $mergedIntoId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -37044,6 +37280,7 @@ typedef $$KnowledgePrinciplesTableCreateCompanionBuilder =
       Value<String> scope,
       Value<String> status,
       required DateTime declaredAt,
+      Value<String?> mergedIntoId,
       Value<int> rowid,
     });
 typedef $$KnowledgePrinciplesTableUpdateCompanionBuilder =
@@ -37059,6 +37296,7 @@ typedef $$KnowledgePrinciplesTableUpdateCompanionBuilder =
       Value<String> scope,
       Value<String> status,
       Value<DateTime> declaredAt,
+      Value<String?> mergedIntoId,
       Value<int> rowid,
     });
 
@@ -37126,6 +37364,11 @@ class $$KnowledgePrinciplesTableFilterComposer
     column: $table.declaredAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$KnowledgePrinciplesTableOrderingComposer
@@ -37191,6 +37434,11 @@ class $$KnowledgePrinciplesTableOrderingComposer
     column: $table.declaredAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$KnowledgePrinciplesTableAnnotationComposer
@@ -37240,6 +37488,11 @@ class $$KnowledgePrinciplesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get declaredAt => $composableBuilder(
     column: $table.declaredAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
     builder: (column) => column,
   );
 }
@@ -37298,6 +37551,7 @@ class $$KnowledgePrinciplesTableTableManager
                 Value<String> scope = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<DateTime> declaredAt = const Value.absent(),
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgePrinciplesCompanion(
                 ownerUserId: ownerUserId,
@@ -37311,6 +37565,7 @@ class $$KnowledgePrinciplesTableTableManager
                 scope: scope,
                 status: status,
                 declaredAt: declaredAt,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -37326,6 +37581,7 @@ class $$KnowledgePrinciplesTableTableManager
                 Value<String> scope = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 required DateTime declaredAt,
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgePrinciplesCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -37339,6 +37595,7 @@ class $$KnowledgePrinciplesTableTableManager
                 scope: scope,
                 status: status,
                 declaredAt: declaredAt,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -37385,6 +37642,7 @@ typedef $$KnowledgeAssumptionsTableCreateCompanionBuilder =
       Value<String> status,
       Value<DateTime?> lastVerifiedAt,
       required DateTime declaredAt,
+      Value<String?> mergedIntoId,
       Value<int> rowid,
     });
 typedef $$KnowledgeAssumptionsTableUpdateCompanionBuilder =
@@ -37402,6 +37660,7 @@ typedef $$KnowledgeAssumptionsTableUpdateCompanionBuilder =
       Value<String> status,
       Value<DateTime?> lastVerifiedAt,
       Value<DateTime> declaredAt,
+      Value<String?> mergedIntoId,
       Value<int> rowid,
     });
 
@@ -37479,6 +37738,11 @@ class $$KnowledgeAssumptionsTableFilterComposer
     column: $table.declaredAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$KnowledgeAssumptionsTableOrderingComposer
@@ -37554,6 +37818,11 @@ class $$KnowledgeAssumptionsTableOrderingComposer
     column: $table.declaredAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$KnowledgeAssumptionsTableAnnotationComposer
@@ -37615,6 +37884,11 @@ class $$KnowledgeAssumptionsTableAnnotationComposer
     column: $table.declaredAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => column,
+  );
 }
 
 class $$KnowledgeAssumptionsTableTableManager
@@ -37673,6 +37947,7 @@ class $$KnowledgeAssumptionsTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<DateTime?> lastVerifiedAt = const Value.absent(),
                 Value<DateTime> declaredAt = const Value.absent(),
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgeAssumptionsCompanion(
                 ownerUserId: ownerUserId,
@@ -37688,6 +37963,7 @@ class $$KnowledgeAssumptionsTableTableManager
                 status: status,
                 lastVerifiedAt: lastVerifiedAt,
                 declaredAt: declaredAt,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -37705,6 +37981,7 @@ class $$KnowledgeAssumptionsTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<DateTime?> lastVerifiedAt = const Value.absent(),
                 required DateTime declaredAt,
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgeAssumptionsCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -37720,6 +37997,7 @@ class $$KnowledgeAssumptionsTableTableManager
                 status: status,
                 lastVerifiedAt: lastVerifiedAt,
                 declaredAt: declaredAt,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -37772,6 +38050,7 @@ typedef $$KnowledgeDecisionsTableCreateCompanionBuilder =
       Value<String?> supersededByDecisionId,
       Value<String?> contextSnapshotJson,
       required DateTime decidedAt,
+      Value<String?> mergedIntoId,
       Value<int> rowid,
     });
 typedef $$KnowledgeDecisionsTableUpdateCompanionBuilder =
@@ -37795,6 +38074,7 @@ typedef $$KnowledgeDecisionsTableUpdateCompanionBuilder =
       Value<String?> supersededByDecisionId,
       Value<String?> contextSnapshotJson,
       Value<DateTime> decidedAt,
+      Value<String?> mergedIntoId,
       Value<int> rowid,
     });
 
@@ -37902,6 +38182,11 @@ class $$KnowledgeDecisionsTableFilterComposer
     column: $table.decidedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$KnowledgeDecisionsTableOrderingComposer
@@ -38007,6 +38292,11 @@ class $$KnowledgeDecisionsTableOrderingComposer
     column: $table.decidedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$KnowledgeDecisionsTableAnnotationComposer
@@ -38098,6 +38388,11 @@ class $$KnowledgeDecisionsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get decidedAt =>
       $composableBuilder(column: $table.decidedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => column,
+  );
 }
 
 class $$KnowledgeDecisionsTableTableManager
@@ -38159,6 +38454,7 @@ class $$KnowledgeDecisionsTableTableManager
                 Value<String?> supersededByDecisionId = const Value.absent(),
                 Value<String?> contextSnapshotJson = const Value.absent(),
                 Value<DateTime> decidedAt = const Value.absent(),
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgeDecisionsCompanion(
                 ownerUserId: ownerUserId,
@@ -38180,6 +38476,7 @@ class $$KnowledgeDecisionsTableTableManager
                 supersededByDecisionId: supersededByDecisionId,
                 contextSnapshotJson: contextSnapshotJson,
                 decidedAt: decidedAt,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -38203,6 +38500,7 @@ class $$KnowledgeDecisionsTableTableManager
                 Value<String?> supersededByDecisionId = const Value.absent(),
                 Value<String?> contextSnapshotJson = const Value.absent(),
                 required DateTime decidedAt,
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgeDecisionsCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -38224,6 +38522,7 @@ class $$KnowledgeDecisionsTableTableManager
                 supersededByDecisionId: supersededByDecisionId,
                 contextSnapshotJson: contextSnapshotJson,
                 decidedAt: decidedAt,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -38629,6 +38928,7 @@ typedef $$KnowledgeExperimentsTableCreateCompanionBuilder =
       Value<String?> targetAssumptionId,
       required DateTime startedAt,
       Value<DateTime?> endedAt,
+      Value<String?> mergedIntoId,
       Value<int> rowid,
     });
 typedef $$KnowledgeExperimentsTableUpdateCompanionBuilder =
@@ -38648,6 +38948,7 @@ typedef $$KnowledgeExperimentsTableUpdateCompanionBuilder =
       Value<String?> targetAssumptionId,
       Value<DateTime> startedAt,
       Value<DateTime?> endedAt,
+      Value<String?> mergedIntoId,
       Value<int> rowid,
     });
 
@@ -38735,6 +39036,11 @@ class $$KnowledgeExperimentsTableFilterComposer
     column: $table.endedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$KnowledgeExperimentsTableOrderingComposer
@@ -38820,6 +39126,11 @@ class $$KnowledgeExperimentsTableOrderingComposer
     column: $table.endedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$KnowledgeExperimentsTableAnnotationComposer
@@ -38887,6 +39198,11 @@ class $$KnowledgeExperimentsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get endedAt =>
       $composableBuilder(column: $table.endedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get mergedIntoId => $composableBuilder(
+    column: $table.mergedIntoId,
+    builder: (column) => column,
+  );
 }
 
 class $$KnowledgeExperimentsTableTableManager
@@ -38947,6 +39263,7 @@ class $$KnowledgeExperimentsTableTableManager
                 Value<String?> targetAssumptionId = const Value.absent(),
                 Value<DateTime> startedAt = const Value.absent(),
                 Value<DateTime?> endedAt = const Value.absent(),
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgeExperimentsCompanion(
                 ownerUserId: ownerUserId,
@@ -38964,6 +39281,7 @@ class $$KnowledgeExperimentsTableTableManager
                 targetAssumptionId: targetAssumptionId,
                 startedAt: startedAt,
                 endedAt: endedAt,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -38983,6 +39301,7 @@ class $$KnowledgeExperimentsTableTableManager
                 Value<String?> targetAssumptionId = const Value.absent(),
                 required DateTime startedAt,
                 Value<DateTime?> endedAt = const Value.absent(),
+                Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgeExperimentsCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -39000,6 +39319,7 @@ class $$KnowledgeExperimentsTableTableManager
                 targetAssumptionId: targetAssumptionId,
                 startedAt: startedAt,
                 endedAt: endedAt,
+                mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

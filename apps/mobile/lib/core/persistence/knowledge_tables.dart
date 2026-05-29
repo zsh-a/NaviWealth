@@ -48,6 +48,11 @@ class KnowledgePrinciples extends Table with SyncableTable {
   TextColumn get status => text().withDefault(const Constant('active'))();
   DateTimeColumn get declaredAt => dateTime()();
 
+  /// Dedupe pointer — see [KnowledgeNotes.mergedIntoId]. A principle merged
+  /// into another is soft-deleted and stamped with the survivor's id; any
+  /// Decision referencing it is re-pointed to the survivor (§15.3 P1).
+  TextColumn get mergedIntoId => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
@@ -64,6 +69,12 @@ class KnowledgeAssumptions extends Table with SyncableTable {
   TextColumn get status => text().withDefault(const Constant('active'))();
   DateTimeColumn get lastVerifiedAt => dateTime().nullable()();
   DateTimeColumn get declaredAt => dateTime()();
+
+  /// Dedupe pointer — see [KnowledgeNotes.mergedIntoId]. An assumption merged
+  /// into another is soft-deleted and stamped with the survivor's id; any
+  /// Decision (`assumptionIds`) or Experiment (`targetAssumptionId`)
+  /// referencing it is re-pointed to the survivor (§15.3 P1).
+  TextColumn get mergedIntoId => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -90,6 +101,14 @@ class KnowledgeDecisions extends Table with SyncableTable {
   TextColumn get supersededByDecisionId => text().nullable()();
   TextColumn get contextSnapshotJson => text().nullable()();
   DateTimeColumn get decidedAt => dateTime()();
+
+  /// Dedupe pointer — see [KnowledgeNotes.mergedIntoId]. A decision merged
+  /// into another is soft-deleted and stamped with the survivor's id; any
+  /// other decision whose `supersededByDecisionId` pointed at it is
+  /// re-pointed to the survivor (§15.3 P1). Distinct from `superseded`
+  /// status — merge is "these were the same decision", supersede is
+  /// "a later decision replaced this one".
+  TextColumn get mergedIntoId => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -130,6 +149,11 @@ class KnowledgeExperiments extends Table with SyncableTable {
   TextColumn get targetAssumptionId => text().nullable()();
   DateTimeColumn get startedAt => dateTime()();
   DateTimeColumn get endedAt => dateTime().nullable()();
+
+  /// Dedupe pointer — see [KnowledgeNotes.mergedIntoId]. Experiments carry no
+  /// inbound id references, so a merge only unions metrics onto the survivor
+  /// and tombstones the duplicate (no re-pointing needed).
+  TextColumn get mergedIntoId => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

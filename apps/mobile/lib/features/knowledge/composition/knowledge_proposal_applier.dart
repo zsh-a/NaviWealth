@@ -8,7 +8,11 @@
 /// (`composite_proposal_applier.dart`) now routes `knowledge_*` kinds here.
 ///
 /// Handled kinds:
-///  - `knowledge_merge`        → `mergeNotes` / `mergeConcepts` (§15.3 dedupe)
+///  - `knowledge_merge`        → `mergeNotes` / `mergeConcepts` /
+///                               `mergePrinciples` / `mergeAssumptions` /
+///                               `mergeDecisions` / `mergeExperiments`
+///                               (§15.3 dedupe — assumption/principle/decision
+///                               merges also re-point inbound references)
 ///  - `knowledge_routine`      → `upsertRoutine`
 ///  - `knowledge_concept_link` → `linkConcepts` (§14.2 — bidirectional edge)
 ///
@@ -143,9 +147,105 @@ class KnowledgeProposalApplier implements ProposalApplier {
           appliedTable: 'knowledge_concepts',
           shortLabel: '已合并 ${dups.length} 条到「${survivor.name}」',
         );
+      case 'principle':
+        final primary = await repo.findPrinciple(primaryId);
+        if (primary == null) {
+          throw ProposalApplyException('principle $primaryId 不存在');
+        }
+        final dups = await _hydrate(duplicateIds, repo.findPrinciple);
+        if (dups.isEmpty) {
+          throw ProposalApplyException('没有可合并的重复 principle');
+        }
+        final survivor = await repo.mergePrinciples(
+          primary: primary,
+          duplicates: dups,
+          stamp: stamp,
+        );
+        return ProposalApplyState(
+          status: ProposalApplyStatus.applied,
+          appliedEntityId: survivor.id,
+          appliedTable: 'knowledge_principles',
+          shortLabel: '已合并 ${dups.length} 条到「${survivor.statement}」',
+        );
+      case 'assumption':
+        final primary = await repo.findAssumption(primaryId);
+        if (primary == null) {
+          throw ProposalApplyException('assumption $primaryId 不存在');
+        }
+        final dups = await _hydrate(duplicateIds, repo.findAssumption);
+        if (dups.isEmpty) {
+          throw ProposalApplyException('没有可合并的重复 assumption');
+        }
+        final survivor = await repo.mergeAssumptions(
+          primary: primary,
+          duplicates: dups,
+          stamp: stamp,
+        );
+        return ProposalApplyState(
+          status: ProposalApplyStatus.applied,
+          appliedEntityId: survivor.id,
+          appliedTable: 'knowledge_assumptions',
+          shortLabel: '已合并 ${dups.length} 条到「${survivor.statement}」',
+        );
+      case 'decision':
+        final primary = await repo.findDecision(primaryId);
+        if (primary == null) {
+          throw ProposalApplyException('decision $primaryId 不存在');
+        }
+        final dups = await _hydrate(duplicateIds, repo.findDecision);
+        if (dups.isEmpty) {
+          throw ProposalApplyException('没有可合并的重复 decision');
+        }
+        final survivor = await repo.mergeDecisions(
+          primary: primary,
+          duplicates: dups,
+          stamp: stamp,
+        );
+        return ProposalApplyState(
+          status: ProposalApplyStatus.applied,
+          appliedEntityId: survivor.id,
+          appliedTable: 'knowledge_decisions',
+          shortLabel: '已合并 ${dups.length} 条到「${survivor.question}」',
+        );
+      case 'experiment':
+        final primary = await repo.findExperiment(primaryId);
+        if (primary == null) {
+          throw ProposalApplyException('experiment $primaryId 不存在');
+        }
+        final dups = await _hydrate(duplicateIds, repo.findExperiment);
+        if (dups.isEmpty) {
+          throw ProposalApplyException('没有可合并的重复 experiment');
+        }
+        final survivor = await repo.mergeExperiments(
+          primary: primary,
+          duplicates: dups,
+          stamp: stamp,
+        );
+        return ProposalApplyState(
+          status: ProposalApplyStatus.applied,
+          appliedEntityId: survivor.id,
+          appliedTable: 'knowledge_experiments',
+          shortLabel: '已合并 ${dups.length} 条到「${survivor.hypothesis}」',
+        );
       default:
-        throw ProposalApplyException('merge entity_type 只支持 note / concept');
+        throw ProposalApplyException(
+          'merge entity_type 只支持 note / concept / principle / '
+          'assumption / decision / experiment',
+        );
     }
+  }
+
+  /// Hydrate ids into rows, dropping any that no longer resolve.
+  Future<List<T>> _hydrate<T>(
+    List<String> ids,
+    Future<T?> Function(String) find,
+  ) async {
+    final out = <T>[];
+    for (final id in ids) {
+      final row = await find(id);
+      if (row != null) out.add(row);
+    }
+    return out;
   }
 
   Future<ProposalApplyState> _applyConceptLink(ReadyProposalPlan plan) async {

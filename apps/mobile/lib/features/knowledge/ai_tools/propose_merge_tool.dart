@@ -28,10 +28,11 @@ class ProposeMergeTool implements DeviceTool {
   String get description =>
       '建议把若干条重复的 KnowledgeOS 条目合并为一条。**不会**直接写库,返回 proposal envelope,'
       '前端显示合并 diff 让用户一键确认。'
-      'entity_type 只支持 note / concept(MVP)。primary_id 为保留的那条;'
-      'duplicate_ids 为被合并(合并后软删)的条目。'
+      'entity_type 支持 note / concept / principle / assumption / decision / experiment。'
+      'primary_id 为保留的那条;duplicate_ids 为被合并(合并后软删)的条目。'
       '可选 merged_title / merged_body(note)或 merged_name / merged_summary(concept)覆盖保留条目的字段;'
-      '不传则沿用 primary 的字段、并并集 tags(concept 另并集 aliases / related)。'
+      '不传则沿用 primary 的字段、并并集 tags(concept 另并集 aliases / related,assumption 并集 evidence,experiment 并集 metrics)。'
+      'assumption / principle / decision 合并会自动重定向引用它们的 Decision / Experiment。'
       '通常先用 find_similar_knowledge 找到候选,再调用本工具。';
 
   @override
@@ -40,7 +41,14 @@ class ProposeMergeTool implements DeviceTool {
     'properties': {
       'entity_type': {
         'type': 'string',
-        'enum': <String>['note', 'concept'],
+        'enum': <String>[
+          'note',
+          'concept',
+          'principle',
+          'assumption',
+          'decision',
+          'experiment',
+        ],
       },
       'primary_id': {
         'type': 'string',
@@ -82,8 +90,16 @@ class ProposeMergeTool implements DeviceTool {
         : const <String>[];
     final reason = (input['reason'] as String?)?.trim() ?? '';
 
-    if (entityType != 'note' && entityType != 'concept') {
-      return badRequest('entity_type 只支持 note / concept。');
+    const nouns = <String, String>{
+      'note': '笔记',
+      'concept': '概念',
+      'principle': '原则',
+      'assumption': '假设',
+      'decision': '决策',
+      'experiment': '实验',
+    };
+    if (!nouns.containsKey(entityType)) {
+      return badRequest('entity_type 只支持 ${nouns.keys.join(' / ')}。');
     }
     if (primaryId.isEmpty || reason.isEmpty || duplicateIds.isEmpty) {
       return badRequest(
@@ -93,48 +109,56 @@ class ProposeMergeTool implements DeviceTool {
 
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
 
-    // Hydrate so the card can show a real diff and we can fail fast on a
-    // dangling id rather than letting the apply path discover it.
-    final missing = <String>[];
-    final keptLabel = <String, Object?>{};
-    final removedLabels = <String>[];
-    final mergedTags = <String>{};
+    // Resolve a row to its display label + the tokens a merge unions onto the
+    // survivor (tags / aliases / evidence / metrics — empty for types with
+    // none). Returns null label when the id no longer resolves.
+    Future<({String? label, Set<String> tokens})> resolve(String id) async {
+      switch (entityType) {
+        case 'note':
+          final r = await repo.findNote(id);
+          return (label: r?.title, tokens: <String>{...?r?.tags});
+        case 'concept':
+          final r = await repo.findConcept(id);
+          return (
+            label: r?.name,
+            tokens: <String>{...?r?.aliases, if (r != null) r.name},
+          );
+        case 'principle':
+          final r = await repo.findPrinciple(id);
+          return (label: r?.statement, tokens: const <String>{});
+        case 'assumption':
+          final r = await repo.findAssumption(id);
+          return (label: r?.statement, tokens: <String>{...?r?.evidenceIds});
+        case 'decision':
+          final r = await repo.findDecision(id);
+          return (label: r?.question, tokens: const <String>{});
+        case 'experiment':
+          final r = await repo.findExperiment(id);
+          return (label: r?.hypothesis, tokens: <String>{...?r?.metrics});
+        default:
+          return (label: null, tokens: const <String>{});
+      }
+    }
 
-    if (entityType == 'note') {
-      final primary = await repo.findNote(primaryId);
-      if (primary == null) {
-        missing.add(primaryId);
-      } else {
-        keptLabel['title'] = primary.title;
-        mergedTags.addAll(primary.tags);
-      }
-      for (final id in duplicateIds) {
-        final d = await repo.findNote(id);
-        if (d == null) {
-          missing.add(id);
-        } else {
-          removedLabels.add(d.title);
-          mergedTags.addAll(d.tags);
-        }
-      }
+    // Hydrate so the card can show a real diff and we fail fast on a dangling
+    // id rather than letting the apply path discover it.
+    final missing = <String>[];
+    final removedLabels = <String>[];
+    final mergedTokens = <String>{};
+
+    final primary = await resolve(primaryId);
+    if (primary.label == null) {
+      missing.add(primaryId);
     } else {
-      final primary = await repo.findConcept(primaryId);
-      if (primary == null) {
-        missing.add(primaryId);
+      mergedTokens.addAll(primary.tokens);
+    }
+    for (final id in duplicateIds) {
+      final d = await resolve(id);
+      if (d.label == null) {
+        missing.add(id);
       } else {
-        keptLabel['title'] = primary.name;
-        mergedTags.addAll(primary.aliases);
-      }
-      for (final id in duplicateIds) {
-        final d = await repo.findConcept(id);
-        if (d == null) {
-          missing.add(id);
-        } else {
-          removedLabels.add(d.name);
-          mergedTags
-            ..addAll(d.aliases)
-            ..add(d.name);
-        }
+        removedLabels.add(d.label!);
+        mergedTokens.addAll(d.tokens);
       }
     }
 
@@ -142,9 +166,8 @@ class ProposeMergeTool implements DeviceTool {
       return notFound('以下 id 不存在或已删除: ${missing.join(', ')}', missing);
     }
 
-    final kept = keptLabel['title'] as String? ?? primaryId;
-    final summary =
-        '建议合并 ${duplicateIds.length} 条${entityType == 'note' ? '笔记' : '概念'}'
+    final kept = primary.label ?? primaryId;
+    final summary = '建议合并 ${duplicateIds.length} 条${nouns[entityType]}'
         '到「$kept」— $reason';
 
     return proposalEnvelope(
@@ -164,12 +187,13 @@ class ProposeMergeTool implements DeviceTool {
         'diff': <String, Object?>{
           'kept': kept,
           'removed': removedLabels,
-          'merged_tags': mergedTags.toList(growable: false),
+          'merged_tags': mergedTokens.toList(growable: false),
         },
       },
       note:
           '前端必须显示 summary_zh + diff 给用户确认；只有用户明确点确认后才走 '
-          'KnowledgeRepository.mergeNotes / mergeConcepts。合并可逆(被合并条目软删并记 mergedIntoId)。',
+          'KnowledgeRepository.merge{Notes/Concepts/Principles/Assumptions/Decisions/Experiments}。'
+          '合并可逆(被合并条目软删并记 mergedIntoId);assumption/principle/decision 合并会重定向引用。',
     );
   }
 }

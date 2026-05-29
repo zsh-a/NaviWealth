@@ -130,6 +130,7 @@ class KnowledgePrinciple {
     required this.scope,
     required this.status,
     required this.declaredAt,
+    this.mergedIntoId,
     required this.sync,
   });
 
@@ -139,6 +140,9 @@ class KnowledgePrinciple {
   final String scope;
   final PrincipleStatus status;
   final DateTime declaredAt;
+
+  /// Non-null only on a principle merged into another (`§15.3`).
+  final String? mergedIntoId;
   final SyncMeta sync;
 }
 
@@ -152,6 +156,7 @@ class KnowledgeAssumption {
     required this.status,
     required this.declaredAt,
     this.lastVerifiedAt,
+    this.mergedIntoId,
     required this.sync,
   });
 
@@ -163,6 +168,9 @@ class KnowledgeAssumption {
   final AssumptionStatus status;
   final DateTime declaredAt;
   final DateTime? lastVerifiedAt;
+
+  /// Non-null only on an assumption merged into another (`§15.3`).
+  final String? mergedIntoId;
   final SyncMeta sync;
 
   int daysSinceVerify(DateTime now) {
@@ -219,6 +227,7 @@ class KnowledgeDecision {
     this.supersededByDecisionId,
     this.contextSnapshot,
     required this.decidedAt,
+    this.mergedIntoId,
     required this.sync,
   });
 
@@ -236,6 +245,11 @@ class KnowledgeDecision {
   final String? supersededByDecisionId;
   final Map<String, Object?>? contextSnapshot;
   final DateTime decidedAt;
+
+  /// Non-null only on a decision merged into another (`§15.3`). Distinct
+  /// from [supersededByDecisionId] — merge = "same decision, deduped",
+  /// supersede = "a later decision replaced this one".
+  final String? mergedIntoId;
   final SyncMeta sync;
 
   int? daysOverdue(DateTime now) {
@@ -280,6 +294,7 @@ class KnowledgeExperiment {
     this.targetAssumptionId,
     required this.startedAt,
     this.endedAt,
+    this.mergedIntoId,
     required this.sync,
   });
 
@@ -293,6 +308,9 @@ class KnowledgeExperiment {
   final String? targetAssumptionId;
   final DateTime startedAt;
   final DateTime? endedAt;
+
+  /// Non-null only on an experiment merged into another (`§15.3`).
+  final String? mergedIntoId;
   final SyncMeta sync;
 }
 

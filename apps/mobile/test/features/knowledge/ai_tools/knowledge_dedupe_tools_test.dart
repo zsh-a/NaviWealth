@@ -240,8 +240,10 @@ void main() {
 
     test('rejects unsupported entity_type', () async {
       final c = await repoContainer((_) async {});
+      // `routine` is a first-class type but not merge-able; note/concept/
+      // principle/assumption/decision/experiment are the supported set.
       final out = await _invoke(c, tool, const {
-        'entity_type': 'decision',
+        'entity_type': 'routine',
         'primary_id': 'a',
         'duplicate_ids': ['b'],
         'reason': 'x',

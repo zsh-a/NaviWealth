@@ -71,7 +71,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 22;
+  int get schemaVersion => 23;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -313,6 +313,24 @@ class AppDatabase extends _$AppDatabase {
         );
         await customStatement(
           'ALTER TABLE knowledge_concepts ADD COLUMN merged_into_id TEXT',
+        );
+      }
+      // v22 → v23: extend the dedupe pointer to the remaining merge-able
+      // KnowledgeOS types (§15.3 P1). Principle / Assumption / Decision merges
+      // also re-point inbound references; Experiment merges only tombstone.
+      // Additive nullable columns — no rewrite of existing rows.
+      if (from < 23) {
+        await customStatement(
+          'ALTER TABLE knowledge_principles ADD COLUMN merged_into_id TEXT',
+        );
+        await customStatement(
+          'ALTER TABLE knowledge_assumptions ADD COLUMN merged_into_id TEXT',
+        );
+        await customStatement(
+          'ALTER TABLE knowledge_decisions ADD COLUMN merged_into_id TEXT',
+        );
+        await customStatement(
+          'ALTER TABLE knowledge_experiments ADD COLUMN merged_into_id TEXT',
         );
       }
     },
