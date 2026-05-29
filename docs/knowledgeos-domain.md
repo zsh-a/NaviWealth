@@ -416,7 +416,7 @@ class KnowledgeExperiments extends Table with SyncableTable {
 **P3 — 工程债**
 - [ ] **测试**：`test/features/knowledge/` 目录尚未建立。至少需要 repository 单测 + AI tool 单测 + agent 单测（参考 `health/test/`）
 - [ ] **l10n**：所有 UI 文案当前是字面量（中/英混排）；触发 dogfood feedback 收敛后入 `.arb`
-- [ ] **Sync wire prefix 修复**：`SyncEngine._toRowChange` 硬编码 `prefixFinanceTable(table)`；KnowledgeOS 表上车后 outbound 仍走 `fin:` 前缀。HealthOS 也踩这个雷（health_metrics 目前本地 only）。需要按表名查 domain → 选 prefix 的 dispatch
+- [x] **Sync wire prefix 修复**（2026-05-29）：`SyncEngine._toRowChange` 原硬编码 `prefixFinanceTable(table)`,KnowledgeOS 行 outbound 全被错标 `fin:`。新增 `domain_prefix.dart` 的 `kKnowledgeTables` + `domainPrefixForTable()` / `prefixTable()` 分派(knowledge → `know:`,其余 → `fin:`),engine 改用 `prefixTable`。**同时修一个潜在 bug**:`knowledge_routines` 此前漏登 `kSyncableTables`(只列了 6 张),inbound 会被丢弃 → routine 根本不同步;现已补全 7 张。inbound strip 本就是 prefix-agnostic + LWW,所以历史 `fin:`-误标的 knowledge 行在 pull 时仍能落到同一本地行,无数据丢失。测试:`domain_prefix_test`(+3)、`op_test` 闭集补 7 张表。HealthOS 仍 local-only,触 sync 时按同模式加 `health:` 分派
 - [ ] **Share-intent dispatcher 解耦**：当前 `share_intent_service.dart` 内联 Knowledge 写入路径，违反 feature 边界（Finance ingest feature 直接 import Knowledge repo）。抽一个 `ShareIntentDispatcher` 接口，让 Knowledge / Finance 各注册自己的 handler；第三个分发目标出现时强制收敛
 - [ ] **`kPrimaryTabPaths` / dock 可视性**：dock 现在 3 域全开会很挤；need responsive collapse 策略（HealthOS D-2.3b 的 ≥ 600 px 桌面 dock 已经实现，移动端 chevron 也是）
 - [ ] **图标**：当前 `Icons.psychology` (Material) 还在 domain shell；HealthOS 同样用 Material icon glyph，convention 一致但 long-term 应该用 `FLucideIcons.brain` 等

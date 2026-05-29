@@ -30,5 +30,24 @@ void main() {
       const table = 'options_trade_journal';
       expect(stripDomainPrefix(prefixFinanceTable(table)), table);
     });
+
+    test('domainPrefixForTable routes knowledge tables to know:, else fin:',
+        () {
+      expect(domainPrefixForTable('knowledge_notes'), 'know:');
+      expect(domainPrefixForTable('knowledge_routines'), 'know:');
+      expect(domainPrefixForTable('accounts'), 'fin:');
+      expect(domainPrefixForTable('options_trade_journal'), 'fin:');
+    });
+
+    test('prefixTable tags each domain correctly', () {
+      expect(prefixTable('knowledge_decisions'), 'know:knowledge_decisions');
+      expect(prefixTable('accounts'), 'fin:accounts');
+    });
+
+    test('prefix round-trip on a knowledge table is the identity', () {
+      for (final table in kKnowledgeTables) {
+        expect(stripDomainPrefix(prefixTable(table)), table);
+      }
+    });
   });
 }
