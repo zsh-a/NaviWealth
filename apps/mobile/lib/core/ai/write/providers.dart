@@ -14,16 +14,16 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/persistence/providers.dart';
-import '../../auth/providers.dart';
+import '../../auth/current_user.dart';
 import 'drift_ai_touched_store.dart';
 import 'drift_undo_stack.dart';
 
 final undoStackProvider = Provider<DriftUndoStack?>((ref) {
   final dbAsync = ref.watch(appDatabaseProvider);
-  final auth = ref.watch(authSessionProvider);
+  final ownerUserId = ref.watch(activeUserIdProvider);
   return dbAsync.when(
     data: (db) {
-      final stack = DriftUndoStack(db, ownerUserId: auth?.userId);
+      final stack = DriftUndoStack(db, ownerUserId: ownerUserId);
       ref.onDispose(stack.dispose);
       return stack;
     },
@@ -47,10 +47,10 @@ final undoEntriesStreamProvider = StreamProvider<List<PersistedUndoEntry>>((
 /// user logs out or the DB closes.
 final aiTouchedStoreProvider = Provider<DriftAiTouchedStore?>((ref) {
   final dbAsync = ref.watch(appDatabaseProvider);
-  final auth = ref.watch(authSessionProvider);
+  final ownerUserId = ref.watch(activeUserIdProvider);
   return dbAsync.when(
     data: (db) {
-      final store = DriftAiTouchedStore(db, ownerUserId: auth?.userId);
+      final store = DriftAiTouchedStore(db, ownerUserId: ownerUserId);
       ref.onDispose(store.dispose);
       return store;
     },

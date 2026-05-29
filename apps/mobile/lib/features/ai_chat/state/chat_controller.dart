@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
-import '../../../core/auth/providers.dart';
+import '../../../core/auth/current_user.dart';
 import '../data/providers.dart';
 
 /// Phases of the user's outgoing turn:
@@ -48,13 +48,11 @@ class ChatController extends StateNotifier<ChatTurnState> {
     final trimmed = content.trim();
     if (trimmed.isEmpty || state.isBusy) return;
 
-    final session = ref.read(authSessionReaderProvider)();
-    if (session == null) {
-      // Without a session, the repository would throw; surface that
-      // up front by leaving state idle and letting the page render
-      // a "log in to chat" notice.
-      return;
-    }
+    // Device-only AI works in local-only mode too, so scope by the active
+    // user id (synthetic [kLocalOnlyUserId] when account-less) rather than a
+    // cloud session. `null` only before auth settles — the page guards that.
+    final ownerUserId = ref.read(activeUserIdProvider);
+    if (ownerUserId == null) return;
 
     final cancelToken = CancelToken();
     state = state.copyWith(
@@ -66,7 +64,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
       final repo = await ref.read(chatRepositoryProvider.future);
       await repo.sendMessage(
         sessionId: sessionId,
-        ownerUserId: session.userId,
+        ownerUserId: ownerUserId,
         content: trimmed,
         systemContext: systemContext,
         cancelToken: cancelToken,

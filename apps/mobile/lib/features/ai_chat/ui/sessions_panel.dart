@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../../../core/auth/providers.dart';
+import '../../../core/auth/current_user.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
@@ -46,9 +46,11 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final session = ref.watch(authSessionProvider);
+    // Device-only AI is account-less; scope sessions by the active user id
+    // ([kLocalOnlyUserId] in local-only mode). `null` only before auth settles.
+    final userId = ref.watch(activeUserIdProvider);
 
-    if (session == null) {
+    if (userId == null) {
       return _PanelShell(
         onNew: null,
         child: _PanelMessage(
@@ -58,7 +60,7 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
       );
     }
 
-    final sessionsAsync = ref.watch(chatSessionsStreamProvider(session.userId));
+    final sessionsAsync = ref.watch(chatSessionsStreamProvider(userId));
     return _PanelShell(
       onNew: widget.onNew,
       // Surface the search box once there's at least one session — for

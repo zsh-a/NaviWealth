@@ -7,6 +7,7 @@ import '../../../core/ai/composition/chat_trace_prep.dart';
 import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/trace/trace.dart';
+import '../../../core/auth/auth_session.dart';
 import '../../../core/auth/providers.dart';
 import '../domain/chat_events.dart';
 import '../domain/chat_models.dart';
@@ -129,13 +130,18 @@ class ChatRepository {
     /// leave this `null`.
     Map<String, Object?>? invocationTrace,
   }) async {
-    final session = _sessionReader();
-    if (session == null) {
-      throw const AiChatRequestException(
-        statusCode: 401,
-        message: 'not authenticated',
-      );
-    }
+    // Device-only AI (W-D7 removed the cloud relay): the runtime authenticates
+    // with the user's own LLM key, not this token. In local-only mode there is
+    // no cloud session, so synthesize one scoped to [ownerUserId] — the API
+    // client requires a non-null session but ignores its token on-device.
+    final session =
+        _sessionReader() ??
+        AuthSession(
+          accessToken: '',
+          userId: ownerUserId,
+          deviceId: 'local-device',
+          expiresAt: DateTime.utc(2100),
+        );
     await _ensureSessionExists(
       sessionId: sessionId,
       ownerUserId: ownerUserId,
