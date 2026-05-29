@@ -38,6 +38,15 @@ void main() {
         'approved_underlyings',
         // Options Income Planner P3 — trade journal.
         'options_trade_journal',
+        // KnowledgeOS (`docs/knowledgeos-domain.md` §9) — all seven tables
+        // ride the row-state protocol under the `know:` row family.
+        'knowledge_notes',
+        'knowledge_principles',
+        'knowledge_assumptions',
+        'knowledge_decisions',
+        'knowledge_concepts',
+        'knowledge_experiments',
+        'knowledge_routines',
       };
       expect(kSyncableTables, expected);
     });

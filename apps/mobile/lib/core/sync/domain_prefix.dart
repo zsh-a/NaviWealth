@@ -34,6 +34,34 @@ const Set<String> kSyncDomainPrefixes = <String>{
 String prefixFinanceTable(String localTable) =>
     '$kFinanceDomainPrefix$localTable';
 
+/// KnowledgeOS local table names (`docs/knowledgeos-domain.md` §9). Kept
+/// explicit rather than sniffing the `knowledge_` name prefix so adding a
+/// table is a deliberate edit that lands next to the prefix decision.
+const Set<String> kKnowledgeTables = <String>{
+  'knowledge_notes',
+  'knowledge_principles',
+  'knowledge_assumptions',
+  'knowledge_decisions',
+  'knowledge_concepts',
+  'knowledge_experiments',
+  'knowledge_routines',
+};
+
+/// The LifeOS domain prefix an outbound row should carry, by local table
+/// name. KnowledgeOS rows ride `know:`; everything else is FinanceOS today
+/// (HealthOS rows stay local-only until D-2 wires their sync). This is the
+/// single dispatch point — before it, `SyncEngine` tagged *every* outgoing
+/// row `fin:`, so KnowledgeOS rows crossed the wire mislabelled.
+String domainPrefixForTable(String localTable) =>
+    kKnowledgeTables.contains(localTable)
+        ? kKnowledgeDomainPrefix
+        : kFinanceDomainPrefix;
+
+/// Add the correct LifeOS domain prefix to an outbound Drift table name
+/// (see [domainPrefixForTable]).
+String prefixTable(String localTable) =>
+    '${domainPrefixForTable(localTable)}$localTable';
+
 /// Strip a known LifeOS domain prefix. Returns `null` when the input
 /// has no recognised prefix — the applier should skip those rows
 /// rather than guess.
