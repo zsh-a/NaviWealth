@@ -83,22 +83,36 @@ final manualMorningBriefingRunProvider =
 /// Sync errors are swallowed — a stale snapshot is better than no
 /// briefing.
 Future<AgentRunResult> runMorningBriefingNow(Ref ref) async {
-  // Best-effort sync so the agent reads the night that just happened.
-  // Wrapped so a missing service / permissions / network error doesn't
-  // block the briefing from running on whatever data is already in the
-  // local DB.
+  // The agent run is long-lived (a platform sync + an LLM call) and the
+  // calling providers are autoDispose, triggered via `ref.refresh(...future)`
+  // which retains no subscription. Without this the provider can be torn
+  // down mid-run and the resumed continuation (here and inside the agent,
+  // which holds `ctx.ref`) touches a disposed Ref → "Cannot use the Ref of
+  // FutureProvider<AgentRunResult> after it has been disposed". keepAlive
+  // pins it for the duration; the link is released once the run settles.
+  final link = ref.keepAlive();
   try {
-    final svc = await ref.read(healthSyncServiceProvider.future);
-    await svc.syncRange();
-  } on Object {
-    // Best-effort — sync failure here surfaces in the next manual sync.
+    // Best-effort sync so the agent reads the night that just happened.
+    // Wrapped so a missing service / permissions / network error doesn't
+    // block the briefing from running on whatever data is already in the
+    // local DB.
+    try {
+      final svc = await ref.read(healthSyncServiceProvider.future);
+      await svc.syncRange();
+    } on Object {
+      // Best-effort — sync failure here surfaces in the next manual sync.
+    }
+    // `read`, not `watch`: watching after an async gap re-subscribes the
+    // already-running provider and can re-invalidate it mid-flight.
+    final runner = await ref.read(agentRunnerProvider.future);
+    final agent = ref.read(morningBriefingAgentProvider);
+    return await runner.runOnce(
+      agent,
+      AgentContext(ref: ref, now: DateTime.now().toUtc()),
+    );
+  } finally {
+    link.close();
   }
-  final runner = await ref.watch(agentRunnerProvider.future);
-  final agent = ref.read(morningBriefingAgentProvider);
-  return runner.runOnce(
-    agent,
-    AgentContext(ref: ref, now: DateTime.now().toUtc()),
-  );
 }
 
 /// Most recent `morning_briefing` memory record, or `null` when none
