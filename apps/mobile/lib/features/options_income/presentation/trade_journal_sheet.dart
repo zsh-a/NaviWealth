@@ -254,47 +254,6 @@ class _LabeledTextField extends StatelessWidget {
   }
 }
 
-/// Row of equal-width segmented buttons. Used for strategy and status
-/// pickers so they align with the full-width text fields above/below.
-class _SegmentedRow<T> extends StatelessWidget {
-  const _SegmentedRow({
-    required this.options,
-    required this.value,
-    required this.labelOf,
-    required this.onChanged,
-  });
-
-  final List<T> options;
-  final T value;
-  final String Function(T) labelOf;
-  final ValueChanged<T> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final children = <Widget>[];
-    for (var i = 0; i < options.length; i++) {
-      if (i > 0) children.add(const SizedBox(width: AppSpacing.s8));
-      final option = options[i];
-      children.add(
-        Expanded(
-          child: FButton(
-            variant: option == value
-                ? FButtonVariant.primary
-                : FButtonVariant.outline,
-            onPress: () => onChanged(option),
-            child: Text(
-              labelOf(option),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ),
-      );
-    }
-    return Row(children: children);
-  }
-}
-
 class _StrategySelect extends StatelessWidget {
   const _StrategySelect({required this.value, required this.onChanged});
 
@@ -304,7 +263,7 @@ class _StrategySelect extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return _SegmentedRow<OptionsStrategyKind>(
+    return SegmentedRow<OptionsStrategyKind>(
       options: OptionsStrategyKind.values,
       value: value,
       labelOf: (o) => optionsStrategyKindShortLabel(l10n, o),
@@ -322,7 +281,7 @@ class _StatusSelect extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return _SegmentedRow<TradeJournalStatus>(
+    return SegmentedRow<TradeJournalStatus>(
       options: TradeJournalStatus.values,
       value: value,
       labelOf: (o) => tradeJournalStatusLabel(l10n, o),

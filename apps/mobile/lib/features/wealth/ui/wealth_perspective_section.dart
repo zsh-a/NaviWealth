@@ -68,35 +68,17 @@ class _PerspectiveToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final segments = <(WealthPerspective, String)>[
-      (WealthPerspective.byCategory, l10n.wealthPerspectiveByCategory),
-      (WealthPerspective.byCurrency, l10n.wealthPerspectiveByCurrency),
-    ];
-    return Row(
-      children: [
-        for (var i = 0; i < segments.length; i++) ...[
-          if (i > 0) const SizedBox(width: AppSpacing.s8),
-          Expanded(
-            child: FButton(
-              variant: segments[i].$1 == value
-                  ? FButtonVariant.primary
-                  : FButtonVariant.outline,
-              onPress: () => onChanged(segments[i].$1),
-              // FButton lays its child in a `MainAxisSize.max` Row without
-              // a Flexible, so a label wider than the equal-split slot
-              // (e.g. the English "By category" at phone widths) overflows
-              // instead of ellipsizing. Flexible lets it shrink to fit.
-              child: Flexible(
-                child: Text(
-                  segments[i].$2,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-          ),
-        ],
+    return SegmentedRow<WealthPerspective>(
+      options: const [
+        WealthPerspective.byCategory,
+        WealthPerspective.byCurrency,
       ],
+      value: value,
+      labelOf: (p) => switch (p) {
+        WealthPerspective.byCategory => l10n.wealthPerspectiveByCategory,
+        WealthPerspective.byCurrency => l10n.wealthPerspectiveByCurrency,
+      },
+      onChanged: onChanged,
     );
   }
 }

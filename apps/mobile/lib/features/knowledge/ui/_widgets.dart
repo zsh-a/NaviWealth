@@ -26,7 +26,6 @@ import 'package:forui/forui.dart';
 
 import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../design_system/design_system.dart';
-import '_segmented_row.dart';
 
 /// Max items a Review-tab summary card lists per section. Kept here so the
 /// three cards (Routines / Decisions / Assumptions) stay in agreement.
@@ -66,12 +65,12 @@ class KnowledgeSection extends StatelessWidget {
     List<Widget> children = const <Widget>[],
     Widget? trailing,
   }) : this(
-          key: key,
-          title: title,
-          children: children,
-          padding: const EdgeInsets.all(AppSpacing.s12),
-          trailing: trailing,
-        );
+         key: key,
+         title: title,
+         children: children,
+         padding: const EdgeInsets.all(AppSpacing.s12),
+         trailing: trailing,
+       );
 
   /// Grouped section card: s16 padding, expects a title.
   const KnowledgeSection.group({
@@ -80,12 +79,12 @@ class KnowledgeSection extends StatelessWidget {
     required List<Widget> children,
     Widget? trailing,
   }) : this(
-          key: key,
-          title: title,
-          children: children,
-          padding: const EdgeInsets.all(AppSpacing.s16),
-          trailing: trailing,
-        );
+         key: key,
+         title: title,
+         children: children,
+         padding: const EdgeInsets.all(AppSpacing.s16),
+         trailing: trailing,
+       );
 
   final String? title;
   final TextStyle? titleStyle;
@@ -111,7 +110,8 @@ class KnowledgeSection extends StatelessWidget {
                 Expanded(
                   child: Text(
                     t,
-                    style: titleStyle ??
+                    style:
+                        titleStyle ??
                         typography.md.copyWith(fontWeight: FontWeight.w600),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -170,8 +170,7 @@ class MarkdownEditorWithPreview extends StatefulWidget {
 
 enum _MarkdownMode { edit, preview }
 
-class _MarkdownEditorWithPreviewState
-    extends State<MarkdownEditorWithPreview> {
+class _MarkdownEditorWithPreviewState extends State<MarkdownEditorWithPreview> {
   _MarkdownMode _mode = _MarkdownMode.edit;
 
   @override
@@ -188,7 +187,7 @@ class _MarkdownEditorWithPreviewState
           ),
           const SizedBox(height: AppSpacing.s4),
         ],
-        KnowledgeSegmentedRow<_MarkdownMode>(
+        SegmentedRow<_MarkdownMode>(
           options: _MarkdownMode.values,
           value: _mode,
           labelOf: (m) => switch (m) {
@@ -217,8 +216,9 @@ class _MarkdownEditorWithPreviewState
             child: widget.controller.text.trim().isEmpty
                 ? Text(
                     '暂无内容预览 — 切回编辑模式输入。',
-                    style: typography.sm
-                        .copyWith(color: colors.mutedForeground),
+                    style: typography.sm.copyWith(
+                      color: colors.mutedForeground,
+                    ),
                   )
                 : AiMarkdown(text: widget.controller.text),
           ),
@@ -251,8 +251,9 @@ class KnowledgeStatusBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: context.theme.typography.xs
-            .copyWith(color: colors.mutedForeground),
+        style: context.theme.typography.xs.copyWith(
+          color: colors.mutedForeground,
+        ),
       ),
     );
   }
