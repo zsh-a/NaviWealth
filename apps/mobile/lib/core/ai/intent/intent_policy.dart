@@ -24,14 +24,22 @@ class IntentDescriptor {
     this.preferredReadModels = const <String>[],
     this.requiresExplicitConfirmation = false,
     this.domain = 'finance',
+    this.allowedDomains = const <String>{},
   });
 
   /// Stable identifier — `'explain_change'`, never renamed.
   final String name;
 
-  /// LifeOS domain this intent belongs to. Phase D-1.3 default
-  /// `finance`; Phase D-2 will introduce `health` intents.
+  /// Home LifeOS domain this intent belongs to (trace attribution +
+  /// the default surface). Phase D-1.3 default `finance`.
   final String domain;
+
+  /// Extra domains this intent is *also* valid in, beyond [domain]. Set
+  /// this for genuinely cross-cutting intents (e.g. a "correlate spend ×
+  /// sleep" intent valid from both a finance and a health surface) so a
+  /// trigger on either domain's page is accepted. Empty = single-domain
+  /// (just [domain]). The effective set is [domains].
+  final Set<String> allowedDomains;
 
   /// Capsule / button text shown to the user in Chinese ("为什么", "对比").
   /// Short — capsules are dense.
@@ -69,7 +77,17 @@ class IntentDescriptor {
   /// undoable through [DriftUndoStack]: external API calls, cross-account
   /// transfers, account deletion, broker order placement.
   final bool requiresExplicitConfirmation;
+
+  /// Full set of domains this intent may be triggered from = [domain]
+  /// plus [allowedDomains]. Single-domain intents resolve to `{domain}`.
+  Set<String> get domains => <String>{domain, ...allowedDomains};
 }
+
+/// Whether [desc] may be triggered from [domain]. Cross-domain intents
+/// (those declaring [IntentDescriptor.allowedDomains]) accept any of
+/// their domains; single-domain intents accept only their home [domain].
+bool intentAllowsDomain(IntentDescriptor desc, String domain) =>
+    desc.domains.contains(domain);
 
 const intentDescriptors = <IntentDescriptor>[
   IntentDescriptor(
@@ -303,6 +321,15 @@ String renderPromptFor(
       '"${invocation.object!.type}" (allowed: ${desc.allowedObjectTypes}).',
     );
   }
+  // Domain guard (dev-only, mirrors the object-type assert): a surface
+  // must trigger an intent only from a domain the intent declares. A
+  // failure here flags a mis-wired call site — either the surface set
+  // the wrong domain, or the intent needs `allowedDomains` widened.
+  assert(
+    intentAllowsDomain(desc, invocation.domain),
+    'Intent "${invocation.intent}" triggered from domain '
+    '"${invocation.domain}" but only allows ${desc.domains}.',
+  );
   final timeframe =
       (invocation.context['timeframe'] as String?) ??
       defaultTimeframe ??

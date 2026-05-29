@@ -1,7 +1,8 @@
 // Wave 33 — IntentDescriptor registry invariants.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/core/ai/contracts/intent.dart' show kDomainFinance;
+import 'package:naviwealth/core/ai/contracts/intent.dart'
+    show kDomainFinance, kDomainHealth, kDomainKnowledge;
 import 'package:naviwealth/core/ai/intent/intent.dart';
 
 void main() {
@@ -79,6 +80,44 @@ void main() {
     );
     final prompt = renderPromptFor(inv);
     expect(prompt, contains('最近 30 天'));
+  });
+
+  test('single-domain intent: domains resolves to just its home domain', () {
+    const d = IntentDescriptor(
+      name: 'explain_change',
+      labelZh: '为什么',
+      allowedObjectTypes: <String>{'expense'},
+      preferredCapabilities: <AiCapability>{AiCapability.chat},
+      promptTemplate: '解释 {{object_label}}',
+    );
+    expect(d.domains, <String>{kDomainFinance});
+    expect(intentAllowsDomain(d, kDomainFinance), isTrue);
+    expect(intentAllowsDomain(d, kDomainHealth), isFalse);
+  });
+
+  test('cross-domain intent accepts home + allowedDomains', () {
+    const d = IntentDescriptor(
+      name: 'correlate_spend_sleep',
+      labelZh: '开销 × 睡眠',
+      allowedObjectTypes: <String>{},
+      preferredCapabilities: <AiCapability>{AiCapability.chat},
+      promptTemplate: '把我的开销和睡眠放在一起看。',
+      allowedDomains: <String>{kDomainHealth},
+    );
+    expect(d.domains, <String>{kDomainFinance, kDomainHealth});
+    expect(intentAllowsDomain(d, kDomainFinance), isTrue);
+    expect(intentAllowsDomain(d, kDomainHealth), isTrue);
+    expect(intentAllowsDomain(d, kDomainKnowledge), isFalse);
+  });
+
+  test('every registered intent allows its own home domain', () {
+    for (final d in intentDescriptors) {
+      expect(
+        intentAllowsDomain(d, d.domain),
+        isTrue,
+        reason: 'intent "${d.name}" must accept its own domain',
+      );
+    }
   });
 
   test('toTraceJson is stable and includes source + intent + object', () {

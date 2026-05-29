@@ -5,6 +5,11 @@
 /// a `Run now` affordance underneath. The Briefing is the only signal
 /// HealthOS surfaces in-app today; Trend and Plan tabs keep the
 /// placeholder until later milestones flesh them out.
+///
+/// Chrome matches the rest of LifeOS (`docs/lifeos-shell.md` §3): the
+/// ForUI `FScaffold` + `FHeader.nested` shell, `SoftCard` surfaces and
+/// `context.theme` tokens — never Material `Scaffold` / `Theme.of` —
+/// so HealthOS reads as the same app as Finance / Knowledge.
 library;
 
 import 'package:flutter/material.dart';
@@ -25,23 +30,21 @@ class HealthTodayPage extends ConsumerWidget {
     final briefingAsync = ref.watch(
       health_agent_providers.latestMorningBriefingProvider,
     );
-    return Scaffold(
-      appBar: AppBar(title: const Text('今日 · HealthOS')),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.s16),
-          children: [
-            const _MetricGrid(),
-            const SizedBox(height: AppSpacing.s16),
-            briefingAsync.when(
-              loading: () => const _BriefingSkeleton(),
-              error: (e, _) => _BriefingError(message: '$e'),
-              data: (record) => _BriefingCard(record: record),
-            ),
-            const SizedBox(height: AppSpacing.s16),
-            const _RunNowSection(),
-          ],
-        ),
+    return DomainTabScaffold(
+      title: '今日 · HealthOS',
+      child: ListView(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        children: [
+          const _MetricGrid(),
+          const SizedBox(height: AppSpacing.s16),
+          briefingAsync.when(
+            loading: () => const _BriefingSkeleton(),
+            error: (e, _) => _BriefingError(message: '$e'),
+            data: (record) => _BriefingCard(record: record),
+          ),
+          const SizedBox(height: AppSpacing.s16),
+          const _RunNowSection(),
+        ],
       ),
     );
   }
@@ -150,10 +153,7 @@ class _WorkoutCard extends StatelessWidget {
         data: (m) {
           if (m == null) return const _ValueDash();
           final minutes = (m.value / 60).round();
-          return _ValueBig(
-            value: '${minutes}min',
-            sub: _ago(m.capturedAt),
-          );
+          return _ValueBig(value: '${minutes}min', sub: _ago(m.capturedAt));
         },
       ),
     );
@@ -183,10 +183,7 @@ class _StepsCard extends ConsumerWidget {
           final sub = wm != null && _utcDayKey(wm.capturedAt) == stepsDay
               ? '${(wm.value / 1000.0).toStringAsFixed(1)} km · ${_ago(m.capturedAt)}'
               : _ago(m.capturedAt);
-          return _ValueBig(
-            value: _formatSteps(m.value),
-            sub: sub,
-          );
+          return _ValueBig(value: _formatSteps(m.value), sub: sub);
         },
       ),
     );
@@ -223,7 +220,7 @@ class _RecoveryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final colors = context.theme.colors;
     return _MetricCard(
       icon: Icons.bolt_outlined,
       label: '恢复',
@@ -238,7 +235,7 @@ class _RecoveryCard extends StatelessWidget {
           return _ValueBig(
             value: scoreText,
             sub: _verdictLabel(verdict),
-            subColor: _verdictColor(verdict, scheme),
+            subColor: _verdictColor(verdict, colors),
           );
         },
       ),
@@ -246,18 +243,18 @@ class _RecoveryCard extends StatelessWidget {
   }
 
   static String _verdictLabel(String v) => switch (v) {
-        'rested' => '充分恢复',
-        'balanced' => '平衡',
-        'strained' => '过载',
-        _ => '数据不足',
-      };
+    'rested' => '充分恢复',
+    'balanced' => '平衡',
+    'strained' => '过载',
+    _ => '数据不足',
+  };
 
-  static Color _verdictColor(String v, ColorScheme scheme) => switch (v) {
-        'rested' => scheme.primary,
-        'balanced' => scheme.onSurfaceVariant,
-        'strained' => scheme.error,
-        _ => scheme.onSurfaceVariant,
-      };
+  static Color _verdictColor(String v, FColors colors) => switch (v) {
+    'rested' => colors.primary,
+    'balanced' => colors.mutedForeground,
+    'strained' => colors.destructive,
+    _ => colors.mutedForeground,
+  };
 }
 
 class _MetricCard extends StatelessWidget {
@@ -272,33 +269,29 @@ class _MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return FCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 16, color: scheme.onSurfaceVariant),
-                const SizedBox(width: AppSpacing.s4),
-                Expanded(
-                  child: Text(
-                    label,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.labelMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: colors.mutedForeground),
+              const SizedBox(width: AppSpacing.s4),
+              Expanded(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: typography.xs.copyWith(color: colors.mutedForeground),
                 ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            child,
-          ],
-        ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          child,
+        ],
       ),
     );
   }
@@ -312,17 +305,18 @@ class _ValueBig extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(value, style: textTheme.titleLarge),
+        Text(value, style: typography.xl),
         const SizedBox(height: 2),
         Text(
           sub,
-          style: textTheme.bodySmall
-              ?.copyWith(color: subColor ?? scheme.onSurfaceVariant),
+          style: typography.xs.copyWith(
+            color: subColor ?? colors.mutedForeground,
+          ),
         ),
       ],
     );
@@ -334,16 +328,16 @@ class _ValueDash extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('—', style: textTheme.titleLarge?.copyWith(color: scheme.onSurfaceVariant)),
+        Text('—', style: typography.xl.copyWith(color: colors.mutedForeground)),
         const SizedBox(height: 2),
         Text(
           '暂无数据',
-          style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          style: typography.xs.copyWith(color: colors.mutedForeground),
         ),
       ],
     );
@@ -355,7 +349,7 @@ class _ValueSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final colors = context.theme.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -363,7 +357,7 @@ class _ValueSkeleton extends StatelessWidget {
           width: 56,
           height: 20,
           decoration: BoxDecoration(
-            color: scheme.surfaceContainerHighest,
+            color: colors.muted,
             borderRadius: BorderRadius.circular(4),
           ),
         ),
@@ -372,7 +366,7 @@ class _ValueSkeleton extends StatelessWidget {
           width: 40,
           height: 10,
           decoration: BoxDecoration(
-            color: scheme.surfaceContainerHighest,
+            color: colors.muted,
             borderRadius: BorderRadius.circular(4),
           ),
         ),
@@ -382,16 +376,15 @@ class _ValueSkeleton extends StatelessWidget {
 }
 
 double _secondsToHours(double value, String unit) => switch (unit) {
-      's' => value / 3600.0,
-      'min' => value / 60.0,
-      'h' => value,
-      _ => value / 3600.0,
-    };
+  's' => value / 3600.0,
+  'min' => value / 60.0,
+  'h' => value,
+  _ => value / 3600.0,
+};
 
 double _round(double v) => (v * 100).round() / 100.0;
 
-String _utcDayKey(DateTime t) =>
-    t.toUtc().toIso8601String().substring(0, 10);
+String _utcDayKey(DateTime t) => t.toUtc().toIso8601String().substring(0, 10);
 
 String _formatSteps(double v) {
   final n = v.round();
@@ -432,45 +425,39 @@ class _BriefingCard extends StatelessWidget {
     final source = outcome is Map<String, Object?>
         ? outcome['synthesis_source']
         : null;
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return FCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.wb_sunny_outlined,
-                  size: 20,
-                  color: scheme.primary,
-                ),
-                const SizedBox(width: AppSpacing.s8),
-                Text(
-                  '早间简报',
-                  style: textTheme.titleSmall,
-                ),
-                const Spacer(),
-                if (source is String && source.isNotEmpty)
-                  _SourcePill(source: source),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            Text(
-              r.summary,
-              style: textTheme.bodyLarge,
-              maxLines: 8,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            Text(
-              _formatRelative(r.updatedAt),
-              style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-          ],
-        ),
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.wb_sunny_outlined, size: 20, color: colors.primary),
+              const SizedBox(width: AppSpacing.s8),
+              Text(
+                '早间简报',
+                style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const Spacer(),
+              if (source is String && source.isNotEmpty)
+                _SourcePill(source: source),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Text(
+            r.summary,
+            style: typography.md,
+            maxLines: 8,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Text(
+            _formatRelative(r.updatedAt),
+            style: typography.xs.copyWith(color: colors.mutedForeground),
+          ),
+        ],
       ),
     );
   }
@@ -481,32 +468,31 @@ class _BriefingEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return FCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Row(
-          children: [
-            Icon(Icons.wb_twilight_outlined, color: scheme.onSurfaceVariant),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('暂无简报', style: textTheme.titleSmall),
-                  const SizedBox(height: AppSpacing.s4),
-                  Text(
-                    '点击下方"立即生成简报"以生成今日简报。',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Row(
+        children: [
+          Icon(Icons.wb_twilight_outlined, color: colors.mutedForeground),
+          const SizedBox(width: AppSpacing.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '暂无简报',
+                  style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: AppSpacing.s4),
+                Text(
+                  '点击下方"立即生成简报"以生成今日简报。',
+                  style: typography.xs.copyWith(color: colors.mutedForeground),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -517,20 +503,15 @@ class _BriefingSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard(
-      child: const Padding(
-        padding: EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: 18,
-              child: LinearProgressIndicator(minHeight: 2),
-            ),
-            SizedBox(height: AppSpacing.s12),
-            Text('加载中…'),
-          ],
-        ),
+    return const SoftCard(
+      padding: EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 18, child: LinearProgressIndicator(minHeight: 2)),
+          SizedBox(height: AppSpacing.s12),
+          Text('加载中…'),
+        ],
       ),
     );
   }
@@ -543,24 +524,23 @@ class _BriefingError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return FCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Row(
-          children: [
-            Icon(Icons.error_outline, color: scheme.error),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: Text(
-                '简报加载失败：$message',
-                style: Theme.of(context).textTheme.bodySmall,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: colors.destructive),
+          const SizedBox(width: AppSpacing.s12),
+          Expanded(
+            child: Text(
+              '简报加载失败：$message',
+              style: typography.xs,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -573,19 +553,18 @@ class _SourcePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
     final label = source == 'llm' ? 'LLM' : '自动';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
+        color: colors.muted,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: scheme.onSurfaceVariant,
-        ),
+        style: typography.xs2.copyWith(color: colors.mutedForeground),
       ),
     );
   }
@@ -624,28 +603,27 @@ class _RunNowSectionState extends ConsumerState<_RunNowSection> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        FilledButton.icon(
-          onPressed: _running ? null : _run,
-          icon: _running
+        FButton(
+          onPress: _running ? null : _run,
+          prefix: _running
               ? const SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Icon(Icons.refresh),
-          label: Text(_running ? '生成中…' : '立即生成简报'),
+              : const Icon(FLucideIcons.refreshCw, size: 16),
+          child: Text(_running ? '生成中…' : '立即生成简报'),
         ),
         if (_errorMessage != null) ...[
           const SizedBox(height: AppSpacing.s8),
           Text(
             _errorMessage!,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.error,
-            ),
+            style: typography.xs.copyWith(color: colors.destructive),
           ),
         ],
       ],

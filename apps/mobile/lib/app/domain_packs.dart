@@ -14,15 +14,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/ai/agents/agent.dart';
 import '../core/auth/domain_scope.dart';
 import '../core/lifeos/domain_pack.dart';
+import '../features/finance/composition/finance_command_palette.dart';
 import '../features/finance/composition/finance_routes.dart';
 import '../features/finance_ai_tools.dart';
 import '../features/finance_domain_shell.dart';
 import '../features/health/agents/morning_briefing_agent.dart';
+import '../features/health/composition/health_command_palette.dart';
 import '../features/health/composition/health_domain_shell.dart';
 import '../features/health/composition/health_routes.dart';
 import '../features/health_ai_tools.dart';
 import '../features/knowledge/agents/providers.dart'
     as knowledge_agent_providers;
+import '../features/knowledge/composition/knowledge_command_palette.dart';
 import '../features/knowledge/composition/knowledge_domain_shell.dart';
 import '../features/knowledge/composition/knowledge_routes.dart';
 import '../features/knowledge_ai_tools.dart';
@@ -46,6 +49,7 @@ const DomainPack kFinancePack = DomainPack(
   // through Wealth / Plan navigation. Listing it here keeps
   // `aiContextProvider` aware that those routes belong to Finance.
   additionalPathPrefixes: [AppRoutes.cashflow],
+  commandPaletteEntriesBuilder: financeCommandPaletteEntries,
 );
 
 const DomainPack kHealthPack = DomainPack(
@@ -60,6 +64,7 @@ const DomainPack kHealthPack = DomainPack(
     AppRoutes.healthPlan,
   ],
   agentBuilder: _healthAgents,
+  commandPaletteEntriesBuilder: healthCommandPaletteEntries,
 );
 
 const DomainPack kKnowledgePack = DomainPack(
@@ -74,6 +79,7 @@ const DomainPack kKnowledgePack = DomainPack(
     AppRoutes.knowledgeReview,
   ],
   agentBuilder: _knowledgeAgents,
+  commandPaletteEntriesBuilder: knowledgeCommandPaletteEntries,
 );
 
 /// Production inventory. `bootstrap.dart` overrides

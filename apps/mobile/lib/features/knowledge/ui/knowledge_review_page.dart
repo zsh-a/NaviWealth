@@ -24,9 +24,8 @@ class KnowledgeReviewPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FScaffold(
-      header: const FHeader.nested(title: Text('复盘 · KnowledgeOS')),
-      childPad: false,
+    return DomainTabScaffold(
+      title: '复盘 · KnowledgeOS',
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
         children: const <Widget>[
@@ -59,11 +58,7 @@ class _DueRoutinesCard extends ConsumerWidget {
           error: (e, _) => KnowledgeSection.group(
             title: '本周到期的 Routine',
             children: [
-              Text(
-                '加载失败：$e',
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
+              Text('加载失败：$e', maxLines: 3, overflow: TextOverflow.ellipsis),
             ],
           ),
           data: (repo) {
@@ -90,13 +85,14 @@ class _DueRoutinesCard extends ConsumerWidget {
                     if (due.isEmpty)
                       Text(
                         '未来 7 天内没有到期的 Routine。',
-                        style: typography.sm
-                            .copyWith(color: colors.mutedForeground),
+                        style: typography.sm.copyWith(
+                          color: colors.mutedForeground,
+                        ),
                       )
                     else
-                      ...due.take(kReviewCardMaxItems).map(
-                            (r) => _DueRoutineRow(routine: r),
-                          ),
+                      ...due
+                          .take(kReviewCardMaxItems)
+                          .map((r) => _DueRoutineRow(routine: r)),
                   ],
                 );
               },
@@ -159,18 +155,14 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
     final dueLabel = days < 0
         ? '已逾期 ${-days} 天'
         : days == 0
-            ? '今日到期'
-            : '$days 天后';
+        ? '今日到期'
+        : '$days 天后';
     final dueColor = days < 0 ? colors.destructive : colors.mutedForeground;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(
-            FLucideIcons.repeat,
-            size: 14,
-            color: colors.mutedForeground,
-          ),
+          Icon(FLucideIcons.repeat, size: 14, color: colors.mutedForeground),
           const SizedBox(width: AppSpacing.s4),
           Expanded(
             child: Column(
@@ -217,11 +209,7 @@ class _DueReviewsCard extends ConsumerWidget {
           error: (e, _) => KnowledgeSection.group(
             title: '待复盘的 Decision',
             children: [
-              Text(
-                '加载失败：$e',
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
+              Text('加载失败：$e', maxLines: 3, overflow: TextOverflow.ellipsis),
             ],
           ),
           data: (repo) {
@@ -240,11 +228,14 @@ class _DueReviewsCard extends ConsumerWidget {
                     if (list.isEmpty)
                       Text(
                         '当前没有到期的 Decision。',
-                        style: typography.sm
-                            .copyWith(color: colors.mutedForeground),
+                        style: typography.sm.copyWith(
+                          color: colors.mutedForeground,
+                        ),
                       )
                     else
-                      ...list.take(kReviewCardMaxItems).map(
+                      ...list
+                          .take(kReviewCardMaxItems)
+                          .map(
                             (d) => Padding(
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               child: Row(
@@ -318,11 +309,14 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                     if (stale.isEmpty)
                       Text(
                         '所有 active 的 Assumption 都在 $kAssumptionStaleDays 天内校验过。',
-                        style: typography.sm
-                            .copyWith(color: colors.mutedForeground),
+                        style: typography.sm.copyWith(
+                          color: colors.mutedForeground,
+                        ),
                       )
                     else
-                      ...stale.take(kReviewCardMaxItems).map(
+                      ...stale
+                          .take(kReviewCardMaxItems)
+                          .map(
                             (a) => Padding(
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               child: Text(
@@ -343,4 +337,3 @@ class _StaleAssumptionsCard extends ConsumerWidget {
     );
   }
 }
-
