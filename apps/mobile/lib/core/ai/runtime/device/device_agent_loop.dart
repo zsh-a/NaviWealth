@@ -26,6 +26,7 @@ import 'device_session.dart';
 import 'device_system_prompt.dart';
 import 'device_tool_dispatcher.dart';
 import 'llm_stream_event.dart';
+import 'tools/ask_user_tool.dart' show kAskUserToolName;
 
 /// One streaming round, injectable so tests can script
 /// [LlmStreamEvent]s without a network. Production passes
@@ -230,6 +231,12 @@ class DeviceAgentLoop {
 
       final toolResults = <Map<String, Object?>>[];
       var proposalsThisTurn = 0;
+      // `ask_user` is a terminal tool: the model is handing a structured
+      // decision to the user, so once it fires we record the result and
+      // pause the loop instead of re-invoking the model (which would let
+      // it answer its own question). The user's pick arrives as the next
+      // turn. See `ask_user_tool.dart`.
+      var awaitingUser = false;
       for (final tu in mr.toolUses) {
         if (aborted()) return;
         final isPropose = tu.name.startsWith('propose_');
@@ -270,11 +277,21 @@ class DeviceAgentLoop {
             content: jsonEncode(output),
           ),
         );
+        if (tu.name == kAskUserToolName && !_toolOutputIsError(output)) {
+          awaitingUser = true;
+        }
       }
 
       session.messages.add(
         AnthropicChatMessage(role: 'user', content: toolResults),
       );
+
+      if (awaitingUser) {
+        // Pause: end the turn on a clean stop so the round-budget guard
+        // below doesn't fire. The decision card now awaits the user.
+        lastStop = LlmStopReason.endTurn;
+        break;
+      }
     }
 
     if (session.roundsUsed >= budget.maxRounds &&

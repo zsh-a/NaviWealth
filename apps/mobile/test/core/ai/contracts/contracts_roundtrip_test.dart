@@ -159,15 +159,14 @@ void main() {
     });
 
     test('mobile descriptor catalog carries active device tools', () {
-      // 2 Memory Runtime (shell) + 35 FinanceOS + 4 HealthOS + 16 KnowledgeOS
-      // = 57. KnowledgeOS gained find_similar_knowledge + propose_merge
-      // (§15.3 dedupe) then search_knowledge + review_knowledge_health
-      // (§15.3 query + suggest). Each LifeOS domain co-locates its
-      // descriptors with its tool barrel (`kShellToolDescriptors`,
-      // `kFinanceToolDescriptors`, `kHealthToolDescriptors`,
-      // `kKnowledgeToolDescriptors`); the union here is derived in
-      // `tool_descriptor_catalog.dart`.
-      expect(allToolDescriptors, hasLength(57));
+      // 3 shell (query_memory, build_context, ask_user) + 35 FinanceOS +
+      // 4 HealthOS + 16 KnowledgeOS = 58. `ask_user` is the structured
+      // decision-point tool (Claude-Code-style interactive choices). Each
+      // LifeOS domain co-locates its descriptors with its tool barrel
+      // (`kShellToolDescriptors`, `kFinanceToolDescriptors`,
+      // `kHealthToolDescriptors`, `kKnowledgeToolDescriptors`); the union
+      // here is derived in `tool_descriptor_catalog.dart`.
+      expect(allToolDescriptors, hasLength(58));
       expect(
         lookupToolDescriptor('propose_options_profile_update')?.sideEffect,
         SideEffect.deviceLocalWrite,

@@ -74,3 +74,41 @@ Run from the repository root:
 
 Both scripts now run the Dart contract tests; the retired backend
 `tool_descriptor_dump` and Rust enum mirror no longer exist.
+
+## Decision Points (`ask_user`)
+
+High-impact / ambiguous forks are modelled as a **structured action**, not
+free-text the Host has to parse (Claude-Code / Codex style). When the model
+hits such a fork it calls the shell tool **`ask_user`** with a typed
+`decision_request`:
+
+```jsonc
+{
+  "type": "decision_request",
+  "title": "状态管理方案选择",
+  "context": "本地优先 + 可同步 + AI 可读写。",
+  "options": [
+    { "id": "riverpod", "label": "Riverpod + Drift",
+      "description": "…", "pros": ["…"], "cons": ["…"], "recommended": true },
+    { "id": "bloc", "label": "BLoC + Repository", "pros": ["可测试性强"] }
+  ],
+  "allow_custom": true
+}
+```
+
+Flow:
+
+1. `AskUserTool.invoke` validates + normalises and echoes the request as the
+   `tool_result` (2–4 options, each with a non-empty `label`).
+2. The agent loop treats `ask_user` as **terminal**: it records the result and
+   **pauses** (ends the turn on `end_turn`) instead of re-invoking the model —
+   the model never answers its own question.
+3. The Host renders `DecisionCard` (`features/ai_chat/ui/decision_card.dart`)
+   from the parsed `decision_request`; only the trailing turn's decision is
+   interactive.
+4. The user's pick is written back as the next user turn
+   (`我选择「…」。请在此方案下继续。`) and the agent continues under that
+   constraint.
+
+Policy for *when* to ask lives in `kDeviceSystemPromptBase` (clauses 12–14).
+This supersedes the earlier markdown-menu string parsing.

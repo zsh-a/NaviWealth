@@ -33,8 +33,15 @@ class LlmCaptureClassifier implements CaptureClassifier {
   const LlmCaptureClassifier({
     required this.client,
     this.fallback = const HeuristicCaptureClassifier(),
-    this.maxTokens = 2000,
-    this.requestTimeout = const Duration(seconds: 30),
+    // Generous budget: extended-thinking models (mimo, Claude-thinking)
+    // burn most of the budget on reasoning before the JSON answer. A
+    // tight cap (the old 2000) truncated them mid-thought → only a
+    // thinking block, no usable JSON → forced heuristic fallback. Don't
+    // starve the model.
+    this.maxTokens = 8192,
+    // Long enough for a slow thinking model to actually finish; the
+    // heuristic fallback still covers the timeout case.
+    this.requestTimeout = const Duration(seconds: 45),
     this.logger,
   });
 

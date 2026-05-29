@@ -10,7 +10,7 @@ import '../../../core/ai/llm_credentials/providers.dart'
 import '../../../core/logging/providers.dart' show loggerProvider;
 import '../../../core/persistence/providers.dart';
 import '../../../core/sync/outbox_provider.dart';
-import '../../ai_chat/data/providers.dart' show deviceLlmRuntimeProvider;
+import '../../ai_chat/data/providers.dart' show deviceLlmClientProvider;
 import 'capture_classifier.dart';
 import 'inbox_triage_repository.dart';
 import 'knowledge_repository.dart';
@@ -50,8 +50,13 @@ final inboxTriageRepositoryProvider =
 /// LLM is actually engaged.
 final captureClassifierProvider = Provider<CaptureClassifier>((ref) {
   final logger = ref.watch(loggerProvider);
-  final runtime = ref.watch(deviceLlmRuntimeProvider);
-  if (runtime == null) {
+  // Depend on the client, NOT the full runtime: the `propose_capture`
+  // tool reads this provider through the runtime's dispatcher `ref`, and
+  // depending on `deviceLlmRuntimeProvider` here would make the runtime
+  // transitively depend on itself (CircularDependencyError). The client
+  // provider carries no dispatcher/tools, so the graph stays acyclic.
+  final client = ref.watch(deviceLlmClientProvider);
+  if (client == null) {
     // Drill into the gate chain so the log line tells the user which of
     // the 4 possible reasons fired (web platform / credentials still
     // loading / no active profile / active profile has empty key).
@@ -59,11 +64,8 @@ final captureClassifierProvider = Provider<CaptureClassifier>((ref) {
     logger.i('[capture] classifier=heuristic — $reason');
     return const HeuristicCaptureClassifier();
   }
-  logger.i(
-    '[capture] classifier=llm '
-    'model=${runtime.client.config.model}',
-  );
-  return LlmCaptureClassifier(client: runtime.client, logger: logger);
+  logger.i('[capture] classifier=llm model=${client.config.model}');
+  return LlmCaptureClassifier(client: client, logger: logger);
 });
 
 String _diagnoseLlmUnavailable(Ref ref) {
