@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/composition/composite_proposal_applier.dart';
-import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
+import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
@@ -100,6 +100,38 @@ void main() {
       expect(r, isNotNull);
       expect(r!.statement, '港卡活跃');
       expect(r.intervalDays, 180);
+    });
+
+    test('knowledge_concept_link links both concepts bidirectionally', () async {
+      KnowledgeConcept concept(String id, String name) => KnowledgeConcept(
+            id: id,
+            name: name,
+            aliases: const [],
+            summaryMd: '',
+            relatedConceptIds: const [],
+            createdAt: created,
+            sync: SyncMeta(
+              ownerUserId: _owner,
+              updatedAt: created,
+              updatedByDevice: 'dev',
+              hlc: Hlc.zero('dev'),
+            ),
+          );
+      await repo.upsertConcept(concept('c1', 'FIRE'));
+      await repo.upsertConcept(concept('c2', '安全边际'));
+
+      final state = await applier.apply(plan('knowledge_concept_link', {
+        'from_concept_id': 'c1',
+        'to_concept_id': 'c2',
+        'relation': 'relates_to',
+      }));
+      expect(state.status, ProposalApplyStatus.applied);
+      expect(state.appliedTable, 'knowledge_concepts');
+
+      final c1 = await repo.findConcept('c1');
+      final c2 = await repo.findConcept('c2');
+      expect(c1!.relatedConceptIds, contains('c2'));
+      expect(c2!.relatedConceptIds, contains('c1'));
     });
 
     test('merge with unsupported entity_type throws', () async {

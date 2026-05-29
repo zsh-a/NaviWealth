@@ -2337,6 +2337,7 @@
   "aiChatSheetTitle": "AI assistant",
   "aiChatSheetEmpty": "Ask anything about your finances.",
   "aiChatSheetExpandTooltip": "Expand to full screen",
+  "aiChatSheetNewTooltip": "New conversation",
 
   "chartEmptyDefault": "No data yet",
 

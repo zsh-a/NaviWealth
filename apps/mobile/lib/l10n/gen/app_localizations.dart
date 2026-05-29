@@ -7455,6 +7455,12 @@ abstract class AppLocalizations {
   /// **'Expand to full screen'**
   String get aiChatSheetExpandTooltip;
 
+  /// No description provided for @aiChatSheetNewTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'New conversation'**
+  String get aiChatSheetNewTooltip;
+
   /// No description provided for @chartEmptyDefault.
   ///
   /// In en, this message translates to:

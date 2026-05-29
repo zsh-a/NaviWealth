@@ -638,6 +638,51 @@ class KnowledgeRepository {
     return survivor;
   }
 
+  /// Create a bidirectional `[[concept]]` soft link between [a] and [b]
+  /// (`docs/knowledgeos-domain.md` §14.2 — the `propose_concept_link` apply
+  /// path). Each concept gains the other's id in `relatedConceptIds`
+  /// (idempotent — re-linking is a no-op set union). [stamp] mints one
+  /// fresh [SyncMeta] per touched concept; one transaction. Returns the two
+  /// updated concepts. Throws nothing on an already-linked pair — it just
+  /// re-writes the same set.
+  Future<(KnowledgeConcept, KnowledgeConcept)> linkConcepts({
+    required KnowledgeConcept a,
+    required KnowledgeConcept b,
+    required Future<SyncMeta> Function() stamp,
+  }) async {
+    final aMeta = await stamp();
+    final bMeta = await stamp();
+    final aNext = (<String>{...a.relatedConceptIds, b.id}..remove(a.id))
+        .toList(growable: false);
+    final bNext = (<String>{...b.relatedConceptIds, a.id}..remove(b.id))
+        .toList(growable: false);
+    final updatedA = KnowledgeConcept(
+      id: a.id,
+      name: a.name,
+      aliases: a.aliases,
+      summaryMd: a.summaryMd,
+      relatedConceptIds: aNext,
+      createdAt: a.createdAt,
+      mergedIntoId: a.mergedIntoId,
+      sync: aMeta,
+    );
+    final updatedB = KnowledgeConcept(
+      id: b.id,
+      name: b.name,
+      aliases: b.aliases,
+      summaryMd: b.summaryMd,
+      relatedConceptIds: bNext,
+      createdAt: b.createdAt,
+      mergedIntoId: b.mergedIntoId,
+      sync: bMeta,
+    );
+    await _db.transaction(() async {
+      await upsertConcept(updatedA);
+      await upsertConcept(updatedB);
+    });
+    return (updatedA, updatedB);
+  }
+
   // ---------- Row → model ----------
 
   KnowledgeNote _noteFromRow(KnowledgeNoteRow r) => KnowledgeNote(

@@ -4153,6 +4153,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatSheetExpandTooltip => '展开全屏';
 
   @override
+  String get aiChatSheetNewTooltip => '新对话';
+
+  @override
   String get chartEmptyDefault => '暂无数据';
 
   @override

@@ -30,7 +30,28 @@ List<ProposalKindMeta> get kKnowledgeProposalKinds => [
     toolName: 'propose_routine',
     previewRows: _routineRows,
   ),
+  ProposalKindMeta(
+    kind: 'knowledge_concept_link',
+    icon: FLucideIcons.link,
+    label: (_) => '概念关联',
+    toolName: 'propose_concept_link',
+    previewRows: _conceptLinkRows,
+  ),
 ];
+
+List<ProposalKindRow> _conceptLinkRows(
+  AppLocalizations l10n,
+  ReadyProposalPlan plan,
+  Map<String, Object?>? overrides,
+) {
+  final from = plan.get('from_concept_name') ?? plan.get('from_concept_id');
+  final to = plan.get('to_concept_name') ?? plan.get('to_concept_id');
+  return <ProposalKindRow>[
+    if (from != null && to != null) ProposalKindRow('关联', '$from ↔ $to'),
+    if (plan.get('relation') != null)
+      ProposalKindRow('关系', plan.get('relation')!),
+  ];
+}
 
 List<ProposalKindRow> _mergeRows(
   AppLocalizations l10n,
