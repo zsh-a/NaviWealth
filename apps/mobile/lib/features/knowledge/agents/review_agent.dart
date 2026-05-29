@@ -1,11 +1,12 @@
 /// `knowledge_review` — weekly review agent
-/// (`docs/knowledgeos-domain.md` §7).
+/// (`docs/knowledgeos-domain.md` §5 + §7).
 ///
-/// Runs Sunday 09:00 local. Pulls every Decision whose `review_date`
-/// has passed and writes an episodic memory summarising "what needs
-/// review this week". The Review tab in the IA shell reads the same
-/// underlying repo, so the memory is a recall affordance for AI chat,
-/// not a UI primary path.
+/// Runs Sunday 09:00 local. Surfaces "what needs review this week" —
+/// both Decisions whose `review_date` has passed **and** active
+/// Assumptions left unverified past [kAssumptionStaleDays] (§5: "自动列出
+/// review_date 到期的 Decision + 未验证的 assumption"). Writes one episodic
+/// memory; the Review tab reads the same repo, so the memory is a recall
+/// affordance for AI chat, not a UI primary path.
 library;
 
 import '../../../core/ai/agents/agent.dart';
@@ -15,6 +16,7 @@ import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../data/providers.dart';
 import '_agent_memory.dart';
+import 'assumption_agent.dart' show kAssumptionStaleDays;
 
 const String kKnowledgeReviewAgentId = 'knowledge_review';
 const String kKnowledgeReviewMemorySource = 'agent:knowledge_review';
@@ -47,29 +49,42 @@ class ReviewAgent implements Agent {
       ownerUserId: ownerUserId,
       asOf: start,
     );
+    final open = await repo.listOpenAssumptions(ownerUserId: ownerUserId);
+    final staleAssumptions = open
+        .where((a) => a.daysSinceVerify(start) >= kAssumptionStaleDays)
+        .toList(growable: false);
     final finished = DateTime.now().toUtc();
 
-    if (due.isEmpty) {
+    if (due.isEmpty && staleAssumptions.isEmpty) {
       return AgentRunResult.skipped(
         agentId: kKnowledgeReviewAgentId,
         startedAt: start,
         finishedAt: finished,
-        reason: 'no decisions due for review',
+        reason: 'nothing due for review this week',
       );
     }
 
-    final summary = _summarize(due.length, due.first.question);
+    final summary = _summarize(
+      dueCount: due.length,
+      staleCount: staleAssumptions.length,
+      firstDue: due.isNotEmpty ? due.first.question : null,
+      firstStale:
+          staleAssumptions.isNotEmpty ? staleAssumptions.first.statement : null,
+    );
     final built = buildAgentMemory(
       source: kKnowledgeReviewMemorySource,
       kind: MemoryKind.episodic,
       ownerUserId: ownerUserId,
       start: start,
       finished: finished,
-      title: '本周 Decision 复盘',
+      title: '本周复盘',
       summary: summary,
       payload: <String, Object?>{
         'context': 'weekly review tick at ${start.toUtc().toIso8601String()}',
         'due_decision_ids': due.map((d) => d.id).toList(growable: false),
+        'stale_assumption_ids':
+            staleAssumptions.map((a) => a.id).toList(growable: false),
+        'assumption_threshold_days': kAssumptionStaleDays,
       },
       entities: <String>{'knowledge_review', 'weekly_review'},
       importance: 0.7,
@@ -83,15 +98,31 @@ class ReviewAgent implements Agent {
       startedAt: start,
       finishedAt: finished,
       summary: summary,
-      payload: <String, Object?>{'due_count': due.length},
+      payload: <String, Object?>{
+        'due_count': due.length,
+        'stale_assumption_count': staleAssumptions.length,
+      },
       memoryId: built.memoryId,
     );
   }
 
-  String _summarize(int count, String firstQuestion) {
-    if (count == 1) {
-      return '1 个 decision 到期可复盘:$firstQuestion';
+  String _summarize({
+    required int dueCount,
+    required int staleCount,
+    String? firstDue,
+    String? firstStale,
+  }) {
+    final parts = <String>[];
+    if (dueCount > 0) {
+      parts.add(dueCount == 1
+          ? '1 个 decision 到期可复盘:$firstDue'
+          : '$dueCount 个 decision 到期可复盘,首条:$firstDue');
     }
-    return '$count 个 decision 到期可复盘,首条:$firstQuestion';
+    if (staleCount > 0) {
+      parts.add(staleCount == 1
+          ? '1 条假设 > $kAssumptionStaleDays 天未校验:$firstStale'
+          : '$staleCount 条假设 > $kAssumptionStaleDays 天未校验,首条:$firstStale');
+    }
+    return parts.join('；');
   }
 }

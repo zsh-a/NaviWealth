@@ -387,23 +387,54 @@ Widget _buildNoteTile(BuildContext context, KnowledgeNote n) {
 Widget _buildConceptTile(BuildContext context, KnowledgeConcept c) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
-  return KnowledgeSection.item(
-    title: c.name,
-    children: [
-      if (c.summaryMd.isNotEmpty)
-        Text(
-          knowledgeExcerpt(c.summaryMd),
-          style: typography.sm.copyWith(color: colors.mutedForeground),
-        ),
-    ],
+  return GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onTap: () => context.pushNamed(
+      AppRouteNames.knowledgeObjectDetail,
+      pathParameters: {'kind': 'concept', 'id': c.id},
+    ),
+    child: KnowledgeSection.item(
+      title: c.name,
+      trailing: Icon(
+        FLucideIcons.chevronRight,
+        size: 14,
+        color: colors.mutedForeground,
+      ),
+      children: [
+        if (c.summaryMd.isNotEmpty)
+          Text(
+            knowledgeExcerpt(c.summaryMd),
+            style: typography.sm.copyWith(color: colors.mutedForeground),
+          ),
+      ],
+    ),
   );
 }
 
 Widget _buildExperimentTile(BuildContext context, KnowledgeExperiment e) {
-  return KnowledgeSection.item(
-    title: e.hypothesis,
-    trailing: KnowledgeStatusBadge(label: e.status.wire),
-    children: const [],
+  final colors = context.theme.colors;
+  return GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onTap: () => context.pushNamed(
+      AppRouteNames.knowledgeObjectDetail,
+      pathParameters: {'kind': 'experiment', 'id': e.id},
+    ),
+    child: KnowledgeSection.item(
+      title: e.hypothesis,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          KnowledgeStatusBadge(label: e.status.wire),
+          const SizedBox(width: AppSpacing.s4),
+          Icon(
+            FLucideIcons.chevronRight,
+            size: 14,
+            color: colors.mutedForeground,
+          ),
+        ],
+      ),
+      children: const [],
+    ),
   );
 }
 

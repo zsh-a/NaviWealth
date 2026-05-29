@@ -58,9 +58,12 @@ abstract final class AppRoutes {
   static const knowledgeInbox = '/knowledge';
   static const knowledgeLibrary = '/knowledge/library';
   static const knowledgeReview = '/knowledge/review';
-  // Detail pages live under Library — only Decision exists today;
-  // other types' details land per §14.2 P0 follow-ups.
+  // Detail pages live under Library. Decision has its own editable page;
+  // the other typed objects (concept / experiment / principle / assumption)
+  // share one read-only object page keyed by `:kind`.
   static const knowledgeDecisionDetail = '/knowledge/library/decision/:id';
+  static const knowledgeObjectDetail =
+      '/knowledge/library/object/:kind/:id';
 
   // ── Global meta (not a tab) ────────────────────────────────────────────
   static const settings = '/settings';
@@ -208,6 +211,7 @@ abstract final class AppRouteNames {
   static const knowledgeLibrary = 'knowledge-library';
   static const knowledgeReview = 'knowledge-review';
   static const knowledgeDecisionDetail = 'knowledge-decision-detail';
+  static const knowledgeObjectDetail = 'knowledge-object-detail';
 
   // ── Plan ────────────────────────────────────────────────────────────────
   static const plan = 'plan';
