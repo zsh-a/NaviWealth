@@ -235,6 +235,8 @@ void main() {
         'read_asset_window',
         'read_category_window',
         'recall_decision',
+        'review_knowledge_health',
+        'search_knowledge',
         'search_notes',
         'simulate_fire_plan',
         'summarize_topic_evolution',

@@ -4320,6 +4320,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatSheetExpandTooltip => 'Expand to full screen';
 
   @override
+  String get aiChatSheetNewTooltip => 'New conversation';
+
+  @override
   String get chartEmptyDefault => 'No data yet';
 
   @override

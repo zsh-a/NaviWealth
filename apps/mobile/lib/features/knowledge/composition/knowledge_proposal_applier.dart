@@ -8,14 +8,16 @@
 /// (`composite_proposal_applier.dart`) now routes `knowledge_*` kinds here.
 ///
 /// Handled kinds:
-///  - `knowledge_merge`   → `mergeNotes` / `mergeConcepts` (§15.3 dedupe)
-///  - `knowledge_routine` → `upsertRoutine`
+///  - `knowledge_merge`        → `mergeNotes` / `mergeConcepts` (§15.3 dedupe)
+///  - `knowledge_routine`      → `upsertRoutine`
+///  - `knowledge_concept_link` → `linkConcepts` (§14.2 — bidirectional edge)
 ///
 /// Knowledge writes do **not** expose the 60s one-tap undo: `apply` returns
 /// no `appliedAt`, so the card never offers it. Merge stays reversible at
 /// the data layer (`mergedIntoId` + tombstone). [undo] is a safety net that
-/// throws if ever reached. `knowledge_concept_link` / capture / inbox kinds
-/// are intentionally not handled here yet — see §15.6 / §14.2.
+/// throws if ever reached. Capture / inbox kinds are intentionally not
+/// handled here — they flow through the Review-tab triage side-table, not
+/// chat-apply (§5).
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,6 +36,7 @@ import '../domain/knowledge_models.dart';
 const Set<String> kKnowledgeProposalAppliedKinds = <String>{
   'knowledge_merge',
   'knowledge_routine',
+  'knowledge_concept_link',
 };
 
 /// Drift table-name prefix for KnowledgeOS rows — used by the composite to
@@ -55,6 +58,7 @@ class KnowledgeProposalApplier implements ProposalApplier {
       return switch (plan.kind) {
         'knowledge_merge' => await _applyMerge(plan),
         'knowledge_routine' => await _applyRoutine(plan),
+        'knowledge_concept_link' => await _applyConceptLink(plan),
         _ => throw ProposalApplyException(
           'unknown knowledge proposal kind: ${plan.kind}',
         ),
@@ -142,6 +146,26 @@ class KnowledgeProposalApplier implements ProposalApplier {
       default:
         throw ProposalApplyException('merge entity_type 只支持 note / concept');
     }
+  }
+
+  Future<ProposalApplyState> _applyConceptLink(ReadyProposalPlan plan) async {
+    final fromId = plan.get('from_concept_id');
+    final toId = plan.get('to_concept_id');
+    if (fromId == null || toId == null || fromId == toId) {
+      throw ProposalApplyException('concept_link 缺少 from/to 或两者相同');
+    }
+    final a = await repo.findConcept(fromId);
+    final b = await repo.findConcept(toId);
+    if (a == null || b == null) {
+      throw ProposalApplyException('concept_link 引用的概念不存在');
+    }
+    final (updatedA, _) = await repo.linkConcepts(a: a, b: b, stamp: stamp);
+    return ProposalApplyState(
+      status: ProposalApplyStatus.applied,
+      appliedEntityId: updatedA.id,
+      appliedTable: 'knowledge_concepts',
+      shortLabel: '已关联「${a.name}」↔「${b.name}」',
+    );
   }
 
   Future<ProposalApplyState> _applyRoutine(ReadyProposalPlan plan) async {

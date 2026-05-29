@@ -159,14 +159,15 @@ void main() {
     });
 
     test('mobile descriptor catalog carries active device tools', () {
-      // 2 Memory Runtime (shell) + 35 FinanceOS + 4 HealthOS + 14 KnowledgeOS
-      // = 55. KnowledgeOS gained find_similar_knowledge + propose_merge in
-      // the §15.3 dedupe slice. Each LifeOS domain co-locates its
+      // 2 Memory Runtime (shell) + 35 FinanceOS + 4 HealthOS + 16 KnowledgeOS
+      // = 57. KnowledgeOS gained find_similar_knowledge + propose_merge
+      // (§15.3 dedupe) then search_knowledge + review_knowledge_health
+      // (§15.3 query + suggest). Each LifeOS domain co-locates its
       // descriptors with its tool barrel (`kShellToolDescriptors`,
       // `kFinanceToolDescriptors`, `kHealthToolDescriptors`,
       // `kKnowledgeToolDescriptors`); the union here is derived in
       // `tool_descriptor_catalog.dart`.
-      expect(allToolDescriptors, hasLength(55));
+      expect(allToolDescriptors, hasLength(57));
       expect(
         lookupToolDescriptor('propose_options_profile_update')?.sideEffect,
         SideEffect.deviceLocalWrite,

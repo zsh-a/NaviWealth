@@ -22,6 +22,8 @@ import 'knowledge/ai_tools/propose_link_to_decision_tool.dart';
 import 'knowledge/ai_tools/propose_merge_tool.dart';
 import 'knowledge/ai_tools/propose_routine_tool.dart';
 import 'knowledge/ai_tools/recall_decision_tool.dart';
+import 'knowledge/ai_tools/review_knowledge_health_tool.dart';
+import 'knowledge/ai_tools/search_knowledge_tool.dart';
 import 'knowledge/ai_tools/search_notes_tool.dart';
 import 'knowledge/ai_tools/summarize_topic_evolution_tool.dart';
 
@@ -38,7 +40,9 @@ const List<DeviceTool> kKnowledgeDeviceTools = <DeviceTool>[
   ListDueReviewsTool(),
   ListDueRoutinesTool(),
   SearchNotesTool(),
+  SearchKnowledgeTool(),
   FindSimilarKnowledgeTool(),
+  ReviewKnowledgeHealthTool(),
   ProposeConceptLinkTool(),
   ProposeMergeTool(),
   ProposeInboxClassificationTool(),
@@ -102,6 +106,22 @@ const Map<String, ToolDescriptor> kKnowledgeToolDescriptors =
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.small,
+    domain: kDomainKnowledge,
+  ),
+  'search_knowledge': ToolDescriptor(
+    name: 'search_knowledge',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.standard,
+    domain: kDomainKnowledge,
+  ),
+  'review_knowledge_health': ToolDescriptor(
+    name: 'review_knowledge_health',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.standard,
     domain: kDomainKnowledge,
   ),
   'summarize_topic_evolution': ToolDescriptor(
@@ -192,6 +212,9 @@ const String kKnowledgeSystemPromptBlock =
     '  • propose_merge（去重：发现重复条目时建议合并，仅支持 note / concept）\n'
     '- 录入 / 查重场景：先用 find_similar_knowledge 找近似条目；'
     'similarity ≥ 阈值说明可能重复，再用 propose_merge 建议合并（保留一条、其余软删）。\n'
+    '- 跨类型检索「关于 X 我都记过什么 / 在哪写过」用 search_knowledge（笔记/概念/决策/原则/假设/实验一起搜）。\n'
+    '- 用户问「给我点建议 / 本周该做什么 / 知识库健康吗」时调用 review_knowledge_health，'
+    '它汇总到期复盘 / 本周到期定期事项 / 长期未校验假设 / 孤儿笔记，再据此用 propose_* 给出行动。\n'
     '- 用户问「我以前对 X 的判断是什么」时优先调用 recall_decision；不要凭记忆复述决策内容。\n'
     '- 跨主题演变 / 历史观点对比用 summarize_topic_evolution，时间线以工具返回为准。\n'
     '- 「我现在有什么定期事项要做 / 本周到期」用 list_due_routines，结合 list_due_reviews 给出综合提醒。';

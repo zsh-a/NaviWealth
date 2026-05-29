@@ -441,6 +441,26 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
   bool _loginRequired = false;
   String? _errorDetail;
 
+  // Conversation-mode: when the user taps "new conversation" we create a
+  // fresh thread and pin it here, overriding the resumed default session
+  // (`defaultChatSessionProvider`, which otherwise always reopens the last
+  // thread). Null ⇒ use the resolved default.
+  String? _convSessionId;
+  bool _startingNew = false;
+
+  Future<void> _startNewConversation(String ownerUserId) async {
+    if (_startingNew) return;
+    setState(() => _startingNew = true);
+    try {
+      final repo = await ref.read(chatRepositoryProvider.future);
+      final session = await repo.createSession(ownerUserId: ownerUserId);
+      if (!mounted) return;
+      setState(() => _convSessionId = session.id);
+    } finally {
+      if (mounted) setState(() => _startingNew = false);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -600,15 +620,20 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
       );
     }
 
-    final activeId = ref
+    final resolvedDefault = ref
         .watch(defaultChatSessionProvider(session.userId))
         .asData
         ?.value;
+    // A user-started fresh thread wins over the resumed default.
+    final activeId = _convSessionId ?? resolvedDefault;
 
     return Column(
       children: [
         _ConversationHeader(
           title: l10n.aiChatSheetTitle,
+          onNew: activeId == null || _startingNew
+              ? null
+              : () => _startNewConversation(session.userId),
           onExpand: activeId == null
               ? null
               : () {
@@ -657,12 +682,17 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
 }
 
 class _ConversationHeader extends StatelessWidget {
-  const _ConversationHeader({required this.title, this.onExpand});
+  const _ConversationHeader({required this.title, this.onExpand, this.onNew});
   final String title;
   final VoidCallback? onExpand;
 
+  /// Start a fresh conversation (clears the resumed thread from view).
+  /// Null while no session is resolved or a new one is being created.
+  final VoidCallback? onNew;
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -671,8 +701,15 @@ class _ConversationHeader extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(child: Text(title, style: AiType.title(context))),
           FTooltip(
-            tipBuilder: (_, _) =>
-                Text(AppLocalizations.of(context).aiChatSheetExpandTooltip),
+            tipBuilder: (_, _) => Text(l10n.aiChatSheetNewTooltip),
+            child: FButton.icon(
+              variant: FButtonVariant.ghost,
+              onPress: onNew,
+              child: const Icon(FLucideIcons.squarePen, size: 20),
+            ),
+          ),
+          FTooltip(
+            tipBuilder: (_, _) => Text(l10n.aiChatSheetExpandTooltip),
             child: FButton.icon(
               variant: FButtonVariant.ghost,
               onPress: onExpand,

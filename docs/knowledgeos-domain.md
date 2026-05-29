@@ -358,7 +358,7 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - ✅ `InboxTriageRepository`（`features/knowledge/data/inbox_triage_repository.dart`）：侧表 upsert / resolve / pending feed；dismissed 合并保护
 
 **AI tools**（`features/knowledge_ai_tools.dart` → `kKnowledgeDeviceTools`）
-- ✅ Read：`recall_decision`、`list_open_assumptions`、`list_due_reviews`、`list_due_routines`（2026-05-29）、`search_notes`（hybrid via `MemoryRuntime.recall(source='know:notes')` + tag/project 后过滤；cold start 或空 query 回落 substring 扫）、`summarize_topic_evolution`、`find_similar_knowledge`（2026-05-29，§15.3 去重读：遍历 `kKnowledgeMemorySources` 具体 source + cosine + Jaccard token 复核）
+- ✅ Read：`recall_decision`、`list_open_assumptions`、`list_due_reviews`、`list_due_routines`（2026-05-29）、`search_notes`（hybrid via `MemoryRuntime.recall(source='know:notes')` + tag/project 后过滤；cold start 或空 query 回落 substring 扫）、`summarize_topic_evolution`、`find_similar_knowledge`（2026-05-29，§15.3 去重读：遍历 `kKnowledgeMemorySources` 具体 source + cosine + Jaccard token 复核）、`search_knowledge`（2026-05-29，跨 7 类语义检索）、`review_knowledge_health`（2026-05-29，聚合到期/未校验/孤儿/到期 routine 给「本周建议」）
 - ✅ Write（全部 ProposalEnvelope，§4 行为契约）：`propose_concept_link`、`propose_inbox_classification`、`propose_inbox_tags`、`propose_link_to_decision`、`propose_routine`（2026-05-29）、`propose_capture`（2026-05-29，统一 7 类分类器，目前 routine heuristic 稳定，其余走 note 兜底）、`propose_merge`（2026-05-29，§15.3 去重写：`knowledge_merge` envelope + diff，note/concept；chat-apply 接线待办见 §15.6）
 - ✅ `propose_inbox_*` 三件套同时持久化到 `knowledge_inbox_triage` —— §5 异步 triage 的 LLM 写端口
 - ✅ 通过 `deviceToolsProvider` 在 bootstrap 拼入，gated on `domainOptInsProvider.contains(DomainScope.knowledge)`
@@ -540,11 +540,14 @@ in:  { primary_id, duplicate_ids:[...], merged:{ title?, body_md?, tags?, links?
   - [x] schema v22（`merged_into_id` on notes + concepts，迁移 + 1 条 ALTER ×2）+ `KnowledgeRepository.mergeNotes` / `mergeConcepts`（事务内并集 + tombstone + concept 入边重指）+ 聚合 `kKnowledgeMemorySources`（2026-05-29）
   - [x] `find_similar_knowledge`（read，遍历具体 source + cosine + Jaccard token 复核）+ `propose_merge`（write，`knowledge_merge` envelope + diff，Confirmation.oneTap）+ descriptors + system prompt（2026-05-29）。测试:`knowledge_merge_repository_test`(8) + `knowledge_dedupe_tools_test`(8);更新 `contracts_roundtrip`(55) + `device_degradation` canonical 列表(顺带补全此前漏登的 routine/capture)
   - [x] `propose_merge` 接入 chat-apply（2026-05-29）：新增 shell 级 `CompositeProposalApplier`（`core/ai/composition/composite_proposal_applier.dart`，按 kind 路由 apply、按 `appliedTable` 前缀路由 undo）+ `KnowledgeProposalApplier`（`features/knowledge/composition/knowledge_proposal_applier.dart`，handle `knowledge_merge` → `mergeNotes`/`mergeConcepts`、`knowledge_routine` → `upsertRoutine`）+ kind 元数据（`knowledge_proposal_kinds.dart`，propose card 渲染 merge diff / routine 行）+ `knowledgeCompositionOverrides()`。**Riverpod 3 禁止重复 override**:Finance bundle 不再 override `proposalApplierProvider` / `proposalKindRegistryProvider`(仅暴露 `financeProposalApplierProvider` + `kFinanceProposalKinds` 供 composite 读),由 knowledge bundle 作为唯一 owner 组合 finance + knowledge。知识写不暴露 60s 一键 undo(apply 不回 `appliedAt`);merge 经 `mergedIntoId` 数据层可逆。测试:`knowledge_proposal_applier_test`(6)。
-    - 顺带:这也修了 **全部 knowledge propose 工具共用的缺口**(此前 propose_* 从 chat 确认都撞 finance applier 的 "unknown kind")。`knowledge_concept_link` / capture / inbox 仍未接(concept_link apply = §14.2 待办,语义需改两个 concept 的 related 列;capture/inbox 走 Review tab triage 侧表,非 chat-apply)——composite 已就位,加一条 `switch` 分支即可。
-- **P1 — 统一入口**：Inbox 录入面升格为 knowledge-scoped 会话面 + 快捷 chips，复用 ai_chat 引擎；无 runtime 回落 heuristic。
-  - [ ] `knowledgeScope` preset + `AiIntentInvocation` 打开 surface
-  - [ ] 三个 chip 意图预设
-- **P2 — 建议聚合**：`search_knowledge` + `review_knowledge_health` + `InboxTriageAgent` 近重检测。
+    - 顺带:这也修了 **全部 knowledge propose 工具共用的缺口**(此前 propose_* 从 chat 确认都撞 finance applier 的 "unknown kind")。
+  - [x] `knowledge_concept_link` chat-apply（2026-05-29，顺手补 §14.2 待办）：`KnowledgeRepository.linkConcepts`（双向 related 边并集 + 事务）+ applier `_applyConceptLink` 分支 + kind 元数据。`knowledge_concept_link` 加入 `kKnowledgeProposalAppliedKinds`。capture / inbox 仍走 Review tab triage 侧表(非 chat-apply,符合 §5)。
+- **P1 — 统一入口**（2026-05-29 落地）：Inbox 顶部新增 `_AiAssistantBar`（`knowledge_inbox_page.dart`）——一个「记点什么 / 问点什么…」录入 pill + 三枚快捷 chip（查重 / 本周建议 / 搜知识），全部经 `askAi` 会话模式打开 ai_chat surface（知识路由 → aiContext.domain = knowledge → 自动挂 `kKnowledgeDeviceTools` + `kKnowledgeSystemPromptBlock`）。
+  - [x] 复用 ai_chat 引擎(`askAi` → `showAiSheet` conversation 模式)，**不新增 chat 引擎/运行时**；无 LLM runtime 时 surface 自身给登录/配置引导(沿用 ai_sheet 既有降级)。
+  - [x] 三个 chip 用**会话 prefill**(强种子 prompt)而非 invocation intent —— 刻意避开 regression-corpus / renderer fixture 链(每个 invocation intent 需 corpus 条目 + renderer + preferredReadModels);send 后 agent 照常跑完整工具链。
+- **P2 — 建议聚合**（2026-05-29 落地）：
+  - [x] `search_knowledge`（read，跨 7 类语义检索，遍历 `kKnowledgeMemorySources` + 混合分排序）+ `review_knowledge_health`（read，聚合到期复盘 / 本周到期定期事项 / 长期未校验假设 / 孤儿笔记,按 count 排序)。descriptors + system prompt + 注册。测试:`knowledge_query_tools_test`(8)。
+  - [ ] `InboxTriageAgent` 近重检测(push 版,§15.5)——pull 版已由 `find_similar_knowledge` + `review_knowledge_health` 覆盖;后台 agent 增强按 dogfood 需要再做。
 
 每期遵守：本地优先永不阻塞 save、写必经 ProposalEnvelope、Web 优雅降级、trace 全覆盖。
 
