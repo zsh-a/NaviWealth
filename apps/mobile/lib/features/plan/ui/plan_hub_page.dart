@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
+import '../../../app/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../fire/data/fire_providers.dart';
@@ -25,8 +26,8 @@ class PlanHubPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return FScaffold(
-      header: FHeader.nested(title: Text(l10n.planHubTitle)),
+    return ShellTabScaffold(
+      title: l10n.planHubTitle,
       childPad: false,
       child: LayoutBuilder(
         builder: (context, constraints) {

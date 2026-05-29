@@ -13,6 +13,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
+import '../../../app/shell_chrome.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../design_system/design_system.dart';
 import '../data/providers.dart';
@@ -37,7 +38,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return DomainTabScaffold(
+    return ShellTabScaffold(
       title: '资料库 · KnowledgeOS',
       child: Stack(
         children: [

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
+import '../../../app/shell_chrome.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../auth/data/auth_controller.dart';
 import '../data/dashboard_insights_provider.dart';
 import '../data/dashboard_providers.dart';
 
@@ -78,13 +76,12 @@ class HomeGreetingHeader extends ConsumerWidget {
                   ),
                 ),
               ),
-              // IA contract §1: Settings is global meta — accessed from
-              // the Today header avatar, not a tab. Pushes outside the
-              // shell so pop returns to whatever tab the user came from.
-              // Avatar replaces the previous gear so the editorial header
-              // doesn't read as chrome-heavy; it can later carry a sync
-              // status ring + an initial once display-name lands.
-              const _AccountAvatarButton(),
+              // Today has no `FHeader`, so the editorial greeting row is
+              // where the cross-domain shell chrome lands (domain switch +
+              // global Search / Settings) — the same cluster the headered
+              // tabs render via `ShellTabScaffold`. Hidden on desktop,
+              // where the dock / sidebar own these.
+              const ShellActionRow(),
             ],
           ),
           if (statusFragments.isNotEmpty) ...[
@@ -135,51 +132,4 @@ class _StatusFragment {
   const _StatusFragment({required this.text, required this.color});
   final String text;
   final Color color;
-}
-
-/// 36dp circular avatar in the top-right of the Today header. Single
-/// entry point to /settings on mobile (the desktop shell pins Settings
-/// at the bottom of its sidebar instead).
-///
-/// Two visual states:
-///   * **logged-in / local-only**: teal-tinted disc with a person glyph
-///     (initial-letter rendering will land once display name is in
-///     [AuthSession]; keep the path open by reading auth state).
-///   * **logged-out**: shouldn't render on Today — the auth guard
-///     redirects to /login first — but if it does, the same disc shows
-///     so the layout doesn't jump.
-class _AccountAvatarButton extends ConsumerWidget {
-  const _AccountAvatarButton();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
-    // Watch auth state so future profile-aware rendering can branch
-    // without another refactor. Today the icon is the same either way.
-    ref.watch(authControllerProvider);
-    return Semantics(
-      label: l10n.navSettingsTooltip,
-      button: true,
-      child: Tooltip(
-        message: l10n.navSettingsTooltip,
-        child: FTappable(
-          onPress: () => context.push(AppRoutes.settings),
-          child: Container(
-            width: 36,
-            height: 36,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              // Soft primary tint — matches the avatar disc used in
-              // settings (pre-Phase-D) and other "personal" affordances
-              // so this reads as identity, not chrome.
-              color: colors.primary.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(FLucideIcons.user, size: 18, color: colors.primary),
-          ),
-        ),
-      ),
-    );
-  }
 }

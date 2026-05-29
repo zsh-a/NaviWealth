@@ -68,7 +68,7 @@ Widget _wrap({
 }
 
 void main() {
-  testWidgets('renders a time-of-day greeting + settings avatar', (
+  testWidgets('renders a time-of-day greeting + shell chrome actions', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(900, 400));
@@ -77,7 +77,11 @@ void main() {
     await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(FLucideIcons.user), findsOneWidget);
+    // The greeting hosts the cross-domain shell chrome (the Today tab has
+    // no FHeader): global Search + Settings. The domain switcher chip is
+    // hidden here because only one domain is registered in this scope.
+    expect(find.byIcon(FLucideIcons.search), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.settings), findsOneWidget);
     // Some greeting is rendered — the exact text depends on local time.
     expect(find.byType(Text), findsWidgets);
   });

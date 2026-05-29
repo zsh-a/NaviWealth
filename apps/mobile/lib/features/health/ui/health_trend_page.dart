@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../app/shell_chrome.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
@@ -28,7 +29,7 @@ class HealthTrendPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return DomainTabScaffold(
+    return ShellTabScaffold(
       title: '趋势 · HealthOS',
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
