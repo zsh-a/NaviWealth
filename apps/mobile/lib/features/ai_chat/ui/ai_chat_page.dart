@@ -7,7 +7,7 @@ import '../../../app/route_paths.dart';
 import '../../../app/selection_query.dart';
 import '../../../core/ai/composition/ai_context_summary.dart';
 import '../../../core/ai/visual/visual.dart';
-import '../../../core/auth/providers.dart';
+import '../../../core/auth/current_user.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
@@ -89,8 +89,11 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final session = ref.watch(authSessionProvider);
-    if (session == null) {
+    // Device-only AI is available in local-only mode too — scope by the
+    // active user id ([kLocalOnlyUserId] when account-less) instead of a
+    // cloud session. `null` only while auth is still settling.
+    final userId = ref.watch(activeUserIdProvider);
+    if (userId == null) {
       return FScaffold(
         header: FHeader.nested(
           title: Text(l10n.aiChatAppBarTitle),
@@ -101,7 +104,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
       );
     }
 
-    final defaultAsync = ref.watch(defaultChatSessionProvider(session.userId));
+    final defaultAsync = ref.watch(defaultChatSessionProvider(userId));
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -122,7 +125,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
             return _BootstrapErrorPane(
               error: defaultAsync.error!,
               onRetry: () =>
-                  ref.invalidate(defaultChatSessionProvider(session.userId)),
+                  ref.invalidate(defaultChatSessionProvider(userId)),
             );
           }
           return const _BootstrappingPane();
@@ -146,7 +149,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                     selected: id,
                   );
                 },
-                onNew: () => _newSession(session.userId),
+                onNew: () => _newSession(userId),
               ),
               detail: activeId == null
                   ? pendingPane()
@@ -158,16 +161,16 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
         // mobile + tablet: drawer for sessions.
         return FScaffold(
           header: FHeader.nested(
-            title: Text(_titleForActive(session.userId, activeId, l10n)),
+            title: Text(_titleForActive(userId, activeId, l10n)),
             prefixes: [backHeaderAction(context)],
             suffixes: [
               FHeaderAction(
                 icon: const Icon(FLucideIcons.history),
-                onPress: () => _openSessionsSheet(session.userId, activeId),
+                onPress: () => _openSessionsSheet(userId, activeId),
               ),
               FHeaderAction(
                 icon: const Icon(FLucideIcons.plus),
-                onPress: () => _newSession(session.userId),
+                onPress: () => _newSession(userId),
               ),
             ],
           ),

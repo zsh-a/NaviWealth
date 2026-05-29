@@ -34,7 +34,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/route_paths.dart';
 import '../../../core/ai/intent/intent.dart';
 import '../../../core/ai/visual/visual.dart';
-import '../../../core/auth/providers.dart';
+import '../../../core/auth/current_user.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
@@ -475,8 +475,8 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
     if (_kicked) return;
     _kicked = true;
     final invocation = widget.invocation!;
-    final auth = ref.read(authSessionProvider);
-    if (auth == null) {
+    final ownerUserId = ref.read(activeUserIdProvider);
+    if (ownerUserId == null) {
       setState(() => _loginRequired = true);
       return;
     }
@@ -490,7 +490,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
           ? '${desc.labelZh} · ${widget.objectLabel ?? invocation.object?.type ?? "AI"}'
           : (widget.objectLabel ?? 'AI');
       final session = await repo.createSession(
-        ownerUserId: auth.userId,
+        ownerUserId: ownerUserId,
         title: title,
       );
       if (!mounted) return;
@@ -502,7 +502,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
       unawaited(
         repo.sendMessage(
           sessionId: session.id,
-          ownerUserId: auth.userId,
+          ownerUserId: ownerUserId,
           content: prompt,
           invocationTrace: invocation.toTraceJson(),
         ),
@@ -514,14 +514,14 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
   }
 
   Future<void> _sendChip(String sessionId, String chip) async {
-    final auth = ref.read(authSessionProvider);
-    if (auth == null) return;
+    final ownerUserId = ref.read(activeUserIdProvider);
+    if (ownerUserId == null) return;
     try {
       final repo = await ref.read(chatRepositoryProvider.future);
       unawaited(
         repo.sendMessage(
           sessionId: sessionId,
-          ownerUserId: auth.userId,
+          ownerUserId: ownerUserId,
           content: chip,
           // Same invocation tag — trace attribution carries through
           // follow-up chip taps so the transparency page can group them.
@@ -598,9 +598,12 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
 
   Widget _buildConversation(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final session = ref.watch(authSessionProvider);
+    // Device-only AI works account-less; scope by the active user id
+    // ([kLocalOnlyUserId] in local-only mode). `null` only before auth
+    // settles, which the surrounding shell guards.
+    final userId = ref.watch(activeUserIdProvider);
 
-    if (session == null) {
+    if (userId == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -621,7 +624,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
     }
 
     final resolvedDefault = ref
-        .watch(defaultChatSessionProvider(session.userId))
+        .watch(defaultChatSessionProvider(userId))
         .asData
         ?.value;
     // A user-started fresh thread wins over the resumed default.
@@ -633,7 +636,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
           title: l10n.aiChatSheetTitle,
           onNew: activeId == null || _startingNew
               ? null
-              : () => _startNewConversation(session.userId),
+              : () => _startNewConversation(userId),
           onExpand: activeId == null
               ? null
               : () {
