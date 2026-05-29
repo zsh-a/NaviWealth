@@ -27,28 +27,56 @@ class KnowledgeSegmentedRow<T> extends StatelessWidget {
   final String Function(T) labelOf;
   final ValueChanged<T> onChanged;
 
+  /// Below this comfortable per-segment width the equal-split Row would
+  /// clip labels (e.g. 5 segments on a 360-dp phone). At/under it we fall
+  /// back to a horizontally scrollable row of intrinsic-width buttons so
+  /// text never overflows.
+  static const double _minSegmentWidth = 96;
+
   @override
   Widget build(BuildContext context) {
-    final children = <Widget>[];
-    for (var i = 0; i < options.length; i++) {
-      if (i > 0) children.add(const SizedBox(width: AppSpacing.s8));
-      final option = options[i];
-      children.add(
-        Expanded(
-          child: FButton(
-            variant: option == value
-                ? FButtonVariant.primary
-                : FButtonVariant.outline,
-            onPress: () => onChanged(option),
-            child: Text(
-              labelOf(option),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ),
-      );
-    }
-    return Row(children: children);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final n = options.length;
+        const gap = AppSpacing.s8;
+        final maxW = constraints.maxWidth;
+        final fits =
+            maxW.isFinite && (maxW - gap * (n - 1)) / n >= _minSegmentWidth;
+
+        final children = <Widget>[];
+        for (var i = 0; i < n; i++) {
+          if (i > 0) children.add(const SizedBox(width: gap));
+          children.add(_button(options[i], expand: fits));
+        }
+
+        final row = Row(
+          mainAxisSize: fits ? MainAxisSize.max : MainAxisSize.min,
+          children: children,
+        );
+        // Equal-width fill when there's room; otherwise scroll horizontally
+        // so every label stays legible on a narrow screen.
+        return fits
+            ? row
+            : SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: row,
+              );
+      },
+    );
+  }
+
+  Widget _button(T option, {required bool expand}) {
+    final button = FButton(
+      variant: option == value
+          ? FButtonVariant.primary
+          : FButtonVariant.outline,
+      onPress: () => onChanged(option),
+      child: Text(
+        labelOf(option),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+    return expand ? Expanded(child: button) : button;
   }
 }

@@ -15,8 +15,13 @@ const int kMaxToolRounds = 8;
 /// Per-conversation cap on `propose_*` calls.
 const int kMaxProposalsPerConversation = 5;
 
-/// `max_tokens` sent on every Messages request.
-const int kAnthropicMaxOutputTokens = 4096;
+/// `max_tokens` sent on every Messages request. Generous on purpose:
+/// extended-thinking models (mimo, Claude with thinking, …) spend a large
+/// share of the budget on internal reasoning before emitting the visible
+/// answer / tool call. A tight cap truncates them mid-thought
+/// (`stop_reason: max_tokens` with no usable output), so an agent must not
+/// be starved here.
+const int kAnthropicMaxOutputTokens = 8192;
 
 /// Domain-agnostic system prompt core. Carries identity, read rules,
 /// and the generic write protocol shared across LifeOS domains.
@@ -40,6 +45,11 @@ const String kDeviceSystemPromptBase =
     '9. 工具返回 candidates 时，把候选列给用户挑选，不要替用户选。\n'
     '10. 如果工具返回 status=needs_clarification，立刻把 reason 转化为对用户友好的问句，不要再调用其他写工具。\n'
     '11. 计划返回后，把工具给的 summary_zh 念给用户听，再确认：「确认就在确认页点确认；要改的话直接告诉我」。前端会负责真正的写入按钮。\n'
+    '\n'
+    '决策点（交互式选择）：\n'
+    '12. 遇到**高影响 / 不可逆 / 有多条合理路线**的岔路——技术选型、引入新依赖、改数据模型 / 同步协议 / 安全边界、目录结构大改等——不要自己拍板继续，调用 `ask_user` 给出 2~4 个结构化选项（每个带 label / 简述 / 取舍，可标 recommended），让用户来选。\n'
+    '13. 调用 `ask_user` 后**立即停下**，不要自答、也不要继续调用其它工具——前端会把选项渲染成可点击卡片，用户的选择会作为下一轮输入回到对话。日常无歧义的小事直接做或用 propose_*，不要滥用 `ask_user`。\n'
+    '14. 一般的"你想要哪一个"这类轻量分支，也优先用 `ask_user` 给可点击选项，而不是在正文里写「1. … 2. …」让用户打字。\n'
     '\n'
     '当前时间会作为消息的一部分提供给你。';
 

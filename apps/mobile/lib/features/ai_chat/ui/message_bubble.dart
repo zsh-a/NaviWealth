@@ -5,12 +5,16 @@ import 'package:forui/forui.dart';
 
 import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
+import '../../../core/ai/runtime/device/tools/ask_user_tool.dart'
+    show kAskUserToolName;
 import '../../../core/ai/visual/visual.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
 import '../state/chat_controller.dart';
 import 'ai_transparency_badge.dart';
+import 'decision_card.dart';
+import 'decision_request.dart';
 import 'propose_card.dart';
 import 'reply_chips.dart';
 import 'tool_invocation_card.dart' show friendlyToolName;
@@ -35,6 +39,7 @@ class MessageBubble extends StatelessWidget {
     this.invocationIntent,
     this.isLastAssistant = false,
     this.isLastUser = false,
+    this.suggestCannedReplies = true,
   });
 
   final String sessionId;
@@ -45,6 +50,14 @@ class MessageBubble extends StatelessWidget {
   /// text. Caller sends it as the next user turn. Streaming/error
   /// messages render no chips regardless.
   final void Function(String chip)? onReplyChip;
+
+  /// When false, the generic rules-based reply chips
+  /// (`suggestReplyChips`) are suppressed — only a content-derived
+  /// clickable choice list (parsed from a menu the model actually wrote)
+  /// renders. The conversation sheet sets this false so every turn isn't
+  /// trailed by canned "展开细节 / 对比" suggestions; the invocation
+  /// surface keeps them (true) as its guided next-step affordance.
+  final bool suggestCannedReplies;
 
   /// Wave 34 — invocation intent that triggered this turn (Wave 33
   /// invocation). Drives the rules-based chip suggester.
@@ -77,6 +90,7 @@ class MessageBubble extends StatelessWidget {
         onReplyChip: onReplyChip,
         invocationIntent: invocationIntent,
         isLastAssistant: isLastAssistant,
+        suggestCannedReplies: suggestCannedReplies,
       ),
     };
     return TweenAnimationBuilder<double>(
@@ -232,6 +246,7 @@ class _AssistantBubble extends StatelessWidget {
     this.onReplyChip,
     this.invocationIntent,
     this.isLastAssistant = false,
+    this.suggestCannedReplies = true,
   });
 
   final String sessionId;
@@ -239,6 +254,7 @@ class _AssistantBubble extends StatelessWidget {
   final void Function(String chip)? onReplyChip;
   final String? invocationIntent;
   final bool isLastAssistant;
+  final bool suggestCannedReplies;
 
   bool get _isError =>
       message.role == ChatRole.error ||
@@ -323,10 +339,14 @@ class _AssistantBubble extends StatelessWidget {
               canRegenerate: isLastAssistant,
             ),
           ),
-        // Wave 34 — reply chips under completed assistant turns. Skip
-        // when no onReplyChip handler is supplied (older surfaces) or
-        // when the turn errored / was cancelled.
+        // Wave 34 — generic rules-based reply chips under completed
+        // assistant turns. Gated by [suggestCannedReplies] so the
+        // conversation sheet stays quiet (it relies on the model's own
+        // structured `ask_user` decision card instead — see
+        // `_renderToolEntry`). The invocation surface keeps these as its
+        // guided next-step affordance.
         if (onReplyChip != null &&
+            suggestCannedReplies &&
             !isStreaming &&
             !_isError &&
             message.role == ChatRole.assistant &&
@@ -491,6 +511,19 @@ class _AssistantBubble extends StatelessWidget {
         invocation: invocation,
         plan: plan,
       );
+    }
+    // Structured decision point (`ask_user`): render the interactive
+    // choice card. Only the trailing turn's decision is actionable; a
+    // tap sends the pick back as the next user turn via [onReplyChip].
+    if (invocation.name == kAskUserToolName) {
+      final request = DecisionRequest.tryParse(invocation.output);
+      if (request != null) {
+        return DecisionCard(
+          request: request,
+          interactive: isLastAssistant && onReplyChip != null,
+          onSelect: (reply) => onReplyChip?.call(reply),
+        );
+      }
     }
     // Wave 37 — inline rendering when a domain renderer is registered;
     // the legacy card (chevron + raw JSON) remains the fallback for
@@ -948,6 +981,7 @@ class _ReplyChips extends StatelessWidget {
     );
   }
 }
+
 
 /// Inline copy / regenerate row shown under a completed (or errored)
 /// assistant turn. Kept low-contrast on purpose — these are escape

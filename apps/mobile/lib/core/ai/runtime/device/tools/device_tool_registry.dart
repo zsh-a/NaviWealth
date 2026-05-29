@@ -24,18 +24,25 @@ import '../../../contracts/tool_descriptor.dart';
 import '../anthropic/anthropic_wire.dart';
 import '../device_session.dart';
 import '../device_tool_dispatcher.dart';
+import 'ask_user_tool.dart';
 import 'build_context_tool.dart';
 import 'device_tool.dart';
 import 'query_memory_tool.dart';
 
-/// Mirrors backend `PER_TOOL_TIMEOUT_MS`.
-const Duration kPerToolTimeout = Duration(seconds: 15);
+/// Per-tool dispatch backstop. Most device tools are local Drift reads
+/// (sub-100ms), but a few are LLM-backed (e.g. `propose_capture` →
+/// `LlmCaptureClassifier`), and an extended-thinking model can legitimately
+/// take 30s+. Set high enough not to kill those mid-flight; it stays a
+/// safety net against a genuinely hung tool. The LLM-backed tools carry
+/// their own (shorter) request timeout + heuristic fallback inside.
+const Duration kPerToolTimeout = Duration(seconds: 60);
 
 /// Shell-only tools (cross-domain). Domain tool lists live under
 /// `features/<domain>/ai_tools/`.
 const List<DeviceTool> kShellDeviceToolsCore = <DeviceTool>[
   QueryMemoryTool(),
   BuildContextTool(),
+  AskUserTool(),
 ];
 
 /// Shell-only tool descriptors. Co-located with [kShellDeviceToolsCore]
@@ -57,6 +64,16 @@ const Map<String, ToolDescriptor> kShellToolDescriptors =
     risk: RiskLevel.info,
     requiresConfirmation: Confirmation.none,
     allowedContextTier: BudgetTier.standard,
+    domain: kDomainShell,
+  ),
+  // Interaction tool: no data side effect, but it pauses the agent loop
+  // and hands a structured decision to the user (see `ask_user_tool.dart`).
+  'ask_user': ToolDescriptor(
+    name: 'ask_user',
+    access: Access.read,
+    risk: RiskLevel.info,
+    requiresConfirmation: Confirmation.none,
+    allowedContextTier: BudgetTier.small,
     domain: kDomainShell,
   ),
 };

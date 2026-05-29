@@ -22,18 +22,26 @@ import 'chat_history_store.dart';
 import 'chat_repository.dart';
 import 'runtime_routing_api_client.dart';
 
-/// §4.6 W-D3 — the on-device runtime, or `null` when unavailable (web /
-/// no active profile). Rebuilt automatically when the active profile
-/// changes, since [deviceLlmAvailableProvider] / [llmCredentialsProvider]
-/// are watched. Each instance gets its own [Dio] because the base URL
-/// is the user's (possibly custom) endpoint.
-final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
+/// Just the provider-neutral LLM **client** (or `null` when unavailable),
+/// split out of [deviceLlmRuntimeProvider] so lightweight consumers (e.g.
+/// `captureClassifierProvider`) can depend on the client WITHOUT pulling
+/// in the agent loop's dispatcher + tool registry.
+///
+/// This split is what breaks a circular dependency: the runtime's
+/// dispatcher holds the runtime provider's `ref`, and a dispatched tool
+/// (`propose_capture`) reads `captureClassifierProvider`. If that
+/// classifier depended on `deviceLlmRuntimeProvider`, the runtime would
+/// transitively depend on itself. Depending on the client provider
+/// instead keeps the graph acyclic.
+final deviceLlmClientProvider = Provider<DeviceLlmClient?>((ref) {
   if (!ref.watch(deviceLlmAvailableProvider)) return null;
   final profile = ref.watch(llmCredentialsProvider).asData?.value?.active;
   if (profile == null || !profile.hasKey) return null;
+  // Each instance gets its own [Dio] because the base URL is the user's
+  // (possibly custom) endpoint.
   final dio = Dio()
     ..interceptors.add(TalkerDioLogger(talker: ref.read(talkerProvider)));
-  final client = switch (profile.provider) {
+  return switch (profile.provider) {
     LlmProvider.anthropic => AnthropicClient(
       dio: dio,
       config: LlmConfig.fromProfile(profile),
@@ -43,6 +51,15 @@ final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
       config: OpenAiConfig.fromProfile(profile),
     ),
   };
+});
+
+/// §4.6 W-D3 — the on-device runtime, or `null` when unavailable (web /
+/// no active profile). Rebuilt automatically when the active profile
+/// changes, since [deviceLlmClientProvider] (which watches
+/// [deviceLlmAvailableProvider] / [llmCredentialsProvider]) is watched.
+final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
+  final client = ref.watch(deviceLlmClientProvider);
+  if (client == null) return null;
   // §4.6.3 — registry membership is the device allow-list. The list
   // itself is built by the cross-domain composition root
   // ([deviceToolsProvider], `docs/lifeos-shell.md` §7.1 D-1.2): each

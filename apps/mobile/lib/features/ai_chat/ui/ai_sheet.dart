@@ -651,6 +651,17 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
                     horizontal: 12,
                     vertical: 8,
                   ),
+                  // Only surface a tappable choice list when the model
+                  // actually wrote a menu — no generic canned reply chips
+                  // trailing every plain turn.
+                  suggestCannedReplies: false,
+                  // A tap sends the chosen option as the next user message.
+                  onReplyChip: (chip) {
+                    final routeCtx = ref.read(aiContextProvider);
+                    ref
+                        .read(chatControllerProvider(activeId).notifier)
+                        .send(chip, systemContext: routeCtx.toSystemContext());
+                  },
                   emptyBuilder: (context) => Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24),

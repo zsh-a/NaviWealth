@@ -183,6 +183,7 @@ void main() {
     test('registry advertises exactly the canonical set, sorted', () {
       final names = defaultDeviceToolRegistry().schemas().map((s) => s.name);
       expect(names, [
+        'ask_user',
         'build_context',
         'find_similar_knowledge',
         'get_activity_summary',

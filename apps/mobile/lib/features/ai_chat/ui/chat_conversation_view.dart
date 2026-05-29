@@ -31,6 +31,7 @@ class ChatConversationView extends ConsumerStatefulWidget {
     this.onReplyChip,
     this.emptyBuilder,
     this.loadingBuilder,
+    this.suggestCannedReplies = true,
   });
 
   final String sessionId;
@@ -54,6 +55,11 @@ class ChatConversationView extends ConsumerStatefulWidget {
   /// Defaults to a centered progress indicator; the full page passes an
   /// [AiChatSkeleton], the intent sheet a shimmer.
   final WidgetBuilder? loadingBuilder;
+
+  /// Forwarded to [MessageBubble]. False on the conversation sheet so
+  /// plain turns don't trail generic canned reply chips — only a menu the
+  /// model actually wrote becomes a tappable choice list.
+  final bool suggestCannedReplies;
 
   @override
   ConsumerState<ChatConversationView> createState() =>
@@ -170,6 +176,7 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
                 onReplyChip: widget.onReplyChip,
                 isLastAssistant: i == lastAssistantIdx,
                 isLastUser: i == lastUserIdx,
+                suggestCannedReplies: widget.suggestCannedReplies,
               ),
             ),
             Positioned(
