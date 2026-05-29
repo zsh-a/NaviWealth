@@ -2,9 +2,10 @@
 /// (`docs/knowledgeos-domain.md` §3 + §9 — Decision 7-state lifecycle
 /// and `supersededByDecisionId` chain).
 ///
-/// Read-only MVP. Status edits / actual-outcome capture / supersede
-/// wiring are the natural follow-ups but live as §14.2 P2 (dogfood
-/// will tell us which gets used first).
+/// Read view + a lifecycle editor (header ✎): status changes, actual-outcome
+/// capture and supersede wiring all run through [showDecisionLifecycleSheet]
+/// — the write path that lets a decision read as cognitive evolution rather
+/// than a frozen record.
 library;
 
 import 'package:flutter/widgets.dart';
@@ -15,6 +16,7 @@ import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../design_system/design_system.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '_decision_lifecycle_sheet.dart';
 import '_widgets.dart';
 
 class KnowledgeDecisionDetailPage extends ConsumerWidget {
@@ -23,11 +25,7 @@ class KnowledgeDecisionDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FScaffold(
-      header: const FHeader.nested(title: Text('Decision')),
-      childPad: false,
-      child: _Body(decisionId: decisionId),
-    );
+    return _Body(decisionId: decisionId);
   }
 }
 
@@ -72,27 +70,18 @@ class _BodyState extends ConsumerState<_Body> {
       cursor = next;
     }
 
-    // Resolve referenced principles / assumptions.
+    // Resolve referenced principles / assumptions by id so a decision that
+    // cites a since-retired principle or falsified assumption still shows it
+    // (listActive/listOpen would silently drop those — exactly the rows a
+    // post-mortem cares about).
     final principles = <KnowledgePrinciple>[];
     final assumptions = <KnowledgeAssumption>[];
-    final allPrinciples = await repo.listActivePrinciples(
-      ownerUserId: d.sync.ownerUserId,
-    );
-    final allAssumptions = await repo.listOpenAssumptions(
-      ownerUserId: d.sync.ownerUserId,
-    );
-    final pById = <String, KnowledgePrinciple>{
-      for (final p in allPrinciples) p.id: p,
-    };
-    final aById = <String, KnowledgeAssumption>{
-      for (final a in allAssumptions) a.id: a,
-    };
     for (final id in d.principleIds) {
-      final p = pById[id];
+      final p = await repo.findPrinciple(id);
       if (p != null) principles.add(p);
     }
     for (final id in d.assumptionIds) {
-      final a = aById[id];
+      final a = await repo.findAssumption(id);
       if (a != null) assumptions.add(a);
     }
 
@@ -107,10 +96,32 @@ class _BodyState extends ConsumerState<_Body> {
     }
   }
 
+  Future<void> _openEditor(KnowledgeDecision d) async {
+    final saved = await showDecisionLifecycleSheet(context, ref, d);
+    if (saved == true) await _load();
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: FProgress());
     final d = _decision;
+    return FScaffold(
+      header: FHeader.nested(
+        title: const Text('决策详情'),
+        suffixes: [
+          if (d != null)
+            FHeaderAction(
+              icon: const Icon(FLucideIcons.pencil),
+              onPress: () => _openEditor(d),
+            ),
+        ],
+      ),
+      childPad: false,
+      child: _buildBody(context, d),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, KnowledgeDecision? d) {
+    if (_loading) return const Center(child: FProgress());
     if (d == null) {
       return const Center(child: Text('Decision 不存在或已删除'));
     }

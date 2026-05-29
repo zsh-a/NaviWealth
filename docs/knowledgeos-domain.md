@@ -364,7 +364,7 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - ✅ 通过 `deviceToolsProvider` 在 bootstrap 拼入，gated on `domainOptInsProvider.contains(DomainScope.knowledge)`
 
 **Agents**（`features/knowledge/agents/`，复用 shell §7.3）
-- ✅ `ReviewAgent`（每周日 09:00 local）
+- ✅ `ReviewAgent`（每周日 09:00 local）—— §5 "到期 Decision + 未校验 assumption"：除 `listDueReviews` 外也扫 > `kAssumptionStaleDays` 未校验的 active 假设，二者皆空才 skip（2026-05-29 补齐）
 - ✅ `AssumptionAgent`（30d cadence，扫 > 90d 未校验 active 假设）
 - ✅ `ContradictionAgent`（每 6h，principle mismatch + assumption invalidation 启发式）
 - ✅ `InboxTriageAgent`（15min cadence，§5/§7 核心）：heuristic-only MVP —— 分类（长文 + 选项语言 → decision_candidate；短定义 → concept_candidate）、tag 词典命中、token-overlap 决策建联；每 run ≤ `kInboxTriageMaxNotesPerRun` (10) 条；输出落 `knowledge_inbox_triage`；dismissed kind 永不重提。LLM round-trip 替换 heuristic 是 §14.2 P1 一项，不阻塞 dogfood
@@ -405,8 +405,8 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - [ ] **从 Note 提升到 typed row（decision / assumption / principle / concept / experiment）**：当前 Capture sheet 对这 5 类用 tag-only 提升（`kind:<x>_candidate` + 可选 `scope:<...>` tag），未直接写结构化行。Library typed FABs + Review tab 的 AI 建议卡可以一键应用，但 sheet 内一步到位的 "Promote with extracted fields" 路径尚未串联
 
 **P2 — Dogfood 改进**
-- [ ] **非 Decision 类型 detail pages**：Concept / Experiment / Principle / Assumption 卡片当前不可点击。Decision detail 是基础底盘可参考；按 dogfood 哪个先被点拍开实现顺序
-- [ ] **Decision lifecycle 编辑**：detail 页是 read-only，缺 status 变更 / actual_outcome 填写 / `supersededByDecisionId` 设置入口。后两条是 §3 "认知演化"链能成立的必要条件
+- [x] **非 Decision 类型 detail pages**（2026-05-29）：`knowledge_object_detail_page.dart` —— Concept / Experiment / Principle / Assumption 共用一个 read-only 详情页（route `/knowledge/library/object/:kind/:id`），Library 的 Concept / Experiment 卡片现在可点开（chevron 一致）。按 id 经 repo `findX` 解析，referenced-but-archived 行也能打开
+- [x] **Decision lifecycle 编辑**（2026-05-29）：`_decision_lifecycle_sheet.dart` —— detail 页头 ✎ 打开生命周期编辑：7 态 status 切换 / actual_outcome 填写 / `supersededByDecisionId` 选择（标 superseded 时必填，否则清空,使"认知演化"链能成立）。复用 `mutationStamperProvider` + `upsertDecision`。顺带修 detail 页引用解析：principle/assumption 改用 `findX`,引用了 retired/falsified 的也会显示。测试 `knowledge_lifecycle_repository_test`(4)
 - [ ] **Review tab "recent agent runs"**：§5 spec 列出但未渲染；需要 Agent 历史读 API
 - [x] **`lifeos.knowledge.review` 通知 channel**（2026-05-29）：`NotificationChannelSpec.knowledgeReview` enum 落地；`NotificationService.showNow` 接受 `channel` 参数；RoutineDueAgent 首批使用。ReviewAgent / AssumptionAgent 接入同通道仅一行改动，按 dogfood 反馈再开
 - [ ] **`ai_context_summary` override**：§6 列了，但现有 slot (`AiContextSummary`) 是 Finance-shaped；要么扩 slot 形态，要么换成独立的 prompt 拼接 seam

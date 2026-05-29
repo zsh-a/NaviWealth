@@ -13,6 +13,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../ui/knowledge_decision_detail_page.dart';
 import '../ui/knowledge_inbox_page.dart';
 import '../ui/knowledge_library_page.dart';
+import '../ui/knowledge_object_detail_page.dart';
 import '../ui/knowledge_review_page.dart';
 import 'knowledge_domain_shell.dart';
 
@@ -44,6 +45,14 @@ StatefulShellRoute knowledgeShellRoute() {
                 name: AppRouteNames.knowledgeDecisionDetail,
                 builder: (context, state) => KnowledgeDecisionDetailPage(
                   decisionId: state.pathParameters['id'] ?? '',
+                ),
+              ),
+              GoRoute(
+                path: 'object/:kind/:id',
+                name: AppRouteNames.knowledgeObjectDetail,
+                builder: (context, state) => KnowledgeObjectDetailPage(
+                  kind: state.pathParameters['kind'] ?? '',
+                  id: state.pathParameters['id'] ?? '',
                 ),
               ),
             ],
