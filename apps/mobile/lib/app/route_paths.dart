@@ -131,6 +131,8 @@ abstract final class AppRoutes {
   static const settingsStressTest = '/settings/stress-test';
   // Monthly-expense window / override editor (powers FIRE projection).
   static const settingsMonthlyExpense = '/settings/monthly-expense';
+  // LifeOS domain console — per-user opt-in toggles + per-domain ops.
+  static const settingsDomains = '/settings/domains';
   // Target allocation editor is reachable via the rebalance Custom
   // chip; settings overview links to it through a deep link for
   // discoverability.
@@ -182,6 +184,7 @@ abstract final class AppRouteNames {
   static const riskThresholds = 'risk-thresholds';
   static const stressTest = 'stress-test';
   static const monthlyExpense = 'monthly-expense';
+  static const domains = 'domains';
 
   // ── Wealth ──────────────────────────────────────────────────────────────
   static const wealth = 'wealth';

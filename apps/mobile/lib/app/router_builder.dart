@@ -18,6 +18,7 @@ import '../features/settings/ui/ai_llm_credentials_page.dart';
 import '../features/settings/ui/ai_models_page.dart';
 import '../features/settings/ui/ai_privacy_page.dart';
 import '../features/settings/ui/ai_transparency_page.dart';
+import '../features/settings/ui/domains_settings_page.dart';
 import '../features/settings/ui/fire_stress_settings_page.dart';
 import '../features/settings/ui/monthly_expense_settings_page.dart';
 import '../features/settings/ui/risk_thresholds_page.dart';
@@ -151,6 +152,11 @@ GoRoute _settingsRoute() {
         path: 'sync',
         name: AppRouteNames.sync,
         builder: (context, state) => const SyncStatusPage(),
+      ),
+      GoRoute(
+        path: 'domains',
+        name: AppRouteNames.domains,
+        builder: (context, state) => const DomainsSettingsPage(),
       ),
       GoRoute(
         path: 'ai-history',
