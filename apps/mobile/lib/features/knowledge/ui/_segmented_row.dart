@@ -66,16 +66,23 @@ class KnowledgeSegmentedRow<T> extends StatelessWidget {
   }
 
   Widget _button(T option, {required bool expand}) {
+    final label = Text(
+      labelOf(option),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
     final button = FButton(
       variant: option == value
           ? FButtonVariant.primary
           : FButtonVariant.outline,
       onPress: () => onChanged(option),
-      child: Text(
-        labelOf(option),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+      // In the equal-split (expand) layout the button has a bounded
+      // width, but FButton lays its child in a `MainAxisSize.max` Row
+      // without a Flexible — so a label wider than the slot overflows
+      // instead of ellipsizing. Wrap it so it shrinks to fit. The scroll
+      // fallback keeps the bare Text: there the Row is unbounded and a
+      // Flexible would assert.
+      child: expand ? Flexible(child: label) : label,
     );
     return expand ? Expanded(child: button) : button;
   }

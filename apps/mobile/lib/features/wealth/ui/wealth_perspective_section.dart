@@ -82,10 +82,16 @@ class _PerspectiveToggle extends StatelessWidget {
                   ? FButtonVariant.primary
                   : FButtonVariant.outline,
               onPress: () => onChanged(segments[i].$1),
-              child: Text(
-                segments[i].$2,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              // FButton lays its child in a `MainAxisSize.max` Row without
+              // a Flexible, so a label wider than the equal-split slot
+              // (e.g. the English "By category" at phone widths) overflows
+              // instead of ellipsizing. Flexible lets it shrink to fit.
+              child: Flexible(
+                child: Text(
+                  segments[i].$2,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
           ),
