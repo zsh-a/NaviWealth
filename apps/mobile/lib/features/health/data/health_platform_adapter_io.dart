@@ -13,12 +13,11 @@
 /// | weight                | `WEIGHT`                                 | `WEIGHT`                                            |
 /// | bodyFat               | `BODY_FAT_PERCENTAGE` (0–100 → /100)     | `BODY_FAT_PERCENTAGE` (0–100 → /100)                |
 /// | workoutSession        | `WORKOUT`                                | `WORKOUT`                                           |
-/// | distanceWalkingRunning| `DISTANCE_WALKING_RUNNING`               | `DISTANCE_WALKING_RUNNING`*                         |
+/// | distanceWalkingRunning| `DISTANCE_WALKING_RUNNING`               | `DISTANCE_DELTA`                                     |
 /// | vo2Max                | *not yet exposed by `package:health@13.3.1`* — list stays empty until plugin support lands or a native channel is added |
 ///
-/// *On Health Connect this maps to the generic `DistanceRecord`. The
-/// plugin returns meters in both cases (we still bucket per UTC day and
-/// sum, matching the steps/active-energy pipeline).
+/// The plugin returns meters in both cases (we still bucket per UTC day
+/// and sum, matching the steps/active-energy pipeline).
 ///
 /// **iOS sleep MVP caveat**: HealthKit returns per-segment
 /// `SLEEP_ASLEEP` entries — one nightly sleep can become 3–7 segments
@@ -34,8 +33,7 @@ import 'package:health/health.dart';
 
 import 'health_platform_adapter.dart';
 
-HealthPlatformAdapter createHealthPlatformAdapter() =>
-    _HealthPackageAdapter();
+HealthPlatformAdapter createHealthPlatformAdapter() => _HealthPackageAdapter();
 
 class _HealthPackageAdapter implements HealthPlatformAdapter {
   _HealthPackageAdapter();
@@ -50,8 +48,9 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
   }
 
   List<HealthDataType> get _types {
+    final distanceType = _distanceWalkingRunningType;
     if (Platform.isIOS) {
-      return const <HealthDataType>[
+      return <HealthDataType>[
         HealthDataType.SLEEP_ASLEEP,
         HealthDataType.HEART_RATE_VARIABILITY_SDNN,
         HealthDataType.RESTING_HEART_RATE,
@@ -60,11 +59,11 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
         HealthDataType.WEIGHT,
         HealthDataType.BODY_FAT_PERCENTAGE,
         HealthDataType.WORKOUT,
-        HealthDataType.DISTANCE_WALKING_RUNNING,
+        distanceType,
       ];
     }
     if (Platform.isAndroid) {
-      return const <HealthDataType>[
+      return <HealthDataType>[
         HealthDataType.SLEEP_SESSION,
         HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
         HealthDataType.RESTING_HEART_RATE,
@@ -73,11 +72,15 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
         HealthDataType.WEIGHT,
         HealthDataType.BODY_FAT_PERCENTAGE,
         HealthDataType.WORKOUT,
-        HealthDataType.DISTANCE_WALKING_RUNNING,
+        distanceType,
       ];
     }
     return const <HealthDataType>[];
   }
+
+  HealthDataType get _distanceWalkingRunningType => Platform.isAndroid
+      ? HealthDataType.DISTANCE_DELTA
+      : HealthDataType.DISTANCE_WALKING_RUNNING;
 
   List<HealthDataAccess> _readOnlyPermissions(List<HealthDataType> types) =>
       List<HealthDataAccess>.filled(types.length, HealthDataAccess.READ);
@@ -147,6 +150,7 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
     final sleepType = Platform.isIOS
         ? HealthDataType.SLEEP_ASLEEP
         : HealthDataType.SLEEP_SESSION;
+    final distanceType = _distanceWalkingRunningType;
 
     final platformPrefix = Platform.isIOS ? 'hk' : 'hc';
 
@@ -185,9 +189,7 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
       platformPrefix: platformPrefix,
     );
     final distanceWalkRun = _aggregateDailySum(
-      points: points.where(
-        (p) => p.type == HealthDataType.DISTANCE_WALKING_RUNNING,
-      ),
+      points: points.where((p) => p.type == distanceType),
       kindWire: 'distance_walking_running',
       platformPrefix: platformPrefix,
     );
@@ -321,10 +323,12 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
       bucket.add(v);
     }
     return buckets.values
-        .map((b) => b.toDaily(
-              externalId: '$platformPrefix:$kindWire:${b.dayKey}',
-              reduce: _Reduce.average,
-            ))
+        .map(
+          (b) => b.toDaily(
+            externalId: '$platformPrefix:$kindWire:${b.dayKey}',
+            reduce: _Reduce.average,
+          ),
+        )
         .toList(growable: false);
   }
 
@@ -345,10 +349,12 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
       bucket.add(v);
     }
     return buckets.values
-        .map((b) => b.toDaily(
-              externalId: '$platformPrefix:$kindWire:${b.dayKey}',
-              reduce: _Reduce.sum,
-            ))
+        .map(
+          (b) => b.toDaily(
+            externalId: '$platformPrefix:$kindWire:${b.dayKey}',
+            reduce: _Reduce.sum,
+          ),
+        )
         .toList(growable: false);
   }
 
@@ -387,10 +393,7 @@ class _DailyBucket {
     _count++;
   }
 
-  RawDailyValue toDaily({
-    required String externalId,
-    required _Reduce reduce,
-  }) {
+  RawDailyValue toDaily({required String externalId, required _Reduce reduce}) {
     final parts = dayKey.split('-');
     final day = DateTime.utc(
       int.parse(parts[0]),
