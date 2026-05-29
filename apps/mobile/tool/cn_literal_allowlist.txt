@@ -195,3 +195,96 @@ lib/core/ai/runtime/device/tools/query_memory_tool.dart
 # bundled EmbeddingGemma manifest entry. Surface in the AI Models
 # settings card; migrate together with that page's ARB pass.
 lib/core/ai/local/embedding/model_manifest.dart
+
+# ─── Phase-D shell + per-domain AI device tools (FIR-99 follow-up) ────
+# Phase D split the device-AI tool catalog into per-domain facade files
+# (lib/features/<domain>_ai_tools.dart) and added the cross-decision
+# ask_user_tool. Same category as the per-feature ai_tools/ entries
+# above: LLM-facing schemas + CN descriptions tuned for the agent
+# prompt, not user-visible chrome. Track as the same FIR-99 follow-up.
+lib/core/ai/runtime/device/tools/ask_user_tool.dart
+lib/features/finance_ai_tools.dart
+lib/features/health_ai_tools.dart
+lib/features/knowledge_ai_tools.dart
+# decision_card.dart renders the AskUser decision prompt in the chat
+# timeline; user-facing copy that should move to ARB with the broader
+# ai_chat l10n pass (same block as tool_invocation_renderers.dart above).
+lib/features/ai_chat/ui/decision_card.dart
+
+# ─── Cross-domain command palettes (matching corpora — intentional) ──
+# Per-domain command-palette entry builders (DomainPack) ship bilingual
+# search aliases just like default_commands.dart above: the displayed
+# label routes through AppLocalizations, while the CN strings are
+# non-displayed search terms so CN-keyboard users can find entries by
+# typing in their language. Re-localising would defeat the point.
+lib/features/finance/composition/finance_command_palette.dart
+lib/features/health/composition/health_command_palette.dart
+lib/features/knowledge/composition/knowledge_command_palette.dart
+
+# ─── HealthOS shell pages (D-2, landed 2026-05-27 .. 05-29) ──────────
+# HealthOS domain shell + Today/Plan/Trend pages shipped with CN
+# literals (status chips, section titles, empty-state copy). User-facing
+# — should move to ARB in a focused HealthOS l10n pass.
+lib/features/health/composition/health_domain_shell.dart
+lib/features/health/ui/health_plan_page.dart
+lib/features/health/ui/health_today_page.dart
+lib/features/health/ui/health_trend_page.dart
+
+# ─── KnowledgeOS (landed 2026-05-28 .. 05-29) ───────────────────────
+# KnowledgeOS shipped the Inbox / Library / detail pages, capture sheet,
+# object/decision/routine writers, agents, AI tools and composition
+# layer straight to CN literals. Two sub-categories, same FIR-99 track:
+#   1. UI pages + writers + suggestion cards — user-facing display copy,
+#      should move to ARB in a focused KnowledgeOS l10n pass.
+#   2. AI tools + agents + classifiers + proposal appliers — LLM-facing
+#      schemas / prompts / persisted proposal labels, same path as the
+#      per-feature ai_tools/ block above (enum codes + structured args
+#      rendered through AppLocalizations at display time).
+lib/features/knowledge/agents/assumption_agent.dart
+lib/features/knowledge/agents/contradiction_agent.dart
+lib/features/knowledge/agents/inbox_triage_agent.dart
+lib/features/knowledge/agents/review_agent.dart
+lib/features/knowledge/agents/routine_due_agent.dart
+lib/features/knowledge/ai_tools/_inbox_triage_support.dart
+lib/features/knowledge/ai_tools/_tool_support.dart
+lib/features/knowledge/ai_tools/find_similar_knowledge_tool.dart
+lib/features/knowledge/ai_tools/list_due_reviews_tool.dart
+lib/features/knowledge/ai_tools/list_due_routines_tool.dart
+lib/features/knowledge/ai_tools/list_open_assumptions_tool.dart
+lib/features/knowledge/ai_tools/propose_capture_tool.dart
+lib/features/knowledge/ai_tools/propose_concept_link_tool.dart
+lib/features/knowledge/ai_tools/propose_inbox_classification_tool.dart
+lib/features/knowledge/ai_tools/propose_inbox_tags_tool.dart
+lib/features/knowledge/ai_tools/propose_link_to_decision_tool.dart
+lib/features/knowledge/ai_tools/propose_merge_tool.dart
+lib/features/knowledge/ai_tools/propose_routine_tool.dart
+lib/features/knowledge/ai_tools/recall_decision_tool.dart
+lib/features/knowledge/ai_tools/review_knowledge_health_tool.dart
+lib/features/knowledge/ai_tools/search_knowledge_tool.dart
+lib/features/knowledge/ai_tools/search_notes_tool.dart
+lib/features/knowledge/ai_tools/summarize_topic_evolution_tool.dart
+lib/features/knowledge/composition/knowledge_domain_shell.dart
+lib/features/knowledge/composition/knowledge_proposal_applier.dart
+lib/features/knowledge/composition/knowledge_proposal_kinds.dart
+lib/features/knowledge/data/capture_classifier.dart
+lib/features/knowledge/data/llm_capture_classifier.dart
+lib/features/knowledge/data/providers.dart
+lib/features/knowledge/ui/_ai_suggestions_card.dart
+lib/features/knowledge/ui/_decision_lifecycle_sheet.dart
+lib/features/knowledge/ui/_decision_writer.dart
+lib/features/knowledge/ui/_object_writers.dart
+lib/features/knowledge/ui/_routine_writer.dart
+lib/features/knowledge/ui/_widgets.dart
+lib/features/knowledge/ui/knowledge_capture_sheet.dart
+lib/features/knowledge/ui/knowledge_decision_detail_page.dart
+lib/features/knowledge/ui/knowledge_inbox_page.dart
+lib/features/knowledge/ui/knowledge_library_page.dart
+lib/features/knowledge/ui/knowledge_object_detail_page.dart
+lib/features/knowledge/ui/knowledge_review_page.dart
+
+# ─── Settings shell pages (Phase-D, FIR-99 follow-up) ────────────────
+# domains_settings_page.dart (LifeOS domain management) and
+# log_viewer_page.dart shipped with CN literals (titles, action labels,
+# status copy). User-facing — should move to ARB with the settings pass.
+lib/features/settings/log_viewer_page.dart
+lib/features/settings/ui/domains_settings_page.dart
