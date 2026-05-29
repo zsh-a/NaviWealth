@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../app/shell_chrome.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../design_system/design_system.dart';
 import '../agents/providers.dart' as health_agent_providers;
@@ -30,7 +31,7 @@ class HealthTodayPage extends ConsumerWidget {
     final briefingAsync = ref.watch(
       health_agent_providers.latestMorningBriefingProvider,
     );
-    return DomainTabScaffold(
+    return ShellTabScaffold(
       title: '今日 · HealthOS',
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),

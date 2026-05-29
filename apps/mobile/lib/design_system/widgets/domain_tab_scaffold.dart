@@ -1,5 +1,8 @@
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
+
+import '../tokens/motion_tokens.dart';
 
 /// Unified scaffold for a domain's **top-level tab / hub page** (Today,
 /// Trend, Inbox, Library, …).
@@ -16,12 +19,33 @@ import 'package:forui/forui.dart';
 ///
 /// Pushed detail pages use [ObjectDetailScaffold] instead — they DO get
 /// a back arrow.
-class DomainTabScaffold extends StatelessWidget {
+///
+/// ### Cross-domain shell chrome ([leading] / [actions])
+///
+/// This widget owns only *presentation*. The shell-level chrome —
+/// the domain switcher chip and the global Search / Settings actions —
+/// is composed one layer up (`app/shell_chrome.dart`) and passed in via
+/// [leading] (a header prefix) and [actions] (header suffixes). Keeping
+/// the injection out of `design_system` preserves this layer as a leaf
+/// (no `app/` or `core/shell` imports).
+///
+/// ### Scroll-collapse
+///
+/// To avoid permanently occupying vertical space, the header collapses
+/// when the body scrolls down (reading) and reappears on scroll-up or at
+/// the top of the list. The collapse is pure UI — a
+/// [NotificationListener] over [UserScrollNotification] driving an
+/// [AnimatedSize] — so it works whether the body is a `ListView`, a
+/// sliver, or a nested scroll view.
+class DomainTabScaffold extends StatefulWidget {
   const DomainTabScaffold({
     super.key,
     required this.title,
     required this.child,
+    this.leading,
+    this.actions = const <Widget>[],
     this.childPad = false,
+    this.collapseOnScroll = true,
   });
 
   /// Plain header title, e.g. `'今日 · HealthOS'`.
@@ -32,17 +56,81 @@ class DomainTabScaffold extends StatelessWidget {
   /// floats an action button.
   final Widget child;
 
+  /// Optional header *prefix* (rendered left of the title). The shell
+  /// passes the domain switcher chip here; tab roots have no back arrow
+  /// so the prefix slot is free. `null` → no prefix.
+  final Widget? leading;
+
+  /// Trailing header actions (`FHeaderAction`s). Domain-owned actions
+  /// (`+`, filter, …) come first; the shell appends the global Search /
+  /// Settings actions when it composes the list.
+  final List<Widget> actions;
+
   /// Forwarded to [FScaffold.childPad]. Defaults to `false` because tab
   /// bodies pad themselves; flip to `true` only for trivial centered
   /// content.
   final bool childPad;
 
+  /// When `true` (default) the header hides on scroll-down and returns on
+  /// scroll-up / at-top. Set `false` for pages whose body never scrolls
+  /// (the header would never come back).
+  final bool collapseOnScroll;
+
+  @override
+  State<DomainTabScaffold> createState() => _DomainTabScaffoldState();
+}
+
+class _DomainTabScaffoldState extends State<DomainTabScaffold> {
+  bool _headerVisible = true;
+
+  bool _onScroll(UserScrollNotification notification) {
+    if (!widget.collapseOnScroll) return false;
+    if (notification.metrics.axis != Axis.vertical) return false;
+
+    // Content too short to scroll — keep the header pinned so it can't get
+    // stuck collapsed on a page that never scrolls back up.
+    if (notification.metrics.maxScrollExtent <= 0) {
+      if (!_headerVisible) setState(() => _headerVisible = true);
+      return false;
+    }
+
+    switch (notification.direction) {
+      case ScrollDirection.reverse:
+        if (_headerVisible) setState(() => _headerVisible = false);
+      case ScrollDirection.forward:
+        if (!_headerVisible) setState(() => _headerVisible = true);
+      case ScrollDirection.idle:
+        break;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return FScaffold(
-      header: FHeader.nested(title: Text(title)),
-      childPad: childPad,
-      child: child,
+    final header = AnimatedSize(
+      duration: Motion.medium,
+      curve: Motion.standard,
+      alignment: Alignment.topCenter,
+      child: _headerVisible
+          ? FHeader.nested(
+              prefixes: widget.leading == null
+                  ? const <Widget>[]
+                  : <Widget>[widget.leading!],
+              title: Text(widget.title),
+              suffixes: widget.actions,
+            )
+          // Full-width zero-height placeholder: collapsing to nothing frees
+          // the entire top band (the chosen "顶部全部让出" behaviour).
+          : const SizedBox(width: double.infinity),
+    );
+
+    return NotificationListener<UserScrollNotification>(
+      onNotification: _onScroll,
+      child: FScaffold(
+        header: header,
+        childPad: widget.childPad,
+        child: widget.child,
+      ),
     );
   }
 }

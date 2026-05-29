@@ -9,6 +9,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../app/shell_chrome.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
@@ -24,7 +25,7 @@ class KnowledgeReviewPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return DomainTabScaffold(
+    return ShellTabScaffold(
       title: '复盘 · KnowledgeOS',
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),

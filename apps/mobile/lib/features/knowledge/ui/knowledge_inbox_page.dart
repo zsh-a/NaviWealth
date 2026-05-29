@@ -12,6 +12,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../app/shell_chrome.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../design_system/design_system.dart';
 import '../../ai_chat/ui/ask_ai.dart';
@@ -25,7 +26,7 @@ class KnowledgeInboxPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return DomainTabScaffold(
+    return ShellTabScaffold(
       title: '收件箱 · KnowledgeOS',
       child: Stack(
         children: [

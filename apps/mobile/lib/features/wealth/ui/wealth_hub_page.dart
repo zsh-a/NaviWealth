@@ -8,6 +8,7 @@ import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../app/route_paths.dart';
+import '../../../app/shell_chrome.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -37,18 +38,16 @@ class WealthHubPage extends ConsumerWidget {
     final balancesAsync = ref.watch(accountBalancesByIdProvider);
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.wealthHubTitle),
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.plus),
-            semanticsLabel: l10n.accountsActionsTitle,
-            onPress: () => showWealthActionPanel(context),
-          ),
-        ],
-      ),
+    return ShellTabScaffold(
+      title: l10n.wealthHubTitle,
       childPad: false,
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.plus),
+          semanticsLabel: l10n.accountsActionsTitle,
+          onPress: () => showWealthActionPanel(context),
+        ),
+      ],
       child: accountsAsync.when(
         loading: () => const Center(child: FCircularProgress()),
         error: (_, _) => Center(child: Text(l10n.commonLoadFailed)),

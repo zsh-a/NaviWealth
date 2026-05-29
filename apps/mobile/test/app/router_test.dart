@@ -345,7 +345,8 @@ void main() {
       expect(_currentPath(container), AppRoutes.home);
 
       // Find the bottom bar and calculate nav item positions.
-      // Layout: Today / Activity / Search / Wealth / Plan.
+      // Layout: Today / Activity / Wealth / Plan. Search moved to the
+      // header chrome, so the bottom nav is pure 4-tab navigation.
       final barFinder = find.byType(FBottomNavigationBar);
       final barBox = tester.renderObject<RenderBox>(barFinder);
       final barSize = barBox.size;
@@ -353,17 +354,17 @@ void main() {
 
       final barCenterY = barOrigin.dy + barSize.height / 2;
       final barWidth = barSize.width;
-      final tabW = barWidth / 5;
+      final tabW = barWidth / 4;
 
-      // Item 3 = Wealth. Item 2 is the Search action and does not navigate.
-      final wealthX = barOrigin.dx + tabW * 3.5;
+      // Item 2 = Wealth.
+      final wealthX = barOrigin.dx + tabW * 2.5;
       await tester.tapAt(Offset(wealthX, barCenterY));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(_currentPath(container), AppRoutes.wealth);
 
-      // Item 4 = Plan.
-      final planX = barOrigin.dx + tabW * 4.5;
+      // Item 3 = Plan.
+      final planX = barOrigin.dx + tabW * 3.5;
       await tester.tapAt(Offset(planX, barCenterY));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -372,8 +373,8 @@ void main() {
     });
 
     testWidgets('selected tab index follows the current URL', (tester) async {
-      // 5-item nav layout:
-      // Today(0) | Activity(1) | Search action(2) | Wealth(3) | Plan(4)
+      // 4-item nav layout:
+      // Today(0) | Activity(1) | Wealth(2) | Plan(3)
       final container = await _pumpAt(
         tester,
         initialLocation: AppRoutes.wealth,
@@ -381,7 +382,7 @@ void main() {
       final bar = tester.widget<FBottomNavigationBar>(
         find.byType(FBottomNavigationBar),
       );
-      expect(bar.index, 3);
+      expect(bar.index, 2);
 
       container.read(appRouterProvider).go(AppRoutes.activity);
       await tester.pump();
@@ -409,16 +410,22 @@ void main() {
     });
 
     testWidgets(
-      'S2.5 — mobile shell exposes a command-bar nav action (only Layer-1 '
-      'AI entry on touch; opens the palette on tap)',
+      'S2.5 — the tab header chrome opens the command palette on tap',
       (tester) async {
-        final container = await _pumpAt(tester, viewportSize: _mobileSize);
-        // Resolve the localized label so the assertion survives a copy
-        // change.
-        final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-        final searchAction = find.text(l10n.navSearch);
+        // Search now lives in the shared header chrome — every headered tab
+        // surfaces it via ShellTabScaffold (Today hosts it in its greeting
+        // instead) — not a bottom-nav slot. Activity's header is always
+        // present (not gated on async page data), so it's the stable place
+        // to assert the chrome.
+        final container = await _pumpAt(
+          tester,
+          initialLocation: AppRoutes.activity,
+          viewportSize: _mobileSize,
+        );
+        final searchAction = find.byIcon(FLucideIcons.search);
         expect(searchAction, findsOneWidget);
 
+        final l10n = await AppLocalizations.delegate.load(const Locale('en'));
         await tester.tap(searchAction);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
@@ -426,22 +433,22 @@ void main() {
         expect(find.text(l10n.commandPaletteSearchHint), findsOneWidget);
         expect(
           _currentPath(container),
-          AppRoutes.home,
+          AppRoutes.activity,
           reason: 'opening the palette must not navigate away',
         );
         await _drainTimers(tester);
       },
     );
 
-    testWidgets('S2.5 — desktop shell does not show the mobile search action', (
+    testWidgets('S2.5 — desktop shell does not show the header search action', (
       tester,
     ) async {
       await _pumpAt(tester, viewportSize: _desktopSize);
-      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       expect(
-        find.text(l10n.navSearch),
+        find.byIcon(FLucideIcons.search),
         findsNothing,
-        reason: 'desktop uses Cmd-K; the nav action is touch-only',
+        reason: 'desktop uses Cmd-K + the left dock; the inline header '
+            'chrome is touch-only',
       );
     });
 

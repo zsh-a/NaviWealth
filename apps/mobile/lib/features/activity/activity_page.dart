@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
+import '../../app/shell_chrome.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../shared/entry_kind_labels.dart';
@@ -51,32 +52,30 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
       _replaceActivityUrl(query: next);
     });
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 1024;
-        return FScaffold(
-          header: FHeader.nested(
-            title: Text(l10n.navActivity),
-            suffixes: [
-              // §5.10.10 / S5a — Layer 4 ingest review queue entry. Calm
-              // by design: a plain outlined inbox, no badge/glow; the
-              // pending count lives inside the review page.
-              FHeaderAction(
-                icon: const Icon(FLucideIcons.inbox),
-                onPress: () => context.push(AppRoutes.activityIngest),
-              ),
-              FHeaderAction(
-                icon: const Icon(FLucideIcons.filter),
-                onPress: () => ActivityFeedFilterSheet.show(context),
-              ),
-              FHeaderAction(
-                icon: const Icon(FLucideIcons.plus),
-                onPress: () => showActivityActionPanel(context),
-              ),
-            ],
-          ),
-          childPad: false,
-          child: isDesktop
+    return ShellTabScaffold(
+      title: l10n.navActivity,
+      childPad: false,
+      actions: [
+        // §5.10.10 / S5a — Layer 4 ingest review queue entry. Calm
+        // by design: a plain outlined inbox, no badge/glow; the
+        // pending count lives inside the review page.
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.inbox),
+          onPress: () => context.push(AppRoutes.activityIngest),
+        ),
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.filter),
+          onPress: () => ActivityFeedFilterSheet.show(context),
+        ),
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.plus),
+          onPress: () => showActivityActionPanel(context),
+        ),
+      ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= 1024;
+          return isDesktop
               ? AdaptiveContentFrame(
                   maxWidth: AdaptiveMaxWidth.dashboard,
                   layout: AdaptiveFrameLayout.cockpit,
@@ -93,9 +92,9 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                     _ActivityKindFilterRow(),
                     Expanded(child: ActivityFeed()),
                   ],
-                ),
-        );
-      },
+                );
+        },
+      ),
     );
   }
 

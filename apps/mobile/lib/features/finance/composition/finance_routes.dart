@@ -60,13 +60,13 @@ import '../../rebalance/ui/rebalance_page.dart' deferred as rebalance_lib;
 import '../../wealth/ui/wealth_hub_page.dart';
 
 /// FinanceOS `StatefulShellRoute`: 4 branches (Today / Activity / Wealth /
-/// Plan) backed by [DomainTabsShell] (`showMobileSearchSlot: true`).
+/// Plan) backed by [DomainTabsShell]. Search + Settings are surfaced by the
+/// shared header chrome (`app/shell_chrome.dart`), not a bottom-nav slot.
 StatefulShellRoute financeShellRoute() {
   return StatefulShellRoute.indexedStack(
     builder: (context, state, shell) => DomainTabsShell(
       shell: shell,
       spec: financeDomainShell(AppLocalizations.of(context)),
-      showMobileSearchSlot: true,
     ),
     branches: [
       // ── Branch 0: Today ──────────────────────────────────────────────

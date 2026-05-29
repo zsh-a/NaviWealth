@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../core/ai/write/persistent_undo_banner.dart';
 import '../core/shell/domain_shell.dart';
-import '../core/shortcuts/shortcut_intents.dart';
 import '../design_system/design_system.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'desktop_sidebar.dart';
@@ -25,15 +24,10 @@ class DomainTabsShell extends ConsumerStatefulWidget {
     super.key,
     required this.shell,
     required this.spec,
-    this.showMobileSearchSlot = false,
   });
 
   final StatefulNavigationShell shell;
   final DomainShellSpec spec;
-
-  /// FinanceOS reserves a middle slot in the mobile bottom nav for the
-  /// command palette ("Search"); other domains (HealthOS) don't.
-  final bool showMobileSearchSlot;
 
   static const double _tabletBreakpoint = 600;
   static const double _desktopBreakpoint = 1240;
@@ -108,7 +102,6 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
           tabs: tabs,
           selectedIndex: index,
           onDestinationSelected: _onSelected,
-          showSearchSlot: widget.showMobileSearchSlot,
           child: animatedChild,
         );
       },
@@ -121,62 +114,32 @@ class _MobileLayout extends ConsumerWidget {
     required this.tabs,
     required this.selectedIndex,
     required this.onDestinationSelected,
-    required this.showSearchSlot,
     required this.child,
   });
 
   final List<DomainShellTab> tabs;
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
-  final bool showSearchSlot;
   final Widget child;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    // Search lives between tab 2 and tab 3 (Wealth) on Finance; domains
-    // without enough tabs to make the middle meaningful skip it.
-    final int? searchIndex = showSearchSlot && tabs.length >= 3 ? 2 : null;
-    final int navIndex = searchIndex == null
-        ? selectedIndex
-        : (selectedIndex < searchIndex ? selectedIndex : selectedIndex + 1);
-
-    void onNavChange(int i) {
-      if (searchIndex != null && i == searchIndex) {
-        Actions.maybeInvoke(context, const OpenCommandPaletteIntent());
-        return;
-      }
-      final tabIdx = searchIndex == null
-          ? i
-          : (i < searchIndex ? i : i - 1);
-      onDestinationSelected(tabIdx);
-    }
-
-    final children = <FBottomNavigationBarItem>[];
-    for (var i = 0; i < tabs.length; i++) {
-      if (searchIndex != null && i == searchIndex) {
-        children.add(
-          FBottomNavigationBarItem(
-            icon: const Icon(Icons.search),
-            label: Text(l10n.navSearch),
-          ),
-        );
-      }
-      children.add(
+    // Pure tab nav — Search no longer steals a slot here. The global
+    // Search / Settings actions live in each page's header
+    // (`app/shell_chrome.dart`); Finance is back to its 4 tabs, matching
+    // every other domain's bottom-nav shape.
+    final children = <FBottomNavigationBarItem>[
+      for (var i = 0; i < tabs.length; i++)
         FBottomNavigationBarItem(
-          icon: Icon(
-            i == selectedIndex ? tabs[i].selectedIcon : tabs[i].icon,
-          ),
+          icon: Icon(i == selectedIndex ? tabs[i].selectedIcon : tabs[i].icon),
           label: Text(tabs[i].label),
         ),
-      );
-    }
+    ];
 
-    // Long-press on the bottom nav opens the cross-domain switcher
-    // (`docs/lifeos-shell.md` §3 dogfood note). Tap behaviour is
-    // untouched — GestureDetector only intercepts long-press, taps
-    // pass through to the inner FBottomNavigationBar via the default
-    // hit-test behaviour.
+    // Long-press still opens the cross-domain switcher as a power-user
+    // shortcut; the discoverable entry is now the header domain chip.
+    // GestureDetector only intercepts long-press — taps pass through to
+    // the inner FBottomNavigationBar via the default hit-test behaviour.
     final specs = ref.watch(activeDomainShellsProvider);
     final hasSwitcher = specs.length >= 2;
 
@@ -194,8 +157,8 @@ class _MobileLayout extends ConsumerWidget {
                 ? () => showDomainSwitcherSheet(context, specs)
                 : null,
             child: FBottomNavigationBar(
-              index: navIndex,
-              onChange: onNavChange,
+              index: selectedIndex,
+              onChange: onDestinationSelected,
               safeAreaBottom: true,
               children: children,
             ),

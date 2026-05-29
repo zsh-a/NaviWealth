@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../app/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import 'health_today_providers.dart';
 
@@ -23,7 +24,7 @@ class HealthPlanPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(recoverySignalProvider);
-    return DomainTabScaffold(
+    return ShellTabScaffold(
       title: '计划 · HealthOS',
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
