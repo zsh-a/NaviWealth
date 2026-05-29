@@ -12,10 +12,12 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/gen/app_localizations.dart';
 import '../ai/agents/agent.dart';
 import '../ai/runtime/device/tools/device_tool.dart';
 import '../auth/domain_scope.dart';
 import '../auth/providers.dart';
+import '../command_palette/command_palette_entry.dart';
 import '../shell/domain_shell.dart';
 
 /// Builds the per-turn list of [Agent]s a domain contributes. Receives
@@ -32,6 +34,13 @@ typedef DomainShellRouteBuilder = StatefulShellRoute Function();
 /// that ship every page in the main bundle leave this `null`.
 typedef DomainDeferredPreloader = Future<void> Function();
 
+/// Builds the domain's contributions to the shared Cmd-K command palette.
+/// Receives [AppLocalizations] so labels / keywords search in the user's
+/// language. The shell concatenates every active domain's entries the
+/// same way it merges device tools — see `defaultCommandPaletteEntries`.
+typedef DomainCommandPaletteBuilder =
+    List<CommandPaletteEntry> Function(AppLocalizations l10n);
+
 /// Static description of one LifeOS domain's shell contributions. Held
 /// as a `const` value next to the domain's tool barrel, so the inventory
 /// list in `lib/app/domain_packs.dart` is the single grep-able answer to
@@ -47,6 +56,7 @@ class DomainPack {
     this.tabPaths = const <String>[],
     this.additionalPathPrefixes = const <String>[],
     this.agentBuilder,
+    this.commandPaletteEntriesBuilder,
   });
 
   /// Opt-in scope this pack registers under.
@@ -92,6 +102,12 @@ class DomainPack {
   /// one or more agent providers from `ref` so each agent stays
   /// composition-blind.
   final DomainAgentBuilder? agentBuilder;
+
+  /// Cmd-K command palette contributions. Null when the domain has no
+  /// palette entries yet. Non-null builders are invoked with the active
+  /// locale's [AppLocalizations] and their entries are concatenated into
+  /// the shell palette in domain order.
+  final DomainCommandPaletteBuilder? commandPaletteEntriesBuilder;
 }
 
 /// Inventory of all known [DomainPack]s. Default empty; `bootstrap.dart`
@@ -111,5 +127,8 @@ final activeDomainPacksProvider = Provider<List<DomainPack>>((ref) {
   final all = ref.watch(domainPackRegistryProvider);
   final optIns =
       ref.watch(domainOptInsProvider).value ?? DomainOptIns.financeOnly;
-  return [for (final p in all) if (optIns.contains(p.scope)) p];
+  return [
+    for (final p in all)
+      if (optIns.contains(p.scope)) p,
+  ];
 });

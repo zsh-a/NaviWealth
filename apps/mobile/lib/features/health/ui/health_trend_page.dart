@@ -28,43 +28,41 @@ class HealthTrendPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('趋势 · HealthOS')),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.s16),
-          children: const [
-            _TrendCard(
-              title: 'HRV',
-              subtitle: '心率变异性（近 30 天）',
-              kind: HealthMetricKind.hrvDaily,
-            ),
-            SizedBox(height: AppSpacing.s12),
-            _TrendCard(
-              title: '睡眠',
-              subtitle: '每晚小时数（近 30 天）',
-              kind: HealthMetricKind.sleepSession,
-            ),
-            SizedBox(height: AppSpacing.s12),
-            _TrendCard(
-              title: '运动',
-              subtitle: '每天分钟数（近 30 天）',
-              kind: HealthMetricKind.workoutSession,
-            ),
-            SizedBox(height: AppSpacing.s12),
-            _TrendCard(
-              title: '步数',
-              subtitle: '每天步数（近 30 天）',
-              kind: HealthMetricKind.stepsDaily,
-            ),
-            SizedBox(height: AppSpacing.s12),
-            _TrendCard(
-              title: '步行距离',
-              subtitle: '每天公里数（近 30 天）',
-              kind: HealthMetricKind.distanceWalkingRunningDaily,
-            ),
-          ],
-        ),
+    return DomainTabScaffold(
+      title: '趋势 · HealthOS',
+      child: ListView(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        children: const [
+          _TrendCard(
+            title: 'HRV',
+            subtitle: '心率变异性（近 30 天）',
+            kind: HealthMetricKind.hrvDaily,
+          ),
+          SizedBox(height: AppSpacing.s12),
+          _TrendCard(
+            title: '睡眠',
+            subtitle: '每晚小时数（近 30 天）',
+            kind: HealthMetricKind.sleepSession,
+          ),
+          SizedBox(height: AppSpacing.s12),
+          _TrendCard(
+            title: '运动',
+            subtitle: '每天分钟数（近 30 天）',
+            kind: HealthMetricKind.workoutSession,
+          ),
+          SizedBox(height: AppSpacing.s12),
+          _TrendCard(
+            title: '步数',
+            subtitle: '每天步数（近 30 天）',
+            kind: HealthMetricKind.stepsDaily,
+          ),
+          SizedBox(height: AppSpacing.s12),
+          _TrendCard(
+            title: '步行距离',
+            subtitle: '每天公里数（近 30 天）',
+            kind: HealthMetricKind.distanceWalkingRunningDaily,
+          ),
+        ],
       ),
     );
   }
@@ -84,62 +82,59 @@ class _TrendCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(trendChartProvider(kind));
-    final textTheme = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-    return FCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: textTheme.titleSmall,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            SizedBox(
-              height: 160,
-              child: async.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(
-                  child: Text(
-                    '加载失败：$e',
-                    style: textTheme.bodySmall
-                        ?.copyWith(color: scheme.error),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+    final typography = context.theme.typography;
+    final colors = context.theme.colors;
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: typography.xs.copyWith(color: colors.mutedForeground),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          SizedBox(
+            height: 160,
+            child: async.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(
+                child: Text(
+                  '加载失败：$e',
+                  style: typography.xs.copyWith(color: colors.destructive),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                data: (points) {
-                  if (points.length < 2) {
-                    return Center(
-                      child: Text(
-                        '数据还不够。',
-                        style: textTheme.bodySmall
-                            ?.copyWith(color: scheme.onSurfaceVariant),
-                      ),
-                    );
-                  }
-                  return NwLineChart(
-                    series: <ChartSeries>[
-                      ChartSeries(name: title, points: points),
-                    ],
-                  );
-                },
               ),
+              data: (points) {
+                if (points.length < 2) {
+                  return Center(
+                    child: Text(
+                      '数据还不够。',
+                      style: typography.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                  );
+                }
+                return NwLineChart(
+                  series: <ChartSeries>[
+                    ChartSeries(name: title, points: points),
+                  ],
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -149,22 +144,22 @@ class _TrendCard extends ConsumerWidget {
 /// ascending so the line chart reads left-to-right oldest → newest.
 final trendChartProvider = FutureProvider.autoDispose
     .family<List<ChartPoint>, HealthMetricKind>((ref, kind) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) {
-    return const <ChartPoint>[];
-  }
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  // Generous limit so a busy user (multiple workouts/day) doesn't get
-  // clipped. listByKind orders newest-first, the projection re-sorts.
-  final rows = await repo.listByKind(
-    ownerUserId: userId,
-    kind: kind,
-    limit: 200,
-  );
-  final cutoff = DateTime.now().toUtc().subtract(kHealthTrendWindow);
-  return _projectToPoints(rows, kind, cutoff: cutoff);
-});
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.health)) {
+        return const <ChartPoint>[];
+      }
+      final repo = await ref.watch(healthMetricRepositoryProvider.future);
+      final userId = await ref.read(currentUserIdProvider)();
+      // Generous limit so a busy user (multiple workouts/day) doesn't get
+      // clipped. listByKind orders newest-first, the projection re-sorts.
+      final rows = await repo.listByKind(
+        ownerUserId: userId,
+        kind: kind,
+        limit: 200,
+      );
+      final cutoff = DateTime.now().toUtc().subtract(kHealthTrendWindow);
+      return _projectToPoints(rows, kind, cutoff: cutoff);
+    });
 
 /// Pure projection: rows → ChartPoints. Exposed for unit tests.
 @visibleForTesting
@@ -172,8 +167,7 @@ List<ChartPoint> healthTrendProject({
   required List<HealthMetric> rows,
   required HealthMetricKind kind,
   required DateTime cutoff,
-}) =>
-    _projectToPoints(rows, kind, cutoff: cutoff);
+}) => _projectToPoints(rows, kind, cutoff: cutoff);
 
 List<ChartPoint> _projectToPoints(
   List<HealthMetric> rows,
@@ -192,10 +186,12 @@ List<ChartPoint> _projectToPoints(
       final pts = <ChartPoint>[];
       for (final r in rows) {
         if (r.capturedAt.isBefore(cutoff)) continue;
-        pts.add(ChartPoint(
-          x: r.capturedAt.toUtc().millisecondsSinceEpoch.toDouble(),
-          y: r.value,
-        ));
+        pts.add(
+          ChartPoint(
+            x: r.capturedAt.toUtc().millisecondsSinceEpoch.toDouble(),
+            y: r.value,
+          ),
+        );
       }
       pts.sort((a, b) => a.x.compareTo(b.x));
       return pts;
@@ -204,10 +200,12 @@ List<ChartPoint> _projectToPoints(
       final pts = <ChartPoint>[];
       for (final r in rows) {
         if (r.capturedAt.isBefore(cutoff)) continue;
-        pts.add(ChartPoint(
-          x: r.capturedAt.toUtc().millisecondsSinceEpoch.toDouble(),
-          y: r.value / 1000.0,
-        ));
+        pts.add(
+          ChartPoint(
+            x: r.capturedAt.toUtc().millisecondsSinceEpoch.toDouble(),
+            y: r.value / 1000.0,
+          ),
+        );
       }
       pts.sort((a, b) => a.x.compareTo(b.x));
       return pts;
@@ -222,10 +220,12 @@ List<ChartPoint> _projectToPoints(
           'h' => r.value,
           _ => r.value / 3600.0,
         };
-        pts.add(ChartPoint(
-          x: r.capturedAt.toUtc().millisecondsSinceEpoch.toDouble(),
-          y: hours,
-        ));
+        pts.add(
+          ChartPoint(
+            x: r.capturedAt.toUtc().millisecondsSinceEpoch.toDouble(),
+            y: hours,
+          ),
+        );
       }
       pts.sort((a, b) => a.x.compareTo(b.x));
       return pts;
@@ -247,10 +247,9 @@ List<ChartPoint> _projectToPoints(
           int.parse(parts[1]),
           int.parse(parts[2]),
         );
-        pts.add(ChartPoint(
-          x: dt.millisecondsSinceEpoch.toDouble(),
-          y: byDay[k]!,
-        ));
+        pts.add(
+          ChartPoint(x: dt.millisecondsSinceEpoch.toDouble(), y: byDay[k]!),
+        );
       }
       return pts;
     case HealthMetricKind.unknown:

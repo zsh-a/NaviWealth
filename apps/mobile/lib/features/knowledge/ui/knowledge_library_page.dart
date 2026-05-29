@@ -38,9 +38,8 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return FScaffold(
-      header: const FHeader.nested(title: Text('资料库 · KnowledgeOS')),
-      childPad: false,
+    return DomainTabScaffold(
+      title: '资料库 · KnowledgeOS',
       child: Stack(
         children: [
           Positioned.fill(
@@ -159,8 +158,9 @@ class _DecisionFamilyChooser extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: context.theme.typography.sm
-                    .copyWith(fontWeight: FontWeight.w600),
+                style: context.theme.typography.sm.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               Text(
                 hint,
@@ -180,12 +180,21 @@ class _DecisionFamilyChooser extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          tile('Decision', '主路径 — question / options / rationale',
-              () => showNewDecisionSheet(context, ref)),
-          tile('Principle', '世界观原语（例如 "edge-first"）',
-              () => showNewPrincipleSheet(context, ref)),
-          tile('Assumption', '可证伪的信念 + 置信度',
-              () => showNewAssumptionSheet(context, ref)),
+          tile(
+            'Decision',
+            '主路径 — question / options / rationale',
+            () => showNewDecisionSheet(context, ref),
+          ),
+          tile(
+            'Principle',
+            '世界观原语（例如 "edge-first"）',
+            () => showNewPrincipleSheet(context, ref),
+          ),
+          tile(
+            'Assumption',
+            '可证伪的信念 + 置信度',
+            () => showNewAssumptionSheet(context, ref),
+          ),
         ],
       ),
     );
@@ -235,18 +244,14 @@ class _LibraryList extends ConsumerWidget {
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         return repoAsync.when(
           loading: () => const Center(child: FProgress()),
-          error: (e, _) => Text(
-            '加载失败：$e',
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
+          error: (e, _) =>
+              Text('加载失败：$e', maxLines: 3, overflow: TextOverflow.ellipsis),
           data: (repo) => switch (segment) {
             _LibrarySegment.decisions => _SegmentList<KnowledgeDecision>(
               stream: repo.watchDecisions(ownerUserId: owner),
               emptyIcon: Icons.alt_route_outlined,
               emptyTitle: '还没有 Decision',
-              emptyMessage:
-                  '点右下角 + 新建 Decision，记录第一条值得复盘的判断。',
+              emptyMessage: '点右下角 + 新建 Decision，记录第一条值得复盘的判断。',
               tileBuilder: _buildDecisionTile,
             ),
             _LibrarySegment.notes => _SegmentList<KnowledgeNote>(
@@ -274,8 +279,7 @@ class _LibraryList extends ConsumerWidget {
               stream: repo.watchRoutines(ownerUserId: owner),
               emptyIcon: Icons.event_repeat_outlined,
               emptyTitle: '还没有 Routine',
-              emptyMessage:
-                  '定期提醒（例如「港卡每 6 个月活跃一次」）。新建后 AI 会在到期前主动提示。',
+              emptyMessage: '定期提醒（例如「港卡每 6 个月活跃一次」）。新建后 AI 会在到期前主动提示。',
               tileBuilder: _buildRoutineTile,
             ),
           },
@@ -446,8 +450,8 @@ Widget _buildRoutineTile(BuildContext context, KnowledgeRoutine r) {
   final dueLabel = days < 0
       ? '已逾期 ${-days} 天'
       : days == 0
-          ? '今日到期'
-          : '$days 天后到期';
+      ? '今日到期'
+      : '$days 天后到期';
   final dueColor = days < 0 ? colors.destructive : colors.mutedForeground;
   return KnowledgeSection.item(
     title: r.statement,
@@ -460,4 +464,3 @@ Widget _buildRoutineTile(BuildContext context, KnowledgeRoutine r) {
     ],
   );
 }
-

@@ -4,11 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../core/command_palette/command_palette.dart';
+import '../core/lifeos/domain_pack.dart';
 import '../core/pwa/pwa_update_banner.dart';
 import '../core/shortcuts/shortcuts.dart';
 import '../design_system/design_system.dart';
 import '../features/ai_chat/ui/ask_ai.dart';
-import '../features/finance/composition/finance_command_palette.dart';
 import '../features/shared/forms/optimistic_form_submit.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'route_paths.dart';
@@ -130,9 +130,19 @@ class NaviWealthApp extends ConsumerWidget {
                         ref.read(localeProvider.notifier).cycle();
                       },
                       onAskAi: (BuildContext ctx) => askAi(ctx, ref),
-                      domainEntries: financeCommandPaletteEntries(
-                        AppLocalizations.of(invokeCtx),
-                      ),
+                      // Every active domain contributes its palette
+                      // entries, merged in domain order — the same
+                      // aggregation pattern as device tools / prompt
+                      // blocks (`activeDomainPacksProvider`). HealthOS /
+                      // KnowledgeOS used to be Cmd-K dead zones; this
+                      // wires them in alongside Finance automatically.
+                      domainEntries: <CommandPaletteEntry>[
+                        for (final pack in ref.read(activeDomainPacksProvider))
+                          if (pack.commandPaletteEntriesBuilder != null)
+                            ...pack.commandPaletteEntriesBuilder!(
+                              AppLocalizations.of(invokeCtx),
+                            ),
+                      ],
                     ),
                     onAskAi: (String query) =>
                         askAi(invokeCtx, ref, prefill: query),
@@ -140,8 +150,7 @@ class NaviWealthApp extends ConsumerWidget {
                 },
                 onToggleSidebar: () =>
                     ref.read(sidebarCollapsedProvider.notifier).toggle(),
-                onOpenAiChat: (BuildContext invokeCtx) =>
-                    askAi(invokeCtx, ref),
+                onOpenAiChat: (BuildContext invokeCtx) => askAi(invokeCtx, ref),
                 onVimGoto: (String target) {
                   final path = _kVimGotoRoutes[target];
                   if (path != null) router.go(path);

@@ -25,9 +25,8 @@ class KnowledgeInboxPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FScaffold(
-      header: const FHeader.nested(title: Text('收件箱 · KnowledgeOS')),
-      childPad: false,
+    return DomainTabScaffold(
+      title: '收件箱 · KnowledgeOS',
       child: Stack(
         children: [
           const Positioned.fill(child: _InboxBody()),
@@ -134,7 +133,8 @@ class _AiAssistantBar extends ConsumerWidget {
                 onTap: () => askAi(
                   context,
                   ref,
-                  prefill: '帮我查一下知识库里有没有内容相近、可能重复的笔记或概念，'
+                  prefill:
+                      '帮我查一下知识库里有没有内容相近、可能重复的笔记或概念，'
                       '重复的建议合并。',
                 ),
               ),
@@ -144,7 +144,8 @@ class _AiAssistantBar extends ConsumerWidget {
                 onTap: () => askAi(
                   context,
                   ref,
-                  prefill: '根据我的知识库给我这周的建议：到期复盘的决策、'
+                  prefill:
+                      '根据我的知识库给我这周的建议：到期复盘的决策、'
                       '长期未校验的假设、本周到期的定期事项、没有标签或链接的孤儿笔记。',
                 ),
               ),
@@ -259,7 +260,8 @@ class _EmptyState extends StatelessWidget {
     return const AppEmptyState(
       icon: Icons.inbox_outlined,
       title: '收件箱空空如也',
-      message: '点击右下角 + 写一条想法 — AI 会判断它是 Note / Routine / Decision，'
+      message:
+          '点击右下角 + 写一条想法 — AI 会判断它是 Note / Routine / Decision，'
           '一键确认升级。',
     );
   }
@@ -270,10 +272,7 @@ class _ErrorState extends StatelessWidget {
   final String message;
   @override
   Widget build(BuildContext context) {
-    return AppEmptyState.error(
-      title: '收件箱加载失败',
-      message: message,
-    );
+    return AppEmptyState.error(title: '收件箱加载失败', message: message);
   }
 }
 

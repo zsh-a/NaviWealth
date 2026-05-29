@@ -104,18 +104,15 @@ class _BodyState extends ConsumerState<_Body> {
   @override
   Widget build(BuildContext context) {
     final d = _decision;
-    return FScaffold(
-      header: FHeader.nested(
-        title: const Text('决策详情'),
-        suffixes: [
-          if (d != null)
-            FHeaderAction(
-              icon: const Icon(FLucideIcons.pencil),
-              onPress: () => _openEditor(d),
-            ),
-        ],
-      ),
-      childPad: false,
+    return ObjectDetailScaffold(
+      title: '决策详情',
+      actions: [
+        if (d != null)
+          FHeaderAction(
+            icon: const Icon(FLucideIcons.pencil),
+            onPress: () => _openEditor(d),
+          ),
+      ],
       child: _buildBody(context, d),
     );
   }
@@ -136,8 +133,7 @@ class _BodyState extends ConsumerState<_Body> {
             Expanded(
               child: Text(
                 d.question,
-                style: typography.lg
-                    .copyWith(fontWeight: FontWeight.w600),
+                style: typography.lg.copyWith(fontWeight: FontWeight.w600),
                 maxLines: 4,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -153,54 +149,57 @@ class _BodyState extends ConsumerState<_Body> {
           style: typography.xs.copyWith(color: colors.mutedForeground),
         ),
         const SizedBox(height: AppSpacing.s16),
-        KnowledgeSection.group(title: '选项', children: [
-          for (final opt in d.options)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    opt.label == d.selectedLabel
-                        ? FLucideIcons.checkCircle2
-                        : FLucideIcons.circle,
-                    size: 14,
-                    color: opt.label == d.selectedLabel
-                        ? colors.primary
-                        : colors.mutedForeground,
-                  ),
-                  const SizedBox(width: AppSpacing.s8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          opt.label,
-                          style: typography.sm.copyWith(
-                            fontWeight: opt.label == d.selectedLabel
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (opt.rationale != null &&
-                            opt.rationale!.isNotEmpty)
+        KnowledgeSection.group(
+          title: '选项',
+          children: [
+            for (final opt in d.options)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.s4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      opt.label == d.selectedLabel
+                          ? FLucideIcons.checkCircle2
+                          : FLucideIcons.circle,
+                      size: 14,
+                      color: opt.label == d.selectedLabel
+                          ? colors.primary
+                          : colors.mutedForeground,
+                    ),
+                    const SizedBox(width: AppSpacing.s8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            opt.rationale!,
-                            style: typography.xs.copyWith(
-                              color: colors.mutedForeground,
+                            opt.label,
+                            style: typography.sm.copyWith(
+                              fontWeight: opt.label == d.selectedLabel
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
                             ),
-                            maxLines: 4,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                      ],
+                          if (opt.rationale != null &&
+                              opt.rationale!.isNotEmpty)
+                            Text(
+                              opt.rationale!,
+                              style: typography.xs.copyWith(
+                                color: colors.mutedForeground,
+                              ),
+                              maxLines: 4,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-        ]),
+          ],
+        ),
         if (d.rationaleMd.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
           KnowledgeSection.group(
@@ -210,33 +209,39 @@ class _BodyState extends ConsumerState<_Body> {
         ],
         if (_principles.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
-          KnowledgeSection.group(title: '引用的 Principle', children: [
-            for (final p in _principles)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Text(
-                  '· ${p.statement}',
-                  style: typography.sm,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
+          KnowledgeSection.group(
+            title: '引用的 Principle',
+            children: [
+              for (final p in _principles)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Text(
+                    '· ${p.statement}',
+                    style: typography.sm,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-          ]),
+            ],
+          ),
         ],
         if (_assumptions.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
-          KnowledgeSection.group(title: '引用的 Assumption', children: [
-            for (final a in _assumptions)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Text(
-                  '· ${a.statement}（conf ${a.confidence.toStringAsFixed(2)}）',
-                  style: typography.sm,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
+          KnowledgeSection.group(
+            title: '引用的 Assumption',
+            children: [
+              for (final a in _assumptions)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Text(
+                    '· ${a.statement}（conf ${a.confidence.toStringAsFixed(2)}）',
+                    style: typography.sm,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-          ]),
+            ],
+          ),
         ],
         if (d.expectedOutcome != null && d.expectedOutcome!.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
@@ -258,32 +263,35 @@ class _BodyState extends ConsumerState<_Body> {
         ],
         if (_chain.length > 1) ...[
           const SizedBox(height: AppSpacing.s12),
-          KnowledgeSection.group(title: '认知演化链', children: [
-            for (var i = 0; i < _chain.length; i++)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  children: [
-                    Icon(
-                      i == 0
-                          ? FLucideIcons.arrowRightCircle
-                          : FLucideIcons.arrowUpCircle,
-                      size: 14,
-                      color: colors.mutedForeground,
-                    ),
-                    const SizedBox(width: AppSpacing.s8),
-                    Expanded(
-                      child: Text(
-                        '${_chain[i].question}（${_chain[i].status.wire}）',
-                        style: typography.sm,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+          KnowledgeSection.group(
+            title: '认知演化链',
+            children: [
+              for (var i = 0; i < _chain.length; i++)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    children: [
+                      Icon(
+                        i == 0
+                            ? FLucideIcons.arrowRightCircle
+                            : FLucideIcons.arrowUpCircle,
+                        size: 14,
+                        color: colors.mutedForeground,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: AppSpacing.s8),
+                      Expanded(
+                        child: Text(
+                          '${_chain[i].question}（${_chain[i].status.wire}）',
+                          style: typography.sm,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-          ]),
+            ],
+          ),
         ],
       ],
     );
@@ -306,39 +314,41 @@ class _ContextSnapshotSection extends StatelessWidget {
     final health = (snapshot['recent_health_events'] as List?) ?? const [];
     final capturedAt = snapshot['captured_at'] as String?;
     final window = snapshot['window_days'];
-    return KnowledgeSection.group(title: '当时的跨域状态', children: [
-      if (capturedAt != null)
-        Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-          child: Text(
-            '采样于 ${capturedAt.substring(0, 10)} · 窗口 ${window ?? "—"} 天',
-            style:
-                typography.xs.copyWith(color: colors.mutedForeground),
+    return KnowledgeSection.group(
+      title: '当时的跨域状态',
+      children: [
+        if (capturedAt != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.s4),
+            child: Text(
+              '采样于 ${capturedAt.substring(0, 10)} · 窗口 ${window ?? "—"} 天',
+              style: typography.xs.copyWith(color: colors.mutedForeground),
+            ),
           ),
-        ),
-      if (finance.isEmpty && health.isEmpty)
-        Text(
-          '当时窗口内无 Finance / Health 事件。',
-          style: typography.sm.copyWith(color: colors.mutedForeground),
-        ),
-      if (finance.isNotEmpty) ...[
-        Text(
-          'Finance',
-          style: typography.xs.copyWith(fontWeight: FontWeight.w600),
-        ),
-        for (final raw in finance.whereType<Map<Object?, Object?>>())
-          _SnapshotRow(map: raw.cast<String, Object?>()),
-        const SizedBox(height: AppSpacing.s4),
+        if (finance.isEmpty && health.isEmpty)
+          Text(
+            '当时窗口内无 Finance / Health 事件。',
+            style: typography.sm.copyWith(color: colors.mutedForeground),
+          ),
+        if (finance.isNotEmpty) ...[
+          Text(
+            'Finance',
+            style: typography.xs.copyWith(fontWeight: FontWeight.w600),
+          ),
+          for (final raw in finance.whereType<Map<Object?, Object?>>())
+            _SnapshotRow(map: raw.cast<String, Object?>()),
+          const SizedBox(height: AppSpacing.s4),
+        ],
+        if (health.isNotEmpty) ...[
+          Text(
+            'Health',
+            style: typography.xs.copyWith(fontWeight: FontWeight.w600),
+          ),
+          for (final raw in health.whereType<Map<Object?, Object?>>())
+            _SnapshotRow(map: raw.cast<String, Object?>()),
+        ],
       ],
-      if (health.isNotEmpty) ...[
-        Text(
-          'Health',
-          style: typography.xs.copyWith(fontWeight: FontWeight.w600),
-        ),
-        for (final raw in health.whereType<Map<Object?, Object?>>())
-          _SnapshotRow(map: raw.cast<String, Object?>()),
-      ],
-    ]);
+    );
   }
 }
 
@@ -362,8 +372,7 @@ class _SnapshotRow extends StatelessWidget {
               padding: const EdgeInsets.only(right: AppSpacing.s8, top: 2),
               child: Text(
                 ts.substring(5, 10),
-                style: typography.xs
-                    .copyWith(color: colors.mutedForeground),
+                style: typography.xs.copyWith(color: colors.mutedForeground),
               ),
             ),
           Expanded(
@@ -379,4 +388,3 @@ class _SnapshotRow extends StatelessWidget {
     );
   }
 }
-

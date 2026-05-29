@@ -93,11 +93,7 @@ class _KnowledgeObjectDetailPageState
 
   @override
   Widget build(BuildContext context) {
-    return FScaffold(
-      header: FHeader.nested(title: Text(_title)),
-      childPad: false,
-      child: _buildBody(),
-    );
+    return ObjectDetailScaffold(title: _title, child: _buildBody());
   }
 
   String get _title => switch (_kind) {
@@ -170,9 +166,12 @@ List<Widget> _conceptSections(BuildContext context, KnowledgeConcept c) {
     ],
     if (c.relatedConceptIds.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s12),
-      KnowledgeSection.group(title: '相关概念', children: [
-        Text('${c.relatedConceptIds.length} 个关联', style: typography.sm),
-      ]),
+      KnowledgeSection.group(
+        title: '相关概念',
+        children: [
+          Text('${c.relatedConceptIds.length} 个关联', style: typography.sm),
+        ],
+      ),
     ],
   ];
 }
@@ -190,9 +189,10 @@ List<Widget> _experimentSections(BuildContext context, KnowledgeExperiment e) {
     ],
     if (e.metrics.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s12),
-      KnowledgeSection.group(title: '指标', children: [
-        Text(e.metrics.join(' · '), style: typography.sm),
-      ]),
+      KnowledgeSection.group(
+        title: '指标',
+        children: [Text(e.metrics.join(' · '), style: typography.sm)],
+      ),
     ],
     if (e.resultMd != null && e.resultMd!.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s12),
@@ -243,9 +243,10 @@ List<Widget> _assumptionSections(BuildContext context, KnowledgeAssumption a) {
     ),
     if (a.evidenceIds.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s16),
-      KnowledgeSection.group(title: '证据', children: [
-        Text('${a.evidenceIds.length} 条引用', style: typography.sm),
-      ]),
+      KnowledgeSection.group(
+        title: '证据',
+        children: [Text('${a.evidenceIds.length} 条引用', style: typography.sm)],
+      ),
     ],
   ];
 }
