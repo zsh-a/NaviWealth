@@ -19,7 +19,7 @@ import '../../../core/ai/local/skills/skills.dart';
 import '../../../core/ai/runtime/ai_runtime.dart';
 import '../../../core/ai/trace/ai_trace_builder.dart';
 import '../../../core/ai/trace/providers.dart';
-import '../../../core/auth/providers.dart';
+import '../../../core/auth/current_user.dart';
 import '../../../core/persistence/providers.dart';
 import '../../ai_chat/data/providers.dart' show deviceLlmRuntimeProvider;
 import '../domain/ingest_models.dart';
@@ -33,10 +33,13 @@ import 'ingest_privacy_gate.dart';
 /// Owner-scoped staging store. Null while the DB is mid-boot.
 final ingestDraftStoreProvider = Provider<IngestDraftStore?>((ref) {
   final dbAsync = ref.watch(appDatabaseProvider);
-  final auth = ref.watch(authSessionProvider);
+  // Scope by the active user id (device-only AI works account-less, so
+  // this is [kLocalOnlyUserId] in local-only mode) — never the cloud
+  // session, which is null without an account. See current_user.dart.
+  final ownerUserId = ref.watch(activeUserIdProvider);
   return dbAsync.when(
     data: (db) {
-      final store = IngestDraftStore(db, ownerUserId: auth?.userId);
+      final store = IngestDraftStore(db, ownerUserId: ownerUserId);
       ref.onDispose(store.dispose);
       return store;
     },
@@ -135,14 +138,14 @@ class IngestController {
         rejectedReason: '数据库尚未就绪，请稍后重试',
       );
     }
-    final auth = _ref.read(authSessionProvider);
+    final ownerUserId = _ref.read(activeUserIdProvider) ?? '';
     final ledger = await _ref.read(_ledgerSnapshotProvider.future);
     final result = _ref
         .read(ingestPipelineProvider)
         .plan(
           source: source,
           existingLedger: ledger,
-          ownerUserId: auth?.userId ?? '',
+          ownerUserId: ownerUserId,
         );
     if (!result.isRejected && result.drafts.isNotEmpty) {
       await store.putAll(result.drafts);
@@ -150,10 +153,14 @@ class IngestController {
     return result;
   }
 
-  /// §5.10.10 / S5b-vision — the cloud branch. Backend does ③ (Vision
-  /// parse); ④⑤⑥ stay on-device (same `planFromParsed` the CSV path
-  /// uses) so dedup runs against the Drift truth, and a full [AiTrace]
-  /// is appended because this *is* a real cloud model round-trip.
+  /// §5.10.10 / S5b-vision — the Vision branch. Parse (③) runs
+  /// device-direct against the user's own key ([DeviceVisionIngestClient],
+  /// W-D7); ④⑤⑥ stay on-device (same `planFromParsed` the CSV path uses)
+  /// so dedup runs against the Drift truth, and a full [AiTrace] is
+  /// appended because this *is* a real model round-trip. Device-only AI
+  /// is account-less, so there is no login gate — when no on-device
+  /// runtime is configured the client surfaces actionable "configure a
+  /// key" guidance instead.
   Future<IngestResult> _ingestCloud(IngestSource source) async {
     final store = _ref.read(ingestDraftStoreProvider);
     if (store == null) {
@@ -162,13 +169,7 @@ class IngestController {
         rejectedReason: '数据库尚未就绪，请稍后重试',
       );
     }
-    final session = _ref.read(authSessionProvider);
-    if (session == null) {
-      return const IngestResult(
-        drafts: <IngestDraft>[],
-        rejectedReason: '需要登录后才能使用云端解析',
-      );
-    }
+    final ownerUserId = _ref.read(activeUserIdProvider) ?? '';
 
     final startedAt = DateTime.now().toUtc();
     final requestId = const Uuid().v4();
@@ -177,7 +178,6 @@ class IngestController {
       parsed = await _ref
           .read(cloudIngestClientProvider)
           .parse(
-            session: session,
             kind: source.kind,
             mime: source.mime ?? 'application/octet-stream',
             contentBase64: source.payload,
@@ -196,7 +196,7 @@ class IngestController {
           parsed: parsed,
           source: source,
           existingLedger: ledger,
-          ownerUserId: session.userId,
+          ownerUserId: ownerUserId,
           traceId: requestId,
         );
     if (result.drafts.isNotEmpty) {

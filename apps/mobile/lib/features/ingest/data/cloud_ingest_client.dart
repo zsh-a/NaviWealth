@@ -9,7 +9,6 @@
 /// pure wire mappers below are retained — the device path reuses them.
 library;
 
-import '../../../core/auth/auth_session.dart';
 import '../domain/ingest_models.dart';
 
 class CloudIngestException implements Exception {
@@ -21,7 +20,6 @@ class CloudIngestException implements Exception {
 
 abstract class CloudIngestClient {
   Future<List<ParsedTransaction>> parse({
-    required AuthSession session,
     required IngestSourceKind kind,
     required String mime,
     required String contentBase64,
@@ -100,7 +98,6 @@ class UnavailableCloudIngestClient implements CloudIngestClient {
 
   @override
   Future<List<ParsedTransaction>> parse({
-    required AuthSession session,
     required IngestSourceKind kind,
     required String mime,
     required String contentBase64,
