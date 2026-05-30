@@ -27,9 +27,15 @@ Future<void> showCommandPalette(
   return showFDialog<void>(
     context: context,
     barrierDismissible: true,
-    builder: (ctx, style, animation) => FDialog.raw(
-      builder: (innerCtx, _) =>
-          _CommandPaletteDialog(commands: commands, onAskAi: onAskAi),
+    // NB: we intentionally do *not* wrap in `FDialog.raw`. forui's dialog
+    // vertically centres its (min-sized) child and reserves the keyboard as
+    // bottom padding, so on mobile the palette floats to the middle and leaves
+    // a keyboard-sized blank band once the list shrinks while typing. The
+    // palette presents its own top-anchored, keyboard-aware surface instead.
+    builder: (_, _, animation) => _CommandPaletteDialog(
+      commands: commands,
+      onAskAi: onAskAi,
+      animation: animation,
     ),
   ).whenComplete(() => _isOpen = false);
 }
@@ -47,10 +53,19 @@ void resetCommandPaletteForTest() {
 bool _isOpen = false;
 
 class _CommandPaletteDialog extends ConsumerStatefulWidget {
-  const _CommandPaletteDialog({required this.commands, this.onAskAi});
+  const _CommandPaletteDialog({
+    required this.commands,
+    required this.animation,
+    this.onAskAi,
+  });
 
   final List<CommandPaletteEntry> commands;
   final void Function(String query)? onAskAi;
+
+  /// The route's entrance animation, used to fade the palette in (forui's
+  /// `FDialog` normally owns this; we drive it ourselves so we can control the
+  /// palette's position).
+  final Animation<double> animation;
 
   @override
   ConsumerState<_CommandPaletteDialog> createState() =>
@@ -170,14 +185,16 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final AppLocalizations l10n = AppLocalizations.of(context);
-    final Size mediaSize = MediaQuery.sizeOf(context);
+    final MediaQueryData media = MediaQuery.of(context);
+    final Size mediaSize = media.size;
+    final double keyboardInset = media.viewInsets.bottom;
 
     final double maxWidth = mediaSize.width < 560 ? mediaSize.width - 48 : 520;
     final double maxHeight = mediaSize.height * 0.6;
 
     final executor = ref.watch(driftQueryPlanExecutorProvider);
 
-    return ConstrainedBox(
+    final Widget card = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
       child: DecoratedBox(
         decoration: BoxDecoration(
@@ -245,6 +262,21 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+
+    // Top-anchor the palette and reserve the keyboard's height ourselves so the
+    // search field stays pinned near the top and the result list grows downward
+    // toward the keyboard. The space below the (min-sized) card is the dimmed
+    // barrier, never an opaque blank band — and the field no longer jumps as the
+    // list filters while typing.
+    return FadeTransition(
+      opacity: widget.animation,
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16, 12, 16, keyboardInset + 12),
+          child: Align(alignment: Alignment.topCenter, child: card),
         ),
       ),
     );
