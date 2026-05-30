@@ -643,6 +643,13 @@
   "@activityEntryDetailInsightHousing": { "description": "Heuristic AI insight shown for rent or mortgage-like transaction descriptions" },
   "activityEntryDetailInsightIncome": "Primary income inflow. Keep it stable in cash-flow projections.",
   "@activityEntryDetailInsightIncome": { "description": "Heuristic AI insight shown for salary or payroll-like transaction descriptions" },
+  "activityEntryDetailLegCount": "{count, plural, =1{1 line} other{{count} lines}}",
+  "@activityEntryDetailLegCount": {
+    "description": "Transaction detail posting line count",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "activityEntryDetailLedgerTitle": "Ledger breakdown",
+  "@activityEntryDetailLedgerTitle": { "description": "Transaction detail section title for the full posting breakdown" },
   "aiContextSummaryThisMonth": "Monthly summary",
   "@aiContextSummaryThisMonth": { "description": "AI context summary section eyebrow" },
   "aiContextSummaryNetWorthLine": "Net worth {pct} this month",
@@ -3498,6 +3505,32 @@
   "@ingestParseSummary": {
     "description": "Ingest review: parse result summary toast",
     "placeholders": { "total": { "type": "int" }, "fresh": { "type": "int" }, "dup": { "type": "int" } }
+  },
+  "ingestProcessingTitle": "Parsing import",
+  "@ingestProcessingTitle": { "description": "Ingest review: in-page title while an import is being parsed" },
+  "ingestProcessingBody": "Reading {source}, extracting transactions, and checking duplicates against your ledger.",
+  "@ingestProcessingBody": {
+    "description": "Ingest review: in-page status while an import source is being parsed",
+    "placeholders": { "source": { "type": "String" } }
+  },
+  "ingestRecordingTitle": "Recording entries",
+  "@ingestRecordingTitle": { "description": "Ingest review: in-page title while drafts are being written to the ledger" },
+  "ingestRecordingBody": "Writing confirmed entries and refreshing the queue.",
+  "@ingestRecordingBody": { "description": "Ingest review: in-page status while confirmed drafts are being recorded" },
+  "ingestSourceCsv": "CSV file",
+  "@ingestSourceCsv": { "description": "Ingest source label for CSV input" },
+  "ingestSourcePaste": "Pasted text",
+  "@ingestSourcePaste": { "description": "Ingest source label for pasted statement text" },
+  "ingestSourceImage": "Receipt image",
+  "@ingestSourceImage": { "description": "Ingest source label for image input" },
+  "ingestSourcePdf": "PDF statement",
+  "@ingestSourcePdf": { "description": "Ingest source label for PDF input" },
+  "ingestSourceEmail": "Email",
+  "@ingestSourceEmail": { "description": "Ingest source label for email input" },
+  "ingestDraftConfidence": "{percent}% confidence",
+  "@ingestDraftConfidence": {
+    "description": "Ingest review: parsed draft confidence chip",
+    "placeholders": { "percent": { "type": "int" } }
   },
   "ingestUncategorized": "Uncategorized",
   "@ingestUncategorized": { "description": "Ingest review: draft with no category hint" },
