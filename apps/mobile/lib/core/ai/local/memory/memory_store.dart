@@ -44,6 +44,15 @@ abstract class MemoryStore {
   Future<MemoryRecord?> readMemory(String id);
   Future<void> deleteMemory(String id);
 
+  /// Delete memories for [ownerUserId] + [source] whose source ids are no
+  /// longer present in the upstream source table. This keeps derived
+  /// memories in lockstep with soft-deleted / merged domain rows.
+  Future<void> deleteMemoriesBySourceExcept({
+    required String ownerUserId,
+    required String source,
+    required Set<String> keepSourceIds,
+  });
+
   /// Touch [lastAccessedAt] on the listed memories (no-op for unknown
   /// ids). Called by the runtime after a recall.
   Future<void> touchAccess(Iterable<String> ids, DateTime at);
@@ -151,6 +160,30 @@ class SqliteMemoryStore implements MemoryStore {
     await _db.customStatement('DELETE FROM memories WHERE id = ?', <Object?>[
       id,
     ]);
+  }
+
+  @override
+  Future<void> deleteMemoriesBySourceExcept({
+    required String ownerUserId,
+    required String source,
+    required Set<String> keepSourceIds,
+  }) async {
+    final vars = <Object?>[ownerUserId, source];
+    var sql = 'DELETE FROM memories WHERE owner_user_id = ? AND source = ?';
+    if (keepSourceIds.isEmpty) {
+      await _db.customStatement(sql, vars);
+      return;
+    } else {
+      final placeholders = List<String>.filled(
+        keepSourceIds.length,
+        '?',
+      ).join(', ');
+      sql = '$sql AND (source_id IS NULL OR source_id NOT IN ($placeholders))';
+      for (final id in keepSourceIds) {
+        vars.add(id);
+      }
+    }
+    await _db.customStatement(sql, vars);
   }
 
   @override

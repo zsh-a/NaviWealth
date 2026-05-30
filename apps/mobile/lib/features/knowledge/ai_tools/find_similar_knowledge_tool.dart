@@ -41,10 +41,7 @@ class FindSimilarKnowledgeTool implements DeviceTool {
   Map<String, Object?> get inputSchema => <String, Object?>{
     'type': 'object',
     'properties': {
-      'text': {
-        'type': 'string',
-        'description': '要查重的文本(标题+正文拼一起即可)。',
-      },
+      'text': {'type': 'string', 'description': '要查重的文本(标题+正文拼一起即可)。'},
       'types': {
         'type': 'array',
         'items': <String, Object?>{
@@ -70,12 +67,7 @@ class FindSimilarKnowledgeTool implements DeviceTool {
         'maximum': 1,
         'description': '余弦下限,默认 0.82。低于此不算近重复。',
       },
-      'top_k': {
-        'type': 'integer',
-        'minimum': 1,
-        'maximum': 20,
-        'default': 5,
-      },
+      'top_k': {'type': 'integer', 'minimum': 1, 'maximum': 20, 'default': 5},
     },
     'required': <String>['text'],
   };
@@ -87,10 +79,7 @@ class FindSimilarKnowledgeTool implements DeviceTool {
   ) async {
     final text = ((input['text'] as String?) ?? '').trim();
     if (text.isEmpty) {
-      return <String, Object?>{
-        'error': 'text 必填且非空。',
-        'code': 'bad_request',
-      };
+      return <String, Object?>{'error': 'text 必填且非空。', 'code': 'bad_request'};
     }
     final excludeId = (input['exclude_id'] as String?)?.trim();
     final threshold = (input['threshold'] is num)
@@ -103,9 +92,9 @@ class FindSimilarKnowledgeTool implements DeviceTool {
     final typesRaw = input['types'];
     final wantTypes = typesRaw is List
         ? typesRaw.whereType<String>().toSet()
-        : kKnowledgeMemorySources.keys.toSet();
+        : kKnowledgeDedupeMemorySources.keys.toSet();
     final sources = <String, String>{
-      for (final e in kKnowledgeMemorySources.entries)
+      for (final e in kKnowledgeDedupeMemorySources.entries)
         if (wantTypes.contains(e.key)) e.key: e.value,
     };
     if (sources.isEmpty) {

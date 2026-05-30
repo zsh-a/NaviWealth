@@ -44,6 +44,7 @@ const String kKnowledgeAssumptionMemorySource = 'know:assumptions';
 const String kKnowledgeConceptMemorySource = 'know:concepts';
 const String kKnowledgeExperimentMemorySource = 'know:experiments';
 const String kKnowledgeDecisionMemorySource = 'know:decisions';
+const String kKnowledgeRoutineMemorySource = 'know:routines';
 
 /// Every KnowledgeOS Memory source keyed by a short type token
 /// (`docs/knowledgeos-domain.md` §15.3). Iterated by the dedupe /
@@ -55,10 +56,36 @@ const Map<String, String> kKnowledgeMemorySources = <String, String>{
   'concept': kKnowledgeConceptMemorySource,
   'experiment': kKnowledgeExperimentMemorySource,
   'decision': kKnowledgeDecisionMemorySource,
+  'routine': kKnowledgeRoutineMemorySource,
+};
+
+/// Knowledge types where a near-duplicate can be turned into a supported
+/// `knowledge_merge` proposal. Routine rows are searchable, but excluded
+/// from dedupe until they get a merge pointer and apply path.
+const Map<String, String> kKnowledgeDedupeMemorySources = <String, String>{
+  'note': kKnowledgeNoteMemorySource,
+  'principle': kKnowledgePrincipleMemorySource,
+  'assumption': kKnowledgeAssumptionMemorySource,
+  'concept': kKnowledgeConceptMemorySource,
+  'experiment': kKnowledgeExperimentMemorySource,
+  'decision': kKnowledgeDecisionMemorySource,
 };
 
 String _truncate(String s, [int n = 280]) =>
     s.length > n ? '${s.substring(0, n)}…' : s;
+
+Future<void> _forgetMissingSourceIds(
+  MemoryRuntime runtime, {
+  required String ownerUserId,
+  required String source,
+  required Set<String> liveSourceIds,
+}) {
+  return runtime.forgetSourceExcept(
+    ownerUserId: ownerUserId,
+    source: source,
+    keepSourceIds: liveSourceIds,
+  );
+}
 
 /// Shared subscribe-then-reindex plumbing for every KnowledgeOS indexer
 /// provider, Decision included (`docs/knowledgeos-domain.md` §3).
@@ -71,22 +98,23 @@ String _truncate(String s, [int n = 280]) =>
 void subscribeKnowledgeIndexer<T>(
   Ref ref, {
   required Stream<List<T>> Function(KnowledgeRepository repo, String userId)
-      streamOf,
+  streamOf,
   required Future<void> Function(
     MemoryRuntime runtime,
     List<T> rows, {
     required String ownerUserId,
-  }) reindex,
+  })
+  reindex,
 }) {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.knowledge)) return;
   () async {
-    final opt = await ref.read(core_auth.domainOptInsProvider.future);
-    if (!opt.contains(DomainScope.knowledge)) return;
     final repo = await ref.read(knowledgeRepositoryProvider.future);
     final userId = await ref.read(currentUserIdProvider)();
     final runtime = await ref.read(memoryRuntimeProvider.future);
     var running = false;
     final sub = streamOf(repo, userId).listen((rows) async {
-      if (running || rows.isEmpty) return;
+      if (running) return;
       running = true;
       try {
         await reindex(runtime, rows, ownerUserId: userId);
@@ -106,6 +134,12 @@ Future<void> _reindexNotes(
   required String ownerUserId,
 }) async {
   final now = DateTime.now().toUtc();
+  await _forgetMissingSourceIds(
+    runtime,
+    ownerUserId: ownerUserId,
+    source: kKnowledgeNoteMemorySource,
+    liveSourceIds: {for (final n in notes) n.id},
+  );
   for (final n in notes) {
     final id = '$kKnowledgeNoteMemorySource:episodic:${n.id}';
     final summary = n.bodyMd.isEmpty
@@ -158,6 +192,12 @@ Future<void> _reindexPrinciples(
   required String ownerUserId,
 }) async {
   final now = DateTime.now().toUtc();
+  await _forgetMissingSourceIds(
+    runtime,
+    ownerUserId: ownerUserId,
+    source: kKnowledgePrincipleMemorySource,
+    liveSourceIds: {for (final p in ps) p.id},
+  );
   for (final p in ps) {
     final id = '$kKnowledgePrincipleMemorySource:semantic:${p.id}';
     await runtime.remember(
@@ -208,6 +248,12 @@ Future<void> _reindexAssumptions(
   required String ownerUserId,
 }) async {
   final now = DateTime.now().toUtc();
+  await _forgetMissingSourceIds(
+    runtime,
+    ownerUserId: ownerUserId,
+    source: kKnowledgeAssumptionMemorySource,
+    liveSourceIds: {for (final a in xs) a.id},
+  );
   for (final a in xs) {
     final id = '$kKnowledgeAssumptionMemorySource:semantic:${a.id}';
     await runtime.remember(
@@ -262,6 +308,12 @@ Future<void> _reindexConcepts(
   required String ownerUserId,
 }) async {
   final now = DateTime.now().toUtc();
+  await _forgetMissingSourceIds(
+    runtime,
+    ownerUserId: ownerUserId,
+    source: kKnowledgeConceptMemorySource,
+    liveSourceIds: {for (final c in cs) c.id},
+  );
   for (final c in cs) {
     final id = '$kKnowledgeConceptMemorySource:semantic:${c.id}';
     await runtime.remember(
@@ -312,6 +364,12 @@ Future<void> _reindexExperiments(
   required String ownerUserId,
 }) async {
   final now = DateTime.now().toUtc();
+  await _forgetMissingSourceIds(
+    runtime,
+    ownerUserId: ownerUserId,
+    source: kKnowledgeExperimentMemorySource,
+    liveSourceIds: {for (final e in xs) e.id},
+  );
   for (final e in xs) {
     final id = '$kKnowledgeExperimentMemorySource:episodic:${e.id}';
     final body = e.methodMd.isEmpty
@@ -364,5 +422,63 @@ final knowledgeExperimentMemoryIndexerProvider = Provider<void>((ref) {
     ref,
     streamOf: (r, uid) => r.watchExperiments(ownerUserId: uid),
     reindex: _reindexExperiments,
+  );
+});
+
+// ── Routines ─────────────────────────────────────────────────────────────
+
+Future<void> _reindexRoutines(
+  MemoryRuntime runtime,
+  List<KnowledgeRoutine> routines, {
+  required String ownerUserId,
+}) async {
+  final now = DateTime.now().toUtc();
+  await _forgetMissingSourceIds(
+    runtime,
+    ownerUserId: ownerUserId,
+    source: kKnowledgeRoutineMemorySource,
+    liveSourceIds: {for (final r in routines) r.id},
+  );
+  for (final r in routines) {
+    final id = '$kKnowledgeRoutineMemorySource:episodic:${r.id}';
+    await runtime.remember(
+      MemoryRecord(
+        id: id,
+        kind: MemoryKind.episodic,
+        ownerUserId: ownerUserId,
+        scope: r.scope,
+        source: kKnowledgeRoutineMemorySource,
+        sourceId: r.id,
+        title: r.statement,
+        summary:
+            '${r.statement} — every ${r.intervalDays} days; next due '
+            '${r.nextDueAt.toUtc().toIso8601String()}',
+        payload: <String, Object?>{
+          'interval_days': r.intervalDays,
+          'status': r.status.wire,
+          'next_due_at': r.nextDueAt.toUtc().toIso8601String(),
+          if (r.lastDoneAt != null)
+            'last_done_at': r.lastDoneAt!.toUtc().toIso8601String(),
+        },
+        entities: <String>{'knowledge_routine', r.id, 'scope:${r.scope}'},
+        importance: switch (r.status) {
+          RoutineStatus.active => 0.65,
+          RoutineStatus.paused => 0.35,
+          RoutineStatus.archived => 0.25,
+        },
+        confidence: 0.9,
+        validFrom: r.createdAt.toUtc(),
+        createdAt: r.createdAt.toUtc(),
+        updatedAt: now,
+      ),
+    );
+  }
+}
+
+final knowledgeRoutineMemoryIndexerProvider = Provider<void>((ref) {
+  subscribeKnowledgeIndexer<KnowledgeRoutine>(
+    ref,
+    streamOf: (r, uid) => r.watchRoutines(ownerUserId: uid),
+    reindex: _reindexRoutines,
   );
 });

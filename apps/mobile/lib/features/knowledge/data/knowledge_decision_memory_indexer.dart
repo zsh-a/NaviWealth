@@ -26,6 +26,11 @@ class KnowledgeDecisionMemoryIndexer {
     required String ownerUserId,
   }) async {
     final now = DateTime.now().toUtc();
+    await runtime.forgetSourceExcept(
+      ownerUserId: ownerUserId,
+      source: kKnowledgeDecisionMemorySource,
+      keepSourceIds: {for (final d in decisions) d.id},
+    );
     for (final d in decisions) {
       final memoryId = '$kKnowledgeDecisionMemorySource:episodic:${d.id}';
       final memory = MemoryRecord(

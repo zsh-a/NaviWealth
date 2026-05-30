@@ -50,11 +50,11 @@ Future<Map<String, Object?>> _invoke(
 void main() {
   final created = DateTime.utc(2026, 1, 1);
   SyncMeta meta() => SyncMeta(
-        ownerUserId: _owner,
-        updatedAt: created,
-        updatedByDevice: 'dev',
-        hlc: Hlc.zero('dev'),
-      );
+    ownerUserId: _owner,
+    updatedAt: created,
+    updatedByDevice: 'dev',
+    hlc: Hlc.zero('dev'),
+  );
 
   group('SearchKnowledgeTool', () {
     const tool = SearchKnowledgeTool();
@@ -69,10 +69,12 @@ void main() {
       for (final m in seed) {
         await rt.remember(m);
       }
-      final c = ProviderContainer(overrides: [
-        memoryRuntimeProvider.overrideWith((ref) async => rt),
-        currentUserIdProvider.overrideWithValue(() async => _owner),
-      ]);
+      final c = ProviderContainer(
+        overrides: [
+          memoryRuntimeProvider.overrideWith((ref) async => rt),
+          currentUserIdProvider.overrideWithValue(() async => _owner),
+        ],
+      );
       addTearDown(c.dispose);
       addTearDown(db.close);
       return c;
@@ -139,6 +141,19 @@ void main() {
       final results = (out['results'] as List).cast<Object?>();
       expect(results.map((e) => (e as Map)['kind']).toSet(), {'concept'});
     });
+
+    test('routine rows are searchable across the knowledge corpus', () async {
+      final c = await seededMemory([
+        mem('know:routines', 'r1', 'activate HK card every six months'),
+      ]);
+      final out = await _invoke(c, tool, const {
+        'query': 'HK card active',
+        'types': ['routine'],
+      });
+      final results = (out['results'] as List).cast<Object?>();
+      expect(results.single as Map, containsPair('kind', 'routine'));
+      expect(results.single as Map, containsPair('id', 'r1'));
+    });
   });
 
   group('ReviewKnowledgeHealthTool', () {
@@ -150,10 +165,12 @@ void main() {
       final db = makeTestDatabase();
       final repo = KnowledgeRepository(db: db, outbox: InMemoryOutboxStore());
       await seed(repo);
-      final c = ProviderContainer(overrides: [
-        knowledgeRepositoryProvider.overrideWith((ref) async => repo),
-        currentUserIdProvider.overrideWithValue(() async => _owner),
-      ]);
+      final c = ProviderContainer(
+        overrides: [
+          knowledgeRepositoryProvider.overrideWith((ref) async => repo),
+          currentUserIdProvider.overrideWithValue(() async => _owner),
+        ],
+      );
       addTearDown(c.dispose);
       addTearDown(db.close);
       return c;
@@ -167,68 +184,79 @@ void main() {
       expect(d.sideEffect, SideEffect.none);
     });
 
-    test('aggregates due reviews, due routines, stale assumptions, orphans',
-        () async {
-      final past = DateTime.utc(2020, 1, 1);
-      final c = await seededRepo((repo) async {
-        // Due decision (review_date in the past, status active).
-        await repo.upsertDecision(KnowledgeDecision(
-          id: 'dec1',
-          question: '该不该满仓?',
-          options: const [],
-          selectedLabel: '',
-          rationaleMd: '',
-          principleIds: const [],
-          assumptionIds: const [],
-          status: DecisionStatus.active,
-          reviewDate: past,
-          decidedAt: past,
-          sync: meta(),
-        ));
-        // Due routine (next_due in the past).
-        await repo.upsertRoutine(KnowledgeRoutine(
-          id: 'r1',
-          statement: '港卡活跃',
-          intervalDays: 180,
-          nextDueAt: past,
-          scope: '*',
-          status: RoutineStatus.active,
-          createdAt: past,
-          sync: meta(),
-        ));
-        // Stale assumption (never verified).
-        await repo.upsertAssumption(KnowledgeAssumption(
-          id: 'a1',
-          statement: '美股长期向上',
-          confidence: 0.7,
-          scope: '*',
-          evidenceIds: const [],
-          status: AssumptionStatus.active,
-          declaredAt: past,
-          sync: meta(),
-        ));
-        // Orphan note (no tags, no project).
-        await repo.upsertNote(KnowledgeNote(
-          id: 'n1',
-          title: '随手记',
-          bodyMd: '',
-          tags: const [],
-          createdAt: created,
-          sync: meta(),
-        ));
-      });
+    test(
+      'aggregates due reviews, due routines, stale assumptions, orphans',
+      () async {
+        final past = DateTime.utc(2020, 1, 1);
+        final c = await seededRepo((repo) async {
+          // Due decision (review_date in the past, status active).
+          await repo.upsertDecision(
+            KnowledgeDecision(
+              id: 'dec1',
+              question: '该不该满仓?',
+              options: const [],
+              selectedLabel: '',
+              rationaleMd: '',
+              principleIds: const [],
+              assumptionIds: const [],
+              status: DecisionStatus.active,
+              reviewDate: past,
+              decidedAt: past,
+              sync: meta(),
+            ),
+          );
+          // Due routine (next_due in the past).
+          await repo.upsertRoutine(
+            KnowledgeRoutine(
+              id: 'r1',
+              statement: '港卡活跃',
+              intervalDays: 180,
+              nextDueAt: past,
+              scope: '*',
+              status: RoutineStatus.active,
+              createdAt: past,
+              sync: meta(),
+            ),
+          );
+          // Stale assumption (never verified).
+          await repo.upsertAssumption(
+            KnowledgeAssumption(
+              id: 'a1',
+              statement: '美股长期向上',
+              confidence: 0.7,
+              scope: '*',
+              evidenceIds: const [],
+              status: AssumptionStatus.active,
+              declaredAt: past,
+              sync: meta(),
+            ),
+          );
+          // Orphan note (no tags, no project).
+          await repo.upsertNote(
+            KnowledgeNote(
+              id: 'n1',
+              title: '随手记',
+              bodyMd: '',
+              tags: const [],
+              createdAt: created,
+              sync: meta(),
+            ),
+          );
+        });
 
-      final out = await _invoke(c, tool, const {});
-      expect(out['total_items'], 4);
-      final sections = (out['sections'] as List).cast<Object?>();
-      final byKey = {
-        for (final s in sections) (s as Map)['key'] as String: s['count'] as int,
-      };
-      expect(byKey['due_reviews'], 1);
-      expect(byKey['due_routines'], 1);
-      expect(byKey['stale_assumptions'], 1);
-      expect(byKey['orphan_notes'], 1);
-    });
+        final out = await _invoke(c, tool, const {});
+        expect(out['total_items'], 4);
+        final sections = (out['sections'] as List).cast<Object?>();
+        final byKey = {
+          for (final s in sections)
+            (s as Map)['key'] as String: s['count'] as int,
+        };
+        expect(byKey['due_reviews'], 1);
+        expect(byKey['due_routines'], 1);
+        expect(byKey['stale_assumptions'], 1);
+        expect(byKey['orphan_notes'], 1);
+      },
+    );
 
     test('empty knowledge base reports zero with a note', () async {
       final c = await seededRepo((_) async {});
