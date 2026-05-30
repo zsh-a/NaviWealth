@@ -59,11 +59,11 @@ class _CashFlowPageState extends ConsumerState<CashFlowPage> {
         suffixes: [
           FHeaderAction(
             icon: const Icon(FLucideIcons.calendarClock),
-            onPress: () => context.push(kCashflowRecurringPath),
+            onPress: () => context.push(AppRoutes.cashflowRecurring),
           ),
           FHeaderAction(
             icon: const Icon(FLucideIcons.wallet),
-            onPress: () => context.push(kDividendCenterPath),
+            onPress: () => context.push(AppRoutes.cashflowDividends),
           ),
         ],
       ),
@@ -467,7 +467,7 @@ class _CategoryPanel extends StatelessWidget {
               padding: const EdgeInsets.only(top: AppSpacing.s12),
               child: FButton(
                 variant: FButtonVariant.outline,
-                onPress: () => context.push(kDividendCenterPath),
+                onPress: () => context.push(AppRoutes.cashflowDividends),
                 prefix: const Icon(FLucideIcons.wallet),
                 child: Text(l10n.cashFlowViewDividendCenter),
               ),

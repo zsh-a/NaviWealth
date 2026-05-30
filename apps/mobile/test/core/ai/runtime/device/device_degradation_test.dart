@@ -1,13 +1,15 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/runtime/ai_runtime.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
 import 'package:naviwealth/features/ai_chat/data/runtime_routing_api_client.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_events.dart';
 import 'package:naviwealth/features/ai_chat/ui/ai_transparency_badge.dart';
-import 'package:naviwealth/features/finance_ai_tools.dart';
 
 AiTrace _trace({
   required Backend backend,
@@ -65,6 +67,14 @@ Future<List<AiChatEvent>> _run(RuntimeRoutingAiChatApiClient c) => c
       messages: const [WireMessage(role: 'user', content: 'hi')],
     )
     .toList();
+
+List<DeviceTool> _productionDeviceTools() => <DeviceTool>[
+  ...kShellDeviceToolsCore,
+  for (final pack in kAllDomainPacks) ...pack.deviceTools,
+];
+
+DeviceToolRegistry _productionDeviceToolRegistry() =>
+    DeviceToolRegistry(_productionDeviceTools());
 
 void main() {
   group('formatAiTraceBadge — device-direct text (W-D6)', () {
@@ -146,8 +156,8 @@ void main() {
   );
 
   group('device tool static contract (W-D6)', () {
-    test('every kDeviceTools name resolves in the descriptor mirror', () {
-      for (final tool in kDeviceTools) {
+    test('every production device tool resolves in the descriptor mirror', () {
+      for (final tool in _productionDeviceTools()) {
         final d = lookupToolDescriptor(tool.name);
         expect(
           d,
@@ -168,20 +178,22 @@ void main() {
     });
 
     test('every descriptor is advertised by the device registry', () {
-      final advertised = defaultDeviceToolRegistry().names.toSet();
+      final advertised = _productionDeviceToolRegistry().names.toSet();
       for (final descriptor in allToolDescriptors) {
         expect(
           advertised,
           contains(descriptor.name),
           reason:
               '${descriptor.name} has ToolDescriptor metadata but is not '
-              'registered in kDeviceTools',
+              'registered in the production device tool registry',
         );
       }
     });
 
     test('registry advertises exactly the canonical set, sorted', () {
-      final names = defaultDeviceToolRegistry().schemas().map((s) => s.name);
+      final names = _productionDeviceToolRegistry().schemas().map(
+        (s) => s.name,
+      );
       expect(names, [
         'ask_user',
         'build_context',

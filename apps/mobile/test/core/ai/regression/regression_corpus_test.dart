@@ -13,9 +13,10 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/core/ai/intent/intent.dart';
 import 'package:naviwealth/core/ai/regression/regression_corpus.dart';
-import 'package:naviwealth/features/finance_ai_tools.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
 
 /// Tool names that have an inline domain renderer in
 /// `tool_invocation_renderers.dart`. Extracted at test-time so adding
@@ -37,6 +38,11 @@ Set<String> _renderersOnDisk() {
   }
   return out;
 }
+
+DeviceToolRegistry _productionDeviceToolRegistry() => DeviceToolRegistry([
+  ...kShellDeviceToolsCore,
+  for (final pack in kAllDomainPacks) ...pack.deviceTools,
+]);
 
 void main() {
   group('Wave 44 — regression corpus contract', () {
@@ -146,7 +152,7 @@ void main() {
     });
 
     test('every expected tool is advertised by the device registry', () {
-      final advertised = defaultDeviceToolRegistry().names.toSet();
+      final advertised = _productionDeviceToolRegistry().names.toSet();
       for (final p in regressionCorpus) {
         for (final tool in p.expectedTools) {
           expect(

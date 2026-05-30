@@ -64,7 +64,7 @@ class _PassiveIncomeContent extends ConsumerWidget {
         : colors.destructive;
 
     return SoftCard(
-      onPress: () => context.push(kDividendCenterPath),
+      onPress: () => context.push(AppRoutes.cashflowDividends),
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: SizedBox(
         height: 154,

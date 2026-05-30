@@ -122,42 +122,6 @@ class RecentSignal {
   }
 }
 
-/// Phase 4 placeholder; the type is defined now so the wire schema is
-/// stable when semantic memory ships.
-class SemanticHit {
-  const SemanticHit({
-    required this.source,
-    required this.title,
-    required this.excerpt,
-    required this.score,
-  });
-
-  final String source;
-  final String title;
-  final String excerpt;
-  final double score;
-
-  Map<String, Object?> toJson() => <String, Object?>{
-    'source': source,
-    'title': title,
-    'excerpt': excerpt,
-    'score': score,
-  };
-
-  factory SemanticHit.fromJson(Map<String, Object?> json) {
-    final src = json['source'];
-    final ttl = json['title'];
-    final exc = json['excerpt'];
-    final scr = json['score'];
-    return SemanticHit(
-      source: src is String ? src : '',
-      title: ttl is String ? ttl : '',
-      excerpt: exc is String ? exc : '',
-      score: scr is num ? scr.toDouble() : 0,
-    );
-  }
-}
-
 class DateRange {
   const DateRange({required this.fromInclusive, required this.toExclusive});
 

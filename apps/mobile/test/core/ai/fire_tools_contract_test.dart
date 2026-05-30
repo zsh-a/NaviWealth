@@ -1,7 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/intent/intent_policy.dart';
-import 'package:naviwealth/features/finance_ai_tools.dart';
+import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
+
+DeviceToolRegistry _productionDeviceToolRegistry() => DeviceToolRegistry([
+  ...kShellDeviceToolsCore,
+  for (final pack in kAllDomainPacks) ...pack.deviceTools,
+]);
 
 /// Static-contract test: every FIRE OS Phase-5 tool name must resolve in
 /// both the registry (dispatchable) and the descriptor table
@@ -20,14 +26,14 @@ void main() {
       'propose_fire_bucket_rule',
     ];
 
-    final registry = defaultDeviceToolRegistry();
+    final registry = _productionDeviceToolRegistry();
 
     test('all 8 tools registered in the device registry', () {
       for (final name in expectedTools) {
         expect(
           registry.lookup(name),
           isNotNull,
-          reason: 'tool $name is missing from kDeviceTools',
+          reason: 'tool $name is missing from the production device registry',
         );
       }
     });

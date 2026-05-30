@@ -10,8 +10,6 @@ import '../core/ai/contracts/intent.dart' show RiskLevel, kDomainFinance;
 import '../core/ai/contracts/privacy_budget.dart' show BudgetTier;
 import '../core/ai/contracts/tool_descriptor.dart';
 import '../core/ai/runtime/device/tools/device_tool.dart';
-import '../core/ai/runtime/device/tools/device_tool_registry.dart'
-    show DeviceToolRegistry, kShellDeviceToolsCore;
 import 'accounts/ai_tools/list_payment_accounts_tool.dart';
 import 'accounts/ai_tools/propose_account_create_tool.dart';
 import 'accounts/ai_tools/read_account_window_tool.dart';
@@ -31,7 +29,6 @@ import 'fire/ai_tools/get_fire_stress_tests_tool.dart';
 import 'fire/ai_tools/propose_fire_bucket_rule_tool.dart';
 import 'fire/ai_tools/propose_fire_plan_update_tool.dart';
 import 'fire/ai_tools/simulate_fire_plan_tool.dart';
-import 'health_ai_tools.dart' show kHealthDeviceTools;
 import 'home/ai_tools/get_net_worth_summary_tool.dart';
 import 'investment/ai_tools/breakdown_tools.dart';
 import 'investment/ai_tools/get_asset_allocation_tool.dart';
@@ -40,7 +37,6 @@ import 'investment/ai_tools/get_investment_performance_tool.dart';
 import 'investment/ai_tools/propose_asset_valuation_tool.dart';
 import 'investment/ai_tools/propose_trade_tool.dart';
 import 'investment/ai_tools/read_asset_window_tool.dart';
-import 'knowledge_ai_tools.dart' show kKnowledgeDeviceTools;
 import 'liabilities/ai_tools/propose_liability_payment_tool.dart';
 import 'options_income/ai_tools/get_options_income_opportunities_tool.dart';
 import 'options_income/ai_tools/get_options_strategy_profile_tool.dart';
@@ -95,17 +91,12 @@ const List<DeviceTool> kFinanceDeviceTools = <DeviceTool>[
   GetWheelLifecycleTool(),
 ];
 
-/// Shell-only tools — re-exported here so `bootstrap.dart` has a
-/// single import surface.
-const List<DeviceTool> kShellDeviceTools = kShellDeviceToolsCore;
-
 /// FinanceOS device-tool descriptors. Co-located with the tool list
 /// above — adding a Finance tool means one new file under
 /// `features/<feature>/ai_tools/`, one new line in
 /// [kFinanceDeviceTools], and one new entry here. Merged into
 /// [allToolDescriptors] by the cross-domain catalog.
-const Map<String, ToolDescriptor> kFinanceToolDescriptors =
-    <String, ToolDescriptor>{
+const kFinanceToolDescriptors = <String, ToolDescriptor>{
   // Accounts
   'list_payment_accounts': ToolDescriptor(
     name: 'list_payment_accounts',
@@ -404,21 +395,6 @@ const Map<String, ToolDescriptor> kFinanceToolDescriptors =
     domain: kDomainFinance,
   ),
 };
-
-/// Back-compat surface for tests that pre-date D-1.2's composition
-/// root. Production code reads `deviceToolsProvider` instead so each
-/// domain's contribution is observable. Includes every LifeOS domain
-/// today so the registry mirrors `allToolDescriptors`.
-const List<DeviceTool> kDeviceTools = <DeviceTool>[
-  ...kShellDeviceToolsCore,
-  ...kFinanceDeviceTools,
-  ...kHealthDeviceTools,
-  ...kKnowledgeDeviceTools,
-];
-
-/// Back-compat factory matching the pre-D-1.2 surface.
-DeviceToolRegistry defaultDeviceToolRegistry() =>
-    DeviceToolRegistry(kDeviceTools);
 
 /// FinanceOS system-prompt block. Appended onto [kDeviceSystemPromptBase]
 /// by `systemPromptBlocksProvider` when FinanceOS is active (always on
