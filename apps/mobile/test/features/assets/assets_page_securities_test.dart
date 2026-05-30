@@ -12,6 +12,8 @@ import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -90,6 +92,10 @@ Widget _wrap({
         (_) => Stream.value(physicalAssets),
       ),
       holdingsSnapshotProvider.overrideWith((_) async => holdings),
+      dashboardManualAssetValuationsProvider.overrideWith(
+        (_) => const AsyncValue.data(<ManualAssetValuation>[]),
+      ),
+      accountsStreamProvider.overrideWith((_) => Stream.value(const [])),
     ],
     child: MaterialApp.router(
       theme: AppTheme.light(),
