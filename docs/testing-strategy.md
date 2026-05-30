@@ -78,10 +78,14 @@ outbox) and the HLC stamper (`makeStubStamper()`, the sanctioned seam).
 Everything downstream is real: `accountsStreamProvider`,
 `dashboardSnapshotProvider`, the `DashboardAggregator`.
 
-Seed: `test/integration/account_net_worth_integration_test.dart` —
-creates an account through the real repository and asserts it surfaces
-through the live stream, plus the dashboard net-worth read model resolving
-against the real DB. Tagged `integration`. Headless (`flutter test`).
+Seeds (`test/integration/`, tagged `integration`, headless):
+- `account_net_worth_integration_test.dart` — creates an account through
+  the real repository, asserts it surfaces through the live stream, and
+  that the net-worth read model resolves to zero for an empty ledger.
+- `liability_net_worth_integration_test.dart` — the read model *reacts*:
+  a 120k CNY loan written through the real repository flows through the
+  generated amortization schedule → `LiabilitySummary` →
+  `DashboardAggregator`, driving net worth to -120k.
 
 ### Flow / Task (Page Objects, ~4%)
 `test/flow/` — boots the real `NaviWealthApp` (real router, shell, widgets)
@@ -175,7 +179,7 @@ real coverage.
 - ✅ Known-failing gate is now a monotonic ratchet (fixed-but-listed fails CI).
 - ✅ Flow layer seeded — `test/flow/` with Page Object Model + Task #1.
 - ✅ Integration layer seeded — `test/integration/` real-Drift harness +
-  account-persistence / net-worth read-model test.
+  account-persistence test + value-moving liability → net-worth test.
 - Both new layers run inside the existing `flutter test` job (tagged `flow`
   / `integration` in `dart_test.yaml`); no emulator required.
 
