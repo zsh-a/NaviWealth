@@ -38,6 +38,13 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings
       - run: cargo check --target wasm32-unknown-unknown --all-targets
+      - name: Run backend unit tests (native host target)
+        # The crate ships as a wasm32 Worker, but every `#[cfg(test)]`
+        # module is plain `#[test]` and the dependency tree compiles for
+        # the host target too (verified locally). Running on the host lets
+        # the JWT-domain-claim and sync LWW-conflict tests actually gate
+        # PRs — previously they compiled but never executed in CI.
+        run: cargo test
 
   deploy:
     needs: [check]
