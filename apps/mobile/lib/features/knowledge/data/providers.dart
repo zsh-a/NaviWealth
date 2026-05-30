@@ -12,9 +12,11 @@ import '../../../core/persistence/providers.dart';
 import '../../../core/sync/outbox_provider.dart';
 import '../../ai_chat/data/providers.dart' show deviceLlmClientProvider;
 import 'capture_classifier.dart';
+import 'inbox_triage_classifier.dart';
 import 'inbox_triage_repository.dart';
 import 'knowledge_repository.dart';
 import 'llm_capture_classifier.dart';
+import 'llm_inbox_triage_classifier.dart';
 
 /// Single Uuid instance shared by every KnowledgeOS writer / tool.
 /// Replaces a handful of per-file `_kUuid` / `kInboxTriageUuid`
@@ -29,10 +31,34 @@ final knowledgeRepositoryProvider = FutureProvider<KnowledgeRepository>((
   return KnowledgeRepository(db: db, outbox: outbox);
 });
 
-final inboxTriageRepositoryProvider =
-    FutureProvider<InboxTriageRepository>((ref) async {
+final inboxTriageRepositoryProvider = FutureProvider<InboxTriageRepository>((
+  ref,
+) async {
   final db = await ref.watch(appDatabaseProvider.future);
   return InboxTriageRepository(db: db);
+});
+
+/// Inbox-triage classifier seam (§14.2 "InboxTriageAgent LLM round-trip
+/// 替换 heuristic"). Returns the LLM-backed classifier when a device LLM
+/// profile is configured, the pure-Dart heuristic otherwise. The LLM
+/// path degrades silently to the same heuristic on any per-note failure
+/// (no profile / network / 8s timeout / parse / low confidence), so the
+/// no-LLM (Web / no key) path behaves byte-for-byte as before. Resolved
+/// by [InboxTriageAgent.run] via `ctx.ref` so the agent stays
+/// synchronously constructible.
+final inboxTriageClassifierProvider = FutureProvider<InboxTriageClassifier>((
+  ref,
+) async {
+  final logger = ref.watch(loggerProvider);
+  final client = ref.watch(deviceLlmClientProvider);
+  if (client == null) {
+    logger.i(
+      '[inbox-triage] classifier=heuristic — ${_diagnoseLlmUnavailable(ref)}',
+    );
+    return const HeuristicInboxTriageClassifier();
+  }
+  logger.i('[inbox-triage] classifier=llm model=${client.config.model}');
+  return LlmInboxTriageClassifier(client: client, logger: logger);
 });
 
 /// Capture classifier seam. Returns the LLM-driven classifier when a
