@@ -247,6 +247,7 @@ final dashboardSnapshotProvider = FutureProvider<DashboardSnapshot>((
   final manualList = await _manualAssetValuationsForHeader(ref);
   final physical = ref.watch(physicalAssetsListProvider);
   final liab = ref.watch(liabilitiesStreamProvider);
+  final liabilitySummaries = ref.watch(allLiabilitySummariesProvider);
   final assets = ref.watch(allAssetsStreamProvider);
   final holdings = ref.watch(holdingsSnapshotProvider);
   final rates = ref.watch(fxRatesStreamProvider);
@@ -260,26 +261,34 @@ final dashboardSnapshotProvider = FutureProvider<DashboardSnapshot>((
       liab.value ??
       await ref.watch(liabilitiesStreamProvider.future) ??
       const <Liability>[];
+  final assetList =
+      assets.value ??
+      await ref.watch(allAssetsStreamProvider.future) ??
+      const <Asset>[];
+  final holdingsByAsset =
+      holdings.value ??
+      await ref.watch(holdingsSnapshotProvider.future) ??
+      const <String, HoldingSnapshot>{};
+  final fxRows =
+      rates.value ?? await ref.watch(fxRatesStreamProvider.future) ?? const [];
+  final summaryMap =
+      liabilitySummaries.value ??
+      await ref.watch(allLiabilitySummariesProvider.future) ??
+      const <String, LiabilitySummary>{};
   final securities = _buildSecurityHoldings(
-    holdingsByAsset: holdings.value ?? const {},
-    assets: assets.value ?? const [],
+    holdingsByAsset: holdingsByAsset,
+    assets: assetList,
   );
-
-  final summaries = <LiabilitySummary>[];
-  for (final liability in liabList) {
-    final summary = ref.watch(liabilitySummaryProvider(liability.id)).value;
-    if (summary != null) summaries.add(summary);
-  }
 
   return runInIsolate(
     () => aggregateDashboard(
       baseCurrency: base,
       asOf: DateTime.now(),
-      fxRates: rates.value ?? const [],
+      fxRates: fxRows,
       manualAssets: manualList,
       physicalAssets: physicalList,
       liabilities: liabList,
-      liabilitySummaries: summaries,
+      liabilitySummaries: summaryMap.values,
       securitiesHoldings: securities,
     ),
   );
@@ -484,6 +493,24 @@ final dashboardLiabilitySchedulesProvider =
       return out;
     });
 
+Future<Map<String, List<AmortizationEntry>>> _liabilitySchedulesForTrend(
+  Ref ref,
+  List<Liability> liabilities,
+) async {
+  final out = <String, List<AmortizationEntry>>{};
+  for (final liability in liabilities) {
+    final schedule = ref.watch(
+      amortizationScheduleStreamProvider(liability.id),
+    );
+    out[liability.id] =
+        schedule.value ??
+        await ref.watch(
+          amortizationScheduleStreamProvider(liability.id).future,
+        );
+  }
+  return out;
+}
+
 /// Net-worth trend timeseries for the dashboard line chart, scoped to the
 /// selected [DashboardTimeRange]. Re-evaluates when the range changes or
 /// any upstream stream emits.
@@ -494,7 +521,6 @@ final dashboardTrendProvider = FutureProvider<DashboardTrend>((ref) async {
   final rates = ref.watch(fxRatesStreamProvider);
   final base = ref.watch(dashboardBaseCurrencyProvider);
   final range = ref.watch(dashboardTimeRangeProvider);
-  final schedules = ref.watch(dashboardLiabilitySchedulesProvider);
   final holdings = ref.watch(holdingsSnapshotProvider);
   final assets = ref.watch(allAssetsStreamProvider);
   final prices = ref.watch(dashboardPriceRowsProvider);
@@ -507,20 +533,35 @@ final dashboardTrendProvider = FutureProvider<DashboardTrend>((ref) async {
       liab.value ??
       await ref.watch(liabilitiesStreamProvider.future) ??
       const <Liability>[];
+  final schedules = await _liabilitySchedulesForTrend(ref, liabList);
+  final assetList =
+      assets.value ??
+      await ref.watch(allAssetsStreamProvider.future) ??
+      const <Asset>[];
+  final holdingsByAsset =
+      holdings.value ??
+      await ref.watch(holdingsSnapshotProvider.future) ??
+      const <String, HoldingSnapshot>{};
+  final priceRows =
+      prices.value ??
+      await ref.watch(dashboardPriceRowsProvider.future) ??
+      const <PriceRow>[];
+  final fxRows =
+      rates.value ?? await ref.watch(fxRatesStreamProvider.future) ?? const [];
   final securities = _buildSecurityHoldings(
-    holdingsByAsset: holdings.value ?? const {},
-    assets: assets.value ?? const [],
+    holdingsByAsset: holdingsByAsset,
+    assets: assetList,
   );
   final securityPrices = _buildSecurityPriceHistory(
-    assets: assets.value ?? const [],
-    priceRows: prices.value ?? const [],
+    assets: assetList,
+    priceRows: priceRows,
   );
 
   return runInIsolate(
     () => buildDashboardTrend(
       range: range,
       baseCurrency: base,
-      fxRates: rates.value ?? const [],
+      fxRates: fxRows,
       manualAssets: manualList,
       physicalAssets: physicalList,
       liabilities: liabList,
@@ -568,13 +609,24 @@ final dashboardHeaderMetricsProvider = FutureProvider<DashboardHeaderMetrics>((
 ) async {
   // Establish the same postings-derived invalidation edge as the dashboard
   // snapshot. The return service does the historical XIRR query below.
-  ref.watch(holdingsSnapshotProvider);
   final manualList = await _manualAssetValuationsForHeader(ref);
   final physicalList = await ref.watch(physicalAssetsListProvider.future);
   final liabList = await ref.watch(liabilitiesStreamProvider.future);
-  final converter = ref.watch(dashboardCurrencyConverterProvider);
+  final assetList = await ref.watch(allAssetsStreamProvider.future);
+  final holdingsByAsset = await ref.watch(holdingsSnapshotProvider.future);
+  final priceRows = await ref.watch(dashboardPriceRowsProvider.future);
+  final fxRows = await ref.watch(fxRatesStreamProvider.future);
+  final converter = FxRateCurrencyConverter(InMemoryFxRateLookup(fxRows));
   final base = ref.watch(dashboardBaseCurrencyProvider);
-  final schedules = ref.watch(dashboardLiabilitySchedulesProvider);
+  final schedules = await _liabilitySchedulesForTrend(ref, liabList);
+  final securities = _buildSecurityHoldings(
+    holdingsByAsset: holdingsByAsset,
+    assets: assetList,
+  );
+  final securityPrices = _buildSecurityPriceHistory(
+    assets: assetList,
+    priceRows: priceRows,
+  );
 
   final builder = DashboardTrendBuilder(
     converter: converter,
@@ -594,6 +646,8 @@ final dashboardHeaderMetricsProvider = FutureProvider<DashboardHeaderMetrics>((
       physicalAssets: physicalList,
       liabilities: liabList,
       liabilitySchedules: schedules,
+      securitiesHoldings: securities,
+      securityPrices: securityPrices,
     );
     return trend.points.isEmpty
         ? Money.zero(base)

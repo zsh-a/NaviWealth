@@ -8,6 +8,7 @@ import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import '../../../app/master_detail_layout.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../home/domain/dashboard_models.dart';
 import '../../investment/domain/models/holding_snapshot.dart';
 import '../physical/data/physical_asset.dart';
 import 'asset_list_row_widgets.dart';
@@ -39,6 +40,9 @@ class AssetsBody extends StatelessWidget {
     required this.manualAsync,
     required this.physicalAsync,
     required this.securitiesAsync,
+    required this.holdingsAsync,
+    required this.valuationsAsync,
+    required this.accountsAsync,
     required this.securities,
     required this.holdings,
     required this.valuationMap,
@@ -50,6 +54,9 @@ class AssetsBody extends StatelessWidget {
   final AsyncValue<List<Asset>> manualAsync;
   final AsyncValue<List<PhysicalAsset>> physicalAsync;
   final AsyncValue<List<Asset>> securitiesAsync;
+  final AsyncValue<Map<String, HoldingSnapshot>> holdingsAsync;
+  final AsyncValue<List<ManualAssetValuation>> valuationsAsync;
+  final AsyncValue<List<Account>> accountsAsync;
   final List<Asset> securities;
   final Map<String, HoldingSnapshot> holdings;
   final Map<String, Decimal> valuationMap;
@@ -62,7 +69,10 @@ class AssetsBody extends StatelessWidget {
     final loading =
         manualAsync.isLoading ||
         physicalAsync.isLoading ||
-        securitiesAsync.isLoading;
+        securitiesAsync.isLoading ||
+        holdingsAsync.isLoading ||
+        valuationsAsync.isLoading ||
+        accountsAsync.isLoading;
     return PageSkeletonShell<void>(
       skeleton: const AssetsListSkeleton(),
       isLoading: loading,
@@ -73,17 +83,22 @@ class AssetsBody extends StatelessWidget {
   Widget _resolveBody(BuildContext context) {
     if (manualAsync.isLoading ||
         physicalAsync.isLoading ||
-        securitiesAsync.isLoading) {
+        securitiesAsync.isLoading ||
+        holdingsAsync.isLoading ||
+        valuationsAsync.isLoading ||
+        accountsAsync.isLoading) {
       return const AssetsListSkeleton();
     }
-    final manualErr = manualAsync.hasError ? manualAsync.error : null;
-    final physicalErr = physicalAsync.hasError ? physicalAsync.error : null;
-    final securitiesErr = securitiesAsync.hasError
-        ? securitiesAsync.error
-        : null;
-    if (manualErr != null && physicalErr != null && securitiesErr != null) {
+    final loadError =
+        _firstError(manualAsync) ??
+        _firstError(physicalAsync) ??
+        _firstError(securitiesAsync) ??
+        _firstError(holdingsAsync) ??
+        _firstError(valuationsAsync) ??
+        _firstError(accountsAsync);
+    if (loadError != null) {
       return Center(
-        child: Text(AppLocalizations.of(context).assetsLoadError('$manualErr')),
+        child: Text(AppLocalizations.of(context).assetsLoadError('$loadError')),
       );
     }
     final manual = manualAsync.value ?? const <Asset>[];
@@ -113,6 +128,10 @@ class AssetsBody extends StatelessWidget {
         inMasterDetail: inMasterDetail,
       ),
     );
+  }
+
+  Object? _firstError(AsyncValue<Object?> value) {
+    return value.hasError ? value.error : null;
   }
 }
 
