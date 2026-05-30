@@ -71,6 +71,19 @@ class MemoryRuntime {
 
   Future<void> forget(String id) => memoryStore.deleteMemory(id);
 
+  /// Keep the derived memory rows for one domain source in sync with its
+  /// live source ids. Source tables are authoritative; memory rows are an
+  /// index and should disappear when a source row is soft-deleted or merged.
+  Future<void> forgetSourceExcept({
+    required String ownerUserId,
+    required String source,
+    required Set<String> keepSourceIds,
+  }) => memoryStore.deleteMemoriesBySourceExcept(
+    ownerUserId: ownerUserId,
+    source: source,
+    keepSourceIds: keepSourceIds,
+  );
+
   /// Mark [oldId] as ending now and write [newRecord] (typically with
   /// `validFrom = now`). Use to evolve a preference / rule without
   /// losing the prior version's history.

@@ -14,6 +14,8 @@ MemoryRecord _mem({
   required String id,
   MemoryKind kind = MemoryKind.episodic,
   String scope = 'options_trading',
+  String source = 'test',
+  String? sourceId,
   String title = '',
   String summary = '',
   Set<String> entities = const {},
@@ -27,7 +29,8 @@ MemoryRecord _mem({
     kind: kind,
     ownerUserId: _kOwner,
     scope: scope,
-    source: 'test',
+    source: source,
+    sourceId: sourceId,
     title: title.isEmpty ? id : title,
     summary: summary.isEmpty ? 'summary $id' : summary,
     payload: const {},
@@ -142,6 +145,25 @@ void main() {
       await rt.remember(_mem(id: 'a'));
       await rt.forget('a');
       expect(await rt.memoryCount, 0);
+    });
+
+    test('forgetSourceExcept prunes stale derived rows by sourceId', () async {
+      final rt = _runtime();
+      await rt.remember(_mem(id: 'keep', source: 'know:notes', sourceId: 'n1'));
+      await rt.remember(_mem(id: 'drop', source: 'know:notes', sourceId: 'n2'));
+      await rt.remember(
+        _mem(id: 'other', source: 'know:concepts', sourceId: 'c1'),
+      );
+
+      await rt.forgetSourceExcept(
+        ownerUserId: _kOwner,
+        source: 'know:notes',
+        keepSourceIds: const {'n1'},
+      );
+
+      expect(await rt.memoryStore.readMemory('keep'), isNotNull);
+      expect(await rt.memoryStore.readMemory('drop'), isNull);
+      expect(await rt.memoryStore.readMemory('other'), isNotNull);
     });
 
     test(

@@ -36,4 +36,5 @@ final memoryLayerBootstrapProvider = Provider<void>((ref) {
   ref.watch(knowledgeAssumptionMemoryIndexerProvider);
   ref.watch(knowledgeConceptMemoryIndexerProvider);
   ref.watch(knowledgeExperimentMemoryIndexerProvider);
+  ref.watch(knowledgeRoutineMemoryIndexerProvider);
 });

@@ -46,15 +46,11 @@ class SearchKnowledgeTool implements DeviceTool {
             'principle',
             'assumption',
             'experiment',
+            'routine',
           ],
         },
       },
-      'top_k': {
-        'type': 'integer',
-        'minimum': 1,
-        'maximum': 20,
-        'default': 8,
-      },
+      'top_k': {'type': 'integer', 'minimum': 1, 'maximum': 20, 'default': 8},
     },
     'required': <String>['query'],
   };
@@ -66,10 +62,7 @@ class SearchKnowledgeTool implements DeviceTool {
   ) async {
     final query = ((input['query'] as String?) ?? '').trim();
     if (query.isEmpty) {
-      return <String, Object?>{
-        'error': 'query 必填且非空。',
-        'code': 'bad_request',
-      };
+      return <String, Object?>{'error': 'query 必填且非空。', 'code': 'bad_request'};
     }
     final topK = (input['top_k'] is num)
         ? (input['top_k'] as num).toInt().clamp(1, 20)
