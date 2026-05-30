@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Expense {
 
- String get id; String get expenseAccountId; Decimal get amount; String get currency; DateTime get tradeDate; List<String> get tags; String? get note; SyncMeta get sync;
+ String get id; String get expenseAccountId; String? get fromAccountId; Decimal get amount; String get currency; DateTime get tradeDate; List<String> get tags; String? get note; SyncMeta get sync;
 /// Create a copy of Expense
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ExpenseCopyWith<Expense> get copyWith => _$ExpenseCopyWithImpl<Expense>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Expense&&(identical(other.id, id) || other.id == id)&&(identical(other.expenseAccountId, expenseAccountId) || other.expenseAccountId == expenseAccountId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.tradeDate, tradeDate) || other.tradeDate == tradeDate)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Expense&&(identical(other.id, id) || other.id == id)&&(identical(other.expenseAccountId, expenseAccountId) || other.expenseAccountId == expenseAccountId)&&(identical(other.fromAccountId, fromAccountId) || other.fromAccountId == fromAccountId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.tradeDate, tradeDate) || other.tradeDate == tradeDate)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,expenseAccountId,amount,currency,tradeDate,const DeepCollectionEquality().hash(tags),note,sync);
+int get hashCode => Object.hash(runtimeType,id,expenseAccountId,fromAccountId,amount,currency,tradeDate,const DeepCollectionEquality().hash(tags),note,sync);
 
 @override
 String toString() {
-  return 'Expense(id: $id, expenseAccountId: $expenseAccountId, amount: $amount, currency: $currency, tradeDate: $tradeDate, tags: $tags, note: $note, sync: $sync)';
+  return 'Expense(id: $id, expenseAccountId: $expenseAccountId, fromAccountId: $fromAccountId, amount: $amount, currency: $currency, tradeDate: $tradeDate, tags: $tags, note: $note, sync: $sync)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ExpenseCopyWith<$Res>  {
   factory $ExpenseCopyWith(Expense value, $Res Function(Expense) _then) = _$ExpenseCopyWithImpl;
 @useResult
 $Res call({
- String id, String expenseAccountId, Decimal amount, String currency, DateTime tradeDate, List<String> tags, String? note, SyncMeta sync
+ String id, String expenseAccountId, String? fromAccountId, Decimal amount, String currency, DateTime tradeDate, List<String> tags, String? note, SyncMeta sync
 });
 
 
@@ -62,11 +62,12 @@ class _$ExpenseCopyWithImpl<$Res>
 
 /// Create a copy of Expense
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? expenseAccountId = null,Object? amount = null,Object? currency = null,Object? tradeDate = null,Object? tags = null,Object? note = freezed,Object? sync = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? expenseAccountId = null,Object? fromAccountId = freezed,Object? amount = null,Object? currency = null,Object? tradeDate = null,Object? tags = null,Object? note = freezed,Object? sync = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,expenseAccountId: null == expenseAccountId ? _self.expenseAccountId : expenseAccountId // ignore: cast_nullable_to_non_nullable
-as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
+as String,fromAccountId: freezed == fromAccountId ? _self.fromAccountId : fromAccountId // ignore: cast_nullable_to_non_nullable
+as String?,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
 as Decimal,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as String,tradeDate: null == tradeDate ? _self.tradeDate : tradeDate // ignore: cast_nullable_to_non_nullable
 as DateTime,tags: null == tags ? _self.tags : tags // ignore: cast_nullable_to_non_nullable
@@ -166,10 +167,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String expenseAccountId,  Decimal amount,  String currency,  DateTime tradeDate,  List<String> tags,  String? note,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String expenseAccountId,  String? fromAccountId,  Decimal amount,  String currency,  DateTime tradeDate,  List<String> tags,  String? note,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Expense() when $default != null:
-return $default(_that.id,_that.expenseAccountId,_that.amount,_that.currency,_that.tradeDate,_that.tags,_that.note,_that.sync);case _:
+return $default(_that.id,_that.expenseAccountId,_that.fromAccountId,_that.amount,_that.currency,_that.tradeDate,_that.tags,_that.note,_that.sync);case _:
   return orElse();
 
 }
@@ -187,10 +188,10 @@ return $default(_that.id,_that.expenseAccountId,_that.amount,_that.currency,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String expenseAccountId,  Decimal amount,  String currency,  DateTime tradeDate,  List<String> tags,  String? note,  SyncMeta sync)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String expenseAccountId,  String? fromAccountId,  Decimal amount,  String currency,  DateTime tradeDate,  List<String> tags,  String? note,  SyncMeta sync)  $default,) {final _that = this;
 switch (_that) {
 case _Expense():
-return $default(_that.id,_that.expenseAccountId,_that.amount,_that.currency,_that.tradeDate,_that.tags,_that.note,_that.sync);case _:
+return $default(_that.id,_that.expenseAccountId,_that.fromAccountId,_that.amount,_that.currency,_that.tradeDate,_that.tags,_that.note,_that.sync);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -207,10 +208,10 @@ return $default(_that.id,_that.expenseAccountId,_that.amount,_that.currency,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String expenseAccountId,  Decimal amount,  String currency,  DateTime tradeDate,  List<String> tags,  String? note,  SyncMeta sync)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String expenseAccountId,  String? fromAccountId,  Decimal amount,  String currency,  DateTime tradeDate,  List<String> tags,  String? note,  SyncMeta sync)?  $default,) {final _that = this;
 switch (_that) {
 case _Expense() when $default != null:
-return $default(_that.id,_that.expenseAccountId,_that.amount,_that.currency,_that.tradeDate,_that.tags,_that.note,_that.sync);case _:
+return $default(_that.id,_that.expenseAccountId,_that.fromAccountId,_that.amount,_that.currency,_that.tradeDate,_that.tags,_that.note,_that.sync);case _:
   return null;
 
 }
@@ -222,11 +223,12 @@ return $default(_that.id,_that.expenseAccountId,_that.amount,_that.currency,_tha
 
 
 class _Expense implements Expense {
-  const _Expense({required this.id, required this.expenseAccountId, required this.amount, required this.currency, required this.tradeDate, final  List<String> tags = const <String>[], this.note, required this.sync}): _tags = tags;
+  const _Expense({required this.id, required this.expenseAccountId, this.fromAccountId, required this.amount, required this.currency, required this.tradeDate, final  List<String> tags = const <String>[], this.note, required this.sync}): _tags = tags;
   
 
 @override final  String id;
 @override final  String expenseAccountId;
+@override final  String? fromAccountId;
 @override final  Decimal amount;
 @override final  String currency;
 @override final  DateTime tradeDate;
@@ -250,16 +252,16 @@ _$ExpenseCopyWith<_Expense> get copyWith => __$ExpenseCopyWithImpl<_Expense>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Expense&&(identical(other.id, id) || other.id == id)&&(identical(other.expenseAccountId, expenseAccountId) || other.expenseAccountId == expenseAccountId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.tradeDate, tradeDate) || other.tradeDate == tradeDate)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Expense&&(identical(other.id, id) || other.id == id)&&(identical(other.expenseAccountId, expenseAccountId) || other.expenseAccountId == expenseAccountId)&&(identical(other.fromAccountId, fromAccountId) || other.fromAccountId == fromAccountId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.tradeDate, tradeDate) || other.tradeDate == tradeDate)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,expenseAccountId,amount,currency,tradeDate,const DeepCollectionEquality().hash(_tags),note,sync);
+int get hashCode => Object.hash(runtimeType,id,expenseAccountId,fromAccountId,amount,currency,tradeDate,const DeepCollectionEquality().hash(_tags),note,sync);
 
 @override
 String toString() {
-  return 'Expense(id: $id, expenseAccountId: $expenseAccountId, amount: $amount, currency: $currency, tradeDate: $tradeDate, tags: $tags, note: $note, sync: $sync)';
+  return 'Expense(id: $id, expenseAccountId: $expenseAccountId, fromAccountId: $fromAccountId, amount: $amount, currency: $currency, tradeDate: $tradeDate, tags: $tags, note: $note, sync: $sync)';
 }
 
 
@@ -270,7 +272,7 @@ abstract mixin class _$ExpenseCopyWith<$Res> implements $ExpenseCopyWith<$Res> {
   factory _$ExpenseCopyWith(_Expense value, $Res Function(_Expense) _then) = __$ExpenseCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String expenseAccountId, Decimal amount, String currency, DateTime tradeDate, List<String> tags, String? note, SyncMeta sync
+ String id, String expenseAccountId, String? fromAccountId, Decimal amount, String currency, DateTime tradeDate, List<String> tags, String? note, SyncMeta sync
 });
 
 
@@ -287,11 +289,12 @@ class __$ExpenseCopyWithImpl<$Res>
 
 /// Create a copy of Expense
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? expenseAccountId = null,Object? amount = null,Object? currency = null,Object? tradeDate = null,Object? tags = null,Object? note = freezed,Object? sync = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? expenseAccountId = null,Object? fromAccountId = freezed,Object? amount = null,Object? currency = null,Object? tradeDate = null,Object? tags = null,Object? note = freezed,Object? sync = null,}) {
   return _then(_Expense(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,expenseAccountId: null == expenseAccountId ? _self.expenseAccountId : expenseAccountId // ignore: cast_nullable_to_non_nullable
-as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
+as String,fromAccountId: freezed == fromAccountId ? _self.fromAccountId : fromAccountId // ignore: cast_nullable_to_non_nullable
+as String?,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
 as Decimal,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as String,tradeDate: null == tradeDate ? _self.tradeDate : tradeDate // ignore: cast_nullable_to_non_nullable
 as DateTime,tags: null == tags ? _self._tags : tags // ignore: cast_nullable_to_non_nullable

@@ -136,6 +136,22 @@ final fireStateProvider = Provider<AsyncValue<FireState>>((ref) {
   final fireView = ref.watch(fireDashboardViewProvider);
   final now = ref.watch(fireNowProvider);
 
+  if (snapshotAsync.isLoading || summaryAsync.isLoading) {
+    return const AsyncValue.loading();
+  }
+  if (snapshotAsync.hasError) {
+    return AsyncValue.error(
+      snapshotAsync.error!,
+      snapshotAsync.stackTrace ?? StackTrace.current,
+    );
+  }
+  if (summaryAsync.hasError) {
+    return AsyncValue.error(
+      summaryAsync.error!,
+      summaryAsync.stackTrace ?? StackTrace.current,
+    );
+  }
+
   return snapshotAsync.when(
     loading: () => const AsyncValue.loading(),
     error: (e, st) => AsyncValue.error(e, st),
@@ -151,11 +167,7 @@ final fireStateProvider = Provider<AsyncValue<FireState>>((ref) {
 
       final investable = _computeInvestableAssets(snapshot);
       final liquid = _computeLiquidAssets(snapshot);
-
-      Money? trailing;
-      summaryAsync.whenData((summary) {
-        trailing = trailingAnnualSpend(summary, now: now);
-      });
+      final trailing = trailingAnnualSpend(summaryAsync.requireValue, now: now);
 
       final allocation = ref
           .watch(fireBucketAllocationProvider)

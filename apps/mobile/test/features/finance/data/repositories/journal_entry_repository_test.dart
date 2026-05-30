@@ -1,7 +1,9 @@
 import 'package:decimal/decimal.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/invariants.dart';
@@ -279,6 +281,38 @@ void main() {
     });
   });
 
+  group('watchExpenses', () {
+    test('projects the paying account from sibling postings', () async {
+      await _insertAccount(
+        db,
+        id: 'cash',
+        side: AccountSide.asset,
+        type: AccountCategory.cash,
+      );
+      await _insertAccount(
+        db,
+        id: 'food',
+        side: AccountSide.expense,
+        type: AccountCategory.asset,
+      );
+      await repo.create(
+        entry: JournalEntryDraft(
+          id: 'je-expense',
+          date: DateTime.utc(2026, 5, 1),
+          narration: 'Lunch',
+        ),
+        postings: [cashLeg('food', '12.50'), cashLeg('cash', '-12.50')],
+      );
+
+      final expenses = await repo.watchExpenses().first;
+
+      expect(expenses, hasLength(1));
+      expect(expenses.single.expenseAccountId, 'food');
+      expect(expenses.single.fromAccountId, 'cash');
+      expect(expenses.single.amount, Decimal.parse('12.50'));
+    });
+  });
+
   group('queryActivityFeed', () {
     test('uses SQL-backed date/account filters and keyset ordering', () async {
       await repo.create(
@@ -350,4 +384,27 @@ void main() {
       expect(page.hasMore, isFalse);
     });
   });
+}
+
+Future<void> _insertAccount(
+  AppDatabase db, {
+  required String id,
+  required AccountSide side,
+  required AccountCategory type,
+}) {
+  return db
+      .into(db.accounts)
+      .insert(
+        AccountsCompanion.insert(
+          id: id,
+          type: type,
+          name: id,
+          currency: 'USD',
+          category: Value(side),
+          ownerUserId: 'u-test',
+          updatedAt: DateTime.utc(2026),
+          updatedByDevice: 'dev-test',
+          hlc: const Hlc(wallMillis: 1, counter: 0, nodeId: 'dev-test'),
+        ),
+      );
 }

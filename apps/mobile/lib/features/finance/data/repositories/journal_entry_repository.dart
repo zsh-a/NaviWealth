@@ -415,12 +415,32 @@ class JournalEntryRepository {
               mode: OrderingMode.desc,
             ),
           ]);
-    return query.watch().map((rows) {
+    return query.watch().asyncMap((rows) async {
+      final entryIds = {
+        for (final row in rows) row.readTable(_db.journalEntries).id,
+      };
+      final postingsByEntryId = <String, List<PostingRow>>{};
+      if (entryIds.isNotEmpty) {
+        final postings =
+            await (_db.select(_db.postings)
+                  ..where((t) => t.deletedAt.isNull())
+                  ..where((t) => t.journalEntryId.isIn(entryIds)))
+                .get();
+        for (final posting in postings) {
+          postingsByEntryId
+              .putIfAbsent(posting.journalEntryId, () => <PostingRow>[])
+              .add(posting);
+        }
+      }
       final out = <Expense>[];
       for (final row in rows) {
         final jeRow = row.readTable(_db.journalEntries);
         final postingRow = row.readTable(_db.postings);
-        final e = _postingToExpense(jeRow, postingRow);
+        final e = _postingToExpense(
+          jeRow,
+          postingRow,
+          postingsByEntryId[jeRow.id] ?? const <PostingRow>[],
+        );
         if (e != null) out.add(e);
       }
       return out;
@@ -428,12 +448,21 @@ class JournalEntryRepository {
   }
 
   /// Maps a JE + its expense-leg posting to an [Expense] domain object.
-  Expense? _postingToExpense(JournalEntryRow jeRow, PostingRow postingRow) {
+  Expense? _postingToExpense(
+    JournalEntryRow jeRow,
+    PostingRow postingRow,
+    List<PostingRow> siblingPostings,
+  ) {
     final tagIds = (jsonDecode(jeRow.tagIdsJson) as List<dynamic>)
         .cast<String>();
+    final counterPosting = _expenseCounterPosting(
+      expensePosting: postingRow,
+      siblingPostings: siblingPostings,
+    );
     return Expense(
       id: jeRow.id,
       expenseAccountId: postingRow.accountId,
+      fromAccountId: counterPosting?.accountId,
       amount: postingRow.units.abs(),
       currency: postingRow.unit,
       tradeDate: jeRow.date,
@@ -447,6 +476,25 @@ class JournalEntryRepository {
         deletedAt: jeRow.deletedAt,
       ),
     );
+  }
+
+  PostingRow? _expenseCounterPosting({
+    required PostingRow expensePosting,
+    required List<PostingRow> siblingPostings,
+  }) {
+    for (final posting in siblingPostings) {
+      if (posting.accountId == expensePosting.accountId) continue;
+      if (posting.unit != expensePosting.unit) continue;
+      if (posting.units < Decimal.zero) return posting;
+    }
+    for (final posting in siblingPostings) {
+      if (posting.accountId == expensePosting.accountId) continue;
+      if (posting.units < Decimal.zero) return posting;
+    }
+    for (final posting in siblingPostings) {
+      if (posting.accountId != expensePosting.accountId) return posting;
+    }
+    return null;
   }
 
   // ---------- Writes ----------

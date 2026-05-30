@@ -99,7 +99,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
     return all.where((e) {
       if (_filters.fromAccountId != null &&
           _filters.fromAccountId!.isNotEmpty) {
-        // fromAccountId is not on the Expense model; skip this filter
+        if (e.fromAccountId != _filters.fromAccountId) return false;
       }
       if (_filters.expenseAccountId != null &&
           e.expenseAccountId != _filters.expenseAccountId) {

@@ -37,8 +37,8 @@ class RebalanceEngine {
     final actualWeights = _computeActualWeights(snapshot, totalAssets);
     final drifts = _computeDrifts(actualWeights, target);
     final trades = _generateTrades(drifts, totalAssets, target);
-    final fees = _estimateFees(trades);
-    final taxes = _estimateTaxes(trades);
+    final fees = _estimateFees(trades, totalAssets.currency);
+    final taxes = _estimateTaxes(trades, totalAssets.currency);
     final driftBefore = _overallDrift(drifts);
     final driftAfter = _estimateDriftAfter(trades, totalAssets, target);
 
@@ -154,9 +154,9 @@ class RebalanceEngine {
     return trades;
   }
 
-  Money _estimateFees(List<SuggestedTrade> trades) {
+  Money _estimateFees(List<SuggestedTrade> trades, String fallbackCurrency) {
     if (trades.isEmpty) {
-      return Money.zero(trades.isEmpty ? 'CNY' : trades.first.amount.currency);
+      return Money.zero(fallbackCurrency);
     }
     final currency = trades.first.amount.currency;
     var totalFee = Decimal.zero;
@@ -167,9 +167,9 @@ class RebalanceEngine {
     return Money(totalFee, currency);
   }
 
-  Money _estimateTaxes(List<SuggestedTrade> trades) {
+  Money _estimateTaxes(List<SuggestedTrade> trades, String fallbackCurrency) {
     if (trades.isEmpty) {
-      return Money.zero(trades.isEmpty ? 'CNY' : trades.first.amount.currency);
+      return Money.zero(fallbackCurrency);
     }
     final currency = trades.first.amount.currency;
     var totalTax = Decimal.zero;
@@ -197,7 +197,8 @@ class RebalanceEngine {
     // After perfect rebalance, drift → 0. Estimate with a small residual
     // due to rounding and fee drag.
     final feeDrag =
-        _estimateFees(trades).amount.toDouble() / totalAssets.amount.toDouble();
+        _estimateFees(trades, totalAssets.currency).amount.toDouble() /
+        totalAssets.amount.toDouble();
     return feeDrag;
   }
 }
