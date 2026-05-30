@@ -335,13 +335,16 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   unawaited(
     container.read(health_agent_providers.pendingBriefingRunProvider.future),
   );
-  if (container.read(core_auth.authSessionProvider) != null) {
-    unawaited(
-      container.read(
-        recurringMaterialiseDueProvider(DateTime.now().toUtc()).future,
-      ),
-    );
-  }
+  // Eager startup catch-up for due recurring transactions. This is a
+  // local-first finance job (it writes through the mutation stamper /
+  // journal repo, no cloud session needed — the same provider runs
+  // ungated from Home / CashFlow), so it must fire in local-only mode
+  // too, not just when a cloud session exists.
+  unawaited(
+    container.read(
+      recurringMaterialiseDueProvider(DateTime.now().toUtc()).future,
+    ),
+  );
 
   return container;
 }
