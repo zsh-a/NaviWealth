@@ -160,13 +160,13 @@ void main() {
 
     test('mobile descriptor catalog carries active device tools', () {
       // 3 shell (query_memory, build_context, ask_user) + 35 FinanceOS +
-      // 4 HealthOS + 16 KnowledgeOS = 58. `ask_user` is the structured
+      // 5 HealthOS + 16 KnowledgeOS = 59. `ask_user` is the structured
       // decision-point tool (Claude-Code-style interactive choices). Each
       // LifeOS domain co-locates its descriptors with its tool barrel
       // (`kShellToolDescriptors`, `kFinanceToolDescriptors`,
       // `kHealthToolDescriptors`, `kKnowledgeToolDescriptors`); the union
       // here is derived in `tool_descriptor_catalog.dart`.
-      expect(allToolDescriptors, hasLength(58));
+      expect(allToolDescriptors, hasLength(59));
       expect(
         lookupToolDescriptor('propose_options_profile_update')?.sideEffect,
         SideEffect.deviceLocalWrite,
