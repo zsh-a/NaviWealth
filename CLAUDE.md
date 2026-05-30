@@ -7,7 +7,9 @@ Read these before changing architecture or cross-domain code:
 - `docs/lifeos-architecture-northstar.md`: boundaries and non-goals.
 - `docs/lifeos-shell.md`: cross-domain shell, domain registration, AI, sync, memory, persistence.
 - `docs/lifeos-decision-2026-05-24.md`: ADR that started Phase D and selected HealthOS as the second domain.
-- Domain SSOTs as needed: `docs/healthos-domain.md`, `docs/knowledgeos-domain.md`, `docs/roadmap-next.md`.
+- Roadmaps and domain SSOTs as needed: `docs/roadmap-lifeos.md`,
+  `docs/roadmap-finance.md`, `docs/healthos-domain.md`,
+  `docs/knowledgeos-domain.md`.
 
 ## Current Domains
 
