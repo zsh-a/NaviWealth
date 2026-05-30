@@ -15,7 +15,9 @@ import 'package:go_router/go_router.dart';
 import '../../../app/route_paths.dart';
 import '../../../app/shell_chrome.dart';
 import '../../../core/sync/mutation_context.dart';
+import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
+import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_decision_writer.dart';
@@ -252,35 +254,100 @@ class _LibraryList extends ConsumerWidget {
               emptyIcon: Icons.alt_route_outlined,
               emptyTitle: '还没有 Decision',
               emptyMessage: '点右下角 + 新建 Decision，记录第一条值得复盘的判断。',
-              tileBuilder: _buildDecisionTile,
+              tileBuilder: (context, d) => _buildDecisionTile(
+                context,
+                d,
+                deleteButton: _DeleteEntryButton(
+                  onPressed: () => _deleteEntry(
+                    context: context,
+                    ref: ref,
+                    repo: repo,
+                    kind: KnowledgeEntryKind.decision,
+                    id: d.id,
+                    title: d.question,
+                  ),
+                ),
+              ),
             ),
             _LibrarySegment.notes => _SegmentList<KnowledgeNote>(
               stream: repo.watchNotes(ownerUserId: owner),
               emptyIcon: Icons.notes_outlined,
               emptyTitle: '资料库里还没有 Note',
               emptyMessage: 'Note 在收件箱录入；这里只做浏览。',
-              tileBuilder: _buildNoteTile,
+              tileBuilder: (context, n) => _buildNoteTile(
+                context,
+                n,
+                deleteButton: _DeleteEntryButton(
+                  onPressed: () => _deleteEntry(
+                    context: context,
+                    ref: ref,
+                    repo: repo,
+                    kind: KnowledgeEntryKind.note,
+                    id: n.id,
+                    title: n.title.isEmpty ? '(无标题)' : n.title,
+                  ),
+                ),
+              ),
             ),
             _LibrarySegment.concepts => _SegmentList<KnowledgeConcept>(
               stream: repo.watchConcepts(ownerUserId: owner),
               emptyIcon: Icons.account_tree_outlined,
               emptyTitle: '还没有 Concept 节点',
               emptyMessage: 'Concept 用于 [[soft links]] 和 AI 关联。',
-              tileBuilder: _buildConceptTile,
+              tileBuilder: (context, c) => _buildConceptTile(
+                context,
+                c,
+                deleteButton: _DeleteEntryButton(
+                  onPressed: () => _deleteEntry(
+                    context: context,
+                    ref: ref,
+                    repo: repo,
+                    kind: KnowledgeEntryKind.concept,
+                    id: c.id,
+                    title: c.name,
+                  ),
+                ),
+              ),
             ),
             _LibrarySegment.experiments => _SegmentList<KnowledgeExperiment>(
               stream: repo.watchExperiments(ownerUserId: owner),
               emptyIcon: Icons.science_outlined,
               emptyTitle: '没有进行中的 Experiment',
               emptyMessage: 'Experiment 通常挂在一条待验证的 Assumption 上。',
-              tileBuilder: _buildExperimentTile,
+              tileBuilder: (context, e) => _buildExperimentTile(
+                context,
+                e,
+                deleteButton: _DeleteEntryButton(
+                  onPressed: () => _deleteEntry(
+                    context: context,
+                    ref: ref,
+                    repo: repo,
+                    kind: KnowledgeEntryKind.experiment,
+                    id: e.id,
+                    title: e.hypothesis,
+                  ),
+                ),
+              ),
             ),
             _LibrarySegment.routines => _SegmentList<KnowledgeRoutine>(
               stream: repo.watchRoutines(ownerUserId: owner),
               emptyIcon: Icons.event_repeat_outlined,
               emptyTitle: '还没有 Routine',
               emptyMessage: '定期提醒（例如「港卡每 6 个月活跃一次」）。新建后 AI 会在到期前主动提示。',
-              tileBuilder: _buildRoutineTile,
+              tileBuilder: (context, r) => _buildRoutineTile(
+                context,
+                r,
+                deleteButton: _DeleteEntryButton(
+                  onPressed: () => _deleteEntry(
+                    context: context,
+                    ref: ref,
+                    repo: repo,
+                    kind: KnowledgeEntryKind.routine,
+                    id: r.id,
+                    title: r.statement,
+                  ),
+                ),
+              ),
             ),
           },
         );
@@ -332,7 +399,74 @@ class _SegmentList<T> extends StatelessWidget {
   }
 }
 
-Widget _buildDecisionTile(BuildContext context, KnowledgeDecision d) {
+class _DeleteEntryButton extends StatelessWidget {
+  const _DeleteEntryButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return FTooltip(
+      tipBuilder: (_, _) => const Text('删除'),
+      child: FButton.icon(
+        variant: FButtonVariant.ghost,
+        onPress: onPressed,
+        child: Icon(
+          FLucideIcons.trash2,
+          size: 16,
+          color: context.theme.colors.destructive,
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> _deleteEntry({
+  required BuildContext context,
+  required WidgetRef ref,
+  required KnowledgeRepository repo,
+  required KnowledgeEntryKind kind,
+  required String id,
+  required String title,
+}) async {
+  final confirmed = await showConfirmDialog(
+    context: context,
+    title: const Text('删除条目？'),
+    body: Text('“$title” 会从资料库移除，并在下次索引同步后从 AI 记忆中清理。'),
+    confirmLabel: '删除',
+    destructive: true,
+  );
+  if (confirmed != true) return;
+
+  try {
+    final stamper = await ref.read(mutationStamperProvider.future);
+    final stamp = await stamper.stamp();
+    await repo.deleteEntry(
+      kind: kind,
+      id: id,
+      sync: SyncMeta(
+        ownerUserId: stamp.ownerUserId,
+        updatedAt: stamp.now,
+        updatedByDevice: stamp.deviceId,
+        hlc: stamp.hlc,
+        deletedAt: stamp.now,
+      ),
+    );
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.success, '已删除');
+    }
+  } catch (e) {
+    if (context.mounted) {
+      AppMessenger.show(context, ToastKind.error, '删除失败：$e');
+    }
+  }
+}
+
+Widget _buildDecisionTile(
+  BuildContext context,
+  KnowledgeDecision d, {
+  required Widget deleteButton,
+}) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
   return GestureDetector(
@@ -347,6 +481,8 @@ Widget _buildDecisionTile(BuildContext context, KnowledgeDecision d) {
         mainAxisSize: MainAxisSize.min,
         children: [
           KnowledgeStatusBadge(label: d.status.wire),
+          const SizedBox(width: AppSpacing.s4),
+          deleteButton,
           const SizedBox(width: AppSpacing.s4),
           Icon(
             FLucideIcons.chevronRight,
@@ -373,11 +509,16 @@ Widget _buildDecisionTile(BuildContext context, KnowledgeDecision d) {
   );
 }
 
-Widget _buildNoteTile(BuildContext context, KnowledgeNote n) {
+Widget _buildNoteTile(
+  BuildContext context,
+  KnowledgeNote n, {
+  required Widget deleteButton,
+}) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
   return KnowledgeSection.item(
     title: n.title.isEmpty ? '(无标题)' : n.title,
+    trailing: deleteButton,
     children: [
       if (n.bodyMd.isNotEmpty)
         Text(
@@ -388,7 +529,11 @@ Widget _buildNoteTile(BuildContext context, KnowledgeNote n) {
   );
 }
 
-Widget _buildConceptTile(BuildContext context, KnowledgeConcept c) {
+Widget _buildConceptTile(
+  BuildContext context,
+  KnowledgeConcept c, {
+  required Widget deleteButton,
+}) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
   return GestureDetector(
@@ -399,10 +544,17 @@ Widget _buildConceptTile(BuildContext context, KnowledgeConcept c) {
     ),
     child: KnowledgeSection.item(
       title: c.name,
-      trailing: Icon(
-        FLucideIcons.chevronRight,
-        size: 14,
-        color: colors.mutedForeground,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          deleteButton,
+          const SizedBox(width: AppSpacing.s4),
+          Icon(
+            FLucideIcons.chevronRight,
+            size: 14,
+            color: colors.mutedForeground,
+          ),
+        ],
       ),
       children: [
         if (c.summaryMd.isNotEmpty)
@@ -415,7 +567,11 @@ Widget _buildConceptTile(BuildContext context, KnowledgeConcept c) {
   );
 }
 
-Widget _buildExperimentTile(BuildContext context, KnowledgeExperiment e) {
+Widget _buildExperimentTile(
+  BuildContext context,
+  KnowledgeExperiment e, {
+  required Widget deleteButton,
+}) {
   final colors = context.theme.colors;
   return GestureDetector(
     behavior: HitTestBehavior.opaque,
@@ -430,6 +586,8 @@ Widget _buildExperimentTile(BuildContext context, KnowledgeExperiment e) {
         children: [
           KnowledgeStatusBadge(label: e.status.wire),
           const SizedBox(width: AppSpacing.s4),
+          deleteButton,
+          const SizedBox(width: AppSpacing.s4),
           Icon(
             FLucideIcons.chevronRight,
             size: 14,
@@ -442,7 +600,11 @@ Widget _buildExperimentTile(BuildContext context, KnowledgeExperiment e) {
   );
 }
 
-Widget _buildRoutineTile(BuildContext context, KnowledgeRoutine r) {
+Widget _buildRoutineTile(
+  BuildContext context,
+  KnowledgeRoutine r, {
+  required Widget deleteButton,
+}) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
   final now = DateTime.now();
@@ -455,7 +617,14 @@ Widget _buildRoutineTile(BuildContext context, KnowledgeRoutine r) {
   final dueColor = days < 0 ? colors.destructive : colors.mutedForeground;
   return KnowledgeSection.item(
     title: r.statement,
-    trailing: KnowledgeStatusBadge(label: r.status.wire),
+    trailing: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        KnowledgeStatusBadge(label: r.status.wire),
+        const SizedBox(width: AppSpacing.s4),
+        deleteButton,
+      ],
+    ),
     children: [
       Text(
         '$dueLabel · 每 ${r.intervalDays} 天 · ${r.scope}',

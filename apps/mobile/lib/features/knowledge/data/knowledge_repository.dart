@@ -14,6 +14,20 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 
 import '../domain/knowledge_models.dart';
 
+enum KnowledgeEntryKind {
+  note('knowledge_notes'),
+  principle('knowledge_principles'),
+  assumption('knowledge_assumptions'),
+  decision('knowledge_decisions'),
+  concept('knowledge_concepts'),
+  experiment('knowledge_experiments'),
+  routine('knowledge_routines');
+
+  const KnowledgeEntryKind(this.tableName);
+
+  final String tableName;
+}
+
 class KnowledgeRepository {
   KnowledgeRepository({required AppDatabase db, required OutboxStore outbox})
     : _db = db,
@@ -38,6 +52,51 @@ class KnowledgeRepository {
       await _outbox.enqueue(table: tableName, rowId: rowId);
     });
   }
+
+  /// Soft-delete one KnowledgeOS row using the shared sync columns.
+  ///
+  /// This is intentionally type-agnostic: every `knowledge_*` table carries
+  /// the same `SyncableTable` metadata, so Library UI delete can stay one
+  /// path while still writing a tombstone peers can sync.
+  Future<void> deleteEntry({
+    required KnowledgeEntryKind kind,
+    required String id,
+    required SyncMeta sync,
+  }) async {
+    final deletedAt = sync.deletedAt ?? sync.updatedAt;
+    await _db.transaction(() async {
+      final changed = await _db.customUpdate(
+        '''
+UPDATE ${kind.tableName}
+SET updated_at = ?, updated_by_device = ?, hlc = ?, deleted_at = ?
+WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
+''',
+        variables: [
+          Variable<DateTime>(sync.updatedAt),
+          Variable<String>(sync.updatedByDevice),
+          Variable<String>(sync.hlc.toString()),
+          Variable<DateTime>(deletedAt),
+          Variable<String>(id),
+          Variable<String>(sync.ownerUserId),
+        ],
+        updates: {_tableFor(kind)},
+      );
+      if (changed > 0) {
+        await _outbox.enqueue(table: kind.tableName, rowId: id);
+      }
+    });
+  }
+
+  TableInfo<Table, Object?> _tableFor(KnowledgeEntryKind kind) =>
+      switch (kind) {
+        KnowledgeEntryKind.note => _db.knowledgeNotes,
+        KnowledgeEntryKind.principle => _db.knowledgePrinciples,
+        KnowledgeEntryKind.assumption => _db.knowledgeAssumptions,
+        KnowledgeEntryKind.decision => _db.knowledgeDecisions,
+        KnowledgeEntryKind.concept => _db.knowledgeConcepts,
+        KnowledgeEntryKind.experiment => _db.knowledgeExperiments,
+        KnowledgeEntryKind.routine => _db.knowledgeRoutines,
+      };
 
   // ---------- Notes ----------
 
@@ -283,7 +342,8 @@ class KnowledgeRepository {
       ..where((t) => t.deletedAt.isNull());
     if (statuses != null && statuses.isNotEmpty) {
       q.where(
-        (t) => t.status.isIn(statuses.map((s) => s.wire).toList(growable: false)),
+        (t) =>
+            t.status.isIn(statuses.map((s) => s.wire).toList(growable: false)),
       );
     }
     q
@@ -469,9 +529,7 @@ class KnowledgeRepository {
 
   static const String _routinesTable = 'knowledge_routines';
 
-  Stream<List<KnowledgeRoutine>> watchRoutines({
-    required String ownerUserId,
-  }) {
+  Stream<List<KnowledgeRoutine>> watchRoutines({required String ownerUserId}) {
     final q = _db.select(_db.knowledgeRoutines)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
@@ -582,7 +640,9 @@ class KnowledgeRepository {
       mergedTags.addAll(d.tags);
     }
     final survivorMeta = await stamp();
-    final tombMetas = <SyncMeta>[for (var i = 0; i < dups.length; i++) await stamp()];
+    final tombMetas = <SyncMeta>[
+      for (var i = 0; i < dups.length; i++) await stamp(),
+    ];
 
     final survivor = KnowledgeNote(
       id: primary.id,
@@ -659,13 +719,16 @@ class KnowledgeRepository {
       if (c.id == primary.id || dupIds.contains(c.id)) continue;
       if (!c.relatedConceptIds.any(dupIds.contains)) continue;
       final next = <String>{
-        for (final r in c.relatedConceptIds) dupIds.contains(r) ? primary.id : r,
+        for (final r in c.relatedConceptIds)
+          dupIds.contains(r) ? primary.id : r,
       }..remove(c.id);
       repoints.add((c, next.toList(growable: false)));
     }
 
     final survivorMeta = await stamp();
-    final tombMetas = <SyncMeta>[for (var i = 0; i < dups.length; i++) await stamp()];
+    final tombMetas = <SyncMeta>[
+      for (var i = 0; i < dups.length; i++) await stamp(),
+    ];
     final repointMetas = <SyncMeta>[
       for (var i = 0; i < repoints.length; i++) await stamp(),
     ];
@@ -735,10 +798,14 @@ class KnowledgeRepository {
   }) async {
     final aMeta = await stamp();
     final bMeta = await stamp();
-    final aNext = (<String>{...a.relatedConceptIds, b.id}..remove(a.id))
-        .toList(growable: false);
-    final bNext = (<String>{...b.relatedConceptIds, a.id}..remove(b.id))
-        .toList(growable: false);
+    final aNext = (<String>{
+      ...a.relatedConceptIds,
+      b.id,
+    }..remove(a.id)).toList(growable: false);
+    final bNext = (<String>{
+      ...b.relatedConceptIds,
+      a.id,
+    }..remove(b.id)).toList(growable: false);
     final updatedA = KnowledgeConcept(
       id: a.id,
       name: a.name,
@@ -776,18 +843,24 @@ class KnowledgeRepository {
     required List<KnowledgePrinciple> duplicates,
     required Future<SyncMeta> Function() stamp,
   }) async {
-    final dups =
-        duplicates.where((d) => d.id != primary.id).toList(growable: false);
+    final dups = duplicates
+        .where((d) => d.id != primary.id)
+        .toList(growable: false);
     final dupIds = dups.map((d) => d.id).toSet();
     final ownerUserId = primary.sync.ownerUserId;
 
-    final decisions = await listDecisions(ownerUserId: ownerUserId, limit: _all);
+    final decisions = await listDecisions(
+      ownerUserId: ownerUserId,
+      limit: _all,
+    );
     final affected = decisions
         .where((d) => d.principleIds.any(dupIds.contains))
         .toList(growable: false);
 
     final survivorMeta = await stamp();
-    final tombMetas = <SyncMeta>[for (var i = 0; i < dups.length; i++) await stamp()];
+    final tombMetas = <SyncMeta>[
+      for (var i = 0; i < dups.length; i++) await stamp(),
+    ];
     final refMetas = <SyncMeta>[
       for (var i = 0; i < affected.length; i++) await stamp(),
     ];
@@ -809,11 +882,13 @@ class KnowledgeRepository {
       }
       for (var i = 0; i < affected.length; i++) {
         final d = affected[i];
-        await upsertDecision(_redirectDecision(
-          d,
-          principleIds: _redirectIds(d.principleIds, dupIds, primary.id),
-          sync: refMetas[i],
-        ));
+        await upsertDecision(
+          _redirectDecision(
+            d,
+            principleIds: _redirectIds(d.principleIds, dupIds, primary.id),
+            sync: refMetas[i],
+          ),
+        );
       }
     });
     return survivor;
@@ -829,8 +904,9 @@ class KnowledgeRepository {
     required List<KnowledgeAssumption> duplicates,
     required Future<SyncMeta> Function() stamp,
   }) async {
-    final dups =
-        duplicates.where((d) => d.id != primary.id).toList(growable: false);
+    final dups = duplicates
+        .where((d) => d.id != primary.id)
+        .toList(growable: false);
     final dupIds = dups.map((d) => d.id).toSet();
     final ownerUserId = primary.sync.ownerUserId;
 
@@ -839,18 +915,25 @@ class KnowledgeRepository {
       evidence.addAll(d.evidenceIds);
     }
 
-    final decisions = await listDecisions(ownerUserId: ownerUserId, limit: _all);
+    final decisions = await listDecisions(
+      ownerUserId: ownerUserId,
+      limit: _all,
+    );
     final affectedDecisions = decisions
         .where((d) => d.assumptionIds.any(dupIds.contains))
         .toList(growable: false);
-    final experiments =
-        await listExperiments(ownerUserId: ownerUserId, limit: _all);
+    final experiments = await listExperiments(
+      ownerUserId: ownerUserId,
+      limit: _all,
+    );
     final affectedExperiments = experiments
         .where((e) => dupIds.contains(e.targetAssumptionId))
         .toList(growable: false);
 
     final survivorMeta = await stamp();
-    final tombMetas = <SyncMeta>[for (var i = 0; i < dups.length; i++) await stamp()];
+    final tombMetas = <SyncMeta>[
+      for (var i = 0; i < dups.length; i++) await stamp(),
+    ];
     final decMetas = <SyncMeta>[
       for (var i = 0; i < affectedDecisions.length; i++) await stamp(),
     ];
@@ -877,19 +960,23 @@ class KnowledgeRepository {
       }
       for (var i = 0; i < affectedDecisions.length; i++) {
         final d = affectedDecisions[i];
-        await upsertDecision(_redirectDecision(
-          d,
-          assumptionIds: _redirectIds(d.assumptionIds, dupIds, primary.id),
-          sync: decMetas[i],
-        ));
+        await upsertDecision(
+          _redirectDecision(
+            d,
+            assumptionIds: _redirectIds(d.assumptionIds, dupIds, primary.id),
+            sync: decMetas[i],
+          ),
+        );
       }
       for (var i = 0; i < affectedExperiments.length; i++) {
         final e = affectedExperiments[i];
-        await upsertExperiment(_redirectExperiment(
-          e,
-          targetAssumptionId: primary.id,
-          sync: expMetas[i],
-        ));
+        await upsertExperiment(
+          _redirectExperiment(
+            e,
+            targetAssumptionId: primary.id,
+            sync: expMetas[i],
+          ),
+        );
       }
     });
     return survivor;
@@ -906,21 +993,29 @@ class KnowledgeRepository {
     required List<KnowledgeDecision> duplicates,
     required Future<SyncMeta> Function() stamp,
   }) async {
-    final dups =
-        duplicates.where((d) => d.id != primary.id).toList(growable: false);
+    final dups = duplicates
+        .where((d) => d.id != primary.id)
+        .toList(growable: false);
     final dupIds = dups.map((d) => d.id).toSet();
     final ownerUserId = primary.sync.ownerUserId;
 
-    final decisions = await listDecisions(ownerUserId: ownerUserId, limit: _all);
+    final decisions = await listDecisions(
+      ownerUserId: ownerUserId,
+      limit: _all,
+    );
     final affected = decisions
-        .where((d) =>
-            d.id != primary.id &&
-            !dupIds.contains(d.id) &&
-            dupIds.contains(d.supersededByDecisionId))
+        .where(
+          (d) =>
+              d.id != primary.id &&
+              !dupIds.contains(d.id) &&
+              dupIds.contains(d.supersededByDecisionId),
+        )
         .toList(growable: false);
 
     final survivorMeta = await stamp();
-    final tombMetas = <SyncMeta>[for (var i = 0; i < dups.length; i++) await stamp()];
+    final tombMetas = <SyncMeta>[
+      for (var i = 0; i < dups.length; i++) await stamp(),
+    ];
     final refMetas = <SyncMeta>[
       for (var i = 0; i < affected.length; i++) await stamp(),
     ];
@@ -931,18 +1026,22 @@ class KnowledgeRepository {
       await upsertDecision(survivor);
       for (var i = 0; i < dups.length; i++) {
         final d = dups[i];
-        await upsertDecision(_redirectDecision(
-          d,
-          mergedIntoId: primary.id,
-          deletedSync: tombMetas[i],
-        ));
+        await upsertDecision(
+          _redirectDecision(
+            d,
+            mergedIntoId: primary.id,
+            deletedSync: tombMetas[i],
+          ),
+        );
       }
       for (var i = 0; i < affected.length; i++) {
-        await upsertDecision(_redirectDecision(
-          affected[i],
-          supersededByDecisionId: primary.id,
-          sync: refMetas[i],
-        ));
+        await upsertDecision(
+          _redirectDecision(
+            affected[i],
+            supersededByDecisionId: primary.id,
+            sync: refMetas[i],
+          ),
+        );
       }
     });
     return survivor;
@@ -957,14 +1056,17 @@ class KnowledgeRepository {
     required List<KnowledgeExperiment> duplicates,
     required Future<SyncMeta> Function() stamp,
   }) async {
-    final dups =
-        duplicates.where((d) => d.id != primary.id).toList(growable: false);
+    final dups = duplicates
+        .where((d) => d.id != primary.id)
+        .toList(growable: false);
     final metrics = <String>{...primary.metrics};
     for (final d in dups) {
       metrics.addAll(d.metrics);
     }
     final survivorMeta = await stamp();
-    final tombMetas = <SyncMeta>[for (var i = 0; i < dups.length; i++) await stamp()];
+    final tombMetas = <SyncMeta>[
+      for (var i = 0; i < dups.length; i++) await stamp(),
+    ];
 
     final survivor = KnowledgeExperiment(
       id: primary.id,
@@ -984,20 +1086,22 @@ class KnowledgeRepository {
       await upsertExperiment(survivor);
       for (var i = 0; i < dups.length; i++) {
         final d = dups[i];
-        await upsertExperiment(KnowledgeExperiment(
-          id: d.id,
-          hypothesis: d.hypothesis,
-          methodMd: d.methodMd,
-          metrics: d.metrics,
-          status: d.status,
-          resultMd: d.resultMd,
-          conclusionMd: d.conclusionMd,
-          targetAssumptionId: d.targetAssumptionId,
-          startedAt: d.startedAt,
-          endedAt: d.endedAt,
-          mergedIntoId: primary.id,
-          sync: tombMetas[i].copyWith(deletedAt: tombMetas[i].updatedAt),
-        ));
+        await upsertExperiment(
+          KnowledgeExperiment(
+            id: d.id,
+            hypothesis: d.hypothesis,
+            methodMd: d.methodMd,
+            metrics: d.metrics,
+            status: d.status,
+            resultMd: d.resultMd,
+            conclusionMd: d.conclusionMd,
+            targetAssumptionId: d.targetAssumptionId,
+            startedAt: d.startedAt,
+            endedAt: d.endedAt,
+            mergedIntoId: primary.id,
+            sync: tombMetas[i].copyWith(deletedAt: tombMetas[i].updatedAt),
+          ),
+        );
       }
     });
     return survivor;
@@ -1062,55 +1166,56 @@ class KnowledgeRepository {
     KnowledgeExperiment e, {
     required String targetAssumptionId,
     required SyncMeta sync,
-  }) =>
-      KnowledgeExperiment(
-        id: e.id,
-        hypothesis: e.hypothesis,
-        methodMd: e.methodMd,
-        metrics: e.metrics,
-        status: e.status,
-        resultMd: e.resultMd,
-        conclusionMd: e.conclusionMd,
-        targetAssumptionId: targetAssumptionId,
-        startedAt: e.startedAt,
-        endedAt: e.endedAt,
-        mergedIntoId: e.mergedIntoId,
-        sync: sync,
-      );
+  }) => KnowledgeExperiment(
+    id: e.id,
+    hypothesis: e.hypothesis,
+    methodMd: e.methodMd,
+    metrics: e.metrics,
+    status: e.status,
+    resultMd: e.resultMd,
+    conclusionMd: e.conclusionMd,
+    targetAssumptionId: targetAssumptionId,
+    startedAt: e.startedAt,
+    endedAt: e.endedAt,
+    mergedIntoId: e.mergedIntoId,
+    sync: sync,
+  );
 
   Future<void> _tombstonePrinciple(
     KnowledgePrinciple p,
     String survivorId,
     SyncMeta meta,
-  ) =>
-      upsertPrinciple(KnowledgePrinciple(
-        id: p.id,
-        statement: p.statement,
-        rationaleMd: p.rationaleMd,
-        scope: p.scope,
-        status: p.status,
-        declaredAt: p.declaredAt,
-        mergedIntoId: survivorId,
-        sync: meta.copyWith(deletedAt: meta.updatedAt),
-      ));
+  ) => upsertPrinciple(
+    KnowledgePrinciple(
+      id: p.id,
+      statement: p.statement,
+      rationaleMd: p.rationaleMd,
+      scope: p.scope,
+      status: p.status,
+      declaredAt: p.declaredAt,
+      mergedIntoId: survivorId,
+      sync: meta.copyWith(deletedAt: meta.updatedAt),
+    ),
+  );
 
   Future<void> _tombstoneAssumption(
     KnowledgeAssumption a,
     String survivorId,
     SyncMeta meta,
-  ) =>
-      upsertAssumption(KnowledgeAssumption(
-        id: a.id,
-        statement: a.statement,
-        confidence: a.confidence,
-        scope: a.scope,
-        evidenceIds: a.evidenceIds,
-        status: a.status,
-        declaredAt: a.declaredAt,
-        lastVerifiedAt: a.lastVerifiedAt,
-        mergedIntoId: survivorId,
-        sync: meta.copyWith(deletedAt: meta.updatedAt),
-      ));
+  ) => upsertAssumption(
+    KnowledgeAssumption(
+      id: a.id,
+      statement: a.statement,
+      confidence: a.confidence,
+      scope: a.scope,
+      evidenceIds: a.evidenceIds,
+      status: a.status,
+      declaredAt: a.declaredAt,
+      lastVerifiedAt: a.lastVerifiedAt,
+      mergedIntoId: survivorId,
+      sync: meta.copyWith(deletedAt: meta.updatedAt),
+    ),
+  );
 
   // ---------- Row → model ----------
 
