@@ -81,22 +81,22 @@ void main() {
       ], ownerUserId: 'u1');
 
       expect(out.events, 3);
-      expect(out.memories, 0,
-          reason: 'normal sleep + plain HRV + plain steps → no episodic');
+      expect(
+        out.memories,
+        0,
+        reason: 'normal sleep + plain HRV + plain steps → no episodic',
+      );
 
       final events = await rt.recentEvents(
         ownerUserId: 'u1',
         window: const Duration(days: 9999),
       );
       expect(events, hasLength(3));
-      expect(
-        events.map((e) => e.type).toSet(),
-        {
-          kEventSleepSessionEnded,
-          kEventHrvRecorded,
-          kEventStepsRecorded,
-        },
-      );
+      expect(events.map((e) => e.type).toSet(), {
+        kEventSleepSessionEnded,
+        kEventHrvRecorded,
+        kEventStepsRecorded,
+      });
     });
 
     test('unknown kind is skipped silently', () async {
@@ -128,6 +128,11 @@ void main() {
         HealthMetricKind.bodyFat,
         HealthMetricKind.workoutSession,
         HealthMetricKind.vo2Max,
+        HealthMetricKind.distanceWalkingRunningDaily,
+        HealthMetricKind.heartRateDaily,
+        HealthMetricKind.totalEnergyDaily,
+        HealthMetricKind.floorsClimbedDaily,
+        HealthMetricKind.respiratoryRateDaily,
       ];
       final metrics = [
         for (var i = 0; i < knownKinds.length; i++)
@@ -195,32 +200,34 @@ void main() {
   });
 
   group('HealthMetricMemoryIndexer.reindex — episodic memory emission', () {
-    test('short sleep (< 5h) → episodic memory with short_sleep entity',
-        () async {
-      final rt = _runtime();
-      final indexer = HealthMetricMemoryIndexer(clock: () => now);
-      final out = await indexer.reindex(rt, [
-        _metric(
-          id: 'short-1',
-          kind: HealthMetricKind.sleepSession,
-          value: 4.5 * 3600.0, // 4.5h
-          capturedAt: now.subtract(const Duration(days: 1)),
-        ),
-      ], ownerUserId: 'u1');
-      expect(out.events, 1);
-      expect(out.memories, 1);
+    test(
+      'short sleep (< 5h) → episodic memory with short_sleep entity',
+      () async {
+        final rt = _runtime();
+        final indexer = HealthMetricMemoryIndexer(clock: () => now);
+        final out = await indexer.reindex(rt, [
+          _metric(
+            id: 'short-1',
+            kind: HealthMetricKind.sleepSession,
+            value: 4.5 * 3600.0, // 4.5h
+            capturedAt: now.subtract(const Duration(days: 1)),
+          ),
+        ], ownerUserId: 'u1');
+        expect(out.events, 1);
+        expect(out.memories, 1);
 
-      // Recall by entity
-      final hits = await rt.recall(
-        queryText: '',
-        ownerUserId: 'u1',
-        entityFilter: const {'short_sleep'},
-        topK: 5,
-      );
-      expect(hits, hasLength(1));
-      expect(hits.single.record.kind, MemoryKind.episodic);
-      expect(hits.single.record.scope, 'health');
-    });
+        // Recall by entity
+        final hits = await rt.recall(
+          queryText: '',
+          ownerUserId: 'u1',
+          entityFilter: const {'short_sleep'},
+          topK: 5,
+        );
+        expect(hits, hasLength(1));
+        expect(hits.single.record.kind, MemoryKind.episodic);
+        expect(hits.single.record.scope, 'health');
+      },
+    );
 
     test('long sleep (> 9h) → episodic with long_sleep entity', () async {
       final rt = _runtime();
@@ -258,32 +265,34 @@ void main() {
       expect(out.memories, 0);
     });
 
-    test('sleep with payloadJson note → episodic + reasoning carries note',
-        () async {
-      final rt = _runtime();
-      final indexer = HealthMetricMemoryIndexer(clock: () => now);
-      const note = '{"reason":"travel jet lag"}';
-      final out = await indexer.reindex(rt, [
-        _metric(
-          id: 'noted-1',
-          kind: HealthMetricKind.sleepSession,
-          value: 7 * 3600.0, // duration alone wouldn't trigger
-          payloadJson: note,
-          capturedAt: now.subtract(const Duration(days: 1)),
-        ),
-      ], ownerUserId: 'u1');
-      expect(out.memories, 1);
+    test(
+      'sleep with payloadJson note → episodic + reasoning carries note',
+      () async {
+        final rt = _runtime();
+        final indexer = HealthMetricMemoryIndexer(clock: () => now);
+        const note = '{"reason":"travel jet lag"}';
+        final out = await indexer.reindex(rt, [
+          _metric(
+            id: 'noted-1',
+            kind: HealthMetricKind.sleepSession,
+            value: 7 * 3600.0, // duration alone wouldn't trigger
+            payloadJson: note,
+            capturedAt: now.subtract(const Duration(days: 1)),
+          ),
+        ], ownerUserId: 'u1');
+        expect(out.memories, 1);
 
-      final hits = await rt.recall(
-        queryText: '',
-        ownerUserId: 'u1',
-        entityFilter: const {'noted_sleep'},
-        topK: 5,
-      );
-      expect(hits, hasLength(1));
-      final payload = hits.single.record.payload;
-      expect(payload['reasoning'], note);
-    });
+        final hits = await rt.recall(
+          queryText: '',
+          ownerUserId: 'u1',
+          entityFilter: const {'noted_sleep'},
+          topK: 5,
+        );
+        expect(hits, hasLength(1));
+        final payload = hits.single.record.payload;
+        expect(payload['reasoning'], note);
+      },
+    );
 
     test('HRV / steps / RHR rows never produce episodic memories', () async {
       final rt = _runtime();
@@ -309,8 +318,7 @@ void main() {
   });
 
   group('HealthMetricMemoryIndexer.reindex — idempotency', () {
-    test('repeated reindex with same input doesn\'t duplicate rows',
-        () async {
+    test('repeated reindex with same input doesn\'t duplicate rows', () async {
       final rt = _runtime();
       final indexer = HealthMetricMemoryIndexer(clock: () => now);
       final input = [

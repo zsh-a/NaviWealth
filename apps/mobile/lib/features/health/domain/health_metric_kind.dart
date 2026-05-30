@@ -48,6 +48,21 @@ enum HealthMetricKind {
   /// start UTC, value = meters, unit = `'m'`.
   distanceWalkingRunningDaily,
 
+  /// Daily average heart rate from platform samples. This is distinct
+  /// from resting heart rate: Garmin Health Connect sharing exposes
+  /// heart-rate samples, but does not currently guarantee RHR.
+  heartRateDaily,
+
+  /// Daily total calories burned (active + basal where the platform
+  /// source supplies the total). Android Health Connect only today.
+  totalEnergyDaily,
+
+  /// Daily floors climbed.
+  floorsClimbedDaily,
+
+  /// Daily average respiratory rate.
+  respiratoryRateDaily,
+
   /// Sentinel for wire kinds the client doesn't recognise. Callers
   /// should drop rows with this kind rather than crash.
   unknown,
@@ -67,6 +82,10 @@ extension HealthMetricKindX on HealthMetricKind {
     HealthMetricKind.vo2Max => 'vo2_max_daily',
     HealthMetricKind.distanceWalkingRunningDaily =>
       'distance_walking_running_daily',
+    HealthMetricKind.heartRateDaily => 'heart_rate_daily',
+    HealthMetricKind.totalEnergyDaily => 'total_energy_daily',
+    HealthMetricKind.floorsClimbedDaily => 'floors_climbed_daily',
+    HealthMetricKind.respiratoryRateDaily => 'respiratory_rate_daily',
     HealthMetricKind.unknown => 'unknown',
   };
 
@@ -84,6 +103,10 @@ extension HealthMetricKindX on HealthMetricKind {
     HealthMetricKind.workoutSession => 's',
     HealthMetricKind.vo2Max => 'ml_kg_min',
     HealthMetricKind.distanceWalkingRunningDaily => 'm',
+    HealthMetricKind.heartRateDaily => 'bpm',
+    HealthMetricKind.totalEnergyDaily => 'kcal',
+    HealthMetricKind.floorsClimbedDaily => 'count',
+    HealthMetricKind.respiratoryRateDaily => 'rpm',
     HealthMetricKind.unknown => '',
   };
 

@@ -13,6 +13,10 @@
     <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"/>
     <uses-permission android:name="android.permission.health.READ_WEIGHT"/>
     <uses-permission android:name="android.permission.health.READ_BODY_FAT"/>
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE"/>
+    <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"/>
+    <uses-permission android:name="android.permission.health.READ_FLOORS_CLIMBED"/>
+    <uses-permission android:name="android.permission.health.READ_RESPIRATORY_RATE"/>
     <!-- Android uses `HealthDataType.DISTANCE_DELTA` → `DistanceRecord`
          for walking/running distance. Must be declared or Health Connect
          silently omits it from the consent sheet and `hasPermissions()`

@@ -50,6 +50,10 @@ const String kEventWorkoutCompleted = 'workout_completed';
 const String kEventVo2MaxRecorded = 'vo2_max_recorded';
 const String kEventDistanceWalkingRunningRecorded =
     'distance_walking_running_recorded';
+const String kEventHeartRateRecorded = 'heart_rate_recorded';
+const String kEventTotalEnergyRecorded = 'total_energy_recorded';
+const String kEventFloorsClimbedRecorded = 'floors_climbed_recorded';
+const String kEventRespiratoryRateRecorded = 'respiratory_rate_recorded';
 
 /// Sleep duration boundaries (hours) for an episodic memory. Outside
 /// this range a session is "notable" — either deficit or recovery.
@@ -131,10 +135,9 @@ class HealthMetricMemoryIndexer {
     final shape = isShort
         ? 'short'
         : isLong
-            ? 'long'
-            : 'noted';
-    final eventId =
-        '$kHealthSource:${_eventType(metric.kind)}:${metric.id}';
+        ? 'long'
+        : 'noted';
+    final eventId = '$kHealthSource:${_eventType(metric.kind)}:${metric.id}';
     return MemoryRecord(
       id: '$kHealthSource:episodic:${metric.id}',
       kind: MemoryKind.episodic,
@@ -184,19 +187,24 @@ class HealthMetricMemoryIndexer {
     HealthMetricKind.vo2Max => kEventVo2MaxRecorded,
     HealthMetricKind.distanceWalkingRunningDaily =>
       kEventDistanceWalkingRunningRecorded,
+    HealthMetricKind.heartRateDaily => kEventHeartRateRecorded,
+    HealthMetricKind.totalEnergyDaily => kEventTotalEnergyRecorded,
+    HealthMetricKind.floorsClimbedDaily => kEventFloorsClimbedRecorded,
+    HealthMetricKind.respiratoryRateDaily => kEventRespiratoryRateRecorded,
     HealthMetricKind.unknown => 'health_unknown',
   };
 
   String _eventTitle(HealthMetric metric) {
-    final whenIso =
-        metric.capturedAt.toUtc().toIso8601String().substring(0, 10);
+    final whenIso = metric.capturedAt.toUtc().toIso8601String().substring(
+      0,
+      10,
+    );
     return switch (metric.kind) {
       HealthMetricKind.sleepSession =>
         'Sleep ${_round(_secondsToHours(metric.value, metric.unit))}h · $whenIso',
       HealthMetricKind.hrvDaily =>
         'HRV ${_round(metric.value)} ${metric.unit} · $whenIso',
-      HealthMetricKind.stepsDaily =>
-        'Steps ${metric.value.round()} · $whenIso',
+      HealthMetricKind.stepsDaily => 'Steps ${metric.value.round()} · $whenIso',
       HealthMetricKind.rhrDaily =>
         'RHR ${_round(metric.value)} ${metric.unit} · $whenIso',
       HealthMetricKind.activeEnergyDaily =>
@@ -211,6 +219,14 @@ class HealthMetricMemoryIndexer {
         'VO₂max ${_round(metric.value)} ${metric.unit} · $whenIso',
       HealthMetricKind.distanceWalkingRunningDaily =>
         'Walk/run ${_round(metric.value / 1000.0)} km · $whenIso',
+      HealthMetricKind.heartRateDaily =>
+        'Heart rate ${_round(metric.value)} ${metric.unit} · $whenIso',
+      HealthMetricKind.totalEnergyDaily =>
+        'Total energy ${_round(metric.value)} ${metric.unit} · $whenIso',
+      HealthMetricKind.floorsClimbedDaily =>
+        'Floors ${_round(metric.value)} · $whenIso',
+      HealthMetricKind.respiratoryRateDaily =>
+        'Respiration ${_round(metric.value)} ${metric.unit} · $whenIso',
       HealthMetricKind.unknown => 'Health row · $whenIso',
     };
   }
@@ -238,6 +254,14 @@ class HealthMetricMemoryIndexer {
         'VO₂max ${_round(metric.value)} ${metric.unit} on $whenIso.',
       HealthMetricKind.distanceWalkingRunningDaily =>
         'Walked/ran ${_round(metric.value / 1000.0)} km on $whenIso.',
+      HealthMetricKind.heartRateDaily =>
+        'Average heart rate ${_round(metric.value)} ${metric.unit} on $whenIso.',
+      HealthMetricKind.totalEnergyDaily =>
+        'Burned ${_round(metric.value)} ${metric.unit} total on $whenIso.',
+      HealthMetricKind.floorsClimbedDaily =>
+        'Climbed ${_round(metric.value)} floors on $whenIso.',
+      HealthMetricKind.respiratoryRateDaily =>
+        'Respiratory rate ${_round(metric.value)} ${metric.unit} on $whenIso.',
       HealthMetricKind.unknown => 'Health metric on $whenIso.',
     };
   }
@@ -291,16 +315,18 @@ class HealthMetricMemoryIndexer {
         final hours = _secondsToHours(metric.value, metric.unit);
         return hours > 1.0 ? 0.6 : 0.5;
       case HealthMetricKind.vo2Max:
+      case HealthMetricKind.heartRateDaily:
+      case HealthMetricKind.respiratoryRateDaily:
         return 0.55;
+      case HealthMetricKind.totalEnergyDaily:
+      case HealthMetricKind.floorsClimbedDaily:
+        return 0.45;
       case HealthMetricKind.unknown:
         return 0.4;
     }
   }
 
-  double _episodicImportance({
-    required String shape,
-    required bool hasNotes,
-  }) {
+  double _episodicImportance({required String shape, required bool hasNotes}) {
     var imp = switch (shape) {
       'short' => 0.7, // Deficit nights matter for "why was I off"
       'long' => 0.6,
@@ -326,62 +352,56 @@ class HealthMetricMemoryIndexer {
 /// Provider that wires the indexer to the sleep + HRV streams. Gated
 /// on `domainOptInsProvider`: when Health is OFF the indexer is built
 /// but doesn't subscribe — first-time installs spend zero work.
-final healthMetricMemoryIndexerProvider =
-    Provider<HealthMetricMemoryIndexer>((ref) {
-      final indexer = HealthMetricMemoryIndexer();
-      var running = false;
+final healthMetricMemoryIndexerProvider = Provider<HealthMetricMemoryIndexer>((
+  ref,
+) {
+  final indexer = HealthMetricMemoryIndexer();
 
-      Future<void> reindexNow(List<HealthMetric> metrics) async {
-        if (running) return;
-        running = true;
-        try {
-          final runtime = await ref.read(memoryRuntimeProvider.future);
-          final userId = await ref.read(currentUserIdProvider)();
-          await indexer.reindex(runtime, metrics, ownerUserId: userId);
-        } finally {
-          running = false;
-        }
-      }
+  Future<void> reindexNow(List<HealthMetric> metrics) async {
+    final runtime = await ref.read(memoryRuntimeProvider.future);
+    final userId = await ref.read(currentUserIdProvider)();
+    await indexer.reindex(runtime, metrics, ownerUserId: userId);
+  }
 
-      () async {
-        final resolved = await ref.read(core_auth.domainOptInsProvider.future);
-        if (!resolved.contains(DomainScope.health)) {
-          // Health domain OFF — don't subscribe to any streams. The
-          // provider stays inert until the user opts in and the bootstrap
-          // re-reads it.
-          return;
-        }
-        final repo = await ref.read(healthMetricRepositoryProvider.future);
-        final userId = await ref.read(currentUserIdProvider)();
+  () async {
+    final resolved = await ref.read(core_auth.domainOptInsProvider.future);
+    if (!resolved.contains(DomainScope.health)) {
+      // Health domain OFF — don't subscribe to any streams. The
+      // provider stays inert until the user opts in and the bootstrap
+      // re-reads it.
+      return;
+    }
+    final repo = await ref.read(healthMetricRepositoryProvider.future);
+    final userId = await ref.read(currentUserIdProvider)();
 
-        // Two subscriptions — sleep (for episodic memories) and HRV
-        // (event-only today, agent-ready for D-2.5). Other kinds emit
-        // events only and don't yet warrant a subscription cost; D-2.5
-        // will reconsider when the Morning Briefing agent lands.
-        final sleepSub = repo
-            .watchRecent(
-              ownerUserId: userId,
-              kind: HealthMetricKind.sleepSession,
-              limit: 60,
-            )
-            .listen((metrics) {
-          // ignore: discarded_futures
-          reindexNow(metrics);
-        });
-        ref.onDispose(sleepSub.cancel);
+    Future<void> queue = Future<void>.value();
+    void subscribe(HealthMetricKind kind, int limit) {
+      final sub = repo
+          .watchRecent(ownerUserId: userId, kind: kind, limit: limit)
+          .listen((metrics) {
+            queue = queue.then((_) => reindexNow(metrics));
+            // ignore: discarded_futures
+            queue;
+          });
+      ref.onDispose(sub.cancel);
+    }
 
-        final hrvSub = repo
-            .watchRecent(
-              ownerUserId: userId,
-              kind: HealthMetricKind.hrvDaily,
-              limit: 90,
-            )
-            .listen((metrics) {
-          // ignore: discarded_futures
-          reindexNow(metrics);
-        });
-        ref.onDispose(hrvSub.cancel);
-      }();
+    for (final kind in HealthMetricKind.values) {
+      if (kind == HealthMetricKind.unknown) continue;
+      subscribe(kind, _indexerLimitFor(kind));
+    }
+  }();
 
-      return indexer;
-    });
+  return indexer;
+});
+
+int _indexerLimitFor(HealthMetricKind kind) => switch (kind) {
+  HealthMetricKind.sleepSession => 60,
+  HealthMetricKind.hrvDaily ||
+  HealthMetricKind.rhrDaily ||
+  HealthMetricKind.heartRateDaily ||
+  HealthMetricKind.respiratoryRateDaily ||
+  HealthMetricKind.vo2Max => 90,
+  HealthMetricKind.workoutSession => 150,
+  _ => 120,
+};

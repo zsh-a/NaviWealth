@@ -183,6 +183,10 @@ List<ChartPoint> _projectToPoints(
     case HealthMetricKind.weight:
     case HealthMetricKind.bodyFat:
     case HealthMetricKind.vo2Max:
+    case HealthMetricKind.heartRateDaily:
+    case HealthMetricKind.totalEnergyDaily:
+    case HealthMetricKind.floorsClimbedDaily:
+    case HealthMetricKind.respiratoryRateDaily:
       // One row per measurement → one point.
       final pts = <ChartPoint>[];
       for (final r in rows) {

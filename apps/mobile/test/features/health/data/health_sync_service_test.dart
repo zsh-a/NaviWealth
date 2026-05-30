@@ -151,6 +151,34 @@ void main() {
               value: 0.184, // already fraction
             ),
           ],
+          heartRate: <RawDailyValue>[
+            RawDailyValue(
+              externalId: 'hc:heart_rate:2026-05-25',
+              day: DateTime.utc(2026, 5, 25),
+              value: 64.5,
+            ),
+          ],
+          totalEnergy: <RawDailyValue>[
+            RawDailyValue(
+              externalId: 'hc:total_energy:2026-05-25',
+              day: DateTime.utc(2026, 5, 25),
+              value: 2420,
+            ),
+          ],
+          floorsClimbed: <RawDailyValue>[
+            RawDailyValue(
+              externalId: 'hc:floors_climbed:2026-05-25',
+              day: DateTime.utc(2026, 5, 25),
+              value: 12,
+            ),
+          ],
+          respiratoryRate: <RawDailyValue>[
+            RawDailyValue(
+              externalId: 'hc:respiratory_rate:2026-05-25',
+              day: DateTime.utc(2026, 5, 25),
+              value: 14.2,
+            ),
+          ],
         ),
       );
       final svc = HealthSyncService(
@@ -161,8 +189,8 @@ void main() {
 
       final r = await svc.syncRange();
       expect(r.ok, isTrue);
-      expect(r.totalFetched, 5);
-      expect(r.upserted, 5);
+      expect(r.totalFetched, 9);
+      expect(r.upserted, 9);
       expect(r.unchanged, 0);
 
       final sleep = await repo.findById('hk:sleep:s1');
@@ -192,87 +220,102 @@ void main() {
       expect(bf.unit, 'fraction');
       expect(bf.value, closeTo(0.184, 1e-6));
 
-      expect(await outbox.depth(), 5);
+      final hr = await repo.findById('hc:heart_rate:2026-05-25');
+      expect(hr!.kind, HealthMetricKind.heartRateDaily);
+      expect(hr.unit, 'bpm');
+
+      final totalEnergy = await repo.findById('hc:total_energy:2026-05-25');
+      expect(totalEnergy!.kind, HealthMetricKind.totalEnergyDaily);
+      expect(totalEnergy.unit, 'kcal');
+
+      final floors = await repo.findById('hc:floors_climbed:2026-05-25');
+      expect(floors!.kind, HealthMetricKind.floorsClimbedDaily);
+      expect(floors.unit, 'count');
+
+      final resp = await repo.findById('hc:respiratory_rate:2026-05-25');
+      expect(resp!.kind, HealthMetricKind.respiratoryRateDaily);
+      expect(resp.unit, 'rpm');
+
+      expect(await outbox.depth(), 9);
     },
   );
 
-  test('re-syncing identical data is a no-op (idempotent, no outbox spam)',
-      () async {
-    final snapshot = HealthPlatformSnapshot(
-      hrv: <RawDailyValue>[
-        RawDailyValue(
-          externalId: 'hk:hrv:2026-05-25',
-          day: DateTime.utc(2026, 5, 25),
-          value: 50,
-        ),
-      ],
-    );
-    final adapter = _FakeAdapter(snapshot: snapshot);
-    final svc = HealthSyncService(
-      adapter: adapter,
-      repository: repo,
-      stamper: _fakeStamper(),
-    );
-
-    final first = await svc.syncRange();
-    expect(first.upserted, 1);
-    expect(first.unchanged, 0);
-    expect(await outbox.depth(), 1);
-
-    final second = await svc.syncRange();
-    expect(second.upserted, 0);
-    expect(second.unchanged, 1);
-    expect(
-      await outbox.depth(),
-      1,
-      reason: 'unchanged rows must not enqueue a new outbox op',
-    );
-  });
-
   test(
-    'value mutation rewrites the row and bumps the outbox',
+    're-syncing identical data is a no-op (idempotent, no outbox spam)',
     () async {
-      final svc = HealthSyncService(
-        adapter: _FakeAdapter(
-          snapshot: HealthPlatformSnapshot(
-            hrv: <RawDailyValue>[
-              RawDailyValue(
-                externalId: 'hk:hrv:d1',
-                day: DateTime.utc(2026, 5, 25),
-                value: 50,
-              ),
-            ],
+      final snapshot = HealthPlatformSnapshot(
+        hrv: <RawDailyValue>[
+          RawDailyValue(
+            externalId: 'hk:hrv:2026-05-25',
+            day: DateTime.utc(2026, 5, 25),
+            value: 50,
           ),
-        ),
+        ],
+      );
+      final adapter = _FakeAdapter(snapshot: snapshot);
+      final svc = HealthSyncService(
+        adapter: adapter,
         repository: repo,
         stamper: _fakeStamper(),
       );
-      await svc.syncRange();
-      expect((await repo.findById('hk:hrv:d1'))!.value, 50);
 
-      // Same id, new value → must write through.
-      final adapter2 = _FakeAdapter(
+      final first = await svc.syncRange();
+      expect(first.upserted, 1);
+      expect(first.unchanged, 0);
+      expect(await outbox.depth(), 1);
+
+      final second = await svc.syncRange();
+      expect(second.upserted, 0);
+      expect(second.unchanged, 1);
+      expect(
+        await outbox.depth(),
+        1,
+        reason: 'unchanged rows must not enqueue a new outbox op',
+      );
+    },
+  );
+
+  test('value mutation rewrites the row and bumps the outbox', () async {
+    final svc = HealthSyncService(
+      adapter: _FakeAdapter(
         snapshot: HealthPlatformSnapshot(
           hrv: <RawDailyValue>[
             RawDailyValue(
               externalId: 'hk:hrv:d1',
               day: DateTime.utc(2026, 5, 25),
-              value: 55,
+              value: 50,
             ),
           ],
         ),
-      );
-      final svc2 = HealthSyncService(
-        adapter: adapter2,
-        repository: repo,
-        stamper: _fakeStamper(startMillis: 1_700_000_001_000),
-      );
-      final r = await svc2.syncRange();
-      expect(r.upserted, 1);
-      expect(r.unchanged, 0);
-      expect((await repo.findById('hk:hrv:d1'))!.value, 55);
-    },
-  );
+      ),
+      repository: repo,
+      stamper: _fakeStamper(),
+    );
+    await svc.syncRange();
+    expect((await repo.findById('hk:hrv:d1'))!.value, 50);
+
+    // Same id, new value → must write through.
+    final adapter2 = _FakeAdapter(
+      snapshot: HealthPlatformSnapshot(
+        hrv: <RawDailyValue>[
+          RawDailyValue(
+            externalId: 'hk:hrv:d1',
+            day: DateTime.utc(2026, 5, 25),
+            value: 55,
+          ),
+        ],
+      ),
+    );
+    final svc2 = HealthSyncService(
+      adapter: adapter2,
+      repository: repo,
+      stamper: _fakeStamper(startMillis: 1_700_000_001_000),
+    );
+    final r = await svc2.syncRange();
+    expect(r.upserted, 1);
+    expect(r.unchanged, 0);
+    expect((await repo.findById('hk:hrv:d1'))!.value, 55);
+  });
 
   test(
     'maps workout sessions into workout_session rows with payload JSON',
@@ -344,32 +387,29 @@ void main() {
     expect(row.unit, 'ml_kg_min');
   });
 
-  test(
-    'workout with no payload fields → row has null payloadJson',
-    () async {
-      final adapter = _FakeAdapter(
-        snapshot: HealthPlatformSnapshot(
-          workouts: <RawWorkoutSession>[
-            RawWorkoutSession(
-              externalId: 'hk:workout:bare',
-              startedAt: DateTime.utc(2026, 5, 26, 7),
-              duration: const Duration(minutes: 30),
-              // no activityType / energy / distance — happens on
-              // manual-entry workouts without classification
-            ),
-          ],
-        ),
-      );
-      final svc = HealthSyncService(
-        adapter: adapter,
-        repository: repo,
-        stamper: _fakeStamper(),
-      );
-      await svc.syncRange();
-      final row = await repo.findById('hk:workout:bare');
-      expect(row!.payloadJson, isNull);
-    },
-  );
+  test('workout with no payload fields → row has null payloadJson', () async {
+    final adapter = _FakeAdapter(
+      snapshot: HealthPlatformSnapshot(
+        workouts: <RawWorkoutSession>[
+          RawWorkoutSession(
+            externalId: 'hk:workout:bare',
+            startedAt: DateTime.utc(2026, 5, 26, 7),
+            duration: const Duration(minutes: 30),
+            // no activityType / energy / distance — happens on
+            // manual-entry workouts without classification
+          ),
+        ],
+      ),
+    );
+    final svc = HealthSyncService(
+      adapter: adapter,
+      repository: repo,
+      stamper: _fakeStamper(),
+    );
+    await svc.syncRange();
+    final row = await repo.findById('hk:workout:bare');
+    expect(row!.payloadJson, isNull);
+  });
 
   test('honours explicit from / to window', () async {
     final adapter = _FakeAdapter();
