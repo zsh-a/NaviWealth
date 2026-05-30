@@ -96,6 +96,14 @@ class _RecoveryCard extends StatelessWidget {
             maxLines: 5,
             overflow: TextOverflow.ellipsis,
           ),
+          const SizedBox(height: AppSpacing.s12),
+          Text(
+            '今日建议',
+            style: typography.xs.copyWith(color: colors.mutedForeground),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          for (final item in _planActions(verdict))
+            _PlanActionRow(icon: item.icon, text: item.text),
           if (out['note'] is String) ...[
             const SizedBox(height: AppSpacing.s8),
             Text(
@@ -109,6 +117,7 @@ class _RecoveryCard extends StatelessWidget {
             style: typography.xs.copyWith(color: colors.mutedForeground),
           ),
           const SizedBox(height: AppSpacing.s8),
+          _InputRow(label: '置信度', value: score == null ? '低' : '中'),
           _InputRow(
             label: 'HRV（近期均值）',
             value: _format(inputs['latest_hrv_ms'], unit: 'ms'),
@@ -152,15 +161,64 @@ class _RecoveryCard extends StatelessWidget {
   };
 
   static String _verdictSuggestion(String v) => switch (v) {
-    'rested' => '今天可以推高强度训练 / 长会议日。HRV 与睡眠都好于基线。',
-    'balanced' => '维持平时节奏即可,不建议推到极限。',
-    'strained' => '建议减负:轻量训练、午睡、避免高压会议。HRV / RHR / 睡眠 至少一项明显偏离基线。',
+    'rested' => '身体信号支持更高负荷。',
+    'balanced' => '维持节奏，不要把强度推到极限。',
+    'strained' => '恢复信号偏弱，今天先保护睡眠和压力。',
     _ => '基线不足。继续连续记录 1-2 周后再看这里。',
+  };
+
+  static List<_PlanAction> _planActions(String v) => switch (v) {
+    'rested' => const [
+      _PlanAction(FLucideIcons.dumbbell, '可安排高强度训练或关键深度工作。'),
+      _PlanAction(FLucideIcons.moon, '保持正常睡眠窗口，避免过度透支。'),
+    ],
+    'balanced' => const [
+      _PlanAction(FLucideIcons.activity, '按原计划训练，保留 1-2 成余量。'),
+      _PlanAction(FLucideIcons.coffee, '下午减少咖啡因，保持晚间恢复。'),
+    ],
+    'strained' => const [
+      _PlanAction(FLucideIcons.footprints, '换成散步、拉伸或 Zone 2 轻量活动。'),
+      _PlanAction(FLucideIcons.calendarX, '避免连续高压会议和晚间训练。'),
+    ],
+    _ => const [
+      _PlanAction(FLucideIcons.refreshCw, '先同步 Health Connect 数据。'),
+      _PlanAction(FLucideIcons.calendarDays, '连续记录几天后再判断趋势。'),
+    ],
   };
 
   static String _format(Object? v, {required String unit}) {
     if (v == null) return '—';
     return '$v $unit';
+  }
+}
+
+class _PlanAction {
+  const _PlanAction(this.icon, this.text);
+  final IconData icon;
+  final String text;
+}
+
+class _PlanActionRow extends StatelessWidget {
+  const _PlanActionRow({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: colors.mutedForeground),
+          const SizedBox(width: AppSpacing.s8),
+          Expanded(child: Text(text, style: typography.sm)),
+        ],
+      ),
+    );
   }
 }
 

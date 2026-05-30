@@ -18,8 +18,12 @@ import 'package:forui/forui.dart';
 
 import '../../../app/shell_chrome.dart';
 import '../../../core/ai/contracts/memory_record.dart';
+import '../../../core/auth/domain_scope.dart';
+import '../../../core/auth/providers.dart' as core_auth;
 import '../../../design_system/design_system.dart';
 import '../agents/providers.dart' as health_agent_providers;
+import '../data/health_sync_service.dart';
+import '../data/providers.dart' as health_data;
 import '../domain/health_metric.dart';
 import 'health_today_providers.dart';
 
@@ -28,24 +32,188 @@ class HealthTodayPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final briefingAsync = ref.watch(
-      health_agent_providers.latestMorningBriefingProvider,
-    );
     return ShellTabScaffold(
       title: '今日 · HealthOS',
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
-        children: [
-          const _MetricGrid(),
-          const SizedBox(height: AppSpacing.s16),
-          briefingAsync.when(
-            loading: () => const _BriefingSkeleton(),
-            error: (e, _) => _BriefingError(message: '$e'),
-            data: (record) => _BriefingCard(record: record),
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          const _RunNowSection(),
+        children: const [
+          _HealthDataStatusBanner(),
+          SizedBox(height: AppSpacing.s12),
+          _RecoveryHero(),
+          SizedBox(height: AppSpacing.s12),
+          _MetricGrid(),
+          SizedBox(height: AppSpacing.s12),
+          _BriefingPanel(),
         ],
+      ),
+    );
+  }
+}
+
+class _HealthDataStatusBanner extends ConsumerStatefulWidget {
+  const _HealthDataStatusBanner();
+
+  @override
+  ConsumerState<_HealthDataStatusBanner> createState() =>
+      _HealthDataStatusBannerState();
+}
+
+class _HealthDataStatusBannerState
+    extends ConsumerState<_HealthDataStatusBanner> {
+  bool _running = false;
+  HealthSyncResult? _lastResult;
+
+  Future<void> _sync() async {
+    if (_running) return;
+    setState(() => _running = true);
+    try {
+      final service = await ref.read(
+        health_data.healthSyncServiceProvider.future,
+      );
+      if (!await service.hasPermissions()) {
+        final granted = await service.requestPermissions();
+        if (!granted) {
+          setState(() {
+            _lastResult = HealthSyncResult.skipped(
+              startedAt: DateTime.now().toUtc(),
+              errorMessage: '权限被拒绝',
+            );
+          });
+          return;
+        }
+      }
+      final result = await service.syncRange();
+      setState(() => _lastResult = result);
+      ref
+        ..invalidate(latestSleepSessionProvider)
+        ..invalidate(latestHrvProvider)
+        ..invalidate(latestHeartRateProvider)
+        ..invalidate(latestWorkoutProvider)
+        ..invalidate(latestStepsProvider)
+        ..invalidate(latestWalkingDistanceProvider)
+        ..invalidate(latestActiveEnergyProvider)
+        ..invalidate(recoverySignalProvider);
+    } finally {
+      if (mounted) setState(() => _running = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+    final enabled = optIns?.contains(DomainScope.health) ?? false;
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    final result = _lastResult;
+
+    final text = !enabled
+        ? 'HealthOS 未启用'
+        : _running
+        ? '正在同步健康数据…'
+        : result == null
+        ? '同步最近 30 天健康数据'
+        : result.ok
+        ? '已同步 ${result.upserted} 新数据 · ${result.unchanged} 未变'
+        : result.errorMessage ?? '同步失败';
+    final action = !enabled
+        ? null
+        : FButton(
+            variant: FButtonVariant.outline,
+            onPress: _running ? null : _sync,
+            prefix: _running
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(FLucideIcons.refreshCw, size: 14),
+            child: Text(_running ? '同步中' : '同步'),
+          );
+
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Row(
+        children: [
+          Icon(
+            enabled ? FLucideIcons.activity : FLucideIcons.circleOff,
+            color: enabled ? colors.primary : colors.mutedForeground,
+            size: 18,
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          Expanded(
+            child: Text(
+              text,
+              style: typography.xs.copyWith(color: colors.mutedForeground),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (action != null) ...[const SizedBox(width: AppSpacing.s8), action],
+        ],
+      ),
+    );
+  }
+}
+
+class _RecoveryHero extends ConsumerWidget {
+  const _RecoveryHero();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(recoverySignalProvider);
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: async.when(
+        loading: () => const SizedBox(
+          height: 96,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (e, _) => Text(
+          '恢复状态加载失败：$e',
+          style: typography.xs.copyWith(color: colors.destructive),
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+        ),
+        data: (out) {
+          final verdict = out?['verdict']?.toString() ?? 'insufficient_data';
+          final score = out?['score'];
+          final scoreText = score == null ? '—' : '$score';
+          final color = _RecoveryTone.color(verdict, colors);
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(_RecoveryTone.icon(verdict), color: color, size: 20),
+                  const SizedBox(width: AppSpacing.s8),
+                  Expanded(
+                    child: Text(
+                      '今日恢复',
+                      style: typography.sm.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Text(scoreText, style: typography.xl.copyWith(color: color)),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              Text(
+                _RecoveryTone.label(verdict),
+                style: typography.xl.copyWith(color: color),
+              ),
+              const SizedBox(height: AppSpacing.s4),
+              Text(
+                _RecoveryTone.suggestion(verdict),
+                style: typography.sm.copyWith(color: colors.mutedForeground),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -58,37 +226,33 @@ class _MetricGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sleep = ref.watch(latestSleepSessionProvider);
     final hrv = ref.watch(latestHrvProvider);
+    final heartRate = ref.watch(latestHeartRateProvider);
     final workout = ref.watch(latestWorkoutProvider);
-    final recovery = ref.watch(recoverySignalProvider);
     final steps = ref.watch(latestStepsProvider);
     final energy = ref.watch(latestActiveEnergyProvider);
+    final cards = <Widget>[
+      _SleepCard(async: sleep),
+      _HrvCard(async: hrv),
+      _HeartRateCard(async: heartRate),
+      _StepsCard(async: steps),
+      _WorkoutCard(async: workout),
+      _ActiveEnergyCard(async: energy),
+    ];
 
-    return Column(
-      children: [
-        Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 720 ? 3 : 2;
+        const gap = AppSpacing.s8;
+        final itemWidth =
+            (constraints.maxWidth - gap * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
           children: [
-            Expanded(child: _SleepCard(async: sleep)),
-            const SizedBox(width: AppSpacing.s8),
-            Expanded(child: _HrvCard(async: hrv)),
+            for (final card in cards) SizedBox(width: itemWidth, child: card),
           ],
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        Row(
-          children: [
-            Expanded(child: _RecoveryCard(async: recovery)),
-            const SizedBox(width: AppSpacing.s8),
-            Expanded(child: _WorkoutCard(async: workout)),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        Row(
-          children: [
-            Expanded(child: _StepsCard(async: steps)),
-            const SizedBox(width: AppSpacing.s8),
-            Expanded(child: _ActiveEnergyCard(async: energy)),
-          ],
-        ),
-      ],
+        );
+      },
     );
   }
 }
@@ -100,7 +264,7 @@ class _SleepCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _MetricCard(
-      icon: Icons.nightlight_outlined,
+      icon: FLucideIcons.moon,
       label: '睡眠',
       child: async.when(
         loading: () => const _ValueSkeleton(),
@@ -122,8 +286,32 @@ class _HrvCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _MetricCard(
-      icon: Icons.favorite_outline,
+      icon: FLucideIcons.heartPulse,
       label: 'HRV',
+      child: async.when(
+        loading: () => const _ValueSkeleton(),
+        error: (e, _) => const _ValueDash(),
+        data: (m) {
+          if (m == null) return const _ValueDash();
+          return _ValueBig(
+            value: '${_round(m.value)} ${m.unit}',
+            sub: _ago(m.capturedAt),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _HeartRateCard extends StatelessWidget {
+  const _HeartRateCard({required this.async});
+  final AsyncValue<HealthMetric?> async;
+
+  @override
+  Widget build(BuildContext context) {
+    return _MetricCard(
+      icon: FLucideIcons.heartPulse,
+      label: '心率',
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -146,7 +334,7 @@ class _WorkoutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _MetricCard(
-      icon: Icons.directions_run,
+      icon: FLucideIcons.dumbbell,
       label: '运动',
       child: async.when(
         loading: () => const _ValueSkeleton(),
@@ -169,7 +357,7 @@ class _StepsCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final walking = ref.watch(latestWalkingDistanceProvider);
     return _MetricCard(
-      icon: Icons.directions_walk,
+      icon: FLucideIcons.footprints,
       label: '步数',
       child: async.when(
         loading: () => const _ValueSkeleton(),
@@ -198,7 +386,7 @@ class _ActiveEnergyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _MetricCard(
-      icon: Icons.local_fire_department_outlined,
+      icon: FLucideIcons.flame,
       label: '能量',
       child: async.when(
         loading: () => const _ValueSkeleton(),
@@ -213,49 +401,6 @@ class _ActiveEnergyCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _RecoveryCard extends StatelessWidget {
-  const _RecoveryCard({required this.async});
-  final AsyncValue<Map<String, Object?>?> async;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return _MetricCard(
-      icon: Icons.bolt_outlined,
-      label: '恢复',
-      child: async.when(
-        loading: () => const _ValueSkeleton(),
-        error: (e, _) => const _ValueDash(),
-        data: (out) {
-          if (out == null) return const _ValueDash();
-          final verdict = out['verdict']?.toString() ?? 'insufficient_data';
-          final score = out['score'];
-          final scoreText = score == null ? '—' : '$score';
-          return _ValueBig(
-            value: scoreText,
-            sub: _verdictLabel(verdict),
-            subColor: _verdictColor(verdict, colors),
-          );
-        },
-      ),
-    );
-  }
-
-  static String _verdictLabel(String v) => switch (v) {
-    'rested' => '充分恢复',
-    'balanced' => '平衡',
-    'strained' => '过载',
-    _ => '数据不足',
-  };
-
-  static Color _verdictColor(String v, FColors colors) => switch (v) {
-    'rested' => colors.primary,
-    'balanced' => colors.mutedForeground,
-    'strained' => colors.destructive,
-    _ => colors.mutedForeground,
-  };
 }
 
 class _MetricCard extends StatelessWidget {
@@ -299,10 +444,9 @@ class _MetricCard extends StatelessWidget {
 }
 
 class _ValueBig extends StatelessWidget {
-  const _ValueBig({required this.value, required this.sub, this.subColor});
+  const _ValueBig({required this.value, required this.sub});
   final String value;
   final String sub;
-  final Color? subColor;
 
   @override
   Widget build(BuildContext context) {
@@ -313,12 +457,7 @@ class _ValueBig extends StatelessWidget {
       children: [
         Text(value, style: typography.xl),
         const SizedBox(height: 2),
-        Text(
-          sub,
-          style: typography.xs.copyWith(
-            color: subColor ?? colors.mutedForeground,
-          ),
-        ),
+        Text(sub, style: typography.xs.copyWith(color: colors.mutedForeground)),
       ],
     );
   }
@@ -376,6 +515,38 @@ class _ValueSkeleton extends StatelessWidget {
   }
 }
 
+class _RecoveryTone {
+  const _RecoveryTone._();
+
+  static IconData icon(String v) => switch (v) {
+    'rested' => FLucideIcons.zap,
+    'balanced' => FLucideIcons.activity,
+    'strained' => FLucideIcons.triangleAlert,
+    _ => FLucideIcons.info,
+  };
+
+  static Color color(String v, FColors colors) => switch (v) {
+    'rested' => colors.primary,
+    'balanced' => colors.mutedForeground,
+    'strained' => colors.destructive,
+    _ => colors.mutedForeground,
+  };
+
+  static String label(String v) => switch (v) {
+    'rested' => '充分恢复',
+    'balanced' => '平衡',
+    'strained' => '过载',
+    _ => '数据不足',
+  };
+
+  static String suggestion(String v) => switch (v) {
+    'rested' => '今天可以安排高强度训练或高认知负荷工作。',
+    'balanced' => '维持平时节奏，训练和会议都不要推到极限。',
+    'strained' => '建议减负：轻量活动、补眠，避免连续高压安排。',
+    _ => '先同步并连续记录几天，恢复建议会更稳定。',
+  };
+}
+
 double _secondsToHours(double value, String unit) => switch (unit) {
   's' => value / 3600.0,
   'min' => value / 60.0,
@@ -413,15 +584,82 @@ String _ago(DateTime when) {
   return '$mm-$dd';
 }
 
+class _BriefingPanel extends ConsumerStatefulWidget {
+  const _BriefingPanel();
+
+  @override
+  ConsumerState<_BriefingPanel> createState() => _BriefingPanelState();
+}
+
+class _BriefingPanelState extends ConsumerState<_BriefingPanel> {
+  bool _running = false;
+  String? _errorMessage;
+
+  Future<void> _run() async {
+    if (_running) return;
+    setState(() {
+      _running = true;
+      _errorMessage = null;
+    });
+    try {
+      // ignore: unused_result
+      ref.refresh(health_agent_providers.manualMorningBriefingRunProvider);
+      await ref.read(
+        health_agent_providers.manualMorningBriefingRunProvider.future,
+      );
+      ref.invalidate(health_agent_providers.latestMorningBriefingProvider);
+    } on Object catch (e) {
+      setState(() => _errorMessage = e.toString());
+    } finally {
+      if (mounted) setState(() => _running = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(
+      health_agent_providers.latestMorningBriefingProvider,
+    );
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        async.when(
+          loading: () => const _BriefingSkeleton(),
+          error: (e, _) => _BriefingError(message: '$e'),
+          data: (record) =>
+              _BriefingCard(record: record, running: _running, onRun: _run),
+        ),
+        if (_errorMessage != null) ...[
+          const SizedBox(height: AppSpacing.s8),
+          Text(
+            _errorMessage!,
+            style: typography.xs.copyWith(color: colors.destructive),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 class _BriefingCard extends StatelessWidget {
-  const _BriefingCard({required this.record});
+  const _BriefingCard({
+    required this.record,
+    required this.running,
+    required this.onRun,
+  });
 
   final MemoryRecord? record;
+  final bool running;
+  final VoidCallback onRun;
 
   @override
   Widget build(BuildContext context) {
     final r = record;
-    if (r == null) return const _BriefingEmpty();
+    if (r == null) return _BriefingEmpty(running: running, onRun: onRun);
     final outcome = r.payload['outcome'];
     final source = outcome is Map<String, Object?>
         ? outcome['synthesis_source']
@@ -444,6 +682,19 @@ class _BriefingCard extends StatelessWidget {
               const Spacer(),
               if (source is String && source.isNotEmpty)
                 _SourcePill(source: source),
+              const SizedBox(width: AppSpacing.s8),
+              FButton(
+                variant: FButtonVariant.outline,
+                onPress: running ? null : onRun,
+                prefix: running
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(FLucideIcons.refreshCw, size: 14),
+                child: Text(running ? '生成中' : '更新'),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.s8),
@@ -465,7 +716,10 @@ class _BriefingCard extends StatelessWidget {
 }
 
 class _BriefingEmpty extends StatelessWidget {
-  const _BriefingEmpty();
+  const _BriefingEmpty({required this.running, required this.onRun});
+
+  final bool running;
+  final VoidCallback onRun;
 
   @override
   Widget build(BuildContext context) {
@@ -487,11 +741,24 @@ class _BriefingEmpty extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.s4),
                 Text(
-                  '点击下方"立即生成简报"以生成今日简报。',
+                  '同步数据后可生成今日简报。',
                   style: typography.xs.copyWith(color: colors.mutedForeground),
                 ),
               ],
             ),
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          FButton(
+            variant: FButtonVariant.outline,
+            onPress: running ? null : onRun,
+            prefix: running
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(FLucideIcons.refreshCw, size: 14),
+            child: Text(running ? '生成中' : '生成'),
           ),
         ],
       ),
@@ -567,67 +834,6 @@ class _SourcePill extends StatelessWidget {
         label,
         style: typography.xs2.copyWith(color: colors.mutedForeground),
       ),
-    );
-  }
-}
-
-class _RunNowSection extends ConsumerStatefulWidget {
-  const _RunNowSection();
-
-  @override
-  ConsumerState<_RunNowSection> createState() => _RunNowSectionState();
-}
-
-class _RunNowSectionState extends ConsumerState<_RunNowSection> {
-  bool _running = false;
-  String? _errorMessage;
-
-  Future<void> _run() async {
-    if (_running) return;
-    setState(() {
-      _running = true;
-      _errorMessage = null;
-    });
-    try {
-      // ignore: unused_result
-      ref.refresh(health_agent_providers.manualMorningBriefingRunProvider);
-      await ref.read(
-        health_agent_providers.manualMorningBriefingRunProvider.future,
-      );
-      ref.invalidate(health_agent_providers.latestMorningBriefingProvider);
-    } on Object catch (e) {
-      setState(() => _errorMessage = e.toString());
-    } finally {
-      if (mounted) setState(() => _running = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        FButton(
-          onPress: _running ? null : _run,
-          prefix: _running
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(FLucideIcons.refreshCw, size: 16),
-          child: Text(_running ? '生成中…' : '立即生成简报'),
-        ),
-        if (_errorMessage != null) ...[
-          const SizedBox(height: AppSpacing.s8),
-          Text(
-            _errorMessage!,
-            style: typography.xs.copyWith(color: colors.destructive),
-          ),
-        ],
-      ],
     );
   }
 }

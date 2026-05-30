@@ -87,7 +87,7 @@ class DomainsSettingsPage extends ConsumerWidget {
                   InlineLinkRow(
                     icon: FLucideIcons.eye,
                     label: 'HealthOS · Today',
-                    subtitle: '查看每日 Morning Briefing 卡片',
+                    subtitle: '查看今日恢复、指标与早间简报',
                     onTap: () => context.goNamed(AppRouteNames.healthToday),
                   ),
                   _RowDivider(),
@@ -193,7 +193,7 @@ class _HealthPlatformSyncRowState
   String _subtitle() {
     final r = _lastResult;
     if (_running) return '正在拉取…';
-    if (r == null) return '从 HealthKit / Health Connect 拉取最近 30 天数据';
+    if (r == null) return '从系统健康平台拉取最近 30 天数据';
     if (!r.ok) return r.errorMessage ?? '上次同步失败';
     return '上次同步: ${r.upserted} 新写入 / ${r.unchanged} 未变 · 拉取 ${r.totalFetched} 项';
   }
@@ -202,7 +202,7 @@ class _HealthPlatformSyncRowState
   Widget build(BuildContext context) {
     return InlineLinkRow(
       icon: FLucideIcons.refreshCcw,
-      label: 'Sync from HealthKit / Health Connect',
+      label: '同步健康数据',
       subtitle: _subtitle(),
       onTap: _running ? () {} : _run,
     );
@@ -258,17 +258,17 @@ class _MorningBriefingRunRowState
   }
 
   String _subtitle() {
-    if (_running) return '正在运行 Morning Briefing…';
+    if (_running) return '正在生成早间简报…';
     final err = _errorMessage;
-    if (err != null) return 'Briefing failed: $err';
+    if (err != null) return '简报生成失败：$err';
     final r = _lastResult;
     if (r == null) {
-      return '后台每日 07:00 自动跑;点这里手动触发并发通知';
+      return '后台每日自动运行；点按可立即生成并发送通知';
     }
     return switch (r.status) {
-      AgentRunStatus.completed => 'Last run: ${r.summary ?? "completed"}',
-      AgentRunStatus.skipped => 'Last run skipped: ${r.summary ?? "no signal"}',
-      AgentRunStatus.failed => 'Last run failed: ${r.error ?? "unknown"}',
+      AgentRunStatus.completed => '上次运行：${r.summary ?? "已完成"}',
+      AgentRunStatus.skipped => '上次跳过：${r.summary ?? "暂无信号"}',
+      AgentRunStatus.failed => '上次失败：${r.error ?? "未知错误"}',
     };
   }
 
@@ -276,7 +276,7 @@ class _MorningBriefingRunRowState
   Widget build(BuildContext context) {
     return InlineLinkRow(
       icon: FLucideIcons.sunrise,
-      label: 'Run Morning Briefing now',
+      label: '立即生成早间简报',
       subtitle: _subtitle(),
       onTap: _running ? () {} : _run,
     );
