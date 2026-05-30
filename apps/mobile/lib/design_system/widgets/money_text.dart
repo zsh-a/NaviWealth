@@ -7,6 +7,7 @@ import '../../core/format/formatters.dart';
 import '../../domain/values/money.dart';
 import '../theme/semantic_colors.dart';
 import '../tokens/typography_tokens.dart';
+import 'amount_privacy_scope.dart';
 
 /// How much horizontal space the symbol should take.
 enum MoneySymbolStyle {
@@ -90,6 +91,17 @@ class MoneyText extends StatelessWidget {
       color: color,
       fontFeatures: TypographyTokens.tabularFigures,
     );
+    if (amount != null && AmountPrivacyScope.isHiddenOf(context)) {
+      return Text(
+        AmountPrivacyScope.mask,
+        style: effectiveStyle,
+        textAlign: textAlign,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        semanticsLabel:
+            semanticsLabel ?? AmountPrivacyScope.hiddenSemanticsLabel,
+      );
+    }
     final formatted = _format(context);
     return Text(
       formatted,
@@ -222,7 +234,10 @@ class SignedMoneyText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formatted = amount == null
+    final hidden = amount != null && AmountPrivacyScope.isHiddenOf(context);
+    final formatted = hidden
+        ? AmountPrivacyScope.mask
+        : amount == null
         ? '—'
         : formatters.signedMoney(
             amount!,
@@ -240,7 +255,11 @@ class SignedMoneyText extends StatelessWidget {
       textAlign: textAlign,
       maxLines: maxLines,
       overflow: overflow,
-      semanticsLabel: semanticsLabel ?? '$formatted $unit',
+      semanticsLabel:
+          semanticsLabel ??
+          (hidden
+              ? AmountPrivacyScope.hiddenSemanticsLabel
+              : '$formatted $unit'),
     );
   }
 

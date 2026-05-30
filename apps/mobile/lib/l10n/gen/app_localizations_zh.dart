@@ -1185,6 +1185,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeNetWorthTitle => '净资产';
 
   @override
+  String get financePrivacyHideAmountsTooltip => '隐藏金额';
+
+  @override
+  String get financePrivacyShowAmountsTooltip => '显示金额';
+
+  @override
   String homeNetWorthSubtitle(String currency) {
     return '基础货币 $currency · 等数据接入后展示';
   }

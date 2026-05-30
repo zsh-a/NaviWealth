@@ -79,6 +79,22 @@ void main() {
     },
   );
 
+  testWidgets('MoneyText hides exact value inside AmountPrivacyScope', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const AmountPrivacyScope(
+          hidden: true,
+          child: MoneyText(amount: 12345.6, currencyCode: 'USD', symbol: '\$'),
+        ),
+      ),
+    );
+
+    expect(find.text(AmountPrivacyScope.mask), findsOneWidget);
+    expect(find.textContaining('12,345'), findsNothing);
+  });
+
   testWidgets('SignedMoneyText uses shared signed formatter', (tester) async {
     final formatters = AppFormatters(locale: const Locale('en', 'US'));
     await tester.pumpWidget(
@@ -92,6 +108,27 @@ void main() {
     );
 
     expect(find.text(r'+$1,234.5'), findsOneWidget);
+  });
+
+  testWidgets('SignedMoneyText hides exact value inside AmountPrivacyScope', (
+    tester,
+  ) async {
+    final formatters = AppFormatters(locale: const Locale('en', 'US'));
+    await tester.pumpWidget(
+      _wrap(
+        AmountPrivacyScope(
+          hidden: true,
+          child: SignedMoneyText(
+            amount: Decimal.parse('1234.5000'),
+            unit: 'USD',
+            formatters: formatters,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text(AmountPrivacyScope.mask), findsOneWidget);
+    expect(find.text(r'+$1,234.5'), findsNothing);
   });
 
   testWidgets('SignedMoneyText formats securities and can hide plus', (

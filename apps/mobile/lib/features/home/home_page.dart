@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
 
 import '../../core/format/providers.dart';
@@ -32,6 +33,8 @@ final _valuationStatusTickerProvider = StreamProvider.autoDispose<DateTime>((
     (_) => DateTime.now(),
   );
 });
+
+final _financeAmountsHiddenProvider = StateProvider<bool>((ref) => false);
 
 /// Home cockpit (FIR-52, redesigned).
 ///
@@ -94,6 +97,7 @@ class _DashboardBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final insights = ref.watch(dashboardInsightsProvider);
+    final amountsHidden = ref.watch(_financeAmountsHiddenProvider);
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -114,67 +118,70 @@ class _DashboardBody extends ConsumerWidget {
               AppSpacing.s16,
         );
 
-        return ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            if (useCockpit)
-              AdaptiveContentFrame(
-                maxWidth: AdaptiveMaxWidth.dashboard,
-                layout: AdaptiveFrameLayout.cockpit,
-                padding: padding.copyWith(top: 0),
-                header: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const HomeGreetingHeader(),
-                    _NetWorthHeader(snapshot: snapshot),
-                  ],
-                ),
-                primary: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const _CashFlowCardsGrid(),
-                    const SizedBox(height: AppSpacing.s20),
-                    AllocationSummary(snapshot: snapshot),
-                    const SizedBox(height: AppSpacing.s20),
-                    const TrendCard(),
-                  ],
-                ),
-                secondary: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (insights.isNotEmpty) ...[
-                      AiInsightFeed(insights: insights),
-                      const SizedBox(height: AppSpacing.s20),
+        return AmountPrivacyScope(
+          hidden: amountsHidden,
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              if (useCockpit)
+                AdaptiveContentFrame(
+                  maxWidth: AdaptiveMaxWidth.dashboard,
+                  layout: AdaptiveFrameLayout.cockpit,
+                  padding: padding.copyWith(top: 0),
+                  header: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const HomeGreetingHeader(),
+                      _NetWorthHeader(snapshot: snapshot),
                     ],
-                    const ActivityTimelinePreview(),
-                  ],
-                ),
-              )
-            else
-              AdaptiveContentFrame(
-                maxWidth: AdaptiveMaxWidth.narrow,
-                padding: padding.copyWith(top: 0),
-                primary: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const HomeGreetingHeader(),
-                    _NetWorthHeader(snapshot: snapshot),
-                    const SizedBox(height: AppSpacing.s20),
-                    const _CashFlowCardsGrid(),
-                    if (insights.isNotEmpty) ...[
+                  ),
+                  primary: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const _CashFlowCardsGrid(),
                       const SizedBox(height: AppSpacing.s20),
-                      AiInsightFeed(insights: insights),
+                      AllocationSummary(snapshot: snapshot),
+                      const SizedBox(height: AppSpacing.s20),
+                      const TrendCard(),
                     ],
-                    const SizedBox(height: AppSpacing.s20),
-                    AllocationSummary(snapshot: snapshot),
-                    const SizedBox(height: AppSpacing.s20),
-                    const ActivityTimelinePreview(),
-                    const SizedBox(height: AppSpacing.s20),
-                    const TrendCard(),
-                  ],
+                  ),
+                  secondary: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (insights.isNotEmpty) ...[
+                        AiInsightFeed(insights: insights),
+                        const SizedBox(height: AppSpacing.s20),
+                      ],
+                      const ActivityTimelinePreview(),
+                    ],
+                  ),
+                )
+              else
+                AdaptiveContentFrame(
+                  maxWidth: AdaptiveMaxWidth.narrow,
+                  padding: padding.copyWith(top: 0),
+                  primary: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const HomeGreetingHeader(),
+                      _NetWorthHeader(snapshot: snapshot),
+                      const SizedBox(height: AppSpacing.s20),
+                      const _CashFlowCardsGrid(),
+                      if (insights.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.s20),
+                        AiInsightFeed(insights: insights),
+                      ],
+                      const SizedBox(height: AppSpacing.s20),
+                      AllocationSummary(snapshot: snapshot),
+                      const SizedBox(height: AppSpacing.s20),
+                      const ActivityTimelinePreview(),
+                      const SizedBox(height: AppSpacing.s20),
+                      const TrendCard(),
+                    ],
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -224,18 +231,46 @@ class _NetWorthHeader extends ConsumerWidget {
     final hasData = !snapshot.isEmpty;
     final value = hasData ? snapshot.netWorth.amount.toDouble() : null;
     final metricsAsync = ref.watch(dashboardHeaderMetricsProvider);
+    final amountsHidden = ref.watch(_financeAmountsHiddenProvider);
+    final privacyLabel = amountsHidden
+        ? l10n.financePrivacyShowAmountsTooltip
+        : l10n.financePrivacyHideAmountsTooltip;
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s20),
       borderRadius: 18,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.homeNetWorthTitle,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.homeNetWorthTitle,
+                  style: context.theme.typography.sm.copyWith(
+                    color: context.theme.colors.mutedForeground,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Semantics(
+                button: true,
+                label: privacyLabel,
+                child: FTooltip(
+                  tipBuilder: (_, _) => Text(privacyLabel),
+                  child: FButton.icon(
+                    variant: FButtonVariant.ghost,
+                    onPress: () {
+                      ref.read(_financeAmountsHiddenProvider.notifier).state =
+                          !amountsHidden;
+                    },
+                    child: Icon(
+                      amountsHidden ? FLucideIcons.eyeClosed : FLucideIcons.eye,
+                      size: AppIconSizes.md,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.s8),
           // Cap dynamic-text scaling on the 32dp hero number so users on
@@ -274,12 +309,18 @@ class _NetWorthHeader extends ConsumerWidget {
                     children: [
                       Text(
                         '${l10n.dashboardNetWorthAssetsLabel} '
-                        '${formatters.currency(snapshot.totalAssets.amount, code: snapshot.baseCurrency)}',
+                        '${_privacyAwareCurrency(
+                          hidden: amountsHidden,
+                          value: formatters.currency(snapshot.totalAssets.amount, code: snapshot.baseCurrency),
+                        )}',
                       ),
                       const Text('·'),
                       Text(
                         '${l10n.dashboardNetWorthLiabilitiesLabel} '
-                        '${formatters.currency(snapshot.totalLiabilities.amount, code: snapshot.baseCurrency)}',
+                        '${_privacyAwareCurrency(
+                          hidden: amountsHidden,
+                          value: formatters.currency(snapshot.totalLiabilities.amount, code: snapshot.baseCurrency),
+                        )}',
                       ),
                     ],
                   )
@@ -290,6 +331,10 @@ class _NetWorthHeader extends ConsumerWidget {
       ),
     );
   }
+}
+
+String _privacyAwareCurrency({required bool hidden, required String value}) {
+  return hidden ? AmountPrivacyScope.mask : value;
 }
 
 class _ValuationStatusLine extends ConsumerWidget {
