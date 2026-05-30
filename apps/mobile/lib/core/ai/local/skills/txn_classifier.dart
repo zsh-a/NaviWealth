@@ -1,7 +1,7 @@
 /// Rule-based transaction classifier.
 ///
-/// Phase 2-B baseline: a static alias table maps merchant keys to
-/// category *hints* (free-form strings — feature adapters map them to
+/// Phase 2-B baseline: a static alias table maps transaction descriptors
+/// to category *hints* (free-form strings — feature adapters map them to
 /// real category ids). High-confidence matches return 0.9; ambiguous
 /// or near-misses are intentionally left to the user.
 ///
@@ -35,95 +35,176 @@ class Classification {
   final String reason;
 }
 
-const Map<String, String> _aliasToCategory = <String, String>{
-  // Coffee
-  'starbucks': 'coffee',
-  'luckin': 'coffee',
-  'bluebottle': 'coffee',
-  '星巴克': 'coffee',
-  '瑞幸': 'coffee',
-  'manner': 'coffee',
-  // Food delivery
-  'doordash': 'food_delivery',
-  'ubereats': 'food_delivery',
-  'grubhub': 'food_delivery',
-  'meituan': 'food_delivery',
-  '美团': 'food_delivery',
-  '饿了么': 'food_delivery',
-  // Grocery
-  'wholefoods': 'grocery',
-  'safeway': 'grocery',
-  'costco': 'grocery',
-  'traderjoes': 'grocery',
-  '盒马': 'grocery',
-  '沃尔玛': 'grocery',
-  // Transport
-  'uber': 'transport',
-  'lyft': 'transport',
-  'didi': 'transport',
-  '滴滴': 'transport',
-  // Subscription / digital
-  'netflix': 'subscription',
-  'spotify': 'subscription',
-  'apple': 'subscription',
-  'icloud': 'subscription',
-  'dropbox': 'subscription',
-  'github': 'subscription',
-  'openai': 'subscription',
-  '腾讯视频': 'subscription',
-  '爱奇艺': 'subscription',
-  // Shopping (broad)
-  'amazon': 'shopping',
-  'taobao': 'shopping',
-  '淘宝': 'shopping',
-  '京东': 'shopping',
-  'jd': 'shopping',
-  'tmall': 'shopping',
-  '天猫': 'shopping',
-  // Utilities
-  'verizon': 'utilities',
-  'comcast': 'utilities',
-  'pg&e': 'utilities',
-  '中国移动': 'utilities',
-  '中国联通': 'utilities',
-  '国家电网': 'utilities',
-};
+class _CategoryRule {
+  const _CategoryRule(this.categoryHint, this.aliases);
+
+  final String categoryHint;
+  final List<String> aliases;
+}
+
+final RegExp _tokenRun = RegExp(r'[一-鿿]+|[a-z0-9]+');
+
+const List<_CategoryRule> _rules = <_CategoryRule>[
+  _CategoryRule('food_delivery', <String>[
+    'uber eats',
+    'ubereats',
+    'doordash',
+    'grubhub',
+    'meituan',
+    '美团外卖',
+    '美团',
+    '饿了么',
+    'eleme',
+  ]),
+  _CategoryRule('coffee', <String>[
+    'starbucks',
+    'luckin',
+    'blue bottle',
+    'bluebottle',
+    '星巴克',
+    '瑞幸咖啡',
+    '瑞幸',
+    'manner',
+  ]),
+  _CategoryRule('grocery', <String>[
+    'whole foods',
+    'wholefoods',
+    'safeway',
+    'costco',
+    'trader joes',
+    'traderjoes',
+    'walmart',
+    '盒马',
+    '沃尔玛',
+  ]),
+  _CategoryRule('transport', <String>['uber', 'lyft', 'didi', '滴滴']),
+  _CategoryRule('subscription', <String>[
+    'netflix',
+    'spotify',
+    'apple music',
+    'apple.com/bill',
+    'icloud',
+    'dropbox',
+    'github',
+    'openai',
+    '腾讯视频',
+    '爱奇艺',
+  ]),
+  _CategoryRule('shopping', <String>[
+    'apple store',
+    'applestore',
+    'amazon',
+    'taobao',
+    '淘宝',
+    '京东',
+    'jd',
+    'tmall',
+    '天猫',
+  ]),
+  _CategoryRule('utilities', <String>[
+    'verizon',
+    'comcast',
+    'pge',
+    'pg&e',
+    '中国移动',
+    '中国联通',
+    '国家电网',
+  ]),
+];
 
 /// Classify [txn]. Returns `null` when:
 ///  * The transaction already has a [TransactionInput.categoryId]
 ///    (the user has already chosen — never override),
-///  * The merchant key is empty (description had no letters),
+///  * The amount is not an outflow,
+///  * The descriptor is empty,
 ///  * No alias matches (the rules layer doesn't guess).
 Classification? classifyTransaction(TransactionInput txn) {
   if (txn.categoryId != null) return null;
+  if (parseAmountMinor(txn.amountMinor) >= 0) return null;
   final key = merchantKey(txn.description);
-  if (key.isEmpty) return null;
+  final descriptor = _descriptor(txn.description);
+  if (key.isEmpty || descriptor.normalized.isEmpty) return null;
 
-  // Exact match first — highest confidence.
-  final exact = _aliasToCategory[key];
-  if (exact != null) {
-    return Classification(
-      categoryHint: exact,
-      confidence: 0.9,
-      reason: 'merchant alias matched: $key',
-    );
-  }
+  final match = _bestRuleMatch(descriptor);
+  if (match == null) return null;
+  final exactMerchant = key == match.normalizedAlias;
+  return Classification(
+    categoryHint: match.categoryHint,
+    confidence: exactMerchant ? 0.9 : 0.82,
+    reason: exactMerchant
+        ? 'merchant alias matched: $key'
+        : 'descriptor alias matched: ${match.alias}',
+  );
+}
 
-  // Substring fallback. Common for Chinese merchant strings where
-  // the extracted key is `'美团外卖'` and the alias is `'美团'`. Pick
-  // the *longest* matching alias so 'amazonfresh' (if added) wins
-  // over the broader 'amazon'.
-  String? best;
-  for (final alias in _aliasToCategory.keys) {
-    if (!key.contains(alias)) continue;
-    if (best == null || alias.length > best.length) best = alias;
+_RuleMatch? _bestRuleMatch(_Descriptor descriptor) {
+  _RuleMatch? best;
+  for (final rule in _rules) {
+    for (final alias in rule.aliases) {
+      final normalizedAlias = _normalize(alias);
+      if (normalizedAlias.isEmpty) continue;
+      if (!_matchesAlias(descriptor, normalizedAlias)) continue;
+      final candidate = _RuleMatch(
+        categoryHint: rule.categoryHint,
+        alias: alias,
+        normalizedAlias: normalizedAlias,
+      );
+      if (best == null ||
+          candidate.normalizedAlias.length > best.normalizedAlias.length) {
+        best = candidate;
+      }
+    }
   }
-  if (best != null) {
-    return Classification(
-      categoryHint: _aliasToCategory[best]!,
-      confidence: 0.8,
-      reason: 'merchant alias substring match: $best',
-    );
+  return best;
+}
+
+bool _matchesAlias(_Descriptor descriptor, String normalizedAlias) {
+  if (descriptor.normalized == normalizedAlias) return true;
+  if (descriptor.tokens.contains(normalizedAlias)) return true;
+  if (_isPhraseAlias(normalizedAlias)) {
+    return descriptor.normalized.contains(normalizedAlias);
   }
-  return null;
+  return false;
+}
+
+bool _isPhraseAlias(String normalizedAlias) {
+  for (final rule in _rules) {
+    for (final alias in rule.aliases) {
+      if (_normalize(alias) == normalizedAlias) {
+        return _tokens(alias).length > 1 || RegExp(r'[一-鿿]').hasMatch(alias);
+      }
+    }
+  }
+  return false;
+}
+
+_Descriptor _descriptor(String input) {
+  final tokens = _tokens(input);
+  return _Descriptor(tokens: tokens, normalized: tokens.join());
+}
+
+List<String> _tokens(String input) => _tokenRun
+    .allMatches(input.toLowerCase())
+    .map((m) => m.group(0)!)
+    .toList(growable: false);
+
+String _normalize(String input) => _tokens(input).join();
+
+class _Descriptor {
+  const _Descriptor({required this.tokens, required this.normalized});
+
+  final List<String> tokens;
+  final String normalized;
+}
+
+class _RuleMatch {
+  const _RuleMatch({
+    required this.categoryHint,
+    required this.alias,
+    required this.normalizedAlias,
+  });
+
+  final String categoryHint;
+  final String alias;
+  final String normalizedAlias;
 }
