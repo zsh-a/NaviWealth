@@ -82,10 +82,17 @@ Seeds (`test/integration/`, tagged `integration`, headless):
 - `account_net_worth_integration_test.dart` — creates an account through
   the real repository, asserts it surfaces through the live stream, and
   that the net-worth read model resolves to zero for an empty ledger.
-- `liability_net_worth_integration_test.dart` — the read model *reacts*:
-  a 120k CNY loan written through the real repository flows through the
-  generated amortization schedule → `LiabilitySummary` →
+- `liability_net_worth_integration_test.dart` — the read model *reacts*
+  on the negative side: a 120k CNY loan written through the real repository
+  flows through the generated amortization schedule → `LiabilitySummary` →
   `DashboardAggregator`, driving net worth to -120k.
+- `asset_net_worth_integration_test.dart` — the positive side: a 50k CNY
+  term deposit records an append-only valuation observation that flows
+  through the prices table → `ManualAssetValuation` → aggregator, raising
+  net worth to +50k.
+
+Together the three integration tests prove the net-worth read model both
+resolves (empty) and moves in both directions through the real data layer.
 
 ### Flow / Task (Page Objects, ~4%)
 `test/flow/` — boots the real `NaviWealthApp` (real router, shell, widgets)
@@ -185,8 +192,8 @@ real coverage.
 
 **P1 — fill the missing layers:**
 - Grow `test/flow/` from 1 → the 12 Tasks in §3.
-- Grow `test/integration/` to cover writes that move net worth (assets,
-  liabilities, trades) through the real read model.
+- ✅ Net-worth read model covered both directions (assets, liabilities);
+  next: securities trades (holdings → net worth) through the real chain.
 - Stand up on-device `integration_test/` (§6) for the SQLCipher boot path.
 - Contracts-as-code: generated enum SSOT + `sync-v2` wire roundtrip vs the
   Rust serializer.
