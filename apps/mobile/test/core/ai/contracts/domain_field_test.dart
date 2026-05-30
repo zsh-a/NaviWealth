@@ -28,10 +28,7 @@ void main() {
     });
 
     test('IntentHint legacy JSON without domain decodes to finance', () {
-      final legacy = <String, Object?>{
-        'capability': 'analyze',
-        'risk': 'info',
-      };
+      final legacy = <String, Object?>{'capability': 'analyze', 'risk': 'info'};
       expect(IntentHint.fromJson(legacy).domain, kDomainFinance);
     });
 
@@ -67,10 +64,7 @@ void main() {
         allowedContextTier: BudgetTier.small,
         domain: 'health',
       );
-      expect(
-        ToolDescriptor.fromJson(healthTool.toJson()).domain,
-        'health',
-      );
+      expect(ToolDescriptor.fromJson(healthTool.toJson()).domain, 'health');
     });
 
     test('ToolDescriptor legacy JSON without domain decodes to finance', () {
@@ -131,19 +125,15 @@ void main() {
     test('IntentDescriptor defaults to finance, accepts non-finance', () {
       const descriptor = IntentDescriptor(
         name: 'explain_change',
-        labelZh: '为什么',
         allowedObjectTypes: <String>{'expense'},
         preferredCapabilities: <AiCapability>{AiCapability.chat},
-        promptTemplate: '解释 {{object_label}}',
       );
       expect(descriptor.domain, kDomainFinance);
 
       const healthDescriptor = IntentDescriptor(
         name: 'explain_recovery',
-        labelZh: '恢复',
         allowedObjectTypes: <String>{'sleep_session'},
         preferredCapabilities: <AiCapability>{AiCapability.chat},
-        promptTemplate: '解释 {{object_label}} 的恢复趋势',
         domain: 'health',
       );
       expect(healthDescriptor.domain, 'health');
