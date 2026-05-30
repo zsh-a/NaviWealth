@@ -247,7 +247,6 @@ final dashboardSnapshotProvider = FutureProvider<DashboardSnapshot>((
   final manualList = await _manualAssetValuationsForHeader(ref);
   final physical = ref.watch(physicalAssetsListProvider);
   final liab = ref.watch(liabilitiesStreamProvider);
-  final liabilitySummaries = ref.watch(allLiabilitySummariesProvider);
   final assets = ref.watch(allAssetsStreamProvider);
   final holdings = ref.watch(holdingsSnapshotProvider);
   final rates = ref.watch(fxRatesStreamProvider);
@@ -271,10 +270,9 @@ final dashboardSnapshotProvider = FutureProvider<DashboardSnapshot>((
       const <String, HoldingSnapshot>{};
   final fxRows =
       rates.value ?? await ref.watch(fxRatesStreamProvider.future) ?? const [];
-  final summaryMap =
-      liabilitySummaries.value ??
-      await ref.watch(allLiabilitySummariesProvider.future) ??
-      const <String, LiabilitySummary>{};
+  final summaryMap = liabList.isEmpty
+      ? const <String, LiabilitySummary>{}
+      : await ref.watch(allLiabilitySummariesProvider.future);
   final securities = _buildSecurityHoldings(
     holdingsByAsset: holdingsByAsset,
     assets: assetList,
