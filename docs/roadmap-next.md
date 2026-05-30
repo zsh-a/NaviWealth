@@ -1,9 +1,27 @@
-# NaviWealth 开发计划（v0.5.x → v0.7.x）
+# NaviWealth Roadmap Index
 
-> 本文档是**当前唯一的开发计划入口**。它的作用域被
-> [`lifeos-architecture-northstar.md`](./lifeos-architecture-northstar.md) 严格约束:
-> **只规划 FinanceOS(NaviWealth 当前唯一存在的域)**,不包含任何 HealthOS / TimeOS /
-> LivingOS 的阶段化计划——这类规划由北极星 §1.8 明确禁止,触发条件见 §6。
+> Status: compatibility entry point.
+>
+> NaviWealth now has an active multi-domain LifeOS shell. This file remains
+> as the stable link for older references, but new planning should start from
+> the split roadmap below:
+>
+> - Cross-domain LifeOS sequencing: [`roadmap-lifeos.md`](./roadmap-lifeos.md)
+> - FinanceOS domain sequencing: [`roadmap-finance.md`](./roadmap-finance.md)
+> - HealthOS SSOT: [`healthos-domain.md`](./healthos-domain.md)
+> - KnowledgeOS SSOT: [`knowledgeos-domain.md`](./knowledgeos-domain.md)
+> - Shell and extension seams: [`lifeos-shell.md`](./lifeos-shell.md)
+>
+> The historical FinanceOS plan follows below for traceability. If a section
+> conflicts with the split roadmaps or the domain SSOTs, treat the newer split
+> roadmap and SSOT as authoritative.
+
+# Historical FinanceOS Plan（v0.5.x → v0.7.x）
+
+> 下方内容是 2026-05-24 前后的 FinanceOS 历史调度快照。它不再是唯一开发计划入口。
+> 当前跨域计划由 [`roadmap-lifeos.md`](./roadmap-lifeos.md) 负责,FinanceOS 域计划由
+> [`roadmap-finance.md`](./roadmap-finance.md) 负责。若历史段落仍写着"当前唯一"
+> 或"唯一存在的域",以本文件顶部索引和各 SSOT 为准。
 >
 > 各执行轨道的**任务级细节**仍在原 detail 文档里;本文档只做**统一调度 + 优先级 + 触发条件 + 反目标**。
 >

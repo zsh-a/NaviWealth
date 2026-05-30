@@ -26,7 +26,10 @@
 
 **仅剩 P1-H 仍是开放的近期工作**:测试覆盖空白补齐(codecov 60% 项目目标 / 70% patch 目标)。
 
-**结论**:Phase 1 收尾基本完成。下一程的重心应该转到 [`roadmap-next.md`](./roadmap-next.md) §3 中期项(多币种双显示 / Budget MVP / Income Planner P4 / AI Copilot M1 等)。
+**结论**:Phase 1 收尾基本完成。下一程的重心应该转到
+[`roadmap-lifeos.md`](./roadmap-lifeos.md) 和
+[`roadmap-finance.md`](./roadmap-finance.md);历史 FinanceOS 调度仍可在
+[`roadmap-next.md`](./roadmap-next.md) 查阅。
 
 ---
 

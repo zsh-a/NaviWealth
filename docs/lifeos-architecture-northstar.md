@@ -183,4 +183,5 @@ Before merging architecture-affecting code, answer:
 - `lifeos-shell.md`: current shell implementation and extension points.
 - `healthos-domain.md`: HealthOS domain behavior.
 - `knowledgeos-domain.md`: KnowledgeOS domain behavior.
-- `roadmap-next.md`: FinanceOS roadmap and product sequencing.
+- `roadmap-lifeos.md`: cross-domain roadmap and product sequencing.
+- `roadmap-finance.md`: FinanceOS roadmap and product sequencing.

@@ -16,7 +16,7 @@ The shell owns cross-domain infrastructure:
 
 Domain business behavior belongs in the domain SSOT:
 
-- FinanceOS: `docs/roadmap-next.md` and finance feature docs.
+- FinanceOS: `docs/roadmap-finance.md` and finance feature docs.
 - HealthOS: `docs/healthos-domain.md`.
 - KnowledgeOS: `docs/knowledgeos-domain.md`.
 
