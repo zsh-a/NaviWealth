@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/logging/providers.dart';
 import '../core/logging/talker_route_observer.dart';
+import '../design_system/widgets/system_back_scope.dart';
 import '../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
 import '../features/auth/presentation/devices_page.dart'
     deferred as devices_lib;
@@ -116,96 +117,112 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
 /// Top-level settings sub-tree. Outside the shell so opening Settings
 /// covers the bottom nav and `pop` returns to whatever tab the user
 /// came from. See IA contract §1: Settings is global meta, not a tab.
+///
+/// Because this sub-tree is a *sibling* of the dock shell, it does not
+/// inherit the shell's root system-back handler. Every page is therefore
+/// wrapped in [SystemBackScope] so the Android back gesture mirrors the
+/// toolbar arrow (pop → else go to the logical parent) instead of falling
+/// through to the OS and exiting the app when a settings route is the
+/// stack root (reached via `go()` / deep link / app restore).
 GoRoute _settingsRoute() {
   return GoRoute(
     path: AppRoutes.settings,
     name: AppRouteNames.settings,
-    builder: (context, state) => DeferredRoute(
-      load: settings_lib.loadLibrary,
-      builder: (_) => settings_lib.SettingsPage(),
+    builder: (context, state) => _backSafe(
+      DeferredRoute(
+        load: settings_lib.loadLibrary,
+        builder: (_) => settings_lib.SettingsPage(),
+      ),
     ),
     routes: [
       GoRoute(
         path: 'devices',
         name: AppRouteNames.devices,
-        builder: (context, state) => DeferredRoute(
-          load: devices_lib.loadLibrary,
-          builder: (_) => devices_lib.DevicesPage(),
+        builder: (context, state) => _backSafe(
+          DeferredRoute(
+            load: devices_lib.loadLibrary,
+            builder: (_) => devices_lib.DevicesPage(),
+          ),
         ),
       ),
       GoRoute(
         path: 'fx-rates',
         name: AppRouteNames.fxRates,
-        builder: (context, state) => const FxRatesPage(),
+        builder: (context, state) => _backSafe(const FxRatesPage()),
       ),
       GoRoute(
         path: 'backup',
         name: AppRouteNames.backup,
-        builder: (context, state) => const BackupPage(),
+        builder: (context, state) => _backSafe(const BackupPage()),
       ),
       GoRoute(
         path: 'logs',
         name: AppRouteNames.logs,
-        builder: (context, state) => const LogViewerPage(),
+        builder: (context, state) => _backSafe(const LogViewerPage()),
       ),
       GoRoute(
         path: 'sync',
         name: AppRouteNames.sync,
-        builder: (context, state) => const SyncStatusPage(),
+        builder: (context, state) => _backSafe(const SyncStatusPage()),
       ),
       GoRoute(
         path: 'domains',
         name: AppRouteNames.domains,
-        builder: (context, state) => const DomainsSettingsPage(),
+        builder: (context, state) => _backSafe(const DomainsSettingsPage()),
       ),
       GoRoute(
         path: 'ai-history',
         name: AppRouteNames.aiHistory,
-        builder: (context, state) => DeferredRoute(
-          load: ai_chat_lib.loadLibrary,
-          builder: (_) => ai_chat_lib.AiChatPage(),
+        builder: (context, state) => _backSafe(
+          DeferredRoute(
+            load: ai_chat_lib.loadLibrary,
+            builder: (_) => ai_chat_lib.AiChatPage(),
+          ),
         ),
       ),
       GoRoute(
         path: 'ai-privacy',
         name: AppRouteNames.aiPrivacy,
-        builder: (context, state) => const AiPrivacyPage(),
+        builder: (context, state) => _backSafe(const AiPrivacyPage()),
       ),
       GoRoute(
         path: 'ai-llm',
         name: AppRouteNames.aiLlm,
-        builder: (context, state) => const AiLlmCredentialsPage(),
+        builder: (context, state) => _backSafe(const AiLlmCredentialsPage()),
       ),
       GoRoute(
         path: 'ai-models',
         name: AppRouteNames.aiModels,
-        builder: (context, state) => const AiModelsPage(),
+        builder: (context, state) => _backSafe(const AiModelsPage()),
       ),
       GoRoute(
         path: 'risk-thresholds',
         name: AppRouteNames.riskThresholds,
-        builder: (context, state) => const RiskThresholdsPage(),
+        builder: (context, state) => _backSafe(const RiskThresholdsPage()),
       ),
       GoRoute(
         path: 'stress-test',
         name: AppRouteNames.stressTest,
-        builder: (context, state) => const FireStressSettingsPage(),
+        builder: (context, state) => _backSafe(const FireStressSettingsPage()),
       ),
       GoRoute(
         path: 'monthly-expense',
         name: AppRouteNames.monthlyExpense,
-        builder: (context, state) => const MonthlyExpenseSettingsPage(),
+        builder: (context, state) =>
+            _backSafe(const MonthlyExpenseSettingsPage()),
       ),
       GoRoute(
         path: 'ai-transparency',
         name: AppRouteNames.aiTransparency,
-        builder: (context, state) => const AiTransparencyPage(),
+        builder: (context, state) => _backSafe(const AiTransparencyPage()),
         routes: [
           GoRoute(
             path: ':requestId',
             name: AppRouteNames.aiTransparencyDetail,
-            builder: (context, state) => AiTransparencyDetailPage(
-              requestId: state.pathParameters['requestId'] ?? '',
+            builder: (context, state) => _backSafe(
+              AiTransparencyDetailPage(
+                requestId: state.pathParameters['requestId'] ?? '',
+              ),
             ),
           ),
         ],
@@ -213,5 +230,9 @@ GoRoute _settingsRoute() {
     ],
   );
 }
+
+/// Wraps an out-of-shell settings page so the system back gesture routes
+/// through [SystemBackScope] (pop → else go to the logical parent).
+Widget _backSafe(Widget child) => SystemBackScope(child: child);
 
 final appRouterProvider = Provider<GoRouter>((ref) => buildAppRouter(ref));
