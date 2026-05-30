@@ -18,7 +18,7 @@
 // dashboardSnapshotProvider — runs against the real database.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
+import 'package:flutter_riverpod/misc.dart' show Override, ProviderListenable;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
@@ -44,7 +44,12 @@ class IntegrationEnv {
   final ProviderContainer container;
   final AppDatabase db;
 
-  static Future<IntegrationEnv> create() async {
+  /// [extraOverrides] are appended after the base overrides, so a test can
+  /// replace any provider it needs (e.g. swap the live price resolver for a
+  /// deterministic fake) without rebuilding the base wiring.
+  static Future<IntegrationEnv> create({
+    List<Override> extraOverrides = const [],
+  }) async {
     SharedPreferences.setMockInitialValues(const {});
     final prefs = await SharedPreferences.getInstance();
     final db = makeTestDatabase();
@@ -55,6 +60,7 @@ class IntegrationEnv {
         appDatabaseProvider.overrideWith((ref) async => db),
         authControllerProvider.overrideWith(_LocalOnlyAuthController.new),
         mutationStamperProvider.overrideWith((ref) async => makeStubStamper()),
+        ...extraOverrides,
       ],
     );
 

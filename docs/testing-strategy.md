@@ -91,8 +91,14 @@ Seeds (`test/integration/`, tagged `integration`, headless):
   through the prices table → `ManualAssetValuation` → aggregator, raising
   net worth to +50k.
 
-Together the three integration tests prove the net-worth read model both
-resolves (empty) and moves in both directions through the real data layer.
+- `securities_net_worth_integration_test.dart` — the deepest input path:
+  a buy recorded as double-entry postings is reconstructed into a holding
+  by `HoldingService` from the ledger, valued by a fixed-price fake
+  resolver (offline, deterministic), and folded into net worth (+2000).
+
+Together the four integration tests prove the net-worth read model resolves
+(empty) and moves in every direction — manual assets, liabilities, and
+ledger-reconstructed securities — through the real data layer.
 
 ### Flow / Task (Page Objects, ~4%)
 `test/flow/` — boots the real `NaviWealthApp` (real router, shell, widgets)
@@ -110,6 +116,11 @@ HomePage(tester).expectLanded();
 When the layout is refactored, only the Page Object changes; the Task
 body does not. Use a bounded `settle()` pump, never `pumpAndSettle`
 (stream/timer surfaces can hang).
+
+Seeds: `net_worth_flow_test.dart` (Task #1 — land on Today, move between
+destinations) and `navigation_flow_test.dart` (route-smoke across all four
+FinanceOS primary tabs — Today / Activity / Wealth / Plan — asserting each
+resolves and keeps the shell mounted rather than hitting the 404 page).
 
 ### Contract (Dart↔Rust↔wire, ~5%)
 The client and the Rust Worker share a wire format but no generated
@@ -166,16 +177,21 @@ standing goal; see §7.
 It does **not** exercise SQLCipher, the platform secure-storage key path,
 or a real on-device Drift connection. The on-device layer closes that gap:
 
-1. Add the `integration_test` dev dependency to `apps/mobile/pubspec.yaml`.
-2. Create `apps/mobile/integration_test/` with the same Page Objects
-   (promote `test/flow/support/` to a shared location).
-3. Boot with a **real** `AppDatabase` (override `appDatabaseProvider` with a
-   shared instance), seed via real repositories, assert rendered outcomes.
-4. Run on an emulator in a dedicated, possibly nightly, CI job (slower;
-   keep off the fast PR path unless it stays under budget).
+✅ Seeded. `apps/mobile/integration_test/database_boot_integration_test.dart`
+opens the **real** file-backed `AppDatabase` through `openAppConnection()`
+(path_provider + `createInBackground` + on-disk migration to schemaVersion)
+and proves a write survives a full close/reopen cycle — the production
+connection every headless test bypasses via `NativeDatabase.memory`. The
+`integration_test` dev dependency is wired in `pubspec.yaml`.
 
-This is where Task #11 (backup/restore) and the SQLCipher PRAGMA path get
-real coverage.
+Because it needs a real device, it runs via the `integration-device.yml`
+workflow on an Android emulator (nightly + manual + PRs touching the
+harness or `core/persistence/`), not the unit-test VM. Run locally with:
+`flutter test integration_test/ -d <device>` (needs a full Apple/Android
+toolchain — it can't run on the headless `flutter test` host).
+
+Next here: boot the full app with a real `AppDatabase` + Page Objects to
+cover Task #11 (backup/restore) and any SQLCipher PRAGMA path on-device.
 
 ## 7. Roadmap
 
@@ -186,15 +202,18 @@ real coverage.
 - ✅ Known-failing gate is now a monotonic ratchet (fixed-but-listed fails CI).
 - ✅ Flow layer seeded — `test/flow/` with Page Object Model + Task #1.
 - ✅ Integration layer seeded — `test/integration/` real-Drift harness +
-  account-persistence test + value-moving liability → net-worth test.
+  net-worth coverage in every direction (manual asset, liability, securities).
+- ✅ On-device `integration_test/` seeded — real file-backed DB boot/migrate/
+  reopen test + `integration-device.yml` Android-emulator runner (§6).
 - Both new layers run inside the existing `flutter test` job (tagged `flow`
   / `integration` in `dart_test.yaml`); no emulator required.
 
-**P1 — fill the missing layers:**
-- Grow `test/flow/` from 1 → the 12 Tasks in §3.
-- ✅ Net-worth read model covered both directions (assets, liabilities);
-  next: securities trades (holdings → net worth) through the real chain.
-- Stand up on-device `integration_test/` (§6) for the SQLCipher boot path.
+**P1 — fill the missing layers (in progress):**
+- ✅ Net-worth read model covered in every direction — manual assets,
+  liabilities, and ledger-reconstructed securities — through the real chain.
+- ✅ On-device `integration_test/` stood up (real file DB boot + emulator CI).
+- Flow layer: 2 of 12 Tasks done (view net worth, navigate primaries);
+  grow toward the remaining Tasks in §3 (add account, import, AI, etc.).
 - Contracts-as-code: generated enum SSOT + `sync-v2` wire roundtrip vs the
   Rust serializer.
 - Expand golden coverage to each Task surface + responsive breakpoints.
