@@ -34,7 +34,9 @@ class IngestReviewPage extends ConsumerStatefulWidget {
 
 class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   String? _accountId;
-  bool _busy = false;
+  _IngestBusyState? _busy;
+
+  bool get _isBusy => _busy != null;
 
   @override
   Widget build(BuildContext context) {
@@ -56,15 +58,15 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         suffixes: [
           FHeaderAction(
             icon: const Icon(FLucideIcons.camera),
-            onPress: _busy ? null : _captureCamera,
+            onPress: _isBusy ? null : _captureCamera,
           ),
           FHeaderAction(
             icon: const Icon(FLucideIcons.paperclip),
-            onPress: _busy ? null : _pickFile,
+            onPress: _isBusy ? null : _pickFile,
           ),
           FHeaderAction(
             icon: const Icon(FLucideIcons.clipboard),
-            onPress: _busy ? null : _openPasteDialog,
+            onPress: _isBusy ? null : _openPasteDialog,
           ),
         ],
       ),
@@ -72,7 +74,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       // §5.10.10 / S5c-native — drag a receipt/statement onto the page
       // (desktop/web). No-op on touch platforms.
       child: DropTarget(
-        onDragDone: _busy ? (_) {} : _onDrop,
+        onDragDone: _isBusy ? (_) {} : _onDrop,
         child: Material(
           color: Colors.transparent,
           child: accountsAsync.when(
@@ -112,10 +114,12 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     List<IngestDraft> drafts,
   ) {
     if (drafts.isEmpty) {
+      final busy = _busy;
+      if (busy != null) return _ProcessingState(state: busy);
       return _EmptyState(
-        onPaste: _busy ? null : _openPasteDialog,
-        onImport: _busy ? null : _pickFile,
-        onCamera: _busy ? null : _captureCamera,
+        onPaste: _isBusy ? null : _openPasteDialog,
+        onImport: _isBusy ? null : _pickFile,
+        onCamera: _isBusy ? null : _captureCamera,
       );
     }
     final payable = accounts.where((a) => !a.archived).toList(growable: false);
@@ -127,6 +131,11 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (_busy != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: _ProcessingBanner(state: _busy!),
+          ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: Text(
@@ -161,7 +170,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
             separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, i) => _DraftCard(
               draft: drafts[i],
-              busy: _busy,
+              busy: _isBusy,
               onConfirm: () => _confirm(drafts[i], selectedId),
               onSkip: () => _skip(drafts[i]),
             ),
@@ -174,7 +183,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: FButton(
                 variant: FButtonVariant.primary,
-                onPress: _busy
+                onPress: _isBusy
                     ? null
                     : () => _confirmAllFresh(drafts, selectedId),
                 child: Text(l10n.ingestConfirmAllFresh(freshCount)),
@@ -204,7 +213,13 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       );
       return;
     }
-    setState(() => _busy = true);
+    setState(
+      () => _busy = _IngestBusyState(
+        title: l10n.ingestRecordingTitle,
+        message: l10n.ingestRecordingBody,
+        icon: FLucideIcons.badgeCheck,
+      ),
+    );
     try {
       final svc = await ref.read(ingestConfirmServiceProvider.future);
       if (svc == null) {
@@ -224,7 +239,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     } on IngestConfirmException catch (e) {
       if (mounted) AppMessenger.show(context, ToastKind.error, e.message);
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => _busy = null);
     }
   }
 
@@ -246,7 +261,13 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       );
       return;
     }
-    setState(() => _busy = true);
+    setState(
+      () => _busy = _IngestBusyState(
+        title: l10n.ingestRecordingTitle,
+        message: l10n.ingestRecordingBody,
+        icon: FLucideIcons.badgeCheck,
+      ),
+    );
     try {
       final svc = await ref.read(ingestConfirmServiceProvider.future);
       if (svc == null) return;
@@ -257,7 +278,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     } on IngestConfirmException catch (e) {
       if (mounted) AppMessenger.show(context, ToastKind.error, e.message);
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => _busy = null);
     }
   }
 
@@ -289,7 +310,14 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   /// pipeline and surface the outcome with one consistent toast set.
   Future<void> _runIngest(IngestSource source) async {
     final l10n = AppLocalizations.of(context);
-    setState(() => _busy = true);
+    final sourceLabel = _sourceLabel(l10n, source);
+    setState(
+      () => _busy = _IngestBusyState(
+        title: l10n.ingestProcessingTitle,
+        message: l10n.ingestProcessingBody(sourceLabel),
+        icon: _sourceIcon(source.kind),
+      ),
+    );
     try {
       final result = await ref.read(ingestControllerProvider).ingest(source);
       if (!mounted) return;
@@ -309,8 +337,148 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         );
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => _busy = null);
     }
+  }
+
+  static IconData _sourceIcon(IngestSourceKind kind) {
+    return switch (kind) {
+      IngestSourceKind.csv => FLucideIcons.fileSpreadsheet,
+      IngestSourceKind.pasteText => FLucideIcons.clipboard,
+      IngestSourceKind.receiptImage => FLucideIcons.image,
+      IngestSourceKind.statementPdf => FLucideIcons.fileText,
+      IngestSourceKind.email => FLucideIcons.mail,
+    };
+  }
+
+  static String _sourceLabel(AppLocalizations l10n, IngestSource source) {
+    final label = source.originLabel?.trim();
+    if (label != null && label.isNotEmpty && label != 'paste') return label;
+    return switch (source.kind) {
+      IngestSourceKind.csv => l10n.ingestSourceCsv,
+      IngestSourceKind.pasteText => l10n.ingestSourcePaste,
+      IngestSourceKind.receiptImage => l10n.ingestSourceImage,
+      IngestSourceKind.statementPdf => l10n.ingestSourcePdf,
+      IngestSourceKind.email => l10n.ingestSourceEmail,
+    };
+  }
+}
+
+class _IngestBusyState {
+  const _IngestBusyState({
+    required this.title,
+    required this.message,
+    required this.icon,
+  });
+
+  final String title;
+  final String message;
+  final IconData icon;
+}
+
+class _ProcessingState extends StatelessWidget {
+  const _ProcessingState({required this.state});
+
+  final _IngestBusyState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: _ProcessingPanel(state: state),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProcessingBanner extends StatelessWidget {
+  const _ProcessingBanner({required this.state});
+
+  final _IngestBusyState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ProcessingPanel(state: state, compact: true);
+  }
+}
+
+class _ProcessingPanel extends StatelessWidget {
+  const _ProcessingPanel({required this.state, this.compact = false});
+
+  final _IngestBusyState state;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return SoftCard(
+      padding: EdgeInsets.zero,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            LinearProgressIndicator(
+              minHeight: 2,
+              backgroundColor: colors.muted,
+              color: colors.primary,
+            ),
+            Padding(
+              padding: EdgeInsets.all(
+                compact ? AppSpacing.s12 : AppSpacing.s20,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: compact ? 34 : 40,
+                    height: compact ? 34 : 40,
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      state.icon,
+                      size: compact ? AppIconSizes.sm : AppIconSizes.md,
+                      color: colors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          state.title,
+                          style: context.theme.typography.sm.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.s4),
+                        Text(
+                          state.message,
+                          style: context.theme.typography.sm.copyWith(
+                            color: colors.mutedForeground,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -330,7 +498,6 @@ class _DraftCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     final p = draft.parsed;
     return SoftCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -339,14 +506,16 @@ class _DraftCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(
                   p.description,
                   style: context.theme.typography.sm.copyWith(
                     fontWeight: FontWeight.w600,
+                    height: 1.25,
                   ),
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -361,22 +530,29 @@ class _DraftCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Row(
+          Wrap(
+            spacing: AppSpacing.s6,
+            runSpacing: AppSpacing.s6,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text(
-                _ymd(p.occurredAt),
-                style: context.theme.typography.xs.copyWith(
-                  color: colors.mutedForeground,
+              _DraftMetaChip(
+                icon: FLucideIcons.calendar,
+                label: _ymd(p.occurredAt),
+              ),
+              _DraftMetaChip(
+                icon: FLucideIcons.tags,
+                label: p.categoryHint ?? l10n.ingestUncategorized,
+              ),
+              _DraftMetaChip(
+                icon: _sourceIcon(draft.sourceKind),
+                label: _draftSourceLabel(l10n, draft),
+              ),
+              _DraftMetaChip(
+                icon: FLucideIcons.sparkles,
+                label: l10n.ingestDraftConfidence(
+                  (draft.confidence * 100).round(),
                 ),
               ),
-              const SizedBox(width: 8),
-              Text(
-                p.categoryHint ?? l10n.ingestUncategorized,
-                style: context.theme.typography.xs.copyWith(
-                  color: colors.mutedForeground,
-                ),
-              ),
-              const Spacer(),
               _VerdictPill(verdict: draft.verdict),
             ],
           ),
@@ -405,10 +581,70 @@ class _DraftCard extends StatelessWidget {
     );
   }
 
+  static IconData _sourceIcon(IngestSourceKind kind) {
+    return switch (kind) {
+      IngestSourceKind.csv => FLucideIcons.fileSpreadsheet,
+      IngestSourceKind.pasteText => FLucideIcons.clipboard,
+      IngestSourceKind.receiptImage => FLucideIcons.image,
+      IngestSourceKind.statementPdf => FLucideIcons.fileText,
+      IngestSourceKind.email => FLucideIcons.mail,
+    };
+  }
+
+  static String _draftSourceLabel(AppLocalizations l10n, IngestDraft draft) {
+    final origin = draft.originLabel?.trim();
+    if (origin != null && origin.isNotEmpty && origin != 'paste') {
+      return origin;
+    }
+    return switch (draft.sourceKind) {
+      IngestSourceKind.csv => l10n.ingestSourceCsv,
+      IngestSourceKind.pasteText => l10n.ingestSourcePaste,
+      IngestSourceKind.receiptImage => l10n.ingestSourceImage,
+      IngestSourceKind.statementPdf => l10n.ingestSourcePdf,
+      IngestSourceKind.email => l10n.ingestSourceEmail,
+    };
+  }
+
   static String _ymd(DateTime d) {
     final u = d.toLocal();
     String two(int n) => n.toString().padLeft(2, '0');
     return '${u.year}-${two(u.month)}-${two(u.day)}';
+  }
+}
+
+class _DraftMetaChip extends StatelessWidget {
+  const _DraftMetaChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s4,
+      ),
+      decoration: BoxDecoration(
+        color: colors.muted,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: AppIconSizes.xs, color: colors.mutedForeground),
+          const SizedBox(width: AppSpacing.s4),
+          Text(
+            label,
+            style: context.theme.typography.xs2.copyWith(
+              color: colors.mutedForeground,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

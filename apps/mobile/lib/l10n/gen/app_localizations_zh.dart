@@ -1048,6 +1048,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityEntryDetailInsightIncome => '识别为主要收入流入。可作为现金流预测的稳定基线。';
 
   @override
+  String activityEntryDetailLegCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 行',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get activityEntryDetailLedgerTitle => '完整分录';
+
+  @override
   String get aiContextSummaryThisMonth => '本月概览';
 
   @override
@@ -5793,6 +5806,40 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String ingestParseSummary(int total, int fresh, int dup) {
     return '解析 $total 笔（新增 $fresh · 疑似重复 $dup）';
+  }
+
+  @override
+  String get ingestProcessingTitle => '正在解析导入内容';
+
+  @override
+  String ingestProcessingBody(String source) {
+    return '正在读取 $source，提取交易并与本地流水去重。';
+  }
+
+  @override
+  String get ingestRecordingTitle => '正在入账';
+
+  @override
+  String get ingestRecordingBody => '正在写入已确认记录，并刷新待确认队列。';
+
+  @override
+  String get ingestSourceCsv => 'CSV 文件';
+
+  @override
+  String get ingestSourcePaste => '粘贴文本';
+
+  @override
+  String get ingestSourceImage => '票据图片';
+
+  @override
+  String get ingestSourcePdf => 'PDF 账单';
+
+  @override
+  String get ingestSourceEmail => '邮件';
+
+  @override
+  String ingestDraftConfidence(int percent) {
+    return '置信度 $percent%';
   }
 
   @override

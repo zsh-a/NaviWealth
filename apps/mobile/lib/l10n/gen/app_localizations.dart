@@ -1982,6 +1982,18 @@ abstract class AppLocalizations {
   /// **'Primary income inflow. Keep it stable in cash-flow projections.'**
   String get activityEntryDetailInsightIncome;
 
+  /// Transaction detail posting line count
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 line} other{{count} lines}}'**
+  String activityEntryDetailLegCount(int count);
+
+  /// Transaction detail section title for the full posting breakdown
+  ///
+  /// In en, this message translates to:
+  /// **'Ledger breakdown'**
+  String get activityEntryDetailLedgerTitle;
+
   /// AI context summary section eyebrow
   ///
   /// In en, this message translates to:
@@ -10452,6 +10464,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Parsed {total} · {fresh} new · {dup} possible dup'**
   String ingestParseSummary(int total, int fresh, int dup);
+
+  /// Ingest review: in-page title while an import is being parsed
+  ///
+  /// In en, this message translates to:
+  /// **'Parsing import'**
+  String get ingestProcessingTitle;
+
+  /// Ingest review: in-page status while an import source is being parsed
+  ///
+  /// In en, this message translates to:
+  /// **'Reading {source}, extracting transactions, and checking duplicates against your ledger.'**
+  String ingestProcessingBody(String source);
+
+  /// Ingest review: in-page title while drafts are being written to the ledger
+  ///
+  /// In en, this message translates to:
+  /// **'Recording entries'**
+  String get ingestRecordingTitle;
+
+  /// Ingest review: in-page status while confirmed drafts are being recorded
+  ///
+  /// In en, this message translates to:
+  /// **'Writing confirmed entries and refreshing the queue.'**
+  String get ingestRecordingBody;
+
+  /// Ingest source label for CSV input
+  ///
+  /// In en, this message translates to:
+  /// **'CSV file'**
+  String get ingestSourceCsv;
+
+  /// Ingest source label for pasted statement text
+  ///
+  /// In en, this message translates to:
+  /// **'Pasted text'**
+  String get ingestSourcePaste;
+
+  /// Ingest source label for image input
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt image'**
+  String get ingestSourceImage;
+
+  /// Ingest source label for PDF input
+  ///
+  /// In en, this message translates to:
+  /// **'PDF statement'**
+  String get ingestSourcePdf;
+
+  /// Ingest source label for email input
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get ingestSourceEmail;
+
+  /// Ingest review: parsed draft confidence chip
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% confidence'**
+  String ingestDraftConfidence(int percent);
 
   /// Ingest review: draft with no category hint
   ///

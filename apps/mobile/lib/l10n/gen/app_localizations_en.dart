@@ -1081,6 +1081,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Primary income inflow. Keep it stable in cash-flow projections.';
 
   @override
+  String activityEntryDetailLegCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lines',
+      one: '1 line',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get activityEntryDetailLedgerTitle => 'Ledger breakdown';
+
+  @override
   String get aiContextSummaryThisMonth => 'Monthly summary';
 
   @override
@@ -6035,6 +6049,41 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String ingestParseSummary(int total, int fresh, int dup) {
     return 'Parsed $total · $fresh new · $dup possible dup';
+  }
+
+  @override
+  String get ingestProcessingTitle => 'Parsing import';
+
+  @override
+  String ingestProcessingBody(String source) {
+    return 'Reading $source, extracting transactions, and checking duplicates against your ledger.';
+  }
+
+  @override
+  String get ingestRecordingTitle => 'Recording entries';
+
+  @override
+  String get ingestRecordingBody =>
+      'Writing confirmed entries and refreshing the queue.';
+
+  @override
+  String get ingestSourceCsv => 'CSV file';
+
+  @override
+  String get ingestSourcePaste => 'Pasted text';
+
+  @override
+  String get ingestSourceImage => 'Receipt image';
+
+  @override
+  String get ingestSourcePdf => 'PDF statement';
+
+  @override
+  String get ingestSourceEmail => 'Email';
+
+  @override
+  String ingestDraftConfidence(int percent) {
+    return '$percent% confidence';
   }
 
   @override
