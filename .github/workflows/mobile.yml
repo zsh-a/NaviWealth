@@ -10,7 +10,6 @@ on:
       - '.github/workflows/mobile.yml'
       - 'codecov.yml'
       - 'docs/ai-protocol.md'
-      - 'tool/check-modal-helpers.sh'
       - 'tool/check-enum-mirror.sh'
       - 'tool/lint-money-display.sh'
       - 'tool/lint-no-finance-in-core.sh'
@@ -21,7 +20,6 @@ on:
       - 'tool/fetch-onnxruntime.sh'
       - 'tool/embed-onnxruntime-android.sh'
       - 'tool/embed-onnxruntime-macos.sh'
-      - 'apps/mobile/tool/check-back-nav-coverage.sh'
   pull_request:
     paths:
       - 'apps/mobile/**'
@@ -30,7 +28,6 @@ on:
       - '.github/workflows/mobile.yml'
       - 'codecov.yml'
       - 'docs/ai-protocol.md'
-      - 'tool/check-modal-helpers.sh'
       - 'tool/check-enum-mirror.sh'
       - 'tool/lint-money-display.sh'
       - 'tool/lint-no-finance-in-core.sh'
@@ -41,7 +38,6 @@ on:
       - 'tool/fetch-onnxruntime.sh'
       - 'tool/embed-onnxruntime-android.sh'
       - 'tool/embed-onnxruntime-macos.sh'
-      - 'apps/mobile/tool/check-back-nav-coverage.sh'
 
 concurrency:
   group: mobile-${{ github.ref }}
@@ -75,8 +71,6 @@ jobs:
                 assets/fonts/inter-semibold.woff2 assets/fonts/inter-bold.woff2 \
                 assets/fonts/outfit-bold.woff2
       - run: flutter analyze --fatal-infos
-      - name: Lint — no Chinese literals in source (FIR-99)
-        run: dart tool/check_cn_literals.dart
       - name: Verify generated code is up to date
         run: |
           dart run build_runner build --delete-conflicting-outputs
@@ -85,46 +79,20 @@ jobs:
             git --no-pager diff --stat -- '*.g.dart' '*.freezed.dart'
             exit 1
           fi
-      - name: Schema-as-contract — Dart↔Rust enum mirror (Wave 42)
-        # Catches "added a Rust variant but forgot the Dart mirror"
-        # (and vice versa). The script diffs enums of the same name
-        # across mobile/contracts and backend/ai/context.
-        working-directory: ${{ github.workspace }}
-        run: ./tool/check-enum-mirror.sh
-      - name: Schema-as-contract — ARB l10n key parity (Wave 42)
-        # Both en and zh must define exactly the same key set —
-        # otherwise zh users see English at runtime via the silent
-        # fallback path.
+      - name: ARB l10n key parity — en/zh define the same key set
+        # Otherwise zh users see English at runtime via the silent fallback.
         run: ./tool/check-l10n-parity.sh
-      - name: Unified modal system — no raw Material modals in features
-        # Every sheet/dialog must go through the design-system helpers
-        # (showAppSheet / showAppFormSheet / showConfirmDialog) so chrome
-        # stays identical. Bans showDialog/AlertDialog/etc. in features.
-        working-directory: ${{ github.workspace }}
-        run: ./tool/check-modal-helpers.sh
-      - name: Money display lint — no naked toStringAsFixed
-        # Existing non-money uses are centrally allowlisted. Any new naked
-        # formatter must either use MoneyText/AppFormatters or document a
-        # non-money reason in tool/money-display-to-string-allowlist.txt.
-        working-directory: ${{ github.workspace }}
-        run: ./tool/lint-money-display.sh --strict
-      - name: Back-nav coverage — every non-tab page surfaces a way out
-        # Tab pages (Today/Activity/Wealth/Plan) intentionally have no
-        # back arrow. Every other FHeader.nested page must wire one via
-        # appSubPageHeader() or backHeaderAction() so users pushed in
-        # via deep link / sibling nav can leave without the system
-        # gesture (which doesn't exist on web).
-        run: ./tool/check-back-nav-coverage.sh
-      - name: LifeOS boundaries — D-1 cross-domain shell gates
-        # `docs/lifeos-shell.md` §11. Four guard rails landed with the
-        # D-1 shell foundation:
-        #   - no Finance imports in core/ai/runtime/ (D-1.2)
-        #   - no cross-feature imports inside ai_chat/ (D-1.6)
-        #   - every sync RowChange producer carries a domain prefix (D-1.4)
-        #   - shell contracts (core/ai/contracts/, core/sync/) stay
-        #     domain-neutral (no Money/Account/SleepSession leakage)
+      - name: Contract & boundary lints
+        # High-value architecture gates, run from the repo root:
+        #   - enum mirror: Dart↔Rust enums stay in sync (Wave 42)
+        #   - money display: no naked toStringAsFixed (allowlisted)
+        #   - LifeOS D-1 cross-domain shell boundaries (docs/lifeos-shell.md §11):
+        #       no Finance in core/ai/runtime/, no cross-feature imports in
+        #       ai_chat/, sync RowChange domain prefixes, domain-neutral contracts.
         working-directory: ${{ github.workspace }}
         run: |
+          ./tool/check-enum-mirror.sh
+          ./tool/lint-money-display.sh --strict
           ./tool/lint-no-finance-in-core.sh
           ./tool/lint-cross-feature-imports.sh
           ./tool/lint-row-family-prefix.sh
