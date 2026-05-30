@@ -145,6 +145,13 @@ class _MobileLayout extends ConsumerWidget {
 
     return FScaffold(
       childPad: false,
+      // The shell must NOT resize for the keyboard: every routed page builds
+      // its own keyboard-aware scaffold (DomainTabScaffold / ObjectDetailScaffold
+      // resize themselves; form pages own avoidance via AppFormScaffoldBody).
+      // If the shell also resized, the inset would be counted twice, lifting
+      // form action bars a keyboard-height above the IME with a blank band
+      // between (see app_form_scaffold_body_keyboard_test.dart).
+      resizeToAvoidBottomInset: false,
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -188,6 +195,9 @@ class _TabletLayout extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return FScaffold(
       childPad: false,
+      // See _MobileLayout: the routed page owns keyboard avoidance; the shell
+      // must not double-count the inset.
+      resizeToAvoidBottomInset: false,
       sidebar: SizedBox(
         width: 80,
         child: Column(
@@ -321,6 +331,9 @@ class _DesktopLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return FScaffold(
       childPad: false,
+      // See _MobileLayout: the routed page owns keyboard avoidance; the shell
+      // must not double-count the inset.
+      resizeToAvoidBottomInset: false,
       sidebar: DesktopSidebar(
         destinations: [
           for (final t in tabs)
