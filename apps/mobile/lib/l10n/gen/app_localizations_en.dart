@@ -1223,6 +1223,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNetWorthTitle => 'Net Worth';
 
   @override
+  String get financePrivacyHideAmountsTooltip => 'Hide amounts';
+
+  @override
+  String get financePrivacyShowAmountsTooltip => 'Show amounts';
+
+  @override
   String homeNetWorthSubtitle(String currency) {
     return 'Base currency $currency · shown once data is connected';
   }

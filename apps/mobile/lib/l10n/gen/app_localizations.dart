@@ -2210,6 +2210,18 @@ abstract class AppLocalizations {
   /// **'Net Worth'**
   String get homeNetWorthTitle;
 
+  /// Tooltip for the Finance home privacy button when tapping will hide exact monetary amounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide amounts'**
+  String get financePrivacyHideAmountsTooltip;
+
+  /// Tooltip for the Finance home privacy button when tapping will reveal exact monetary amounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Show amounts'**
+  String get financePrivacyShowAmountsTooltip;
+
   /// No description provided for @homeNetWorthSubtitle.
   ///
   /// In en, this message translates to:

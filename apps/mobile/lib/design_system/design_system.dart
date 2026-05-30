@@ -18,6 +18,7 @@ export 'tokens/dimens_tokens.dart';
 export 'tokens/motion_tokens.dart';
 export 'tokens/typography_tokens.dart';
 export 'widgets/adaptive_content_frame.dart';
+export 'widgets/amount_privacy_scope.dart';
 export 'widgets/animated_money_text.dart';
 export 'widgets/app_action_sheet_tile.dart';
 export 'widgets/app_empty_state.dart';

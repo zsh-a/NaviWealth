@@ -365,6 +365,8 @@
   "homeAppBarTitle": "总览",
   "homeAiAssistantTooltip": "AI 助手",
   "homeNetWorthTitle": "净资产",
+  "financePrivacyHideAmountsTooltip": "隐藏金额",
+  "financePrivacyShowAmountsTooltip": "显示金额",
   "homeNetWorthSubtitle": "基础货币 {currency} · 等数据接入后展示",
   "homePassiveIncomeTitle": "被动收入",
   "homePassiveIncomeSubtitle": "TTM 股息、利息与其他被动收入",

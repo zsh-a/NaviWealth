@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../theme/market_color_mode.dart';
 import '../theme/market_colors.dart';
 import '../tokens/typography_tokens.dart';
+import 'amount_privacy_scope.dart';
 import 'money_text.dart';
 
 /// How a delta value should render.
@@ -124,6 +125,10 @@ class DeltaText extends StatelessWidget {
 
   String _spokenLabel(BuildContext context) {
     if (value == null) return '—';
+    if (format == DeltaFormat.currency &&
+        AmountPrivacyScope.isHiddenOf(context)) {
+      return AmountPrivacyScope.hiddenSemanticsLabel;
+    }
     final direction = value! > 0
         ? '+'
         : value! < 0

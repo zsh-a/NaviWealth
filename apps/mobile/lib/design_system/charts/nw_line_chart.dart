@@ -8,6 +8,7 @@ import 'package:forui/forui.dart';
 import '../theme/market_colors.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
+import '../widgets/amount_privacy_scope.dart';
 import 'axes.dart';
 import 'chart_palette.dart';
 import 'chart_series.dart';
@@ -136,6 +137,7 @@ class _NwLineChartState extends State<NwLineChart> {
     final chartMinY = minY - yPad;
     final chartMaxY = maxY + yPad;
     final plotInsets = _plotInsets;
+    final hideAmounts = AmountPrivacyScope.isHiddenOf(context);
 
     final lineBars = <LineChartBarData>[];
     for (var i = 0; i < processed.length; i++) {
@@ -182,7 +184,7 @@ class _NwLineChartState extends State<NwLineChart> {
               borderData: FlBorderData(show: false),
               titlesData: widget.minimal
                   ? const FlTitlesData(show: false)
-                  : _buildTitles(palette, minX, maxX, minY, maxY),
+                  : _buildTitles(palette, minX, maxX, minY, maxY, hideAmounts),
               lineBarsData: lineBars,
               lineTouchData: widget.minimal
                   ? const LineTouchData(enabled: false)
@@ -219,6 +221,7 @@ class _NwLineChartState extends State<NwLineChart> {
                   xAxis: widget.xAxis,
                   yAxis: widget.yAxis,
                   touchStartPoint: _touchStartPoint,
+                  hideAmounts: hideAmounts,
                 ),
               ),
             ),
@@ -395,6 +398,7 @@ class _NwLineChartState extends State<NwLineChart> {
     double maxX,
     double minY,
     double maxY,
+    bool hideAmounts,
   ) {
     final labelStyle = TypographyTokens.numericCaption.copyWith(
       color: palette.axisLabel,
@@ -438,7 +442,9 @@ class _NwLineChartState extends State<NwLineChart> {
             return Padding(
               padding: const EdgeInsets.only(right: 4),
               child: Text(
-                widget.yAxis.formatValue(value),
+                hideAmounts
+                    ? AmountPrivacyScope.mask
+                    : widget.yAxis.formatValue(value),
                 style: labelStyle,
                 maxLines: 1,
                 softWrap: false,
@@ -743,6 +749,7 @@ class _ChartTooltip extends StatelessWidget {
     required this.xAxis,
     required this.yAxis,
     required this.touchStartPoint,
+    required this.hideAmounts,
   });
 
   final int spotIndex;
@@ -750,6 +757,7 @@ class _ChartTooltip extends StatelessWidget {
   final TimeAxis xAxis;
   final ValueAxis yAxis;
   final ChartPoint? touchStartPoint;
+  final bool hideAmounts;
 
   @override
   Widget build(BuildContext context) {
@@ -801,7 +809,13 @@ class _ChartTooltip extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.s4),
                   for (var i = 0; i < processed.length; i++)
-                    _buildSeriesRow(i, processed[i], safeIndex, onSurface),
+                    _buildSeriesRow(
+                      i,
+                      processed[i],
+                      safeIndex,
+                      onSurface,
+                      hideAmounts,
+                    ),
                 ],
               ),
             );
@@ -816,10 +830,13 @@ class _ChartTooltip extends StatelessWidget {
     ChartSeries s,
     int safeIndex,
     Color onSurface,
+    bool hideAmounts,
   ) {
     if (safeIndex >= s.points.length) return const SizedBox.shrink();
     final p = s.points[safeIndex];
-    final valueStr = yAxis.formatValue(p.y);
+    final valueStr = hideAmounts
+        ? AmountPrivacyScope.mask
+        : yAxis.formatValue(p.y);
     final delta = touchStartPoint != null ? p.y - touchStartPoint!.y : 0.0;
 
     return Padding(
@@ -835,7 +852,7 @@ class _ChartTooltip extends StatelessWidget {
           ),
           if (touchStartPoint != null) ...[
             const SizedBox(width: 6),
-            _DeltaBadge(value: delta, yAxis: yAxis),
+            _DeltaBadge(value: delta, yAxis: yAxis, hideAmounts: hideAmounts),
           ],
         ],
       ),
@@ -925,10 +942,15 @@ double _spotPixelY(double y, Rect plot, double minY, double maxY) {
 // ---------------------------------------------------------------------------
 
 class _DeltaBadge extends StatelessWidget {
-  const _DeltaBadge({required this.value, required this.yAxis});
+  const _DeltaBadge({
+    required this.value,
+    required this.yAxis,
+    required this.hideAmounts,
+  });
 
   final double value;
   final ValueAxis yAxis;
+  final bool hideAmounts;
 
   @override
   Widget build(BuildContext context) {
@@ -937,7 +959,9 @@ class _DeltaBadge extends StatelessWidget {
     final color = market.forDelta(value);
     final bg = color.withValues(alpha: 0.15);
     final sign = positive ? '+' : '';
-    final label = '$sign${yAxis.formatValue(value)}';
+    final label = hideAmounts
+        ? AmountPrivacyScope.mask
+        : '$sign${yAxis.formatValue(value)}';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
