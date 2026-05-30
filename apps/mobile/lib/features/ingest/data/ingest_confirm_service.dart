@@ -15,6 +15,8 @@ import 'package:decimal/decimal.dart';
 import '../../../core/ai/composition/proposal_applier.dart';
 import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
+import '../../../core/ai/local/skills/txn_classifier.dart'
+    show expenseCategorySlugForHint;
 import '../domain/ingest_models.dart';
 import 'ingest_draft_store.dart';
 
@@ -86,6 +88,7 @@ class IngestConfirmService {
     required String fromAccountId,
   }) {
     final amount = _minorToDecimalString(draft.parsed.amountMinor.abs());
+    final category = expenseCategorySlugForHint(draft.parsed.categoryHint);
     return ReadyProposalPlan(
       proposalId: draft.draftId,
       kind: 'expense',
@@ -98,7 +101,7 @@ class IngestConfirmService {
         'currency': draft.parsed.currency,
         'date': draft.parsed.occurredAt.toUtc().toIso8601String(),
         'note': draft.parsed.description,
-        'category': draft.parsed.categoryHint ?? 'other',
+        'category': category,
       },
     );
   }

@@ -32,7 +32,7 @@ void main() {
       expect(plan.proposalId, 'd1');
       expect(plan.payload['account_id'], 'acct-cash');
       expect(plan.payload['currency'], 'CNY');
-      expect(plan.payload['category'], 'coffee');
+      expect(plan.payload['category'], 'food');
       expect(plan.payload['note'], 'Starbucks Coffee');
       expect(plan.payload['date'], '2026-05-10T00:00:00.000Z');
       // Amount is positive (sign handled by the JE builder) and exact.
@@ -45,6 +45,14 @@ void main() {
     test('defaults the category to "other" when unclassified', () {
       final plan = IngestConfirmService.expensePlanFor(
         _draft(),
+        fromAccountId: 'acct-cash',
+      );
+      expect(plan.payload['category'], 'other');
+    });
+
+    test('sanitizes unknown category hints to "other"', () {
+      final plan = IngestConfirmService.expensePlanFor(
+        _draft(categoryHint: 'weird:model:label'),
         fromAccountId: 'acct-cash',
       );
       expect(plan.payload['category'], 'other');

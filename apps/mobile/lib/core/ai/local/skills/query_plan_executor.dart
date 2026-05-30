@@ -92,8 +92,7 @@ class InMemoryQueryPlanExecutor implements QueryPlanExecutor {
     final byCategory = <String, int>{};
     String? currency;
     for (final t in inRange) {
-      final classification = classifyTransaction(t);
-      final hint = classification?.categoryHint ?? 'uncategorised';
+      final hint = categoryHintForTransaction(t) ?? 'uncategorised';
       if (hintsFilter != null && !hintsFilter.contains(hint)) continue;
       currency ??= t.currency;
       if (currency != t.currency) continue; // skip mixed-currency rows

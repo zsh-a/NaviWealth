@@ -19,6 +19,7 @@ library;
 
 import '../../contracts/contracts.dart' show DateRange;
 import 'finance_query_plan.dart';
+import 'txn_classifier.dart' show categoryHintsForText;
 
 /// Returns a typed plan, or `null` if the query is too open-ended for
 /// the local rules to handle. [now] anchors relative time references;
@@ -28,7 +29,7 @@ FinanceQueryPlan? parseNlQuery(String query, {required DateTime now}) {
   if (normalized.isEmpty) return null;
 
   final range = _extractDateRange(normalized, now);
-  final categoryHints = _extractCategoryHints(normalized);
+  final categoryHints = categoryHintsForText(normalized);
 
   // Highest-specificity intents go first so an ambiguous query like
   // '上月订阅花了多少' lands on SpendingByCategory rather than
@@ -81,36 +82,6 @@ bool _hasTransactionsIntent(String q) =>
     q.contains('明细') ||
     q.contains('账单') ||
     q.contains('transactions');
-
-// ── category extraction ───────────────────────────────────────────
-
-const Map<String, String> _categoryKeywords = <String, String>{
-  '咖啡': 'coffee',
-  'coffee': 'coffee',
-  '外卖': 'food_delivery',
-  'delivery': 'food_delivery',
-  '订阅': 'subscription',
-  'subscription': 'subscription',
-  '日用': 'grocery',
-  '生鲜': 'grocery',
-  'grocery': 'grocery',
-  '打车': 'transport',
-  '出行': 'transport',
-  'uber': 'transport',
-  'lyft': 'transport',
-  '购物': 'shopping',
-  'shopping': 'shopping',
-  '水电': 'utilities',
-  'utilities': 'utilities',
-};
-
-List<String>? _extractCategoryHints(String q) {
-  final hits = <String>{};
-  for (final entry in _categoryKeywords.entries) {
-    if (q.contains(entry.key)) hits.add(entry.value);
-  }
-  return hits.isEmpty ? null : hits.toList(growable: false);
-}
 
 // ── time-window extraction ────────────────────────────────────────
 
