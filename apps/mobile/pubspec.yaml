@@ -7,6 +7,7 @@ environment:
   sdk: ^3.11.5
 
 dependencies:
+  charset: ^2.0.1
   collection: ^1.19.1
   cross_file: ^0.3.4
   crypto: ^3.0.6

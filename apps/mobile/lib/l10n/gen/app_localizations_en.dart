@@ -6038,7 +6038,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ingestPasteHint =>
-      'Paste CSV / statement text\ne.g. 2026-05-10,Starbucks,-38.00,CNY';
+      'Paste Alipay / WeChat Pay / bank CSV text\ne.g. 2026-05-10,Starbucks,-38.00,CNY';
 
   @override
   String get ingestParseAction => 'Parse';
@@ -6056,7 +6056,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String ingestProcessingBody(String source) {
-    return 'Reading $source, extracting transactions, and checking duplicates against your ledger.';
+    return 'Reading $source, extracting expenses, and checking duplicates against your ledger and pending imports.';
   }
 
   @override
@@ -6109,7 +6109,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ingestEmptyBody =>
-      'Paste statement / CSV text — it is parsed into drafts,\nreconciled, and confirmed here.';
+      'Import Alipay, WeChat Pay, or bank statement CSV/text regularly.\nOverlapping periods are flagged before confirmation.';
 
   @override
   String get ingestPasteAction => 'Paste text';

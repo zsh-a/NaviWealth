@@ -139,14 +139,10 @@ class IngestController {
       );
     }
     final ownerUserId = _ref.read(activeUserIdProvider) ?? '';
-    final ledger = await _ref.read(_ledgerSnapshotProvider.future);
+    final ledger = await _dedupLedgerWithPending(store);
     final result = _ref
         .read(ingestPipelineProvider)
-        .plan(
-          source: source,
-          existingLedger: ledger,
-          ownerUserId: ownerUserId,
-        );
+        .plan(source: source, existingLedger: ledger, ownerUserId: ownerUserId);
     if (!result.isRejected && result.drafts.isNotEmpty) {
       await store.putAll(result.drafts);
     }
@@ -189,7 +185,7 @@ class IngestController {
       );
     }
 
-    final ledger = await _ref.read(_ledgerSnapshotProvider.future);
+    final ledger = await _dedupLedgerWithPending(store);
     final result = _ref
         .read(ingestPipelineProvider)
         .planFromParsed(
@@ -249,5 +245,25 @@ class IngestController {
     } catch (_) {
       // Transparency is decorative relative to the parse itself.
     }
+  }
+
+  Future<List<TransactionInput>> _dedupLedgerWithPending(
+    IngestDraftStore store,
+  ) async {
+    final ledger = await _ref.read(_ledgerSnapshotProvider.future);
+    final pending = await store.listByStatus(DraftStatus.pending);
+    if (pending.isEmpty) return ledger;
+    return <TransactionInput>[
+      ...ledger,
+      for (final d in pending)
+        TransactionInput(
+          id: d.draftId,
+          description: d.parsed.description,
+          amountMinor: d.parsed.amountMinor.toString(),
+          currency: d.parsed.currency,
+          occurredAt: d.parsed.occurredAt,
+          categoryId: d.parsed.categoryHint,
+        ),
+    ];
   }
 }

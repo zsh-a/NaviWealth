@@ -10444,7 +10444,7 @@ abstract class AppLocalizations {
   /// Ingest paste dialog text-field hint
   ///
   /// In en, this message translates to:
-  /// **'Paste CSV / statement text\ne.g. 2026-05-10,Starbucks,-38.00,CNY'**
+  /// **'Paste Alipay / WeChat Pay / bank CSV text\ne.g. 2026-05-10,Starbucks,-38.00,CNY'**
   String get ingestPasteHint;
 
   /// Ingest paste dialog confirm button
@@ -10474,7 +10474,7 @@ abstract class AppLocalizations {
   /// Ingest review: in-page status while an import source is being parsed
   ///
   /// In en, this message translates to:
-  /// **'Reading {source}, extracting transactions, and checking duplicates against your ledger.'**
+  /// **'Reading {source}, extracting expenses, and checking duplicates against your ledger and pending imports.'**
   String ingestProcessingBody(String source);
 
   /// Ingest review: in-page title while drafts are being written to the ledger
@@ -10570,7 +10570,7 @@ abstract class AppLocalizations {
   /// Ingest review empty-state body
   ///
   /// In en, this message translates to:
-  /// **'Paste statement / CSV text — it is parsed into drafts,\nreconciled, and confirmed here.'**
+  /// **'Import Alipay, WeChat Pay, or bank statement CSV/text regularly.\nOverlapping periods are flagged before confirmation.'**
   String get ingestEmptyBody;
 
   /// Ingest review: open paste dialog

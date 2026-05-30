@@ -10,6 +10,8 @@ library;
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:charset/charset.dart' as charset;
+
 import '../domain/ingest_models.dart';
 
 /// Extensions accepted by the file picker / drop target.
@@ -46,7 +48,7 @@ IngestSource? ingestSourceFromCapture({
     case 'txt':
       return IngestSource(
         kind: IngestSourceKind.csv,
-        payload: utf8.decode(bytes, allowMalformed: true),
+        payload: _decodeStatementText(bytes),
         originLabel: label,
       );
     case 'pdf':
@@ -81,3 +83,11 @@ String _imageMime(String ext) => switch (ext) {
   'heif' => 'image/heif',
   _ => 'application/octet-stream',
 };
+
+String _decodeStatementText(Uint8List bytes) {
+  try {
+    return utf8.decode(bytes);
+  } on FormatException {
+    return charset.gbk.decode(bytes, allowMalformed: true);
+  }
+}

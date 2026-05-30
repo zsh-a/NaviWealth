@@ -83,4 +83,63 @@ void main() {
     expect(result.isRejected, isFalse);
     expect(result.total, 0);
   });
+
+  test('dedups repeated rows inside the imported batch', () {
+    final result = build().plan(
+      source: const IngestSource(
+        kind: IngestSourceKind.csv,
+        payload:
+            '交易时间,交易对方,商品,收/支,金额(元),当前状态\n'
+            '2026-05-10 12:30:01,瑞幸咖啡,拿铁,支出,18.00,支付成功\n'
+            '2026-05-10 12:30:01,瑞幸咖啡,拿铁,支出,18.00,支付成功\n',
+      ),
+      existingLedger: const [],
+      ownerUserId: 'u1',
+    );
+
+    expect(result.total, 2);
+    expect(result.drafts[0].verdict, DedupVerdict.newTxn);
+    expect(result.drafts[1].verdict, DedupVerdict.duplicate);
+    expect(result.drafts[1].dedupTargetEntryId, result.drafts[0].draftId);
+  });
+
+  test('dedups periodic re-imports against pending drafts', () {
+    final pipeline = build();
+    final first = pipeline.plan(
+      source: const IngestSource(
+        kind: IngestSourceKind.csv,
+        payload:
+            'date,description,amount,currency\n'
+            '2026-05-10,Netflix,-68.00,CNY\n',
+      ),
+      existingLedger: const [],
+      ownerUserId: 'u1',
+    );
+    final pendingAsLedger = [
+      TransactionInput(
+        id: first.drafts.single.draftId,
+        description: first.drafts.single.parsed.description,
+        amountMinor: first.drafts.single.parsed.amountMinor.toString(),
+        currency: first.drafts.single.parsed.currency,
+        occurredAt: first.drafts.single.parsed.occurredAt,
+      ),
+    ];
+
+    final second = pipeline.plan(
+      source: const IngestSource(
+        kind: IngestSourceKind.csv,
+        payload:
+            'date,description,amount,currency\n'
+            '2026-05-10,Netflix,-68.00,CNY\n',
+      ),
+      existingLedger: pendingAsLedger,
+      ownerUserId: 'u1',
+    );
+
+    expect(second.drafts.single.verdict, DedupVerdict.duplicate);
+    expect(
+      second.drafts.single.dedupTargetEntryId,
+      first.drafts.single.draftId,
+    );
+  });
 }

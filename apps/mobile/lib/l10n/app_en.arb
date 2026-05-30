@@ -3495,7 +3495,7 @@
   },
   "ingestPasteTitle": "Paste statement text",
   "@ingestPasteTitle": { "description": "Ingest paste dialog title" },
-  "ingestPasteHint": "Paste CSV / statement text\ne.g. 2026-05-10,Starbucks,-38.00,CNY",
+  "ingestPasteHint": "Paste Alipay / WeChat Pay / bank CSV text\ne.g. 2026-05-10,Starbucks,-38.00,CNY",
   "@ingestPasteHint": { "description": "Ingest paste dialog text-field hint" },
   "ingestParseAction": "Parse",
   "@ingestParseAction": { "description": "Ingest paste dialog confirm button" },
@@ -3508,7 +3508,7 @@
   },
   "ingestProcessingTitle": "Parsing import",
   "@ingestProcessingTitle": { "description": "Ingest review: in-page title while an import is being parsed" },
-  "ingestProcessingBody": "Reading {source}, extracting transactions, and checking duplicates against your ledger.",
+  "ingestProcessingBody": "Reading {source}, extracting expenses, and checking duplicates against your ledger and pending imports.",
   "@ingestProcessingBody": {
     "description": "Ingest review: in-page status while an import source is being parsed",
     "placeholders": { "source": { "type": "String" } }
@@ -3546,7 +3546,7 @@
   "@ingestVerdictDuplicate": { "description": "Ingest dedup verdict: exact duplicate" },
   "ingestEmptyTitle": "Nothing to confirm",
   "@ingestEmptyTitle": { "description": "Ingest review empty-state title" },
-  "ingestEmptyBody": "Paste statement / CSV text — it is parsed into drafts,\nreconciled, and confirmed here.",
+  "ingestEmptyBody": "Import Alipay, WeChat Pay, or bank statement CSV/text regularly.\nOverlapping periods are flagged before confirmation.",
   "@ingestEmptyBody": { "description": "Ingest review empty-state body" },
   "ingestPasteAction": "Paste text",
   "@ingestPasteAction": { "description": "Ingest review: open paste dialog" },
