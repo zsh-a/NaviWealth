@@ -41,10 +41,10 @@ class HealthSyncResult {
   const HealthSyncResult.skipped({
     required this.startedAt,
     required this.errorMessage,
-  })  : completedAt = startedAt,
-        totalFetched = 0,
-        upserted = 0,
-        unchanged = 0;
+  }) : completedAt = startedAt,
+       totalFetched = 0,
+       upserted = 0,
+       unchanged = 0;
 
   final DateTime startedAt;
   final DateTime completedAt;
@@ -68,10 +68,10 @@ class HealthSyncService {
     required HealthMetricRepository repository,
     required MutationStamper stamper,
     DateTime Function()? clock,
-  })  : _adapter = adapter,
-        _repo = repository,
-        _stamper = stamper,
-        _clock = clock ?? _defaultClock;
+  }) : _adapter = adapter,
+       _repo = repository,
+       _stamper = stamper,
+       _clock = clock ?? _defaultClock;
 
   static DateTime _defaultClock() => DateTime.now().toUtc();
 
@@ -179,6 +179,26 @@ class HealthSyncService {
       final r = await _upsertIfChanged(m);
       r == _WriteOutcome.upserted ? upserted++ : unchanged++;
     }
+    for (final d in snapshot.heartRate) {
+      final m = _dailyMetric(d, HealthMetricKind.heartRateDaily);
+      final r = await _upsertIfChanged(m);
+      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
+    }
+    for (final d in snapshot.totalEnergy) {
+      final m = _dailyMetric(d, HealthMetricKind.totalEnergyDaily);
+      final r = await _upsertIfChanged(m);
+      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
+    }
+    for (final d in snapshot.floorsClimbed) {
+      final m = _dailyMetric(d, HealthMetricKind.floorsClimbedDaily);
+      final r = await _upsertIfChanged(m);
+      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
+    }
+    for (final d in snapshot.respiratoryRate) {
+      final m = _dailyMetric(d, HealthMetricKind.respiratoryRateDaily);
+      final r = await _upsertIfChanged(m);
+      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
+    }
 
     return HealthSyncResult(
       startedAt: startedAt,
@@ -221,15 +241,15 @@ class HealthSyncService {
   }
 
   HealthMetric _sleepMetric(RawSleepSession s) => HealthMetric(
-        id: s.externalId,
-        capturedAt: s.startedAt,
-        kind: HealthMetricKind.sleepSession,
-        value: s.duration.inSeconds.toDouble(),
-        unit: HealthMetricKind.sleepSession.defaultUnit,
-        payloadJson: s.stageHistogramJson,
-        sourceDevice: s.sourceDevice,
-        sync: _placeholderSync,
-      );
+    id: s.externalId,
+    capturedAt: s.startedAt,
+    kind: HealthMetricKind.sleepSession,
+    value: s.duration.inSeconds.toDouble(),
+    unit: HealthMetricKind.sleepSession.defaultUnit,
+    payloadJson: s.stageHistogramJson,
+    sourceDevice: s.sourceDevice,
+    sync: _placeholderSync,
+  );
 
   HealthMetric _dailyMetric(RawDailyValue d, HealthMetricKind kind) =>
       HealthMetric(

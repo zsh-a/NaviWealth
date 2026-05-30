@@ -58,19 +58,27 @@ class HealthPlatformSnapshot {
     this.workouts = const <RawWorkoutSession>[],
     this.vo2Max = const <RawDailyValue>[],
     this.distanceWalkingRunning = const <RawDailyValue>[],
+    this.heartRate = const <RawDailyValue>[],
+    this.totalEnergy = const <RawDailyValue>[],
+    this.floorsClimbed = const <RawDailyValue>[],
+    this.respiratoryRate = const <RawDailyValue>[],
   });
 
   const HealthPlatformSnapshot.empty()
-      : sleepSessions = const <RawSleepSession>[],
-        hrv = const <RawDailyValue>[],
-        rhr = const <RawDailyValue>[],
-        steps = const <RawDailyValue>[],
-        activeEnergy = const <RawDailyValue>[],
-        weight = const <RawPointValue>[],
-        bodyFat = const <RawPointValue>[],
-        workouts = const <RawWorkoutSession>[],
-        vo2Max = const <RawDailyValue>[],
-        distanceWalkingRunning = const <RawDailyValue>[];
+    : sleepSessions = const <RawSleepSession>[],
+      hrv = const <RawDailyValue>[],
+      rhr = const <RawDailyValue>[],
+      steps = const <RawDailyValue>[],
+      activeEnergy = const <RawDailyValue>[],
+      weight = const <RawPointValue>[],
+      bodyFat = const <RawPointValue>[],
+      workouts = const <RawWorkoutSession>[],
+      vo2Max = const <RawDailyValue>[],
+      distanceWalkingRunning = const <RawDailyValue>[],
+      heartRate = const <RawDailyValue>[],
+      totalEnergy = const <RawDailyValue>[],
+      floorsClimbed = const <RawDailyValue>[],
+      respiratoryRate = const <RawDailyValue>[];
 
   /// One [RawSleepSession] per ended sleep session (HealthKit
   /// `HKCategoryTypeIdentifierSleepAnalysis` of stage `asleep*`;
@@ -119,6 +127,20 @@ class HealthPlatformSnapshot {
   /// strolls + commute that don't get recorded as a session.
   final List<RawDailyValue> distanceWalkingRunning;
 
+  /// Daily average heart rate (bpm). Garmin's native Health Connect
+  /// export currently shares heart rate, while HRV/RHR may be absent.
+  final List<RawDailyValue> heartRate;
+
+  /// Daily total calories burned (kcal). Health Connect-only in the
+  /// current plugin; active calories remain separate.
+  final List<RawDailyValue> totalEnergy;
+
+  /// Daily floors climbed.
+  final List<RawDailyValue> floorsClimbed;
+
+  /// Daily average respiratory rate (breaths/min).
+  final List<RawDailyValue> respiratoryRate;
+
   /// Total number of raw readings across every list — handy for
   /// "fetched N readings" status text without re-summing in the UI.
   int get totalCount =>
@@ -131,7 +153,11 @@ class HealthPlatformSnapshot {
       bodyFat.length +
       workouts.length +
       vo2Max.length +
-      distanceWalkingRunning.length;
+      distanceWalkingRunning.length +
+      heartRate.length +
+      totalEnergy.length +
+      floorsClimbed.length +
+      respiratoryRate.length;
 }
 
 /// Default gap (≤ this much time between two `asleep` segments → same
@@ -184,16 +210,10 @@ List<RawSleepSession> mergeSleepSegments(
       (acc, s) => acc + s.duration,
     );
     final device = b
-        .firstWhere(
-          (s) => s.sourceDevice != null,
-          orElse: () => first,
-        )
+        .firstWhere((s) => s.sourceDevice != null, orElse: () => first)
         .sourceDevice;
     final existingPayload = b
-        .firstWhere(
-          (s) => s.stageHistogramJson != null,
-          orElse: () => first,
-        )
+        .firstWhere((s) => s.stageHistogramJson != null, orElse: () => first)
         .stageHistogramJson;
     // Keep the prefix of the underlying segments so the merged id stays
     // `hk:…` on iOS and `hc:…` on Android (Android shouldn't actually
@@ -204,13 +224,11 @@ List<RawSleepSession> mergeSleepSegments(
         ? firstId.substring(0, firstId.indexOf(':'))
         : 'hk';
     return RawSleepSession(
-      externalId:
-          '$prefix:sleep:merged:${first.startedAt.toIso8601String()}',
+      externalId: '$prefix:sleep:merged:${first.startedAt.toIso8601String()}',
       startedAt: first.startedAt,
       duration: totalDuration,
       sourceDevice: device,
-      stageHistogramJson:
-          existingPayload ?? '{"merged_segments":${b.length}}',
+      stageHistogramJson: existingPayload ?? '{"merged_segments":${b.length}}',
     );
   }
 

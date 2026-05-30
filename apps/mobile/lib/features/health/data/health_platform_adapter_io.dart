@@ -14,6 +14,10 @@
 /// | bodyFat               | `BODY_FAT_PERCENTAGE` (0–100 → /100)     | `BODY_FAT_PERCENTAGE` (0–100 → /100)                |
 /// | workoutSession        | `WORKOUT`                                | `WORKOUT`                                           |
 /// | distanceWalkingRunning| `DISTANCE_WALKING_RUNNING`               | `DISTANCE_DELTA`                                     |
+/// | heartRateDaily        | `HEART_RATE`                             | `HEART_RATE`                                        |
+/// | totalEnergyDaily      | —                                        | `TOTAL_CALORIES_BURNED`                             |
+/// | floorsClimbedDaily    | `FLIGHTS_CLIMBED`                        | `FLIGHTS_CLIMBED`                                   |
+/// | respiratoryRateDaily  | `RESPIRATORY_RATE`                       | `RESPIRATORY_RATE`                                  |
 /// | vo2Max                | *not yet exposed by `package:health@13.3.1`* — list stays empty until plugin support lands or a native channel is added |
 ///
 /// The plugin returns meters in both cases (we still bucket per UTC day
@@ -27,6 +31,7 @@
 /// merging is a follow-up.
 library;
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:health/health.dart';
@@ -60,11 +65,20 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
         HealthDataType.BODY_FAT_PERCENTAGE,
         HealthDataType.WORKOUT,
         distanceType,
+        HealthDataType.HEART_RATE,
+        HealthDataType.FLIGHTS_CLIMBED,
+        HealthDataType.RESPIRATORY_RATE,
       ];
     }
     if (Platform.isAndroid) {
       return <HealthDataType>[
         HealthDataType.SLEEP_SESSION,
+        HealthDataType.SLEEP_AWAKE,
+        HealthDataType.SLEEP_AWAKE_IN_BED,
+        HealthDataType.SLEEP_LIGHT,
+        HealthDataType.SLEEP_DEEP,
+        HealthDataType.SLEEP_REM,
+        HealthDataType.SLEEP_UNKNOWN,
         HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
         HealthDataType.RESTING_HEART_RATE,
         HealthDataType.STEPS,
@@ -73,6 +87,10 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
         HealthDataType.BODY_FAT_PERCENTAGE,
         HealthDataType.WORKOUT,
         distanceType,
+        HealthDataType.HEART_RATE,
+        HealthDataType.TOTAL_CALORIES_BURNED,
+        HealthDataType.FLIGHTS_CLIMBED,
+        HealthDataType.RESPIRATORY_RATE,
       ];
     }
     return const <HealthDataType>[];
@@ -156,7 +174,7 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
 
     final rawSleep = points
         .where((p) => p.type == sleepType)
-        .map(_sleepFrom)
+        .map((p) => _sleepFrom(p, platformPrefix))
         .whereType<RawSleepSession>()
         .toList(growable: false);
     // iOS emits per-segment SLEEP_ASLEEP rows (3–7 per night). Merge
@@ -164,7 +182,9 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
     // to count segments. On Android the gap threshold guarantees this
     // is a no-op (whole sessions don't fall within 30 min of each
     // other unless the source recorded them that way).
-    final sleepSessions = mergeSleepSegments(rawSleep);
+    final sleepSessions = Platform.isAndroid
+        ? _attachSleepStageHistograms(rawSleep, points)
+        : mergeSleepSegments(rawSleep);
 
     final hrv = _aggregateDailyAverage(
       points: points.where((p) => p.type == hrvType),
@@ -191,6 +211,28 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
     final distanceWalkRun = _aggregateDailySum(
       points: points.where((p) => p.type == distanceType),
       kindWire: 'distance_walking_running',
+      platformPrefix: platformPrefix,
+    );
+    final heartRate = _aggregateDailyAverage(
+      points: points.where((p) => p.type == HealthDataType.HEART_RATE),
+      kindWire: 'heart_rate',
+      platformPrefix: platformPrefix,
+    );
+    final totalEnergy = _aggregateDailySum(
+      points: points.where(
+        (p) => p.type == HealthDataType.TOTAL_CALORIES_BURNED,
+      ),
+      kindWire: 'total_energy',
+      platformPrefix: platformPrefix,
+    );
+    final floorsClimbed = _aggregateDailySum(
+      points: points.where((p) => p.type == HealthDataType.FLIGHTS_CLIMBED),
+      kindWire: 'floors_climbed',
+      platformPrefix: platformPrefix,
+    );
+    final respiratoryRate = _aggregateDailyAverage(
+      points: points.where((p) => p.type == HealthDataType.RESPIRATORY_RATE),
+      kindWire: 'respiratory_rate',
       platformPrefix: platformPrefix,
     );
 
@@ -230,19 +272,81 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
       workouts: workouts,
       vo2Max: vo2Max,
       distanceWalkingRunning: distanceWalkRun,
+      heartRate: heartRate,
+      totalEnergy: totalEnergy,
+      floorsClimbed: floorsClimbed,
+      respiratoryRate: respiratoryRate,
     );
   }
 
-  RawSleepSession? _sleepFrom(HealthDataPoint p) {
+  RawSleepSession? _sleepFrom(HealthDataPoint p, String platformPrefix) {
     final duration = p.dateTo.difference(p.dateFrom);
     if (duration <= Duration.zero) return null;
     return RawSleepSession(
-      externalId: 'hk:sleep:${p.uuid}',
+      externalId: '$platformPrefix:sleep:${p.uuid}',
       startedAt: p.dateFrom.toUtc(),
       duration: duration,
       sourceDevice: _sourceLabel(p),
     );
   }
+
+  List<RawSleepSession> _attachSleepStageHistograms(
+    List<RawSleepSession> sessions,
+    List<HealthDataPoint> points,
+  ) {
+    if (sessions.isEmpty) return sessions;
+    final stagePoints = points
+        .where((p) => _sleepStageLabel(p.type) != null)
+        .toList(growable: false);
+    if (stagePoints.isEmpty) return sessions;
+
+    return sessions
+        .map((s) {
+          final start = s.startedAt.toUtc();
+          final end = start.add(s.duration);
+          final secondsByStage = <String, int>{};
+          for (final p in stagePoints) {
+            final label = _sleepStageLabel(p.type);
+            if (label == null) continue;
+            final from = _maxInstant(start, p.dateFrom.toUtc());
+            final to = _minInstant(end, p.dateTo.toUtc());
+            if (!to.isAfter(from)) continue;
+            secondsByStage.update(
+              label,
+              (v) => v + to.difference(from).inSeconds,
+              ifAbsent: () => to.difference(from).inSeconds,
+            );
+          }
+          if (secondsByStage.isEmpty) return s;
+          final ordered = <String, int>{
+            for (final key in const <String>[
+              'light',
+              'deep',
+              'rem',
+              'awake',
+              'unknown',
+            ])
+              if ((secondsByStage[key] ?? 0) > 0) key: secondsByStage[key]!,
+          };
+          return RawSleepSession(
+            externalId: s.externalId,
+            startedAt: s.startedAt,
+            duration: s.duration,
+            sourceDevice: s.sourceDevice,
+            stageHistogramJson: jsonEncode(ordered),
+          );
+        })
+        .toList(growable: false);
+  }
+
+  static String? _sleepStageLabel(HealthDataType type) => switch (type) {
+    HealthDataType.SLEEP_LIGHT => 'light',
+    HealthDataType.SLEEP_DEEP => 'deep',
+    HealthDataType.SLEEP_REM => 'rem',
+    HealthDataType.SLEEP_AWAKE || HealthDataType.SLEEP_AWAKE_IN_BED => 'awake',
+    HealthDataType.SLEEP_UNKNOWN => 'unknown',
+    _ => null,
+  };
 
   RawWorkoutSession? _workoutFrom(HealthDataPoint p, String platformPrefix) {
     final v = p.value;
@@ -377,6 +481,10 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
     final d = utc.day.toString().padLeft(2, '0');
     return '$y-$m-$d';
   }
+
+  static DateTime _maxInstant(DateTime a, DateTime b) => a.isAfter(b) ? a : b;
+
+  static DateTime _minInstant(DateTime a, DateTime b) => a.isBefore(b) ? a : b;
 }
 
 enum _Reduce { sum, average }
