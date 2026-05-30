@@ -18,8 +18,9 @@ import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 
 /// Newest sleep session row, or `null` when HealthOS is off / no data.
-final latestSleepSessionProvider =
-    FutureProvider.autoDispose<HealthMetric?>((ref) async {
+final latestSleepSessionProvider = FutureProvider.autoDispose<HealthMetric?>((
+  ref,
+) async {
   final optIns = ref.watch(core_auth.domainOptInsProvider).value;
   if (optIns == null || !optIns.contains(DomainScope.health)) return null;
   final repo = await ref.watch(healthMetricRepositoryProvider.future);
@@ -33,8 +34,9 @@ final latestSleepSessionProvider =
 });
 
 /// Newest HRV daily row.
-final latestHrvProvider =
-    FutureProvider.autoDispose<HealthMetric?>((ref) async {
+final latestHrvProvider = FutureProvider.autoDispose<HealthMetric?>((
+  ref,
+) async {
   final optIns = ref.watch(core_auth.domainOptInsProvider).value;
   if (optIns == null || !optIns.contains(DomainScope.health)) return null;
   final repo = await ref.watch(healthMetricRepositoryProvider.future);
@@ -47,9 +49,27 @@ final latestHrvProvider =
   return rows.isEmpty ? null : rows.first;
 });
 
+/// Newest daily average heart-rate row. Garmin Health Connect sharing
+/// reliably exposes heart rate even when HRV/RHR are absent.
+final latestHeartRateProvider = FutureProvider.autoDispose<HealthMetric?>((
+  ref,
+) async {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final userId = await ref.read(currentUserIdProvider)();
+  final rows = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.heartRateDaily,
+    limit: 1,
+  );
+  return rows.isEmpty ? null : rows.first;
+});
+
 /// Newest workout session row.
-final latestWorkoutProvider =
-    FutureProvider.autoDispose<HealthMetric?>((ref) async {
+final latestWorkoutProvider = FutureProvider.autoDispose<HealthMetric?>((
+  ref,
+) async {
   final optIns = ref.watch(core_auth.domainOptInsProvider).value;
   if (optIns == null || !optIns.contains(DomainScope.health)) return null;
   final repo = await ref.watch(healthMetricRepositoryProvider.future);
@@ -63,8 +83,9 @@ final latestWorkoutProvider =
 });
 
 /// Newest daily step count row.
-final latestStepsProvider =
-    FutureProvider.autoDispose<HealthMetric?>((ref) async {
+final latestStepsProvider = FutureProvider.autoDispose<HealthMetric?>((
+  ref,
+) async {
   final optIns = ref.watch(core_auth.domainOptInsProvider).value;
   if (optIns == null || !optIns.contains(DomainScope.health)) return null;
   final repo = await ref.watch(healthMetricRepositoryProvider.future);
@@ -78,23 +99,25 @@ final latestStepsProvider =
 });
 
 /// Newest daily walking + running distance row (meters).
-final latestWalkingDistanceProvider =
-    FutureProvider.autoDispose<HealthMetric?>((ref) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  final rows = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.distanceWalkingRunningDaily,
-    limit: 1,
-  );
-  return rows.isEmpty ? null : rows.first;
-});
+final latestWalkingDistanceProvider = FutureProvider.autoDispose<HealthMetric?>(
+  (ref) async {
+    final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+    if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+    final repo = await ref.watch(healthMetricRepositoryProvider.future);
+    final userId = await ref.read(currentUserIdProvider)();
+    final rows = await repo.listByKind(
+      ownerUserId: userId,
+      kind: HealthMetricKind.distanceWalkingRunningDaily,
+      limit: 1,
+    );
+    return rows.isEmpty ? null : rows.first;
+  },
+);
 
 /// Newest daily active-energy row (kcal burned through activity).
-final latestActiveEnergyProvider =
-    FutureProvider.autoDispose<HealthMetric?>((ref) async {
+final latestActiveEnergyProvider = FutureProvider.autoDispose<HealthMetric?>((
+  ref,
+) async {
   final optIns = ref.watch(core_auth.domainOptInsProvider).value;
   if (optIns == null || !optIns.contains(DomainScope.health)) return null;
   final repo = await ref.watch(healthMetricRepositoryProvider.future);
@@ -112,35 +135,35 @@ final latestActiveEnergyProvider =
 /// empty state instead of confusing zeros.
 final recoverySignalProvider =
     FutureProvider.autoDispose<Map<String, Object?>?>((ref) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  final hrv = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.hrvDaily,
-    limit: 35,
-  );
-  final sleep = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.sleepSession,
-    limit: 50,
-  );
-  final rhr = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.rhrDaily,
-    limit: 35,
-  );
-  final vo2 = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.vo2Max,
-    limit: 35,
-  );
-  return GetRecoverySignalTool.shape(
-    hrv: hrv,
-    sleep: sleep,
-    rhr: rhr,
-    vo2Max: vo2,
-    now: DateTime.now().toUtc(),
-  );
-});
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+      final repo = await ref.watch(healthMetricRepositoryProvider.future);
+      final userId = await ref.read(currentUserIdProvider)();
+      final hrv = await repo.listByKind(
+        ownerUserId: userId,
+        kind: HealthMetricKind.hrvDaily,
+        limit: 35,
+      );
+      final sleep = await repo.listByKind(
+        ownerUserId: userId,
+        kind: HealthMetricKind.sleepSession,
+        limit: 50,
+      );
+      final rhr = await repo.listByKind(
+        ownerUserId: userId,
+        kind: HealthMetricKind.rhrDaily,
+        limit: 35,
+      );
+      final vo2 = await repo.listByKind(
+        ownerUserId: userId,
+        kind: HealthMetricKind.vo2Max,
+        limit: 35,
+      );
+      return GetRecoverySignalTool.shape(
+        hrv: hrv,
+        sleep: sleep,
+        rhr: rhr,
+        vo2Max: vo2,
+        now: DateTime.now().toUtc(),
+      );
+    });
