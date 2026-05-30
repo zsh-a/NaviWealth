@@ -115,6 +115,24 @@ void main() {
       expect(detectDuplicateCharges(txns), isEmpty);
     });
 
+    test('does not pair broad first-word merchant collisions', () {
+      final txns = <TransactionInput>[
+        _t(
+          id: 'a',
+          description: 'Apple Store',
+          signedMinor: -6800,
+          occurredAt: DateTime.utc(2026, 5, 10),
+        ),
+        _t(
+          id: 'b',
+          description: 'Apple Music',
+          signedMinor: -6800,
+          occurredAt: DateTime.utc(2026, 5, 10),
+        ),
+      ];
+      expect(detectDuplicateCharges(txns), isEmpty);
+    });
+
     test('does not double-consume a transaction across pairs', () {
       // Three charges in a row — the detector should pair only (a,b),
       // leaving c unpaired (it would have to back-track to find a

@@ -37,11 +37,27 @@ void main() {
       expect(r.targetEntryId, 'e1');
     });
 
-    test('same amount + same calendar day with empty key → duplicate', () {
+    test('same amount + same calendar day with empty key → newTxn', () {
       final r = classifyDedup(_parsed(description: ''), [
         _existing(description: ''),
       ]);
-      expect(r.verdict, DedupVerdict.duplicate);
+      expect(r.verdict, DedupVerdict.newTxn);
+    });
+
+    test('same amount + same day but different merchant → newTxn', () {
+      final r = classifyDedup(
+        _parsed(description: 'Blue Bottle', amountMinor: -3800),
+        [_existing(description: 'Starbucks Coffee', amountMinor: '-3800')],
+      );
+      expect(r.verdict, DedupVerdict.newTxn);
+    });
+
+    test('same first word but different descriptor → newTxn', () {
+      final r = classifyDedup(
+        _parsed(description: 'Apple Store', amountMinor: -6800),
+        [_existing(description: 'Apple Music', amountMinor: '-6800')],
+      );
+      expect(r.verdict, DedupVerdict.newTxn);
     });
 
     test('same merchant + near amount within tolerance → likely', () {
@@ -72,6 +88,11 @@ void main() {
       final r = classifyDedup(_parsed(currency: 'USD'), [
         _existing(currency: 'CNY'),
       ]);
+      expect(r.verdict, DedupVerdict.newTxn);
+    });
+
+    test('opposite sign is never a duplicate', () {
+      final r = classifyDedup(_parsed(), [_existing(amountMinor: '3800')]);
       expect(r.verdict, DedupVerdict.newTxn);
     });
 

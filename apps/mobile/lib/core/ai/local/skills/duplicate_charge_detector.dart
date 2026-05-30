@@ -9,13 +9,14 @@
 ///
 /// Conservative by design: a false positive nags the user, a false
 /// negative just means we miss one. Detection only runs against
-/// outflows that share merchant key + currency + signed amount within
-/// a tolerance of 100 minor units.
+/// outflows that share currency, a strong descriptor match, and signed
+/// amount within a tiny tolerance.
 library;
 
 import 'merchant_key.dart';
 import 'recurring_detector.dart' show detectRecurring;
 import 'refund_matcher.dart' show matchRefunds;
+import 'transaction_descriptor_match.dart';
 import 'transaction_input.dart';
 
 class DuplicateChargeMatch {
@@ -88,7 +89,12 @@ List<DuplicateChargeMatch> detectDuplicateCharges(
     if (amt >= 0) continue; // only outflows
     final mk = merchantKey(t.description);
     if (mk.isEmpty) continue;
-    byKey.putIfAbsent('$mk|${t.currency}', () => <TransactionInput>[]).add(t);
+    byKey
+        .putIfAbsent(
+          '$mk|${t.currency.toUpperCase()}',
+          () => <TransactionInput>[],
+        )
+        .add(t);
   }
 
   final out = <DuplicateChargeMatch>[];
@@ -112,6 +118,12 @@ Iterable<DuplicateChargeMatch> _scanGroup(List<TransactionInput> group) sync* {
       if (consumed.contains(b.id)) continue;
       final gap = b.occurredAt.difference(a.occurredAt);
       if (gap > kDuplicateChargeMaxGap) break;
+      if (!compareTransactionDescriptions(
+        a.description,
+        b.description,
+      ).isStrong) {
+        continue;
+      }
       final bAmt = parseAmountMinor(b.amountMinor);
       if ((aAmt - bAmt).abs() > kDuplicateChargeAmountToleranceMinor) continue;
       yield DuplicateChargeMatch(
