@@ -1,0 +1,548 @@
+/// Unit-tests for [ContradictionAgent] + its [ContradictionJudge] seam
+/// (`docs/knowledgeos-domain.md` §7 + §14.2 "ContradictionAgent cosine +
+/// LLM judge 路径").
+///
+/// Covers:
+/// - check-1 (assumption integrity) stays structural / deterministic —
+///   it flags without ever consulting the judge;
+/// - check-2 (principle drift) gates on the judge: a confirmed
+///   contradiction flags with the LLM reason, a rejected mention or a
+///   low-confidence verdict produces NO flag (the false-positive win);
+/// - the cosine floor filters off-topic candidates before the judge;
+/// - empty recall → the agent skips;
+/// - the heuristic fallback + no-LLM provider parity;
+/// - [LlmContradictionJudge] in isolation (parse / fallback paths).
+library;
+
+import 'dart:async';
+
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/agents/agent.dart';
+import 'package:naviwealth/core/ai/contracts/memory_record.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
+import 'package:naviwealth/core/ai/local/memory/providers.dart'
+    show memoryRuntimeProvider;
+import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_client.dart';
+import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
+import 'package:naviwealth/core/ai/runtime/device/llm_stream_event.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/features/knowledge/agents/contradiction_agent.dart';
+import 'package:naviwealth/features/knowledge/data/contradiction_judge.dart';
+import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
+import 'package:naviwealth/features/knowledge/data/llm_contradiction_judge.dart';
+import 'package:naviwealth/features/knowledge/data/providers.dart';
+import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
+
+const _owner = 'u1';
+final _now = DateTime.utc(2026, 5, 30, 12);
+
+SyncMeta _meta() => SyncMeta(
+  ownerUserId: _owner,
+  updatedAt: _now,
+  updatedByDevice: 'dev-test',
+  hlc: Hlc.zero('dev-test'),
+);
+
+// ---------------------------------------------------------------------------
+// Fakes
+// ---------------------------------------------------------------------------
+
+/// Fake repository: only the three list methods the agent calls are
+/// implemented; everything else routes through `noSuchMethod`.
+class _FakeRepo implements KnowledgeRepository {
+  _FakeRepo({
+    this.decisions = const [],
+    this.principles = const [],
+    this.openAssumptions = const [],
+  });
+
+  final List<KnowledgeDecision> decisions;
+  final List<KnowledgePrinciple> principles;
+  final List<KnowledgeAssumption> openAssumptions;
+
+  @override
+  Future<List<KnowledgeDecision>> listDecisions({
+    required String ownerUserId,
+    Set<DecisionStatus>? statuses,
+    int limit = 200,
+  }) async => decisions;
+
+  @override
+  Future<List<KnowledgePrinciple>> listActivePrinciples({
+    required String ownerUserId,
+  }) async => principles;
+
+  @override
+  Future<List<KnowledgeAssumption>> listOpenAssumptions({
+    required String ownerUserId,
+    double? confidenceMax,
+  }) async => openAssumptions;
+
+  // The agent never touches any other method.
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} not stubbed');
+}
+
+/// Fake runtime: serves canned recall hits per source and captures the
+/// record the agent writes via `remember`.
+class _FakeRuntime implements MemoryRuntime {
+  _FakeRuntime(this.hitsBySource);
+
+  /// `know:decisions` / `know:notes` → hits returned for any query.
+  final Map<String, List<MemoryHit>> hitsBySource;
+  MemoryRecord? remembered;
+
+  @override
+  Future<List<MemoryHit>> recall({
+    required String ownerUserId,
+    String? queryText,
+    Set<String>? entityFilter,
+    Set<MemoryKind>? kinds,
+    String? scope,
+    String? source,
+    DateTime? validAt,
+    int topK = 10,
+    Duration recencyHalfLife = const Duration(days: 30),
+  }) async {
+    return hitsBySource[source] ?? const <MemoryHit>[];
+  }
+
+  @override
+  Future<void> remember(MemoryRecord record) async {
+    remembered = record;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} not stubbed');
+}
+
+/// Programmable judge so each test pins the verdict for the candidate it
+/// feeds in.
+class _FixedJudge implements ContradictionJudge {
+  _FixedJudge(this.verdict);
+  final ContradictionVerdict verdict;
+  int calls = 0;
+  @override
+  Future<ContradictionVerdict> judge({
+    required String principleStatement,
+    required String memoryText,
+  }) async {
+    calls++;
+    return verdict;
+  }
+}
+
+/// A judge that throws — proves check-1 never consults the judge.
+class _ThrowingJudge implements ContradictionJudge {
+  @override
+  Future<ContradictionVerdict> judge({
+    required String principleStatement,
+    required String memoryText,
+  }) async => throw StateError('boom');
+}
+
+/// Canned-completion fake (same shape as the inbox-triage test fake).
+class _FakeConfig implements DeviceLlmConfig {
+  const _FakeConfig();
+  @override
+  String get model => 'test-model';
+}
+
+class _FakeDeviceLlmClient implements DeviceLlmClient {
+  _FakeDeviceLlmClient({this.responseText, this.error});
+
+  final String? responseText;
+  final Object? error;
+
+  @override
+  DeviceLlmConfig get config => const _FakeConfig();
+
+  @override
+  Stream<LlmStreamEvent> streamMessages(
+    AnthropicRequest request, {
+    CancelToken? cancelToken,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<AnthropicCompletion> complete(
+    AnthropicRequest request, {
+    CancelToken? cancelToken,
+  }) async {
+    if (error != null) throw error!;
+    return AnthropicCompletion(
+      content: <Object?>[
+        if (responseText != null)
+          <String, Object?>{'type': 'text', 'text': responseText},
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Builders
+// ---------------------------------------------------------------------------
+
+KnowledgePrinciple _principle(String id, String statement) =>
+    KnowledgePrinciple(
+      id: id,
+      statement: statement,
+      rationaleMd: '',
+      scope: '*',
+      status: PrincipleStatus.active,
+      declaredAt: _now,
+      sync: _meta(),
+    );
+
+KnowledgeDecision _decision(
+  String id, {
+  required String question,
+  List<String> assumptionIds = const [],
+  DecisionStatus status = DecisionStatus.active,
+  DateTime? decidedAt,
+}) => KnowledgeDecision(
+  id: id,
+  question: question,
+  options: const [],
+  selectedLabel: '',
+  rationaleMd: '',
+  principleIds: const [],
+  assumptionIds: assumptionIds,
+  status: status,
+  decidedAt: decidedAt ?? _now,
+  sync: _meta(),
+);
+
+KnowledgeAssumption _assumption(String id, String statement) =>
+    KnowledgeAssumption(
+      id: id,
+      statement: statement,
+      confidence: 0.7,
+      scope: '*',
+      evidenceIds: const [],
+      status: AssumptionStatus.active,
+      declaredAt: _now,
+      sync: _meta(),
+    );
+
+MemoryHit _hit(
+  String sourceId,
+  String title,
+  String summary, {
+  double cosine = 0.9,
+}) => MemoryHit(
+  record: MemoryRecord(
+    id: 'know:decisions:episodic:$sourceId',
+    kind: MemoryKind.episodic,
+    ownerUserId: _owner,
+    scope: '*',
+    source: 'know:decisions',
+    sourceId: sourceId,
+    title: title,
+    summary: summary,
+    payload: const <String, Object?>{},
+    entities: const <String>{},
+    importance: 0.5,
+    confidence: 0.85,
+    createdAt: _now,
+    updatedAt: _now,
+  ),
+  score: cosine,
+  semanticSim: cosine,
+  entityOverlap: 0.0,
+  recency: 1.0,
+);
+
+void main() {
+  ProviderContainer makeContainer({
+    required _FakeRepo repo,
+    required _FakeRuntime runtime,
+    bool heuristicProviderJudge = false,
+  }) {
+    final c = ProviderContainer(
+      overrides: [
+        currentUserIdProvider.overrideWithValue(() async => _owner),
+        knowledgeRepositoryProvider.overrideWith((ref) async => repo),
+        memoryRuntimeProvider.overrideWith((ref) async => runtime),
+        // The no-LLM provider path yields HeuristicContradictionJudge.
+        // We pin that directly (rather than overriding deviceLlmClient to
+        // null) so the test doesn't have to stand up the whole
+        // llmCredentials provider graph — the agent still resolves the
+        // judge via contradictionJudgeProvider, exercising the same
+        // ctx.ref path the production no-LLM build takes.
+        if (heuristicProviderJudge)
+          contradictionJudgeProvider.overrideWith(
+            (ref) async => const HeuristicContradictionJudge(),
+          ),
+      ],
+    );
+    addTearDown(c.dispose);
+    return c;
+  }
+
+  /// Run via a probe provider so `ctx.ref` is a real Riverpod Ref.
+  Future<AgentRunResult> runAgent(ProviderContainer c, ContradictionAgent a) {
+    final probe = FutureProvider<AgentRunResult>(
+      (ref) => a.run(AgentContext(ref: ref, now: _now)),
+    );
+    c.listen(probe, (_, _) {});
+    return c.read(probe.future);
+  }
+
+  test(
+    'check-1: active decision citing a falsified/retired assumption flags '
+    '(no LLM involved)',
+    () async {
+      // a-stale is NOT in the open set -> invalidated. The judge throws to
+      // prove check-1 never consults it.
+      final repo = _FakeRepo(
+        decisions: [
+          _decision(
+            'd1',
+            question: 'Hold NASDAQ?',
+            assumptionIds: ['a-stale'],
+          ),
+        ],
+        openAssumptions: [_assumption('a-open', 'Other still-open')],
+      );
+      final runtime = _FakeRuntime(const {});
+      final container = makeContainer(repo: repo, runtime: runtime);
+
+      final agent = ContradictionAgent(judgeOverride: _ThrowingJudge());
+      final result = await runAgent(container, agent);
+
+      expect(result.status, AgentRunStatus.completed);
+      expect(result.payload['issue_count'], 1);
+      final issues = runtime.remembered!.payload['issues']! as List<Object?>;
+      final issue = issues.single! as Map<String, Object?>;
+      expect(issue['kind'], 'assumption_invalidated');
+      expect(issue['reference_id'], 'a-stale');
+    },
+  );
+
+  test(
+    'check-2: LLM judge confirms a real contradiction -> flag with the '
+    'LLM reason',
+    () async {
+      final repo = _FakeRepo(principles: [_principle('p1', '长期持有,不做波段')]);
+      final runtime = _FakeRuntime({
+        'know:decisions': [
+          _hit('d9', '是否频繁波段交易', '决定本月开始高频波段交易博取价差'),
+        ],
+      });
+      final judge = _FixedJudge(
+        const ContradictionVerdict(
+          isContradiction: true,
+          confidence: 0.92,
+          reasonZh: '该决定主张频繁波段,与长期持有原则方向相反。',
+        ),
+      );
+      final container = makeContainer(repo: repo, runtime: runtime);
+
+      final agent = ContradictionAgent(judgeOverride: judge);
+      final result = await runAgent(container, agent);
+
+      expect(judge.calls, 1);
+      expect(result.payload['issue_count'], 1);
+      final issue =
+          (runtime.remembered!.payload['issues']! as List<Object?>).single!
+              as Map<String, Object?>;
+      expect(issue['kind'], 'principle_mismatch');
+      expect(issue['reference_id'], 'p1');
+      expect(issue['detail'], '该决定主张频繁波段,与长期持有原则方向相反。');
+    },
+  );
+
+  test(
+    'check-2: judge REJECTS a mere mention -> NO flag (false-positive '
+    'suppression)',
+    () async {
+      final repo = _FakeRepo(principles: [_principle('p1', '长期持有,不做波段')]);
+      final runtime = _FakeRuntime({
+        'know:decisions': [
+          // Mentions the principle verbatim but does not contradict it.
+          _hit('d9', '复盘长期持有策略', '记录了长期持有不做波段的执行情况,一切正常'),
+        ],
+      });
+      final judge = _FixedJudge(const ContradictionVerdict.none());
+      final container = makeContainer(repo: repo, runtime: runtime);
+
+      final agent = ContradictionAgent(judgeOverride: judge);
+      final result = await runAgent(container, agent);
+
+      expect(judge.calls, 1);
+      expect(result.status, AgentRunStatus.skipped);
+      expect(runtime.remembered, isNull);
+    },
+  );
+
+  test('check-2: low confidence (<0.6) -> no flag', () async {
+    final repo = _FakeRepo(principles: [_principle('p1', '长期持有,不做波段')]);
+    final runtime = _FakeRuntime({
+      'know:decisions': [_hit('d9', 'q', '可能有点冲突但说不准')],
+    });
+    final judge = _FixedJudge(
+      const ContradictionVerdict(
+        isContradiction: true,
+        confidence: 0.4,
+        reasonZh: '不太确定',
+      ),
+    );
+    final container = makeContainer(repo: repo, runtime: runtime);
+
+    final agent = ContradictionAgent(judgeOverride: judge);
+    final result = await runAgent(container, agent);
+
+    expect(result.status, AgentRunStatus.skipped);
+    expect(runtime.remembered, isNull);
+  });
+
+  test('candidate cosine floor: below-threshold hits are not judged', () async {
+    final repo = _FakeRepo(principles: [_principle('p1', '长期持有,不做波段')]);
+    // cosine 0.3 < _kCandidateCosineFloor (0.55) -> filtered before judge.
+    final runtime = _FakeRuntime({
+      'know:decisions': [_hit('d9', 'q', '高频波段', cosine: 0.3)],
+    });
+    final judge = _FixedJudge(
+      const ContradictionVerdict(
+        isContradiction: true,
+        confidence: 0.99,
+        reasonZh: 'should not be reached',
+      ),
+    );
+    final container = makeContainer(repo: repo, runtime: runtime);
+
+    final agent = ContradictionAgent(judgeOverride: judge);
+    final result = await runAgent(container, agent);
+
+    expect(judge.calls, 0);
+    expect(result.status, AgentRunStatus.skipped);
+  });
+
+  test('no candidates (empty recall) -> agent skips', () async {
+    final repo = _FakeRepo(principles: [_principle('p1', '长期持有')]);
+    final runtime = _FakeRuntime(const {});
+    final judge = _FixedJudge(const ContradictionVerdict.none());
+    final container = makeContainer(repo: repo, runtime: runtime);
+
+    final agent = ContradictionAgent(judgeOverride: judge);
+    final result = await runAgent(container, agent);
+
+    expect(judge.calls, 0);
+    expect(result.status, AgentRunStatus.skipped);
+    expect(result.summary, contains('no contradictions'));
+  });
+
+  group('fallback / parity', () {
+    test('HeuristicContradictionJudge: marker token -> contradiction', () async {
+      const judge = HeuristicContradictionJudge();
+      final v = await judge.judge(
+        principleStatement: '长期持有',
+        memoryText: '这个决定违反了长期持有原则',
+      );
+      expect(v.isContradiction, isTrue);
+      expect(v.confidence, greaterThanOrEqualTo(0.6));
+    });
+
+    test('HeuristicContradictionJudge: no marker -> none', () async {
+      const judge = HeuristicContradictionJudge();
+      final v = await judge.judge(
+        principleStatement: '长期持有',
+        memoryText: '复盘了长期持有的执行情况,一切正常',
+      );
+      expect(v.isContradiction, isFalse);
+    });
+
+    test('no-LLM path == heuristic judge (provider parity)', () async {
+      // No judge injected + no deviceLlmClient -> the agent resolves
+      // contradictionJudgeProvider, which yields HeuristicContradictionJudge.
+      // The recalled memory carries a marker token so the heuristic flags it.
+      final repo = _FakeRepo(principles: [_principle('p1', '长期持有,不做波段')]);
+      final runtime = _FakeRuntime({
+        'know:decisions': [_hit('d9', 'q', '该决定违反了长期持有的原则')],
+      });
+      final container = makeContainer(
+        repo: repo,
+        runtime: runtime,
+        heuristicProviderJudge: true,
+      );
+
+      const agent = ContradictionAgent(); // resolves provider
+      final result = await runAgent(container, agent);
+
+      expect(result.status, AgentRunStatus.completed);
+      final issue =
+          (runtime.remembered!.payload['issues']! as List<Object?>).single!
+              as Map<String, Object?>;
+      expect(issue['kind'], 'principle_mismatch');
+      expect(issue['detail'], contains('违反'));
+    });
+
+    test(
+      'LlmContradictionJudge falls back to heuristic on malformed JSON',
+      () async {
+        final judge = LlmContradictionJudge(
+          client: _FakeDeviceLlmClient(responseText: 'not json'),
+        );
+        final v = await judge.judge(
+          principleStatement: '长期持有',
+          memoryText: '该决定违反了长期持有',
+        );
+        expect(v.isContradiction, isTrue); // heuristic caught the marker
+      },
+    );
+
+    test('LlmContradictionJudge falls back when the client throws', () async {
+      final judge = LlmContradictionJudge(
+        client: _FakeDeviceLlmClient(error: StateError('boom')),
+      );
+      final v = await judge.judge(
+        principleStatement: '长期持有',
+        memoryText: '复盘了长期持有,无异常', // no marker -> heuristic says none
+      );
+      expect(v.isContradiction, isFalse);
+    });
+
+    test(
+      'LlmContradictionJudge parses a genuine-contradiction verdict',
+      () async {
+        final judge = LlmContradictionJudge(
+          client: _FakeDeviceLlmClient(
+            responseText:
+                '{"is_contradiction": true, "confidence": 0.9, '
+                '"reason_zh": "方向相反"}',
+          ),
+        );
+        final v = await judge.judge(
+          principleStatement: '长期持有',
+          memoryText: '决定开始高频波段',
+        );
+        expect(v.isContradiction, isTrue);
+        expect(v.reasonZh, '方向相反');
+      },
+    );
+
+    test(
+      'LlmContradictionJudge drops a low-confidence positive verdict',
+      () async {
+        final judge = LlmContradictionJudge(
+          client: _FakeDeviceLlmClient(
+            responseText:
+                '{"is_contradiction": true, "confidence": 0.3, '
+                '"reason_zh": "不确定"}',
+          ),
+        );
+        final v = await judge.judge(
+          principleStatement: '长期持有',
+          memoryText: '一些无关内容', // no marker so fallback also says none
+        );
+        expect(v.isContradiction, isFalse);
+      },
+    );
+  });
+}

@@ -366,8 +366,8 @@ class KnowledgeExperiments extends Table with SyncableTable {
 **Agents**（`features/knowledge/agents/`，复用 shell §7.3）
 - ✅ `ReviewAgent`（每周日 09:00 local）—— §5 "到期 Decision + 未校验 assumption"：除 `listDueReviews` 外也扫 > `kAssumptionStaleDays` 未校验的 active 假设，二者皆空才 skip（2026-05-29 补齐）
 - ✅ `AssumptionAgent`（30d cadence，扫 > 90d 未校验 active 假设）
-- ✅ `ContradictionAgent`（每 6h，principle mismatch + assumption invalidation 启发式）
-- ✅ `InboxTriageAgent`（15min cadence，§5/§7 核心）：heuristic-only MVP —— 分类（长文 + 选项语言 → decision_candidate；短定义 → concept_candidate）、tag 词典命中、token-overlap 决策建联；每 run ≤ `kInboxTriageMaxNotesPerRun` (10) 条；输出落 `knowledge_inbox_triage`；dismissed kind 永不重提。LLM round-trip 替换 heuristic 是 §14.2 P1 一项，不阻塞 dogfood
+- ✅ `ContradictionAgent`（每 6h）：check-1 assumption invalidation 为确定性结构检查;check-2 principle drift 已升级为 cosine 预筛 + LLM judge（heuristic fallback，2026-05-30，见 §14.2 / §7）
+- ✅ `InboxTriageAgent`（15min cadence，§5/§7 核心）：经 `InboxTriageClassifier` seam 出提议 —— heuristic 分类（长文 + 选项语言 → decision_candidate；短定义 → concept_candidate）、tag 词典命中、token-overlap 决策建联；有 LLM profile 时走 `LlmInboxTriageClassifier`（单次 round-trip，失败静默回退 heuristic，见 §14.2「LLM round-trip」）；每 run ≤ `kInboxTriageMaxNotesPerRun` (10) 条；输出落 `knowledge_inbox_triage`；dismissed kind 永不重提
 - ✅ `RoutineDueAgent`（daily 08:00 local，2026-05-29）：扫 `next_due_at <= now + 7d` 的 active routines，写 episodic memory + 单次 local notification（`NotificationChannelSpec.knowledgeReview` 通道，与 ReviewAgent 共用）。Review tab "本周到期的 Routine" 卡片 + 单按钮"已处理"（`lastDoneAt = now`, `nextDueAt = now + intervalDays`）
 
 **Memory Layer 接入**（§3 "写一份，索引两次"）
@@ -399,9 +399,9 @@ class KnowledgeExperiments extends Table with SyncableTable {
 
 **P1 — 影响 §0 定位的关键功能**
 - [ ] **AssumptionAgent 事件触发**：§7 spec 说 "月初 + **任何决策被新事件触及时**"。当前只有月初 cadence，事件触发需要 `EventStore` listener
-- [ ] **ContradictionAgent cosine + LLM judge 路径**：MVP 是纯启发式 token 匹配，§7 spec 要语义比对。等 Knowledge Memory 全量化后切换
+- [x] **ContradictionAgent cosine + LLM judge 路径**（2026-05-30 完成）：结构性 check-1（assumption integrity，决策仍引用非 active 假设）保持确定性、无 LLM;check-2（principle ↔ recent-memory drift）改为 EmbeddingGemma 余弦预筛（复用 `find_similar_knowledge` 的余弦 + token 重叠 hybrid，每 principle 取 top-K candidate）+ `ContradictionJudge` seam 的 LLM 判定（`HeuristicContradictionJudge` = 原 marker-token 逻辑搬出作 fallback;`LlmContradictionJudge` 单 candidate ≤ 1 round-trip，JSON-in-text、0.6 置信度门、对任何失败静默回退 heuristic）。仅在 isContradiction && confidence≥0.6 才出 flag，压制 §14.4 sunset 信号的误报。新增 `data/contradiction_judge.dart` / `data/llm_contradiction_judge.dart` / `contradictionJudgeProvider` + `test/features/knowledge/agents/contradiction_agent_test.dart`（13）
 - [x] **CaptureClassifier LLM 替换 heuristic**（2026-05-29 完成）：`LlmCaptureClassifier` 走 user-configured `DeviceLlmClient.complete`，全 7 类 JSON 抽取；heuristic 作为 silent fallback 保留无 profile / 失败场景。`CaptureClassifier.classify` 抽象成 interface 作为 swap 边界（LLM / Heuristic 实现等价）
-- [ ] **InboxTriageAgent LLM round-trip 替换 heuristic**：§7 spec "单次 Note ≤ 1 LLM round-trip(3 个 propose 工具批量调)"。MVP 是规则启发式（词典 + token overlap）。可参考 `LlmCaptureClassifier` 的 prompt-engineered JSON 模式 / 失败兜底 / 置信度门槛实现；3 件套 tool 形态稍有不同（每条 Note 输出多 envelope）但骨架共用
+- [x] **InboxTriageAgent LLM round-trip 替换 heuristic**（2026-05-30 完成）：参 `LlmCaptureClassifier` 抽出 `InboxTriageClassifier` seam —— `data/inbox_triage_classifier.dart`（`HeuristicInboxTriageClassifier`，原启发式从 agent 原样搬出）+ `data/llm_inbox_triage_classifier.dart`（`LlmInboxTriageClassifier`：单次 Note ≤ 1 LLM round-trip，一个 JSON 对象同时覆盖 classification / tags / link_to_decision，JSON-in-text、8s 超时、0.6 置信度门、对任何失败 / 空 profile / parse 失败静默回退 heuristic）。经 `inboxTriageClassifierProvider`（有 LLM client 走 LLM，否则 heuristic）注入，agent 在 `run()` 里按 `ctx.ref` 解析(保持 `knowledgeAgentsProvider` 同步可构造)；per-run cap 与 dismissed-kind 语义不变；无 LLM(Web / 无 key)路径行为与之前完全一致。新增 `test/features/knowledge/agents/inbox_triage_agent_test.dart`(12 — 此前 agent 测试为 0)
 - [ ] **从 Note 提升到 typed row（decision / assumption / principle / concept / experiment）**：当前 Capture sheet 对这 5 类用 tag-only 提升（`kind:<x>_candidate` + 可选 `scope:<...>` tag），未直接写结构化行。Library typed FABs + Review tab 的 AI 建议卡可以一键应用，但 sheet 内一步到位的 "Promote with extracted fields" 路径尚未串联
 
 **P2 — Dogfood 改进**
@@ -410,7 +410,7 @@ class KnowledgeExperiments extends Table with SyncableTable {
 - [ ] **Review tab "recent agent runs"**：§5 spec 列出但未渲染；需要 Agent 历史读 API
 - [x] **`lifeos.knowledge.review` 通知 channel**（2026-05-29）：`NotificationChannelSpec.knowledgeReview` enum 落地；`NotificationService.showNow` 接受 `channel` 参数；RoutineDueAgent 首批使用。ReviewAgent / AssumptionAgent 接入同通道仅一行改动，按 dogfood 反馈再开
 - [ ] **`ai_context_summary` override**：§6 列了，但现有 slot (`AiContextSummary`) 是 Finance-shaped；要么扩 slot 形态，要么换成独立的 prompt 拼接 seam
-- [ ] **`propose_concept_link` 真正落地路径**：write tool 已经返回 ProposalEnvelope，但 `ProposalApplier` 还没认这个 kind。需要在 `featureProposalApplier` 里加 `knowledge_concept_link` 分支
+- [x] **`propose_concept_link` 真正落地路径**（已落地，2026-05-29 §14.4 chat-apply 一并补全）：`KnowledgeProposalApplier` 将 `knowledge_concept_link` 路由到 `_applyConceptLink` → `repo.linkConcepts`，apply 时真正建立 concept ↔ concept 双向边（见 `composition/knowledge_proposal_applier.dart`，`kKnowledgeProposalAppliedKinds` 含 `knowledge_concept_link`）
 - [ ] **Knowledge opt-out 清理**：关闭 opt-in 时 indexer 停止订阅，但已写入的 episodic memories 不清。需要明确策略（保留 vs prune），shell §5 应该有相关约定
 
 **P3 — 工程债**
