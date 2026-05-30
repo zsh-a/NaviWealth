@@ -18,7 +18,6 @@ library;
 import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import '../../../core/ai/runtime/device/device_vision_parse.dart';
-import '../../../core/auth/auth_session.dart';
 import '../domain/ingest_models.dart';
 import 'cloud_ingest_client.dart';
 
@@ -33,7 +32,6 @@ class DeviceVisionIngestClient implements CloudIngestClient {
 
   @override
   Future<List<ParsedTransaction>> parse({
-    required AuthSession session,
     required IngestSourceKind kind,
     required String mime,
     required String contentBase64,
@@ -91,7 +89,6 @@ class RoutingCloudIngestClient implements CloudIngestClient {
 
   @override
   Future<List<ParsedTransaction>> parse({
-    required AuthSession session,
     required IngestSourceKind kind,
     required String mime,
     required String contentBase64,
@@ -99,7 +96,6 @@ class RoutingCloudIngestClient implements CloudIngestClient {
   }) {
     final client = _device ?? _cloud;
     return client.parse(
-      session: session,
       kind: kind,
       mime: mime,
       contentBase64: contentBase64,

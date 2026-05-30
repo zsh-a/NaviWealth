@@ -1,16 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_vision_parse.dart';
-import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/features/ingest/data/cloud_ingest_client.dart';
 import 'package:naviwealth/features/ingest/data/device_ingest_client.dart';
 import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
-
-AuthSession _session() => AuthSession(
-  accessToken: 't',
-  expiresAt: DateTime.utc(2030),
-  userId: 'u',
-  deviceId: 'd',
-);
 
 class _FakeIngest implements CloudIngestClient {
   _FakeIngest(this.tag);
@@ -18,7 +10,6 @@ class _FakeIngest implements CloudIngestClient {
   bool called = false;
   @override
   Future<List<ParsedTransaction>> parse({
-    required AuthSession session,
     required IngestSourceKind kind,
     required String mime,
     required String contentBase64,
@@ -154,7 +145,6 @@ void main() {
       final r = RoutingCloudIngestClient(cloud: cloud, device: device);
       expect(r.usesDevice, isTrue);
       final out = await r.parse(
-        session: _session(),
         kind: IngestSourceKind.receiptImage,
         mime: 'image/png',
         contentBase64: 'Qkk=',
@@ -169,7 +159,6 @@ void main() {
       final r = RoutingCloudIngestClient(cloud: cloud);
       expect(r.usesDevice, isFalse);
       final out = await r.parse(
-        session: _session(),
         kind: IngestSourceKind.statementPdf,
         mime: 'application/pdf',
         contentBase64: 'Qkk=',
