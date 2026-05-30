@@ -69,11 +69,19 @@ layer in tests, never wrap providers in static `AsyncValue`. This is where
 form logic, money/FX, domain services, and individual widgets are proven.
 
 ### Integration (real chain, ~10%)
-Exercises **UI → repository → real Drift → domain** with a real
-`AppDatabase` (in-memory, SQLCipher bypassed), so repository writes and
-stream reads are real. Override `appDatabaseProvider` with a shared
-`makeTestDatabase()` instance, then drive the real repo
-(`accountRepositoryProvider`, etc.) and assert the rendered outcome.
+Exercises **repository → real Drift → read model** with a real
+`AppDatabase` (in-memory, SQLCipher bypassed), so writes and stream reads
+are real. `test/integration/support/integration_env.dart` wires a real DB
+into the production provider graph (`appDatabaseProvider` overridden),
+faking only the non-deterministic edges — auth (`AuthLocalOnly` → Noop
+outbox) and the HLC stamper (`makeStubStamper()`, the sanctioned seam).
+Everything downstream is real: `accountsStreamProvider`,
+`dashboardSnapshotProvider`, the `DashboardAggregator`.
+
+Seed: `test/integration/account_net_worth_integration_test.dart` —
+creates an account through the real repository and asserts it surfaces
+through the live stream, plus the dashboard net-worth read model resolving
+against the real DB. Tagged `integration`. Headless (`flutter test`).
 
 ### Flow / Task (Page Objects, ~4%)
 `test/flow/` — boots the real `NaviWealthApp` (real router, shell, widgets)
@@ -125,7 +133,7 @@ Target: **< 12 min** of blocking PR checks; heavy/flaky-prone work nightly.
 ```
 PR  ├─ analyze --fatal-infos + boundary lints      (mobile.yml, existing)
     ├─ build_runner freshness + l10n parity         (existing)
-    ├─ flutter test (unit + widget + flow)          ~3 min   flow runs here today
+    ├─ flutter test (unit + widget + flow + integ.)  ~3 min   flow/integ run here today
     ├─ golden regression (Linux-pinned)             ~30 s    (existing)
     ├─ cargo test (backend, native host)            ~1 min   ← ADDED
     ├─ contract tests                               ~30 s
@@ -166,10 +174,16 @@ real coverage.
 - ✅ Web smoke wired up — `web-smoke.yml`: chromium on PRs, full matrix nightly.
 - ✅ Known-failing gate is now a monotonic ratchet (fixed-but-listed fails CI).
 - ✅ Flow layer seeded — `test/flow/` with Page Object Model + Task #1.
+- ✅ Integration layer seeded — `test/integration/` real-Drift harness +
+  account-persistence / net-worth read-model test.
+- Both new layers run inside the existing `flutter test` job (tagged `flow`
+  / `integration` in `dart_test.yaml`); no emulator required.
 
 **P1 — fill the missing layers:**
 - Grow `test/flow/` from 1 → the 12 Tasks in §3.
-- Stand up `integration_test/` (§6) with real-Drift boot.
+- Grow `test/integration/` to cover writes that move net worth (assets,
+  liabilities, trades) through the real read model.
+- Stand up on-device `integration_test/` (§6) for the SQLCipher boot path.
 - Contracts-as-code: generated enum SSOT + `sync-v2` wire roundtrip vs the
   Rust serializer.
 - Expand golden coverage to each Task surface + responsive breakpoints.

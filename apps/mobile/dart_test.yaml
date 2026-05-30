@@ -5,6 +5,16 @@
 # `tags: 'golden'` argument on each `testGoldens(...)` call under
 # `test/golden/`. CI runs them in a dedicated job after `flutter test`
 # so a font / theme regression doesn't get masked by the unit suite.
+#
+# flow: Task-oriented flow tests (test/flow/) — boot the real app shell and
+# drive a user task through Page Objects. See docs/testing-strategy.md §4.
+#
+# integration: Real-Drift integration tests (test/integration/) — exercise
+# repository → Drift → read-model against a real in-memory database.
 tags:
   golden:
+    timeout: 2x
+  flow:
+    timeout: 2x
+  integration:
     timeout: 2x
