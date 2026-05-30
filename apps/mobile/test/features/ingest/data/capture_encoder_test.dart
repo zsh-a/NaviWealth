@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:charset/charset.dart' as charset;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/ingest/data/capture_encoder.dart';
 import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
@@ -25,6 +26,23 @@ void main() {
         bytes: _b('hello'),
       );
       expect(txt!.kind, IngestSourceKind.csv);
+    });
+
+    test('csv text falls back to GBK for Alipay exports', () {
+      final src = ingestSourceFromCapture(
+        fileName: '支付宝交易明细.csv',
+        bytes: Uint8List.fromList(
+          charset.gbk.encode(
+            '交易时间,交易分类,交易对方,商品说明,收/支,金额,交易状态\n'
+            '2026-05-30 18:50:44,餐饮美食,麦当劳,北京麦当劳食品有限公司,支出,31.50,交易成功\n',
+          ),
+        ),
+      );
+
+      expect(src, isNotNull);
+      expect(src!.payload, contains('交易时间'));
+      expect(src.payload, contains('麦当劳'));
+      expect(src.payload, contains('支出'));
     });
 
     test('pdf → cloud statement lane (base64 + mime)', () {

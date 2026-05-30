@@ -5795,7 +5795,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ingestPasteTitle => '粘贴账单文本';
 
   @override
-  String get ingestPasteHint => '粘贴 CSV / 账单文本\n例如：2026-05-10,星巴克,-38.00,CNY';
+  String get ingestPasteHint =>
+      '粘贴支付宝 / 微信 / 银行 CSV 账单文本\n例如：2026-05-10,星巴克,-38.00,CNY';
 
   @override
   String get ingestParseAction => '解析';
@@ -5813,7 +5814,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String ingestProcessingBody(String source) {
-    return '正在读取 $source，提取交易并与本地流水去重。';
+    return '正在读取 $source，提取支出并与本地流水、待确认导入去重。';
   }
 
   @override
@@ -5864,7 +5865,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ingestEmptyTitle => '没有待确认的记录';
 
   @override
-  String get ingestEmptyBody => '粘贴账单 / CSV 文本，自动解析为草稿，\n去重对账后在这里确认入账。';
+  String get ingestEmptyBody =>
+      '可定期导入支付宝、微信或银行 CSV / 文本账单，\n重叠账期会先标记重复，再由你确认入账。';
 
   @override
   String get ingestPasteAction => '粘贴文本';
