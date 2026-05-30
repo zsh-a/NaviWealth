@@ -219,7 +219,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
           cashFlowMonthKey: metrics.monthKey,
           cashFlowNetMinor: _moneyToMinor(metrics.net.amount),
           cashFlowCurrency: metrics.net.currency,
-          route: kCashflowPath,
+          route: AppRoutes.cashflow,
         ),
       );
     }

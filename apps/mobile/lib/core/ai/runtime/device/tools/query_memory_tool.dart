@@ -13,7 +13,6 @@
 library;
 
 import 'package:naviwealth/core/auth/current_user.dart';
-import '../../../contracts/contracts.dart' show SemanticHit;
 import '../../../contracts/memory_record.dart';
 import '../../../local/memory/memory_runtime.dart';
 import '../../../local/memory/providers.dart';
@@ -123,16 +122,6 @@ class QueryMemoryTool implements DeviceTool {
     'importance': h.record.importance,
     'confidence': h.record.confidence,
   };
-
-  /// Keep [SemanticHit] reachable so legacy consumers that already
-  /// know the shape can still import it.
-  // ignore: unused_element
-  static SemanticHit _legacyHit(MemoryHit h) => SemanticHit(
-    source: h.record.source ?? '',
-    title: h.record.title,
-    excerpt: _excerpt(h.record.summary),
-    score: h.score,
-  );
 
   static String _excerpt(String s) {
     const window = 120;

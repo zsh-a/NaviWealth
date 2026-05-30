@@ -20,6 +20,8 @@ import '../core/ai/local/embedding/model_manifest.dart';
 import '../core/ai/local/embedding/rust_gemma_embedder.dart';
 import '../core/ai/local/memory/providers.dart' as memory_providers;
 import '../core/ai/runtime/device/tools/device_tool.dart';
+import '../core/ai/runtime/device/tools/device_tool_registry.dart'
+    show kShellDeviceToolsCore;
 import '../core/auth/providers.dart' as core_auth;
 import '../core/config/app_config.dart';
 import '../core/config/providers.dart';
@@ -40,7 +42,6 @@ import '../features/auth/data/auth_route_guard.dart';
 import '../features/cashflow/data/recurring_transaction_providers.dart';
 import '../features/finance/composition/finance_bootstrap.dart';
 import '../features/finance/data/market/sync/price_sync_providers.dart';
-import '../features/finance_ai_tools.dart';
 import '../features/health/agents/briefing_synthesizer.dart';
 import '../features/health/agents/morning_briefing_agent.dart';
 import '../features/health/agents/providers.dart' as health_agent_providers;
@@ -150,7 +151,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       deviceToolsProvider.overrideWith((ref) {
         final packs = ref.watch(activeDomainPacksProvider);
         return <DeviceTool>[
-          ...kShellDeviceTools,
+          ...kShellDeviceToolsCore,
           for (final p in packs) ...p.deviceTools,
         ];
       }),
@@ -348,7 +349,6 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
 
   return container;
 }
-
 
 /// Kick off Memory Runtime maintenance without blocking first paint.
 ///

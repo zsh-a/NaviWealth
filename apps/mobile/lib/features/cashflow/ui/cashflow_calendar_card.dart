@@ -54,7 +54,7 @@ class _CashflowCalendarContent extends ConsumerWidget {
         : Colors.amber;
 
     return SoftCard(
-      onPress: () => context.push(kCashflowPath),
+      onPress: () => context.push(AppRoutes.cashflow),
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: SizedBox(
         height: 154,

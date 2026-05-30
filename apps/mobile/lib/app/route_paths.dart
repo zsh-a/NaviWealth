@@ -62,8 +62,7 @@ abstract final class AppRoutes {
   // the other typed objects (concept / experiment / principle / assumption)
   // share one read-only object page keyed by `:kind`.
   static const knowledgeDecisionDetail = '/knowledge/library/decision/:id';
-  static const knowledgeObjectDetail =
-      '/knowledge/library/object/:kind/:id';
+  static const knowledgeObjectDetail = '/knowledge/library/object/:kind/:id';
 
   // ── Global meta (not a tab) ────────────────────────────────────────────
   static const settings = '/settings';
@@ -256,8 +255,7 @@ abstract final class AppRouteNames {
 /// domain therefore touches only `domain_packs.dart` — this function
 /// stays domain-blind.
 DomainScope? domainForRoute(List<DomainPack> packs, String path) {
-  bool ownedBy(String prefix) =>
-      path == prefix || path.startsWith('$prefix/');
+  bool ownedBy(String prefix) => path == prefix || path.startsWith('$prefix/');
   for (final p in packs) {
     for (final tab in p.tabPaths) {
       if (ownedBy(tab)) return p.scope;
@@ -281,8 +279,3 @@ final primaryTabPathsProvider = Provider<List<String>>((ref) {
   final packs = ref.watch(domainPackRegistryProvider);
   return [for (final p in packs) ...p.tabPaths];
 });
-
-const String kCashflowPath = AppRoutes.cashflow;
-const String kCashflowRecurringPath = AppRoutes.cashflowRecurring;
-const String kDividendCenterPath = AppRoutes.cashflowDividends;
-const String kDividendsPath = AppRoutes.cashflowDividends;
