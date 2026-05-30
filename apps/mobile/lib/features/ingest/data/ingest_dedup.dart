@@ -11,7 +11,8 @@ library;
 import '../../../core/ai/local/skills/skills.dart';
 import '../domain/ingest_models.dart';
 
-/// Date proximity for two rows to be considered the same event.
+/// Date proximity for two rows to be considered the same event. Covers
+/// manual entry date vs bank settlement/posting date drift.
 const Duration kIngestDedupWindow = Duration(days: 3);
 
 /// Minor-unit slack for a "likely" (vs exact) duplicate. Mirrors the
@@ -28,16 +29,17 @@ class DedupResult {
   static const DedupResult fresh = DedupResult(verdict: DedupVerdict.newTxn);
 }
 
-/// Classify [parsed] against [existing]. Conservative by design: an
-/// empty merchant key never matches on the key path (avoids collapsing
-/// every blank-memo cash expense into one "duplicate").
+/// Classify [parsed] against [existing].
+///
+/// A same-day amount collision is not enough. We require the same sign,
+/// currency, date proximity, and a strong descriptor match.
 DedupResult classifyDedup(
   ParsedTransaction parsed,
   Iterable<TransactionInput> existing, {
   Duration window = kIngestDedupWindow,
 }) {
-  final key = merchantKey(parsed.description);
-  final amount = parsed.amountMinor.abs();
+  final parsedSigned = parsed.amountMinor;
+  final amount = parsedSigned.abs();
   if (amount == 0) return DedupResult.fresh;
 
   DedupResult? likely;
@@ -46,16 +48,21 @@ DedupResult classifyDedup(
     final gap = parsed.occurredAt.difference(e.occurredAt).abs();
     if (gap > window) continue;
 
-    final existingAmount = parseAmountMinor(e.amountMinor).abs();
-    final existingKey = merchantKey(e.description);
-    final keyMatch = key.isNotEmpty && key == existingKey;
-    final sameDay = _sameCalendarDay(parsed.occurredAt, e.occurredAt);
+    final existingSigned = parseAmountMinor(e.amountMinor);
+    if (existingSigned == 0) continue;
+    if (existingSigned.isNegative != parsedSigned.isNegative) continue;
+    final existingAmount = existingSigned.abs();
+    final descriptorMatch = compareTransactionDescriptions(
+      parsed.description,
+      e.description,
+    );
+    if (!descriptorMatch.isStrong) continue;
 
-    if (existingAmount == amount && (keyMatch || sameDay)) {
+    if (existingAmount == amount) {
       return DedupResult(verdict: DedupVerdict.duplicate, targetEntryId: e.id);
     }
 
-    if (keyMatch && _withinTolerance(amount, existingAmount)) {
+    if (_withinTolerance(amount, existingAmount)) {
       likely ??= DedupResult(
         verdict: DedupVerdict.likelyDuplicate,
         targetEntryId: e.id,
@@ -63,12 +70,6 @@ DedupResult classifyDedup(
     }
   }
   return likely ?? DedupResult.fresh;
-}
-
-bool _sameCalendarDay(DateTime a, DateTime b) {
-  final ua = a.toUtc();
-  final ub = b.toUtc();
-  return ua.year == ub.year && ua.month == ub.month && ua.day == ub.day;
 }
 
 bool _withinTolerance(int a, int b) {
