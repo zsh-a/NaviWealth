@@ -1,299 +1,258 @@
-# NaviWealth — Agent Guide
+# NaviWealth Agent Guide
 
-Personal Life OS (Phase D starting 2026-05-24). **FinanceOS** is the first domain — live on v0.5.x: all asset classes, investment tracking, portfolio analysis, FIRE dashboard, rebalancing, options income, device-only AI assistant. **HealthOS** is the second domain, in Phase D-2 (gated on shell foundation D-1). Cross-platform iOS / Android / Web (Web has no AI, no Health domain). Local-first + cloud sync.
+NaviWealth is a local-first Personal LifeOS. FinanceOS is the seed domain; HealthOS and KnowledgeOS are opt-in domains registered through the LifeOS shell. The app targets iOS, Android, and Web. Device AI is native-only; Web has no AI runtime and no Health integration.
 
-Before touching architecture, read `docs/lifeos-architecture-northstar.md` (boundaries), `docs/lifeos-shell.md` (cross-domain shell SSOT), and `docs/lifeos-decision-2026-05-24.md` (Phase D activation ADR).
+Read these before changing architecture or cross-domain code:
 
-## Quick Reference
+- `docs/lifeos-architecture-northstar.md`: boundaries and non-goals.
+- `docs/lifeos-shell.md`: cross-domain shell, domain registration, AI, sync, memory, persistence.
+- `docs/lifeos-decision-2026-05-24.md`: ADR that started Phase D and selected HealthOS as the second domain.
+- Domain SSOTs as needed: `docs/healthos-domain.md`, `docs/knowledgeos-domain.md`, `docs/roadmap-next.md`.
+
+## Current Domains
+
+| Domain | Status | Main paths | Sync prefix |
+|---|---|---|---|
+| FinanceOS | Always on | `features/finance/`, finance feature slices, `features/finance_ai_tools.dart` | `fin:` |
+| HealthOS | User opt-in | `features/health/`, `features/health_ai_tools.dart` | `health:` |
+| KnowledgeOS | User opt-in | `features/knowledge/`, `features/knowledge_ai_tools.dart` | `know:` |
+
+The production domain inventory is `apps/mobile/lib/app/domain_packs.dart`. Each domain contributes a `DomainPack`: tools, prompt block, shell route, shell spec, agents, command palette entries, and tab paths. Add a new domain by adding a real domain package and one registry entry; do not scatter one-off branching through bootstrap.
+
+## Repository Map
 
 | Area | Path | Language |
-|------|------|----------|
-| Mobile app | `apps/mobile/` | Dart (Flutter) |
-| Mobile native primitives | `apps/mobile/native/lifeos_native/` | Rust (candle MiniLM embedder; D-1.7c) |
-| Backend | `apps/backend/` | Rust (Cloudflare Workers + D1) |
+|---|---|---|
+| Mobile app | `apps/mobile/` | Dart, Flutter |
+| Native embedding runtime | `apps/mobile/native/lifeos_native/` | Rust, flutter_rust_bridge |
+| Backend | `apps/backend/` | Rust, Cloudflare Workers, D1 |
 | Securities catalog build | `tool/asset_catalog/` | Python |
-| Docs | `docs/` | Markdown |
+| Project docs | `docs/` | Markdown |
 | CI/CD | `.github/workflows/` | GitHub Actions |
 
-## Code Search
+Mobile layout:
 
-Use `semble search` to find code by describing what it does or naming a symbol/identifier, instead of grep:
-
-```bash
-semble search "authentication flow" ./my-project
-semble search "save_pretrained" ./my-project
-semble search "save model to disk" ./my-project --top-k 10
+```text
+apps/mobile/lib/
+  app/                  bootstrap, router, domain packs, app-level composition
+  core/                 cross-domain infrastructure only
+    ai/                 contracts, runtime, local memory, agents, composition seams
+    audit/              domain-neutral event log
+    auth/               JWT/session/domain opt-in
+    lifeos/             DomainPack registry seam
+    persistence/        Drift adapter and shared tables
+    shell/              multi-domain IA primitives
+    sync/               sync v2 row-state client and sync envelope types
+  design_system/        tokens, themes, charts, reusable widgets
+  domain/               legacy pure finance-neutral values/services still shared by Finance
+  features/
+    finance/            Finance composition and data root
+    health/             HealthOS data, UI, AI tools, agents
+    knowledge/          KnowledgeOS data, UI, AI tools, agents
+    <finance slices>/   accounts, assets, cashflow, investment, options, etc.
+  l10n/                 ARB files and generated localizations
 ```
 
-If you anticipate doing more than one search, use `semble index` to create an index.
+Backend layout:
 
-```bash
-semble index ./my-project -o my_index
+```text
+apps/backend/src/
+  lib.rs                Worker router
+  auth/                 JWT, password hashing, middleware
+  routes/               health, auth, me, sync
+  sync/                 generic row-state sync store
+  error.rs              coded JSON errors
+  hlc.rs                Hybrid Logical Clock
 ```
 
-You can then reuse this index later on:
+## Architecture Rules
+
+- `core/` is domain-neutral. It must not import `features/<domain>/` or domain business entities.
+- Domain business code lives under `features/<domain>/`. Finance slices may be legacy sibling features, but new cross-domain work should use `features/finance/` composition seams or app-level composition.
+- `app/` is the composition root. It may import multiple domains to assemble routers, memory indexers, domain packs, AI tools, agents, and provider overrides.
+- AI contracts and runtime stay in `core/ai/`; concrete domain tools live in `features/<domain>/ai_tools/` and are exported by `<domain>_ai_tools.dart`.
+- `core/persistence/` is the shared Drift adapter. Domain repositories own domain table access. Cross-domain infrastructure may use only its own tables.
+- Sync is v2 row-state: generic versioned blobs, last-writer-wins, one `POST /sync`. Do not rebuild sync as CRDT, event sourcing, or schema negotiation.
+- AI is device-only. There is no backend AI relay, no cloud fallback, and no `/ai/chat` endpoint. Users provide their own Anthropic or OpenAI-compatible profile on device.
+- Web builds exclude AI runtime and Health platform integration.
+
+## Search Workflow
+
+Use CodeGraph for structural questions and `rg` or `semble` for text/prose.
+
+CodeGraph:
+
+- Find symbol: `codegraph_search`
+- Focused task context: `codegraph_context`
+- Callers/callees/impact: `codegraph_callers`, `codegraph_callees`, `codegraph_impact`
+- Directory inventory: `codegraph_files`
+
+Semble examples:
 
 ```bash
-semble search "save_pretrained" --index my_index
+rtk semble search "DomainPack registry" apps/mobile --content all
+rtk semble search "MorningBriefingAgent" apps/mobile
+rtk semble search "deployment guide" docs --content docs
 ```
 
-An index is not automatically updated, so if the code changes significantly, reindex. If you notice stale results while resolving searches to files, reindex.
-
-Use `--content docs` to search documentation and prose, `--content config` for config files (yaml, toml, etc.), or `--content all` to search code, docs, and config:
+If `semble` is unavailable, use:
 
 ```bash
-semble search "deployment guide" ./my-project --content docs
-semble search "database host port" ./my-project --content config
-semble search "authentication" ./my-project --content all
+rtk uvx --from "semble[mcp]" semble search "DomainPack registry" apps/mobile --content all
 ```
 
-Use `semble find-related` to discover code similar to a known location (pass `file_path` and `line` from a prior search result):
+Use `rg` for exact strings, comments, config literals, and generated-file checks.
 
-```bash
-semble find-related src/auth.py 42 ./my-project
-```
+## Build And Test
 
-Like search, `find-related` also accepts an `--index` argument.
+Prefix shell commands with `rtk` when running from this repo.
 
-`path` defaults to the current directory when omitted; git URLs are accepted.
-
-If `semble` is not on `$PATH`, use `uvx --from "semble[mcp]" semble` in its place.
-
-### Workflow
-
-1. Index the repo using `semble index -o cached_index`.
-2. Start with `semble search` to find relevant chunks. Pass the index to achieve results faster.
-3. Use `--content docs` for documentation, `--content config` for config files, or `--content all` for everything.
-4. Inspect full files only when the returned chunk does not give enough context.
-5. Optionally use `semble find-related` with a promising result's `file_path` and `line` to discover related implementations.
-6. Use grep only when you need exhaustive literal matches or quick confirmation of an exact string.
-
----
-
-## Build & Run
-
-### Flutter Mobile
+Mobile:
 
 ```bash
 cd apps/mobile
-flutter pub get
-flutter test                                 # unit + widget tests
-flutter analyze --fatal-infos                # static analysis
-flutter run                                  # default device
-flutter run -d chrome                        # web dev
-flutter build web --release
-flutter build apk --debug
-flutter build ios --debug --no-codesign      # macOS only
+rtk flutter pub get
+rtk dart format .
+rtk flutter analyze --fatal-infos
+rtk flutter test
+rtk flutter run
+rtk flutter run -d chrome
+rtk flutter build web --release
+rtk flutter build apk --debug
+rtk flutter build ios --debug --no-codesign
 ```
 
-One-time web setup (scripts live under the mobile app):
+Generated code:
+
 ```bash
-apps/mobile/tool/setup-drift-web.sh    # sqlite3.wasm + drift_worker.dart.js
-apps/mobile/tool/build-cn-fonts.sh     # CN font subsets (app-cn-base/ext.woff2)
+cd apps/mobile
+rtk dart run build_runner build --delete-conflicting-outputs
 ```
 
-### Rust Backend
+One-time or asset setup:
 
 ```bash
-# prerequisites: rustup target add wasm32-unknown-unknown && npm i -g wrangler
+apps/mobile/tool/setup-drift-web.sh
+apps/mobile/tool/build-cn-fonts.sh
+apps/mobile/tool/build-latin-fonts.sh
+```
+
+Native embedding runtime:
+
+```bash
+cd apps/mobile
+rtk bash tool/build-lifeos-native.sh macos
+```
+
+Backend:
+
+```bash
 cd apps/backend
-cargo check --target wasm32-unknown-unknown
-cargo fmt --all -- --check
-cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings
-wrangler dev                                 # local dev
-wrangler deploy                              # production
+rtk cargo check --target wasm32-unknown-unknown
+rtk cargo fmt --all -- --check
+rtk cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings
+rtk wrangler dev
+rtk wrangler deploy
 ```
 
-### Securities Catalog
+Web smoke:
 
 ```bash
-tool/build-asset-catalog.sh           # rebuilds bundled NDJSON consumed by mobile FTS5
-                                       # see tool/asset_catalog/README.md (full ingest is manual)
+cd apps/mobile
+rtk flutter build web --release
+cd web_smoke
+rtk npm install
+rtk npm test
 ```
 
-### Web Smoke Tests
+Project lint gates:
 
 ```bash
-cd apps/mobile && flutter build web --release
-cd web_smoke && npm install && npm test
+./tool/lint-no-finance-in-core.sh
+./tool/lint-cross-feature-imports.sh
+./tool/lint-row-family-prefix.sh
+./tool/lint-domain-neutral-contracts.sh
+./tool/check-tool-descriptors.sh
 ```
 
-### Versioning, Release & Hooks
+## Dart And Flutter Conventions
 
-```bash
-./tool/bump-version.sh 0.2.0           # stamp mobile + backend, commit, tag v0.2.0
-git push origin HEAD --follow-tags     # triggers release.yml
-./tool/install-hooks.sh                # pre-commit: dart format + analyze on staged .dart
-```
+- Strict analysis is enabled: strict casts, strict inference, strict raw types.
+- Files use `snake_case.dart`; classes use `PascalCase`.
+- Providers use `camelCaseProvider`.
+- Constants use the existing local style; many cross-domain constants use `k` prefixes.
+- Use single quotes and trailing commas.
+- Never edit generated `*.g.dart`, `*.freezed.dart`, or FRB generated files by hand.
+- Complex async state should extend `ConventionalAsyncNotifier<T>` when it matches the fetch/refresh/mutate convention.
+- Override data/repository layers in tests instead of replacing feature providers with static `AsyncValue` unless the existing test pattern already does that.
 
-Build number = `git rev-list --count <tag>` (monotonic, reproducible).
+## UI Conventions
 
----
+- UI uses Forui plus the local design system. Prefer `FCard`, `FButton`, `FTheme`, `AppSpacing`, `AppRadius`, and chart components already in `design_system/`.
+- Keep domain shells dense and task-oriented. Do not add marketing pages or explanatory hero screens inside the app.
+- Use existing domain routes and `DomainTabsShell`; do not invent a second navigation model.
+- Cards are for repeated items, modals, and framed tools. Do not nest cards or turn every section into a card.
+- Use generated/localized strings where the surrounding UI does. Keep English and Chinese ARB files in sync.
+- After frontend changes, run a targeted widget test or inspect in the browser when a local web target is relevant.
 
-## Architecture
+## Testing Rules
 
-### Monorepo Layout
+- In-memory DB helper: `makeTestDatabase()`.
+- Common fakes: `makeStubStamper()`, `InMemoryOutboxStore`, `InMemoryCursorStore`, `FakeSyncApiClient`.
+- Widget tests should wrap UI in `MaterialApp` or the existing app test harness so theme and localization resolve.
+- Add focused tests for new repositories, sync behavior, AI tools, proposal appliers, and route shell changes.
+- Generated files are excluded from coverage; patch coverage target is 70 percent.
 
-```
-apps/mobile/      Flutter app (iOS / Android / Web)
-apps/backend/     Cloudflare Workers + Rust + D1
-tool/             Versioning, hooks, securities catalog build, dev utilities
-docs/             Protocol specs, roadmap, monitoring, compat matrix
-```
+## Data And Sync
 
-No workspace-level build tool. Each app is self-contained. CI uses path filters.
+- Drift lives in `core/persistence/`; domain repositories live under `features/<domain>/data/`.
+- Shared sync envelope types live in `core/sync/`: `Hlc`, `SyncMeta`, `MutationStamper`, and outbox providers.
+- Row families are domain-prefixed at the sync boundary:
+  - Finance: `fin:<table>`
+  - Health: `health:<table>`
+  - Knowledge: `know:<table>`
+- Local-only derived data, memory embeddings, and triage side tables do not sync unless explicitly designed to do so.
 
-### Mobile (Feature-First Clean Architecture)
+## AI Runtime
 
-```
-lib/
-  app/            MaterialApp, go_router, bootstrap, route guards, master/detail layout
-  core/           Cross-cutting:
-                    ai/               Device-only AI runtime, tools, contracts,
-                                      trace (see docs/ai-architecture.md)
-                    async/            ConventionalAsyncNotifier base, isolate runner
-                    auth/             Auth controller, providers
-                    backup/           Encrypted local backup
-                    command_palette/  Cmd-K palette + default commands
-                    config/           Compile-time config (AppConfig)
-                    format/           Number/date/currency formatting
-                    haptics/          Platform haptic feedback
-                    logging/          Structured logging
-                    perf/             Performance instrumentation
-                    pwa/              Web PWA install/update
-                    security/         SQLCipher key handling
-                    shortcuts/        Keyboard shortcuts
-                    sync/             OpLog, push/pull engine, providers
-  data/
-    audit/             Domain event log (writer/reader)
-    db/                Drift ORM: app_database, tables, converters, connection variants
-    domain/            Freezed models: Account, Asset, JournalEntry, Posting, Liability, Expense...
-    market/            Market-data providers (Yahoo, CoinGecko, Sina), cache, rate limiter
-    repositories/      Data repositories
-    securities_catalog/ Bundled FTS5 catalog loader + search
-  domain/         Pure domain layer:
-                    entities/  fx_rate, quote, historical_bar, symbol_info
-                    services/  net worth, currency converter, market data, price/balance sources
-                    values/    Money, asset_market
-  features/       Feature modules (each: ui/, data/, domain/):
-                    accounts, activity, ai_chat, analytics, assets, auth,
-                    cashflow, expense, fire, home, ingest, investment,
-                    liabilities, rebalance, settings, shared
-  design_system/  W3C Design Tokens (color / typography / motion / dimension),
-                  themes, charts, reusable widgets. UI is built on Forui
-                  (FCard / FButton / FTheme(zinc)); spacing & radius via
-                  AppSpacing / AppRadius tokens (no magic numbers in chrome).
-  l10n/           Localization (en + zh, ARB files)
-```
+- Runtime contracts: `core/ai/contracts/`.
+- Provider-neutral loop: `core/ai/runtime/`.
+- Domain tools: `features/<domain>/ai_tools/`.
+- Tool registry aggregation: `deviceToolsProvider` in `bootstrap.dart`, based on active `DomainPack`s.
+- Prompt aggregation: `systemPromptBlocksProvider`, also based on active `DomainPack`s.
+- Agents: `core/ai/agents/` framework; domain agents live under `features/<domain>/agents/` and are registered through `DomainPack.agentBuilder`.
+- Proposal application is a cross-domain seam. Finance and Knowledge proposals are composed in `features/knowledge/composition/knowledge_bootstrap.dart`.
 
-### Backend
+## Environment
 
-```
-src/
-  lib.rs          Worker Router (entry point)
-  error.rs        AppError enum with coded JSON responses
-  hlc.rs          Hybrid Logical Clock
-  auth/           JWT (HS256), Argon2 password hashing, middleware
-  routes/         HTTP handlers: health, auth, me, sync
-  sync/           OpLog (op), materialise, state
-migrations/       D1 SQL migrations (AI read-model tables kept as history; W-D7)
-```
+- Do not commit `.env` files.
+- Mobile compile-time config uses `--dart-define` in `apps/mobile/lib/core/config/app_config.dart`.
+- Key defines include:
+  - `API_BASE_URL`, default `http://127.0.0.1:8787`
+  - `BYPASS_AUTH`, default `false`
+  - `RUST_EMBEDDER_MODEL_DIR`
+  - `RUST_EMBEDDER_ORT_DYLIB_PATH`
+  - `RUST_EMBEDDER_LIBRARY_PATH`
+- Wrangler secret: `JWT_SECRET`.
+- The LLM API key is user-owned and stored on device as an `LlmProfile`, not as a backend secret.
 
-### Key Architectural Decisions
+## Documentation Index
 
-- **Local-first**: client is source of truth; server is durable storage + fan-out.
-- **Sync**: eventual consistency via polling, **row-state sync** (v2) — each row is a last-writer-wins register; the server is a generic versioned blob store, one `POST /sync` does push+pull. See `docs/sync-v2.md`. (`docs/sync-protocol.md` is the superseded v1 OpLog design, history only.)
-- **Money**: `Decimal` (not `double`) everywhere; `Money` value object rejects cross-currency ops at the type boundary; FX through explicit converter service.
-- **Database**: Drift ORM; SQLCipher (native), sqlite3 WASM (web).
-- **Auth**: single-user JWT (HS256), no registration endpoint; `BYPASS_AUTH` for dev.
-- **Routing**: go_router with Path URL strategy; deferred imports for web code-splitting.
-- **AI**: device-only — on-device agent runtime calls the user's chosen LLM provider (Anthropic- **or** OpenAI-compatible endpoint) directly with the user's own key; provider + key managed as switchable `LlmProfile`s in Settings, no opt-in toggle (W-D7 deleted the cloud AI backend; no `/ai/chat` relay, no cloud fallback; web has no AI). See `docs/ai-architecture.md` (design) + `docs/ai-protocol.md` (runtime event contract).
-
----
-
-## Code Conventions
-
-### Dart / Flutter
-- **Linting**: strict-casts, strict-inference, strict-raw-types (`apps/mobile/analysis_options.yaml`).
-- Files `snake_case.dart`; classes `PascalCase`; private widgets `_PrefixName`.
-- Providers: `camelCase` + `Provider` suffix (e.g. `appRouterProvider`).
-- Constants: `k` prefix (e.g. `kPrimaryTabPaths`, `kPushBatchMaxOps`).
-- Single quotes; trailing commas required.
-- `*.g.dart` / `*.freezed.dart` are generated — never edit.
-
-### Riverpod
-- Use `Provider`, `FutureProvider`, `StreamProvider`, `StateProvider` for the obvious cases.
-- Complex async state extends `ConventionalAsyncNotifier<T>` (`fetch / refresh / mutate`) — see `core/async/async_notifier_convention.dart`.
-- Group provider declarations per layer (`data/db/providers.dart`, `core/sync/providers.dart`, ...).
-
-### Rust
-- Standard Rust 2021. `cargo fmt` enforced in CI.
-- Centralized `AppError` (`thiserror`) with factory methods.
-- Handler pattern: public `pub async fn name(...)` wrapping an inner `_inner` for error/metrics handling.
-
----
-
-## Testing
-
-```
-test/
-  app/, core/, data/, domain/, design_system/, features/, l10n/, golden/
-  e2e/            Multi-device sync via SyncCluster / VirtualDevice harness
-```
-
-- **In-memory DB**: `makeTestDatabase()` (Drift in-memory, bypasses SQLCipher).
-- **Deterministic fakes**: `makeStubStamper()`, `InMemoryOutboxStore`, `InMemoryCursorStore`, `FakeSyncApiClient`.
-- **Widget tests**: wrap in `MaterialApp` so theme resolves.
-- **Convention**: override the data layer in tests, not providers with static `AsyncValue`.
-- **Coverage targets** (`codecov.yml`): project 60%, patch 70%; generated files excluded.
-
----
-
-## CI/CD
-
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `mobile.yml` | `apps/mobile/**` | analyze, build_runner check, test+coverage, golden regression, web build |
-| `backend.yml` | `apps/backend/**` | fmt, clippy, wasm32 check, deploy/preview |
-| `release.yml` | tag `vX.Y.Z` + manual | version stamp, APK GitHub Release, deploy backend |
-
----
-
-## Environment & Config
-
-- **No `.env` files committed.** Compile-time config via `--dart-define` (see `apps/mobile/lib/core/config/app_config.dart`):
-  - `API_BASE_URL` (default `http://127.0.0.1:8787`)
-  - `BYPASS_AUTH` (default `false`; opt in with `--dart-define=BYPASS_AUTH=true` for dev)
-- **Wrangler secrets**: `JWT_SECRET` (`wrangler secret put`). `ANTHROPIC_API_KEY` is no longer a backend secret — W-D7 removed the cloud AI proxy; the model key is the user's, held on-device.
-- **GitHub secrets**: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CODECOV_TOKEN`, `KEYSTORE_BASE64` + signing keys.
-
----
-
-## Detailed Documentation
-
-| Doc | Description |
-|-----|-------------|
-| `docs/lifeos-architecture-northstar.md` | **Architecture boundary SSOT** — read before any `core/` change. Phase D §4 lists the 8 active shell-foundation items |
-| `docs/lifeos-shell.md` | **Cross-domain shell SSOT** — IA / Memory / sync namespace / auth scope / AI tool layering / Rust boundary / CI gates |
-| `docs/lifeos-decision-2026-05-24.md` | Phase D activation ADR (why HealthOS, why not parallel, constraints, consequences) |
-| `docs/healthos-domain.md` | HealthOS domain SSOT (scope, schema, AI tools, IA placement) — gated on shell D-1 |
-| `docs/sync-v2.md` | **Active** sync spec (v2, row-state): generic row store, `version`/`seq`, single `POST /sync` |
-| `docs/sync-protocol.md` | Superseded v1 OpLog spec — history only |
-| `docs/sync-protocol-tests.md` | 50+ protocol test cases |
-| `docs/sync-e2e-manual.md` | Manual E2E checklist for multi-device sync |
-| `docs/sync-monitoring.md` | Latency targets, alert tiers, D1 sampling |
-| `docs/ai-architecture.md` | AI design source of truth: device-only runtime, tools, contracts, UI grammar (read before touching `lib/core/ai/`) |
-| `docs/ai-protocol.md` | Device AI runtime event contract (stream events, stop reasons, tool catalog) |
-| `docs/options-income.md` | Income Planner design: device-only options income engine (covered call / cash-secured put), yfinance MVP, AI reads cache only |
-| `docs/local-development.md` | Local dev setup walkthrough |
-| `docs/market-data-providers.md` | Market-data provider matrix and limits |
-| `docs/web-compat-matrix.md` | Cross-browser compatibility and known issues |
-| `docs/web-routing.md` | Web routing verification checklist |
-| `docs/visual-baseline/README.md` | Golden suite + Figma sync contract |
-| `docs/branch-protection.md` | Branch protection rules for `main` |
-| `docs/roadmap.md` (+ `roadmap-phase1.md`, `roadmap-midterm-execution.md`, `roadmap-fire-os.md`) | Product roadmap |
+| Doc | Use |
+|---|---|
+| `docs/lifeos-architecture-northstar.md` | Architecture boundaries and non-goals |
+| `docs/lifeos-shell.md` | Cross-domain shell SSOT |
+| `docs/lifeos-decision-2026-05-24.md` | Phase D ADR |
+| `docs/healthos-domain.md` | HealthOS scope, data, AI tools, agents |
+| `docs/knowledgeos-domain.md` | KnowledgeOS scope, data, AI tools, agents |
+| `docs/ai-architecture.md` | Device AI runtime design |
+| `docs/ai-protocol.md` | AI event/tool protocol |
+| `docs/sync-v2.md` | Active sync protocol |
+| `docs/sync-protocol.md` | Historical v1 protocol only |
+| `docs/options-income.md` | Options income engine |
+| `docs/market-data-providers.md` | Market data providers |
+| `docs/local-development.md` | Local setup |
+| `docs/testing-strategy.md` | Test strategy |
 | `apps/mobile/README.md` | Mobile engineering baseline |
-| `apps/mobile/design_tokens/README.md` | W3C Design Token system |
+| `apps/mobile/design_tokens/README.md` | Design tokens |
 | `apps/mobile/web_smoke/README.md` | Playwright smoke tests |
-| `apps/mobile/docs/web-bundle.md` | Web bundle size baseline + regression policy |
-| `tool/asset_catalog/README.md` | Securities catalog build pipeline |
