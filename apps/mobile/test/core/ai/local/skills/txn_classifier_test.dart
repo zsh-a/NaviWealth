@@ -45,6 +45,19 @@ void main() {
       expect(c?.categoryHint, 'coffee');
     });
 
+    test('matches common concatenated bank descriptors', () {
+      final c = classifyTransaction(
+        TransactionInput(
+          id: 't-whole-foods',
+          description: 'WHOLEFOODSMARKET 10231',
+          amountMinor: '-4200',
+          currency: 'USD',
+          occurredAt: DateTime.utc(2026, 5, 1),
+        ),
+      );
+      expect(c?.categoryHint, 'grocery');
+    });
+
     test('prefers specific food delivery over broad transport merchant', () {
       final eats = classifyTransaction(
         TransactionInput(
@@ -149,6 +162,8 @@ void main() {
     test('maps fine-grained hints to seeded expense account slugs', () {
       expect(expenseCategorySlugForHint('coffee'), 'food');
       expect(expenseCategorySlugForHint('food_delivery'), 'food');
+      expect(expenseCategorySlugForHint('food delivery'), 'food');
+      expect(expenseCategorySlugForHint('food-delivery'), 'food');
       expect(expenseCategorySlugForHint('subscription'), 'entertainment');
       expect(expenseCategorySlugForHint('utilities'), 'communication');
       expect(expenseCategorySlugForHint('unknown'), 'other');
@@ -167,7 +182,7 @@ void main() {
       );
     });
 
-    test('uses description first and stored category as fallback', () {
+    test('refines only taxonomy-owned broad stored categories', () {
       final coffee = categoryHintForTransaction(
         TransactionInput(
           id: 't-coffee',
@@ -176,6 +191,16 @@ void main() {
           currency: 'USD',
           occurredAt: DateTime.utc(2026, 5, 1),
           categoryId: 'system-account:u1:expense:food',
+        ),
+      );
+      final manualGift = categoryHintForTransaction(
+        TransactionInput(
+          id: 't-gift',
+          description: 'STARBUCKS',
+          amountMinor: '-450',
+          currency: 'USD',
+          occurredAt: DateTime.utc(2026, 5, 1),
+          categoryId: 'system-account:u1:expense:gift',
         ),
       );
       final stored = categoryHintForTransaction(
@@ -189,6 +214,7 @@ void main() {
         ),
       );
       expect(coffee, 'coffee');
+      expect(manualGift, 'gift');
       expect(stored, 'food');
     });
   });

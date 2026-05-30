@@ -1,14 +1,14 @@
 /// Rule-based transaction classifier.
 ///
-/// Phase 2-B baseline: a static alias table maps transaction descriptors
-/// to category *hints* (free-form strings — feature adapters map them to
-/// real category ids). High-confidence matches return 0.9; ambiguous
-/// or near-misses are intentionally left to the user.
+/// One taxonomy drives three surfaces:
+///  * transaction classification (`hint`),
+///  * natural-language category extraction (`queryKeywords`),
+///  * ledger write-back (`expenseSlug`).
 ///
-/// This skill is the warm path for ~99% of transactions: rules cover
-/// the long tail of common merchants without paying for an LLM call.
-/// When rules miss, the higher-tier path (Phase 5 device LLM) takes
-/// over — but that's an opt-in upgrade, not a Phase 2 dependency.
+/// Hints are finer-grained than the current Finance expense accounts:
+/// `coffee`, `food_delivery`, and `grocery` all persist under
+/// `expense:food`, while analytics can still use the finer descriptor
+/// when it is safely inferred.
 library;
 
 import 'merchant_key.dart';
@@ -21,285 +21,304 @@ class Classification {
     required this.reason,
   });
 
-  /// Free-form category hint. Feature-side adapters map this to a
-  /// concrete category id ('coffee' → `kCategoryCoffee`, etc.). Keeps
-  /// the skill independent of the project's category schema.
   final String categoryHint;
-
-  /// 0.0 to 1.0. The classifier returns nothing when it's not
-  /// confident enough — it never guesses.
   final double confidence;
-
-  /// Short human-readable rationale for tracing / debugging
-  /// (`'merchant alias matched: starbucks'`).
   final String reason;
 }
 
-class _CategoryRule {
-  const _CategoryRule(this.categoryHint, this.aliases);
+class _CategoryTaxon {
+  const _CategoryTaxon({
+    required this.hint,
+    required this.expenseSlug,
+    this.aliases = const <String>[],
+    this.queryKeywords = const <String>[],
+  });
 
-  final String categoryHint;
+  final String hint;
+  final String expenseSlug;
   final List<String> aliases;
+  final List<String> queryKeywords;
 }
 
 final RegExp _tokenRun = RegExp(r'[一-鿿]+|[a-z0-9]+');
+final RegExp _cjkRun = RegExp(r'[一-鿿]');
 
-const List<_CategoryRule> _rules = <_CategoryRule>[
-  _CategoryRule('food_delivery', <String>[
-    'uber eats',
-    'ubereats',
-    'doordash',
-    'grubhub',
-    'meituan',
-    '美团外卖',
-    '美团',
-    '饿了么',
-    'eleme',
-  ]),
-  _CategoryRule('coffee', <String>[
-    'starbucks',
-    'luckin',
-    'blue bottle',
-    'bluebottle',
-    '星巴克',
-    '瑞幸咖啡',
-    '瑞幸',
-    'manner',
-  ]),
-  _CategoryRule('grocery', <String>[
-    'whole foods',
-    'wholefoods',
-    'safeway',
-    'costco',
-    'trader joes',
-    'traderjoes',
-    'walmart',
-    '盒马',
-    '沃尔玛',
-  ]),
-  _CategoryRule('transport', <String>['uber', 'lyft', 'didi', '滴滴']),
-  _CategoryRule('subscription', <String>[
-    'netflix',
-    'spotify',
-    'apple music',
-    'apple.com/bill',
-    'icloud',
-    'dropbox',
-    'github',
-    'openai',
-    '腾讯视频',
-    '爱奇艺',
-  ]),
-  _CategoryRule('shopping', <String>[
-    'apple store',
-    'applestore',
-    'amazon',
-    'taobao',
-    '淘宝',
-    '京东',
-    'jd',
-    'tmall',
-    '天猫',
-  ]),
-  _CategoryRule('utilities', <String>[
-    'verizon',
-    'comcast',
-    'pge',
-    'pg&e',
-    '中国移动',
-    '中国联通',
-    '国家电网',
-  ]),
+const List<_CategoryTaxon> _taxonomy = <_CategoryTaxon>[
+  _CategoryTaxon(
+    hint: 'food_delivery',
+    expenseSlug: 'food',
+    aliases: <String>[
+      'uber eats',
+      'ubereats',
+      'doordash',
+      'grubhub',
+      'meituan',
+      '美团外卖',
+      '美团',
+      '饿了么',
+      'eleme',
+    ],
+    queryKeywords: <String>['外卖', 'delivery', 'food delivery'],
+  ),
+  _CategoryTaxon(
+    hint: 'coffee',
+    expenseSlug: 'food',
+    aliases: <String>[
+      'starbucks',
+      'luckin',
+      'blue bottle',
+      'bluebottle',
+      '星巴克',
+      '瑞幸咖啡',
+      '瑞幸',
+      'manner',
+    ],
+    queryKeywords: <String>['咖啡', 'coffee'],
+  ),
+  _CategoryTaxon(
+    hint: 'grocery',
+    expenseSlug: 'food',
+    aliases: <String>[
+      'whole foods',
+      'wholefoods',
+      'safeway',
+      'costco',
+      'trader joes',
+      'traderjoes',
+      'walmart',
+      '盒马',
+      '沃尔玛',
+    ],
+    queryKeywords: <String>['日用', '生鲜', 'grocery'],
+  ),
+  _CategoryTaxon(
+    hint: 'transport',
+    expenseSlug: 'transport',
+    aliases: <String>['uber', 'lyft', 'didi', '滴滴'],
+    queryKeywords: <String>['打车', '出行'],
+  ),
+  _CategoryTaxon(
+    hint: 'subscription',
+    expenseSlug: 'entertainment',
+    aliases: <String>[
+      'netflix',
+      'spotify',
+      'apple music',
+      'apple.com/bill',
+      'icloud',
+      'dropbox',
+      'github',
+      'openai',
+      '腾讯视频',
+      '爱奇艺',
+    ],
+    queryKeywords: <String>['订阅', 'subscription'],
+  ),
+  _CategoryTaxon(
+    hint: 'shopping',
+    expenseSlug: 'shopping',
+    aliases: <String>[
+      'apple store',
+      'applestore',
+      'amazon',
+      'taobao',
+      '淘宝',
+      '京东',
+      'jd',
+      'tmall',
+      '天猫',
+    ],
+    queryKeywords: <String>['购物', 'shopping'],
+  ),
+  _CategoryTaxon(
+    hint: 'utilities',
+    expenseSlug: 'communication',
+    aliases: <String>[
+      'verizon',
+      'comcast',
+      'pge',
+      'pg&e',
+      '中国移动',
+      '中国联通',
+      '国家电网',
+    ],
+    queryKeywords: <String>['水电', 'utilities'],
+  ),
 ];
 
-const Map<String, String> _queryCategoryAliases = <String, String>{
-  '咖啡': 'coffee',
-  'coffee': 'coffee',
-  '外卖': 'food_delivery',
-  'delivery': 'food_delivery',
-  '订阅': 'subscription',
-  'subscription': 'subscription',
-  '日用': 'grocery',
-  '生鲜': 'grocery',
-  'grocery': 'grocery',
-  '打车': 'transport',
-  '出行': 'transport',
-  '购物': 'shopping',
-  'shopping': 'shopping',
-  '水电': 'utilities',
-  'utilities': 'utilities',
+const Set<String> _expenseSlugs = <String>{
+  'food',
+  'transport',
+  'housing',
+  'household',
+  'entertainment',
+  'medical',
+  'education',
+  'shopping',
+  'travel',
+  'communication',
+  'gift',
+  'trading',
+  'tax',
+  'other',
 };
 
-const Map<String, String> _hintToExpenseSlug = <String, String>{
-  'coffee': 'food',
-  'food_delivery': 'food',
-  'grocery': 'food',
-  'transport': 'transport',
-  'subscription': 'entertainment',
-  'shopping': 'shopping',
-  'utilities': 'communication',
-  'food': 'food',
-  'household': 'household',
-  'housing': 'housing',
-  'entertainment': 'entertainment',
-  'medical': 'medical',
-  'education': 'education',
-  'travel': 'travel',
-  'communication': 'communication',
-  'gift': 'gift',
-  'tax': 'tax',
-  'other': 'other',
-};
-
-/// Classify [txn]. Returns `null` when:
-///  * The transaction already has a [TransactionInput.categoryId]
-///    (the user has already chosen — never override),
-///  * The amount is not an outflow,
-///  * The descriptor is empty,
-///  * No alias matches (the rules layer doesn't guess).
 Classification? classifyTransaction(TransactionInput txn) {
   if (txn.categoryId != null) return null;
   if (parseAmountMinor(txn.amountMinor) >= 0) return null;
   return _classifyDescription(txn.description);
 }
 
-/// Best-effort category hint for analytics/query use. Unlike
-/// [classifyTransaction], this can refine an existing broad ledger account
-/// from the transaction description, then falls back to the stored category.
+/// Analytics/query classification. Stored user categories are respected
+/// except when they are broad parent buckets that this taxonomy owns and
+/// can safely refine from the descriptor.
 String? categoryHintForTransaction(TransactionInput txn) {
   if (parseAmountMinor(txn.amountMinor) >= 0) return null;
-  final fromDescription = _classifyDescription(txn.description)?.categoryHint;
-  if (fromDescription != null) return fromDescription;
-  return categoryHintFromCategoryId(txn.categoryId);
+  final stored = categoryHintFromCategoryId(txn.categoryId);
+  final inferred = _classifyDescription(txn.description)?.categoryHint;
+  if (stored == null || stored == 'other') return inferred ?? stored;
+  if (inferred != null && _canRefine(stored, inferred)) return inferred;
+  return stored;
 }
 
-/// Convert a category hint into the existing Finance expense account slug.
-/// Unknown or model-supplied free-form values collapse to `other`.
 String expenseCategorySlugForHint(String? hint) {
-  if (hint == null) return 'other';
-  final lower = hint.toLowerCase().trim();
-  return _hintToExpenseSlug[lower] ??
-      _hintToExpenseSlug[_normalizeHint(hint)] ??
-      'other';
+  final canonical = _canonicalHint(hint);
+  if (canonical == null) return 'other';
+  return _taxonForHint(canonical)?.expenseSlug ??
+      (_expenseSlugs.contains(canonical) ? canonical : 'other');
 }
 
-/// Extract one or more category hints from a natural-language query.
 List<String>? categoryHintsForText(String input) {
-  final normalized = input.trim().toLowerCase();
-  if (normalized.isEmpty) return null;
-  final hits = <String>{};
-  for (final entry in _queryCategoryAliases.entries) {
-    if (normalized.contains(entry.key)) hits.add(entry.value);
-  }
+  final descriptor = _descriptor(input);
+  if (descriptor.normalized.isEmpty) return null;
 
-  final descriptor = _descriptor(normalized);
-  final ruleMatches = <_RuleMatch>[];
-  for (final rule in _rules) {
-    for (final alias in rule.aliases) {
-      final normalizedAlias = _normalize(alias);
-      if (normalizedAlias.isEmpty) continue;
-      if (_matchesAlias(descriptor, normalizedAlias)) {
-        ruleMatches.add(
-          _RuleMatch(
-            categoryHint: rule.categoryHint,
-            alias: alias,
-            normalizedAlias: normalizedAlias,
-          ),
+  final matches = <_TaxonMatch>[];
+  for (final taxon in _taxonomy) {
+    for (final term in <String>[...taxon.queryKeywords, ...taxon.aliases]) {
+      final normalized = _normalize(term);
+      if (normalized.isEmpty) continue;
+      if (_matchesTerm(descriptor, normalized, term)) {
+        matches.add(
+          _TaxonMatch(taxon: taxon, term: term, normalized: normalized),
         );
       }
     }
   }
-  ruleMatches.sort(
-    (a, b) => b.normalizedAlias.length.compareTo(a.normalizedAlias.length),
-  );
-  final selectedAliases = <String>[];
-  for (final match in ruleMatches) {
-    final shadowed = selectedAliases.any(
-      (alias) =>
-          alias != match.normalizedAlias &&
-          alias.contains(match.normalizedAlias),
-    );
-    if (shadowed) continue;
-    hits.add(match.categoryHint);
-    selectedAliases.add(match.normalizedAlias);
-  }
-  return hits.isEmpty ? null : hits.toList(growable: false);
+  return _selectHints(matches);
 }
 
 String? categoryHintFromCategoryId(String? categoryId) {
-  if (categoryId == null || categoryId.isEmpty) return null;
-  final lower = categoryId.toLowerCase().trim();
-  if (_hintToExpenseSlug.containsKey(lower)) return lower;
-  final normalized = _normalizeHint(categoryId);
-  if (_hintToExpenseSlug.containsKey(normalized)) return normalized;
-  final expenseIndex = normalized.indexOf('expense');
-  if (expenseIndex < 0) return null;
-  final tail = normalized.substring(expenseIndex + 'expense'.length);
-  for (final slug in _hintToExpenseSlug.values.toSet()) {
-    if (tail == slug || tail.startsWith(slug)) return slug;
-  }
-  return null;
+  if (categoryId == null || categoryId.trim().isEmpty) return null;
+  final direct = _canonicalHint(categoryId);
+  if (direct != null) return direct;
+
+  final segments = categoryId
+      .toLowerCase()
+      .split(RegExp(r'[:/]+'))
+      .map((s) => s.trim())
+      .where((s) => s.isNotEmpty)
+      .toList(growable: false);
+  final expenseIndex = segments.indexOf('expense');
+  if (expenseIndex < 0 || expenseIndex + 1 >= segments.length) return null;
+  final slug = segments[expenseIndex + 1];
+  return _expenseSlugs.contains(slug) ? slug : null;
 }
 
 Classification? _classifyDescription(String description) {
   final key = merchantKey(description);
   final descriptor = _descriptor(description);
   if (key.isEmpty || descriptor.normalized.isEmpty) return null;
-  final match = _bestRuleMatch(descriptor);
+  final match = _bestMatch(descriptor);
   if (match == null) return null;
-  final exactMerchant = key == match.normalizedAlias;
+  final exactMerchant = key == match.normalized;
   return Classification(
-    categoryHint: match.categoryHint,
+    categoryHint: match.taxon.hint,
     confidence: exactMerchant ? 0.9 : 0.82,
     reason: exactMerchant
         ? 'merchant alias matched: $key'
-        : 'descriptor alias matched: ${match.alias}',
+        : 'descriptor alias matched: ${match.term}',
   );
 }
 
-String _normalizeHint(String input) =>
-    input.toLowerCase().replaceAll(RegExp(r'[^a-z0-9一-鿿]+'), '');
-
-_RuleMatch? _bestRuleMatch(_Descriptor descriptor) {
-  _RuleMatch? best;
-  for (final rule in _rules) {
-    for (final alias in rule.aliases) {
-      final normalizedAlias = _normalize(alias);
-      if (normalizedAlias.isEmpty) continue;
-      if (!_matchesAlias(descriptor, normalizedAlias)) continue;
-      final candidate = _RuleMatch(
-        categoryHint: rule.categoryHint,
-        alias: alias,
-        normalizedAlias: normalizedAlias,
-      );
-      if (best == null ||
-          candidate.normalizedAlias.length > best.normalizedAlias.length) {
-        best = candidate;
+_TaxonMatch? _bestMatch(_Descriptor descriptor) {
+  final matches = <_TaxonMatch>[];
+  for (final taxon in _taxonomy) {
+    for (final alias in taxon.aliases) {
+      final normalized = _normalize(alias);
+      if (normalized.isEmpty) continue;
+      if (_matchesTerm(descriptor, normalized, alias)) {
+        matches.add(
+          _TaxonMatch(taxon: taxon, term: alias, normalized: normalized),
+        );
       }
     }
   }
-  return best;
+  if (matches.isEmpty) return null;
+  matches.sort((a, b) => b.normalized.length.compareTo(a.normalized.length));
+  return matches.first;
 }
 
-bool _matchesAlias(_Descriptor descriptor, String normalizedAlias) {
-  if (descriptor.normalized == normalizedAlias) return true;
-  if (descriptor.tokens.contains(normalizedAlias)) return true;
-  if (_isPhraseAlias(normalizedAlias)) {
-    return descriptor.normalized.contains(normalizedAlias);
+List<String>? _selectHints(List<_TaxonMatch> matches) {
+  matches.sort((a, b) => b.normalized.length.compareTo(a.normalized.length));
+  final selectedTerms = <String>[];
+  final hints = <String>{};
+  for (final match in matches) {
+    final shadowed = selectedTerms.any(
+      (term) => term != match.normalized && term.contains(match.normalized),
+    );
+    if (shadowed) continue;
+    hints.add(match.taxon.hint);
+    selectedTerms.add(match.normalized);
+  }
+  return hints.isEmpty ? null : hints.toList(growable: false);
+}
+
+bool _canRefine(String stored, String inferred) {
+  final taxon = _taxonForHint(inferred);
+  return taxon != null && taxon.expenseSlug == stored;
+}
+
+String? _canonicalHint(String? input) {
+  if (input == null) return null;
+  final normalized = _normalize(input);
+  if (normalized.isEmpty) return null;
+  for (final taxon in _taxonomy) {
+    if (normalized == _normalize(taxon.hint)) return taxon.hint;
+    if (normalized == _normalize(taxon.expenseSlug)) return taxon.expenseSlug;
+    for (final term in <String>[...taxon.queryKeywords, ...taxon.aliases]) {
+      if (normalized == _normalize(term)) return taxon.hint;
+    }
+  }
+  for (final slug in _expenseSlugs) {
+    if (normalized == _normalize(slug)) return slug;
+  }
+  return null;
+}
+
+_CategoryTaxon? _taxonForHint(String hint) {
+  for (final taxon in _taxonomy) {
+    if (taxon.hint == hint) return taxon;
+  }
+  return null;
+}
+
+bool _matchesTerm(
+  _Descriptor descriptor,
+  String normalizedTerm,
+  String rawTerm,
+) {
+  if (descriptor.normalized == normalizedTerm) return true;
+  if (descriptor.tokens.contains(normalizedTerm)) return true;
+  if (_isPhrase(rawTerm) || _canMatchInside(normalizedTerm)) {
+    return descriptor.normalized.contains(normalizedTerm);
   }
   return false;
 }
 
-bool _isPhraseAlias(String normalizedAlias) {
-  for (final rule in _rules) {
-    for (final alias in rule.aliases) {
-      if (_normalize(alias) == normalizedAlias) {
-        return _tokens(alias).length > 1 || RegExp(r'[一-鿿]').hasMatch(alias);
-      }
-    }
-  }
-  return false;
-}
+bool _isPhrase(String rawTerm) =>
+    _tokens(rawTerm).length > 1 || _cjkRun.hasMatch(rawTerm);
+
+bool _canMatchInside(String normalizedTerm) => normalizedTerm.length >= 6;
 
 _Descriptor _descriptor(String input) {
   final tokens = _tokens(input);
@@ -320,14 +339,14 @@ class _Descriptor {
   final String normalized;
 }
 
-class _RuleMatch {
-  const _RuleMatch({
-    required this.categoryHint,
-    required this.alias,
-    required this.normalizedAlias,
+class _TaxonMatch {
+  const _TaxonMatch({
+    required this.taxon,
+    required this.term,
+    required this.normalized,
   });
 
-  final String categoryHint;
-  final String alias;
-  final String normalizedAlias;
+  final _CategoryTaxon taxon;
+  final String term;
+  final String normalized;
 }
