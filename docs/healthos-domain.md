@@ -13,7 +13,7 @@
 D-2 子阶段进度:
 
 - ✅ **D-2.1 域骨架 + Drift tables** (2026-05-26) — `health_metrics` 表 (schema v18) + `HealthMetric` Freezed 实体 + `HealthMetricKind` 枚举 + `HealthMetricRepository` (upsert / listByKind / watchRecent / findById) + 7 个仓库测试通过
-- ✅ **D-2.4a AI tools (read-only)** (2026-05-27) — 4 个 device tool 落地 (`get_recent_sleep_summary` / `get_hrv_trend` / `get_activity_summary` / `get_recovery_signal`) + 22 个测试通过 + `kHealthDeviceTools` barrel + bootstrap 域级 opt-in gate (`domainOptInsProvider`)
+- ✅ **D-2.4a AI tools** (2026-05-27; 2026-05-30 加低频写入) — 4 个 read device tool 落地 (`get_recent_sleep_summary` / `get_hrv_trend` / `get_activity_summary` / `get_recovery_signal`) + `record_body_measurement` 仅支持用户明确给出的体重 / 体脂本地写入(one-tap confirmation) + `kHealthDeviceTools` barrel + bootstrap 域级 opt-in gate (`domainOptInsProvider`)
 - ✅ **D-2.4b Memory Layer 第二 caller** (2026-05-27) — `HealthMetricMemoryIndexer` 落地:每条 `health_metrics` 行写一个 `EventRecord`(7 种 type:sleep/hrv/steps/rhr/active_energy/weight/body_fat);notable 睡眠会话(< 5h / > 9h / 带 `payloadJson` 注释)额外写 `episodic MemoryRecord` 进 `scope='health'`,带 `short_sleep` / `long_sleep` / `noted_sleep` entity 便于跨域召回。Bootstrap 经 `memory_indexers_bootstrap.dart` 接入;indexer 内部读 `domainOptInsProvider` 域级 opt-in,Health OFF 时不订阅。9 个 indexer 测试通过(event emission 3 + episodic 5 + idempotency 1)
 - ✅ **D-2.3 IA 接入(seam + 直链)** (2026-05-27) — `healthDomainShell(l10n)` (3 tabs: Today/Trend/Plan) + `AppRoutes.healthToday`/`.healthTrend`/`.healthPlan` + 3 个 placeholder 页(`HealthPlaceholderPage`)+ `bootstrap.dart` 在 Health 域 opt-in 时 append spec 到 `activeDomainShellsProvider`(`domainDockVisibleProvider` 自动翻 true)+ Settings → LifeOS 域 加 HealthOS 入口直链。3 个 shell-spec 测试通过。**dock UI 渲染**(改 `app_shell.dart` 的 StatefulShellRoute 让 dock 可视)留作 D-2.3b — 当前 Health 页面经 Settings 直链或直接 URL 访问,蚪自己 dogfood 验 Option B 是否顺手再决定全量切换
 - ✅ **D-2.5 Morning Briefing agent (programmatic MVP)** (2026-05-27) — `core/ai/agents/{agent,agent_schedule,agent_registry,agent_runner}.dart` 通用框架 + `features/health/agents/morning_briefing_agent.dart` 第一个具名 agent。每日 07:00 (jitter ±5min) 触发,读取过去 24h Memory Layer 跨域 events,程序化合成 sleep/HRV/finance 三段摘要写为 `episodic MemoryRecord` (`scope='*'`,entity `morning_briefing` + dayKey)。Agent runner 通过 `EventRecord` 记录每次运行 (`source='agent_run'`,3 种 type:completed/skipped/failed)。Bootstrap 在 Health opt-in 时注册到 `agentRegistryProvider`。19 个测试通过 (schedule 8 + runner 6 + briefing 5)。**LLM 合成 + 平台原生 cron** 留作 D-2.5b follow-up。
@@ -87,7 +87,7 @@ class HealthMetrics extends Table with SyncableTable {
 
 ## 4. AI tools (D-2.4a 已落地 2026-05-27)
 
-**Read tool 优先,无 write tool**(健康数据隐私敏感,不让 AI 改)。位置:`features/health/ai_tools/`。注册:`features/health_ai_tools.dart::kHealthDeviceTools` → bootstrap `deviceToolsProvider` override (仅在 `domainOptInsProvider.contains(DomainScope.health)` 时拼入,Health 默认 OFF)。
+**Read tool 优先;写入只开放低频身体指标**。健康数据隐私敏感,AI 不写睡眠 / HRV / 活动 / 训练等高频或平台采集数据。体重 / 体脂允许在用户明确说"记录/录入/保存"且给出数值时走 `record_body_measurement`,并由 tool descriptor 要求 one-tap confirmation。位置:`features/health/ai_tools/`。注册:`features/health_ai_tools.dart::kHealthDeviceTools` → bootstrap `deviceToolsProvider` override (仅在 `domainOptInsProvider.contains(DomainScope.health)` 时拼入,Health 默认 OFF)。
 
 | 工具 | 输入 | 输出 | 用途 |
 |---|---|---|---|
@@ -95,6 +95,7 @@ class HealthMetrics extends Table with SyncableTable {
 | `get_hrv_trend` | `window_days` (枚举 7/14/30/60/90, 默认 30) | `{window_days, from, to, points[{date, hrv_ms}], summary{latest_ms, average_ms, first_half_average_ms, second_half_average_ms, delta_pct}?, note?}` | HRV 序列 + 前后半 delta,< 4 样本时不算 delta |
 | `get_activity_summary` | `days_back` (1–90, 默认 7) | `{from, to, days[{date, steps, active_kcal}], summary{total_steps, average_steps, total_active_kcal, average_active_kcal, step_day_count, kcal_day_count}, note?}` | 按日 join steps/kcal,缺一边时另一边返回 null |
 | `get_recovery_signal` | 无入参 | `{score (0–100 或 null), verdict (rested/balanced/strained/insufficient_data), inputs{latest_hrv_ms, avg_sleep_hours, latest_rhr_bpm}}` | 综合恢复评分:recent (7d) vs baseline (7–28d) HRV/RHR + 睡眠对 7h 锚点 |
+| `record_body_measurement` | `kind` (`weight`/`body_fat`), `value`, `date_iso?`, `note?` | `{ok, id, kind, value, unit, captured_at, source}` | 低频身体指标本地写入;手动录入和 AI 录入共用 `HealthMetricWriteService`;body_fat 以 fraction 存储,输入可用百分数 |
 
 **算法约定**:
 - baseline 窗口是 7–28 天前(**排除最近 7 天**),避免近期改善被自己稀释
@@ -103,7 +104,7 @@ class HealthMetrics extends Table with SyncableTable {
 - 基线 < 5 天 OR 最近无任何信号 → `insufficient_data` (模型回避建议)
 
 **不做** (MVP):
-- AI 写健康数据
+- AI 写高频/平台采集健康数据(睡眠、HRV、步数、训练等)
 - AI 自动训练计划生成
 - 真实时检测(MVP 日级聚合)
 - 跨工具复合 prompt 自动判定(Morning Briefing agent 是 D-2.5)

@@ -25,6 +25,8 @@ import '../agents/providers.dart' as health_agent_providers;
 import '../data/health_sync_service.dart';
 import '../data/providers.dart' as health_data;
 import '../domain/health_metric.dart';
+import '../domain/health_metric_kind.dart';
+import 'body_measurement_entry_sheet.dart';
 import 'health_today_providers.dart';
 
 class HealthTodayPage extends ConsumerWidget {
@@ -34,6 +36,16 @@ class HealthTodayPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return ShellTabScaffold(
       title: '今日 · HealthOS',
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.scale),
+          semanticsLabel: '记录身体指标',
+          onPress: () => showBodyMeasurementEntrySheet(
+            context: context,
+            initialKind: HealthMetricKind.weight,
+          ),
+        ),
+      ],
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
         children: const [
