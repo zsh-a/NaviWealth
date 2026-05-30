@@ -34,11 +34,9 @@ class ExpenseCategoryPieCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             if (report.byCategory.isEmpty)
-              LayoutBuilder(
-                builder: (context, c) => AspectRatio(
-                  aspectRatio: chartAspectFor(c.maxWidth),
-                  child: const EmptyChartPlaceholder(icon: FLucideIcons.chartPie),
-                ),
+              const SizedBox(
+                height: 200,
+                child: EmptyChartPlaceholder(icon: FLucideIcons.chartPie),
               )
             else
               LayoutBuilder(
@@ -51,17 +49,21 @@ class ExpenseCategoryPieCard extends StatelessWidget {
                   );
                   if (isWide) {
                     return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Expanded(child: pie),
-                        const SizedBox(width: 24),
+                        SizedBox(width: 232, child: pie),
+                        const SizedBox(width: AppSpacing.s20),
                         Expanded(child: legend),
                       ],
                     );
                   }
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [pie, const SizedBox(height: 12), legend],
+                    children: [
+                      pie,
+                      const SizedBox(height: AppSpacing.s12),
+                      legend,
+                    ],
                   );
                 },
               ),
@@ -186,7 +188,6 @@ class _Pie extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final palette = ChartPalette.of(context);
     final slices = <Slice>[
       for (var i = 0; i < report.byCategory.length; i++)
         Slice(
@@ -194,30 +195,46 @@ class _Pie extends StatelessWidget {
               categoryById[report.byCategory[i].expenseAccountId]?.name ??
               l10n.expenseReportUncategorized,
           value: report.byCategory[i].total.amount.toDouble(),
-          colorOverride: palette.accentAt(i),
+          colorOverride:
+              categoryById[report.byCategory[i].expenseAccountId]
+                  ?.expenseAccentColor(context, ordinal: i) ??
+              ChartPalette.of(context).accentAt(i),
           meta: report.byCategory[i],
         ),
     ];
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 240),
-      child: NwPieChart(
-        slices: slices,
-        drillDown: SliceDrillDown((slice) {
-          final breakdown = slice.meta;
-          if (breakdown is! CategoryBreakdown) return;
-          showFSheet<void>(
-            side: FLayout.btt,
-            context: context,
-            mainAxisMaxRatio: null,
-            builder: (ctx) => _CategoryDrillDown(
-              breakdown: breakdown,
-              categoryById: categoryById,
-              baseCurrency: report.baseCurrency,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxSize = constraints.maxWidth < Breakpoints.mobile
+            ? 208.0
+            : 224.0;
+        final size = constraints.maxWidth.clamp(168.0, maxSize).toDouble();
+        return Align(
+          alignment: Alignment.center,
+          child: SizedBox.square(
+            dimension: size,
+            child: NwPieChart(
+              slices: slices,
+              hole: 0.66,
+              minLabelPercent: 7,
+              drillDown: SliceDrillDown((slice) {
+                final breakdown = slice.meta;
+                if (breakdown is! CategoryBreakdown) return;
+                showFSheet<void>(
+                  side: FLayout.btt,
+                  context: context,
+                  mainAxisMaxRatio: null,
+                  builder: (ctx) => _CategoryDrillDown(
+                    breakdown: breakdown,
+                    categoryById: categoryById,
+                    baseCurrency: report.baseCurrency,
+                  ),
+                );
+              }),
+              semanticLabel: l10n.expenseReportCategoryShare,
             ),
-          );
-        }),
-        semanticLabel: l10n.expenseReportCategoryShare,
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -231,14 +248,16 @@ class _PieLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final palette = ChartPalette.of(context);
     final total = report.total.amount.toDouble();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (var i = 0; i < report.byCategory.length; i++)
           _LegendRow(
-            color: palette.accentAt(i),
+            color:
+                categoryById[report.byCategory[i].expenseAccountId]
+                    ?.expenseAccentColor(context, ordinal: i) ??
+                ChartPalette.of(context).accentAt(i),
             label:
                 categoryById[report.byCategory[i].expenseAccountId]?.name ??
                 l10n.expenseReportUncategorized,
@@ -293,20 +312,31 @@ class _LegendRow extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.s6,
+          horizontal: AppSpacing.s4,
+        ),
         child: Row(
           children: [
             Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(AppRadius.xs),
+              ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: context.theme.typography.sm),
+                  Text(
+                    label,
+                    style: context.theme.typography.sm,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   Text(
                     '${(percent * 100).toStringAsFixed(1)}%',
                     style: context.theme.typography.xs.copyWith(
@@ -316,15 +346,16 @@ class _LegendRow extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(width: AppSpacing.s8),
             MoneyText(
               amount: valueInBase,
               currencyCode: currencyCode,
               compact: true,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.s4),
             Icon(
               FLucideIcons.chevronRight,
-              size: 16,
+              size: AppIconSizes.sm,
               color: context.theme.colors.mutedForeground,
             ),
           ],
@@ -349,7 +380,8 @@ class _CategoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final category = categoryById[breakdown.expenseAccountId];
-    final accent = category?.accentColor ?? context.theme.colors.primary;
+    final accent =
+        category?.expenseAccentColor(context) ?? context.theme.colors.primary;
     return FTile(
       title: Text(category?.name ?? l10n.expenseReportUncategorized),
       prefix: CircleAvatar(

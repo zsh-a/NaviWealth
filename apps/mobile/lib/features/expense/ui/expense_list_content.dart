@@ -317,7 +317,8 @@ class _ExpenseRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final accent = account?.accentColor ?? context.theme.colors.primary;
+    final accent =
+        account?.expenseAccentColor(context) ?? context.theme.colors.primary;
     return FTile(
       title: Text(account?.name ?? l10n.expenseListUncategorized),
       prefix: CircleAvatar(

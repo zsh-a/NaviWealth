@@ -6,15 +6,15 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'expense_category_visuals.dart';
 
-/// Tap-grid expense category picker. Each tile shows the category
-/// icon + name, anchored to the category's user-defined accent color.
+/// Tap-grid expense category picker. Each tile shows the category icon + name,
+/// anchored to the expense display accent.
 ///
 /// Visual rules align with the rest of the app:
-///   - container: 14% accent fill when selected, 4% foreground tint
+///   - container: 12% accent fill when selected, 3.5% foreground tint
 ///     otherwise (matches SoftCard's resting tint)
 ///   - selection: thin teal/accent border + bolder label, no heavy
 ///     1.5px outline
-///   - icon disc: 36×36 rounded square (not a circle) so the
+///   - icon disc: 32×32 rounded square (not a circle) so the
 ///     vocabulary matches AccountCategoryPicker / Accounts hub rows
 class CategoryGridPicker extends StatelessWidget {
   const CategoryGridPicker({
@@ -58,7 +58,7 @@ class CategoryGridPicker extends StatelessWidget {
               children: [
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    const tileWidth = 84.0;
+                    const tileWidth = 76.0;
                     final crossAxisCount = (constraints.maxWidth / tileWidth)
                         .floor()
                         .clamp(3, 6);
@@ -66,9 +66,9 @@ class CategoryGridPicker extends StatelessWidget {
                       crossAxisCount: crossAxisCount,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      childAspectRatio: 0.85,
+                      mainAxisSpacing: AppSpacing.s8,
+                      crossAxisSpacing: AppSpacing.s8,
+                      childAspectRatio: 0.92,
                       children: [
                         for (final account in accounts)
                           _AccountTile(
@@ -102,6 +102,8 @@ class CategoryGridPicker extends StatelessWidget {
   }
 }
 
+const double _kTileIconFrame = 32;
+
 class _AccountTile extends StatelessWidget {
   const _AccountTile({
     required this.account,
@@ -116,44 +118,49 @@ class _AccountTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final accent = account.accentColor ?? colors.primary;
+    final accent = account.expenseAccentColor(context);
     final fill = selected
-        ? accent.withValues(alpha: 0.10)
-        : colors.foreground.withValues(alpha: 0.04);
+        ? accent.withValues(alpha: 0.12)
+        : colors.foreground.withValues(alpha: 0.035);
     final border = selected
-        ? accent.withValues(alpha: 0.65)
-        : colors.foreground.withValues(alpha: 0.06);
+        ? accent.withValues(alpha: 0.46)
+        : colors.foreground.withValues(alpha: 0.055);
     return AnimatedContainer(
       duration: Motion.fast,
       curve: Motion.standardDecelerate,
       decoration: BoxDecoration(
         color: fill,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border, width: selected ? 1.2 : 1),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: border),
       ),
       child: FTappable(
         onPress: onTap,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s6,
+            AppSpacing.s8,
+            AppSpacing.s6,
+            AppSpacing.s6,
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: _kTileIconFrame,
+                height: _kTileIconFrame,
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(10),
+                  color: accent.withValues(alpha: selected ? 0.18 : 0.11),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 alignment: Alignment.center,
-                child: Icon(account.iconData, color: accent, size: 18),
+                child: Icon(account.iconData, color: accent, size: 16),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpacing.s6),
               Text(
                 account.name,
                 style: context.theme.typography.xs.copyWith(
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                  color: selected ? accent : colors.foreground,
+                  color: colors.foreground,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
