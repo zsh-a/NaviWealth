@@ -77,12 +77,15 @@ if [[ -n "${new_failures}" ]]; then
 fi
 
 if [[ -n "${fixed}" ]]; then
-  echo "::warning::These files are on the allowlist but no longer fail:"
+  echo "::error::These files are on the allowlist but no longer fail:"
   echo "${fixed}" | sed 's/^/  - /'
   echo
-  echo "Please delete those lines from ${EXPECTED_FILE} so the baseline"
-  echo "tightens. (Soft warning — not a CI failure today.)"
+  echo "The baseline is a monotonic ratchet: once a test is fixed it must be"
+  echo "removed from ${EXPECTED_FILE} so the footprint can only ever shrink."
+  echo "Delete the line(s) above and commit. (If the failure is flaky rather"
+  echo "than fixed, stabilise the test — do not re-pin it.)"
+  exit 2
 fi
 
-echo "✅ Failure footprint matches the pinned baseline."
+echo "✅ Failure footprint matches the pinned baseline exactly."
 exit 0

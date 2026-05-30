@@ -1,0 +1,88 @@
+name: web-smoke
+
+# Cross-browser Playwright smoke for the Flutter web release bundle
+# (apps/mobile/web_smoke). The suites already existed; this workflow is
+# what actually runs them — previously they were dormant (FIR-40).
+#
+#   - Pull requests touching web-relevant paths: chromium only (fast gate).
+#   - Nightly + manual dispatch: full Chromium / Firefox / WebKit matrix
+#     (WebKit stands in for desktop Safari and exercises the OPFS fallback).
+on:
+  pull_request:
+    paths:
+      - 'apps/mobile/lib/**'
+      - 'apps/mobile/web/**'
+      - 'apps/mobile/web_smoke/**'
+      - 'apps/mobile/pubspec.yaml'
+      - '.github/workflows/web-smoke.yml'
+  schedule:
+    # 02:30 UTC nightly — full browser matrix.
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: web-smoke-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  smoke:
+    name: web smoke (${{ github.event_name == 'pull_request' && 'chromium' || 'all browsers' }})
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: flutter pub get
+
+      # Web build needs the same asset materialisation as the build-web job
+      # in mobile.yml (drift wasm worker + font subsets).
+      - name: Materialize drift web assets (sqlite3.wasm + drift_worker.dart.js)
+        run: tool/setup-drift-web.sh
+      - name: Build CN web font subsets
+        run: tool/build-cn-fonts.sh
+      - name: Build Latin font subsets (Inter + Outfit)
+        run: tool/build-latin-fonts.sh
+      - name: Read backend API URL
+        id: api-url
+        working-directory: ${{ github.workspace }}
+        run: echo "url=$(cat apps/backend/.api-base-url | tr -d '\n')" >> "$GITHUB_OUTPUT"
+      - name: Build Flutter web (release)
+        run: flutter build web --release --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }}
+
+      - name: Install Playwright + browsers
+        working-directory: apps/mobile/web_smoke
+        run: |
+          npm install
+          # PRs only need chromium; nightly/manual installs the full matrix.
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            npx playwright install --with-deps chromium
+          else
+            npx playwright install --with-deps
+          fi
+      - name: Run smoke suite
+        working-directory: apps/mobile/web_smoke
+        env:
+          CI: 'true'
+          WEB_BUILD_DIR: ${{ github.workspace }}/apps/mobile/build/web
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            npx playwright test --project=chromium
+          else
+            npx playwright test
+          fi
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-smoke-report
+          path: apps/mobile/web_smoke/playwright-report/**
+          if-no-files-found: ignore
+          retention-days: 7
