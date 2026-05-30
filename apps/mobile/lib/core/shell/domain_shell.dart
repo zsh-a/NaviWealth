@@ -1,15 +1,10 @@
 /// Multi-domain IA shell seam (`docs/lifeos-shell.md` §3, D-1.8).
 ///
-/// Phase D-1.8 ships the *abstraction*: each active LifeOS domain
-/// declares a [DomainShellSpec] (label, icon, root tabs) and the
-/// app shell renders them. Today only FinanceOS is active, so the
-/// shell looks identical to the pre-D-1.8 UI. Phase D-2 lands a
-/// HealthOS shell spec alongside, and the left domain dock (shell
-/// §3 Option B) becomes visible once two specs are registered.
-///
-/// **Decision gate (shell §3 复述)**: dogfood 2 weeks after D-2 to
-/// confirm Option B (left dock) over Option A (top switcher). The
-/// abstraction below is shape-compatible with either presentation.
+/// Each active LifeOS domain declares a [DomainShellSpec] (label, icon,
+/// root tabs) and the app shell renders them. FinanceOS is always
+/// present; HealthOS and KnowledgeOS appear when their domain opt-ins
+/// are enabled. The dock/switcher becomes visible once two or more
+/// specs are active.
 library;
 
 import 'package:flutter/widgets.dart';
@@ -57,9 +52,8 @@ class DomainShellSpec {
   /// AI tool registry) all key off this enum.
   final DomainScope scope;
 
-  /// Display name in the dock / switcher ("FinanceOS", "HealthOS").
-  /// Phase D-1.8 leaves it as a literal — l10n can be added when
-  /// HealthOS ships and the dock becomes visible.
+  /// Display name in the dock / switcher ("FinanceOS", "HealthOS",
+  /// "KnowledgeOS").
   final String label;
 
   /// Icon shown in the dock / switcher.
@@ -80,16 +74,14 @@ class DomainShellSpec {
 /// overrides this with the union of every domain the user has opted
 /// into via [domainOptInsProvider].
 ///
-/// Phase D-1.8: only FinanceOS is ever registered, so the dock is
-/// always 1-entry and stays hidden. Phase D-2 will append a HealthOS
-/// spec when the user enables the Health opt-in.
+/// FinanceOS is always registered. Optional domain specs are included
+/// when their opt-ins are active.
 final activeDomainShellsProvider = Provider<List<DomainShellSpec>>(
   (ref) => const <DomainShellSpec>[],
 );
 
 /// True when the user has at least two domains active. Drives the
-/// dock visibility — single-domain builds look identical to the
-/// pre-D-1.8 single-shell layout.
+/// dock visibility. Single-domain builds hide the dock chrome.
 final domainDockVisibleProvider = Provider<bool>(
   (ref) => ref.watch(activeDomainShellsProvider).length > 1,
 );
@@ -104,7 +96,8 @@ final domainDockVisibleProvider = Provider<bool>(
 ///   final l10n = ...; // resolved at render time
 ///   return [
 ///     financeDomainShell(l10n),
-///     if (opts.contains(DomainScope.health)) healthDomainShellPlaceholder,
+///     if (opts.contains(DomainScope.health)) healthDomainShell(l10n),
+///     if (opts.contains(DomainScope.knowledge)) knowledgeDomainShell(l10n),
 ///   ];
 /// });
 /// ```
@@ -112,11 +105,9 @@ DomainOptIns currentOptIns(Ref ref) =>
     ref.watch(domainOptInsProvider).value ?? DomainOptIns.financeOnly;
 
 /// Localised builder hook — domains expose a function that takes
-/// [AppLocalizations] so labels stay i18n-clean. Phase D-2 will use
-/// this for the Health domain. Provided here as a reference type
-/// rather than enforced because Finance currently builds its spec
-/// inline in `bootstrap.dart`.
-typedef DomainShellSpecBuilder = DomainShellSpec Function(AppLocalizations l10n);
+/// [AppLocalizations] so labels stay i18n-clean.
+typedef DomainShellSpecBuilder =
+    DomainShellSpec Function(AppLocalizations l10n);
 
 // ─── Path → domain spec helpers ───
 //

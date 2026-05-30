@@ -1,9 +1,8 @@
 /// Sync v2 row-family namespace (`docs/lifeos-shell.md` §8, D-1.4).
 ///
 /// Every row crossing the sync wire is tagged with a LifeOS domain
-/// prefix so the active-domain set is observable in `sync_rows` and a
-/// future `core/auth` opt-in (D-1.5) can scope pulls per domain.
-/// Today `fin:` is the only active prefix; Phase D-2 adds `health:`.
+/// prefix so the active-domain set is observable in `sync_rows` and
+/// `core/auth` can scope pulls per domain.
 ///
 /// Storage shape is the unprefixed Drift table name (`accounts`,
 /// `journal_entries`, ...). The transform lives at the sync boundary
@@ -15,7 +14,8 @@ library;
 /// prefix so `'$prefix$table'` composes cleanly.
 const String kFinanceDomainPrefix = 'fin:';
 
-/// Reserved for Phase D-2 HealthOS rows.
+/// HealthOS row-family prefix. Whether a concrete Health table syncs is
+/// controlled by `kSyncableTables` and the outbound table-prefix router.
 const String kHealthDomainPrefix = 'health:';
 
 /// KnowledgeOS rows (`docs/knowledgeos-domain.md` §2, §11).
@@ -48,14 +48,13 @@ const Set<String> kKnowledgeTables = <String>{
 };
 
 /// The LifeOS domain prefix an outbound row should carry, by local table
-/// name. KnowledgeOS rows ride `know:`; everything else is FinanceOS today
-/// (HealthOS rows stay local-only until D-2 wires their sync). This is the
-/// single dispatch point — before it, `SyncEngine` tagged *every* outgoing
-/// row `fin:`, so KnowledgeOS rows crossed the wire mislabelled.
+/// name. KnowledgeOS rows ride `know:`; all other currently-routed
+/// syncable rows ride `fin:`. Add a table set here when another domain
+/// starts syncing outbound rows.
 String domainPrefixForTable(String localTable) =>
     kKnowledgeTables.contains(localTable)
-        ? kKnowledgeDomainPrefix
-        : kFinanceDomainPrefix;
+    ? kKnowledgeDomainPrefix
+    : kFinanceDomainPrefix;
 
 /// Add the correct LifeOS domain prefix to an outbound Drift table name
 /// (see [domainPrefixForTable]).

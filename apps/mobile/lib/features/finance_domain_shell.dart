@@ -1,10 +1,10 @@
 /// FinanceOS `DomainShellSpec` registration (`docs/lifeos-shell.md`
 /// §3, D-1.8).
 ///
-/// Today FinanceOS is the only active domain so this spec just
-/// captures the existing 4-tab IA (Today / Activity / Wealth / Plan).
-/// HealthOS D-2 lands `features/health/composition/health_domain_shell.dart`
-/// alongside and bootstrap merges both into [activeDomainShellsProvider].
+/// FinanceOS is the seed domain, so this spec is always present and
+/// captures the 4-tab IA (Today / Activity / Wealth / Plan). Optional
+/// domains such as HealthOS and KnowledgeOS register their own specs;
+/// bootstrap merges active specs through [activeDomainShellsProvider].
 library;
 
 import 'package:flutter/material.dart';
