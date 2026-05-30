@@ -76,15 +76,18 @@ class ReviewKnowledgeHealthTool implements DeviceTool {
     final dueRoutines = await repo.listDueRoutines(
       ownerUserId: ownerUserId,
       asOf: now.add(Duration(days: lookahead)),
+      excludeDoneSince: _startOfLocalDay(now),
     );
     final assumptions = await repo.listOpenAssumptions(
       ownerUserId: ownerUserId,
     );
-    final staleAssumptions = assumptions.where((a) {
-      final v = a.lastVerifiedAt;
-      if (v == null) return true;
-      return now.difference(v.toUtc()).inDays > kStaleAssumptionDays;
-    }).toList(growable: false);
+    final staleAssumptions = assumptions
+        .where((a) {
+          final v = a.lastVerifiedAt;
+          if (v == null) return true;
+          return now.difference(v.toUtc()).inDays > kStaleAssumptionDays;
+        })
+        .toList(growable: false);
     final notes = await repo.listNotes(ownerUserId: ownerUserId, limit: 500);
     final orphans = notes
         .where((n) => n.tags.isEmpty && (n.projectTag == null))
@@ -117,19 +120,14 @@ class ReviewKnowledgeHealthTool implements DeviceTool {
       ),
     ];
 
-    final total = sections.fold<int>(
-      0,
-      (sum, s) => sum + (s['count'] as int),
-    );
+    final total = sections.fold<int>(0, (sum, s) => sum + (s['count'] as int));
 
     return <String, Object?>{
       'as_of': now.toIso8601String(),
       'total_items': total,
       // Highest-count, most-actionable first so the model leads with it.
       'sections': sections.where((s) => (s['count'] as int) > 0).toList()
-        ..sort(
-          (a, b) => (b['count'] as int).compareTo(a['count'] as int),
-        ),
+        ..sort((a, b) => (b['count'] as int).compareTo(a['count'] as int)),
       if (total == 0) 'note': '知识库当前没有待办事项 —— 一切都在掌控中。',
     };
   }
@@ -148,4 +146,9 @@ class ReviewKnowledgeHealthTool implements DeviceTool {
 
   static Map<String, Object?> _item(String id, String label) =>
       <String, Object?>{'id': id, 'label': label};
+}
+
+DateTime _startOfLocalDay(DateTime value) {
+  final local = value.toLocal();
+  return DateTime(local.year, local.month, local.day);
 }

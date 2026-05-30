@@ -20,6 +20,26 @@ import '../domain/knowledge_models.dart';
 import '_ai_suggestions_card.dart';
 import '_widgets.dart';
 
+@visibleForTesting
+bool shouldShowRoutineInReview(
+  KnowledgeRoutine routine,
+  DateTime now, {
+  Duration lookahead = kRoutineDueLookahead,
+}) {
+  if (routine.status != RoutineStatus.active) return false;
+  final doneAt = routine.lastDoneAt;
+  if (doneAt != null && _isSameLocalDay(doneAt, now)) return false;
+  return !routine.nextDueAt.toUtc().isAfter(now.add(lookahead).toUtc());
+}
+
+bool _isSameLocalDay(DateTime a, DateTime b) {
+  final localA = a.toLocal();
+  final localB = b.toLocal();
+  return localA.year == localB.year &&
+      localA.month == localB.month &&
+      localA.day == localB.day;
+}
+
 class KnowledgeReviewPage extends ConsumerWidget {
   const KnowledgeReviewPage({super.key});
 
@@ -70,13 +90,8 @@ class _DueRoutinesCard extends ConsumerWidget {
               stream: repo.watchRoutines(ownerUserId: owner),
               builder: (context, snap) {
                 final now = DateTime.now();
-                final asOf = now.add(kRoutineDueLookahead);
                 final due = (snap.data ?? const <KnowledgeRoutine>[])
-                    .where(
-                      (r) =>
-                          r.status == RoutineStatus.active &&
-                          !r.nextDueAt.isAfter(asOf),
-                    )
+                    .where((r) => shouldShowRoutineInReview(r, now))
                     .toList(growable: false);
                 final typography = context.theme.typography;
                 final colors = context.theme.colors;
@@ -142,6 +157,17 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
           ),
         ),
       );
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          '已完成，下次 ${_formatDate(next)}',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppMessenger.show(context, ToastKind.error, '完成失败：$e');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -192,6 +218,12 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
       ),
     );
   }
+}
+
+String _formatDate(DateTime date) {
+  final local = date.toLocal();
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${local.year}-${two(local.month)}-${two(local.day)}';
 }
 
 class _DueReviewsCard extends ConsumerWidget {

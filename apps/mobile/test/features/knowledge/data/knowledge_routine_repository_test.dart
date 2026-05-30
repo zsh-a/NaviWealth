@@ -25,11 +25,11 @@ void main() {
   tearDown(() async => db.close());
 
   SyncMeta meta(DateTime at) => SyncMeta(
-        ownerUserId: owner,
-        updatedAt: at,
-        updatedByDevice: 'dev-test',
-        hlc: Hlc.zero('dev-test'),
-      );
+    ownerUserId: owner,
+    updatedAt: at,
+    updatedByDevice: 'dev-test',
+    hlc: Hlc.zero('dev-test'),
+  );
 
   KnowledgeRoutine makeRoutine({
     required String id,
@@ -39,6 +39,7 @@ void main() {
     String scope = 'finance/cards/hk',
     RoutineStatus status = RoutineStatus.active,
     DateTime? createdAt,
+    DateTime? lastDoneAt,
   }) {
     final now = createdAt ?? DateTime.utc(2026, 1, 1);
     return KnowledgeRoutine(
@@ -46,6 +47,7 @@ void main() {
       statement: statement,
       intervalDays: intervalDays,
       nextDueAt: nextDueAt,
+      lastDoneAt: lastDoneAt,
       scope: scope,
       status: status,
       createdAt: now,
@@ -54,10 +56,7 @@ void main() {
   }
 
   test('upsertRoutine persists and queues a sync outbox entry', () async {
-    final r = makeRoutine(
-      id: 'r-1',
-      nextDueAt: DateTime.utc(2026, 6, 1),
-    );
+    final r = makeRoutine(id: 'r-1', nextDueAt: DateTime.utc(2026, 6, 1));
 
     await repo.upsertRoutine(r);
 
@@ -72,52 +71,43 @@ void main() {
     expect(outbox.queued.single.rowId, 'r-1');
   });
 
-  test(
-    'listDueRoutines returns only active routines with next_due_at <= asOf, '
-    'ordered ascending',
-    () async {
-      // Two due, one upcoming, one paused (must be filtered out).
-      await repo.upsertRoutine(makeRoutine(
-        id: 'overdue',
-        nextDueAt: DateTime.utc(2026, 5, 1),
-      ));
-      await repo.upsertRoutine(makeRoutine(
-        id: 'today',
-        nextDueAt: DateTime.utc(2026, 5, 29),
-      ));
-      await repo.upsertRoutine(makeRoutine(
-        id: 'next-month',
-        nextDueAt: DateTime.utc(2026, 7, 1),
-      ));
-      await repo.upsertRoutine(makeRoutine(
+  test('listDueRoutines returns only active routines with next_due_at <= asOf, '
+      'ordered ascending', () async {
+    // Two due, one upcoming, one paused (must be filtered out).
+    await repo.upsertRoutine(
+      makeRoutine(id: 'overdue', nextDueAt: DateTime.utc(2026, 5, 1)),
+    );
+    await repo.upsertRoutine(
+      makeRoutine(id: 'today', nextDueAt: DateTime.utc(2026, 5, 29)),
+    );
+    await repo.upsertRoutine(
+      makeRoutine(id: 'next-month', nextDueAt: DateTime.utc(2026, 7, 1)),
+    );
+    await repo.upsertRoutine(
+      makeRoutine(
         id: 'paused-but-overdue',
         nextDueAt: DateTime.utc(2026, 4, 1),
         status: RoutineStatus.paused,
-      ));
+      ),
+    );
 
-      final due = await repo.listDueRoutines(
-        ownerUserId: owner,
-        asOf: DateTime.utc(2026, 5, 29),
-      );
-      expect(due.map((r) => r.id), <String>['overdue', 'today']);
-    },
-  );
-
-  test('listDueRoutines respects the 7-day lookahead window', () async {
-    await repo.upsertRoutine(makeRoutine(
-      id: 'within-week',
-      nextDueAt: DateTime.utc(2026, 6, 3),
-    ));
-    await repo.upsertRoutine(makeRoutine(
-      id: 'beyond-week',
-      nextDueAt: DateTime.utc(2026, 6, 10),
-    ));
-
-    final asOf = DateTime.utc(2026, 5, 29).add(const Duration(days: 7));
     final due = await repo.listDueRoutines(
       ownerUserId: owner,
-      asOf: asOf,
+      asOf: DateTime.utc(2026, 5, 29),
     );
+    expect(due.map((r) => r.id), <String>['overdue', 'today']);
+  });
+
+  test('listDueRoutines respects the 7-day lookahead window', () async {
+    await repo.upsertRoutine(
+      makeRoutine(id: 'within-week', nextDueAt: DateTime.utc(2026, 6, 3)),
+    );
+    await repo.upsertRoutine(
+      makeRoutine(id: 'beyond-week', nextDueAt: DateTime.utc(2026, 6, 10)),
+    );
+
+    final asOf = DateTime.utc(2026, 5, 29).add(const Duration(days: 7));
+    final due = await repo.listDueRoutines(ownerUserId: owner, asOf: asOf);
     expect(due.map((r) => r.id), <String>['within-week']);
   });
 
@@ -160,7 +150,38 @@ void main() {
         ownerUserId: owner,
         asOf: doneAt.add(const Duration(days: 7)),
       );
-      expect(due, isEmpty, reason: 'bumped routine no longer in this-week window');
+      expect(
+        due,
+        isEmpty,
+        reason: 'bumped routine no longer in this-week window',
+      );
     },
   );
+
+  test('listDueRoutines can hide routines already completed today', () async {
+    final now = DateTime.utc(2026, 5, 30, 10);
+    await repo.upsertRoutine(
+      makeRoutine(
+        id: 'weekly-done',
+        intervalDays: 7,
+        nextDueAt: now.add(const Duration(days: 7)),
+        lastDoneAt: now.subtract(const Duration(hours: 1)),
+      ),
+    );
+    await repo.upsertRoutine(
+      makeRoutine(
+        id: 'weekly-open',
+        intervalDays: 7,
+        nextDueAt: now.add(const Duration(days: 3)),
+      ),
+    );
+
+    final due = await repo.listDueRoutines(
+      ownerUserId: owner,
+      asOf: now.add(const Duration(days: 7)),
+      excludeDoneSince: DateTime.utc(2026, 5, 30),
+    );
+
+    expect(due.map((r) => r.id), <String>['weekly-open']);
+  });
 }
