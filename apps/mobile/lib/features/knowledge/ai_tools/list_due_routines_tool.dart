@@ -34,12 +34,7 @@ class ListDueRoutinesTool implements DeviceTool {
         'type': 'string',
         'description': 'ISO8601 截止时间;默认 now + 7 天(本周窗口)。',
       },
-      'limit': {
-        'type': 'integer',
-        'minimum': 1,
-        'maximum': 200,
-        'default': 50,
-      },
+      'limit': {'type': 'integer', 'minimum': 1, 'maximum': 200, 'default': 50},
     },
   };
 
@@ -61,6 +56,7 @@ class ListDueRoutinesTool implements DeviceTool {
     final due = await repo.listDueRoutines(
       ownerUserId: ownerUserId,
       asOf: asOf,
+      excludeDoneSince: _startOfLocalDay(now),
       limit: limit,
     );
 
@@ -81,4 +77,9 @@ class ListDueRoutinesTool implements DeviceTool {
           .toList(growable: false),
     };
   }
+}
+
+DateTime _startOfLocalDay(DateTime value) {
+  final local = value.toLocal();
+  return DateTime(local.year, local.month, local.day);
 }

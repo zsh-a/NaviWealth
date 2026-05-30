@@ -543,13 +543,21 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
   Future<List<KnowledgeRoutine>> listDueRoutines({
     required String ownerUserId,
     required DateTime asOf,
+    DateTime? excludeDoneSince,
     int limit = 50,
   }) async {
     final q = _db.select(_db.knowledgeRoutines)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..where((t) => t.status.equals(RoutineStatus.active.wire))
-      ..where((t) => t.nextDueAt.isSmallerOrEqualValue(asOf))
+      ..where((t) => t.nextDueAt.isSmallerOrEqualValue(asOf));
+    if (excludeDoneSince != null) {
+      final cutoff = excludeDoneSince.toUtc();
+      q.where(
+        (t) => t.lastDoneAt.isNull() | t.lastDoneAt.isSmallerThanValue(cutoff),
+      );
+    }
+    q
       ..orderBy([(t) => OrderingTerm(expression: t.nextDueAt)])
       ..limit(limit);
     final rows = await q.get();

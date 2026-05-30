@@ -63,6 +63,7 @@ class RoutineDueAgent implements Agent {
     final due = await repo.listDueRoutines(
       ownerUserId: ownerUserId,
       asOf: start.add(kRoutineDueLookahead),
+      excludeDoneSince: _startOfLocalDay(start),
     );
     final finished = DateTime.now().toUtc();
 
@@ -78,9 +79,7 @@ class RoutineDueAgent implements Agent {
     // Split overdue vs. upcoming so the summary line can lead with the
     // more urgent count when both are non-empty.
     final overdue = due.where((r) => r.isDue(start)).toList(growable: false);
-    final upcoming = due
-        .where((r) => !r.isDue(start))
-        .toList(growable: false);
+    final upcoming = due.where((r) => !r.isDue(start)).toList(growable: false);
 
     final summary = _summarize(
       overdueCount: overdue.length,
@@ -98,11 +97,12 @@ class RoutineDueAgent implements Agent {
       title: '本周到期的 Routine',
       summary: summary,
       payload: <String, Object?>{
-        'context': 'routine-due agent tick at ${start.toUtc().toIso8601String()}',
-        'overdue_routine_ids':
-            overdue.map((r) => r.id).toList(growable: false),
-        'upcoming_routine_ids':
-            upcoming.map((r) => r.id).toList(growable: false),
+        'context':
+            'routine-due agent tick at ${start.toUtc().toIso8601String()}',
+        'overdue_routine_ids': overdue.map((r) => r.id).toList(growable: false),
+        'upcoming_routine_ids': upcoming
+            .map((r) => r.id)
+            .toList(growable: false),
         'lookahead_days': kRoutineDueLookahead.inDays,
       },
       entities: <String>{'knowledge_routine', 'routine_due'},
@@ -140,8 +140,8 @@ class RoutineDueAgent implements Agent {
     final leadFirst = days < 0
         ? '${first.statement}（已逾期 ${-days} 天）'
         : days == 0
-            ? '${first.statement}（今日到期）'
-            : '${first.statement}（$days 天后到期）';
+        ? '${first.statement}（今日到期）'
+        : '${first.statement}（$days 天后到期）';
     if (overdueCount > 0 && upcomingCount > 0) {
       return '$overdueCount 条已逾期 + $upcomingCount 条本周到期，首条:$leadFirst';
     }
@@ -172,4 +172,9 @@ class RoutineDueAgent implements Agent {
       // run failed. The memory record above is the durable surface.
     }
   }
+}
+
+DateTime _startOfLocalDay(DateTime value) {
+  final local = value.toLocal();
+  return DateTime(local.year, local.month, local.day);
 }
