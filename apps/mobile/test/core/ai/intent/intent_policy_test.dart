@@ -4,13 +4,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/intent.dart'
     show kDomainFinance, kDomainHealth, kDomainKnowledge;
 import 'package:naviwealth/core/ai/intent/intent.dart';
+import 'package:naviwealth/l10n/gen/app_localizations_zh.dart';
 
 void main() {
-  test('every registered intent has a non-empty label and prompt', () {
+  test('every registered intent resolves localized copy', () {
+    final l10n = AppLocalizationsZh();
+    final resolver = localizedIntentCopyResolver(l10n);
     for (final d in intentDescriptors) {
       expect(d.name, isNotEmpty);
-      expect(d.labelZh, isNotEmpty);
-      expect(d.promptTemplate, isNotEmpty);
+      expect(resolver(d).label, isNotEmpty);
+      expect(resolver(d).promptTemplate, isNotEmpty);
     }
   });
 
@@ -49,10 +52,8 @@ void main() {
   test('requiresExplicitConfirmation can be set on a descriptor', () {
     const d = IntentDescriptor(
       name: 'place_order',
-      labelZh: '下单',
       allowedObjectTypes: <String>{'asset'},
       preferredCapabilities: <AiCapability>{AiCapability.proposal},
-      promptTemplate: '请确认是否对 {{object_label}} 下单。',
       requiresExplicitConfirmation: true,
     );
     expect(d.requiresExplicitConfirmation, isTrue);
@@ -66,7 +67,12 @@ void main() {
       context: {'timeframe': '本月'},
       domain: kDomainFinance,
     );
-    final prompt = renderPromptFor(inv, objectLabel: 'Netflix 订阅');
+    final l10n = AppLocalizationsZh();
+    final prompt = renderPromptFor(
+      inv,
+      objectLabel: 'Netflix 订阅',
+      copyResolver: localizedIntentCopyResolver(l10n),
+    );
     expect(prompt, contains('Netflix 订阅'));
     expect(prompt, contains('本月'));
   });
@@ -78,17 +84,42 @@ void main() {
       object: AiObjectRef(type: 'expense', id: 'e1'),
       domain: kDomainFinance,
     );
-    final prompt = renderPromptFor(inv);
+    final l10n = AppLocalizationsZh();
+    final prompt = renderPromptFor(
+      inv,
+      defaultTimeframe: l10n.aiIntentDefaultTimeframe,
+      copyResolver: localizedIntentCopyResolver(l10n),
+    );
+    expect(prompt, contains('最近 30 天'));
+  });
+
+  test('renderPromptFor can use localized intent copy', () {
+    const inv = AiIntentInvocation(
+      source: 'chart',
+      intent: 'explain_chart',
+      object: AiObjectRef(type: 'chart', id: 'net_worth'),
+      domain: kDomainFinance,
+    );
+    final l10n = AppLocalizationsZh();
+    final prompt = renderPromptFor(
+      inv,
+      objectLabel: '净值趋势',
+      defaultTimeframe: l10n.aiIntentDefaultTimeframe,
+      copyResolver: localizedIntentCopyResolver(l10n),
+      fallbackObjectLabel: l10n.aiIntentCurrentObject,
+      fallbackPromptTemplate: l10n.aiIntentFallbackPrompt('{{object_label}}'),
+    );
+
+    expect(localizedIntentLabel(l10n, lookupIntent('explain_chart')), '问这张图');
+    expect(prompt, contains('净值趋势'));
     expect(prompt, contains('最近 30 天'));
   });
 
   test('single-domain intent: domains resolves to just its home domain', () {
     const d = IntentDescriptor(
       name: 'explain_change',
-      labelZh: '为什么',
       allowedObjectTypes: <String>{'expense'},
       preferredCapabilities: <AiCapability>{AiCapability.chat},
-      promptTemplate: '解释 {{object_label}}',
     );
     expect(d.domains, <String>{kDomainFinance});
     expect(intentAllowsDomain(d, kDomainFinance), isTrue);
@@ -98,10 +129,8 @@ void main() {
   test('cross-domain intent accepts home + allowedDomains', () {
     const d = IntentDescriptor(
       name: 'correlate_spend_sleep',
-      labelZh: '开销 × 睡眠',
       allowedObjectTypes: <String>{},
       preferredCapabilities: <AiCapability>{AiCapability.chat},
-      promptTemplate: '把我的开销和睡眠放在一起看。',
       allowedDomains: <String>{kDomainHealth},
     );
     expect(d.domains, <String>{kDomainFinance, kDomainHealth});

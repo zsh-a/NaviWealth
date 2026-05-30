@@ -40,10 +40,12 @@ class AiObjectCapsule extends ConsumerWidget {
   @override
   Widget build(BuildContext buildContext, WidgetRef ref) {
     final descriptor = lookupIntent(intent);
+    final l10n = AppLocalizations.of(buildContext);
     final label =
         fallbackLabel ??
-        descriptor?.labelZh ??
-        AppLocalizations.of(buildContext).aiCapsuleExpandFallback;
+        (descriptor == null
+            ? l10n.aiCapsuleExpandFallback
+            : localizedIntentLabel(l10n, descriptor));
     return AiPill(
       leading: const AiSparkle(),
       label: label,

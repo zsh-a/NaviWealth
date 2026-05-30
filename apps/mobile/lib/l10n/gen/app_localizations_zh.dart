@@ -3656,22 +3656,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatLoginRequired => '请先登录后再使用 AI 助手。';
 
   @override
-  String get aiChatEmptyTitle => '你的财务助手';
+  String get aiChatEmptyTitle => '你的 Life OS 助手';
 
   @override
-  String get aiChatEmptyBody => '基于你的持仓与账本分录回答问题。所有金额来自你本地同步的账本，模型不会自行计算关键数字。';
+  String get aiChatEmptyBody =>
+      '可以把财务、知识、健康和计划放在一起问。回答会优先基于本地数据与已启用的 domain 工具，缺少关键字段时会先向你确认。';
 
   @override
-  String get aiChatEmptySuggestion1 => '我最近三个月赚了多少？';
+  String get aiChatEmptySuggestion1 => '我现在最需要关注什么？';
 
   @override
-  String get aiChatEmptySuggestion2 => '帮我看看持仓里风险最高的资产。';
+  String get aiChatEmptySuggestion2 => '总结一下最近的财务、知识和健康信号。';
 
   @override
-  String get aiChatEmptySuggestion3 => '我的行业分布是怎样的？';
+  String get aiChatEmptySuggestion3 => '我的计划和复盘里有哪些风险？';
 
   @override
-  String get aiChatEmptySuggestion4 => '从开户到现在我的 XIRR 是多少？';
+  String get aiChatEmptySuggestion4 => '基于当前状态，下一步最值得做什么？';
 
   @override
   String get aiChatEmptySuggestionsHeader => '试试这些';
@@ -3701,6 +3702,112 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiChatBootstrappingLabel => '正在准备会话…';
+
+  @override
+  String get aiIntentDefaultTimeframe => '最近 30 天';
+
+  @override
+  String get aiIntentCurrentObject => '当前对象';
+
+  @override
+  String aiIntentFallbackPrompt(Object objectLabel) {
+    return '请就 $objectLabel 提供分析。';
+  }
+
+  @override
+  String get aiIntentExplainChangeLabel => '为什么变化';
+
+  @override
+  String aiIntentExplainChangePrompt(Object objectLabel, Object timeframe) {
+    return '请解释 $objectLabel 在 $timeframe 内的变化原因，并指出相关趋势。';
+  }
+
+  @override
+  String get aiIntentSummarizeAccountLabel => '账户概览';
+
+  @override
+  String aiIntentSummarizeAccountPrompt(Object objectLabel, Object timeframe) {
+    return '请用要点总结账户 $objectLabel 在 $timeframe 的表现。';
+  }
+
+  @override
+  String get aiIntentStressTestPlanLabel => '如何提高';
+
+  @override
+  String aiIntentStressTestPlanPrompt(Object objectLabel) {
+    return '请评估 $objectLabel 在不利条件下的稳健性，并给出 2–3 个具体改进建议。';
+  }
+
+  @override
+  String get aiIntentComparePeriodLabel => '对比';
+
+  @override
+  String aiIntentComparePeriodPrompt(Object objectLabel) {
+    return '请对比 $objectLabel 在两个不同时期的差异并说明驱动因素。';
+  }
+
+  @override
+  String get aiIntentExplainInsightLabel => '展开';
+
+  @override
+  String aiIntentExplainInsightPrompt(Object objectLabel) {
+    return '请详细解释这条洞察（$objectLabel），说明触发原因、严重程度和可采取的行动。';
+  }
+
+  @override
+  String get aiIntentExplainChartLabel => '问这张图';
+
+  @override
+  String aiIntentExplainChartPrompt(Object objectLabel, Object timeframe) {
+    return '请解释这张图（$objectLabel）在 $timeframe 内的关键变化，以及背后的驱动因素。';
+  }
+
+  @override
+  String get aiIntentTransactionsExplainSelectionLabel => '解读';
+
+  @override
+  String aiIntentTransactionsExplainSelectionPrompt(Object objectLabel) {
+    return '请解读用户选中的这些交易（$objectLabel），给出共同点、异常和可能归类。';
+  }
+
+  @override
+  String get aiIntentExplainFireStateLabel => '解读 FIRE 状态';
+
+  @override
+  String aiIntentExplainFireStatePrompt(Object objectLabel) {
+    return '请基于 get_fire_state 的结果，向我解释当前 $objectLabel 的安全等级、提取率、现金桶覆盖和 FIRE ETA，并指出最值得关注的一两条 suggested_actions。';
+  }
+
+  @override
+  String get aiIntentReviewCashBucketLabel => '检查现金桶';
+
+  @override
+  String aiIntentReviewCashBucketPrompt(Object objectLabel) {
+    return '请用 get_fire_buckets 检查当前现金桶覆盖月数；如低于目标 $objectLabel，请给出补足金额，并准备好 propose_fire_plan_update 或 propose_fire_bucket_rule 的建议。';
+  }
+
+  @override
+  String get aiIntentSimulateFireChangeLabel => '模拟一下';
+
+  @override
+  String aiIntentSimulateFireChangePrompt(Object objectLabel) {
+    return '请用 simulate_fire_plan 模拟 $objectLabel 的变化（支出、结余、SWR、现金桶月数等）对 FIRE 状态的影响。明确告诉我这只是模拟，没有写入计划。';
+  }
+
+  @override
+  String get aiIntentExplainStressTestLabel => '解释压力测试';
+
+  @override
+  String aiIntentExplainStressTestPrompt(Object objectLabel) {
+    return '请基于 get_fire_stress_tests 的结果逐条解释市场回撤、支出上升、一次性冲击、汇率冲击和现金桶耗尽对 $objectLabel 的影响。强调这是韧性检验，不是预测。';
+  }
+
+  @override
+  String get aiIntentSuggestFireActionsLabel => '下一步怎么办';
+
+  @override
+  String get aiIntentSuggestFireActionsPrompt =>
+      '请基于 get_fire_state 的 suggested_actions 给出三件最值得做的事；若涉及计划改动，请用 propose_fire_plan_update 让我确认。';
 
   @override
   String get aiChatSessionsHeader => '对话';
@@ -3747,7 +3854,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get aiChatComposerHintIdle => '问问 NaviWealth：例如\"我最近一个月赚了多少？\"';
+  String get aiChatComposerHintIdle => '问问 NaviWealth：财务、知识、健康或计划都可以';
 
   @override
   String get aiChatComposerHintStreaming => '正在生成回答…';
@@ -4160,7 +4267,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatSheetTitle => 'AI 助手';
 
   @override
-  String get aiChatSheetEmpty => '随便问问你的财务情况。';
+  String get aiChatSheetEmpty => '随便问问你的 Life OS 状态。';
 
   @override
   String get aiChatSheetExpandTooltip => '展开全屏';

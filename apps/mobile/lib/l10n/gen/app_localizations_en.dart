@@ -3809,25 +3809,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatLoginRequired => 'Sign in to use the AI assistant.';
 
   @override
-  String get aiChatEmptyTitle => 'Your financial assistant';
+  String get aiChatEmptyTitle => 'Your Life OS assistant';
 
   @override
   String get aiChatEmptyBody =>
-      'Answers grounded in your holdings and ledger entries. Numbers come from your locally-synced ledger; the model never invents key figures.';
+      'Ask across finance, knowledge, health, and plans. Answers are grounded in local data and enabled domain tools; when key fields are missing, the assistant asks before assuming.';
 
   @override
-  String get aiChatEmptySuggestion1 =>
-      'How much have I made in the last three months?';
+  String get aiChatEmptySuggestion1 => 'What needs my attention right now?';
 
   @override
-  String get aiChatEmptySuggestion2 => 'Which holdings carry the highest risk?';
+  String get aiChatEmptySuggestion2 =>
+      'Summarize recent finance, knowledge, and health signals.';
 
   @override
   String get aiChatEmptySuggestion3 =>
-      'What does my industry breakdown look like?';
+      'What risks show up in my plans and reviews?';
 
   @override
-  String get aiChatEmptySuggestion4 => 'What\'s my XIRR since inception?';
+  String get aiChatEmptySuggestion4 =>
+      'What is the highest-value next step right now?';
 
   @override
   String get aiChatEmptySuggestionsHeader => 'Try these';
@@ -3860,6 +3861,112 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiChatBootstrappingLabel => 'Preparing conversation…';
+
+  @override
+  String get aiIntentDefaultTimeframe => 'the last 30 days';
+
+  @override
+  String get aiIntentCurrentObject => 'the current object';
+
+  @override
+  String aiIntentFallbackPrompt(Object objectLabel) {
+    return 'Please analyze $objectLabel.';
+  }
+
+  @override
+  String get aiIntentExplainChangeLabel => 'Why it changed';
+
+  @override
+  String aiIntentExplainChangePrompt(Object objectLabel, Object timeframe) {
+    return 'Explain why $objectLabel changed during $timeframe, and call out the relevant trends.';
+  }
+
+  @override
+  String get aiIntentSummarizeAccountLabel => 'Account overview';
+
+  @override
+  String aiIntentSummarizeAccountPrompt(Object objectLabel, Object timeframe) {
+    return 'Summarize account $objectLabel during $timeframe in concise bullets.';
+  }
+
+  @override
+  String get aiIntentStressTestPlanLabel => 'Improve resilience';
+
+  @override
+  String aiIntentStressTestPlanPrompt(Object objectLabel) {
+    return 'Evaluate how resilient $objectLabel is under adverse conditions, then give 2–3 concrete improvements.';
+  }
+
+  @override
+  String get aiIntentComparePeriodLabel => 'Compare';
+
+  @override
+  String aiIntentComparePeriodPrompt(Object objectLabel) {
+    return 'Compare $objectLabel across two periods and explain the drivers.';
+  }
+
+  @override
+  String get aiIntentExplainInsightLabel => 'Expand';
+
+  @override
+  String aiIntentExplainInsightPrompt(Object objectLabel) {
+    return 'Explain this insight ($objectLabel) in detail, including trigger, severity, and possible actions.';
+  }
+
+  @override
+  String get aiIntentExplainChartLabel => 'Ask about chart';
+
+  @override
+  String aiIntentExplainChartPrompt(Object objectLabel, Object timeframe) {
+    return 'Explain the key changes in this chart ($objectLabel) during $timeframe, including likely drivers.';
+  }
+
+  @override
+  String get aiIntentTransactionsExplainSelectionLabel => 'Interpret';
+
+  @override
+  String aiIntentTransactionsExplainSelectionPrompt(Object objectLabel) {
+    return 'Interpret these selected transactions ($objectLabel); identify common patterns, anomalies, and possible categorization.';
+  }
+
+  @override
+  String get aiIntentExplainFireStateLabel => 'Explain FIRE state';
+
+  @override
+  String aiIntentExplainFireStatePrompt(Object objectLabel) {
+    return 'Use get_fire_state to explain the current safety level, withdrawal rate, cash-bucket coverage, and FIRE ETA for $objectLabel; call out the one or two suggested_actions that matter most.';
+  }
+
+  @override
+  String get aiIntentReviewCashBucketLabel => 'Check cash bucket';
+
+  @override
+  String aiIntentReviewCashBucketPrompt(Object objectLabel) {
+    return 'Use get_fire_buckets to check current cash-bucket coverage. If it is below the target for $objectLabel, give the refill amount and prepare a propose_fire_plan_update or propose_fire_bucket_rule suggestion.';
+  }
+
+  @override
+  String get aiIntentSimulateFireChangeLabel => 'Simulate';
+
+  @override
+  String aiIntentSimulateFireChangePrompt(Object objectLabel) {
+    return 'Use simulate_fire_plan to model how changes to $objectLabel affect FIRE status, including expenses, balance, SWR, and cash-bucket months. Make clear this is a simulation and does not write to the plan.';
+  }
+
+  @override
+  String get aiIntentExplainStressTestLabel => 'Explain stress test';
+
+  @override
+  String aiIntentExplainStressTestPrompt(Object objectLabel) {
+    return 'Use get_fire_stress_tests to explain how market drawdown, higher expenses, one-off shocks, FX shocks, and cash-bucket depletion affect $objectLabel. Emphasize that this is a resilience check, not a forecast.';
+  }
+
+  @override
+  String get aiIntentSuggestFireActionsLabel => 'Next steps';
+
+  @override
+  String get aiIntentSuggestFireActionsPrompt =>
+      'Use get_fire_state suggested_actions to give the three highest-value next steps. If a plan change is involved, use propose_fire_plan_update so I can confirm.';
 
   @override
   String get aiChatSessionsHeader => 'Conversations';
@@ -3908,7 +4015,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiChatComposerHintIdle =>
-      'Ask NaviWealth, e.g. \"How much did I earn last month?\"';
+      'Ask NaviWealth about finance, knowledge, health, or plans';
 
   @override
   String get aiChatComposerHintStreaming => 'Generating answer…';
@@ -4328,7 +4435,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatSheetTitle => 'AI assistant';
 
   @override
-  String get aiChatSheetEmpty => 'Ask anything about your finances.';
+  String get aiChatSheetEmpty => 'Ask anything about your Life OS.';
 
   @override
   String get aiChatSheetExpandTooltip => 'Expand to full screen';

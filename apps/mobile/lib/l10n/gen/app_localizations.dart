@@ -6606,37 +6606,37 @@ abstract class AppLocalizations {
   /// No description provided for @aiChatEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Your financial assistant'**
+  /// **'Your Life OS assistant'**
   String get aiChatEmptyTitle;
 
   /// No description provided for @aiChatEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Answers grounded in your holdings and ledger entries. Numbers come from your locally-synced ledger; the model never invents key figures.'**
+  /// **'Ask across finance, knowledge, health, and plans. Answers are grounded in local data and enabled domain tools; when key fields are missing, the assistant asks before assuming.'**
   String get aiChatEmptyBody;
 
   /// No description provided for @aiChatEmptySuggestion1.
   ///
   /// In en, this message translates to:
-  /// **'How much have I made in the last three months?'**
+  /// **'What needs my attention right now?'**
   String get aiChatEmptySuggestion1;
 
   /// No description provided for @aiChatEmptySuggestion2.
   ///
   /// In en, this message translates to:
-  /// **'Which holdings carry the highest risk?'**
+  /// **'Summarize recent finance, knowledge, and health signals.'**
   String get aiChatEmptySuggestion2;
 
   /// No description provided for @aiChatEmptySuggestion3.
   ///
   /// In en, this message translates to:
-  /// **'What does my industry breakdown look like?'**
+  /// **'What risks show up in my plans and reviews?'**
   String get aiChatEmptySuggestion3;
 
   /// No description provided for @aiChatEmptySuggestion4.
   ///
   /// In en, this message translates to:
-  /// **'What\'s my XIRR since inception?'**
+  /// **'What is the highest-value next step right now?'**
   String get aiChatEmptySuggestion4;
 
   /// No description provided for @aiChatEmptySuggestionsHeader.
@@ -6668,6 +6668,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Preparing conversation…'**
   String get aiChatBootstrappingLabel;
+
+  /// No description provided for @aiIntentDefaultTimeframe.
+  ///
+  /// In en, this message translates to:
+  /// **'the last 30 days'**
+  String get aiIntentDefaultTimeframe;
+
+  /// No description provided for @aiIntentCurrentObject.
+  ///
+  /// In en, this message translates to:
+  /// **'the current object'**
+  String get aiIntentCurrentObject;
+
+  /// No description provided for @aiIntentFallbackPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Please analyze {objectLabel}.'**
+  String aiIntentFallbackPrompt(Object objectLabel);
+
+  /// No description provided for @aiIntentExplainChangeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Why it changed'**
+  String get aiIntentExplainChangeLabel;
+
+  /// No description provided for @aiIntentExplainChangePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain why {objectLabel} changed during {timeframe}, and call out the relevant trends.'**
+  String aiIntentExplainChangePrompt(Object objectLabel, Object timeframe);
+
+  /// No description provided for @aiIntentSummarizeAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account overview'**
+  String get aiIntentSummarizeAccountLabel;
+
+  /// No description provided for @aiIntentSummarizeAccountPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Summarize account {objectLabel} during {timeframe} in concise bullets.'**
+  String aiIntentSummarizeAccountPrompt(Object objectLabel, Object timeframe);
+
+  /// No description provided for @aiIntentStressTestPlanLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve resilience'**
+  String get aiIntentStressTestPlanLabel;
+
+  /// No description provided for @aiIntentStressTestPlanPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Evaluate how resilient {objectLabel} is under adverse conditions, then give 2–3 concrete improvements.'**
+  String aiIntentStressTestPlanPrompt(Object objectLabel);
+
+  /// No description provided for @aiIntentComparePeriodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare'**
+  String get aiIntentComparePeriodLabel;
+
+  /// No description provided for @aiIntentComparePeriodPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare {objectLabel} across two periods and explain the drivers.'**
+  String aiIntentComparePeriodPrompt(Object objectLabel);
+
+  /// No description provided for @aiIntentExplainInsightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand'**
+  String get aiIntentExplainInsightLabel;
+
+  /// No description provided for @aiIntentExplainInsightPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain this insight ({objectLabel}) in detail, including trigger, severity, and possible actions.'**
+  String aiIntentExplainInsightPrompt(Object objectLabel);
+
+  /// No description provided for @aiIntentExplainChartLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask about chart'**
+  String get aiIntentExplainChartLabel;
+
+  /// No description provided for @aiIntentExplainChartPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain the key changes in this chart ({objectLabel}) during {timeframe}, including likely drivers.'**
+  String aiIntentExplainChartPrompt(Object objectLabel, Object timeframe);
+
+  /// No description provided for @aiIntentTransactionsExplainSelectionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Interpret'**
+  String get aiIntentTransactionsExplainSelectionLabel;
+
+  /// No description provided for @aiIntentTransactionsExplainSelectionPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Interpret these selected transactions ({objectLabel}); identify common patterns, anomalies, and possible categorization.'**
+  String aiIntentTransactionsExplainSelectionPrompt(Object objectLabel);
+
+  /// No description provided for @aiIntentExplainFireStateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain FIRE state'**
+  String get aiIntentExplainFireStateLabel;
+
+  /// No description provided for @aiIntentExplainFireStatePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Use get_fire_state to explain the current safety level, withdrawal rate, cash-bucket coverage, and FIRE ETA for {objectLabel}; call out the one or two suggested_actions that matter most.'**
+  String aiIntentExplainFireStatePrompt(Object objectLabel);
+
+  /// No description provided for @aiIntentReviewCashBucketLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Check cash bucket'**
+  String get aiIntentReviewCashBucketLabel;
+
+  /// No description provided for @aiIntentReviewCashBucketPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Use get_fire_buckets to check current cash-bucket coverage. If it is below the target for {objectLabel}, give the refill amount and prepare a propose_fire_plan_update or propose_fire_bucket_rule suggestion.'**
+  String aiIntentReviewCashBucketPrompt(Object objectLabel);
+
+  /// No description provided for @aiIntentSimulateFireChangeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulate'**
+  String get aiIntentSimulateFireChangeLabel;
+
+  /// No description provided for @aiIntentSimulateFireChangePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Use simulate_fire_plan to model how changes to {objectLabel} affect FIRE status, including expenses, balance, SWR, and cash-bucket months. Make clear this is a simulation and does not write to the plan.'**
+  String aiIntentSimulateFireChangePrompt(Object objectLabel);
+
+  /// No description provided for @aiIntentExplainStressTestLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain stress test'**
+  String get aiIntentExplainStressTestLabel;
+
+  /// No description provided for @aiIntentExplainStressTestPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Use get_fire_stress_tests to explain how market drawdown, higher expenses, one-off shocks, FX shocks, and cash-bucket depletion affect {objectLabel}. Emphasize that this is a resilience check, not a forecast.'**
+  String aiIntentExplainStressTestPrompt(Object objectLabel);
+
+  /// No description provided for @aiIntentSuggestFireActionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Next steps'**
+  String get aiIntentSuggestFireActionsLabel;
+
+  /// No description provided for @aiIntentSuggestFireActionsPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Use get_fire_state suggested_actions to give the three highest-value next steps. If a plan change is involved, use propose_fire_plan_update so I can confirm.'**
+  String get aiIntentSuggestFireActionsPrompt;
 
   /// No description provided for @aiChatSessionsHeader.
   ///
@@ -6744,7 +6906,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiChatComposerHintIdle.
   ///
   /// In en, this message translates to:
-  /// **'Ask NaviWealth, e.g. \"How much did I earn last month?\"'**
+  /// **'Ask NaviWealth about finance, knowledge, health, or plans'**
   String get aiChatComposerHintIdle;
 
   /// No description provided for @aiChatComposerHintStreaming.
@@ -7458,7 +7620,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiChatSheetEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Ask anything about your finances.'**
+  /// **'Ask anything about your Life OS.'**
   String get aiChatSheetEmpty;
 
   /// No description provided for @aiChatSheetExpandTooltip.

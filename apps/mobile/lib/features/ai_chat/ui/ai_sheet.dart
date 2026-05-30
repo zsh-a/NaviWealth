@@ -480,6 +480,8 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
       setState(() => _loginRequired = true);
       return;
     }
+    final l10n = AppLocalizations.of(context);
+    final copyResolver = localizedIntentCopyResolver(l10n);
     try {
       final repo = await ref.read(chatRepositoryProvider.future);
       // Real session backed by ChatHistoryStore so "expand to chat" can
@@ -487,7 +489,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
       // for sidebar legibility.
       final desc = lookupIntent(invocation.intent);
       final title = desc != null
-          ? '${desc.labelZh} · ${widget.objectLabel ?? invocation.object?.type ?? "AI"}'
+          ? '${localizedIntentLabel(l10n, desc)} · ${widget.objectLabel ?? invocation.object?.type ?? "AI"}'
           : (widget.objectLabel ?? 'AI');
       final session = await repo.createSession(
         ownerUserId: ownerUserId,
@@ -498,6 +500,10 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
       final prompt = renderPromptFor(
         invocation,
         objectLabel: widget.objectLabel,
+        defaultTimeframe: l10n.aiIntentDefaultTimeframe,
+        copyResolver: copyResolver,
+        fallbackObjectLabel: l10n.aiIntentCurrentObject,
+        fallbackPromptTemplate: l10n.aiIntentFallbackPrompt('{{object_label}}'),
       );
       unawaited(
         repo.sendMessage(
@@ -773,6 +779,7 @@ class _InvocationHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final desc = lookupIntent(invocation.intent);
+    final l10n = AppLocalizations.of(context);
     // Single inline header row: sparkle + intent label + middot +
     // object label, so context stays visible while the body scrolls.
     return Padding(
@@ -788,7 +795,7 @@ class _InvocationHeader extends StatelessWidget {
               text: TextSpan(
                 children: [
                   TextSpan(
-                    text: desc?.labelZh ?? 'AI',
+                    text: localizedIntentLabel(l10n, desc),
                     style: AiType.label(context),
                   ),
                   if (objectLabel != null) ...[
