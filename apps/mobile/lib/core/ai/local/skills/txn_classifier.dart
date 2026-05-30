@@ -112,6 +112,45 @@ const List<_CategoryRule> _rules = <_CategoryRule>[
   ]),
 ];
 
+const Map<String, String> _queryCategoryAliases = <String, String>{
+  '咖啡': 'coffee',
+  'coffee': 'coffee',
+  '外卖': 'food_delivery',
+  'delivery': 'food_delivery',
+  '订阅': 'subscription',
+  'subscription': 'subscription',
+  '日用': 'grocery',
+  '生鲜': 'grocery',
+  'grocery': 'grocery',
+  '打车': 'transport',
+  '出行': 'transport',
+  '购物': 'shopping',
+  'shopping': 'shopping',
+  '水电': 'utilities',
+  'utilities': 'utilities',
+};
+
+const Map<String, String> _hintToExpenseSlug = <String, String>{
+  'coffee': 'food',
+  'food_delivery': 'food',
+  'grocery': 'food',
+  'transport': 'transport',
+  'subscription': 'entertainment',
+  'shopping': 'shopping',
+  'utilities': 'communication',
+  'food': 'food',
+  'household': 'household',
+  'housing': 'housing',
+  'entertainment': 'entertainment',
+  'medical': 'medical',
+  'education': 'education',
+  'travel': 'travel',
+  'communication': 'communication',
+  'gift': 'gift',
+  'tax': 'tax',
+  'other': 'other',
+};
+
 /// Classify [txn]. Returns `null` when:
 ///  * The transaction already has a [TransactionInput.categoryId]
 ///    (the user has already chosen — never override),
@@ -121,10 +160,91 @@ const List<_CategoryRule> _rules = <_CategoryRule>[
 Classification? classifyTransaction(TransactionInput txn) {
   if (txn.categoryId != null) return null;
   if (parseAmountMinor(txn.amountMinor) >= 0) return null;
-  final key = merchantKey(txn.description);
-  final descriptor = _descriptor(txn.description);
-  if (key.isEmpty || descriptor.normalized.isEmpty) return null;
+  return _classifyDescription(txn.description);
+}
 
+/// Best-effort category hint for analytics/query use. Unlike
+/// [classifyTransaction], this can refine an existing broad ledger account
+/// from the transaction description, then falls back to the stored category.
+String? categoryHintForTransaction(TransactionInput txn) {
+  if (parseAmountMinor(txn.amountMinor) >= 0) return null;
+  final fromDescription = _classifyDescription(txn.description)?.categoryHint;
+  if (fromDescription != null) return fromDescription;
+  return categoryHintFromCategoryId(txn.categoryId);
+}
+
+/// Convert a category hint into the existing Finance expense account slug.
+/// Unknown or model-supplied free-form values collapse to `other`.
+String expenseCategorySlugForHint(String? hint) {
+  if (hint == null) return 'other';
+  final lower = hint.toLowerCase().trim();
+  return _hintToExpenseSlug[lower] ??
+      _hintToExpenseSlug[_normalizeHint(hint)] ??
+      'other';
+}
+
+/// Extract one or more category hints from a natural-language query.
+List<String>? categoryHintsForText(String input) {
+  final normalized = input.trim().toLowerCase();
+  if (normalized.isEmpty) return null;
+  final hits = <String>{};
+  for (final entry in _queryCategoryAliases.entries) {
+    if (normalized.contains(entry.key)) hits.add(entry.value);
+  }
+
+  final descriptor = _descriptor(normalized);
+  final ruleMatches = <_RuleMatch>[];
+  for (final rule in _rules) {
+    for (final alias in rule.aliases) {
+      final normalizedAlias = _normalize(alias);
+      if (normalizedAlias.isEmpty) continue;
+      if (_matchesAlias(descriptor, normalizedAlias)) {
+        ruleMatches.add(
+          _RuleMatch(
+            categoryHint: rule.categoryHint,
+            alias: alias,
+            normalizedAlias: normalizedAlias,
+          ),
+        );
+      }
+    }
+  }
+  ruleMatches.sort(
+    (a, b) => b.normalizedAlias.length.compareTo(a.normalizedAlias.length),
+  );
+  final selectedAliases = <String>[];
+  for (final match in ruleMatches) {
+    final shadowed = selectedAliases.any(
+      (alias) =>
+          alias != match.normalizedAlias &&
+          alias.contains(match.normalizedAlias),
+    );
+    if (shadowed) continue;
+    hits.add(match.categoryHint);
+    selectedAliases.add(match.normalizedAlias);
+  }
+  return hits.isEmpty ? null : hits.toList(growable: false);
+}
+
+String? categoryHintFromCategoryId(String? categoryId) {
+  if (categoryId == null || categoryId.isEmpty) return null;
+  final lower = categoryId.toLowerCase().trim();
+  if (_hintToExpenseSlug.containsKey(lower)) return lower;
+  final normalized = _normalizeHint(categoryId);
+  if (_hintToExpenseSlug.containsKey(normalized)) return normalized;
+  final expenseIndex = normalized.indexOf('expense');
+  if (expenseIndex < 0) return null;
+  final tail = normalized.substring(expenseIndex + 'expense'.length);
+  for (final slug in _hintToExpenseSlug.values.toSet()) {
+    if (tail == slug || tail.startsWith(slug)) return slug;
+  }
+  return null;
+}
+
+Classification? _classifyDescription(String description) {
+  final key = merchantKey(description);
+  final descriptor = _descriptor(description);
+  if (key.isEmpty || descriptor.normalized.isEmpty) return null;
   final match = _bestRuleMatch(descriptor);
   if (match == null) return null;
   final exactMerchant = key == match.normalizedAlias;
@@ -136,6 +256,9 @@ Classification? classifyTransaction(TransactionInput txn) {
         : 'descriptor alias matched: ${match.alias}',
   );
 }
+
+String _normalizeHint(String input) =>
+    input.toLowerCase().replaceAll(RegExp(r'[^a-z0-9一-鿿]+'), '');
 
 _RuleMatch? _bestRuleMatch(_Descriptor descriptor) {
   _RuleMatch? best;

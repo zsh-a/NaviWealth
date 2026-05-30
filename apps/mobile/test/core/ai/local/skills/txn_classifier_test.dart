@@ -144,4 +144,52 @@ void main() {
       expect(c, isNull);
     });
   });
+
+  group('category helpers', () {
+    test('maps fine-grained hints to seeded expense account slugs', () {
+      expect(expenseCategorySlugForHint('coffee'), 'food');
+      expect(expenseCategorySlugForHint('food_delivery'), 'food');
+      expect(expenseCategorySlugForHint('subscription'), 'entertainment');
+      expect(expenseCategorySlugForHint('utilities'), 'communication');
+      expect(expenseCategorySlugForHint('unknown'), 'other');
+    });
+
+    test('extracts category hints from query text with specific aliases', () {
+      expect(categoryHintsForText('本月 uber eats 花了多少'), <String>[
+        'food_delivery',
+      ]);
+      expect(categoryHintsForText('apple store spending'), <String>[
+        'shopping',
+      ]);
+      expect(
+        categoryHintsForText('本月咖啡和外卖花了多少'),
+        containsAll(<String>['coffee', 'food_delivery']),
+      );
+    });
+
+    test('uses description first and stored category as fallback', () {
+      final coffee = categoryHintForTransaction(
+        TransactionInput(
+          id: 't-coffee',
+          description: 'STARBUCKS',
+          amountMinor: '-450',
+          currency: 'USD',
+          occurredAt: DateTime.utc(2026, 5, 1),
+          categoryId: 'system-account:u1:expense:food',
+        ),
+      );
+      final stored = categoryHintForTransaction(
+        TransactionInput(
+          id: 't-food',
+          description: 'Unknown Cafe',
+          amountMinor: '-450',
+          currency: 'USD',
+          occurredAt: DateTime.utc(2026, 5, 1),
+          categoryId: 'system-account:u1:expense:food',
+        ),
+      );
+      expect(coffee, 'coffee');
+      expect(stored, 'food');
+    });
+  });
 }

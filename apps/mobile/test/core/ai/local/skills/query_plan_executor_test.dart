@@ -69,6 +69,40 @@ void main() {
       );
       expect(result.summary?.totalAbsAmountMinor, 500);
     });
+
+    test(
+      'can refine existing broad ledger category from description',
+      () async {
+        final exec = InMemoryQueryPlanExecutor(
+          transactions: <TransactionInput>[
+            _txn(
+              'STARBUCKS',
+              -500,
+              '2026-04-15',
+              categoryId: 'system-account:u1:expense:food',
+            ),
+            _txn(
+              'Unknown Cafe',
+              -800,
+              '2026-04-16',
+              categoryId: 'system-account:u1:expense:food',
+            ),
+          ],
+        );
+        final result = await exec.run(
+          const SpendingByCategoryPlan(
+            range: DateRange(
+              fromInclusive: '2026-04-01T00:00:00.000Z',
+              toExclusive: '2026-05-01T00:00:00.000Z',
+            ),
+          ),
+        );
+        expect(result.rows.map((r) => r.values['category']).toList(), <String>[
+          'food',
+          'coffee',
+        ]);
+      },
+    );
   });
 
   group('InMemoryQueryPlanExecutor — TransactionsFilterPlan', () {
@@ -174,7 +208,12 @@ void main() {
   });
 }
 
-TransactionInput _txn(String desc, int amountMinor, String date) {
+TransactionInput _txn(
+  String desc,
+  int amountMinor,
+  String date, {
+  String? categoryId,
+}) {
   // `date` is an ISO calendar date (YYYY-MM-DD); we always anchor it
   // to UTC midnight so range comparisons against ContextPack-style
   // ISO ranges are timezone-independent.
@@ -184,6 +223,7 @@ TransactionInput _txn(String desc, int amountMinor, String date) {
     description: desc,
     amountMinor: amountMinor.toString(),
     currency: 'USD',
+    categoryId: categoryId,
     occurredAt: DateTime.utc(
       int.parse(parts[0]),
       int.parse(parts[1]),
