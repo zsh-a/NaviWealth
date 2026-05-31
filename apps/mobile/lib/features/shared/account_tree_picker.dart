@@ -6,8 +6,8 @@ import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import '../accounts/account_icon_catalog.dart';
 
 /// FIR-128 §1.2 — drop-in replacement for the legacy flat
-/// [AccountPicker] / [CategoryGridPicker] that surfaces the
-/// [Account.parentId] tree as Beancount-style breadcrumb labels
+/// [AccountPicker] that surfaces the [Account.parentId] tree as
+/// Beancount-style breadcrumb labels
 /// ("Expenses › Trading › Fee"). One picker covers every category
 /// (asset / liability / income / expense / equity); the [category]
 /// prop narrows the list to a single bucket when forms only want to
@@ -35,6 +35,7 @@ class AccountTreePicker extends StatelessWidget {
     this.helperText,
     this.allowSystemAccounts = true,
     this.includeArchived = false,
+    this.leafOnly = false,
     this.validator,
   });
 
@@ -68,6 +69,10 @@ class AccountTreePicker extends StatelessWidget {
   /// account" flows.
   final bool includeArchived;
 
+  /// When true, rows that have children are treated as grouping nodes and are
+  /// not selectable.
+  final bool leafOnly;
+
   final FormFieldValidator<String>? validator;
 
   @override
@@ -81,8 +86,8 @@ class AccountTreePicker extends StatelessWidget {
     };
     return FSelect<String>.rich(
       format: (id) => pathById[id] ?? '',
-      control: FSelectControl<String>.managed(
-        initial: effectiveValue,
+      control: FSelectControl<String>.lifted(
+        value: effectiveValue,
         onChange: onChanged,
       ),
       label: Text(label ?? 'Account'),
@@ -93,7 +98,7 @@ class AccountTreePicker extends StatelessWidget {
         for (final e in entries)
           FSelectItem<String>(
             value: e.account.id,
-            title: Text(e.path, overflow: TextOverflow.ellipsis),
+            title: Text(e.path, maxLines: 2, overflow: TextOverflow.fade),
             prefix: _LeadingGlyph(account: e.account),
           ),
       ],
@@ -102,55 +107,77 @@ class AccountTreePicker extends StatelessWidget {
 
   List<_PickerEntry> _buildEntries() {
     final byId = <String, Account>{for (final a in accounts) a.id: a};
-    final filtered = accounts.where((a) {
-      if (a.sync.deletedAt != null) return false;
-      if (!includeArchived && a.archived) return false;
-      if (category != null && a.category != category) return false;
-      if (!allowSystemAccounts && a.id.startsWith('system-account:')) {
-        return false;
-      }
-      return true;
-    });
+    final filtered = accounts
+        .where((a) {
+          if (a.sync.deletedAt != null) return false;
+          if (!includeArchived && a.archived) return false;
+          if (category != null && a.category != category) return false;
+          if (!allowSystemAccounts && a.id.startsWith('system-account:')) {
+            return false;
+          }
+          return true;
+        })
+        .toList(growable: false);
+    final parentIds = {
+      for (final account in filtered)
+        if (account.parentId != null) account.parentId!,
+    };
 
-    final entries = <_PickerEntry>[];
+    final entriesByPath = <String, _PickerEntry>{};
     for (final a in filtered) {
-      final pathParts = <String>[];
-      var depth = 0;
-      var cursor = a;
-      while (true) {
-        pathParts.add(cursor.name);
-        final parentId = cursor.parentId;
-        if (parentId == null) break;
-        final parent = byId[parentId];
-        if (parent == null) break;
-        // Defensive: stop after 64 hops if the parent chain is
-        // pathological so render doesn't hang.
-        if (depth > 64) break;
-        cursor = parent;
-        depth += 1;
+      if (leafOnly && parentIds.contains(a.id)) continue;
+      final entry = _PickerEntry(account: a, path: _pathFor(a, byId));
+      final key = entry.path.trim().toLowerCase();
+      final existing = entriesByPath[key];
+      if (existing == null || _prefer(entry, existing)) {
+        entriesByPath[key] = entry;
       }
-      entries.add(
-        _PickerEntry(
-          account: a,
-          depth: depth,
-          path: pathParts.reversed.join(' › '),
-        ),
-      );
     }
+    final entries = entriesByPath.values.toList();
     entries.sort((a, b) => a.path.compareTo(b.path));
     return entries;
+  }
+
+  String _pathFor(Account account, Map<String, Account> byId) {
+    final chain = <Account>[];
+    var depth = 0;
+    var cursor = account;
+    while (true) {
+      chain.add(cursor);
+      final parentId = cursor.parentId;
+      if (parentId == null) break;
+      final parent = byId[parentId];
+      if (parent == null) break;
+      // Defensive: stop after 64 hops if the parent chain is pathological.
+      if (depth > 64) break;
+      cursor = parent;
+      depth += 1;
+    }
+    final ordered = chain.reversed.toList();
+    if (ordered.length > 1 && _isSystemAccount(ordered.first)) {
+      ordered.removeAt(0);
+    }
+    return ordered.map((a) => a.name).join(' › ');
+  }
+
+  bool _prefer(_PickerEntry next, _PickerEntry existing) {
+    if (next.account.id == value) return true;
+    if (existing.account.id == value) return false;
+    final nextSystem = _isSystemAccount(next.account);
+    final existingSystem = _isSystemAccount(existing.account);
+    if (nextSystem != existingSystem) return !nextSystem;
+    return next.account.id.compareTo(existing.account.id) < 0;
+  }
+
+  bool _isSystemAccount(Account account) {
+    return account.id.startsWith('system-account:');
   }
 }
 
 class _PickerEntry {
-  const _PickerEntry({
-    required this.account,
-    required this.depth,
-    required this.path,
-  });
+  const _PickerEntry({required this.account, required this.path});
 
   final Account account;
-  final int depth;
   final String path;
 }
 

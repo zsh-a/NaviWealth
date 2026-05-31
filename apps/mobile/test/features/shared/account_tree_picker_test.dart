@@ -123,6 +123,61 @@ void main() {
     expect(find.text('Income'), findsNothing);
   });
 
+  testWidgets('leafOnly hides grouping nodes and deduplicates paths', (
+    tester,
+  ) async {
+    final accounts = <Account>[
+      _account(id: 'system-account:u:expense', name: 'System Expenses'),
+      _account(
+        id: 'system-account:u:expense:trading',
+        name: 'Trading',
+        parentId: 'system-account:u:expense',
+      ),
+      _account(
+        id: 'system-account:u:expense:trading:fee',
+        name: 'Trading Fee',
+        parentId: 'system-account:u:expense:trading',
+      ),
+      _account(
+        id: 'user:expense:trading:fee',
+        name: 'Trading Fee',
+        parentId: 'system-account:u:expense:trading',
+      ),
+      _account(
+        id: 'system-account:u:expense:trading:interest',
+        name: 'Trading Interest',
+        parentId: 'system-account:u:expense:trading',
+      ),
+    ];
+
+    String? selected;
+    await tester.pumpWidget(
+      _wrap(
+        AccountTreePicker(
+          accounts: accounts,
+          value: null,
+          onChanged: (v) => selected = v,
+          category: AccountSide.expense,
+          leafOnly: true,
+        ),
+      ),
+    );
+
+    await tester.tap(find.byType(AccountTreePicker));
+    await tester.pumpAndSettle();
+
+    final fee = find.text('Trading › Trading Fee');
+    final interest = find.text('Trading › Trading Interest');
+    expect(find.text('System Expenses'), findsNothing);
+    expect(find.text('Trading'), findsNothing);
+    expect(fee, findsOneWidget);
+    expect(interest, findsOneWidget);
+
+    await tester.tap(interest);
+    await tester.pumpAndSettle();
+    expect(selected, 'system-account:u:expense:trading:interest');
+  });
+
   testWidgets('archived and deleted rows are hidden by default', (
     tester,
   ) async {
