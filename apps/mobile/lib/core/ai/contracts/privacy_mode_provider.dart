@@ -1,5 +1,4 @@
-/// §5.10.5 — runtime user-facing toggle for what the AI runtime is
-/// allowed to send to the cloud.
+/// §5.10.5 — runtime user-facing toggle for AI privacy posture.
 ///
 /// Post-W-D7 the chat path is device-only, so this setting now only
 /// gates the cloud-Vision ingest fallback (see `ingest_privacy_gate`).
@@ -57,9 +56,9 @@ class AiPrivacySettings {
     maskAccountNames: false,
   );
 
-  /// PrivacyBudget tier this mode allows for cloud requests. The
-  /// router uses this as an upper bound; tools that explicitly need a
-  /// smaller tier (or that the user gated to small) still get capped.
+  /// PrivacyBudget tier this mode allows. Device prompt assembly and
+  /// ingest traces use this as an upper bound; tools that explicitly
+  /// need a smaller tier still get capped.
   BudgetTier get maxBudgetTier => switch (mode) {
     AiPrivacyMode.amountsAllowed => BudgetTier.large,
     AiPrivacyMode.amountsBucketed => BudgetTier.standard,
@@ -114,8 +113,7 @@ class AiPrivacyController extends Notifier<AiPrivacySettings> {
 }
 
 /// User's current AI-privacy posture. The command palette status badge
-/// reads this; the router clamps to `state.maxBudgetTier` before
-/// dispatching to the cloud runtime.
+/// reads this; context assembly clamps to `state.maxBudgetTier`.
 final aiPrivacySettingsProvider =
     NotifierProvider<AiPrivacyController, AiPrivacySettings>(
       AiPrivacyController.new,

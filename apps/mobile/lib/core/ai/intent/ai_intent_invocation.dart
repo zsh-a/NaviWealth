@@ -44,8 +44,8 @@ class AiIntentInvocation {
   final AiObjectRef? object;
 
   /// Extra ContextPack signals attached to this invocation (e.g.
-  /// `timeframe: '30d'`, related account ids). Forwarded to the cloud
-  /// in ContextPack.task.invocation_context (Wave 33+).
+  /// `timeframe: '30d'`, related account ids). Summarized into trace
+  /// attribution and prompt context.
   final Map<String, Object?> context;
 
   /// Override copy used when the registered intent's `promptTemplate`

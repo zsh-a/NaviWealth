@@ -4,7 +4,7 @@
 /// over the shared [secureKeyStoreProvider]; the mutable async state
 /// is a [ConventionalAsyncNotifier]; everything synchronous & derived
 /// (platform support, "is the device runtime usable") is a plain
-/// [Provider] so the W-D3 [RuntimeRegistry] can read it cheaply.
+/// [Provider] so chat routing can fail closed while credentials load.
 library;
 
 import 'package:flutter/foundation.dart';
@@ -36,8 +36,9 @@ final llmConnectivityProbeProvider = Provider<LlmConnectivityProbe>((ref) {
 /// rationale (system-level secure storage for the key + native HTTP so
 /// no browser CORS / JS key exposure) holds identically on desktop:
 /// `flutter_secure_storage` ^10 maps to the macOS Keychain, the Windows
-/// credential store, and Linux libsecret. Only **web** stays on the
-/// cloud relay (IndexedDB-only key + browser-direct CORS).
+/// credential store, and Linux libsecret. **Web** has no AI runtime
+/// because there is no cloud relay fallback and browser-direct keys
+/// would be exposed to the page environment.
 final deviceLlmPlatformSupportedProvider = Provider<bool>((ref) {
   return !kIsWeb;
 });
@@ -98,10 +99,9 @@ class LlmCredentialsNotifier
   }
 }
 
-/// The single boolean W-D3's `RuntimeRegistry.pickFor` consumes:
-/// native platform **and** an active profile carrying a non-empty
-/// key. Resolves to `false` while credentials are still loading or
-/// errored (fail closed → the turn surfaces `device_unavailable`).
+/// Native platform **and** an active profile carrying a non-empty key.
+/// Resolves to `false` while credentials are still loading or errored
+/// (fail closed → the turn surfaces `device_unavailable`).
 final deviceLlmAvailableProvider = Provider<bool>((ref) {
   if (!ref.watch(deviceLlmPlatformSupportedProvider)) return false;
   final creds = ref.watch(llmCredentialsProvider).asData?.value;
