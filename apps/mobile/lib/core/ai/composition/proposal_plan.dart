@@ -51,6 +51,28 @@ sealed class ProposalPlan {
     }
     if (kind.isEmpty) return null;
 
+    if ((m['envelope_kind'] == 'batch' || kind == 'batch') &&
+        status == 'ready') {
+      final summary = m['summary_zh'];
+      final children = m['children'];
+      if (summary is! String || children is! List || children.isEmpty) {
+        return null;
+      }
+      final parsedChildren = <ReadyProposalPlan>[];
+      for (final child in children) {
+        final parsed = ProposalPlan.tryParse(child);
+        if (parsed is! ReadyProposalPlan) return null;
+        parsedChildren.add(parsed);
+      }
+      return BatchProposalPlan(
+        proposalId: id,
+        kind: kind,
+        summaryZh: summary,
+        children: parsedChildren,
+        warnings: _stringList(m['warnings']),
+      );
+    }
+
     switch (status) {
       case 'ready':
         final summary = m['summary_zh'];
@@ -77,6 +99,23 @@ sealed class ProposalPlan {
         return null;
     }
   }
+}
+
+/// `envelope_kind = batch` — one user confirmation applies multiple local
+/// proposals as a single gesture. Children are parsed as ordinary ready
+/// plans and are applied sequentially by the propose-card shell.
+final class BatchProposalPlan extends ProposalPlan {
+  const BatchProposalPlan({
+    required super.proposalId,
+    required super.kind,
+    required this.summaryZh,
+    required this.children,
+    this.warnings = const <String>[],
+  });
+
+  final String summaryZh;
+  final List<ReadyProposalPlan> children;
+  final List<String> warnings;
 }
 
 /// `status = ready` — the model has fully specified the plan and the user
