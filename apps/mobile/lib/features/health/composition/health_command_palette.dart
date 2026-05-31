@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -21,7 +22,7 @@ List<CommandPaletteEntry> healthCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'nav.health.today',
       label: '健康 · 今日',
-      icon: Icons.favorite_outline,
+      icon: FLucideIcons.heart,
       keywords: const <String>[
         AppRoutes.healthToday,
         'health',
@@ -36,7 +37,7 @@ List<CommandPaletteEntry> healthCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'nav.health.trend',
       label: '健康 · 趋势',
-      icon: Icons.show_chart_outlined,
+      icon: FLucideIcons.trendingUp,
       keywords: const <String>[
         AppRoutes.healthTrend,
         'health',
@@ -52,7 +53,7 @@ List<CommandPaletteEntry> healthCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'nav.health.plan',
       label: '健康 · 计划',
-      icon: Icons.bolt_outlined,
+      icon: FLucideIcons.zap,
       keywords: const <String>[
         AppRoutes.healthPlan,
         'health',

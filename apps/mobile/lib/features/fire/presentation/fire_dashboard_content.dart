@@ -326,12 +326,7 @@ class _ScenariosTable extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s16,
-              AppSpacing.s16,
-              AppSpacing.s16,
-              AppSpacing.s8,
-            ),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s8, ),
             child: Align(
               alignment: AlignmentDirectional.centerStart,
               child: Text(

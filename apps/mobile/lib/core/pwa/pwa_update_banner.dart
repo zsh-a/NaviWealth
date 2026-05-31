@@ -66,7 +66,7 @@ class _PwaUpdateBannerState extends ConsumerState<PwaUpdateBanner> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.system_update_alt, color: colors.background),
+                      Icon(FLucideIcons.download, color: colors.background),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(

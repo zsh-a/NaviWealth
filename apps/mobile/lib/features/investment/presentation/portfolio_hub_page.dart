@@ -406,11 +406,7 @@ class _PortfolioHubBody extends StatelessWidget {
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(
-        hPad,
-        8,
-        hPad,
-        80 + MediaQuery.paddingOf(context).bottom,
+      padding: EdgeInsets.fromLTRB(hPad, AppSpacing.s8, hPad, 80 + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
         _PortfolioSummary(data: data),
@@ -977,7 +973,7 @@ class _ViewChip extends StatelessWidget {
       child: AnimatedContainer(
         duration: Motion.medium,
         curve: Motion.emphasizedDecelerate,
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: AppSpacing.s4),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8, horizontal: AppSpacing.s4),
         decoration: BoxDecoration(
           color: selected
               ? context.theme.colors.background

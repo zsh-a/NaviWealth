@@ -43,15 +43,11 @@ class DomainsSettingsPage extends ConsumerWidget {
       ),
       childPad: false,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.s16,
-          AppSpacing.s16,
-          AppSpacing.s16,
-          AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
+        padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(4, 0, 4, AppSpacing.s12),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.s4, 0, AppSpacing.s4, AppSpacing.s12),
             child: Text(
               l10n.settingsDomainsIntro,
               style: context.theme.typography.sm.copyWith(
@@ -137,7 +133,7 @@ class _RowDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
       child: Container(
         height: 1,
         color: context.theme.colors.foreground.withValues(alpha: 0.05),
@@ -209,7 +205,7 @@ class _HealthPlatformSyncRowState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return InlineLinkRow(
-      icon: FLucideIcons.refreshCcw,
+      icon: FLucideIcons.refreshCw,
       label: l10n.settingsDomainsHealthSyncTitle,
       subtitle: _subtitle(l10n),
       onTap: _running ? () {} : _run,

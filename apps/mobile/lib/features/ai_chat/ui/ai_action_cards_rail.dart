@@ -25,12 +25,12 @@ class AiActionCardsRail extends ConsumerWidget {
     final items = selector(l10n);
     if (items.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
+      padding: const EdgeInsets.fromLTRB(0, AppSpacing.s8, 0, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 16, 8),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.s20, 0, AppSpacing.s16, AppSpacing.s8),
             child: Text(
               l10n.aiActionCardsTitle,
               style: context.theme.typography.xs.copyWith(
@@ -78,7 +78,7 @@ class _ActionCard extends StatelessWidget {
       width: 240,
       child: SoftCard(
         onPress: route == null ? null : () => context.push(route),
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(AppSpacing.s14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

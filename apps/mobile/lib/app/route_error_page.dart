@@ -39,7 +39,7 @@ class RouteErrorPage extends StatelessWidget {
               children: [
                 Icon(
                   hasError
-                      ? Icons.travel_explore_outlined
+                      ? FLucideIcons.globe
                       : FLucideIcons.circleAlert,
                   size: 56,
                   color: colors.destructive,
@@ -64,7 +64,7 @@ class RouteErrorPage extends StatelessWidget {
                       FButton(
                         variant: FButtonVariant.outline,
                         onPress: () => smartPop(context),
-                        prefix: const Icon(Icons.arrow_back_ios_new, size: AppIconSizes.xs),
+                        prefix: const Icon(FLucideIcons.arrowLeft, size: AppIconSizes.xs),
                         child: Text(l10n.routeGoBack),
                       ),
                       const SizedBox(width: 12),
@@ -72,7 +72,7 @@ class RouteErrorPage extends StatelessWidget {
                     FButton(
                       variant: FButtonVariant.primary,
                       onPress: () => context.go(AppRoutes.home),
-                      prefix: const Icon(Icons.home_outlined, size: AppIconSizes.sm),
+                      prefix: const Icon(FLucideIcons.home, size: AppIconSizes.sm),
                       child: Text(l10n.routeGoHome),
                     ),
                   ],

@@ -83,7 +83,7 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
     final colors = context.theme.colors;
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.s20, AppSpacing.s16, AppSpacing.s20, AppSpacing.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -194,7 +194,7 @@ class _OnboardingChoiceTile extends StatelessWidget {
     final isSelected = mode == selected;
     return SoftCard(
       onPress: () => onSelect(mode),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[

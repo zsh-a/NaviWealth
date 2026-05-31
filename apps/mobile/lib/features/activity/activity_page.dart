@@ -167,7 +167,7 @@ class _ActivityRightRail extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s12),
                 child: Text(
                   l10n.navActivity,
                   style: context.theme.typography.md.copyWith(
@@ -196,7 +196,7 @@ class _ActivityRightRail extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.s8),
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.s16, 0, AppSpacing.s16, AppSpacing.s16),
                 child: FButton(
                   variant: FButtonVariant.outline,
                   onPress: onFilter,
@@ -293,7 +293,7 @@ class _FilterChip extends StatelessWidget {
     return FTappable(
       onPress: spec.onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s6),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s6),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.full),

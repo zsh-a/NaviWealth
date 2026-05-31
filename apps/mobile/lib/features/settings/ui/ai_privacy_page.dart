@@ -134,7 +134,7 @@ class _ModeRow extends StatelessWidget {
     return FTappable(
       onPress: () => onSelect(mode),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s14),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

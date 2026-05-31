@@ -142,7 +142,7 @@ class MasterDetailEmpty extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              icon ?? Icons.touch_app_outlined,
+              icon ?? FLucideIcons.hand,
               size: AppIconSizes.xl,
               color: colors.mutedForeground,
             ),

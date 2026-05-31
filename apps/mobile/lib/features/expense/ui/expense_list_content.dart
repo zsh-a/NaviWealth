@@ -173,7 +173,7 @@ class _SegmentChip extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: AppSpacing.s6),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
         decoration: selected
             ? BoxDecoration(
                 color: context.theme.colors.primary.withValues(alpha: 0.15),

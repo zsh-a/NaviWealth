@@ -47,12 +47,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
         children: [
           Positioned.fill(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s16,
-                AppSpacing.s8,
-                AppSpacing.s16,
-                AppSpacing.s16,
-              ),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s16, ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -252,7 +247,7 @@ class _LibraryList extends ConsumerWidget {
           data: (repo) => switch (segment) {
             _LibrarySegment.decisions => _SegmentList<KnowledgeDecision>(
               stream: repo.watchDecisions(ownerUserId: owner),
-              emptyIcon: Icons.alt_route_outlined,
+              emptyIcon: FLucideIcons.gitBranch,
               emptyTitle: '还没有 Decision',
               emptyMessage: '点右下角 + 新建 Decision，记录第一条值得复盘的判断。',
               tileBuilder: (context, d) => _buildDecisionTile(
@@ -272,7 +267,7 @@ class _LibraryList extends ConsumerWidget {
             ),
             _LibrarySegment.notes => _SegmentList<KnowledgeNote>(
               stream: repo.watchNotes(ownerUserId: owner),
-              emptyIcon: Icons.notes_outlined,
+              emptyIcon: FLucideIcons.fileText,
               emptyTitle: '资料库里还没有 Note',
               emptyMessage: 'Note 在收件箱录入；这里只做浏览。',
               tileBuilder: (context, n) => _buildNoteTile(
@@ -294,7 +289,7 @@ class _LibraryList extends ConsumerWidget {
             ),
             _LibrarySegment.concepts => _SegmentList<KnowledgeConcept>(
               stream: repo.watchConcepts(ownerUserId: owner),
-              emptyIcon: Icons.account_tree_outlined,
+              emptyIcon: FLucideIcons.folderTree,
               emptyTitle: '还没有 Concept 节点',
               emptyMessage: 'Concept 用于 [[soft links]] 和 AI 关联。',
               tileBuilder: (context, c) => _buildConceptTile(
@@ -314,7 +309,7 @@ class _LibraryList extends ConsumerWidget {
             ),
             _LibrarySegment.experiments => _SegmentList<KnowledgeExperiment>(
               stream: repo.watchExperiments(ownerUserId: owner),
-              emptyIcon: Icons.science_outlined,
+              emptyIcon: FLucideIcons.flaskConical,
               emptyTitle: '没有进行中的 Experiment',
               emptyMessage: 'Experiment 通常挂在一条待验证的 Assumption 上。',
               tileBuilder: (context, e) => _buildExperimentTile(
@@ -334,7 +329,7 @@ class _LibraryList extends ConsumerWidget {
             ),
             _LibrarySegment.routines => _SegmentList<KnowledgeRoutine>(
               stream: repo.watchRoutines(ownerUserId: owner),
-              emptyIcon: Icons.event_repeat_outlined,
+              emptyIcon: FLucideIcons.calendarClock,
               emptyTitle: '还没有 Routine',
               emptyMessage: '定期提醒（例如「港卡每 6 个月活跃一次」）。新建后 AI 会在到期前主动提示。',
               tileBuilder: (context, r) => _buildRoutineTile(

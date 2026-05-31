@@ -86,12 +86,7 @@ class _AiAssistantBar extends ConsumerWidget {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s16,
-        AppSpacing.s12,
-        AppSpacing.s16,
-        AppSpacing.s4,
-      ),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s4, ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -202,13 +197,8 @@ class _NotesList extends ConsumerWidget {
                 final notes = snapshot.data ?? const <KnowledgeNote>[];
                 if (notes.isEmpty) return const _EmptyState();
                 return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.s16,
-                    AppSpacing.s8,
-                    AppSpacing.s16,
-                    // Bottom padding leaves room for the floating FAB.
-                    AppSpacing.s64,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, // Bottom padding leaves room for the floating FAB.
+                    AppSpacing.s64, ),
                   itemCount: notes.length,
                   separatorBuilder: (_, _) =>
                       const SizedBox(height: AppSpacing.s8),
@@ -261,7 +251,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const AppEmptyState(
-      icon: Icons.inbox_outlined,
+      icon: FLucideIcons.inbox,
       title: '收件箱空空如也',
       message:
           '点击右下角 + 写一条想法 — AI 会判断它是 Note / Routine / Decision，'

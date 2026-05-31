@@ -71,7 +71,7 @@ class _InlineLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 10, bottom: AppSpacing.s4),
+      padding: const EdgeInsets.only(top: AppSpacing.s10, bottom: AppSpacing.s4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -146,7 +146,7 @@ class _AttributionRow extends StatelessWidget {
         child: SizedBox(
           height: MediaQuery.sizeOf(context).height * 0.7,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.s16, 0, AppSpacing.s16, AppSpacing.s24),
             children: [
               // Reuse the existing card — it ships its own chevron / JSON
               // viewer. From inside the bottom sheet the chrome reads as

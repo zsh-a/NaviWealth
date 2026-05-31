@@ -57,9 +57,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Bad state: boom'), findsOneWidget);
-    expect(find.byIcon(Icons.refresh), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.refreshCw), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.tap(find.byIcon(FLucideIcons.refreshCw));
     await tester.pumpAndSettle();
 
     expect(find.text('loaded'), findsOneWidget);

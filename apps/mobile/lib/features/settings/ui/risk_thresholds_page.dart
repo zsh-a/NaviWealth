@@ -152,7 +152,7 @@ class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
       child: Container(
         height: 1,
         color: context.theme.colors.foreground.withValues(alpha: 0.05),
@@ -238,7 +238,7 @@ class _ThresholdSliderState extends State<_ThresholdSlider> {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s8),
       child: Row(
         children: [
           Icon(widget.icon, size: AppIconSizes.h18, color: colors.mutedForeground),

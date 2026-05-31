@@ -16,6 +16,7 @@
 library;
 
 import 'package:flutter/widgets.dart';
+import '../../../design_system/design_system.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -35,7 +36,7 @@ class LlmProfileChip extends ConsumerWidget {
     if (active == null) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s6, AppSpacing.s12, 0),
       child: Align(
         alignment: Alignment.centerLeft,
         child: FTooltip(

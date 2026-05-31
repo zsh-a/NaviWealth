@@ -3,6 +3,8 @@ import 'package:flutter/material.dart'
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../../../design_system/design_system.dart';
+
 import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
@@ -163,7 +165,7 @@ class _DateFieldState extends State<DateField> {
               padding: const EdgeInsetsDirectional.only(end: 8),
               child: Icon(
                 FLucideIcons.calendarDays,
-                size: 18,
+                size: AppIconSizes.h18,
                 color: ctx.theme.colors.mutedForeground,
               ),
             )
@@ -174,7 +176,7 @@ class _DateFieldState extends State<DateField> {
                 onPress: widget.required ? null : _clear,
                 child: Icon(
                   FLucideIcons.x,
-                  size: 18,
+                  size: AppIconSizes.h18,
                   semanticLabel: l10n.formDateFieldClearTooltip,
                 ),
               ),

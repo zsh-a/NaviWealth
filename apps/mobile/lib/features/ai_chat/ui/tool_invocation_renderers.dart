@@ -170,7 +170,7 @@ class _HoldingsTable extends StatelessWidget {
         for (final row in visible) _holdingRowTile(context, row),
         if (hidden > 0)
           Padding(
-            padding: const EdgeInsets.only(top: 4, left: AppSpacing.s8),
+            padding: const EdgeInsets.only(top: AppSpacing.s4, left: AppSpacing.s8),
             child: Text(
               '还有 $hidden 项未展示',
               style: context.theme.typography.xs.copyWith(
@@ -618,7 +618,7 @@ class _RiskAlertList extends StatelessWidget {
         for (final a in visible) _alertTile(context, a),
         if (hidden > 0)
           Padding(
-            padding: const EdgeInsets.only(top: 4, left: AppSpacing.s8),
+            padding: const EdgeInsets.only(top: AppSpacing.s4, left: AppSpacing.s8),
             child: Text(
               '还有 $hidden 项未展示',
               style: context.theme.typography.xs.copyWith(
@@ -720,7 +720,7 @@ class _EmptyResult extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: AppSpacing.s8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s8),
       child: Row(
         children: [
           Icon(
@@ -1098,7 +1098,7 @@ class RecurringPatternsView extends StatelessWidget {
 Widget _miniChip(BuildContext context, String label) {
   final cs = Theme.of(context).colorScheme;
   return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: 1),
     decoration: BoxDecoration(
       color: cs.outline.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(AppRadius.full),

@@ -729,7 +729,7 @@ class _LegendRow extends StatelessWidget {
           // than this, so the InkWell pads itself out vertically.
           constraints: const BoxConstraints(minHeight: 48),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: AppSpacing.s8),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12, horizontal: AppSpacing.s8),
             child: Row(
               children: [
                 Container(

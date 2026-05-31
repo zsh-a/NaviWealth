@@ -153,7 +153,7 @@ class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
       child: Container(
         height: 1,
         color: context.theme.colors.foreground.withValues(alpha: 0.05),

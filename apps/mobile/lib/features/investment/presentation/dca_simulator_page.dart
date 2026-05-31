@@ -59,8 +59,7 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
         onRefresh: () => ref.read(dcaSimulationProvider.notifier).refresh(),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(
-            Breakpoints.isMobile(MediaQuery.sizeOf(context).width) ? 16 : 24,
+          padding: EdgeInsets.fromLTRB(Breakpoints.isMobile(MediaQuery.sizeOf(context).width) ? 16 : 24,
             8,
             Breakpoints.isMobile(MediaQuery.sizeOf(context).width) ? 16 : 24,
             80 + MediaQuery.paddingOf(context).bottom,

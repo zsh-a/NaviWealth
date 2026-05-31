@@ -27,11 +27,7 @@ class PerfDiagnosticsPage extends ConsumerWidget {
       ),
       childPad: false,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.s16,
-          AppSpacing.s16,
-          AppSpacing.s16,
-          AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
+        padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
           _SummaryCard(stats: stats),

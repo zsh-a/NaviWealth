@@ -36,11 +36,7 @@ class PlanHubPage extends ConsumerWidget {
               ? AppSpacing.s16
               : AppSpacing.s24;
           return ListView(
-            padding: EdgeInsets.fromLTRB(
-              hPad,
-              AppSpacing.s12,
-              hPad,
-              AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
+            padding: EdgeInsets.fromLTRB(hPad, AppSpacing.s12, hPad, AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
             ),
             children: const [
               _PlanHero(),

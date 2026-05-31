@@ -140,10 +140,10 @@ class _RecoveryCard extends StatelessWidget {
   }
 
   static IconData _verdictIcon(String v) => switch (v) {
-    'rested' => Icons.bolt,
-    'balanced' => Icons.balance,
-    'strained' => Icons.warning_amber_outlined,
-    _ => Icons.help_outline,
+    'rested' => FLucideIcons.zap,
+    'balanced' => FLucideIcons.scale,
+    'strained' => FLucideIcons.triangleAlert,
+    _ => FLucideIcons.circleHelp,
   };
 
   static Color _verdictColor(String v, FColors colors) => switch (v) {

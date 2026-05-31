@@ -76,12 +76,7 @@ class _BudgetBody extends StatelessWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s16,
-        AppSpacing.s12,
-        AppSpacing.s16,
-        AppSpacing.s24,
-      ),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s24, ),
       children: [
         _MonthHeaderCard(
           monthKey: monthKey,

@@ -11,6 +11,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import '../../../design_system/design_system.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
@@ -80,7 +81,7 @@ class _UndoRow extends StatelessWidget {
         top: false,
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s10),
           child: Row(
             children: [
               const AiSparkle(),

@@ -157,11 +157,7 @@ class _WatchlistBody extends StatelessWidget {
     final byId = {for (final snapshot in snapshots) snapshot.item.id: snapshot};
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(
-        hPad,
-        8,
-        hPad,
-        80 + MediaQuery.paddingOf(context).bottom,
+      padding: EdgeInsets.fromLTRB(hPad, AppSpacing.s8, hPad, 80 + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
         if (items.isEmpty)

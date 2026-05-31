@@ -685,7 +685,7 @@ class _BriefingCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.wb_sunny_outlined, size: AppIconSizes.md, color: colors.primary),
+              Icon(FLucideIcons.sun, size: AppIconSizes.md, color: colors.primary),
               const SizedBox(width: AppSpacing.s8),
               Text(
                 '早间简报',
@@ -741,7 +741,7 @@ class _BriefingEmpty extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
         children: [
-          Icon(Icons.wb_twilight_outlined, color: colors.mutedForeground),
+          Icon(FLucideIcons.sunset, color: colors.mutedForeground),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(

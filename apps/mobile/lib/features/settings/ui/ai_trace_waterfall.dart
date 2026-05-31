@@ -177,7 +177,7 @@ class _WaterfallRow extends StatelessWidget {
               : null,
           borderRadius: BorderRadius.circular(AppRadius.xs),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: AppSpacing.s4),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -185,7 +185,7 @@ class _WaterfallRow extends StatelessWidget {
             SizedBox(
               width: 150,
               child: Padding(
-                padding: EdgeInsets.only(left: 10.0 * row.depth),
+                padding: EdgeInsets.only(left: AppSpacing.s10 * row.depth),
                 child: Row(
                   children: [
                     Container(
@@ -287,7 +287,7 @@ class _SpanDetail extends StatelessWidget {
         span.kind == AiSpanKind.tool || span.kind == AiSpanKind.llm;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.s14),
       decoration: BoxDecoration(
         color: AiTone.surfaceTint(context).withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -367,7 +367,7 @@ class _SpanDetail extends StatelessWidget {
 
   Widget _kv(BuildContext context, String k, String v, {Color? tone}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -410,7 +410,7 @@ Color _kindTone(BuildContext context, AiSpan span) {
 IconData _kindIcon(AiSpan span) => switch (span.kind) {
   AiSpanKind.turn => FLucideIcons.flag,
   AiSpanKind.llm => FLucideIcons.sparkles,
-  AiSpanKind.tool => FLucideIcons.bolt,
+  AiSpanKind.tool => FLucideIcons.zap,
 };
 
 String _shortName(AiSpan span) {

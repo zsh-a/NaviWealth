@@ -60,7 +60,7 @@ class ActivityEntryDetailPage extends ConsumerWidget {
       ),
       childPad: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s32),
         children: [
           // AiTouchMark: surfaces when this journal entry was created
           // by an accepted AI proposal. Self-gating: hidden otherwise.

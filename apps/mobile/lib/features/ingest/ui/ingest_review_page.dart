@@ -147,7 +147,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.s16, 0, AppSpacing.s16, AppSpacing.s8),
           child: Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -181,7 +181,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.s16, 0, AppSpacing.s16, AppSpacing.s12),
               child: FButton(
                 variant: FButtonVariant.primary,
                 onPress: _isBusy
@@ -501,7 +501,7 @@ class _DraftCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final p = draft.parsed;
     return SoftCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

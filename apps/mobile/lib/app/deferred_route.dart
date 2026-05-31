@@ -96,7 +96,7 @@ class _DeferredError extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  Icons.cloud_off_outlined,
+                  FLucideIcons.cloudOff,
                   size: 48,
                   color: context.theme.colors.destructive,
                 ),
@@ -118,7 +118,7 @@ class _DeferredError extends StatelessWidget {
                 FButton(
                   variant: FButtonVariant.primary,
                   onPress: onRetry,
-                  prefix: const Icon(Icons.refresh, size: 16),
+                  prefix: const Icon(FLucideIcons.refreshCw, size: 16),
                   child: Text(l10n.deferredLoadRetry),
                 ),
               ],

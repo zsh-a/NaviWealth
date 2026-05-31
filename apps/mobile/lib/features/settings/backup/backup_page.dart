@@ -494,7 +494,7 @@ class _ProgressSheetState extends State<_ProgressSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: AppSpacing.s24),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24, vertical: AppSpacing.s24),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
