@@ -37,9 +37,9 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
     await Clipboard.setData(ClipboardData(text: text));
     if (!context.mounted) return;
     ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      const SnackBar(
-        content: Text('日志已复制 / Logs copied'),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(AppLocalizations.of(context).settingsLogsCopiedToast),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -116,7 +116,7 @@ class _LogTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _colorForLevel(log.logLevel);
+    final color = _colorForLevel(context, log.logLevel);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -170,15 +170,15 @@ class _LogTile extends StatelessWidget {
     );
   }
 
-  Color _colorForLevel(LogLevel? level) {
+  Color _colorForLevel(BuildContext context, LogLevel? level) {
+    final semantic = SemanticColors.of(context);
+    final colors = context.theme.colors;
     return switch (level) {
-      LogLevel.error => const Color(0xFFE53935),
-      LogLevel.critical => const Color(0xFFD32F2F),
-      LogLevel.warning => const Color(0xFFFFA726),
-      LogLevel.info => const Color(0xFF42A5F5),
-      LogLevel.debug => const Color(0xFF78909C),
-      LogLevel.verbose => const Color(0xFF90A4AE),
-      _ => const Color(0xFF90A4AE),
+      LogLevel.error || LogLevel.critical => semantic.danger,
+      LogLevel.warning => semantic.warning,
+      LogLevel.info => semantic.info,
+      LogLevel.debug || LogLevel.verbose => colors.mutedForeground,
+      _ => colors.mutedForeground,
     };
   }
 }

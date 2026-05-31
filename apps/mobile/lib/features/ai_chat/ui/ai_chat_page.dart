@@ -124,8 +124,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
           if (defaultAsync.hasError) {
             return _BootstrapErrorPane(
               error: defaultAsync.error!,
-              onRetry: () =>
-                  ref.invalidate(defaultChatSessionProvider(userId)),
+              onRetry: () => ref.invalidate(defaultChatSessionProvider(userId)),
             );
           }
           return const _BootstrappingPane();
@@ -388,7 +387,7 @@ class _SuggestionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FCard.raw(
+    return SoftCard(
       child: FTappable(
         onPress: onTap,
         child: Padding(

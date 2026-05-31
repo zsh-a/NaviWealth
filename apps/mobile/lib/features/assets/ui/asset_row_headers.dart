@@ -1,7 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
-
 import 'package:naviwealth/features/finance/data/domain/account.dart';
+
+import '../../../design_system/design_system.dart';
 
 class AssetSectionHeader extends StatelessWidget {
   const AssetSectionHeader({super.key, required this.title});
@@ -55,6 +56,6 @@ class TertiaryRowSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard.raw(child: child);
+    return SoftCard(child: child);
   }
 }

@@ -63,7 +63,7 @@ class AssetPnLCard extends ConsumerWidget {
         ? null
         : dailyChangeFromHistory(historyAsync, snap.quantity);
 
-    return FCard.raw(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

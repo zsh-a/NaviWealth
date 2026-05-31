@@ -171,133 +171,131 @@ class _DcaControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: formKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              FTextFormField(
-                control: FTextFieldControl.managed(controller: symbols),
-                label: Text(l10n.dcaSimulatorSymbolField),
-                hint: l10n.dcaSimulatorSymbolHint,
-                textCapitalization: TextCapitalization.characters,
-                textInputAction: TextInputAction.next,
-                validator: (value) => _parseSymbols(value ?? '').isEmpty
-                    ? l10n.dcaSimulatorInvalidSymbols
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: FTextFormField(
-                      control: FTextFieldControl.managed(controller: amount),
-                      label: Text(l10n.dcaSimulatorAmountField),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                      ],
-                      validator: (value) {
-                        final parsed = Decimal.tryParse(value?.trim() ?? '');
-                        if (parsed == null || parsed <= Decimal.zero) {
-                          return l10n.dcaSimulatorInvalidAmount;
-                        }
-                        return null;
-                      },
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Form(
+        key: formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FTextFormField(
+              control: FTextFieldControl.managed(controller: symbols),
+              label: Text(l10n.dcaSimulatorSymbolField),
+              hint: l10n.dcaSimulatorSymbolHint,
+              textCapitalization: TextCapitalization.characters,
+              textInputAction: TextInputAction.next,
+              validator: (value) => _parseSymbols(value ?? '').isEmpty
+                  ? l10n.dcaSimulatorInvalidSymbols
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: FTextFormField(
+                    control: FTextFieldControl.managed(controller: amount),
+                    label: Text(l10n.dcaSimulatorAmountField),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
                     ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    ],
+                    validator: (value) {
+                      final parsed = Decimal.tryParse(value?.trim() ?? '');
+                      if (parsed == null || parsed <= Decimal.zero) {
+                        return l10n.dcaSimulatorInvalidAmount;
+                      }
+                      return null;
+                    },
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FTextFormField(
-                      control: FTextFieldControl.managed(controller: currency),
-                      label: Text(l10n.dcaSimulatorCurrencyField),
-                      textCapitalization: TextCapitalization.characters,
-                      validator: (value) {
-                        final raw = value?.trim() ?? '';
-                        return raw.length < 3
-                            ? l10n.dcaSimulatorInvalidCurrency
-                            : null;
-                      },
-                    ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FTextFormField(
+                    control: FTextFieldControl.managed(controller: currency),
+                    label: Text(l10n.dcaSimulatorCurrencyField),
+                    textCapitalization: TextCapitalization.characters,
+                    validator: (value) {
+                      final raw = value?.trim() ?? '';
+                      return raw.length < 3
+                          ? l10n.dcaSimulatorInvalidCurrency
+                          : null;
+                    },
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              FSelect<AssetMarket>(
-                items: {
-                  l10n.dcaSimulatorMarketUs: AssetMarket.usStock,
-                  l10n.dcaSimulatorMarketHk: AssetMarket.hkStock,
-                  l10n.dcaSimulatorMarketCn: AssetMarket.cnA,
-                  l10n.dcaSimulatorMarketCrypto: AssetMarket.crypto,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            FSelect<AssetMarket>(
+              items: {
+                l10n.dcaSimulatorMarketUs: AssetMarket.usStock,
+                l10n.dcaSimulatorMarketHk: AssetMarket.hkStock,
+                l10n.dcaSimulatorMarketCn: AssetMarket.cnA,
+                l10n.dcaSimulatorMarketCrypto: AssetMarket.crypto,
+              },
+              control: FSelectControl<AssetMarket>.managed(
+                initial: market,
+                onChange: (value) {
+                  if (value != null) onMarketChanged(value);
                 },
-                control: FSelectControl<AssetMarket>.managed(
-                  initial: market,
-                  onChange: (value) {
-                    if (value != null) onMarketChanged(value);
-                  },
-                ),
-                label: Text(l10n.dcaSimulatorMarketField),
               ),
-              const SizedBox(height: 12),
-              Row(
+              label: Text(l10n.dcaSimulatorMarketField),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: FSelect<DcaFrequency>(
+                    items: {
+                      l10n.dcaSimulatorFrequencyMonthly: DcaFrequency.monthly,
+                      l10n.dcaSimulatorFrequencyQuarterly:
+                          DcaFrequency.quarterly,
+                    },
+                    control: FSelectControl<DcaFrequency>.managed(
+                      initial: frequency,
+                      onChange: (value) {
+                        if (value != null) onFrequencyChanged(value);
+                      },
+                    ),
+                    label: Text(l10n.dcaSimulatorFrequencyField),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FSelect<int>(
+                    items: {
+                      l10n.dcaSimulatorWindow1y: 1,
+                      l10n.dcaSimulatorWindow3y: 3,
+                      l10n.dcaSimulatorWindow5y: 5,
+                    },
+                    control: FSelectControl<int>.managed(
+                      initial: years,
+                      onChange: (value) {
+                        if (value != null) onYearsChanged(value);
+                      },
+                    ),
+                    label: Text(l10n.dcaSimulatorWindowField),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            FButton(
+              onPress: busy ? null : onRun,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: FSelect<DcaFrequency>(
-                      items: {
-                        l10n.dcaSimulatorFrequencyMonthly: DcaFrequency.monthly,
-                        l10n.dcaSimulatorFrequencyQuarterly:
-                            DcaFrequency.quarterly,
-                      },
-                      control: FSelectControl<DcaFrequency>.managed(
-                        initial: frequency,
-                        onChange: (value) {
-                          if (value != null) onFrequencyChanged(value);
-                        },
-                      ),
-                      label: Text(l10n.dcaSimulatorFrequencyField),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FSelect<int>(
-                      items: {
-                        l10n.dcaSimulatorWindow1y: 1,
-                        l10n.dcaSimulatorWindow3y: 3,
-                        l10n.dcaSimulatorWindow5y: 5,
-                      },
-                      control: FSelectControl<int>.managed(
-                        initial: years,
-                        onChange: (value) {
-                          if (value != null) onYearsChanged(value);
-                        },
-                      ),
-                      label: Text(l10n.dcaSimulatorWindowField),
-                    ),
-                  ),
+                  const Icon(FLucideIcons.workflow, size: 18),
+                  const SizedBox(width: 6),
+                  Text(l10n.dcaSimulatorRunAction),
                 ],
               ),
-              const SizedBox(height: 16),
-              FButton(
-                onPress: busy ? null : onRun,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(FLucideIcons.workflow, size: 18),
-                    const SizedBox(width: 6),
-                    Text(l10n.dcaSimulatorRunAction),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -318,76 +316,74 @@ class _DcaResults extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        FCard.raw(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        l10n.dcaSimulatorResultTitle,
-                        style: context.theme.typography.lg.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+        SoftCard(
+          padding: const EdgeInsets.all(AppSpacing.s16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.dcaSimulatorResultTitle,
+                      style: context.theme.typography.lg.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    _FreshnessChip(freshness: state.freshness),
+                  ),
+                  _FreshnessChip(freshness: state.freshness),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _MetricGrid(result: result),
+              const SizedBox(height: 18),
+              Text(
+                l10n.dcaSimulatorChartTitle,
+                style: context.theme.typography.sm.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 220,
+                child: NwLineChart(
+                  series: [
+                    ChartSeries(
+                      name: l10n.dcaSimulatorChartSeries,
+                      points: [
+                        for (final point in result.equityCurve)
+                          ChartPoint(
+                            x: point.asOf.millisecondsSinceEpoch.toDouble(),
+                            y: point.value.toDouble(),
+                          ),
+                      ],
+                    ),
                   ],
-                ),
-                const SizedBox(height: 14),
-                _MetricGrid(result: result),
-                const SizedBox(height: 18),
-                Text(
-                  l10n.dcaSimulatorChartTitle,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
+                  xAxis: const TimeAxis(
+                    format: AxisDateFormat.monthYear,
+                    maxLabels: 5,
                   ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  height: 220,
-                  child: NwLineChart(
-                    series: [
-                      ChartSeries(
-                        name: l10n.dcaSimulatorChartSeries,
-                        points: [
-                          for (final point in result.equityCurve)
-                            ChartPoint(
-                              x: point.asOf.millisecondsSinceEpoch.toDouble(),
-                              y: point.value.toDouble(),
-                            ),
-                        ],
-                      ),
-                    ],
-                    xAxis: const TimeAxis(
-                      format: AxisDateFormat.monthYear,
-                      maxLabels: 5,
-                    ),
-                    yAxis: ValueAxis.currency(
-                      currencyCode: result.currency,
-                      maxLabels: 4,
-                    ),
-                    interpolation: ChartInterpolation.linear,
-                    semanticLabel: l10n.dcaSimulatorChartTitle,
+                  yAxis: ValueAxis.currency(
+                    currencyCode: result.currency,
+                    maxLabels: 4,
                   ),
+                  interpolation: ChartInterpolation.linear,
+                  semanticLabel: l10n.dcaSimulatorChartTitle,
                 ),
-                const SizedBox(height: 14),
-                for (final position in result.positions)
-                  _PositionRow(position: position, currency: result.currency),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FButton(
-                    variant: FButtonVariant.secondary,
-                    onPress: onDraft,
-                    child: Text(l10n.dcaSimulatorDraftAction),
-                  ),
+              ),
+              const SizedBox(height: 14),
+              for (final position in result.positions)
+                _PositionRow(position: position, currency: result.currency),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: FButton(
+                  variant: FButtonVariant.secondary,
+                  onPress: onDraft,
+                  child: Text(l10n.dcaSimulatorDraftAction),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ],
@@ -586,15 +582,13 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Center(
-          child: Text(
-            message,
-            textAlign: TextAlign.center,
-            style: context.theme.typography.sm,
-          ),
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s24),
+      child: Center(
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: context.theme.typography.sm,
         ),
       ),
     );

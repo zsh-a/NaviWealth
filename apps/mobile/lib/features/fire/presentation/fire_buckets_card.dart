@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../../home/data/dashboard_providers.dart';
@@ -52,58 +53,53 @@ class _FireBucketsCardState extends ConsumerState<FireBucketsCard> {
           source: 'fire_buckets_card',
           objectLabel: l10n.fireOsBucketsTitle,
         ),
-        child: FCard.raw(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.fireOsBucketsTitle,
-                  style: context.theme.typography.md,
+        child: SoftCard(
+          padding: const EdgeInsets.all(AppSpacing.s16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.fireOsBucketsTitle, style: context.theme.typography.md),
+              const SizedBox(height: 4),
+              Text(
+                l10n.fireOsBucketsSubtitle,
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  l10n.fireOsBucketsSubtitle,
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+              ),
+              const SizedBox(height: 12),
+              for (final bucket in allocation.buckets) ...[
+                _BucketRow(
+                  bucket: bucket,
+                  formatters: formatters,
+                  l10n: l10n,
+                  expanded: _expanded.contains(bucket.role),
+                  onTap: () => setState(() {
+                    if (!_expanded.add(bucket.role)) {
+                      _expanded.remove(bucket.role);
+                    }
+                  }),
+                  itemsById: itemsById,
+                ),
+                const SizedBox(height: 10),
+              ],
+              if (allocation.unmappedHoldings.isNotEmpty) ...[
+                _UnmappedSection(
+                  unmapped: allocation.unmappedHoldings,
+                  formatters: formatters,
+                  l10n: l10n,
                 ),
                 const SizedBox(height: 12),
-                for (final bucket in allocation.buckets) ...[
-                  _BucketRow(
-                    bucket: bucket,
-                    formatters: formatters,
-                    l10n: l10n,
-                    expanded: _expanded.contains(bucket.role),
-                    onTap: () => setState(() {
-                      if (!_expanded.add(bucket.role)) {
-                        _expanded.remove(bucket.role);
-                      }
-                    }),
-                    itemsById: itemsById,
-                  ),
-                  const SizedBox(height: 10),
-                ],
-                if (allocation.unmappedHoldings.isNotEmpty) ...[
-                  _UnmappedSection(
-                    unmapped: allocation.unmappedHoldings,
-                    formatters: formatters,
-                    l10n: l10n,
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: FButton(
-                    variant: FButtonVariant.outline,
-                    onPress: () => showFireBucketMappingSheet(context),
-                    prefix: const Icon(FLucideIcons.slidersHorizontal, size: 14),
-                    child: Text(l10n.fireOsBucketsManageCta),
-                  ),
-                ),
               ],
-            ),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => showFireBucketMappingSheet(context),
+                  prefix: const Icon(FLucideIcons.slidersHorizontal, size: 14),
+                  child: Text(l10n.fireOsBucketsManageCta),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -366,24 +362,22 @@ class _BucketsSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(width: 80, height: 16, color: context.theme.colors.muted),
-            const SizedBox(height: 12),
-            for (var i = 0; i < 3; i++) ...[
-              Container(
-                width: double.infinity,
-                height: 20,
-                color: context.theme.colors.muted,
-              ),
-              const SizedBox(height: 8),
-            ],
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(width: 80, height: 16, color: context.theme.colors.muted),
+          const SizedBox(height: 12),
+          for (var i = 0; i < 3; i++) ...[
+            Container(
+              width: double.infinity,
+              height: 20,
+              color: context.theme.colors.muted,
+            ),
+            const SizedBox(height: 8),
           ],
-        ),
+        ],
       ),
     );
   }

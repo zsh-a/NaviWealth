@@ -328,7 +328,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     // SoftCard exposes no border slot — wrap to mark the active one.
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(
           color: colors.primary.withValues(alpha: 0.45),
           width: 1.5,

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../core/format/providers.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/concentration_risk.dart';
@@ -56,7 +57,7 @@ class _AlertList extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        FCard.raw(
+        SoftCard(
           child: Column(
             children: [
               for (var i = 0; i < alerts.length; i++) ...[

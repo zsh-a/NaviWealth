@@ -102,7 +102,7 @@ class _RateList extends ConsumerWidget {
           background: Container(
             decoration: BoxDecoration(
               color: semantic.dangerContainer,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             alignment: AlignmentDirectional.centerEnd,
             padding: const EdgeInsets.symmetric(horizontal: 16),

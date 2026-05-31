@@ -21,6 +21,7 @@ import '../../../core/ai/local/embedding/embedder_path_resolution.dart';
 import '../../../core/ai/local/embedding/model_install_state.dart';
 import '../../../core/ai/local/embedding/model_manifest.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 
 class AiModelsPage extends ConsumerWidget {
   const AiModelsPage({super.key});
@@ -29,9 +30,10 @@ class AiModelsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final bundles = ref.watch(knownModelBundlesProvider);
     final resolution = ref.watch(embedderPathResolutionProvider);
+    final l10n = AppLocalizations.of(context);
     return FScaffold(
       header: FHeader.nested(
-        title: const Text('AI 模型'),
+        title: Text(l10n.settingsAiModelsTitle),
         prefixes: [backHeaderAction(context)],
       ),
       childPad: false,
@@ -68,22 +70,28 @@ class _RuntimeDiagnosticsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final semantic = SemanticColors.of(context);
+    final colors = context.theme.colors;
     return SoftCard(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.s12),
       child: resolution.when(
-        loading: () => const Row(
+        loading: () => Row(
           children: [
-            SizedBox.square(
+            const SizedBox.square(
               dimension: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
-            SizedBox(width: 8),
-            Text('正在检查下次启动的 embedder 路径…'),
+            const SizedBox(width: AppSpacing.s8),
+            Text(
+              l10n.settingsAiModelsCheckingRuntime,
+              style: context.theme.typography.sm,
+            ),
           ],
         ),
         error: (e, _) => Text(
-          'embedder 路径检查失败:$e',
-          style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+          l10n.settingsAiModelsRuntimeCheckFailed('$e'),
+          style: context.theme.typography.xs.copyWith(color: semantic.danger),
         ),
         data: (r) {
           final complete = r.isComplete;
@@ -95,40 +103,40 @@ class _RuntimeDiagnosticsCard extends StatelessWidget {
                   Icon(
                     complete ? FLucideIcons.cpu : FLucideIcons.circleAlert,
                     size: 18,
-                    color: complete ? Colors.green : Colors.orange,
+                    color: complete ? semantic.success : semantic.warning,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.s8),
                   Expanded(
                     child: Text(
                       complete
-                          ? '下次启动将加载 Rust EmbeddingGemma'
-                          : '下次启动仍会使用 stub embedder',
-                      style: const TextStyle(
-                        fontSize: 13,
+                          ? l10n.settingsAiModelsRuntimeReady
+                          : l10n.settingsAiModelsRuntimeStub,
+                      style: context.theme.typography.sm.copyWith(
+                        color: colors.foreground,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
               _RuntimeRow(
-                label: '模型',
+                label: l10n.settingsAiModelsModelLabel,
                 value: r.modelDir.isEmpty
-                    ? '缺失: EmbeddingGemma model dir'
-                    : '${_modelSourceLabel(r.modelSource)} · ${r.modelDir}',
+                    ? l10n.settingsAiModelsModelMissing
+                    : '${_modelSourceLabel(l10n, r.modelSource)} · ${r.modelDir}',
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.s4),
               _RuntimeRow(
                 label: 'ONNX Runtime',
                 value: r.ortDylibPath.isEmpty
-                    ? '缺失: ONNX Runtime dylib'
-                    : '${_ortSourceLabel(r.ortSource)} · ${r.ortDylibPath}',
+                    ? l10n.settingsAiModelsOrtMissing
+                    : '${_ortSourceLabel(l10n, r.ortSource)} · ${r.ortDylibPath}',
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.s4),
               _RuntimeRow(
-                label: 'native lib',
-                value: r.libraryPath ?? '由平台插件加载',
+                label: l10n.settingsAiModelsNativeLibLabel,
+                value: r.libraryPath ?? l10n.settingsAiModelsNativeLibPlatform,
               ),
             ],
           );
@@ -146,6 +154,7 @@ class _RuntimeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.theme.colors;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -153,13 +162,17 @@ class _RuntimeRow extends StatelessWidget {
           width: 86,
           child: Text(
             label,
-            style: const TextStyle(fontSize: 11, color: Colors.grey),
+            style: context.theme.typography.xs2.copyWith(
+              color: colors.mutedForeground,
+            ),
           ),
         ),
         Expanded(
           child: SelectableText(
             value,
-            style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+            style: TypographyTokens.numericCaption.copyWith(
+              color: colors.foreground,
+            ),
           ),
         ),
       ],
@@ -167,30 +180,34 @@ class _RuntimeRow extends StatelessWidget {
   }
 }
 
-String _modelSourceLabel(EmbedderModelPathSource source) => switch (source) {
+String _modelSourceLabel(
+  AppLocalizations l10n,
+  EmbedderModelPathSource source,
+) => switch (source) {
   EmbedderModelPathSource.dartDefine => 'dart-define',
-  EmbedderModelPathSource.installedBundle => '已安装',
-  EmbedderModelPathSource.missing => '缺失',
+  EmbedderModelPathSource.installedBundle =>
+    l10n.settingsAiModelsInstalledSource,
+  EmbedderModelPathSource.missing => l10n.settingsAiModelsMissingSource,
 };
 
-String _ortSourceLabel(EmbedderOrtPathSource source) => switch (source) {
-  EmbedderOrtPathSource.dartDefine => 'dart-define',
-  EmbedderOrtPathSource.bundled => 'app bundle',
-  EmbedderOrtPathSource.missing => '缺失',
-};
+String _ortSourceLabel(AppLocalizations l10n, EmbedderOrtPathSource source) =>
+    switch (source) {
+      EmbedderOrtPathSource.dartDefine => 'dart-define',
+      EmbedderOrtPathSource.bundled => 'app bundle',
+      EmbedderOrtPathSource.missing => l10n.settingsAiModelsMissingSource,
+    };
 
 class _Hint extends StatelessWidget {
   const _Hint();
 
   @override
   Widget build(BuildContext context) {
-    return const SoftCard(
-      padding: EdgeInsets.all(12),
+    final l10n = AppLocalizations.of(context);
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s12),
       child: Text(
-        'AI 记忆检索默认走轻量 stub。下载 EmbeddingGemma 模型后重启应用即可启用'
-        '本地多语言句向量(768-d)。文件保存在本机,不上传任何远端。'
-        '(ONNX Runtime 引擎已随 app 一起构建,无需单独管理。)',
-        style: TextStyle(fontSize: 13),
+        l10n.settingsAiModelsHint,
+        style: context.theme.typography.sm,
       ),
     );
   }
@@ -201,13 +218,14 @@ class _Footnote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4),
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
       child: Text(
-        '下载完成后,请重启应用让 Memory Runtime 使用新 embedder。'
-        '已有的记忆条目会在下次 indexer 周期自动用新模型重新生成 vector,'
-        '原始 typed records (events/episodic/...) 保持不变。',
-        style: TextStyle(fontSize: 12, color: Colors.grey),
+        l10n.settingsAiModelsFootnote,
+        style: context.theme.typography.xs.copyWith(
+          color: context.theme.colors.mutedForeground,
+        ),
       ),
     );
   }
@@ -222,9 +240,12 @@ class _BundleCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final stateAsync = ref.watch(modelInstallProvider(bundle));
     final controller = ref.read(modelInstallProvider(bundle).notifier);
+    final l10n = AppLocalizations.of(context);
+    final semantic = SemanticColors.of(context);
+    final colors = context.theme.colors;
 
     return SoftCard(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -236,15 +257,17 @@ class _BundleCard extends ConsumerWidget {
                   children: [
                     Text(
                       bundle.displayName,
-                      style: const TextStyle(
-                        fontSize: 15,
+                      style: context.theme.typography.sm.copyWith(
+                        color: colors.foreground,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpacing.s2),
                     Text(
                       bundle.description,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      style: context.theme.typography.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
                     ),
                   ],
                 ),
@@ -252,15 +275,17 @@ class _BundleCard extends ConsumerWidget {
               _SizeBadge(bundle: bundle),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           stateAsync.when(
             loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
               child: LinearProgressIndicator(),
             ),
             error: (e, _) => Text(
-              '加载状态失败:$e',
-              style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+              l10n.settingsAiModelsStateLoadFailed('$e'),
+              style: context.theme.typography.xs.copyWith(
+                color: semantic.danger,
+              ),
             ),
             data: (bundleState) => _BundleBody(
               state: bundleState,
@@ -282,15 +307,22 @@ class _SizeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final total = bundle.totalSizeBytes;
     if (total == null) return const SizedBox.shrink();
+    final colors = context.theme.colors;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s4,
+      ),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(8),
+        color: colors.foreground.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Text(
         _formatBytes(total),
-        style: const TextStyle(fontSize: 11, color: Colors.black54),
+        style: context.theme.typography.xs2.copyWith(
+          color: colors.mutedForeground,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -311,28 +343,43 @@ class _BundleBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final semantic = SemanticColors.of(context);
+    final colors = context.theme.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final file in state.files) _FileRow(file: file),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         Row(
           children: [
             if (state.isInstalled)
-              const _StatusChip(text: '已安装', color: Colors.green)
+              _StatusChip(
+                text: l10n.settingsAiModelsStatusInstalled,
+                color: semantic.success,
+              )
             else if (state.isInstalling)
               _StatusChip(
-                text: '下载中…',
-                color: Colors.blue,
+                text: l10n.settingsAiModelsStatusDownloading,
+                color: colors.primary,
                 progress: state.aggregateProgress,
               )
             else if (state.files.any((f) => f.status == ModelFileStatus.failed))
-              const _StatusChip(text: '失败', color: Colors.redAccent)
+              _StatusChip(
+                text: l10n.settingsAiModelsStatusFailed,
+                color: semantic.danger,
+              )
             else
-              const _StatusChip(text: '未安装', color: Colors.grey),
+              _StatusChip(
+                text: l10n.settingsAiModelsStatusNotInstalled,
+                color: colors.mutedForeground,
+              ),
             const Spacer(),
             if (state.isInstalling)
-              TextButton(onPressed: onCancel, child: const Text('取消'))
+              TextButton(
+                onPressed: onCancel,
+                child: Text(l10n.settingsAiModelsCancel),
+              )
             else if (state.isInstalled) ...[
               TextButton(
                 onPressed: () async {
@@ -341,17 +388,20 @@ class _BundleBody extends StatelessWidget {
                     await onDelete();
                   }
                 },
-                child: const Text('删除'),
+                child: Text(l10n.settingsAiModelsDelete),
               ),
               TextButton(
                 onPressed: () async {
                   await onDelete();
                   await onInstall();
                 },
-                child: const Text('重新下载'),
+                child: Text(l10n.settingsAiModelsRedownload),
               ),
             ] else
-              FilledButton(onPressed: onInstall, child: const Text('下载')),
+              FilledButton(
+                onPressed: onInstall,
+                child: Text(l10n.settingsAiModelsDownload),
+              ),
           ],
         ),
       ],
@@ -359,12 +409,13 @@ class _BundleBody extends StatelessWidget {
   }
 
   Future<bool?> _confirmDelete(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return showConfirmDialog(
       context: context,
-      title: const Text('删除模型?'),
-      body: const Text('删除后 AI 检索会自动回到 stub embedder。重新下载需要再走一次网络。'),
-      confirmLabel: '删除',
-      cancelLabel: '取消',
+      title: Text(l10n.settingsAiModelsDeleteTitle),
+      body: Text(l10n.settingsAiModelsDeleteBody),
+      confirmLabel: l10n.settingsAiModelsDelete,
+      cancelLabel: l10n.settingsAiModelsCancel,
       destructive: true,
     );
   }
@@ -377,8 +428,10 @@ class _FileRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = file.progress;
+    final colors = context.theme.colors;
+    final semantic = SemanticColors.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -387,28 +440,34 @@ class _FileRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   file.file.localName,
-                  style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                  style: TypographyTokens.numericCaption.copyWith(
+                    color: colors.foreground,
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
-              _statusIcon(file.status),
+              const SizedBox(width: AppSpacing.s8),
+              _statusIcon(context, file.status),
             ],
           ),
           if (file.status == ModelFileStatus.downloading) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             LinearProgressIndicator(value: progress, minHeight: 3),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppSpacing.s2),
             Text(
               '${_formatBytes(file.bytesDownloaded)}'
               '${file.file.sizeBytes != null ? ' / ${_formatBytes(file.file.sizeBytes!)}' : ''}',
-              style: const TextStyle(fontSize: 10, color: Colors.grey),
+              style: context.theme.typography.xs2.copyWith(
+                color: colors.mutedForeground,
+              ),
             ),
           ],
           if (file.status == ModelFileStatus.failed && file.error != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               file.error!,
-              style: const TextStyle(fontSize: 10, color: Colors.redAccent),
+              style: context.theme.typography.xs2.copyWith(
+                color: semantic.danger,
+              ),
             ),
           ],
         ],
@@ -416,28 +475,32 @@ class _FileRow extends StatelessWidget {
     );
   }
 
-  Widget _statusIcon(ModelFileStatus s) => switch (s) {
-    ModelFileStatus.notInstalled => const Icon(
-      FLucideIcons.download,
-      size: 16,
-      color: Colors.grey,
-    ),
-    ModelFileStatus.downloading => const SizedBox(
-      width: 12,
-      height: 12,
-      child: CircularProgressIndicator(strokeWidth: 2),
-    ),
-    ModelFileStatus.installed => const Icon(
-      FLucideIcons.circleCheck,
-      size: 16,
-      color: Colors.green,
-    ),
-    ModelFileStatus.failed => const Icon(
-      FLucideIcons.circleAlert,
-      size: 16,
-      color: Colors.redAccent,
-    ),
-  };
+  Widget _statusIcon(BuildContext context, ModelFileStatus s) {
+    final colors = context.theme.colors;
+    final semantic = SemanticColors.of(context);
+    return switch (s) {
+      ModelFileStatus.notInstalled => Icon(
+        FLucideIcons.download,
+        size: 16,
+        color: colors.mutedForeground,
+      ),
+      ModelFileStatus.downloading => const SizedBox(
+        width: 12,
+        height: 12,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+      ModelFileStatus.installed => Icon(
+        FLucideIcons.circleCheck,
+        size: 16,
+        color: semantic.success,
+      ),
+      ModelFileStatus.failed => Icon(
+        FLucideIcons.circleAlert,
+        size: 16,
+        color: semantic.danger,
+      ),
+    };
+  }
 }
 
 class _StatusChip extends StatelessWidget {
@@ -448,27 +511,29 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8 + AppSpacing.s2,
+        vertical: AppSpacing.s4,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             text,
-            style: TextStyle(
-              fontSize: 11,
+            style: context.theme.typography.xs2.copyWith(
               color: color,
               fontWeight: FontWeight.w600,
             ),
           ),
           if (progress != null) ...[
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.s6),
             Text(
               '${(progress! * 100).toStringAsFixed(0)}%',
-              style: TextStyle(fontSize: 11, color: color),
+              style: context.theme.typography.xs2.copyWith(color: color),
             ),
           ],
         ],

@@ -77,7 +77,7 @@ class _LiabilityDetailBody extends ConsumerWidget {
               Padding(padding: const EdgeInsets.all(16), child: Text('$e')),
           data: (schedule) {
             if (schedule.isEmpty) {
-              return FCard.raw(
+              return SoftCard(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(l10n.liabilityRevolvingNoSchedule),
@@ -102,7 +102,7 @@ class _LiabilityHeaderCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final l = summary.liability;
-    return FCard.raw(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -145,7 +145,7 @@ class _LiabilitySummaryCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final l = summary.liability;
-    return FCard.raw(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -235,7 +235,7 @@ class _AmortizationTable extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    return FCard.raw(
+    return SoftCard(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -120,50 +120,48 @@ class _ProgressHeaderCard extends StatelessWidget {
     final target = view.goal.targetAmount.toDouble();
     final gap = target - current;
 
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.fireProgressTitle, style: context.theme.typography.md),
-            const SizedBox(height: AppSpacing.s12),
-            Center(
-              child: FireProgressGauge(
-                progress: ratio,
-                centerLabel: percentLabel,
-                caption: l10n.fireProgressGaugeCaption,
-              ),
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.fireProgressTitle, style: context.theme.typography.md),
+          const SizedBox(height: AppSpacing.s12),
+          Center(
+            child: FireProgressGauge(
+              progress: ratio,
+              centerLabel: percentLabel,
+              caption: l10n.fireProgressGaugeCaption,
             ),
-            const SizedBox(height: AppSpacing.s16),
-            _LabelValueRow(
-              label: l10n.fireProgressCurrent,
-              child: AnimatedMoneyText(
-                amount: current,
-                currencyCode: view.baseCurrency,
-                style: context.theme.typography.sm,
-              ),
+          ),
+          const SizedBox(height: AppSpacing.s16),
+          _LabelValueRow(
+            label: l10n.fireProgressCurrent,
+            child: AnimatedMoneyText(
+              amount: current,
+              currencyCode: view.baseCurrency,
+              style: context.theme.typography.sm,
             ),
-            const SizedBox(height: AppSpacing.s4),
-            _LabelValueRow(
-              label: l10n.fireProgressTarget,
-              child: AnimatedMoneyText(
-                amount: target,
-                currencyCode: view.baseCurrency,
-                style: context.theme.typography.sm,
-              ),
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          _LabelValueRow(
+            label: l10n.fireProgressTarget,
+            child: AnimatedMoneyText(
+              amount: target,
+              currencyCode: view.baseCurrency,
+              style: context.theme.typography.sm,
             ),
-            const SizedBox(height: AppSpacing.s4),
-            _LabelValueRow(
-              label: l10n.fireProgressGap,
-              child: AnimatedMoneyText(
-                amount: gap > 0 ? gap : 0,
-                currencyCode: view.baseCurrency,
-                style: context.theme.typography.sm,
-              ),
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          _LabelValueRow(
+            label: l10n.fireProgressGap,
+            child: AnimatedMoneyText(
+              amount: gap > 0 ? gap : 0,
+              currencyCode: view.baseCurrency,
+              style: context.theme.typography.sm,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -222,20 +220,18 @@ class _CountdownCard extends StatelessWidget {
             ],
           );
 
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.fireCountdownTitle(referenceLabel),
-              style: context.theme.typography.md,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            body,
-          ],
-        ),
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.fireCountdownTitle(referenceLabel),
+            style: context.theme.typography.md,
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          body,
+        ],
       ),
     );
   }
@@ -257,34 +253,32 @@ class _ProjectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.fireProjectionTitle, style: context.theme.typography.md),
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              l10n.fireProjectionSubtitle,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.fireProjectionTitle, style: context.theme.typography.md),
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            l10n.fireProjectionSubtitle,
+            style: context.theme.typography.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
             ),
-            const SizedBox(height: AppSpacing.s12),
-            LayoutBuilder(
-              builder: (context, c) => FireScenariosChart(
-                scenarios: view.scenarios,
-                baseCurrency: view.baseCurrency,
-                locale: Localizations.localeOf(context).toString(),
-                scenarioLabel: (tier) => _scenarioLabel(l10n, tier),
-                aspectRatio: chartAspectFor(c.maxWidth),
-              ),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          LayoutBuilder(
+            builder: (context, c) => FireScenariosChart(
+              scenarios: view.scenarios,
+              baseCurrency: view.baseCurrency,
+              locale: Localizations.localeOf(context).toString(),
+              scenarioLabel: (tier) => _scenarioLabel(l10n, tier),
+              aspectRatio: chartAspectFor(c.maxWidth),
             ),
-            const SizedBox(height: AppSpacing.s8),
-            _ScenarioLegend(view: view),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          _ScenarioLegend(view: view),
+        ],
       ),
     );
   }
@@ -328,7 +322,7 @@ class _ScenariosTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FCard.raw(
+    return SoftCard(
       child: Column(
         children: [
           Padding(
@@ -400,50 +394,48 @@ class _SafeWithdrawalCard extends StatelessWidget {
             ),
           );
 
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.fireSafeWithdrawalTitle,
-              style: context.theme.typography.md,
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.fireSafeWithdrawalTitle,
+            style: context.theme.typography.md,
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            l10n.fireSafeWithdrawalSubtitle,
+            style: context.theme.typography.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
             ),
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              l10n.fireSafeWithdrawalSubtitle,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _LabelValueRow(
+            label: l10n.fireSafeWithdrawalMonthly,
+            value: formatters.currency(
+              _toFixedDecimal(monthly),
+              code: view.baseCurrency,
             ),
-            const SizedBox(height: AppSpacing.s12),
-            _LabelValueRow(
-              label: l10n.fireSafeWithdrawalMonthly,
-              value: formatters.currency(
-                _toFixedDecimal(monthly),
-                code: view.baseCurrency,
-              ),
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          _LabelValueRow(
+            label: l10n.fireSafeWithdrawalAnnual,
+            value: formatters.currency(
+              _toFixedDecimal(monthly * 12),
+              code: view.baseCurrency,
             ),
-            const SizedBox(height: AppSpacing.s4),
-            _LabelValueRow(
-              label: l10n.fireSafeWithdrawalAnnual,
-              value: formatters.currency(
-                _toFixedDecimal(monthly * 12),
-                code: view.baseCurrency,
-              ),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Text(
+            coverageHint,
+            style: context.theme.typography.xs.copyWith(
+              color: surplus >= 0 || monthlyExpenses == 0
+                  ? context.theme.colors.mutedForeground
+                  : context.theme.colors.destructive,
             ),
-            const SizedBox(height: AppSpacing.s8),
-            Text(
-              coverageHint,
-              style: context.theme.typography.xs.copyWith(
-                color: surplus >= 0 || monthlyExpenses == 0
-                    ? context.theme.colors.mutedForeground
-                    : context.theme.colors.destructive,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -459,37 +451,35 @@ class _SensitivityCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final s = view.sensitivity;
 
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.fireSensitivityTitle, style: context.theme.typography.md),
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              l10n.fireSensitivitySubtitle,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.fireSensitivityTitle, style: context.theme.typography.md),
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            l10n.fireSensitivitySubtitle,
+            style: context.theme.typography.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
             ),
-            const SizedBox(height: AppSpacing.s12),
-            _LabelValueRow(
-              label: l10n.fireSensitivityHigherSurplus,
-              value: _formatOptionalMonths(l10n, s.highSurplusMonths),
-            ),
-            const SizedBox(height: AppSpacing.s4),
-            _LabelValueRow(
-              label: l10n.fireSensitivityBaseline,
-              value: _formatOptionalMonths(l10n, s.baselineMonths),
-            ),
-            const SizedBox(height: AppSpacing.s4),
-            _LabelValueRow(
-              label: l10n.fireSensitivityLowerSurplus,
-              value: _formatOptionalMonths(l10n, s.lowSurplusMonths),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          _LabelValueRow(
+            label: l10n.fireSensitivityHigherSurplus,
+            value: _formatOptionalMonths(l10n, s.highSurplusMonths),
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          _LabelValueRow(
+            label: l10n.fireSensitivityBaseline,
+            value: _formatOptionalMonths(l10n, s.baselineMonths),
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          _LabelValueRow(
+            label: l10n.fireSensitivityLowerSurplus,
+            value: _formatOptionalMonths(l10n, s.lowSurplusMonths),
+          ),
+        ],
       ),
     );
   }

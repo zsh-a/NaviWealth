@@ -41,7 +41,7 @@ class AssetFxPnlCard extends ConsumerWidget {
     final breakdown = report?.pnlBreakdown;
     final baseCurrency =
         breakdown?.baseCurrency ?? report?.baseCurrency ?? 'USD';
-    return FCard.raw(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

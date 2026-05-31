@@ -15,6 +15,7 @@ import 'package:forui/forui.dart';
 import '../../../app/shell_chrome.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/ui/ask_ai.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
@@ -230,13 +231,14 @@ class _NoteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            note.title.isEmpty ? '(无标题)' : note.title,
+            note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
             style: typography.md.copyWith(fontWeight: FontWeight.w600),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,

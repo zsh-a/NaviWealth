@@ -42,6 +42,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navSettingsTooltip => '设置';
 
   @override
+  String get shellSwitchDomainTitle => '切换域';
+
+  @override
+  String get shellExpandSidebarShortcut => '展开侧边栏  (⌘B)';
+
+  @override
+  String get shellCollapseSidebarShortcut => '收起侧边栏  (⌘B)';
+
+  @override
   String get planHubTitle => '规划';
 
   @override
@@ -4697,6 +4706,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDataSection => '数据';
 
   @override
+  String get settingsDomainsSection => 'LifeOS 域';
+
+  @override
+  String get settingsDomainsTitle => '域管理';
+
+  @override
+  String get settingsDomainsSubtitle =>
+      'FinanceOS / HealthOS / KnowledgeOS 开关与设置';
+
+  @override
+  String get settingsAdvancedSection => '高级';
+
+  @override
+  String get settingsAiModelsTitle => 'AI 模型';
+
+  @override
+  String get settingsAiModelsSubtitle => '下载与管理本地 EmbeddingGemma 模型';
+
+  @override
   String get settingsBadgeAuto => '自动';
 
   @override
@@ -4780,6 +4808,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsLogsSubtitle => '查看实时诊断日志';
 
   @override
+  String get settingsLogsCopiedToast => '日志已复制';
+
+  @override
   String get settingsPerfTitle => '性能';
 
   @override
@@ -4808,6 +4839,232 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsPerfRasterP95 => '栅格 p95';
+
+  @override
+  String get settingsDomainsIntro => '每个域独立开关。打开后该域的 AI 工具、Memory 索引与导航入口会启用。';
+
+  @override
+  String get settingsDomainsFinanceSubtitle => '永远启用（seed 域）';
+
+  @override
+  String get settingsDomainsEnabledBadge => '已启用';
+
+  @override
+  String get settingsDomainsHealthEnabledSubtitle =>
+      '预览中 — AI 工具与 Memory 索引已启用';
+
+  @override
+  String get settingsDomainsHealthDisabledSubtitle =>
+      '预览版 — 打开后启用 AI 工具与 Memory 索引';
+
+  @override
+  String get settingsDomainsHealthTodaySubtitle => '查看今日恢复、指标与早间简报';
+
+  @override
+  String get settingsDomainsKnowledgeEnabledSubtitle =>
+      '预览中 — Inbox、Library、Review、AI 工具与 Memory 索引已启用';
+
+  @override
+  String get settingsDomainsKnowledgeDisabledSubtitle => '预览版 — 个人决策与认知演化记忆库';
+
+  @override
+  String get settingsDomainsKnowledgeInboxSubtitle => '捕获笔记、写决策、查看资料库与复盘';
+
+  @override
+  String get settingsDomainsHealthPermissionDenied =>
+      '权限被拒绝 — 在系统 Health 设置里再试';
+
+  @override
+  String get settingsDomainsHealthSyncRunning => '正在拉取…';
+
+  @override
+  String get settingsDomainsHealthSyncIdle => '从系统健康平台拉取最近 30 天数据';
+
+  @override
+  String get settingsDomainsHealthSyncFailed => '上次同步失败';
+
+  @override
+  String settingsDomainsHealthSyncSummary(
+    int upserted,
+    int unchanged,
+    int total,
+  ) {
+    return '上次同步：$upserted 新写入 / $unchanged 未变 · 拉取 $total 项';
+  }
+
+  @override
+  String get settingsDomainsHealthSyncTitle => '同步健康数据';
+
+  @override
+  String get settingsDomainsBriefingRunning => '正在生成早间简报…';
+
+  @override
+  String settingsDomainsBriefingFailed(String error) {
+    return '简报生成失败：$error';
+  }
+
+  @override
+  String get settingsDomainsBriefingIdle => '后台每日自动运行；点按可立即生成并发送通知';
+
+  @override
+  String settingsDomainsBriefingCompleted(String summary) {
+    return '上次运行：$summary';
+  }
+
+  @override
+  String settingsDomainsBriefingSkipped(String summary) {
+    return '上次跳过：$summary';
+  }
+
+  @override
+  String settingsDomainsBriefingRunFailed(String error) {
+    return '上次失败：$error';
+  }
+
+  @override
+  String get settingsDomainsBriefingFallbackDone => '已完成';
+
+  @override
+  String get settingsDomainsBriefingFallbackNoSignals => '暂无信号';
+
+  @override
+  String get settingsDomainsBriefingFallbackUnknown => '未知错误';
+
+  @override
+  String get settingsDomainsBriefingRunTitle => '立即生成早间简报';
+
+  @override
+  String get settingsDomainsBriefingTimeHelp => 'Morning Briefing 时间';
+
+  @override
+  String get settingsDomainsBriefingTimeTitle => 'Briefing 时间';
+
+  @override
+  String settingsDomainsBriefingTimeSubtitle(String hour) {
+    return '每日大约 $hour:00 触发（后台调度窗口浮动）';
+  }
+
+  @override
+  String get settingsAiModelsCheckingRuntime => '正在检查下次启动的 embedder 路径…';
+
+  @override
+  String settingsAiModelsRuntimeCheckFailed(String error) {
+    return 'embedder 路径检查失败：$error';
+  }
+
+  @override
+  String get settingsAiModelsRuntimeReady => '下次启动将加载 Rust EmbeddingGemma';
+
+  @override
+  String get settingsAiModelsRuntimeStub => '下次启动仍会使用 stub embedder';
+
+  @override
+  String get settingsAiModelsModelLabel => '模型';
+
+  @override
+  String get settingsAiModelsModelMissing => '缺失：EmbeddingGemma model dir';
+
+  @override
+  String get settingsAiModelsOrtMissing => '缺失：ONNX Runtime dylib';
+
+  @override
+  String get settingsAiModelsNativeLibLabel => 'native lib';
+
+  @override
+  String get settingsAiModelsNativeLibPlatform => '由平台插件加载';
+
+  @override
+  String get settingsAiModelsInstalledSource => '已安装';
+
+  @override
+  String get settingsAiModelsMissingSource => '缺失';
+
+  @override
+  String get settingsAiModelsHint =>
+      'AI 记忆检索默认走轻量 stub。下载 EmbeddingGemma 模型后重启应用即可启用本地多语言句向量（768-d）。文件保存在本机，不上传任何远端。ONNX Runtime 引擎已随 app 一起构建，无需单独管理。';
+
+  @override
+  String get settingsAiModelsFootnote =>
+      '下载完成后，请重启应用让 Memory Runtime 使用新 embedder。已有的记忆条目会在下次 indexer 周期自动用新模型重新生成 vector，原始 typed records 保持不变。';
+
+  @override
+  String settingsAiModelsStateLoadFailed(String error) {
+    return '加载状态失败：$error';
+  }
+
+  @override
+  String get settingsAiModelsStatusInstalled => '已安装';
+
+  @override
+  String get settingsAiModelsStatusDownloading => '下载中…';
+
+  @override
+  String get settingsAiModelsStatusFailed => '失败';
+
+  @override
+  String get settingsAiModelsStatusNotInstalled => '未安装';
+
+  @override
+  String get settingsAiModelsCancel => '取消';
+
+  @override
+  String get settingsAiModelsDelete => '删除';
+
+  @override
+  String get settingsAiModelsRedownload => '重新下载';
+
+  @override
+  String get settingsAiModelsDownload => '下载';
+
+  @override
+  String get settingsAiModelsDeleteTitle => '删除模型？';
+
+  @override
+  String get settingsAiModelsDeleteBody =>
+      '删除后 AI 检索会自动回到 stub embedder。重新下载需要再走一次网络。';
+
+  @override
+  String get knowledgeAiSuggestionsTitle => 'AI 建议';
+
+  @override
+  String knowledgeAiSuggestionsTitleWithCount(int count) {
+    return 'AI 建议（$count）';
+  }
+
+  @override
+  String get knowledgeAiSuggestionsEmpty =>
+      '当前无待处理的 AI 建议。新写的 Note 会在 15 分钟内被 triage。';
+
+  @override
+  String knowledgeLoadFailed(String error) {
+    return '加载失败：$error';
+  }
+
+  @override
+  String knowledgeNoteDeleted(String noteId) {
+    return 'Note $noteId 已删除';
+  }
+
+  @override
+  String get knowledgeUntitled => '无标题';
+
+  @override
+  String get knowledgeMarkdownEdit => '编辑';
+
+  @override
+  String get knowledgeMarkdownPreview => '预览';
+
+  @override
+  String get knowledgeMarkdownPreviewEmpty => '暂无内容预览。切回编辑模式输入。';
+
+  @override
+  String get knowledgeDecisionNotFound => 'Decision 不存在或已删除';
+
+  @override
+  String get knowledgeObjectNotFound => '条目不存在或已删除';
+
+  @override
+  String get knowledgeDeletedToast => '已删除';
 
   @override
   String get backupExportTitle => '导出备份';

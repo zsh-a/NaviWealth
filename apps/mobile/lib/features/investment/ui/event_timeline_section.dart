@@ -74,7 +74,7 @@ class _EventRow extends StatelessWidget {
     final dateText = DateFormat.yMMMd(
       Localizations.localeOf(context).toString(),
     ).format(event.scheduledFor);
-    return FCard.raw(
+    return SoftCard(
       child: FTile(
         prefix: Container(
           width: 36,

@@ -26,6 +26,7 @@ import 'package:forui/forui.dart';
 
 import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 
 /// Max items a Review-tab summary card lists per section. Kept here so the
 /// three cards (Routines / Decisions / Assumptions) stay in agreement.
@@ -177,6 +178,7 @@ class _MarkdownEditorWithPreviewState extends State<MarkdownEditorWithPreview> {
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -191,8 +193,8 @@ class _MarkdownEditorWithPreviewState extends State<MarkdownEditorWithPreview> {
           options: _MarkdownMode.values,
           value: _mode,
           labelOf: (m) => switch (m) {
-            _MarkdownMode.edit => '编辑',
-            _MarkdownMode.preview => '预览',
+            _MarkdownMode.edit => l10n.knowledgeMarkdownEdit,
+            _MarkdownMode.preview => l10n.knowledgeMarkdownPreview,
           },
           onChanged: (m) => setState(() => _mode = m),
         ),
@@ -215,7 +217,7 @@ class _MarkdownEditorWithPreviewState extends State<MarkdownEditorWithPreview> {
             ),
             child: widget.controller.text.trim().isEmpty
                 ? Text(
-                    '暂无内容预览 — 切回编辑模式输入。',
+                    l10n.knowledgeMarkdownPreviewEmpty,
                     style: typography.sm.copyWith(
                       color: colors.mutedForeground,
                     ),

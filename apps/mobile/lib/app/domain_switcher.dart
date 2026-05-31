@@ -16,6 +16,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/shell/domain_shell.dart';
 import '../design_system/design_system.dart';
+import '../l10n/gen/app_localizations.dart';
 
 /// Show the domain-picker sheet. No-op if fewer than 2 domains are
 /// registered (single-domain installs never need the picker).
@@ -24,12 +25,13 @@ Future<void> showDomainSwitcherSheet(
   List<DomainShellSpec> specs,
 ) async {
   if (specs.length < 2) return;
-  final activePath =
-      GoRouter.of(context).routeInformationProvider.value.uri.path;
+  final activePath = GoRouter.of(
+    context,
+  ).routeInformationProvider.value.uri.path;
   final active = activeSpecForPath(specs, activePath);
   await showAppSheet<void>(
     context: context,
-    title: 'Switch domain',
+    title: AppLocalizations.of(context).shellSwitchDomainTitle,
     scrollable: false,
     builder: (sheetContext) {
       return Column(
@@ -94,8 +96,7 @@ class _DomainRow extends StatelessWidget {
                 ),
               ),
             ),
-            if (selected)
-              Icon(Icons.check, size: 18, color: colors.primary),
+            if (selected) Icon(Icons.check, size: 18, color: colors.primary),
           ],
         ),
       ),

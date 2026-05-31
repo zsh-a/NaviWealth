@@ -16,7 +16,7 @@ import 'insight_feed_strings.dart';
 /// Vertical feed of AI-generated insights — the calm-finance replacement
 /// for the legacy horizontal `InsightStrip` chip carousel.
 ///
-/// Each insight renders as a full-width [FCard.raw] with:
+/// Each insight renders as a full-width [SoftCard] with:
 ///  - left: rounded tinted icon disc (color reflects severity)
 ///  - middle: headline + detail copy
 ///  - right: chevron when the card is tappable

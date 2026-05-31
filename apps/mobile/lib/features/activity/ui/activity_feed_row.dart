@@ -47,7 +47,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
         ? entry.entry.payee!
         : _accountSummary(entry.postings, accountsById);
 
-    return FCard.raw(
+    return SoftCard(
       child: FTile(
         onPress: () => _openDetail(context),
         prefix: Container(

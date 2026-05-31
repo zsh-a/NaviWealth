@@ -112,7 +112,7 @@ class _AccountsSection extends StatelessWidget {
               ),
             ),
           ),
-          FCard.raw(
+          SoftCard(
             child: Column(
               children: [
                 for (var i = 0; i < accounts.length; i++) ...[

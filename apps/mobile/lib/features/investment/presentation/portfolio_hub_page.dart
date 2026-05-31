@@ -512,7 +512,7 @@ class _DcaSimulatorEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FCard.raw(
+    return SoftCard(
       child: FTile(
         onPress: () => context.push(AppRoutes.planDca),
         prefix: Icon(
@@ -823,35 +823,33 @@ class _EngineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  trailing,
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                trailing,
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            child,
-          ],
-        ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
       ),
     );
   }
@@ -1017,53 +1015,51 @@ class _GroupRowCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: _TitleSubtitle(
-                    title: group.title,
-                    subtitle:
-                        '${group.subtitle} · ${l10n.portfolioHubHoldingCount(group.holdingsCount)}',
-                  ),
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _TitleSubtitle(
+                  title: group.title,
+                  subtitle:
+                      '${group.subtitle} · ${l10n.portfolioHubHoldingCount(group.holdingsCount)}',
                 ),
-                AnimatedMoneyText(
-                  amount: group.marketValueInBase.toDouble(),
-                  currencyCode: group.baseCurrency,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              ),
+              AnimatedMoneyText(
+                amount: group.marketValueInBase.toDouble(),
+                currencyCode: group.baseCurrency,
+                style: context.theme.typography.sm.copyWith(
+                  fontWeight: FontWeight.w700,
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            _WeightBar(weight: group.weight.toDouble()),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Text(
-                  _formatRatio(context, group.weight.toDouble()),
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _WeightBar(weight: group.weight.toDouble()),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                _formatRatio(context, group.weight.toDouble()),
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
                 ),
-                const Spacer(),
-                AnimatedMoneyText(
-                  amount: group.unrealizedPnlInBase.toDouble(),
-                  currencyCode: group.baseCurrency,
-                  showSign: true,
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+              ),
+              const Spacer(),
+              AnimatedMoneyText(
+                amount: group.unrealizedPnlInBase.toDouble(),
+                currencyCode: group.baseCurrency,
+                showSign: true,
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -1077,12 +1073,11 @@ class _HoldingRowCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FCard.raw(
-      child: GestureDetector(
-        onTap: () => context.push(AppRoutes.wealthAsset(holding.assetId)),
-        behavior: HitTestBehavior.opaque,
+    return SoftCard(
+      child: FTappable(
+        onPress: () => context.push(AppRoutes.wealthAsset(holding.assetId)),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(AppSpacing.s12),
           child: Row(
             children: [
               Expanded(

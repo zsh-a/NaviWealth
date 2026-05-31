@@ -109,8 +109,8 @@ class SettingsOverview extends ConsumerWidget {
           _SectionDivider(),
           InlineLinkRow(
             icon: FLucideIcons.download,
-            label: 'AI 模型',
-            subtitle: '下载 / 管理本地 embedder 模型 (EmbeddingGemma)',
+            label: l10n.settingsAiModelsTitle,
+            subtitle: l10n.settingsAiModelsSubtitle,
             onTap: () => context.goNamed(AppRouteNames.aiModels),
           ),
         ],
@@ -147,11 +147,11 @@ class SettingsOverview extends ConsumerWidget {
     // toggle and per-domain ops (HealthOS sync / briefing) aren't crammed
     // into the global preferences list. The overview just links in.
     final domainsGroup = _Section(
-      title: 'LifeOS 域',
+      title: l10n.settingsDomainsSection,
       child: InlineLinkRow(
         icon: FLucideIcons.layoutGrid,
-        label: '域管理',
-        subtitle: 'FinanceOS / HealthOS / KnowledgeOS — 开关与设置',
+        label: l10n.settingsDomainsTitle,
+        subtitle: l10n.settingsDomainsSubtitle,
         onTap: () => context.goNamed(AppRouteNames.domains),
       ),
     );
@@ -163,8 +163,8 @@ class SettingsOverview extends ConsumerWidget {
     // already kept in memory in every build, and dogfood users need a
     // way to copy diagnostics out (e.g. Health Connect permission flow)
     // without a debug attach.
-    final developerGroup = _Section(
-      title: l10n.settingsDeveloperSection,
+    final advancedGroup = _Section(
+      title: l10n.settingsAdvancedSection,
       child: Column(
         children: [
           InlineLinkRow(
@@ -217,7 +217,7 @@ class SettingsOverview extends ConsumerWidget {
             const SizedBox(height: 16),
             aboutGroup,
             const SizedBox(height: 16),
-            developerGroup,
+            advancedGroup,
           ],
         );
 
@@ -260,7 +260,7 @@ class SettingsOverview extends ConsumerWidget {
                         const SizedBox(height: 16),
                         aboutGroup,
                         const SizedBox(height: 16),
-                        developerGroup,
+                        advancedGroup,
                       ],
                     )
                   : null,
