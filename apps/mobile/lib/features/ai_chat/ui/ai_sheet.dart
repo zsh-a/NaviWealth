@@ -81,7 +81,7 @@ Future<void> showAiSheet(
     context: context,
     barrierLabel: 'ai-chat-sheet',
     barrierDismissible: true,
-    barrierColor: Colors.black.withValues(alpha: AppOpacity.medium),
+    barrierColor: SemanticColors.of(context).scrim,
     transitionDuration: Motion.medium,
     pageBuilder: (ctx, animation, secondaryAnimation) =>
         _DesktopSheetOverlay(prefill: prefill),

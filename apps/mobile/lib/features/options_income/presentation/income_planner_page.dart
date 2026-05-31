@@ -125,7 +125,7 @@ class _StartState extends ConsumerWidget {
           children: [
             Icon(
               FLucideIcons.candlestickChart,
-              size: 48,
+              size: AppIconSizes.hero,
               color: colors.mutedForeground,
             ),
             const SizedBox(height: AppSpacing.s16),
@@ -170,7 +170,7 @@ class _ConfiguredBody extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
-        _SectionHeader(
+        SectionHeader(
           title: l10n.incomePlannerApprovedSectionTitle,
           trailing: FButton(
             variant: FButtonVariant.outline,
@@ -358,59 +358,57 @@ class _OpportunityCard extends StatelessWidget {
     final colors = context.theme.colors;
     final metrics = opportunity.metrics;
     final contract = opportunity.contract;
-    return FCard(
-      child: InkWell(
-        onTap: () => showOpportunityDetailSheet(context, opportunity),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.s16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  _StrategyBadge(strategy: opportunity.strategy),
-                  const SizedBox(width: AppSpacing.s8),
-                  _RiskBadge(risk: opportunity.risk),
-                  const Spacer(),
-                  Text(
-                    '${contract.underlying} ${contract.dte}DTE',
-                    style: context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+    return SoftCard(
+      onPress: () => showOpportunityDetailSheet(context, opportunity),
+      borderRadius: AppRadius.md,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _StrategyBadge(strategy: opportunity.strategy),
+                const SizedBox(width: AppSpacing.s8),
+                _RiskBadge(risk: opportunity.risk),
+                const Spacer(),
+                Text(
+                  '${contract.underlying} ${contract.dte}DTE',
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s12),
+            _MetricsRow(metrics: metrics, contract: contract),
+            const SizedBox(height: AppSpacing.s12),
+            if (opportunity.explanation.whyGood.isNotEmpty) ...[
+              Text(
+                l10n.incomePlannerDetailWhyGood,
+                style: context.theme.typography.xs.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colors.mutedForeground,
+                ),
               ),
-              const SizedBox(height: AppSpacing.s12),
-              _MetricsRow(metrics: metrics, contract: contract),
-              const SizedBox(height: AppSpacing.s12),
-              if (opportunity.explanation.whyGood.isNotEmpty) ...[
-                Text(
-                  l10n.incomePlannerDetailWhyGood,
-                  style: context.theme.typography.xs.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colors.mutedForeground,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.s2),
-                for (final line in opportunity.explanation.whyGood.take(2))
-                  _BulletRow(line: line),
-              ],
-              if (opportunity.explanation.whyRisky.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.s8),
-                Text(
-                  l10n.incomePlannerDetailWhyRisky,
-                  style: context.theme.typography.xs.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colors.destructive,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.s2),
-                for (final line in opportunity.explanation.whyRisky.take(2))
-                  _BulletRow(line: line),
-              ],
+              const SizedBox(height: AppSpacing.s2),
+              for (final line in opportunity.explanation.whyGood.take(2))
+                _BulletRow(line: line),
             ],
-          ),
+            if (opportunity.explanation.whyRisky.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s8),
+              Text(
+                l10n.incomePlannerDetailWhyRisky,
+                style: context.theme.typography.xs.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colors.destructive,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s2),
+              for (final line in opportunity.explanation.whyRisky.take(2))
+                _BulletRow(line: line),
+            ],
+          ],
         ),
       ),
     );
@@ -488,7 +486,7 @@ class _ScanEmptyResultCard extends StatelessWidget {
     final body = universeEmpty
         ? l10n.incomePlannerRefreshUniverseEmpty
         : l10n.incomePlannerOpportunitiesAllRejected;
-    return FCard(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
@@ -680,7 +678,7 @@ class _EmptyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FCard(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Text(
@@ -704,7 +702,7 @@ class _ErrorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FCard(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
@@ -732,30 +730,6 @@ class _ErrorCard extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, this.trailing});
-
-  final String title;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            style: context.theme.typography.lg.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        ?trailing,
-      ],
-    );
-  }
-}
-
 class _ApprovedEmpty extends StatelessWidget {
   const _ApprovedEmpty();
 
@@ -763,7 +737,7 @@ class _ApprovedEmpty extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    return FCard(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
@@ -818,49 +792,47 @@ class _ApprovedTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    return FCard(
-      child: InkWell(
-        onTap: () => showApprovedUnderlyingSheet(context, existing: item),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s16,
-            vertical: AppSpacing.s12,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.displaySymbol,
-                      style: context.theme.typography.sm.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+    return SoftCard(
+      onPress: () => showApprovedUnderlyingSheet(context, existing: item),
+      borderRadius: AppRadius.md,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s16,
+          vertical: AppSpacing.s12,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.displaySymbol,
+                    style: context.theme.typography.sm.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(height: AppSpacing.s2),
-                    Text(
-                      item.market.wire,
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
+                  ),
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(
+                    item.market.wire,
+                    style: context.theme.typography.xs.copyWith(
+                      color: colors.mutedForeground,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(width: AppSpacing.s8),
-              _StrategyChip(
-                label: l10n.incomePlannerProfileAllowPut,
-                enabled: item.allowPut,
-              ),
-              const SizedBox(width: AppSpacing.s6),
-              _StrategyChip(
-                label: l10n.incomePlannerProfileAllowCall,
-                enabled: item.allowCall,
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            _StrategyChip(
+              label: l10n.incomePlannerProfileAllowPut,
+              enabled: item.allowPut,
+            ),
+            const SizedBox(width: AppSpacing.s6),
+            _StrategyChip(
+              label: l10n.incomePlannerProfileAllowCall,
+              enabled: item.allowCall,
+            ),
+          ],
         ),
       ),
     );
@@ -920,7 +892,7 @@ class _TradeJournalSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(
+        SectionHeader(
           title: l10n.incomePlannerJournalSectionTitle,
           trailing: FButton(
             variant: FButtonVariant.outline,
@@ -951,55 +923,53 @@ class _TradeJournalSection extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(
                           vertical: AppSpacing.s4,
                         ),
-                        child: FCard(
-                          child: InkWell(
-                            onTap: () => showTradeJournalSheet(
-                              context,
-                              existingId: entry.id,
+                        child: SoftCard(
+                          onPress: () => showTradeJournalSheet(
+                            context,
+                            existingId: entry.id,
+                          ),
+                          borderRadius: AppRadius.md,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.s16,
+                              vertical: AppSpacing.s12,
                             ),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.s16,
-                                vertical: AppSpacing.s12,
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '${entry.symbol} · ${entry.optionSymbol}',
-                                          style: context.theme.typography.sm
-                                              .copyWith(
-                                                fontWeight: FontWeight.w600,
-                                              ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${entry.symbol} · ${entry.optionSymbol}',
+                                        style: context.theme.typography.sm
+                                            .copyWith(
+                                          fontWeight: FontWeight.w600,
                                         ),
-                                        const SizedBox(height: AppSpacing.s2),
-                                        Text(
-                                          tradeJournalStatusLabel(
-                                            l10n,
-                                            entry.status,
-                                          ),
-                                          style: context.theme.typography.xs
-                                              .copyWith(
-                                                color: colors.mutedForeground,
-                                              ),
+                                      ),
+                                      const SizedBox(height: AppSpacing.s2),
+                                      Text(
+                                        tradeJournalStatusLabel(
+                                          l10n,
+                                          entry.status,
                                         ),
-                                      ],
-                                    ),
+                                        style: context.theme.typography.xs
+                                            .copyWith(
+                                          color: colors.mutedForeground,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    '+${entry.entryCredit}',
-                                    style: context.theme.typography.sm.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: colors.primary,
-                                    ),
+                                ),
+                                Text(
+                                  '+${entry.entryCredit}',
+                                  style: context.theme.typography.sm.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: colors.primary,
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

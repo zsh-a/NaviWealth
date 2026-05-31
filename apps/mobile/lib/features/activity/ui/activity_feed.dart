@@ -190,7 +190,7 @@ class _EmptyFeed extends StatelessWidget {
           children: [
             Icon(
               FLucideIcons.workflow,
-              size: 48,
+              size: AppIconSizes.hero,
               color: context.theme.colors.mutedForeground.withValues(
                 alpha: 0.4,
               ),

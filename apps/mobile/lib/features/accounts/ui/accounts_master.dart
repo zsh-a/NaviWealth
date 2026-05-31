@@ -165,7 +165,7 @@ class _EmptyAccounts extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(FLucideIcons.landmark, size: 48),
+            const Icon(FLucideIcons.landmark, size: AppIconSizes.hero),
             const SizedBox(height: AppSpacing.s12),
             Text(l10n.accountsEmptyHint, textAlign: TextAlign.center),
             const SizedBox(height: AppSpacing.s16),

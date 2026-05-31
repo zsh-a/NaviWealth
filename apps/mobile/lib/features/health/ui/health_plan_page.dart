@@ -111,7 +111,7 @@ class _RecoveryCard extends StatelessWidget {
               style: typography.xs.copyWith(color: colors.mutedForeground),
             ),
           ],
-          const Divider(height: AppSpacing.s24),
+          const SizedBox(height: AppSpacing.s24),
           Text(
             '输入指标',
             style: typography.xs.copyWith(color: colors.mutedForeground),
