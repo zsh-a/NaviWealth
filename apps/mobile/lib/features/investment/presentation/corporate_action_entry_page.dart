@@ -309,7 +309,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
                 label: Text(l10n.corpActionSelectAsset),
                 description: Text(l10n.corpActionSelectAssetHint),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s16),
               // Effective date row.
               FTile(
                 key: const Key('corp-action-date'),
@@ -319,7 +319,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
                 suffix: FButton.icon(
                   variant: FButtonVariant.ghost,
                   onPress: _pickEffectiveDate,
-                  child: const Icon(FLucideIcons.calendarPlus, size: 20),
+                  child: const Icon(FLucideIcons.calendarPlus, size: AppIconSizes.md),
                 ),
               ),
               const FDivider(),
@@ -328,17 +328,17 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
                 l10n.corpActionEventTypeTitle,
                 style: context.theme.typography.md,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
               _TypeSelector(
                 selected: _type,
                 onChanged: _onTypeChanged,
                 l10n: l10n,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s16),
               // Type-specific fields.
               ..._fieldsForType(l10n),
               if (_previewError != null) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.s16),
                 SoftCard(
                   padding: const EdgeInsets.all(AppSpacing.s12),
                   child: Text(
@@ -348,7 +348,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
                 ),
               ],
               if (_preview != null) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.s16),
                 _PreviewCard(
                   key: const Key('corp-action-preview-card'),
                   preview: _preview!,
@@ -373,7 +373,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
             requirePositive: false,
             l10n: l10n,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           _decimalField(
             controllerKey: 'withholding-tax',
             controller: _withholdingTaxCtl,
@@ -412,7 +412,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
             requirePositive: true,
             l10n: l10n,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           _decimalField(
             controllerKey: 'price-per-unit',
             controller: _pricePerUnitCtl,
@@ -420,7 +420,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
             requirePositive: true,
             l10n: l10n,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           _decimalField(
             controllerKey: 'fee',
             controller: _feeCtl,
@@ -438,7 +438,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
             requirePositive: true,
             l10n: l10n,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           _decimalField(
             controllerKey: 'price-per-unit',
             controller: _pricePerUnitCtl,
@@ -446,7 +446,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
             requirePositive: true,
             l10n: l10n,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           _decimalField(
             controllerKey: 'withholding-tax',
             controller: _withholdingTaxCtl,
@@ -454,7 +454,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
             requirePositive: false,
             l10n: l10n,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           _decimalField(
             controllerKey: 'fee',
             controller: _feeCtl,
@@ -574,7 +574,7 @@ class _PreviewCard extends StatelessWidget {
             l10n.corpActionPreviewHeading,
             style: context.theme.typography.md,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           if (dividend != null) ...[
             _kv(l10n.corpActionPreviewSharesOnRecord, '${dividend.shareCount}'),
             _kv(
@@ -598,7 +598,7 @@ class _PreviewCard extends StatelessWidget {
             ),
           for (final delta in preview.lotDeltas)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
               child: Text(
                 l10n.corpActionPreviewLotChange(
                   delta.before.id,
@@ -611,7 +611,7 @@ class _PreviewCard extends StatelessWidget {
             ),
           for (final newLot in preview.newLots)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
               child: Text(
                 l10n.corpActionPreviewNewLot(
                   '${newLot.originalQuantity}',
@@ -625,7 +625,7 @@ class _PreviewCard extends StatelessWidget {
   }
 
   Widget _kv(String label, String value) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 2),
+    padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [Text(label), Text(value)],

@@ -104,7 +104,7 @@ class _AccountsSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.s12, 0, AppSpacing.s12, AppSpacing.s8),
             child: Text(
               title.toUpperCase(),
               style: context.theme.typography.xs2.copyWith(
@@ -230,7 +230,7 @@ class _AccountRowState extends State<_AccountRow> {
                       ),
                     if (balances.isMultiUnit)
                       Padding(
-                        padding: const EdgeInsets.only(top: 2),
+                        padding: const EdgeInsets.only(top: AppSpacing.s2),
                         child: Text(
                           _multiHint(balances),
                           style: context.theme.typography.xs2.copyWith(
@@ -247,7 +247,7 @@ class _AccountRowState extends State<_AccountRow> {
                       _expanded
                           ? FLucideIcons.chevronUp
                           : FLucideIcons.chevronDown,
-                      size: 18,
+                      size: AppIconSizes.h18,
                       color: colors.mutedForeground.withValues(alpha: 0.6),
                     ),
                   ),
@@ -296,12 +296,12 @@ class _AccountIconBadge extends StatelessWidget {
       height: 36,
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       alignment: Alignment.center,
       child: Icon(
         resolveAccountIcon(account.icon) ?? _iconFor(account.type),
-        size: 18,
+        size: AppIconSizes.h18,
         color: accent == colors.mutedForeground
             ? colors.mutedForeground
             : accent,
@@ -362,7 +362,7 @@ class _SubLegRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Row(
         children: [
           Expanded(

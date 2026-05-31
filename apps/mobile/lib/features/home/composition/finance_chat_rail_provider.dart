@@ -22,6 +22,14 @@ import '../data/dashboard_insights_provider.dart';
 import '../domain/insight_models.dart';
 import '../ui/insight_feed_strings.dart';
 
+ChatRailTone? _mapTone(InsightTone? tone) => switch (tone) {
+      InsightTone.success => ChatRailTone.success,
+      InsightTone.warning => ChatRailTone.warning,
+      InsightTone.danger => ChatRailTone.danger,
+      InsightTone.info => ChatRailTone.info,
+      null => null,
+    };
+
 /// Maps the home-domain `InsightItem` list into the cross-domain
 /// `ChatRailContent` model the shell consumes.
 List<ChatRailContent> financeChatRailContent({
@@ -34,7 +42,7 @@ List<ChatRailContent> financeChatRailContent({
             headline: insightHeadline(l10n, item),
             detail: insightDetail(l10n, item),
             icon: item.icon,
-            iconColor: item.iconColor,
+            tone: _mapTone(item.tone),
             route: item.route,
           ))
       .toList(growable: false);

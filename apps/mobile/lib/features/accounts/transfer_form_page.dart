@@ -221,18 +221,18 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         children: [
           if (convertMode)
             Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: AppSpacing.s12),
               child: Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppSpacing.s12),
                 decoration: BoxDecoration(
                   color: context.theme.colors.primary.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       FLucideIcons.arrowLeftRight,
-                      size: 16,
+                      size: AppIconSizes.sm,
                       color: context.theme.colors.primary,
                     ),
                     const SizedBox(width: 8),
@@ -271,7 +271,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                 ? l10n.transferValidationRequired
                 : null,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           AccountTreePicker(
             accounts: transferable,
             value: _toAccountId,
@@ -296,7 +296,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
               return null;
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           AmountField(
             label: fromCurrency == null
                 ? l10n.transferAmountLabel
@@ -317,7 +317,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
             },
           ),
           if (isCrossCurrency) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             AmountField(
               label: l10n.transferToAmountLabel(toCurrency),
               controller: _toAmountController,
@@ -331,7 +331,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
             ),
             if (amount != null && toAmount != null && amount > Decimal.zero)
               Padding(
-                padding: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.only(top: AppSpacing.s4),
                 child: Text(
                   _rateLabel(
                     amount: amount,
@@ -345,7 +345,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                 ),
               ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           DateField(
             label: l10n.transferDateLabel,
             initialValue: _date,
@@ -360,9 +360,9 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
               }
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           NoteField(controller: _noteController, focusNode: _noteFocus),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
           if (preview != null)
             PostingsPreview(
               postings: preview,

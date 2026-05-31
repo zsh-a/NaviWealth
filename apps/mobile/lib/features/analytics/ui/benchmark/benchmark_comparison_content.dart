@@ -26,9 +26,9 @@ class BenchmarkComparisonContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _ComparisonChart(result: result),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         _AnnualizedSummary(result: result),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         for (final series in result.benchmarks)
           _ExcessRow(result: result, series: series),
       ],
@@ -150,7 +150,7 @@ class _ExcessRow extends StatelessWidget {
     final benchAnn = series.annualizedReturn;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Row(
         children: [
           Expanded(
@@ -188,7 +188,7 @@ class BenchmarkCardSkeleton extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SkeletonBox(height: 220, radius: 8),
-        SizedBox(height: 12),
+        SizedBox(height: AppSpacing.s12),
         Row(
           children: [
             Expanded(child: SkeletonBox(height: 14)),
@@ -196,9 +196,9 @@ class BenchmarkCardSkeleton extends StatelessWidget {
             SkeletonBox(width: 80, height: 18),
           ],
         ),
-        SizedBox(height: 8),
+        SizedBox(height: AppSpacing.s8),
         SkeletonBox(height: 14),
-        SizedBox(height: 4),
+        SizedBox(height: AppSpacing.s4),
         SkeletonBox(height: 14, width: 200),
       ],
     );
@@ -214,7 +214,7 @@ class BenchmarkCardError extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s24),
       child: Center(
         child: Text(
           l10n.benchmarkComparisonError('$error'),

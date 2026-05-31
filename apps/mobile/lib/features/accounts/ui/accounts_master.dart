@@ -161,14 +161,14 @@ class _EmptyAccounts extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(FLucideIcons.landmark, size: 48),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(l10n.accountsEmptyHint, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             FButton(
               variant: FButtonVariant.primary,
               onPress: () => context.go(AppRoutes.wealthAccountNew),

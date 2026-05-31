@@ -587,7 +587,7 @@ class _LoadError extends StatelessWidget {
           Icon(
             FLucideIcons.circleAlert,
             color: context.theme.colors.destructive,
-            size: 32,
+            size: AppIconSizes.xl,
           ),
           const SizedBox(height: AppSpacing.s8),
           Text(message, textAlign: TextAlign.center),

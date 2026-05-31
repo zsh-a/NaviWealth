@@ -47,10 +47,10 @@ class DesktopSidebar extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
                 itemCount: destinations.length,
                 itemBuilder: (_, i) => _SidebarItem(
                   destination: destinations[i],
@@ -157,11 +157,11 @@ class _SidebarItem extends StatelessWidget {
           ),
         Container(
           height: 48,
-          margin: const EdgeInsets.symmetric(vertical: 2),
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          margin: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
           decoration: BoxDecoration(
             color: background,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           alignment: Alignment.centerLeft,
           child: row,
@@ -202,7 +202,7 @@ class _SettingsPinnedRow extends StatelessWidget {
       children: [
         SizedBox(
           width: kSidebarCollapsedWidth - 16,
-          child: Icon(Icons.settings_outlined, color: iconColor),
+          child: Icon(FLucideIcons.settings, color: iconColor),
         ),
         if (!collapsed)
           Expanded(
@@ -220,8 +220,8 @@ class _SettingsPinnedRow extends StatelessWidget {
     );
     final tile = Container(
       height: 48,
-      margin: const EdgeInsets.symmetric(vertical: 2),
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      margin: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
       alignment: Alignment.centerLeft,
       child: row,
     );
@@ -233,7 +233,7 @@ class _SettingsPinnedRow extends StatelessWidget {
       return FTooltip(tipBuilder: (_, _) => Text(label), child: tap);
     }
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
       child: tap,
     );
   }
@@ -250,7 +250,7 @@ class _CollapseToggle extends StatelessWidget {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: AppSpacing.s8),
       child: FTooltip(
         tipBuilder: (_, _) => Text(
           collapsed
@@ -268,7 +268,7 @@ class _CollapseToggle extends StatelessWidget {
               children: [
                 Icon(
                   collapsed
-                      ? Icons.chevron_right_rounded
+                      ? FLucideIcons.chevronRight
                       : Icons.chevron_left_rounded,
                   color: colors.mutedForeground,
                 ),

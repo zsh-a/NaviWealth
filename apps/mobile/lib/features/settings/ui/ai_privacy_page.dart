@@ -30,10 +30,10 @@ class AiPrivacyPage extends ConsumerWidget {
       ),
       childPad: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s24),
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
             child: Text(
               l10n.aiPrivacyIntro,
               style: context.theme.typography.sm.copyWith(
@@ -41,7 +41,7 @@ class AiPrivacyPage extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           SoftCard(
             padding: EdgeInsets.zero,
             child: Column(
@@ -72,9 +72,9 @@ class AiPrivacyPage extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
           SoftCard(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
             child: Row(
               children: [
                 Expanded(
@@ -88,7 +88,7 @@ class AiPrivacyPage extends ConsumerWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppSpacing.s2),
                       Text(
                         l10n.aiPrivacyMaskAccountsDescription,
                         style: context.theme.typography.xs.copyWith(
@@ -156,7 +156,7 @@ class _ModeRow extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpacing.s2),
                   Text(
                     description,
                     style: context.theme.typography.xs.copyWith(

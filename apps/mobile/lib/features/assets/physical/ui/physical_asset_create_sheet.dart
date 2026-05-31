@@ -144,7 +144,7 @@ class _PhysicalAssetCreateSheetState
                   ? _currencyFocus.requestFocus()
                   : _addressFocus.requestFocus(),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             if (!_isVehicle) ...[
               FTextFormField(
                 control: FTextFieldControl.managed(controller: _addressCtrl),
@@ -153,7 +153,7 @@ class _PhysicalAssetCreateSheetState
                 textInputAction: TextInputAction.next,
                 onSubmit: (_) => _currencyFocus.requestFocus(),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s12),
             ],
             Row(
               children: [
@@ -184,7 +184,7 @@ class _PhysicalAssetCreateSheetState
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             FTextFormField(
               control: FTextFieldControl.managed(
                 controller: _purchasePriceCtrl,
@@ -198,7 +198,7 @@ class _PhysicalAssetCreateSheetState
               validator: _positiveDecimal(l10n),
               onSubmit: (_) => _currentValuationFocus.requestFocus(),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             FTextFormField(
               control: FTextFieldControl.managed(
                 controller: _currentValuationCtrl,
@@ -218,7 +218,7 @@ class _PhysicalAssetCreateSheetState
                   : _linkedLiabilityFocus.requestFocus(),
             ),
             if (_isVehicle) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s12),
               FTextFormField(
                 control: FTextFieldControl.managed(
                   controller: _residualRateCtrl,
@@ -244,7 +244,7 @@ class _PhysicalAssetCreateSheetState
                 },
                 onSubmit: (_) => _saving ? null : _submit(),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.s4),
               SwitchListTile.adaptive(
                 title: Text(l10n.physicalAssetFieldAutoDepreciation),
                 value: _autoDepreciation,
@@ -258,7 +258,7 @@ class _PhysicalAssetCreateSheetState
               ),
             ],
             if (!_isVehicle) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s12),
               FTextFormField(
                 control: FTextFieldControl.managed(
                   controller: _linkedLiabilityCtrl,

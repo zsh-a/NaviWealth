@@ -33,30 +33,30 @@ class RouteErrorPage extends StatelessWidget {
       child: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.s24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   hasError
                       ? Icons.travel_explore_outlined
-                      : Icons.error_outline,
+                      : FLucideIcons.circleAlert,
                   size: 56,
                   color: colors.destructive,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.s16),
                 Text(
                   title,
                   style: typography.lg.copyWith(fontWeight: FontWeight.w600),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.s8),
                 Text(
                   message,
                   style: typography.sm.copyWith(color: colors.mutedForeground),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.s24),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -64,7 +64,7 @@ class RouteErrorPage extends StatelessWidget {
                       FButton(
                         variant: FButtonVariant.outline,
                         onPress: () => smartPop(context),
-                        prefix: const Icon(Icons.arrow_back_ios_new, size: 14),
+                        prefix: const Icon(Icons.arrow_back_ios_new, size: AppIconSizes.xs),
                         child: Text(l10n.routeGoBack),
                       ),
                       const SizedBox(width: 12),
@@ -72,7 +72,7 @@ class RouteErrorPage extends StatelessWidget {
                     FButton(
                       variant: FButtonVariant.primary,
                       onPress: () => context.go(AppRoutes.home),
-                      prefix: const Icon(Icons.home_outlined, size: 16),
+                      prefix: const Icon(Icons.home_outlined, size: AppIconSizes.sm),
                       child: Text(l10n.routeGoHome),
                     ),
                   ],

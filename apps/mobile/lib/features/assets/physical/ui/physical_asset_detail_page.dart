@@ -95,11 +95,11 @@ class _DetailBody extends ConsumerWidget {
     final estimatedToday = _estimatedToday(asset);
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
         SoftCard(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppSpacing.s20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -107,7 +107,7 @@ class _DetailBody extends ConsumerWidget {
                   l10n.physicalAssetDetailValuationTitle,
                   style: context.theme.typography.md,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.s8),
                 AnimatedMoneyText(
                   amount: asset.currentValuation.toDouble(),
                   currencyCode: asset.currency,
@@ -117,7 +117,7 @@ class _DetailBody extends ConsumerWidget {
                   ),
                 ),
                 if (asset.lastValuationAt != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.s4),
                   Text(
                     dateFormat.format(asset.lastValuationAt!),
                     style: context.theme.typography.xs.copyWith(
@@ -126,7 +126,7 @@ class _DetailBody extends ConsumerWidget {
                   ),
                 ],
                 if (estimatedToday != null) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.s8),
                   Text(
                     l10n.physicalAssetDetailEstimatedToday(estimatedToday),
                     style: context.theme.typography.sm.copyWith(
@@ -134,24 +134,24 @@ class _DetailBody extends ConsumerWidget {
                     ),
                   ),
                 ],
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.s16),
                 FButton(
                   variant: FButtonVariant.primary,
                   onPress: () =>
                       ValuationUpdateSheet.show(context, asset: asset),
-                  prefix: const Icon(FLucideIcons.pencil, size: 16),
+                  prefix: const Icon(FLucideIcons.pencil, size: AppIconSizes.sm),
                   child: Text(l10n.physicalAssetUpdateValuationAction),
                 ),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         _FactsCard(asset: asset, dateFormat: dateFormat),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         SoftCard(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.s16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -159,7 +159,7 @@ class _DetailBody extends ConsumerWidget {
                   l10n.physicalAssetDetailHistoryTitle,
                   style: context.theme.typography.md,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 historyAsync.when(
                   loading: () => const Center(child: FCircularProgress()),
                   error: (e, st) => Text('$e'),
@@ -173,7 +173,7 @@ class _DetailBody extends ConsumerWidget {
                           projection: projection,
                           currency: asset.currency,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpacing.s8),
                         ...history.reversed.map(
                           (p) => _HistoryRow(
                             point: p,
@@ -267,13 +267,13 @@ class _FactsCard extends StatelessWidget {
     ];
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final (label, value) in entries) ...[
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -324,7 +324,7 @@ class _HistoryRow extends StatelessWidget {
       ValuationPointKind.projected => l10n.physicalAssetDetailAutoEstimateLabel,
     };
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Row(
         children: [
           Expanded(

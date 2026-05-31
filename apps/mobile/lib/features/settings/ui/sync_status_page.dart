@@ -37,7 +37,7 @@ class SyncStatusPage extends ConsumerWidget {
         loading: () => const Center(child: FCircularProgress()),
         error: (e, _) => Center(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.s24),
             child: Text(l10n.syncStatusBusError(e.toString())),
           ),
         ),
@@ -75,9 +75,9 @@ class _Body extends ConsumerWidget {
     final localTotal = countsAsync.value?.values.fold<int>(0, (a, b) => a + b);
 
     return ListView(
-      padding: const EdgeInsets.all(16).copyWith(
+      padding: const EdgeInsets.all(AppSpacing.s16).copyWith(
         bottom:
-            const EdgeInsets.all(16).bottom +
+            const EdgeInsets.all(AppSpacing.s16).bottom +
             64 +
             MediaQuery.paddingOf(context).bottom,
       ),
@@ -86,21 +86,21 @@ class _Body extends ConsumerWidget {
           event: event,
           onSyncNow: session == null ? null : () => _triggerSyncNow(ref),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         _StatGrid(
           pending: outboxAsync.value,
           localTotal: localTotal,
           lastSyncAt: event.lastSuccessAt,
         ),
         if (event.lastError != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           _ErrorCard(message: event.lastError!),
         ],
         if (event.conflicts.hasFindings) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           _ConflictCard(diagnostics: event.conflicts),
         ],
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         _DiagnosticsCard(
           event: event,
           cursor: cursorAsync.value,
@@ -108,7 +108,7 @@ class _Body extends ConsumerWidget {
           apiBaseUrl: kDebugMode ? config.apiBaseUrl : null,
         ),
         if (kDebugMode) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           _LocalCountsCard(counts: countsAsync.value),
         ],
       ],
@@ -148,7 +148,7 @@ class _HeroCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.s2),
                 Text(
                   _heroSubtitle(l10n, event),
                   style: context.theme.typography.xs.copyWith(
@@ -274,16 +274,16 @@ class _StatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SoftCard(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s12, AppSpacing.s12, AppSpacing.s12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             icon,
-            size: 18,
+            size: AppIconSizes.h18,
             color: accent ?? context.theme.colors.mutedForeground,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           Text(
             value,
             style: context.theme.typography.lg.copyWith(
@@ -292,7 +292,7 @@ class _StatTile extends StatelessWidget {
               color: accent ?? context.theme.colors.foreground,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.s2),
           Text(
             label,
             style: context.theme.typography.xs.copyWith(
@@ -318,11 +318,11 @@ class _ErrorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final semantic = SemanticColors.of(context);
     return SoftCard(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(FLucideIcons.triangleAlert, color: semantic.danger, size: 20),
+          Icon(FLucideIcons.triangleAlert, color: semantic.danger, size: AppIconSizes.md),
           const SizedBox(width: 8),
           Expanded(
             child: SelectableText(
@@ -349,11 +349,11 @@ class _ConflictCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final semantic = SemanticColors.of(context);
     return SoftCard(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(FLucideIcons.arrowLeftRight, color: semantic.warning, size: 20),
+          Icon(FLucideIcons.arrowLeftRight, color: semantic.warning, size: AppIconSizes.md),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -365,7 +365,7 @@ class _ConflictCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.s2),
                 Text(
                   l10n.syncStatusConflictsLocalWins(diagnostics.localWins),
                   style: context.theme.typography.xs.copyWith(
@@ -373,7 +373,7 @@ class _ConflictCard extends StatelessWidget {
                   ),
                 ),
                 if (diagnostics.ignoredRows > 0) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpacing.s2),
                   Text(
                     l10n.syncStatusConflictsIgnored(diagnostics.ignoredRows),
                     style: context.theme.typography.xs.copyWith(
@@ -474,7 +474,7 @@ class _LocalCountsCard extends StatelessWidget {
 
     if (counts == null) {
       return const SoftCard(
-        padding: EdgeInsets.all(12),
+        padding: EdgeInsets.all(AppSpacing.s12),
         child: Center(child: FCircularProgress()),
       );
     }
@@ -482,7 +482,7 @@ class _LocalCountsCard extends StatelessWidget {
     Widget cell(String id) {
       final value = counts![id] ?? 0;
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
         child: Row(
           children: [
             Expanded(
@@ -508,7 +508,7 @@ class _LocalCountsCard extends StatelessWidget {
     }
 
     return SoftCard(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -627,7 +627,7 @@ class _StatusOrbState extends State<_StatusOrb>
               alignment: Alignment.center,
               child: Icon(
                 _statusIcon(widget.status),
-                size: 14,
+                size: AppIconSizes.xs,
                 color: widget.palette.onForeground,
               ),
             ),
@@ -676,7 +676,7 @@ class _Row extends StatelessWidget {
             );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
       child: Row(
         crossAxisAlignment: wrap
             ? CrossAxisAlignment.start

@@ -20,14 +20,14 @@ class AssetHoldingCard extends ConsumerWidget {
     final snapshotAsync = ref.watch(assetHoldingSnapshotProvider(asset.id));
     return snapshotAsync.when(
       loading: () => const SkeletonCard(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SkeletonBox(width: 80, height: 14, radius: 4),
-            SizedBox(height: 12),
+            SizedBox(height: AppSpacing.s12),
             SkeletonBox(height: 18),
-            SizedBox(height: 8),
+            SizedBox(height: AppSpacing.s8),
             SkeletonBox(height: 18),
           ],
         ),
@@ -46,7 +46,7 @@ class AssetHoldingCard extends ConsumerWidget {
         final marketValueAsset = snap?.marketValueInAssetCurrency;
         return SoftCard(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.s16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -54,14 +54,14 @@ class AssetHoldingCard extends ConsumerWidget {
                   l10n.assetDetailHoldingsTitle,
                   style: context.theme.typography.sm,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 AssetDetailMetricRow(
                   label: l10n.assetDetailCurrentQuantity,
                   value: hasPosition
                       ? formatAssetDetailQuantity(qty)
                       : '\u2014',
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.s8),
                 AssetDetailMetricRow(
                   label: l10n.assetDetailAverageCost,
                   trailing: AnimatedMoneyText(
@@ -70,7 +70,7 @@ class AssetHoldingCard extends ConsumerWidget {
                     fractionDigits: assetDetailPriceFractionDigits(asset.type),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.s8),
                 AssetDetailMetricRow(
                   label: l10n.assetDetailCurrentMarketValue,
                   trailing: OptionalHero(
@@ -84,7 +84,7 @@ class AssetHoldingCard extends ConsumerWidget {
                 ),
                 if (snap != null && snap.marketValueInAssetCurrency.sign == 0)
                   Padding(
-                    padding: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.only(top: AppSpacing.s8),
                     child: Text(
                       l10n.assetDetailPriceUnavailable,
                       style: context.theme.typography.xs.copyWith(

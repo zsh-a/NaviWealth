@@ -200,7 +200,7 @@ class _DesktopDock extends ConsumerWidget {
         right: false,
         child: Column(
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             for (final spec in specs)
               _DockIcon(
                 spec: spec,
@@ -209,7 +209,7 @@ class _DesktopDock extends ConsumerWidget {
               ),
             const Spacer(),
             _AskAiDockButton(onPress: () => askAi(context, ref)),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
           ],
         ),
       ),
@@ -236,17 +236,17 @@ class _AskAiDockButton extends StatelessWidget {
         child: Container(
           width: 40,
           height: 40,
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
           decoration: BoxDecoration(
             color: colors.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(
               color: colors.primary.withValues(alpha: 0.25),
               width: 1,
             ),
           ),
           alignment: Alignment.center,
-          child: Icon(FLucideIcons.sparkles, color: colors.primary, size: 20),
+          child: Icon(FLucideIcons.sparkles, color: colors.primary, size: AppIconSizes.md),
         ),
       ),
     );
@@ -277,10 +277,10 @@ class _DockIcon extends StatelessWidget {
         child: Container(
           width: 40,
           height: 40,
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
           decoration: BoxDecoration(
             color: fill,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           alignment: Alignment.center,
           child: Icon(

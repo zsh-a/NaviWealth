@@ -271,7 +271,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
     if (eligible.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -279,11 +279,11 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
                 l10n.wealthProductNoAccountHint,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s12),
               FButton(
                 variant: FButtonVariant.outline,
                 onPress: () => context.go(AppRoutes.wealthAccountNew),
-                prefix: const Icon(FLucideIcons.plus, size: 16),
+                prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
                 child: Text(l10n.wealthProductCreateAccountAction),
               ),
             ],
@@ -321,7 +321,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
                 entityId: widget.assetId!,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
           ],
           AccountPicker(
             accounts: eligible,
@@ -331,7 +331,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
               dirty.markDirty();
             }),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _nameController),
             label: Text(l10n.wealthProductNameLabel),
@@ -342,7 +342,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
                 : null,
             onSubmit: (_) => _issuerFocus.requestFocus(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _issuerController),
             label: Text(l10n.wealthProductIssuerLabel),
@@ -350,7 +350,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
             textInputAction: TextInputAction.next,
             onSubmit: (_) => _productCodeFocus.requestFocus(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           FTextFormField(
             control: FTextFieldControl.managed(
               controller: _productCodeController,
@@ -360,7 +360,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
             textInputAction: TextInputAction.next,
             onSubmit: (_) => _principalFocus.requestFocus(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           CurrencyPicker(
             value: _currency,
             onChanged: (v) => setState(() {
@@ -368,7 +368,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
               dirty.markDirty();
             }),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           AmountField(
             label: l10n.wealthProductAmountLabel,
             controller: _principalController,
@@ -376,7 +376,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
             focusNode: _principalFocus,
             onFieldSubmitted: (_) => _returnFocus.requestFocus(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           FTextFormField(
             control: FTextFieldControl.managed(
               controller: _expectedReturnPctController,
@@ -397,7 +397,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
             },
             onSubmit: (_) => _valuationFocus.requestFocus(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           DateField(
             label: l10n.wealthProductValueDateLabel,
             initialValue: _startDate,
@@ -406,7 +406,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
               dirty.markDirty();
             }),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           DateField(
             label: l10n.wealthProductMaturityDateLabel,
             initialValue: _maturityDate,
@@ -415,7 +415,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
               dirty.markDirty();
             }),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           AmountField(
             label: l10n.wealthProductValuationLabel,
             controller: _valuationController,

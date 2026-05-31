@@ -42,7 +42,7 @@ class ManualAssetTile extends StatelessWidget {
                 : null,
             constraints: const BoxConstraints(minHeight: 48),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -61,7 +61,7 @@ class ManualAssetTile extends StatelessWidget {
                           ),
                         ),
                         if (chips.isNotEmpty) ...[
-                          const SizedBox(height: 6),
+                          const SizedBox(height: AppSpacing.s6),
                           Wrap(spacing: 6, runSpacing: 4, children: chips),
                         ],
                       ],
@@ -161,10 +161,10 @@ class _MetaChip extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: context.theme.colors.secondary,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
         child: Text(label, style: textStyle),
       ),
     );

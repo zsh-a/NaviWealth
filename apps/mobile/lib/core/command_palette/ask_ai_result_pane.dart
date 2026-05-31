@@ -134,7 +134,7 @@ class _AskAiResultPaneState extends State<AskAiResultPane> {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s12),
       decoration: BoxDecoration(
         color: colors.secondary,
         border: Border(bottom: BorderSide(color: colors.border, width: 1)),
@@ -144,7 +144,7 @@ class _AskAiResultPaneState extends State<AskAiResultPane> {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           _StatusBadge(label: l10n.askAiResultLocalBadge),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           _buildBody(l10n),
         ],
       ),
@@ -158,7 +158,7 @@ class _AskAiResultPaneState extends State<AskAiResultPane> {
         return _SkeletonRow();
       case _PaneStatus.irreversible:
         return _GuidanceText(
-          icon: Icons.lock_outline,
+          icon: FLucideIcons.lock,
           message: l10n.askAiResultIrreversibleBlocked,
         );
       case _PaneStatus.noMatch:
@@ -167,11 +167,11 @@ class _AskAiResultPaneState extends State<AskAiResultPane> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             _GuidanceText(
-              icon: Icons.info_outline,
+              icon: FLucideIcons.info,
               message: l10n.askAiResultNoLocalMatch,
             ),
             if (widget.onContinueInChat != null) ...<Widget>[
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
               _ContinueInChatLink(
                 label: l10n.askAiResultContinueInChat,
                 onTap: () => widget.onContinueInChat!(widget.query.trim()),
@@ -181,7 +181,7 @@ class _AskAiResultPaneState extends State<AskAiResultPane> {
         );
       case _PaneStatus.error:
         return _GuidanceText(
-          icon: Icons.error_outline,
+          icon: FLucideIcons.circleAlert,
           message: l10n.askAiResultError(_errorMessage ?? '?'),
         );
       case _PaneStatus.result:
@@ -225,10 +225,10 @@ class _StatusBadge extends StatelessWidget {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
         decoration: BoxDecoration(
           color: colors.background,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.xs),
           border: Border.all(color: colors.border, width: 1),
         ),
         child: Text(
@@ -251,7 +251,7 @@ class _SkeletonRow extends StatelessWidget {
       height: 18,
       decoration: BoxDecoration(
         color: colors.muted,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
     );
   }
@@ -268,7 +268,7 @@ class _GuidanceText extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Icon(icon, size: 16, color: colors.mutedForeground),
+        Icon(icon, size: AppIconSizes.sm, color: colors.mutedForeground),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
@@ -328,12 +328,12 @@ class _ResultView extends StatelessWidget {
           ),
         ),
         if (summary != null) ...<Widget>[
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           _SummaryLine(summary: summary, planKind: result.plan.kind),
         ],
         if (preview.isEmpty)
           Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.only(top: AppSpacing.s8),
             child: Text(
               l10n.askAiResultEmpty,
               style: context.theme.typography.sm.copyWith(
@@ -342,15 +342,15 @@ class _ResultView extends StatelessWidget {
             ),
           )
         else ...<Widget>[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           for (final row in preview)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
               child: _ResultRow(row: row),
             ),
           if (rows.length > preview.length)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: AppSpacing.s4),
               child: Text(
                 l10n.askAiResultMoreRows(rows.length - preview.length),
                 style: context.theme.typography.xs.copyWith(
@@ -360,7 +360,7 @@ class _ResultView extends StatelessWidget {
             ),
         ],
         if (result.note != null) ...<Widget>[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           Text(
             result.note!,
             style: context.theme.typography.xs.copyWith(

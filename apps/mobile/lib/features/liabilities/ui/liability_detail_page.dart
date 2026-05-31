@@ -60,26 +60,26 @@ class _LiabilityDetailBody extends ConsumerWidget {
     );
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
         _LiabilityHeaderCard(summary: summary),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         _LiabilitySummaryCard(summary: summary),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         Text(l10n.liabilityScheduleHeading, style: context.theme.typography.md),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         scheduleAsync.when(
           loading: () => const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.s24),
             child: Center(child: FCircularProgress()),
           ),
           error: (e, _) =>
-              Padding(padding: const EdgeInsets.all(16), child: Text('$e')),
+              Padding(padding: const EdgeInsets.all(AppSpacing.s16), child: Text('$e')),
           data: (schedule) {
             if (schedule.isEmpty) {
               return SoftCard(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.s16),
                   child: Text(l10n.liabilityRevolvingNoSchedule),
                 ),
               );
@@ -104,12 +104,12 @@ class _LiabilityHeaderCard extends ConsumerWidget {
     final l = summary.liability;
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.s20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l.name, style: context.theme.typography.lg),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               '${liabilityTypeLabel(l10n, l.type)} · '
               '${repaymentMethodLabel(l10n, l.paymentMethod)} · '
@@ -118,12 +118,12 @@ class _LiabilityHeaderCard extends ConsumerWidget {
                 color: context.theme.colors.mutedForeground,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(
               formatters.currency(l.principal, code: l.currency),
               style: context.theme.typography.xl,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               formatters.percent(l.interestRate.toDouble()),
               style: context.theme.typography.sm,
@@ -147,7 +147,7 @@ class _LiabilitySummaryCard extends ConsumerWidget {
     final l = summary.liability;
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -176,12 +176,12 @@ class _LiabilitySummaryCard extends ConsumerWidget {
               label: l10n.liabilitySummaryInterestRatio,
               value: formatters.percent(summary.interestRatio.toDouble()),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             if (summary.totalPeriods > 0) ...[
               FDeterminateProgress(
                 value: summary.progressFraction.clamp(0.0, 1.0),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.s4),
               Text(
                 l10n.liabilitySummaryProgress(
                   summary.paidPeriods,
@@ -208,7 +208,7 @@ class _SummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -314,7 +314,7 @@ class _AmortizationHeaderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = context.theme.typography.xs2;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
       child: Row(
         children: [
           SizedBox(
@@ -377,7 +377,7 @@ class _AmortizationDataRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle = context.theme.typography.xs;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s4),
       child: Row(
         children: [
           SizedBox(

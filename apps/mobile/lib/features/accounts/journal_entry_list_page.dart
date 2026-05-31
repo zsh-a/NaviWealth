@@ -57,7 +57,7 @@ class _EmptyJournal extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -66,7 +66,7 @@ class _EmptyJournal extends StatelessWidget {
               size: 48,
               color: context.theme.colors.mutedForeground,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(
               l10n.journalEmptyHint,
               textAlign: TextAlign.center,
@@ -91,9 +91,9 @@ class _JournalList extends StatelessWidget {
   Widget build(BuildContext context) {
     final formatter = AppFormatters(locale: Localizations.localeOf(context));
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       itemCount: entries.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
       itemBuilder: (context, index) {
         final je = entries[index];
         return _JournalEntryRow(
@@ -131,7 +131,7 @@ class _JournalEntryRow extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: context.theme.colors.muted,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: context.theme.colors.border),
       ),
       clipBehavior: Clip.antiAlias,
@@ -152,7 +152,7 @@ class _JournalEntryRow extends StatelessWidget {
                     ),
                     if (headline != null)
                       Padding(
-                        padding: const EdgeInsets.only(left: 8),
+                        padding: const EdgeInsets.only(left: AppSpacing.s8),
                         child: SignedMoneyText(
                           amount: headline.units,
                           unit: headline.unit,
@@ -165,7 +165,7 @@ class _JournalEntryRow extends StatelessWidget {
                   ],
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(top: 4),
+                  padding: const EdgeInsets.only(top: AppSpacing.s4),
                   child: Row(
                     children: [
                       EntryKindBadge(

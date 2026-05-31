@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../design_system/design_system.dart';
 import 'package:flutter/services.dart';
+import '../../../design_system/design_system.dart';
 import 'package:forui/forui.dart';
 
 /// Single-line setting row in iOS-style inset-grouped lists.
@@ -400,7 +402,7 @@ class _StatusBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: colors.foreground.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Text(
         label.toUpperCase(),

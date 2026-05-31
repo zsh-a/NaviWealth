@@ -78,10 +78,10 @@ class ActivityEntryDetailPage extends ConsumerWidget {
             formatters: formatters,
           ),
           if (aiInsight != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             _AiInsightCard(insight: aiInsight),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           _LedgerBreakdownCard(
             postings: entry.postings,
             accountsById: accountsById,

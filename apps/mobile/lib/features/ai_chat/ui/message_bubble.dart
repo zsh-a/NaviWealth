@@ -136,7 +136,7 @@ class _UserBubble extends ConsumerWidget {
     // in-flight pipeline and produce duplicates.
     final showEdit = isLastUser && !turn.isBusy;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -178,7 +178,7 @@ class _UserBubble extends ConsumerWidget {
           ),
           if (showEdit)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: AppSpacing.s4),
               child: _ActionButton(
                 icon: FLucideIcons.pencil,
                 label: l10n.aiChatEditUserMessage,
@@ -216,7 +216,7 @@ class _UserBubble extends ConsumerWidget {
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             FTextField(
               control: FTextFieldControl.managed(controller: controller),
               autofocus: true,
@@ -287,7 +287,7 @@ class _AssistantBubble extends StatelessWidget {
         if (_isError) ...[
           Row(
             children: [
-              Icon(FLucideIcons.circleAlert, size: 16, color: colors.destructive),
+              Icon(FLucideIcons.circleAlert, size: AppIconSizes.sm, color: colors.destructive),
               const SizedBox(width: 6),
               Text(
                 l10n.aiChatSemanticsAssistantError,
@@ -298,11 +298,11 @@ class _AssistantBubble extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.s6),
         ],
         if ((message.reasoningText ?? '').isNotEmpty) ...[
           _ReasoningPanel(text: message.reasoningText!),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
         ],
         ..._buildInterleavedBlocks(
           context: context,
@@ -310,7 +310,7 @@ class _AssistantBubble extends StatelessWidget {
           isStreaming: isStreaming,
         ),
         if (errorMessage != null && errorMessage.isNotEmpty) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           Text(
             errorMessage,
             style: context.theme.typography.xs.copyWith(
@@ -331,7 +331,7 @@ class _AssistantBubble extends StatelessWidget {
         // follow-up turns).
         if (!isStreaming && message.role == ChatRole.assistant)
           Padding(
-            padding: const EdgeInsets.only(top: 6),
+            padding: const EdgeInsets.only(top: AppSpacing.s6),
             child: _AssistantActions(
               sessionId: sessionId,
               message: message,
@@ -351,7 +351,7 @@ class _AssistantBubble extends StatelessWidget {
             message.role == ChatRole.assistant &&
             message.status == ChatMessageStatus.complete)
           Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.only(top: AppSpacing.s8),
             child: _ReplyChips(
               toolNames: {for (final t in message.toolCalls) t.name},
               invocationIntent: invocationIntent,
@@ -366,7 +366,7 @@ class _AssistantBubble extends StatelessWidget {
     // legible — matches the SoftCard / AiTone "error is an accent"
     // discipline used across the AI surfaces.
     final bubble = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
       decoration: BoxDecoration(
         color: colors.muted,
         borderRadius: const BorderRadius.all(Radius.circular(8)),
@@ -381,7 +381,7 @@ class _AssistantBubble extends StatelessWidget {
     );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -461,7 +461,7 @@ class _AssistantBubble extends StatelessWidget {
     bool anythingEmittedYet = false;
     void addGapIfNeeded() {
       if (anythingEmittedYet) {
-        blocks.add(const SizedBox(height: 8));
+        blocks.add(const SizedBox(height: AppSpacing.s8));
       }
     }
 
@@ -610,7 +610,7 @@ class _AssistantBody extends StatelessWidget {
           ? WidgetSpan(
               alignment: PlaceholderAlignment.middle,
               child: Padding(
-                padding: const EdgeInsets.only(left: 4),
+                padding: const EdgeInsets.only(left: AppSpacing.s4),
                 child: _StreamingCaret(color: textColor),
               ),
             )
@@ -752,7 +752,7 @@ class _TruncationFooter extends ConsumerWidget {
     final turn = ref.watch(chatControllerProvider(sessionId));
 
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: AppSpacing.s8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -760,10 +760,10 @@ class _TruncationFooter extends ConsumerWidget {
             height: 1,
             color: context.theme.colors.border.withValues(alpha: 0.5),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.s6),
           Row(
             children: [
-              Icon(FLucideIcons.scissors, size: 14, color: muted),
+              Icon(FLucideIcons.scissors, size: AppIconSizes.xs, color: muted),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -808,7 +808,7 @@ class _ContinueButton extends StatelessWidget {
     return FTappable(
       onPress: enabled ? onPressed : null,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -820,7 +820,7 @@ class _ContinueButton extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 2),
-            Icon(FLucideIcons.arrowRight, size: 14, color: color),
+            Icon(FLucideIcons.arrowRight, size: AppIconSizes.xs, color: color),
           ],
         ),
       ),
@@ -853,7 +853,7 @@ class _ReasoningPanelState extends State<_ReasoningPanel> {
         FTappable(
           onPress: () => setState(() => _expanded = !_expanded),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -866,7 +866,7 @@ class _ReasoningPanelState extends State<_ReasoningPanel> {
                   _expanded
                       ? FLucideIcons.chevronUp
                       : FLucideIcons.chevronDown,
-                  size: 16,
+                  size: AppIconSizes.sm,
                   color: colors.mutedForeground,
                 ),
               ],
@@ -875,7 +875,7 @@ class _ReasoningPanelState extends State<_ReasoningPanel> {
         ),
         if (_expanded)
           Padding(
-            padding: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.only(top: AppSpacing.s4),
             // Reasoning is free-form LLM prose — frequently contains
             // headings, lists, inline code (especially for tool-call
             // explanations), so we render through AiMarkdown so the
@@ -908,7 +908,7 @@ class _AssistantAvatar extends StatelessWidget {
         border: Border.all(color: AiTone.outline(context), width: 1),
       ),
       alignment: Alignment.center,
-      child: const AiSparkle(size: 16),
+      child: const AiSparkle(size: AppIconSizes.sm),
     );
   }
 }
@@ -921,16 +921,16 @@ class _SystemNotice extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
       child: Center(
         child: Semantics(
           container: true,
           label: l10n.aiChatSemanticsSystemNotice,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s4),
             decoration: BoxDecoration(
               color: context.theme.colors.secondary.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(9999),
+              borderRadius: BorderRadius.circular(AppRadius.full),
             ),
             child: Text(
               text,
@@ -1066,11 +1066,11 @@ class _ActionButton extends StatelessWidget {
     return FTappable(
       onPress: onPressed,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: AppSpacing.s4),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: color),
+            Icon(icon, size: AppIconSizes.xs, color: color),
             const SizedBox(width: 4),
             Text(
               label,

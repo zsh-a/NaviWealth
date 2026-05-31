@@ -96,7 +96,7 @@ class _DomainRow extends StatelessWidget {
                 ),
               ),
             ),
-            if (selected) Icon(Icons.check, size: 18, color: colors.primary),
+            if (selected) Icon(Icons.check, size: AppIconSizes.h18, color: colors.primary),
           ],
         ),
       ),

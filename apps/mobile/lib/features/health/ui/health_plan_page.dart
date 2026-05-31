@@ -213,7 +213,7 @@ class _PlanActionRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: colors.mutedForeground),
+          Icon(icon, size: AppIconSizes.sm, color: colors.mutedForeground),
           const SizedBox(width: AppSpacing.s8),
           Expanded(child: Text(text, style: typography.sm)),
         ],
@@ -232,7 +232,7 @@ class _InputRow extends StatelessWidget {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Row(
         children: [
           Expanded(
@@ -256,7 +256,7 @@ class _LoadingCard extends StatelessWidget {
       padding: EdgeInsets.all(AppSpacing.s16),
       child: SizedBox(
         height: 80,
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: FCircularProgress()),
       ),
     );
   }
@@ -272,7 +272,7 @@ class _OffCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
         children: [
-          Icon(Icons.info_outline, color: colors.mutedForeground),
+          Icon(FLucideIcons.info, color: colors.mutedForeground),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Text(
@@ -297,7 +297,7 @@ class _ErrorCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: colors.destructive),
+          Icon(FLucideIcons.circleAlert, color: colors.destructive),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Text(

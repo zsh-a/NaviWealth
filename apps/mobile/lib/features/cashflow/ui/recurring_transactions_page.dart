@@ -162,7 +162,7 @@ class _RecurringRow extends ConsumerWidget {
           const SizedBox(width: AppSpacing.s8),
           FTappable(
             onPress: () => _showRowActions(context, ref, rule),
-            child: Icon(FLucideIcons.ellipsisVertical, size: 20, color: muted),
+            child: Icon(FLucideIcons.ellipsisVertical, size: AppIconSizes.md, color: muted),
           ),
         ],
       ),
@@ -314,7 +314,7 @@ class _RecurringSkeleton extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SkeletonBox(width: 160, height: 14, radius: 4),
-                      SizedBox(height: 6),
+                      SizedBox(height: AppSpacing.s6),
                       SkeletonBox(width: 100, height: 12, radius: 4),
                     ],
                   ),

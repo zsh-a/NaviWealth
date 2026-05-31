@@ -15,7 +15,9 @@ class AppSpacing {
   static const double s4 = 4;
   static const double s6 = 6;
   static const double s8 = 8;
+  static const double s10 = 10;
   static const double s12 = 12;
+  static const double s14 = 14;
   static const double s16 = 16;
   static const double s20 = 20;
   static const double s24 = 24;
@@ -54,6 +56,10 @@ class AppIconSizes {
 
   /// Default for affordance icons in compact rows / chips.
   static const double sm = 16;
+
+  /// Slightly larger than sm — used for inline icons that need more presence
+  /// (e.g. delta arrows, status indicators in tight rows).
+  static const double h18 = 18;
 
   /// List-row leading icons, sheet tile prefix icons.
   static const double md = 20;

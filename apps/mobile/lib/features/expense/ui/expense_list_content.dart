@@ -36,7 +36,7 @@ class ExpenseFiltersBar extends StatelessWidget {
         entry.key: localizedAccountPath(l10n, entry.value, expenseAccountById),
     };
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, 0),
       child: Column(
         children: [
           FTextField(
@@ -47,7 +47,7 @@ class ExpenseFiltersBar extends StatelessWidget {
             hint: l10n.expenseListSearchHint,
             prefixBuilder: (ctx, style, variants) => const Padding(
               padding: EdgeInsetsDirectional.only(start: 12, end: 8),
-              child: Icon(FLucideIcons.search, size: 18),
+              child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
             ),
             suffixBuilder: keywordController.text.isEmpty
                 ? null
@@ -59,11 +59,11 @@ class ExpenseFiltersBar extends StatelessWidget {
                         keywordController.clear();
                         onChanged(filters.copyWith(keyword: ''));
                       },
-                      child: const Icon(FLucideIcons.x, size: 18),
+                      child: const Icon(FLucideIcons.x, size: AppIconSizes.h18),
                     ),
                   ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           SizedBox(
             height: 36,
             child: ListView(
@@ -134,7 +134,7 @@ class _GroupingChips extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(AppSpacing.s4),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -173,11 +173,11 @@ class _SegmentChip extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: AppSpacing.s6),
         decoration: selected
             ? BoxDecoration(
                 color: context.theme.colors.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               )
             : null,
         child: Text(
@@ -212,12 +212,12 @@ class _FilterChip<T> extends StatelessWidget {
     return FButton(
       variant: active ? FButtonVariant.secondary : FButtonVariant.outline,
       onPress: onPick,
-      prefix: active ? const Icon(FLucideIcons.check, size: 14) : null,
+      prefix: active ? const Icon(FLucideIcons.check, size: AppIconSizes.xs) : null,
       suffix: active
           ? FButton.icon(
               variant: FButtonVariant.ghost,
               onPress: onClear,
-              child: const Icon(FLucideIcons.x, size: 14),
+              child: const Icon(FLucideIcons.x, size: AppIconSizes.xs),
             )
           : null,
       child: Text(label),
@@ -254,13 +254,13 @@ class ExpenseGroupedList extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
       itemCount: items.length,
       itemBuilder: (context, i) {
         final item = items[i];
         return switch (item) {
           _ExpenseGroupHeader(:final group) => Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -364,12 +364,12 @@ class EmptyExpenseList extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(FLucideIcons.receipt, size: 48),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(
               filtered
                   ? l10n.expenseListEmptyFiltered

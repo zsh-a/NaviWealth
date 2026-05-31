@@ -42,7 +42,7 @@ class ActivityTimelinePreview extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.only(left: 4, top: 4, bottom: 8),
+              padding: const EdgeInsets.only(left: 4, top: 4, bottom: AppSpacing.s8),
               child: Row(
                 children: [
                   Expanded(
@@ -84,7 +84,7 @@ class ActivityTimelinePreview extends ConsumerWidget {
                     ),
                     if (i < entries.length - 1)
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
                         child: Container(
                           height: 1,
                           color: context.theme.colors.foreground.withValues(
@@ -129,7 +129,7 @@ class _PreviewRow extends StatelessWidget {
     return FTappable(
       onPress: () => context.go(AppRoutes.activity),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s10),
         child: Row(
           children: [
             Container(
@@ -137,10 +137,10 @@ class _PreviewRow extends StatelessWidget {
               height: 32,
               decoration: BoxDecoration(
                 color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               alignment: Alignment.center,
-              child: Icon(iconData, size: 16, color: iconColor),
+              child: Icon(iconData, size: AppIconSizes.sm, color: iconColor),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -159,7 +159,7 @@ class _PreviewRow extends StatelessWidget {
                   if (entry.entry.payee != null &&
                       entry.entry.payee!.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(top: 2),
+                      padding: const EdgeInsets.only(top: AppSpacing.s2),
                       child: Text(
                         entry.entry.payee!,
                         style: context.theme.typography.xs.copyWith(
@@ -186,7 +186,7 @@ class _PreviewRow extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.s2),
                 Text(
                   timeStr,
                   style: context.theme.typography.xs.copyWith(

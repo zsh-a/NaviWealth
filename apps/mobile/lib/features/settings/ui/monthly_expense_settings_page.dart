@@ -35,15 +35,15 @@ class MonthlyExpenseSettingsPage extends ConsumerWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final padding = Breakpoints.isMobile(constraints.maxWidth)
-              ? const EdgeInsets.all(16)
-              : const EdgeInsets.all(24);
+              ? const EdgeInsets.all(AppSpacing.s16)
+              : const EdgeInsets.all(AppSpacing.s24);
           return ListView(
             padding: padding,
             children: const [
               _Hint(),
-              SizedBox(height: 12),
+              SizedBox(height: AppSpacing.s12),
               SoftCard(
-                padding: EdgeInsets.symmetric(vertical: 4),
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
                 child: MonthlyExpenseSettings(),
               ),
             ],
@@ -61,7 +61,7 @@ class _Hint extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
       child: Text(
         l10n.settingsMonthlyExpenseHint,
         style: context.theme.typography.xs.copyWith(
@@ -97,7 +97,7 @@ class MonthlyExpenseSettings extends ConsumerWidget {
           onChanged: controller.setOverride,
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(14, 4, 14, 8),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.s14, AppSpacing.s4, AppSpacing.s14, AppSpacing.s8),
           child: Align(
             alignment: AlignmentDirectional.centerEnd,
             child: FTappable(
@@ -108,7 +108,7 @@ class MonthlyExpenseSettings extends ConsumerWidget {
                 );
               },
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s4),
                 child: Text(
                   l10n.settingsMonthlyExpenseResetDefaults,
                   style: context.theme.typography.xs.copyWith(
@@ -202,7 +202,7 @@ class _WindowSliderState extends State<_WindowSlider> {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s14, AppSpacing.s10, AppSpacing.s14, AppSpacing.s10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -216,7 +216,7 @@ class _WindowSliderState extends State<_WindowSlider> {
                       l10n.settingsMonthlyExpenseWindowLabel,
                       style: context.theme.typography.sm,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpacing.s2),
                     Text(
                       l10n.settingsMonthlyExpenseWindowSubtitle,
                       style: context.theme.typography.xs.copyWith(
@@ -236,7 +236,7 @@ class _WindowSliderState extends State<_WindowSlider> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.s6),
           FSlider(
             control: FSliderControl.managedContinuous(controller: _controller),
             tooltipBuilder: (_, v) {
@@ -320,7 +320,7 @@ class _OverrideFieldState extends State<_OverrideField> {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s14, AppSpacing.s10, AppSpacing.s14, AppSpacing.s10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -328,14 +328,14 @@ class _OverrideFieldState extends State<_OverrideField> {
             l10n.settingsMonthlyExpenseOverrideLabel,
             style: context.theme.typography.sm,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.s2),
           Text(
             l10n.settingsMonthlyExpenseOverrideSubtitle,
             style: context.theme.typography.xs.copyWith(
               color: colors.mutedForeground,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.s6),
           Row(
             children: [
               Expanded(

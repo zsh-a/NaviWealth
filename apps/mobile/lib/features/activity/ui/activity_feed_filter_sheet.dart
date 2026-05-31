@@ -74,7 +74,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
         ),
         if (query.dateRange != null)
           Padding(
-            padding: const EdgeInsets.only(top: 6, left: 4),
+            padding: const EdgeInsets.only(top: 6, left: AppSpacing.s4),
             child: Text(
               _formatRange(l10n, query.dateRange!),
               style: context.theme.typography.xs.copyWith(
@@ -86,7 +86,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
         _SheetSectionLabel(text: l10n.activityFeedFilterAccount),
         if (accounts.isEmpty)
           Padding(
-            padding: const EdgeInsets.only(top: 4, bottom: 8),
+            padding: const EdgeInsets.only(top: 4, bottom: AppSpacing.s8),
             child: Text(
               l10n.activityFeedFilterAccountEmpty,
               style: context.theme.typography.xs.copyWith(
@@ -252,7 +252,7 @@ class _HeaderTextAction extends StatelessWidget {
     return FTappable(
       onPress: onPress,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
         child: Text(
           label,
           style: context.theme.typography.sm.copyWith(
@@ -306,10 +306,10 @@ class _PillChip extends StatelessWidget {
     return FTappable(
       onPress: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s6),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
         ),
         alignment: Alignment.center,
         child: Text(
@@ -340,7 +340,7 @@ class _AccountFilterRow extends StatelessWidget {
     return FTappable(
       onPress: onToggle,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: AppSpacing.s8),
         child: Row(
           children: [
             Expanded(

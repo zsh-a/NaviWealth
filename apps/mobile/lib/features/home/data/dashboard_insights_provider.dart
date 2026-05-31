@@ -1,5 +1,4 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
@@ -49,7 +48,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         const InsightItem(
           icon: FLucideIcons.partyPopper,
           kind: InsightKind.fireReached,
-          iconColor: Colors.green,
+          tone: InsightTone.success,
           route: AppRoutes.planFire,
         ),
       );
@@ -68,7 +67,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         InsightItem(
           icon: FLucideIcons.trendingUp,
           kind: InsightKind.fireOsHighWithdrawalRate,
-          iconColor: Colors.amber,
+          tone: InsightTone.warning,
           route: AppRoutes.planFire,
           fireOsWithdrawalRate: state.withdrawalRate,
           fireOsSafeWithdrawalRate: state.plan.safeWithdrawalRate,
@@ -81,7 +80,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         InsightItem(
           icon: FLucideIcons.landmark,
           kind: InsightKind.fireOsLowCashBucket,
-          iconColor: Colors.amber,
+          tone: InsightTone.warning,
           route: AppRoutes.planFire,
           fireOsCashBucketMonths: state.cashBucketMonths,
           fireOsTargetCashBucketMonths: state.plan.targetCashBucketMonths,
@@ -93,7 +92,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         InsightItem(
           icon: FLucideIcons.circleHelp,
           kind: InsightKind.fireOsUnmappedHoldings,
-          iconColor: Colors.amber,
+          tone: InsightTone.warning,
           route: AppRoutes.planFire,
           fireOsUnmappedCount: state.unmappedHoldings.length,
         ),
@@ -115,7 +114,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
               ? FLucideIcons.foldVertical
               : FLucideIcons.unfoldVertical,
           kind: InsightKind.fireOsBucketDeviation,
-          iconColor: Colors.amber,
+          tone: InsightTone.warning,
           route: AppRoutes.planFire,
           fireOsBucketRoleLabel: _bucketRoleWire(worst.role),
           fireOsBucketCurrentLabel: fmt
@@ -137,7 +136,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         kind: InsightKind.portfolioDrift,
         category: drift.category,
         driftPct: drift.deviation,
-        iconColor: Colors.amber,
+        tone: InsightTone.warning,
         route: AppRoutes.planRebalance,
       ),
     );
@@ -163,7 +162,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         icon: FLucideIcons.trendingUp,
         kind: InsightKind.anomaly,
         anomalyPct: anomaly.deltaRatio,
-        iconColor: anomaly.deltaRatio > 0 ? Colors.orange : null,
+        tone: anomaly.deltaRatio > 0 ? InsightTone.warning : null,
         route: AppRoutes.expenseReport,
       ),
     );
@@ -175,7 +174,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
       InsightItem(
         icon: FLucideIcons.copy,
         kind: InsightKind.duplicateCharge,
-        iconColor: Colors.deepOrange,
+        tone: InsightTone.danger,
         duplicateChargeCount: duplicate.matches.length,
         duplicateChargeAmountMinor: duplicate.totalAbsAmountMinor,
         duplicateChargeCurrency: duplicate.currency,
@@ -190,7 +189,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
       InsightItem(
         icon: FLucideIcons.calendar,
         kind: InsightKind.monthlySummary,
-        iconColor: summary.deltaMinor >= 0 ? Colors.teal : Colors.redAccent,
+        tone: summary.deltaMinor >= 0 ? InsightTone.success : InsightTone.danger,
         summaryYear: summary.year,
         summaryMonth: summary.month,
         summaryDeltaMinor: summary.deltaMinor,
@@ -215,7 +214,7 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
         InsightItem(
           icon: FLucideIcons.wallet,
           kind: InsightKind.cashFlowDeficit,
-          iconColor: Colors.redAccent,
+          tone: InsightTone.danger,
           cashFlowMonthKey: metrics.monthKey,
           cashFlowNetMinor: _moneyToMinor(metrics.net.amount),
           cashFlowCurrency: metrics.net.currency,

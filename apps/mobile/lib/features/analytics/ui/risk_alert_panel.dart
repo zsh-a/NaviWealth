@@ -47,7 +47,7 @@ class _AlertList extends StatelessWidget {
           children: [
             Icon(
               FLucideIcons.shield,
-              size: 20,
+              size: AppIconSizes.md,
               color: context.theme.colors.destructive,
             ),
             const SizedBox(width: 8),
@@ -56,7 +56,7 @@ class _AlertList extends StatelessWidget {
             _AlertCountBadge(count: alerts.length),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         SoftCard(
           child: Column(
             children: [
@@ -80,10 +80,10 @@ class _AlertCountBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s2),
       decoration: BoxDecoration(
         color: theme.colorScheme.errorContainer,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Text(
         '$count',

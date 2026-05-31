@@ -91,7 +91,7 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
               action: FButton(
                 variant: FButtonVariant.primary,
                 onPress: widget.onNew,
-                prefix: const Icon(FLucideIcons.plus, size: 14),
+                prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.xs),
                 child: Text(l10n.aiChatNewSessionTooltip),
               ),
             );
@@ -111,16 +111,16 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
           final now = DateTime.now();
           final groups = _groupByRecency(filtered, now, l10n);
           return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: AppSpacing.s8),
             itemCount: groups.length,
             itemBuilder: (context, i) {
               final group = groups[i];
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (i > 0) const SizedBox(height: 10),
+                  if (i > 0) const SizedBox(height: AppSpacing.s10),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.s8, AppSpacing.s4, AppSpacing.s8, AppSpacing.s4),
                     child: Text(
                       group.label,
                       style: context.theme.typography.xs2.copyWith(
@@ -138,7 +138,7 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
                       onDelete: () => _confirmDelete(context, ref, s),
                       onRename: () => _promptRename(context, ref, s),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.s4),
                   ],
                 ],
               );
@@ -248,7 +248,7 @@ class _PanelShell extends StatelessWidget {
                     children: [
                       Icon(
                         FLucideIcons.history,
-                        size: 18,
+                        size: AppIconSizes.h18,
                         color: colors.mutedForeground,
                       ),
                       const SizedBox(width: 8),
@@ -267,7 +267,7 @@ class _PanelShell extends StatelessWidget {
                           child: FButton.icon(
                             variant: FButtonVariant.secondary,
                             onPress: onNew,
-                            child: const Icon(FLucideIcons.plus, size: 18),
+                            child: const Icon(FLucideIcons.plus, size: AppIconSizes.h18),
                           ),
                         ),
                     ],
@@ -406,12 +406,12 @@ class _PanelMessage extends StatelessWidget {
     final colors = context.theme.colors;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 36, color: iconColor ?? colors.mutedForeground),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(
               message,
               textAlign: TextAlign.center,
@@ -419,7 +419,7 @@ class _PanelMessage extends StatelessWidget {
                 color: colors.mutedForeground,
               ),
             ),
-            if (action != null) ...[const SizedBox(height: 16), action!],
+            if (action != null) ...[const SizedBox(height: AppSpacing.s16), action!],
           ],
         ),
       ),
@@ -456,7 +456,7 @@ class _SessionTile extends StatelessWidget {
         child: FTappable(
           onPress: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
             child: Row(
               children: [
                 Container(
@@ -470,7 +470,7 @@ class _SessionTile extends StatelessWidget {
                 const SizedBox(width: 8),
                 Icon(
                   FLucideIcons.messageCircle,
-                  size: 18,
+                  size: AppIconSizes.h18,
                   color: selected ? colors.primary : colors.mutedForeground,
                 ),
                 const SizedBox(width: 12),
@@ -489,7 +489,7 @@ class _SessionTile extends StatelessWidget {
                               : FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppSpacing.s2),
                       Text(
                         _formatRelative(l10n, lastAt),
                         style: context.theme.typography.xs2.copyWith(
@@ -506,7 +506,7 @@ class _SessionTile extends StatelessWidget {
                     onPress: () => _showActions(context, l10n),
                     child: Icon(
                       FLucideIcons.ellipsis,
-                      size: 18,
+                      size: AppIconSizes.h18,
                       color: colors.mutedForeground,
                     ),
                   ),
@@ -535,7 +535,7 @@ class _SessionTile extends StatelessWidget {
               onRename();
             },
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           _ActionRow(
             icon: FLucideIcons.trash2,
             label: l10n.commonDelete,
@@ -572,10 +572,10 @@ class _ActionRow extends StatelessWidget {
       child: FTappable(
         onPress: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: AppSpacing.s12),
           child: Row(
             children: [
-              Icon(icon, size: 20, color: fg),
+              Icon(icon, size: AppIconSizes.md, color: fg),
               const SizedBox(width: 12),
               Text(
                 label,

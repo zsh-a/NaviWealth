@@ -24,7 +24,7 @@ class BenchmarkComparisonCard extends ConsumerWidget {
 
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.s20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -32,18 +32,18 @@ class BenchmarkComparisonCard extends ConsumerWidget {
               l10n.benchmarkComparisonTitle,
               style: context.theme.typography.md,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               l10n.benchmarkComparisonSubtitle,
               style: context.theme.typography.sm.copyWith(
                 color: context.theme.colors.mutedForeground,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             const _BenchmarkSelectionChips(),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             const _BenchmarkRangeChips(),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             resultAsync.when(
               loading: () => const BenchmarkCardSkeleton(),
               error: (e, _) => BenchmarkCardError(error: e),
@@ -104,7 +104,7 @@ class _BenchmarkRangeChips extends ConsumerWidget {
         children: [
           for (final preset in DashboardRangePreset.values)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: AppSpacing.s8),
               child: FButton(
                 variant: (preset == selected)
                     ? FButtonVariant.primary

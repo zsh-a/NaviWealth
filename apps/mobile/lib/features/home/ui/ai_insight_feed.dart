@@ -36,7 +36,7 @@ class AiInsightFeed extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8, top: 4),
+          padding: const EdgeInsets.only(left: 4, bottom: 8, top: AppSpacing.s4),
           child: Text(
             l10n.dashboardAiInsightsTitle,
             style: context.theme.typography.sm.copyWith(
@@ -88,7 +88,14 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
     final item = widget.item;
     final route = item.route;
     final tappable = item.onTap != null || route != null;
-    final iconTint = item.iconColor ?? colors.primary;
+    final sem = SemanticColors.of(context);
+    final iconTint = switch (item.tone) {
+      InsightTone.success => sem.success,
+      InsightTone.warning => sem.warning,
+      InsightTone.danger => sem.danger,
+      InsightTone.info => sem.info,
+      null => colors.primary,
+    };
     return AiHoverOverlay(
       capsule: _InsightOverlayActions(
         expanded: _expanded,
@@ -105,7 +112,7 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
       ),
       child: SoftCard(
         onPress: !tappable ? null : (item.onTap ?? () => context.push(route!)),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -117,10 +124,10 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
                   height: 36,
                   decoration: BoxDecoration(
                     color: iconTint.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   alignment: Alignment.center,
-                  child: Icon(item.icon, size: 18, color: iconTint),
+                  child: Icon(item.icon, size: AppIconSizes.h18, color: iconTint),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -136,7 +143,7 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppSpacing.s2),
                       Text(
                         insightDetail(l10n, item),
                         style: context.theme.typography.xs.copyWith(
@@ -152,14 +159,14 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
                   const SizedBox(width: 8),
                   Icon(
                     FLucideIcons.chevronRight,
-                    size: 18,
+                    size: AppIconSizes.h18,
                     color: colors.mutedForeground.withValues(alpha: 0.6),
                   ),
                 ],
               ],
             ),
             if (_expanded) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
               _ExpandedDetail(item: item),
             ],
           ],
@@ -188,10 +195,10 @@ class _ExpandedDetail extends StatelessWidget {
     final colors = context.theme.colors;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
       decoration: BoxDecoration(
         color: colors.muted,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Text(
         _expandedDetailFor(item),
@@ -273,12 +280,12 @@ class _InsightOverlayActions extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s2),
         decoration: BoxDecoration(
           color: isDark
               ? colors.background.withValues(alpha: 0.92)
               : Colors.white.withValues(alpha: 0.94),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
             color: colors.foreground.withValues(alpha: isDark ? 0.10 : 0.06),
           ),
@@ -332,8 +339,8 @@ class _OverlayIconButton extends StatelessWidget {
       child: FTappable(
         onPress: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          child: Icon(icon, size: 14, color: colors.mutedForeground),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s4),
+          child: Icon(icon, size: AppIconSizes.xs, color: colors.mutedForeground),
         ),
       ),
     );

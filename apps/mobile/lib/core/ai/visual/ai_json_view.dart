@@ -11,6 +11,7 @@
 library;
 
 import 'package:flutter/services.dart';
+import '../../../design_system/design_system.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -49,7 +50,7 @@ class AiJsonView extends StatelessWidget {
               onPress: () =>
                   Clipboard.setData(ClipboardData(text: _pretty(value))),
               child: Padding(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(AppSpacing.s4),
                 child: Icon(
                   FLucideIcons.copy,
                   size: 14,
@@ -59,13 +60,13 @@ class AiJsonView extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.s4),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(AppSpacing.s10),
           decoration: BoxDecoration(
             color: AiTone.surfaceTint(context).withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: _JsonNode(value: value, depth: 0, propertyKey: null),
         ),

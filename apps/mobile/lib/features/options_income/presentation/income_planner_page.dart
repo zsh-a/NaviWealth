@@ -70,7 +70,7 @@ class _LoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: CircularProgressIndicator());
+    return const Center(child: FCircularProgress());
   }
 }
 
@@ -905,7 +905,7 @@ class _LoadingTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
-      child: Center(child: CircularProgressIndicator()),
+      child: Center(child: FCircularProgress()),
     );
   }
 }

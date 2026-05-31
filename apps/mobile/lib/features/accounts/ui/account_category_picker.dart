@@ -132,10 +132,10 @@ class _CategoryCard extends StatelessWidget {
                 height: 32,
                 decoration: BoxDecoration(
                   color: iconColor.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 alignment: Alignment.center,
-                child: Icon(icon, size: 18, color: iconColor),
+                child: Icon(icon, size: AppIconSizes.h18, color: iconColor),
               ),
               const Spacer(),
               Text(
@@ -147,7 +147,7 @@ class _CategoryCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpacing.s2),
               Text(
                 hint,
                 style: context.theme.typography.xs2.copyWith(

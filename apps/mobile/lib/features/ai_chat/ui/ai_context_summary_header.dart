@@ -25,7 +25,7 @@ class AiContextSummaryHeader extends ConsumerWidget {
     final colors = context.theme.colors;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s4),
       child: SoftCard(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         child: Column(
@@ -40,9 +40,9 @@ class AiContextSummaryHeader extends ConsumerWidget {
                 letterSpacing: 0.6,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             for (var i = 0; i < summary.facts.length; i++) ...[
-              if (i > 0) const SizedBox(height: 4),
+              if (i > 0) const SizedBox(height: AppSpacing.s4),
               _InfoLine(fact: summary.facts[i]),
             ],
           ],
@@ -70,8 +70,8 @@ class _InfoLine extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Icon(fact.icon, size: 14, color: _toneColor(fact.tone, colors)),
+          padding: const EdgeInsets.only(top: AppSpacing.s2),
+          child: Icon(fact.icon, size: AppIconSizes.xs, color: _toneColor(fact.tone, colors)),
         ),
         const SizedBox(width: 8),
         Expanded(

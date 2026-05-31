@@ -169,7 +169,7 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
           child: Material(
             color: Colors.transparent,
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.s16),
               children: [
                 // AI provenance hint for stock/etf/crypto
                 // assets touched by `propose_asset_valuation`. Self-
@@ -178,26 +178,26 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
                   alignment: Alignment.centerLeft,
                   child: AiTouchMark(entityType: 'assets', entityId: asset.id),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.s8),
                 AssetSummaryCard(asset: asset),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 AssetHoldingCard(asset: asset),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 AssetPnLCard(asset: asset),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 AssetFxPnlCard(assetId: asset.id),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 AssetTrendMiniChartCard(asset: asset),
                 if (_supportsCorporateActions(asset)) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.s16),
                   EventTimelineSection(symbol: asset.symbol),
                 ],
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.s16),
                 FButton(
                   variant: FButtonVariant.primary,
                   onPress: () =>
                       context.push(AppRoutes.tradeForAsset(asset.id)),
-                  prefix: const Icon(FLucideIcons.plus, size: 16),
+                  prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
                   child: Text(l10n.assetDetailNewTradeLabel),
                 ),
               ],

@@ -24,7 +24,7 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
     if (marketKey == null) {
       return SoftCard(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -32,7 +32,7 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
                 l10n.assetDetailTrend30d,
                 style: context.theme.typography.sm,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
               Text(
                 l10n.assetDetailNoMarketLinked,
                 style: context.theme.typography.xs.copyWith(
@@ -50,7 +50,7 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
 
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -65,7 +65,7 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
                 if (historyAsync.value?.isStale == true) const _StaleBadge(),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             _ChartBody(
               history: historyAsync,
               snapshot: snapshotAsync.value,
@@ -164,10 +164,10 @@ class _StaleBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
       decoration: BoxDecoration(
         color: context.theme.colors.secondary,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Text(
         l10n.assetDetailStaleBadge,

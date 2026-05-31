@@ -1,6 +1,8 @@
 import 'dart:convert';
+import '../../../design_system/design_system.dart';
 
 import 'package:flutter/material.dart';
+import '../../../design_system/design_system.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
@@ -137,7 +139,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                       invocation.input,
                     ),
                     if (invocation.output != null) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.s8),
                       _resultBlock(context, l10n, invocation),
                     ],
                   ],
@@ -233,14 +235,14 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
               ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.s4),
         if (body != null)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(AppSpacing.s8),
             decoration: BoxDecoration(
               color: context.theme.colors.background,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(AppRadius.xs),
               border: Border.all(
                 color: context.theme.colors.border.withValues(alpha: 0.4),
               ),
@@ -272,7 +274,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
             letterSpacing: 0.2,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.s4),
         _CodeBlock(text: _prettyJson(value)),
       ],
     );
@@ -289,7 +291,7 @@ class _CodeBlock extends StatelessWidget {
     final colors = context.theme.colors;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
         color: colors.muted,
         borderRadius: const BorderRadius.all(Radius.circular(6)),

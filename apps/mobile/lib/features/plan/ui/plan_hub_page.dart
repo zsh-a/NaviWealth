@@ -332,14 +332,14 @@ class _PlanSectionCard extends StatelessWidget {
           height: 36,
           decoration: BoxDecoration(
             color: colors.foreground.withValues(alpha: 0.04),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           alignment: Alignment.center,
-          child: Icon(spec.icon, size: 18, color: colors.mutedForeground),
+          child: Icon(spec.icon, size: AppIconSizes.h18, color: colors.mutedForeground),
         ),
         title: Text(spec.title),
         subtitle: Text(spec.subtitle),
-        suffix: const Icon(FLucideIcons.chevronRight, size: 18),
+        suffix: const Icon(FLucideIcons.chevronRight, size: AppIconSizes.h18),
       ),
     );
   }

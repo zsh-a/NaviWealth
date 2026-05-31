@@ -471,10 +471,10 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         ),
         children: [
           _buildAssetSearch(),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
 
           _buildTypeSelector(),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
 
           AccountPicker(
             accounts: eligible.isEmpty ? accounts : eligible,
@@ -485,7 +485,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             }),
           ),
           if (_type == TradeType.buy || _type == TradeType.sell) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             AccountPicker(
               key: const Key('trade-entry-cash-account'),
               label: l10n.tradeEntryCashAccountLabel,
@@ -503,7 +503,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               }),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
 
           AmountField(
             key: const Key('trade-entry-quantity'),
@@ -513,7 +513,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             onFieldSubmitted: (_) => _priceFocus.requestFocus(),
             helperText: _decimalScaleHint(l10n),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
 
           AmountField(
             key: const Key('trade-entry-price'),
@@ -525,7 +525,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             focusNode: _priceFocus,
             onFieldSubmitted: (_) => _feeFocus.requestFocus(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
 
           DateField(
             label: l10n.tradeEntryDateLabel,
@@ -541,7 +541,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               }
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
 
           CurrencyPicker(
             value: _currency,
@@ -550,7 +550,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               dirty.markDirty();
             }),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
 
           Row(
             children: [
@@ -577,7 +577,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
 
           NoteField(controller: _noteController, focusNode: _noteFocus),
         ],

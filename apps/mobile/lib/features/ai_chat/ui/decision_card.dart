@@ -39,7 +39,7 @@ class DecisionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(FLucideIcons.listChecks, size: 16, color: colors.primary),
+              Icon(FLucideIcons.listChecks, size: AppIconSizes.sm, color: colors.primary),
               const SizedBox(width: AppSpacing.s8),
               Expanded(
                 child: Text(
@@ -102,7 +102,7 @@ class _OptionTile extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: colors.background,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
             color: option.recommended
                 ? colors.primary.withValues(alpha: 0.5)
@@ -128,14 +128,14 @@ class _OptionTile extends StatelessWidget {
                   const SizedBox(width: AppSpacing.s4),
                   Icon(
                     FLucideIcons.arrowRight,
-                    size: 14,
+                    size: AppIconSizes.xs,
                     color: colors.mutedForeground,
                   ),
                 ],
               ],
             ),
             if (option.description.isNotEmpty) ...[
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpacing.s2),
               Text(
                 option.description,
                 style: typography.xs.copyWith(color: colors.mutedForeground),
@@ -159,7 +159,7 @@ class _RecommendedBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
         color: colors.primary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Text(
         '推荐',
@@ -183,7 +183,7 @@ class _Tradeoff extends StatelessWidget {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
     return Padding(
-      padding: const EdgeInsets.only(top: 2),
+      padding: const EdgeInsets.only(top: AppSpacing.s2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

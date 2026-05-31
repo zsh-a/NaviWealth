@@ -331,7 +331,7 @@ class _MdList extends _MdBlock {
     // hue. Checked state fills with the active tone + check glyph.
     if (item.checkbox != null) {
       final box = Padding(
-        padding: const EdgeInsets.only(right: AppSpacing.s8, top: 2),
+        padding: const EdgeInsets.only(right: AppSpacing.s8, top: AppSpacing.s2),
         child: _TaskCheckbox(checked: item.checkbox!),
       );
       // Ordered task items (`1. [x] step`) keep their number so the
@@ -403,7 +403,7 @@ class _TaskCheckbox extends StatelessWidget {
           color: checked ? AiTone.active(context) : AiTone.outline(context),
           width: 1.2,
         ),
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       alignment: Alignment.center,
       child: checked
@@ -709,7 +709,7 @@ class _CopyButtonState extends State<_CopyButton> {
         },
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s6),
-          child: Icon(icon, size: 14, color: color),
+          child: Icon(icon, size: AppIconSizes.xs, color: color),
         ),
       ),
     );

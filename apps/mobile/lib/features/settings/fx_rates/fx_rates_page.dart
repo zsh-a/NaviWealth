@@ -73,7 +73,7 @@ class _RateList extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     if (rates.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Center(
           child: Text(
             l10n.fxRatesEmpty,
@@ -91,9 +91,9 @@ class _RateList extends ConsumerWidget {
     final semantic = SemanticColors.of(context);
     final colors = context.theme.colors;
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       itemCount: ordered.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 6),
+      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s6),
       itemBuilder: (ctx, i) {
         final r = ordered[i];
         return Dismissible(
@@ -105,7 +105,7 @@ class _RateList extends ConsumerWidget {
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             alignment: AlignmentDirectional.centerEnd,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
             child: Icon(FLucideIcons.trash2, color: semantic.danger),
           ),
           confirmDismiss: (_) async {
@@ -118,7 +118,7 @@ class _RateList extends ConsumerWidget {
             return true;
           },
           child: SoftCard(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s12),
             child: Row(
               children: [
                 Container(
@@ -126,12 +126,12 @@ class _RateList extends ConsumerWidget {
                   height: 36,
                   decoration: BoxDecoration(
                     color: colors.foreground.withValues(alpha: 0.04),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   alignment: Alignment.center,
                   child: Icon(
                     FLucideIcons.arrowLeftRight,
-                    size: 18,
+                    size: AppIconSizes.h18,
                     color: colors.mutedForeground,
                   ),
                 ),
@@ -148,7 +148,7 @@ class _RateList extends ConsumerWidget {
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppSpacing.s2),
                       Text(
                         '${dateFmt.format(r.date)} · ${r.source}',
                         style: context.theme.typography.xs.copyWith(

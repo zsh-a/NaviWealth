@@ -121,7 +121,7 @@ class _DevicesList extends ConsumerWidget {
       ..sort((a, b) => b.lastSeenAt.compareTo(a.lastSeenAt));
     return ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
       itemCount: devices.length,
       separatorBuilder: (_, _) => const FDivider(),
       itemBuilder: (context, i) {
@@ -146,7 +146,7 @@ class _DevicesList extends ConsumerWidget {
                   child: FButton.icon(
                     variant: FButtonVariant.ghost,
                     onPress: () => _confirmRevoke(context, ref, device),
-                    child: const Icon(FLucideIcons.logOut, size: 18),
+                    child: const Icon(FLucideIcons.logOut, size: AppIconSizes.h18),
                   ),
                 ),
         );
@@ -195,19 +195,19 @@ class _ErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.s24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             FLucideIcons.circleAlert,
-            size: 40,
+            size: AppIconSizes.xxl,
             color: context.theme.colors.destructive,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           Text(message, textAlign: TextAlign.center),
           if (details != null && details!.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               details!,
               textAlign: TextAlign.center,
@@ -217,7 +217,7 @@ class _ErrorView extends StatelessWidget {
             ),
           ],
           if (onRetry != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             FButton(
               variant: FButtonVariant.outline,
               onPress: onRetry,

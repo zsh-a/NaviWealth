@@ -139,7 +139,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                   ),
                   label: Text(l10n.liabilityFieldType),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 FTextFormField(
                   control: FTextFieldControl.managed(controller: _name),
                   label: Text(l10n.liabilityFieldName),
@@ -150,7 +150,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                       : null,
                   onSubmit: (_) => _principalFocus.requestFocus(),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 FTextFormField(
                   control: FTextFieldControl.managed(controller: _principal),
                   label: Text(l10n.liabilityFieldPrincipal),
@@ -162,7 +162,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                   validator: _validatePositive(l10n),
                   onSubmit: (_) => _rateFocus.requestFocus(),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 FTextFormField(
                   control: FTextFieldControl.managed(controller: _rate),
                   label: Text(l10n.liabilityFieldInterestRate),
@@ -183,7 +183,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                   },
                   onSubmit: (_) => _currencyFocus.requestFocus(),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 FSelect<LiabilityRateType>(
                   items: {
                     for (final r in LiabilityRateType.values)
@@ -198,7 +198,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                   ),
                   label: Text(l10n.liabilityFieldRateType),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 FTextFormField(
                   control: FTextFieldControl.managed(controller: _currency),
                   label: Text(l10n.liabilityFieldCurrency),
@@ -215,7 +215,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                       : _termFocus.requestFocus(),
                 ),
                 if (!_isCreditCard) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.s12),
                   FTextFormField(
                     control: FTextFieldControl.managed(controller: _term),
                     label: Text(l10n.liabilityFieldTerm),
@@ -231,7 +231,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                     },
                     onSubmit: (_) => _saving ? null : _save(),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.s12),
                   _DateField(
                     label: l10n.liabilityFieldStartDate,
                     value: _startDate,
@@ -240,7 +240,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                       dirty.markDirty();
                     }),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.s12),
                   FSelect<RepaymentMethod>(
                     items: {
                       for (final m in RepaymentMethod.values)
@@ -256,7 +256,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                     label: Text(l10n.liabilityFieldMethod),
                   ),
                 ] else ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.s12),
                   FTextFormField(
                     control: FTextFieldControl.managed(
                       controller: _statementDay,
@@ -268,7 +268,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                     validator: _validateOptionalDay(l10n),
                     onSubmit: (_) => _paymentDueDayFocus.requestFocus(),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.s12),
                   FTextFormField(
                     control: FTextFieldControl.managed(
                       controller: _paymentDueDay,

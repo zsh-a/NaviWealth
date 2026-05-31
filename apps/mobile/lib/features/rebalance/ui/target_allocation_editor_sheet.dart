@@ -272,7 +272,7 @@ class _TotalCard extends StatelessWidget {
           children: [
             Icon(
               valid ? FLucideIcons.circleCheck : FLucideIcons.circleAlert,
-              size: 20,
+              size: AppIconSizes.md,
               color: fg,
             ),
             const SizedBox(width: AppSpacing.s8),
@@ -345,7 +345,7 @@ class _AllocationRow extends StatelessWidget {
               children: [
                 Icon(
                   AssetCategoryVisuals.icon(category),
-                  size: 18,
+                  size: AppIconSizes.h18,
                   color: colors.mutedForeground,
                 ),
                 const SizedBox(width: AppSpacing.s8),

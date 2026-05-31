@@ -20,7 +20,8 @@ class AiMotion {
   static const Duration short = Duration(milliseconds: 120);
 
   /// Container reveal: bottom sheet entrance, banner fade, drawer slide.
-  static const Duration medium = Duration(milliseconds: 200);
+  /// Aligned with [Motion.medium] for cross-surface consistency.
+  static const Duration medium = Duration(milliseconds: 220);
 
   /// Streaming "fade in next chunk" timing. Just barely perceptible
   /// so text reads naturally as it streams in.

@@ -108,19 +108,19 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
               helper: l10n.fireGoalFieldTargetHelper,
               required: true,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             _MoneyField(
               controller: _expensesCtrl,
               label: l10n.fireGoalFieldMonthlyExpenses,
               helper: l10n.fireGoalFieldMonthlyExpensesHelper,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             _MoneyField(
               controller: _surplusCtrl,
               label: l10n.fireGoalFieldMonthlySurplus,
               helper: l10n.fireGoalFieldMonthlySurplusHelper,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             Text(
               l10n.fireGoalFieldInflation(
                 (_inflation * 100).toStringAsFixed(1),
@@ -136,7 +136,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                 }),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.s24),
             // FIRE OS extras: advanced planning knobs. Stay folded into
             // the same sheet so saving stays a single confirm.
             Text(
@@ -145,7 +145,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                 color: context.theme.colors.mutedForeground,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(
               '${l10n.fireOsPlanFormSwrLabel} · '
               '${l10n.fireOsPlanFormSwrValue((_swr * 100).toStringAsFixed(1))}',
@@ -166,7 +166,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                 color: context.theme.colors.mutedForeground,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             FTextFormField(
               control: FTextFieldControl.managed(controller: _cashBucketCtrl),
               label: Text(l10n.fireOsPlanFormCashBucketLabel),
@@ -185,12 +185,12 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                 return null;
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(
               l10n.fireOsPlanFormLifestyleLabel,
               style: context.theme.typography.sm,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             Wrap(
               spacing: 8,
               runSpacing: 8,

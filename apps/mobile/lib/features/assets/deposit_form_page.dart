@@ -297,11 +297,11 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
                 entityId: widget.assetId!,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
           ],
           SoftCard(
             child: Padding(
-              padding: const EdgeInsets.all(4),
+              padding: const EdgeInsets.all(AppSpacing.s4),
               child: Row(
                 children: [
                   Expanded(
@@ -336,7 +336,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           AccountPicker(
             accounts: eligible,
             value: _accountId,
@@ -345,7 +345,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
               dirty.markDirty();
             }),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _nameController),
             label: Text(l10n.depositNameLabel),
@@ -357,7 +357,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
                 : null,
             onSubmit: (_) => _principalFocus.requestFocus(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           CurrencyPicker(
             value: _currency,
             onChanged: (v) => setState(() {
@@ -365,7 +365,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
               dirty.markDirty();
             }),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           AmountField(
             label: l10n.depositPrincipalLabel,
             controller: _principalController,
@@ -373,7 +373,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
             focusNode: _principalFocus,
             onFieldSubmitted: (_) => _rateFocus.requestFocus(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           FTextFormField(
             control: FTextFieldControl.managed(
               controller: _ratePercentController,
@@ -393,7 +393,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
             },
             onSubmit: (_) => _valuationFocus.requestFocus(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           DateField(
             label: l10n.depositValueDateLabel,
             initialValue: _startDate,
@@ -402,7 +402,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
               dirty.markDirty();
             }),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           DateField(
             label: l10n.depositMaturityDateLabel,
             initialValue: _maturityDate,
@@ -412,7 +412,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
               dirty.markDirty();
             }),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           AmountField(
             label: l10n.depositCurrentValuationLabel,
             controller: _valuationController,
@@ -423,7 +423,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => _busy ? null : _save(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           if (_kind == AssetType.bankDepositTerm)
             FSwitch(
               label: Text(l10n.depositAutoRenewTitle),
@@ -450,16 +450,16 @@ class _PromptCreateAccount extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(l10n.depositNoAccountHint, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             FButton(
               variant: FButtonVariant.outline,
               onPress: onTap,
-              prefix: const Icon(FLucideIcons.plus, size: 16),
+              prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
               child: Text(l10n.depositCreateAccountAction),
             ),
           ],
@@ -488,11 +488,11 @@ class _DepositKindChip extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
         decoration: selected
             ? BoxDecoration(
                 color: context.theme.colors.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               )
             : null,
         child: Row(
@@ -500,7 +500,7 @@ class _DepositKindChip extends StatelessWidget {
           children: [
             Icon(
               icon,
-              size: 18,
+              size: AppIconSizes.h18,
               color: selected
                   ? context.theme.colors.primary
                   : context.theme.colors.mutedForeground,

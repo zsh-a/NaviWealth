@@ -202,7 +202,7 @@ class _DecisionWriterState extends State<_DecisionWriter> {
             alignment: Alignment.centerLeft,
             child: FButton(
               variant: FButtonVariant.outline,
-              prefix: const Icon(FLucideIcons.plus, size: 14),
+              prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.xs),
               onPress: () => setState(() {
                 final draft = _OptionDraft();
                 draft.labelCtrl.addListener(_onAnyChange);
@@ -344,7 +344,7 @@ class _OptionEditorTile extends StatelessWidget {
                     selected
                         ? FLucideIcons.check
                         : FLucideIcons.circle,
-                    size: 14,
+                    size: AppIconSizes.xs,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s8),
@@ -361,7 +361,7 @@ class _OptionEditorTile extends StatelessWidget {
                   FButton.icon(
                     variant: FButtonVariant.outline,
                     onPress: onRemove,
-                    child: const Icon(FLucideIcons.x, size: 14),
+                    child: const Icon(FLucideIcons.x, size: AppIconSizes.xs),
                   ),
                 ],
               ],
@@ -520,14 +520,14 @@ class _CheckboxList extends StatelessWidget {
             behavior: HitTestBehavior.opaque,
             onTap: () => onToggle(item.id),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
               child: Row(
                 children: [
                   Icon(
                     item.selected
                         ? FLucideIcons.checkSquare2
                         : FLucideIcons.square,
-                    size: 14,
+                    size: AppIconSizes.xs,
                   ),
                   const SizedBox(width: AppSpacing.s8),
                   Expanded(

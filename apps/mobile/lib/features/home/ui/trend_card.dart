@@ -56,7 +56,7 @@ class TrendCard extends ConsumerWidget {
           orElse: () => const SizedBox.shrink(),
         ),
         child: SoftCard(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpacing.s20),
           borderRadius: 18,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,7 +81,7 @@ class TrendCard extends ConsumerWidget {
                                 title: l10n.dashboardTrendTitle,
                                 child: const _TrendFullscreenContent(),
                               ),
-                        child: const Icon(FLucideIcons.maximize, size: 20),
+                        child: const Icon(FLucideIcons.maximize, size: AppIconSizes.md),
                       ),
                     ),
                     orElse: () => const SizedBox(width: 48, height: 48),
@@ -89,7 +89,7 @@ class TrendCard extends ConsumerWidget {
                 ],
               ),
               const _RangeChips(),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s12),
               trendAsync.when(
                 loading: () => const _TrendSkeleton(),
                 error: (e, st) => _TrendError(error: e),
@@ -113,7 +113,7 @@ class _TrendFullscreenContent extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _RangeChips(),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         Expanded(
           child: trendAsync.when(
             loading: () => const _TrendSkeleton(),
@@ -142,7 +142,7 @@ class _RangeChips extends ConsumerWidget {
         children: [
           for (final preset in DashboardRangePreset.values)
             Padding(
-              padding: const EdgeInsets.only(right: 4),
+              padding: const EdgeInsets.only(right: AppSpacing.s4),
               child: _RangeChip(
                 label: _rangeLabel(l10n, preset),
                 selected: preset == selected,
@@ -237,10 +237,10 @@ class _RangeChip extends StatelessWidget {
     return FTappable(
       onPress: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.xs),
         ),
         alignment: Alignment.center,
         child: Text(
@@ -314,7 +314,7 @@ class _TrendChart extends StatelessWidget {
                 Expanded(child: flatChart)
               else
                 SizedBox(height: 132, child: flatChart),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s12),
               Text(
                 AppLocalizations.of(context).dashboardTrendFlatHint,
                 style: context.theme.typography.xs.copyWith(
@@ -404,7 +404,7 @@ class _TrendError extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s24),
       child: Center(
         child: Text(
           l10n.dashboardTrendError('$error'),

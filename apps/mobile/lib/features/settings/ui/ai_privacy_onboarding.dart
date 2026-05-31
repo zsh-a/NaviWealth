@@ -98,10 +98,10 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             Row(
               children: <Widget>[
-                Icon(FLucideIcons.lock, size: 20, color: colors.primary),
+                Icon(FLucideIcons.lock, size: AppIconSizes.md, color: colors.primary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -113,14 +113,14 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             Text(
               l10n.aiPrivacyOnboardingBody,
               style: context.theme.typography.sm.copyWith(
                 color: colors.mutedForeground,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             _OnboardingChoiceTile(
               mode: AiPrivacyMode.amountsAllowed,
               selected: settings.mode,
@@ -128,7 +128,7 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
               description: l10n.aiPrivacyModeAmountsAllowedDescription,
               onSelect: controller.setMode,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             _OnboardingChoiceTile(
               mode: AiPrivacyMode.amountsBucketed,
               selected: settings.mode,
@@ -136,7 +136,7 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
               description: l10n.aiPrivacyModeAmountsBucketedDescription,
               onSelect: controller.setMode,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             _OnboardingChoiceTile(
               mode: AiPrivacyMode.amountsLocal,
               selected: settings.mode,
@@ -144,7 +144,7 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
               description: l10n.aiPrivacyModeAmountsLocalDescription,
               onSelect: controller.setMode,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.s20),
             Row(
               children: <Widget>[
                 Expanded(
@@ -194,7 +194,7 @@ class _OnboardingChoiceTile extends StatelessWidget {
     final isSelected = mode == selected;
     return SoftCard(
       onPress: () => onSelect(mode),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -215,7 +215,7 @@ class _OnboardingChoiceTile extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.s2),
                 Text(
                   description,
                   style: context.theme.typography.xs.copyWith(

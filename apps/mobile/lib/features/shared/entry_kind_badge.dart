@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../../../design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'entry_kind_labels.dart';
@@ -49,7 +50,7 @@ class EntryKindBadge extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: visuals.background,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Padding(
           padding: EdgeInsets.symmetric(

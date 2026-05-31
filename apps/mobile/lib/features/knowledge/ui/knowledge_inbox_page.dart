@@ -36,7 +36,7 @@ class KnowledgeInboxPage extends ConsumerWidget {
             right: AppSpacing.s16,
             bottom: AppSpacing.s16,
             child: FButton(
-              prefix: const Icon(FLucideIcons.plus, size: 16),
+              prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
               onPress: () => showKnowledgeCaptureSheet(context, ref),
               child: const Text('新建捕获'),
             ),
@@ -105,7 +105,7 @@ class _AiAssistantBar extends ConsumerWidget {
               ),
               child: Row(
                 children: [
-                  Icon(FLucideIcons.sparkles, size: 16, color: colors.primary),
+                  Icon(FLucideIcons.sparkles, size: AppIconSizes.sm, color: colors.primary),
                   const SizedBox(width: AppSpacing.s8),
                   Expanded(
                     child: Text(
@@ -117,7 +117,7 @@ class _AiAssistantBar extends ConsumerWidget {
                   ),
                   Icon(
                     FLucideIcons.arrowRight,
-                    size: 16,
+                    size: AppIconSizes.sm,
                     color: colors.mutedForeground,
                   ),
                 ],
@@ -175,7 +175,7 @@ class _Chip extends StatelessWidget {
     return FButton(
       variant: FButtonVariant.outline,
       onPress: onTap,
-      prefix: Icon(icon, size: 14),
+      prefix: Icon(icon, size: AppIconSizes.xs),
       child: Text(label),
     );
   }

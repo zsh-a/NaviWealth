@@ -526,7 +526,7 @@ class _PolishPanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(FLucideIcons.wand, size: 14, color: colors.primary),
+              Icon(FLucideIcons.wand, size: AppIconSizes.xs, color: colors.primary),
               const SizedBox(width: AppSpacing.s4),
               Text(
                 'AI 润色后的版本',
@@ -579,12 +579,12 @@ class _DiffRow extends StatelessWidget {
           style: typography.xs
               .copyWith(color: colors.mutedForeground, fontWeight: FontWeight.w600),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: AppSpacing.s2),
         Text(
           '原:${trim(before)}',
           style: typography.sm.copyWith(color: colors.mutedForeground),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: AppSpacing.s2),
         Text(
           '→ ${trim(after)}',
           style: typography.sm.copyWith(color: colors.primary),
@@ -630,7 +630,7 @@ class _UpgradePanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(FLucideIcons.sparkles, size: 14, color: colors.primary),
+              Icon(FLucideIcons.sparkles, size: AppIconSizes.xs, color: colors.primary),
               const SizedBox(width: AppSpacing.s4),
               Text(
                 headline,

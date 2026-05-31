@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../design_system/design_system.dart';
 import 'package:flutter/services.dart';
+import '../../design_system/design_system.dart';
 import 'package:forui/forui.dart';
 
 import '../../l10n/gen/app_localizations.dart';
@@ -77,7 +79,7 @@ class _ShortcutHelpSheet extends StatelessWidget {
               ),
             ),
             Text(l10n.shortcutsHelpTitle, style: context.theme.typography.lg),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             Flexible(
               child: SingleChildScrollView(
                 child: Column(
@@ -164,7 +166,7 @@ class _ActivatorBadge extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: context.theme.colors.secondary,
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(AppRadius.xs),
               border: Border.all(color: context.theme.colors.border),
             ),
             child: Text(
@@ -211,7 +213,7 @@ class _KeyLabelBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: context.theme.colors.secondary,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
         border: Border.all(color: context.theme.colors.border),
       ),
       child: Text(

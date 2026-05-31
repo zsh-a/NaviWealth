@@ -35,7 +35,7 @@ class WealthPerspectiveSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          padding: const EdgeInsets.only(left: 4, bottom: AppSpacing.s8),
           child: Text(
             l10n.wealthPerspectiveSectionTitle,
             style: context.theme.typography.sm.copyWith(
@@ -117,7 +117,7 @@ class _PerspectiveBody extends ConsumerWidget {
           for (var i = 0; i < aggregation.buckets.length; i++) ...[
             if (i > 0)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
                 child: Container(
                   height: 1,
                   color: context.theme.colors.foreground.withValues(
@@ -176,7 +176,7 @@ class _BucketRow extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpacing.s2),
               Text(
                 l10n.wealthPerspectiveItemCount(bucket.itemCount),
                 style: context.theme.typography.xs.copyWith(
@@ -200,7 +200,7 @@ class _BucketRow extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppSpacing.s2),
             Text(
               formatters.percent(share, decimalDigits: 1),
               style: context.theme.typography.xs.copyWith(

@@ -91,7 +91,7 @@ class _ExecutionTradeRow extends StatelessWidget {
           Icon(
             AssetCategoryVisuals.icon(trade.category),
             color: context.theme.colors.mutedForeground,
-            size: 20,
+            size: AppIconSizes.md,
           ),
           const SizedBox(width: AppSpacing.s8),
           Expanded(

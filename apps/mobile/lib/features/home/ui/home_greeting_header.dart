@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../design_system/design_system.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../design_system/design_system.dart';
 import 'package:forui/forui.dart';
 
 import '../../../app/shell_chrome.dart';
@@ -85,7 +87,7 @@ class HomeGreetingHeader extends ConsumerWidget {
             ],
           ),
           if (statusFragments.isNotEmpty) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.s6),
             DefaultTextStyle.merge(
               style: context.theme.typography.sm.copyWith(
                 color: colors.mutedForeground,

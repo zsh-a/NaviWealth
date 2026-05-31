@@ -238,17 +238,17 @@ class _TabletRailSettings extends StatelessWidget {
     return FTappable(
       onPress: () => GoRouter.of(context).push(AppRoutes.settings),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.settings_outlined,
+              FLucideIcons.settings,
               color: colors.mutedForeground,
               size: 22,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               label,
               style: context.theme.typography.xs.copyWith(
@@ -284,11 +284,11 @@ class _TabletRailItem extends StatelessWidget {
     return FTappable(
       onPress: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s10),
         decoration: BoxDecoration(
           color: fill,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -298,7 +298,7 @@ class _TabletRailItem extends StatelessWidget {
               color: iconColor,
               size: 22,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               tab.label,
               style: context.theme.typography.xs.copyWith(

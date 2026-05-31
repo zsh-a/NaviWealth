@@ -67,26 +67,26 @@ class _MappingSheetState extends ConsumerState<_MappingSheet> {
       ),
       child: snapshotAsync.when(
         loading: () => const Padding(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSpacing.s16),
           child: SizedBox.shrink(),
         ),
         error: (e, _) =>
-            Padding(padding: const EdgeInsets.all(16), child: Text('$e')),
+            Padding(padding: const EdgeInsets.all(AppSpacing.s16), child: Text('$e')),
         data: (snapshot) {
           final items = _flattenItems(snapshot);
           _seed(rules, items);
           if (items.isEmpty) {
             return Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.s16),
               child: Text(l10n.fireOsBucketsMappingEmpty),
             );
           }
           return ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
             itemCount: items.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
+            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
             itemBuilder: (context, index) {
               final item = items[index];
               final selected = _selection[item.id];
@@ -157,10 +157,10 @@ class _MappingRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(AppSpacing.s10),
       decoration: BoxDecoration(
         color: context.theme.colors.muted.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,7 +171,7 @@ class _MappingRow extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.s6),
           Wrap(
             spacing: 6,
             runSpacing: 6,
@@ -229,10 +229,10 @@ class _RolePill extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
           border: Border.all(color: colors.border),
         ),
         child: Text(

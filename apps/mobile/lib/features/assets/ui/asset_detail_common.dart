@@ -51,7 +51,7 @@ class AssetDetailErrorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Text(
           message,
           style: context.theme.typography.xs.copyWith(

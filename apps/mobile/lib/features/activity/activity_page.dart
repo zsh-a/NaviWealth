@@ -176,17 +176,17 @@ class _ActivityRightRail extends ConsumerWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [for (final chip in chips) _FilterChip(spec: chip)],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s16),
               const FDivider(),
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, 0),
                 child: FButton(
                   variant: FButtonVariant.primary,
                   onPress: onAdd,
@@ -194,7 +194,7 @@ class _ActivityRightRail extends ConsumerWidget {
                   child: Text(l10n.activityAddAction),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: FButton(
@@ -259,7 +259,7 @@ class _ActivityKindFilterRow extends ConsumerWidget {
       height: 44,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
         itemCount: chips.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, i) => _FilterChip(spec: chips[i]),
@@ -293,10 +293,10 @@ class _FilterChip extends StatelessWidget {
     return FTappable(
       onPress: spec.onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s6),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
         ),
         alignment: Alignment.center,
         child: Text(

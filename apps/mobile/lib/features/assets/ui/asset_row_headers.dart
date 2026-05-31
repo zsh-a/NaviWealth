@@ -12,7 +12,7 @@ class AssetSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      padding: const EdgeInsets.only(top: 8, bottom: AppSpacing.s8),
       child: Text(title, style: context.theme.typography.md),
     );
   }
@@ -34,7 +34,7 @@ class CashAccountGroupHeader extends StatelessWidget {
     final subtitle = account?.institution;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
       color: context.theme.colors.secondary.withValues(alpha: 0.3),
       child: Text(
         subtitle != null && subtitle.isNotEmpty

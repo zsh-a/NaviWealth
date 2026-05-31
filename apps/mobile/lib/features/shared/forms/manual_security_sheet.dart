@@ -193,7 +193,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
       context: context,
       builder: (ctx, style, animation) => FDialog.raw(
         builder: (innerCtx, _) => Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -204,7 +204,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s12),
               for (final hit in hits)
                 FTile(
                   key: Key(
@@ -307,14 +307,14 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 return null;
               },
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             Align(
               alignment: Alignment.centerLeft,
               child: FButton(
                 key: const Key('manual-security-import'),
                 variant: FButtonVariant.ghost,
                 onPress: _importing ? null : _importFromNetwork,
-                prefix: const Icon(FLucideIcons.cloudDownload, size: 16),
+                prefix: const Icon(FLucideIcons.cloudDownload, size: AppIconSizes.sm),
                 child: Text(
                   _importing
                       ? l10n.manualSecurityImporting
@@ -322,13 +322,13 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             FTextFormField(
               key: const Key('manual-security-name'),
               control: FTextFieldControl.managed(controller: _nameCtl),
               label: Text(l10n.manualSecurityNameLabel),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             FSelect<AssetMarket>(
               key: const Key('manual-security-market'),
               items: {
@@ -353,7 +353,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
               ),
               label: Text(l10n.manualSecurityMarketLabel),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             FSelect<AssetType>(
               key: const Key('manual-security-type'),
               items: {
@@ -371,7 +371,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
               ),
               label: Text(l10n.manualSecurityTypeLabel),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             CurrencyPicker(
               value: _currency,
               onChanged: (v) {
@@ -383,7 +383,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 }
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             FTextFormField(
               key: const Key('manual-security-isin'),
               control: FTextFieldControl.managed(controller: _isinCtl),

@@ -16,6 +16,7 @@
 library;
 
 import 'package:flutter/widgets.dart';
+import '../../../design_system/design_system.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/ai/contracts/contracts.dart';
@@ -92,7 +93,7 @@ class _AiTraceWaterfallState extends State<AiTraceWaterfall> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _RollupHeader(trace: widget.trace),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         for (final r in rows)
           _WaterfallRow(
             row: r,
@@ -103,7 +104,7 @@ class _AiTraceWaterfallState extends State<AiTraceWaterfall> {
             ),
           ),
         if (selected != null) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
           _SpanDetail(span: selected),
         ],
       ],
@@ -174,7 +175,7 @@ class _WaterfallRow extends StatelessWidget {
           color: selected
               ? AiTone.surfaceTint(context).withValues(alpha: 0.5)
               : null,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.xs),
         ),
         padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
         child: Row(
@@ -231,7 +232,7 @@ class _WaterfallRow extends StatelessWidget {
                           color: AiTone.outline(
                             context,
                           ).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(3),
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
                         ),
                       ),
                       Padding(
@@ -243,7 +244,7 @@ class _WaterfallRow extends StatelessWidget {
                             color: tone.withValues(
                               alpha: span.isError ? 0.9 : 0.55,
                             ),
-                            borderRadius: BorderRadius.circular(3),
+                            borderRadius: BorderRadius.circular(AppRadius.xs),
                           ),
                         ),
                       ),
@@ -289,7 +290,7 @@ class _SpanDetail extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AiTone.surfaceTint(context).withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(
           color: AiTone.outline(context).withValues(alpha: 0.4),
         ),
@@ -315,7 +316,7 @@ class _SpanDetail extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.s10),
           _kv(context, 'kind', span.kind.wire),
           _kv(context, 'duration', '${span.durationMs} ms'),
           _kv(
@@ -343,15 +344,15 @@ class _SpanDetail extends StatelessWidget {
               tone: AiTone.error(context),
             ),
           if (span.input != null) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             AiJsonView(value: span.input, label: 'input'),
           ],
           if (span.output != null) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             AiJsonView(value: span.output, label: 'output'),
           ],
           if (isPayloadKind && span.input == null && span.output == null) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             Text(
               l10n.aiTraceNoPayloadCaptured,
               style: AiType.meta(

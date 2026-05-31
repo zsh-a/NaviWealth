@@ -18,14 +18,14 @@ class AssetFxPnlCard extends ConsumerWidget {
     final reportAsync = ref.watch(assetHoldingReportProvider(assetId));
     if (reportAsync.isLoading) {
       return const SkeletonCard(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SkeletonBox(width: 120, height: 14, radius: 4),
-            SizedBox(height: 12),
+            SizedBox(height: AppSpacing.s12),
             SkeletonBox(height: 16),
-            SizedBox(height: 8),
+            SizedBox(height: AppSpacing.s8),
             SkeletonBox(height: 16),
           ],
         ),
@@ -43,7 +43,7 @@ class AssetFxPnlCard extends ConsumerWidget {
         breakdown?.baseCurrency ?? report?.baseCurrency ?? 'USD';
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -51,7 +51,7 @@ class AssetFxPnlCard extends ConsumerWidget {
               l10n.assetDetailFxPnlTitle,
               style: context.theme.typography.sm,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             AssetDetailMetricRow(
               label: l10n.assetDetailFxPnlMarketLeg,
               trailing: AnimatedMoneyText(
@@ -60,7 +60,7 @@ class AssetFxPnlCard extends ConsumerWidget {
                 showSign: true,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             AssetDetailMetricRow(
               label: l10n.assetDetailFxPnlCurrencyLeg,
               trailing: AnimatedMoneyText(

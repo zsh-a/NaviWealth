@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'chart_palette.dart';
 import 'chart_series.dart';
@@ -173,7 +174,7 @@ class _NwPieChartState extends State<NwPieChart> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.s2),
           Text(
             s.label,
             style: TypographyTokens.numericCaption.copyWith(
@@ -298,7 +299,7 @@ class LegendRow extends StatelessWidget {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: AppSpacing.s6),
                 Flexible(
                   child: Text(
                     label,
@@ -308,7 +309,7 @@ class LegendRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.s4),
                 Text(
                   '${percent.toStringAsFixed(1)}%',
                   style: TypographyTokens.numericCaption.copyWith(
@@ -317,7 +318,7 @@ class LegendRow extends StatelessWidget {
                   ),
                 ),
                 if (value != null) ...[
-                  const SizedBox(width: 4),
+                  const SizedBox(width: AppSpacing.s4),
                   Text(
                     value!,
                     style: TypographyTokens.numericCaption.copyWith(
@@ -328,7 +329,7 @@ class LegendRow extends StatelessWidget {
                 ],
               ],
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppSpacing.s2),
             Container(
               height: 2,
               width: double.infinity,

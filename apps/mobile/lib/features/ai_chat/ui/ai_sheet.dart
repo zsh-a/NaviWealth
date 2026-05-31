@@ -287,11 +287,11 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
           width: sheetSize.width,
           height: sheetSize.height,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             child: Container(
               decoration: BoxDecoration(
                 color: colors.background,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
                 border: Border.all(color: colors.border, width: 1),
                 boxShadow: const [
                   BoxShadow(
@@ -564,7 +564,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
           ],
           if (_loginRequired || _errorDetail != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s16),
               child: Text(
                 _loginRequired
                     ? l10n.aiChatLoginRequired
@@ -588,7 +588,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
     }
     return ChatConversationView(
       sessionId: sessionId,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s16),
       invocationIntent: widget.invocation!.intent,
       onReplyChip: (chip) => _sendChip(sessionId, chip),
       loadingBuilder: (_) => const _BodySkeleton(),
@@ -608,16 +608,16 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
     if (userId == null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppSpacing.s24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 FLucideIcons.lock,
-                size: 32,
+                size: AppIconSizes.xl,
                 color: context.theme.colors.mutedForeground,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s12),
               Text(l10n.aiChatLoginRequired),
             ],
           ),
@@ -669,7 +669,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
                   },
                   emptyBuilder: (context) => Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(AppSpacing.s24),
                       child: Text(
                         AppLocalizations.of(context).aiChatSheetEmpty,
                         style: context.theme.typography.sm.copyWith(
@@ -710,10 +710,10 @@ class _ConversationHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
       child: Row(
         children: [
-          const AiSparkle(size: 16),
+          const AiSparkle(size: AppIconSizes.sm),
           const SizedBox(width: 8),
           Expanded(child: Text(title, style: AiType.title(context))),
           FTooltip(
@@ -721,7 +721,7 @@ class _ConversationHeader extends StatelessWidget {
             child: FButton.icon(
               variant: FButtonVariant.ghost,
               onPress: onNew,
-              child: const Icon(FLucideIcons.squarePen, size: 20),
+              child: const Icon(FLucideIcons.squarePen, size: AppIconSizes.md),
             ),
           ),
           FTooltip(
@@ -729,13 +729,13 @@ class _ConversationHeader extends StatelessWidget {
             child: FButton.icon(
               variant: FButtonVariant.ghost,
               onPress: onExpand,
-              child: const Icon(FLucideIcons.maximize, size: 20),
+              child: const Icon(FLucideIcons.maximize, size: AppIconSizes.md),
             ),
           ),
           FButton.icon(
             variant: FButtonVariant.ghost,
             onPress: () => Navigator.of(context).pop(),
-            child: const Icon(FLucideIcons.x, size: 20),
+            child: const Icon(FLucideIcons.x, size: AppIconSizes.md),
           ),
         ],
       ),
@@ -845,9 +845,9 @@ class _BodySkeletonState extends State<_BodySkeleton>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _bar(color, widthFactor: 0.85),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
               _bar(color, widthFactor: 0.65),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
               _bar(color, widthFactor: 0.45),
             ],
           );
@@ -864,7 +864,7 @@ class _BodySkeletonState extends State<_BodySkeleton>
         height: 12,
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.xs),
         ),
       ),
     );
@@ -880,20 +880,20 @@ class _Footer extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s8, AppSpacing.s12, AppSpacing.s8),
       child: Row(
         children: [
           FButton(
             variant: FButtonVariant.ghost,
             onPress: onDismiss,
-            prefix: const Icon(FLucideIcons.x, size: 16),
+            prefix: const Icon(FLucideIcons.x, size: AppIconSizes.sm),
             child: Text(l10n.commonClose),
           ),
           const Spacer(),
           FButton(
             variant: FButtonVariant.outline,
             onPress: onExpand,
-            prefix: const Icon(FLucideIcons.maximize, size: 16),
+            prefix: const Icon(FLucideIcons.maximize, size: AppIconSizes.sm),
             child: Text(l10n.aiChatSheetExpandTooltip),
           ),
         ],

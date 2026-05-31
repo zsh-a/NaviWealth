@@ -186,10 +186,10 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
         : '$days 天后';
     final dueColor = days < 0 ? colors.destructive : colors.mutedForeground;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Row(
         children: [
-          Icon(FLucideIcons.repeat, size: 14, color: colors.mutedForeground),
+          Icon(FLucideIcons.repeat, size: AppIconSizes.xs, color: colors.mutedForeground),
           const SizedBox(width: AppSpacing.s4),
           Expanded(
             child: Column(
@@ -270,12 +270,12 @@ class _DueReviewsCard extends ConsumerWidget {
                           .take(kReviewCardMaxItems)
                           .map(
                             (d) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
                               child: Row(
                                 children: [
                                   Icon(
                                     FLucideIcons.calendar,
-                                    size: 14,
+                                    size: AppIconSizes.xs,
                                     color: colors.mutedForeground,
                                   ),
                                   const SizedBox(width: AppSpacing.s4),
@@ -351,7 +351,7 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                           .take(kReviewCardMaxItems)
                           .map(
                             (a) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
                               child: Text(
                                 '· ${a.statement}（${a.daysSinceVerify(now)} 天, conf ${a.confidence.toStringAsFixed(2)}）',
                                 style: typography.sm,

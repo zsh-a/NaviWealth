@@ -58,10 +58,10 @@ class ActivityFeedEntryRow extends StatelessWidget {
           height: 36,
           decoration: BoxDecoration(
             color: iconTint.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           alignment: Alignment.center,
-          child: Icon(iconData, size: 18, color: iconTint),
+          child: Icon(iconData, size: AppIconSizes.h18, color: iconTint),
         ),
         title: Text(
           entry.entry.narration.isEmpty ? '—' : entry.entry.narration,
@@ -94,7 +94,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppSpacing.s2),
             Text(
               timeStr,
               style: context.theme.typography.xs.copyWith(
