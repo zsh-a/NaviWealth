@@ -93,7 +93,7 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: colors.mutedForeground.withValues(alpha: 0.4),
+                  color: colors.mutedForeground.withValues(alpha: AppOpacity.disabled),
                   borderRadius: BorderRadius.circular(AppRadius.xxs),
                 ),
               ),

@@ -51,7 +51,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const AiSparkle(size: AppIconSizes.sm),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.s6),
             Text(l10n.ingestReviewTitle),
           ],
         ),
@@ -440,7 +440,7 @@ class _ProcessingPanel extends StatelessWidget {
                     width: compact ? 34 : 40,
                     height: compact ? 34 : 40,
                     decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.12),
+                      color: colors.primary.withValues(alpha: AppOpacity.light),
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     alignment: Alignment.center,
@@ -520,7 +520,7 @@ class _DraftCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               MoneyText(
                 amount: p.amountMinor.abs() / 100.0,
                 currencyCode: p.currency,
@@ -567,7 +567,7 @@ class _DraftCard extends StatelessWidget {
                   child: Text(l10n.ingestSkip),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Expanded(
                 child: FButton(
                   variant: FButtonVariant.primary,
@@ -696,7 +696,7 @@ class _EmptyState extends StatelessWidget {
             Icon(
               FLucideIcons.inbox,
               size: AppIconSizes.xxl,
-              color: colors.mutedForeground.withValues(alpha: 0.5),
+              color: colors.mutedForeground.withValues(alpha: AppOpacity.scrim),
             ),
             const SizedBox(height: AppSpacing.s12),
             Text(

@@ -491,7 +491,7 @@ class _DepositKindChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
         decoration: selected
             ? BoxDecoration(
-                color: context.theme.colors.primary.withValues(alpha: 0.15),
+                color: context.theme.colors.primary.withValues(alpha: AppOpacity.medium),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               )
             : null,

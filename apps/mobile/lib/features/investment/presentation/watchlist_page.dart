@@ -255,7 +255,7 @@ class _WatchlistRow extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: colors.foreground.withValues(alpha: 0.04),
+                  color: colors.foreground.withValues(alpha: AppOpacity.whisper),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 alignment: Alignment.center,
@@ -370,7 +370,7 @@ class _RuleChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.theme.colors.foreground.withValues(alpha: 0.05),
+        color: context.theme.colors.foreground.withValues(alpha: AppOpacity.whisper),
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(

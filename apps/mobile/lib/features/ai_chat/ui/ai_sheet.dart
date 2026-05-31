@@ -81,7 +81,7 @@ Future<void> showAiSheet(
     context: context,
     barrierLabel: 'ai-chat-sheet',
     barrierDismissible: true,
-    barrierColor: Colors.black.withValues(alpha: 0.18),
+    barrierColor: Colors.black.withValues(alpha: AppOpacity.medium),
     transitionDuration: Motion.medium,
     pageBuilder: (ctx, animation, secondaryAnimation) =>
         _DesktopSheetOverlay(prefill: prefill),
@@ -325,7 +325,7 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
                                   color: colors.mutedForeground.withValues(
                                     alpha: 0.4,
                                   ),
-                                  borderRadius: BorderRadius.circular(2),
+                                  borderRadius: BorderRadius.circular(AppRadius.xxs),
                                 ),
                               ),
                             ),
@@ -714,7 +714,7 @@ class _ConversationHeader extends StatelessWidget {
       child: Row(
         children: [
           const AiSparkle(size: AppIconSizes.sm),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Expanded(child: Text(title, style: AiType.title(context))),
           FTooltip(
             tipBuilder: (_, _) => Text(l10n.aiChatSheetNewTooltip),
@@ -783,7 +783,7 @@ class _InvocationHeader extends StatelessWidget {
       child: Row(
         children: [
           const AiSparkle(),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Flexible(
             child: RichText(
               maxLines: 2,

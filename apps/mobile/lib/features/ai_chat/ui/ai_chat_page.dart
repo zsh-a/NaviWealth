@@ -397,12 +397,12 @@ class _SuggestionTile extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.12),
+                  color: colors.primary.withValues(alpha: AppOpacity.light),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, size: AppIconSizes.sm, color: colors.primary),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Text(
                   label,

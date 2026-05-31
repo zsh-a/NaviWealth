@@ -457,7 +457,7 @@ class _MdCode extends _MdBlock {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AiTone.surfaceTint(context).withValues(alpha: 0.5),
+        color: AiTone.surfaceTint(context).withValues(alpha: AppOpacity.scrim),
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: AiTone.outline(context)),
       ),
@@ -557,7 +557,7 @@ class _MdTable extends _MdBlock {
       fontWeight: FontWeight.w600,
       color: AiTone.onSurface(context),
     );
-    final headerBg = AiTone.surfaceTint(context).withValues(alpha: 0.4);
+    final headerBg = AiTone.surfaceTint(context).withValues(alpha: AppOpacity.disabled);
 
     // Pad short rows / clip long rows so every row has exactly `cols`
     // cells — `Table` throws if rows differ in length.
@@ -1058,7 +1058,7 @@ class _InlineParser {
             final linkStyle = base.copyWith(
               color: AiTone.active(context),
               decoration: TextDecoration.underline,
-              decorationColor: AiTone.active(context).withValues(alpha: 0.4),
+              decorationColor: AiTone.active(context).withValues(alpha: AppOpacity.disabled),
             );
             // The label is rendered inside a tappable WidgetSpan so we
             // don't need to wire a TapGestureRecognizer (which would
@@ -1196,7 +1196,7 @@ Future<void> _confirmAndOpen(BuildContext context, String url) async {
             vertical: AppSpacing.s6,
           ),
           decoration: BoxDecoration(
-            color: AiTone.surfaceTint(context).withValues(alpha: 0.5),
+            color: AiTone.surfaceTint(context).withValues(alpha: AppOpacity.scrim),
             borderRadius: BorderRadius.circular(AppRadius.xs),
             border: Border.all(color: AiTone.outline(context)),
           ),
@@ -1253,14 +1253,14 @@ class _CodeTinter {
     BuildContext context,
   ) {
     final stringStyle = base.copyWith(
-      color: AiTone.active(context).withValues(alpha: 0.85),
+      color: AiTone.active(context).withValues(alpha: AppOpacity.overlay),
     );
     final commentStyle = base.copyWith(
       color: AiTone.muted(context),
       fontStyle: FontStyle.italic,
     );
     final numberStyle = base.copyWith(
-      color: AiTone.active(context).withValues(alpha: 0.7),
+      color: AiTone.active(context).withValues(alpha: AppOpacity.strong),
     );
     final spans = <InlineSpan>[];
     final buf = StringBuffer();
@@ -1393,7 +1393,7 @@ InlineSpan _codeSpan(String text, TextStyle base, BuildContext context) {
         vertical: 1,
       ),
       decoration: BoxDecoration(
-        color: AiTone.surfaceTint(context).withValues(alpha: 0.6),
+        color: AiTone.surfaceTint(context).withValues(alpha: AppOpacity.prominent),
         borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Text(

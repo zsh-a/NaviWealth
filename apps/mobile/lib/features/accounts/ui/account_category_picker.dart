@@ -105,11 +105,11 @@ class _CategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final border = selected
-        ? colors.primary.withValues(alpha: 0.7)
-        : colors.foreground.withValues(alpha: 0.06);
+        ? colors.primary.withValues(alpha: AppOpacity.strong)
+        : colors.foreground.withValues(alpha: AppOpacity.faint);
     final fill = selected
-        ? colors.primary.withValues(alpha: 0.10)
-        : colors.foreground.withValues(alpha: 0.02);
+        ? colors.primary.withValues(alpha: AppOpacity.subtle)
+        : colors.foreground.withValues(alpha: AppOpacity.whisper);
     final iconColor = selected ? colors.primary : colors.mutedForeground;
     return AnimatedContainer(
       duration: Motion.fast,
@@ -131,7 +131,7 @@ class _CategoryCard extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.14),
+                  color: iconColor.withValues(alpha: AppOpacity.medium),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 alignment: Alignment.center,

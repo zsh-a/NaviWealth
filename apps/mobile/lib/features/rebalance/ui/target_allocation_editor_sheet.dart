@@ -257,14 +257,14 @@ class _TotalCard extends StatelessWidget {
     final colors = context.theme.colors;
     final fg = valid ? colors.primary : colorScheme.error;
     final bg = valid
-        ? colorScheme.primaryContainer.withValues(alpha: 0.22)
-        : colorScheme.errorContainer.withValues(alpha: 0.28);
+        ? colorScheme.primaryContainer.withValues(alpha: AppOpacity.muted)
+        : colorScheme.errorContainer.withValues(alpha: AppOpacity.muted);
 
     return DecoratedBox(
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: fg.withValues(alpha: 0.24)),
+        border: Border.all(color: fg.withValues(alpha: AppOpacity.muted)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s12),

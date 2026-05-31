@@ -173,7 +173,7 @@ class _WaterfallRow extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: selected
-              ? AiTone.surfaceTint(context).withValues(alpha: 0.5)
+              ? AiTone.surfaceTint(context).withValues(alpha: AppOpacity.scrim)
               : null,
           borderRadius: BorderRadius.circular(AppRadius.xs),
         ),
@@ -231,7 +231,7 @@ class _WaterfallRow extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: AiTone.outline(
                             context,
-                          ).withValues(alpha: 0.15),
+                          ).withValues(alpha: AppOpacity.medium),
                           borderRadius: BorderRadius.circular(AppRadius.xs),
                         ),
                       ),
@@ -289,10 +289,10 @@ class _SpanDetail extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.s14),
       decoration: BoxDecoration(
-        color: AiTone.surfaceTint(context).withValues(alpha: 0.35),
+        color: AiTone.surfaceTint(context).withValues(alpha: AppOpacity.muted),
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(
-          color: AiTone.outline(context).withValues(alpha: 0.4),
+          color: AiTone.outline(context).withValues(alpha: AppOpacity.disabled),
         ),
       ),
       child: Column(

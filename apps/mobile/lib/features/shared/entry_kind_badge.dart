@@ -62,7 +62,7 @@ class EntryKindBadge extends StatelessWidget {
             children: [
               Icon(visuals.icon, size: 14, color: visuals.foreground),
               if (showLabel) ...[
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.s4),
                 Text(
                   label,
                   style: context.theme.typography.xs2.copyWith(

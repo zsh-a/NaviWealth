@@ -135,7 +135,7 @@ class _SidebarItem extends StatelessWidget {
     );
 
     final Color background = selected
-        ? colors.primary.withValues(alpha: 0.10)
+        ? colors.primary.withValues(alpha: AppOpacity.subtle)
         : const Color(0x00000000);
 
     final content = Stack(

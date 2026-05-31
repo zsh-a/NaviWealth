@@ -73,7 +73,7 @@ class _InfoLine extends StatelessWidget {
           padding: const EdgeInsets.only(top: AppSpacing.s2),
           child: Icon(fact.icon, size: AppIconSizes.xs, color: _toneColor(fact.tone, colors)),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.s8),
         Expanded(
           child: Text(
             fact.text,

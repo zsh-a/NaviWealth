@@ -136,7 +136,7 @@ class _RowDivider extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
       child: Container(
         height: 1,
-        color: context.theme.colors.foreground.withValues(alpha: 0.05),
+        color: context.theme.colors.foreground.withValues(alpha: AppOpacity.whisper),
       ),
     );
   }

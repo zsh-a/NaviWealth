@@ -362,7 +362,7 @@ class _BatchProposalView extends ConsumerWidget {
           Row(
             children: [
               Icon(FLucideIcons.layers, size: AppIconSizes.h18, color: colors.foreground),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Text(
                 l10n.aiChatProposalBatchPending(plan.children.length),
                 style: context.theme.typography.xs.copyWith(
@@ -435,10 +435,10 @@ class _BatchChildrenList extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s6),
       decoration: BoxDecoration(
-        color: context.theme.colors.background.withValues(alpha: 0.6),
+        color: context.theme.colors.background.withValues(alpha: AppOpacity.prominent),
         borderRadius: BorderRadius.circular(AppRadius.xs),
         border: Border.all(
-          color: context.theme.colors.border.withValues(alpha: 0.4),
+          color: context.theme.colors.border.withValues(alpha: AppOpacity.disabled),
         ),
       ),
       child: Column(
@@ -456,7 +456,7 @@ class _BatchChildrenList extends StatelessWidget {
                       color: context.theme.colors.mutedForeground,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.s8),
                   Expanded(
                     child: Text(
                       '${proposalKindLabel(l10n, registry, plan.children[i].kind)} · '
@@ -516,7 +516,7 @@ class _BatchCollapsedView extends StatelessWidget {
           child: Row(
             children: [
               Icon(icon, size: AppIconSizes.sm, color: color),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Expanded(
                 child: Text(
                   label,
@@ -588,7 +588,7 @@ class _ExpandedView extends ConsumerWidget {
                 size: AppIconSizes.h18,
                 color: colors.foreground,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Text(
                 l10n.aiChatProposalPendingHeader(
                   proposalKindLabel(l10n, registry, plan.kind),
@@ -699,7 +699,7 @@ class _OneTapView extends ConsumerWidget {
       margin: const EdgeInsets.only(top: AppSpacing.s8),
       padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s10, AppSpacing.s8, AppSpacing.s10),
       decoration: BoxDecoration(
-        color: AiTone.surfaceTint(context).withValues(alpha: 0.6),
+        color: AiTone.surfaceTint(context).withValues(alpha: AppOpacity.prominent),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Column(
@@ -708,7 +708,7 @@ class _OneTapView extends ConsumerWidget {
           Row(
             children: [
               const AiSparkle(),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpacing.s6),
               Text(
                 proposalKindLabel(l10n, registry, plan.kind),
                 style: AiType.meta(context),
@@ -948,7 +948,7 @@ class _CollapsedView extends StatelessWidget {
           child: Row(
             children: [
               Icon(icon, size: AppIconSizes.sm, color: color),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Expanded(
                 child: Text(
                   label,
@@ -1080,7 +1080,7 @@ class _ClarificationView extends ConsumerWidget {
                     size: AppIconSizes.h18,
                     color: colors.mutedForeground,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.s8),
                   Text(
                     l10n.aiChatProposalNeedsClarificationHeader(
                       proposalKindLabel(l10n, registry, plan.kind),
@@ -1159,10 +1159,10 @@ class ProposalPayloadDetails extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s6),
       decoration: BoxDecoration(
-        color: context.theme.colors.background.withValues(alpha: 0.6),
+        color: context.theme.colors.background.withValues(alpha: AppOpacity.prominent),
         borderRadius: BorderRadius.circular(AppRadius.xs),
         border: Border.all(
-          color: context.theme.colors.border.withValues(alpha: 0.4),
+          color: context.theme.colors.border.withValues(alpha: AppOpacity.disabled),
         ),
       ),
       child: Column(
@@ -1183,7 +1183,7 @@ class ProposalPayloadDetails extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.s8),
                   Expanded(
                     child: Text(
                       r.value,
@@ -1366,7 +1366,7 @@ class _ProposalEditSheetState extends ConsumerState<ProposalEditSheet> {
                         size: AppIconSizes.sm,
                         color: AiTone.active(context),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSpacing.s4),
                       Text(
                         _fullMode
                             ? l10n.aiChatProposalEditStandardFields
@@ -1422,14 +1422,14 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
       margin: const EdgeInsets.only(top: AppSpacing.s8),
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
       decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.10),
+        color: colors.primary.withValues(alpha: AppOpacity.subtle),
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
           Icon(FLucideIcons.layers, size: AppIconSizes.h18, color: colors.primary),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: Text(
               l10n.aiChatProposalBatchPending(widget.pending.length),
@@ -1543,7 +1543,7 @@ class _WarningCallout extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border(
           left: BorderSide(
-            color: AiTone.active(context).withValues(alpha: 0.6),
+            color: AiTone.active(context).withValues(alpha: AppOpacity.prominent),
             width: 2,
           ),
         ),
@@ -1561,7 +1561,7 @@ class _WarningCallout extends StatelessWidget {
                   size: AppIconSizes.sm,
                   color: AiTone.onSurface(context),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.s8),
                 Expanded(
                   child: Text(
                     warnings[i],

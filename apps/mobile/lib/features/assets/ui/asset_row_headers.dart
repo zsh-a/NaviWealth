@@ -35,7 +35,7 @@ class CashAccountGroupHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
-      color: context.theme.colors.secondary.withValues(alpha: 0.3),
+      color: context.theme.colors.secondary.withValues(alpha: AppOpacity.muted),
       child: Text(
         subtitle != null && subtitle.isNotEmpty
             ? '${account!.name} \u00B7 $subtitle'

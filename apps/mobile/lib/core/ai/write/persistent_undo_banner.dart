@@ -85,7 +85,7 @@ class _UndoRow extends StatelessWidget {
           child: Row(
             children: [
               const AiSparkle(),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Expanded(
                 child: Text(
                   summary,
@@ -94,7 +94,7 @@ class _UndoRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               AiPill(
                 label: AppLocalizations.of(context).commonUndo,
                 state: AiPillState.selected,

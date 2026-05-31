@@ -314,7 +314,7 @@ class _SizeBadge extends StatelessWidget {
         vertical: AppSpacing.s4,
       ),
       decoration: BoxDecoration(
-        color: colors.foreground.withValues(alpha: 0.06),
+        color: colors.foreground.withValues(alpha: AppOpacity.faint),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Text(
@@ -516,7 +516,7 @@ class _StatusChip extends StatelessWidget {
         vertical: AppSpacing.s4,
       ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: color.withValues(alpha: AppOpacity.medium),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(

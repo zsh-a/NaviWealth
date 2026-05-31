@@ -38,7 +38,7 @@ class ManualAssetTile extends StatelessWidget {
           onTap: () => _onTap(context),
           child: Container(
             color: selected
-                ? context.theme.colors.primary.withValues(alpha: 0.10)
+                ? context.theme.colors.primary.withValues(alpha: AppOpacity.subtle)
                 : null,
             constraints: const BoxConstraints(minHeight: 48),
             child: Padding(

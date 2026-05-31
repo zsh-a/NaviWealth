@@ -390,7 +390,7 @@ class _CategoryTile extends StatelessWidget {
         _categoryLabel(l10n, category, l10n.expenseReportUncategorized),
       ),
       prefix: CircleAvatar(
-        backgroundColor: accent.withValues(alpha: 0.15),
+        backgroundColor: accent.withValues(alpha: AppOpacity.medium),
         child: Icon(category?.iconData ?? FLucideIcons.banknote, color: accent),
       ),
       subtitle: Text(l10n.expenseReportItemCount(breakdown.items.length)),
@@ -455,7 +455,7 @@ class _CategoryDrillDown extends StatelessWidget {
                     category?.iconData ?? FLucideIcons.banknote,
                     color: context.theme.colors.primary,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.s8),
                   Expanded(
                     child: Text(
                       _categoryLabel(

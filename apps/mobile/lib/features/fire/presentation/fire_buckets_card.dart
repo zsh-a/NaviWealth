@@ -178,9 +178,9 @@ class _BucketRow extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.12),
+                  color: statusColor.withValues(alpha: AppOpacity.light),
                   borderRadius: BorderRadius.circular(AppRadius.full),
-                  border: Border.all(color: statusColor.withValues(alpha: 0.4)),
+                  border: Border.all(color: statusColor.withValues(alpha: AppOpacity.disabled)),
                 ),
                 child: Text(
                   _statusLabel(l10n, bucket.status),
@@ -255,7 +255,7 @@ class _BucketAssetList extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s8),
       decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: 0.3),
+        color: colors.muted.withValues(alpha: AppOpacity.muted),
         borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Column(
@@ -310,7 +310,7 @@ class _UnmappedSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s10),
       decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: 0.3),
+        color: colors.muted.withValues(alpha: AppOpacity.muted),
         borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Column(

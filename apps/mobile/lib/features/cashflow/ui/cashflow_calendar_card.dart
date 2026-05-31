@@ -196,7 +196,7 @@ class _CardHeader extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.14),
+            color: color.withValues(alpha: AppOpacity.medium),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           alignment: Alignment.center,
@@ -217,7 +217,7 @@ class _CardHeader extends StatelessWidget {
         Icon(
           FLucideIcons.chevronRight,
           size: AppIconSizes.h18,
-          color: context.theme.colors.mutedForeground.withValues(alpha: 0.6),
+          color: context.theme.colors.mutedForeground.withValues(alpha: AppOpacity.prominent),
         ),
       ],
     );

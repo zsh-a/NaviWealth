@@ -533,7 +533,7 @@ class _LegendDot extends StatelessWidget {
           decoration: BoxDecoration(
             color: dashed ? null : color,
             border: dashed ? Border.all(color: color, width: 1.5) : null,
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(AppRadius.xxs),
           ),
         ),
         const SizedBox(width: AppSpacing.s4),

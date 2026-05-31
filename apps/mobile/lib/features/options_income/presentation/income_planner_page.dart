@@ -610,7 +610,7 @@ class _StrategyBadge extends StatelessWidget {
     final colors = context.theme.colors;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.12),
+        color: colors.primary.withValues(alpha: AppOpacity.light),
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(
@@ -652,7 +652,7 @@ class _RiskBadge extends StatelessWidget {
     };
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
+        color: color.withValues(alpha: AppOpacity.subtle),
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(
@@ -878,7 +878,7 @@ class _StrategyChip extends StatelessWidget {
     final colors = context.theme.colors;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: enabled ? colors.primary.withValues(alpha: 0.12) : colors.muted,
+        color: enabled ? colors.primary.withValues(alpha: AppOpacity.light) : colors.muted,
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(

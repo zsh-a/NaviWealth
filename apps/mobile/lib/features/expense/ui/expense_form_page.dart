@@ -469,13 +469,13 @@ class _NoAccountsHint extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: semantic.warning.withValues(alpha: 0.14),
+              color: semantic.warning.withValues(alpha: AppOpacity.medium),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             alignment: Alignment.center,
             child: Icon(FLucideIcons.wallet, size: AppIconSizes.h18, color: semantic.warning),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

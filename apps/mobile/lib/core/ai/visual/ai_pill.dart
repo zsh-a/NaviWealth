@@ -42,9 +42,9 @@ class AiPill extends StatelessWidget {
       AiPillState.error => AiTone.error(context),
     };
     final Color bg = switch (state) {
-      AiPillState.neutral => AiTone.surfaceTint(context).withValues(alpha: 0.6),
-      AiPillState.selected => tone.withValues(alpha: 0.16),
-      AiPillState.error => tone.withValues(alpha: 0.12),
+      AiPillState.neutral => AiTone.surfaceTint(context).withValues(alpha: AppOpacity.prominent),
+      AiPillState.selected => tone.withValues(alpha: AppOpacity.medium),
+      AiPillState.error => tone.withValues(alpha: AppOpacity.light),
     };
     final BorderSide side = switch (state) {
       AiPillState.neutral => BorderSide.none,

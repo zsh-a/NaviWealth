@@ -288,7 +288,7 @@ class _AssistantBubble extends StatelessWidget {
           Row(
             children: [
               Icon(FLucideIcons.circleAlert, size: AppIconSizes.sm, color: colors.destructive),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpacing.s6),
               Text(
                 l10n.aiChatSemanticsAssistantError,
                 style: context.theme.typography.xs.copyWith(
@@ -372,7 +372,7 @@ class _AssistantBubble extends StatelessWidget {
         borderRadius: const BorderRadius.all(Radius.circular(8)),
         border: Border.all(
           color: _isError
-              ? colors.destructive.withValues(alpha: 0.55)
+              ? colors.destructive.withValues(alpha: AppOpacity.scrim)
               : colors.border,
           width: _isError ? 1.5 : 1,
         ),
@@ -386,7 +386,7 @@ class _AssistantBubble extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _AssistantAvatar(),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Flexible(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 720),
@@ -569,7 +569,7 @@ class _AssistantBody extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const AiSparkle(active: true),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.s6),
             Text(
               // Pass the friendly localized tool name (e.g. "查询持仓")
               // instead of the wire id — generic users shouldn't need to
@@ -580,20 +580,20 @@ class _AssistantBody extends StatelessWidget {
                 context,
               ).copyWith(color: AiTone.active(context)),
             ),
-            const SizedBox(width: 2),
-            _TypingDots(color: AiTone.active(context).withValues(alpha: 0.7)),
+            const SizedBox(width: AppSpacing.s2),
+            _TypingDots(color: AiTone.active(context).withValues(alpha: AppOpacity.strong)),
           ],
         );
       }
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _TypingDots(color: textColor.withValues(alpha: 0.7)),
-          const SizedBox(width: 8),
+          _TypingDots(color: textColor.withValues(alpha: AppOpacity.strong)),
+          const SizedBox(width: AppSpacing.s8),
           Text(
             l10n.aiChatThinking,
             style: context.theme.typography.sm.copyWith(
-              color: textColor.withValues(alpha: 0.7),
+              color: textColor.withValues(alpha: AppOpacity.strong),
             ),
           ),
         ],
@@ -649,7 +649,7 @@ class _TypingDotsState extends State<_TypingDots>
           mainAxisSize: MainAxisSize.min,
           children: [
             for (var i = 0; i < 3; i++) ...[
-              if (i > 0) const SizedBox(width: 4),
+              if (i > 0) const SizedBox(width: AppSpacing.s4),
               _dot(i),
             ],
           ],
@@ -707,7 +707,7 @@ class _StreamingCaretState extends State<_StreamingCaret>
         height: 14,
         decoration: BoxDecoration(
           color: widget.color,
-          borderRadius: BorderRadius.circular(2),
+          borderRadius: BorderRadius.circular(AppRadius.xxs),
         ),
       ),
     );
@@ -758,13 +758,13 @@ class _TruncationFooter extends ConsumerWidget {
         children: [
           Container(
             height: 1,
-            color: context.theme.colors.border.withValues(alpha: 0.5),
+            color: context.theme.colors.border.withValues(alpha: AppOpacity.scrim),
           ),
           const SizedBox(height: AppSpacing.s6),
           Row(
             children: [
               Icon(FLucideIcons.scissors, size: AppIconSizes.xs, color: muted),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpacing.s6),
               Expanded(
                 child: Text(
                   label,
@@ -819,7 +819,7 @@ class _ContinueButton extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(width: 2),
+            const SizedBox(width: AppSpacing.s2),
             Icon(FLucideIcons.arrowRight, size: AppIconSizes.xs, color: color),
           ],
         ),
@@ -861,7 +861,7 @@ class _ReasoningPanelState extends State<_ReasoningPanel> {
                   AppLocalizations.of(context).aiChatThinking,
                   style: labelStyle,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.s4),
                 Icon(
                   _expanded
                       ? FLucideIcons.chevronUp
@@ -929,7 +929,7 @@ class _SystemNotice extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s4),
             decoration: BoxDecoration(
-              color: context.theme.colors.secondary.withValues(alpha: 0.6),
+              color: context.theme.colors.secondary.withValues(alpha: AppOpacity.prominent),
               borderRadius: BorderRadius.circular(AppRadius.full),
             ),
             child: Text(
@@ -1062,7 +1062,7 @@ class _ActionButton extends StatelessWidget {
     final enabled = onPressed != null;
     final color = enabled
         ? context.theme.colors.mutedForeground
-        : context.theme.colors.mutedForeground.withValues(alpha: 0.4);
+        : context.theme.colors.mutedForeground.withValues(alpha: AppOpacity.disabled);
     return FTappable(
       onPress: onPressed,
       child: Padding(
@@ -1071,7 +1071,7 @@ class _ActionButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: AppIconSizes.xs, color: color),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.s4),
             Text(
               label,
               style: context.theme.typography.xs.copyWith(color: color),

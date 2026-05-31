@@ -134,9 +134,9 @@ class _SafetyPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.12),
+        color: accent.withValues(alpha: AppOpacity.light),
         borderRadius: BorderRadius.circular(AppRadius.full),
-        border: Border.all(color: accent.withValues(alpha: 0.4), width: 1),
+        border: Border.all(color: accent.withValues(alpha: AppOpacity.disabled), width: 1),
       ),
       child: Text(
         label,
@@ -268,7 +268,7 @@ class _MetricTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: 0.3),
+        color: colors.muted.withValues(alpha: AppOpacity.muted),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Column(

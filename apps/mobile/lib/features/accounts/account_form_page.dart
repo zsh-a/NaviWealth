@@ -583,7 +583,7 @@ class _IconChip extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             color: isSelected
-                ? selectionTint.withValues(alpha: 0.1)
+                ? selectionTint.withValues(alpha: AppOpacity.subtle)
                 : colors.muted,
             border: Border.all(
               color: isSelected ? selectionTint : colors.border,

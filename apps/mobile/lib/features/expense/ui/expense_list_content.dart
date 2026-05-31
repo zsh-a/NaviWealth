@@ -73,7 +73,7 @@ class ExpenseFiltersBar extends StatelessWidget {
                   selected: filters.grouping,
                   onChanged: (g) => onChanged(filters.copyWith(grouping: g)),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.s8),
                 _FilterChip<String?>(
                   label: filters.expenseAccountId == null
                       ? l10n.expenseListAllCategories
@@ -176,7 +176,7 @@ class _SegmentChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
         decoration: selected
             ? BoxDecoration(
-                color: context.theme.colors.primary.withValues(alpha: 0.15),
+                color: context.theme.colors.primary.withValues(alpha: AppOpacity.medium),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               )
             : null,
@@ -332,7 +332,7 @@ class _ExpenseRow extends StatelessWidget {
             : localizedAccountName(l10n, account!),
       ),
       prefix: CircleAvatar(
-        backgroundColor: accent.withValues(alpha: 0.15),
+        backgroundColor: accent.withValues(alpha: AppOpacity.medium),
         child: Icon(account?.iconData ?? FLucideIcons.banknote, color: accent),
       ),
       subtitle: Text(

@@ -317,7 +317,7 @@ class _CommandRow extends StatelessWidget {
           child: Row(
             children: <Widget>[
               Icon(entry.icon, size: 20, color: iconColor),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.s16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

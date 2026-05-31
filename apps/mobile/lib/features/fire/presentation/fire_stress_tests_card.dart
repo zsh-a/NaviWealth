@@ -135,9 +135,9 @@ class _StressRow extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
               decoration: BoxDecoration(
-                color: verdictColor.withValues(alpha: 0.12),
+                color: verdictColor.withValues(alpha: AppOpacity.light),
                 borderRadius: BorderRadius.circular(AppRadius.full),
-                border: Border.all(color: verdictColor.withValues(alpha: 0.4)),
+                border: Border.all(color: verdictColor.withValues(alpha: AppOpacity.disabled)),
               ),
               child: Text(
                 verdictLabel,

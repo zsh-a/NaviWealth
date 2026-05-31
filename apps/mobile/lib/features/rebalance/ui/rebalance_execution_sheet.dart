@@ -84,7 +84,7 @@ class _ExecutionTradeRow extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: color,
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(AppRadius.xxs),
             ),
           ),
           const SizedBox(width: AppSpacing.s8),

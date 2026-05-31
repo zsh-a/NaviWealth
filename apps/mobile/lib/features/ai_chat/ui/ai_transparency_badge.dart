@@ -49,7 +49,7 @@ class AiTransparencyBadge extends ConsumerWidget {
                     style: context.theme.typography.xs.copyWith(color: muted),
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.s4),
                 Icon(FLucideIcons.chevronRight, size: 14, color: muted),
               ],
             ),

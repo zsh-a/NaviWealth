@@ -192,7 +192,7 @@ class BenchmarkCardSkeleton extends StatelessWidget {
         Row(
           children: [
             Expanded(child: SkeletonBox(height: 14)),
-            SizedBox(width: 12),
+            SizedBox(width: AppSpacing.s12),
             SkeletonBox(width: 80, height: 18),
           ],
         ),

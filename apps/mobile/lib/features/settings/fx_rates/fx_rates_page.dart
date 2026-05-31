@@ -125,7 +125,7 @@ class _RateList extends ConsumerWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: colors.foreground.withValues(alpha: 0.04),
+                    color: colors.foreground.withValues(alpha: AppOpacity.whisper),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   alignment: Alignment.center,

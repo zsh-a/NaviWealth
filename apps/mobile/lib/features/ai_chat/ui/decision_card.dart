@@ -105,7 +105,7 @@ class _OptionTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
             color: option.recommended
-                ? colors.primary.withValues(alpha: 0.5)
+                ? colors.primary.withValues(alpha: AppOpacity.scrim)
                 : colors.border,
           ),
         ),
@@ -158,7 +158,7 @@ class _RecommendedBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: 1),
       decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.12),
+        color: colors.primary.withValues(alpha: AppOpacity.light),
         borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Text(
@@ -192,7 +192,7 @@ class _Tradeoff extends StatelessWidget {
             size: 12,
             color: positive ? colors.primary : colors.mutedForeground,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpacing.s4),
           Expanded(
             child: Text(
               text,

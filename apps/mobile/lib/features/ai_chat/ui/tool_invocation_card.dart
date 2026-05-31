@@ -70,7 +70,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                       size: 16,
                       color: pending ? colors.mutedForeground : colors.primary,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.s8),
                     Expanded(
                       child: Text.rich(
                         TextSpan(
@@ -243,7 +243,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
               color: context.theme.colors.background,
               borderRadius: BorderRadius.circular(AppRadius.xs),
               border: Border.all(
-                color: context.theme.colors.border.withValues(alpha: 0.4),
+                color: context.theme.colors.border.withValues(alpha: AppOpacity.disabled),
               ),
             ),
             child: body,

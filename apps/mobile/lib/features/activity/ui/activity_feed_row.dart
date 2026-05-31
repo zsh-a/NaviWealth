@@ -57,7 +57,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: iconTint.withValues(alpha: 0.12),
+            color: iconTint.withValues(alpha: AppOpacity.light),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           alignment: Alignment.center,

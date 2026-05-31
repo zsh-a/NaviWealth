@@ -103,3 +103,36 @@ class ColorPalette {
   static const Color cbOrangeContainerLight = Color(0xFFFCEED1);
   static const Color cbOrangeContainerDark = Color(0xFF402C00);
 }
+
+/// Expense-category accent colours.
+///
+/// Each expense icon maps to a distinct hue so the picker, list, and report
+/// screens read as a varied palette rather than a flat red block. Values are
+/// Tailwind-derived and chosen to stay accessible against both light and dark
+/// surfaces. The default seed accent (red500) is intentionally omitted from
+/// this map — callers treat its absence as "use the category hue".
+class ExpenseCategoryColors {
+  const ExpenseCategoryColors._();
+
+  static const Color orange = Color(0xFFF97316); // restaurant, fastfood
+  static const Color amber = ColorPalette.amber500; // local_cafe
+  static const Color lime = Color(0xFF65A30D); // grocery, shopping_cart
+  static const Color sky = Color(0xFF0EA5E9); // car, bus
+  static const Color skyDark = Color(0xFF0284C7); // taxi
+  static const Color indigo = Color(0xFF6366F1); // home
+  static const Color slate = Color(0xFF64748B); // apartment
+  static const Color yellow = Color(0xFFEAB308); // utilities (bolt)
+  static const Color teal = ColorPalette.teal500; // furniture (chair)
+  static const Color purple = Color(0xFFA855F7); // entertainment (esports, movie)
+  static const Color red = ColorPalette.red500; // medical_services
+  static const Color rose = ColorPalette.red600; // local_hospital
+  static const Color emerald = ColorPalette.green600; // education (school)
+  static const Color pink = Color(0xFFEC4899); // shopping_bag
+  static const Color blue = ColorPalette.brand500; // flight
+  static const Color slateDark = Color(0xFF475569); // phone, credit_card
+  static const Color amberLight = Color(0xFFF59E0B); // gifts
+  static const Color violet = Color(0xFF8B5CF6); // pets
+  static const Color emeraldLight = ColorPalette.green500; // fitness
+  static const Color cyan = ColorPalette.cyan500; // category
+  static const Color gray = ColorPalette.neutral500; // receipts, more
+}

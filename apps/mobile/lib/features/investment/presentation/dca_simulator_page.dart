@@ -488,7 +488,7 @@ class _MetricShell extends StatelessWidget {
       width: 148,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: context.theme.colors.foreground.withValues(alpha: 0.04),
+          color: context.theme.colors.foreground.withValues(alpha: AppOpacity.whisper),
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Padding(
@@ -563,7 +563,7 @@ class _FreshnessChip extends StatelessWidget {
     };
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.theme.colors.foreground.withValues(alpha: 0.05),
+        color: context.theme.colors.foreground.withValues(alpha: AppOpacity.whisper),
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(

@@ -481,7 +481,7 @@ class _SankeyPainter extends CustomPainter {
         layout.assetRect.width,
         targetHeight,
       );
-      _drawRibbon(canvas, source, target, flow.color.withValues(alpha: 0.28));
+      _drawRibbon(canvas, source, target, flow.color.withValues(alpha: AppOpacity.muted));
       nodePaint.color = flow.color;
       canvas.drawRRect(
         RRect.fromRectAndRadius(source, const Radius.circular(4)),
@@ -496,7 +496,7 @@ class _SankeyPainter extends CustomPainter {
       );
     }
 
-    nodePaint.color = const Color(0xFF64748B);
+    nodePaint.color = ColorPalette.neutral600;
     canvas.drawRRect(
       RRect.fromRectAndRadius(layout.assetRect, const Radius.circular(4)),
       nodePaint,
@@ -523,9 +523,9 @@ class _SankeyPainter extends CustomPainter {
       canvas,
       netWorthOut,
       layout.netWorthInRect,
-      const Color(0xFF22C55E).withValues(alpha: 0.24),
+      ColorPalette.green500.withValues(alpha: AppOpacity.muted),
     );
-    nodePaint.color = const Color(0xFF22C55E);
+    nodePaint.color = ColorPalette.green500;
     canvas.drawRRect(
       RRect.fromRectAndRadius(layout.netWorthRect, const Radius.circular(4)),
       nodePaint,
@@ -547,7 +547,7 @@ class _SankeyPainter extends CustomPainter {
         canvas,
         layout.liabilityOutRect!,
         layout.liabilityInRect!,
-        ColorPalette.red500.withValues(alpha: 0.22),
+        ColorPalette.red500.withValues(alpha: AppOpacity.muted),
       );
       nodePaint.color = ColorPalette.red500;
       canvas.drawRRect(
@@ -604,7 +604,7 @@ class _SankeyPainter extends CustomPainter {
       text: TextSpan(
         text: label,
         style: TypographyTokens.numericCaption.copyWith(
-          color: const Color(0xFF64748B),
+          color: ColorPalette.neutral600,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -618,7 +618,7 @@ class _SankeyPainter extends CustomPainter {
       text: TextSpan(
         text: value,
         style: TypographyTokens.numericCaption.copyWith(
-          color: const Color(0xFF94A3B8),
+          color: ColorPalette.neutral400,
           fontSize: 10,
         ),
       ),

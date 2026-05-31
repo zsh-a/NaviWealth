@@ -181,7 +181,7 @@ class _DeltaPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
-        color: context.theme.colors.muted.withValues(alpha: 0.3),
+        color: context.theme.colors.muted.withValues(alpha: AppOpacity.muted),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Column(

@@ -123,7 +123,7 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: iconTint.withValues(alpha: 0.14),
+                    color: iconTint.withValues(alpha: AppOpacity.medium),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   alignment: Alignment.center,
@@ -160,7 +160,7 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
                   Icon(
                     FLucideIcons.chevronRight,
                     size: AppIconSizes.h18,
-                    color: colors.mutedForeground.withValues(alpha: 0.6),
+                    color: colors.mutedForeground.withValues(alpha: AppOpacity.prominent),
                   ),
                 ],
               ],
@@ -283,8 +283,8 @@ class _InsightOverlayActions extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s2),
         decoration: BoxDecoration(
           color: isDark
-              ? colors.background.withValues(alpha: 0.92)
-              : Colors.white.withValues(alpha: 0.94),
+              ? colors.background.withValues(alpha: AppOpacity.overlay)
+              : Colors.white.withValues(alpha: AppOpacity.overlay),
           borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
             color: colors.foreground.withValues(alpha: isDark ? 0.10 : 0.06),

@@ -175,7 +175,7 @@ class _AccountRowState extends State<_AccountRow> {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: widget.selected
-            ? colors.primary.withValues(alpha: 0.10)
+            ? colors.primary.withValues(alpha: AppOpacity.subtle)
             : Colors.transparent,
       ),
       child: Column(
@@ -248,7 +248,7 @@ class _AccountRowState extends State<_AccountRow> {
                           ? FLucideIcons.chevronUp
                           : FLucideIcons.chevronDown,
                       size: AppIconSizes.h18,
-                      color: colors.mutedForeground.withValues(alpha: 0.6),
+                      color: colors.mutedForeground.withValues(alpha: AppOpacity.prominent),
                     ),
                   ),
               ],
@@ -295,7 +295,7 @@ class _AccountIconBadge extends StatelessWidget {
       width: 36,
       height: 36,
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.10),
+        color: accent.withValues(alpha: AppOpacity.subtle),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       alignment: Alignment.center,

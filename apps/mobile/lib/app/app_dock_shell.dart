@@ -238,10 +238,10 @@ class _AskAiDockButton extends StatelessWidget {
           height: 40,
           margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
           decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: 0.08),
+            color: colors.primary.withValues(alpha: AppOpacity.faint),
             borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(
-              color: colors.primary.withValues(alpha: 0.25),
+              color: colors.primary.withValues(alpha: AppOpacity.muted),
               width: 1,
             ),
           ),
@@ -269,7 +269,7 @@ class _DockIcon extends StatelessWidget {
     final colors = context.theme.colors;
     final iconColor = selected ? colors.primary : colors.mutedForeground;
     final fill =
-        selected ? colors.primary.withValues(alpha: 0.10) : Colors.transparent;
+        selected ? colors.primary.withValues(alpha: AppOpacity.subtle) : Colors.transparent;
     return FTooltip(
       tipBuilder: (_, _) => Text(spec.label),
       child: FTappable(

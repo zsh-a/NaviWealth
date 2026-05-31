@@ -225,7 +225,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
               child: Container(
                 padding: const EdgeInsets.all(AppSpacing.s12),
                 decoration: BoxDecoration(
-                  color: context.theme.colors.primary.withValues(alpha: 0.10),
+                  color: context.theme.colors.primary.withValues(alpha: AppOpacity.subtle),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Row(

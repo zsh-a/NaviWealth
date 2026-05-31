@@ -75,7 +75,7 @@ class _ShortcutHelpSheet extends StatelessWidget {
                 color: context.theme.colors.mutedForeground.withValues(
                   alpha: 0.4,
                 ),
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppRadius.xxs),
               ),
             ),
             Text(l10n.shortcutsHelpTitle, style: context.theme.typography.lg),

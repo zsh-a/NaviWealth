@@ -65,7 +65,7 @@ class AiJsonView extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(AppSpacing.s10),
           decoration: BoxDecoration(
-            color: AiTone.surfaceTint(context).withValues(alpha: 0.4),
+            color: AiTone.surfaceTint(context).withValues(alpha: AppOpacity.disabled),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: _JsonNode(value: value, depth: 0, propertyKey: null),
