@@ -194,7 +194,6 @@ class _BodyMeasurementEntrySheetState
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
-      Haptics.error();
       AppMessenger.show(context, ToastKind.error, '保存失败：$e');
     } finally {
       if (mounted) setState(() => _saving = false);

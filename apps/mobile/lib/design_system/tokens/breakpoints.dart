@@ -18,6 +18,10 @@ class Breakpoints {
   /// ~256-wide drawer leaves ~984 dp for content, which stays single-column.
   static const double contentTwoColumn = 1024;
 
+  /// Threshold at which content frames switch from 2-column to 3-column grids.
+  /// Used by health metric grids and similar dense layouts.
+  static const double contentThreeColumn = 720;
+
   static bool isMobile(double width) => width < mobile;
   static bool isTablet(double width) => width >= mobile && width < desktop;
   static bool isDesktop(double width) => width >= desktop;

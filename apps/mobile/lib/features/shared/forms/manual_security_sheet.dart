@@ -130,7 +130,6 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
     final l10n = AppLocalizations.of(context);
     final query = _symbolCtl.text.trim();
     if (query.isEmpty) {
-      Haptics.error();
       AppMessenger.show(
         context,
         ToastKind.error,
@@ -157,7 +156,6 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
       // whole failure surface to a single non-scary message and let the
       // user fall through to manual entry.
       if (!mounted) return;
-      Haptics.error();
       AppMessenger.show(
         context,
         ToastKind.error,
@@ -175,7 +173,6 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
     setState(() => _importing = false);
 
     if (hits.isEmpty) {
-      Haptics.error();
       AppMessenger.show(context, ToastKind.error, l10n.manualSecurityNoMatch);
       return;
     }

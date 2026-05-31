@@ -113,7 +113,6 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_kind == AssetType.bankDepositTerm && _maturityDate == null) {
-      Haptics.error();
       AppMessenger.show(
         context,
         ToastKind.error,

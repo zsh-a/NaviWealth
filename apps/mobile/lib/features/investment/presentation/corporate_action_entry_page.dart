@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/corporate_action_preview.dart';
@@ -249,7 +248,6 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
     final preview = _preview;
     if (preview == null) return;
     widget.onSubmit(preview);
-    Haptics.success();
     final l10n = AppLocalizations.of(context);
     if (mounted) {
       AppMessenger.show(context, ToastKind.success, l10n.corpActionSubmitted);

@@ -6,7 +6,6 @@ import '../../../core/auth/auth_api_client.dart';
 import '../../../core/auth/auth_errors.dart';
 import '../../../core/auth/providers.dart';
 import '../../../core/format/providers.dart';
-import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/auth_controller.dart';
@@ -178,7 +177,6 @@ class _DevicesList extends ConsumerWidget {
     try {
       await ref.read(devicesProvider.notifier).revoke(device.id);
     } on AuthException catch (e) {
-      Haptics.error();
       if (!context.mounted) return;
       AppMessenger.show(context, ToastKind.error, e.message ?? fallback);
     }

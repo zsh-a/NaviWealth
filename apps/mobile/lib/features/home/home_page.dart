@@ -195,7 +195,7 @@ class _CashFlowCardsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final twoColumns = constraints.maxWidth >= 620;
+        final twoColumns = constraints.maxWidth >= Breakpoints.mobile;
         if (!twoColumns) {
           return const Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

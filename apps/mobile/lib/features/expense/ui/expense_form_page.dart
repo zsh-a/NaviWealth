@@ -119,7 +119,6 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     final l10n = AppLocalizations.of(context);
     final amount = readAmount(_amountController);
     if (amount == null || amount <= Decimal.zero) {
-      Haptics.error();
       AppMessenger.show(
         context,
         ToastKind.error,
@@ -130,7 +129,6 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     if (_expenseAccountId == null ||
         _fromAccountId == null ||
         _currency == null) {
-      Haptics.error();
       AppMessenger.show(
         context,
         ToastKind.error,
