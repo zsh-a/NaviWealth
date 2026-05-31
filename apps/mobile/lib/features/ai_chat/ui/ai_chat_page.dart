@@ -21,7 +21,7 @@ import 'chat_conversation_view.dart';
 import 'llm_profile_chip.dart';
 import 'sessions_panel.dart';
 
-/// Top-level "AI 助手" surface (FIR-60).
+/// Top-level "AI 助手" surface.
 ///
 /// Layout adapts at the [Breakpoints.mobile] / [Breakpoints.desktop]
 /// boundaries:

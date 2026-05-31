@@ -5,15 +5,15 @@
 /// in-app audit page. 30-day rolling retention; older rows are pruned
 /// by [AiTraceStore].
 ///
-/// Post-W-D7 there is no router decision and no cloud disclosure; the
-/// trace records what the device runtime did.
+/// There is no router decision and no cloud disclosure; the trace
+/// records what the device runtime did.
 library;
 
 import 'ai_span.dart';
 import 'intent.dart';
 import 'privacy_budget.dart' show BudgetTier, BudgetTierWire;
 
-/// §4.6 W-D6 — [AiTrace.routingReason] value set when the on-device
+/// §4.6 — [AiTrace.routingReason] value set when the on-device
 /// LLM runtime (user's own key, direct to provider) handled the turn.
 /// Distinguishes device-LLM-direct from the zero-model rules-device
 /// path so the transparency badge can say "未经我方服务器".
@@ -21,14 +21,15 @@ const String kDeviceLlmDirectRoutingReason = 'device_llm_direct';
 
 /// Where the turn was executed.
 ///
-/// **Live producers** (post-W-D7):
+/// **Live producers**:
 ///  - [Backend.device] — every chat turn, plus Layer 4 device Vision ingest.
 ///
 /// **Fossil values**, kept only to:
-///  1. deserialize old AiTrace rows written before W-D7;
+///  1. deserialize old AiTrace rows written before the cloud relay was
+///     removed;
 ///  2. let `features/ingest/data/providers.dart` tag its Vision trace
-///     (`layer4_cloud_vision`) — that flow predates W-D7 and is itself
-///     pending a separate audit (see ingest module).
+///     (`layer4_cloud_vision`) — that flow is itself pending a
+///     separate audit (see ingest module).
 ///  - [Backend.cloud] — has the ingest producer above; otherwise fossil.
 ///  - [Backend.hybrid] — no live producer anywhere; only old DB rows.
 ///
@@ -51,7 +52,7 @@ extension BackendWire on Backend {
   };
 }
 
-/// How the turn ended (Wave 30). Distinguishes "normal completion" from
+/// How the turn ended. Distinguishes "normal completion" from
 /// "the user cancelled mid-stream" from "the stream raised an error" —
 /// today these all collapse into a single trace row, which loses
 /// signal for the transparency surface and for future SLO dashboards.
@@ -120,10 +121,10 @@ class AiTrace {
   final int totalDurationMs;
 
   /// How the turn ended. Defaults to [TerminalReason.done] for
-  /// callers that haven't been updated yet (Wave 30).
+  /// callers that haven't been updated yet.
   final TerminalReason terminalReason;
 
-  /// Wave 33 — entry-point attribution. Captures the
+  /// Entry-point attribution. Captures the
   /// `AiIntentInvocation` summary (source / intent / object_type /
   /// object_id / context_keys) so the transparency page can answer
   /// "which surface triggered this AI call?". Local-only — not on the

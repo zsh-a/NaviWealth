@@ -67,7 +67,7 @@ String formatAiTraceBadge(AiTrace trace) {
   final parts = <String>[];
   switch (trace.backend) {
     case Backend.device:
-      // §4.6 W-D6 — device-LLM-direct (user's own key, straight to the
+      // Device-LLM-direct (user's own key, straight to the
       // provider) is materially more private than the zero-model
       // rules-device path; surface the distinction.
       parts.add(

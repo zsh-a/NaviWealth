@@ -14,7 +14,7 @@ import 'package:naviwealth/features/finance/data/domain/journal_entry.dart';
 import 'package:naviwealth/features/finance/data/domain/posting.dart';
 import 'package:uuid/uuid.dart';
 
-/// FIR-130 — Drift DAO for `journal_entries` + `postings`. Models a JE
+/// Drift DAO for `journal_entries` + `postings`. Models a JE
 /// and its postings as one logical unit: every public mutation lives
 /// inside a single Drift transaction that writes the JE row, the
 /// posting rows, and queues the corresponding outbox `Op`s atomically.
@@ -25,7 +25,7 @@ import 'package:uuid/uuid.dart';
 /// balanced ledger.
 ///
 /// What this repository deliberately does NOT do:
-///   - Build the legs for a buy / sell / transfer (that's the FIR-131
+///   - Build the legs for a buy / sell / transfer (that's the
 ///     `JournalEntryBuilders` surface — this DAO is the persistence
 ///     backend the builders sit on top of).
 ///   - Run cost-basis selection (FIFO / LIFO) — `cost.lotId` is taken
@@ -102,7 +102,7 @@ class JournalEntryRepository {
   /// Implementation: rides on top of the JE-list stream and pulls the
   /// matching postings in a single `WHERE journal_entry_id IN (...)`
   /// query per emission. This means a JE-write atomically (which is
-  /// the FIR-130 `JournalEntryRepository.create` contract — every
+  /// the `JournalEntryRepository.create` contract — every
   /// posting batch ships with its parent JE in one transaction) hits
   /// the consumer with a fresh snapshot. Posting-only mutations (e.g.
   /// a sync-borne posting update without its JE row changing) won't
@@ -388,7 +388,7 @@ class JournalEntryRepository {
     });
   }
 
-  /// FIR-132 — live stream of expense entries materialised from the
+  /// Live stream of expense entries materialised from the
   /// journal. Each row is a JE whose expense-leg posting sits on an
   /// `accounts.category = 'expense'` account. The result is shaped as
   /// [Expense] so existing report / list UI can consume it without

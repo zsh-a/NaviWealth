@@ -50,7 +50,7 @@
 仅做事实记录,**不**作为路线规划。详情见各 detail 文档。
 
 - **核心账本**: 资产、账户、负债、支出、投资、再平衡、活动流
-- **AI 运行时**: 设备端 multi-profile,34 个 device tool,Opik 风格 trace,W-D7 云端代码彻底删除
+- **AI 运行时**: 设备端 multi-profile,34 个 device tool,Opik 风格 trace,云端代码已删除
 - **FIRE OS**: Phase 0–5 完成(安全等级、bucket、压力测试、Review、AI Copilot tools)
 - **Income Planner**: P0–P3 完成(profile、approved underlyings、covered call scanner、trade journal)
 - **Sync**: v2 row-state 单端点 `POST /sync` 全量切换完成(client `SyncEngine` + backend `sync/store.rs`),v1 OpLog 代码已下线;30s 轮询保留。详见 `sync-v2.md`
@@ -74,7 +74,7 @@
 > - ✅ **P1-A** (`me/`/`more/` 清理) — IA contract migration (commits aacded4 / 3e37cfc)
 > - ✅ **P1-B** (Dashboard Insights 4 类) — `InsightKind` 已含全部 4 类
 > - ✅ **P1-C** (Activity feed 分页) — `activity_feed_provider.dart` 已支持
-> - ❌ **P1-E** (后端 AI 工具补全) — W-D7 删除后端 AI relay 后作废
+> - ❌ **P1-E** (后端 AI 工具补全) — 后端 AI relay 删除后作废
 > - ✅ **P1-F** (Web 备份/恢复) — `features/settings/backup/` 已实现 web/native split
 > - ✅ **P1-G** (E2E sync 5 case) — 已在本批落地
 >

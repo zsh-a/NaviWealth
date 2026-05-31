@@ -32,7 +32,7 @@ IconData _iconFor(List<ProposalKindMeta> registry, String kind) {
   return registry.metaFor(kind)?.icon ?? FLucideIcons.circleHelp;
 }
 
-/// FIR-67 — confirmation card rendered for `propose_*` tool calls.
+/// Confirmation card rendered for `propose_*` tool calls.
 ///
 /// Single source of truth for the lifecycle: pending → applying → applied
 /// → undone (or cancelled / errored). The persisted state lives on the
@@ -95,7 +95,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
       case ProposalApplyStatus.pending:
       case ProposalApplyStatus.errored:
       case ProposalApplyStatus.applying:
-        // Wave 38 — pick the confirmation surface from §5.5
+        // Pick the confirmation surface from §5.5
         // `interactionModeForKindLabel`. oneTap (memo/category/tag/
         // small-expense) gets a slim Apply row; typed (broker order,
         // bulk delete — unused today) gates Confirm behind a token
@@ -665,7 +665,7 @@ class _ExpandedView extends ConsumerWidget {
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-// Wave 38 — InteractionMode.oneTap surface.
+// InteractionMode.oneTap surface.
 //
 // Reserved for low-risk, easily-undoable proposals (memo edits, tag
 // applies, category sets, small expense entries). The expanded diff
@@ -773,7 +773,7 @@ class _OneTapView extends ConsumerWidget {
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-// Wave 38 — InteractionMode.typed surface.
+// InteractionMode.typed surface.
 //
 // User must type a literal "确认" (or the proposal amount in future
 // revisions) before Apply is enabled. Reserved for broker_order /
@@ -1203,7 +1203,7 @@ class ProposalPayloadDetails extends ConsumerWidget {
 
 /// Inline edit sheet: lets the user override the high-frequency fields
 /// (amount / price / note / date) before they confirm. Anything beyond
-/// these flows back to the full FIR-44 / FIR-63 / FIR-64 entry pages —
+/// these flows back to the full entry pages —
 /// surfaced as a compact Forui action at the bottom of the sheet.
 class ProposalEditSheet extends ConsumerStatefulWidget {
   const ProposalEditSheet({super.key, required this.plan, this.initial});

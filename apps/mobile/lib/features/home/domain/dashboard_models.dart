@@ -7,7 +7,7 @@ import '../../../domain/values/money.dart';
 import '../../../domain/values/price_confidence.dart';
 
 /// The seven top-level "big bucket" categories surfaced by the dashboard pie
-/// chart. The set is derived from FIR-52's scope: 股票 / ETF / 现金 / 加密 /
+/// chart. The set is derived from scope: 股票 / ETF / 现金 / 加密 /
 /// 房产 / 车辆 / 负债. We add `bondsAndFunds` as a catch-all for fixed-income
 /// holdings (mutual funds, bonds, deposits, wealth products) so they don't
 /// silently roll up into "cash" — users keep separate mental buckets for

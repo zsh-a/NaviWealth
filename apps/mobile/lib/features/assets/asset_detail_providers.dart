@@ -44,7 +44,7 @@ class PriceHistoryKey {
   int get hashCode => Object.hash(symbol, market, days);
 }
 
-/// Last [PriceHistoryKey.days] of close-price bars for the asset (FIR-26).
+/// Last [PriceHistoryKey.days] of close-price bars for the asset.
 ///
 /// The market service is responsible for caching + offline degradation;
 /// this provider just turns its returned [MarketResponse] into a Riverpod

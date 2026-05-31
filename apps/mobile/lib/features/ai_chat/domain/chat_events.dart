@@ -1,6 +1,6 @@
 /// Sealed events emitted by the active device runtime.
 ///
-/// Before W-D7 these mirrored `/ai/chat` SSE frames. The cloud route is
+/// Previously these mirrored `/ai/chat` SSE frames. The cloud route is
 /// gone, but the repository/UI contract intentionally keeps the same
 /// event vocabulary: text deltas, optional thinking deltas, tool-call
 /// construction, tool results, usage, spans, error, and done.

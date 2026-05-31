@@ -1,5 +1,5 @@
-/// Wave 33 — `AiIntentInvocation`: the typed envelope every AI trigger
-/// surface carries through to the runtime.
+/// `AiIntentInvocation`: the typed envelope every AI trigger surface
+/// carries through to the runtime.
 ///
 /// The supported entry point is the `askAi()` helper
 /// (`features/ai_chat/ui/ask_ai.dart`); it builds this invocation,
@@ -110,9 +110,9 @@ enum AiCapability {
   /// Inline `propose_*` cards (LocalProposal / device propose tool output).
   proposal,
 
-  /// Domain-specific visualisations (Wave 34 renderers).
+  /// Domain-specific visualisations.
   visualization,
 
-  /// Reserved for Wave 36+ voice follow-up button.
+  /// Reserved for voice follow-up button.
   voiceFollowup,
 }

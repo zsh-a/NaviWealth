@@ -6,7 +6,7 @@ import 'lot.dart';
 /// Per-asset position summary at a given point in time.
 ///
 /// `cost_basis_in_base`, `market_value_in_base` and `unrealized_pnl_in_base`
-/// are denominated in the user's selected base currency (FIR-21). The
+/// are denominated in the user's selected base currency. The
 /// asset-currency view ([costBasisInAssetCurrency], [marketValueInAssetCurrency])
 /// is preserved alongside so reports that want to show "AAPL: $1,234 USD"
 /// don't have to round-trip back through the FX converter.

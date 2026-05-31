@@ -23,7 +23,7 @@ final llmCredentialStoreProvider = Provider<LlmCredentialStore>((ref) {
   return LlmCredentialStore(ref.watch(secureKeyStoreProvider));
 });
 
-/// One-tap connectivity probe (Wave 46). Stateless; the settings page
+/// One-tap connectivity probe. Stateless; the settings page
 /// passes the (possibly unsaved) profile being edited.
 final llmConnectivityProbeProvider = Provider<LlmConnectivityProbe>((ref) {
   return LlmConnectivityProbe();

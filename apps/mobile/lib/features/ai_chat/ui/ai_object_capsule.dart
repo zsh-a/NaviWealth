@@ -1,6 +1,6 @@
-/// Wave 33 — `AiObjectCapsule`: the object-semantic AI affordance.
+/// `AiObjectCapsule`: the object-semantic AI affordance.
 ///
-/// Wave 36 refactor — now backed by [AiPill] + [AiSparkle] primitives
+/// Now backed by [AiPill] + [AiSparkle] primitives
 /// so capsules everywhere look identical. Adding a new capsule never
 /// touches sizing / color / typography; it just supplies the
 /// invocation.

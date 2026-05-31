@@ -83,6 +83,6 @@ class AuthRouteGuard implements RouteGuard {
 
 /// Override-friendly factory for the guard list. Tests can swap this with
 /// `overrideWithValue` to drop the guard entirely (route_guard_test does
-/// this for FIR-15's redirect-machinery tests so they don't have to set
+/// this for redirect-machinery tests so they don't have to set
 /// up auth state).
 final authRouteGuardProvider = Provider<AuthRouteGuard>(AuthRouteGuard.new);

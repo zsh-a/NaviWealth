@@ -64,7 +64,7 @@ class ChartPalette {
   static List<Color> _accentSequence({required bool isDark}) {
     // The 4th and 8th slots stay aligned with `MarketColors.up/down` so a
     // benchmark series labelled "profit" / "loss" reads the same hue as the
-    // dashboard's hero number. FIR-104 swapped these to emerald / soft
+    // dashboard's hero number. These were swapped to emerald / soft
     // crimson; the rest of the sequence is unchanged.
     if (isDark) {
       return const [

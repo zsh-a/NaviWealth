@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../design_system/preferences/theme_preferences.dart';
 
-/// Per-device "last used" defaults for the entry forms (FIR-95).
+/// Per-device "last used" defaults for the entry forms.
 ///
 /// Snapshots the most recently chosen account / currency / category so
 /// repeat entries pre-fill with whatever the user picked last time. The

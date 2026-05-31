@@ -1,9 +1,9 @@
-/// W-D1 / Wave 46 — user-supplied LLM credentials for the on-device AI
-/// runtime (§4.6.1 decision 1).
+/// User-supplied LLM credentials for the on-device AI runtime
+/// (§4.6.1 decision 1).
 ///
 /// The Phase 5 device runtime calls the LLM provider **directly** with
-/// a key the user pastes in Settings. Wave 46 generalises the single
-/// slot into **multiple named profiles + one active selection** so the
+/// a key the user pastes in Settings. The single slot was generalised
+/// into **multiple named profiles + one active selection** so the
 /// user can keep e.g. an official Anthropic key, a self-hosted
 /// gateway, and a regional proxy side by side and switch between them.
 ///
@@ -11,9 +11,9 @@
 /// never via OpLog / cloud sync / plaintext backup — same trust class
 /// as the SQLCipher DB key.
 ///
-/// **The opt-in `enabled` switch was removed in Wave 46.** It only
-/// made sense while a cloud relay existed to fall back to; W-D7
-/// deleted that. The active profile *is* the intent: a saved+active
+/// **The opt-in `enabled` switch was removed.** It only made sense
+/// while a cloud relay existed to fall back to; the relay was deleted.
+/// The active profile *is* the intent: a saved+active
 /// profile with a key → device AI runs; otherwise the turn surfaces
 /// `device_unavailable`.
 library;
@@ -225,7 +225,7 @@ class LlmCredentials {
   ///
   /// Migration: a legacy `{provider, api_key, base_url, enabled}` blob
   /// becomes a single profile. It is made active regardless of the old
-  /// `enabled` flag — post-W-D7 there is no cloud to fall back to, so a
+  /// `enabled` flag — there is no cloud to fall back to, so a
   /// saved key the user bothered to enter should just work.
   static LlmCredentials decode(String raw) {
     final dynamic parsed = jsonDecode(raw);

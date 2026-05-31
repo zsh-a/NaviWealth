@@ -6,7 +6,7 @@ import 'dart:async';
 /// for a single-process mobile app — there is no aggregation across devices.
 /// A debug screen can subscribe to [snapshots] for a live read of hit-rate,
 /// error-rate, and provider health. Backend telemetry export is out of scope
-/// for FIR-26 and can be layered on top by listening to [snapshots].
+/// and can be layered on top by listening to [snapshots].
 class MarketMetrics {
   MarketMetrics();
 

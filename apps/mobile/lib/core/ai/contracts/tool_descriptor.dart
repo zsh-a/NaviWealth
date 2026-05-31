@@ -1,6 +1,6 @@
 /// Code-level metadata for an AI tool.
 ///
-/// W-D7 removed the cloud AI backend, so this catalog no longer mirrors
+/// The cloud AI backend was removed, so this catalog no longer mirrors
 /// a Rust registry. Phase D: each LifeOS domain co-locates its
 /// descriptors with its tool barrel — see `kShellToolDescriptors`,
 /// `kFinanceToolDescriptors`, `kHealthToolDescriptors`,

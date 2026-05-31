@@ -23,7 +23,7 @@ abstract class Account with _$Account {
     /// construct an [Account] without an explicit category.
     @Default(AccountSide.asset) AccountSide category,
 
-    /// FIR-130 — Beancount-style account tree. NULL on top-level
+    /// Beancount-style account tree. NULL on top-level
     /// accounts; on a child the parent's [id] forms the chain. The tree
     /// is enforced as a parent / child relationship at the application
     /// level (no DB constraint) so a sync-borne reorder doesn't fight
@@ -35,7 +35,7 @@ abstract class Account with _$Account {
     /// canonical set.
     String? icon,
 
-    /// FIR-130 — colour token for the account's avatar (hex or design
+    /// Colour token for the account's avatar (hex or design
     /// token id). Same provenance as [icon].
     String? color,
     required SyncMeta sync,

@@ -1,4 +1,4 @@
-/// `list_payment_accounts` — device port (§4.6 W-D4).
+/// `list_payment_accounts` — device port.
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/list_payment_accounts.rs`. The backend

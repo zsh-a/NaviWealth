@@ -1,8 +1,8 @@
 import 'enums.dart';
 import 'posting.dart';
 
-/// FIR-128 §1.1 — derived classification of a [JournalEntry] for UI
-/// rendering (icon, color, default narration).
+/// Derived classification of a [JournalEntry] for UI rendering
+/// (icon, color, default narration).
 ///
 /// Computed from the postings + the involved account categories;
 /// **never persisted** because the rules are deterministic over the
@@ -49,7 +49,7 @@ enum EntryKind {
 class EntryKindClassification {
   const EntryKindClassification({required this.kind, this.isInflow});
 
-  /// Discrete kind under the FIR-128 §1.1 rules.
+  /// Discrete kind under the classification rules.
   final EntryKind kind;
 
   /// Net cash flow direction relative to the user's asset accounts.

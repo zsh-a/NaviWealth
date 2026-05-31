@@ -29,7 +29,7 @@ import '../domain/dashboard_time_range.dart';
 import '../domain/dashboard_trend_builder.dart';
 
 /// Base currency the dashboard renders totals in. Reads from the persisted
-/// user preference (FIR-73) so changing the setting reactively recomputes
+/// user preference so changing the setting reactively recomputes
 /// every downstream allocation / trend point.
 final dashboardBaseCurrencyProvider = Provider<String>((ref) {
   return ref.watch(baseCurrencyProvider);
@@ -57,9 +57,9 @@ final dashboardCurrencyMismatchesProvider = Provider<List<CurrencyMismatch>>((
 });
 
 /// Currency converter used for cross-currency conversion in the dashboard.
-/// FIR-51's [NetWorthService] expects an [FxRateLookup]-backed converter;
-/// the dashboard reads every recorded rate from the local `fx_rates` table
-/// (FIR-73) so manually entered rates flow into the snapshot, the
+/// [NetWorthService] expects an [FxRateLookup]-backed converter; the
+/// dashboard reads every recorded rate from the local `fx_rates` table
+/// so manually entered rates flow into the snapshot, the
 /// allocation pie, and the trend chart without a refresh.
 ///
 /// Same-currency conversions short-circuit, and callers (the aggregator +

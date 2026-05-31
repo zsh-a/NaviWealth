@@ -1,4 +1,4 @@
-/// `get_asset_allocation` — device port (§4.6 W-D4.2b).
+/// `get_asset_allocation` — device port.
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/get_asset_allocation.rs`. The backend

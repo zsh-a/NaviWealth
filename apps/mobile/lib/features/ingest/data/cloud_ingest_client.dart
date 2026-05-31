@@ -1,6 +1,6 @@
 /// §5.10.10 / S5b-vision — Vision ingest client surface.
 ///
-/// W-D7 deleted the cloud Vision relay (`POST /ingest/parse`) together
+/// The cloud Vision relay (`POST /ingest/parse`) was removed together
 /// with the rest of the cloud AI backend. Vision parsing now runs
 /// device-direct ([DeviceVisionIngestClient]); when no on-device
 /// runtime exists the [CloudIngestClient] slot is the
@@ -88,7 +88,7 @@ List<ParsedTransaction> parseCloudIngestResponse(Map<String, Object?> body) {
   return out;
 }
 
-/// W-D7 replacement for the deleted `DioCloudIngestClient`. The cloud
+/// Replacement for the deleted `DioCloudIngestClient`. The cloud
 /// Vision relay is gone; with no on-device runtime, Vision ingest is
 /// simply unavailable. `IngestController._ingestCloud` catches
 /// [CloudIngestException] and surfaces `message` as the rejected

@@ -1,4 +1,4 @@
-/// Wave 36 — visual language tokens for AI surfaces.
+/// Visual language tokens for AI surfaces.
 ///
 /// **Every AI surface (capsule, pill, sparkle, banner, message bubble,
 /// timeline, etc.) must use these primitives.** Direct

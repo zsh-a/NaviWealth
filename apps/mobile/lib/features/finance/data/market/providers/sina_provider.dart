@@ -19,7 +19,7 @@ import 'market_provider.dart';
 ///   * Unprefixed code: `600519` → routed to `sh`; `000001` / `300xxx` → `sz`
 ///
 /// Historical bars and search are NOT supported by this endpoint — see
-/// FIR-25 v2 for the fallback story (Tushare day-line / AKShare). This
+/// the fallback story (Tushare day-line / AKShare). This
 /// adapter throws [UnsupportedError] on those paths and the composite
 /// service falls through to the next provider in the chain.
 class SinaProvider implements MarketProvider {

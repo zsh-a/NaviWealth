@@ -1,10 +1,10 @@
 /// Device LLM runtime contract.
 ///
-/// After W-D7 deleted the cloud AI backend, there is exactly one chat
+/// The cloud AI backend was deleted, leaving exactly one chat
 /// runtime: [DeviceLlmRuntime], which owns the on-device agent loop and
 /// calls the user's chosen LLM provider directly with the user's own
 /// key. The earlier `AiRuntime` / `RuntimeRegistry` / `CloudAnthropicRuntime`
-/// / `RulesDeviceRuntime` scaffolding was removed in the post-W-D7
+/// / `RulesDeviceRuntime` scaffolding was removed in the
 /// boundary audit (see `docs/ai-boundary-audit.md`); selection now
 /// happens upstream in [RuntimeRoutingAiChatApiClient], which either
 /// dispatches to the device runtime or yields `device_unavailable`.
@@ -26,9 +26,9 @@ import 'device/device_system_prompt.dart';
 import 'device/device_tool_dispatcher.dart';
 import 'device/device_user_profile_prompt.dart';
 
-/// The slice of the device runtime the routing client (W-D3/W-D6
-/// failover history) depends on. An interface so tests can inject a
-/// scripted device without a network-bound provider client.
+/// The slice of the device runtime the routing client depends on.
+/// An interface so tests can inject a scripted device without a
+/// network-bound provider client.
 abstract class DeviceChatRunner {
   Stream<AiChatEvent> run({
     required List<WireMessage> messages,
@@ -43,7 +43,7 @@ abstract class DeviceChatRunner {
 ///
 /// Owns the full agent loop client-side: builds a [DeviceSession] from
 /// the inbound turn, runs [DeviceAgentLoop] over a device LLM client
-/// that talks straight to the user's provider with their key (W-D1/2),
+/// that talks straight to the user's provider with their key,
 /// and emits [AiChatEvent]s consumed by `ChatRepository`.
 class DeviceLlmRuntime implements DeviceChatRunner {
   DeviceLlmRuntime({

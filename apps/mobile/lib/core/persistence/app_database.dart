@@ -151,7 +151,7 @@ class AppDatabase extends _$AppDatabase {
       }
       // v5 → v6: side-table that records "this entity was touched by
       // an AI proposal" so detail pages can surface a subtle sparkle
-      // prefix (Wave 39). Side table > new column on entity tables —
+      // prefix. Side table > new column on entity tables —
       // domain models stay clean and the migration is additive only.
       if (from < 6) {
         await _createAiTouchedEntitiesTable(this);
@@ -605,7 +605,7 @@ Future<void> _createSecuritiesCatalogIndexes(AppDatabase db) async {
 }
 
 // ---------------------------------------------------------------------------
-// AI surfaces (Waves 23 / 24) — local-only audit + undo stack.
+// AI surfaces — local-only audit + undo stack.
 // Both tables stay device-local (never sync). Per-user partitioning is the
 // caller's responsibility; we store the owner alongside each row so a
 // multi-user install can scope queries.
@@ -648,7 +648,7 @@ Future<void> _createAiUndoStackTable(AppDatabase db) async {
 }
 
 Future<void> _createAiTouchedEntitiesTable(AppDatabase db) async {
-  // Wave 39 — records "this entity was last touched by an AI
+  // Records "this entity was last touched by an AI
   // proposal apply at <touched_at>". Detail pages query this side
   // table to render `AiSourceMark` next to recently AI-modified
   // entities; storing the touch out-of-band keeps the underlying

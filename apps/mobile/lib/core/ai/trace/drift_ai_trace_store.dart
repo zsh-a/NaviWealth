@@ -1,4 +1,4 @@
-/// Wave 23 — Drift-backed [AiTraceStore].
+/// Drift-backed [AiTraceStore].
 ///
 /// Each row stores the trace as a JSON blob plus a few indexed columns
 /// (request_id PK, started_at_iso for ORDER BY, owner_user_id for

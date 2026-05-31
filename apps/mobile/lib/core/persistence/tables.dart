@@ -75,7 +75,7 @@ class Accounts extends Table with SyncableTable {
   TextColumn get note => text().nullable()();
   BoolColumn get archived => boolean().withDefault(const Constant(false))();
 
-  /// FIR-126 — accounting classification (asset / liability / income /
+  /// Accounting classification (asset / liability / income /
   /// expense / equity). See [AccountSide] for the why and the
   /// migration in `app_database.dart` (v8) for the back-fill rules.
   ///
@@ -86,7 +86,7 @@ class Accounts extends Table with SyncableTable {
       .map(const EnumStringConverter(AccountSide.values))
       .withDefault(Constant(AccountSide.asset.name))();
 
-  /// FIR-130 — id of this account's parent in the Beancount-style tree.
+  /// Id of this account's parent in the Beancount-style tree.
   /// NULL on top-level rows; otherwise points at another row in this
   /// table. No FK at the SQL layer because sync-borne reorders need to
   /// land before the parent has caught up.
@@ -102,7 +102,7 @@ class Accounts extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-/// FIR-130 — atomic economic event in the Beancount-style ledger. One
+/// Atomic economic event in the Beancount-style ledger. One
 /// row per event; the postings that compose it live in the [Postings]
 /// table and must satisfy the SUM(weight) = 0 invariant (see
 /// `entryIsBalanced` in `domain/invariants.dart`).
@@ -142,7 +142,7 @@ class JournalEntries extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-/// FIR-130 — one leg of a [JournalEntries] row. The composite invariant
+/// One leg of a [JournalEntries] row. The composite invariant
 /// `SUM(units × weight) GROUP BY journal_entry_id ≈ 0` (after FX folding
 /// to base) is enforced by the application layer at write time (see
 /// `entryIsBalanced`).
@@ -191,7 +191,7 @@ class Postings extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-/// FIR-130 — append-only price observations time-series. Replaces the
+/// Append-only price observations time-series. Replaces the
 /// legacy `valuationAdjust` event row plus `assets.last_price` mirror.
 /// Reading the current price of an asset is a "find the latest
 /// observation" query against this table.
@@ -606,7 +606,7 @@ class MarketSymbolSearches extends Table {
   Set<Column<Object>> get primaryKey => {query, source};
 }
 
-/// FIR-76 — read-only seed catalog of major securities (A-shares full set,
+/// Read-only seed catalog of major securities (A-shares full set,
 /// HK / US majors, popular ETFs). The trade-entry search hits this table
 /// first so a fresh install with zero recorded trades still finds
 /// the user's instrument by symbol, English name, Chinese name, full
@@ -658,7 +658,7 @@ class SecuritiesCatalog extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-/// FIR-76 — singleton row that pins which version of the seed catalog is
+/// Singleton row that pins which version of the seed catalog is
 /// currently materialised in [SecuritiesCatalog]. The loader compares
 /// the bundled catalog's version + checksum against this row before
 /// touching the catalog table; a no-change reload is a free no-op.

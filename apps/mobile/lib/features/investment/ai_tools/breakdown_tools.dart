@@ -1,5 +1,5 @@
 /// `get_industry_breakdown` / `get_geo_breakdown` /
-/// `get_market_cap_breakdown` — device port (§4.6 W-D4.2c, Snapshot).
+/// `get_market_cap_breakdown` — device port (Snapshot).
 ///
 /// Verbatim mirror of the backend's structure: one
 /// `impls::get_breakdown(ctx, dim)` over a `BreakdownDim` enum with

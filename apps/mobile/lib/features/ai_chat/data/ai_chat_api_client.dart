@@ -1,4 +1,4 @@
-/// §4.6 W-D7 — chat client surface. The cloud relay transport
+/// Chat client surface. The cloud relay transport
 /// (`DioAiChatApiClient` → `POST /ai/chat`) was removed when the cloud
 /// AI backend was deleted; turns now run on-device via
 /// [RuntimeRoutingAiChatApiClient] over the [DeviceChatRunner]. This

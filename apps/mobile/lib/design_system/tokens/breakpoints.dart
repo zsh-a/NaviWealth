@@ -1,6 +1,6 @@
 /// Three-tier responsive breakpoints used across the app.
 ///
-/// The parent epic (FIR-12) defines mobile / tablet / desktop layouts.
+/// Defines mobile / tablet / desktop layouts.
 /// Tokens live here so individual widgets agree on the same widths.
 class Breakpoints {
   const Breakpoints._();

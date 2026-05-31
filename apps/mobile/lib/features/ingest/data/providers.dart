@@ -64,7 +64,7 @@ final ingestPipelineProvider = Provider<IngestPipeline>(
   (ref) => IngestPipeline(),
 );
 
-/// §4.6 W-D7 — Vision parse runs device-direct when the on-device
+/// Vision parse runs device-direct when the on-device
 /// runtime is available (native incl. desktop × user key × opt-in),
 /// reusing the *same* [AnthropicClient] the chat path built. The cloud
 /// Vision relay (`/ingest/parse`) was deleted with the rest of the
@@ -150,8 +150,8 @@ class IngestController {
   }
 
   /// §5.10.10 / S5b-vision — the Vision branch. Parse (③) runs
-  /// device-direct against the user's own key ([DeviceVisionIngestClient],
-  /// W-D7); ④⑤⑥ stay on-device (same `planFromParsed` the CSV path uses)
+  /// device-direct against the user's own key ([DeviceVisionIngestClient]);
+  /// ④⑤⑥ stay on-device (same `planFromParsed` the CSV path uses)
   /// so dedup runs against the Drift truth, and a full [AiTrace] is
   /// appended because this *is* a real model round-trip. Device-only AI
   /// is account-less, so there is no login gate — when no on-device

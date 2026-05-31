@@ -6,10 +6,10 @@
 ///
 /// 1. **Web parity.** Crashlytics' Flutter Web support is third-party / fragile;
 ///    Sentry's `sentry_flutter` ships first-class Web support including source
-///    map upload. NaviWealth must run on iOS / Android / Web (FIR-2), so this
+///    map upload. NaviWealth must run on iOS / Android / Web, so this
 ///    is decisive.
-/// 2. **Backend uniformity.** The Cloudflare Workers + Rust backend (FIR-32 /
-///    FIR-36) can also report to Sentry, giving a single dashboard for client
+/// 2. **Backend uniformity.** The Cloudflare Workers + Rust backend can also
+///    report to Sentry, giving a single dashboard for client
 ///    + server errors and shared release tags.
 /// 3. **No Firebase footprint.** Adopting Crashlytics drags in google-services
 ///    config, FlutterFire init, and an extra Apple privacy-manifest entry —

@@ -1,13 +1,13 @@
-/// §4.6 W-D1 / Wave 46 — Settings ▸ on-device AI (bring-your-own key).
+/// Settings ▸ on-device AI (bring-your-own key).
 ///
 /// Manage **multiple** provider profiles (official Anthropic, a
 /// self-hosted gateway, a regional proxy, …) and switch the active one
 /// with a single tap. Keys are stored in the Keychain/Keystore via
 /// [llmCredentialsProvider]; the active profile drives the device
-/// runtime (W-D3). Native platforms only — web sees an explanatory
+/// runtime. Native platforms only — web sees an explanatory
 /// card.
 ///
-/// The old "启用端侧 AI" opt-in switch was removed: post-W-D7 there is
+/// The old "启用端侧 AI" opt-in switch was removed: there is
 /// no cloud relay to fall back to, so the active profile *is* the
 /// intent.
 library;

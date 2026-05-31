@@ -1,4 +1,4 @@
-/// `read_category_window` — device port (§4.6 W-D4.4b, Scoped Detail).
+/// `read_category_window` — device port (Scoped Detail).
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/read_category_window.rs`; primary logic a
@@ -22,8 +22,7 @@
 /// JE). A `device_note` always states the remap and, when the category
 /// names no expense account, says so explicitly (empty ≠ "no
 /// transactions" — same "surface, don't silently mislead" stance as
-/// `read_account_window`; this is the W-D4.2c-class risk the roadmap
-/// flags). Like its siblings: HMAC dropped → real `note_excerpt` (data
+/// `read_account_window`). Like its siblings: HMAC dropped → real `note_excerpt` (data
 /// never leaves the device); mandatory `purpose` + hard caps (≤31d,
 /// ≤50) preserved for the AiTrace audit.
 library;
@@ -45,7 +44,7 @@ class ReadCategoryWindowTool implements DeviceTool {
   String get name => 'read_category_window';
 
   // Originally ported from backend `read_category_window.rs`; updated
-  // after W-D7 so it only references tools advertised on device.
+  // so it only references tools advertised on device.
   @override
   String get description =>
       'Scoped Detail 工具：返回某一类目在指定时间窗口内的交易明细（drill-down）。'

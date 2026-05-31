@@ -1,9 +1,9 @@
-/// Device-side Anthropic Messages API client (§4.6 W-D2).
+/// Device-side Anthropic Messages API client.
 ///
 /// Dart port of `apps/backend/src/ai/adapters/anthropic/client.rs`,
-/// using the user's own key (W-D1) and calling the provider directly —
+/// using the user's own key and calling the provider directly —
 /// no Worker in the path. Streaming feeds [decodeAnthropicSse]; the
-/// one-shot [complete] backs on-device Vision ingest (W-D5).
+/// one-shot [complete] backs on-device Vision ingest.
 library;
 
 import 'dart:async';
@@ -113,7 +113,7 @@ class AnthropicClient implements DeviceLlmClient {
   final LlmConfig config;
 
   /// Streaming Messages call → low-level provider events. One HTTP
-  /// request per turn; the W-D3 loop calls this once per round.
+  /// request per turn; the device loop calls this once per round.
   @override
   Stream<LlmStreamEvent> streamMessages(
     AnthropicRequest request, {
@@ -202,7 +202,7 @@ class AnthropicClient implements DeviceLlmClient {
   }
 
   /// Non-streaming single-shot call. Returns the raw `content` block
-  /// list and `stop_reason` so the Vision ingest path (W-D5) can pull
+  /// list and `stop_reason` so the Vision ingest path can pull
   /// the forced `tool_use` block. Mirrors the backend `complete`.
   @override
   Future<AnthropicCompletion> complete(

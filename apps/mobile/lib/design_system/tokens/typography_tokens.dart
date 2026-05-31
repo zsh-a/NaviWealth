@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Type scale.
 ///
-/// FIR-104 swapped the primary fontFamily from `AppCnSans` (the Noto Sans
+/// Swapped the primary fontFamily from `AppCnSans` (the Noto Sans
 /// SC subset) to **Inter** for Latin / numeric / English copy. Inter
 /// brings the things a fintech UI needs out of the box:
 ///
@@ -55,7 +55,7 @@ class TypographyTokens {
 
   static const String fontFamilyMono = 'monospace';
 
-  /// Lining tabular figures — applied to every text style as of FIR-104
+  /// Lining tabular figures — applied to every text style
   /// so digits stay aligned across rows even in non-numeric contexts (a
   /// chart legend, a settings row with a count badge, …) without each
   /// site having to opt in.
@@ -163,7 +163,7 @@ class TypographyTokens {
     letterSpacing: 0.5,
   );
 
-  // Numeric — money, percentages, charts axis labels. With FIR-104 these
+  // Numeric — money, percentages, charts axis labels. These
   // are no longer the only carriers of `tabularFigures`; they remain a
   // semantic alias so call sites that explicitly want "this is a number"
   // can keep reading.
@@ -192,7 +192,7 @@ class TypographyTokens {
   /// §5.10.4 — true monospace numeral style for surfaces that explicitly
   /// want a "data-grid" read (structured answer tables in the command
   /// palette result pane, ingest preview rows, etc.). MoneyText keeps its
-  /// proportional Inter + tabular-figures default from FIR-104; reach for
+  /// proportional Inter + tabular-figures default; reach for
   /// this token only when a surface needs every character to occupy the
   /// same width.
   static final TextStyle numericMono = _t(

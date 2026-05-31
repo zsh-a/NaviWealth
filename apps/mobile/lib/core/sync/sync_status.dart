@@ -1,8 +1,7 @@
 import 'dart:async';
 
 /// User-facing sync state surfaced by the SyncEngine. The UI layer reads
-/// this to render online / offline / syncing / failed indicators
-/// (FIR-34 §"同步状态指示").
+/// this to render online / offline / syncing / failed indicators.
 enum SyncStatus {
   /// Engine has never run yet (cold start before first sync attempt).
   idle,

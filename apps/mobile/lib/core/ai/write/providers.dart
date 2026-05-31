@@ -1,4 +1,4 @@
-/// Wave 35 / 39 — Riverpod surface for the persisted undo + AI-touched
+/// Riverpod surface for the persisted undo + AI-touched
 /// stores.
 ///
 /// Provides:
@@ -43,7 +43,7 @@ final undoEntriesStreamProvider = StreamProvider<List<PersistedUndoEntry>>((
   yield* stack.watchAll();
 });
 
-/// Wave 39 — owner-scoped [DriftAiTouchedStore]. Disposed when the
+/// Owner-scoped [DriftAiTouchedStore]. Disposed when the
 /// user logs out or the DB closes.
 final aiTouchedStoreProvider = Provider<DriftAiTouchedStore?>((ref) {
   final dbAsync = ref.watch(appDatabaseProvider);
@@ -59,7 +59,7 @@ final aiTouchedStoreProvider = Provider<DriftAiTouchedStore?>((ref) {
   );
 });
 
-/// Wave 39 — detail-page surface. `family((entityType, entityId))`
+/// Detail-page surface. `family((entityType, entityId))`
 /// streams the latest [AiTouchedEntity] (or null). Auto-dispose so
 /// off-screen detail pages release their subscription.
 final aiTouchedAtProvider = StreamProvider.autoDispose

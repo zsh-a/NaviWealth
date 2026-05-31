@@ -21,7 +21,7 @@
 > **下面是 2026-05-24 落地前的审计原文**。审计期的建议措辞（"应删 / 推荐删除"）
 > 与今天的事实可能不一致——以代码现状为准，以本节为故事背景。
 
-> **一次性文档**。目的是把 W-D7（删除后端 AI）之后 `apps/mobile/lib/core/ai/` 里
+> **一次性文档**。目的是把删除后端 AI 之后 `apps/mobile/lib/core/ai/` 里
 > "代码已转向但抽象/注释未收敛" 的状态摊开，给出**留/删/改**三类清单。
 > 不是路线图、不是重构 PR、不是新设计。审计落地完成后可删除。
 >
@@ -70,7 +70,7 @@ ChatRepository.sendMessage()
       → AnthropicClient | OpenAiClient（用户 key 直发 provider；每轮 LLM round
         都是真实网络调用，只有 tool dispatch 是本地）
       → DriftDeviceToolDispatcher（当前 **34 个** kDeviceTools：22 基础 + 8 FIRE +
-        4 Options。架构文档里的 "22 个" 是 W-D7 前的数字，需要同步更新）
+        4 Options。架构文档里的 "22 个" 是旧的数字，需要同步更新）
   → 端侧产生 LlmStreamEvent，UI 渲染，AiTraceBuilder 写 Drift `ai_traces`
 
 替代分支（同样是"生产路径"）：
@@ -99,8 +99,8 @@ trace 与执行**矛盾**。这是"router 应删"的最具体证据，不是"rou
 | L91–L115 | `RuntimeRegistry.pickFor(decision)` 把 `Backend.cloud/hybrid → cloudAnthropic` | 只在 `ai_runtime_test.dart` 调用，prod 完全不经过 |
 | L120–L139 | `class CloudAnthropicRuntime implements AiRuntime` | **codegraph: 零 caller**。包装的 `AiChatApiClient` 也不再有 Dio 实现（`DioAiChatApiClient` 已删，docstring 在 `ai_chat_api_client.dart:2` 自己承认） |
 | L165–L174 | `abstract class DeviceChatRunner` | **保留**——是 `RuntimeRoutingAiChatApiClient` 与 `DeviceLlmRuntime` 之间真实的 production seam |
-| L48 | docstring "(native × key × opt-in)" | **错**：Wave 46 已删除 opt-in 开关（架构文档 §2.2） |
-| L102–L103 | docstring "Phase 1 maps... Phase 5 may insert a real device-LLM" | Phase 5 已经是 W-D7 后唯一的 runtime，这句话谈的是已经发生的过去 |
+| L48 | docstring "(native × key × opt-in)" | **错**：opt-in 开关已删除（架构文档 §2.2） |
+| L102–L103 | docstring "Phase 1 maps... Phase 5 may insert a real device-LLM" | Phase 5 已经是唯一的 runtime，这句话谈的是已经发生的过去 |
 
 **建议动作**：保留 `AiRuntime` / `AiRuntimeRequest` / `RuntimeId.deviceLlm` /
 `DeviceLlmRuntime` / `DeviceChatRunner`。其余全删，包括 `cloudAnthropic` 枚举值、
@@ -136,7 +136,7 @@ trace 与执行**矛盾**。这是"router 应删"的最具体证据，不是"rou
 ### 2.3 `core/ai/freshness/freshness_gate.dart`
 
 整个文件存在的意义是：云端 read model 返回 `Freshness.sourceHlcWatermark`，端侧检查
-"我的 op_log 是不是云端还没消费"。W-D7 后**没有云端 read model**。**在当前唯一
+"我的 op_log 是不是云端还没消费"。**没有云端 read model**。**在当前唯一
 production runtime `DeviceLlmRuntime` 下**，`DeviceAgentLoop._runInner` 构造的
 `ToolResultEvent` 不设 `freshness` 字段（`device_agent_loop.dart:268`），所以
 staleness 分支不命中。
@@ -254,7 +254,7 @@ labelling"——但 trace 的 backend label 是在 `_prepareChatTrace` 里直接
 ### 4.2 `ChatSyncGate`
 
 虽然 docstring 说"AI backend reads user's data from D1"是错的，但 `ChatSyncGate.awaitFlush()`
-实际做的是"等本地 OpLog push 到云端"——这个语义在 W-D7 后**是否还有意义**取决于：
+实际做的是"等本地 OpLog push 到云端"——这个语义在后端 AI 删除后**是否还有意义**取决于：
 device tool 直接读本地 Drift，本地写入对端侧立即可见，根本不需要等任何 flush。
 
 唯一可能还有用的场景：用户在 A 设备录入交易，立刻在 A 设备问 AI——这是 trivially OK，
@@ -299,7 +299,7 @@ device tool 直接读本地 Drift，本地写入对端侧立即可见，根本�
    只改 docstring，不删任何符号：
    - `ai_runtime.dart` 顶部 library docstring（"Today every chat goes to the cloud
      Anthropic relay" / "(native × key × opt-in)" / "Phase 5 may insert..." 都要改）
-   - `providers.dart` 里 W-D7 前的 freshness/opt-in/no-key 文案 + `chatSyncGateProvider`
+   - `providers.dart` 里旧的 freshness/opt-in/no-key 文案 + `chatSyncGateProvider`
      的 "AI backend reads user's data from D1"
    - `local/embedding/semantic_memory.dart` 的 "cloud planner can receive (at most top-K)"
    - `task_context.dart` 顶部 §4.x 引用（确认每个编号是否仍指向有效 §）

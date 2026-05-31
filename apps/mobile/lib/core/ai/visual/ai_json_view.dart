@@ -5,7 +5,7 @@
 /// span detail panel on the AI transparency page so a debugger can
 /// inspect exactly what the model passed a tool and what came back.
 ///
-/// Wave 36 visual discipline: monospace body via [AiType], tone via
+/// Monospace body via [AiType], tone via
 /// [AiTone], no ad-hoc colours. Maps/Lists collapse below a small
 /// size so a 200-row tool result doesn't blow the viewport.
 library;

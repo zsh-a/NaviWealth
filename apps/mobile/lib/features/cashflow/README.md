@@ -13,4 +13,4 @@ Module boundaries:
 
 - `domain/` contains pure models, classification rules, and aggregation.
 - `data/` adapts Riverpod streams and isolate execution to the pure domain.
-- `ui/` is reserved for FIR-140 and later presentation work.
+- `ui/` is reserved for later presentation work.

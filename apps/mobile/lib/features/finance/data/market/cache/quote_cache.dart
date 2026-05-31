@@ -23,7 +23,7 @@ import 'cache_policy.dart';
 /// Tag semantics for `read*` results:
 ///   * `cachedFresh` — younger than `XxxFresh`.
 ///   * `stale`      — between `XxxFresh` and `XxxStaleWindow`. UI shows the
-///                    "数据延迟" badge (FIR-26 离线降级).
+///                    "数据延迟" badge (离线降级).
 ///   * miss         — older than the stale window OR no row exists; returns
 ///                    null and the caller must hit a provider.
 class MarketCache {

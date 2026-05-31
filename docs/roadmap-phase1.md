@@ -6,10 +6,10 @@
 
 ## 状态注记（2026-05-24）
 
-本文档撰写时 IA 还是 Home / Portfolio / Activity / Plan,W-D7 也尚未发生。之后两件事改变了部分前提:
+本文档撰写时 IA 还是 Home / Portfolio / Activity / Plan,后端 AI relay 尚未删除。之后两件事改变了部分前提:
 
 1. **IA contract migration**(commits 3e37cfc / aacded4): 主 tab 改为 Today / Activity / Wealth / Plan。`features/portfolio/` 和 `features/me/` / `features/more/` 已删除,`features/wealth/` 接管原 Portfolio 职责。
-2. **W-D7** 删除后端 AI relay。`apps/backend/src/ai/tools.rs` 不再存在;持仓由端侧 `GetHoldingsTool` 计算。
+2. 后端 AI relay 已删除。`apps/backend/src/ai/tools.rs` 不再存在;持仓由端侧 `GetHoldingsTool` 计算。
 3. **E2E sync 5 case** (P1-G): 已在 `apps/mobile/test/e2e/sync_e2e_test.dart` 落地完毕(2026-05-24)。
 
 因此下表中**已过时**的条目:
@@ -202,7 +202,7 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
 **现状**（`apps/backend/src/ai/tools.rs` 头部注释明确）：
 - `get_holdings` 是"postings 近似读模型"，带 `approximation: true`；
 - 跨币种合并被显式延后（"We do *not* fabricate cross-currency totals"）；
-- FIR-48 holding engine 未移植到 Worker。
+- Holding engine 未移植到 Worker。
 
 **目标**：让 AI 工具产出与客户端一致的数字，去掉 `approximation: true` 标签。
 
@@ -213,7 +213,7 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
    - 后端工具直接读 context，而不是从 D1 重算；
    - 优点：不用移植 holding engine，单一计算源；缺点：context 体积、隐私。
 
-2. **将 FIR-48 holding engine 移植到 Worker**（重）
+2. **将 holding engine 移植到 Worker**（重）
    - 把 `lib/features/investment/domain/` 的 cost basis 引擎用 Rust 重写；
    - 优点：服务端可独立计算；缺点：双实现需要长期对齐。
 
@@ -324,7 +324,7 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
    - 多币种全局 UI 体验（仅做 Portfolio by-currency 视角的最小版）；
    - WebSocket 实时同步（保留 30s 轮询）；
    - 预算 / 计划交易模块；
-   - 命令面板（FIR-87）。
+   - 命令面板。
 3. **代码风格**：strict-casts / strict-inference / strict-raw-types；不要新增 `dynamic` / `// ignore`。
 
 ---

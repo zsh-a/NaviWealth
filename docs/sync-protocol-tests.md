@@ -4,8 +4,8 @@ Companion to [`sync-protocol.md`](./sync-protocol.md). These are
 **protocol-level** scenarios that both the client (Flutter) and server
 (Workers + Rust) test suites must cover. Implementation tickets:
 
-- Server: FIR-36 (Sync API).
-- Client: FIR-34 (SyncEngine).
+- Server: Sync API implementation.
+- Client: SyncEngine implementation.
 
 Each case lists: **setup → action → expected outcome**. Test names follow
 `SP-<group>-<n>` for cross-referencing in PRs.
@@ -386,7 +386,7 @@ Each case lists: **setup → action → expected outcome**. Test names follow
 ### SP-I-2 — Expired JWT → 401, refresh, retry
 
 - **Action**: pull with expired token.
-- **Expect**: client refreshes via auth flow (FIR-30) and retries
+- **Expect**: client refreshes via auth flow and retries
   transparently.
 
 ### SP-I-3 — Wrong protocol version → 426
@@ -460,7 +460,7 @@ Each case lists: **setup → action → expected outcome**. Test names follow
 ### SP-K-2 — Health endpoints unaffected
 
 - **Action**: hit `/health`, `/health/db`.
-- **Expect**: 200 (existing baseline from FIR-32 still passes).
+- **Expect**: 200 (existing baseline still passes).
 
 ### SP-K-3 — Unknown table in op rejected
 

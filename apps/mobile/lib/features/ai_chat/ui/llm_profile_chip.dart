@@ -1,7 +1,7 @@
 /// A compact "current LLM profile" capsule shown directly above the
 /// composer.
 ///
-/// W-D6 + W-D7 made the device-LLM runtime the only AI path (no cloud
+/// The device-LLM runtime is the only AI path (no cloud
 /// relay), and the user can have several `LlmProfile`s saved in
 /// settings. Before this chip there was no UI indication of which
 /// profile is actually answering — so a Claude / GPT swap silently

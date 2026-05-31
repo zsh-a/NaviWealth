@@ -1,4 +1,4 @@
-/// `propose_trade` — device port (§4.6 W-D4.5c, final propose_*).
+/// `propose_trade` — device port (final propose_*).
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/propose_trade.rs`; logic a verbatim port

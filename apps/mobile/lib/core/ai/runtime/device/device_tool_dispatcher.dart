@@ -1,7 +1,7 @@
-/// Device tool dispatch contract (§4.6 W-D3).
+/// Device tool dispatch contract.
 ///
-/// Port of the backend `ToolDispatcher` trait. W-D4 supplies the real
-/// implementation reading Drift; until then [UnavailableToolDispatcher]
+/// Port of the backend `ToolDispatcher` trait. The real
+/// implementation reads Drift; until then [UnavailableToolDispatcher]
 /// returns a standard error tool_result so a model that calls a tool
 /// degrades to "I can't read that yet" rather than crashing the turn —
 /// the same shape `risk_policy` denials use on the backend.
@@ -17,7 +17,7 @@ abstract class DeviceToolDispatcher {
   Future<Object?> dispatch(DeviceSession session, String name, Object? input);
 }
 
-/// Placeholder until W-D4. With no tool schemas advertised the model
+/// Placeholder. With no tool schemas advertised the model
 /// shouldn't call tools at all; this is the safety net if it does.
 class UnavailableToolDispatcher implements DeviceToolDispatcher {
   const UnavailableToolDispatcher();
@@ -32,7 +32,7 @@ class UnavailableToolDispatcher implements DeviceToolDispatcher {
     'code': 'tool_unavailable',
     'tool': name,
     'message':
-        '端侧工具尚未接入（W-D4 待落地）。请直接基于已知信息回答，'
+        '端侧工具尚未接入。请直接基于已知信息回答，'
         '或告诉用户该数据当前在本机模式下不可用。',
   };
 }

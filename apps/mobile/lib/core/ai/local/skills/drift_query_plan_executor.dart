@@ -1,4 +1,4 @@
-/// Wave 28 — Drift-backed [QueryPlanExecutor] adapter.
+/// Drift-backed [QueryPlanExecutor] adapter.
 ///
 /// The pure logic in [InMemoryQueryPlanExecutor] already does the
 /// heavy lifting; we just need a way to source `TransactionInput`
@@ -11,7 +11,7 @@
 ///   3. Delegates to [InMemoryQueryPlanExecutor].
 ///
 /// `NetWorthTrendPlan` continues to return a note (handled by the
-/// dashboard adapter in Wave 29); we deliberately don't double-implement
+/// dashboard adapter); we deliberately don't double-implement
 /// it here.
 ///
 /// The adapter is Riverpod-aware so callers can hand in any `Ref` —
@@ -37,7 +37,7 @@ class DriftQueryPlanExecutor implements QueryPlanExecutor {
 
   @override
   Future<QueryResult> run(FinanceQueryPlan plan) async {
-    // Wave 29: NetWorthTrendPlan reads from the dashboard trend
+    // NetWorthTrendPlan reads from the dashboard trend
     // provider — no transaction list needed.
     if (plan is NetWorthTrendPlan) {
       return _netWorthTrend(plan);

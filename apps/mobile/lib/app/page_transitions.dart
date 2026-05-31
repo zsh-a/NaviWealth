@@ -8,7 +8,7 @@ import '../design_system/design_system.dart';
 ///
 /// * Mobile (`< Breakpoints.mobile`) — the familiar Material horizontal
 ///   slide from the right. Hero animations on the page run on top of it,
-///   which matches the FIR-103 spec ("mobile: keep slide, mark hero").
+///   which matches the spec ("mobile: keep slide, mark hero").
 /// * Tablet / Desktop (`>= Breakpoints.mobile`) — a 16dp horizontal
 ///   translate plus a fade over [Motion.slow] / [Motion.emphasizedDecelerate].
 ///   A full screen-width slide reads as visual noise on wide windows;

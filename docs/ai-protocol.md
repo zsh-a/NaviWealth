@@ -1,6 +1,6 @@
 # NaviWealth AI Runtime Event Contract
 
-W-D7 removed the cloud AI backend and the `/ai/chat` SSE endpoint. The active
+The cloud AI backend and the `/ai/chat` SSE endpoint were removed. The active
 chat path is device-only:
 
 ```text

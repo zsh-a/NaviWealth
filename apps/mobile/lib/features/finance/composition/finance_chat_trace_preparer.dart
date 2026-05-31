@@ -84,7 +84,7 @@ Future<ChatTracePrepResult> _prepareChatTrace(
       fireGoal: fireGoal,
     );
 
-    // Post-W-D7 there is only one runtime (device LLM) and one
+    // There is only one runtime (device LLM) and one
     // fallback (device_unavailable). The router that historically chose
     // between cloud / hybrid / device is gone; we stamp the trace
     // directly with the runtime that will actually run this turn.

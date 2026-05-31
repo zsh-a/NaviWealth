@@ -41,7 +41,7 @@ class RefreshedToken {
   final DateTime expiresAt;
 }
 
-/// Wire-protocol contract with the FIR-29 backend.
+/// Wire-protocol contract with the backend.
 ///
 /// All methods either return a successful response or throw an
 /// [AuthException]. Concrete implementations live in

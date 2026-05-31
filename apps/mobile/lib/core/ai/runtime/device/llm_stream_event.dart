@@ -1,9 +1,9 @@
 /// Provider-neutral low-level stream events emitted by a device LLM
-/// adapter (§4.6 W-D2).
+/// adapter.
 ///
 /// This is the Dart mirror of the backend `AgentEvent` subset that the
 /// Anthropic adapter produces (`apps/backend/src/ai/runtime/event.rs` /
-/// `adapters/anthropic/event_map.rs`). The W-D3 device agent loop
+/// `adapters/anthropic/event_map.rs`). The device agent loop
 /// consumes this stream and translates it into the existing
 /// [AiChatEvent] taxonomy (`features/ai_chat/domain/chat_events.dart`)
 /// so the chat UI / proposal applier / trace builder stay unchanged.

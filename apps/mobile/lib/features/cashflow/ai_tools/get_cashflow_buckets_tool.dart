@@ -1,4 +1,4 @@
-/// `get_cashflow_buckets` — device port (§4.6 W-D4.2c, Snapshot P1).
+/// `get_cashflow_buckets` — device port (Snapshot P1).
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/get_cashflow_buckets.rs`; the monthly
@@ -23,7 +23,7 @@
 /// and asset-leg exclusion, the complementary split (this one buckets
 /// inflow vs outflow per month·currency; net_worth accumulates the
 /// signed net). The broader day/week net-worth computer was cloud-only
-/// and is not advertised after W-D7.
+/// and is not advertised on device.
 library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';

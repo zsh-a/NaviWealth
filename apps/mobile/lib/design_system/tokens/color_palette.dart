@@ -52,8 +52,8 @@ class ColorPalette {
   static const Color neutral1000 = Color(0xFF000000);
 
   // ── Profit / gain (emerald) ─────────────────────────────────────────────
-  // Migrated from legacy "standard green" #16A34A to Tailwind emerald in
-  // FIR-104 to give profit a softer, more premium read against dark surfaces
+  // Migrated from legacy "standard green" #16A34A to Tailwind emerald
+  // to give profit a softer, more premium read against dark surfaces
   // while still hitting WCAG AA on light backgrounds. The 500 / 600 pair is
   // the canonical fg used by [MarketColors] (dark mode / light mode resp.).
   static const Color green50 = Color(0xFFECFDF5);
@@ -65,7 +65,7 @@ class ColorPalette {
   static const Color green900 = Color(0xFF064E3B);
 
   // ── Loss / danger (rose / soft crimson) ─────────────────────────────────
-  // Migrated from saturated red #DC2626 to Tailwind rose in FIR-104. The
+  // Migrated from saturated red #DC2626 to Tailwind rose. The
   // softer crimson reads less alarming in tight delta columns while staying
   // unambiguously "down" against both light and dark surfaces.
   static const Color red50 = Color(0xFFFFF1F2);

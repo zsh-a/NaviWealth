@@ -62,10 +62,8 @@ class ActivityEntryDetailPage extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          // Wave 40 — surfaces when this journal entry was created
-          // by an accepted AI proposal (propose_trade /
-          // propose_expense / propose_liability_payment). Self-
-          // gating: hidden otherwise.
+          // AiTouchMark: surfaces when this journal entry was created
+          // by an accepted AI proposal. Self-gating: hidden otherwise.
           Align(
             alignment: Alignment.centerLeft,
             child: AiTouchMark(

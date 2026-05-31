@@ -45,7 +45,7 @@ class MessageBubble extends StatelessWidget {
   final String sessionId;
   final ChatMessage message;
 
-  /// Wave 34 — when non-null, completed assistant turns render reply
+  /// When non-null, completed assistant turns render reply
   /// chips below the body and call this back with the tapped chip
   /// text. Caller sends it as the next user turn. Streaming/error
   /// messages render no chips regardless.
@@ -59,8 +59,7 @@ class MessageBubble extends StatelessWidget {
   /// surface keeps them (true) as its guided next-step affordance.
   final bool suggestCannedReplies;
 
-  /// Wave 34 — invocation intent that triggered this turn (Wave 33
-  /// invocation). Drives the rules-based chip suggester.
+  /// Invocation intent that triggered this turn. Drives the rules-based chip suggester.
   final String? invocationIntent;
 
   /// Whether this is the trailing assistant message in the timeline.
@@ -339,7 +338,7 @@ class _AssistantBubble extends StatelessWidget {
               canRegenerate: isLastAssistant,
             ),
           ),
-        // Wave 34 — generic rules-based reply chips under completed
+        // Generic rules-based reply chips under completed
         // assistant turns. Gated by [suggestCannedReplies] so the
         // conversation sheet stays quiet (it relies on the model's own
         // structured `ask_user` decision card instead — see
@@ -472,7 +471,7 @@ class _AssistantBubble extends StatelessWidget {
       final shouldRenderText = seg.isNotEmpty || (isLastSeg && isStreaming);
       if (shouldRenderText) {
         addGapIfNeeded();
-        // Wave 37 — when the model is mid-flight and has called a tool
+        // When the model is mid-flight and has called a tool
         // whose result hasn't arrived yet, surface the tool name so the
         // streaming indicator reads "正在 <tool>" instead of generic
         // "思考中". The pending tool is the *last* invocation without
@@ -525,14 +524,14 @@ class _AssistantBubble extends StatelessWidget {
         );
       }
     }
-    // Wave 37 — inline rendering when a domain renderer is registered;
+    // Inline rendering when a domain renderer is registered;
     // the legacy card (chevron + raw JSON) remains the fallback for
     // tools without one, and accessible via long-press on the inline.
     return ToolInvocationInline(invocation: invocation);
   }
 }
 
-/// Wave 37 — last unresolved tool name. The model emits tool_use frames
+/// Last unresolved tool name. The model emits tool_use frames
 /// serially under the Anthropic protocol, so the most recent
 /// invocation without an output is the one currently being awaited.
 String? _findPendingToolName(List<ToolInvocation> tools) {
@@ -553,7 +552,7 @@ class _AssistantBody extends StatelessWidget {
   final bool isStreaming;
   final Color textColor;
 
-  /// Wave 37 — when the model has dispatched a tool but is still
+  /// When the model has dispatched a tool but is still
   /// waiting for the result, surface the tool name. Beats a generic
   /// "thinking" placeholder for agentic flows.
   final String? pendingToolName;
@@ -897,7 +896,7 @@ class _ReasoningPanelState extends State<_ReasoningPanel> {
 class _AssistantAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // Wave 36 visual language: the assistant identity glyph is a framed
+    // The assistant identity glyph is a framed
     // [AiSparkle]. No ad-hoc `secondary` hue — surface tint + hairline
     // only (AiTone), per core/ai/visual §5.8.
     return Container(
@@ -946,8 +945,8 @@ class _SystemNotice extends StatelessWidget {
   }
 }
 
-/// Wave 34 / 36 — reply chip row under completed assistant turns.
-/// Now backed by [AiPill] (Wave 36) so chips share the capsule's
+/// Reply chip row under completed assistant turns.
+/// Now backed by [AiPill] so chips share the capsule's
 /// visual language. Up to 3 chips sourced from `suggestReplyChips`.
 class _ReplyChips extends StatelessWidget {
   const _ReplyChips({

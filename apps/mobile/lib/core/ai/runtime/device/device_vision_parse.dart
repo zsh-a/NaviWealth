@@ -1,5 +1,5 @@
 /// On-device Vision parse — schema / prompt / message builder /
-/// extractor (§4.6 W-D5).
+/// extractor.
 ///
 /// Verbatim Dart port of `apps/backend/src/ai/ingest/parse.rs` so a
 /// receipt/statement parsed on-device (user's own key, straight to the

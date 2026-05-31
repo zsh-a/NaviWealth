@@ -11,7 +11,7 @@ import 'domain_event.dart';
 /// in the same `_db.transaction(...)` block so a crash between the two
 /// cannot leave one durable without the other.
 ///
-/// FIR-125 strategy (a): the table is local-only. The writer therefore
+/// Strategy (a): the table is local-only. The writer therefore
 /// neither enqueues a sync `Op` nor cares about the `op_outbox`. If
 /// per-device audit history is later promoted to a synced ledger, the
 /// callsites stay the same — only the writer's persistence backend

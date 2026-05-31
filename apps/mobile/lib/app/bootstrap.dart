@@ -57,7 +57,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   final prefs = await SharedPreferences.getInstance();
   final effectiveConfig = config ?? AppConfig.dev;
 
-  // D-1.7c: resolve embedder asset paths before the container is built
+  // Resolve embedder asset paths before the container is built
   // so the override list knows whether to wire the Rust embedder. Each
   // path can come from either an `AppConfig` dart-define override (dev
   // / test) or from the in-app installer's on-disk install dir. When
@@ -80,7 +80,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         crashReporterDelegateProvider.overrideWith(
           (ref) => LoggingCrashReporter(talker: ref.watch(talkerProvider)),
         ),
-      // Plug the AuthRouteGuard into FIR-15's empty default. The guard
+      // Plug the AuthRouteGuard into the empty default. The guard
       // reads `authControllerProvider` per redirect; auth state changes
       // bump `routeRedirectVersionProvider` which makes go_router re-run
       // the full redirect chain. Skipped when `bypassAuth` is on so dev
@@ -130,7 +130,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       // (`docs/lifeos-shell.md` §4): tools, prompt blocks, agents, shell
       // specs, and the registry all derive from the DomainPack list.
       ...lifeOsDomainCompositionOverrides(),
-      // D-2.5b — wire the Morning Briefing with the LLM synthesizer
+      // Wire the Morning Briefing with the LLM synthesizer
       // (falling back to programmatic when no device LLM is configured)
       // and the local notification service so each successful run can
       // surface a toast even when the app is backgrounded. The agent
@@ -149,7 +149,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           hourLocal: hourLocal,
         );
       }),
-      // D-1.7c (`docs/lifeos-shell.md` §6.6): swap in the Rust
+      // Swap in the Rust
       // EmbeddingGemma embedder when the user has configured a model
       // directory. Loading is async (FRB init + ONNX session warm-up
       // takes a few seconds); the override returns a Future that the
@@ -262,12 +262,12 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // future domain indexers) to their source streams so semantic memory
   // stays current without UI involvement.
   container.read(memoryLayerBootstrapProvider);
-  // D-2.5b — drive the platform background scheduler from the
+  // Drive the platform background scheduler from the
   // Health domain opt-in. Eager-read so the provider mounts now
   // and reacts to subsequent toggles (workmanager register / cancel
   // happens inside the provider build, see `morningBriefingCronProvider`).
   container.read(health_agent_providers.morningBriefingCronProvider);
-  // D-2.5b — when the workmanager callback fired while the app was
+  // When the workmanager callback fired while the app was
   // backgrounded it stamped `kMorningBriefingDueAtKey`. Kick off the
   // in-process run so the freshest summary lands in Memory + the
   // notification gets refined to the actual content.
@@ -298,7 +298,7 @@ void _scheduleMemoryRuntimeStartupTasks({
   required ProviderContainer container,
   required AppLogger logger,
 }) {
-  // D-1.7c (`docs/lifeos-shell.md` §6.6): if the embedder changed
+  // If the embedder changed
   // since last run (e.g. swapping Stub ↔ Rust EmbeddingGemma), invalidate
   // any memory_embeddings produced by a different fingerprint so the next
   // indexer cycle re-embeds with the current model.

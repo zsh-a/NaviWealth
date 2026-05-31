@@ -1,4 +1,4 @@
-/// Wave 39 — Drift-backed "this entity was touched by AI" store.
+/// Drift-backed "this entity was touched by AI" store.
 ///
 /// Detail pages query [latestTouch] / [watchLatest] to decide whether
 /// to render an [AiSourceMark] next to a value. The `ai_touched_entities`
@@ -65,7 +65,7 @@ class DriftAiTouchedStore {
 
   String get _owner => ownerUserId ?? '';
 
-  /// Wave 39 — manual change channel. Same pattern as
+  /// Manual change-notify channel. Same pattern as
   /// [DriftUndoStack]: customStatement table → no built-in Drift
   /// change notification → we push a no-op signal after each mutation
   /// so [watchLatest] subscribers re-fetch.

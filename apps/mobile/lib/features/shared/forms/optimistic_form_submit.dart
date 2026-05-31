@@ -26,7 +26,7 @@ final scaffoldMessengerKeyProvider =
 /// generic line can ignore the argument.
 typedef OptimisticFailureMessageBuilder = String Function(Object error);
 
-/// "Pop-then-write" form-submit pattern (FIR-98).
+/// "Pop-then-write" form-submit pattern.
 ///
 /// Local Drift writes complete in well under 10 ms, so the
 /// `setState(_busy=true) → await write() → snackbar → pop` flow shows a

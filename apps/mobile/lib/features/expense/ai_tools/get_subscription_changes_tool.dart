@@ -1,4 +1,4 @@
-/// `get_subscription_changes` — device port (§4.6 W-D4.3b).
+/// `get_subscription_changes` — device port.
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/get_subscription_changes.rs`. Per §4.3.3

@@ -1,8 +1,8 @@
 /// Device-side `read_*_window` tool parameter validation.
 ///
-/// Pre-W-D7 this file held the full cloud disclosure protocol
+/// This file previously held the full cloud disclosure protocol
 /// (DisclosureRequest / DisclosureResponse / LedgerField / UserConsent /
-/// AnonymizationLevel-keyed responses). After W-D7 the cloud planner is
+/// AnonymizationLevel-keyed responses). The cloud planner is
 /// gone, but the [DisclosurePurpose] enum is still useful: device
 /// scoped-window tools require callers to declare *why* they're pulling
 /// detail rows, and that requires a stable enumerated value.

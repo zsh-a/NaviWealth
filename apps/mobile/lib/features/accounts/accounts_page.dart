@@ -15,8 +15,8 @@ import 'ui/accounts_master.dart';
 /// archived-accounts surface is intentionally separate so the primary list
 /// stays focused on the user's day-to-day book of accounts.
 ///
-/// At desktop width (≥ 1240) the page renders as a master-detail surface
-/// (FIR-106): the list lives on the left, and the account edit form for
+/// At desktop width (≥ 1240) the page renders as a master-detail surface:
+/// the list lives on the left, and the account edit form for
 /// the `?selected=<id>` row lives on the right.
 class AccountsPage extends ConsumerWidget {
   const AccountsPage({super.key, this.embedded = false});

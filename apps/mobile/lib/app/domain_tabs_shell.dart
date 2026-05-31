@@ -155,7 +155,7 @@ class _MobileLayout extends ConsumerWidget {
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Wave 35 — persistent undo banner sits between content and
+          // Persistent undo banner sits between content and
           // the bottom nav. Hidden when the stack is empty.
           const PersistentUndoBanner(),
           GestureDetector(

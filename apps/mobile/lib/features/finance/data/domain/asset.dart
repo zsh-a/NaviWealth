@@ -27,7 +27,7 @@ abstract class Asset with _$Asset {
     required SyncMeta sync,
   }) = _Asset;
 
-  /// Canonical id for a securities-class asset (FIR-75): `<market>:<symbol>`.
+  /// Canonical id for a securities-class asset: `<market>:<symbol>`.
   ///
   /// Securities use a deterministic id derived from `(market, symbol)` so
   /// the same instrument lines up across devices without a UUID mapping

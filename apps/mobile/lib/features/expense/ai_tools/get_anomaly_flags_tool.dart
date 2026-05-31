@@ -1,4 +1,4 @@
-/// `get_anomaly_flags` — device port (§4.6 W-D4.3, Analytical layer).
+/// `get_anomaly_flags` — device port (Analytical layer).
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/get_anomaly_flags.rs`. Per §4.3.3 the

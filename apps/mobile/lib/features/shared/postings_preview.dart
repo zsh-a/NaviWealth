@@ -9,7 +9,7 @@ import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'account_l10n.dart';
 
-/// FIR-128 §1.3 — read-only ledger card that mirrors the Beancount
+/// Read-only ledger card that mirrors the Beancount
 /// posting layout: account path on the left, signed `units` and (when
 /// present) cost / price annotations on the right, with a Σ row at the
 /// bottom that surfaces the per-currency unit-balance check.

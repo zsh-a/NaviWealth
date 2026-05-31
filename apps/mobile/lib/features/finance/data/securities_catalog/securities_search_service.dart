@@ -7,12 +7,12 @@ import 'asset_search_hit.dart';
 
 /// Strict, four-tier offline search over the local securities universe.
 ///
-/// FIR-76: a fresh install with **zero** recorded trades must still find
+/// A fresh install with **zero** recorded trades must still find
 /// the user's instrument by symbol, English name, Chinese name, full
 /// pinyin or pinyin initials — and must do so without making a single
 /// HTTP request. The trade-entry form calls into this service first;
 /// the network-backed [MarketDataService] is only invoked when the
-/// caller explicitly requests an enrichment (FIR-78).
+/// caller explicitly requests an enrichment.
 ///
 /// Tier order (the merge is non-negotiable — never silently re-rank):
 ///

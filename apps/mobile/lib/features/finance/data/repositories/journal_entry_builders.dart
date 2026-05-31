@@ -3,7 +3,7 @@ import 'package:decimal/decimal.dart';
 import 'package:naviwealth/features/finance/data/domain/posting.dart';
 import 'journal_entry_repository.dart';
 
-/// FIR-131 — pure construction layer that turns a high-level economic
+/// Pure construction layer that turns a high-level economic
 /// event ("buy 100 AAPL @ $150 from cash") into the
 /// `(JournalEntryDraft, List<PostingDraft>)` shape
 /// [JournalEntryRepository.create] consumes.
@@ -19,7 +19,7 @@ import 'journal_entry_repository.dart';
 ///     so if a builder ever drifts out of balance the
 ///     [JournalEntryUnbalancedException] surfaces it immediately.
 ///
-/// Sign convention (FIR-128 §6, restated here so the leg signs in this
+/// Sign convention (restated here so the leg signs in this
 /// file are easy to verify):
 ///
 /// | Account category | `units` sign on a *normal* event              |
@@ -211,7 +211,7 @@ class JournalEntryBuilders {
       throw ArgumentError(
         'sell currently requires costCurrency ($costCurrency) to match '
         'quoteCurrency ($quoteCurrency); cross-currency lot closure '
-        'is FIR-132 territory.',
+        'is unsupported territory.',
       );
     }
     final fee = _normalizeOptionalAmount(feeAmount, feeAccountId, label: 'fee');

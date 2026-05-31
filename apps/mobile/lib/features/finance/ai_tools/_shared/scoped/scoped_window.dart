@@ -1,4 +1,4 @@
-/// Shared Scoped-Detail helpers (§4.6 W-D4.4) — Dart port of the
+/// Shared Scoped-Detail helpers — Dart port of the
 /// constants + parsing公约 in
 /// `apps/backend/src/ai/read_models/scoped_detail/common.rs`.
 ///

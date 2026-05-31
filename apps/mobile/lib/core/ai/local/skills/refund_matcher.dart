@@ -31,7 +31,7 @@ class RefundMatch {
 /// The canonical [RefundMatch] → [AnalyticalUpload] conversion
 /// (§4.3.3). Single source shared by the cloud
 /// `ContextPack.analytical_uploads` path and the device
-/// `get_refund_links` tool (W-D4.3b) so the device tool's output is
+/// `get_refund_links` tool so the device tool's output is
 /// exactly what the backend `refund_links` read model mirrors (§10).
 AnalyticalUpload refundMatchToUpload(RefundMatch m) {
   return AnalyticalUpload(

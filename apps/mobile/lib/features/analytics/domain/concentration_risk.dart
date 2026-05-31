@@ -40,7 +40,7 @@ class ConcentrationThresholds {
     required this.currencyWarning,
   });
 
-  /// Product-spec defaults from the FIR-54 issue description.
+  /// Product-spec defaults.
   factory ConcentrationThresholds.defaults() => const ConcentrationThresholds(
     assetWarning: 0.20,
     sectorWarning: 0.35,

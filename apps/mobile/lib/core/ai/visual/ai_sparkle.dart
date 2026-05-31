@@ -1,4 +1,4 @@
-/// Wave 36 — the sparkle primitive.
+/// The sparkle primitive.
 ///
 /// **One way** to draw the AI signal across all surfaces:
 ///   - Outlined glyph (`auto_awesome_outlined`), never filled

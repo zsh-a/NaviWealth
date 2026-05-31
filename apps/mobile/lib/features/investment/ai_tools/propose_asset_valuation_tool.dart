@@ -1,4 +1,4 @@
-/// `propose_asset_valuation` — device port (§4.6 W-D4.5b).
+/// `propose_asset_valuation` — device port.
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/propose_asset_valuation.rs`; logic a

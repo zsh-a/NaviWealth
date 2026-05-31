@@ -1,4 +1,4 @@
-/// Wave 44 — frozen regression corpus.
+/// Frozen regression corpus.
 ///
 /// Per registered intent (see `intent_policy.dart`), one or more
 /// representative prompts plus the **tool names** we expect the
@@ -23,7 +23,7 @@
 ///      not wired in this commit.
 ///
 /// Add prompts to widen coverage. Removing prompts requires a
-/// `// Wave 44 — coverage shrink rationale: …` comment.
+/// `// coverage shrink rationale: …` comment.
 library;
 
 class RegressionPrompt {
@@ -68,7 +68,7 @@ class RegressionPrompt {
 ///
 /// Adding here ≈ "we know this tool dispatches but the JSON viewer
 /// is good enough for now". Removing here ≈ "we need to write a
-/// custom renderer for this tool" (Wave 34.x kind of work).
+/// custom renderer for this tool".
 const Set<String> jsonOnlyRenderTools = <String>{
   // Read models with simple tabular outputs (number + currency +
   // optional breakdown). The raw JSON is short and the LLM mostly
@@ -79,7 +79,7 @@ const Set<String> jsonOnlyRenderTools = <String>{
   'get_investment_performance',
   // FIRE OS Phase 5 — the hero / buckets / stress / review surfaces
   // render the numbers natively on the FIRE page; the chat sheet
-  // falls back to JSON until a Wave-34-style custom renderer lands.
+  // falls back to JSON until a custom renderer lands.
   'get_fire_state',
   'get_fire_plan',
   'get_fire_buckets',

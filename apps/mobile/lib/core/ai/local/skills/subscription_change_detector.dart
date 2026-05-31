@@ -53,7 +53,7 @@ class SubscriptionChange {
 /// The canonical [SubscriptionChange] → [AnalyticalUpload] conversion
 /// (§4.3.3). Single source shared by the cloud
 /// `ContextPack.analytical_uploads` path and the device
-/// `get_subscription_changes` tool (W-D4.3b) so the device tool's
+/// `get_subscription_changes` tool so the device tool's
 /// output is exactly what the backend `subscription_changes` read
 /// model mirrors (§10).
 AnalyticalUpload subscriptionChangeToUpload(SubscriptionChange c) {

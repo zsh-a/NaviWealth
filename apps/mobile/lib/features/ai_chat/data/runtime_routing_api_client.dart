@@ -1,9 +1,9 @@
-/// §4.6 W-D7 — device-only [AiChatApiClient].
+/// Device-only [AiChatApiClient].
 ///
 /// The seam that lets `ChatRepository` "go through the registry"
 /// unchanged: same [AiChatApiClient] surface, but every turn is
 /// dispatched to the on-device [DeviceLlmRuntime]. The cloud relay
-/// (`/ai/chat`) was removed in W-D7, so there is no device→cloud
+/// (`/ai/chat`) was removed, so there is no device→cloud
 /// failover anymore — when no device runtime exists (web platform / no
 /// user key / opted out) AI is unavailable and the turn surfaces a
 /// single explanatory `ErrorEvent` + `DoneEvent` guiding the user to
@@ -31,7 +31,7 @@ class RuntimeRoutingAiChatApiClient implements AiChatApiClient {
   final DeviceChatRunner? _device;
 
   /// Which runtime a turn would hit — surfaced for the transparency
-  /// badge / trace label (W-D6). Always device or unavailable now.
+  /// badge / trace label. Always device or unavailable now.
   bool get usesDevice => _device != null;
 
   @override

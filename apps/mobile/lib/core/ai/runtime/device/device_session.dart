@@ -1,4 +1,4 @@
-/// Per-turn device agent session (§4.6 W-D3).
+/// Per-turn device agent session.
 ///
 /// Dart port of `apps/backend/src/ai/runtime/session.rs`. The message
 /// list is mutated in place across tool rounds (assistant `tool_use`
@@ -21,10 +21,10 @@ class DeviceSession {
   final List<AnthropicChatMessage> messages;
 
   /// Device-derived portfolio snapshot. Threaded to the tool
-  /// dispatcher (W-D4); unused while tools are stubbed.
+  /// dispatcher; unused while tools are stubbed.
   final Map<String, Object?>? portfolioSnapshot;
 
-  /// ContextPack-derived system extension (W-D6). Appended verbatim
+  /// ContextPack-derived system extension. Appended verbatim
   /// after the base prompt + clock, mirroring the backend.
   final String? systemAppendix;
 

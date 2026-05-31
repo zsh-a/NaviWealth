@@ -287,7 +287,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
           ),
         ),
         children: [
-          // Wave 40 — surface AI provenance for assets touched by
+          // Surface AI provenance for assets touched by
           // `propose_asset_valuation`. Self-gating.
           if (widget.isEdit && widget.assetId != null) ...[
             Align(

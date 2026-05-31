@@ -109,7 +109,7 @@ class ToolInvocation {
   final Object? output;
   final String? partialInputJson;
 
-  /// FIR-67 — apply state for `propose_*` tool calls. `null` for read-only
+  /// Apply state for `propose_*` tool calls. `null` for read-only
   /// tools and for propose tools the user hasn't acted on yet (the UI
   /// treats null and `pending` identically; null keeps the JSON payload
   /// quiet for non-propose calls so we don't bloat persisted history).

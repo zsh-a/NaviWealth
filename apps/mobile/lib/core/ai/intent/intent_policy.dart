@@ -1,4 +1,4 @@
-/// Wave 33 — Intent registry (governance for intent strings).
+/// Intent registry (governance for intent strings).
 ///
 /// Without a registry the codebase ends up with 50 intent strings, half
 /// of them dead. Mirror the `tool_policy.rs` pattern: descriptors are a

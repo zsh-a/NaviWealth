@@ -1,4 +1,4 @@
-/// `propose_account_create` — device port (§4.6 W-D4.5b).
+/// `propose_account_create` — device port.
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/propose_account_create.rs`; logic a
