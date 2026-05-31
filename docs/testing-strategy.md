@@ -118,9 +118,12 @@ body does not. Use a bounded `settle()` pump, never `pumpAndSettle`
 (stream/timer surfaces can hang).
 
 Seeds: `net_worth_flow_test.dart` (Task #1 — land on Today, move between
-destinations) and `navigation_flow_test.dart` (route-smoke across all four
-FinanceOS primary tabs — Today / Activity / Wealth / Plan — asserting each
-resolves and keeps the shell mounted rather than hitting the 404 page).
+destinations), `add_account_flow_test.dart` (Task #2 — discover account
+creation from Wealth, save through the real repository into in-memory Drift,
+and return to the live account list), and `navigation_flow_test.dart`
+(route-smoke across all four FinanceOS primary tabs — Today / Activity /
+Wealth / Plan — asserting each resolves and keeps the shell mounted rather
+than hitting the 404 page).
 
 ### Contract (Dart↔Rust↔wire, ~5%)
 The client and the Rust Worker share a wire format but no generated
@@ -212,8 +215,9 @@ cover Task #11 (backup/restore) and any SQLCipher PRAGMA path on-device.
 - ✅ Net-worth read model covered in every direction — manual assets,
   liabilities, and ledger-reconstructed securities — through the real chain.
 - ✅ On-device `integration_test/` stood up (real file DB boot + emulator CI).
-- Flow layer: 2 of 12 Tasks done (view net worth, navigate primaries);
-  grow toward the remaining Tasks in §3 (add account, import, AI, etc.).
+- Flow layer: 3 of 12 Tasks done (view net worth, add account, navigate
+  primaries); grow toward the remaining Tasks in §3 (import, AI, export,
+  options income, etc.).
 - Contracts-as-code: generated enum SSOT + `sync-v2` wire roundtrip vs the
   Rust serializer.
 - Expand golden coverage to each Task surface + responsive breakpoints.
