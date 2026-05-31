@@ -70,39 +70,36 @@ void main() {
       expect(result.summary?.totalAbsAmountMinor, 500);
     });
 
-    test(
-      'can refine existing broad ledger category from description',
-      () async {
-        final exec = InMemoryQueryPlanExecutor(
-          transactions: <TransactionInput>[
-            _txn(
-              'STARBUCKS',
-              -500,
-              '2026-04-15',
-              categoryId: 'system-account:u1:expense:food',
-            ),
-            _txn(
-              'Unknown Cafe',
-              -800,
-              '2026-04-16',
-              categoryId: 'system-account:u1:expense:food',
-            ),
-          ],
-        );
-        final result = await exec.run(
-          const SpendingByCategoryPlan(
-            range: DateRange(
-              fromInclusive: '2026-04-01T00:00:00.000Z',
-              toExclusive: '2026-05-01T00:00:00.000Z',
-            ),
+    test('keeps seeded leaf ledger categories distinct', () async {
+      final exec = InMemoryQueryPlanExecutor(
+        transactions: <TransactionInput>[
+          _txn(
+            'STARBUCKS',
+            -500,
+            '2026-04-15',
+            categoryId: 'system-account:u1:expense:coffee',
           ),
-        );
-        expect(result.rows.map((r) => r.values['category']).toList(), <String>[
-          'food',
-          'coffee',
-        ]);
-      },
-    );
+          _txn(
+            'Unknown Cafe',
+            -800,
+            '2026-04-16',
+            categoryId: 'system-account:u1:expense:dining',
+          ),
+        ],
+      );
+      final result = await exec.run(
+        const SpendingByCategoryPlan(
+          range: DateRange(
+            fromInclusive: '2026-04-01T00:00:00.000Z',
+            toExclusive: '2026-05-01T00:00:00.000Z',
+          ),
+        ),
+      );
+      expect(result.rows.map((r) => r.values['category']).toList(), <String>[
+        'dining',
+        'coffee',
+      ]);
+    });
   });
 
   group('InMemoryQueryPlanExecutor — TransactionsFilterPlan', () {

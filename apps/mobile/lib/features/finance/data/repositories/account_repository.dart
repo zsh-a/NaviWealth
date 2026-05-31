@@ -508,12 +508,15 @@ class AccountRepository {
   ///
   /// ```
   /// Income/{Salary,Dividend,Interest,CapitalGains,Other}
-  /// Expenses/{Food,Transit,Housing,Trading/{Fee,Tax,Interest},Tax/{Withholding},Other}
+  /// Expenses/{Dining,Groceries,Coffee,Transport,RideHailing,Housing,Utilities,
+  /// Household,Shopping,Subscriptions,Entertainment,Medical,Fitness,Education,
+  /// Travel,Communication,FamilySupport,Gift,Pets,Trading/{Fee,Tax,Interest},
+  /// Tax/{Withholding},Other}
   /// Equity/{OpeningBalance,Splits,Adjustments}
   /// ```
   ///
-  /// Three roots (carrying the existing FIR-126 ids) plus 18 children
-  /// for a total of 21 seeded accounts on a fresh install.
+  /// Three roots (carrying the existing FIR-126 ids) plus a curated set of
+  /// common leaves for a total of 37 seeded accounts on a fresh install.
   ///
   /// Each row uses a deterministic id derived from
   /// [systemAccountIdForPath], so re-running the seed is a free no-op
@@ -708,13 +711,29 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     color: '#10B981',
   ),
 
-  // ---- Expense leaves + Trading branch ----
+  // ---- Everyday expense leaves + Trading / Tax branches ----
   _SystemAccountSeed(
-    path: 'expense:food',
+    path: 'expense:dining',
     parentPath: 'expense',
-    name: 'Food',
+    name: 'Dining',
     category: AccountSide.expense,
     icon: 'restaurant',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:groceries',
+    parentPath: 'expense',
+    name: 'Groceries',
+    category: AccountSide.expense,
+    icon: 'local_grocery_store',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:coffee',
+    parentPath: 'expense',
+    name: 'Coffee',
+    category: AccountSide.expense,
+    icon: 'local_cafe',
     color: '#EF4444',
   ),
   _SystemAccountSeed(
@@ -726,6 +745,14 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     color: '#EF4444',
   ),
   _SystemAccountSeed(
+    path: 'expense:rideHailing',
+    parentPath: 'expense',
+    name: 'Ride Hailing',
+    category: AccountSide.expense,
+    icon: 'local_taxi',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
     path: 'expense:housing',
     parentPath: 'expense',
     name: 'Housing',
@@ -734,11 +761,35 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     color: '#EF4444',
   ),
   _SystemAccountSeed(
+    path: 'expense:utilities',
+    parentPath: 'expense',
+    name: 'Utilities',
+    category: AccountSide.expense,
+    icon: 'bolt',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
     path: 'expense:household',
     parentPath: 'expense',
     name: 'Household',
     category: AccountSide.expense,
     icon: 'chair',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:shopping',
+    parentPath: 'expense',
+    name: 'Shopping',
+    category: AccountSide.expense,
+    icon: 'shopping_bag',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:subscriptions',
+    parentPath: 'expense',
+    name: 'Subscriptions',
+    category: AccountSide.expense,
+    icon: 'credit_card',
     color: '#EF4444',
   ),
   _SystemAccountSeed(
@@ -758,19 +809,19 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     color: '#EF4444',
   ),
   _SystemAccountSeed(
+    path: 'expense:fitness',
+    parentPath: 'expense',
+    name: 'Fitness',
+    category: AccountSide.expense,
+    icon: 'fitness_center',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
     path: 'expense:education',
     parentPath: 'expense',
     name: 'Education',
     category: AccountSide.expense,
     icon: 'school',
-    color: '#EF4444',
-  ),
-  _SystemAccountSeed(
-    path: 'expense:shopping',
-    parentPath: 'expense',
-    name: 'Shopping',
-    category: AccountSide.expense,
-    icon: 'shopping_bag',
     color: '#EF4444',
   ),
   _SystemAccountSeed(
@@ -795,6 +846,22 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     name: 'Gift',
     category: AccountSide.expense,
     icon: 'card_giftcard',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:familySupport',
+    parentPath: 'expense',
+    name: 'Family Support',
+    category: AccountSide.expense,
+    icon: 'redeem',
+    color: '#EF4444',
+  ),
+  _SystemAccountSeed(
+    path: 'expense:pets',
+    parentPath: 'expense',
+    name: 'Pets',
+    category: AccountSide.expense,
+    icon: 'pets',
     color: '#EF4444',
   ),
   _SystemAccountSeed(

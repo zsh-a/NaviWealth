@@ -46,8 +46,12 @@ void main() {
       'trending_up',
       'more_horiz',
       'restaurant',
+      'local_grocery_store',
+      'local_cafe',
       'directions_bus',
+      'local_taxi',
       'home',
+      'bolt',
       'show_chart',
       'receipt_long',
       'request_quote',
@@ -59,11 +63,14 @@ void main() {
       'chair',
       'sports_esports',
       'medical_services',
+      'fitness_center',
       'school',
       'shopping_bag',
       'flight',
       'smartphone',
       'card_giftcard',
+      'redeem',
+      'pets',
     ];
     for (final name in seeded) {
       expect(
