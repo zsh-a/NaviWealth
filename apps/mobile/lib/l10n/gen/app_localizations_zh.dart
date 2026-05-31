@@ -5743,6 +5743,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncStatusErrorHeader => '上次错误';
 
   @override
+  String get syncStatusConflictsHeader => '冲突诊断';
+
+  @override
+  String syncStatusConflictsLocalWins(int n) {
+    return '$n 条远端行旧于本地状态';
+  }
+
+  @override
+  String syncStatusConflictsIgnored(int n) {
+    return '$n 条远端行因命名空间不支持而被忽略';
+  }
+
+  @override
   String get syncStatusDetailsHeader => '详情';
 
   @override
@@ -5759,6 +5772,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syncStatusDetailCursorUnset => '未设置';
+
+  @override
+  String get syncStatusDetailRemoteRows => '远端行';
 
   @override
   String get syncStatusDetailEndpoint => '服务端地址';

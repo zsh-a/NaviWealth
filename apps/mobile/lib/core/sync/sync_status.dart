@@ -28,6 +28,7 @@ class SyncStatusEvent {
     this.lastError,
     this.lastSuccessAt,
     this.outboxDepth,
+    this.conflicts = const SyncConflictDiagnostics.empty(),
   });
 
   final SyncStatus status;
@@ -35,6 +36,38 @@ class SyncStatusEvent {
   final String? lastError;
   final DateTime? lastSuccessAt;
   final int? outboxDepth;
+  final SyncConflictDiagnostics conflicts;
+}
+
+class SyncConflictDiagnostics {
+  const SyncConflictDiagnostics({
+    required this.remoteRows,
+    required this.appliedRows,
+    required this.localWins,
+    required this.ignoredRows,
+  });
+
+  const SyncConflictDiagnostics.empty()
+    : remoteRows = 0,
+      appliedRows = 0,
+      localWins = 0,
+      ignoredRows = 0;
+
+  final int remoteRows;
+  final int appliedRows;
+  final int localWins;
+  final int ignoredRows;
+
+  bool get hasFindings => localWins > 0 || ignoredRows > 0;
+
+  SyncConflictDiagnostics merge(SyncConflictDiagnostics other) {
+    return SyncConflictDiagnostics(
+      remoteRows: remoteRows + other.remoteRows,
+      appliedRows: appliedRows + other.appliedRows,
+      localWins: localWins + other.localWins,
+      ignoredRows: ignoredRows + other.ignoredRows,
+    );
+  }
 }
 
 /// Broadcasts status transitions. Multi-listener via a broadcast stream;

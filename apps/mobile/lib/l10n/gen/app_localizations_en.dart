@@ -5983,6 +5983,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncStatusErrorHeader => 'Last error';
 
   @override
+  String get syncStatusConflictsHeader => 'Conflict diagnostics';
+
+  @override
+  String syncStatusConflictsLocalWins(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n remote rows were older than local state',
+      one: '1 remote row was older than local state',
+      zero: 'No remote rows were blocked by local state',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncStatusConflictsIgnored(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other:
+          '$n remote rows were ignored because their namespace is not supported here',
+      one:
+          '1 remote row was ignored because its namespace is not supported here',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get syncStatusDetailsHeader => 'Details';
 
   @override
@@ -5999,6 +6027,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncStatusDetailCursorUnset => 'not set';
+
+  @override
+  String get syncStatusDetailRemoteRows => 'Remote rows';
 
   @override
   String get syncStatusDetailEndpoint => 'Endpoint';

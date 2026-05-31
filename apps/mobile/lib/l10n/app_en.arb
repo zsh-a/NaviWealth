@@ -3424,6 +3424,18 @@
   "@syncStatusActionSyncNow": { "description": "Outbox card trailing action button label" },
   "syncStatusErrorHeader": "Last error",
   "@syncStatusErrorHeader": { "description": "Section header for the last-error card" },
+  "syncStatusConflictsHeader": "Conflict diagnostics",
+  "@syncStatusConflictsHeader": { "description": "Section header for sync conflict diagnostics" },
+  "syncStatusConflictsLocalWins": "{n, plural, =0{No remote rows were blocked by local state} =1{1 remote row was older than local state} other{{n} remote rows were older than local state}}",
+  "@syncStatusConflictsLocalWins": {
+    "description": "Conflict diagnostics line for remote rows skipped by LWW because local state was newer or equal",
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "syncStatusConflictsIgnored": "{n, plural, =1{1 remote row was ignored because its namespace is not supported here} other{{n} remote rows were ignored because their namespace is not supported here}}",
+  "@syncStatusConflictsIgnored": {
+    "description": "Conflict diagnostics line for remote rows ignored due to unsupported namespaces, unknown prefixes, or unusable payloads",
+    "placeholders": { "n": { "type": "int" } }
+  },
   "syncStatusDetailsHeader": "Details",
   "@syncStatusDetailsHeader": { "description": "Section header for the diagnostics card" },
   "syncStatusDetailState": "State",
@@ -3436,6 +3448,8 @@
   "@syncStatusDetailCursor": { "description": "Diagnostics row label for the persisted last_pulled_hlc" },
   "syncStatusDetailCursorUnset": "not set",
   "@syncStatusDetailCursorUnset": { "description": "Diagnostics cursor placeholder before any pull has run" },
+  "syncStatusDetailRemoteRows": "Remote rows",
+  "@syncStatusDetailRemoteRows": { "description": "Diagnostics row label for applied remote rows over total remote rows received in the last sync cycle" },
   "syncStatusDetailEndpoint": "Endpoint",
   "@syncStatusDetailEndpoint": { "description": "Diagnostics row label for the API base URL (debug only)" },
 
