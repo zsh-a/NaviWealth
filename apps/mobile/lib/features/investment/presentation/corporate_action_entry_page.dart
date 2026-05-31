@@ -258,7 +258,6 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final dateFmt = DateFormat.yMd(Localizations.localeOf(context).toString());
     final asset = _selectedAsset;
@@ -343,7 +342,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
                   padding: const EdgeInsets.all(AppSpacing.s12),
                   child: Text(
                     _previewError!,
-                    style: TextStyle(color: theme.colorScheme.onErrorContainer),
+                    style: TextStyle(color: context.theme.colors.destructive),
                   ),
                 ),
               ],

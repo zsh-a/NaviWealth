@@ -257,7 +257,6 @@ class _AmortizationTable extends ConsumerWidget {
                   currency: liability.currency,
                   formatters: formatters,
                   l10n: l10n,
-                  theme: Theme.of(context),
                   onMarkPaid: () =>
                       _confirmMarkPaid(context, ref, row, liability),
                 );
@@ -362,7 +361,6 @@ class _AmortizationDataRow extends StatelessWidget {
     required this.currency,
     required this.formatters,
     required this.l10n,
-    required this.theme,
     required this.onMarkPaid,
   });
 
@@ -370,7 +368,6 @@ class _AmortizationDataRow extends StatelessWidget {
   final String currency;
   final AppFormatters formatters;
   final AppLocalizations l10n;
-  final ThemeData theme;
   final VoidCallback onMarkPaid;
 
   @override

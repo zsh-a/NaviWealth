@@ -410,7 +410,7 @@ class _TaskCheckbox extends StatelessWidget {
           ? Icon(
               FLucideIcons.check,
               size: 10,
-              color: Theme.of(context).colorScheme.onPrimary,
+              color: context.theme.colors.primaryForeground,
             )
           : null,
     );

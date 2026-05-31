@@ -78,17 +78,16 @@ class _AlertCountBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s2),
       decoration: BoxDecoration(
-        color: theme.colorScheme.errorContainer,
+        color: context.theme.colors.destructive.withValues(alpha: AppOpacity.subtle),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Text(
         '$count',
         style: context.theme.typography.xs2.copyWith(
-          color: theme.colorScheme.onErrorContainer,
+          color: context.theme.colors.destructive,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -103,12 +102,11 @@ class _AlertRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final formatters = ref.watch(
       appFormattersProvider(Localizations.localeOf(context)),
     );
-    final severityColor = _severityColor(alert.severity, theme);
+    final severityColor = _severityColor(alert.severity, context.theme.colors);
     final dimensionLabel = _dimensionLabel(l10n, alert.dimension);
 
     return FTile(
@@ -190,9 +188,9 @@ String _dimensionLabel(AppLocalizations l10n, RiskDimension dim) {
   }
 }
 
-Color _severityColor(RiskSeverity severity, ThemeData theme) {
+Color _severityColor(RiskSeverity severity, FColors colors) {
   return switch (severity) {
-    RiskSeverity.warning => theme.colorScheme.tertiary,
-    RiskSeverity.critical => theme.colorScheme.error,
+    RiskSeverity.warning => colors.primary,
+    RiskSeverity.critical => colors.destructive,
   };
 }
