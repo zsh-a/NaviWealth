@@ -24,8 +24,10 @@ class AppShell {
   }
 
   /// Whether a primary destination with [label] is reachable from the nav.
-  bool hasTab(String label) =>
-      find.descendant(of: bottomNav, matching: find.text(label)).evaluate().isNotEmpty;
+  bool hasTab(String label) => find
+      .descendant(of: bottomNav, matching: find.text(label))
+      .evaluate()
+      .isNotEmpty;
 
   /// Taps the primary destination labelled [label] and lets it settle.
   Future<void> openTab(String label) async {
@@ -49,5 +51,72 @@ class HomePage {
       findsWidgets,
       reason: 'expected to land on the Today home surface',
     );
+  }
+}
+
+/// Wealth destination entry points used by task-level flows.
+class WealthPage {
+  WealthPage(this.tester);
+
+  final WidgetTester tester;
+
+  Future<void> openAccounts() async {
+    final card = find.text('Accounts');
+    expect(card, findsWidgets, reason: 'accounts entry missing on Wealth');
+    await tester.tap(card.first);
+    await settle(tester);
+  }
+}
+
+/// Accounts list surface.
+class AccountsPageObject {
+  AccountsPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectEmptyState() {
+    expect(
+      find.textContaining('No accounts yet'),
+      findsOneWidget,
+      reason: 'expected first-run accounts empty state',
+    );
+  }
+
+  Future<void> startNewAccount() async {
+    final action = find.text('New account');
+    expect(action, findsWidgets, reason: 'new-account action missing');
+    await tester.tap(action.last);
+    await settle(tester);
+  }
+
+  void expectAccountVisible(String name) {
+    expect(find.text(name), findsWidgets, reason: 'saved account not visible');
+  }
+}
+
+/// New/edit account form.
+class AccountFormObject {
+  AccountFormObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectCreateMode() {
+    expect(find.text('New account'), findsWidgets);
+    expect(find.widgetWithText(FTextFormField, 'Account name'), findsOneWidget);
+  }
+
+  Future<void> enterName(String name) async {
+    await tester.enterText(
+      find.widgetWithText(FTextFormField, 'Account name'),
+      name,
+    );
+    await settle(tester);
+  }
+
+  Future<void> save() async {
+    final save = find.widgetWithText(FButton, 'Save');
+    expect(save, findsOneWidget);
+    await tester.tap(save);
+    await settle(tester);
   }
 }

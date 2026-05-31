@@ -33,13 +33,14 @@ class AccountCategoryPicker extends StatelessWidget {
       builder: (context, constraints) {
         // 2 columns under 480, 4 columns at tablet width.
         final cols = constraints.maxWidth >= 600 ? 4 : 2;
+        final aspectRatio = cols == 2 ? 1.35 : 1.6;
         return GridView.count(
           crossAxisCount: cols,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
-          childAspectRatio: 1.6,
+          childAspectRatio: aspectRatio,
           children: [
             for (final c in AccountCategory.values)
               _CategoryCard(

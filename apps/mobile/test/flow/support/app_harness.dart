@@ -19,12 +19,19 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/domain_packs.dart';
+import 'package:naviwealth/core/ai/write/providers.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/cashflow/data/cash_flow_providers.dart';
+import 'package:naviwealth/features/cashflow/data/recurring_transaction_providers.dart';
 import 'package:naviwealth/features/cashflow/domain/cash_flow_aggregator.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
@@ -35,6 +42,10 @@ import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../core/persistence/test_database.dart';
+import '../../core/sync/_outbox_test_ext.dart';
+import '../../features/finance/data/repositories/_stub_stamper.dart';
 
 /// Deterministic seed data for a flow. Defaults to an empty portfolio
 /// (the "first run" state); pass non-empty lists to drive Tasks that
@@ -51,6 +62,30 @@ class FlowSeed {
   final List<Liability> liabilities;
 }
 
+/// Real in-memory data layer for flow Tasks that must prove a write path
+/// through repositories, not only navigation through stubbed streams.
+class FlowDataHarness {
+  FlowDataHarness({
+    required this.db,
+    required this.outbox,
+    required this.stamper,
+  });
+
+  final AppDatabase db;
+  final InMemoryOutboxStore outbox;
+  final MutationStamper stamper;
+
+  static Future<FlowDataHarness> create() async {
+    return FlowDataHarness(
+      db: makeTestDatabase(),
+      outbox: InMemoryOutboxStore(),
+      stamper: makeStubStamper(),
+    );
+  }
+
+  Future<void> dispose() => db.close();
+}
+
 /// Boots `NaviWealthApp` on a phone-sized surface and pumps it to a
 /// settled frame. Returns once the home shell is interactive.
 ///
@@ -59,6 +94,7 @@ class FlowSeed {
 Future<void> bootApp(
   WidgetTester tester, {
   FlowSeed seed = const FlowSeed(),
+  FlowDataHarness? liveData,
   List<Override> extraOverrides = const [],
 }) async {
   // Phone surface so the shell renders the bottom navigation bar; the
@@ -74,6 +110,11 @@ Future<void> bootApp(
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        if (liveData != null) ...[
+          appDatabaseProvider.overrideWith((_) async => liveData.db),
+          outboxStoreProvider.overrideWith((_) async => liveData.outbox),
+          mutationStamperProvider.overrideWith((_) async => liveData.stamper),
+        ],
         // The DomainPack registry contributes the per-domain shell routes
         // (D-1.8 / D-2.3b). bootstrap.dart populates it in production; the
         // default is empty, so without this the `/` route 404s.
@@ -92,9 +133,10 @@ Future<void> bootApp(
         liabilitiesStreamProvider.overrideWith(
           (ref) => Stream<List<Liability>>.value(seed.liabilities),
         ),
-        accountsStreamProvider.overrideWith(
-          (ref) => Stream<List<Account>>.value(seed.accounts),
-        ),
+        if (liveData == null)
+          accountsStreamProvider.overrideWith(
+            (ref) => Stream<List<Account>>.value(seed.accounts),
+          ),
         fxRatesStreamProvider.overrideWith(
           (ref) => Stream<List<FxRate>>.value(const []),
         ),
@@ -112,6 +154,8 @@ Future<void> bootApp(
             totalInBase: Money.zero('CNY'),
           ),
         ),
+        recurringMaterialiseDueProvider.overrideWith((ref, now) async => 0),
+        undoEntriesStreamProvider.overrideWith((ref) => Stream.value(const [])),
         ...extraOverrides,
       ],
       child: const NaviWealthApp(),
