@@ -43,7 +43,7 @@ void main() {
 
   // ONNX Runtime is intentionally NOT in the Dart-side manifest —
   // it's build-time managed by tool/fetch-onnxruntime.sh + discovered
-  // at runtime by _discoverBundledOrtDylib in bootstrap.dart.
+  // at runtime by discoverBundledOrtDylib.
 
   group('ModelBundle.totalSizeBytes', () {
     test('null when any file has unknown size', () {

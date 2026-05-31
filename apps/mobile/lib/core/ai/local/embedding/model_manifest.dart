@@ -10,8 +10,7 @@
 /// **What's NOT in here**: ONNX Runtime. ORT is a Rust crate
 /// dependency built/fetched alongside `liblifeos_native` by
 /// `tool/fetch-onnxruntime.sh`, not user-installable data. See
-/// `lifeos-shell.md` §6.6 + the `_discoverBundledOrtDylib`
-/// resolver in `bootstrap.dart`.
+/// `lifeos-shell.md` §6.6 + `discoverBundledOrtDylib`.
 ///
 /// **Cross-domain neutral**: lives in `embedding/` because that's
 /// the only consumer today, but the types don't carry finance- or
@@ -144,8 +143,8 @@ ModelBundle embeddingGemmaBundle() {
 
 // NOTE: there is intentionally no `onnxRuntimeBundle()` function
 // here. ORT is fetched at build time by `tool/fetch-onnxruntime.sh`
-// and discovered at runtime by `_discoverBundledOrtDylib` in
-// `bootstrap.dart`. Keeping a Dart-side manifest for it would just
-// duplicate the version pin and trick the UI into showing a
-// downloadable bundle the in-app installer can't handle (the
-// upstream archive is a tar of multiple files, not a single dylib).
+// and discovered at runtime by `discoverBundledOrtDylib`. Keeping a
+// Dart-side manifest for it would just duplicate the version pin and
+// trick the UI into showing a downloadable bundle the in-app installer
+// can't handle (the upstream archive is a tar of multiple files, not a
+// single dylib).

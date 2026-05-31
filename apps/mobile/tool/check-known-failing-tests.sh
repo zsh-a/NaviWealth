@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # Wave 41 — pin the count of allowed-failing test files.
 #
-# We can't fix all ~50 design-system / golden / widget rot tests at
-# once (they reference removed APIs like `AppElevations` and
-# `marketColorMode` — a separate cleanup), but we MUST stop the rot
-# from growing. This script:
+# The baseline is currently zero, but the ratchet stays in place so any
+# exceptional temporary allowlist entry must shrink again as soon as it is
+# fixed. This script:
 #
 #   1. Runs `flutter test --exclude-tags=golden`.
 #   2. Tallies which test files contain failures.
@@ -49,18 +48,21 @@ actual="$(grep -E '\[E\]$' \
   | grep -E '\.dart$' \
   | sort -u || true)"
 
+expected="$(grep -v '^#' "${EXPECTED_FILE}" | grep -v '^[[:space:]]*$' | sort -u || true)"
+
 if [[ -z "${actual}" ]]; then
   echo "✅ No test failures detected."
-  # Sanity: if the expected list is non-empty but actual is empty,
-  # somebody fixed everything — flag it so the baseline can be tightened.
-  if [[ -s "${EXPECTED_FILE}" ]]; then
-    echo "⚠️  Baseline allows failures but none were observed."
-    echo "    Consider deleting ${EXPECTED_FILE} to enforce zero failures going forward."
+  # Sanity: if the expected list has real entries but actual is empty,
+  # somebody fixed them — fail so the baseline can be tightened.
+  if [[ -n "${expected}" ]]; then
+    echo "::error::Baseline allows failures but none were observed:"
+    echo "${expected}" | sed 's/^/  - /'
+    echo
+    echo "Delete the line(s) above from ${EXPECTED_FILE}."
+    exit 2
   fi
   exit 0
 fi
-
-expected="$(grep -v '^#' "${EXPECTED_FILE}" | grep -v '^[[:space:]]*$' | sort -u || true)"
 
 # Files that are failing but not on the allowlist → REGRESSION.
 new_failures="$(comm -23 <(echo "${actual}") <(echo "${expected}") || true)"

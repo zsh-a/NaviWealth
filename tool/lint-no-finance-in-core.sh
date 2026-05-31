@@ -3,13 +3,10 @@
 # (`docs/lifeos-shell.md` §7.1, D-1.2). It must not import from
 # `features/<domain>/`.
 #
-# Phase D-1.2 ships the composition root + `deviceToolsProvider` so
-# each domain registers its own tools. The 30+ existing Finance tool
-# implementations under `core/ai/runtime/device/tools/` are still
-# physically there as a known exception (northstar §2.2) — moving them
-# is a follow-up batch. This script protects against NEW additions:
-# it lints the runtime dir (excluding the grandfathered tool files
-# under `device/tools/`) so the boundary holds for any new shell code.
+# Phase D-1.2 ships the DomainPack composition root + `deviceToolsProvider`
+# so each domain registers its own tools. The old Finance tool cluster has
+# moved out of `core/ai/runtime/device/tools/`; this script protects against
+# regressions by linting new shell runtime imports.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -38,7 +35,7 @@ if [[ -n "$violations" ]]; then
   echo "$violations" >&2
   echo >&2
   echo "Tools must live under features/<domain>/ai_tools/ and be" >&2
-  echo "registered via deviceToolsProvider in bootstrap.dart." >&2
+  echo "registered through the domain's DomainPack/deviceTools list." >&2
   exit 1
 fi
 

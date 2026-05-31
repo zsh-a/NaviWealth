@@ -22,9 +22,8 @@ class ModelInstallPaths {
   ModelInstallPaths._(this.rootDir);
 
   /// Test/bootstrap seam — wrap an existing directory without going
-  /// through `path_provider`. Used by [_resolveEmbedderPaths] in
-  /// `bootstrap.dart` to read on-disk install state before any
-  /// provider container exists.
+  /// through `path_provider`. Used by [resolveEmbedderPaths] to read
+  /// on-disk install state before any provider container exists.
   factory ModelInstallPaths.unsafeForDir(Directory rootDir) =>
       ModelInstallPaths._(rootDir);
 

@@ -1,14 +1,11 @@
-# Wave 41 — allowlist of test files currently failing on `main`.
+# Wave 41+ — allowlist of test files currently failing on `main`.
 #
 # Pinned by `tool/check-known-failing-tests.sh`. New PRs cannot
 # introduce additional failing files; reducing this list is welcome.
 # When a file here is fixed, remove its line (the script will warn).
 #
-# Remaining failures all live in `app/router_test.dart` — widget
-# finders that haven't been touched up for go_router / Forui drift.
-# (The original design-system-API-drift and widget-finder-rot clusters
-# were resolved by the forui 0.22 migration.)
+# Baseline is currently zero. Keep this file as the documented place
+# for an exceptional temporary entry; do not add one without reviewer
+# sign-off and a brief reason.
 #
 # Add new lines ONLY with reviewer sign-off and a brief reason.
-
-app/router_test.dart
