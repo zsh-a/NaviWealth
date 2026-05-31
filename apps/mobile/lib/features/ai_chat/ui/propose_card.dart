@@ -1518,9 +1518,10 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
     } else {
       message = l10n.aiChatProposalBatchResultMixed(applied, failed);
     }
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger?.showSnackBar(
-      SnackBar(content: Text(message), duration: const Duration(seconds: 3)),
+    AppMessenger.show(
+      context,
+      applied == 0 ? ToastKind.error : ToastKind.success,
+      message,
     );
   }
 }

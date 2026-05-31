@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../design_system/design_system.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../design_system/design_system.dart';
 import 'package:forui/forui.dart';
 
 import '../../../app/shell_chrome.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/dashboard_insights_provider.dart';
 import '../data/dashboard_providers.dart';
@@ -94,8 +93,8 @@ class HomeGreetingHeader extends ConsumerWidget {
                 height: 1.35,
               ),
               child: Wrap(
-                spacing: 8,
-                runSpacing: 2,
+                spacing: AppSpacing.s8,
+                runSpacing: AppSpacing.s2,
                 children: [
                   for (var i = 0; i < statusFragments.length; i++) ...[
                     Text(

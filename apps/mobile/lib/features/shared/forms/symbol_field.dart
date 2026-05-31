@@ -477,7 +477,7 @@ class _ReadOnlySummary extends StatelessWidget {
         choice.name == null
             ? choice.symbol
             : '${choice.symbol} — ${choice.name}',
-        style: const TextStyle(fontWeight: FontWeight.w600),
+        style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w600),
       ),
       subtitle: Text(
         subtitleParts.join(' · '),
@@ -519,7 +519,7 @@ class _HitTile extends StatelessWidget {
     return FTile(
       title: Text(
         hit.symbol,
-        style: const TextStyle(fontWeight: FontWeight.w600),
+        style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w600),
       ),
       subtitle: display == null
           ? null

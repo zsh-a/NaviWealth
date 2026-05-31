@@ -149,7 +149,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             const SizedBox(height: AppSpacing.s16),
                             Text(
                               l10n.appTitle,
-                              style: Theme.of(context).textTheme.headlineSmall,
+                              style: context.theme.typography.lg,
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: AppSpacing.s8),

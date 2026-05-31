@@ -112,7 +112,7 @@ class _ChartBody extends StatelessWidget {
     }
     final bars = history.value?.data ?? const <HistoricalBar>[];
     if (bars.isEmpty) {
-      return const SizedBox(height: 160, child: EmptyChartPlaceholder());
+      return const SizedBox(height: AppChartHeights.standard, child: EmptyChartPlaceholder());
     }
 
     final pricePoints = [

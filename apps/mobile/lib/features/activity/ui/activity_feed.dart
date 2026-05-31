@@ -182,30 +182,9 @@ class _EmptyFeed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              FLucideIcons.workflow,
-              size: AppIconSizes.hero,
-              color: context.theme.colors.mutedForeground.withValues(
-                alpha: 0.4,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return AppEmptyState(
+      icon: FLucideIcons.workflow,
+      title: message,
     );
   }
 }

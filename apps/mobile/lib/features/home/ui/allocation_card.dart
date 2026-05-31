@@ -635,7 +635,6 @@ class _SankeyPainter extends CustomPainter {
         text: value,
         style: TypographyTokens.numericCaption.copyWith(
           color: valueColor,
-          fontSize: 10,
         ),
       ),
       textDirection: TextDirection.ltr,

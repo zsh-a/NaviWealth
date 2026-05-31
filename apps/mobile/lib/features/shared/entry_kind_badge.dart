@@ -36,8 +36,10 @@ class EntryKindBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final visuals = _entryKindVisuals(classification, scheme);
+    final colors = context.theme.colors;
+    final semantic = SemanticColors.of(context);
+    final brightness = Theme.of(context).brightness;
+    final visuals = _entryKindVisuals(classification, colors, semantic, brightness);
     final l10n = AppLocalizations.of(context);
 
     final semanticLabel = entryKindLabel(l10n, classification.kind);
@@ -93,7 +95,12 @@ class _BadgeVisuals {
   final String defaultLabel;
 }
 
-_BadgeVisuals _entryKindVisuals(EntryKindClassification c, ColorScheme scheme) {
+_BadgeVisuals _entryKindVisuals(
+  EntryKindClassification c,
+  FColors colors,
+  SemanticColors semantic,
+  Brightness brightness,
+) {
   switch (c.kind) {
     case EntryKind.trade:
       // Direction-aware icon. `null` (no cash leg) falls back to the
@@ -106,57 +113,57 @@ _BadgeVisuals _entryKindVisuals(EntryKindClassification c, ColorScheme scheme) {
       };
       return _BadgeVisuals(
         icon: icon,
-        background: scheme.primaryContainer,
-        foreground: scheme.onPrimaryContainer,
+        background: AccentColors.tint(brightness),
+        foreground: colors.primary,
         defaultLabel: 'Trade',
       );
     case EntryKind.transfer:
       return _BadgeVisuals(
         icon: FLucideIcons.arrowLeftRight,
-        background: scheme.secondaryContainer,
-        foreground: scheme.onSecondaryContainer,
+        background: colors.secondary,
+        foreground: colors.secondaryForeground,
         defaultLabel: 'Transfer',
       );
     case EntryKind.income:
       return _BadgeVisuals(
         icon: FLucideIcons.arrowDownLeft,
-        background: scheme.tertiaryContainer,
-        foreground: scheme.onTertiaryContainer,
+        background: semantic.successContainer,
+        foreground: semantic.onSuccessContainer,
         defaultLabel: 'Income',
       );
     case EntryKind.expense:
       return _BadgeVisuals(
         icon: FLucideIcons.arrowUpRight,
-        background: scheme.errorContainer,
-        foreground: scheme.onErrorContainer,
+        background: semantic.dangerContainer,
+        foreground: semantic.onDangerContainer,
         defaultLabel: 'Expense',
       );
     case EntryKind.payment:
       return _BadgeVisuals(
         icon: FLucideIcons.banknote,
-        background: scheme.secondaryContainer,
-        foreground: scheme.onSecondaryContainer,
+        background: colors.secondary,
+        foreground: colors.secondaryForeground,
         defaultLabel: 'Payment',
       );
     case EntryKind.adjustment:
       return _BadgeVisuals(
         icon: FLucideIcons.gitBranch,
-        background: scheme.surfaceContainerHigh,
-        foreground: scheme.onSurface,
+        background: colors.secondary,
+        foreground: colors.foreground,
         defaultLabel: 'Adjustment',
       );
     case EntryKind.opening:
       return _BadgeVisuals(
         icon: FLucideIcons.flag,
-        background: scheme.surfaceContainerHigh,
-        foreground: scheme.onSurfaceVariant,
+        background: colors.secondary,
+        foreground: colors.mutedForeground,
         defaultLabel: 'Opening',
       );
     case EntryKind.other:
       return _BadgeVisuals(
         icon: FLucideIcons.fileEdit,
-        background: scheme.secondaryContainer,
-        foreground: scheme.onSecondaryContainer,
+        background: colors.secondary,
+        foreground: colors.secondaryForeground,
         defaultLabel: 'Entry',
       );
   }

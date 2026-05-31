@@ -23,14 +23,14 @@ class CurrencyMismatchBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    final semantic = SemanticColors.of(context);
     final mismatches = ref.watch(dashboardCurrencyMismatchesProvider);
     if (mismatches.isEmpty) return const SizedBox.shrink();
 
     final l10n = AppLocalizations.of(context);
     final base = ref.watch(dashboardBaseCurrencyProvider);
     return Material(
-      color: theme.colorScheme.errorContainer,
+      color: semantic.dangerContainer,
       child: InkWell(
         onTap: () => _showDetails(context, mismatches, base),
         child: Padding(
@@ -39,14 +39,14 @@ class CurrencyMismatchBanner extends ConsumerWidget {
             children: [
               Icon(
                 FLucideIcons.triangleAlert,
-                color: theme.colorScheme.onErrorContainer,
+                color: semantic.onDangerContainer,
               ),
               const SizedBox(width: AppSpacing.s8),
               Expanded(
                 child: Text(
                   l10n.dashboardCurrencyMismatchBanner(mismatches.length, base),
                   style: context.theme.typography.sm.copyWith(
-                    color: theme.colorScheme.onErrorContainer,
+                    color: semantic.onDangerContainer,
                   ),
                 ),
               ),
@@ -54,7 +54,7 @@ class CurrencyMismatchBanner extends ConsumerWidget {
               Text(
                 l10n.dashboardCurrencyMismatchAction,
                 style: context.theme.typography.sm.copyWith(
-                  color: theme.colorScheme.onErrorContainer,
+                  color: semantic.onDangerContainer,
                 ),
               ),
             ],

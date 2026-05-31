@@ -122,7 +122,7 @@ class _SheetFrame extends StatelessWidget {
       height: height,
       child: AppSheetSurface(
         child: AnimatedPadding(
-          duration: const Duration(milliseconds: 150),
+          duration: Motion.fast,
           curve: Curves.easeOut,
           padding: EdgeInsets.only(bottom: keyboard),
           child: child,
@@ -293,11 +293,11 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
                 color: colors.background,
                 borderRadius: BorderRadius.circular(AppRadius.xl),
                 border: Border.all(color: colors.border, width: 1),
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
-                    color: Color(0x33000000),
+                    color: Colors.black.withValues(alpha: AppOpacity.muted),
                     blurRadius: 24,
-                    offset: Offset(0, 12),
+                    offset: const Offset(0, 12),
                   ),
                 ],
               ),

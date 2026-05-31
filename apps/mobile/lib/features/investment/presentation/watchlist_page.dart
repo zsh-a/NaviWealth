@@ -199,9 +199,7 @@ class _WatchlistEmpty extends StatelessWidget {
           const SizedBox(height: AppSpacing.s12),
           Text(
             l10n.watchlistEmptyTitle,
-            style: context.theme.typography.lg.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: context.theme.typography.lg,
           ),
           const SizedBox(height: AppSpacing.s6),
           Text(
@@ -294,9 +292,7 @@ class _WatchlistRow extends StatelessWidget {
               else
                 Text(
                   price,
-                  style: context.theme.typography.lg.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.theme.typography.lg,
                 ),
             ],
           ),

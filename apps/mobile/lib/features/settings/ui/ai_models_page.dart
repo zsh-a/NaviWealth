@@ -321,7 +321,6 @@ class _SizeBadge extends StatelessWidget {
         _formatBytes(total),
         style: context.theme.typography.xs2.copyWith(
           color: colors.mutedForeground,
-          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -376,30 +375,33 @@ class _BundleBody extends StatelessWidget {
               ),
             const Spacer(),
             if (state.isInstalling)
-              TextButton(
-                onPressed: onCancel,
+              FButton(
+                onPress: onCancel,
+                variant: FButtonVariant.outline,
                 child: Text(l10n.settingsAiModelsCancel),
               )
             else if (state.isInstalled) ...[
-              TextButton(
-                onPressed: () async {
+              FButton(
+                onPress: () async {
                   final confirm = await _confirmDelete(context);
                   if (confirm == true) {
                     await onDelete();
                   }
                 },
+                variant: FButtonVariant.outline,
                 child: Text(l10n.settingsAiModelsDelete),
               ),
-              TextButton(
-                onPressed: () async {
+              FButton(
+                onPress: () async {
                   await onDelete();
                   await onInstall();
                 },
+                variant: FButtonVariant.outline,
                 child: Text(l10n.settingsAiModelsRedownload),
               ),
             ] else
-              FilledButton(
-                onPressed: onInstall,
+              FButton(
+                onPress: onInstall,
                 child: Text(l10n.settingsAiModelsDownload),
               ),
           ],
@@ -539,7 +541,6 @@ class _StatusChip extends StatelessWidget {
             text,
             style: context.theme.typography.xs2.copyWith(
               color: color,
-              fontWeight: FontWeight.w600,
             ),
           ),
           if (progress != null) ...[

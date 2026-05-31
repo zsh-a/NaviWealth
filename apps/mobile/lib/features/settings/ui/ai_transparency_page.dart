@@ -363,17 +363,9 @@ class _UndoRow extends ConsumerWidget {
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
   @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.s24),
-      child: Text(
-        AppLocalizations.of(context).aiTransparencyEmpty,
-        textAlign: TextAlign.center,
-        style: context.theme.typography.sm.copyWith(
-          color: context.theme.colors.mutedForeground,
-        ),
-      ),
-    ),
+  Widget build(BuildContext context) => AppEmptyState(
+    icon: FLucideIcons.eye,
+    title: AppLocalizations.of(context).aiTransparencyEmpty,
   );
 }
 
