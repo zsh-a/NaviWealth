@@ -772,14 +772,14 @@ class AssetAllocationView extends StatelessWidget {
     if (raw.isEmpty) {
       return const _EmptyHint(text: '尚无持仓数据');
     }
-    final scheme = Theme.of(context).colorScheme;
+    final colors = context.theme.colors;
     final palette = <Color>[
-      scheme.primary,
-      scheme.secondary,
-      scheme.tertiary,
-      scheme.primaryContainer,
-      scheme.secondaryContainer,
-      scheme.outline,
+      colors.primary,
+      colors.secondary,
+      colors.mutedForeground,
+      colors.primary.withValues(alpha: 0.3),
+      colors.secondary.withValues(alpha: 0.15),
+      colors.border,
     ];
 
     // Group by currency so the donut totals are meaningful.
@@ -861,9 +861,7 @@ class _AllocBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: AppOpacity.disabled),
+        color: context.theme.colors.secondary.withValues(alpha: AppOpacity.disabled),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
@@ -1002,22 +1000,21 @@ class RecurringPatternsView extends StatelessWidget {
     }
     final visible = raw.take(_kMaxVisibleRows).toList();
     final fmt = NumberFormat.decimalPattern();
-    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final entry in visible)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-            child: _patternRow(context, entry, fmt, cs),
+            child: _patternRow(context, entry, fmt),
           ),
         if (raw.length > visible.length)
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.s4),
             child: Text(
               '+ 还有 ${raw.length - visible.length} 项',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs2.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
           ),
@@ -1029,7 +1026,6 @@ class RecurringPatternsView extends StatelessWidget {
     BuildContext context,
     Object? entry,
     NumberFormat fmt,
-    ColorScheme cs,
   ) {
     final mp = _asMap(entry);
     if (mp == null) return const SizedBox.shrink();
@@ -1050,7 +1046,7 @@ class RecurringPatternsView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withValues(alpha: AppOpacity.disabled),
+        color: context.theme.colors.secondary.withValues(alpha: AppOpacity.disabled),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
@@ -1061,9 +1057,7 @@ class RecurringPatternsView extends StatelessWidget {
               children: [
                 Text(
                   merchant,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                  style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: AppSpacing.s2),
                 Row(
@@ -1072,8 +1066,8 @@ class RecurringPatternsView extends StatelessWidget {
                     const SizedBox(width: AppSpacing.s6),
                     Text(
                       '$occ 次${lastSeen != null ? ' · 最近 ${_displayDate(lastSeen)}' : ''}',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: cs.onSurfaceVariant,
+                      style: context.theme.typography.xs2.copyWith(
+                        color: context.theme.colors.mutedForeground,
                       ),
                     ),
                   ],
@@ -1084,7 +1078,7 @@ class RecurringPatternsView extends StatelessWidget {
           const SizedBox(width: AppSpacing.s12),
           Text(
             '${fmt.format(medianMinor.abs() / 100.0)} $currency',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: context.theme.typography.sm.copyWith(
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
@@ -1095,18 +1089,17 @@ class RecurringPatternsView extends StatelessWidget {
 }
 
 Widget _miniChip(BuildContext context, String label) {
-  final cs = Theme.of(context).colorScheme;
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: 1),
     decoration: BoxDecoration(
-      color: cs.outline.withValues(alpha: AppOpacity.light),
+      color: context.theme.colors.border.withValues(alpha: AppOpacity.light),
       borderRadius: BorderRadius.circular(AppRadius.full),
     ),
     child: Text(
       label,
-      style: Theme.of(
-        context,
-      ).textTheme.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+      style: context.theme.typography.xs2.copyWith(
+        color: context.theme.colors.mutedForeground,
+      ),
     ),
   );
 }
@@ -1143,8 +1136,8 @@ class SubscriptionChangesView extends StatelessWidget {
             padding: const EdgeInsets.only(top: AppSpacing.s4),
             child: Text(
               '+ 还有 ${raw.length - visible.length} 项',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs2.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
           ),
@@ -1161,9 +1154,8 @@ class SubscriptionChangesView extends StatelessWidget {
     final next = int.tryParse(_asString(mp['new_amount_minor']) ?? '') ?? 0;
     final delta = _asDouble(mp['delta_ratio']) ?? 0.0;
     final since = _asDate(mp['since']);
-    final cs = Theme.of(context).colorScheme;
     final up = next.abs() > prev.abs();
-    final accent = up ? cs.error : cs.primary;
+    final accent = up ? context.theme.colors.destructive : context.theme.colors.primary;
     final fmt = NumberFormat.decimalPattern();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
@@ -1186,17 +1178,15 @@ class SubscriptionChangesView extends StatelessWidget {
               children: [
                 Text(
                   merchant,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                  style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   '${fmt.format(prev.abs() / 100.0)} → ${fmt.format(next.abs() / 100.0)} $currency'
                   '${since != null ? ' · 自 ${_displayDate(since)}' : ''}',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                  style: context.theme.typography.xs2.copyWith(
+                    color: context.theme.colors.mutedForeground,
+                  ),
                 ),
               ],
             ),
@@ -1204,7 +1194,7 @@ class SubscriptionChangesView extends StatelessWidget {
           const SizedBox(width: AppSpacing.s8),
           Text(
             '${delta >= 0 ? '+' : ''}${(delta * 100).toStringAsFixed(1)}%',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: context.theme.typography.sm.copyWith(
               color: accent,
               fontWeight: FontWeight.w600,
               fontFeatures: const [FontFeature.tabularFigures()],
@@ -1248,8 +1238,8 @@ class RefundLinksView extends StatelessWidget {
             padding: const EdgeInsets.only(top: AppSpacing.s4),
             child: Text(
               '+ 还有 ${raw.length - visible.length} 项',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              style: context.theme.typography.xs2.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
           ),
@@ -1264,11 +1254,10 @@ class RefundLinksView extends StatelessWidget {
     final refund = _asString(mp['refund_txn_id']) ?? '?';
     final amountMinor = int.tryParse(_asString(mp['amount_minor']) ?? '') ?? 0;
     final currency = _asString(mp['currency']) ?? '';
-    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withValues(alpha: AppOpacity.disabled),
+        color: context.theme.colors.secondary.withValues(alpha: AppOpacity.disabled),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
@@ -1282,17 +1271,16 @@ class RefundLinksView extends StatelessWidget {
                     Icon(
                       FLucideIcons.arrowDownLeft,
                       size: AppIconSizes.xs,
-                      color: cs.onSurfaceVariant,
+                      color: context.theme.colors.mutedForeground,
                     ),
                     const SizedBox(width: AppSpacing.s4),
                     Expanded(
                       child: Text(
                         origin,
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(
-                              fontFamily: 'monospace',
-                              color: cs.onSurfaceVariant,
-                            ),
+                        style: context.theme.typography.sm.copyWith(
+                          fontFamily: 'monospace',
+                          color: context.theme.colors.mutedForeground,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -1301,16 +1289,15 @@ class RefundLinksView extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s4),
                 Row(
                   children: [
-                    Icon(FLucideIcons.arrowUpRight, size: AppIconSizes.xs, color: cs.primary),
+                    Icon(FLucideIcons.arrowUpRight, size: AppIconSizes.xs, color: context.theme.colors.primary),
                     const SizedBox(width: AppSpacing.s4),
                     Expanded(
                       child: Text(
                         refund,
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(
-                              fontFamily: 'monospace',
-                              color: cs.primary,
-                            ),
+                        style: context.theme.typography.sm.copyWith(
+                          fontFamily: 'monospace',
+                          color: context.theme.colors.primary,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -1322,7 +1309,7 @@ class RefundLinksView extends StatelessWidget {
           const SizedBox(width: AppSpacing.s12),
           Text(
             '${fmt.format(amountMinor.abs() / 100.0)} $currency',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: context.theme.typography.sm.copyWith(
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
@@ -1341,8 +1328,8 @@ class _EmptyHint extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        style: context.theme.typography.xs.copyWith(
+          color: context.theme.colors.mutedForeground,
         ),
       ),
     );

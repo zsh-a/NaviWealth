@@ -141,18 +141,9 @@ class _EmptyHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(FLucideIcons.wallet, size: AppIconSizes.hero),
-            const SizedBox(height: AppSpacing.s12),
-            Text(l10n.assetsEmptyHint, textAlign: TextAlign.center),
-          ],
-        ),
-      ),
+    return AppEmptyState(
+      icon: FLucideIcons.wallet,
+      title: l10n.assetsEmptyHint,
     );
   }
 }

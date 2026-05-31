@@ -200,9 +200,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
             children: [
               Text(
                 l10n.manualSecuritySelectMatchTitle,
-                style: innerCtx.theme.typography.lg.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: innerCtx.theme.typography.lg,
               ),
               const SizedBox(height: AppSpacing.s12),
               for (final hit in hits)
@@ -213,7 +211,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                   ),
                   title: Text(
                     hit.symbol,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w600),
                   ),
                   subtitle: Text(
                     [

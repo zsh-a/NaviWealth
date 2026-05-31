@@ -137,7 +137,7 @@ Widget _heading(BuildContext context, String text, {String? badge}) {
       Expanded(
         child: Text(
           text,
-          style: typography.lg.copyWith(fontWeight: FontWeight.w600),
+          style: typography.lg,
         ),
       ),
       if (badge != null) ...[

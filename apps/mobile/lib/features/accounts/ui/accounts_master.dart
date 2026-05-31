@@ -159,24 +159,14 @@ class _EmptyAccounts extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(FLucideIcons.landmark, size: AppIconSizes.hero),
-            const SizedBox(height: AppSpacing.s12),
-            Text(l10n.accountsEmptyHint, textAlign: TextAlign.center),
-            const SizedBox(height: AppSpacing.s16),
-            FButton(
-              variant: FButtonVariant.primary,
-              onPress: () => context.go(AppRoutes.wealthAccountNew),
-              prefix: const Icon(FLucideIcons.creditCard),
-              child: Text(l10n.accountFormCreateTitle),
-            ),
-          ],
-        ),
+    return AppEmptyState(
+      icon: FLucideIcons.landmark,
+      title: l10n.accountsEmptyHint,
+      action: FButton(
+        variant: FButtonVariant.primary,
+        onPress: () => context.go(AppRoutes.wealthAccountNew),
+        prefix: const Icon(FLucideIcons.creditCard),
+        child: Text(l10n.accountFormCreateTitle),
       ),
     );
   }

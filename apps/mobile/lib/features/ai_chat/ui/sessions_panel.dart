@@ -569,7 +569,7 @@ class _ActionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final fg = color ?? context.theme.colors.foreground;
     return ClipRRect(
-      borderRadius: const BorderRadius.all(Radius.circular(12)),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: FTappable(
         onPress: onTap,
         child: Padding(

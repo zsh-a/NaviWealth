@@ -136,7 +136,7 @@ class _BodyState extends ConsumerState<_Body> {
             Expanded(
               child: Text(
                 d.question,
-                style: typography.lg.copyWith(fontWeight: FontWeight.w600),
+                style: typography.lg,
                 maxLines: 4,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -336,7 +336,7 @@ class _ContextSnapshotSection extends StatelessWidget {
         if (finance.isNotEmpty) ...[
           Text(
             'Finance',
-            style: typography.xs.copyWith(fontWeight: FontWeight.w600),
+            style: typography.xs,
           ),
           for (final raw in finance.whereType<Map<Object?, Object?>>())
             _SnapshotRow(map: raw.cast<String, Object?>()),
@@ -345,7 +345,7 @@ class _ContextSnapshotSection extends StatelessWidget {
         if (health.isNotEmpty) ...[
           Text(
             'Health',
-            style: typography.xs.copyWith(fontWeight: FontWeight.w600),
+            style: typography.xs,
           ),
           for (final raw in health.whereType<Map<Object?, Object?>>())
             _SnapshotRow(map: raw.cast<String, Object?>()),

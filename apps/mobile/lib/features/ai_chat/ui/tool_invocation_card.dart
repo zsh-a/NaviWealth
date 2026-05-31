@@ -47,7 +47,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
       child: Container(
         decoration: BoxDecoration(
           color: colors.muted,
-          borderRadius: const BorderRadius.all(Radius.circular(6)),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(color: colors.border, width: 1),
         ),
         child: Column(
@@ -293,7 +293,7 @@ class _CodeBlock extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
         color: colors.muted,
-        borderRadius: const BorderRadius.all(Radius.circular(6)),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: colors.border, width: 1),
       ),
       child: SelectableText(
