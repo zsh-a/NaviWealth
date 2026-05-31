@@ -269,7 +269,7 @@ class _GuidanceText extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Icon(icon, size: AppIconSizes.sm, color: colors.mutedForeground),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.s8),
         Expanded(
           child: Text(
             message,
@@ -400,7 +400,7 @@ class _SummaryLine extends StatelessWidget {
               color: colors.foreground,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.s12),
         ],
         if (summary.rowCount != null)
           Text(
@@ -438,7 +438,7 @@ class _ResultRow extends StatelessWidget {
           ),
         ),
         if (amountMinor is int && currency != null) ...<Widget>[
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           MoneyText(
             amount: amountMinor.abs() / 100.0,
             currencyCode: currency,

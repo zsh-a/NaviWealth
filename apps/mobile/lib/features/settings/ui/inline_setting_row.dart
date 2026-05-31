@@ -118,7 +118,7 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
               Icon(
                 FLucideIcons.unfoldVertical,
                 size: 16,
-                color: colors.mutedForeground.withValues(alpha: 0.6),
+                color: colors.mutedForeground.withValues(alpha: AppOpacity.prominent),
               ),
             ],
           ),
@@ -375,7 +375,7 @@ class InlineLinkRow extends StatelessWidget {
             Icon(
               FLucideIcons.chevronRight,
               size: 16,
-              color: colors.mutedForeground.withValues(alpha: 0.6),
+              color: colors.mutedForeground.withValues(alpha: AppOpacity.prominent),
             ),
           ],
         ),
@@ -401,7 +401,7 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s2),
       decoration: BoxDecoration(
-        color: colors.foreground.withValues(alpha: 0.06),
+        color: colors.foreground.withValues(alpha: AppOpacity.faint),
         borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Text(

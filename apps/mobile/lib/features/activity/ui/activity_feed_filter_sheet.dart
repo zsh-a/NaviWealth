@@ -82,7 +82,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
               ),
             ),
           ),
-        const SizedBox(height: 18),
+        const SizedBox(height: AppSpacing.s20),
         _SheetSectionLabel(text: l10n.activityFeedFilterAccount),
         if (accounts.isEmpty)
           Padding(
@@ -302,7 +302,7 @@ class _PillChip extends StatelessWidget {
     final fg = selected ? colors.primaryForeground : colors.foreground;
     final bg = selected
         ? colors.primary
-        : colors.foreground.withValues(alpha: 0.04);
+        : colors.foreground.withValues(alpha: AppOpacity.whisper);
     return FTappable(
       onPress: onTap,
       child: Container(

@@ -212,7 +212,7 @@ class _CardHeader extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.14),
+            color: color.withValues(alpha: AppOpacity.medium),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           alignment: Alignment.center,
@@ -233,7 +233,7 @@ class _CardHeader extends StatelessWidget {
         Icon(
           FLucideIcons.chevronRight,
           size: AppIconSizes.h18,
-          color: context.theme.colors.mutedForeground.withValues(alpha: 0.6),
+          color: context.theme.colors.mutedForeground.withValues(alpha: AppOpacity.prominent),
         ),
       ],
     );
@@ -255,7 +255,7 @@ class _DeltaPill extends StatelessWidget {
         vertical: AppSpacing.s6,
       ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withValues(alpha: AppOpacity.light),
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       alignment: Alignment.center,
@@ -284,7 +284,7 @@ class _PassiveIncomeSparkline extends StatelessWidget {
       painter: _SparklinePainter(
         values: values.map((value) => value.toDouble()).toList(growable: false),
         color: color,
-        guideColor: context.theme.colors.border.withValues(alpha: 0.5),
+        guideColor: context.theme.colors.border.withValues(alpha: AppOpacity.scrim),
       ),
     );
   }

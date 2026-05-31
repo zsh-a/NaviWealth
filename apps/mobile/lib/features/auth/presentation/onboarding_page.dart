@@ -130,13 +130,13 @@ class _ModeCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: 0.14),
+              color: colors.primary.withValues(alpha: AppOpacity.medium),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             alignment: Alignment.center,
             child: Icon(icon, color: colors.primary, size: 22),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: AppSpacing.s14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

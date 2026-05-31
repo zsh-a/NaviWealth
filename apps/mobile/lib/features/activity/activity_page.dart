@@ -261,7 +261,7 @@ class _ActivityKindFilterRow extends ConsumerWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
         itemCount: chips.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s8),
         itemBuilder: (context, i) => _FilterChip(spec: chips[i]),
       ),
     );

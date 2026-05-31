@@ -163,7 +163,7 @@ class _SegmentLegendRow extends StatelessWidget {
           height: 8,
           decoration: BoxDecoration(
             color: segment.color,
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(AppRadius.xxs),
           ),
         ),
         const SizedBox(width: AppSpacing.s10),

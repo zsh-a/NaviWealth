@@ -330,7 +330,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(
-          color: colors.primary.withValues(alpha: 0.45),
+          color: colors.primary.withValues(alpha: AppOpacity.disabled),
           width: 1.5,
         ),
       ),
@@ -534,7 +534,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
   Widget _tag(BuildContext context, String text, Color color) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: AppSpacing.s2),
     decoration: BoxDecoration(
-      color: color.withValues(alpha: 0.14),
+      color: color.withValues(alpha: AppOpacity.medium),
       borderRadius: BorderRadius.circular(AppRadius.xs),
     ),
     child: Text(

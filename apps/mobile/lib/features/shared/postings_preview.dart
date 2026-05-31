@@ -137,7 +137,7 @@ class _PostingRow extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.s8),
         SignedMoneyText(
           amount: posting.units,
           unit: posting.unit,
@@ -170,7 +170,7 @@ class _UnitBalanceRow extends StatelessWidget {
             size: AppIconSizes.xs,
             color: tone,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpacing.s4),
           Expanded(
             child: Text(
               'Σ $unit',

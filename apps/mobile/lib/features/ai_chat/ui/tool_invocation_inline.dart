@@ -112,14 +112,14 @@ class _AttributionRow extends StatelessWidget {
             size: AppIconSizes.xs,
             color: AiTone.muted(context),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.s6),
           Flexible(
             child: Text(
               _friendly(invocation.name),
               style: AiType.meta(context).copyWith(fontFamily: 'monospace'),
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.s6),
           FTooltip(
             tipBuilder: (_, _) => Text(l10n.aiChatToolDebugTooltip),
             child: FTappable(

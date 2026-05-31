@@ -42,6 +42,49 @@ class AppRadius {
   static const double full = 9999;
 }
 
+
+/// Semantic opacity scale.
+///
+/// Replaces raw `withValues(alpha: ...)` magic numbers with named tokens.
+/// Values are chosen from the most frequent alpha literals in the codebase
+/// (see design token audit 2026-05-31).
+class AppOpacity {
+  const AppOpacity._();
+
+  /// Barely visible -- hairline dividers, ghost backgrounds. (~0.04)
+  static const double whisper = 0.04;
+
+  /// Very subtle -- faint tint layers. (~0.06)
+  static const double faint = 0.06;
+
+  /// Subtle -- selection highlights, icon tints, card surfaces. (~0.10)
+  static const double subtle = 0.10;
+
+  /// Light -- secondary highlights, soft accents. (~0.12)
+  static const double light = 0.12;
+
+  /// Medium -- visible but not dominant accents. (~0.14)
+  static const double medium = 0.14;
+
+  /// Muted -- borders, muted backgrounds, secondary text. (~0.30)
+  static const double muted = 0.30;
+
+  /// Disabled / dimmed -- container fills, de-emphasized content. (~0.40)
+  static const double disabled = 0.40;
+
+  /// Scrim / overlay backdrop. (~0.50)
+  static const double scrim = 0.50;
+
+  /// Prominent -- emphasized text, active states. (~0.60)
+  static const double prominent = 0.60;
+
+  /// Strong -- high-emphasis foreground. (~0.70)
+  static const double strong = 0.70;
+
+  /// Overlay -- near-opaque overlays, greeting text. (~0.85)
+  static const double overlay = 0.85;
+}
+
 /// Canonical icon sizes used across the app's chrome.
 ///
 /// Most icons fall into three buckets: inline ornaments (e.g. delta arrows

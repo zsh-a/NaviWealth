@@ -315,7 +315,7 @@ class _RecurringSkeleton extends StatelessWidget {
                     ],
                   ),
                 ),
-                SizedBox(width: 12),
+                SizedBox(width: AppSpacing.s12),
                 SkeletonBox(width: 72, height: 16, radius: 4),
               ],
             ),

@@ -159,7 +159,7 @@ class _MappingRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s10),
       decoration: BoxDecoration(
-        color: context.theme.colors.muted.withValues(alpha: 0.3),
+        color: context.theme.colors.muted.withValues(alpha: AppOpacity.muted),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Column(

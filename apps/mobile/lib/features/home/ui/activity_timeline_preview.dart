@@ -136,7 +136,7 @@ class _PreviewRow extends StatelessWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
+                color: iconColor.withValues(alpha: AppOpacity.light),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               alignment: Alignment.center,

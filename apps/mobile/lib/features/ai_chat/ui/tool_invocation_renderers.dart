@@ -191,7 +191,7 @@ class _HoldingsTable extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(
-            color: context.theme.colors.border.withValues(alpha: 0.3),
+            color: context.theme.colors.border.withValues(alpha: AppOpacity.muted),
           ),
         ),
       ),
@@ -499,7 +499,7 @@ class _BreakdownView extends StatelessWidget {
               minLabelPercent: 100, // hide in-slice labels for mini view
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -517,7 +517,7 @@ class _BreakdownView extends StatelessWidget {
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: AppSpacing.s6),
                         Expanded(
                           child: Text(
                             top[i].label,
@@ -660,7 +660,7 @@ class _RiskAlertList extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: AppIconSizes.sm, color: fg),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -728,7 +728,7 @@ class _EmptyResult extends StatelessWidget {
             size: AppIconSizes.sm,
             color: context.theme.colors.mutedForeground,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Text(
             message,
             style: context.theme.typography.xs.copyWith(
@@ -863,7 +863,7 @@ class _AllocBlock extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(
           context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: AppOpacity.disabled),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
@@ -890,7 +890,7 @@ class _AllocBlock extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppSpacing.s14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -909,7 +909,7 @@ class _AllocBlock extends StatelessWidget {
                                 shape: BoxShape.circle,
                               ),
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: AppSpacing.s6),
                             Expanded(
                               child: Text(
                                 sorted[i].key,
@@ -1051,7 +1051,7 @@ class RecurringPatternsView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+        color: cs.surfaceContainerHighest.withValues(alpha: AppOpacity.disabled),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
@@ -1070,7 +1070,7 @@ class RecurringPatternsView extends StatelessWidget {
                 Row(
                   children: [
                     _miniChip(context, cadenceLabel),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSpacing.s6),
                     Text(
                       '$occ 次${lastSeen != null ? ' · 最近 ${_displayDate(lastSeen)}' : ''}',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -1082,7 +1082,7 @@ class RecurringPatternsView extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.s12),
           Text(
             '${fmt.format(medianMinor.abs() / 100.0)} $currency',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -1100,7 +1100,7 @@ Widget _miniChip(BuildContext context, String label) {
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: 1),
     decoration: BoxDecoration(
-      color: cs.outline.withValues(alpha: 0.12),
+      color: cs.outline.withValues(alpha: AppOpacity.light),
       borderRadius: BorderRadius.circular(AppRadius.full),
     ),
     child: Text(
@@ -1169,9 +1169,9 @@ class SubscriptionChangesView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.06),
+        color: accent.withValues(alpha: AppOpacity.faint),
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: accent.withValues(alpha: 0.2)),
+        border: Border.all(color: accent.withValues(alpha: AppOpacity.muted)),
       ),
       child: Row(
         children: [
@@ -1180,7 +1180,7 @@ class SubscriptionChangesView extends StatelessWidget {
             size: AppIconSizes.h18,
             color: accent,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.s10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1202,7 +1202,7 @@ class SubscriptionChangesView extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Text(
             '${delta >= 0 ? '+' : ''}${(delta * 100).toStringAsFixed(1)}%',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -1269,7 +1269,7 @@ class RefundLinksView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+        color: cs.surfaceContainerHighest.withValues(alpha: AppOpacity.disabled),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
@@ -1285,7 +1285,7 @@ class RefundLinksView extends StatelessWidget {
                       size: AppIconSizes.xs,
                       color: cs.onSurfaceVariant,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppSpacing.s4),
                     Expanded(
                       child: Text(
                         origin,
@@ -1303,7 +1303,7 @@ class RefundLinksView extends StatelessWidget {
                 Row(
                   children: [
                     Icon(FLucideIcons.arrowUpRight, size: AppIconSizes.xs, color: cs.primary),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppSpacing.s4),
                     Expanded(
                       child: Text(
                         refund,
@@ -1320,7 +1320,7 @@ class RefundLinksView extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.s12),
           Text(
             '${fmt.format(amountMinor.abs() / 100.0)} $currency',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(

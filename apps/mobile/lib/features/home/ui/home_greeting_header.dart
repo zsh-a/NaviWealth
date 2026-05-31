@@ -43,7 +43,7 @@ class HomeGreetingHeader extends ConsumerWidget {
       final absPct = (pct.abs() * 100).toStringAsFixed(1);
       final color = pct >= 0
           ? colors.primary
-          : colors.foreground.withValues(alpha: 0.85);
+          : colors.foreground.withValues(alpha: AppOpacity.overlay);
       statusFragments.add(
         _StatusFragment(
           text: l10n.homeGreetingNetWorthFragment('$direction$absPct%'),
@@ -109,7 +109,7 @@ class HomeGreetingHeader extends ConsumerWidget {
                       Text(
                         '·',
                         style: TextStyle(
-                          color: colors.mutedForeground.withValues(alpha: 0.5),
+                          color: colors.mutedForeground.withValues(alpha: AppOpacity.scrim),
                         ),
                       ),
                   ],

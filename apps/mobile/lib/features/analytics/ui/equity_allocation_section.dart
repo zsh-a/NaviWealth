@@ -253,7 +253,7 @@ class _UnclassifiedBanner extends StatelessWidget {
               FLucideIcons.triangleAlert,
               color: context.theme.colors.mutedForeground,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             Expanded(child: Text(l10n.analyticsUnclassifiedHint(count))),
           ],
         ),

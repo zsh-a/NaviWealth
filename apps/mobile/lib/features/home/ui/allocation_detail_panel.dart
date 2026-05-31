@@ -42,7 +42,7 @@ Future<void> showAllocationDetailPanel({
     context: context,
     barrierLabel: 'allocation-detail-panel',
     barrierDismissible: true,
-    barrierColor: Colors.black.withValues(alpha: 0.42),
+    barrierColor: Colors.black.withValues(alpha: AppOpacity.disabled),
     transitionDuration: Motion.medium,
     pageBuilder: (_, _, _) => _DesktopAllocationInspector(snapshot: snapshot),
     transitionBuilder: (context, animation, _, child) {
@@ -142,7 +142,7 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
                 color: context.theme.colors.mutedForeground.withValues(
                   alpha: 0.35,
                 ),
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppRadius.xxs),
               ),
             ),
           ),
@@ -231,7 +231,7 @@ class _DimensionSwitch extends StatelessWidget {
     };
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.theme.colors.secondary.withValues(alpha: 0.5),
+        color: context.theme.colors.secondary.withValues(alpha: AppOpacity.scrim),
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(
@@ -429,13 +429,13 @@ class _BreakdownRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
           decoration: BoxDecoration(
             color: selected
-                ? colors.primary.withValues(alpha: 0.08)
-                : colors.foreground.withValues(alpha: 0.035),
+                ? colors.primary.withValues(alpha: AppOpacity.faint)
+                : colors.foreground.withValues(alpha: AppOpacity.whisper),
             borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(
               color: selected
-                  ? colors.primary.withValues(alpha: 0.35)
-                  : colors.foreground.withValues(alpha: 0.06),
+                  ? colors.primary.withValues(alpha: AppOpacity.muted)
+                  : colors.foreground.withValues(alpha: AppOpacity.faint),
             ),
           ),
           child: Row(
@@ -444,7 +444,7 @@ class _BreakdownRow extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: group.color.withValues(alpha: 0.16),
+                  color: group.color.withValues(alpha: AppOpacity.medium),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Icon(group.icon, size: 17, color: group.color),
@@ -615,13 +615,13 @@ class _PaletteSeed {
   Color next() {
     const colors = [
       ColorPalette.teal500,
-      Color(0xFF3B82F6),
-      Color(0xFFF59E0B),
+      ColorPalette.brand400,
+      ExpenseCategoryColors.amberLight,
       ColorPalette.red500,
-      Color(0xFF8B5CF6),
-      Color(0xFF22C55E),
-      Color(0xFFEC4899),
-      Color(0xFF64748B),
+      ExpenseCategoryColors.violet,
+      ColorPalette.green500,
+      ExpenseCategoryColors.pink,
+      ColorPalette.neutral600,
     ];
     final color = colors[_index % colors.length];
     _index += 1;

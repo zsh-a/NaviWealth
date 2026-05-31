@@ -197,7 +197,7 @@ class _DiffPanel extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(AppSpacing.s8),
         decoration: BoxDecoration(
-          color: colors.muted.withValues(alpha: 0.3),
+          color: colors.muted.withValues(alpha: AppOpacity.muted),
           borderRadius: BorderRadius.circular(AppRadius.xs),
         ),
         child: Text(
@@ -219,7 +219,7 @@ class _DiffPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s10),
       decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: 0.3),
+        color: colors.muted.withValues(alpha: AppOpacity.muted),
         borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Column(

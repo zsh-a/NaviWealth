@@ -925,7 +925,7 @@ class PortfolioHubViewSegment extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: context.theme.colors.secondary.withValues(alpha: 0.45),
+        color: context.theme.colors.secondary.withValues(alpha: AppOpacity.disabled),
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       padding: const EdgeInsets.all(AppSpacing.s2),

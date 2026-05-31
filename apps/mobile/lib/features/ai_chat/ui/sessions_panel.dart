@@ -251,7 +251,7 @@ class _PanelShell extends StatelessWidget {
                         size: AppIconSizes.h18,
                         color: colors.mutedForeground,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.s8),
                       Text(
                         l10n.aiChatSessionsHeader,
                         style: context.theme.typography.md.copyWith(
@@ -451,7 +451,7 @@ class _SessionTile extends StatelessWidget {
       borderRadius: const BorderRadius.all(Radius.circular(12)),
       child: ColoredBox(
         color: selected
-            ? colors.primary.withValues(alpha: 0.10)
+            ? colors.primary.withValues(alpha: AppOpacity.subtle)
             : const Color(0x00000000),
         child: FTappable(
           onPress: onTap,
@@ -467,13 +467,13 @@ class _SessionTile extends StatelessWidget {
                     borderRadius: const BorderRadius.all(Radius.circular(2)),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.s8),
                 Icon(
                   FLucideIcons.messageCircle,
                   size: AppIconSizes.h18,
                   color: selected ? colors.primary : colors.mutedForeground,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.s12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -576,7 +576,7 @@ class _ActionRow extends StatelessWidget {
           child: Row(
             children: [
               Icon(icon, size: AppIconSizes.md, color: fg),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.s12),
               Text(
                 label,
                 style: context.theme.typography.md.copyWith(color: fg),

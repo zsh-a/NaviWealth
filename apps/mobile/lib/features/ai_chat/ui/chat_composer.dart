@@ -87,7 +87,7 @@ class _ChatComposerState extends State<ChatComposer> {
           top: BorderSide(
             color: Theme.of(
               context,
-            ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+            ).colorScheme.outlineVariant.withValues(alpha: AppOpacity.scrim),
           ),
         ),
       ),
@@ -119,7 +119,7 @@ class _ChatComposerState extends State<ChatComposer> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               _TrailingButton(
                 controller: _controller,
                 isStreaming: widget.isStreaming,

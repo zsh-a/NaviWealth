@@ -45,7 +45,7 @@ class AiActionCardsRail extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
               itemCount: items.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s10),
               itemBuilder: (context, i) =>
                   _ActionCard(item: items[i], l10n: l10n),
             ),
@@ -88,13 +88,13 @@ class _ActionCard extends StatelessWidget {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: tint.withValues(alpha: 0.14),
+                    color: tint.withValues(alpha: AppOpacity.medium),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   alignment: Alignment.center,
                   child: Icon(item.icon, size: AppIconSizes.xs, color: tint),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.s8),
                 Expanded(
                   child: Text(
                     item.headline,

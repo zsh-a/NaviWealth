@@ -231,7 +231,7 @@ class _RangeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = selected
-        ? colors.primary.withValues(alpha: 0.14)
+        ? colors.primary.withValues(alpha: AppOpacity.medium)
         : Colors.transparent;
     final fg = selected ? colors.primary : colors.mutedForeground;
     return FTappable(

@@ -207,7 +207,7 @@ class _KindGlyph extends StatelessWidget {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: tint.withValues(alpha: 0.12),
+        color: tint.withValues(alpha: AppOpacity.light),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       alignment: Alignment.center,
@@ -231,7 +231,7 @@ class _KindLabel extends StatelessWidget {
         vertical: AppSpacing.s4,
       ),
       decoration: BoxDecoration(
-        color: tint.withValues(alpha: 0.10),
+        color: tint.withValues(alpha: AppOpacity.subtle),
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Text(
@@ -265,7 +265,7 @@ class _AiInsightCard extends StatelessWidget {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: 0.10),
+              color: colors.primary.withValues(alpha: AppOpacity.subtle),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             alignment: Alignment.center,
@@ -377,7 +377,7 @@ class _SubtleDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 1,
-      color: context.theme.colors.foreground.withValues(alpha: 0.05),
+      color: context.theme.colors.foreground.withValues(alpha: AppOpacity.whisper),
     );
   }
 }
