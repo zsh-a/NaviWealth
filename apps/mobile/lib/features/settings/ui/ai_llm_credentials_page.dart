@@ -290,7 +290,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.s8),
                     if (isActive)
                       _tag(context, l10n.aiLlmActiveTag, colors.primary)
                     else
@@ -302,7 +302,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
                       ),
                   ],
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: AppSpacing.s4),
                 Text(
                   meta,
                   style: context.theme.typography.xs.copyWith(
@@ -314,7 +314,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
               ],
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.s6),
           _iconAction(
             context,
             FLucideIcons.pencil,
@@ -356,7 +356,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.s14),
           _label(context, l10n.aiLlmNameLabel),
           const SizedBox(height: AppSpacing.s6),
           FTextFormField(
@@ -411,7 +411,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
             autocorrect: false,
             enableSuggestions: false,
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.s20),
           FButton(
             variant: FButtonVariant.outline,
             onPress: (_probing || _saving) ? null : () => _test(existing),
@@ -434,7 +434,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
             ),
           ],
           if (includeActions) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpacing.s14),
             _editorActions(context, existing),
           ],
         ],
@@ -452,7 +452,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
             child: Text(_saving ? l10n.aiLlmSaving : l10n.commonSave),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.s12),
         Expanded(
           child: FButton(
             variant: FButtonVariant.outline,

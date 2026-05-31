@@ -203,7 +203,7 @@ class _MetricsGrid extends StatelessWidget {
                 value: wrLabel,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: _MetricTile(
                 label: l10n.fireOsHeroCashBucketLabel,
@@ -221,7 +221,7 @@ class _MetricsGrid extends StatelessWidget {
                 value: etaLabel,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: _MetricTile(
                 label: l10n.fireOsHeroNetWorthLabel,
@@ -367,7 +367,7 @@ class _ActionRow extends StatelessWidget {
             shape: BoxShape.circle,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.s8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -429,7 +429,7 @@ class _HeroErrorCard extends StatelessWidget {
             color: context.theme.colors.destructive,
             size: AppIconSizes.h18,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: Text(
               message,

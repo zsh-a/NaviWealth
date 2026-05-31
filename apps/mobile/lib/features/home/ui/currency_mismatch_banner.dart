@@ -41,7 +41,7 @@ class CurrencyMismatchBanner extends ConsumerWidget {
                 FLucideIcons.triangleAlert,
                 color: theme.colorScheme.onErrorContainer,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Expanded(
                 child: Text(
                   l10n.dashboardCurrencyMismatchBanner(mismatches.length, base),
@@ -50,7 +50,7 @@ class CurrencyMismatchBanner extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Text(
                 l10n.dashboardCurrencyMismatchAction,
                 style: context.theme.typography.sm.copyWith(

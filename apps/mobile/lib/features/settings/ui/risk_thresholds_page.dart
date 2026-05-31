@@ -242,7 +242,7 @@ class _ThresholdSliderState extends State<_ThresholdSlider> {
       child: Row(
         children: [
           Icon(widget.icon, size: AppIconSizes.h18, color: colors.mutedForeground),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.s12),
           SizedBox(
             width: 72,
             child: Text(

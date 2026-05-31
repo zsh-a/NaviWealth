@@ -98,7 +98,7 @@ class AiPrivacyPage extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.s12),
                 FSwitch(
                   value: settings.maskAccountNames,
                   onChange: controller.setMaskAccountNames,
@@ -143,7 +143,7 @@ class _ModeRow extends StatelessWidget {
               onChange: (_) => onSelect(mode),
               semanticsLabel: label,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -478,7 +478,7 @@ class _PortfolioSummary extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppSpacing.s14),
         Row(
           children: [
             Expanded(
@@ -487,7 +487,7 @@ class _PortfolioSummary extends StatelessWidget {
                 value: xirr == null ? '—' : _formatRatio(context, xirr),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: _SummaryMetric.money(
                 label: l10n.portfolioHubAbsoluteReturnLabel,
@@ -617,7 +617,7 @@ class _EngineExposureSection extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     for (var i = 0; i < cards.length; i++) ...[
-                      if (i != 0) const SizedBox(width: 12),
+                      if (i != 0) const SizedBox(width: AppSpacing.s12),
                       Expanded(child: cards[i]),
                     ],
                   ],
@@ -834,7 +834,7 @@ class _EngineCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Text(
                 trailing,
                 style: context.theme.typography.xs.copyWith(
@@ -869,7 +869,7 @@ class _TwoLineAmountRow extends StatelessWidget {
         Expanded(
           child: _TitleSubtitle(title: title, subtitle: subtitle),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.s12),
         Text(
           amount,
           maxLines: 1,
@@ -985,7 +985,7 @@ class _ViewChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 17, color: color),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.s6),
             Flexible(
               child: Text(
                 label,
@@ -1129,7 +1129,7 @@ class _TitleSubtitle extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: AppSpacing.s4),
         Text(
           subtitle,
           maxLines: 1,
@@ -1175,7 +1175,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 28),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32),
       child: Center(
         child: Text(
           message,
@@ -1202,7 +1202,7 @@ class _PortfolioHubSkeleton extends StatelessWidget {
         SkeletonBox(width: 220, height: 34, radius: 8),
         SizedBox(height: AppSpacing.s24),
         SkeletonBox(height: 42, radius: 999),
-        SizedBox(height: 18),
+        SizedBox(height: AppSpacing.s20),
         SkeletonBox(height: 82, radius: 8),
         SizedBox(height: AppSpacing.s10),
         SkeletonBox(height: 82, radius: 8),

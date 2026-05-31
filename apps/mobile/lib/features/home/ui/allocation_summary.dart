@@ -70,7 +70,7 @@ class AllocationSummary extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _StackedBar(segments: segments),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpacing.s14),
               for (final s in segments.take(3)) ...[
                 _SegmentLegendRow(
                   segment: s,
@@ -166,7 +166,7 @@ class _SegmentLegendRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: AppSpacing.s10),
         Expanded(
           child: Text(
             AssetCategoryVisuals.label(l10n, segment.allocation.category),
@@ -175,7 +175,7 @@ class _SegmentLegendRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.s8),
         Text(
           '$pct%',
           style: context.theme.typography.sm.copyWith(

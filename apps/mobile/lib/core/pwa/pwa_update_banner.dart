@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'pwa_update.dart';
 
@@ -67,7 +68,7 @@ class _PwaUpdateBannerState extends ConsumerState<PwaUpdateBanner> {
                   child: Row(
                     children: [
                       Icon(FLucideIcons.download, color: colors.background),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.s12),
                       Expanded(
                         child: Text(
                           l10n.pwaUpdateAvailable,
@@ -81,7 +82,7 @@ class _PwaUpdateBannerState extends ConsumerState<PwaUpdateBanner> {
                         onPress: () => setState(() => _dismissed = true),
                         child: Text(l10n.pwaUpdateDismiss),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSpacing.s4),
                       FButton(
                         variant: FButtonVariant.outline,
                         onPress: controller.applyUpdate,

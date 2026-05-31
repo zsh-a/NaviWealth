@@ -440,7 +440,7 @@ class _MdCode extends _MdBlock {
     final mono = base.copyWith(
       fontFamily: 'monospace',
       fontFamilyFallback: const ['Menlo', 'Consolas', 'monospace'],
-      fontSize: (base.fontSize ?? 13) - 1,
+      fontSize: (base.fontSize ?? TypographyTokens.bodySmall.fontSize!) - 1,
       height: 1.5,
       color: AiTone.onSurface(context),
     );
@@ -1401,7 +1401,7 @@ InlineSpan _codeSpan(String text, TextStyle base, BuildContext context) {
         style: base.copyWith(
           fontFamily: 'monospace',
           fontFamilyFallback: const ['Menlo', 'Consolas', 'monospace'],
-          fontSize: (base.fontSize ?? 13) - 1,
+          fontSize: (base.fontSize ?? TypographyTokens.bodySmall.fontSize!) - 1,
           color: AiTone.onSurface(context),
         ),
       ),

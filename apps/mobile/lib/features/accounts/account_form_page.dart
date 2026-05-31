@@ -520,7 +520,7 @@ class _IconPickerSection extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: kAccountIconCatalogue.length + 1,
-            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s8),
             itemBuilder: (context, index) {
               if (index == 0) {
                 final isSelected = selected == null;

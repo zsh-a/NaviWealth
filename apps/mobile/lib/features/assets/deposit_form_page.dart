@@ -505,7 +505,7 @@ class _DepositKindChip extends StatelessWidget {
                   ? context.theme.colors.primary
                   : context.theme.colors.mutedForeground,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.s4),
             Text(
               label,
               style: context.theme.typography.sm.copyWith(

@@ -1,13 +1,12 @@
 import 'dart:convert';
-import '../../../design_system/design_system.dart';
 
 import 'package:flutter/material.dart';
-import '../../../design_system/design_system.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../core/ai/contracts/evidence_anchor.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/chat_models.dart';
 import 'tool_invocation_renderers.dart';
@@ -267,7 +266,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
         Text(
           label,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: TypographyTokens.labelSmall.fontSize,
             height: 1.2,
             fontWeight: FontWeight.w500,
             color: colors.mutedForeground,
@@ -302,7 +301,7 @@ class _CodeBlock extends StatelessWidget {
         style: TextStyle(
           fontFamily: 'monospace',
           fontFamilyFallback: const ['Menlo', 'Consolas', 'Courier'],
-          fontSize: 12,
+          fontSize: TypographyTokens.labelMedium.fontSize,
           height: 1.45,
           color: colors.foreground,
         ),

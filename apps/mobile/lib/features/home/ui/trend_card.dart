@@ -84,7 +84,7 @@ class TrendCard extends ConsumerWidget {
                         child: const Icon(FLucideIcons.maximize, size: AppIconSizes.md),
                       ),
                     ),
-                    orElse: () => const SizedBox(width: 48, height: 48),
+                    orElse: () => const SizedBox(width: AppSpacing.s48, height: AppSpacing.s48),
                   ),
                 ],
               ),

@@ -172,7 +172,7 @@ class _JournalEntryRow extends StatelessWidget {
                         classification: classification,
                         compact: true,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.s8),
                       Text(
                         dateLabel,
                         style: context.theme.typography.xs2.copyWith(
@@ -180,7 +180,7 @@ class _JournalEntryRow extends StatelessWidget {
                         ),
                       ),
                       if (entry.entry.payee != null) ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.s8),
                         Flexible(
                           child: Text(
                             '· ${entry.entry.payee}',

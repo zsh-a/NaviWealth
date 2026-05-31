@@ -67,7 +67,7 @@ class RouteErrorPage extends StatelessWidget {
                         prefix: const Icon(FLucideIcons.arrowLeft, size: AppIconSizes.xs),
                         child: Text(l10n.routeGoBack),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.s12),
                     ],
                     FButton(
                       variant: FButtonVariant.primary,

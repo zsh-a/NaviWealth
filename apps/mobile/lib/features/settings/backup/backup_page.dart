@@ -311,7 +311,7 @@ class _WebBackupSecurityBanner extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(FLucideIcons.shieldCheck, color: context.theme.colors.primary),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Text(
               l10n.backupWebSecurityWarning,
@@ -499,7 +499,7 @@ class _ProgressSheetState extends State<_ProgressSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const FCircularProgress(),
-          const SizedBox(width: 16),
+          const SizedBox(width: AppSpacing.s16),
           Flexible(
             child: Text(widget.message, style: context.theme.typography.sm),
           ),

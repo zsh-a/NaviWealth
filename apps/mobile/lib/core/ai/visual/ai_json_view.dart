@@ -138,7 +138,7 @@ class _JsonNodeState extends State<_JsonNode> {
     }
     // Scalar leaf.
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: RichText(
         text: TextSpan(
           style: _mono(context),
@@ -166,7 +166,7 @@ class _JsonNodeState extends State<_JsonNode> {
     final header = FTappable(
       onPress: () => setState(() => _expanded = !_expanded),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 1),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -175,7 +175,7 @@ class _JsonNodeState extends State<_JsonNode> {
               size: 13,
               color: AiTone.muted(context),
             ),
-            const SizedBox(width: 2),
+            const SizedBox(width: AppSpacing.s2),
             Flexible(
               child: Text.rich(
                 TextSpan(

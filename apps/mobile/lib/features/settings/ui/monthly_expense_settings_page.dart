@@ -226,7 +226,7 @@ class _WindowSliderState extends State<_WindowSlider> {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Text(
                 l10n.settingsMonthlyExpenseWindowValue(widget.windowMonths),
                 style: context.theme.typography.sm.copyWith(
@@ -348,7 +348,7 @@ class _OverrideFieldState extends State<_OverrideField> {
                   hint: l10n.settingsMonthlyExpenseOverrideHint,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Text(
                 widget.baseCurrency,
                 style: context.theme.typography.sm.copyWith(

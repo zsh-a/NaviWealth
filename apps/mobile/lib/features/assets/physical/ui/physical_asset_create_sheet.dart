@@ -170,7 +170,7 @@ class _PhysicalAssetCreateSheetState
                     onSubmit: (_) => _purchasePriceFocus.requestFocus(),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.s12),
                 Expanded(
                   child: InkWell(
                     onTap: _saving ? null : _pickPurchaseDate,

@@ -68,7 +68,7 @@ class AiPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (leading != null) ...[leading!, const SizedBox(width: 6)],
+          if (leading != null) ...[leading!, const SizedBox(width: AppSpacing.s6)],
           Text(label, style: AiType.label(context).copyWith(color: fg)),
         ],
       ),

@@ -107,7 +107,7 @@ class AllocationCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(flex: 6, child: chart),
-                          const SizedBox(width: 24),
+                          const SizedBox(width: AppSpacing.s24),
                           Expanded(flex: 5, child: legend),
                         ],
                       )
@@ -155,7 +155,7 @@ class AllocationCard extends StatelessWidget {
                         onTap: (alloc) => _openDrillDown(context, alloc),
                       ),
                     ),
-                    const SizedBox(width: 24),
+                    const SizedBox(width: AppSpacing.s24),
                     Expanded(
                       flex: 4,
                       child: SingleChildScrollView(
@@ -547,9 +547,9 @@ class _SankeyPainter extends CustomPainter {
         canvas,
         layout.liabilityOutRect!,
         layout.liabilityInRect!,
-        const Color(0xFFEF4444).withValues(alpha: 0.22),
+        ColorPalette.red500.withValues(alpha: 0.22),
       );
-      nodePaint.color = const Color(0xFFEF4444);
+      nodePaint.color = ColorPalette.red500;
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           layout.liabilityRect!,
@@ -740,13 +740,13 @@ class _LegendRow extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.s8),
                 Icon(
                   icon,
                   size: AppIconSizes.sm,
                   color: context.theme.colors.mutedForeground,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.s8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -768,7 +768,7 @@ class _LegendRow extends StatelessWidget {
                   compact: true,
                   showSign: valueInBase < 0,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.s4),
                 Icon(
                   FLucideIcons.chevronRight,
                   size: AppIconSizes.sm,
@@ -819,7 +819,7 @@ class CategoryDrillDownSheet extends StatelessWidget {
                     AssetCategoryVisuals.icon(allocation.category),
                     color: context.theme.colors.primary,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.s8),
                   Expanded(
                     child: Text(
                       AssetCategoryVisuals.label(l10n, allocation.category),

@@ -211,7 +211,7 @@ class _DcaControls extends StatelessWidget {
                     },
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.s10),
                 Expanded(
                   child: FTextFormField(
                     control: FTextFieldControl.managed(controller: currency),
@@ -262,7 +262,7 @@ class _DcaControls extends StatelessWidget {
                     label: Text(l10n.dcaSimulatorFrequencyField),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.s10),
                 Expanded(
                   child: FSelect<int>(
                     items: {
@@ -289,7 +289,7 @@ class _DcaControls extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(FLucideIcons.workflow, size: AppIconSizes.h18),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: AppSpacing.s6),
                   Text(l10n.dcaSimulatorRunAction),
                 ],
               ),
@@ -333,9 +333,9 @@ class _DcaResults extends StatelessWidget {
                   _FreshnessChip(freshness: state.freshness),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpacing.s14),
               _MetricGrid(result: result),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppSpacing.s20),
               Text(
                 l10n.dcaSimulatorChartTitle,
                 style: context.theme.typography.sm.copyWith(
@@ -370,7 +370,7 @@ class _DcaResults extends StatelessWidget {
                   semanticLabel: l10n.dcaSimulatorChartTitle,
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpacing.s14),
               for (final position in result.positions)
                 _PositionRow(position: position, currency: result.currency),
               const SizedBox(height: AppSpacing.s12),
@@ -567,7 +567,7 @@ class _FreshnessChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s6),
         child: Text(label, style: context.theme.typography.xs),
       ),
     );

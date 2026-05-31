@@ -93,7 +93,7 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
           child: Row(
             children: [
               Icon(widget.icon, size: AppIconSizes.h18, color: colors.mutedForeground),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Text(
                   widget.label,
@@ -102,7 +102,7 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Flexible(
                 child: Text(
                   selectedLabel,
@@ -114,7 +114,7 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
                   textAlign: TextAlign.end,
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSpacing.s4),
               Icon(
                 FLucideIcons.unfoldVertical,
                 size: 16,
@@ -204,7 +204,7 @@ class _OptionRow<T> extends StatelessWidget {
                   ? Icon(FLucideIcons.check, size: 16, color: accentColor)
                   : null,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             Expanded(
               child: Text(
                 label,
@@ -250,7 +250,7 @@ class InlineSwitchRow extends StatelessWidget {
       child: Row(
         children: [
           Icon(icon, size: AppIconSizes.h18, color: colors.mutedForeground),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -331,7 +331,7 @@ class InlineLinkRow extends StatelessWidget {
         child: Row(
           children: [
             Icon(icon, size: AppIconSizes.h18, color: colors.mutedForeground),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,7 +352,7 @@ class InlineLinkRow extends StatelessWidget {
               ),
             ),
             if (trailingValue != null) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Flexible(
                 child: Text(
                   trailingValue!,
@@ -365,13 +365,13 @@ class InlineLinkRow extends StatelessWidget {
                 ),
               ),
             ] else if (trailingBadge != null) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               _StatusBadge(label: trailingBadge!),
             ] else if (trailing != null) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               trailing!,
             ],
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.s4),
             Icon(
               FLucideIcons.chevronRight,
               size: 16,

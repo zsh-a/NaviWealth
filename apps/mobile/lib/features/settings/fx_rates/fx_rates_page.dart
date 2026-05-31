@@ -135,7 +135,7 @@ class _RateList extends ConsumerWidget {
                     color: colors.mutedForeground,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.s12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
