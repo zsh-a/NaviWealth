@@ -19,6 +19,7 @@ import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../shared/account_l10n.dart';
 import '../../shared/forms/forms.dart';
 import '../data/ingest_capture_source.dart';
 import '../data/ingest_confirm_service.dart';
@@ -153,7 +154,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
             children: [
               for (final a in payable)
                 AiPill(
-                  label: a.name,
+                  label: localizedAccountName(l10n, a),
                   state: a.id == selectedId
                       ? AiPillState.selected
                       : AiPillState.neutral,
