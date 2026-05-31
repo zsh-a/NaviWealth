@@ -1,4 +1,4 @@
-/// Anthropic SSE → [LlmStreamEvent] decoder (§4.6 W-D2).
+/// Anthropic SSE → [LlmStreamEvent] decoder.
 ///
 /// Faithful Dart port of
 /// `apps/backend/src/ai/adapters/anthropic/event_map.rs`. The backend

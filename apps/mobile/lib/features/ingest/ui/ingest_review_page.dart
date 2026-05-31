@@ -5,7 +5,7 @@
 /// The page never auto-applies anything — every write is the user's
 /// explicit tap (§5.10.6). All copy is localized via AppLocalizations
 /// (S5a.1 — full ARB pass; the data-layer parser tokens stay on the
-/// FIR-99 allowlist by nature, see §5.10.9).
+/// allowlist by nature, see §5.10.9).
 library;
 
 import 'package:desktop_drop/desktop_drop.dart';

@@ -1,4 +1,4 @@
-/// `get_holdings` — device port (§4.6 W-D4.2).
+/// `get_holdings` — device port.
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/get_holdings.rs`. The backend tool

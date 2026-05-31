@@ -8,7 +8,7 @@ import '../values/asset_market.dart';
 /// `live` — fetched from a provider just now.
 /// `cachedFresh` — served from cache within its TTL; equivalent to live for UI.
 /// `stale` — served from cache past its TTL because the provider is unreachable
-/// or we are offline. UI must surface this with a badge per FIR-26.
+/// or we are offline. UI must surface this with a badge.
 enum DataFreshness { live, cachedFresh, stale }
 
 /// Wrapper attaching freshness + source metadata to any market-data payload.

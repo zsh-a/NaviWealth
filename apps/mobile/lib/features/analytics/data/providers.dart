@@ -40,8 +40,8 @@ final equityClassifierProvider = Provider<EquityClassifier>((ref) {
   return DefaultEquityClassifier(overrides: overrides);
 });
 
-/// Per-asset thresholds for [MarketCapBucket]. Defaults to the FIR-53
-/// product values (200B / 2B). Overridable from settings later.
+/// Per-asset thresholds for [MarketCapBucket]. Defaults to the product
+/// values (200B / 2B). Overridable from settings later.
 final marketCapThresholdsProvider = Provider<MarketCapThresholds>(
   (ref) => MarketCapThresholds.defaults(),
 );

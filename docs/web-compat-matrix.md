@@ -4,7 +4,7 @@ NaviWealth ships a Flutter Web build (`apps/mobile/web/`) that runs as both a re
 
 Headless smoke (`apps/mobile/web_smoke/`) covers Chromium / WebKit / Firefox on Linux runners; the manual checklist covers what those can't reach (real Safari, real iOS Safari, "Add to Home Screen" install).
 
-Parent task: FIR-35; this is the FIR-40 deliverable.
+Parent task: cross-browser compatibility.
 
 ---
 

@@ -1,10 +1,10 @@
-# Visual baseline (FIR-113)
+# Visual baseline
 
-Final acceptance for the [FIR-103](https://multica/issues/FIR-103) "premium UI" epic. Three deliverables:
+Final acceptance for the "premium UI" epic. Three deliverables:
 
 1. **Golden screenshot regression** — locks the rendered look of the seven golden-path mobile pages against drift.
 2. **Figma mock baseline** — three-breakpoint mocks, kept in sync with the Dart `design_tokens/tokens.json`.
-3. **Cross-end walkthrough** — manual verification of FIR-103 §10 "Golden Path", with screenshots archived under `walkthrough/`.
+3. **Cross-end walkthrough** — manual verification of "Golden Path", with screenshots archived under `walkthrough/`.
 
 ---
 
@@ -23,7 +23,7 @@ Final acceptance for the [FIR-103](https://multica/issues/FIR-103) "premium UI" 
 
 6 pages × 2 themes = **12 PNG baselines** under `apps/mobile/test/golden/goldens/`. (Light-mode was dropped — see *Variant choice* below.)
 
-Mobile-only for now. Per FIR-103 §11 R7 ("截图回归在 CI 上跨端不稳"), tablet and desktop snapshots are deferred — those layouts use the same primitives the mobile goldens already cover, and the master-detail surfaces add CI flake without a visual signal we don't already get from the unit suite.
+Mobile-only for now. Tablet and desktop snapshots are deferred — those layouts use the same primitives the mobile goldens already cover, and the master-detail surfaces add CI flake without a visual signal we don't already get from the unit suite.
 
 ### Variant choice
 
@@ -121,16 +121,16 @@ above is done by an engineer — Figma is downstream.
 
 ### Three-breakpoint mocks
 
-Per FIR-103 §4 (`mobile <600 / tablet 600–1240 / desktop ≥1240`) the Figma library covers each
+The Figma library covers each
 critical path at **all three** breakpoints:
 
 | Path | Mobile | Tablet | Desktop |
 |------|--------|--------|---------|
 | Home / dashboard | ✓ | ✓ | ✓ |
 | Asset detail | ✓ | ✓ | ✓ (master-detail right pane) |
-| AI Chat sheet (FIR-111 floating pill) | ✓ | ✓ | ✓ |
-| Command palette (FIR-112) | n/a | ✓ | ✓ |
-| Master-Detail layout (FIR-106) | n/a | ✓ | ✓ |
+| AI Chat sheet (floating pill) | ✓ | ✓ | ✓ |
+| Command palette | n/a | ✓ | ✓ |
+| Master-Detail layout | n/a | ✓ | ✓ |
 
 The Figma library URL and the per-frame links go in this README once design publishes the v1
 library — replace the placeholder URL above and add a `Figma frames` table mapping each path to a
@@ -138,7 +138,7 @@ Figma node id.
 
 ---
 
-## 3. Cross-end walkthrough — FIR-103 §10 Golden Path
+## 3. Cross-end walkthrough — Golden Path
 
 Verify each item on each of the three layout shells (`_MobileShell`, `_TabletShell`, `_DesktopShell`)
 before signing off the epic. Drop the screenshot evidence into `walkthrough/<step>-<shell>.png` and

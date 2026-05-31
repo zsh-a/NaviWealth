@@ -8,8 +8,8 @@ import 'auth_session.dart';
 ///   - Android: EncryptedSharedPreferences over the Keystore.
 ///   - Web: `flutter_secure_storage`'s WebCrypto + IndexedDB fallback.
 ///
-/// FIR-30's original spec called for `HttpOnly` cookies on web, but the
-/// backend (FIR-29) returns the access token in the JSON body for every
+/// Original spec called for `HttpOnly` cookies on web, but the
+/// backend returns the access token in the JSON body for every
 /// platform and does not issue `Set-Cookie`. Until that contract changes
 /// we keep one storage mechanism so login / refresh flow is identical
 /// across platforms — see `docs/auth.md` (added in this commit) for the

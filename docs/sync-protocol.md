@@ -4,7 +4,7 @@
 > (Cloudflare Workers + Rust + D1).
 >
 > MVP target: **eventual consistency via polling**. WebSocket / SSE / E2EE /
-> field-level LWW are explicitly out of scope for v1 (FIR-31, FIR-33).
+> field-level LWW are explicitly out of scope for v1.
 
 Status: **Frozen v1.0** (2026-04-28). Any change after this point requires a
 new minor version (`Sync-Protocol-Version` header) and migration notes.
@@ -234,7 +234,7 @@ JSON encoding rules for column values:
 All endpoints:
 
 - `Content-Type: application/json; charset=utf-8`
-- `Authorization: Bearer <jwt>` required (returns 401 otherwise — see FIR-29)
+- `Authorization: Bearer <jwt>` required (returns 401 otherwise)
 - `Sync-Protocol-Version: 1` request header — server returns 426 `Upgrade
   Required` on mismatch
 - All timestamps ISO-8601 UTC, all HLCs in canonical string form (§3.1)
@@ -378,8 +378,8 @@ Fetch ops newer than `since`.
 - Push: 30 batches / minute / user.
 - Pull: 60 calls / minute / user.
 
-These are guard rails against runaway client bugs (FIR-28 explicitly cited
-"防自己代码 bug 把额度跑光"), not adversarial defence.
+These are guard rails against runaway client bugs ("防自己代码 bug 把额度跑光"),
+not adversarial defence.
 
 ---
 
@@ -407,7 +407,7 @@ fn apply(local_row: Option<Row>, op: Op) -> Option<Row>:
   a transaction). Two devices independently editing **different fields of
   the same row** is rare for a single-user app.
 - Field-level LWW requires per-field HLC storage on every row → ~doubled
-  schema. Deferred (FIR-33 explicitly OOS).
+  schema. Deferred (explicitly out of scope).
 
 ### 6.3 Special cases
 
@@ -575,7 +575,7 @@ The `hlc_text` column is TEXT with the canonical (lex-sortable) form from
 by the handler — if accumulating ops would exceed it, stop early and set
 `has_more = true`.
 
-### 8.3 D1 sync tables (sketch — full DDL in FIR-36)
+### 8.3 D1 sync tables (sketch)
 
 ```sql
 CREATE TABLE op_log (
@@ -602,7 +602,7 @@ CREATE TABLE sync_state (
 
 Materialised business tables (`accounts`, `assets`, `journal_entries`,
 `postings`, `prices`, …) carry `hlc_text TEXT NOT NULL`, `device_id TEXT`,
-`deleted_at TEXT NULL` columns (see FIR-36 schema).
+`deleted_at TEXT NULL` columns.
 
 ---
 
@@ -733,7 +733,7 @@ These are explicitly **not** v1; tracked here so the spec stays complete.
 |---|------|---------------------|
 | D1 | Realtime push (WS / SSE / Durable Objects) | Multi-device latency complaints in user testing |
 | D2 | Field-level LWW | Observed lost-update incidents on shared rows |
-| D3 | E2EE payload (FIR-31) | Sharing the app with anyone other than the author |
+| D3 | E2EE payload | Sharing the app with anyone other than the author |
 | D4 | Tombstone GC | OpLog growth > 100 MB / device |
 | D5 | Compaction / snapshot pulls | First-sync time on new device > 30 s |
 | D6 | Multi-tenant scoping | Ever shipping outside single-user mode |
@@ -744,8 +744,8 @@ These are explicitly **not** v1; tracked here so the spec stays complete.
 
 - `apps/mobile/lib/data/db/tables.dart` — local schema baseline
 - `apps/backend/src/error.rs` — error envelope shape
-- FIR-19 — core entity definitions
-- FIR-29 — JWT auth (request preconditions for every endpoint here)
-- FIR-32 — Workers + Rust skeleton (host for these handlers)
-- FIR-34 — client SyncEngine implementation (consumer of this spec)
-- FIR-36 — D1 schema migration & API implementation (server side)
+- Core entity definitions
+- JWT auth (request preconditions for every endpoint here)
+- Workers + Rust skeleton (host for these handlers)
+- Client SyncEngine implementation (consumer of this spec)
+- D1 schema migration & API implementation (server side)

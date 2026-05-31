@@ -2,11 +2,11 @@
 
 > 文档版本：2026-05-10 · 当前应用版本：0.2.5
 > 本次更新：扩展 §2 中期规划为 6 个工作流 × 3 个里程碑（M1/M2/M3）的可执行计划。
-> 分析基础：仓库现状全量扫描（feature 模块、backend 路由、同步协议、测试覆盖、git 历史 FIR-1 ~ FIR-134）。
+> 分析基础：仓库现状全量扫描（feature 模块、backend 路由、同步协议、测试覆盖、git 历史）。
 > 本路线图是**方向性参考**，不是承诺；优先级会随用户反馈与开发节奏调整。
 >
-> ⚠️ **W-D7 后已过时提示**：本文部分章节（§0 后端速览、§1.3、§2.5、§5）写于云端 AI 时代。
-> W-D7 已删除整个 `apps/backend/src/ai/`，AI 改为 **device-only**——所有
+> ⚠️ **已过时提示**：本文部分章节（§0 后端速览、§1.3、§2.5、§5）写于云端 AI 时代。
+> `apps/backend/src/ai/` 已删除，AI 改为 **device-only**——所有
 > `apps/backend/src/ai/*` 引用与「后端 AI 工具/SSE/proposals」计划均已被取代，
 > 以 [`docs/ai-architecture.md`](./ai-architecture.md) 为准。
 > FIRE OS 演进计划见 [`docs/roadmap-fire-os.md`](./roadmap-fire-os.md)。
@@ -17,10 +17,10 @@
 
 | 维度 | 现状 |
 |------|------|
-| 平台覆盖 | iOS / Android / Web（PWA 完成，桌面端 Shell 在做：FIR-106） |
+| 平台覆盖 | iOS / Android / Web（PWA 完成，桌面端 Shell 在做） |
 | 核心域 | 资产 / 账户 / 投资 / 负债 / 支出 / FIRE / 再平衡 / 分析 / AI 助手 已上线 |
 | 同步 | Sync Protocol v1.0 已冻结（轮询 30s，HLC + OpLog + 行级 LWW） |
-| 后端 | Cloudflare Workers + D1，路由极简（health/auth/me/sync；AI 路由 W-D7 已删除） |
+| 后端 | Cloudflare Workers + D1，路由极简（health/auth/me/sync；AI 路由已删除） |
 | 测试 | 62 个 `*_test.dart`，分布不均；E2E sync 框架存在但未落地 |
 | 国际化 | en + zh；设计稿提及 ja 尚未支持 |
 | 安全 | 原生端 SQLCipher；Web 端为 sqlite3 WASM（弱于原生）；JWT HS256 单用户 |
@@ -185,7 +185,7 @@
 
 ### 2.4 桌面端 Shell 完整化
 
-**现状**：`core/command_palette/` 已落地（FIR-87），`app/desktop_sidebar.dart` + `app/master_detail_layout.dart` + `app/shell_preferences.dart` 已存在（FIR-106），`core/shortcuts/` 已有 8 个 shortcut 文件。
+**现状**：`core/command_palette/` 已落地，`app/desktop_sidebar.dart` + `app/master_detail_layout.dart` + `app/shell_preferences.dart` 已存在，`core/shortcuts/` 已有 8 个 shortcut 文件。
 
 **阶段拆分**：
 - **M1（月 1）— 命令面板覆盖率达标**
@@ -196,7 +196,7 @@
 - **M2（月 3）— master-detail 三大模块铺开**
   - accounts、assets、investments 三个列表页在 `≥ 1024dp` 宽度下自动转 master-detail。
   - 详情区独立 router 子路由：URL 可深链到 detail（不破坏 web routing 检查清单）。
-  - 列偏好（FIR-106 续作）：每列宽度 + 排序持久化到 `shell_preferences`。
+  - 列偏好（续作）：每列宽度 + 排序持久化到 `shell_preferences`。
 - **M3（月 6）— 快捷键发现性**
   - 帮助页：从 `core/shortcuts/shortcut_bindings.dart` 自动渲染所有绑定 + 当前平台修饰键。
   - 触发方式：`?` 或 `Cmd+/` 打开 cheatsheet（已有 `shortcut_help_dialog.dart` 升级）。
@@ -272,8 +272,8 @@
 
 ### 3.1 同步协议 v2（解冻）
 当前 v1 是轮询 + 行级 LWW，文档 `docs/sync-protocol.md` 已明确以下为 out-of-scope：
-- 端到端加密（FIR-31）；
-- WebSocket / SSE 实时推送（FIR-33）；
+- 端到端加密；
+- WebSocket / SSE 实时推送；
 - 字段级 LWW（目前是行级）。
 长期需要重新评估：
 - **E2EE**：服务端零知识，密钥派生自登录密码 + 设备认证；
@@ -308,7 +308,7 @@
 
 ### 4.1 测试
 - **覆盖率**：当前目标 60%（项目）/ 70%（patch），需检查 `me`、`more`、`plan`、`portfolio`、`activity` 是否在 codecov ignore 之外；
-- **黄金图测试（visual regression）**：`docs/visual-baseline/` 已有规划（FIR-113），需要在 CI 落地（platform pinned，每个主页面至少 1 个 golden）；
+- **黄金图测试（visual regression）**：`docs/visual-baseline/` 已有规划，需要在 CI 落地（platform pinned，每个主页面至少 1 个 golden）；
 - **E2E sync**：见 §1.6；
 - **a11y 自动化**：`docs/design/12-usability-self-check.md §7` 提到引入 `dart_a11y` 或自定义 Semantics 校验器，目前是手工 checklist。
 
@@ -324,7 +324,7 @@
 
 ### 4.4 安全
 - Web 端敏感数据存储模型重审（见 §1.5）；
-- JWT 刷新窗口、设备撤销链路压测（已有 FIR-29/30/37 基础）；
+- JWT 刷新窗口、设备撤销链路压测（已有基础）；
 - 依赖审计：不再作为 GitHub Actions CI 门禁；需要时手动运行 `dart pub outdated`、`cargo audit` 与文件系统漏洞扫描，可后续补 SBOM 产出。
 
 ---
@@ -370,6 +370,5 @@
 
 - 本文档是**方向**；具体实现细节看 `docs/sync-protocol.md`、`docs/web-routing.md`、`docs/visual-baseline/`、`apps/mobile/README.md`。
 - 子路线图：`docs/roadmap-phase1.md`（短期）、`docs/roadmap-midterm-execution.md`（中期任务级）、`docs/roadmap-fire-os.md`（FIRE OS 演进）。
-- AI 架构与运行时以 `docs/ai-architecture.md` + `docs/ai-protocol.md` 为准（device-only，W-D7 后）。
-- 任务级别跟踪走 FIR-XXX 编号（见 CLAUDE.md 中的引用方式）。
+- AI 架构与运行时以 `docs/ai-architecture.md` + `docs/ai-protocol.md` 为准（device-only）。
 - 路线图调整请提交 PR 同时更新本文件顶部的"文档版本"。

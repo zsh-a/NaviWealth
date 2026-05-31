@@ -1,11 +1,11 @@
-/// Wave 35 / 36 — `PersistentUndoBanner`: global "已修改 X · 撤销" surface.
+/// `PersistentUndoBanner`: global "已修改 X · 撤销" surface.
 ///
 /// Sits above the bottom navigation bar in `AppShell`. Watches
 /// `undoEntriesStreamProvider`; shows the newest non-expired entry
 /// when present, hides otherwise. Tap "撤销" calls
 /// `DriftUndoStack.take(token)` and dismisses the banner.
 ///
-/// Wave 36 refactor — uses `AiSparkle` / `AiType` / `AiMotion` from
+/// Uses `AiSparkle` / `AiType` / `AiMotion` from
 /// `core/ai/visual/` so the banner shares the visual language of
 /// every other AI surface.
 library;
@@ -56,8 +56,8 @@ class PersistentUndoBanner extends ConsumerWidget {
     if (stack == null) return;
     await stack.take(token);
     // The reverter (kind → impl) lookup is the caller's responsibility
-    // — Wave 24 deliberately doesn't bake one in. The banner just
-    // surfaces + removes; future Wave wires the reverter dispatch.
+    // — deliberately doesn't bake one in. The banner just
+    // surfaces + removes; future wiring adds the reverter dispatch.
   }
 }
 

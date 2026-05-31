@@ -10,7 +10,7 @@ import 'drift_ai_trace_store.dart';
 
 /// Backend storage for [AiTrace] records.
 ///
-/// Production wiring (Wave 23): falls back to in-memory until the
+/// Production wiring: falls back to in-memory until the
 /// Drift database is ready, then switches to the Drift-backed store.
 /// The async DB boot is one-shot — once available we keep the same
 /// store instance for the rest of the session.

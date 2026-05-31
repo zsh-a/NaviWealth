@@ -32,7 +32,7 @@ class TransferMatch {
 /// The canonical [TransferMatch] → [AnalyticalUpload] conversion
 /// (§4.3.3). Single source shared by the cloud
 /// `ContextPack.analytical_uploads` path and the device
-/// `get_transfer_links` tool (W-D4.3b) so the device tool's output is
+/// `get_transfer_links` tool so the device tool's output is
 /// exactly what the backend `transfer_links` read model mirrors (§10).
 AnalyticalUpload transferMatchToUpload(TransferMatch m) {
   return AnalyticalUpload(

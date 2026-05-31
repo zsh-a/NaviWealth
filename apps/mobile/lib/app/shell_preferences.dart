@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../design_system/preferences/theme_preferences.dart';
 
-/// Persisted desktop-shell preferences (FIR-106).
+/// Persisted desktop-shell preferences.
 ///
 /// The two values driven through here both belong to the desktop master-
 /// detail experience and are user-tweakable from the UI:
@@ -17,8 +17,8 @@ import '../design_system/preferences/theme_preferences.dart';
 const String _kSidebarCollapsedKey = 'naviwealth.shell.sidebar_collapsed';
 const String _kMasterPaneWidthKey = 'naviwealth.shell.master_pane_width';
 
-/// Default width for the master list pane on desktop. 380dp is the value
-/// quoted in FIR-106 — wide enough for a primary asset row + delta chip
+/// Default width for the master list pane on desktop. 380dp is wide enough
+/// for a primary asset row + delta chip
 /// without truncation, narrow enough to leave the detail pane the bulk
 /// of a 1240dp window.
 const double kMasterPaneDefaultWidth = 380;

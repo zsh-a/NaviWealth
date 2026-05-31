@@ -1,4 +1,4 @@
-/// Device tool registry + Drift-backed dispatcher (§4.6 W-D4).
+/// Device tool registry + Drift-backed dispatcher.
 ///
 /// D-1.2: the registry *class* and the dispatcher live here as
 /// domain-neutral runtime. The *tool list* is composed per-domain via

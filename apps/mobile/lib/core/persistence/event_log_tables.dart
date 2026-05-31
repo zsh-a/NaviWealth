@@ -1,4 +1,4 @@
-/// Raw-SQL DDL for the `domain_event_log` table (FIR-125).
+/// Raw-SQL DDL for the `domain_event_log` table.
 ///
 /// `domain_event_log` is an append-only audit ledger for entity state
 /// changes (creations, field-level mutations, soft deletes, restores).
@@ -6,7 +6,7 @@
 /// the outbox is a transport buffer, this is the truth source for
 /// "what was the value before".
 ///
-/// The table is local-only by design (issue FIR-125 strategy (a)): it
+/// The table is local-only by design: it
 /// does not flow through the sync protocol. Each device thus has its
 /// own view of "what *I* did". Cross-device merging of event histories
 /// is left to a follow-up.

@@ -18,7 +18,7 @@ class MarketCapThresholds {
   const MarketCapThresholds({required this.largeMin, required this.smallMax})
     : assert(true, 'caller validates ordering');
 
-  /// Construct the default 200B / 2B split (FIR-53 product spec).
+  /// Construct the default 200B / 2B split.
   factory MarketCapThresholds.defaults() => MarketCapThresholds(
     largeMin: Decimal.parse('200000000000'),
     smallMax: Decimal.parse('2000000000'),
@@ -41,7 +41,7 @@ class MarketCapThresholds {
 
 /// Where a single classification field came from.
 ///
-/// `auto` — populated by MarketDataService (FIR-26) into the asset row.
+/// `auto` — populated by MarketDataService into the asset row.
 /// `manual` — explicit user override stored in [EquityClassificationOverrideStore].
 /// `missing` — neither source had a value; the field is treated as
 /// "未分类" in the UI and counts toward the unclassified prompt.
@@ -242,15 +242,15 @@ class DefaultEquityClassifier implements EquityClassifier {
   }
 
   /// Auto market cap is not yet populated by the current MarketDataService;
-  /// returning null lets [_resolve] fall through to "missing". When FIR-26
-  /// lands market-cap support, point this at the appropriate Asset field
+  /// returning null lets [_resolve] fall through to "missing". When
+  /// market-cap support lands, point this at the appropriate Asset field
   /// (or a sidecar metadata column) without having to revisit the rest of
   /// the analytics pipeline.
   Decimal? _autoMarketCap(Asset asset) => null;
 }
 
 /// Maps a free-form market / region hint string (as stored on the `Asset`
-/// row by FIR-26) to an [AssetMarket]. Intentionally permissive — every
+/// row) to an [AssetMarket]. Intentionally permissive — every
 /// canonical broker name we have seen so far flows through here.
 AssetMarket? assetMarketFromHint(String? raw) {
   if (raw == null) return null;

@@ -19,7 +19,7 @@ abstract class RouteGuard {
   RedirectPath redirect(GoRouterState state);
 }
 
-/// Empty default. Overridden once auth (FIR-30) lands; until then every route
+/// Empty default. Overridden once auth lands; until then every route
 /// is reachable.
 final routeGuardsProvider = Provider<List<RouteGuard>>((_) => const []);
 

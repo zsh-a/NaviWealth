@@ -10,7 +10,7 @@ Drives holdings valuation, dashboard, FIRE projections, benchmark comparison. Al
 - Falls back to a stale cache + freshness badge when offline; never blocks UI on a network round-trip.
 - The user opted in by adding the security to their portfolio.
 
-## 2. Metadata enrichment path — `searchSymbol` (FIR-78)
+## 2. Metadata enrichment path — `searchSymbol`
 
 **Only** for one-shot, user-initiated metadata import:
 
@@ -23,7 +23,7 @@ Constraints:
 - Never invoked from a background task or render path. A user gesture is required.
 - A failure (offline, upstream outage, no result) collapses to a non-blocking message — the form must still save.
 - Imported metadata fills **only empty fields** on the existing asset row (`SecuritiesAssetRepository.enrichMetadata`); user-edited fields are never overwritten.
-- Trade-entry does **not** call `searchSymbol`; it reads from the local FTS catalog (FIR-76) and writes via `upsertSecurity` (FIR-75). A fresh install is fully usable offline.
+- Trade-entry does **not** call `searchSymbol`; it reads from the local FTS catalog and writes via `upsertSecurity`. A fresh install is fully usable offline.
 
 ## Why the split exists
 

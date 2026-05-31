@@ -36,7 +36,7 @@ final _valuationStatusTickerProvider = StreamProvider.autoDispose<DateTime>((
 
 final _financeAmountsHiddenProvider = StateProvider<bool>((ref) => false);
 
-/// Home cockpit (FIR-52, redesigned).
+/// Home cockpit.
 ///
 /// One-column scroll: Net Worth Hero → AI Insight Feed → Allocation
 /// Summary → Recent Activity preview → Trend chart. The heavy Sankey

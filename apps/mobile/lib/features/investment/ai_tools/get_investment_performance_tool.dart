@@ -1,4 +1,4 @@
-/// `get_investment_performance` — device port (§4.6 W-D4.3b).
+/// `get_investment_performance` — device port.
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/get_investment_performance.rs`. Per

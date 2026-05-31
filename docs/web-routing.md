@@ -2,7 +2,7 @@
 
 Behavior contract for the Flutter web build's go_router setup. Automated coverage lives in `apps/mobile/test/app/router_test.dart` and `apps/mobile/web_smoke/tests/router.spec.ts`; this doc covers platform-glue behaviors that only manifest in a real browser (history stack, hard refresh, address-bar deep links).
 
-Tracking issues: FIR-43 (this verification), FIR-14 (initial setup), FIR-40 (cross-browser matrix).
+Tracking issues: web routing verification, initial setup, cross-browser matrix.
 
 ## Setup
 
@@ -13,7 +13,7 @@ cd build/web && python3 -m http.server 8080
 # open http://localhost:8080/
 ```
 
-Repeat on each browser in the FIR-40 matrix (Chrome, Safari, Edge, Firefox; macOS + iOS Safari at minimum).
+Repeat on each browser in the cross-browser matrix (Chrome, Safari, Edge, Firefox; macOS + iOS Safari at minimum).
 
 ## Routes in scope
 
@@ -41,7 +41,7 @@ Common deep links (sample — `route_paths.dart` is the full list):
 
 ## Checklist
 
-For each item: tick **Pass** if behavior matches; otherwise file a follow-up linked to FIR-43.
+For each item: tick **Pass** if behavior matches; otherwise file a follow-up.
 
 ### A. Tab navigation pushes browser history
 
@@ -94,6 +94,6 @@ With `BYPASS_AUTH=false` (production / staging build):
 
 ## Triage rules
 
-- Routing bug → fix in FIR-43.
-- Missing **feature** (e.g. a route doesn't exist yet) → file under the relevant feature epic; don't expand FIR-43.
-- Browser-specific regression (Safari only, etc.) → attach to FIR-40 with the failing checklist item ID.
+- Routing bug → fix in the web routing task.
+- Missing **feature** (e.g. a route doesn't exist yet) → file under the relevant feature epic; don't expand the web routing task.
+- Browser-specific regression (Safari only, etc.) → attach to the cross-browser matrix with the failing checklist item ID.

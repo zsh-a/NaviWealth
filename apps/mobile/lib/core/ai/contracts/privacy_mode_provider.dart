@@ -1,6 +1,6 @@
 /// §5.10.5 — runtime user-facing toggle for AI privacy posture.
 ///
-/// Post-W-D7 the chat path is device-only, so this setting now only
+/// The chat path is device-only, so this setting now only
 /// gates the cloud-Vision ingest fallback (see `ingest_privacy_gate`).
 /// [maxBudgetTier] is also read by ingest to stamp the AiTrace tier.
 ///

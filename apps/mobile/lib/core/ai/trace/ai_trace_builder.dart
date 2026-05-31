@@ -2,7 +2,7 @@
 ///
 /// Lifecycle:
 ///
-///  1. Caller constructs a seed [AiTrace] (post-W-D7: no router).
+///  1. Caller constructs a seed [AiTrace].
 ///  2. The execution layer wraps it in an [AiTraceBuilder].
 ///  3. Each finished LLM round / tool dispatch calls
 ///     [AiTraceBuilder.addSpan] (Opik-style hierarchical model).
@@ -31,7 +31,7 @@ class AiTraceBuilder {
   Map<String, Object?>? _invocation;
 
   /// Attach an `AiIntentInvocation.toTraceJson()` summary to this
-  /// turn (Wave 33). Called once at chat dispatch when the surface
+  /// turn. Called once at chat dispatch when the surface
   /// originated from a registered invocation.
   void attachInvocation(Map<String, Object?> invocation) {
     _invocation = invocation;

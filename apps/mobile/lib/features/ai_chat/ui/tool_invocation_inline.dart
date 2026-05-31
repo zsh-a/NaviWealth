@@ -1,4 +1,4 @@
-/// Wave 37 — inline tool attribution + domain renderer (no card chrome).
+/// Inline tool attribution + domain renderer (no card chrome).
 ///
 /// Replaces the card-shaped `ToolInvocationCard` for tools that have a
 /// domain renderer registered in `tool_invocation_renderers.dart`.

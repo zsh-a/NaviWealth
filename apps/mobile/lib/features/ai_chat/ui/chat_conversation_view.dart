@@ -39,7 +39,7 @@ class ChatConversationView extends ConsumerStatefulWidget {
   /// Inset around the message list. Sheets run tighter than the page.
   final EdgeInsets padding;
 
-  /// Wave 33 invocation intent that triggered this turn, forwarded to
+  /// Invocation intent that triggered this turn, forwarded to
   /// [MessageBubble] so the reply-chip suggester can specialise.
   final String? invocationIntent;
 

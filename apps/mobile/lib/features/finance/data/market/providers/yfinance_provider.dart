@@ -12,7 +12,7 @@ import 'market_provider.dart';
 /// Yahoo Finance adapter using the public `query1`/`query2` chart and search
 /// endpoints. These are the same endpoints `yfinance` (Python) wraps.
 ///
-/// Caveats — see FIR-25 v2 selection notes:
+/// Caveats — see selection notes:
 /// * Yahoo's TOS prohibits commercial redistribution. Acceptable for personal,
 ///   non-commercial use only. The composite service must not surface this
 ///   data in any commercial product without a license.

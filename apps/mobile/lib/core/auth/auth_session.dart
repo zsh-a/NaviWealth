@@ -2,7 +2,7 @@ import 'dart:convert';
 
 /// Active access-token session held by the client.
 ///
-/// The backend (FIR-29) issues a single long-lived (30-day) JWT and exposes
+/// The backend issues a single long-lived (30-day) JWT and exposes
 /// `POST /auth/refresh` to rotate it. There is no separate refresh token —
 /// rotation is gated by the existing access token still being unexpired and
 /// the device row's `jti` matching. We persist the whole record so the app

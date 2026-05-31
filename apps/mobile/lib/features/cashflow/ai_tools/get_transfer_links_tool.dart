@@ -1,4 +1,4 @@
-/// `get_transfer_links` — device port (§4.6 W-D4.3b, Analytical).
+/// `get_transfer_links` — device port (Analytical).
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/get_transfer_links.rs`. Per §4.3.3 the

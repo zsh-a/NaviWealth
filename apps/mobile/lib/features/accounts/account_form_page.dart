@@ -271,7 +271,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                     ),
                   ),
                   children: [
-                    // Wave 40 — surface AI provenance when this
+                    // Surface AI provenance when this
                     // account was last touched by an AI proposal
                     // (`propose_account_create`). The widget is
                     // self-gating: renders nothing when the entity

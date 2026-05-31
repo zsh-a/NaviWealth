@@ -43,7 +43,7 @@ class RecurringPattern {
 /// The canonical [RecurringPattern] → [AnalyticalUpload] conversion
 /// (§4.3.3). Single source shared by the cloud
 /// `ContextPack.analytical_uploads` path and the device
-/// `get_recurring_patterns` tool (W-D4.3b), so the device tool's output
+/// `get_recurring_patterns` tool, so the device tool's output
 /// is exactly what the backend `recurring_patterns` read model mirrors
 /// (no Dart/Rust heuristic drift; §10).
 AnalyticalUpload recurringPatternToUpload(RecurringPattern p) {

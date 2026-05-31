@@ -22,7 +22,7 @@ enum InsightKind {
   // §5.10.10 / S5a.1 — Layer 4 ingest queue has parsed-but-unconfirmed
   // drafts waiting for the user to confirm / skip.
   ingestQueue,
-  // FIR-142 — current-month operating cashflow is below zero.
+  // Current-month operating cashflow is below zero.
   cashFlowDeficit,
   // FIRE OS Phase 1 — trailing-12-month withdrawal rate is above the
   // plan's safe withdrawal rate.

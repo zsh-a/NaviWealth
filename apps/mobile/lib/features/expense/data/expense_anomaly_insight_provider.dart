@@ -94,7 +94,7 @@ String _monthKey(DateTime date) =>
 /// The canonical anomaly → [AnalyticalUpload] conversion (§4.3.3).
 ///
 /// Single source for both the cloud `ContextPack.analytical_uploads`
-/// path and the device `get_anomaly_flags` tool (W-D4.3), so the
+/// path and the device `get_anomaly_flags` tool, so the
 /// device tool's output is exactly what the backend `anomaly_flags`
 /// read model mirrors. `null` ⇒ no anomaly to report.
 AnalyticalUpload? analyticalAnomalyUpload(

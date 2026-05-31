@@ -261,7 +261,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
           ),
         ),
         children: [
-          // Wave 40 — AI provenance hint for assets touched by
+          // AI provenance hint for assets touched by
           // `propose_asset_valuation`. Self-gating: hidden when no
           // recent touch on this asset id.
           if (widget.isEdit && widget.assetId != null) ...[

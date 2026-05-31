@@ -1,4 +1,4 @@
-/// `get_recurring_patterns` — device port (§4.6 W-D4.3b, Analytical).
+/// `get_recurring_patterns` — device port (Analytical).
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/get_recurring_patterns.rs`. Per §4.3.3

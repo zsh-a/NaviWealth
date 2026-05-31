@@ -1,4 +1,4 @@
-/// Wave 46 — one-tap connectivity probe for an [LlmProfile].
+/// One-tap connectivity probe for an [LlmProfile].
 ///
 /// Fires a **minimal real request** down the *exact* provider path the
 /// device runtime uses so a green result means "this key + endpoint +

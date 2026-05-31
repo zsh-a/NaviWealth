@@ -123,14 +123,14 @@ class ChatRepository {
     String? model,
     CancelToken? cancelToken,
 
-    /// Wave 33 — when this turn was triggered through an
+    /// When this turn was triggered through an
     /// [AiIntentInvocation] (capsule / insight / command), pass the
     /// invocation's `toTraceJson()` here so the finalised trace
     /// records the entry point. Plain "user typed in chat tab" calls
     /// leave this `null`.
     Map<String, Object?>? invocationTrace,
   }) async {
-    // Device-only AI (W-D7 removed the cloud relay): the runtime authenticates
+    // Device-only AI: the runtime authenticates
     // with the user's own LLM key, not this token. In local-only mode there is
     // no cloud session, so synthesize one scoped to [ownerUserId] — the API
     // client requires a non-null session but ignores its token on-device.
@@ -229,7 +229,7 @@ class ChatRepository {
     final invocationOrder = <String>[];
     final localCancel = cancelToken ?? CancelToken();
     SendOutcome outcome = SendOutcome.completed;
-    // Wave 30: granular terminal reason for the finalised trace.
+    // Granular terminal reason for the finalised trace.
     // SendOutcome collapses error/cancel into the user-visible shape;
     // the trace surface needs the finer split so the audit page can
     // tell "user cancelled" from "stream errored" from "policy denied".
@@ -449,7 +449,7 @@ class ChatRepository {
 
   /// Mutate the apply state of one tool invocation inside [messageId].
   ///
-  /// Used by FIR-67 propose-card flow: confirm / cancel / undo each call this
+  /// Used by propose-card flow: confirm / cancel / undo each call this
   /// to persist the new status alongside the existing assistant message so a
   /// reload preserves the user's decision.
   Future<void> updateToolApplyState({
@@ -543,7 +543,7 @@ class ChatRepository {
 
   /// Insert an in-band system message into the timeline. Used both
   /// internally (context-window truncation notices) and by the chat
-  /// controller (FIR-71 staleness warning when the pre-chat sync gate
+  /// controller (staleness warning when the pre-chat sync gate
   /// times out).
   Future<void> insertSystemNotice({
     required String sessionId,

@@ -1,4 +1,4 @@
-/// Wave 36 — the AI pill primitive.
+/// The AI pill primitive.
 ///
 /// Replaces every ad-hoc capsule / chip / outlined-button decoration
 /// across AI surfaces. One shape, three states:

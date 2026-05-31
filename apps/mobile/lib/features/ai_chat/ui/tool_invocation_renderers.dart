@@ -39,7 +39,7 @@ Widget? renderToolOutput(
       'get_geo_breakdown' ||
       'get_market_cap_breakdown' => _BreakdownView(output: output),
       'get_risk_alerts' => _RiskAlertList(output: output),
-      // Wave 34 — Analytical / Snapshot read-model renderers.
+      // Analytical / Snapshot read-model renderers.
       'get_asset_allocation' => AssetAllocationView(output: output),
       'get_recurring_patterns' => RecurringPatternsView(output: output),
       'get_subscription_changes' => SubscriptionChangesView(output: output),
@@ -746,7 +746,7 @@ class _EmptyResult extends StatelessWidget {
 /// hidden behind a "查看 raw JSON" toggle even when the payload itself is
 /// huge.
 // ===========================================================================
-// Wave 34 — Domain renderers for Snapshot/Analytical read-model tools.
+// Domain renderers for Snapshot/Analytical read-model tools.
 // Calm Intelligence: surface tone, no glow, type-first layout. Each view
 // degrades gracefully (empty / off-shape payloads) and never throws.
 // ===========================================================================

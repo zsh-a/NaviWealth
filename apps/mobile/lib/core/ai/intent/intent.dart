@@ -1,4 +1,4 @@
-/// Barrel for the AI Intent layer (Wave 33).
+/// Barrel for the AI Intent layer.
 library;
 
 export 'ai_context_chip_scope.dart';

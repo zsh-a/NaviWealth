@@ -1,8 +1,8 @@
-/// Anthropic Messages API wire types (§4.6 W-D2).
+/// Anthropic Messages API wire types.
 ///
 /// Dart mirror of `apps/backend/src/ai/adapters/anthropic/wire.rs`,
-/// plus content-block builders the device loop (W-D3) and on-device
-/// Vision ingest (W-D5) need. snake_case JSON per §10, even though
+/// plus content-block builders the device loop and on-device
+/// Vision ingest need. snake_case JSON per §10, even though
 /// these requests never touch our servers.
 library;
 
@@ -40,7 +40,7 @@ class AnthropicChatMessage {
 }
 
 /// Tool schema as Anthropic expects it. `inputSchema` is a JSON Schema
-/// object (ported verbatim from the backend tool registry in W-D4).
+/// object (ported verbatim from the backend tool registry).
 class AnthropicToolSchema {
   const AnthropicToolSchema({
     required this.name,
@@ -132,7 +132,7 @@ abstract final class AnthropicBlocks {
     if (isError) 'is_error': true,
   };
 
-  /// base64 image block for on-device Vision ingest (W-D5). The raw
+  /// base64 image block for on-device Vision ingest. The raw
   /// image never leaves the device except directly to the user's
   /// provider.
   static Map<String, Object?> imageBase64({

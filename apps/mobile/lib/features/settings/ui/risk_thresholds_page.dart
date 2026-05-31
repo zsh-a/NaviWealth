@@ -1,7 +1,7 @@
 /// Advanced sub-page that exposes the four concentration-alert
 /// thresholds (asset / sector / region / currency).
 ///
-/// Until W-D7-RA-1 this was the entire "Risk" section on the Settings
+/// Previously, this was the entire "Risk" section on the Settings
 /// overview — four sliders consuming a whole card for a power-user
 /// setting most people will never touch. The new SSOT model promotes
 /// the actual user-facing "Risk appetite" dial to the top of Settings;

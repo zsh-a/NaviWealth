@@ -1,6 +1,6 @@
-/// Wave 35 / 36 / 39 — `AiSourceMark`: micro-prefix for AI-modified
+/// `AiSourceMark`: micro-prefix for AI-modified
 /// fields, plus the consumer wrapper [AiTouchMark] that reads from the
-/// `ai_touched_entities` side table (Wave 39) and shows the mark only
+/// `ai_touched_entities` side table and shows the mark only
 /// when the entity was actually touched by an AI proposal.
 ///
 /// Use [AiTouchMark] from detail pages; [AiSourceMark] alone is for
@@ -30,7 +30,7 @@ class AiSourceMark extends StatelessWidget {
   }
 }
 
-/// Wave 39 — bound version of [AiSourceMark]. Watches
+/// Bound version of [AiSourceMark]. Watches
 /// `aiTouchedAtProvider((entityType, entityId))`; renders nothing when
 /// the entity has no recent touch. Detail pages drop this in next to
 /// any field they want to flag — the widget itself decides when to

@@ -14,11 +14,11 @@ import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
 import 'liability_l10n.dart';
 
-/// Add-liability form. Edit support is intentionally out of scope for the
-/// initial FIR-47 PR — the schedule is materialised at create time and
-/// editing principal/rate/term would require a "regenerate the schedule
-/// from period N" routine that's a non-trivial UX problem. The form is
-/// scoped to creating new liabilities; user-driven edits become FIR-47-1.
+/// Add-liability form. Edit support is intentionally out of scope — the
+/// schedule is materialised at create time and editing principal/rate/term
+/// would require a "regenerate the schedule from period N" routine that's
+/// a non-trivial UX problem. The form is scoped to creating new
+/// liabilities.
 class LiabilityFormPage extends ConsumerStatefulWidget {
   const LiabilityFormPage({super.key});
 

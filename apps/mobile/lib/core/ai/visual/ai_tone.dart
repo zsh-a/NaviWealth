@@ -1,4 +1,4 @@
-/// Wave 36 — color discipline for AI surfaces.
+/// Color discipline for AI surfaces.
 ///
 /// AI surfaces use **four** color roles. Material's `tertiary` /
 /// `secondary` are forbidden inside `lib/features/ai_chat/`,

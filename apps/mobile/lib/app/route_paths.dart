@@ -122,7 +122,7 @@ abstract final class AppRoutes {
   static const settingsAiHistory = '/settings/ai-history';
   // §5.10.5 — user-facing privacy posture for cloud-bound AI requests.
   static const settingsAiPrivacy = '/settings/ai-privacy';
-  // §4.6 W-D1 — bring-your-own LLM key for the on-device AI runtime.
+  // Bring-your-own LLM key for the on-device AI runtime.
   static const settingsAiLlm = '/settings/ai-llm';
   // Investment preferences — risk appetite SSOT + advanced
   // concentration thresholds.

@@ -53,7 +53,7 @@ final deviceLlmClientProvider = Provider<DeviceLlmClient?>((ref) {
   };
 });
 
-/// §4.6 W-D3 — the on-device runtime, or `null` when unavailable (web /
+/// The on-device runtime, or `null` when unavailable (web /
 /// no active profile). Rebuilt automatically when the active profile
 /// changes, since [deviceLlmClientProvider] (which watches
 /// [deviceLlmAvailableProvider] / [llmCredentialsProvider]) is watched.
@@ -79,10 +79,9 @@ final deviceLlmRuntimeProvider = Provider<DeviceLlmRuntime?>((ref) {
   );
 });
 
-/// §4.6 W-D7 — what `ChatRepository` injects. Device-only: every turn
+/// What `ChatRepository` injects. Device-only: every turn
 /// runs on the on-device runtime; with no device (web / no key / opted
-/// out) the turn surfaces an explanatory error (no cloud relay — the
-/// `/ai/chat` backend was deleted in W-D7).
+/// out) the turn surfaces an explanatory error (no cloud relay).
 final aiChatApiClientProvider = Provider<AiChatApiClient>((ref) {
   return RuntimeRoutingAiChatApiClient(
     device: ref.watch(deviceLlmRuntimeProvider),

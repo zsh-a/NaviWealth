@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../tokens/breakpoints.dart';
 
-/// Width-aware aspect ratios for line / bar / area charts (FIR-106).
+/// Width-aware aspect ratios for line / bar / area charts.
 ///
 /// Wide desktop windows can host a more cinematic 2.4:1 frame; mobile and
 /// tablet keep a tighter 1.6:1 so the chart still has vertical breathing

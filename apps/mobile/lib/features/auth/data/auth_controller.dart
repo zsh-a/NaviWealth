@@ -278,7 +278,7 @@ class AuthController extends AsyncNotifier<AuthState> {
     _bumpRouterRedirect();
   }
 
-  /// Notify go_router (via FIR-15's refresh listenable) that auth state
+  /// Notify go_router (via refresh listenable) that auth state
   /// changed. Deferred to a microtask so we don't mutate
   /// [routeRedirectVersionProvider] from inside a Riverpod build —
   /// `listenSelf` fires synchronously during the AsyncNotifier's build

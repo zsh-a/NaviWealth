@@ -1,4 +1,4 @@
-/// `propose_liability_payment` — device port (§4.6 W-D4.5c).
+/// `propose_liability_payment` — device port.
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/propose_liability_payment.rs`; logic a

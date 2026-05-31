@@ -340,7 +340,7 @@ class _OverlayIconButton extends StatelessWidget {
   }
 }
 
-/// Wave 33: synthesise a stable insight id from kind + key params so
+/// Synthesise a stable insight id from kind + key params so
 /// the AiTrace records `object_id` consistently across rebuilds. Not a
 /// persistent identifier — purely for attribution in this session.
 String _insightStableId(InsightItem item) {

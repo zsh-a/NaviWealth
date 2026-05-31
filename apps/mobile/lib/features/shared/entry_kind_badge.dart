@@ -5,7 +5,7 @@ import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'entry_kind_labels.dart';
 
-/// FIR-128 §1.1 — pill-shaped badge that surfaces the derived
+/// Pill-shaped badge that surfaces the derived
 /// [EntryKind] of a journal entry (icon + short label, colour-toned by
 /// kind).
 ///

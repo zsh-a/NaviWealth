@@ -242,7 +242,7 @@ class _AggregateHeader extends StatelessWidget {
   }
 }
 
-/// §5.10.5 — pending-undo section. Lists every persisted entry in
+/// Pending-undo section. Lists every persisted entry in
 /// [DriftUndoStack] and exposes per-row "撤销" buttons. Tapping
 /// [DriftUndoStack.take] removes the entry from the stack (the
 /// reverter dispatch that actually rolls the data back is intentional
@@ -455,7 +455,7 @@ class _TraceRow extends StatelessWidget {
     );
   }
 
-  /// Prefer the invocation intent (Wave 33) → falls back to the
+  /// Prefer the invocation intent → falls back to the
   /// intent label → finally a generic placeholder. The invocation
   /// intent is more user-actionable ("explain_change" tells you *what*
   /// the turn was for, while `label` is often the chat tab's

@@ -12,7 +12,7 @@ import '../domain/dashboard_models.dart';
 /// excluded from the totals because no FX rate is available to convert
 /// them into the active base currency.
 ///
-/// FIR-73: silently dropping foreign-currency rows is what shipped before;
+/// Silently dropping foreign-currency rows is what shipped before;
 /// the banner makes the omission visible so users don't read a stale total
 /// as ground truth. Tapping it surfaces the offending holdings (currency
 /// + id) so the user can either record the missing rate or fix the

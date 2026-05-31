@@ -1,4 +1,4 @@
-/// Wave 36 — motion tokens for AI surfaces.
+/// Motion tokens for AI surfaces.
 ///
 /// Material's `easeOut` is right for general UI but feels "springy" on
 /// AI panels (bottom sheet entrance, chip pop-in, undo banner reveal).

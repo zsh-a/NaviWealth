@@ -1,4 +1,4 @@
-/// Wave 24 — Drift-backed undo stack for AI-driven local writes.
+/// Drift-backed undo stack for AI-driven local writes.
 ///
 /// Today [LocalImmediateWriteExecutor] keeps undo entries in process
 /// memory as `Future<void> Function()` closures; that's fine when the
@@ -58,7 +58,7 @@ class DriftUndoStack {
 
   String get _owner => ownerUserId ?? '';
 
-  /// Wave 35 — manual change-notify channel. The Drift `customSelect`
+  /// Manual change-notify channel. The Drift `customSelect`
   /// stream API can't auto-track tables created via `customStatement`
   /// (no `TableInfo`), so each mutation calls [_notifyChange] and the
   /// [watchAll] stream re-fetches.
@@ -154,7 +154,7 @@ class DriftUndoStack {
     _notifyChange();
   }
 
-  /// Wave 35 — stream the current entry list (newest first). Emits an
+  /// Stream the current entry list (newest first). Emits an
   /// initial snapshot and re-fetches after every mutation routed
   /// through this stack instance.
   Stream<List<PersistedUndoEntry>> watchAll({int limit = 100}) async* {

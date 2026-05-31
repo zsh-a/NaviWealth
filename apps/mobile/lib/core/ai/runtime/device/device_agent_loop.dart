@@ -1,13 +1,13 @@
-/// Provider-neutral device LLM/tool loop (§4.6 W-D3).
+/// Provider-neutral device LLM/tool loop.
 ///
 /// Dart port of `apps/backend/src/ai/runtime/agent_loop.rs`
-/// (`run_inner` + `collect_model_round`). Consumes the W-D2
+/// (`run_inner` + `collect_model_round`). Consumes the
 /// [LlmStreamEvent] stream per round and emits the existing
 /// [AiChatEvent] taxonomy so `ChatRepository` / the chat UI / the trace
 /// builder stay byte-for-byte unchanged versus the cloud path.
 ///
 /// Differences from the backend, all intentional:
-/// * tool data comes from a [DeviceToolDispatcher] over Drift (W-D4),
+/// * tool data comes from a [DeviceToolDispatcher] over Drift,
 ///   not D1 — so there is no freshness gate on this path (§4.6.1).
 /// * the turn-timeout race uses a Dart [Timer] instead of
 ///   `gloo_timers::select`.

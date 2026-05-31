@@ -1,5 +1,5 @@
-/// Shared proposal scaffolding for the device `propose_*` tools
-/// (§4.6 W-D4.5). Verbatim Dart port of the envelope + reference
+/// Shared proposal scaffolding for the device `propose_*` tools.
+/// Verbatim Dart port of the envelope + reference
 /// resolution + category matching in `apps/backend/src/ai/proposals.rs`
 /// so a device-generated plan is **byte-identical** to the cloud one —
 /// the existing `ProposalEnvelope`/`proposal_applier` confirm flow

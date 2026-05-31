@@ -1,4 +1,4 @@
-# Multi-device Sync — Manual E2E Checklist (FIR-61)
+# Multi-device Sync — Manual E2E Checklist
 
 Complements the automated suites (`apps/mobile/test/e2e/sync_e2e_test.dart`, `apps/mobile/web_smoke/tests/multi_tab.spec.ts`) and the protocol catalogue in [`sync-protocol-tests.md`](./sync-protocol-tests.md). Covers what automation can't: real OS background schedulers, real network jitter, real human-eye latency, and Flutter UI flows unreachable from Playwright (canvas, no semantics).
 

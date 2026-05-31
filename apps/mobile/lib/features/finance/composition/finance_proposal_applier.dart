@@ -63,7 +63,7 @@ class FinanceProposalApplier implements ProposalApplier {
   final ManualAssetRepository manualAssetRepo;
   final LiabilityRepository liabilityRepo;
 
-  /// Wave 39 — when present, every successful [apply] records an AI-
+  /// When present, every successful [apply] records an AI-
   /// touch entry keyed by `(entityType, entityId)`. Optional so
   /// existing tests (which inject the applier with hand-rolled stubs)
   /// don't need a Drift DB to compile. Production wiring in
@@ -71,7 +71,7 @@ class FinanceProposalApplier implements ProposalApplier {
   final DriftAiTouchedStore? aiTouchedStore;
 
   /// Resolves the current single-user owner id, used to mint stable
-  /// `system-account:<userId>:<path>` ids for the FIR-133 seeded
+  /// `system-account:<userId>:<path>` ids for the seeded
   /// expense / liability tree. Same shape as
   /// [MutationStamper.currentUserId] — production wiring delegates
   /// to that lookup so the applier never disagrees with the repo
@@ -130,7 +130,7 @@ class FinanceProposalApplier implements ProposalApplier {
           'unknown proposal kind: ${plan.kind}',
         ),
       };
-      // Wave 39 — when an apply succeeds, record the AI touch keyed by
+      // When an apply succeeds, record the AI touch keyed by
       // (entityType, entityId). Detail pages surface a tiny sparkle
       // prefix for recent touches; the touch survives across restarts
       // because the table is persisted in Drift.
@@ -636,7 +636,7 @@ class FinanceProposalApplier implements ProposalApplier {
   }
 }
 
-/// FIR-67 — Finance-domain applier wiring. Resolves all repositories +
+/// Finance-domain applier wiring. Resolves all repositories +
 /// fire writers once and instantiates [FinanceProposalApplier]. Used by
 /// `bootstrap.dart` to override `proposalApplierProvider`.
 final financeProposalApplierProvider = FutureProvider<ProposalApplier>((

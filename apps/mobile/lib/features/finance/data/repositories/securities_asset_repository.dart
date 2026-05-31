@@ -140,7 +140,7 @@ class SecuritiesAssetRepository {
   }
 
   /// Fill **only** fields that are still null on the existing row. Used by
-  /// FIR-78's "同步元数据" / "从网络导入" actions: the network is treated as a
+  /// The "同步元数据" / "从网络导入" actions: the network is treated as a
   /// best-effort metadata enrichment, never as a source of truth, so any
   /// field the user has already touched is left alone. Currency is
   /// non-nullable in the schema and so is never overwritten through this

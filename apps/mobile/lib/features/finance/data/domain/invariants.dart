@@ -4,7 +4,7 @@ import 'enums.dart';
 import 'journal_entry.dart';
 import 'posting.dart';
 
-/// FIR-130 — base-currency FX rate lookup interface used by the JE
+/// Base-currency FX rate lookup interface used by the JE
 /// balance check. Kept narrow on purpose: the validator wants the rate
 /// at the JE date and nothing else.
 ///
@@ -46,7 +46,7 @@ class IdentityFxRateSource implements FxRateSource {
   }
 }
 
-/// FIR-130 — outcome of [evaluateEntryBalance]. Carries enough detail
+/// Outcome of [evaluateEntryBalance]. Carries enough detail
 /// for the writer to surface a useful error to the user (or for a debug
 /// build to assert / log the offending JE).
 class JournalEntryBalanceReport {
@@ -106,7 +106,7 @@ class EntryBalanceProblem {
   final String? postingId;
 }
 
-/// FIR-130 — default tolerance for the JE balance check. 1e-6 absorbs
+/// Default tolerance for the JE balance check. 1e-6 absorbs
 /// the rounding noise from string-stored Decimals while still catching
 /// genuine off-by-one cents (which differ by 1e-2).
 final Decimal kDefaultBalanceTolerance = Decimal.parse('0.000001');

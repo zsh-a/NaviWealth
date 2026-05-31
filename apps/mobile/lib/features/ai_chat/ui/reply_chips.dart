@@ -1,8 +1,8 @@
-/// Wave 34 — Reply chip generator (rules-based v1).
+/// Reply chip generator (rules-based v1).
 ///
 /// Picks up to 3 follow-up suggestions to show under a completed
 /// assistant turn. The signal is intentionally crude: hashed off the
-/// invocation intent (Wave 33) and the set of tool names the assistant
+/// invocation intent and the set of tool names the assistant
 /// used in the turn. A future revision can ship an end-side classifier.
 ///
 /// [suggestReplyChips] returns **stable chip ids**, not display text, so

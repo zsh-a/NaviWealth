@@ -1,4 +1,4 @@
-/// Wave 35 — `InteractionMode` derived from a [ProposalEnvelope].
+/// `InteractionMode` derived from a [ProposalEnvelope].
 ///
 /// The §5.5 doc rule: confirmation UI must come from `(risk,
 /// side_effect)` — feature code is *not allowed* to hand-pick a mode.

@@ -1,4 +1,4 @@
-/// Public API for the global command palette (FIR-87).
+/// Public API for the global command palette.
 ///
 /// Wire `showCommandPalette` to the `Cmd/Ctrl+K` shortcut callback exposed
 /// by `GlobalShortcutsScope`.

@@ -72,7 +72,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 
 | 约束 | 来源 | 对设计的影响 |
 |---|---|---|
-| AI 完全设备端，无 `/ai/chat` 中继 | [`ai-architecture.md`](./ai-architecture.md) §4.6（W-D7） | 评分 + tool 实现全部 Dart。Backend 不解析期权语义。 |
+| AI 完全设备端，无 `/ai/chat` 中继 | [`ai-architecture.md`](./ai-architecture.md) §4.6 | 评分 + tool 实现全部 Dart。Backend 不解析期权语义。 |
 | Backend 只做 sync_rows 存储 | [`sync-v2.md`](./sync-v2.md) | 派生数据（opportunity cache）**不上同步**；用户状态（profile / approved / journal）走行级同步。 |
 | Read Model 三层 | `lib/core/ai/contracts/tool_descriptor.dart` | profile = `snapshot`，opportunity = `analytical`，single chain = `scopedDetail`。 |
 | Money 类型 | CLAUDE.md「Money」 | 所有期权金额走 `Money` + `Decimal`。 |
@@ -82,7 +82,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 
 ### 2.2 不会被打破的现有原则
 
-- 不重蹈 W-D7 的覆辙：**评分逻辑不上 Worker**。P5 接 OAuth 行情源时，Worker 角色严格限制为"凭证持有 + HTTP 透传"，禁止任何 normalize / score / cache。
+- **评分逻辑不上 Worker**。P5 接 OAuth 行情源时，Worker 角色严格限制为"凭证持有 + HTTP 透传"，禁止任何 normalize / score / cache。
 - 不破坏 [`market-data-providers.md`](./market-data-providers.md) 的 valuation / metadata 双路径：`OptionsChainProvider` 是**第三条**路径——"low-frequency user-initiated scan"，单独定义 cache 与 rate limit 策略。
 - 不污染 FIRE engine：期权产生的现金流通过既有 `cashflow_buckets` 接入 FIRE，FIRE engine 不感知期权语义。
 
@@ -654,7 +654,7 @@ P0/P3 不需要新增 backend 业务表；服务端通过 [`sync-v2.md`](./sync-
 |---|---|---|---|
 | 2026-05-21 | MVP 行情源 = yfinance | Tradier sandbox / Polygon | 零成本、复用现有 `MarketHttpClient`；TOS 约束已被 [`market-data-providers.md`](./market-data-providers.md) 锚定 |
 | 2026-05-21 | AI tool 只读 cache | tool 可触发扫描 | 控本 + 解释一致性 + 限流可预测；详见 §8.1 |
-| 2026-05-21 | 评分引擎在端侧（纯 Dart） | 在 Worker 上 | 与 W-D7 device-only 原则一致；评分逻辑不下放 server |
+| 2026-05-21 | 评分引擎在端侧（纯 Dart） | 在 Worker 上 | 与 device-only 原则一致；评分逻辑不下放 server |
 | 2026-05-21 | opportunity cache 不上同步 | 走 sync_rows | 派生数据，重算成本低；跨设备各自扫描更新鲜 |
 | 2026-05-21 | profile / approved / journal 走 sync_rows | 仅本地 | 用户状态，跨设备一致性必要 |
 | 2026-05-21 | 模块为独立 feature `options_income/` | 塞进 `investment/` | 跨 investment / accounts / fire / rebalance，独立 feature 避免双向依赖 |

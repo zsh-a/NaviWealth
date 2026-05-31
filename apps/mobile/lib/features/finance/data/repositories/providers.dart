@@ -47,7 +47,7 @@ final manualAssetRepositoryProvider = FutureProvider<ManualAssetRepository>((
   );
 });
 
-/// FIR-75: securities-class assets (stock / ETF / fund / bond / crypto).
+/// Securities-class assets (stock / ETF / fund / bond / crypto).
 /// Sibling to [manualAssetRepositoryProvider]; the two repos write into
 /// the same `assets` table but own different identity schemes.
 final securitiesAssetRepositoryProvider =
@@ -65,7 +65,7 @@ final securitiesAssetRepositoryProvider =
 /// Live stream of all non-archived, non-deleted accounts. UIs watch this
 /// for the account list / picker.
 ///
-/// FIR-126: also seeds the income / expense / equity virtual system
+/// Also seeds the income / expense / equity virtual system
 /// accounts the first time the user opens any account-aware surface, so
 /// the P2-A double-entry posting model has counter-accounts ready before
 /// the first cash flow is recorded. The seed is idempotent (deterministic
@@ -189,7 +189,7 @@ final fxRatesStreamProvider = StreamProvider.autoDispose<List<dom.FxRate>>((
   yield* repo.watchAll();
 });
 
-/// FIR-125 — read access over the local audit ledger (`domain_event_log`).
+/// Read access over the local audit ledger (`domain_event_log`).
 /// UIs that render an entity's "change history" subscribe to one of the
 /// per-entity providers below; this provider exposes the raw reader for
 /// dev / maintenance tooling.

@@ -5,7 +5,7 @@ import 'package:naviwealth/features/finance/data/market/exceptions.dart';
 /// Decay schedule for retried requests.
 ///
 /// Default values (base 500ms, max 30s, factor 2, jitter ±20%) are conservative
-/// and match the FIR-25 selection note: "indexed backoff base 1s, max 60s,
+/// and match the selection note: "indexed backoff base 1s, max 60s,
 /// jitter ±20%". Halved here because the mobile client is much more
 /// latency-sensitive than a backend cron.
 class RetryPolicy {

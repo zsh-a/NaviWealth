@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:decimal/decimal.dart';
 
 /// Typed view over the `metadataJson` blob stored on `assets` rows for
-/// the no-market-data asset flavours added in FIR-44.
+/// the no-market-data asset flavours.
 ///
 /// The Drift schema already carries a free-form `metadata_json` column; we
 /// keep that as the persistence shape (no extra columns / migrations) and

@@ -11,7 +11,7 @@ library;
 /// liquidity, broker counts toward risk exposure, credit is short-term
 /// liability with billing cycles, etc.).
 ///
-/// Replaced the carrier-shape `AccountType` (FIR-126) with a calmer 8-value
+/// Replaced the carrier-shape `AccountType` with a calmer 8-value
 /// taxonomy modelled after how the user actually thinks about their wealth
 /// containers, not how a bookkeeping system files them. The companion
 /// accounting "side of the double-entry book" classification is
@@ -71,7 +71,7 @@ AccountSide accountSideForCategory(AccountCategory category) {
 /// Static classification of an [Asset]. Used to drive UI affordances and
 /// cost-basis behavior.
 ///
-/// FIR-44 added the three "no-market-data" deposit/wealth flavours at the
+/// Added the three "no-market-data" deposit/wealth flavours at the
 /// end. Adding new values at the *end* keeps name-based persistence
 /// backwards-compatible (see `EnumStringConverter`).
 enum AssetType {
@@ -100,7 +100,7 @@ const Set<AssetType> kManualValuationAssetTypes = {
   AssetType.wealthProduct,
 };
 
-/// Subset of [AssetType] whose canonical id is `<market>:<symbol>` (FIR-75)
+/// Subset of [AssetType] whose canonical id is `<market>:<symbol>`
 /// and which `SecuritiesAssetRepository.watchSecurities` lists by default.
 /// Anything outside this set either has no global symbol (cash / deposit /
 /// wealth product / real estate / vehicle) or is too freeform to lift into
@@ -166,9 +166,9 @@ enum DevicePlatform { ios, android, web, macos, windows, linux, unknown }
 /// enough to reconstruct any state change on the receiving side.
 enum OpKind { insert, update, delete }
 
-/// FIR-130 — Beancount-style lifecycle flag for a `JournalEntry` row. Maps
-/// 1:1 to Beancount's `*` / `!` / `#` prefix syntax so the eventual
-/// `.beancount` exporter (FIR-134) can serialise the column without a
+/// Beancount-style lifecycle flag for a `JournalEntry` row. Maps 1:1 to
+/// Beancount's `*` / `!` / `#` prefix syntax so the eventual `.beancount`
+/// exporter can serialise the column without a
 /// translation table.
 ///
 ///   - [confirmed] — the user has reviewed and accepted the entry; the

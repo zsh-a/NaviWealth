@@ -40,7 +40,7 @@ class AccountRepository {
 
   /// Live stream of non-archived, non-deleted accounts ordered by name.
   ///
-  /// FIR-126: virtual system accounts (`system-account:*`) are filtered
+  /// Virtual system accounts (`system-account:*`) are filtered
   /// out so they never appear in the user-facing list / picker. They
   /// remain queryable via [findById] and through the system-account
   /// helpers on this repository — the caller doing posting work always
@@ -362,7 +362,7 @@ class AccountRepository {
     );
   }
 
-  // ---------- Tree queries (FIR-133) ----------
+  // ---------- Tree queries ----------
 
   /// Live children of [parentId]. Pass `null` to fetch the top-level set
   /// (Beancount-style root nodes whose `parent_id` is NULL).
@@ -443,7 +443,7 @@ class AccountRepository {
     return out.reversed.toList();
   }
 
-  // ---------- System / virtual accounts (FIR-126 + FIR-133) ----------
+  // ---------- System / virtual accounts ----------
 
   /// Stable id prefix for the seeded system accounts. Keeps the seed
   /// idempotent across devices: every install resolves the same path to
@@ -479,7 +479,7 @@ class AccountRepository {
 
   /// Display name for one of the three root system accounts. Kept in
   /// Chinese (the app's primary locale today) so the picker labels look
-  /// natural without an l10n round-trip; child accounts seeded by FIR-133
+  /// natural without an l10n round-trip; child accounts seeded
   /// use the canonical Beancount-style English names from
   /// [_kSystemAccountTreeSeeds] — the UI localises at render time.
   static String systemAccountDisplayName(AccountSide category) {
@@ -515,7 +515,7 @@ class AccountRepository {
   /// Equity/{OpeningBalance,Splits,Adjustments}
   /// ```
   ///
-  /// Three roots (carrying the existing FIR-126 ids) plus a curated set of
+  /// Three roots (carrying the existing ids) plus a curated set of
   /// common leaves for a total of 37 seeded accounts on a fresh install.
   ///
   /// Each row uses a deterministic id derived from
@@ -601,8 +601,7 @@ class AccountRepository {
 
 /// Specification for one seeded system account. Static const so the seed
 /// is the single source of truth for the default tree shape, picker
-/// defaults (FIR-131) and the Beancount export naming convention
-/// (FIR-134).
+/// defaults and the Beancount export naming convention.
 class _SystemAccountSeed {
   const _SystemAccountSeed({
     required this.path,

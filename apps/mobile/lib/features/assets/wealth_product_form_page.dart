@@ -312,7 +312,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
           ),
         ),
         children: [
-          // Wave 40.1 — AI provenance for `propose_asset_valuation`.
+          // AI provenance for `propose_asset_valuation`.
           if (widget.isEdit && widget.assetId != null) ...[
             Align(
               alignment: Alignment.centerLeft,

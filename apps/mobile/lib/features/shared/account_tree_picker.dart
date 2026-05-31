@@ -7,7 +7,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../accounts/account_icon_catalog.dart';
 import 'account_l10n.dart';
 
-/// FIR-128 §1.2 — drop-in replacement for the legacy flat
+/// Drop-in replacement for the legacy flat
 /// [AccountPicker] that surfaces the [Account.parentId] tree as
 /// Beancount-style breadcrumb labels
 /// ("Expenses › Trading › Fee"). One picker covers every category
@@ -23,7 +23,7 @@ import 'account_l10n.dart';
 /// trees we anticipate); the cost is dwarfed by the dropdown render
 /// itself.
 ///
-/// FIR-133 children carry [Account.icon] / [Account.color]; rendering
+/// Children carry [Account.icon] / [Account.color]; rendering
 /// them inside the picker uses [FSelectItem]'s prefix slot so the leading
 /// glyph + breadcrumb path stay legible.
 class AccountTreePicker extends StatelessWidget {
@@ -60,7 +60,7 @@ class AccountTreePicker extends StatelessWidget {
   /// expense category for this transaction").
   final String? helperText;
 
-  /// FIR-126 carries a few `system-account:*` rows that are always
+  /// Carries a few `system-account:*` rows that are always
   /// useful for the [JournalEntryBuilders] layer (Capital Gains,
   /// Opening Balance, etc.). Set to `false` on user-facing forms that
   /// shouldn't surface the abstract counter-accounts.

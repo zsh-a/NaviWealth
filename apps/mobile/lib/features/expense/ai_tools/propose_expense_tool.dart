@@ -1,10 +1,10 @@
-/// `propose_expense` — device port (§4.6 W-D4.5).
+/// `propose_expense` — device port.
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/propose_expense.rs`; logic a verbatim
 /// port of `proposals::propose_expense`. Returns the same
 /// `ready_plan` / `needs_clarification` JSON the cloud tool returns, so
-/// the W-D3 loop's propose interception + the existing
+/// the propose interception + the existing
 /// `ProposalEnvelope`/`proposal_applier` confirm flow consume it
 /// unchanged — the device never auto-writes (§4.5).
 ///

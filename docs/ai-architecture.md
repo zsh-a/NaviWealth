@@ -2,14 +2,14 @@
 
 > **现状一句话**: AI 是 **device-only**。端侧 agent runtime 用**用户自带的 LLM key**
 > 直连用户选定的 provider（Anthropic 或 OpenAI 兼容端点），后端**完全不参与 AI**。
-> W-D7 已删除 `apps/backend/src/ai/` 与 `/ai/chat`、`/ingest/parse` 路由；backend 只剩
+> `apps/backend/src/ai/` 与 `/ai/chat`、`/ingest/parse` 路由已删除；backend 只剩
 > auth / sync / D1。Web 无 AI。
 >
 > **怎么读这篇**: §1–§3 是当前架构（device-only），改 `lib/core/ai/` 前读这三节。
 > §4 是契约细节，其中 §4.6 是 device runtime 的落地决策（代码注释大量引用其编号，编号保持稳定）。
 > §5 是 AI 的 UI/UX 契约——**任何新 AI 入口/渲染/确认面必须满足 §5.8 + §5.10.7 硬约束**。
-> §4.2 freshness gate / §4.3 cloud read models / §6.2 backend AI / §8 Wave 1–32 等
-> **描述的是 W-D7 前已删除的云端协作架构**，仅为历史/编号锚点保留。
+> §4.2 freshness gate / §4.3 cloud read models / §6.2 backend AI / §8 等
+> **描述的是已删除的云端协作架构**，仅为历史/编号锚点保留。
 >
 > **2026-05-24 boundary audit** 之后，下列结构**全部已物理删除**：
 > - freshness gate (`core/ai/freshness/` + 契约 + `staleReadModelNames`)
@@ -77,7 +77,7 @@ ChatRepository
   `LlmProfile{ id, name, provider, apiKey, baseUrl?, model? }`。
 - 存 `SecureKeyStore`（Keychain / Keystore / 凭据库 / libsecret），与 SQLCipher key
   同等对待——**绝不**进 OpLog / 云同步 / 明文备份。
-- **无 opt-in 开关**（Wave 46 删除 `enabled`）：W-D7 后无云回落，active profile 即意图
+- **无 opt-in 开关**（`enabled` 已删除）：无云回落，active profile 即意图
   （`isUsable = active?.hasKey`）。设置页是 profile 卡片列表（切换/编辑/删除 + 连通性测试）。
 - `LlmConnectivityProbe`（`llm_connectivity.dart`）走与真实 chat 同一路径发 1-token ping，
   `classifyLlmProbeException` 把结果分为 ok / 鉴权失败 / 端点不存在 / 限流 / 被拒 / 网络不可达。
@@ -86,7 +86,7 @@ ChatRepository
 
 - **门控 = `!kIsWeb`**：所有原生平台（iOS / Android / macOS / Windows / Linux）都有
   系统级安全存储 + 原生 HTTP，安全前提相同 → 全部支持端侧 agent。**只有 Web 无 AI。**
-- **无 cloud 回落**（cloud relay 已删除）：web / 无可用 active profile / provider 报错
+- **无 cloud 回落**（已删除）：web / 无可用 active profile / provider 报错
   → `RuntimeRoutingAiChatApiClient` 直接产 `ErrorEvent(code:"device_unavailable")`
   + `DoneEvent(stopReason:"error", rounds:0)`，UI 引导用户去设置加 API key。
   provider 自身报错按其 `ErrorEvent`/`DoneEvent` 原样透传。降级仍写 `AiTrace`。
@@ -119,8 +119,8 @@ device 是唯一 runtime，read-model 分层概念也已弃）。invariant 测�
 
 ### 3.3 ProposalEnvelope（确认通道，按副作用分级）
 
-`contracts/proposal_envelope.dart` — sealed，3 子类（W-D7 后端 AI 删除 + 2026-05-24
-boundary audit 中 `CloudProposal` 因零生产 producer 一并删除；device propose 工具
+`contracts/proposal_envelope.dart` — sealed，3 子类（2026-05-24 boundary audit 中
+`CloudProposal` 因零生产 producer 已删除；device propose 工具
 直接进 `LocalProposal` 或 `ExternalSideEffect`）：
 
 | 子类 | 应用层 | 确认 |
@@ -135,7 +135,7 @@ label 影响。**Privacy policy 永远优先于 source。**
 ### 3.4 Trace（`lib/core/ai/trace/` + `contracts/ai_span.dart`）
 
 - 唯一执行记录是 **Opik 风格 `AiSpan`** 层级树（`turn`/`llm`/`tool` × `parentId`
-  × 偏移/时长 × tokens/model/stop/status/IO）。旧 flat `toolCalls`/timeline 已删（Wave 45，不向后兼容）。
+  × 偏移/时长 × tokens/model/stop/status/IO）。旧 flat `toolCalls`/timeline 已删（不向后兼容）。
 - 持久化在 Drift `ai_traces`（local-only，不同步）；30 天清理由 caller 调度。
 - UI：`ai_trace_waterfall.dart` 瀑布树 + span 详情 + 聚合头（p50/p95/token/¥估算）；
   透明度页 `/settings/ai-transparency`。
@@ -145,7 +145,7 @@ label 影响。**Privacy policy 永远优先于 source。**
 
 ## 4. 契约细节（编号稳定——代码注释引用）
 
-> §4.1–§4.5 描述 W-D7 **前**的端云协作设计。**编号保留**让代码注释里 `§4.2`/`§4.3`
+> §4.1–§4.5 描述已删除的端云协作设计。**编号保留**让代码注释里 `§4.2`/`§4.3`
 > 仍能落到正确概念，但**所述结构在 2026-05-24 boundary audit 之后已删除**——见每条
 > 状态。`ContextPack` 仍在仓库内（device runtime 喂 prompt 用）；`ScopedDisclosure`
 > 只剩 `DisclosurePurpose` enum（device window tool 参数校验用），其余协议类型
@@ -164,7 +164,7 @@ label 影响。**Privacy policy 永远优先于 source。**
   不再投影/查询）。`ToolDescriptor.read_model_layer` 字段及 `ReadModelLayer` enum
   **已删除**（boundary audit 批 K）；device 工具直接读 Drift，无分层概念。
 - **§4.5 ProposalEnvelope**：见 §3.3（`CloudProposal` 子类已在 2026-05-24 audit 中删除）。
-- **§4.6 Device LLM Runtime（当前架构的落地决策——代码大量引用 W-D* / §4.6.N）**：
+- **§4.6 Device LLM Runtime（当前架构的落地决策——代码大量引用 §4.6.N）**：
   1. **用户自带 key** — `SecureKeyStore`，绝不进 OpLog/同步/明文备份。
   2. **`DeviceLlmRuntime` 直连 provider** — 多 provider 客户端，统一 `LlmStreamEvent`；
      provider 由 active `LlmProfile.provider` 决定。
@@ -174,7 +174,7 @@ label 影响。**Privacy policy 永远优先于 source。**
   4. **Vision 端侧直发** — 图像 base64 → content block，用户 key 直发 provider，
      原图不出设备（比已删除的 Worker 中转更私密）。
   5. **平台边界 = 全部原生平台，仅排除 Web**（门控 `!kIsWeb`，见 §2.3）。
-  - W-D7 删除 cloud relay：无 device→cloud 失效转移（见 §2.3 降级）。
+  - 无 device→cloud 失效转移（见 §2.3 降级）。
 
 ## 5. Interaction Grammar — AI 进入页面，而非用户进入 AI
 
@@ -279,7 +279,7 @@ AI 元素默认 surface tone（非 accent）；单色细线 sparkle（字号 ≤
 确认走现有 `ProposalApplier`（永不自动 commit）。
 
 - 端侧解析（CSV / paste）零联网，落地可用。
-- **后端 Vision relay 已删除（W-D7）**：原 `POST /ingest/parse` 与
+- **后端 Vision relay 已删除**：原 `POST /ingest/parse` 与
   `apps/backend/src/ai/ingest/` 随后端 AI 一并删除。图片/PDF 的 Vision 解析改为
   **端侧直发**（`DeviceVisionIngestClient` + `core/ai/runtime/device/device_vision_parse.dart`，
   用户 key，§4.6 决策 4，原图不出设备）；无可用端侧 runtime 时 `CloudIngestClient`
@@ -303,14 +303,14 @@ runtime/
                                  （boundary audit 删 RuntimeRegistry / RuntimeId /
                                  AiRuntime / CloudAnthropicRuntime / RulesDeviceRuntime）
   device/
-    device_agent_loop.dart       端侧 agent loop（W-D3）
+    device_agent_loop.dart       端侧 agent loop
     device_session.dart          per-turn session
     device_system_prompt.dart    端侧 system prompt + 硬限额
     device_tool_dispatcher.dart  只广告 kDeviceTools
-    device_vision_parse.dart     端侧 Vision 抽取（W-D5）
+    device_vision_parse.dart     端侧 Vision 抽取
     llm_stream_event.dart        provider-neutral 事件
     anthropic/                   AnthropicClient + SSE decoder + wire
-    openai/                      OpenAiClient + SSE decoder（Wave 46）
+    openai/                      OpenAiClient + SSE decoder
     tools/                       device_tool_registry(kDeviceTools=34) +
                                  34 工具（17 基础 read + 5 基础 propose +
                                  8 FIRE + 4 Options）+ propose/ + scoped/
@@ -340,7 +340,7 @@ domain renderer · `ai_object_capsule` · `reply_chips` · `ai_transparency_badg
 
 `lib/features/ingest/`：见 §5.10.x。
 
-### 6.2 Backend — **已删除（W-D7）**
+### 6.2 Backend — **已删除**
 
 `apps/backend/src/ai/` 整目录删除：无 `/ai/chat`、`/ingest/parse`、guardrails、
 read model projection、ContextPack ingest。backend router（`lib.rs`）只剩
@@ -374,7 +374,7 @@ Chat → providers.dart _prepareChatTrace(ref, requestId)
 | 端侧 Vision 直发（图片/PDF 摄取，`DeviceVisionIngestClient`，替代已删除的 Worker 中转）| ✅ |
 | AiTrace span 可观测性（Opik 瀑布树，取代旧 flat 格式，不向后兼容）| ✅ |
 | 多 provider profile + 切换 + 连通性测试（无 opt-in 开关）| ✅ |
-| §4.6 Device LLM Runtime（W-D1–W-D7：用户自带 key · 直连 provider · 工具读 Drift · 全原生平台含桌面 · 删除 cloud relay）| ✅ |
+| §4.6 Device LLM Runtime（用户自带 key · 直连 provider · 工具读 Drift · 全原生平台含桌面 · 删除 cloud relay）| ✅ |
 | Boundary audit 2026-05-24（四轮）：删 freshness/router/RuntimeRegistry/CloudProposal/ChatSyncGate/disclosure 全链/TaskContext 死字段/readModelLayer/AllowedRuntime/AnonymizationLevel/usedCloud/analyticalUploads 预注入/l10n orphans（累计净删 ~4 400 行）| ✅ |
 
 **测试 gate**：`flutter analyze --fatal-infos` clean；`flutter test` 全绿（golden 按平台
@@ -383,27 +383,27 @@ skip，known-failing 钉基线）；`tool/check-tool-descriptors.sh` / `check-en
 > 已知失败基线：`ai_trace_waterfall_test.dart` 在干净 main 即 l10n-null 失败，
 > 与功能无关，勿追（见 `known-failing-tests.txt`）。
 
-### 历史：W-D7 前的云端协作架构（已删除）
+### 历史：已删除的云端协作架构
 
-W-D7 前 AI 是「端侧 Copilot + 云端 Brain」分层协作：4 条通道（主通道 = Cloud AI
+AI 曾是「端侧 Copilot + 云端 Brain」分层协作：4 条通道（主通道 = Cloud AI
 Read Models / 辅助 = ContextPack / 兜底 = ScopedDisclosure freshness·privacy·draft gate /
 确认 = ProposalEnvelope）；Read Models 三层（Snapshot / Analytical / Scoped Detail）
 在 D1 预计算 + HLC watermark freshness；`apps/backend/src/ai/`（anthropic / sse /
 tools / proposals / guardrails / read_models / policy）。
 
-落地历程 Wave 1–48 概要：
+落地历程概要：
 
-| Wave | 主题 | W-D7 后状态 |
+| 范围 | 主题 | 当前状态 |
 |------|------|------------|
-| 1–25 | Cloud Read Models 三层 + freshness gate + risk_policy enforce + AiRuntime/Registry + Trace/Undo Drift 持久化 + backend tools.rs 拆分 | 云端部分**已删除**；Drift 持久化、Registry、ToolDescriptor 扩展保留 |
-| 26–32 | AI 透明度审计页 + ContextPack→system prompt + Drift QueryPlanExecutor + TerminalReason + ProposalEnvelope.source + ContextPack 收缩 | 端侧部分保留 |
-| 33–40.1 | §5：AiIntentInvocation 入口框架 + domain renderer + InteractionMode + 视觉原语 + tool inline + AiTouchMark 全覆盖 | ✅ 当前 UI 契约 |
-| 41–44 | 测试准出 P0：Red CI cleanup + schema-as-contract gates + AI 视觉回归 + 回归 corpus | ✅ |
-| 45 | Opik 风格 span 可观测性（删旧 flat trace，不兼容）| ✅ |
-| 46 | 多 provider profile + 切换 + 连通性测试（删 opt-in 开关）| ✅ |
-| 47 | 修复多轮 CancelToken 中毒（含 tool 调用的 round-2 误判 provider_error）| ✅ |
-| 48 | active catalog 对齐：移除未注册工具，descriptor 28→22；`ai-protocol.md` 改为设备事件契约 | ✅ |
-| **W-D1–W-D7** | Phase 5 端侧 LLM：自带 key → 直连 provider → 工具读 Drift → 全原生平台含桌面 → **删除 cloud relay**（§4.6）| ✅ 当前架构 |
+| 早期 | Cloud Read Models 三层 + freshness gate + risk_policy enforce + AiRuntime/Registry + Trace/Undo Drift 持久化 + backend tools.rs 拆分 | 云端部分**已删除**；Drift 持久化、Registry、ToolDescriptor 扩展保留 |
+| 中期 | AI 透明度审计页 + ContextPack→system prompt + Drift QueryPlanExecutor + TerminalReason + ProposalEnvelope.source + ContextPack 收缩 | 端侧部分保留 |
+| §5 | AiIntentInvocation 入口框架 + domain renderer + InteractionMode + 视觉原语 + tool inline + AiTouchMark 全覆盖 | ✅ 当前 UI 契约 |
+| 测试 | Red CI cleanup + schema-as-contract gates + AI 视觉回归 + 回归 corpus | ✅ |
+| Trace | Opik 风格 span 可观测性（删旧 flat trace，不兼容）| ✅ |
+| 多 provider | 多 provider profile + 切换 + 连通性测试（删 opt-in 开关）| ✅ |
+| 修复 | 修复多轮 CancelToken 中毒（含 tool 调用的 round-2 误判 provider_error）| ✅ |
+| Catalog | active catalog 对齐：移除未注册工具，descriptor 28→22；`ai-protocol.md` 改为设备事件契约 | ✅ |
+| 端侧 LLM | 自带 key → 直连 provider → 工具读 Drift → 全原生平台含桌面 → **删除 cloud relay**（§4.6）| ✅ 当前架构 |
 
 ## 9. 剩余工作
 

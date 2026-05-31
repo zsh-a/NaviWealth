@@ -1,4 +1,4 @@
-/// Wave 36 — dense type scale for AI surfaces.
+/// Dense type scale for AI surfaces.
 ///
 /// Material defaults are tuned for general-purpose UI; AI surfaces
 /// (chat, bottom sheet, transparency timeline) are *information-dense

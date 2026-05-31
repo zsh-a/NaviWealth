@@ -1,4 +1,4 @@
-/// `read_asset_window` — device port (§4.6 W-D4.4b, Scoped Detail).
+/// `read_asset_window` — device port (Scoped Detail).
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/read_asset_window.rs`; logic a faithful

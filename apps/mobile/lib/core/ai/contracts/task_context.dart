@@ -145,8 +145,8 @@ class DateRange {
   }
 }
 
-/// 端侧 detector 输出的单条分析信号。**类名沿用"Upload"是历史**：W-D7
-/// 前这是端→云上报、由后端镜像入 read model；W-D7 删除后端 AI 后，这些条目
+/// 端侧 detector 输出的单条分析信号。**类名沿用"Upload"是历史**：此前
+/// 这是端→云上报、由后端镜像入 read model；删除后端 AI 后，这些条目
 /// 现在的唯一用途是**预注入 device LLM 的 prompt**（在 LLM 调对应 device tool
 /// 之前给它一个聚合摘要，减少首轮 tool round）。
 ///

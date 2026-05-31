@@ -583,7 +583,7 @@ class _HoldingAccumulator {
 /// Device-side portfolio snapshot — the canonical holdings picture
 /// (holdings engine + FX + multi-lot). Uploaded on the cloud chat path
 /// (`portfolio_snapshot`) and read directly by the device `get_holdings`
-/// tool (§4.6.3 W-D4.2), so both paths share one builder. Returns
+/// tool, so both paths share one builder. Returns
 /// `null` when the user has no holdings.
 final devicePortfolioSnapshotProvider =
     FutureProvider.autoDispose<Map<String, Object?>?>(
@@ -632,7 +632,7 @@ Map<String, Object?> holdingSnapshotJson(HoldingSnapshot snap, Asset? asset) {
 /// The canonical [HoldingSnapshot] → [AnalyticalUpload] conversion
 /// (§4.3.3). Single source shared by the cloud
 /// `ContextPack.analytical_uploads` path and the device
-/// `get_investment_performance` tool (W-D4.3b) so the device tool's
+/// `get_investment_performance` tool, so the device tool's
 /// output is exactly what the backend `investment_performance` read
 /// model mirrors (§10). Decimals are stringified to avoid float drift.
 AnalyticalUpload holdingSnapshotToUpload(HoldingSnapshot snap) {

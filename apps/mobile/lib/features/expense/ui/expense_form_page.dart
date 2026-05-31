@@ -226,7 +226,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     super.dispose();
   }
 
-  /// Build the human label for the AI capsule (Wave 33 proof point).
+  /// Build the human label for the AI capsule.
   /// Prefer the user's note → category name → generic fallback. The
   /// label feeds both the prompt template and the sheet header so it
   /// should read as a noun phrase.
@@ -319,10 +319,9 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                     ),
                     children: [
                       if (widget.isEdit && widget.expenseId != null) ...[
-                        // Wave 39 / 40 — AiTouchMark when this expense
-                        // was last touched by an AI proposal apply. The
-                        // widget is self-gating: nothing renders when
-                        // there's no recent touch.
+                        // AiTouchMark: shows when this expense was last
+                        // touched by an AI proposal. Self-gating: hidden
+                        // when there's no recent touch.
                         AiTouchMark(
                           entityType: 'journal_entries',
                           entityId: widget.expenseId!,

@@ -18,8 +18,8 @@ import 'symbol_field.dart';
 /// caller can immediately use it without round-tripping through the
 /// repository — actual `upsertSecurity` happens at trade-submit time.
 ///
-/// Default flow is fully offline: every field is user-entered. FIR-78
-/// surfaces a "从网络导入" affordance that calls
+/// Default flow is fully offline: every field is user-entered. A
+/// "从网络导入" affordance calls
 /// [MarketDataService.searchSymbol] for one-shot metadata import; that
 /// path is best-effort, falls back to manual entry on any failure, and
 /// never blocks the form from saving.
@@ -153,9 +153,9 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
       hits = response.data;
     } catch (_) {
       // The composite service throws NoMarketDataAvailableException when
-      // every provider fails (offline or upstream outage); per FIR-78 we
-      // collapse the whole failure surface to a single non-scary message
-      // and let the user fall through to manual entry.
+      // every provider fails (offline or upstream outage); we collapse the
+      // whole failure surface to a single non-scary message and let the
+      // user fall through to manual entry.
       if (!mounted) return;
       Haptics.error();
       AppMessenger.show(

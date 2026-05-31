@@ -171,7 +171,7 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // Wave 40.1 — AI provenance hint for stock/etf/crypto
+                // AI provenance hint for stock/etf/crypto
                 // assets touched by `propose_asset_valuation`. Self-
                 // gating; absent when no recent touch on this id.
                 Align(

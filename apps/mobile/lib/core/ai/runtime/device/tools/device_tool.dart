@@ -1,4 +1,4 @@
-/// Device tool contract (§4.6 W-D4).
+/// Device tool contract.
 ///
 /// The device equivalent of one `apps/backend/src/ai/tools/*` entry.
 /// Schema + description are ported **verbatim** from the backend so the

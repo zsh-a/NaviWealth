@@ -1,4 +1,4 @@
-/// `get_net_worth_summary` — device port (§4.6 W-D4.2c, Snapshot P0).
+/// `get_net_worth_summary` — device port (Snapshot P0).
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/get_net_worth_summary.rs`; the monthly
@@ -16,7 +16,7 @@
 ///
 /// This is the monthly net-flow view currently available to the device
 /// runtime. The broader day/week net-worth computer was a cloud-only
-/// tool and is not advertised after W-D7.
+/// tool and is not advertised.
 library;
 
 import 'package:decimal/decimal.dart';

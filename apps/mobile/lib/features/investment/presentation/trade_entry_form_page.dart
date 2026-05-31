@@ -26,11 +26,11 @@ import '../domain/trade_entry/trade_entry_prefill.dart';
 
 /// Create / edit form for a security trade (stock / ETF / crypto).
 ///
-/// Asset lookup is fully local (FIR-77): the picker reads from the seed
+/// Asset lookup is fully local: the picker reads from the seed
 /// catalog + owned securities and never makes a network call. Selecting a
 /// catalog row that the user has never traded triggers an `upsertSecurity`
 /// at submit-time so the resulting postings always point at a real
-/// `assets` row, satisfying the FIR-75 foreign-key contract.
+/// `assets` row, satisfying the foreign-key contract.
 class TradeEntryFormPage extends ConsumerStatefulWidget {
   const TradeEntryFormPage({
     super.key,

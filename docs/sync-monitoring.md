@@ -1,4 +1,4 @@
-# Sync Monitoring Baseline (FIR-61)
+# Sync Monitoring Baseline
 
 What the sync API should look like in production, where to watch it, and what should page someone. Companion to [`sync-protocol.md`](./sync-protocol.md) (contract) and [`sync-e2e-manual.md`](./sync-e2e-manual.md) (manual flows).
 
