@@ -32,7 +32,7 @@ class PhysicalAssetCard extends StatelessWidget {
                   _iconForType(asset.type),
                   color: context.theme.colors.primary,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.s12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,7 +55,7 @@ class PhysicalAssetCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.s12),
                 MoneyText(
                   amount: asset.currentValuation.toDouble(),
                   currencyCode: asset.currency,

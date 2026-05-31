@@ -98,7 +98,7 @@ class _FireReviewCardState extends ConsumerState<FireReviewCard> {
                 child: Text(l10n.fireOsReviewSaveSnapshot),
               ),
               if (_savedKey != null) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.s8),
                 Text(
                   l10n.fireOsReviewSaved(_savedKey!),
                   style: context.theme.typography.xs.copyWith(
@@ -322,7 +322,7 @@ class _FindingRow extends StatelessWidget {
           margin: const EdgeInsets.only(top: AppSpacing.s6),
           decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.s8),
         Expanded(
           child: Text(
             _findingText(l10n, finding),

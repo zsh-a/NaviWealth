@@ -196,7 +196,7 @@ class _WaterfallRow extends StatelessWidget {
                         color: tone,
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSpacing.s6),
                     Expanded(
                       child: Text(
                         label,
@@ -213,7 +213,7 @@ class _WaterfallRow extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             // Waterfall bar.
             Expanded(
               child: LayoutBuilder(
@@ -253,7 +253,7 @@ class _WaterfallRow extends StatelessWidget {
                 },
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             SizedBox(
               width: 56,
               child: Text(
@@ -301,7 +301,7 @@ class _SpanDetail extends StatelessWidget {
           Row(
             children: [
               Icon(_kindIcon(span), size: 14, color: _kindTone(context, span)),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpacing.s6),
               Expanded(
                 child: Text(
                   span.name,

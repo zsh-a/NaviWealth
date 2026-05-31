@@ -147,7 +147,7 @@ class _CaptureToggle extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.s12),
             AiPill(
               label: verbose
                   ? l10n.aiTransparencyToggleOn
@@ -320,7 +320,7 @@ class _UndoRow extends ConsumerWidget {
       child: Row(
         children: <Widget>[
           const AiSparkle(),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,7 +344,7 @@ class _UndoRow extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           AiPill(
             label: l10n.aiTransparencyUndoAction,
             state: AiPillState.selected,
@@ -404,7 +404,7 @@ class _TraceRow extends StatelessWidget {
                 color: isError ? AiTone.error(context) : AiTone.active(context),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -444,7 +444,7 @@ class _TraceRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.s12),
             Text(
               _shortTimestamp(trace.startedAtIso),
               style: AiType.meta(context),
@@ -584,7 +584,7 @@ class _HeaderSummary extends StatelessWidget {
         Row(
           children: [
             const AiSparkle(),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.s6),
             Expanded(child: Text(title, style: AiType.title(context))),
           ],
         ),

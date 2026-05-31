@@ -211,7 +211,7 @@ class _WatchlistEmpty extends StatelessWidget {
               color: context.theme.colors.mutedForeground,
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.s20),
           FButton(onPress: onAdd, child: Text(l10n.watchlistAddAction)),
         ],
       ),
@@ -265,7 +265,7 @@ class _WatchlistRow extends StatelessWidget {
                   color: colors.mutedForeground,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -329,7 +329,7 @@ class _WatchlistRow extends StatelessWidget {
                 onPress: onEdit,
                 child: Text(l10n.watchlistEditAlertsAction),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               FButton(
                 variant: FButtonVariant.destructive,
                 onPress: onRemove,
@@ -374,7 +374,7 @@ class _RuleChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s6),
         child: Text(label, style: context.theme.typography.xs),
       ),
     );
@@ -476,7 +476,7 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
             ],
             validator: _validateDecimal,
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.s20),
           AppSheetFooter(
             cancelLabel: l10n.commonCancel,
             submitLabel: widget.item == null

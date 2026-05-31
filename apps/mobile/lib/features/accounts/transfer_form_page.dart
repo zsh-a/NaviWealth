@@ -235,7 +235,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                       size: AppIconSizes.sm,
                       color: context.theme.colors.primary,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.s8),
                     Expanded(
                       child: Text(
                         l10n.transferConvertModeBanner,

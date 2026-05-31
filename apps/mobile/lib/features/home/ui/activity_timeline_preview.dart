@@ -142,7 +142,7 @@ class _PreviewRow extends StatelessWidget {
               alignment: Alignment.center,
               child: Icon(iconData, size: AppIconSizes.sm, color: iconColor),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,7 +172,7 @@ class _PreviewRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,

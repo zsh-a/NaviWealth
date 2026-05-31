@@ -50,8 +50,8 @@ class _CashflowCalendarContent extends ConsumerWidget {
     final accent = metrics.net.amount < Decimal.zero
         ? colors.destructive
         : positive
-        ? Colors.teal
-        : Colors.amber;
+        ? ColorPalette.teal500
+        : ColorPalette.amber500;
 
     return SoftCard(
       onPress: () => context.push(AppRoutes.cashflow),

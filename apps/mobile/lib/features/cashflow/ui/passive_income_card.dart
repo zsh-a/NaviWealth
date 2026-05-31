@@ -60,7 +60,7 @@ class _PassiveIncomeContent extends ConsumerWidget {
     final trendColor = changeRatio == null
         ? colors.mutedForeground
         : changeRatio >= 0
-        ? Colors.teal
+        ? ColorPalette.teal500
         : colors.destructive;
 
     return SoftCard(
@@ -74,7 +74,7 @@ class _PassiveIncomeContent extends ConsumerWidget {
             _CardHeader(
               icon: FLucideIcons.piggyBank,
               title: l10n.homePassiveIncomeTitle,
-              color: Colors.teal,
+              color: ColorPalette.teal500,
             ),
             const Spacer(),
             Text(

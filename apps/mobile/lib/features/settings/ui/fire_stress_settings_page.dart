@@ -254,7 +254,7 @@ class _PercentSliderState extends State<_PercentSlider> {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Text(
                 '${(widget.value * 100).round()}%',
                 style: context.theme.typography.sm.copyWith(
@@ -375,7 +375,7 @@ class _LumpSumFieldState extends State<_LumpSumField> {
                   hint: l10n.settingsStressTestLumpSumHint,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Text(
                 widget.baseCurrency,
                 style: context.theme.typography.sm.copyWith(

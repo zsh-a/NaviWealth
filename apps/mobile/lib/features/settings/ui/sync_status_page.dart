@@ -137,7 +137,7 @@ class _HeroCard extends StatelessWidget {
       child: Row(
         children: [
           _StatusOrb(palette: palette, status: event.status),
-          const SizedBox(width: 16),
+          const SizedBox(width: AppSpacing.s16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,7 +159,7 @@ class _HeroCard extends StatelessWidget {
             ),
           ),
           if (onSyncNow != null && !syncing) ...[
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             FButton(
               variant: FButtonVariant.ghost,
               onPress: onSyncNow,
@@ -323,7 +323,7 @@ class _ErrorCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(FLucideIcons.triangleAlert, color: semantic.danger, size: AppIconSizes.md),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: SelectableText(
               message,
@@ -354,7 +354,7 @@ class _ConflictCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(FLucideIcons.arrowLeftRight, color: semantic.warning, size: AppIconSizes.md),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

@@ -111,8 +111,8 @@ class _DetailBody extends ConsumerWidget {
                 AnimatedMoneyText(
                   amount: asset.currentValuation.toDouble(),
                   currencyCode: asset.currency,
-                  style: const TextStyle(
-                    fontSize: 32,
+                  style: TextStyle(
+                    fontSize: TypographyTokens.displayMedium.fontSize,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

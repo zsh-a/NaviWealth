@@ -174,7 +174,7 @@ class _BucketRow extends StatelessWidget {
                   size: AppIconSizes.sm,
                   color: colors.mutedForeground,
                 ),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpacing.s6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
                 decoration: BoxDecoration(

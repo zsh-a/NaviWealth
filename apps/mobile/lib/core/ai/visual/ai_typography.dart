@@ -17,6 +17,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../../design_system/design_system.dart';
 import 'ai_tone.dart';
 
 class AiType {
@@ -24,17 +25,17 @@ class AiType {
 
   /// Primary body text on AI surfaces (chat bubbles, timeline rows).
   static TextStyle body(BuildContext c) => Theme.of(c).textTheme.bodyMedium!
-      .copyWith(fontSize: 13, height: 1.45, color: AiTone.onSurface(c));
+      .copyWith(fontSize: TypographyTokens.bodySmall.fontSize, height: 1.45, color: AiTone.onSurface(c));
 
   /// Subtle metadata: timestamps, durations, "x ms", chip values.
   static TextStyle meta(BuildContext c) => Theme.of(c).textTheme.labelSmall!
-      .copyWith(fontSize: 11, height: 1.3, color: AiTone.muted(c));
+      .copyWith(fontSize: TypographyTokens.labelSmall.fontSize, height: 1.3, color: AiTone.muted(c));
 
   /// Pill / capsule / chip label. Slightly weightier than meta to
   /// signal interactivity.
   static TextStyle label(BuildContext c) =>
       Theme.of(c).textTheme.labelMedium!.copyWith(
-        fontSize: 12,
+        fontSize: TypographyTokens.labelMedium.fontSize,
         height: 1.3,
         fontWeight: FontWeight.w500,
         color: AiTone.onSurface(c),

@@ -198,7 +198,7 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
                   onTap: () => setState(() => _selectedKey = group.key),
                 ),
               if (selected != null) ...[
-                const SizedBox(height: 18),
+                const SizedBox(height: AppSpacing.s20),
                 _DrillDownList(
                   group: selected,
                   baseCurrency: widget.snapshot.baseCurrency,
@@ -297,7 +297,7 @@ class _DimensionButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: AppIconSizes.sm, color: color),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.s6),
             Flexible(
               child: Text(
                 label,
@@ -449,7 +449,7 @@ class _BreakdownRow extends StatelessWidget {
                 ),
                 child: Icon(group.icon, size: 17, color: group.color),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpacing.s10),
               Expanded(
                 child: Text(
                   group.label,
@@ -614,10 +614,10 @@ class _PaletteSeed {
 
   Color next() {
     const colors = [
-      Color(0xFF14B8A6),
+      ColorPalette.teal500,
       Color(0xFF3B82F6),
       Color(0xFFF59E0B),
-      Color(0xFFEF4444),
+      ColorPalette.red500,
       Color(0xFF8B5CF6),
       Color(0xFF22C55E),
       Color(0xFFEC4899),

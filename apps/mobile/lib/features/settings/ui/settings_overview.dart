@@ -503,7 +503,7 @@ class _AboutTile extends ConsumerWidget {
       child: Row(
         children: [
           Icon(FLucideIcons.info, size: AppIconSizes.h18, color: colors.mutedForeground),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -593,7 +593,7 @@ class _RiskAppetiteRow extends ConsumerWidget {
                 size: AppIconSizes.h18,
                 color: colors.mutedForeground,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.s12),
               Text(
                 l10n.settingsRiskAppetiteLabel,
                 style: context.theme.typography.sm,
@@ -792,7 +792,7 @@ class _LocalModeStatusRow extends StatelessWidget {
             size: AppIconSizes.h18,
             color: colors.mutedForeground,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

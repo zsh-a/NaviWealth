@@ -94,7 +94,7 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: colors.mutedForeground.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(AppRadius.xxs),
                 ),
               ),
             ),
@@ -102,7 +102,7 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
             Row(
               children: <Widget>[
                 Icon(FLucideIcons.lock, size: AppIconSizes.md, color: colors.primary),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.s8),
                 Expanded(
                   child: Text(
                     l10n.aiPrivacyOnboardingTitle,
@@ -157,7 +157,7 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
                     child: Text(l10n.aiPrivacyTitle),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.s12),
                 Expanded(
                   child: FButton(
                     onPress: () => Navigator.of(context).pop(),
@@ -203,7 +203,7 @@ class _OnboardingChoiceTile extends StatelessWidget {
             onChange: (_) => onSelect(mode),
             semanticsLabel: label,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.s10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

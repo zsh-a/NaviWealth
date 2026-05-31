@@ -564,7 +564,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
                   onFieldSubmitted: (_) => _taxFocus.requestFocus(),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: AmountField(
                   label: l10n.tradeEntryTaxLabel,

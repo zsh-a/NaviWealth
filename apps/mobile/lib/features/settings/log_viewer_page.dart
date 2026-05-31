@@ -144,7 +144,7 @@ class _LogTile extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.s8),
                 Text(
                   log.displayTime(),
                   style: context.theme.typography.xs2.copyWith(

@@ -129,7 +129,7 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
                   alignment: Alignment.center,
                   child: Icon(item.icon, size: AppIconSizes.h18, color: iconTint),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.s12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,7 +156,7 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
                   ),
                 ),
                 if (tappable) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.s8),
                   Icon(
                     FLucideIcons.chevronRight,
                     size: AppIconSizes.h18,

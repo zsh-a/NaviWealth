@@ -32,6 +32,7 @@ class AppRadius {
   const AppRadius._();
 
   static const double none = 0;
+  static const double xxs = 2;
   static const double xs = 4;
   static const double sm = 8;
   static const double md = 12;

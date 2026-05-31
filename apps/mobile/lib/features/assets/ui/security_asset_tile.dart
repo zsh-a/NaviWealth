@@ -78,7 +78,7 @@ class SecurityAssetTile extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.s12),
                   if (displayValue != null)
                     OptionalHero(
                       tag: 'asset-${asset.id}-value',

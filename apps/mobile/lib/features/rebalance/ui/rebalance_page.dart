@@ -161,7 +161,7 @@ class _SchemeSelector extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(FLucideIcons.pencil, size: AppIconSizes.sm),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppSpacing.s6),
                       Text(l10n.targetAllocationEditorEditAction),
                     ],
                   ),
@@ -378,7 +378,7 @@ class _TradeList extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(FLucideIcons.listChecks, size: AppIconSizes.h18),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSpacing.s6),
                     Text(l10n.rebalanceExecuteAction),
                   ],
                 ),
@@ -445,9 +445,9 @@ class _TradeRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Icon(icon, size: AppIconSizes.h18, color: context.theme.colors.mutedForeground),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

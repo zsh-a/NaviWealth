@@ -99,7 +99,7 @@ class _AccountsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.only(bottom: AppSpacing.s20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

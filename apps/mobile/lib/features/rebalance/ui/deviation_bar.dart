@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../design_system/design_system.dart';
 import 'package:forui/forui.dart';
+
 import '../../../design_system/design_system.dart';
 
 import '../domain/rebalance_models.dart';
@@ -53,7 +53,7 @@ class DeviationBar extends StatelessWidget {
                   color: context.theme.colors.mutedForeground,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               _DeviationChip(deviation: deviation, severity: severity),
             ],
           ),
