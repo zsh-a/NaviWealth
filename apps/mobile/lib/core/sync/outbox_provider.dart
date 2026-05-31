@@ -13,7 +13,10 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/auth/data/auth_controller.dart';
+// State types from core; provider still lives in features/.
+import '../auth/auth_state.dart';
+import '../../features/auth/data/auth_controller.dart'
+    show authControllerProvider;
 import '../persistence/providers.dart';
 import 'drift_sync_storage.dart';
 import 'op_outbox.dart';

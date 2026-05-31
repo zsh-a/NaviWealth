@@ -310,7 +310,7 @@ class AppSheetFooter extends StatelessWidget {
     required this.submitLabel,
     required this.onSubmit,
     this.submitKey,
-    this.cancelLabel,
+    required this.cancelLabel,
     this.onCancel,
     this.cancelKey,
     this.busy = false,
@@ -321,8 +321,8 @@ class AppSheetFooter extends StatelessWidget {
   final VoidCallback onSubmit;
   final Key? submitKey;
 
-  /// Defaults to "Cancel" when null is passed by the caller's l10n.
-  final String? cancelLabel;
+  /// Localized cancel label — callers must pass from `AppLocalizations`.
+  final String cancelLabel;
 
   /// Defaults to `Navigator.maybePop()` when null.
   final VoidCallback? onCancel;
@@ -342,7 +342,7 @@ class AppSheetFooter extends StatelessWidget {
             onPress: busy
                 ? null
                 : (onCancel ?? () => Navigator.of(context).maybePop()),
-            child: Text(cancelLabel ?? 'Cancel'),
+            child: Text(cancelLabel),
           ),
         ),
         const SizedBox(width: AppSpacing.s12),

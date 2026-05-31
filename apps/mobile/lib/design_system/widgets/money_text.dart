@@ -99,7 +99,7 @@ class MoneyText extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         semanticsLabel:
-            semanticsLabel ?? AmountPrivacyScope.hiddenSemanticsLabel,
+            semanticsLabel ?? AmountPrivacyScope.hiddenSemanticsLabelOf(context),
       );
     }
     final formatted = _format(context);
@@ -258,7 +258,7 @@ class SignedMoneyText extends StatelessWidget {
       semanticsLabel:
           semanticsLabel ??
           (hidden
-              ? AmountPrivacyScope.hiddenSemanticsLabel
+              ? AmountPrivacyScope.hiddenSemanticsLabelOf(context)
               : '$formatted $unit'),
     );
   }

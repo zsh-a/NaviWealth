@@ -127,7 +127,7 @@ class DeltaText extends StatelessWidget {
     if (value == null) return '—';
     if (format == DeltaFormat.currency &&
         AmountPrivacyScope.isHiddenOf(context)) {
-      return AmountPrivacyScope.hiddenSemanticsLabel;
+      return AmountPrivacyScope.hiddenSemanticsLabelOf(context);
     }
     final direction = value! > 0
         ? '+'

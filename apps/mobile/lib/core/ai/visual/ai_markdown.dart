@@ -32,7 +32,7 @@ import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../design_system/tokens/dimens_tokens.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'ai_motion.dart';
 import 'ai_tone.dart';
@@ -604,10 +604,7 @@ class _MdTable extends _MdBlock {
         child: ConstrainedBox(
           constraints: const BoxConstraints(minWidth: 80),
           child: selectable
-              ? SelectableText.rich(
-                  TextSpan(children: spans),
-                  textAlign: align,
-                )
+              ? SelectableText.rich(TextSpan(children: spans), textAlign: align)
               : Text.rich(TextSpan(children: spans), textAlign: align),
         ),
       );
@@ -647,8 +644,7 @@ class _MdTable extends _MdBlock {
       // descending into cells, so the user can decide whether to skim
       // the structure or skip past it.
       container: true,
-      label:
-          'Table, ${normalizedRows.length + 1} rows, $cols columns',
+      label: 'Table, ${normalizedRows.length + 1} rows, $cols columns',
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.sm),
         // Wide tables stay readable: scroll horizontally rather than
@@ -1060,9 +1056,7 @@ class _InlineParser {
       // Link [label](url)
       if (ch == '[') {
         final close = text.indexOf(']', i + 1);
-        if (close != -1 &&
-            close + 1 < text.length &&
-            text[close + 1] == '(') {
+        if (close != -1 && close + 1 < text.length && text[close + 1] == '(') {
           final paren = text.indexOf(')', close + 2);
           if (paren != -1) {
             final label = text.substring(i + 1, close);
@@ -1191,51 +1185,41 @@ class _LinkTappable extends StatelessWidget {
 /// `launchUrl` reports failure (no installed handler / blocked).
 Future<void> _confirmAndOpen(BuildContext context, String url) async {
   final l10n = AppLocalizations.of(context);
-  final ok = await showDialog<bool>(
+  final ok = await showConfirmDialog(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(l10n.aiChatLinkConfirmTitle),
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            l10n.aiChatLinkConfirmBody,
-            style: AiType.meta(ctx).copyWith(color: AiTone.muted(ctx)),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s8,
-              vertical: AppSpacing.s6,
-            ),
-            decoration: BoxDecoration(
-              color: AiTone.surfaceTint(ctx).withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(AppRadius.xs),
-              border: Border.all(color: AiTone.outline(ctx)),
-            ),
-            child: SelectableText(
-              url,
-              style: AiType.body(ctx).copyWith(
-                fontFamily: 'monospace',
-                fontFamilyFallback: const ['Menlo', 'Consolas', 'monospace'],
-              ),
-              maxLines: 4,
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          child: Text(l10n.commonCancel),
+    title: Text(l10n.aiChatLinkConfirmTitle),
+    body: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          l10n.aiChatLinkConfirmBody,
+          style: AiType.meta(context).copyWith(color: AiTone.muted(context)),
         ),
-        FilledButton(
-          onPressed: () => Navigator.of(ctx).pop(true),
-          child: Text(l10n.aiChatLinkOpen),
+        const SizedBox(height: AppSpacing.s8),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s8,
+            vertical: AppSpacing.s6,
+          ),
+          decoration: BoxDecoration(
+            color: AiTone.surfaceTint(context).withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+            border: Border.all(color: AiTone.outline(context)),
+          ),
+          child: SelectableText(
+            url,
+            style: AiType.body(context).copyWith(
+              fontFamily: 'monospace',
+              fontFamilyFallback: const ['Menlo', 'Consolas', 'monospace'],
+            ),
+            maxLines: 4,
+          ),
         ),
       ],
     ),
+    confirmLabel: l10n.aiChatLinkOpen,
+    cancelLabel: l10n.commonCancel,
   );
   if (ok != true) return;
   if (!context.mounted) return;
@@ -1246,10 +1230,7 @@ Future<void> _confirmAndOpen(BuildContext context, String url) async {
     uri = null;
   }
   if (uri == null) return;
-  final launched = await launchUrl(
-    uri,
-    mode: LaunchMode.externalApplication,
-  );
+  final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!launched && context.mounted) {
     ScaffoldMessenger.maybeOf(context)?.showSnackBar(
       SnackBar(
@@ -1358,7 +1339,9 @@ class _CodeTinter {
       // Numeric literal — int, float, hex. Require a non-word char
       // before to skip e.g. `x10` (identifier).
       if (_isDigit(ch.codeUnitAt(0))) {
-        final prevOk = buf.isEmpty || !_isIdentChar(buf.toString().codeUnitAt(buf.length - 1));
+        final prevOk =
+            buf.isEmpty ||
+            !_isIdentChar(buf.toString().codeUnitAt(buf.length - 1));
         if (prevOk) {
           flushPlain();
           var j = i;
@@ -1373,7 +1356,9 @@ class _CodeTinter {
               j++;
             }
             // Optional decimal portion.
-            if (j < code.length && code[j] == '.' && j + 1 < code.length &&
+            if (j < code.length &&
+                code[j] == '.' &&
+                j + 1 < code.length &&
                 _isDigit(code.codeUnitAt(j + 1))) {
               j++;
               while (j < code.length && _isDigit(code.codeUnitAt(j))) {

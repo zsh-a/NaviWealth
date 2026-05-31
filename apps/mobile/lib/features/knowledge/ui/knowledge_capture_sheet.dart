@@ -313,6 +313,7 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
       footer: stage == _CaptureStage.composing || stage == _CaptureStage.saving
           ? AppSheetFooter(
               submitLabel: stage == _CaptureStage.saving ? '保存中…' : '保存',
+              cancelLabel: '取消',
               busy: !_canSave,
               onSubmit: () {
                 _saveAndClassify();

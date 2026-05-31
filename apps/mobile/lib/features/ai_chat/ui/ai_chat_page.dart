@@ -62,9 +62,8 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
   }
 
   Future<void> _openSessionsSheet(String ownerUserId, String? activeId) async {
-    await showFSheet<void>(
+    await showAppFormSheet<void>(
       context: context,
-      side: FLayout.rtl,
       builder: (ctx) => AppSheetSurface(
         borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
         safeTop: true,

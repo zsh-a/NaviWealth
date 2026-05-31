@@ -160,6 +160,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
           : l10n.incomePlannerJournalAddCta,
       footer: AppSheetFooter(
         submitLabel: l10n.incomePlannerSaveAction,
+        cancelLabel: l10n.commonCancel,
         onSubmit: _save,
         busy: _busy,
       ),

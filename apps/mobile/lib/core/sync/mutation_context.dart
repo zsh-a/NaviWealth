@@ -6,7 +6,10 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/local_hlc_stamper.dart';
 import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
-import 'package:naviwealth/features/auth/data/auth_controller.dart';
+// State types from core; provider still lives in features/.
+import 'package:naviwealth/core/auth/auth_state.dart';
+import 'package:naviwealth/features/auth/data/auth_controller.dart'
+    show authControllerProvider;
 
 export 'package:naviwealth/core/auth/current_user.dart'
     show currentUserIdProvider, kLocalOnlyUserId;

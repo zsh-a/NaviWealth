@@ -56,11 +56,9 @@ Future<void> showAiSheet(
   String? prefill,
 }) {
   if (invocation != null) {
-    return showFSheet<void>(
+    return showAppFormSheet<void>(
       context: context,
-      side: FLayout.btt,
-      mainAxisMaxRatio: null,
-      resizeToAvoidBottomInset: false,
+      maxHeightFactor: 0.95,
       builder: (_) => _SheetFrame(
         child: AiSheetShell.invocation(
           invocation: invocation,
@@ -72,11 +70,9 @@ Future<void> showAiSheet(
 
   final width = MediaQuery.sizeOf(context).width;
   if (Breakpoints.isMobile(width)) {
-    return showFSheet<void>(
-      side: FLayout.btt,
+    return showAppFormSheet<void>(
       context: context,
-      mainAxisMaxRatio: null,
-      resizeToAvoidBottomInset: false,
+      maxHeightFactor: 0.95,
       builder: (_) =>
           _SheetFrame(child: AiSheetShell.conversation(prefill: prefill)),
     );

@@ -159,6 +159,7 @@ class _DecisionWriterState extends State<_DecisionWriter> {
       subtitle: '决策即记忆 — 问题 / 选项 / 理由 / 复盘',
       footer: AppSheetFooter(
         submitLabel: _saving ? '保存中…' : '保存',
+        cancelLabel: '取消',
         busy: _saving || !_canSave,
         onSubmit: () {
           _save();

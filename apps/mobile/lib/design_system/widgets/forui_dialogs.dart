@@ -10,7 +10,7 @@ Future<bool?> showConfirmDialog({
   required Widget title,
   Widget? body,
   required String confirmLabel,
-  String? cancelLabel,
+  required String cancelLabel,
   bool destructive = false,
 }) {
   return showFDialog<bool>(
@@ -22,7 +22,7 @@ Future<bool?> showConfirmDialog({
         FButton(
           variant: FButtonVariant.outline,
           onPress: () => Navigator.of(ctx).pop(false),
-          child: Text(cancelLabel ?? 'Cancel'),
+          child: Text(cancelLabel),
         ),
         FButton(
           variant: destructive
@@ -63,7 +63,7 @@ Future<bool?> showInfoDialog(
   BuildContext context, {
   required Widget title,
   Widget? body,
-  String okLabel = 'OK',
+  required String okLabel,
 }) {
   return showFDialog<bool>(
     context: context,

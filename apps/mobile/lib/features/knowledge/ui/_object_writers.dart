@@ -111,6 +111,7 @@ class _PrincipleWriterState extends State<_PrincipleWriter> {
     subtitle: '长期世界观原语 — 不可证伪',
     footer: AppSheetFooter(
       submitLabel: _saving ? '保存中…' : '保存',
+      cancelLabel: '取消',
       busy: _saving || _stmtCtrl.text.trim().isEmpty,
       onSubmit: () {
         _save();
@@ -217,6 +218,7 @@ class _AssumptionWriterState extends State<_AssumptionWriter> {
       subtitle: '可证伪 — 设置置信度，后续会被复盘',
       footer: AppSheetFooter(
         submitLabel: _saving ? '保存中…' : '保存',
+        cancelLabel: '取消',
         busy: _saving || _stmtCtrl.text.trim().isEmpty,
         onSubmit: () {
           _save();
@@ -343,6 +345,7 @@ class _ConceptWriterState extends State<_ConceptWriter> {
     subtitle: '用于 [[soft links]] 和 AI 提示交叉引用的锚点',
     footer: AppSheetFooter(
       submitLabel: _saving ? '保存中…' : '保存',
+      cancelLabel: '取消',
       busy: _saving || _nameCtrl.text.trim().isEmpty,
       onSubmit: () {
         _save();
@@ -451,6 +454,7 @@ class _ExperimentWriterState extends State<_ExperimentWriter> {
     subtitle: '验证一个假设 — 通常挂在一条 Assumption 上',
     footer: AppSheetFooter(
       submitLabel: _saving ? '保存中…' : '保存',
+      cancelLabel: '取消',
       busy: _saving || _hypoCtrl.text.trim().isEmpty,
       onSubmit: () {
         _save();

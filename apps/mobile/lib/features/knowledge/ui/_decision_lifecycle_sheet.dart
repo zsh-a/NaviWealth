@@ -154,6 +154,7 @@ class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
       subtitle: '状态 / 实际结果 / 认知演化链',
       footer: AppSheetFooter(
         submitLabel: _saving ? '保存中…' : '保存',
+        cancelLabel: '取消',
         busy: !_canSave,
         onSubmit: _save,
       ),

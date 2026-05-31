@@ -2210,5 +2210,6 @@
   "onboardingLocalOnlyTitle": "仅本地",
   "onboardingLocalOnlyDescription": "数据留在本机，不进行同步",
   "settingsAccountLocalOnlyBadge": "本地模式",
-  "settingsAccountLocalOnlyHint": "数据仅保存在本机"
+  "settingsAccountLocalOnlyHint": "数据仅保存在本机",
+  "amountHidden": "金额已隐藏"
 }
