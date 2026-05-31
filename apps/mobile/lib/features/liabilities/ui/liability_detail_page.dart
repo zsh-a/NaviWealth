@@ -6,7 +6,6 @@ import 'package:naviwealth/features/finance/data/domain/liability.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
-import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
@@ -276,7 +275,6 @@ class _AmortizationTable extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     if (liability.accountId == null) {
-      Haptics.error();
       AppMessenger.show(
         context,
         ToastKind.error,

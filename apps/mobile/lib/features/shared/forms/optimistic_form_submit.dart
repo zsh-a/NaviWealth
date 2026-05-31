@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/haptics/haptics.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/providers.dart';
 import '../../../design_system/design_system.dart';
@@ -143,7 +142,6 @@ Future<void> runOptimisticWrite({
     await write();
   } catch (error, stack) {
     logger.e('optimistic-$tag write failed', error: error, stackTrace: stack);
-    Haptics.error();
     if (context == null) return;
     AppMessenger.show(
       context, // ignore: use_build_context_synchronously — overlay cached before pop

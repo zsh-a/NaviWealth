@@ -185,7 +185,7 @@ class _DesktopDock extends ConsumerWidget {
   final List<DomainShellSpec> specs;
   final String activePath;
 
-  static const double _width = 56;
+  static const double _width = AppSpacing.s56;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -234,8 +234,8 @@ class _AskAiDockButton extends StatelessWidget {
       child: FTappable(
         onPress: onPress,
         child: Container(
-          width: 40,
-          height: 40,
+          width: AppSpacing.s40,
+          height: AppSpacing.s40,
           margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
           decoration: BoxDecoration(
             color: colors.primary.withValues(alpha: AppOpacity.faint),
@@ -275,8 +275,8 @@ class _DockIcon extends StatelessWidget {
       child: FTappable(
         onPress: onTap,
         child: Container(
-          width: 40,
-          height: 40,
+          width: AppSpacing.s40,
+          height: AppSpacing.s40,
           margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
           decoration: BoxDecoration(
             color: fill,
@@ -286,7 +286,7 @@ class _DockIcon extends StatelessWidget {
           child: Icon(
             selected ? spec.selectedIcon : spec.icon,
             color: iconColor,
-            size: 22,
+            size: AppIconSizes.mlg,
           ),
         ),
       ),

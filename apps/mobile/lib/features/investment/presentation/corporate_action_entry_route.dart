@@ -13,7 +13,6 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_prov
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
-import '../../../core/haptics/haptics.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/providers.dart';
 import '../../../design_system/design_system.dart';
@@ -205,7 +204,6 @@ Future<void> _runCorporateActionWrite({
       error: error,
       stackTrace: stack,
     );
-    Haptics.error();
     AppMessenger.show(
       // ignore: use_build_context_synchronously -- overlay cached before pop.
       context,

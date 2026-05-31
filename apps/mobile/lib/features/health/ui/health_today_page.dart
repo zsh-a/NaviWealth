@@ -253,7 +253,7 @@ class _MetricGrid extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 720 ? 3 : 2;
+        final columns = constraints.maxWidth >= Breakpoints.contentThreeColumn ? 3 : 2;
         const gap = AppSpacing.s8;
         final itemWidth =
             (constraints.maxWidth - gap * (columns - 1)) / columns;

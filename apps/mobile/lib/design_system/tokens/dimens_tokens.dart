@@ -84,6 +84,12 @@ class AppOpacity {
 
   /// Overlay -- near-opaque overlays, greeting text. (~0.85)
   static const double overlay = 0.85;
+
+  /// Near-opaque -- frosted glass surface fills. (~0.97)
+  static const double nearOpaque = 0.97;
+
+  /// Near-opaque variant -- darker glass surfaces. (~0.98)
+  static const double nearOpaqueDark = 0.98;
 }
 
 /// Canonical icon sizes used across the app's chrome.
@@ -109,6 +115,9 @@ class AppIconSizes {
   /// List-row leading icons, sheet tile prefix icons.
   static const double md = 20;
 
+  /// Mid-large -- tablet rail / dock icons between md and lg.
+  static const double mlg = 22;
+
   /// Toolbar / primary-action icons.
   static const double lg = 24;
 
@@ -123,6 +132,14 @@ class AppIconSizes {
 
   /// Extra-large hero icons for prominent empty-state illustrations.
   static const double heroLg = 56;
+}
+
+/// Backdrop blur sigma values for frosted-glass surfaces.
+class AppBlur {
+  const AppBlur._();
+
+  /// Standard sheet / dialog blur.
+  static const double sheet = 18;
 }
 
 /// Canonical chart container heights.

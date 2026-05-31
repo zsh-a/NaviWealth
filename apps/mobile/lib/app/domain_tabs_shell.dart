@@ -246,7 +246,7 @@ class _TabletRailSettings extends StatelessWidget {
             Icon(
               FLucideIcons.settings,
               color: colors.mutedForeground,
-              size: 22,
+              size: AppIconSizes.mlg,
             ),
             const SizedBox(height: AppSpacing.s4),
             Text(
@@ -296,7 +296,7 @@ class _TabletRailItem extends StatelessWidget {
             Icon(
               selected ? tab.selectedIcon : tab.icon,
               color: iconColor,
-              size: 22,
+              size: AppIconSizes.mlg,
             ),
             const SizedBox(height: AppSpacing.s4),
             Text(

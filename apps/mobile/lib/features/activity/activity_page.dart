@@ -74,7 +74,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
       ],
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isDesktop = constraints.maxWidth >= 1024;
+          final isDesktop = constraints.maxWidth >= Breakpoints.contentTwoColumn;
           return isDesktop
               ? AdaptiveContentFrame(
                   maxWidth: AdaptiveMaxWidth.dashboard,

@@ -90,21 +90,21 @@ class _SoftCardState extends State<SoftCard> {
 
     final baseTint = widget.tinted
         ? (isDark
-              ? colors.foreground.withValues(alpha: 0.05)
-              : Colors.white.withValues(alpha: 0.85))
+              ? colors.foreground.withValues(alpha: AppOpacity.faint)
+              : Colors.white.withValues(alpha: AppOpacity.overlay))
         : Colors.transparent;
-    final hoverBoost = isDark ? 0.03 : 0.05;
+    final hoverBoost = isDark ? 0.03 : AppOpacity.faint;
     final tint = !widget.onPress.isNull && (hovered || pressed)
         ? (widget.tinted
               ? (isDark
-                    ? colors.foreground.withValues(alpha: 0.05 + hoverBoost)
-                    : Colors.white.withValues(alpha: 0.92))
+                    ? colors.foreground.withValues(alpha: AppOpacity.faint + hoverBoost)
+                    : Colors.white.withValues(alpha: AppOpacity.nearOpaque))
               : colors.foreground.withValues(alpha: hoverBoost))
         : baseTint;
 
     final borderColor = widget.borderless
         ? Colors.transparent
-        : colors.foreground.withValues(alpha: isDark ? 0.06 : 0.04);
+        : colors.foreground.withValues(alpha: isDark ? AppOpacity.faint : AppOpacity.whisper);
 
     return AnimatedContainer(
       duration: Motion.fast,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../../core/haptics/haptics.dart';
+
 /// Toast severity levels.
 enum ToastKind { success, warning, error, info }
 
@@ -85,6 +87,17 @@ class AppMessenger {
       ToastKind.error => Icons.error_outline_rounded,
       ToastKind.info => Icons.info_outline_rounded,
     });
+
+    // Fire haptic feedback matching the toast severity.
+    switch (kind) {
+      case ToastKind.success:
+        Haptics.success();
+      case ToastKind.error:
+        Haptics.error();
+      case ToastKind.warning:
+      case ToastKind.info:
+        break;
+    }
 
     state.show(
       context: usingCachedState ? null : context,
