@@ -80,19 +80,51 @@ class RowApplier {
   /// Apply [rows] in a single transaction. Returns the count actually
   /// written (rows shadowed by newer-or-equal local state are skipped).
   Future<int> applyAll(List<RowChange> rows) async {
-    if (rows.isEmpty) return 0;
+    return (await applyWithReport(rows)).written;
+  }
+
+  /// Apply [rows] and keep enough skip detail for sync diagnostics. The
+  /// write path still uses LWW; this report only makes that decision visible
+  /// to the engine and settings page.
+  Future<RowApplyReport> applyWithReport(List<RowChange> rows) async {
+    if (rows.isEmpty) return const RowApplyReport.empty();
     var written = 0;
+    var skippedLocalWins = 0;
+    var skippedUnknownDomain = 0;
+    var skippedUnsupportedTable = 0;
+    var skippedEmptyPayload = 0;
     await _db.transaction(() async {
       // Cross-row references (posting → journal_entry) may arrive in any
       // order; defer FK checks to commit so the page applies atomically.
       await _db.customStatement('PRAGMA defer_foreign_keys = ON');
       for (final row in rows) {
         final local = _resolveLocalTable(row.table);
-        if (local == null) continue;
-        if (await _apply(row, local)) written++;
+        switch (local.outcome) {
+          case _ResolveOutcome.ok:
+            final outcome = await _apply(row, local.table!);
+            switch (outcome) {
+              case _ApplyOutcome.written:
+                written++;
+              case _ApplyOutcome.localWins:
+                skippedLocalWins++;
+              case _ApplyOutcome.emptyPayload:
+                skippedEmptyPayload++;
+            }
+          case _ResolveOutcome.unknownDomain:
+            skippedUnknownDomain++;
+          case _ResolveOutcome.unsupportedTable:
+            skippedUnsupportedTable++;
+        }
       }
     });
-    return written;
+    return RowApplyReport(
+      attempted: rows.length,
+      written: written,
+      skippedLocalWins: skippedLocalWins,
+      skippedUnknownDomain: skippedUnknownDomain,
+      skippedUnsupportedTable: skippedUnsupportedTable,
+      skippedEmptyPayload: skippedEmptyPayload,
+    );
   }
 
   /// Strip the LifeOS domain prefix and confirm the resulting table is
@@ -100,19 +132,19 @@ class RowApplier {
   /// prefix; a row without one is treated as an unknown sender and
   /// dropped (legacy rows are migrated server-side in
   /// `0018_sync_row_namespace.sql`).
-  String? _resolveLocalTable(String wireTable) {
+  _ResolvedTable _resolveLocalTable(String wireTable) {
     final stripped = stripDomainPrefix(wireTable);
     if (stripped == null) {
-      _logger.w(
-        'sync: dropping row with unknown domain prefix: $wireTable',
-      );
-      return null;
+      _logger.w('sync: dropping row with unknown domain prefix: $wireTable');
+      return const _ResolvedTable(_ResolveOutcome.unknownDomain);
     }
-    if (!kSyncableTables.contains(stripped)) return null;
-    return stripped;
+    if (!kSyncableTables.contains(stripped)) {
+      return const _ResolvedTable(_ResolveOutcome.unsupportedTable);
+    }
+    return _ResolvedTable(_ResolveOutcome.ok, table: stripped);
   }
 
-  Future<bool> _apply(RowChange row, String table) async {
+  Future<_ApplyOutcome> _apply(RowChange row, String table) async {
     final types = _columnTypes(table);
     final pk = kSyncPkOverrides[table] ?? 'id';
 
@@ -126,7 +158,7 @@ class RowApplier {
     if (existing != null) {
       final localHlc = Hlc.parse(existing.read<String>('hlc'));
       final remoteHlc = Hlc.parse(row.version);
-      if (localHlc >= remoteHlc) return false;
+      if (localHlc >= remoteHlc) return _ApplyOutcome.localWins;
     }
 
     // Write the full row state. The payload already carries every column
@@ -136,7 +168,7 @@ class RowApplier {
     ordered[pk] = row.id;
     ordered.putIfAbsent('hlc', () => row.version);
     final cols = ordered.keys.where(types.containsKey).toList(growable: false);
-    if (cols.isEmpty) return false;
+    if (cols.isEmpty) return _ApplyOutcome.emptyPayload;
     final placeholders = List.filled(cols.length, '?').join(', ');
     final args = cols
         .map((c) => _coerce(types[c], ordered[c]))
@@ -146,7 +178,7 @@ class RowApplier {
       'VALUES ($placeholders)',
       args,
     );
-    return true;
+    return _ApplyOutcome.written;
   }
 
   /// Coerce a JSON-decoded value to the SQLite-native shape Drift's readers
@@ -180,3 +212,55 @@ class RowApplier {
     }
   }
 }
+
+class RowApplyReport {
+  const RowApplyReport({
+    required this.attempted,
+    required this.written,
+    required this.skippedLocalWins,
+    required this.skippedUnknownDomain,
+    required this.skippedUnsupportedTable,
+    required this.skippedEmptyPayload,
+  });
+
+  const RowApplyReport.empty()
+    : attempted = 0,
+      written = 0,
+      skippedLocalWins = 0,
+      skippedUnknownDomain = 0,
+      skippedUnsupportedTable = 0,
+      skippedEmptyPayload = 0;
+
+  final int attempted;
+  final int written;
+  final int skippedLocalWins;
+  final int skippedUnknownDomain;
+  final int skippedUnsupportedTable;
+  final int skippedEmptyPayload;
+
+  int get skippedIgnored =>
+      skippedUnknownDomain + skippedUnsupportedTable + skippedEmptyPayload;
+
+  RowApplyReport merge(RowApplyReport other) {
+    return RowApplyReport(
+      attempted: attempted + other.attempted,
+      written: written + other.written,
+      skippedLocalWins: skippedLocalWins + other.skippedLocalWins,
+      skippedUnknownDomain: skippedUnknownDomain + other.skippedUnknownDomain,
+      skippedUnsupportedTable:
+          skippedUnsupportedTable + other.skippedUnsupportedTable,
+      skippedEmptyPayload: skippedEmptyPayload + other.skippedEmptyPayload,
+    );
+  }
+}
+
+enum _ResolveOutcome { ok, unknownDomain, unsupportedTable }
+
+class _ResolvedTable {
+  const _ResolvedTable(this.outcome, {this.table});
+
+  final _ResolveOutcome outcome;
+  final String? table;
+}
+
+enum _ApplyOutcome { written, localWins, emptyPayload }

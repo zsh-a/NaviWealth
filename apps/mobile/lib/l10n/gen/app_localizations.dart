@@ -10309,6 +10309,24 @@ abstract class AppLocalizations {
   /// **'Last error'**
   String get syncStatusErrorHeader;
 
+  /// Section header for sync conflict diagnostics
+  ///
+  /// In en, this message translates to:
+  /// **'Conflict diagnostics'**
+  String get syncStatusConflictsHeader;
+
+  /// Conflict diagnostics line for remote rows skipped by LWW because local state was newer or equal
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =0{No remote rows were blocked by local state} =1{1 remote row was older than local state} other{{n} remote rows were older than local state}}'**
+  String syncStatusConflictsLocalWins(int n);
+
+  /// Conflict diagnostics line for remote rows ignored due to unsupported namespaces, unknown prefixes, or unusable payloads
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 remote row was ignored because its namespace is not supported here} other{{n} remote rows were ignored because their namespace is not supported here}}'**
+  String syncStatusConflictsIgnored(int n);
+
   /// Section header for the diagnostics card
   ///
   /// In en, this message translates to:
@@ -10344,6 +10362,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'not set'**
   String get syncStatusDetailCursorUnset;
+
+  /// Diagnostics row label for applied remote rows over total remote rows received in the last sync cycle
+  ///
+  /// In en, this message translates to:
+  /// **'Remote rows'**
+  String get syncStatusDetailRemoteRows;
 
   /// Diagnostics row label for the API base URL (debug only)
   ///

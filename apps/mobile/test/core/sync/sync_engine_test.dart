@@ -66,11 +66,22 @@ class RecordingApplier extends RowApplier {
   RecordingApplier(super.db);
 
   final List<RowChange> applied = [];
+  RowApplyReport? nextReport;
 
   @override
-  Future<int> applyAll(List<RowChange> rows) async {
+  Future<RowApplyReport> applyWithReport(List<RowChange> rows) async {
     applied.addAll(rows);
-    return rows.length;
+    final report = nextReport;
+    nextReport = null;
+    return report ??
+        RowApplyReport(
+          attempted: rows.length,
+          written: rows.length,
+          skippedLocalWins: 0,
+          skippedUnknownDomain: 0,
+          skippedUnsupportedTable: 0,
+          skippedEmptyPayload: 0,
+        );
   }
 }
 
@@ -143,10 +154,9 @@ void main() {
       expect(result.pushed, 2);
       expect(api.pushedBatches.single.map((c) => c.id), ['A1', 'A2']);
       // D-1.4: outbound rows carry the LifeOS domain prefix.
-      expect(
-        api.pushedBatches.single.map((c) => c.table).toSet(),
-        <String>{'fin:accounts'},
-      );
+      expect(api.pushedBatches.single.map((c) => c.table).toSet(), <String>{
+        'fin:accounts',
+      });
       expect(await pending.depth(), 0, reason: 'pointers acknowledged');
     });
 
@@ -193,6 +203,38 @@ void main() {
       expect(result.pulled, 1);
       expect(applier.applied.single.id, 'R1');
       expect(await cursors.readSeq(), greaterThan(0));
+    });
+
+    test('reports remote rows skipped by local LWW', () async {
+      api.seedRemote(
+        RowChange(
+          table: 'accounts',
+          id: 'R1',
+          payload: _rowState(
+            id: 'R1',
+            hlc: _hlc(9, node: _otherDev),
+          ),
+          version: _hlc(9, node: _otherDev),
+          deleted: false,
+        ),
+        deviceId: _otherDev,
+      );
+      applier.nextReport = const RowApplyReport(
+        attempted: 1,
+        written: 0,
+        skippedLocalWins: 1,
+        skippedUnknownDomain: 0,
+        skippedUnsupportedTable: 0,
+        skippedEmptyPayload: 0,
+      );
+
+      final result = await engine.run();
+
+      expect(result.success, isTrue);
+      expect(result.pulled, 0);
+      expect(result.conflicts.remoteRows, 1);
+      expect(result.conflicts.localWins, 1);
+      expect(bus.current.conflicts.localWins, 1);
     });
 
     test('pull filters out the caller-authored rows', () async {

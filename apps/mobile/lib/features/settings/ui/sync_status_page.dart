@@ -96,6 +96,10 @@ class _Body extends ConsumerWidget {
           const SizedBox(height: 12),
           _ErrorCard(message: event.lastError!),
         ],
+        if (event.conflicts.hasFindings) ...[
+          const SizedBox(height: 12),
+          _ConflictCard(diagnostics: event.conflicts),
+        ],
         const SizedBox(height: 12),
         _DiagnosticsCard(
           event: event,
@@ -335,6 +339,57 @@ class _ErrorCard extends StatelessWidget {
   }
 }
 
+class _ConflictCard extends StatelessWidget {
+  const _ConflictCard({required this.diagnostics});
+
+  final SyncConflictDiagnostics diagnostics;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final semantic = SemanticColors.of(context);
+    return SoftCard(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(FLucideIcons.arrowLeftRight, color: semantic.warning, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.syncStatusConflictsHeader,
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  l10n.syncStatusConflictsLocalWins(diagnostics.localWins),
+                  style: context.theme.typography.xs.copyWith(
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                ),
+                if (diagnostics.ignoredRows > 0) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    l10n.syncStatusConflictsIgnored(diagnostics.ignoredRows),
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Diagnostics card
 // ---------------------------------------------------------------------------
@@ -380,6 +435,15 @@ class _DiagnosticsCard extends StatelessWidget {
                 : '#$cursor',
             monospace: cursor != null && cursor != 0,
           ),
+          if (event.conflicts.remoteRows > 0) ...[
+            const FDivider(),
+            _Row(
+              label: l10n.syncStatusDetailRemoteRows,
+              value:
+                  '${event.conflicts.appliedRows}/${event.conflicts.remoteRows}',
+              monospace: true,
+            ),
+          ],
           if (apiBaseUrl != null) ...[
             const FDivider(),
             _Row(

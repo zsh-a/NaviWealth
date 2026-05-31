@@ -108,11 +108,17 @@ void main() {
     ]);
 
     // A change with a lower version must not overwrite the stored row.
-    final written = await applier.applyAll([
+    final report = await applier.applyWithReport([
       _accountChange(version: _hlc(1_000), name: 'Stale', device: _devB),
     ]);
 
-    expect(written, 0, reason: 'older version is shadowed by local state');
+    expect(
+      report.written,
+      0,
+      reason: 'older version is shadowed by local state',
+    );
+    expect(report.skippedLocalWins, 1);
+    expect(report.skippedIgnored, 0);
     final row = await _account(db, 'account-1');
     expect(row.name, 'Newer');
     expect(row.hlc.wallMillis, 2_000);
@@ -150,7 +156,7 @@ void main() {
   });
 
   test('skips rows that are not syncable tables', () async {
-    final written = await applier.applyAll([
+    final report = await applier.applyWithReport([
       RowChange(
         table: 'fin:not_a_table',
         id: 'x',
@@ -160,13 +166,15 @@ void main() {
         deviceId: _devA,
       ),
     ]);
-    expect(written, 0);
+    expect(report.written, 0);
+    expect(report.skippedUnsupportedTable, 1);
+    expect(report.skippedIgnored, 1);
   });
 
   test('drops rows that arrive without a recognised domain prefix', () async {
     // Legacy rows (pre-D-1.4) lose their prefix until the backend
     // migration runs. Until then the applier refuses to write them.
-    final written = await applier.applyAll([
+    final report = await applier.applyWithReport([
       RowChange(
         table: 'accounts',
         id: 'account-1',
@@ -176,7 +184,8 @@ void main() {
         deviceId: _devA,
       ),
     ]);
-    expect(written, 0);
+    expect(report.written, 0);
+    expect(report.skippedUnknownDomain, 1);
   });
 
   test('accepts inbound rows in the health namespace metadata-only', () async {
