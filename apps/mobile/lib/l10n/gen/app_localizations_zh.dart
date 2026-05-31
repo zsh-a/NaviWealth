@@ -7050,4 +7050,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsAccountLocalOnlyHint => '数据仅保存在本机';
+
+  @override
+  String get amountHidden => '金额已隐藏';
 }

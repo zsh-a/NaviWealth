@@ -12698,6 +12698,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Data is stored only on this device'**
   String get settingsAccountLocalOnlyHint;
+
+  /// Screen reader label when monetary amount is hidden by privacy mode
+  ///
+  /// In en, this message translates to:
+  /// **'Amount hidden'**
+  String get amountHidden;
 }
 
 class _AppLocalizationsDelegate

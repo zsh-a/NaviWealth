@@ -84,30 +84,28 @@ class ExpenseFiltersBar extends StatelessWidget {
                       onChanged(filters.copyWith(expenseAccountId: null)),
                   onPick: () async {
                     final expenseAccounts = expenseAccountById.values.toList();
-                    final picked = await showFSheet<String?>(
-                      side: FLayout.btt,
+                    final picked = await showAppSheet<String?>(
                       context: context,
-                      builder: (ctx) => SafeArea(
-                        child: ListView(
-                          shrinkWrap: true,
-                          children: [
+                      title: l10n.expenseListAllCategories,
+                      builder: (ctx) => ListView(
+                        shrinkWrap: true,
+                        children: [
+                          FTile(
+                            title: Text(l10n.expenseListAllCategories),
+                            prefix: const Icon(FLucideIcons.x),
+                            onPress: () =>
+                                Navigator.of(ctx).pop<String?>(null),
+                          ),
+                          for (final a in expenseAccounts)
                             FTile(
-                              title: Text(l10n.expenseListAllCategories),
-                              prefix: const Icon(FLucideIcons.x),
-                              onPress: () =>
-                                  Navigator.of(ctx).pop<String?>(null),
-                            ),
-                            for (final a in expenseAccounts)
-                              FTile(
-                                title: Text(
-                                  categoryLabelById[a.id] ??
-                                      localizedAccountName(l10n, a),
-                                ),
-                                prefix: Icon(a.iconData),
-                                onPress: () => Navigator.of(ctx).pop(a.id),
+                              title: Text(
+                                categoryLabelById[a.id] ??
+                                    localizedAccountName(l10n, a),
                               ),
-                          ],
-                        ),
+                              prefix: Icon(a.iconData),
+                              onPress: () => Navigator.of(ctx).pop(a.id),
+                            ),
+                        ],
                       ),
                     );
                     if (picked == null && filters.expenseAccountId == null) {

@@ -140,10 +140,8 @@ class _AttributionRow extends StatelessWidget {
   }
 
   void _openDebugSheet(BuildContext context) {
-    showFSheet<void>(
+    showAppFormSheet<void>(
       context: context,
-      side: FLayout.btt,
-      mainAxisMaxRatio: null,
       builder: (_) => AppSheetSurface(
         child: SizedBox(
           height: MediaQuery.sizeOf(context).height * 0.7,

@@ -110,6 +110,7 @@ class _RoutineWriterState extends State<_RoutineWriter> {
       subtitle: '定期提醒 — AI 会在临近 next_due_at 时主动提示',
       footer: AppSheetFooter(
         submitLabel: _saving ? '保存中…' : '保存',
+        cancelLabel: '取消',
         busy: _saving || _statementCtrl.text.trim().isEmpty,
         onSubmit: () {
           _save();

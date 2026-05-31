@@ -136,10 +136,8 @@ class EquityAllocationContent extends ConsumerWidget {
     EquityAllocationBucket bucket,
     String baseCurrency,
   ) {
-    showFSheet<void>(
-      side: FLayout.btt,
+    showAppFormSheet<void>(
       context: context,
-      mainAxisMaxRatio: null,
       builder: (_) =>
           EquityBucketHoldingsSheet(bucket: bucket, baseCurrency: baseCurrency),
     );

@@ -10,7 +10,10 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/auth/data/auth_controller.dart';
+// State types from core; provider still lives in features/.
+import 'auth_state.dart';
+import '../../features/auth/data/auth_controller.dart'
+    show authControllerProvider;
 import 'providers.dart';
 
 /// Local-only mode synthetic user id — mirrors the value used by the

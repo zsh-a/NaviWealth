@@ -29,78 +29,76 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
       appFormattersProvider(Localizations.localeOf(context)),
     );
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              l10n.analyticsBucketSheetTitle(localizeBucketLabel(l10n, bucket)),
-              style: context.theme.typography.lg,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            l10n.analyticsBucketSheetTitle(localizeBucketLabel(l10n, bucket)),
+            style: context.theme.typography.lg,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.analyticsHoldingsCount(bucket.holdings.length),
+            style: context.theme.typography.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
             ),
-            const SizedBox(height: 4),
+          ),
+          if (bucket.isUnclassified) ...[
+            const SizedBox(height: 8),
             Text(
-              l10n.analyticsHoldingsCount(bucket.holdings.length),
+              l10n.analyticsUnclassifiedRowCta,
               style: context.theme.typography.xs.copyWith(
                 color: context.theme.colors.mutedForeground,
               ),
             ),
-            if (bucket.isUnclassified) ...[
-              const SizedBox(height: 8),
-              Text(
-                l10n.analyticsUnclassifiedRowCta,
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
-              ),
-            ],
-            const SizedBox(height: 12),
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: bucket.holdings.length,
-                separatorBuilder: (_, _) => const FDivider(),
-                itemBuilder: (context, index) {
-                  final h = bucket.holdings[index];
-                  return FTile(
-                    title: Text(h.name ?? h.symbol),
-                    subtitle: Text(h.symbol),
-                    suffix: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AnimatedMoneyText(
-                          amount: h.marketValueInBase.toDouble(),
-                          currencyCode: baseCurrency,
-                          style: context.theme.typography.sm,
-                          minDeltaThreshold: 0.01,
-                        ),
-                        Text(
-                          formatters.percent(
-                            h.weight.toDouble(),
-                            decimalDigits: 1,
-                          ),
-                          style: context.theme.typography.xs.copyWith(
-                            color: context.theme.colors.mutedForeground,
-                          ),
-                        ),
-                      ],
-                    ),
-                    onPress: () {
-                      Navigator.of(context).pop();
-                      context.goNamed(
-                        AppRouteNames.wealthAssetDetail,
-                        pathParameters: {'assetId': h.assetId},
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
           ],
-        ),
+          const SizedBox(height: 12),
+          Flexible(
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: bucket.holdings.length,
+              separatorBuilder: (_, _) => const FDivider(),
+              itemBuilder: (context, index) {
+                final h = bucket.holdings[index];
+                return FTile(
+                  title: Text(h.name ?? h.symbol),
+                  subtitle: Text(h.symbol),
+                  suffix: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AnimatedMoneyText(
+                        amount: h.marketValueInBase.toDouble(),
+                        currencyCode: baseCurrency,
+                        style: context.theme.typography.sm,
+                        minDeltaThreshold: 0.01,
+                      ),
+                      Text(
+                        formatters.percent(
+                          h.weight.toDouble(),
+                          decimalDigits: 1,
+                        ),
+                        style: context.theme.typography.xs.copyWith(
+                          color: context.theme.colors.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  ),
+                  onPress: () {
+                    Navigator.of(context).pop();
+                    context.goNamed(
+                      AppRouteNames.wealthAssetDetail,
+                      pathParameters: {'assetId': h.assetId},
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

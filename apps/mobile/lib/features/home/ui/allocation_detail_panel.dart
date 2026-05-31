@@ -18,11 +18,23 @@ Future<void> showAllocationDetailPanel({
 }) {
   final width = MediaQuery.sizeOf(context).width;
   if (Breakpoints.isMobile(width)) {
-    return showFSheet<void>(
+    final l10n = AppLocalizations.of(context);
+    return showAppSheet<void>(
       context: context,
-      side: FLayout.btt,
-      mainAxisMaxRatio: 0.92,
-      builder: (_) => _MobileAllocationSheet(snapshot: snapshot),
+      title: l10n.dashboardAllocationTitle,
+      maxHeightFactor: 0.92,
+      actions: [
+        FButton.icon(
+          variant: FButtonVariant.ghost,
+          onPress: () => Navigator.of(context).maybePop(),
+          child: const Icon(FLucideIcons.x, size: 18),
+        ),
+      ],
+      builder: (_) => _AllocationDetailBody(
+        snapshot: snapshot,
+        showHandle: false,
+        showTitle: false,
+      ),
     );
   }
 
@@ -86,41 +98,16 @@ class _DesktopAllocationInspector extends StatelessWidget {
   }
 }
 
-class _MobileAllocationSheet extends StatelessWidget {
-  const _MobileAllocationSheet({required this.snapshot});
-
-  final DashboardSnapshot snapshot;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return SafeArea(
-      top: false,
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.background,
-            border: Border(top: BorderSide(color: colors.border)),
-          ),
-          child: SizedBox(
-            height: MediaQuery.sizeOf(context).height * 0.86,
-            child: _AllocationDetailBody(snapshot: snapshot, showHandle: true),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _AllocationDetailBody extends StatefulWidget {
   const _AllocationDetailBody({
     required this.snapshot,
     this.showHandle = false,
+    this.showTitle = true,
   });
 
   final DashboardSnapshot snapshot;
   final bool showHandle;
+  final bool showTitle;
 
   @override
   State<_AllocationDetailBody> createState() => _AllocationDetailBodyState();
@@ -159,26 +146,27 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
               ),
             ),
           ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 12, 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.dashboardAllocationTitle,
-                  style: context.theme.typography.lg.copyWith(
-                    fontWeight: FontWeight.w700,
+        if (widget.showTitle)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 12, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.dashboardAllocationTitle,
+                    style: context.theme.typography.lg.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-              ),
-              FButton.icon(
-                variant: FButtonVariant.ghost,
-                onPress: () => Navigator.of(context).maybePop(),
-                child: const Icon(FLucideIcons.x, size: 18),
-              ),
-            ],
+                FButton.icon(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => Navigator.of(context).maybePop(),
+                  child: const Icon(FLucideIcons.x, size: 18),
+                ),
+              ],
+            ),
           ),
-        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: _DimensionSwitch(

@@ -24,24 +24,43 @@ class SyncBackfill {
   final OutboxStore _outbox;
   final AuthSession _session;
 
-  /// Bumped to force a re-enqueue. v2 bumps it because the v13 → v14
-  /// migration drops `op_outbox`; re-running the pass repopulates it.
-  static const version = '4';
+  /// Bumped to force a re-enqueue. v5 adds missing syncable tables
+  /// (fx_rates, tags, budgets, goals, devices, watchlist_items,
+  /// options_*, knowledge_*) and removes phantom `recurring_transactions`.
+  static const version = '5';
 
-  /// Tables to backfill. Order is irrelevant — v2 rows are independent.
+  /// Tables to backfill. Must match `kSyncableTables` in `row_applier.dart`.
+  /// Order is irrelevant — v2 rows are independent.
+  /// Tables to backfill. Must match `kSyncableTables` in `row_applier.dart`,
+  /// minus tables that lack the `SyncableTable` mixin (e.g. `fx_rates`).
   static const _tables = <String>[
     'accounts',
     'assets',
-    'prices',
-    'recurring_transactions',
+    'liabilities',
+    // `fx_rates` intentionally excluded — no `owner_user_id` column.
+    'tags',
+    'budgets',
+    'goals',
+    'devices',
+    'amortization_entries',
+    'tag_links',
+    'categories',
+    'settings',
+    'users',
     'journal_entries',
     'postings',
-    'liabilities',
-    'amortization_entries',
-    'users',
-    'settings',
-    'categories',
-    'tag_links',
+    'prices',
+    'watchlist_items',
+    'options_strategy_profile',
+    'approved_underlyings',
+    'options_trade_journal',
+    'knowledge_notes',
+    'knowledge_principles',
+    'knowledge_assumptions',
+    'knowledge_decisions',
+    'knowledge_concepts',
+    'knowledge_experiments',
+    'knowledge_routines',
   ];
 
   Future<int> enqueueMissingLocalRows() async {

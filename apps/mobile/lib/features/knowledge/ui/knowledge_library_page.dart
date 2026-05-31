@@ -435,8 +435,9 @@ Future<void> _deleteEntry({
   final confirmed = await showConfirmDialog(
     context: context,
     title: const Text('删除条目？'),
-    body: Text('“$title” 会从资料库移除，并在下次索引同步后从 AI 记忆中清理。'),
+    body: Text('”$title” 会从资料库移除，并在下次索引同步后从 AI 记忆中清理。'),
     confirmLabel: '删除',
+    cancelLabel: '取消',
     destructive: true,
   );
   if (confirmed != true) return;

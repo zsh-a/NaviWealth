@@ -7349,4 +7349,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsAccountLocalOnlyHint =>
       'Data is stored only on this device';
+
+  @override
+  String get amountHidden => 'Amount hidden';
 }

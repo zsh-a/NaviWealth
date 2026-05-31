@@ -21,6 +21,7 @@ Future<void> showOpportunityDetailSheet(
       title: opportunity.explanation.summary,
       footer: AppSheetFooter(
         submitLabel: l10n.incomePlannerDetailLogTrade,
+        cancelLabel: l10n.commonCancel,
         onSubmit: () async {
           Navigator.of(sheetCtx).pop();
           await showTradeJournalSheet(context, prefilled: opportunity);

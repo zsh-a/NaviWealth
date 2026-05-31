@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 
+import '../../l10n/gen/app_localizations.dart';
+
 /// Page-local switch for hiding exact monetary values.
 class AmountPrivacyScope extends InheritedWidget {
   const AmountPrivacyScope({
@@ -18,7 +20,10 @@ class AmountPrivacyScope extends InheritedWidget {
   }
 
   static const mask = '••••';
-  static const hiddenSemanticsLabel = 'Amount hidden';
+
+  /// Localized semantics label for hidden amounts.
+  static String hiddenSemanticsLabelOf(BuildContext context) =>
+      AppLocalizations.of(context).amountHidden;
 
   @override
   bool updateShouldNotify(AmountPrivacyScope oldWidget) {

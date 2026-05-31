@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/dashboard_providers.dart';
 import '../domain/dashboard_models.dart';
@@ -69,35 +70,26 @@ class CurrencyMismatchBanner extends ConsumerWidget {
     String baseCurrency,
   ) {
     final l10n = AppLocalizations.of(context);
-    showFSheet<void>(
-      side: FLayout.btt,
+    showAppSheet<void>(
       context: context,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.dashboardCurrencyMismatchSheetTitle,
-                style: Theme.of(ctx).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              for (final m in mismatches)
-                FTile(
-                  title: Text('${m.currency} → $baseCurrency'),
-                  prefix: const Icon(FLucideIcons.arrowLeftRight),
-                  subtitle: Text(m.id),
-                  suffix: const Icon(FLucideIcons.chevronRight),
-                  onPress: () {
-                    Navigator.of(ctx).pop();
-                    context.goNamed(AppRouteNames.fxRates);
-                  },
-                ),
-            ],
-          ),
-        ),
+      title: l10n.dashboardCurrencyMismatchSheetTitle,
+      scrollable: false,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final m in mismatches)
+            FTile(
+              title: Text('${m.currency} → $baseCurrency'),
+              prefix: const Icon(FLucideIcons.arrowLeftRight),
+              subtitle: Text(m.id),
+              suffix: const Icon(FLucideIcons.chevronRight),
+              onPress: () {
+                Navigator.of(ctx).pop();
+                context.goNamed(AppRouteNames.fxRates);
+              },
+            ),
+        ],
       ),
     );
   }

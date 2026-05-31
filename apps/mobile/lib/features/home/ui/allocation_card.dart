@@ -197,13 +197,14 @@ class AllocationCard extends StatelessWidget {
       onSliceTap!(context, alloc);
       return;
     }
-    showFSheet<void>(
-      side: FLayout.btt,
+    final l10n = AppLocalizations.of(context);
+    showAppSheet<void>(
       context: context,
-      mainAxisMaxRatio: null,
+      title: AssetCategoryVisuals.label(l10n, alloc.category),
       builder: (ctx) => CategoryDrillDownSheet(
         allocation: alloc,
         baseCurrency: snapshot.baseCurrency,
+        showHeader: false,
       ),
     );
   }
@@ -790,10 +791,12 @@ class CategoryDrillDownSheet extends StatelessWidget {
     super.key,
     required this.allocation,
     required this.baseCurrency,
+    this.showHeader = true,
   });
 
   final CategoryAllocation allocation;
   final String baseCurrency;
+  final bool showHeader;
 
   @override
   Widget build(BuildContext context) {
@@ -809,27 +812,29 @@ class CategoryDrillDownSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(
-                  AssetCategoryVisuals.icon(allocation.category),
-                  color: context.theme.colors.primary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    AssetCategoryVisuals.label(l10n, allocation.category),
-                    style: context.theme.typography.lg,
+            if (showHeader) ...[
+              Row(
+                children: [
+                  Icon(
+                    AssetCategoryVisuals.icon(allocation.category),
+                    color: context.theme.colors.primary,
                   ),
-                ),
-                MoneyText(
-                  amount: total,
-                  currencyCode: baseCurrency,
-                  showSign: total < 0,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      AssetCategoryVisuals.label(l10n, allocation.category),
+                      style: context.theme.typography.lg,
+                    ),
+                  ),
+                  MoneyText(
+                    amount: total,
+                    currencyCode: baseCurrency,
+                    showSign: total < 0,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
             Text(
               l10n.dashboardDrillDownItemCount(allocation.items.length),
               style: context.theme.typography.xs.copyWith(

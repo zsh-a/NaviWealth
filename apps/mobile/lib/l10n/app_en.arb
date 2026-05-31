@@ -4232,5 +4232,7 @@
   "settingsAccountLocalOnlyBadge": "Local mode",
   "@settingsAccountLocalOnlyBadge": { "description": "Account-section label shown to local-only users instead of an email" },
   "settingsAccountLocalOnlyHint": "Data is stored only on this device",
-  "@settingsAccountLocalOnlyHint": { "description": "Account-section subtitle clarifying that local mode does not sync" }
+  "@settingsAccountLocalOnlyHint": { "description": "Account-section subtitle clarifying that local mode does not sync" },
+  "amountHidden": "Amount hidden",
+  "@amountHidden": { "description": "Screen reader label when monetary amount is hidden by privacy mode" }
 }
