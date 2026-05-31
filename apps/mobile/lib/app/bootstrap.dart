@@ -1,19 +1,15 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
-import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/ai/llm_credentials/providers.dart' as llm_credentials;
 import '../core/ai/local/embedding/embedder.dart';
-import '../core/ai/local/embedding/model_install_paths.dart';
-import '../core/ai/local/embedding/model_manifest.dart';
+import '../core/ai/local/embedding/embedder_path_resolution.dart';
 import '../core/ai/local/embedding/rust_gemma_embedder.dart';
 import '../core/ai/local/memory/providers.dart' as memory_providers;
 import '../core/auth/providers.dart' as core_auth;
@@ -68,7 +64,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // any required path is missing we leave `embedderProvider` on its
   // [StubEmbedder] default and let the user install the bundle from
   // Settings → AI Models.
-  final resolvedEmbedderPaths = await _resolveEmbedderPaths(effectiveConfig);
+  final resolvedEmbedderPaths = await resolveEmbedderPaths(effectiveConfig);
 
   final container = ProviderContainer(
     overrides: [
@@ -323,117 +319,6 @@ void _scheduleMemoryRuntimeStartupTasks({
       );
     }
   }());
-}
-
-/// Resolved file paths the Rust embedder needs (D-1.7c). All three
-/// can come from either dart-define override or the in-app
-/// installer's directory.
-class _EmbedderPathResolution {
-  const _EmbedderPathResolution({
-    required this.modelDir,
-    required this.ortDylibPath,
-    this.libraryPath,
-  });
-  final String modelDir;
-  final String ortDylibPath;
-  final String? libraryPath;
-
-  bool get isComplete => modelDir.isNotEmpty && ortDylibPath.isNotEmpty;
-
-  List<String> get missingInputs => [
-    if (modelDir.isEmpty) 'EmbeddingGemma model dir',
-    if (ortDylibPath.isEmpty) 'ONNX Runtime dylib',
-  ];
-}
-
-/// Pick the active embedder paths. When not enough inputs are
-/// available to construct the Rust embedder, [isComplete] is false —
-/// bootstrap then leaves the stub default in place, and the user can
-/// install the model bundle via Settings → AI Models.
-///
-/// Precedence per field:
-///   1. `--dart-define` override (dev / test path)
-///   2. For `modelDir`: on-disk installer artefact (`<app_support>/embedders/`)
-///   3. For `ortDylibPath`: standard locations around the executable
-///      (build-time bundled by `tool/build-lifeos-native.sh` / cargokit)
-///
-/// ORT is build-time managed (not in the in-app installer) because
-/// it's a Rust crate dep, not user data; `tool/fetch-onnxruntime.sh`
-/// downloads + places it alongside `liblifeos_native.{dylib,so}`.
-Future<_EmbedderPathResolution> _resolveEmbedderPaths(AppConfig config) async {
-  String modelDir = config.rustEmbedderModelDir;
-  String ortDylibPath = config.rustEmbedderOrtDylibPath;
-
-  if (modelDir.isEmpty) {
-    try {
-      final support = await getApplicationSupportDirectory();
-      final root = Directory(path.join(support.path, 'embedders'));
-      final gemma = embeddingGemmaBundle();
-      final gemmaDir = Directory(path.join(root.path, gemma.id));
-      final paths = ModelInstallPaths.unsafeForDir(root);
-      if (await paths.isComplete(gemma)) {
-        modelDir = gemmaDir.path;
-      }
-    } on Object {
-      // path_provider failure (rare, e.g. sandbox issues) → bail out
-      // and keep the stub embedder.
-      return _EmbedderPathResolution(
-        modelDir: modelDir,
-        ortDylibPath: ortDylibPath,
-        libraryPath: config.rustEmbedderLibraryPath.isEmpty
-            ? null
-            : config.rustEmbedderLibraryPath,
-      );
-    }
-  }
-
-  if (ortDylibPath.isEmpty) {
-    ortDylibPath = _discoverBundledOrtDylib() ?? '';
-  }
-
-  return _EmbedderPathResolution(
-    modelDir: modelDir,
-    ortDylibPath: ortDylibPath,
-    libraryPath: config.rustEmbedderLibraryPath.isEmpty
-        ? null
-        : config.rustEmbedderLibraryPath,
-  );
-}
-
-/// Look for the build-time-bundled `libonnxruntime.{dylib,so}` next
-/// to (or one level above) the running executable. Returns the first
-/// existing path, or `null` if none matches — caller falls back to
-/// the stub embedder.
-///
-/// Search order is platform-conventional:
-///
-/// - **macOS**: `<exec>/../Frameworks/libonnxruntime.dylib` (Pod-
-///   bundled location), then `<exec>/libonnxruntime.dylib`.
-/// - **Linux**: `<exec>/libonnxruntime.so`.
-/// - **Android**: `libonnxruntime.so` packaged in the app's native
-///   library directory by Gradle; the dynamic loader resolves by name.
-/// - **iOS**: not yet wired — needs a platform-specific bundling step
-///   (TODO when D-2 ships HealthOS on iOS).
-///
-String? _discoverBundledOrtDylib() {
-  if (Platform.isAndroid) return 'libonnxruntime.so';
-  if (!Platform.isMacOS && !Platform.isLinux) return null;
-  final exec = Platform.resolvedExecutable;
-  final execDir = File(exec).parent;
-  final dylibName = Platform.isMacOS
-      ? 'libonnxruntime.dylib'
-      : 'libonnxruntime.so';
-
-  final candidates = <String>[
-    if (Platform.isMacOS)
-      path.join(execDir.parent.path, 'Frameworks', dylibName),
-    path.join(execDir.path, dylibName),
-  ];
-  for (final p in candidates) {
-    final normalised = path.normalize(p);
-    if (File(normalised).existsSync()) return normalised;
-  }
-  return null;
 }
 
 /// Construct the Rust EmbeddingGemma embedder, or log + fall back to

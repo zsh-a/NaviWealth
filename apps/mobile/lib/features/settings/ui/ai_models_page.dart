@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/ai/local/embedding/embedder_path_resolution.dart';
 import '../../../core/ai/local/embedding/model_install_state.dart';
 import '../../../core/ai/local/embedding/model_manifest.dart';
 import '../../../design_system/design_system.dart';
@@ -27,6 +28,7 @@ class AiModelsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bundles = ref.watch(knownModelBundlesProvider);
+    final resolution = ref.watch(embedderPathResolutionProvider);
     return FScaffold(
       header: FHeader.nested(
         title: const Text('AI 模型'),
@@ -41,6 +43,8 @@ class AiModelsPage extends ConsumerWidget {
           return ListView(
             padding: padding,
             children: [
+              _RuntimeDiagnosticsCard(resolution: resolution),
+              const SizedBox(height: 12),
               const _Hint(),
               const SizedBox(height: 16),
               for (final bundle in bundles) ...[
@@ -56,6 +60,124 @@ class AiModelsPage extends ConsumerWidget {
     );
   }
 }
+
+class _RuntimeDiagnosticsCard extends StatelessWidget {
+  const _RuntimeDiagnosticsCard({required this.resolution});
+
+  final AsyncValue<EmbedderPathResolution> resolution;
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard(
+      padding: const EdgeInsets.all(12),
+      child: resolution.when(
+        loading: () => const Row(
+          children: [
+            SizedBox.square(
+              dimension: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 8),
+            Text('正在检查下次启动的 embedder 路径…'),
+          ],
+        ),
+        error: (e, _) => Text(
+          'embedder 路径检查失败:$e',
+          style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+        ),
+        data: (r) {
+          final complete = r.isComplete;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    complete ? FLucideIcons.cpu : FLucideIcons.circleAlert,
+                    size: 18,
+                    color: complete ? Colors.green : Colors.orange,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      complete
+                          ? '下次启动将加载 Rust EmbeddingGemma'
+                          : '下次启动仍会使用 stub embedder',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _RuntimeRow(
+                label: '模型',
+                value: r.modelDir.isEmpty
+                    ? '缺失: EmbeddingGemma model dir'
+                    : '${_modelSourceLabel(r.modelSource)} · ${r.modelDir}',
+              ),
+              const SizedBox(height: 4),
+              _RuntimeRow(
+                label: 'ONNX Runtime',
+                value: r.ortDylibPath.isEmpty
+                    ? '缺失: ONNX Runtime dylib'
+                    : '${_ortSourceLabel(r.ortSource)} · ${r.ortDylibPath}',
+              ),
+              const SizedBox(height: 4),
+              _RuntimeRow(
+                label: 'native lib',
+                value: r.libraryPath ?? '由平台插件加载',
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _RuntimeRow extends StatelessWidget {
+  const _RuntimeRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 86,
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: Colors.grey),
+          ),
+        ),
+        Expanded(
+          child: SelectableText(
+            value,
+            style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+String _modelSourceLabel(EmbedderModelPathSource source) => switch (source) {
+  EmbedderModelPathSource.dartDefine => 'dart-define',
+  EmbedderModelPathSource.installedBundle => '已安装',
+  EmbedderModelPathSource.missing => '缺失',
+};
+
+String _ortSourceLabel(EmbedderOrtPathSource source) => switch (source) {
+  EmbedderOrtPathSource.dartDefine => 'dart-define',
+  EmbedderOrtPathSource.bundled => 'app bundle',
+  EmbedderOrtPathSource.missing => '缺失',
+};
 
 class _Hint extends StatelessWidget {
   const _Hint();
@@ -122,8 +244,7 @@ class _BundleCard extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       bundle.description,
-                      style:
-                          const TextStyle(fontSize: 12, color: Colors.grey),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -167,8 +288,10 @@ class _SizeBadge extends StatelessWidget {
         color: Colors.black.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(_formatBytes(total),
-          style: const TextStyle(fontSize: 11, color: Colors.black54)),
+      child: Text(
+        _formatBytes(total),
+        style: const TextStyle(fontSize: 11, color: Colors.black54),
+      ),
     );
   }
 }
@@ -196,18 +319,14 @@ class _BundleBody extends StatelessWidget {
         Row(
           children: [
             if (state.isInstalled)
-              const _StatusChip(
-                text: '已安装',
-                color: Colors.green,
-              )
+              const _StatusChip(text: '已安装', color: Colors.green)
             else if (state.isInstalling)
               _StatusChip(
                 text: '下载中…',
                 color: Colors.blue,
                 progress: state.aggregateProgress,
               )
-            else if (state.files.any(
-                (f) => f.status == ModelFileStatus.failed))
+            else if (state.files.any((f) => f.status == ModelFileStatus.failed))
               const _StatusChip(text: '失败', color: Colors.redAccent)
             else
               const _StatusChip(text: '未安装', color: Colors.grey),
@@ -232,10 +351,7 @@ class _BundleBody extends StatelessWidget {
                 child: const Text('重新下载'),
               ),
             ] else
-              FilledButton(
-                onPressed: onInstall,
-                child: const Text('下载'),
-              ),
+              FilledButton(onPressed: onInstall, child: const Text('下载')),
           ],
         ),
       ],
@@ -246,9 +362,7 @@ class _BundleBody extends StatelessWidget {
     return showConfirmDialog(
       context: context,
       title: const Text('删除模型?'),
-      body: const Text(
-        '删除后 AI 检索会自动回到 stub embedder。重新下载需要再走一次网络。',
-      ),
+      body: const Text('删除后 AI 检索会自动回到 stub embedder。重新下载需要再走一次网络。'),
       confirmLabel: '删除',
       cancelLabel: '取消',
       destructive: true,
@@ -273,10 +387,7 @@ class _FileRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   file.file.localName,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontFamily: 'monospace',
-                  ),
+                  style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
                 ),
               ),
               const SizedBox(width: 8),
@@ -285,10 +396,7 @@ class _FileRow extends StatelessWidget {
           ),
           if (file.status == ModelFileStatus.downloading) ...[
             const SizedBox(height: 4),
-            LinearProgressIndicator(
-              value: progress,
-              minHeight: 3,
-            ),
+            LinearProgressIndicator(value: progress, minHeight: 3),
             const SizedBox(height: 2),
             Text(
               '${_formatBytes(file.bytesDownloaded)}'
@@ -300,8 +408,7 @@ class _FileRow extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               file.error!,
-              style:
-                  const TextStyle(fontSize: 10, color: Colors.redAccent),
+              style: const TextStyle(fontSize: 10, color: Colors.redAccent),
             ),
           ],
         ],
@@ -310,27 +417,27 @@ class _FileRow extends StatelessWidget {
   }
 
   Widget _statusIcon(ModelFileStatus s) => switch (s) {
-        ModelFileStatus.notInstalled => const Icon(
-            FLucideIcons.download,
-            size: 16,
-            color: Colors.grey,
-          ),
-        ModelFileStatus.downloading => const SizedBox(
-            width: 12,
-            height: 12,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ModelFileStatus.installed => const Icon(
-            FLucideIcons.circleCheck,
-            size: 16,
-            color: Colors.green,
-          ),
-        ModelFileStatus.failed => const Icon(
-            FLucideIcons.circleAlert,
-            size: 16,
-            color: Colors.redAccent,
-          ),
-      };
+    ModelFileStatus.notInstalled => const Icon(
+      FLucideIcons.download,
+      size: 16,
+      color: Colors.grey,
+    ),
+    ModelFileStatus.downloading => const SizedBox(
+      width: 12,
+      height: 12,
+      child: CircularProgressIndicator(strokeWidth: 2),
+    ),
+    ModelFileStatus.installed => const Icon(
+      FLucideIcons.circleCheck,
+      size: 16,
+      color: Colors.green,
+    ),
+    ModelFileStatus.failed => const Icon(
+      FLucideIcons.circleAlert,
+      size: 16,
+      color: Colors.redAccent,
+    ),
+  };
 }
 
 class _StatusChip extends StatelessWidget {
