@@ -62,13 +62,12 @@ class ModelFileState {
     int? bytesDownloaded,
     String? error,
     bool clearError = false,
-  }) =>
-      ModelFileState(
-        file: file,
-        status: status ?? this.status,
-        bytesDownloaded: bytesDownloaded ?? this.bytesDownloaded,
-        error: clearError ? null : (error ?? this.error),
-      );
+  }) => ModelFileState(
+    file: file,
+    status: status ?? this.status,
+    bytesDownloaded: bytesDownloaded ?? this.bytesDownloaded,
+    error: clearError ? null : (error ?? this.error),
+  );
 }
 
 /// Immutable bundle snapshot.
@@ -111,13 +110,12 @@ class ModelBundleState {
   ModelBundleState copyWith({
     List<ModelFileState>? files,
     bool? isInstalling,
-  }) =>
-      ModelBundleState(
-        bundle: bundle,
-        installDir: installDir,
-        files: files ?? this.files,
-        isInstalling: isInstalling ?? this.isInstalling,
-      );
+  }) => ModelBundleState(
+    bundle: bundle,
+    installDir: installDir,
+    files: files ?? this.files,
+    isInstalling: isInstalling ?? this.isInstalling,
+  );
 }
 
 class ModelInstallController extends AsyncNotifier<ModelBundleState> {
@@ -148,10 +146,7 @@ class ModelInstallController extends AsyncNotifier<ModelBundleState> {
     );
   }
 
-  Future<ModelFileState> _scanFileState(
-    ModelFile file,
-    String dirPath,
-  ) async {
+  Future<ModelFileState> _scanFileState(ModelFile file, String dirPath) async {
     final disk = File('$dirPath/${file.localName}');
     if (!disk.existsSync()) {
       return ModelFileState(file: file, status: ModelFileStatus.notInstalled);
@@ -282,7 +277,7 @@ final modelInstallProvider = AsyncNotifierProvider.autoDispose
 /// ONNX Runtime is **not** on this list — it's a Rust crate
 /// dependency managed at build time by `tool/fetch-onnxruntime.sh`,
 /// not user-installable data. See `lifeos-shell.md` §6.6 + the
-/// `_discoverBundledOrtDylib` resolver in `bootstrap.dart`.
+/// `discoverBundledOrtDylib` resolver.
 final knownModelBundlesProvider = Provider<List<ModelBundle>>((ref) {
   return [embeddingGemmaBundle()];
 });
