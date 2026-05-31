@@ -326,7 +326,7 @@ class _NwLineChartState extends State<NwLineChart> {
   }
 
   double _defaultFillTopAlpha(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.12;
+    return context.theme.colors.brightness == Brightness.dark ? 0.18 : 0.12;
   }
 
   _PreparedLineData _prepare(List<ChartSeries> nonEmpty) {

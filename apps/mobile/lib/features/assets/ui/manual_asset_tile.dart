@@ -1,5 +1,5 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
@@ -32,11 +32,10 @@ class ManualAssetTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final chips = _chipsFor(asset, l10n);
     return MergeSemantics(
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: () => _onTap(context),
-          child: Container(
+      child: GestureDetector(
+        onTap: () => _onTap(context),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
             color: selected
                 ? context.theme.colors.primary.withValues(alpha: AppOpacity.subtle)
                 : null,
@@ -79,7 +78,6 @@ class ManualAssetTile extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 

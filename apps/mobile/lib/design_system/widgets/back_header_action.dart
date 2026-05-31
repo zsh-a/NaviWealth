@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import 'back_navigation.dart';
@@ -22,7 +22,7 @@ FHeaderAction backHeaderAction(
   Future<bool> Function()? confirmLeave,
 }) {
   return FHeaderAction(
-    icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+    icon: const Icon(FLucideIcons.arrowLeft, size: 18),
     onPress: () async {
       if (confirmLeave != null) {
         final mayLeave = await confirmLeave();

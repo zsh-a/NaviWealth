@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
@@ -61,9 +61,7 @@ class HomePage extends ConsumerWidget {
       // rendered inside [HomeGreetingHeader]. A bare scaffold (no
       // FHeader) keeps the top of the page calm.
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: PageSkeletonShell<DashboardSnapshot>(
+      child: PageSkeletonShell<DashboardSnapshot>(
           skeleton: const HomeSkeleton(),
           isLoading: snapshotAsync.isLoading && !snapshotAsync.hasValue,
           child: SafeArea(
@@ -84,8 +82,7 @@ class HomePage extends ConsumerWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }
 

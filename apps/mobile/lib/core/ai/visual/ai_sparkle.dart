@@ -11,7 +11,7 @@
 /// **typography**, not a bigger sparkle.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import 'ai_tone.dart';

@@ -101,8 +101,9 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
               },
             ),
             const SizedBox(height: AppSpacing.s12),
-            InkWell(
+            GestureDetector(
               onTap: _saving ? null : _pickDate,
+              behavior: HitTestBehavior.opaque,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

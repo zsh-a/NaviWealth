@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../theme/market_color_mode.dart';
@@ -162,7 +163,7 @@ class DeltaText extends StatelessWidget {
   }
 
   IconData _iconFor(num? v, MarketColorMode _) {
-    if (v == null || v == 0) return Icons.remove;
-    return v > 0 ? Icons.arrow_drop_up : Icons.arrow_drop_down;
+    if (v == null || v == 0) return FLucideIcons.minus;
+    return v > 0 ? FLucideIcons.chevronUp : FLucideIcons.chevronDown;
   }
 }

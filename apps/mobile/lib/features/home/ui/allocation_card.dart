@@ -736,9 +736,9 @@ class _LegendRow extends StatelessWidget {
         ? null
         : '${(percent! * 100).toStringAsFixed(1)}%';
     return MergeSemantics(
-      child: InkWell(
+      child: GestureDetector(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        behavior: HitTestBehavior.opaque,
         child: ConstrainedBox(
           // Material 48dp touch-target floor — the visual row is shorter
           // than this, so the InkWell pads itself out vertically.

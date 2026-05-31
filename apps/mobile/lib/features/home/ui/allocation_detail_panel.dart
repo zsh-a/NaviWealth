@@ -72,9 +72,7 @@ class _DesktopAllocationInspector extends StatelessWidget {
     final colors = context.theme.colors;
     return Align(
       alignment: Alignment.centerRight,
-      child: Material(
-        color: Colors.transparent,
-        child: SafeArea(
+      child: SafeArea(
           left: false,
           child: Container(
             width: 430,
@@ -93,7 +91,6 @@ class _DesktopAllocationInspector extends StatelessWidget {
             child: _AllocationDetailBody(snapshot: snapshot),
           ),
         ),
-      ),
     );
   }
 }

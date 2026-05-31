@@ -11,7 +11,7 @@
 /// inherits sizing from [AiType.label]. No elevation, no shadow.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../../../design_system/design_system.dart';
 import 'ai_motion.dart';
@@ -75,13 +75,10 @@ class AiPill extends StatelessWidget {
     );
 
     if (onTap == null) return pill;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        customBorder: const StadiumBorder(),
-        onTap: onTap,
-        child: pill,
-      ),
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: pill,
     );
   }
 }

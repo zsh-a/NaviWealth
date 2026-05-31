@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -29,10 +29,11 @@ class CurrencyMismatchBanner extends ConsumerWidget {
 
     final l10n = AppLocalizations.of(context);
     final base = ref.watch(dashboardBaseCurrencyProvider);
-    return Material(
+    return ColoredBox(
       color: semantic.dangerContainer,
-      child: InkWell(
+      child: GestureDetector(
         onTap: () => _showDetails(context, mismatches, base),
+        behavior: HitTestBehavior.opaque,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
           child: Row(

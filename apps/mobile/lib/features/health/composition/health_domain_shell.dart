@@ -7,7 +7,6 @@
 /// see this surface in English / Chinese mixed prose either way.
 library;
 
-import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../../../app/route_paths.dart';

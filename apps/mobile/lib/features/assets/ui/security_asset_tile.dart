@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
@@ -35,11 +35,10 @@ class SecurityAssetTile extends StatelessWidget {
         : l10n.securitiesHoldingFlat;
 
     return MergeSemantics(
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: () => _onTap(context),
-          child: Container(
+      child: GestureDetector(
+        onTap: () => _onTap(context),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
             color: selected
                 ? context.theme.colors.primary.withValues(alpha: AppOpacity.subtle)
                 : null,
@@ -94,8 +93,7 @@ class SecurityAssetTile extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   void _onTap(BuildContext context) {

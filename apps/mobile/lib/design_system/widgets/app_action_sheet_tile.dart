@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -58,7 +57,7 @@ class AppActionSheetTile extends StatelessWidget with FTileMixin {
         ),
       ),
       suffix: Icon(
-        Icons.chevron_right,
+        FLucideIcons.chevronRight,
         size: AppIconSizes.md,
         color: colors.mutedForeground.withValues(alpha: 0.55),
       ),

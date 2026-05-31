@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../../core/haptics/haptics.dart';
@@ -82,10 +82,10 @@ class AppMessenger {
       ToastKind.info => FToastVariant.primary,
     };
     final icon = Icon(switch (kind) {
-      ToastKind.success => Icons.check_circle_outline_rounded,
-      ToastKind.warning => Icons.warning_amber_rounded,
-      ToastKind.error => Icons.error_outline_rounded,
-      ToastKind.info => Icons.info_outline_rounded,
+      ToastKind.success => FLucideIcons.circleCheck,
+      ToastKind.warning => FLucideIcons.triangleAlert,
+      ToastKind.error => FLucideIcons.circleX,
+      ToastKind.info => FLucideIcons.info,
     });
 
     // Fire haptic feedback matching the toast severity.

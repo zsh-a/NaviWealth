@@ -231,12 +231,10 @@ class _JumpToBottomChip extends StatelessWidget {
     final colors = context.theme.colors;
     return FTooltip(
       tipBuilder: (_, _) => Text(l10n.aiChatJumpToLatestTooltip),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onPressed,
-          child: Container(
+      child: GestureDetector(
+        onTap: onPressed,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
             width: 36,
             height: 36,
             decoration: BoxDecoration(
@@ -259,7 +257,6 @@ class _JumpToBottomChip extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }

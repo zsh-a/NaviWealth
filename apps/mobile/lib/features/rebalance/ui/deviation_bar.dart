@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
@@ -125,7 +125,7 @@ class _DeviationChip extends StatelessWidget {
 
     final (bg, fg) = switch (severity) {
       DriftSeverity.ok => (
-        AccentColors.tint(Theme.of(context).brightness),
+        AccentColors.tint(context.theme.colors.brightness),
         context.theme.colors.primary,
       ),
       DriftSeverity.warning => (
