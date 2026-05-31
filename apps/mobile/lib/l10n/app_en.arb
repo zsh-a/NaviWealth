@@ -649,6 +649,12 @@
   "@activityEntryDetailInsightHousing": { "description": "Heuristic AI insight shown for rent or mortgage-like transaction descriptions" },
   "activityEntryDetailInsightIncome": "Primary income inflow. Keep it stable in cash-flow projections.",
   "@activityEntryDetailInsightIncome": { "description": "Heuristic AI insight shown for salary or payroll-like transaction descriptions" },
+  "activityEntryDetailInsightDining": "Dining expense. Review if it aligns with your monthly food budget.",
+  "@activityEntryDetailInsightDining": { "description": "Heuristic AI insight shown for restaurant or food delivery transaction descriptions" },
+  "activityEntryDetailInsightTransport": "Transportation cost. Consider whether it's a routine commute or one-off trip.",
+  "@activityEntryDetailInsightTransport": { "description": "Heuristic AI insight shown for ride-hailing, transit, or travel transaction descriptions" },
+  "activityEntryDetailInsightShopping": "Shopping purchase. Check if it was planned or impulse spending.",
+  "@activityEntryDetailInsightShopping": { "description": "Heuristic AI insight shown for online shopping or retail transaction descriptions" },
   "activityEntryDetailLegCount": "{count, plural, =1{1 line} other{{count} lines}}",
   "@activityEntryDetailLegCount": {
     "description": "Transaction detail posting line count",

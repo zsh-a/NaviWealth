@@ -2000,6 +2000,24 @@ abstract class AppLocalizations {
   /// **'Primary income inflow. Keep it stable in cash-flow projections.'**
   String get activityEntryDetailInsightIncome;
 
+  /// Heuristic AI insight shown for restaurant or food delivery transaction descriptions
+  ///
+  /// In en, this message translates to:
+  /// **'Dining expense. Review if it aligns with your monthly food budget.'**
+  String get activityEntryDetailInsightDining;
+
+  /// Heuristic AI insight shown for ride-hailing, transit, or travel transaction descriptions
+  ///
+  /// In en, this message translates to:
+  /// **'Transportation cost. Consider whether it\'s a routine commute or one-off trip.'**
+  String get activityEntryDetailInsightTransport;
+
+  /// Heuristic AI insight shown for online shopping or retail transaction descriptions
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping purchase. Check if it was planned or impulse spending.'**
+  String get activityEntryDetailInsightShopping;
+
   /// Transaction detail posting line count
   ///
   /// In en, this message translates to:

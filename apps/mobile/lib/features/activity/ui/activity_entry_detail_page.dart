@@ -2,12 +2,14 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/posting.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../core/ai/write/write.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
@@ -40,10 +42,21 @@ class ActivityEntryDetailPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
     final aiInsight = _heuristicInsight(entry, l10n);
+    final classification = classifyEntryKind(
+      postings: entry.postings,
+      resolveCategory: (id) => accountsById[id]?.category,
+    );
     return FScaffold(
       header: FHeader.nested(
         title: Text(l10n.activityEntryDetailTitle),
         prefixes: [backHeaderAction(context)],
+        suffixes: [
+          if (classification.kind == EntryKind.expense)
+            FHeaderAction(
+              icon: const Icon(FLucideIcons.pencil),
+              onPress: () => context.go(AppRoutes.expense(entry.entry.id)),
+            ),
+        ],
       ),
       childPad: false,
       child: ListView(
@@ -114,7 +127,8 @@ class _HeroAmountCard extends StatelessWidget {
     final title = entry.entry.narration.isEmpty ? '—' : entry.entry.narration;
     final payee = entry.entry.payee;
     final colors = context.theme.colors;
-    final tint = _tintForKind(classification.kind, colors);
+    final semantic = SemanticColors.of(context);
+    final tint = _tintForKind(classification.kind, colors, semantic);
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s20),
       child: Column(
@@ -383,7 +397,6 @@ class _DetailPostingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     final account = accountsById[posting.accountId];
     final accountLabel = account == null
@@ -444,15 +457,8 @@ class _DetailPostingRow extends StatelessWidget {
               ],
             ),
           ],
-          if (account == null) ...[
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              posting.accountId,
-              style: context.theme.typography.xs2.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
-          ],
+          // account == null 时 accountLabel 已回退为 posting.accountId，
+          // 无需额外兜底文本。数据库验证：当前无孤立 posting 数据。
         ],
       ),
     );
@@ -588,6 +594,56 @@ String? _heuristicInsight(
   ])) {
     return l10n.activityEntryDetailInsightIncome;
   }
+  if (_containsAny(text, const [
+    'restaurant',
+    'dining',
+    'food',
+    'lunch',
+    'dinner',
+    'breakfast',
+    '外卖',
+    '餐饮',
+    '美团',
+    '饿了么',
+    '麦当劳',
+    '肯德基',
+    '星巴克',
+  ])) {
+    return l10n.activityEntryDetailInsightDining;
+  }
+  if (_containsAny(text, const [
+    'uber',
+    'lyft',
+    'taxi',
+    'transit',
+    'metro',
+    'subway',
+    '滴滴',
+    '打车',
+    '地铁',
+    '公交',
+    '高铁',
+    '火车',
+    '机票',
+    '航空',
+  ])) {
+    return l10n.activityEntryDetailInsightTransport;
+  }
+  if (_containsAny(text, const [
+    'shopping',
+    'mall',
+    'store',
+    'taobao',
+    'jd.com',
+    'pinduoduo',
+    '淘宝',
+    '京东',
+    '拼多多',
+    '天猫',
+    '购物',
+  ])) {
+    return l10n.activityEntryDetailInsightShopping;
+  }
   return null;
 }
 
@@ -645,15 +701,18 @@ IconData _iconForKind(EntryKind kind) {
   }
 }
 
-Color _tintForKind(EntryKind kind, FColors colors) {
+Color _tintForKind(EntryKind kind, FColors colors, SemanticColors semantic) {
   switch (kind) {
     case EntryKind.income:
     case EntryKind.trade:
       return colors.primary;
     case EntryKind.expense:
     case EntryKind.payment:
+      return semantic.danger;
     case EntryKind.transfer:
+      return semantic.info;
     case EntryKind.adjustment:
+      return semantic.warning;
     case EntryKind.opening:
     case EntryKind.other:
       return colors.mutedForeground;

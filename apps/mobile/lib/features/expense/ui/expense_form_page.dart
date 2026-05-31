@@ -236,6 +236,22 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     return l10n.expenseFormEditTitle;
   }
 
+  String _pageTitle(AppLocalizations l10n, List<Account>? allAccounts) {
+    if (!widget.isEdit) return l10n.expenseFormCreateTitle;
+    if (_initial == null) return l10n.expenseFormEditTitle;
+    // Show "Edit · Category  ¥120" after the existing record is loaded.
+    final parts = <String>[l10n.expenseFormEditTitle];
+    if (allAccounts != null && _expenseAccountId != null) {
+      final cat = allAccounts.where((a) => a.id == _expenseAccountId).firstOrNull;
+      if (cat != null) parts.add(cat.name);
+    }
+    final amountText = _amountController.text.trim();
+    if (amountText.isNotEmpty) {
+      parts.add(amountText);
+    }
+    return parts.join(' · ');
+  }
+
   List<Account> _leafAccounts(List<Account> accounts) {
     final parentIds = {
       for (final account in accounts)
@@ -255,11 +271,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     return guardedScope(
       child: FScaffold(
         header: FHeader.nested(
-          title: Text(
-            widget.isEdit
-                ? l10n.expenseFormEditTitle
-                : l10n.expenseFormCreateTitle,
-          ),
+          title: Text(_pageTitle(l10n, allAccountsAsync.value)),
           prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
           suffixes: [
             if (widget.isEdit)

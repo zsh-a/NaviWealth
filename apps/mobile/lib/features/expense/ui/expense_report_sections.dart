@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -491,7 +493,14 @@ class _CategoryDrillDown extends StatelessWidget {
                   itemCount: entries.length,
                   itemBuilder: (ctx, i) {
                     final exp = entries[i];
-                    return _ExpenseLine(expense: exp, formatter: formatter);
+                    return _ExpenseLine(
+                      expense: exp,
+                      formatter: formatter,
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                        context.push(AppRoutes.expense(exp.id));
+                      },
+                    );
                   },
                 ),
               ),
@@ -504,10 +513,15 @@ class _CategoryDrillDown extends StatelessWidget {
 }
 
 class _ExpenseLine extends StatelessWidget {
-  const _ExpenseLine({required this.expense, required this.formatter});
+  const _ExpenseLine({
+    required this.expense,
+    required this.formatter,
+    this.onTap,
+  });
 
   final Expense expense;
   final AppFormatters formatter;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -520,6 +534,7 @@ class _ExpenseLine extends StatelessWidget {
           fontFeatures: TypographyTokens.tabularFigures,
         ),
       ),
+      onPress: onTap,
     );
   }
 }

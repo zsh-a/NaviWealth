@@ -1057,6 +1057,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityEntryDetailInsightIncome => '识别为主要收入流入。可作为现金流预测的稳定基线。';
 
   @override
+  String get activityEntryDetailInsightDining => '餐饮支出。可对照月度餐饮预算检查是否合理。';
+
+  @override
+  String get activityEntryDetailInsightTransport => '交通出行费用。留意是日常通勤还是一次性出行。';
+
+  @override
+  String get activityEntryDetailInsightShopping => '购物消费。可回顾是计划内购买还是冲动消费。';
+
+  @override
   String activityEntryDetailLegCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
