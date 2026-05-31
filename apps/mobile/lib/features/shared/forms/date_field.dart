@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart' show showDatePicker;
+import 'package:flutter/material.dart'
+    show TimeOfDay, showDatePicker, showTimePicker;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -16,6 +17,7 @@ class DateField extends StatefulWidget {
     this.lastDate,
     this.required = false,
     this.helperText,
+    this.includeTime = false,
   });
 
   final String label;
@@ -25,6 +27,7 @@ class DateField extends StatefulWidget {
   final DateTime? lastDate;
   final bool required;
   final String? helperText;
+  final bool includeTime;
 
   @override
   State<DateField> createState() => _DateFieldState();
@@ -68,7 +71,10 @@ class _DateFieldState extends State<DateField> {
     if (locale == null) {
       return value.toIso8601String().split('T').first;
     }
-    return AppFormatters(locale: locale).date(value);
+    final formatters = AppFormatters(locale: locale);
+    return widget.includeTime
+        ? formatters.dateTime(value)
+        : formatters.date(value);
   }
 
   void _syncController() {
@@ -115,7 +121,27 @@ class _DateFieldState extends State<DateField> {
       lastDate: lastDate,
     );
     if (picked == null) return;
-    _setValue(picked);
+    if (!widget.includeTime) {
+      _setValue(picked);
+      return;
+    }
+
+    if (!context.mounted) return;
+    final existing = _value ?? today;
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(existing),
+    );
+    if (pickedTime == null) return;
+    _setValue(
+      DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      ),
+    );
   }
 
   void _clear() {

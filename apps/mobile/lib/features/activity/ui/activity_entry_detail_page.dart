@@ -60,7 +60,7 @@ class ActivityEntryDetailPage extends ConsumerWidget {
               entityId: entry.entry.id,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           _HeroAmountCard(
             entry: entry,
             accountsById: accountsById,
@@ -116,89 +116,119 @@ class _HeroAmountCard extends StatelessWidget {
     final colors = context.theme.colors;
     final tint = _tintForKind(classification.kind, colors);
     return SoftCard(
-      padding: EdgeInsets.zero,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              tint.withValues(alpha: 0.12),
-              colors.foreground.withValues(alpha: 0.02),
-            ],
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.s20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.all(AppSpacing.s20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: tint.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+              _KindGlyph(kind: classification.kind, tint: tint),
+              const SizedBox(width: AppSpacing.s12),
+              Flexible(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _KindLabel(
+                    label: entryKindLabel(
+                      AppLocalizations.of(context),
+                      classification.kind,
                     ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      _iconForKind(classification.kind),
-                      color: tint,
-                      size: AppIconSizes.md,
-                    ),
+                    tint: tint,
                   ),
-                  const SizedBox(width: AppSpacing.s12),
-                  Expanded(
-                    child: Text(
-                      entryKindLabel(
-                        AppLocalizations.of(context),
-                        classification.kind,
-                      ),
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s16),
-              Text(
-                title,
-                style: context.theme.typography.lg.copyWith(
-                  fontWeight: FontWeight.w700,
-                  height: 1.2,
                 ),
               ),
-              if (payee != null && payee.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.s4),
-                Text(
-                  payee,
-                  style: context.theme.typography.sm.copyWith(
+              const SizedBox(width: AppSpacing.s8),
+              Flexible(
+                child: Text(
+                  dateLine,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: context.theme.typography.xs.copyWith(
                     color: colors.mutedForeground,
                   ),
                 ),
-              ],
-              const SizedBox(height: AppSpacing.s16),
-              if (headline != null)
-                SignedMoneyText(
-                  amount: headline.units,
-                  unit: headline.unit,
-                  formatters: formatters,
-                  style: TypographyTokens.numericDisplay,
-                ),
-              const SizedBox(height: AppSpacing.s8),
-              Text(
-                dateLine,
-                style: context.theme.typography.xs.copyWith(
-                  color: colors.mutedForeground,
-                ),
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.s16),
+          if (headline != null)
+            SignedMoneyText(
+              amount: headline.units,
+              unit: headline.unit,
+              formatters: formatters,
+              style: TypographyTokens.numericDisplay.copyWith(height: 1.05),
+            ),
+          const SizedBox(height: AppSpacing.s12),
+          Text(
+            title,
+            style: context.theme.typography.lg.copyWith(
+              fontWeight: FontWeight.w700,
+              height: 1.22,
+            ),
+          ),
+          if (payee != null && payee.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s4),
+            Text(
+              payee,
+              style: context.theme.typography.sm.copyWith(
+                color: colors.mutedForeground,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _KindGlyph extends StatelessWidget {
+  const _KindGlyph({required this.kind, required this.tint});
+
+  final EntryKind kind;
+  final Color tint;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: tint.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      alignment: Alignment.center,
+      child: Icon(_iconForKind(kind), color: tint, size: AppIconSizes.sm),
+    );
+  }
+}
+
+class _KindLabel extends StatelessWidget {
+  const _KindLabel({required this.label, required this.tint});
+
+  final String label;
+  final Color tint;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s4,
+      ),
+      decoration: BoxDecoration(
+        color: tint.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: context.theme.typography.xs2.copyWith(
+          color: colors.foreground,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -215,21 +245,25 @@ class _AiInsightCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s16),
+      padding: const EdgeInsets.all(AppSpacing.s12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 28,
+            height: 28,
             decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(8),
+              color: colors.primary.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             alignment: Alignment.center,
-            child: Icon(FLucideIcons.sparkles, size: 16, color: colors.primary),
+            child: Icon(
+              FLucideIcons.sparkles,
+              size: AppIconSizes.xs,
+              color: colors.primary,
+            ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,12 +275,12 @@ class _AiInsightCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.s4),
                 Text(
                   insight,
                   style: context.theme.typography.sm.copyWith(
                     color: colors.mutedForeground,
-                    height: 1.4,
+                    height: 1.38,
                   ),
                 ),
               ],
@@ -274,18 +308,15 @@ class _LedgerBreakdownCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final totals = _computeUnitTotals(postings);
     return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s12,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                FLucideIcons.listTree,
-                size: AppIconSizes.sm,
-                color: context.theme.colors.mutedForeground,
-              ),
-              const SizedBox(width: AppSpacing.s8),
               Expanded(
                 child: Text(
                   l10n.activityEntryDetailLedgerTitle,
@@ -302,8 +333,9 @@ class _LedgerBreakdownCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.s12),
+          const _SubtleDivider(),
           for (var i = 0; i < postings.length; i++) ...[
-            if (i > 0) const FDivider(),
+            if (i > 0) const _SubtleDivider(),
             _DetailPostingRow(
               posting: postings[i],
               accountsById: accountsById,
@@ -311,9 +343,8 @@ class _LedgerBreakdownCard extends StatelessWidget {
             ),
           ],
           if (totals.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.s8),
-            const FDivider(),
-            const SizedBox(height: AppSpacing.s8),
+            const _SubtleDivider(),
+            const SizedBox(height: AppSpacing.s12),
             for (final entry in totals.entries)
               _DetailUnitBalanceRow(
                 unit: entry.key,
@@ -323,6 +354,18 @@ class _LedgerBreakdownCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+class _SubtleDivider extends StatelessWidget {
+  const _SubtleDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 1,
+      color: context.theme.colors.foreground.withValues(alpha: 0.05),
     );
   }
 }
@@ -366,7 +409,7 @@ class _DetailPostingRow extends StatelessWidget {
                 child: Text(
                   accountLabel,
                   style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                     height: 1.35,
                   ),
                 ),

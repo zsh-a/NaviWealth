@@ -350,6 +350,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
             label: l10n.transferDateLabel,
             initialValue: _date,
             required: true,
+            includeTime: true,
             onChanged: (d) {
               if (d != null) {
                 setState(() {
