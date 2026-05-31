@@ -168,11 +168,10 @@ Nightly ├─ web smoke full matrix (Firefox/WebKit/OPFS)       ← ADDED
 ```
 
 **Known-failing ratchet.** `tool/check-known-failing-tests.sh` pins the
-failing-test footprint (design-system API rot, ~50 files). It is now a
-**monotonic ratchet**: a new red file fails CI (regression), and a file
-that is fixed but still listed *also* fails CI (forcing the allowlist to
-shrink). The footprint may only ever decrease. Burn it to zero is a
-standing goal; see §7.
+failing-test footprint. The baseline is currently zero, and the gate remains
+a **monotonic ratchet**: a new red file fails CI (regression), and any
+temporary allowlist entry that stops failing *also* fails CI until removed.
+The footprint may only ever decrease.
 
 ## 6. On-device integration (`integration_test/`) — the next layer
 
@@ -221,7 +220,8 @@ cover Task #11 (backup/restore) and any SQLCipher PRAGMA path on-device.
 - Contracts-as-code: generated enum SSOT + `sync-v2` wire roundtrip vs the
   Rust serializer.
 - Expand golden coverage to each Task surface + responsive breakpoints.
-- Burn down `tool/known-failing-tests.txt` toward empty.
+- Keep `tool/known-failing-tests.txt` empty; any temporary entry needs a
+  reviewer-approved reason and must be removed as soon as the test recovers.
 
 **P2 — modern differentiators:**
 - State-machine traversal tests over `ConventionalAsyncNotifier` states
