@@ -228,6 +228,7 @@ class _AllocationSankeyChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
     final palette = ChartPalette.of(context);
     final valueAxis = ValueAxis.currency(currencyCode: snapshot.baseCurrency);
     final flows = <_SankeyFlow>[
@@ -286,6 +287,11 @@ class _AllocationSankeyChart extends StatelessWidget {
                 liabilityValue: liabilityValue,
                 liabilityValueLabel: valueAxis.formatValue(liabilityValue),
                 liabilityAllocation: liabilityAlloc,
+                neutralColor: colors.mutedForeground,
+                profitColor: MarketColors.of(context).up,
+                lossColor: MarketColors.of(context).down,
+                labelColor: colors.foreground,
+                valueColor: colors.mutedForeground,
               ),
               child: const SizedBox.expand(),
             ),
@@ -441,6 +447,11 @@ class _SankeyPainter extends CustomPainter {
     required this.liabilityValue,
     required this.liabilityValueLabel,
     required this.liabilityAllocation,
+    required this.neutralColor,
+    required this.profitColor,
+    required this.lossColor,
+    required this.labelColor,
+    required this.valueColor,
   });
 
   final List<_SankeyFlow> flows;
@@ -453,6 +464,11 @@ class _SankeyPainter extends CustomPainter {
   final double liabilityValue;
   final String liabilityValueLabel;
   final CategoryAllocation? liabilityAllocation;
+  final Color neutralColor;
+  final Color profitColor;
+  final Color lossColor;
+  final Color labelColor;
+  final Color valueColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -496,7 +512,7 @@ class _SankeyPainter extends CustomPainter {
       );
     }
 
-    nodePaint.color = ColorPalette.neutral600;
+    nodePaint.color = neutralColor;
     canvas.drawRRect(
       RRect.fromRectAndRadius(layout.assetRect, const Radius.circular(4)),
       nodePaint,
@@ -523,9 +539,9 @@ class _SankeyPainter extends CustomPainter {
       canvas,
       netWorthOut,
       layout.netWorthInRect,
-      ColorPalette.green500.withValues(alpha: AppOpacity.muted),
+      profitColor.withValues(alpha: AppOpacity.muted),
     );
-    nodePaint.color = ColorPalette.green500;
+    nodePaint.color = profitColor;
     canvas.drawRRect(
       RRect.fromRectAndRadius(layout.netWorthRect, const Radius.circular(4)),
       nodePaint,
@@ -547,9 +563,9 @@ class _SankeyPainter extends CustomPainter {
         canvas,
         layout.liabilityOutRect!,
         layout.liabilityInRect!,
-        ColorPalette.red500.withValues(alpha: AppOpacity.muted),
+        lossColor.withValues(alpha: AppOpacity.muted),
       );
-      nodePaint.color = ColorPalette.red500;
+      nodePaint.color = lossColor;
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           layout.liabilityRect!,
@@ -604,7 +620,7 @@ class _SankeyPainter extends CustomPainter {
       text: TextSpan(
         text: label,
         style: TypographyTokens.numericCaption.copyWith(
-          color: ColorPalette.neutral600,
+          color: labelColor,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -618,7 +634,7 @@ class _SankeyPainter extends CustomPainter {
       text: TextSpan(
         text: value,
         style: TypographyTokens.numericCaption.copyWith(
-          color: ColorPalette.neutral400,
+          color: valueColor,
           fontSize: 10,
         ),
       ),

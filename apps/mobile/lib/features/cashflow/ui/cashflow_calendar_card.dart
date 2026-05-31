@@ -50,8 +50,8 @@ class _CashflowCalendarContent extends ConsumerWidget {
     final accent = metrics.net.amount < Decimal.zero
         ? colors.destructive
         : positive
-        ? ColorPalette.teal500
-        : ColorPalette.amber500;
+        ? AccentColors.series
+        : SemanticColors.of(context).warning;
 
     return SoftCard(
       onPress: () => context.push(AppRoutes.cashflow),
@@ -61,7 +61,7 @@ class _CashflowCalendarContent extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _CardHeader(
+            DashboardCardHeader(
               icon: FLucideIcons.calendarDays,
               title: l10n.homeMonthlyCashFlowTitle,
               color: accent,
@@ -173,53 +173,6 @@ class _CashflowCalendarError extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _CardHeader extends StatelessWidget {
-  const _CardHeader({
-    required this.icon,
-    required this.title,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String title;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: AppOpacity.medium),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          alignment: Alignment.center,
-          child: Icon(icon, size: AppIconSizes.h18, color: color),
-        ),
-        const SizedBox(width: AppSpacing.s8),
-        Expanded(
-          child: Text(
-            title,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        Icon(
-          FLucideIcons.chevronRight,
-          size: AppIconSizes.h18,
-          color: context.theme.colors.mutedForeground.withValues(alpha: AppOpacity.prominent),
-        ),
-      ],
     );
   }
 }

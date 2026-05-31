@@ -42,7 +42,7 @@ Future<void> showAllocationDetailPanel({
     context: context,
     barrierLabel: 'allocation-detail-panel',
     barrierDismissible: true,
-    barrierColor: Colors.black.withValues(alpha: AppOpacity.disabled),
+    barrierColor: SemanticColors.of(context).scrim,
     transitionDuration: Motion.medium,
     pageBuilder: (_, _, _) => _DesktopAllocationInspector(snapshot: snapshot),
     transitionBuilder: (context, animation, _, child) {
@@ -447,7 +447,7 @@ class _BreakdownRow extends StatelessWidget {
                   color: group.color.withValues(alpha: AppOpacity.medium),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
-                child: Icon(group.icon, size: 17, color: group.color),
+                child: Icon(group.icon, size: AppIconSizes.h18, color: group.color),
               ),
               const SizedBox(width: AppSpacing.s10),
               Expanded(

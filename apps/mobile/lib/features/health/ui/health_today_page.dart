@@ -134,8 +134,8 @@ class _HealthDataStatusBannerState
             onPress: _running ? null : _sync,
             prefix: _running
                 ? const SizedBox(
-                    width: 14,
-                    height: 14,
+                    width: AppIconSizes.xs,
+                    height: AppIconSizes.xs,
                     child: FCircularProgress(),
                   )
                 : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
@@ -765,8 +765,8 @@ class _BriefingEmpty extends StatelessWidget {
             onPress: running ? null : onRun,
             prefix: running
                 ? const SizedBox(
-                    width: 14,
-                    height: 14,
+                    width: AppIconSizes.xs,
+                    height: AppIconSizes.xs,
                     child: FCircularProgress(),
                   )
                 : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
@@ -788,7 +788,7 @@ class _BriefingSkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 18, child: LinearProgressIndicator(minHeight: 2)),
+          SizedBox(height: AppSpacing.s20, child: const FProgress()),
           SizedBox(height: AppSpacing.s12),
           Text('加载中…'),
         ],

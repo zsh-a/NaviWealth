@@ -193,7 +193,7 @@ class _WatchlistEmpty extends StatelessWidget {
         children: [
           Icon(
             FLucideIcons.bellRing,
-            size: 42,
+            size: AppIconSizes.xxl,
             color: context.theme.colors.mutedForeground,
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -261,7 +261,7 @@ class _WatchlistRow extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Icon(
                   _marketIcon(item.market),
-                  size: 19,
+                  size: AppIconSizes.md,
                   color: colors.mutedForeground,
                 ),
               ),

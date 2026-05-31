@@ -117,7 +117,7 @@ class _BodyMeasurementEntrySheetState
               const SizedBox(height: AppSpacing.s4),
               Text(
                 _valueError!,
-                style: FTheme.of(context).typography.xs.copyWith(
+                style: context.theme.typography.xs.copyWith(
                   color: context.theme.colors.destructive,
                 ),
               ),
@@ -125,9 +125,21 @@ class _BodyMeasurementEntrySheetState
             const SizedBox(height: AppSpacing.s12),
             FTappable(
               onPress: _saving ? null : _pickDate,
-              child: InputDecorator(
-                decoration: const InputDecoration(labelText: '日期'),
-                child: Text(dateFormat.format(_capturedAt)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '日期',
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s4),
+                  Text(
+                    dateFormat.format(_capturedAt),
+                    style: context.theme.typography.sm,
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: AppSpacing.s12),

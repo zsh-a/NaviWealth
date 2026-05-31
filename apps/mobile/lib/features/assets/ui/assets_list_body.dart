@@ -147,7 +147,7 @@ class _EmptyHint extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(FLucideIcons.wallet, size: 48),
+            const Icon(FLucideIcons.wallet, size: AppIconSizes.hero),
             const SizedBox(height: AppSpacing.s12),
             Text(l10n.assetsEmptyHint, textAlign: TextAlign.center),
           ],

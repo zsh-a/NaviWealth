@@ -68,7 +68,7 @@ class _EmptyState extends StatelessWidget {
           children: [
             Icon(
               FLucideIcons.scale,
-              size: 48,
+              size: AppIconSizes.hero,
               color: context.theme.colors.mutedForeground,
             ),
             const SizedBox(height: AppSpacing.s12),

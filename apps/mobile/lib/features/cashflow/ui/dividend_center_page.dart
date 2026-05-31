@@ -538,7 +538,7 @@ class _EmptyDividendState extends StatelessWidget {
         children: [
           Icon(
             FLucideIcons.banknote,
-            size: 56,
+            size: AppIconSizes.heroLg,
             color: context.theme.colors.primary,
           ),
           const SizedBox(height: AppSpacing.s16),

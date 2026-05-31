@@ -116,4 +116,26 @@ class AppIconSizes {
 
   /// Hero icons in onboarding / large empty states.
   static const double xxl = 40;
+
+  /// Large hero icons for full-page empty states and splash screens.
+  static const double hero = 48;
+
+  /// Extra-large hero icons for prominent empty-state illustrations.
+  static const double heroLg = 56;
+}
+
+/// Canonical chart container heights.
+///
+/// Keeps sparkline and full chart heights consistent across features.
+class AppChartHeights {
+  const AppChartHeights._();
+
+  /// Mini sparkline in dashboard cards.
+  static const double mini = 132;
+
+  /// Standard chart in detail pages.
+  static const double standard = 160;
+
+  /// Full-width chart in dedicated analytics views.
+  static const double full = 220;
 }

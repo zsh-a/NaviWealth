@@ -87,7 +87,7 @@ class _LiabilitiesEmptyState extends StatelessWidget {
           children: [
             Icon(
               FLucideIcons.landmark,
-              size: 48,
+              size: AppIconSizes.hero,
               color: context.theme.colors.mutedForeground,
             ),
             const SizedBox(height: AppSpacing.s16),

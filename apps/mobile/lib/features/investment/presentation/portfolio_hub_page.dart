@@ -984,7 +984,7 @@ class _ViewChip extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 17, color: color),
+            Icon(icon, size: AppIconSizes.h18, color: color),
             const SizedBox(width: AppSpacing.s6),
             Flexible(
               child: Text(
