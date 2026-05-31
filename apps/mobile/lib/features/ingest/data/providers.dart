@@ -16,6 +16,7 @@ import '../../../core/ai/contracts/ai_trace.dart';
 import '../../../core/ai/contracts/intent.dart';
 import '../../../core/ai/contracts/privacy_mode_provider.dart';
 import '../../../core/ai/local/skills/skills.dart';
+import 'package:naviwealth/features/finance/ai_tools/expense_to_transaction_input.dart';
 import '../../../core/ai/runtime/ai_runtime.dart';
 import '../../../core/ai/trace/ai_trace_builder.dart';
 import '../../../core/ai/trace/providers.dart';

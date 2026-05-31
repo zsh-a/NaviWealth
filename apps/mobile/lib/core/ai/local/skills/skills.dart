@@ -5,9 +5,9 @@
 library;
 
 export 'context_compressor.dart';
-export 'drift_query_plan_executor.dart';
+// `drift_query_plan_executor` and `expense_to_transaction_input` moved
+// to `features/finance/ai_tools/` — they import finance domain types.
 export 'duplicate_charge_detector.dart';
-export 'expense_to_transaction_input.dart';
 export 'finance_query_plan.dart';
 export 'merchant_key.dart';
 export 'nl_to_query_plan.dart';

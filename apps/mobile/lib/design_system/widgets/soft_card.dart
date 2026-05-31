@@ -46,26 +46,55 @@ class SoftCard extends StatefulWidget {
 }
 
 class _SoftCardState extends State<SoftCard> {
-  bool _hovered = false;
-  bool _pressed = false;
+  final ValueNotifier<bool> _hovered = ValueNotifier(false);
+  final ValueNotifier<bool> _pressed = ValueNotifier(false);
+
+  @override
+  void dispose() {
+    _hovered.dispose();
+    _pressed.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.onPress == null) return _buildCard(context, hovered: false, pressed: false);
+
+    return Semantics(
+      button: true,
+      child: MouseRegion(
+        onEnter: (_) => _hovered.value = true,
+        onExit: (_) => _hovered.value = false,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: (_) => _pressed.value = true,
+          onTapUp: (_) => _pressed.value = false,
+          onTapCancel: () => _pressed.value = false,
+          onTap: widget.onPress,
+          child: ValueListenableBuilder<bool>(
+            valueListenable: _hovered,
+            builder: (context, hovered, _) => ValueListenableBuilder<bool>(
+              valueListenable: _pressed,
+              builder: (context, pressed, _) =>
+                  _buildCard(context, hovered: hovered, pressed: pressed),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCard(BuildContext context, {required bool hovered, required bool pressed}) {
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
 
-    // Surface tint reads as "this is a slightly raised area" against
-    // the cool-gray page background, without imitating a Material card.
-    // Light mode: card is the brighter surface (background is cool
-    // gray, card lifts toward white). Dark mode: card is the darker
-    // surface (a touch deeper than the page).
     final baseTint = widget.tinted
         ? (isDark
               ? colors.foreground.withValues(alpha: 0.05)
               : Colors.white.withValues(alpha: 0.85))
         : Colors.transparent;
     final hoverBoost = isDark ? 0.03 : 0.05;
-    final tint = !widget.onPress.isNull && (_hovered || _pressed)
+    final tint = !widget.onPress.isNull && (hovered || pressed)
         ? (widget.tinted
               ? (isDark
                     ? colors.foreground.withValues(alpha: 0.05 + hoverBoost)
@@ -73,13 +102,11 @@ class _SoftCardState extends State<SoftCard> {
               : colors.foreground.withValues(alpha: hoverBoost))
         : baseTint;
 
-    // Ultra-soft hairline — 4% in light, 6% in dark. Cards now read as
-    // floating surfaces rather than outlined components.
     final borderColor = widget.borderless
         ? Colors.transparent
         : colors.foreground.withValues(alpha: isDark ? 0.06 : 0.04);
 
-    final card = AnimatedContainer(
+    return AnimatedContainer(
       duration: Motion.fast,
       curve: Motion.standardDecelerate,
       decoration: BoxDecoration(
@@ -91,24 +118,6 @@ class _SoftCardState extends State<SoftCard> {
       ),
       padding: widget.padding,
       child: widget.child,
-    );
-
-    if (widget.onPress == null) return card;
-
-    return Semantics(
-      button: true,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: (_) => setState(() => _pressed = true),
-          onTapUp: (_) => setState(() => _pressed = false),
-          onTapCancel: () => setState(() => _pressed = false),
-          onTap: widget.onPress,
-          child: card,
-        ),
-      ),
     );
   }
 }
