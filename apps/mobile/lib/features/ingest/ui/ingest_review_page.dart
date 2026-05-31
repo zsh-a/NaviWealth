@@ -695,37 +695,15 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              FLucideIcons.inbox,
-              size: AppIconSizes.xxl,
-              color: colors.mutedForeground.withValues(alpha: AppOpacity.scrim),
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            Text(
-              l10n.ingestEmptyTitle,
-              style: context.theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s6),
-            Text(
-              l10n.ingestEmptyBody,
-              textAlign: TextAlign.center,
-              style: context.theme.typography.sm.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s16),
-            Wrap(
+    return AppEmptyState(
+      icon: FLucideIcons.inbox,
+      title: l10n.ingestEmptyTitle,
+      message: l10n.ingestEmptyBody,
+      iconSize: AppIconSizes.xxl,
+      action: Wrap(
               alignment: WrapAlignment.center,
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppSpacing.s8,
+              runSpacing: AppSpacing.s8,
               children: [
                 FButton(
                   variant: FButtonVariant.outline,
@@ -747,9 +725,6 @@ class _EmptyState extends StatelessWidget {
                 ),
               ],
             ),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -157,10 +157,10 @@ class _UserBubble extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: colors.primary,
                         borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(8),
-                          topRight: Radius.circular(4),
-                          bottomLeft: Radius.circular(8),
-                          bottomRight: Radius.circular(8),
+                          topLeft: Radius.circular(AppRadius.sm),
+                          topRight: Radius.circular(AppRadius.xs),
+                          bottomLeft: Radius.circular(AppRadius.sm),
+                          bottomRight: Radius.circular(AppRadius.sm),
                         ),
                       ),
                       child: SelectableText(
