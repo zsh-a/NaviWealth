@@ -13,6 +13,7 @@ import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../shared/account_l10n.dart';
 import '../../shared/entry_kind_labels.dart';
 
 /// Full-page detail surface for one journal entry. Pushed when the user
@@ -340,10 +341,16 @@ class _DetailPostingRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     final account = accountsById[posting.accountId];
     final accountLabel = account == null
         ? posting.accountId
-        : _accountPath(account, accountsById);
+        : localizedAccountPath(
+            l10n,
+            account,
+            accountsById,
+            dropSystemRoot: false,
+          );
     final cost = posting.cost;
     final price = posting.price;
 
@@ -608,23 +615,6 @@ Color _tintForKind(EntryKind kind, FColors colors) {
     case EntryKind.other:
       return colors.mutedForeground;
   }
-}
-
-String _accountPath(Account leaf, Map<String, Account> accounts) {
-  final parts = <String>[leaf.name];
-  Account? cursor = leaf;
-  var hops = 0;
-  while (true) {
-    final parentId = cursor!.parentId;
-    if (parentId == null) break;
-    final parent = accounts[parentId];
-    if (parent == null) break;
-    parts.add(parent.name);
-    cursor = parent;
-    hops += 1;
-    if (hops > 64) break;
-  }
-  return parts.reversed.join(' › ');
 }
 
 String _costLabel(Cost cost) {

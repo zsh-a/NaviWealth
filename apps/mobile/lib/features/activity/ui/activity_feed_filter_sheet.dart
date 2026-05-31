@@ -6,6 +6,7 @@ import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../shared/account_l10n.dart';
 import '../data/activity_feed_provider.dart';
 
 /// Activity timeline filter sheet — dimensions the inline kind chip row
@@ -343,7 +344,10 @@ class _AccountFilterRow extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text(account.name, style: context.theme.typography.sm),
+              child: Text(
+                localizedAccountName(AppLocalizations.of(context), account),
+                style: context.theme.typography.sm,
+              ),
             ),
             FCheckbox(value: selected, onChange: (_) => onToggle()),
           ],

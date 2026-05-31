@@ -21,7 +21,7 @@ class ExpenseReportBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accountsAsync = ref.watch(accountsStreamProvider);
+    final accountsAsync = ref.watch(allAccountsStreamProvider);
     final allAccounts = accountsAsync.value ?? const <Account>[];
     final expenseAccountById = {
       for (final a in allAccounts.where(

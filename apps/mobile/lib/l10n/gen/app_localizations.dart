@@ -7815,6 +7815,228 @@ abstract class AppLocalizations {
   /// **'Pick a category'**
   String get expenseCategoryPickerRequired;
 
+  /// No description provided for @systemAccountIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get systemAccountIncome;
+
+  /// No description provided for @systemAccountIncomeSalary.
+  ///
+  /// In en, this message translates to:
+  /// **'Salary'**
+  String get systemAccountIncomeSalary;
+
+  /// No description provided for @systemAccountIncomeDividend.
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend'**
+  String get systemAccountIncomeDividend;
+
+  /// No description provided for @systemAccountIncomeInterest.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest'**
+  String get systemAccountIncomeInterest;
+
+  /// No description provided for @systemAccountIncomeCapitalGains.
+  ///
+  /// In en, this message translates to:
+  /// **'Capital Gains'**
+  String get systemAccountIncomeCapitalGains;
+
+  /// No description provided for @systemAccountIncomeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other Income'**
+  String get systemAccountIncomeOther;
+
+  /// No description provided for @systemAccountExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get systemAccountExpense;
+
+  /// No description provided for @systemAccountExpenseDining.
+  ///
+  /// In en, this message translates to:
+  /// **'Dining'**
+  String get systemAccountExpenseDining;
+
+  /// No description provided for @systemAccountExpenseGroceries.
+  ///
+  /// In en, this message translates to:
+  /// **'Groceries'**
+  String get systemAccountExpenseGroceries;
+
+  /// No description provided for @systemAccountExpenseCoffee.
+  ///
+  /// In en, this message translates to:
+  /// **'Coffee'**
+  String get systemAccountExpenseCoffee;
+
+  /// No description provided for @systemAccountExpenseTransport.
+  ///
+  /// In en, this message translates to:
+  /// **'Transport'**
+  String get systemAccountExpenseTransport;
+
+  /// No description provided for @systemAccountExpenseRideHailing.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride Hailing'**
+  String get systemAccountExpenseRideHailing;
+
+  /// No description provided for @systemAccountExpenseHousing.
+  ///
+  /// In en, this message translates to:
+  /// **'Housing'**
+  String get systemAccountExpenseHousing;
+
+  /// No description provided for @systemAccountExpenseUtilities.
+  ///
+  /// In en, this message translates to:
+  /// **'Utilities'**
+  String get systemAccountExpenseUtilities;
+
+  /// No description provided for @systemAccountExpenseHousehold.
+  ///
+  /// In en, this message translates to:
+  /// **'Household'**
+  String get systemAccountExpenseHousehold;
+
+  /// No description provided for @systemAccountExpenseShopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping'**
+  String get systemAccountExpenseShopping;
+
+  /// No description provided for @systemAccountExpenseSubscriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscriptions'**
+  String get systemAccountExpenseSubscriptions;
+
+  /// No description provided for @systemAccountExpenseEntertainment.
+  ///
+  /// In en, this message translates to:
+  /// **'Entertainment'**
+  String get systemAccountExpenseEntertainment;
+
+  /// No description provided for @systemAccountExpenseMedical.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical'**
+  String get systemAccountExpenseMedical;
+
+  /// No description provided for @systemAccountExpenseFitness.
+  ///
+  /// In en, this message translates to:
+  /// **'Fitness'**
+  String get systemAccountExpenseFitness;
+
+  /// No description provided for @systemAccountExpenseEducation.
+  ///
+  /// In en, this message translates to:
+  /// **'Education'**
+  String get systemAccountExpenseEducation;
+
+  /// No description provided for @systemAccountExpenseTravel.
+  ///
+  /// In en, this message translates to:
+  /// **'Travel'**
+  String get systemAccountExpenseTravel;
+
+  /// No description provided for @systemAccountExpenseCommunication.
+  ///
+  /// In en, this message translates to:
+  /// **'Communication'**
+  String get systemAccountExpenseCommunication;
+
+  /// No description provided for @systemAccountExpenseGift.
+  ///
+  /// In en, this message translates to:
+  /// **'Gift'**
+  String get systemAccountExpenseGift;
+
+  /// No description provided for @systemAccountExpenseFamilySupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Family Support'**
+  String get systemAccountExpenseFamilySupport;
+
+  /// No description provided for @systemAccountExpensePets.
+  ///
+  /// In en, this message translates to:
+  /// **'Pets'**
+  String get systemAccountExpensePets;
+
+  /// No description provided for @systemAccountExpenseTrading.
+  ///
+  /// In en, this message translates to:
+  /// **'Trading'**
+  String get systemAccountExpenseTrading;
+
+  /// No description provided for @systemAccountExpenseTradingFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Trading Fee'**
+  String get systemAccountExpenseTradingFee;
+
+  /// No description provided for @systemAccountExpenseTradingTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Trading Tax'**
+  String get systemAccountExpenseTradingTax;
+
+  /// No description provided for @systemAccountExpenseTradingInterest.
+  ///
+  /// In en, this message translates to:
+  /// **'Trading Interest'**
+  String get systemAccountExpenseTradingInterest;
+
+  /// No description provided for @systemAccountExpenseTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get systemAccountExpenseTax;
+
+  /// No description provided for @systemAccountExpenseTaxWithholding.
+  ///
+  /// In en, this message translates to:
+  /// **'Withholding Tax'**
+  String get systemAccountExpenseTaxWithholding;
+
+  /// No description provided for @systemAccountExpenseOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other Expense'**
+  String get systemAccountExpenseOther;
+
+  /// No description provided for @systemAccountEquity.
+  ///
+  /// In en, this message translates to:
+  /// **'Equity'**
+  String get systemAccountEquity;
+
+  /// No description provided for @systemAccountEquityOpeningBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening Balance'**
+  String get systemAccountEquityOpeningBalance;
+
+  /// No description provided for @systemAccountEquitySplits.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock Splits'**
+  String get systemAccountEquitySplits;
+
+  /// No description provided for @systemAccountEquityAdjustments.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjustments'**
+  String get systemAccountEquityAdjustments;
+
   /// Legend label for the projected-valuation curve on a physical asset's trend chart.
   ///
   /// In en, this message translates to:

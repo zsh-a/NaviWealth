@@ -3,7 +3,9 @@ import 'package:forui/forui.dart';
 
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../accounts/account_icon_catalog.dart';
+import 'account_l10n.dart';
 
 /// FIR-128 §1.2 — drop-in replacement for the legacy flat
 /// [AccountPicker] that surfaces the [Account.parentId] tree as
@@ -77,7 +79,8 @@ class AccountTreePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final entries = _buildEntries();
+    final l10n = AppLocalizations.of(context);
+    final entries = _buildEntries(l10n);
     final effectiveValue = entries.any((e) => e.account.id == value)
         ? value
         : null;
@@ -105,7 +108,7 @@ class AccountTreePicker extends StatelessWidget {
     );
   }
 
-  List<_PickerEntry> _buildEntries() {
+  List<_PickerEntry> _buildEntries(AppLocalizations l10n) {
     final byId = <String, Account>{for (final a in accounts) a.id: a};
     final filtered = accounts
         .where((a) {
@@ -126,7 +129,10 @@ class AccountTreePicker extends StatelessWidget {
     final entriesByPath = <String, _PickerEntry>{};
     for (final a in filtered) {
       if (leafOnly && parentIds.contains(a.id)) continue;
-      final entry = _PickerEntry(account: a, path: _pathFor(a, byId));
+      final entry = _PickerEntry(
+        account: a,
+        path: localizedAccountPath(l10n, a, byId),
+      );
       final key = entry.path.trim().toLowerCase();
       final existing = entriesByPath[key];
       if (existing == null || _prefer(entry, existing)) {
@@ -136,28 +142,6 @@ class AccountTreePicker extends StatelessWidget {
     final entries = entriesByPath.values.toList();
     entries.sort((a, b) => a.path.compareTo(b.path));
     return entries;
-  }
-
-  String _pathFor(Account account, Map<String, Account> byId) {
-    final chain = <Account>[];
-    var depth = 0;
-    var cursor = account;
-    while (true) {
-      chain.add(cursor);
-      final parentId = cursor.parentId;
-      if (parentId == null) break;
-      final parent = byId[parentId];
-      if (parent == null) break;
-      // Defensive: stop after 64 hops if the parent chain is pathological.
-      if (depth > 64) break;
-      cursor = parent;
-      depth += 1;
-    }
-    final ordered = chain.reversed.toList();
-    if (ordered.length > 1 && _isSystemAccount(ordered.first)) {
-      ordered.removeAt(0);
-    }
-    return ordered.map((a) => a.name).join(' › ');
   }
 
   bool _prefer(_PickerEntry next, _PickerEntry existing) {
@@ -170,7 +154,7 @@ class AccountTreePicker extends StatelessWidget {
   }
 
   bool _isSystemAccount(Account account) {
-    return account.id.startsWith('system-account:');
+    return systemAccountPath(account) != null;
   }
 }
 

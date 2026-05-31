@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../account_l10n.dart';
 
 /// Drop-down picker over the user's existing accounts, built on [FSelect].
 class AccountPicker extends StatelessWidget {
@@ -30,7 +31,8 @@ class AccountPicker extends StatelessWidget {
         : accounts.where((a) => allowedTypes!.contains(a.type)).toList();
     final effectiveValue = filtered.any((a) => a.id == value) ? value : null;
     final labelById = <String, String>{
-      for (final a in filtered) a.id: '${a.name} · ${a.currency}',
+      for (final a in filtered)
+        a.id: '${localizedAccountName(l10n, a)} · ${a.currency}',
     };
     return FSelect<String>.rich(
       format: (id) => labelById[id] ?? '',
