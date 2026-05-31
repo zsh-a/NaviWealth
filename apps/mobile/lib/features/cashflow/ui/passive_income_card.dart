@@ -216,7 +216,7 @@ class _DeltaPill extends StatelessWidget {
         label,
         style: context.theme.typography.xs.copyWith(
           color: color,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
         ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
