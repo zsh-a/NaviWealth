@@ -15,16 +15,16 @@ class AssetSummaryCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(asset.symbol, style: context.theme.typography.md),
             if (asset.name != null) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.s4),
               Text(asset.name!, style: context.theme.typography.sm),
             ],
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             Text(
               '${asset.market ?? l10n.assetDetailUnknown} \u00B7 ${asset.currency}',
               style: context.theme.typography.xs.copyWith(

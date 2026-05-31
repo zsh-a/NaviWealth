@@ -40,20 +40,20 @@ class AiModelsPage extends ConsumerWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final padding = Breakpoints.isMobile(constraints.maxWidth)
-              ? const EdgeInsets.all(16)
-              : const EdgeInsets.all(24);
+              ? const EdgeInsets.all(AppSpacing.s16)
+              : const EdgeInsets.all(AppSpacing.s24);
           return ListView(
             padding: padding,
             children: [
               _RuntimeDiagnosticsCard(resolution: resolution),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s12),
               const _Hint(),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s16),
               for (final bundle in bundles) ...[
                 _BundleCard(bundle: bundle),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
               ],
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s16),
               const _Footnote(),
             ],
           );
@@ -80,7 +80,7 @@ class _RuntimeDiagnosticsCard extends StatelessWidget {
           children: [
             const SizedBox.square(
               dimension: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: FCircularProgress(),
             ),
             const SizedBox(width: AppSpacing.s8),
             Text(
@@ -102,7 +102,7 @@ class _RuntimeDiagnosticsCard extends StatelessWidget {
                 children: [
                   Icon(
                     complete ? FLucideIcons.cpu : FLucideIcons.circleAlert,
-                    size: 18,
+                    size: AppIconSizes.h18,
                     color: complete ? semantic.success : semantic.warning,
                   ),
                   const SizedBox(width: AppSpacing.s8),
@@ -481,22 +481,22 @@ class _FileRow extends StatelessWidget {
     return switch (s) {
       ModelFileStatus.notInstalled => Icon(
         FLucideIcons.download,
-        size: 16,
+        size: AppIconSizes.sm,
         color: colors.mutedForeground,
       ),
       ModelFileStatus.downloading => const SizedBox(
         width: 12,
         height: 12,
-        child: CircularProgressIndicator(strokeWidth: 2),
+        child: FCircularProgress(),
       ),
       ModelFileStatus.installed => Icon(
         FLucideIcons.circleCheck,
-        size: 16,
+        size: AppIconSizes.sm,
         color: semantic.success,
       ),
       ModelFileStatus.failed => Icon(
         FLucideIcons.circleAlert,
-        size: 16,
+        size: AppIconSizes.sm,
         color: semantic.danger,
       ),
     };

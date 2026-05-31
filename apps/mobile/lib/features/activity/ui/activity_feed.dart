@@ -75,9 +75,9 @@ class _FeedList extends StatelessWidget {
     items.add(_FeedItem.footer(hasMore));
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16).copyWith(
+      padding: const EdgeInsets.all(AppSpacing.s16).copyWith(
         bottom:
-            const EdgeInsets.all(16).bottom +
+            const EdgeInsets.all(AppSpacing.s16).bottom +
             64 +
             MediaQuery.paddingOf(context).bottom,
       ),
@@ -90,7 +90,7 @@ class _FeedList extends StatelessWidget {
             l10n: l10n,
           ),
           _FeedItemEntry(:final entry) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
             child: ActivityFeedEntryRow(
               entry: entry,
               accountsById: accountsById,
@@ -138,7 +138,7 @@ class _FeedFooter extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
       child: Center(
         child: canLoadMore
             ? FButton(
@@ -184,7 +184,7 @@ class _EmptyFeed extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -195,7 +195,7 @@ class _EmptyFeed extends StatelessWidget {
                 alpha: 0.4,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(
               message,
               textAlign: TextAlign.center,

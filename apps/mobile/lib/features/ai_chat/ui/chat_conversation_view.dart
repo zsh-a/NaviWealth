@@ -26,7 +26,7 @@ class ChatConversationView extends ConsumerStatefulWidget {
   const ChatConversationView({
     super.key,
     required this.sessionId,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    this.padding = const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
     this.invocationIntent,
     this.onReplyChip,
     this.emptyBuilder,
@@ -254,7 +254,7 @@ class _JumpToBottomChip extends StatelessWidget {
             alignment: Alignment.center,
             child: Icon(
               FLucideIcons.arrowDown,
-              size: 18,
+              size: AppIconSizes.h18,
               color: colors.foreground,
             ),
           ),

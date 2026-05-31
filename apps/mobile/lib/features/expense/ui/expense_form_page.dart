@@ -470,10 +470,10 @@ class _NoAccountsHint extends StatelessWidget {
             height: 32,
             decoration: BoxDecoration(
               color: semantic.warning.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             alignment: Alignment.center,
-            child: Icon(FLucideIcons.wallet, size: 18, color: semantic.warning),
+            child: Icon(FLucideIcons.wallet, size: AppIconSizes.h18, color: semantic.warning),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -487,7 +487,7 @@ class _NoAccountsHint extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.s2),
                 Text(
                   l10n.expenseFormNoAccountsBody,
                   style: context.theme.typography.xs.copyWith(
@@ -495,7 +495,7 @@ class _NoAccountsHint extends StatelessWidget {
                     height: 1.4,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.s10),
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: () =>

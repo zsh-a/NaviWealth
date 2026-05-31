@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../design_system/design_system.dart';
+
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import '../../../domain/values/asset_market.dart';
 import '../../../features/finance/data/securities_catalog/asset_search_hit.dart';
@@ -346,7 +348,7 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
             value: _market!,
             onChanged: _onMarketChanged,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
         ],
         FTextFormField(
           key: const Key('symbol-field-search'),
@@ -373,7 +375,7 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
                 )
               : _loading
               ? (ctx, style, variants) => const Padding(
-                  padding: EdgeInsets.all(12),
+                  padding: EdgeInsets.all(AppSpacing.s12),
                   child: SizedBox(
                     width: 20,
                     height: 20,

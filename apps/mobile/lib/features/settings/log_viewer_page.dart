@@ -96,7 +96,7 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
           final logs = talker.history;
           return ListView.builder(
             controller: _scrollController,
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(AppSpacing.s8),
             itemCount: logs.length,
             itemBuilder: (context, index) {
               final log = logs[index];
@@ -119,9 +119,9 @@ class _LogTile extends StatelessWidget {
     final color = _colorForLevel(context, log.logLevel);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
       child: SoftCard(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(AppSpacing.s8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -134,7 +134,7 @@ class _LogTile extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
                   ),
                   child: Text(
                     log.title ?? log.logLevel?.name ?? 'log',
@@ -153,10 +153,10 @@ class _LogTile extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(log.message ?? '', style: context.theme.typography.xs),
             if (log.error != null) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.s4),
               Text(
                 '${log.error}',
                 style: context.theme.typography.xs.copyWith(

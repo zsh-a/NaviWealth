@@ -80,7 +80,7 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
               onYearsChanged: (value) => setState(() => _years = value),
               onRun: _run,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             state.when(
               loading: () => const SkeletonBox(height: 360, radius: 8),
               error: (error, _) =>
@@ -189,7 +189,7 @@ class _DcaControls extends StatelessWidget {
                   ? l10n.dcaSimulatorInvalidSymbols
                   : null,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Row(
               children: [
                 Expanded(
@@ -228,7 +228,7 @@ class _DcaControls extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             FSelect<AssetMarket>(
               items: {
                 l10n.dcaSimulatorMarketUs: AssetMarket.usStock,
@@ -244,7 +244,7 @@ class _DcaControls extends StatelessWidget {
               ),
               label: Text(l10n.dcaSimulatorMarketField),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Row(
               children: [
                 Expanded(
@@ -282,14 +282,14 @@ class _DcaControls extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             FButton(
               onPress: busy ? null : onRun,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(FLucideIcons.workflow, size: 18),
+                  const Icon(FLucideIcons.workflow, size: AppIconSizes.h18),
                   const SizedBox(width: 6),
                   Text(l10n.dcaSimulatorRunAction),
                 ],
@@ -343,7 +343,7 @@ class _DcaResults extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpacing.s10),
               SizedBox(
                 height: 220,
                 child: NwLineChart(
@@ -374,7 +374,7 @@ class _DcaResults extends StatelessWidget {
               const SizedBox(height: 14),
               for (final position in result.positions)
                 _PositionRow(position: position, currency: result.currency),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s12),
               SizedBox(
                 width: double.infinity,
                 child: FButton(
@@ -490,10 +490,10 @@ class _MetricShell extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: context.theme.colors.foreground.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.s12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -503,7 +503,7 @@ class _MetricShell extends StatelessWidget {
                   color: context.theme.colors.mutedForeground,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.s4),
               child,
             ],
           ),
@@ -523,7 +523,7 @@ class _PositionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
       child: Row(
         children: [
           Expanded(
@@ -565,7 +565,7 @@ class _FreshnessChip extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: context.theme.colors.foreground.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),

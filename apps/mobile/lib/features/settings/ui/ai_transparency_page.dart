@@ -80,7 +80,7 @@ class _AiTransparencyPageState extends ConsumerState<AiTransparencyPage> {
                   if (shown.isEmpty)
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(AppSpacing.s24),
                         child: Center(
                           child: Text(l10n.aiTransparencyFilteredEmpty),
                         ),
@@ -90,7 +90,7 @@ class _AiTransparencyPageState extends ConsumerState<AiTransparencyPage> {
                     SliverList.separated(
                       itemCount: shown.length,
                       separatorBuilder: (_, _) => const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        padding: EdgeInsets.symmetric(horizontal: AppSpacing.s16),
                         child: FDivider(),
                       ),
                       itemBuilder: (context, i) => _TraceRow(trace: shown[i]),
@@ -122,9 +122,9 @@ class _CaptureToggle extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final verbose = ref.watch(aiTraceVerboseProvider);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s4, AppSpacing.s16, AppSpacing.s4),
       child: SoftCard(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
         child: Row(
           children: [
             Expanded(
@@ -137,7 +137,7 @@ class _CaptureToggle extends ConsumerWidget {
                       context,
                     ).copyWith(fontWeight: FontWeight.w500),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpacing.s2),
                   Text(
                     l10n.aiTransparencyVerboseSubtitle,
                     style: AiType.meta(
@@ -199,7 +199,7 @@ class _AggregateHeader extends StatelessWidget {
       }
     }
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s8),
       child: SoftCard(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Column(
@@ -209,7 +209,7 @@ class _AggregateHeader extends StatelessWidget {
               l10n.aiTransparencyRecentCalls(n),
               style: AiType.body(context).copyWith(fontWeight: FontWeight.w600),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             Wrap(
               spacing: 6,
               runSpacing: 6,
@@ -261,12 +261,12 @@ class _UndoSection extends ConsumerWidget {
         .where((e) => e.expiresAt == null || e.expiresAt!.isAfter(now))
         .toList(growable: false);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            padding: const EdgeInsets.only(left: 4, bottom: AppSpacing.s8),
             child: Text(
               l10n.aiTransparencyUndoSectionTitle,
               style: context.theme.typography.sm.copyWith(
@@ -316,7 +316,7 @@ class _UndoRow extends ConsumerWidget {
         entry.payload['summaryZh'] as String? ??
         entry.kind;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
       child: Row(
         children: <Widget>[
           const AiSparkle(),
@@ -365,7 +365,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(
     child: Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.s24),
       child: Text(
         AppLocalizations.of(context).aiTransparencyEmpty,
         textAlign: TextAlign.center,
@@ -393,12 +393,12 @@ class _TraceRow extends StatelessWidget {
         pathParameters: <String, String>{'requestId': trace.requestId},
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: AppSpacing.s4),
               child: _StatusDot(
                 error: isError,
                 color: isError ? AiTone.error(context) : AiTone.active(context),
@@ -417,7 +417,7 @@ class _TraceRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.s6),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
@@ -493,7 +493,7 @@ class _StatusDot extends StatelessWidget {
       child: Container(
         width: 8,
         height: 8,
-        margin: const EdgeInsets.only(top: 8),
+        margin: const EdgeInsets.only(top: AppSpacing.s8),
         decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
     );
@@ -543,7 +543,7 @@ class _TraceWaterfallBody extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         _HeaderSummary(trace: trace, eventCount: trace.spans.length),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSpacing.s20),
         if (trace.hasSpans)
           AiTraceWaterfall(trace: trace)
         else
@@ -551,7 +551,7 @@ class _TraceWaterfallBody extends StatelessWidget {
           // call chain to draw (no backward-compat shim — they age
           // out within the 30-day retention window).
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s24),
             child: Text(
               AppLocalizations.of(context).aiTransparencyNoSpans,
               textAlign: TextAlign.center,
@@ -588,7 +588,7 @@ class _HeaderSummary extends StatelessWidget {
             Expanded(child: Text(title, style: AiType.title(context))),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.s4),
         Text(
           l10n.aiTransparencyEventSummary(
             eventCount,
@@ -596,7 +596,7 @@ class _HeaderSummary extends StatelessWidget {
           ),
           style: AiType.meta(context),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.s6),
         Text(
           'request_id ${trace.requestId}',
           style: AiType.meta(context).copyWith(fontFamily: 'monospace'),

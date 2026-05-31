@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../design_system/design_system.dart';
 import 'package:forui/forui.dart';
+import '../../../design_system/design_system.dart';
 
 import '../domain/rebalance_models.dart';
 
@@ -55,7 +57,7 @@ class DeviationBar extends StatelessWidget {
               _DeviationChip(deviation: deviation, severity: severity),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           LayoutBuilder(
             builder: (context, constraints) {
               final width = constraints.hasBoundedWidth
@@ -72,7 +74,7 @@ class DeviationBar extends StatelessWidget {
                   children: [
                     // Background bar.
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
                       child: SizedBox(
                         height: 8,
                         child: ColoredBox(
@@ -140,7 +142,7 @@ class _DeviationChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Text(
         text,

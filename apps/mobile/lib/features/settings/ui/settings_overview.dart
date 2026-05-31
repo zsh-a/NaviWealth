@@ -191,8 +191,8 @@ class SettingsOverview extends ConsumerWidget {
         // landscape, foldables, and small tablets.
         final isWide = constraints.maxWidth >= 760;
         final basePadding = Breakpoints.isMobile(constraints.maxWidth)
-            ? const EdgeInsets.all(16)
-            : const EdgeInsets.all(24);
+            ? const EdgeInsets.all(AppSpacing.s16)
+            : const EdgeInsets.all(AppSpacing.s24);
         final padding = basePadding.copyWith(
           bottom:
               basePadding.bottom + 64 + MediaQuery.paddingOf(context).bottom,
@@ -202,21 +202,21 @@ class SettingsOverview extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             accountGroup,
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             numbersGroup,
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             appearanceGroup,
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             planningGroup,
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             aiGroup,
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             dataGroup,
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             domainsGroup,
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             aboutGroup,
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             advancedGroup,
           ],
         );
@@ -239,11 +239,11 @@ class SettingsOverview extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         accountGroup,
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.s16),
                         numbersGroup,
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.s16),
                         appearanceGroup,
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.s16),
                         planningGroup,
                       ],
                     )
@@ -253,13 +253,13 @@ class SettingsOverview extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         aiGroup,
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.s16),
                         dataGroup,
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.s16),
                         domainsGroup,
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.s16),
                         aboutGroup,
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.s16),
                         advancedGroup,
                       ],
                     )
@@ -295,7 +295,7 @@ class _Section extends StatelessWidget {
       children: [
         _SectionHeader(title: resolvedTitle),
         SoftCard(
-          padding: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
           child: child,
         ),
       ],
@@ -499,10 +499,10 @@ class _AboutTile extends ConsumerWidget {
       },
     );
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s10),
       child: Row(
         children: [
-          Icon(FLucideIcons.info, size: 18, color: colors.mutedForeground),
+          Icon(FLucideIcons.info, size: AppIconSizes.h18, color: colors.mutedForeground),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -513,7 +513,7 @@ class _AboutTile extends ConsumerWidget {
                   l10n.settingsAboutTitle,
                   style: context.theme.typography.sm,
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.s2),
                 Text(
                   subtitle,
                   style: context.theme.typography.xs.copyWith(
@@ -582,7 +582,7 @@ class _RiskAppetiteRow extends ConsumerWidget {
     final colors = context.theme.colors;
     final appetite = ref.watch(riskAppetiteProvider);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s14, AppSpacing.s10, AppSpacing.s14, AppSpacing.s10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -590,7 +590,7 @@ class _RiskAppetiteRow extends ConsumerWidget {
             children: [
               Icon(
                 FLucideIcons.slidersHorizontal,
-                size: 18,
+                size: AppIconSizes.h18,
                 color: colors.mutedForeground,
               ),
               const SizedBox(width: 12),
@@ -600,7 +600,7 @@ class _RiskAppetiteRow extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           // The row is intentionally tight — chips share a stadium
           // shape and the active one paints in the AI active tone, so
           // selection is glanceable without verbose copy.
@@ -784,12 +784,12 @@ class _LocalModeStatusRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s10),
       child: Row(
         children: [
           Icon(
             FLucideIcons.smartphone,
-            size: 18,
+            size: AppIconSizes.h18,
             color: colors.mutedForeground,
           ),
           const SizedBox(width: 12),
@@ -800,7 +800,7 @@ class _LocalModeStatusRow extends StatelessWidget {
               children: [
                 Text(label, style: context.theme.typography.sm),
                 Padding(
-                  padding: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.only(top: AppSpacing.s2),
                   child: Text(
                     subtitle,
                     style: context.theme.typography.xs.copyWith(

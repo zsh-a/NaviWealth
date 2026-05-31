@@ -220,16 +220,16 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
     if (eligible.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(l10n.cashFormNeedAccountHint, textAlign: TextAlign.center),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s12),
               FButton(
                 variant: FButtonVariant.outline,
                 onPress: () => context.go(AppRoutes.wealthAccountNew),
-                prefix: const Icon(FLucideIcons.plus, size: 16),
+                prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
                 child: Text(l10n.cashFormCreateAccountAction),
               ),
             ],
@@ -272,7 +272,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
                 entityId: widget.assetId!,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
           ],
           AccountPicker(
             accounts: eligible,
@@ -286,14 +286,14 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
               dirty.markDirty();
             }),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           CurrencyPicker(
             value: _currency,
             // Disabled — currency is derived from the selected account.
             onChanged: (_) {},
             enabled: false,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           AmountField(
             label: l10n.cashFormBalanceLabel,
             controller: _balanceController,
@@ -301,7 +301,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
             focusNode: _balanceFocus,
             onFieldSubmitted: (_) => _nicknameFocus.requestFocus(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _nicknameController),
             label: Text(l10n.cashFormNicknameLabel),

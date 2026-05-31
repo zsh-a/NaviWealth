@@ -60,7 +60,7 @@ class DomainsSettingsPage extends ConsumerWidget {
             ),
           ),
           SoftCard(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
             child: Column(
               children: [
                 InlineLinkRow(

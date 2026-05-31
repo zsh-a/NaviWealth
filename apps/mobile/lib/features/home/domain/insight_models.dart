@@ -40,6 +40,23 @@ enum InsightKind {
   fireOsBucketDeviation,
 }
 
+/// Semantic tone for an insight icon — resolved to a concrete [Color]
+/// by the view layer via [SemanticColors]. Keeps the data layer free
+/// of Flutter color dependencies.
+enum InsightTone {
+  /// Positive signal (e.g. FIRE reached, monthly surplus).
+  success,
+
+  /// Attention needed (e.g. drift, low cash bucket, anomaly).
+  warning,
+
+  /// Urgent / negative signal (e.g. cash-flow deficit, duplicate charge).
+  danger,
+
+  /// Neutral informational (e.g. maturity reminder).
+  info,
+}
+
 /// One actionable insight surfaced on the dashboard. The view layer
 /// resolves [kind] into headline + detail strings via the localized
 /// labels in `insight_feed_strings.dart`, and routes the user to
@@ -48,7 +65,7 @@ class InsightItem {
   const InsightItem({
     required this.icon,
     required this.kind,
-    this.iconColor,
+    this.tone,
     this.onTap,
     this.route,
     this.monthsToTarget,
@@ -81,7 +98,7 @@ class InsightItem {
 
   final IconData icon;
   final InsightKind kind;
-  final Color? iconColor;
+  final InsightTone? tone;
   final VoidCallback? onTap;
   final String? route;
   final int? monthsToTarget;

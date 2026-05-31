@@ -34,15 +34,15 @@ class RiskThresholdsPage extends ConsumerWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final padding = Breakpoints.isMobile(constraints.maxWidth)
-              ? const EdgeInsets.all(16)
-              : const EdgeInsets.all(24);
+              ? const EdgeInsets.all(AppSpacing.s16)
+              : const EdgeInsets.all(AppSpacing.s24);
           return ListView(
             padding: padding,
             children: const [
               _Hint(),
-              SizedBox(height: 12),
+              SizedBox(height: AppSpacing.s12),
               SoftCard(
-                padding: EdgeInsets.symmetric(vertical: 4),
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
                 child: RiskThresholdSettings(),
               ),
             ],
@@ -61,7 +61,7 @@ class _Hint extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
       child: Text(
         l10n.settingsRiskThresholdsHint,
         style: context.theme.typography.xs.copyWith(
@@ -123,7 +123,7 @@ class RiskThresholdSettings extends ConsumerWidget {
               .updateCurrency(v),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(14, 4, 14, 8),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.s14, AppSpacing.s4, AppSpacing.s14, AppSpacing.s8),
           child: Align(
             alignment: AlignmentDirectional.centerEnd,
             child: FTappable(
@@ -131,7 +131,7 @@ class RiskThresholdSettings extends ConsumerWidget {
                   .read(concentrationThresholdsProvider.notifier)
                   .resetToDefaults(),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s4),
                 child: Text(
                   l10n.settingsRiskResetDefaults,
                   style: context.theme.typography.xs.copyWith(
@@ -238,10 +238,10 @@ class _ThresholdSliderState extends State<_ThresholdSlider> {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s8),
       child: Row(
         children: [
-          Icon(widget.icon, size: 18, color: colors.mutedForeground),
+          Icon(widget.icon, size: AppIconSizes.h18, color: colors.mutedForeground),
           const SizedBox(width: 12),
           SizedBox(
             width: 72,

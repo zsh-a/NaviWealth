@@ -57,10 +57,10 @@ class PostingsPreview extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: context.theme.colors.muted,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: context.theme.colors.border),
       ),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(AppSpacing.s8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -71,11 +71,11 @@ class PostingsPreview extends StatelessWidget {
               style: context.theme.typography.sm,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
           ],
           for (final p in postings) ...[
             _PostingRow(posting: p, accounts: accounts),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
           ],
           if (showUnitBalanceTotals && unitTotals.isNotEmpty) ...[
             const FDivider(),
@@ -162,12 +162,12 @@ class _UnitBalanceRow extends StatelessWidget {
     final tone = balanced ? scheme.tertiary : context.theme.colors.destructive;
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
     return Padding(
-      padding: const EdgeInsets.only(top: 2),
+      padding: const EdgeInsets.only(top: AppSpacing.s2),
       child: Row(
         children: [
           Icon(
             balanced ? FLucideIcons.circleCheck : FLucideIcons.circleAlert,
-            size: 14,
+            size: AppIconSizes.xs,
             color: tone,
           ),
           const SizedBox(width: 4),

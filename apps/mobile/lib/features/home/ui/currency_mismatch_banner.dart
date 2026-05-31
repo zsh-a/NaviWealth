@@ -34,7 +34,7 @@ class CurrencyMismatchBanner extends ConsumerWidget {
       child: InkWell(
         onTap: () => _showDetails(context, mismatches, base),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
           child: Row(
             children: [
               Icon(

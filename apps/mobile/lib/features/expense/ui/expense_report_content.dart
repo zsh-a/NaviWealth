@@ -34,16 +34,16 @@ class ExpenseReportBody extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
       children: [
         const _RangeChips(),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         _SummaryCard(report: report),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         ExpenseCategoryPieCard(
           report: report,
           categoryById: expenseAccountById,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         ExpenseTrendCard(report: report),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         ExpenseCategoryListCard(
           report: report,
           categoryById: expenseAccountById,
@@ -67,7 +67,7 @@ class _RangeChips extends ConsumerWidget {
         children: [
           for (final preset in ExpenseReportRangePreset.values)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: AppSpacing.s8),
               child: FButton(
                 variant: (preset == selected)
                     ? FButtonVariant.primary
@@ -141,7 +141,7 @@ class _SummaryCard extends StatelessWidget {
     );
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.s20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -149,7 +149,7 @@ class _SummaryCard extends StatelessWidget {
               l10n.expenseReportTotalExpenses,
               style: context.theme.typography.sm,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               formatter.currency(
                 report.total.amount,
@@ -159,7 +159,7 @@ class _SummaryCard extends StatelessWidget {
                 fontFeatures: TypographyTokens.tabularFigures,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             Row(
               children: [
                 Expanded(
@@ -188,7 +188,7 @@ class _SummaryCard extends StatelessWidget {
               ],
             ),
             if (report.skippedFxCount > 0) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
               Text(
                 l10n.expenseReportSkippedFx(report.skippedFxCount),
                 style: context.theme.typography.xs.copyWith(
@@ -196,7 +196,7 @@ class _SummaryCard extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               l10n.expenseReportBaseCurrency(report.baseCurrency, monthSpan),
               style: context.theme.typography.xs.copyWith(

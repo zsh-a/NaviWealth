@@ -63,13 +63,13 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       width: 72,
                       height: 72,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppSpacing.s20),
                     Text(
                       l10n.onboardingTitle,
                       style: Theme.of(context).textTheme.headlineSmall,
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.s8),
                     Text(
                       l10n.onboardingSubtitle,
                       style: context.theme.typography.sm.copyWith(
@@ -77,7 +77,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: AppSpacing.s32),
                     _ModeCard(
                       key: const ValueKey('onboarding.cloud'),
                       icon: FLucideIcons.cloud,
@@ -85,7 +85,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       description: l10n.onboardingCloudDescription,
                       onTap: _busy ? null : _pickCloud,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.s12),
                     _ModeCard(
                       key: const ValueKey('onboarding.local'),
                       icon: FLucideIcons.smartphone,
@@ -131,7 +131,7 @@ class _ModeCard extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: colors.primary.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             alignment: Alignment.center,
             child: Icon(icon, color: colors.primary, size: 22),
@@ -142,7 +142,7 @@ class _ModeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title, style: context.theme.typography.md),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.s2),
                 Text(
                   description,
                   style: context.theme.typography.sm.copyWith(
@@ -152,7 +152,7 @@ class _ModeCard extends StatelessWidget {
               ],
             ),
           ),
-          Icon(FLucideIcons.chevronRight, color: colors.mutedForeground, size: 20),
+          Icon(FLucideIcons.chevronRight, color: colors.mutedForeground, size: AppIconSizes.md),
         ],
       ),
     );

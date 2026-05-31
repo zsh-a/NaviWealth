@@ -216,7 +216,7 @@ class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
                           c.id == _supersededBy
                               ? FLucideIcons.checkCircle2
                               : FLucideIcons.circle,
-                          size: 14,
+                          size: AppIconSizes.xs,
                           color: c.id == _supersededBy
                               ? colors.primary
                               : colors.mutedForeground,

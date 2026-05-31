@@ -268,8 +268,8 @@ class _EmptyConversation extends ConsumerWidget {
       builder: (context, constraints) {
         final isMobile = Breakpoints.isMobile(constraints.maxWidth);
         final outerPadding = isMobile
-            ? const EdgeInsets.all(16)
-            : const EdgeInsets.all(24);
+            ? const EdgeInsets.all(AppSpacing.s16)
+            : const EdgeInsets.all(AppSpacing.s24);
         return SingleChildScrollView(
           padding: outerPadding,
           child: Center(
@@ -279,7 +279,7 @@ class _EmptyConversation extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.s24),
                   Center(
                     child: Container(
                       width: 64,
@@ -296,7 +296,7 @@ class _EmptyConversation extends ConsumerWidget {
                       child: const AiSparkle(size: 28),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.s16),
                   Text(
                     l10n.aiChatEmptyTitle,
                     textAlign: TextAlign.center,
@@ -305,7 +305,7 @@ class _EmptyConversation extends ConsumerWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.s8),
                   Text(
                     l10n.aiChatEmptyBody,
                     textAlign: TextAlign.center,
@@ -313,17 +313,17 @@ class _EmptyConversation extends ConsumerWidget {
                       color: context.theme.colors.mutedForeground,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.s8),
                   SectionHeader(title: l10n.aiChatEmptySuggestionsHeader),
                   for (var i = 0; i < suggestions.length; i++) ...[
-                    if (i > 0) const SizedBox(height: 8),
+                    if (i > 0) const SizedBox(height: AppSpacing.s8),
                     _SuggestionTile(
                       label: suggestions[i].$1,
                       icon: suggestions[i].$2,
                       onTap: () => onSuggest(suggestions[i].$1),
                     ),
                   ],
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.s24),
                 ],
               ),
             ),
@@ -390,7 +390,7 @@ class _SuggestionTile extends StatelessWidget {
       child: FTappable(
         onPress: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
           child: Row(
             children: [
               Container(
@@ -400,7 +400,7 @@ class _SuggestionTile extends StatelessWidget {
                   color: colors.primary.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, size: 16, color: colors.primary),
+                child: Icon(icon, size: AppIconSizes.sm, color: colors.primary),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -435,7 +435,7 @@ class _BootstrappingPane extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(width: 28, height: 28, child: FCircularProgress()),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           Text(
             l10n.aiChatBootstrappingLabel,
             style: context.theme.typography.xs.copyWith(
@@ -459,7 +459,7 @@ class _BootstrapErrorPane extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -468,7 +468,7 @@ class _BootstrapErrorPane extends StatelessWidget {
               size: 36,
               color: context.theme.colors.destructive,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(
               l10n.commonLoadError(error.toString()),
               textAlign: TextAlign.center,
@@ -476,11 +476,11 @@ class _BootstrapErrorPane extends StatelessWidget {
                 color: context.theme.colors.foreground,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             FButton(
               variant: FButtonVariant.primary,
               onPress: onRetry,
-              prefix: const Icon(FLucideIcons.refreshCw, size: 14),
+              prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
               child: Text(l10n.commonRetry),
             ),
           ],
@@ -498,7 +498,7 @@ class _LoginRequired extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -507,7 +507,7 @@ class _LoginRequired extends StatelessWidget {
               size: 36,
               color: context.theme.colors.mutedForeground,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(
               l10n.aiChatLoginRequired,
               style: context.theme.typography.md.copyWith(

@@ -369,7 +369,7 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
         loading: () => const _PortfolioHubSkeleton(),
         error: (error, _) => Center(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.s24),
             child: Text(l10n.portfolioHubLoadError('$error')),
           ),
         ),
@@ -414,41 +414,41 @@ class _PortfolioHubBody extends StatelessWidget {
       ),
       children: [
         _PortfolioSummary(data: data),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSpacing.s20),
         const _DcaSimulatorEntry(),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSpacing.s20),
         _EngineExposureSection(data: data),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSpacing.s20),
         PortfolioHubViewSegment(value: view, onChanged: onViewChanged),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         Text(
           l10n.portfolioHubHoldingsTitle,
           style: context.theme.typography.lg.copyWith(
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpacing.s10),
         if (groups.isEmpty)
           _EmptyState(message: l10n.portfolioHubEmpty)
         else
           for (final group in groups) ...[
             _GroupRowCard(group: group),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
           ],
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         Text(
           l10n.portfolioHubPositionsTitle,
           style: context.theme.typography.lg.copyWith(
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpacing.s10),
         if (data.holdings.isEmpty)
           _EmptyState(message: l10n.portfolioHubEmpty)
         else
           for (final holding in data.holdings.take(12)) ...[
             _HoldingRowCard(holding: holding),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
           ],
       ],
     );
@@ -474,7 +474,7 @@ class _PortfolioSummary extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.s4),
         AnimatedMoneyText(
           amount: data.marketValueInBase.toDouble(),
           currencyCode: data.baseCurrency,
@@ -521,7 +521,7 @@ class _DcaSimulatorEntry extends StatelessWidget {
         ),
         title: Text(l10n.dcaSimulatorTitle),
         subtitle: Text(l10n.dcaSimulatorAccountsEntrySubtitle),
-        suffix: const Icon(FLucideIcons.chevronRight, size: 18),
+        suffix: const Icon(FLucideIcons.chevronRight, size: AppIconSizes.h18),
       ),
     );
   }
@@ -550,7 +550,7 @@ class _SummaryMetric extends StatelessWidget {
         border: Border(top: BorderSide(color: context.theme.colors.border)),
       ),
       child: Padding(
-        padding: const EdgeInsets.only(top: 10),
+        padding: const EdgeInsets.only(top: AppSpacing.s10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -560,7 +560,7 @@ class _SummaryMetric extends StatelessWidget {
                 color: context.theme.colors.mutedForeground,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             if (amount == null)
               Text(
                 value ?? '—',
@@ -612,7 +612,7 @@ class _EngineExposureSection extends ConsumerWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpacing.s10),
         LayoutBuilder(
           builder: (context, constraints) {
             if (constraints.maxWidth >= 860) {
@@ -632,7 +632,7 @@ class _EngineExposureSection extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 for (var i = 0; i < cards.length; i++) ...[
-                  if (i != 0) const SizedBox(height: 10),
+                  if (i != 0) const SizedBox(height: AppSpacing.s10),
                   cards[i],
                 ],
               ],
@@ -669,7 +669,7 @@ class _RealizedPnlCard extends ConsumerWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.s10),
           if (rows.isEmpty)
             _MutedText(l10n.portfolioHubRealizedPnlEmpty)
           else
@@ -681,7 +681,7 @@ class _RealizedPnlCard extends ConsumerWidget {
                 ),
                 amount: formatters.signedMoney(row.gain, unit: row.currency),
               ),
-              if (row != rows.last) const SizedBox(height: 8),
+              if (row != rows.last) const SizedBox(height: AppSpacing.s8),
             ],
         ],
       ),
@@ -720,9 +720,9 @@ class _DividendForecastCard extends ConsumerWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           _MutedText(_confidenceLabel(l10n, forecast.confidence)),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.s10),
           if (rows.isEmpty)
             _MutedText(l10n.portfolioHubDividendForecastEmpty)
           else
@@ -732,7 +732,7 @@ class _DividendForecastCard extends ConsumerWidget {
                 subtitle: l10n.portfolioHubDividendForecastEvent,
                 amount: formatters.currency(row.value, code: forecast.currency),
               ),
-              if (row != rows.last) const SizedBox(height: 8),
+              if (row != rows.last) const SizedBox(height: AppSpacing.s8),
             ],
         ],
       ),
@@ -788,7 +788,7 @@ class _EventTimelineCard extends ConsumerWidget {
                 subtitle: '${formatters.date(row.date)} - ${row.subtitle}',
                 amount: row.detail,
               ),
-              if (row != visibleRows.last) const SizedBox(height: 8),
+              if (row != visibleRows.last) const SizedBox(height: AppSpacing.s8),
             ],
         ],
       ),
@@ -847,7 +847,7 @@ class _EngineCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           child,
         ],
       ),
@@ -930,9 +930,9 @@ class PortfolioHubViewSegment extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: context.theme.colors.secondary.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
-      padding: const EdgeInsets.all(2),
+      padding: const EdgeInsets.all(AppSpacing.s2),
       child: Row(
         children: [
           for (final view in PortfolioHubView.values)
@@ -977,12 +977,12 @@ class _ViewChip extends StatelessWidget {
       child: AnimatedContainer(
         duration: Motion.medium,
         curve: Motion.emphasizedDecelerate,
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: AppSpacing.s4),
         decoration: BoxDecoration(
           color: selected
               ? context.theme.colors.background
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1037,9 +1037,9 @@ class _GroupRowCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.s10),
           _WeightBar(weight: group.weight.toDouble()),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           Row(
             children: [
               Text(
@@ -1097,7 +1097,7 @@ class _HoldingRowCard extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.s4),
                   Text(
                     _formatRatio(context, holding.weight.toDouble()),
                     style: context.theme.typography.xs.copyWith(
@@ -1156,7 +1156,7 @@ class _WeightBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final clamped = weight.clamp(0, 1).toDouble();
     return ClipRRect(
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(AppRadius.full),
       child: SizedBox(
         height: 5,
         child: LinearProgressIndicator(
@@ -1199,18 +1199,18 @@ class _PortfolioHubSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       children: const [
         SkeletonBox(width: 120, height: 12, radius: 4),
-        SizedBox(height: 8),
+        SizedBox(height: AppSpacing.s8),
         SkeletonBox(width: 220, height: 34, radius: 8),
-        SizedBox(height: 24),
+        SizedBox(height: AppSpacing.s24),
         SkeletonBox(height: 42, radius: 999),
         SizedBox(height: 18),
         SkeletonBox(height: 82, radius: 8),
-        SizedBox(height: 10),
+        SizedBox(height: AppSpacing.s10),
         SkeletonBox(height: 82, radius: 8),
-        SizedBox(height: 10),
+        SizedBox(height: AppSpacing.s10),
         SkeletonBox(height: 82, radius: 8),
       ],
     );

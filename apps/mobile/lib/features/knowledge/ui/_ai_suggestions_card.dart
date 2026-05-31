@@ -174,7 +174,7 @@ class _NoteSuggestionGroupState extends ConsumerState<_NoteSuggestionGroup> {
           const SizedBox(height: AppSpacing.s4),
           for (final p in pending)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
               child: _ProposalRow(note: note, proposal: p),
             ),
         ],
@@ -247,13 +247,13 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
         FButton.icon(
           variant: FButtonVariant.outline,
           onPress: _busy ? null : _accept,
-          child: const Icon(FLucideIcons.check, size: 14),
+          child: const Icon(FLucideIcons.check, size: AppIconSizes.xs),
         ),
         const SizedBox(width: AppSpacing.s4),
         FButton.icon(
           variant: FButtonVariant.outline,
           onPress: _busy ? null : _dismiss,
-          child: const Icon(FLucideIcons.x, size: 14),
+          child: const Icon(FLucideIcons.x, size: AppIconSizes.xs),
         ),
       ],
     );

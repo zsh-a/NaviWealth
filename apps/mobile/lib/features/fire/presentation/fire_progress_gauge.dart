@@ -1,9 +1,10 @@
 import 'dart:math' as math;
+import '../../../design_system/design_system.dart';
 
 import 'package:flutter/widgets.dart';
+import '../../../design_system/design_system.dart';
 import 'package:forui/forui.dart';
 
-import '../../../design_system/tokens/typography_tokens.dart';
 
 /// Half-donut progress gauge: 270° arc with the active sweep starting at
 /// the bottom-left, traveling clockwise. Renders the percentage in the
@@ -56,7 +57,7 @@ class FireProgressGauge extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: AppSpacing.s12),
             // Cap text scaling inside the fixed-size gauge so 200% system
             // font doesn't overflow the donut hole.
             child: MediaQuery.withClampedTextScaling(
@@ -75,7 +76,7 @@ class FireProgressGauge extends StatelessWidget {
                     ),
                   ),
                   if (caption != null) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.s4),
                     Text(
                       caption!,
                       textAlign: TextAlign.center,

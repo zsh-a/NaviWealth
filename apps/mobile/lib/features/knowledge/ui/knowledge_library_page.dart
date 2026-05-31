@@ -103,7 +103,7 @@ class _NewObjectButton extends ConsumerWidget {
       _LibrarySegment.routines => '新建 Routine',
     };
     return FButton(
-      prefix: const Icon(FLucideIcons.plus, size: 16),
+      prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
       onPress: () => _onPress(context, ref),
       child: Text(label),
     );
@@ -416,7 +416,7 @@ class _DeleteEntryButton extends StatelessWidget {
         onPress: onPressed,
         child: Icon(
           FLucideIcons.trash2,
-          size: 16,
+          size: AppIconSizes.sm,
           color: context.theme.colors.destructive,
         ),
       ),
@@ -494,7 +494,7 @@ Widget _buildDecisionTile(
           const SizedBox(width: AppSpacing.s4),
           Icon(
             FLucideIcons.chevronRight,
-            size: 14,
+            size: AppIconSizes.xs,
             color: colors.mutedForeground,
           ),
         ],
@@ -560,7 +560,7 @@ Widget _buildConceptTile(
           const SizedBox(width: AppSpacing.s4),
           Icon(
             FLucideIcons.chevronRight,
-            size: 14,
+            size: AppIconSizes.xs,
             color: colors.mutedForeground,
           ),
         ],
@@ -599,7 +599,7 @@ Widget _buildExperimentTile(
           const SizedBox(width: AppSpacing.s4),
           Icon(
             FLucideIcons.chevronRight,
-            size: 14,
+            size: AppIconSizes.xs,
             color: colors.mutedForeground,
           ),
         ],

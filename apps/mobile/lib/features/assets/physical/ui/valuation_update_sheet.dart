@@ -100,7 +100,7 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
                 return null;
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             InkWell(
               onTap: _saving ? null : _pickDate,
               child: InputDecorator(
@@ -110,7 +110,7 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
                 child: Text(dateFormat.format(_asOf)),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             FTextFormField(
               control: FTextFieldControl.managed(controller: _noteCtrl),
               label: Text(l10n.physicalAssetFieldNote),

@@ -115,9 +115,9 @@ class AssetsBody extends StatelessWidget {
       accountById: accountById,
     );
     return ListView.builder(
-      padding: const EdgeInsets.all(16).copyWith(
+      padding: const EdgeInsets.all(AppSpacing.s16).copyWith(
         bottom:
-            const EdgeInsets.all(16).bottom +
+            const EdgeInsets.all(AppSpacing.s16).bottom +
             64 +
             MediaQuery.paddingOf(context).bottom,
       ),
@@ -143,12 +143,12 @@ class _EmptyHint extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(FLucideIcons.wallet, size: 48),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(l10n.assetsEmptyHint, textAlign: TextAlign.center),
           ],
         ),

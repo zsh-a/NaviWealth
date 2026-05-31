@@ -34,9 +34,9 @@ class AnalyticsEquityColumn extends ConsumerWidget {
           title: l10n.analyticsEquityTitle,
           subtitle: l10n.analyticsEquitySubtitle,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         DimensionSegment(value: dimension, onChanged: onDimensionChanged),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         PageSkeletonShell<EquityAllocationView>(
           skeleton: const _LoadingState(),
           isLoading: view.isLoading,
@@ -98,7 +98,7 @@ class EquityAllocationContent extends ConsumerWidget {
           baseCurrency: view.baseCurrency,
           totalValueInBase: view.totalValueInBase,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         NwPieChart(
           slices: slices,
           aspectRatio: 1.4,
@@ -108,10 +108,10 @@ class EquityAllocationContent extends ConsumerWidget {
           }),
           semanticLabel: l10n.analyticsEquityTitle,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         if (view.unclassifiedCount > 0)
           _UnclassifiedBanner(count: view.unclassifiedCount),
-        if (view.unclassifiedCount > 0) const SizedBox(height: 12),
+        if (view.unclassifiedCount > 0) const SizedBox(height: AppSpacing.s12),
         SoftCard(
           child: Column(
             children: [
@@ -246,7 +246,7 @@ class _UnclassifiedBanner extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: AppSpacing.s12),
         child: Row(
           children: [
             Icon(
@@ -269,7 +269,7 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32),
       child: Column(
         children: [
           Icon(
@@ -277,13 +277,13 @@ class _EmptyState extends StatelessWidget {
             size: 48,
             color: context.theme.colors.mutedForeground,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           Text(
             l10n.analyticsEmptyTitle,
             style: context.theme.typography.md,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Text(
             l10n.analyticsEmptyHint,
             style: context.theme.typography.sm.copyWith(
@@ -312,11 +312,11 @@ class _LoadingState extends StatelessWidget {
             SkeletonBox(width: 120, height: 18),
           ],
         ),
-        SizedBox(height: 16),
+        SizedBox(height: AppSpacing.s16),
         SkeletonBox(height: 220, radius: 8),
-        SizedBox(height: 16),
+        SizedBox(height: AppSpacing.s16),
         SkeletonBox(height: 56, radius: 8),
-        SizedBox(height: 8),
+        SizedBox(height: AppSpacing.s8),
         SkeletonBox(height: 56, radius: 8),
       ],
     );
@@ -333,17 +333,17 @@ class _ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32),
       child: Column(
         children: [
           Icon(
             FLucideIcons.circleAlert,
             color: context.theme.colors.destructive,
-            size: 32,
+            size: AppIconSizes.xl,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           FButton(
             variant: FButtonVariant.ghost,
             onPress: onRetry,

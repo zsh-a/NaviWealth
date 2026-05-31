@@ -27,7 +27,7 @@ class ExpenseCategoryPieCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.s20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -35,7 +35,7 @@ class ExpenseCategoryPieCard extends StatelessWidget {
               l10n.expenseReportCategoryShare,
               style: context.theme.typography.md,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             if (report.byCategory.isEmpty)
               const SizedBox(
                 height: 200,
@@ -96,7 +96,7 @@ class ExpenseTrendCard extends StatelessWidget {
     ];
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpacing.s20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -104,7 +104,7 @@ class ExpenseTrendCard extends StatelessWidget {
               l10n.expenseReportMonthlyTrend,
               style: context.theme.typography.md,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             LayoutBuilder(
               builder: (context, c) {
                 final aspect = chartAspectFor(c.maxWidth);
@@ -158,7 +158,7 @@ class ExpenseCategoryListCard extends StatelessWidget {
     }
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: AppSpacing.s8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -313,7 +313,7 @@ class _LegendRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
       child: Padding(
         padding: const EdgeInsets.symmetric(
           vertical: AppSpacing.s6,
@@ -445,7 +445,7 @@ class _CategoryDrillDown extends StatelessWidget {
       maxChildSize: 0.95,
       builder: (ctx, scrollController) {
         return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -472,14 +472,14 @@ class _CategoryDrillDown extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.s4),
               Text(
                 l10n.expenseReportItemCount(entries.length),
                 style: context.theme.typography.xs.copyWith(
                   color: context.theme.colors.mutedForeground,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s12),
               const FDivider(),
               Expanded(
                 child: ListView.builder(

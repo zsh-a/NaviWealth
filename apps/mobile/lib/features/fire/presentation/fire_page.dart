@@ -52,17 +52,17 @@ class _ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32),
       child: Column(
         children: [
           Icon(
             FLucideIcons.circleAlert,
             color: context.theme.colors.destructive,
-            size: 32,
+            size: AppIconSizes.xl,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           FButton(
             variant: FButtonVariant.ghost,
             onPress: onRetry,

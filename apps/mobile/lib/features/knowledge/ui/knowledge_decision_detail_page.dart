@@ -165,7 +165,7 @@ class _BodyState extends ConsumerState<_Body> {
                       opt.label == d.selectedLabel
                           ? FLucideIcons.checkCircle2
                           : FLucideIcons.circle,
-                      size: 14,
+                      size: AppIconSizes.xs,
                       color: opt.label == d.selectedLabel
                           ? colors.primary
                           : colors.mutedForeground,
@@ -217,7 +217,7 @@ class _BodyState extends ConsumerState<_Body> {
             children: [
               for (final p in _principles)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
                   child: Text(
                     '· ${p.statement}',
                     style: typography.sm,
@@ -235,7 +235,7 @@ class _BodyState extends ConsumerState<_Body> {
             children: [
               for (final a in _assumptions)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
                   child: Text(
                     '· ${a.statement}（conf ${a.confidence.toStringAsFixed(2)}）',
                     style: typography.sm,
@@ -271,14 +271,14 @@ class _BodyState extends ConsumerState<_Body> {
             children: [
               for (var i = 0; i < _chain.length; i++)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
                   child: Row(
                     children: [
                       Icon(
                         i == 0
                             ? FLucideIcons.arrowRightCircle
                             : FLucideIcons.arrowUpCircle,
-                        size: 14,
+                        size: AppIconSizes.xs,
                         color: colors.mutedForeground,
                       ),
                       const SizedBox(width: AppSpacing.s8),
@@ -366,13 +366,13 @@ class _SnapshotRow extends StatelessWidget {
     final summary = (map['summary'] as String?) ?? '';
     final title = (map['title'] as String?) ?? '';
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (ts.length >= 10)
             Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.s8, top: 2),
+              padding: const EdgeInsets.only(right: AppSpacing.s8, top: AppSpacing.s2),
               child: Text(
                 ts.substring(5, 10),
                 style: typography.xs.copyWith(color: colors.mutedForeground),

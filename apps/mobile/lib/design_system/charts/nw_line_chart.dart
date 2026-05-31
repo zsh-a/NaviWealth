@@ -851,7 +851,7 @@ class _ChartTooltip extends StatelessWidget {
             ),
           ),
           if (touchStartPoint != null) ...[
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.s6),
             _DeltaBadge(value: delta, yAxis: yAxis, hideAmounts: hideAmounts),
           ],
         ],

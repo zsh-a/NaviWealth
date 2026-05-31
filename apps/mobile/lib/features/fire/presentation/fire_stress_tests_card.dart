@@ -11,6 +11,7 @@ import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../data/fire_providers.dart';
 import '../domain/fire_stress_test.dart';
 import 'fire_ai_capsule.dart';
+import 'fire_status_colors.dart';
 
 /// Stress tests section — surfaces the deterministic resilience checks
 /// (`runStressTests`) per `docs/roadmap-fire-os.md` §4.3. One row per
@@ -37,17 +38,17 @@ class FireStressTestsCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.fireOsStressTitle, style: context.theme.typography.md),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               l10n.fireOsStressSubtitle,
               style: context.theme.typography.xs.copyWith(
                 color: context.theme.colors.mutedForeground,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             stressAsync.when(
               loading: () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
                 child: SizedBox.shrink(),
               ),
               error: (e, _) => Text(
@@ -69,7 +70,7 @@ class FireStressTestsCard extends ConsumerWidget {
                   children: [
                     for (final r in results) ...[
                       _StressRow(result: r, formatters: formatters, l10n: l10n),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: AppSpacing.s10),
                     ],
                   ],
                 );
@@ -96,7 +97,7 @@ class _StressRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final verdictColor = _verdictColor(colors, result.verdict);
+    final verdictColor = fireStressVerdictColor(SemanticColors.of(context), result.verdict);
     final scenarioLabel = _scenarioLabel(l10n, result, formatters);
     final verdictLabel = _verdictLabel(l10n, result.verdict);
     final wrLabel = result.withdrawalRateAfter.isFinite
@@ -132,10 +133,10 @@ class _StressRow extends StatelessWidget {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
               decoration: BoxDecoration(
                 color: verdictColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.full),
                 border: Border.all(color: verdictColor.withValues(alpha: 0.4)),
               ),
               child: Text(
@@ -148,7 +149,7 @@ class _StressRow extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.s4),
         Wrap(
           spacing: 12,
           runSpacing: 4,
@@ -219,13 +220,3 @@ String _verdictLabel(AppLocalizations l10n, FireStressVerdict v) {
   }
 }
 
-Color _verdictColor(FColors colors, FireStressVerdict v) {
-  switch (v) {
-    case FireStressVerdict.safe:
-      return Colors.green.shade600;
-    case FireStressVerdict.cautious:
-      return Colors.amber.shade700;
-    case FireStressVerdict.danger:
-      return colors.destructive;
-  }
-}

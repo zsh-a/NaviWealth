@@ -13,13 +13,18 @@ library;
 
 import 'package:flutter/widgets.dart';
 
+/// Semantic tone for a chat-rail icon. Resolved to a concrete [Color]
+/// by the view layer via [SemanticColors]. Keeps composition providers
+/// free of theme dependencies.
+enum ChatRailTone { success, warning, danger, info }
+
 class ChatRailContent {
   const ChatRailContent({
     required this.id,
     required this.headline,
     required this.detail,
     required this.icon,
-    this.iconColor,
+    this.tone,
     this.route,
   });
 
@@ -37,9 +42,9 @@ class ChatRailContent {
   /// Lucide / Forui icon rendered in the leading tile.
   final IconData icon;
 
-  /// Optional tint for the icon's background chip. When null the rail
-  /// falls back to the theme primary.
-  final Color? iconColor;
+  /// Optional semantic tone for the icon's background chip. When null
+  /// the rail falls back to the theme primary.
+  final ChatRailTone? tone;
 
   /// `go_router` path to deep-link to when the card is tapped. Null
   /// disables tap.

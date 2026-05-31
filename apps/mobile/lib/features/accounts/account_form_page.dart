@@ -284,7 +284,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                           entityId: widget.accountId!,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.s8),
                     ],
                     // Wealth-container category picker — semantic
                     // icon-grid, not a dropdown. The accounting side
@@ -292,7 +292,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                     // [accountSideForCategory] on every selection and
                     // is never user-editable.
                     Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 8),
+                      padding: const EdgeInsets.only(left: 4, bottom: AppSpacing.s8),
                       child: Text(
                         l10n.accountFormTypeLabel,
                         style: context.theme.typography.sm.copyWith(
@@ -311,7 +311,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                         });
                       },
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.s16),
                     FTextFormField(
                       control: FTextFieldControl.managed(
                         controller: _nameController,
@@ -324,7 +324,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                           : null,
                       onSubmit: (_) => _institutionFocus.requestFocus(),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.s12),
                     _ParentAccountPickerSection(
                       currentAccountId: _initial?.id,
                       category: _category,
@@ -334,7 +334,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                         dirty.markDirty();
                       }),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.s12),
                     _IconPickerSection(
                       selected: _icon,
                       color: _color,
@@ -343,7 +343,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                         dirty.markDirty();
                       }),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.s12),
                     _ColorPickerSection(
                       selected: _color,
                       onChanged: (v) => setState(() {
@@ -351,7 +351,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                         dirty.markDirty();
                       }),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.s12),
                     CurrencyPicker(
                       value: _currency,
                       onChanged: (v) => setState(() {
@@ -359,7 +359,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                         dirty.markDirty();
                       }),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.s12),
                     FTextFormField(
                       control: FTextFieldControl.managed(
                         controller: _institutionController,
@@ -370,7 +370,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                       textInputAction: TextInputAction.next,
                       onSubmit: (_) => _accountNumberFocus.requestFocus(),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.s12),
                     FTextFormField(
                       control: FTextFieldControl.managed(
                         controller: _accountNumberController,
@@ -380,13 +380,13 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                       textInputAction: TextInputAction.next,
                       onSubmit: (_) => _noteFocus.requestFocus(),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.s12),
                     NoteField(
                       controller: _noteController,
                       focusNode: _noteFocus,
                     ),
                     if (widget.isEdit) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.s12),
                       FSwitch(
                         label: Text(l10n.accountFormArchivedTitle),
                         description: Text(l10n.accountFormArchivedSubtitle),
@@ -448,7 +448,7 @@ class _ParentAccountPickerSection extends ConsumerWidget {
             child: FButton.icon(
               variant: FButtonVariant.ghost,
               onPress: () => onChanged(null),
-              child: const Icon(FLucideIcons.x, size: 18),
+              child: const Icon(FLucideIcons.x, size: AppIconSizes.h18),
             ),
           ),
       ],
@@ -514,7 +514,7 @@ class _IconPickerSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(l10n.accountFormIconHeading, style: context.theme.typography.xs),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.s4),
         SizedBox(
           height: 56,
           child: ListView.separated(
@@ -581,7 +581,7 @@ class _IconChip extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             color: isSelected
                 ? selectionTint.withValues(alpha: 0.1)
                 : colors.muted,
@@ -614,7 +614,7 @@ class _ColorPickerSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(l10n.accountFormColorHeading, style: context.theme.typography.xs),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.s4),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -627,7 +627,7 @@ class _ColorPickerSection extends StatelessWidget {
               border: context.theme.colors.border,
               child: Icon(
                 FLucideIcons.ban,
-                size: 16,
+                size: AppIconSizes.sm,
                 color: context.theme.colors.mutedForeground,
               ),
             ),

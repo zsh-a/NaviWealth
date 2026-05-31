@@ -55,7 +55,7 @@ class AllocationSummary extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, top: 4, bottom: 8),
+          padding: const EdgeInsets.only(left: 4, top: 4, bottom: AppSpacing.s8),
           child: Text(
             l10n.dashboardAllocationSummaryTitle,
             style: context.theme.typography.sm.copyWith(
@@ -76,9 +76,9 @@ class AllocationSummary extends StatelessWidget {
                   segment: s,
                   baseCurrency: snapshot.baseCurrency,
                 ),
-                if (s != segments.take(3).last) const SizedBox(height: 8),
+                if (s != segments.take(3).last) const SizedBox(height: AppSpacing.s8),
               ],
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.s4),
               Align(
                 alignment: Alignment.centerLeft,
                 child: FTappable(
@@ -129,7 +129,7 @@ class _StackedBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(AppRadius.xs),
       child: SizedBox(
         height: 8,
         child: Row(

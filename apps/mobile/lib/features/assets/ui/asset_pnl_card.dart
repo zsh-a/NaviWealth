@@ -26,16 +26,16 @@ class AssetPnLCard extends ConsumerWidget {
 
     if (snapshotAsync.isLoading) {
       return const SkeletonCard(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SkeletonBox(width: 80, height: 14, radius: 4),
-            SizedBox(height: 12),
+            SizedBox(height: AppSpacing.s12),
             SkeletonBox(height: 22),
-            SizedBox(height: 8),
+            SizedBox(height: AppSpacing.s8),
             SkeletonBox(height: 14),
-            SizedBox(height: 8),
+            SizedBox(height: AppSpacing.s8),
             SkeletonBox(height: 14),
           ],
         ),
@@ -65,12 +65,12 @@ class AssetPnLCard extends ConsumerWidget {
 
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.assetDetailPnLTitle, style: context.theme.typography.sm),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -84,7 +84,7 @@ class AssetPnLCard extends ConsumerWidget {
                           color: context.theme.colors.mutedForeground,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpacing.s4),
                       DeltaText(
                         value: unrealizedAsset?.toDouble(),
                         currencyCode: asset.currency,
@@ -100,7 +100,7 @@ class AssetPnLCard extends ConsumerWidget {
               ],
             ),
             if (snap != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
               Text(
                 '${l10n.assetDetailBaseCurrency(snap.baseCurrency)} '
                 '${_formatBaseAmount(snap.unrealizedPnlInBase)}',

@@ -62,7 +62,7 @@ class _EmptyState extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -71,13 +71,13 @@ class _EmptyState extends StatelessWidget {
               size: 48,
               color: context.theme.colors.mutedForeground,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(
               l10n.rebalanceEmptyTitle,
               style: context.theme.typography.md,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               l10n.rebalanceEmptyHint,
               style: context.theme.typography.xs.copyWith(
@@ -104,8 +104,8 @@ class _RebalanceBody extends StatelessWidget {
       builder: (context, constraints) {
         final isMobile = Breakpoints.isMobile(constraints.maxWidth);
         final padding = isMobile
-            ? const EdgeInsets.all(16)
-            : const EdgeInsets.all(24);
+            ? const EdgeInsets.all(AppSpacing.s16)
+            : const EdgeInsets.all(AppSpacing.s24);
         return ListView(
           padding: padding,
           children: [
@@ -132,12 +132,12 @@ class _SchemeSelector extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.rebalanceSchemeTitle, style: context.theme.typography.sm),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -160,7 +160,7 @@ class _SchemeSelector extends ConsumerWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(FLucideIcons.pencil, size: 16),
+                      const Icon(FLucideIcons.pencil, size: AppIconSizes.sm),
                       const SizedBox(width: 6),
                       Text(l10n.targetAllocationEditorEditAction),
                     ],
@@ -216,7 +216,7 @@ class _DriftOverview extends StatelessWidget {
 
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -236,7 +236,7 @@ class _DriftOverview extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Text(
                       l10n.rebalanceBalanced,
@@ -248,7 +248,7 @@ class _DriftOverview extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               l10n.rebalanceOverallDrift(
                 '${(plan.driftBeforePct * 100).toStringAsFixed(1)}%',
@@ -257,7 +257,7 @@ class _DriftOverview extends StatelessWidget {
                 color: context.theme.colors.mutedForeground,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             for (final drift in plan.drifts)
               DeviationBar(
                 label: AssetCategoryVisuals.label(l10n, drift.category),
@@ -285,15 +285,15 @@ class _TradeList extends StatelessWidget {
     if (plan.isBalanced) {
       return SoftCard(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
             children: [
               Icon(
                 FLucideIcons.circleCheck,
-                size: 40,
+                size: AppIconSizes.xxl,
                 color: context.theme.colors.primary,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
               Text(l10n.rebalanceBalanced, style: context.theme.typography.sm),
             ],
           ),
@@ -303,12 +303,12 @@ class _TradeList extends StatelessWidget {
 
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.rebalanceTradeTitle, style: context.theme.typography.sm),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             for (final trade in plan.trades) _TradeRow(trade: trade),
             const FDivider(),
             Row(
@@ -329,7 +329,7 @@ class _TradeList extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Row(
               children: [
                 Expanded(
@@ -348,7 +348,7 @@ class _TradeList extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Row(
               children: [
                 Expanded(
@@ -367,7 +367,7 @@ class _TradeList extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             SizedBox(
               width: double.infinity,
               child: FButton(
@@ -377,7 +377,7 @@ class _TradeList extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(FLucideIcons.listChecks, size: 18),
+                    const Icon(FLucideIcons.listChecks, size: AppIconSizes.h18),
                     const SizedBox(width: 6),
                     Text(l10n.rebalanceExecuteAction),
                   ],
@@ -434,7 +434,7 @@ class _TradeRow extends StatelessWidget {
     final catLabel = AssetCategoryVisuals.label(l10n, trade.category);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Row(
         children: [
           Container(
@@ -446,7 +446,7 @@ class _TradeRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Icon(icon, size: 18, color: context.theme.colors.mutedForeground),
+          Icon(icon, size: AppIconSizes.h18, color: context.theme.colors.mutedForeground),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -505,7 +505,7 @@ class _SettingsSheet extends ConsumerWidget {
           tooltipBuilder: (_, v) =>
               Text('${((0.01 + v * 0.19) * 100).toStringAsFixed(0)}%'),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         Text(
           l10n.rebalanceCriticalThreshold,
           style: context.theme.typography.sm,

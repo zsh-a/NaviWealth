@@ -30,19 +30,19 @@ class BackupPage extends ConsumerWidget {
       ),
       childPad: false,
       child: ListView(
-        padding: const EdgeInsets.all(16).copyWith(
+        padding: const EdgeInsets.all(AppSpacing.s16).copyWith(
           bottom:
-              const EdgeInsets.all(16).bottom +
+              const EdgeInsets.all(AppSpacing.s16).bottom +
               64 +
               MediaQuery.paddingOf(context).bottom,
         ),
         children: [
           if (kIsWeb) ...[
             _WebBackupSecurityBanner(l10n: l10n),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
           ],
           SoftCard(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
             child: InlineLinkRow(
               icon: FLucideIcons.upload,
               label: l10n.backupExportTitle,
@@ -50,9 +50,9 @@ class BackupPage extends ConsumerWidget {
               onTap: () => _exportBackup(context, ref),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           SoftCard(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
             child: InlineLinkRow(
               icon: FLucideIcons.download,
               label: l10n.backupImportTitle,
@@ -306,7 +306,7 @@ class _WebBackupSecurityBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SoftCard(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -437,7 +437,7 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _controller),
             label: Text(l10n.backupPassphraseLabel),
@@ -494,7 +494,7 @@ class _ProgressSheetState extends State<_ProgressSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: AppSpacing.s24),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

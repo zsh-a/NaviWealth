@@ -10,6 +10,7 @@ import '../data/fire_providers.dart';
 import '../domain/fire_state.dart';
 import '../domain/fire_state_service.dart';
 import 'fire_ai_capsule.dart';
+import 'fire_status_colors.dart';
 
 /// Simulations section — preset chips that show how a single plan
 /// change would move the headline metrics, without persisting
@@ -85,14 +86,14 @@ class _Body extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(l10n.fireOsSimulationsTitle, style: context.theme.typography.md),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.s4),
         Text(
           l10n.fireOsSimulationsSubtitle,
           style: context.theme.typography.xs.copyWith(
             color: context.theme.colors.mutedForeground,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         Wrap(
           spacing: 6,
           runSpacing: 6,
@@ -105,7 +106,7 @@ class _Body extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         _DeltaPanel(
           baseline: baseline,
           result: result,
@@ -136,10 +137,10 @@ class _PresetChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
           border: Border.all(color: colors.border),
         ),
         child: Text(
@@ -178,10 +179,10 @@ class _DeltaPanel extends StatelessWidget {
     );
     final safetyChanged = baseline.safetyLevel != result.safetyLevel;
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
         color: context.theme.colors.muted.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,7 +193,7 @@ class _DeltaPanel extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.s6),
           Wrap(
             spacing: 12,
             runSpacing: 4,
@@ -213,7 +214,7 @@ class _DeltaPanel extends StatelessWidget {
                 Text(
                   '${baseline.safetyLevel.name} → ${result.safetyLevel.name}',
                   style: context.theme.typography.xs.copyWith(
-                    color: _safetyColor(context, result.safetyLevel),
+                    color: fireSafetyColor(SemanticColors.of(context), result.safetyLevel),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -254,19 +255,6 @@ class _DeltaPanel extends StatelessWidget {
       sign,
       delta.abs().toStringAsFixed(1),
     );
-  }
-
-  static Color _safetyColor(BuildContext context, FireSafetyLevel level) {
-    switch (level) {
-      case FireSafetyLevel.safe:
-        return Colors.green.shade600;
-      case FireSafetyLevel.cautious:
-        return Colors.amber.shade700;
-      case FireSafetyLevel.danger:
-        return context.theme.colors.destructive;
-      case FireSafetyLevel.unconfigured:
-        return context.theme.colors.mutedForeground;
-    }
   }
 }
 

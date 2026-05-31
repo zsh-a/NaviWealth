@@ -50,7 +50,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AiSparkle(size: 16),
+            const AiSparkle(size: AppIconSizes.sm),
             const SizedBox(width: 6),
             Text(l10n.ingestReviewTitle),
           ],
@@ -134,11 +134,11 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       children: [
         if (_busy != null)
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, 0),
             child: _ProcessingBanner(state: _busy!),
           ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s4),
           child: Text(
             l10n.ingestExpenseAccountLabel,
             style: context.theme.typography.xs.copyWith(
@@ -166,9 +166,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         const FDivider(),
         Expanded(
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s12),
             itemCount: drafts.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
+            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
             itemBuilder: (context, i) => _DraftCard(
               draft: drafts[i],
               busy: _isBusy,
@@ -501,7 +501,7 @@ class _DraftCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final p = draft.parsed;
     return SoftCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -530,7 +530,7 @@ class _DraftCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Wrap(
             spacing: AppSpacing.s6,
             runSpacing: AppSpacing.s6,
@@ -557,7 +557,7 @@ class _DraftCard extends StatelessWidget {
               _VerdictPill(verdict: draft.verdict),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.s10),
           Row(
             children: [
               Expanded(
@@ -689,23 +689,23 @@ class _EmptyState extends StatelessWidget {
     final colors = context.theme.colors;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(AppSpacing.s32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               FLucideIcons.inbox,
-              size: 40,
+              size: AppIconSizes.xxl,
               color: colors.mutedForeground.withValues(alpha: 0.5),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(
               l10n.ingestEmptyTitle,
               style: context.theme.typography.sm.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.s6),
             Text(
               l10n.ingestEmptyBody,
               textAlign: TextAlign.center,
@@ -713,7 +713,7 @@ class _EmptyState extends StatelessWidget {
                 color: colors.mutedForeground,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             Wrap(
               alignment: WrapAlignment.center,
               spacing: 8,

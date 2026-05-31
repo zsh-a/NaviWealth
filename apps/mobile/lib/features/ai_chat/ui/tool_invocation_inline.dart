@@ -71,12 +71,12 @@ class _InlineLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 10, bottom: 4),
+      padding: const EdgeInsets.only(top: 10, bottom: AppSpacing.s4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _AttributionRow(invocation: invocation),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.s6),
           body,
         ],
       ),
@@ -109,7 +109,7 @@ class _AttributionRow extends StatelessWidget {
           // the generic sparkle previously washed out.
           Icon(
             toolIcon(invocation.name),
-            size: 14,
+            size: AppIconSizes.xs,
             color: AiTone.muted(context),
           ),
           const SizedBox(width: 6),
@@ -125,7 +125,7 @@ class _AttributionRow extends StatelessWidget {
             child: FTappable(
               onPress: () => _openDebugSheet(context),
               child: Padding(
-                padding: const EdgeInsets.all(2),
+                padding: const EdgeInsets.all(AppSpacing.s2),
                 child: Icon(
                   FLucideIcons.info,
                   size: 12,

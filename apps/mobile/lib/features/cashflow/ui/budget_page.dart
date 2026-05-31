@@ -171,12 +171,12 @@ class _BudgetTile extends StatelessWidget {
           height: 36,
           decoration: BoxDecoration(
             color: colors.foreground.withValues(alpha: 0.04),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           alignment: Alignment.center,
           child: Icon(
             FLucideIcons.piggyBank,
-            size: 18,
+            size: AppIconSizes.h18,
             color: colors.mutedForeground,
           ),
         ),

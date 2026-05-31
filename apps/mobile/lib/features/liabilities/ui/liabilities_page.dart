@@ -42,9 +42,9 @@ class LiabilitiesPage extends ConsumerWidget {
         // per-item layout during scroll, critical for 120fps.
         const itemHeight = 72.0 + 8;
         return ListView.builder(
-          padding: const EdgeInsets.all(16).copyWith(
+          padding: const EdgeInsets.all(AppSpacing.s16).copyWith(
             bottom:
-                const EdgeInsets.all(16).bottom +
+                const EdgeInsets.all(AppSpacing.s16).bottom +
                 64 +
                 MediaQuery.paddingOf(context).bottom,
           ),
@@ -81,7 +81,7 @@ class _LiabilitiesEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -90,7 +90,7 @@ class _LiabilitiesEmptyState extends StatelessWidget {
               size: 48,
               color: context.theme.colors.mutedForeground,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             Text(
               l10n.liabilitiesEmptyHint,
               textAlign: TextAlign.center,

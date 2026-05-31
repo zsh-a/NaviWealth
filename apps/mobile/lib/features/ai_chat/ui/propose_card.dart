@@ -349,19 +349,19 @@ class _BatchProposalView extends ConsumerWidget {
     final registry = ref.watch(proposalKindRegistryProvider);
     final isApplying = applyState.status == ProposalApplyStatus.applying;
     return Container(
-      margin: const EdgeInsets.only(top: 8),
+      margin: const EdgeInsets.only(top: AppSpacing.s8),
       decoration: BoxDecoration(
         color: colors.muted,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: colors.border),
       ),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(FLucideIcons.layers, size: 18, color: colors.foreground),
+              Icon(FLucideIcons.layers, size: AppIconSizes.h18, color: colors.foreground),
               const SizedBox(width: 8),
               Text(
                 l10n.aiChatProposalBatchPending(plan.children.length),
@@ -371,7 +371,7 @@ class _BatchProposalView extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.s6),
           Text(
             plan.summaryZh,
             style: context.theme.typography.md.copyWith(
@@ -379,15 +379,15 @@ class _BatchProposalView extends ConsumerWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           _BatchChildrenList(plan: plan, registry: registry),
           if (plan.warnings.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             _WarningCallout(warnings: plan.warnings),
           ],
           if (applyState.status == ProposalApplyStatus.errored &&
               applyState.errorMessage != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             Text(
               l10n.aiChatProposalFailure(applyState.errorMessage!),
               style: context.theme.typography.xs.copyWith(
@@ -395,14 +395,14 @@ class _BatchProposalView extends ConsumerWidget {
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           Wrap(
             spacing: 8,
             children: [
               FButton(
                 variant: FButtonVariant.primary,
                 onPress: isApplying ? null : onConfirm,
-                prefix: const Icon(FLucideIcons.checkCheck, size: 14),
+                prefix: const Icon(FLucideIcons.checkCheck, size: AppIconSizes.xs),
                 child: Text(
                   isApplying
                       ? l10n.aiChatProposalApplying
@@ -412,7 +412,7 @@ class _BatchProposalView extends ConsumerWidget {
               FButton(
                 variant: FButtonVariant.outline,
                 onPress: isApplying ? null : onCancel,
-                prefix: const Icon(FLucideIcons.x, size: 14),
+                prefix: const Icon(FLucideIcons.x, size: AppIconSizes.xs),
                 child: Text(l10n.commonCancel),
               ),
             ],
@@ -433,10 +433,10 @@ class _BatchChildrenList extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s6),
       decoration: BoxDecoration(
         color: context.theme.colors.background.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
         border: Border.all(
           color: context.theme.colors.border.withValues(alpha: 0.4),
         ),
@@ -509,13 +509,13 @@ class _BatchCollapsedView extends StatelessWidget {
         return const SizedBox.shrink();
     }
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: AppSpacing.s8),
       child: FCard.raw(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
           child: Row(
             children: [
-              Icon(icon, size: 16, color: color),
+              Icon(icon, size: AppIconSizes.sm, color: color),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -571,13 +571,13 @@ class _ExpandedView extends ConsumerWidget {
         : l10n.aiChatProposalSummaryEdited(plan.summaryZh);
 
     return Container(
-      margin: const EdgeInsets.only(top: 8),
+      margin: const EdgeInsets.only(top: AppSpacing.s8),
       decoration: BoxDecoration(
         color: colors.muted,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: colors.border),
       ),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -585,7 +585,7 @@ class _ExpandedView extends ConsumerWidget {
             children: [
               Icon(
                 _iconFor(registry, plan.kind),
-                size: 18,
+                size: AppIconSizes.h18,
                 color: colors.foreground,
               ),
               const SizedBox(width: 8),
@@ -599,7 +599,7 @@ class _ExpandedView extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.s6),
           Text(
             summary,
             style: context.theme.typography.md.copyWith(
@@ -607,10 +607,10 @@ class _ExpandedView extends ConsumerWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           ProposalPayloadDetails(plan: plan, overrides: overrides),
           if (plan.warnings.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             // Warnings are the user's last chance to spot a wrong
             // proposal before applying — they need to read as *content*,
             // not meta. We don't introduce a new warning hue (§5.6
@@ -621,7 +621,7 @@ class _ExpandedView extends ConsumerWidget {
             _WarningCallout(warnings: plan.warnings),
           ],
           if (isErrored && applyState.errorMessage != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             Text(
               l10n.aiChatProposalFailure(applyState.errorMessage!),
               style: context.theme.typography.xs.copyWith(
@@ -629,7 +629,7 @@ class _ExpandedView extends ConsumerWidget {
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           Wrap(
             spacing: 8,
             runSpacing: 4,
@@ -637,7 +637,7 @@ class _ExpandedView extends ConsumerWidget {
               FButton(
                 variant: FButtonVariant.primary,
                 onPress: isApplying ? null : onConfirm,
-                prefix: const Icon(FLucideIcons.check, size: 14),
+                prefix: const Icon(FLucideIcons.check, size: AppIconSizes.xs),
                 child: Text(
                   isApplying
                       ? l10n.aiChatProposalApplying
@@ -647,13 +647,13 @@ class _ExpandedView extends ConsumerWidget {
               FButton(
                 variant: FButtonVariant.outline,
                 onPress: isApplying ? null : onCancel,
-                prefix: const Icon(FLucideIcons.x, size: 14),
+                prefix: const Icon(FLucideIcons.x, size: AppIconSizes.xs),
                 child: Text(l10n.commonCancel),
               ),
               FButton(
                 variant: FButtonVariant.ghost,
                 onPress: isApplying ? null : onEdit,
-                prefix: const Icon(FLucideIcons.pencil, size: 14),
+                prefix: const Icon(FLucideIcons.pencil, size: AppIconSizes.xs),
                 child: Text(l10n.aiChatProposalEdit),
               ),
             ],
@@ -696,11 +696,11 @@ class _OneTapView extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final registry = ref.watch(proposalKindRegistryProvider);
     return Container(
-      margin: const EdgeInsets.only(top: 8),
+      margin: const EdgeInsets.only(top: AppSpacing.s8),
       padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
       decoration: BoxDecoration(
         color: AiTone.surfaceTint(context).withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -731,7 +731,7 @@ class _OneTapView extends ConsumerWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Text(
             plan.summaryZh,
             style: AiType.body(context),
@@ -739,7 +739,7 @@ class _OneTapView extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
           ),
           if (_isErrored && applyState.errorMessage != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.s6),
             Text(
               applyState.errorMessage!,
               style: AiType.meta(
@@ -747,7 +747,7 @@ class _OneTapView extends ConsumerWidget {
               ).copyWith(color: AiTone.error(context)),
             ),
           ],
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Row(
             children: [
               FButton(
@@ -833,7 +833,7 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
           onEdit: widget.onEdit,
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s8, AppSpacing.s12, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -843,7 +843,7 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
                   context,
                 ).copyWith(color: AiTone.error(context)),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpacing.s6),
               TextField(
                 controller: _controller,
                 onChanged: (_) => setState(() {}),
@@ -859,11 +859,11 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
                     vertical: 8,
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     borderSide: BorderSide(color: AiTone.outline(context)),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     borderSide: BorderSide(
                       color: AiTone.error(context),
                       width: 1.5,
@@ -873,7 +873,7 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
               ),
               if (!_matches)
                 Padding(
-                  padding: const EdgeInsets.only(top: 4),
+                  padding: const EdgeInsets.only(top: AppSpacing.s4),
                   child: Text(
                     l10n.aiChatProposalConfirmTokenPending(_confirmToken),
                     style: AiType.meta(context),
@@ -881,7 +881,7 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
                 )
               else
                 Padding(
-                  padding: const EdgeInsets.only(top: 4),
+                  padding: const EdgeInsets.only(top: AppSpacing.s4),
                   child: Text(
                     l10n.aiChatProposalConfirm,
                     style: AiType.meta(
@@ -941,13 +941,13 @@ class _CollapsedView extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: AppSpacing.s8),
       child: FCard.raw(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
           child: Row(
             children: [
-              Icon(icon, size: 16, color: color),
+              Icon(icon, size: AppIconSizes.sm, color: color),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -1066,10 +1066,10 @@ class _ClarificationView extends ConsumerWidget {
     final registry = ref.watch(proposalKindRegistryProvider);
     final turn = ref.watch(chatControllerProvider(sessionId));
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: AppSpacing.s8),
       child: FCard.raw(
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.s12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1077,7 +1077,7 @@ class _ClarificationView extends ConsumerWidget {
                 children: [
                   Icon(
                     FLucideIcons.circleHelp,
-                    size: 18,
+                    size: AppIconSizes.h18,
                     color: colors.mutedForeground,
                   ),
                   const SizedBox(width: 8),
@@ -1091,7 +1091,7 @@ class _ClarificationView extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpacing.s6),
               Text(
                 plan.reason,
                 style: context.theme.typography.sm.copyWith(
@@ -1099,14 +1099,14 @@ class _ClarificationView extends ConsumerWidget {
                 ),
               ),
               if (plan.candidates.isNotEmpty) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.s8),
                 Text(
                   l10n.aiChatProposalCandidatesHeading,
                   style: context.theme.typography.xs2.copyWith(
                     color: context.theme.colors.mutedForeground,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.s4),
                 // Tapping a candidate sends its label as the next user
                 // turn so the clarification round-trips through the same
                 // chat pipeline. Disabled while a turn is in flight
@@ -1157,10 +1157,10 @@ class ProposalPayloadDetails extends ConsumerWidget {
         const <ProposalKindRow>[];
     if (rows.isEmpty) return const SizedBox.shrink();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s6),
       decoration: BoxDecoration(
         color: context.theme.colors.background.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
         border: Border.all(
           color: context.theme.colors.border.withValues(alpha: 0.4),
         ),
@@ -1170,7 +1170,7 @@ class ProposalPayloadDetails extends ConsumerWidget {
         children: [
           for (final r in rows)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1344,7 +1344,7 @@ class _ProposalEditSheetState extends ConsumerState<ProposalEditSheet> {
               label: Text(f.label),
               hint: f.hint,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
           ],
           if (showToggle)
             Align(
@@ -1363,7 +1363,7 @@ class _ProposalEditSheetState extends ConsumerState<ProposalEditSheet> {
                         _fullMode
                             ? FLucideIcons.chevronUp
                             : FLucideIcons.chevronDown,
-                        size: 16,
+                        size: AppIconSizes.sm,
                         color: AiTone.active(context),
                       ),
                       const SizedBox(width: 4),
@@ -1419,16 +1419,16 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
     final l10n = AppLocalizations.of(context);
     if (widget.pending.length < 2) return const SizedBox.shrink();
     return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.only(top: AppSpacing.s8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: AppSpacing.s6),
       decoration: BoxDecoration(
         color: colors.primary.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
-          Icon(FLucideIcons.layers, size: 18, color: colors.primary),
+          Icon(FLucideIcons.layers, size: AppIconSizes.h18, color: colors.primary),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -1441,7 +1441,7 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
           FButton(
             variant: FButtonVariant.primary,
             onPress: _busy ? null : _confirmAll,
-            prefix: const Icon(FLucideIcons.checkCheck, size: 14),
+            prefix: const Icon(FLucideIcons.checkCheck, size: AppIconSizes.xs),
             child: Text(l10n.aiChatProposalBatchConfirmAll),
           ),
         ],
@@ -1540,7 +1540,7 @@ class _WarningCallout extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
       decoration: BoxDecoration(
         color: AiTone.surfaceTint(context),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border(
           left: BorderSide(
             color: AiTone.active(context).withValues(alpha: 0.6),
@@ -1552,13 +1552,13 @@ class _WarningCallout extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (var i = 0; i < warnings.length; i++) ...[
-            if (i > 0) const SizedBox(height: 4),
+            if (i > 0) const SizedBox(height: AppSpacing.s4),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
                   FLucideIcons.triangleAlert,
-                  size: 16,
+                  size: AppIconSizes.sm,
                   color: AiTone.onSurface(context),
                 ),
                 const SizedBox(width: 8),

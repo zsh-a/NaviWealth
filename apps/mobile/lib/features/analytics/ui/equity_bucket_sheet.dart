@@ -39,7 +39,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
             l10n.analyticsBucketSheetTitle(localizeBucketLabel(l10n, bucket)),
             style: context.theme.typography.lg,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Text(
             l10n.analyticsHoldingsCount(bucket.holdings.length),
             style: context.theme.typography.xs.copyWith(
@@ -47,7 +47,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
             ),
           ),
           if (bucket.isUnclassified) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             Text(
               l10n.analyticsUnclassifiedRowCta,
               style: context.theme.typography.xs.copyWith(
@@ -55,7 +55,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           Flexible(
             child: ListView.separated(
               shrinkWrap: true,

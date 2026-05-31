@@ -136,9 +136,9 @@ class _HealthDataStatusBannerState
                 ? const SizedBox(
                     width: 14,
                     height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: FCircularProgress(),
                   )
-                : const Icon(FLucideIcons.refreshCw, size: 14),
+                : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
             child: Text(_running ? '同步中' : '同步'),
           );
 
@@ -149,7 +149,7 @@ class _HealthDataStatusBannerState
           Icon(
             enabled ? FLucideIcons.activity : FLucideIcons.circleOff,
             color: enabled ? colors.primary : colors.mutedForeground,
-            size: 18,
+            size: AppIconSizes.h18,
           ),
           const SizedBox(width: AppSpacing.s8),
           Expanded(
@@ -180,7 +180,7 @@ class _RecoveryHero extends ConsumerWidget {
       child: async.when(
         loading: () => const SizedBox(
           height: 96,
-          child: Center(child: CircularProgressIndicator()),
+          child: Center(child: FCircularProgress()),
         ),
         error: (e, _) => Text(
           '恢复状态加载失败：$e',
@@ -198,7 +198,7 @@ class _RecoveryHero extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Icon(_RecoveryTone.icon(verdict), color: color, size: 20),
+                  Icon(_RecoveryTone.icon(verdict), color: color, size: AppIconSizes.md),
                   const SizedBox(width: AppSpacing.s8),
                   Expanded(
                     child: Text(
@@ -436,7 +436,7 @@ class _MetricCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: colors.mutedForeground),
+              Icon(icon, size: AppIconSizes.sm, color: colors.mutedForeground),
               const SizedBox(width: AppSpacing.s4),
               Expanded(
                 child: Text(
@@ -468,7 +468,7 @@ class _ValueBig extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(value, style: typography.xl),
-        const SizedBox(height: 2),
+        const SizedBox(height: AppSpacing.s2),
         Text(sub, style: typography.xs.copyWith(color: colors.mutedForeground)),
       ],
     );
@@ -486,7 +486,7 @@ class _ValueDash extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('—', style: typography.xl.copyWith(color: colors.mutedForeground)),
-        const SizedBox(height: 2),
+        const SizedBox(height: AppSpacing.s2),
         Text(
           '暂无数据',
           style: typography.xs.copyWith(color: colors.mutedForeground),
@@ -510,16 +510,16 @@ class _ValueSkeleton extends StatelessWidget {
           height: 20,
           decoration: BoxDecoration(
             color: colors.muted,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.s6),
         Container(
           width: 40,
           height: 10,
           decoration: BoxDecoration(
             color: colors.muted,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
           ),
         ),
       ],
@@ -685,7 +685,7 @@ class _BriefingCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.wb_sunny_outlined, size: 20, color: colors.primary),
+              Icon(Icons.wb_sunny_outlined, size: AppIconSizes.md, color: colors.primary),
               const SizedBox(width: AppSpacing.s8),
               Text(
                 '早间简报',
@@ -702,9 +702,9 @@ class _BriefingCard extends StatelessWidget {
                     ? const SizedBox(
                         width: 14,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: FCircularProgress(),
                       )
-                    : const Icon(FLucideIcons.refreshCw, size: 14),
+                    : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
                 child: Text(running ? '生成中' : '更新'),
               ),
             ],
@@ -767,9 +767,9 @@ class _BriefingEmpty extends StatelessWidget {
                 ? const SizedBox(
                     width: 14,
                     height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: FCircularProgress(),
                   )
-                : const Icon(FLucideIcons.refreshCw, size: 14),
+                : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
             child: Text(running ? '生成中' : '生成'),
           ),
         ],
@@ -810,7 +810,7 @@ class _BriefingError extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: colors.destructive),
+          Icon(FLucideIcons.circleAlert, color: colors.destructive),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Text(
@@ -837,10 +837,10 @@ class _SourcePill extends StatelessWidget {
     final typography = context.theme.typography;
     final label = source == 'llm' ? 'LLM' : '自动';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
       decoration: BoxDecoration(
         color: colors.muted,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Text(
         label,

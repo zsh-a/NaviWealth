@@ -41,8 +41,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
           builder: (context, constraints) {
             final isWide = !Breakpoints.isMobile(constraints.maxWidth);
             final basePadding = isWide
-                ? const EdgeInsets.all(24)
-                : const EdgeInsets.all(16);
+                ? const EdgeInsets.all(AppSpacing.s24)
+                : const EdgeInsets.all(AppSpacing.s16);
             return ListView(
               padding: basePadding.copyWith(
                 bottom:
@@ -76,7 +76,7 @@ class _RiskAndBenchmarkColumn extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         RiskAlertPanel(),
-        SizedBox(height: 24),
+        SizedBox(height: AppSpacing.s24),
         BenchmarkComparisonCard(),
       ],
     );

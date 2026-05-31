@@ -200,7 +200,7 @@ class _CardHeader extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: 18, color: color),
+          child: Icon(icon, size: AppIconSizes.h18, color: color),
         ),
         const SizedBox(width: AppSpacing.s8),
         Expanded(
@@ -216,7 +216,7 @@ class _CardHeader extends StatelessWidget {
         ),
         Icon(
           FLucideIcons.chevronRight,
-          size: 18,
+          size: AppIconSizes.h18,
           color: context.theme.colors.mutedForeground.withValues(alpha: 0.6),
         ),
       ],

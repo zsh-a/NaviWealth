@@ -27,7 +27,7 @@ Future<void> showAllocationDetailPanel({
         FButton.icon(
           variant: FButtonVariant.ghost,
           onPress: () => Navigator.of(context).maybePop(),
-          child: const Icon(FLucideIcons.x, size: 18),
+          child: const Icon(FLucideIcons.x, size: AppIconSizes.h18),
         ),
       ],
       builder: (_) => _AllocationDetailBody(
@@ -137,7 +137,7 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
             child: Container(
               width: 36,
               height: 4,
-              margin: const EdgeInsets.only(top: 10, bottom: 6),
+              margin: const EdgeInsets.only(top: 10, bottom: AppSpacing.s6),
               decoration: BoxDecoration(
                 color: context.theme.colors.mutedForeground.withValues(
                   alpha: 0.35,
@@ -162,13 +162,13 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
                 FButton.icon(
                   variant: FButtonVariant.ghost,
                   onPress: () => Navigator.of(context).maybePop(),
-                  child: const Icon(FLucideIcons.x, size: 18),
+                  child: const Icon(FLucideIcons.x, size: AppIconSizes.h18),
                 ),
               ],
             ),
           ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20),
           child: _DimensionSwitch(
             value: _dimension,
             onChanged: (value) {
@@ -188,7 +188,7 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
                 total: total,
                 currencyCode: widget.snapshot.baseCurrency,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.s20),
               for (final group in groups)
                 _BreakdownRow(
                   group: group,
@@ -232,10 +232,10 @@ class _DimensionSwitch extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: context.theme.colors.secondary.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(2),
+        padding: const EdgeInsets.all(AppSpacing.s2),
         child: Row(
           children: [
             for (final dimension in _AllocationDimension.values)
@@ -277,12 +277,12 @@ class _DimensionButton extends StatelessWidget {
       child: AnimatedContainer(
         duration: Motion.fast,
         curve: Motion.standardDecelerate,
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
         decoration: BoxDecoration(
           color: selected
               ? context.theme.colors.background
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: selected
               ? const [
                   BoxShadow(
@@ -296,7 +296,7 @@ class _DimensionButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: color),
+            Icon(icon, size: AppIconSizes.sm, color: color),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
@@ -421,17 +421,17 @@ class _BreakdownRow extends StatelessWidget {
     final pct = total <= 0 ? 0 : (group.value / total) * 100;
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpacing.s8),
       child: FTappable(
         onPress: onTap,
         child: AnimatedContainer(
           duration: Motion.fast,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
           decoration: BoxDecoration(
             color: selected
                 ? colors.primary.withValues(alpha: 0.08)
                 : colors.foreground.withValues(alpha: 0.035),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(
               color: selected
                   ? colors.primary.withValues(alpha: 0.35)
@@ -445,7 +445,7 @@ class _BreakdownRow extends StatelessWidget {
                 height: 32,
                 decoration: BoxDecoration(
                   color: group.color.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Icon(group.icon, size: 17, color: group.color),
               ),
@@ -506,7 +506,7 @@ class _DrillDownList extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         for (final item in group.items)
           FTile(
             prefix: Icon(group.icon, color: group.color),

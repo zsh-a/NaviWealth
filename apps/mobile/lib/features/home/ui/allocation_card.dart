@@ -62,7 +62,7 @@ class AllocationCard extends StatelessWidget {
         ),
         child: SoftCard(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppSpacing.s20),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth >= Breakpoints.mobile;
@@ -96,12 +96,12 @@ class AllocationCard extends StatelessWidget {
                           child: FButton.icon(
                             variant: FButtonVariant.ghost,
                             onPress: () => _openFullscreen(context),
-                            child: const Icon(FLucideIcons.maximize, size: 20),
+                            child: const Icon(FLucideIcons.maximize, size: AppIconSizes.md),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.s8),
                     if (isWide)
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,7 +113,7 @@ class AllocationCard extends StatelessWidget {
                       )
                     else ...[
                       chart,
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.s12),
                       legend,
                     ],
                   ],
@@ -178,7 +178,7 @@ class AllocationCard extends StatelessWidget {
                       height: math.max(360, constraints.maxHeight * 0.58),
                       onTap: (alloc) => _openDrillDown(context, alloc),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.s16),
                     _Legend(
                       assetAllocs: assetAllocs,
                       liabilityAlloc: liabilityAlloc,
@@ -678,9 +678,9 @@ class _Legend extends StatelessWidget {
             onTap: () => onTap(assetAllocs[i]),
           ),
         if (liabilityAlloc != null) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           const FDivider(),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           _LegendRow(
             color: context.theme.colors.destructive,
             label: AssetCategoryVisuals.label(l10n, liabilityAlloc!.category),
@@ -723,13 +723,13 @@ class _LegendRow extends StatelessWidget {
     return MergeSemantics(
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         child: ConstrainedBox(
           // Material 48dp touch-target floor — the visual row is shorter
           // than this, so the InkWell pads itself out vertically.
           constraints: const BoxConstraints(minHeight: 48),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: AppSpacing.s8),
             child: Row(
               children: [
                 Container(
@@ -743,7 +743,7 @@ class _LegendRow extends StatelessWidget {
                 const SizedBox(width: 8),
                 Icon(
                   icon,
-                  size: 16,
+                  size: AppIconSizes.sm,
                   color: context.theme.colors.mutedForeground,
                 ),
                 const SizedBox(width: 8),
@@ -771,7 +771,7 @@ class _LegendRow extends StatelessWidget {
                 const SizedBox(width: 4),
                 Icon(
                   FLucideIcons.chevronRight,
-                  size: 16,
+                  size: AppIconSizes.sm,
                   color: context.theme.colors.mutedForeground,
                 ),
               ],
@@ -807,7 +807,7 @@ class CategoryDrillDownSheet extends StatelessWidget {
         : allocation.totalInBase.amount.toDouble();
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -833,7 +833,7 @@ class CategoryDrillDownSheet extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
             ],
             Text(
               l10n.dashboardDrillDownItemCount(allocation.items.length),
@@ -841,7 +841,7 @@ class CategoryDrillDownSheet extends StatelessWidget {
                 color: context.theme.colors.mutedForeground,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             Flexible(
               child: ListView.builder(
                 shrinkWrap: true,
@@ -857,7 +857,7 @@ class CategoryDrillDownSheet extends StatelessWidget {
                       backgroundColor: context.theme.colors.secondary,
                       child: Icon(
                         AssetCategoryVisuals.icon(allocation.category),
-                        size: 18,
+                        size: AppIconSizes.h18,
                         color: context.theme.colors.mutedForeground,
                       ),
                     ),

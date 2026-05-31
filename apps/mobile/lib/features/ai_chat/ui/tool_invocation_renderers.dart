@@ -132,7 +132,7 @@ class _HoldingsTable extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
           child: Row(
             children: [
               Expanded(
@@ -170,7 +170,7 @@ class _HoldingsTable extends StatelessWidget {
         for (final row in visible) _holdingRowTile(context, row),
         if (hidden > 0)
           Padding(
-            padding: const EdgeInsets.only(top: 4, left: 8),
+            padding: const EdgeInsets.only(top: 4, left: AppSpacing.s8),
             child: Text(
               '还有 $hidden 项未展示',
               style: context.theme.typography.xs.copyWith(
@@ -187,7 +187,7 @@ class _HoldingsTable extends StatelessWidget {
     final primary = row.symbol ?? row.name ?? row.assetId;
     final secondary = row.symbol != null && row.name != null ? row.name! : null;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s6),
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(
@@ -299,7 +299,7 @@ class _XirrSummary extends StatelessWidget {
         : '全部历史';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -309,7 +309,7 @@ class _XirrSummary extends StatelessWidget {
               color: context.theme.colors.mutedForeground,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           if (rate == null)
             Text(
               '无法计算（现金流方向单一或样本不足）',
@@ -324,7 +324,7 @@ class _XirrSummary extends StatelessWidget {
               fractionDigits: 2,
               style: TypographyTokens.numericTitle,
             ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Text(
             '$rangeLabel · ${flows.length} 条现金流',
             style: context.theme.typography.xs.copyWith(
@@ -377,7 +377,7 @@ class _NetWorthSparkline extends StatelessWidget {
     ];
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -406,7 +406,7 @@ class _NetWorthSparkline extends StatelessWidget {
               DeltaChip(value: delta, format: DeltaFormat.currency),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           SizedBox(
             height: 40,
             child: NwLineChart(
@@ -425,7 +425,7 @@ class _NetWorthSparkline extends StatelessWidget {
               downsample: false,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Text(
             '${_displayDate(points.first.$1)} → ${_displayDate(points.last.$1)} · ${points.length} 个采样点',
             style: context.theme.typography.xs2.copyWith(
@@ -486,7 +486,7 @@ class _BreakdownView extends StatelessWidget {
     ];
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -542,7 +542,7 @@ class _BreakdownView extends StatelessWidget {
                   ),
                 if (buckets.length > top.length)
                   Padding(
-                    padding: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.only(top: AppSpacing.s4),
                     child: Text(
                       '其他 ${buckets.length - top.length} 类共 '
                       '${NumberFormat.percentPattern().format(buckets.skip(top.length).fold<double>(0, (s, b) => s + b.share).clamp(0.0, 1.0))}',
@@ -618,7 +618,7 @@ class _RiskAlertList extends StatelessWidget {
         for (final a in visible) _alertTile(context, a),
         if (hidden > 0)
           Padding(
-            padding: const EdgeInsets.only(top: 4, left: 8),
+            padding: const EdgeInsets.only(top: 4, left: AppSpacing.s8),
             child: Text(
               '还有 $hidden 项未展示',
               style: context.theme.typography.xs.copyWith(
@@ -650,16 +650,16 @@ class _RiskAlertList extends StatelessWidget {
       ),
     };
     return Container(
-      margin: const EdgeInsets.only(top: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      margin: const EdgeInsets.only(top: AppSpacing.s4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s6),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: fg),
+          Icon(icon, size: AppIconSizes.sm, color: fg),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -678,7 +678,7 @@ class _RiskAlertList extends StatelessWidget {
           ),
           if (alert.share != null)
             Padding(
-              padding: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.only(left: AppSpacing.s8),
               child: Text(
                 NumberFormat.percentPattern().format(
                   alert.share!.clamp(0.0, 1.0),
@@ -720,12 +720,12 @@ class _EmptyResult extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: AppSpacing.s8),
       child: Row(
         children: [
           Icon(
             positive ? FLucideIcons.circleCheck : FLucideIcons.inbox,
-            size: 16,
+            size: AppIconSizes.sm,
             color: context.theme.colors.mutedForeground,
           ),
           const SizedBox(width: 8),
@@ -802,7 +802,7 @@ class AssetAllocationView extends StatelessWidget {
       children: [
         for (final entry in byCurrency.entries)
           Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: AppSpacing.s12),
             child: _AllocBlock(
               currency: entry.key,
               buckets: entry.value,
@@ -859,12 +859,12 @@ class _AllocBlock extends StatelessWidget {
     final sorted = [...buckets]..sort((a, b) => b.weight.compareTo(a.weight));
     final fmt = NumberFormat.decimalPattern();
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
         color: Theme.of(
           context,
         ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -875,7 +875,7 @@ class _AllocBlock extends StatelessWidget {
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.s10),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -898,7 +898,7 @@ class _AllocBlock extends StatelessWidget {
                   children: [
                     for (var i = 0; i < sorted.length; i++)
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
                         child: Row(
                           children: [
                             Container(
@@ -934,7 +934,7 @@ class _AllocBlock extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           Text(
             '合计成本 ${fmt.format(sorted.fold<int>(0, (a, b) => a + b.totalMinor) / 100.0)} · ${sorted.length} 类持仓',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -1009,12 +1009,12 @@ class RecurringPatternsView extends StatelessWidget {
       children: [
         for (final entry in visible)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
             child: _patternRow(context, entry, fmt, cs),
           ),
         if (raw.length > visible.length)
           Padding(
-            padding: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.only(top: AppSpacing.s4),
             child: Text(
               '+ 还有 ${raw.length - visible.length} 项',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -1049,10 +1049,10 @@ class RecurringPatternsView extends StatelessWidget {
       _ => cadence,
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         children: [
@@ -1066,7 +1066,7 @@ class RecurringPatternsView extends StatelessWidget {
                     context,
                   ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.s2),
                 Row(
                   children: [
                     _miniChip(context, cadenceLabel),
@@ -1101,7 +1101,7 @@ Widget _miniChip(BuildContext context, String label) {
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
     decoration: BoxDecoration(
       color: cs.outline.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(AppRadius.full),
     ),
     child: Text(
       label,
@@ -1136,12 +1136,12 @@ class SubscriptionChangesView extends StatelessWidget {
       children: [
         for (final entry in visible)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
             child: _changeRow(context, entry),
           ),
         if (raw.length > visible.length)
           Padding(
-            padding: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.only(top: AppSpacing.s4),
             child: Text(
               '+ 还有 ${raw.length - visible.length} 项',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -1167,17 +1167,17 @@ class SubscriptionChangesView extends StatelessWidget {
     final accent = up ? cs.error : cs.primary;
     final fmt = NumberFormat.decimalPattern();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: accent.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
           Icon(
             up ? FLucideIcons.trendingUp : FLucideIcons.trendingDown,
-            size: 18,
+            size: AppIconSizes.h18,
             color: accent,
           ),
           const SizedBox(width: 10),
@@ -1191,7 +1191,7 @@ class SubscriptionChangesView extends StatelessWidget {
                     context,
                   ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.s2),
                 Text(
                   '${fmt.format(prev.abs() / 100.0)} → ${fmt.format(next.abs() / 100.0)} $currency'
                   '${since != null ? ' · 自 ${_displayDate(since)}' : ''}',
@@ -1241,12 +1241,12 @@ class RefundLinksView extends StatelessWidget {
       children: [
         for (final entry in visible)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
             child: _pairRow(context, entry, fmt),
           ),
         if (raw.length > visible.length)
           Padding(
-            padding: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.only(top: AppSpacing.s4),
             child: Text(
               '+ 还有 ${raw.length - visible.length} 项',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -1267,10 +1267,10 @@ class RefundLinksView extends StatelessWidget {
     final currency = _asString(mp['currency']) ?? '';
     final cs = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         children: [
@@ -1282,7 +1282,7 @@ class RefundLinksView extends StatelessWidget {
                   children: [
                     Icon(
                       FLucideIcons.arrowDownLeft,
-                      size: 14,
+                      size: AppIconSizes.xs,
                       color: cs.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
@@ -1299,10 +1299,10 @@ class RefundLinksView extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.s4),
                 Row(
                   children: [
-                    Icon(FLucideIcons.arrowUpRight, size: 14, color: cs.primary),
+                    Icon(FLucideIcons.arrowUpRight, size: AppIconSizes.xs, color: cs.primary),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
@@ -1339,7 +1339,7 @@ class _EmptyHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
       child: Text(
         text,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(

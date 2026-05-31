@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import '../design_system/design_system.dart';
 import 'package:forui/forui.dart';
+import '../design_system/design_system.dart';
 
 import '../l10n/gen/app_localizations.dart';
+import '../design_system/design_system.dart';
 
 /// Wraps a route whose page widget lives in a `deferred as` library.
 ///
@@ -88,7 +91,7 @@ class _DeferredError extends StatelessWidget {
         color: Colors.transparent,
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.s24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -97,13 +100,13 @@ class _DeferredError extends StatelessWidget {
                   size: 48,
                   color: context.theme.colors.destructive,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 Text(
                   l10n.deferredLoadFailedTitle,
                   style: context.theme.typography.md,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.s4),
                 Text(
                   '$error',
                   style: context.theme.typography.xs.copyWith(
@@ -111,7 +114,7 @@ class _DeferredError extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.s16),
                 FButton(
                   variant: FButtonVariant.primary,
                   onPress: onRetry,

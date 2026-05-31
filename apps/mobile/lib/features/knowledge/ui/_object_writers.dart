@@ -546,14 +546,14 @@ class _AssumptionTargetPicker extends ConsumerWidget {
                           onChange(selectedId == a.id ? null : a.id),
                       child: Padding(
                         padding:
-                            const EdgeInsets.symmetric(vertical: 4),
+                            const EdgeInsets.symmetric(vertical: AppSpacing.s4),
                         child: Row(
                           children: [
                             Icon(
                               selectedId == a.id
                                   ? FLucideIcons.checkSquare2
                                   : FLucideIcons.square,
-                              size: 14,
+                              size: AppIconSizes.xs,
                             ),
                             const SizedBox(width: AppSpacing.s8),
                             Expanded(

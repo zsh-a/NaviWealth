@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart' show MaterialPageRoute;
+import '../../../design_system/design_system.dart';
 import 'package:flutter/services.dart';
+import '../../../design_system/design_system.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -61,7 +63,7 @@ class _DashboardChartFullscreenPageState
       ),
       childPad: false,
       child: SafeArea(
-        child: Padding(padding: const EdgeInsets.all(16), child: widget.child),
+        child: Padding(padding: const EdgeInsets.all(AppSpacing.s16), child: widget.child),
       ),
     );
   }

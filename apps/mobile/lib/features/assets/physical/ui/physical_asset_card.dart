@@ -25,7 +25,7 @@ class PhysicalAssetCard extends StatelessWidget {
             pathParameters: {'id': asset.id},
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.s16),
             child: Row(
               children: [
                 Icon(
@@ -43,7 +43,7 @@ class PhysicalAssetCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppSpacing.s2),
                       Text(
                         _subtitleFor(asset, l10n),
                         style: context.theme.typography.xs.copyWith(

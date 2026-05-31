@@ -175,7 +175,7 @@ class _WatchlistBody extends StatelessWidget {
               onEdit: () => onEdit(item),
               onRemove: () => onRemove(item),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
           ],
         ],
       ],
@@ -200,14 +200,14 @@ class _WatchlistEmpty extends StatelessWidget {
             size: 42,
             color: context.theme.colors.mutedForeground,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           Text(
             l10n.watchlistEmptyTitle,
             style: context.theme.typography.lg.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.s6),
           Text(
             l10n.watchlistEmptyBody,
             textAlign: TextAlign.center,
@@ -260,7 +260,7 @@ class _WatchlistRow extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: colors.foreground.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 alignment: Alignment.center,
                 child: Icon(
@@ -304,7 +304,7 @@ class _WatchlistRow extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.s10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -324,7 +324,7 @@ class _WatchlistRow extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.s10),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -375,7 +375,7 @@ class _RuleChip extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: context.theme.colors.foreground.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
@@ -459,7 +459,7 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
                 widget.dirty.markDirty();
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
           ],
           FTextFormField(
             control: FTextFieldControl.managed(controller: _above),
@@ -470,7 +470,7 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
             ],
             validator: _validateDecimal,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _below),
             label: Text(l10n.watchlistAlertBelowField),

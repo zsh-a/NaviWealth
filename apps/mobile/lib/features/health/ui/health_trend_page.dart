@@ -87,7 +87,7 @@ class _TrendCard extends ConsumerWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.s2),
           Text(
             spec.subtitle,
             style: typography.xs.copyWith(color: colors.mutedForeground),
@@ -98,7 +98,7 @@ class _TrendCard extends ConsumerWidget {
           SizedBox(
             height: 160,
             child: async.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: FCircularProgress()),
               error: (e, _) => Center(
                 child: Text(
                   '加载失败：$e',

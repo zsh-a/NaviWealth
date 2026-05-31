@@ -81,12 +81,12 @@ class _EventRow extends StatelessWidget {
           height: 36,
           decoration: BoxDecoration(
             color: colors.foreground.withValues(alpha: 0.04),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           alignment: Alignment.center,
           child: Icon(
             _kindIcon(event.kind),
-            size: 18,
+            size: AppIconSizes.h18,
             color: colors.mutedForeground,
           ),
         ),

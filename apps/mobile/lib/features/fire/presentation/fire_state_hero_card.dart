@@ -13,6 +13,7 @@ import '../../ai_chat/ui/ask_ai.dart';
 import '../data/fire_providers.dart';
 import '../domain/fire_action.dart';
 import '../domain/fire_state.dart';
+import 'fire_status_colors.dart';
 import 'fire_ai_capsule.dart';
 
 /// "自由状态" hero card — the headline of the FIRE OS page.
@@ -69,7 +70,7 @@ class _HeroBody extends ConsumerWidget {
       appFormattersProvider(Localizations.localeOf(context)),
     );
     final colors = context.theme.colors;
-    final accent = _safetyColor(colors, state.safetyLevel);
+    final accent = fireSafetyColor(SemanticColors.of(context), state.safetyLevel);
     final safetyLabel = _safetyLabel(l10n, state.safetyLevel);
 
     return SoftCard(
@@ -87,7 +88,7 @@ class _HeroBody extends ConsumerWidget {
                       l10n.fireOsHeroTitle,
                       style: context.theme.typography.md,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.s4),
                     Text(
                       l10n.fireOsHeroSubtitle,
                       style: context.theme.typography.xs.copyWith(
@@ -100,18 +101,18 @@ class _HeroBody extends ConsumerWidget {
               _SafetyPill(label: safetyLabel, accent: accent),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
           _MetricsGrid(state: state, formatters: formatters, l10n: l10n),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           _SuggestedActions(state: state, formatters: formatters, l10n: l10n),
           if (onExplain != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Align(
               alignment: AlignmentDirectional.centerEnd,
               child: FButton(
                 variant: FButtonVariant.ghost,
                 onPress: onExplain,
-                prefix: const Icon(FLucideIcons.sparkles, size: 14),
+                prefix: const Icon(FLucideIcons.sparkles, size: AppIconSizes.xs),
                 child: const Text('Explain'),
               ),
             ),
@@ -131,10 +132,10 @@ class _SafetyPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.full),
         border: Border.all(color: accent.withValues(alpha: 0.4), width: 1),
       ),
       child: Text(
@@ -211,7 +212,7 @@ class _MetricsGrid extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
             Expanded(
@@ -229,7 +230,7 @@ class _MetricsGrid extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
             Expanded(
@@ -265,10 +266,10 @@ class _MetricTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
         color: colors.muted.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,7 +280,7 @@ class _MetricTile extends StatelessWidget {
               color: colors.mutedForeground,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Text(
             value,
             style: context.theme.typography.sm.copyWith(
@@ -326,10 +327,10 @@ class _SuggestedActions extends StatelessWidget {
               color: colors.mutedForeground,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.s6),
           for (final action in state.suggestedActions.take(3)) ...[
             _ActionRow(action: action, formatters: formatters, l10n: l10n),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.s6),
           ],
         ],
       ),
@@ -351,7 +352,7 @@ class _ActionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final severityColor = _severityColor(colors, action.severity);
+    final severityColor = fireActionSeverityColor(SemanticColors.of(context), action.severity);
     final title = fireActionTitle(l10n, action);
     final detail = fireActionDetail(l10n, action, formatters);
     return Row(
@@ -360,7 +361,7 @@ class _ActionRow extends StatelessWidget {
         Container(
           width: 6,
           height: 6,
-          margin: const EdgeInsets.only(top: 6),
+          margin: const EdgeInsets.only(top: AppSpacing.s6),
           decoration: BoxDecoration(
             color: severityColor,
             shape: BoxShape.circle,
@@ -373,7 +374,7 @@ class _ActionRow extends StatelessWidget {
             children: [
               Text(title, style: context.theme.typography.sm),
               if (detail != null) ...[
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.s2),
                 Text(
                   detail,
                   style: context.theme.typography.xs.copyWith(
@@ -400,7 +401,7 @@ class _HeroSkeleton extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(width: 120, height: 18, color: context.theme.colors.muted),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
           Container(
             width: double.infinity,
             height: 64,
@@ -426,7 +427,7 @@ class _HeroErrorCard extends StatelessWidget {
           Icon(
             FLucideIcons.circleAlert,
             color: context.theme.colors.destructive,
-            size: 18,
+            size: AppIconSizes.h18,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -523,26 +524,3 @@ String _safetyLabel(AppLocalizations l10n, FireSafetyLevel level) {
   }
 }
 
-Color _safetyColor(FColors colors, FireSafetyLevel level) {
-  switch (level) {
-    case FireSafetyLevel.safe:
-      return Colors.green.shade600;
-    case FireSafetyLevel.cautious:
-      return Colors.amber.shade700;
-    case FireSafetyLevel.danger:
-      return colors.destructive;
-    case FireSafetyLevel.unconfigured:
-      return colors.mutedForeground;
-  }
-}
-
-Color _severityColor(FColors colors, FireActionSeverity sev) {
-  switch (sev) {
-    case FireActionSeverity.info:
-      return colors.mutedForeground;
-    case FireActionSeverity.warning:
-      return Colors.amber.shade700;
-    case FireActionSeverity.critical:
-      return colors.destructive;
-  }
-}
