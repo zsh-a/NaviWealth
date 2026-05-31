@@ -1,8 +1,8 @@
 /// Stable, low-sensitivity portion of [ContextPack].
 ///
 /// Aggregate-only — no merchant names, no account names, no original
-/// transactions. The cloud planner caches BaseContext keyed by session;
-/// it is only re-uploaded when the device computes a meaningful diff.
+/// transactions. Device prompt assembly can include this block directly
+/// without leaking row-level detail into the model context.
 library;
 
 enum RiskPreference { conservative, moderate, aggressive }
@@ -173,17 +173,13 @@ class BaseContext {
   final String preferredCurrency;
   final RiskPreference riskPreference;
 
-  /// **Wave 32 — DEPRECATED**. Account aggregates now live in the
-  /// cloud read models (`holdings_snapshot`, `asset_allocation_snapshot`).
-  /// The field is retained on the wire for wire-compat with backends
-  /// pinned to the v1 schema; clients should emit an empty
-  /// [AccountSummary]. Will be removed when ContextPack ticks to v2.
+  /// Lightweight account distribution. Kept in BaseContext because it is
+  /// aggregate-only and useful before the model decides whether to call a
+  /// richer device tool.
   final AccountSummary accounts;
 
-  /// **Wave 32 — DEPRECATED**. Cashflow aggregates now live in the
-  /// cloud read models (`cashflow_buckets`, `monthly_spend_by_category`).
-  /// Clients should emit an empty [CashflowSummary]. Will be removed
-  /// when ContextPack ticks to v2.
+  /// Lightweight cashflow profile. Richer category/month detail belongs
+  /// in device tools; this summary is just the initial prompt grounding.
   final CashflowSummary cashflow;
 
   final FireGoalSummary? fireGoal;

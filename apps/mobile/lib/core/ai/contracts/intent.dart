@@ -1,13 +1,12 @@
-/// Intent typing surface for the AI Router.
+/// Intent typing surface for AI policy, tracing, and prompt assembly.
 ///
-/// Every AI-mediated user action in NaviWealth flows through the router
-/// as an [IntentHint]. The hint carries enough information for the
-/// router to pick a backend (device / cloud / hybrid) without the
-/// router needing to know which feature module produced the request.
+/// Every AI-mediated user action in NaviWealth carries an [IntentHint].
+/// The hint describes capability/risk/domain without coupling the
+/// feature module to the device runtime implementation.
 library;
 
 /// Coarse capability the user is requesting. Forms one axis of the
-/// router decision matrix.
+/// intent policy matrix.
 enum Capability {
   /// Categorise / tag / classify a single item. Local-first, very high
   /// frequency.
@@ -47,8 +46,8 @@ enum RiskLevel {
   propose,
 
   /// User-initiated direct mutation. Confirmation policy is decided by
-  /// the router (none for undoable local writes, typed for external
-  /// side effects).
+  /// the proposal dispatcher (none for undoable local writes, typed for
+  /// external side effects).
   commit,
 }
 
@@ -91,9 +90,8 @@ extension RiskLevelWire on RiskLevel {
 }
 
 /// Side-effect classification for `Capability.write` intents. Decides
-/// which [ProposalEnvelope] subtype the router will steer toward and
-/// (combined with [RiskLevel]) the confirmation policy. `null` for
-/// read-only intents.
+/// which [ProposalEnvelope] subtype and confirmation flow are eligible
+/// for a write intent. `null` for read-only intents.
 enum SideEffectScope {
   /// Pure-local, undoable. Memo / tag / categorisation / dismissed
   /// insight / draft budget. Stays on-device, applies through
@@ -143,8 +141,8 @@ const String kDomainKnowledge = 'knowledge';
 /// hard-coding the string.
 const String kDefaultDomain = kDomainFinance;
 
-/// Typed input to the router. Every feature surface that wants AI help
-/// produces one of these.
+/// Typed input for a device AI turn. Every feature surface that wants
+/// AI help produces one of these.
 class IntentHint {
   const IntentHint({
     required this.capability,
@@ -158,8 +156,8 @@ class IntentHint {
   final RiskLevel risk;
 
   /// Required for [Capability.write]; ignored otherwise. When `null`
-  /// on a write intent, the router conservatively assumes
-  /// [SideEffectScope.crossCutting] (cloud + confirmation).
+  /// on a write intent, the dispatcher conservatively treats it as a
+  /// cross-cutting proposal that needs user confirmation.
   final SideEffectScope? sideEffect;
 
   /// Optional short label for tracing / UI ('monthly_report',

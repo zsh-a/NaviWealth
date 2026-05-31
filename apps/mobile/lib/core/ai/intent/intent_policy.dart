@@ -132,9 +132,9 @@ class IntentDescriptor {
   /// The shell may add `chat` regardless.
   final Set<AiCapability> preferredCapabilities;
 
-  /// Read models this intent typically consults. Used to seed the
-  /// freshness gate (force-refresh before the cloud answers) — falls
-  /// back to no-hint when empty.
+  /// Read models this intent typically consults. Kept as a lightweight
+  /// hint for context preparation and future freshness diagnostics;
+  /// empty means no hint.
   final List<String> preferredReadModels;
 
   /// §5.10.6 — irreversible-operation guard. When `true`, surfaces that

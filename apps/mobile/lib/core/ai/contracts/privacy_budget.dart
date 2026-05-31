@@ -1,8 +1,8 @@
 /// Privacy / size budget tiers for [ContextPack].
 ///
 /// The budget caps the JSON-serialized byte size of a ContextPack and,
-/// by extension, governs which tools the cloud planner is allowed to
-/// call (see [ToolDescriptor.allowedContextTier]). Code-enforced — not
+/// by extension, governs which device tools can receive that context
+/// tier (see [ToolDescriptor.allowedContextTier]). Code-enforced — not
 /// a prompt rule.
 library;
 

@@ -1,8 +1,9 @@
-/// Top-level wire contract between device and cloud planner.
+/// Top-level context contract for device-only AI turns.
 ///
 /// `ContextPack = BaseContext (stable) + TaskContext (per-request) +
-/// PrivacyBudget (size cap)`. The cloud rejects packs whose `version`
-/// it doesn't know about — there is no implicit fallback.
+/// PrivacyBudget (size cap)`. The version is retained so future
+/// ContextPack schema changes can be explicit instead of relying on
+/// best-effort fallback.
 library;
 
 import 'dart:convert';
