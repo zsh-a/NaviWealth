@@ -276,22 +276,25 @@ class AppSheet extends StatelessWidget {
   }
 
   // Drag handle — small, muted, centered. One spec for the whole app.
+  // Excluded from semantics — purely decorative.
   static Widget _dragHandle(FColors colors) {
-    return Center(
-      child: Container(
-        width:
-            AppSpacing.s32 +
-            AppSpacing.s4, // 36 — wider than radius for pill shape
-        height: AppSpacing.s4,
-        margin: const EdgeInsets.only(
-          top:
-              AppSpacing.s8 +
-              AppSpacing.s2, // 10 — sits below the sheet's top corner
-          bottom: AppSpacing.s6,
-        ),
-        decoration: BoxDecoration(
-          color: colors.mutedForeground.withValues(alpha: 0.35),
-          borderRadius: BorderRadius.circular(AppSpacing.s2),
+    return ExcludeSemantics(
+      child: Center(
+        child: Container(
+          width:
+              AppSpacing.s32 +
+              AppSpacing.s4, // 36 — wider than radius for pill shape
+          height: AppSpacing.s4,
+          margin: const EdgeInsets.only(
+            top:
+                AppSpacing.s8 +
+                AppSpacing.s2, // 10 — sits below the sheet's top corner
+            bottom: AppSpacing.s6,
+          ),
+          decoration: BoxDecoration(
+            color: colors.mutedForeground.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(AppSpacing.s2),
+          ),
         ),
       ),
     );

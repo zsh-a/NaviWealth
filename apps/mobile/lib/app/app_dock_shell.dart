@@ -40,7 +40,8 @@ class AppDockShell extends ConsumerStatefulWidget {
 
   final Widget child;
 
-  static const double _tabletBreakpoint = 600;
+  // Breakpoint from design_system/tokens/breakpoints.dart
+  static const double _tabletBreakpoint = Breakpoints.mobile;
 
   @override
   ConsumerState<AppDockShell> createState() => _AppDockShellState();

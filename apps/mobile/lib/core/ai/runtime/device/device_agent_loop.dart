@@ -18,9 +18,9 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
-import '../../../../features/ai_chat/domain/chat_events.dart';
 import '../../contracts/contracts.dart'
     show AiSpanKind, AiSpanStatus, SpanTokens, kTurnSpanId;
+import '../../contracts/chat_events.dart';
 import 'anthropic/anthropic_wire.dart';
 import 'device_session.dart';
 import 'device_system_prompt.dart';

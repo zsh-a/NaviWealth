@@ -6,6 +6,7 @@ library;
 export 'ai_span.dart';
 export 'ai_trace.dart';
 export 'base_context.dart';
+export 'chat_events.dart';
 export 'context_pack.dart';
 export 'evidence_anchor.dart';
 export 'intent.dart';

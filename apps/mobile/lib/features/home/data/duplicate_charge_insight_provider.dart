@@ -12,7 +12,7 @@ import 'package:naviwealth/features/finance/data/domain/expense.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 
 import '../../../core/ai/local/skills/duplicate_charge_detector.dart';
-import '../../../core/ai/local/skills/expense_to_transaction_input.dart';
+import 'package:naviwealth/features/finance/ai_tools/expense_to_transaction_input.dart';
 
 class DuplicateChargeSummary {
   const DuplicateChargeSummary({

@@ -16,7 +16,6 @@ library;
 import 'package:dio/dio.dart';
 
 import '../../../features/ai_chat/data/ai_chat_api_client.dart';
-import '../../../features/ai_chat/domain/chat_events.dart';
 import '../contracts/contracts.dart';
 import 'device/anthropic/anthropic_client.dart';
 import 'device/anthropic/anthropic_wire.dart';

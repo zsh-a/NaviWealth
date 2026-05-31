@@ -29,8 +29,9 @@ class DomainTabsShell extends ConsumerStatefulWidget {
   final StatefulNavigationShell shell;
   final DomainShellSpec spec;
 
-  static const double _tabletBreakpoint = 600;
-  static const double _desktopBreakpoint = 1240;
+  // Breakpoints from design_system/tokens/breakpoints.dart
+  static const double _tabletBreakpoint = Breakpoints.mobile;
+  static const double _desktopBreakpoint = Breakpoints.desktop;
 
   @override
   ConsumerState<DomainTabsShell> createState() => _DomainTabsShellState();

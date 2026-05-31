@@ -30,9 +30,8 @@ import 'domain_switcher.dart';
 import 'route_paths.dart';
 
 /// Width at or above which the persistent left dock + sidebar own the
-/// global chrome, so the header/greeting don't repeat it. Mirrors
-/// `DomainTabsShell._desktopBreakpoint`.
-const double _desktopChromeBreakpoint = 1240;
+/// global chrome, so the header/greeting don't repeat it.
+const double _desktopChromeBreakpoint = Breakpoints.desktop;
 
 bool _showInlineChrome(BuildContext context) =>
     MediaQuery.sizeOf(context).width < _desktopChromeBreakpoint;
