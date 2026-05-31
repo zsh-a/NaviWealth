@@ -44,10 +44,10 @@ void main() {
           ),
         ),
       );
-      // Sort: transport (2500), subscription (999), coffee (500).
+      // Sort: rideHailing (2500), subscriptions (999), coffee (500).
       expect(result.rows.map((r) => r.values['category']).toList(), <String>[
-        'transport',
-        'subscription',
+        'rideHailing',
+        'subscriptions',
         'coffee',
       ]);
     });

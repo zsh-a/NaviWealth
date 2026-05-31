@@ -11,6 +11,7 @@
 /// candidate shape `{id,name,type}`) are ported exactly.
 library;
 
+import 'package:naviwealth/domain/values/expense_category_taxonomy.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
@@ -18,18 +19,10 @@ import 'package:uuid/uuid.dart';
 
 const _kUuid = Uuid();
 
-/// Closed expense taxonomy — verbatim from `EXPENSE_CATEGORIES`
-/// (slug, 中文 label), order preserved (top-3 fallback indexes into it).
-const List<(String, String)> kExpenseCategories = [
-  ('food', '餐饮'),
-  ('transport', '交通'),
-  ('housing', '房租'),
-  ('entertainment', '娱乐'),
-  ('medical', '医疗'),
-  ('education', '教育'),
-  ('shopping', '购物'),
-  ('travel', '旅行'),
-  ('other', '其它'),
+/// Closed expense taxonomy exposed to the `propose_expense` tool.
+final List<(String, String)> kExpenseCategories = [
+  for (final category in kExpenseCategoryTaxonomy)
+    (category.slug, category.labelZh),
 ];
 
 /// Account types `propose_account_create` may introduce (mirrors
@@ -248,35 +241,31 @@ class CategoryAmbiguous extends CategoryMatch {
   final List<(String, String)> top3;
 }
 
-/// Verbatim port of `match_expense_category`.
 CategoryMatch matchExpenseCategory(String input) {
   final trimmed = input.trim();
   if (trimmed.isEmpty) return CategoryAmbiguous(_top3Categories());
-  final lc = trimmed.toLowerCase();
 
-  for (final (slug, label) in kExpenseCategories) {
-    if (slug.toLowerCase() == lc || label == trimmed) {
-      return CategoryExact(slug);
-    }
+  final exact = expenseCategoryByInput(trimmed);
+  if (exact != null) {
+    return CategoryExact(exact.slug);
   }
+  final normalized = normalizeExpenseCategoryText(trimmed);
   final substrings = kExpenseCategories
       .where(
         (e) =>
-            e.$1.toLowerCase().contains(lc) ||
-            e.$2.contains(trimmed) ||
-            lc.contains(e.$1.toLowerCase()),
+            normalizeExpenseCategoryText(e.$1).contains(normalized) ||
+            normalizeExpenseCategoryText(e.$2).contains(normalized) ||
+            normalized.contains(normalizeExpenseCategoryText(e.$1)),
       )
       .toList();
   if (substrings.length == 1) return CategoryExact(substrings.first.$1);
   return CategoryAmbiguous(_top3Categories());
 }
 
-/// Port of `top3_categories`: food / shopping / other (indexes 0, 6,
-/// last) — always includes `other` as the escape hatch.
+/// Default clarification candidates.
 List<(String, String)> _top3Categories() => [
-  kExpenseCategories[0],
-  kExpenseCategories[6],
-  kExpenseCategories.last,
+  for (final category in fallbackExpenseCategoryCandidates())
+    (category.slug, category.labelZh),
 ];
 
 /// RFC3339-strict check (mirrors the file-local `parse_iso` in

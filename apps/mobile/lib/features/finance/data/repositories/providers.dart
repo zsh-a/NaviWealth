@@ -80,7 +80,7 @@ final accountsStreamProvider = StreamProvider.autoDispose<List<Account>>((
 
 /// Live stream of all active accounts **including** system accounts.
 /// Used by the expense category picker which needs seeded system expense
-/// accounts (food, transport, etc.) to be visible.
+/// accounts (dining, coffee, transport, etc.) to be visible.
 final allAccountsStreamProvider = StreamProvider.autoDispose<List<Account>>((
   ref,
 ) async* {

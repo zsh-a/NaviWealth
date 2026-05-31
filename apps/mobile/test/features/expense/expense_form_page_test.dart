@@ -77,7 +77,7 @@ void main() {
       await _wrap(
         preferences: const {
           'naviwealth.forms.expense.account': 'cash-1',
-          'naviwealth.forms.expense.category': 'food',
+          'naviwealth.forms.expense.category': 'dining',
           'naviwealth.forms.expense.currency': 'CHF',
         },
         accounts: [
@@ -85,7 +85,7 @@ void main() {
           _account(id: 'cash-2', name: 'Cash', category: AccountSide.asset),
         ],
         allAccounts: [
-          _account(id: 'food', name: 'Food', category: AccountSide.expense),
+          _account(id: 'dining', name: 'Dining', category: AccountSide.expense),
         ],
       ),
     );
@@ -112,7 +112,7 @@ void main() {
           _account(id: 'cash-1', name: 'Cash', category: AccountSide.asset),
         ],
         allAccounts: [
-          _account(id: 'food', name: 'Food', category: AccountSide.expense),
+          _account(id: 'dining', name: 'Dining', category: AccountSide.expense),
         ],
       ),
     );

@@ -765,16 +765,17 @@ void main() {
 
   group('W-D4.5 proposal scaffolding (ports proposals.rs)', () {
     test('matchExpenseCategory: slug / label / substring / ambiguous', () {
-      expect((matchExpenseCategory('food') as CategoryExact).slug, 'food');
-      expect((matchExpenseCategory('餐饮') as CategoryExact).slug, 'food');
+      expect((matchExpenseCategory('dining') as CategoryExact).slug, 'dining');
+      expect((matchExpenseCategory('餐饮') as CategoryExact).slug, 'dining');
       // single substring → exact
       expect(
         (matchExpenseCategory('transp') as CategoryExact).slug,
         'transport',
       );
-      // unknown → ambiguous top-3 (food / shopping / other)
+      expect(matchExpenseCategory('food'), isA<CategoryAmbiguous>());
+      // unknown → ambiguous top-3 (dining / shopping / other)
       final amb = matchExpenseCategory('quux') as CategoryAmbiguous;
-      expect(amb.top3.map((e) => e.$1), ['food', 'shopping', 'other']);
+      expect(amb.top3.map((e) => e.$1), ['dining', 'shopping', 'other']);
       expect(
         (matchExpenseCategory('') as CategoryAmbiguous).top3.last.$1,
         'other',
@@ -826,7 +827,7 @@ void main() {
         field: 'category',
         reason: 'why',
         candidates: [
-          {'id': 'food', 'label': '餐饮'},
+          {'id': 'dining', 'label': '餐饮'},
         ],
       );
       expect(c['status'], 'needs_clarification');
@@ -869,7 +870,7 @@ void main() {
         expect(m['status'], 'needs_clarification');
         expect(m['ambiguous_field'], 'category');
         expect((m['candidates'] as List).map((e) => (e as Map)['id']), [
-          'food',
+          'dining',
           'shopping',
           'other',
         ]);
@@ -883,7 +884,7 @@ void main() {
     // covered purely below via the same helpers the tool calls.
     test('ready-plan composition (pure, mirrors invoke after resolve)', () {
       // No-account path → warn + default CNY, summary like the tool's.
-      const cat = CategoryExact('food');
+      const cat = CategoryExact('dining');
       final slug = (cat).slug;
       final resolved = resolveAccount(const <Account>[], byName: 'nope');
       expect(resolved, isA<ResolvedNone<Account>>());
@@ -904,7 +905,7 @@ void main() {
         ],
       );
       expect(plan['status'], 'ready');
-      expect((plan['payload'] as Map)['category'], 'food');
+      expect((plan['payload'] as Map)['category'], 'dining');
       expect(plan['summary_zh'], '记一笔餐饮支出 12.5 CNY');
       expect(isRfc3339('2026-05-16'), isFalse); // tool would bad_request
     });
@@ -1304,7 +1305,7 @@ void main() {
       expect(((await run(const {})) as Map)['error'], 'category required');
       expect(
         ((await run(const {
-              'category': 'food',
+              'category': 'dining',
               'from': '2026-01-01',
               'to': '2026-03-01', // 59d
               'purpose': 'other',
@@ -1314,7 +1315,7 @@ void main() {
       );
       expect(
         ((await run(const {
-              'category': 'food',
+              'category': 'dining',
               'from': '2026-01-01',
               'to': '2026-01-10',
               'purpose': 'nope',
@@ -1327,7 +1328,7 @@ void main() {
     final from = DateTime.utc(2026, 4, 1);
     final to = DateTime.utc(2026, 5, 1);
     final accounts = [
-      _acct('exp_food', 'Food', category: AccountSide.expense),
+      _acct('exp_dining', 'Dining', category: AccountSide.expense),
       _acct('exp_txp', 'Transport', category: AccountSide.expense),
       _acct('bank', 'Bank', category: AccountSide.asset),
     ];
@@ -1335,7 +1336,7 @@ void main() {
     test('remaps category→expense account; window + amount + summary', () {
       final entries = [
         _ewp('e1', DateTime.utc(2026, 4, 15), [
-          _post('exp_food', 'CNY', '12.50'),
+          _post('exp_dining', 'CNY', '12.50'),
           _post('bank', 'CNY', '-12.50'),
         ], narration: 'Noodle lunch'),
         _ewp('e2', DateTime.utc(2026, 4, 16), [
@@ -1343,13 +1344,13 @@ void main() {
           _post('bank', 'CNY', '-8.00'),
         ]),
         _ewp('out', DateTime.utc(2026, 5, 2), [
-          _post('exp_food', 'CNY', '99.00'),
+          _post('exp_dining', 'CNY', '99.00'),
         ]),
       ];
       final m = ReadCategoryWindowTool.shape(
         entries,
         accounts: accounts,
-        category: 'food',
+        category: 'dining',
         from: from,
         to: to,
         limit: 20,
@@ -1366,14 +1367,14 @@ void main() {
       expect(summary['returned'], 1);
       expect(summary['total_minor'], '1250');
       expect(summary['currency'], 'CNY');
-      expect(m['device_note'], contains('已将 category=food 解析为 1 个支出账户'));
+      expect(m['device_note'], contains('已将 category=dining 解析为 1 个支出账户'));
     });
 
     test('unmatched category → empty + explicit device_note', () {
       final m = ReadCategoryWindowTool.shape(
         [
           _ewp('e1', DateTime.utc(2026, 4, 15), [
-            _post('exp_food', 'CNY', '5.00'),
+            _post('exp_dining', 'CNY', '5.00'),
           ]),
         ],
         accounts: accounts,
@@ -1391,16 +1392,16 @@ void main() {
     test('merchant_substring filters on narration', () {
       final entries = [
         _ewp('e1', DateTime.utc(2026, 4, 15), [
-          _post('exp_food', 'CNY', '4.50'),
+          _post('exp_dining', 'CNY', '4.50'),
         ], narration: 'STARBUCKS 04291'),
         _ewp('e2', DateTime.utc(2026, 4, 16), [
-          _post('exp_food', 'CNY', '12.00'),
+          _post('exp_dining', 'CNY', '12.00'),
         ], narration: 'Lunch noodle'),
       ];
       final m = ReadCategoryWindowTool.shape(
         entries,
         accounts: accounts,
-        category: 'food',
+        category: 'dining',
         from: from,
         to: to,
         limit: 20,
@@ -1415,16 +1416,16 @@ void main() {
     test('mixed currency → by_currency summary branch', () {
       final entries = [
         _ewp('u', DateTime.utc(2026, 4, 10), [
-          _post('exp_food', 'USD', '5.00'),
+          _post('exp_dining', 'USD', '5.00'),
         ]),
         _ewp('c', DateTime.utc(2026, 4, 11), [
-          _post('exp_food', 'CNY', '10.00'),
+          _post('exp_dining', 'CNY', '10.00'),
         ]),
       ];
       final m = ReadCategoryWindowTool.shape(
         entries,
         accounts: accounts,
-        category: 'food',
+        category: 'dining',
         from: from,
         to: to,
         limit: 20,

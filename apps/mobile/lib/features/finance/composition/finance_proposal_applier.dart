@@ -12,8 +12,10 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/domain/values/expense_category_taxonomy.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart' show AccountCategory, AssetType;
+import 'package:naviwealth/features/finance/data/domain/enums.dart'
+    show AccountCategory, AssetType;
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
@@ -124,7 +126,9 @@ class FinanceProposalApplier implements ProposalApplier {
         'asset_valuation' => await _applyAssetValuation(plan, at),
         'fire_plan_update' => await _applyFirePlanUpdate(plan, at),
         'fire_bucket_rule' => await _applyFireBucketRule(plan, at),
-        _ => throw ProposalApplyException('unknown proposal kind: ${plan.kind}'),
+        _ => throw ProposalApplyException(
+          'unknown proposal kind: ${plan.kind}',
+        ),
       };
       // Wave 39 — when an apply succeeds, record the AI touch keyed by
       // (entityType, entityId). Detail pages surface a tiny sparkle
@@ -367,6 +371,9 @@ class FinanceProposalApplier implements ProposalApplier {
     final tradeDate = _parseDate(plan.get('date')) ?? DateTime.now();
     final note = plan.get('note');
     final categorySlug = plan.get('category') ?? 'other';
+    if (!isExpenseCategorySlug(categorySlug)) {
+      throw ProposalApplyException('未知支出类目: $categorySlug');
+    }
     final ownerUserId = await currentUserId();
     final expenseAccountId = AccountRepository.systemAccountIdForPath(
       'expense:$categorySlug',
@@ -632,34 +639,34 @@ class FinanceProposalApplier implements ProposalApplier {
 /// FIR-67 — Finance-domain applier wiring. Resolves all repositories +
 /// fire writers once and instantiates [FinanceProposalApplier]. Used by
 /// `bootstrap.dart` to override `proposalApplierProvider`.
-final financeProposalApplierProvider = FutureProvider<ProposalApplier>(
-  (ref) async {
-    final tradeService = await ref.watch(tradeEntryServiceProvider.future);
-    final journalEntryRepo = await ref.watch(
-      journalEntryRepositoryProvider.future,
-    );
-    final priceRepo = await ref.watch(priceRepositoryProvider.future);
-    final accountRepo = await ref.watch(accountRepositoryProvider.future);
-    final manualAssetRepo = await ref.watch(manualAssetRepositoryProvider.future);
-    final liabilityRepo = await ref.watch(liabilityRepositoryProvider.future);
-    final currentUserId = ref.watch(currentUserIdProvider);
-    final touched = ref.watch(aiTouchedStoreProvider);
-    return FinanceProposalApplier(
-      tradeEntryService: tradeService,
-      journalEntryRepo: journalEntryRepo,
-      priceRepo: priceRepo,
-      accountRepo: accountRepo,
-      manualAssetRepo: manualAssetRepo,
-      liabilityRepo: liabilityRepo,
-      currentUserId: currentUserId,
-      aiTouchedStore: touched,
-      firePlanWriter: (after) =>
-          _applyFirePlanUpdateProposal(ref: ref, after: after),
-      fireBucketRuleWriter: (payload) =>
-          _applyFireBucketRuleProposal(ref: ref, payload: payload),
-    );
-  },
-);
+final financeProposalApplierProvider = FutureProvider<ProposalApplier>((
+  ref,
+) async {
+  final tradeService = await ref.watch(tradeEntryServiceProvider.future);
+  final journalEntryRepo = await ref.watch(
+    journalEntryRepositoryProvider.future,
+  );
+  final priceRepo = await ref.watch(priceRepositoryProvider.future);
+  final accountRepo = await ref.watch(accountRepositoryProvider.future);
+  final manualAssetRepo = await ref.watch(manualAssetRepositoryProvider.future);
+  final liabilityRepo = await ref.watch(liabilityRepositoryProvider.future);
+  final currentUserId = ref.watch(currentUserIdProvider);
+  final touched = ref.watch(aiTouchedStoreProvider);
+  return FinanceProposalApplier(
+    tradeEntryService: tradeService,
+    journalEntryRepo: journalEntryRepo,
+    priceRepo: priceRepo,
+    accountRepo: accountRepo,
+    manualAssetRepo: manualAssetRepo,
+    liabilityRepo: liabilityRepo,
+    currentUserId: currentUserId,
+    aiTouchedStore: touched,
+    firePlanWriter: (after) =>
+        _applyFirePlanUpdateProposal(ref: ref, after: after),
+    fireBucketRuleWriter: (payload) =>
+        _applyFireBucketRuleProposal(ref: ref, payload: payload),
+  );
+});
 
 Future<void> _applyFirePlanUpdateProposal({
   required Ref ref,

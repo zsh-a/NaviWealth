@@ -32,7 +32,7 @@ void main() {
       expect(plan.proposalId, 'd1');
       expect(plan.payload['account_id'], 'acct-cash');
       expect(plan.payload['currency'], 'CNY');
-      expect(plan.payload['category'], 'food');
+      expect(plan.payload['category'], 'coffee');
       expect(plan.payload['note'], 'Starbucks Coffee');
       expect(plan.payload['date'], '2026-05-10T00:00:00.000Z');
       // Amount is positive (sign handled by the JE builder) and exact.

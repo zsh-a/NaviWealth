@@ -99,7 +99,7 @@ void main() {
     final expenses = [
       _expense(
         id: 'e1',
-        expenseAccountId: 'food',
+        expenseAccountId: 'dining',
         amount: Decimal.parse('120'),
         date: inMonth,
       ),
@@ -111,7 +111,7 @@ void main() {
       ),
     ];
 
-    final accounts = [_account('food', '餐饮'), _account('transport', '交通')];
+    final accounts = [_account('dining', '餐饮'), _account('transport', '交通')];
 
     final widget = await _wrap(
       child: const ExpenseReportPage(),

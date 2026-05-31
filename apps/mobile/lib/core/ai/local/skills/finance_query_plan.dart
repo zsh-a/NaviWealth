@@ -28,8 +28,8 @@ final class SpendingByCategoryPlan extends FinanceQueryPlan {
 
   final DateRange range;
 
-  /// Free-form hints (matching the classifier alias table —
-  /// 'coffee', 'food_delivery', 'subscription', etc.). `null` means
+  /// Canonical expense category slugs (for example
+  /// `coffee`, `dining`, `subscriptions`). `null` means
   /// 'all categories' (the executor returns the full breakdown).
   final List<String>? categoryHints;
 

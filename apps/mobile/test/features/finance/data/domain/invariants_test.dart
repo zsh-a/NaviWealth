@@ -199,7 +199,7 @@ void main() {
           id: 'p1',
           units: '300.00',
           unit: 'CNY',
-          accountId: 'acct:expense:food',
+          accountId: 'acct:expense:groceries',
         ),
         _p(
           id: 'p2',
