@@ -369,7 +369,7 @@ class _AssistantBubble extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
       decoration: BoxDecoration(
         color: colors.muted,
-        borderRadius: const BorderRadius.all(Radius.circular(8)),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(
           color: _isError
               ? colors.destructive.withValues(alpha: AppOpacity.scrim)
@@ -1018,13 +1018,7 @@ class _AssistantActions extends ConsumerWidget {
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: message.content));
               if (!context.mounted) return;
-              final messenger = ScaffoldMessenger.maybeOf(context);
-              messenger?.showSnackBar(
-                SnackBar(
-                  content: Text(l10n.aiChatMessageCopied),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
+              AppMessenger.show(context, ToastKind.success, l10n.aiChatMessageCopied);
             },
           ),
         if (canRegenerate)

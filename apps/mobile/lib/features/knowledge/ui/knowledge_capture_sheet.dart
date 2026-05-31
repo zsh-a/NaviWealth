@@ -576,8 +576,7 @@ class _DiffRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: typography.xs
-              .copyWith(color: colors.mutedForeground, fontWeight: FontWeight.w600),
+          style: typography.xs.copyWith(color: colors.mutedForeground),
         ),
         const SizedBox(height: AppSpacing.s2),
         Text(

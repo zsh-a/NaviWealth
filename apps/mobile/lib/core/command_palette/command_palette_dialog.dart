@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart' show Icons, Navigator;
-import '../../design_system/design_system.dart';
+import 'package:flutter/material.dart' show Colors, Navigator;
 import 'package:flutter/services.dart';
-import '../../design_system/design_system.dart';
 import 'package:flutter/widgets.dart';
+
+import '../../design_system/design_system.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -201,11 +201,11 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: colors.background,
-          borderRadius: const BorderRadius.all(Radius.circular(12)),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: colors.border, width: 1),
         ),
         child: ClipRRect(
-          borderRadius: const BorderRadius.all(Radius.circular(12)),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
@@ -302,7 +302,7 @@ class _CommandRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
-    final Color background = selected ? colors.muted : const Color(0x00000000);
+    final Color background = selected ? colors.muted : Colors.transparent;
     final Color labelColor = colors.foreground;
     final Color iconColor = colors.mutedForeground;
 

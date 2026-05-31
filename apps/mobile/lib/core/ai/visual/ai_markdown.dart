@@ -1225,12 +1225,7 @@ Future<void> _confirmAndOpen(BuildContext context, String url) async {
   if (uri == null) return;
   final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!launched && context.mounted) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text(AppLocalizations.of(context).aiChatLinkOpenFailed),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    AppMessenger.show(context, ToastKind.error, AppLocalizations.of(context).aiChatLinkOpenFailed);
   }
 }
 
