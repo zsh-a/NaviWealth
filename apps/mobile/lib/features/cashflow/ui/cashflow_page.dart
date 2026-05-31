@@ -609,34 +609,11 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              FLucideIcons.wallet,
-              size: AppIconSizes.heroLg,
-              color: context.theme.colors.primary,
-            ),
-            const SizedBox(height: AppSpacing.s16),
-            Text(
-              l10n.cashFlowEmptyTitle,
-              style: context.theme.typography.lg,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            Text(
-              l10n.cashFlowEmptyBody,
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+    return AppEmptyState(
+      icon: FLucideIcons.wallet,
+      title: l10n.cashFlowEmptyTitle,
+      message: l10n.cashFlowEmptyBody,
+      iconSize: AppIconSizes.heroLg,
     );
   }
 }

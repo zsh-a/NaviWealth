@@ -500,7 +500,7 @@ class _SankeyPainter extends CustomPainter {
       _drawRibbon(canvas, source, target, flow.color.withValues(alpha: AppOpacity.muted));
       nodePaint.color = flow.color;
       canvas.drawRRect(
-        RRect.fromRectAndRadius(source, const Radius.circular(4)),
+        RRect.fromRectAndRadius(source, const Radius.circular(AppRadius.xs)),
         nodePaint,
       );
       _drawLabel(
