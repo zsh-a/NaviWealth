@@ -5,10 +5,8 @@
 ///  * natural-language category extraction (`queryKeywords`),
 ///  * ledger write-back (`expenseSlug`).
 ///
-/// Hints are finer-grained than the current Finance expense accounts:
-/// `coffee`, `food_delivery`, and `grocery` all persist under
-/// `expense:food`, while analytics can still use the finer descriptor
-/// when it is safely inferred.
+/// Hints are aligned with the seeded Finance expense accounts where possible;
+/// analytics can still use finer descriptors when safely inferred.
 library;
 
 import 'merchant_key.dart';
@@ -46,7 +44,7 @@ final RegExp _cjkRun = RegExp(r'[一-鿿]');
 const List<_CategoryTaxon> _taxonomy = <_CategoryTaxon>[
   _CategoryTaxon(
     hint: 'food_delivery',
-    expenseSlug: 'food',
+    expenseSlug: 'dining',
     aliases: <String>[
       'uber eats',
       'ubereats',
@@ -62,7 +60,7 @@ const List<_CategoryTaxon> _taxonomy = <_CategoryTaxon>[
   ),
   _CategoryTaxon(
     hint: 'coffee',
-    expenseSlug: 'food',
+    expenseSlug: 'coffee',
     aliases: <String>[
       'starbucks',
       'luckin',
@@ -77,7 +75,7 @@ const List<_CategoryTaxon> _taxonomy = <_CategoryTaxon>[
   ),
   _CategoryTaxon(
     hint: 'grocery',
-    expenseSlug: 'food',
+    expenseSlug: 'groceries',
     aliases: <String>[
       'whole foods',
       'wholefoods',
@@ -99,7 +97,7 @@ const List<_CategoryTaxon> _taxonomy = <_CategoryTaxon>[
   ),
   _CategoryTaxon(
     hint: 'subscription',
-    expenseSlug: 'entertainment',
+    expenseSlug: 'subscriptions',
     aliases: <String>[
       'netflix',
       'spotify',
@@ -132,7 +130,7 @@ const List<_CategoryTaxon> _taxonomy = <_CategoryTaxon>[
   ),
   _CategoryTaxon(
     hint: 'utilities',
-    expenseSlug: 'communication',
+    expenseSlug: 'utilities',
     aliases: <String>[
       'verizon',
       'comcast',
@@ -147,17 +145,25 @@ const List<_CategoryTaxon> _taxonomy = <_CategoryTaxon>[
 ];
 
 const Set<String> _expenseSlugs = <String>{
-  'food',
+  'dining',
+  'groceries',
+  'coffee',
   'transport',
+  'rideHailing',
   'housing',
+  'utilities',
   'household',
   'entertainment',
   'medical',
+  'fitness',
   'education',
   'shopping',
+  'subscriptions',
   'travel',
   'communication',
+  'familySupport',
   'gift',
+  'pets',
   'trading',
   'tax',
   'other',

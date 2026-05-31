@@ -65,6 +65,7 @@ const List<AccountIconChoice> kAccountIconCatalogue = [
   // Health / leisure
   AccountIconChoice('medical_services', FLucideIcons.briefcaseMedical),
   AccountIconChoice('fitness_center', FLucideIcons.dumbbell),
+  AccountIconChoice('pets', FLucideIcons.pawPrint),
   AccountIconChoice('movie', FLucideIcons.film),
   AccountIconChoice('sports_esports', FLucideIcons.gamepad2),
 

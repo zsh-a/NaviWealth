@@ -7803,7 +7803,7 @@ abstract class AppLocalizations {
   /// **'New Taiwan Dollar'**
   String get currencyNameTWD;
 
-  /// Default label above the expense-form category grid picker.
+  /// Default label for the expense-form category picker.
   ///
   /// In en, this message translates to:
   /// **'Category'**

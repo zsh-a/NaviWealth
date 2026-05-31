@@ -160,12 +160,13 @@ void main() {
 
   group('category helpers', () {
     test('maps fine-grained hints to seeded expense account slugs', () {
-      expect(expenseCategorySlugForHint('coffee'), 'food');
-      expect(expenseCategorySlugForHint('food_delivery'), 'food');
-      expect(expenseCategorySlugForHint('food delivery'), 'food');
-      expect(expenseCategorySlugForHint('food-delivery'), 'food');
-      expect(expenseCategorySlugForHint('subscription'), 'entertainment');
-      expect(expenseCategorySlugForHint('utilities'), 'communication');
+      expect(expenseCategorySlugForHint('coffee'), 'coffee');
+      expect(expenseCategorySlugForHint('food_delivery'), 'dining');
+      expect(expenseCategorySlugForHint('food delivery'), 'dining');
+      expect(expenseCategorySlugForHint('food-delivery'), 'dining');
+      expect(expenseCategorySlugForHint('grocery'), 'groceries');
+      expect(expenseCategorySlugForHint('subscription'), 'subscriptions');
+      expect(expenseCategorySlugForHint('utilities'), 'utilities');
       expect(expenseCategorySlugForHint('unknown'), 'other');
     });
 
@@ -190,7 +191,7 @@ void main() {
           amountMinor: '-450',
           currency: 'USD',
           occurredAt: DateTime.utc(2026, 5, 1),
-          categoryId: 'system-account:u1:expense:food',
+          categoryId: 'system-account:u1:expense:coffee',
         ),
       );
       final manualGift = categoryHintForTransaction(
@@ -210,12 +211,12 @@ void main() {
           amountMinor: '-450',
           currency: 'USD',
           occurredAt: DateTime.utc(2026, 5, 1),
-          categoryId: 'system-account:u1:expense:food',
+          categoryId: 'system-account:u1:expense:dining',
         ),
       );
       expect(coffee, 'coffee');
       expect(manualGift, 'gift');
-      expect(stored, 'food');
+      expect(stored, 'dining');
     });
   });
 }

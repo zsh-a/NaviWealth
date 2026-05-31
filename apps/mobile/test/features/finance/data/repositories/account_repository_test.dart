@@ -181,10 +181,10 @@ void main() {
 
     test('seedSystemAccounts inserts the full tree once', () async {
       final inserted = await repo.seedSystemAccounts();
-      // 3 roots (income / expense / equity) + expense subtree leaves.
-      // 29 total today — the count is asserted concretely so a future
+      // 3 roots plus seeded income / expense / equity leaves.
+      // 37 total today — the count is asserted concretely so a future
       // seed change has to update the contract.
-      expect(inserted, 29);
+      expect(inserted, 37);
 
       // Re-running is a free no-op — same primary keys, no duplicates.
       final reseeded = await repo.seedSystemAccounts();
@@ -192,7 +192,7 @@ void main() {
 
       final ops = outbox.queued;
       // Inserts on the first call only; the no-op doesn't queue.
-      expect(ops, hasLength(29));
+      expect(ops, hasLength(37));
       expect(ops.every((o) => o.table == 'accounts'), isTrue);
     });
 
@@ -374,14 +374,16 @@ void main() {
     test('walkSubtree returns root then all descendants', () async {
       await repo.seedSystemAccounts();
       final subtree = await repo.walkSubtree('system-account:u-test:expense');
-      // Expenses subtree: 1 root + 13 direct children (one per
-      // expense slug/branch) + 1 trading branch + 3 trading
-      // grand-children + 1 tax grand-child = 19 nodes.
-      expect(subtree, hasLength(19));
+      // Expenses subtree: 1 root + 22 direct children (everyday leaves plus
+      // trading/tax branches) + 3 trading grand-children + 1 tax grand-child.
+      expect(subtree, hasLength(27));
       expect(subtree.first.id, 'system-account:u-test:expense');
       expect(
         subtree.map((a) => a.id),
         containsAll([
+          'system-account:u-test:expense:dining',
+          'system-account:u-test:expense:groceries',
+          'system-account:u-test:expense:coffee',
           'system-account:u-test:expense:trading',
           'system-account:u-test:expense:trading:fee',
           'system-account:u-test:expense:trading:tax',
@@ -389,8 +391,12 @@ void main() {
           'system-account:u-test:expense:tax',
           'system-account:u-test:expense:tax:withholding',
           'system-account:u-test:expense:transport',
+          'system-account:u-test:expense:utilities',
+          'system-account:u-test:expense:subscriptions',
           'system-account:u-test:expense:education',
+          'system-account:u-test:expense:fitness',
           'system-account:u-test:expense:gift',
+          'system-account:u-test:expense:pets',
         ]),
       );
     });

@@ -2431,7 +2431,7 @@
   "currencyNameTWD": "New Taiwan Dollar",
 
   "expenseCategoryPickerLabelDefault": "Category",
-  "@expenseCategoryPickerLabelDefault": { "description": "Default label above the expense-form category grid picker." },
+  "@expenseCategoryPickerLabelDefault": { "description": "Default label for the expense-form category picker." },
   "expenseCategoryPickerRequired": "Pick a category",
   "@expenseCategoryPickerRequired": { "description": "Validator message when no expense category is selected." },
 
