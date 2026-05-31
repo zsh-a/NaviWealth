@@ -47,12 +47,7 @@ class WheelLifecyclePage extends ConsumerWidget {
             );
           }
           return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s16,
-              AppSpacing.s12,
-              AppSpacing.s16,
-              AppSpacing.s24,
-            ),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s24, ),
             itemCount: cycles.length,
             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
             itemBuilder: (context, i) => _WheelTile(cycle: cycles[i]),

@@ -98,11 +98,7 @@ class _WealthHubBody extends StatelessWidget {
     final width = MediaQuery.sizeOf(context).width;
     final hPad = Breakpoints.isMobile(width) ? AppSpacing.s16 : AppSpacing.s24;
     return ListView(
-      padding: EdgeInsets.fromLTRB(
-        hPad,
-        AppSpacing.s12,
-        hPad,
-        AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
+      padding: EdgeInsets.fromLTRB(hPad, AppSpacing.s12, hPad, AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
         _NetWorthHero(

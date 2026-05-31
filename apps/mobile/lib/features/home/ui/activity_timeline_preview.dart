@@ -42,7 +42,7 @@ class ActivityTimelinePreview extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.only(left: 4, top: 4, bottom: AppSpacing.s8),
+              padding: const EdgeInsets.only(left: AppSpacing.s4, top: AppSpacing.s4, bottom: AppSpacing.s8),
               child: Row(
                 children: [
                   Expanded(
@@ -129,7 +129,7 @@ class _PreviewRow extends StatelessWidget {
     return FTappable(
       onPress: () => context.go(AppRoutes.activity),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s10),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s10),
         child: Row(
           children: [
             Container(

@@ -123,7 +123,7 @@ class _ModeCard extends StatelessWidget {
     final colors = context.theme.colors;
     return SoftCard(
       onPress: onTap,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 18),
       child: Row(
         children: [
           Container(

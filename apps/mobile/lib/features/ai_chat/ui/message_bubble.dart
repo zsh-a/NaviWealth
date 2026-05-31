@@ -1066,7 +1066,7 @@ class _ActionButton extends StatelessWidget {
     return FTappable(
       onPress: onPressed,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: AppSpacing.s4),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s4),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

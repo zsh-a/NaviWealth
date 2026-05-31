@@ -8,6 +8,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/route_paths.dart';
@@ -42,7 +43,7 @@ final knowledgeChatRailContentProvider =
               : (d.rationaleMd.length > 140
                   ? '${d.rationaleMd.substring(0, 140)}…'
                   : d.rationaleMd),
-          icon: Icons.psychology_outlined,
+          icon: FLucideIcons.brain,
           route: AppRoutes.knowledgeLibrary,
         ),
       )

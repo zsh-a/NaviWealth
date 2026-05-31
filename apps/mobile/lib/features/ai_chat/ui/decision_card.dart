@@ -156,7 +156,7 @@ class _RecommendedBadge extends StatelessWidget {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: 1),
       decoration: BoxDecoration(
         color: colors.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.xs),

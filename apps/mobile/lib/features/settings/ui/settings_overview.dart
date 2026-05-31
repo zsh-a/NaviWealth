@@ -319,7 +319,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 24, 12, 8),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s24, AppSpacing.s12, AppSpacing.s8),
       child: Text(
         title.toUpperCase(),
         style: context.theme.typography.xs2.copyWith(
@@ -339,7 +339,7 @@ class _SectionDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
       child: Container(
         height: 1,
         color: context.theme.colors.foreground.withValues(alpha: 0.05),
@@ -437,7 +437,7 @@ class _AppearanceSection extends ConsumerWidget {
           onChanged: (m) => ref.read(marketColorModeProvider.notifier).set(m),
         ),
         const Padding(
-          padding: EdgeInsets.fromLTRB(14, 0, 14, 8),
+          padding: EdgeInsets.fromLTRB(AppSpacing.s14, 0, AppSpacing.s14, AppSpacing.s8),
           child: _MarketColorPreview(),
         ),
         _SectionDivider(),
@@ -499,7 +499,7 @@ class _AboutTile extends ConsumerWidget {
       },
     );
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s10),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s10),
       child: Row(
         children: [
           Icon(FLucideIcons.info, size: AppIconSizes.h18, color: colors.mutedForeground),
@@ -784,7 +784,7 @@ class _LocalModeStatusRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s10),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s10),
       child: Row(
         children: [
           Icon(

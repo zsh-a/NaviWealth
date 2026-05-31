@@ -200,11 +200,7 @@ class _AccountsByType extends StatelessWidget {
     final width = MediaQuery.sizeOf(context).width;
     final hPad = Breakpoints.isMobile(width) ? 16.0 : 24.0;
     return ListView(
-      padding: EdgeInsets.fromLTRB(
-        hPad,
-        4,
-        hPad,
-        80 + MediaQuery.paddingOf(context).bottom,
+      padding: EdgeInsets.fromLTRB(hPad, AppSpacing.s4, hPad, 80 + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
         AccountsGroupedSections(

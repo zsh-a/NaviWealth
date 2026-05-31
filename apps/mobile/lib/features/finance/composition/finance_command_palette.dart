@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -19,7 +20,7 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'nav.activity',
       label: l10n.navActivity,
-      icon: Icons.receipt_long_outlined,
+      icon: FLucideIcons.receipt,
       keywords: const <String>[
         AppRoutes.activity,
         'activity',
@@ -33,7 +34,7 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'nav.wealth',
       label: l10n.navWealth,
-      icon: Icons.account_balance_wallet_outlined,
+      icon: FLucideIcons.wallet,
       keywords: const <String>[
         AppRoutes.wealth,
         // Legacy keyword kept so users typing "/accounts" still find the
@@ -53,7 +54,7 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'nav.plan',
       label: l10n.navPlan,
-      icon: Icons.insights_outlined,
+      icon: FLucideIcons.lightbulb,
       keywords: const <String>[
         AppRoutes.plan,
         'plan',
@@ -68,7 +69,7 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'nav.expenses',
       label: l10n.navExpenses,
-      icon: Icons.receipt_long_outlined,
+      icon: FLucideIcons.receipt,
       keywords: const <String>[AppRoutes.activityExpenses, 'expenses', '支出'],
       run: (BuildContext ctx) => ctx.go(AppRoutes.activityExpenses),
     ),
@@ -76,7 +77,7 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'nav.dividends',
       label: l10n.dividendCenterTitle,
-      icon: Icons.payments_outlined,
+      icon: FLucideIcons.creditCard,
       keywords: <String>[
         AppRoutes.cashflowDividends,
         'dividends',
@@ -90,7 +91,7 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'nav.projection',
       label: l10n.planAnalyticsTitle,
-      icon: Icons.pie_chart_outline,
+      icon: FLucideIcons.chartPie,
       keywords: const <String>[
         AppRoutes.planProjection,
         '/accounts/analytics',
@@ -103,14 +104,14 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'nav.fire',
       label: l10n.planFireTitle,
-      icon: Icons.flag_outlined,
+      icon: FLucideIcons.flag,
       keywords: const <String>[AppRoutes.planFire, '/accounts/fire', 'fire'],
       run: (BuildContext ctx) => ctx.go(AppRoutes.planFire),
     ),
     CommandPaletteEntry(
       id: 'nav.incomePlanner',
       label: l10n.incomePlannerTitle,
-      icon: Icons.candlestick_chart_outlined,
+      icon: FLucideIcons.candlestickChart,
       keywords: <String>[
         AppRoutes.planIncome,
         '/accounts/income',
@@ -129,7 +130,7 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'action.newTrade',
       label: l10n.commandPaletteNewTrade,
-      icon: Icons.add_chart_outlined,
+      icon: FLucideIcons.plus,
       keywords: const <String>[
         AppRoutes.tradeEntry,
         'trade',
@@ -142,7 +143,7 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'action.newDividend',
       label: l10n.corpActionTypeCashDividend,
-      icon: Icons.payments_outlined,
+      icon: FLucideIcons.creditCard,
       keywords: <String>[
         AppRoutes.wealthCorporateAction,
         'dividend',
@@ -157,7 +158,7 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'action.corporateAction',
       label: l10n.corpActionTitle,
-      icon: Icons.account_tree_outlined,
+      icon: FLucideIcons.folderTree,
       keywords: <String>[
         AppRoutes.wealthCorporateAction,
         'corporate action',
@@ -173,7 +174,7 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
     CommandPaletteEntry(
       id: 'action.newExpense',
       label: l10n.commandPaletteNewExpense,
-      icon: Icons.add_card_outlined,
+      icon: FLucideIcons.creditCard,
       keywords: const <String>[
         AppRoutes.expenseNew,
         'expense',

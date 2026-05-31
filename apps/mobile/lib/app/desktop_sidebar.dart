@@ -250,7 +250,7 @@ class _CollapseToggle extends StatelessWidget {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: AppSpacing.s8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s8),
       child: FTooltip(
         tipBuilder: (_, _) => Text(
           collapsed
@@ -269,7 +269,7 @@ class _CollapseToggle extends StatelessWidget {
                 Icon(
                   collapsed
                       ? FLucideIcons.chevronRight
-                      : Icons.chevron_left_rounded,
+                      : FLucideIcons.chevronLeft,
                   color: colors.mutedForeground,
                 ),
               ],

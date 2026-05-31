@@ -44,7 +44,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
 
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: AppSpacing.s8),
       child: Container(
         decoration: BoxDecoration(
           color: colors.muted,
@@ -104,7 +104,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                     ),
                     Icon(
                       _expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
-                      size: 18,
+                      size: AppIconSizes.h18,
                       color: context.theme.colors.mutedForeground,
                     ),
                   ],
@@ -113,7 +113,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
             ),
             if (jumps.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.s12, 0, AppSpacing.s12, AppSpacing.s8),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 4,
@@ -129,7 +129,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
               ),
             if (_expanded)
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.s12, 0, AppSpacing.s12, AppSpacing.s12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

@@ -13,6 +13,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../../../design_system/design_system.dart';
 import 'ai_motion.dart';
 import 'ai_tone.dart';
 import 'ai_typography.dart';
@@ -59,7 +60,7 @@ class AiPill extends StatelessWidget {
     final pill = AnimatedContainer(
       duration: AiMotion.short,
       curve: AiMotion.standard,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
       decoration: ShapeDecoration(
         color: bg,
         shape: StadiumBorder(side: side),

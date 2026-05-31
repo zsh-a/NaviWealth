@@ -12,6 +12,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import 'ai_tone.dart';
 
@@ -27,7 +28,7 @@ class AiSparkle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Icon(
-      Icons.auto_awesome_outlined,
+      FLucideIcons.sparkles,
       size: size,
       color: active ? AiTone.active(context) : AiTone.muted(context),
     );

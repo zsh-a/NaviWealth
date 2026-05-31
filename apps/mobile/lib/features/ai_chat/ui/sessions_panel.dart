@@ -111,7 +111,7 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
           final now = DateTime.now();
           final groups = _groupByRecency(filtered, now, l10n);
           return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: AppSpacing.s8),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s8),
             itemCount: groups.length,
             itemBuilder: (context, i) {
               final group = groups[i];
@@ -243,7 +243,7 @@ class _PanelShell extends StatelessWidget {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 8, 12),
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s8, AppSpacing.s12),
                   child: Row(
                     children: [
                       Icon(
@@ -275,7 +275,7 @@ class _PanelShell extends StatelessWidget {
                 ),
                 if (searchBar != null)
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.s12, 0, AppSpacing.s12, AppSpacing.s10),
                     child: searchBar!,
                   ),
               ],
@@ -572,7 +572,7 @@ class _ActionRow extends StatelessWidget {
       child: FTappable(
         onPress: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: AppSpacing.s12),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s12),
           child: Row(
             children: [
               Icon(icon, size: AppIconSizes.md, color: fg),

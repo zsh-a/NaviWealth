@@ -8,6 +8,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../app/route_paths.dart';
 import '../core/auth/domain_scope.dart';
@@ -18,30 +19,30 @@ DomainShellSpec financeDomainShell(AppLocalizations l10n) {
   return DomainShellSpec(
     scope: DomainScope.finance,
     label: 'FinanceOS',
-    icon: Icons.account_balance_wallet_outlined,
-    selectedIcon: Icons.account_balance_wallet,
+    icon: FLucideIcons.wallet,
+    selectedIcon: FLucideIcons.wallet,
     tabs: <DomainShellTab>[
       DomainShellTab(
-        icon: Icons.dashboard_outlined,
-        selectedIcon: Icons.dashboard,
+        icon: FLucideIcons.layoutDashboard,
+        selectedIcon: FLucideIcons.layoutDashboard,
         label: l10n.navToday,
         routePath: AppRoutes.home,
       ),
       DomainShellTab(
-        icon: Icons.receipt_long_outlined,
-        selectedIcon: Icons.receipt_long,
+        icon: FLucideIcons.receipt,
+        selectedIcon: FLucideIcons.receipt,
         label: l10n.navActivity,
         routePath: AppRoutes.activity,
       ),
       DomainShellTab(
-        icon: Icons.account_balance_wallet_outlined,
-        selectedIcon: Icons.account_balance_wallet,
+        icon: FLucideIcons.wallet,
+        selectedIcon: FLucideIcons.wallet,
         label: l10n.navWealth,
         routePath: AppRoutes.wealth,
       ),
       DomainShellTab(
-        icon: Icons.insights_outlined,
-        selectedIcon: Icons.insights,
+        icon: FLucideIcons.lightbulb,
+        selectedIcon: FLucideIcons.lightbulb,
         label: l10n.navPlan,
         routePath: AppRoutes.plan,
       ),

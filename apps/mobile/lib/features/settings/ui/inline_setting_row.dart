@@ -89,10 +89,10 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
           _popover.toggle();
         },
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s10),
           child: Row(
             children: [
-              Icon(widget.icon, size: 18, color: colors.mutedForeground),
+              Icon(widget.icon, size: AppIconSizes.h18, color: colors.mutedForeground),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -150,7 +150,7 @@ class _PopoverContent<T> extends StatelessWidget {
     // Here we just need a min-sized scroll view holding the rows; the
     // Column wraps naturally because the parent gives a bounded width.
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -195,7 +195,7 @@ class _OptionRow<T> extends StatelessWidget {
     return FTappable(
       onPress: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: 9),
         child: Row(
           children: [
             SizedBox(
@@ -246,10 +246,10 @@ class InlineSwitchRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s10),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: colors.mutedForeground),
+          Icon(icon, size: AppIconSizes.h18, color: colors.mutedForeground),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -259,7 +259,7 @@ class InlineSwitchRow extends StatelessWidget {
                 Text(label, style: context.theme.typography.sm),
                 if (subtitle != null)
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.only(top: AppSpacing.s2),
                     child: Text(
                       subtitle!,
                       style: context.theme.typography.xs.copyWith(
@@ -327,10 +327,10 @@ class InlineLinkRow extends StatelessWidget {
     return FTappable(
       onPress: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s10),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: colors.mutedForeground),
+            Icon(icon, size: AppIconSizes.h18, color: colors.mutedForeground),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -340,7 +340,7 @@ class InlineLinkRow extends StatelessWidget {
                   Text(label, style: context.theme.typography.sm),
                   if (subtitle != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 2),
+                      padding: const EdgeInsets.only(top: AppSpacing.s2),
                       child: Text(
                         subtitle!,
                         style: context.theme.typography.xs.copyWith(
@@ -399,7 +399,7 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s2),
       decoration: BoxDecoration(
         color: colors.foreground.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(AppRadius.xs),

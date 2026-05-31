@@ -31,7 +31,7 @@ class ExpenseReportBody extends ConsumerWidget {
     };
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s8, AppSpacing.s12, AppSpacing.s24),
       children: [
         const _RangeChips(),
         const SizedBox(height: AppSpacing.s12),

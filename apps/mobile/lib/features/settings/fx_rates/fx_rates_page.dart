@@ -118,7 +118,7 @@ class _RateList extends ConsumerWidget {
             return true;
           },
           child: SoftCard(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s12),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s12),
             child: Row(
               children: [
                 Container(

@@ -697,7 +697,7 @@ class _OneTapView extends ConsumerWidget {
     final registry = ref.watch(proposalKindRegistryProvider);
     return Container(
       margin: const EdgeInsets.only(top: AppSpacing.s8),
-      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s10, AppSpacing.s8, AppSpacing.s10),
       decoration: BoxDecoration(
         color: AiTone.surfaceTint(context).withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -1420,7 +1420,7 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
     if (widget.pending.length < 2) return const SizedBox.shrink();
     return Container(
       margin: const EdgeInsets.only(top: AppSpacing.s8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: AppSpacing.s6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
       decoration: BoxDecoration(
         color: colors.primary.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -1537,7 +1537,7 @@ class _WarningCallout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s10, AppSpacing.s8, AppSpacing.s10, AppSpacing.s8),
       decoration: BoxDecoration(
         color: AiTone.surfaceTint(context),
         borderRadius: BorderRadius.circular(AppRadius.sm),

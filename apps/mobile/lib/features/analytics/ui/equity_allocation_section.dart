@@ -246,7 +246,7 @@ class _UnclassifiedBanner extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: AppSpacing.s12),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s12),
         child: Row(
           children: [
             Icon(

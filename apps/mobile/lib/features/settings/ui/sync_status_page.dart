@@ -133,7 +133,7 @@ class _HeroCard extends StatelessWidget {
     final syncing = event.status == SyncStatus.syncing;
 
     return SoftCard(
-      padding: const EdgeInsets.fromLTRB(20, 20, 12, 20),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s20, AppSpacing.s20, AppSpacing.s12, AppSpacing.s20),
       child: Row(
         children: [
           _StatusOrb(palette: palette, status: event.status),
@@ -513,7 +513,7 @@ class _LocalCountsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s8, AppSpacing.s12, AppSpacing.s4),
             child: Text(
               l10n.syncStatusLocalCountsHeader,
               style: context.theme.typography.xs.copyWith(

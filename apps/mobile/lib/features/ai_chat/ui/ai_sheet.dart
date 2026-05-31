@@ -779,7 +779,7 @@ class _InvocationHeader extends StatelessWidget {
     // Single inline header row: sparkle + intent label + middot +
     // object label, so context stays visible while the body scrolls.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s20, AppSpacing.s4, AppSpacing.s20, AppSpacing.s12),
       child: Row(
         children: [
           const AiSparkle(),
@@ -833,7 +833,7 @@ class _BodySkeletonState extends State<_BodySkeleton>
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s24),
       child: AnimatedBuilder(
         animation: _ctrl,
         builder: (context, _) {

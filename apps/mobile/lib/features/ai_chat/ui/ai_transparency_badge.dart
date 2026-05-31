@@ -6,6 +6,7 @@
 library;
 
 import 'package:flutter/widgets.dart';
+import '../../../design_system/design_system.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -32,14 +33,14 @@ class AiTransparencyBadge extends ConsumerWidget {
     // info icon at the end advertises the affordance — the muted text
     // alone never read as a button.
     return Padding(
-      padding: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.only(top: AppSpacing.s6),
       child: FTooltip(
         tipBuilder: (_, _) => Text(l10n.aiChatTransparencyOpenDetail),
         child: FTappable(
           onPress: () =>
               context.go(AppRoutes.settingsAiTransparencyDetail(messageId)),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
             child: Row(
               children: [
                 Flexible(

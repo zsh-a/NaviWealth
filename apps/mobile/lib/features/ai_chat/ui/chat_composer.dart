@@ -92,7 +92,7 @@ class _ChatComposerState extends State<ChatComposer> {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s8, AppSpacing.s12, AppSpacing.s12),
         child: SafeArea(
           top: false,
           child: Row(

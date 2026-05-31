@@ -137,7 +137,7 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
             child: Container(
               width: 36,
               height: 4,
-              margin: const EdgeInsets.only(top: 10, bottom: AppSpacing.s6),
+              margin: const EdgeInsets.only(top: AppSpacing.s10, bottom: AppSpacing.s6),
               decoration: BoxDecoration(
                 color: context.theme.colors.mutedForeground.withValues(
                   alpha: 0.35,
@@ -148,7 +148,7 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
           ),
         if (widget.showTitle)
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 14, 12, 8),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.s20, AppSpacing.s14, AppSpacing.s12, AppSpacing.s8),
             child: Row(
               children: [
                 Expanded(
@@ -181,7 +181,7 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
         ),
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.s20, 18, AppSpacing.s20, AppSpacing.s24),
             children: [
               _AllocationDonut(
                 groups: groups,

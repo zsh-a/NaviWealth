@@ -118,11 +118,11 @@ class _SymbolFieldState extends ConsumerState<SymbolField> {
     final asyncSearch = ref.watch(securitiesSearchServiceProvider);
     return asyncSearch.when(
       loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
         child: LinearProgressIndicator(),
       ),
       error: (e, _) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
         child: Text(
           l10n.tradeEntryCatalogLoadError('$e'),
           style: context.theme.typography.sm,
@@ -362,7 +362,7 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
           hint: effectiveHint,
           prefixBuilder: (ctx, style, variants) => const Padding(
             padding: EdgeInsetsDirectional.only(start: 12, end: 8),
-            child: Icon(FLucideIcons.search, size: 18),
+            child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
           ),
           suffixBuilder: _selected != null
               ? (ctx, style, variants) => Padding(
@@ -370,7 +370,7 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
                   child: FButton.icon(
                     variant: FButtonVariant.ghost,
                     onPress: _clear,
-                    child: const Icon(FLucideIcons.x, size: 18),
+                    child: const Icon(FLucideIcons.x, size: AppIconSizes.h18),
                   ),
                 )
               : _loading
@@ -389,7 +389,7 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
         ),
         if (showDropdown)
           Padding(
-            padding: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.only(top: AppSpacing.s4),
             child: FCard.raw(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxHeight: 320),
@@ -495,7 +495,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s4),
       child: Text(
         text,
         style: context.theme.typography.xs.copyWith(

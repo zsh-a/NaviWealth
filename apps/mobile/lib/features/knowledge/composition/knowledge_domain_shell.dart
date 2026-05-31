@@ -7,6 +7,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../core/auth/domain_scope.dart';
@@ -17,24 +18,24 @@ DomainShellSpec knowledgeDomainShell(AppLocalizations l10n) {
   return const DomainShellSpec(
     scope: DomainScope.knowledge,
     label: 'KnowledgeOS',
-    icon: Icons.psychology_outlined,
-    selectedIcon: Icons.psychology,
+    icon: FLucideIcons.brain,
+    selectedIcon: FLucideIcons.brain,
     tabs: <DomainShellTab>[
       DomainShellTab(
-        icon: Icons.inbox_outlined,
-        selectedIcon: Icons.inbox,
+        icon: FLucideIcons.inbox,
+        selectedIcon: FLucideIcons.inbox,
         label: '收件箱',
         routePath: AppRoutes.knowledgeInbox,
       ),
       DomainShellTab(
-        icon: Icons.library_books_outlined,
-        selectedIcon: Icons.library_books,
+        icon: FLucideIcons.bookOpen,
+        selectedIcon: FLucideIcons.bookOpen,
         label: '资料库',
         routePath: AppRoutes.knowledgeLibrary,
       ),
       DomainShellTab(
-        icon: Icons.fact_check_outlined,
-        selectedIcon: Icons.fact_check,
+        icon: FLucideIcons.clipboardCheck,
+        selectedIcon: FLucideIcons.clipboardCheck,
         label: '复盘',
         routePath: AppRoutes.knowledgeReview,
       ),

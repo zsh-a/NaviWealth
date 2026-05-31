@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/route_error_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -36,7 +37,7 @@ void main() {
 
     expect(find.text('Page not found'), findsOneWidget);
     expect(find.textContaining('/does-not-exist'), findsOneWidget);
-    expect(find.byIcon(Icons.home_outlined), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.home), findsOneWidget);
   });
 
   testWidgets('back-to-overview navigates to /', (tester) async {
@@ -44,7 +45,7 @@ void main() {
     await tester.pumpWidget(_wrap(router));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.home_outlined));
+    await tester.tap(find.byIcon(FLucideIcons.home));
     await tester.pumpAndSettle();
 
     expect(find.text('home'), findsOneWidget);

@@ -292,7 +292,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                     // [accountSideForCategory] on every selection and
                     // is never user-editable.
                     Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: AppSpacing.s8),
+                      padding: const EdgeInsets.only(left: AppSpacing.s4, bottom: AppSpacing.s8),
                       child: Text(
                         l10n.accountFormTypeLabel,
                         style: context.theme.typography.sm.copyWith(

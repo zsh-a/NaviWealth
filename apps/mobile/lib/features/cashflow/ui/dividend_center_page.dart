@@ -64,11 +64,7 @@ class _DividendCenterBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.s16,
-        AppSpacing.s16,
-        AppSpacing.s16,
-        AppSpacing.s16 + MediaQuery.paddingOf(context).bottom,
+      padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + MediaQuery.paddingOf(context).bottom,
       ),
       child: AdaptiveContentFrame(
         maxWidth: AdaptiveMaxWidth.dashboard,

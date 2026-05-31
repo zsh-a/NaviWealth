@@ -8,6 +8,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../core/auth/domain_scope.dart';
@@ -24,24 +25,24 @@ DomainShellSpec healthDomainShell(AppLocalizations l10n) {
   return const DomainShellSpec(
     scope: DomainScope.health,
     label: 'HealthOS',
-    icon: Icons.favorite_outline,
-    selectedIcon: Icons.favorite,
+    icon: FLucideIcons.heart,
+    selectedIcon: FLucideIcons.heart,
     tabs: <DomainShellTab>[
       DomainShellTab(
-        icon: Icons.wb_sunny_outlined,
-        selectedIcon: Icons.wb_sunny,
+        icon: FLucideIcons.sun,
+        selectedIcon: FLucideIcons.sun,
         label: '今日',
         routePath: AppRoutes.healthToday,
       ),
       DomainShellTab(
-        icon: Icons.show_chart_outlined,
-        selectedIcon: Icons.show_chart,
+        icon: FLucideIcons.trendingUp,
+        selectedIcon: FLucideIcons.trendingUp,
         label: '趋势',
         routePath: AppRoutes.healthTrend,
       ),
       DomainShellTab(
-        icon: Icons.insights_outlined,
-        selectedIcon: Icons.insights,
+        icon: FLucideIcons.lightbulb,
+        selectedIcon: FLucideIcons.lightbulb,
         label: '计划',
         routePath: AppRoutes.healthPlan,
       ),

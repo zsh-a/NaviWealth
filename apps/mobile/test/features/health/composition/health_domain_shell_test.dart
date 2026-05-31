@@ -36,10 +36,12 @@ void main() {
     test('every tab carries both default + selected icons', () {
       final spec = healthDomainShell(l10n);
       for (final tab in spec.tabs) {
-        // Selected variant should differ from the outlined default so
-        // app_shell can render a visible active-tab cue.
-        expect(tab.icon, isNot(equals(tab.selectedIcon)),
-            reason: 'tab ${tab.label} should pair an outline + filled icon');
+        // Both icon and selectedIcon must be non-null. Lucide icons are
+        // outline-style by design; the active-tab cue comes from color,
+        // not a filled variant.
+        expect(tab.icon, isNotNull, reason: 'tab ${tab.label} icon');
+        expect(tab.selectedIcon, isNotNull,
+            reason: 'tab ${tab.label} selectedIcon');
       }
     });
   });

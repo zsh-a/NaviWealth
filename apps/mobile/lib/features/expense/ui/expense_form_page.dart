@@ -461,7 +461,7 @@ class _NoAccountsHint extends StatelessWidget {
     final colors = context.theme.colors;
     final semantic = SemanticColors.of(context);
     return SoftCard(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s14, AppSpacing.s14, AppSpacing.s14, AppSpacing.s12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

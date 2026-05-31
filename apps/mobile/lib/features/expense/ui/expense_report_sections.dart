@@ -158,12 +158,12 @@ class ExpenseCategoryListCard extends StatelessWidget {
     }
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: AppSpacing.s8),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s8, AppSpacing.s12, AppSpacing.s4),
               child: Text(
                 l10n.expenseReportCategoryDetail,
                 style: context.theme.typography.md,

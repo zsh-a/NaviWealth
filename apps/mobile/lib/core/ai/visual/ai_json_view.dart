@@ -220,7 +220,7 @@ class _JsonNodeState extends State<_JsonNode> {
           child: !_expanded
               ? const SizedBox(width: double.infinity)
               : Padding(
-                  padding: const EdgeInsets.only(left: 14),
+                  padding: const EdgeInsets.only(left: AppSpacing.s14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

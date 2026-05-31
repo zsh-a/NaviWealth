@@ -467,12 +467,7 @@ class _MdCode extends _MdBlock {
         children: [
           if (lang.isNotEmpty || closed)
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s12,
-                AppSpacing.s6,
-                AppSpacing.s4,
-                AppSpacing.s2,
-              ),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s6, AppSpacing.s4, AppSpacing.s2, ),
               child: Row(
                 children: [
                   Expanded(
@@ -500,9 +495,7 @@ class _MdCode extends _MdBlock {
           // GitHub/IDE behaviour).
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.s12,
-              (lang.isNotEmpty || closed) ? AppSpacing.s2 : AppSpacing.s8,
+            padding: EdgeInsets.fromLTRB(AppSpacing.s12, (lang.isNotEmpty || closed) ? AppSpacing.s2 : AppSpacing.s8,
               AppSpacing.s12,
               AppSpacing.s8,
             ),

@@ -201,7 +201,7 @@ class _AggregateHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s8),
       child: SoftCard(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -266,7 +266,7 @@ class _UndoSection extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: AppSpacing.s8),
+            padding: const EdgeInsets.only(left: AppSpacing.s4, bottom: AppSpacing.s8),
             child: Text(
               l10n.aiTransparencyUndoSectionTitle,
               style: context.theme.typography.sm.copyWith(
@@ -277,7 +277,7 @@ class _UndoSection extends ConsumerWidget {
           ),
           if (live.isEmpty)
             SoftCard(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s14),
               child: Text(
                 l10n.aiTransparencyUndoEmpty,
                 style: context.theme.typography.xs.copyWith(
@@ -540,7 +540,7 @@ class _TraceWaterfallBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s24),
       children: [
         _HeaderSummary(trace: trace, eventCount: trace.spans.length),
         const SizedBox(height: AppSpacing.s20),

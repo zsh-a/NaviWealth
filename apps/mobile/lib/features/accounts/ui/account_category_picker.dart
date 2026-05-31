@@ -122,7 +122,7 @@ class _CategoryCard extends StatelessWidget {
       child: FTappable(
         onPress: onTap,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s12, AppSpacing.s12, AppSpacing.s10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,

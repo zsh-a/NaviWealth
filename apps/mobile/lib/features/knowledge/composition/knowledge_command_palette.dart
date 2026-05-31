@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
@@ -24,7 +25,7 @@ List<CommandPaletteEntry> knowledgeCommandPaletteEntries(
     CommandPaletteEntry(
       id: 'nav.knowledge.inbox',
       label: '知识 · 收件箱',
-      icon: Icons.inbox_outlined,
+      icon: FLucideIcons.inbox,
       keywords: const <String>[
         AppRoutes.knowledgeInbox,
         'knowledge',
@@ -40,7 +41,7 @@ List<CommandPaletteEntry> knowledgeCommandPaletteEntries(
     CommandPaletteEntry(
       id: 'nav.knowledge.library',
       label: '知识 · 资料库',
-      icon: Icons.library_books_outlined,
+      icon: FLucideIcons.bookOpen,
       keywords: const <String>[
         AppRoutes.knowledgeLibrary,
         'knowledge',
@@ -56,7 +57,7 @@ List<CommandPaletteEntry> knowledgeCommandPaletteEntries(
     CommandPaletteEntry(
       id: 'nav.knowledge.review',
       label: '知识 · 复盘',
-      icon: Icons.history_edu_outlined,
+      icon: FLucideIcons.scrollText,
       keywords: const <String>[
         AppRoutes.knowledgeReview,
         'knowledge',

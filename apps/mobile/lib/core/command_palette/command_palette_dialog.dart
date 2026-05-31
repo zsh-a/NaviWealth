@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart' show Icons, Navigator;
+import '../../design_system/design_system.dart';
 import 'package:flutter/services.dart';
+import '../../design_system/design_system.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -210,7 +212,7 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
               Focus(
                 onKeyEvent: _onKey,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s12, AppSpacing.s12, AppSpacing.s8),
                   child: FTextField(
                     control: FTextFieldControl.managed(
                       controller: _searchController,
@@ -221,7 +223,7 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
                     hint: l10n.commandPaletteSearchHint,
                     prefixBuilder: (ctx, style, variants) => const Padding(
                       padding: EdgeInsetsDirectional.only(start: 12, end: 8),
-                      child: Icon(Icons.search, size: 18),
+                      child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
                     ),
                   ),
                 ),
@@ -275,7 +277,7 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
       opacity: widget.animation,
       child: SafeArea(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(16, 12, 16, keyboardInset + 12),
+          padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, keyboardInset + 12),
           child: Align(alignment: Alignment.topCenter, child: card),
         ),
       ),
@@ -311,7 +313,7 @@ class _CommandRow extends StatelessWidget {
         onPress: onTap,
         child: Container(
           color: background,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
           child: Row(
             children: <Widget>[
               Icon(entry.icon, size: 20, color: iconColor),
@@ -358,7 +360,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32, horizontal: AppSpacing.s16),
       child: Center(
         child: Text(
           message,

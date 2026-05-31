@@ -227,7 +227,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
       const SizedBox(height: AppSpacing.s12),
       if (profiles.isEmpty && _editingId == null)
         SoftCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 18),
           child: Text(
             l10n.aiLlmEmpty,
             style: context.theme.typography.sm.copyWith(
@@ -269,7 +269,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
       if (p.model != null && p.model!.isNotEmpty) p.model!,
     ].join(' · ');
     final card = SoftCard(
-      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s12, AppSpacing.s12),
       onPress: isActive ? null : () => _activate(p.id),
       child: Row(
         children: [
@@ -346,7 +346,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     final l10n = AppLocalizations.of(context);
     final hasStoredKey = existing?.hasKey ?? false;
     return SoftCard(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s14, AppSpacing.s16, AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -480,7 +480,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
   Widget _unsupportedCard(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s14, AppSpacing.s16, AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -36,7 +36,7 @@ class AiInsightFeed extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8, top: AppSpacing.s4),
+          padding: const EdgeInsets.only(left: AppSpacing.s4, bottom: AppSpacing.s8, top: AppSpacing.s4),
           child: Text(
             l10n.dashboardAiInsightsTitle,
             style: context.theme.typography.sm.copyWith(
@@ -112,7 +112,7 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
       ),
       child: SoftCard(
         onPress: !tappable ? null : (item.onTap ?? () => context.push(route!)),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSpacing.s12),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,

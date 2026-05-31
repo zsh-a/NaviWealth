@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/route_paths.dart';
@@ -32,7 +33,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
     CommandPaletteEntry(
       id: 'nav.home',
       label: l10n.commandPaletteGoOverview,
-      icon: Icons.dashboard_outlined,
+      icon: FLucideIcons.layoutDashboard,
       keywords: const <String>['/', 'today', 'overview', 'home', '今日', '总览'],
       run: (BuildContext ctx) => ctx.go(AppRoutes.home),
     ),
@@ -40,7 +41,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
     CommandPaletteEntry(
       id: 'nav.settings',
       label: l10n.commandPaletteGoSettings,
-      icon: Icons.settings_outlined,
+      icon: FLucideIcons.settings,
       keywords: const <String>[AppRoutes.settings, 'settings', '设置'],
       run: (BuildContext ctx) => ctx.push(AppRoutes.settings),
     ),
@@ -50,7 +51,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       CommandPaletteEntry(
         id: 'action.askAi',
         label: l10n.commandPaletteOpenAi,
-        icon: Icons.auto_awesome_outlined,
+        icon: FLucideIcons.sparkles,
         keywords: const <String>[
           'ai',
           'ask',
@@ -64,7 +65,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
     CommandPaletteEntry(
       id: 'action.aiHistory',
       label: l10n.commandPaletteAiHistory,
-      icon: Icons.smart_toy_outlined,
+      icon: FLucideIcons.bot,
       keywords: const <String>[
         AppRoutes.settingsAiHistory,
         'ai',
@@ -81,7 +82,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       CommandPaletteEntry(
         id: 'action.toggleTheme',
         label: l10n.commandPaletteToggleTheme,
-        icon: Icons.brightness_6_outlined,
+        icon: FLucideIcons.sunMoon,
         keywords: const <String>['theme', 'dark', 'light', '主题', '暗色', '亮色'],
         run: (_) => onToggleTheme(),
       ),
@@ -89,7 +90,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       CommandPaletteEntry(
         id: 'action.toggleColorMode',
         label: l10n.commandPaletteToggleColorMode,
-        icon: Icons.palette_outlined,
+        icon: FLucideIcons.palette,
         keywords: const <String>[
           'color',
           'red',
@@ -105,7 +106,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
       CommandPaletteEntry(
         id: 'action.toggleLanguage',
         label: l10n.commandPaletteToggleLanguage,
-        icon: Icons.translate_outlined,
+        icon: FLucideIcons.languages,
         keywords: const <String>[
           'language',
           'locale',
@@ -119,7 +120,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
     CommandPaletteEntry(
       id: 'action.shortcutHelp',
       label: l10n.commandPaletteShortcutHelp,
-      icon: Icons.keyboard_outlined,
+      icon: FLucideIcons.keyboard,
       keywords: const <String>['shortcuts', 'help', '快捷键'],
       run: showShortcutHelpDialog,
     ),
