@@ -419,6 +419,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                         label: l10n.expenseFormDateLabel,
                         initialValue: _date,
                         required: true,
+                        includeTime: true,
                         onChanged: (v) {
                           if (v != null) {
                             setState(() {

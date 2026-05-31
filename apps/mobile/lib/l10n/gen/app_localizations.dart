@@ -6258,7 +6258,7 @@ abstract class AppLocalizations {
   /// No description provided for @tradeEntryDateLabel.
   ///
   /// In en, this message translates to:
-  /// **'Trade date'**
+  /// **'Trade date & time'**
   String get tradeEntryDateLabel;
 
   /// No description provided for @tradeEntryFeeLabel.
@@ -6456,7 +6456,7 @@ abstract class AppLocalizations {
   /// No description provided for @expenseFormDateLabel.
   ///
   /// In en, this message translates to:
-  /// **'Date'**
+  /// **'Date & time'**
   String get expenseFormDateLabel;
 
   /// No description provided for @expenseFormDeleteDialogTitle.
@@ -9562,7 +9562,7 @@ abstract class AppLocalizations {
   /// Transfer form: date field label
   ///
   /// In en, this message translates to:
-  /// **'Date'**
+  /// **'Date & time'**
   String get transferDateLabel;
 
   /// Transfer form: preview section title

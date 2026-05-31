@@ -531,6 +531,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             label: l10n.tradeEntryDateLabel,
             initialValue: _tradeDate,
             required: true,
+            includeTime: true,
             onChanged: (d) {
               if (d != null) {
                 setState(() {

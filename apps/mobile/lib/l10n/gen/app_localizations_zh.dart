@@ -3470,7 +3470,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tradeEntryPriceHelper => '留空则自动从市场数据获取';
 
   @override
-  String get tradeEntryDateLabel => '交易日期';
+  String get tradeEntryDateLabel => '交易日期时间';
 
   @override
   String get tradeEntryFeeLabel => '手续费';
@@ -3577,7 +3577,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get expenseFormDateLabel => '日期';
+  String get expenseFormDateLabel => '日期时间';
 
   @override
   String get expenseFormDeleteDialogTitle => '删除支出';
@@ -5320,7 +5320,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get transferFxRateEditHelper => '可编辑以覆盖自动填充的汇率。';
 
   @override
-  String get transferDateLabel => '日期';
+  String get transferDateLabel => '日期时间';
 
   @override
   String get transferPreviewTitle => '转账';

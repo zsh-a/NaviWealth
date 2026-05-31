@@ -3618,7 +3618,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tradeEntryPriceHelper => 'Leave blank to fetch from market data';
 
   @override
-  String get tradeEntryDateLabel => 'Trade date';
+  String get tradeEntryDateLabel => 'Trade date & time';
 
   @override
   String get tradeEntryFeeLabel => 'Fee';
@@ -3728,7 +3728,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get expenseFormDateLabel => 'Date';
+  String get expenseFormDateLabel => 'Date & time';
 
   @override
   String get expenseFormDeleteDialogTitle => 'Delete expense';
@@ -5528,7 +5528,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Edit to override the auto-filled rate.';
 
   @override
-  String get transferDateLabel => 'Date';
+  String get transferDateLabel => 'Date & time';
 
   @override
   String get transferPreviewTitle => 'Transfer';

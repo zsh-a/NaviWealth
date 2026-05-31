@@ -1970,7 +1970,7 @@
   "tradeEntryQuantityLabel": "Quantity",
   "tradeEntryPriceLabel": "Price",
   "tradeEntryPriceHelper": "Leave blank to fetch from market data",
-  "tradeEntryDateLabel": "Trade date",
+  "tradeEntryDateLabel": "Trade date & time",
   "tradeEntryFeeLabel": "Fee",
   "tradeEntryTaxLabel": "Tax",
   "tradeEntryCashAccountLabel": "Cash account",
@@ -2018,7 +2018,7 @@
   "@expenseFormAccountsLoadError": {
     "placeholders": { "error": { "type": "String" } }
   },
-  "expenseFormDateLabel": "Date",
+  "expenseFormDateLabel": "Date & time",
   "expenseFormDeleteDialogTitle": "Delete expense",
   "expenseFormDeleteDialogBody": "Delete this expense? This change syncs to your other devices.",
   "expenseFormNoAccountsTitle": "Create an account first",
@@ -2963,7 +2963,7 @@
   "@transferFxRateHelper": { "description": "Transfer form: helper when no FX rate exists" },
   "transferFxRateEditHelper": "Edit to override the auto-filled rate.",
   "@transferFxRateEditHelper": { "description": "Transfer form: helper for editing auto-filled rate" },
-  "transferDateLabel": "Date",
+  "transferDateLabel": "Date & time",
   "@transferDateLabel": { "description": "Transfer form: date field label" },
   "transferPreviewTitle": "Transfer",
   "@transferPreviewTitle": { "description": "Transfer form: preview section title" },
