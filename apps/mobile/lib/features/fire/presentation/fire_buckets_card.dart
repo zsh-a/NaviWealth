@@ -13,8 +13,8 @@ import '../data/fire_providers.dart';
 import '../domain/fire_bucket.dart';
 import '../domain/fire_bucket_allocator.dart';
 import 'fire_ai_capsule.dart';
-import 'fire_status_colors.dart';
 import 'fire_bucket_mapping_sheet.dart';
+import 'fire_status_colors.dart';
 
 /// Buckets card — the second piece of the FIRE OS page after the hero.
 ///
@@ -202,13 +202,17 @@ class _BucketRow extends StatelessWidget {
           ),
           if (hasTarget) ...[
             const SizedBox(height: AppSpacing.s6),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.xs),
-              child: LinearProgressIndicator(
-                value: coverage > 1.5 ? 1.0 : coverage / 1.5,
-                minHeight: 6,
-                backgroundColor: colors.muted,
-                valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+            FDeterminateProgress(
+              value: coverage > 1.5 ? 1.0 : coverage / 1.5,
+              style: FDeterminateProgressStyle(
+                trackDecoration: ShapeDecoration(
+                  shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+                  color: colors.muted,
+                ),
+                fillDecoration: ShapeDecoration(
+                  shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+                  color: statusColor,
+                ),
               ),
             ),
           ],

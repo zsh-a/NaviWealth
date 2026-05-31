@@ -54,13 +54,13 @@ class EntryKindBadge extends StatelessWidget {
         ),
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: showLabel ? 8 : 4,
-            vertical: 2,
+            horizontal: showLabel ? AppSpacing.s8 : AppSpacing.s4,
+            vertical: AppSpacing.s2,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(visuals.icon, size: 14, color: visuals.foreground),
+              Icon(visuals.icon, size: AppIconSizes.xs, color: visuals.foreground),
               if (showLabel) ...[
                 const SizedBox(width: AppSpacing.s4),
                 Text(

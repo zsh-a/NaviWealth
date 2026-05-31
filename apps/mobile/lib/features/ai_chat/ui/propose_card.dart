@@ -446,7 +446,7 @@ class _BatchChildrenList extends StatelessWidget {
         children: [
           for (var i = 0; i < plan.children.length; i++)
             Padding(
-              padding: EdgeInsets.only(top: i == 0 ? 0 : 6),
+              padding: EdgeInsets.only(top: i == 0 ? 0 : AppSpacing.s6),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -718,7 +718,7 @@ class _OneTapView extends ConsumerWidget {
                 const SizedBox(
                   width: 14,
                   height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 1.6),
+                  child: FCircularProgress(size: .xs),
                 )
               else
                 AiPill(

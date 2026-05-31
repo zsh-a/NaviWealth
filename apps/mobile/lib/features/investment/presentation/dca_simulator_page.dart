@@ -59,9 +59,9 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
         onRefresh: () => ref.read(dcaSimulationProvider.notifier).refresh(),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(Breakpoints.isMobile(MediaQuery.sizeOf(context).width) ? 16 : 24,
-            8,
-            Breakpoints.isMobile(MediaQuery.sizeOf(context).width) ? 16 : 24,
+          padding: EdgeInsets.fromLTRB(Breakpoints.isMobile(MediaQuery.sizeOf(context).width) ? AppSpacing.s16 : AppSpacing.s24,
+            AppSpacing.s8,
+            Breakpoints.isMobile(MediaQuery.sizeOf(context).width) ? AppSpacing.s16 : AppSpacing.s24,
             80 + MediaQuery.paddingOf(context).bottom,
           ),
           children: [
@@ -326,7 +326,7 @@ class _DcaResults extends StatelessWidget {
                     child: Text(
                       l10n.dcaSimulatorResultTitle,
                       style: context.theme.typography.lg.copyWith(
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),

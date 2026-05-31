@@ -175,7 +175,7 @@ class _HeroAmountCard extends StatelessWidget {
           Text(
             title,
             style: context.theme.typography.lg.copyWith(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               height: 1.22,
             ),
           ),
@@ -240,7 +240,7 @@ class _KindLabel extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: context.theme.typography.xs2.copyWith(
           color: colors.foreground,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -333,7 +333,7 @@ class _LedgerBreakdownCard extends StatelessWidget {
                 child: Text(
                   l10n.activityEntryDetailLedgerTitle,
                   style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -431,7 +431,7 @@ class _DetailPostingRow extends StatelessWidget {
                 unit: posting.unit,
                 formatters: formatters,
                 style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -537,7 +537,7 @@ class _DetailUnitBalanceRow extends StatelessWidget {
             unit: unit,
             formatters: formatters,
             style: context.theme.typography.xs.copyWith(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
             ),
             color: colors.destructive,
           ),

@@ -88,8 +88,8 @@ class AllocationSummary extends StatelessWidget {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 4,
+                      horizontal: AppSpacing.s4,
+                      vertical: AppSpacing.s4,
                     ),
                     child: Text(
                       l10n.dashboardAllocationViewBreakdown,

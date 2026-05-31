@@ -420,7 +420,7 @@ class _PortfolioHubBody extends StatelessWidget {
         Text(
           l10n.portfolioHubHoldingsTitle,
           style: context.theme.typography.lg.copyWith(
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: AppSpacing.s10),
@@ -435,7 +435,7 @@ class _PortfolioHubBody extends StatelessWidget {
         Text(
           l10n.portfolioHubPositionsTitle,
           style: context.theme.typography.lg.copyWith(
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: AppSpacing.s10),
@@ -561,7 +561,7 @@ class _SummaryMetric extends StatelessWidget {
               Text(
                 value ?? '—',
                 style: context.theme.typography.lg.copyWith(
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                 ),
               )
             else
@@ -605,7 +605,7 @@ class _EngineExposureSection extends ConsumerWidget {
         Text(
           l10n.portfolioHubEnginesTitle,
           style: context.theme.typography.lg.copyWith(
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: AppSpacing.s10),
@@ -830,7 +830,7 @@ class _EngineCard extends StatelessWidget {
                 child: Text(
                   title,
                   style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -875,7 +875,7 @@ class _TwoLineAmountRow extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: context.theme.typography.xs.copyWith(
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -1126,7 +1126,7 @@ class _TitleSubtitle extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: context.theme.typography.sm.copyWith(
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: AppSpacing.s4),
@@ -1151,16 +1151,17 @@ class _WeightBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final clamped = weight.clamp(0, 1).toDouble();
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.full),
-      child: SizedBox(
-        height: 5,
-        child: LinearProgressIndicator(
-          value: clamped,
-          backgroundColor: context.theme.colors.secondary,
-          valueColor: AlwaysStoppedAnimation<Color>(
-            context.theme.colors.primary,
-          ),
+    return FDeterminateProgress(
+      value: clamped,
+      style: FDeterminateProgressStyle(
+        constraints: const BoxConstraints.tightFor(height: 5),
+        trackDecoration: ShapeDecoration(
+          shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+          color: context.theme.colors.secondary,
+        ),
+        fillDecoration: ShapeDecoration(
+          shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+          color: context.theme.colors.primary,
         ),
       ),
     );

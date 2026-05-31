@@ -133,8 +133,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       keyboardDismissBehavior:
                           ScrollViewKeyboardDismissBehavior.onDrag,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 32,
+                        horizontal: AppSpacing.s24,
+                        vertical: AppSpacing.s32,
                       ),
                       child: Form(
                         key: _formKey,

@@ -155,7 +155,7 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
                   child: Text(
                     l10n.dashboardAllocationTitle,
                     style: context.theme.typography.lg.copyWith(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),

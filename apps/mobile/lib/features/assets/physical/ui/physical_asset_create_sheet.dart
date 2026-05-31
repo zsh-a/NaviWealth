@@ -174,11 +174,21 @@ class _PhysicalAssetCreateSheetState
                 Expanded(
                   child: InkWell(
                     onTap: _saving ? null : _pickPurchaseDate,
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                        labelText: l10n.physicalAssetFieldPurchaseDate,
-                      ),
-                      child: Text(dateFormat.format(_purchaseDate)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.physicalAssetFieldPurchaseDate,
+                          style: context.theme.typography.xs.copyWith(
+                            color: context.theme.colors.mutedForeground,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.s4),
+                        Text(
+                          dateFormat.format(_purchaseDate),
+                          style: context.theme.typography.sm,
+                        ),
+                      ],
                     ),
                   ),
                 ),
