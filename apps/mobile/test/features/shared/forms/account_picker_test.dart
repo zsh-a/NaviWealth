@@ -25,11 +25,11 @@ Account _account(String id, String name, String currency) {
   );
 }
 
-Widget _wrap(Widget child) {
+Widget _wrap(Widget child, {Locale locale = const Locale('en', 'US')}) {
   return MaterialApp(
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    locale: const Locale('en', 'US'),
+    locale: locale,
     home: FTheme(
       data: FThemes.slate.light.desktop,
       child: Scaffold(body: child),
@@ -56,5 +56,27 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Cash · CNY'), findsOneWidget);
+  });
+
+  testWidgets('localizes seeded system account labels', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        AccountPicker(
+          accounts: [
+            _account(
+              'system-account:u-test:expense:trading:fee',
+              'Trading Fee',
+              'CNY',
+            ),
+          ],
+          value: 'system-account:u-test:expense:trading:fee',
+          onChanged: (_) {},
+        ),
+        locale: const Locale('zh', 'CN'),
+      ),
+    );
+
+    expect(find.text('手续费 · CNY'), findsOneWidget);
+    expect(find.text('Trading Fee · CNY'), findsNothing);
   });
 }

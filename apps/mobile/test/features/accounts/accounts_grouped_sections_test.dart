@@ -27,6 +27,7 @@ Account _account({
   String? institution,
   String? icon,
   String? color,
+  AccountSide category = AccountSide.asset,
 }) => Account(
   id: id,
   type: type,
@@ -35,16 +36,17 @@ Account _account({
   institution: institution,
   icon: icon,
   color: color,
+  category: category,
   sync: _sync,
 );
 
-Widget _wrap(Widget child) {
+Widget _wrap(Widget child, {Locale locale = const Locale('en', 'US')}) {
   return ProviderScope(
     child: MaterialApp(
       theme: AppTheme.light(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('en', 'US'),
+      locale: locale,
       home: Scaffold(body: child),
     ),
   );
@@ -133,5 +135,28 @@ void main() {
     expect(opened, isFalse);
     expect(find.text('AAPL'), findsOneWidget);
     expect(find.text('10 AAPL'), findsOneWidget);
+  });
+
+  testWidgets('localizes seeded system account row names', (tester) async {
+    final account = _account(
+      id: 'system-account:u-test:expense:trading:fee',
+      name: 'Trading Fee',
+      category: AccountSide.expense,
+      currency: 'CNY',
+    );
+
+    await tester.pumpWidget(
+      _wrap(
+        AccountsGroupedSections(
+          accounts: [account],
+          balances: const {},
+          onAccountPressed: (_, _) {},
+        ),
+        locale: const Locale('zh', 'CN'),
+      ),
+    );
+
+    expect(find.text('手续费'), findsOneWidget);
+    expect(find.text('Trading Fee'), findsNothing);
   });
 }
