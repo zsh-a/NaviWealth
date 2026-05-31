@@ -70,6 +70,9 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     if (plan is ClarificationProposalPlan) {
       return _ClarificationView(plan: plan, sessionId: widget.sessionId);
     }
+    if (plan is BatchProposalPlan) {
+      return _buildBatch(plan, _applyState);
+    }
     if (plan is! ReadyProposalPlan) {
       return const SizedBox.shrink();
     }
@@ -132,6 +135,30 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     }
   }
 
+  Widget _buildBatch(BatchProposalPlan plan, ProposalApplyState state) {
+    switch (state.status) {
+      case ProposalApplyStatus.applied:
+      case ProposalApplyStatus.undone:
+      case ProposalApplyStatus.cancelled:
+        return _BatchCollapsedView(
+          plan: plan,
+          applyState: state,
+          onUndoRequest: state.status == ProposalApplyStatus.applied
+              ? _onUndo
+              : null,
+        );
+      case ProposalApplyStatus.pending:
+      case ProposalApplyStatus.errored:
+      case ProposalApplyStatus.applying:
+        return _BatchProposalView(
+          plan: plan,
+          applyState: state,
+          onConfirm: () => _onConfirmBatch(plan),
+          onCancel: _onCancel,
+        );
+    }
+  }
+
   Future<void> _persist(ProposalApplyState newState) async {
     final repo = await ref.read(chatRepositoryProvider.future);
     await repo.updateToolApplyState(
@@ -182,6 +209,47 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     }
   }
 
+  Future<void> _onConfirmBatch(BatchProposalPlan plan) async {
+    Haptics.primaryPress();
+    await _persist(_applyState.copyWith(status: ProposalApplyStatus.applying));
+    final appliedChildren = <ProposalApplyState>[];
+    try {
+      final applier = await ref.read(proposalApplierProvider.future);
+      for (final child in plan.children) {
+        final childState = await applier.apply(child);
+        if (childState.status != ProposalApplyStatus.applied) {
+          throw ProposalApplyException(
+            childState.errorMessage ?? 'batch child did not apply',
+          );
+        }
+        appliedChildren.add(childState);
+      }
+      if (!mounted) return;
+      await _persist(
+        ProposalApplyState(
+          status: ProposalApplyStatus.applied,
+          appliedTable: '__batch__',
+          appliedAt: DateTime.now().toUtc(),
+          undoData: <String, Object?>{
+            'children': [
+              for (final childState in appliedChildren) childState.toJson(),
+            ],
+          },
+          shortLabel: plan.summaryZh,
+        ),
+      );
+    } on Object catch (e) {
+      await _undoAppliedBatchChildren(appliedChildren);
+      Haptics.error();
+      await _persist(
+        _applyState.copyWith(
+          status: ProposalApplyStatus.errored,
+          errorMessage: e is ProposalApplyException ? e.message : e.toString(),
+        ),
+      );
+    }
+  }
+
   Future<void> _onCancel() async {
     await _persist(_applyState.copyWith(status: ProposalApplyStatus.cancelled));
   }
@@ -192,7 +260,11 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     if (state.status != ProposalApplyStatus.applied) return;
     try {
       final applier = await ref.read(proposalApplierProvider.future);
-      await applier.undo(state);
+      if (state.appliedTable == '__batch__') {
+        await _undoBatchState(applier, state);
+      } else {
+        await applier.undo(state);
+      }
       if (!mounted) return;
       await _persist(state.copyWith(status: ProposalApplyStatus.undone));
     } on ProposalApplyException catch (e) {
@@ -219,6 +291,254 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     );
     if (result == null || !mounted) return;
     setState(() => _overrides = result);
+  }
+
+  Future<void> _undoAppliedBatchChildren(
+    List<ProposalApplyState> children,
+  ) async {
+    if (children.isEmpty) return;
+    try {
+      final applier = await ref.read(proposalApplierProvider.future);
+      for (final childState in children.reversed) {
+        await applier.undo(childState);
+      }
+    } catch (_) {
+      // The apply failure is the user-visible error; rollback is best effort.
+    }
+  }
+
+  Future<void> _undoBatchState(
+    ProposalApplier applier,
+    ProposalApplyState state,
+  ) async {
+    final rawChildren = state.undoData?['children'];
+    if (rawChildren is! List) {
+      throw ProposalApplyException('batch undo data missing children');
+    }
+    final children = rawChildren
+        .whereType<Map<Object?, Object?>>()
+        .map(
+          (m) => ProposalApplyState.fromJson(
+            m.map((key, value) => MapEntry(key.toString(), value)),
+          ),
+        )
+        .toList(growable: false);
+    for (final childState in children.reversed) {
+      await applier.undo(childState);
+    }
+  }
+}
+
+class _BatchProposalView extends ConsumerWidget {
+  const _BatchProposalView({
+    required this.plan,
+    required this.applyState,
+    required this.onConfirm,
+    required this.onCancel,
+  });
+
+  final BatchProposalPlan plan;
+  final ProposalApplyState applyState;
+  final VoidCallback onConfirm;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
+    final registry = ref.watch(proposalKindRegistryProvider);
+    final isApplying = applyState.status == ProposalApplyStatus.applying;
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        color: colors.muted,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.border),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(FLucideIcons.layers, size: 18, color: colors.foreground),
+              const SizedBox(width: 8),
+              Text(
+                l10n.aiChatProposalBatchPending(plan.children.length),
+                style: context.theme.typography.xs.copyWith(
+                  color: colors.mutedForeground,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            plan.summaryZh,
+            style: context.theme.typography.md.copyWith(
+              color: colors.foreground,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _BatchChildrenList(plan: plan, registry: registry),
+          if (plan.warnings.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _WarningCallout(warnings: plan.warnings),
+          ],
+          if (applyState.status == ProposalApplyStatus.errored &&
+              applyState.errorMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              l10n.aiChatProposalFailure(applyState.errorMessage!),
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.destructive,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            children: [
+              FButton(
+                variant: FButtonVariant.primary,
+                onPress: isApplying ? null : onConfirm,
+                prefix: const Icon(FLucideIcons.checkCheck, size: 14),
+                child: Text(
+                  isApplying
+                      ? l10n.aiChatProposalApplying
+                      : l10n.aiChatProposalBatchConfirmAll,
+                ),
+              ),
+              FButton(
+                variant: FButtonVariant.outline,
+                onPress: isApplying ? null : onCancel,
+                prefix: const Icon(FLucideIcons.x, size: 14),
+                child: Text(l10n.commonCancel),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BatchChildrenList extends StatelessWidget {
+  const _BatchChildrenList({required this.plan, required this.registry});
+
+  final BatchProposalPlan plan;
+  final List<ProposalKindMeta> registry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: context.theme.colors.background.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: context.theme.colors.border.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < plan.children.length; i++)
+            Padding(
+              padding: EdgeInsets.only(top: i == 0 ? 0 : 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${i + 1}.',
+                    style: context.theme.typography.xs2.copyWith(
+                      color: context.theme.colors.mutedForeground,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${proposalKindLabel(l10n, registry, plan.children[i].kind)} · '
+                      '${plan.children[i].summaryZh}',
+                      style: context.theme.typography.xs.copyWith(
+                        color: context.theme.colors.foreground,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BatchCollapsedView extends StatelessWidget {
+  const _BatchCollapsedView({
+    required this.plan,
+    required this.applyState,
+    required this.onUndoRequest,
+  });
+
+  final BatchProposalPlan plan;
+  final ProposalApplyState applyState;
+  final VoidCallback? onUndoRequest;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final IconData icon;
+    final Color color;
+    final String label;
+    switch (applyState.status) {
+      case ProposalApplyStatus.applied:
+        icon = FLucideIcons.circleCheck;
+        color = context.theme.colors.primary;
+        label = applyState.shortLabel ?? plan.summaryZh;
+      case ProposalApplyStatus.undone:
+        icon = FLucideIcons.undo;
+        color = context.theme.colors.mutedForeground;
+        label = l10n.aiChatProposalUndoneLabel(plan.summaryZh);
+      case ProposalApplyStatus.cancelled:
+        icon = FLucideIcons.circleX;
+        color = context.theme.colors.mutedForeground;
+        label = l10n.aiChatProposalCancelledLabel(plan.summaryZh);
+      default:
+        return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: FCard.raw(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  style: context.theme.typography.sm.copyWith(
+                    color: context.theme.colors.foreground,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (onUndoRequest != null &&
+                  applyState.status == ProposalApplyStatus.applied &&
+                  applyState.appliedAt != null)
+                _UndoCountdownButton(
+                  appliedAt: applyState.appliedAt!,
+                  onUndo: onUndoRequest!,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

@@ -44,7 +44,6 @@ import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/persistence/test_database.dart';
-import '../../core/sync/_outbox_test_ext.dart';
 import '../../features/finance/data/repositories/_stub_stamper.dart';
 
 /// Deterministic seed data for a flow. Defaults to an empty portfolio

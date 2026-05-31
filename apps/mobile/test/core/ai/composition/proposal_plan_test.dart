@@ -95,6 +95,61 @@ void main() {
       expect((plan! as ReadyProposalPlan).kind, 'sleep_target_adjust');
     });
 
+    test('parses a batch envelope with ready children', () {
+      final plan = ProposalPlan.tryParse(<String, Object?>{
+        'proposal_id': 'batch-1',
+        'kind': 'batch',
+        'status': 'ready',
+        'envelope_kind': 'batch',
+        'summary_zh': '批量记录 2 项支出',
+        'children': <Object?>[
+          <String, Object?>{
+            'proposal_id': 'expense-1',
+            'kind': 'expense',
+            'status': 'ready',
+            'summary_zh': '记录咖啡',
+            'payload': <String, Object?>{'amount': '32.50'},
+          },
+          <String, Object?>{
+            'proposal_id': 'expense-2',
+            'kind': 'expense',
+            'status': 'ready',
+            'summary_zh': '记录午餐',
+            'payload': <String, Object?>{'amount': '58.00'},
+          },
+        ],
+        'warnings': <Object?>['请确认账户'],
+      });
+
+      expect(plan, isA<BatchProposalPlan>());
+      final batch = plan! as BatchProposalPlan;
+      expect(batch.summaryZh, '批量记录 2 项支出');
+      expect(batch.children, hasLength(2));
+      expect(batch.children.first.proposalId, 'expense-1');
+      expect(batch.warnings, ['请确认账户']);
+    });
+
+    test('rejects batch envelopes with non-ready children', () {
+      expect(
+        ProposalPlan.tryParse(<String, Object?>{
+          'proposal_id': 'batch-1',
+          'kind': 'batch',
+          'status': 'ready',
+          'envelope_kind': 'batch',
+          'summary_zh': 'bad batch',
+          'children': <Object?>[
+            <String, Object?>{
+              'proposal_id': 'clarify-1',
+              'kind': 'expense',
+              'status': 'needs_clarification',
+              'reason': 'missing account',
+            },
+          ],
+        }),
+        isNull,
+      );
+    });
+
     test('returns null for non-map output', () {
       expect(ProposalPlan.tryParse(null), isNull);
       expect(ProposalPlan.tryParse('hello'), isNull);
