@@ -4967,6 +4967,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLogsSubtitle => 'View real-time diagnostic logs';
 
   @override
+  String get settingsPerfTitle => 'Performance';
+
+  @override
+  String get settingsPerfSubtitle => 'Inspect recent frame timing and jank';
+
+  @override
+  String get settingsPerfRecentFrames => 'Recent frames';
+
+  @override
+  String get settingsPerfJankFrames => 'Jank frames';
+
+  @override
+  String get settingsPerfFrameBudget => 'Frame budget';
+
+  @override
+  String get settingsPerfTimingTitle => 'Frame timing';
+
+  @override
+  String get settingsPerfTotalP50 => 'Total p50';
+
+  @override
+  String get settingsPerfTotalP95 => 'Total p95';
+
+  @override
+  String get settingsPerfBuildP95 => 'Build p95';
+
+  @override
+  String get settingsPerfRasterP95 => 'Raster p95';
+
+  @override
   String get backupExportTitle => 'Export Backup';
 
   @override

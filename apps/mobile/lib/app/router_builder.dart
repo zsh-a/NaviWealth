@@ -22,6 +22,7 @@ import '../features/settings/ui/ai_transparency_page.dart';
 import '../features/settings/ui/domains_settings_page.dart';
 import '../features/settings/ui/fire_stress_settings_page.dart';
 import '../features/settings/ui/monthly_expense_settings_page.dart';
+import '../features/settings/ui/perf_diagnostics_page.dart';
 import '../features/settings/ui/risk_thresholds_page.dart';
 import '../features/settings/ui/sync_status_page.dart';
 import 'app_dock_shell.dart';
@@ -159,6 +160,11 @@ GoRoute _settingsRoute() {
         path: 'logs',
         name: AppRouteNames.logs,
         builder: (context, state) => _backSafe(const LogViewerPage()),
+      ),
+      GoRoute(
+        path: 'performance',
+        name: AppRouteNames.performance,
+        builder: (context, state) => _backSafe(const PerfDiagnosticsPage()),
       ),
       GoRoute(
         path: 'sync',

@@ -8565,6 +8565,66 @@ abstract class AppLocalizations {
   /// **'View real-time diagnostic logs'**
   String get settingsLogsSubtitle;
 
+  /// Settings developer diagnostics: performance page title
+  ///
+  /// In en, this message translates to:
+  /// **'Performance'**
+  String get settingsPerfTitle;
+
+  /// Settings developer diagnostics: performance page subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect recent frame timing and jank'**
+  String get settingsPerfSubtitle;
+
+  /// Performance diagnostics label for sampled frames
+  ///
+  /// In en, this message translates to:
+  /// **'Recent frames'**
+  String get settingsPerfRecentFrames;
+
+  /// Performance diagnostics label for janky frame count
+  ///
+  /// In en, this message translates to:
+  /// **'Jank frames'**
+  String get settingsPerfJankFrames;
+
+  /// Performance diagnostics label for target frame budget
+  ///
+  /// In en, this message translates to:
+  /// **'Frame budget'**
+  String get settingsPerfFrameBudget;
+
+  /// Performance diagnostics timing section title
+  ///
+  /// In en, this message translates to:
+  /// **'Frame timing'**
+  String get settingsPerfTimingTitle;
+
+  /// No description provided for @settingsPerfTotalP50.
+  ///
+  /// In en, this message translates to:
+  /// **'Total p50'**
+  String get settingsPerfTotalP50;
+
+  /// No description provided for @settingsPerfTotalP95.
+  ///
+  /// In en, this message translates to:
+  /// **'Total p95'**
+  String get settingsPerfTotalP95;
+
+  /// No description provided for @settingsPerfBuildP95.
+  ///
+  /// In en, this message translates to:
+  /// **'Build p95'**
+  String get settingsPerfBuildP95;
+
+  /// No description provided for @settingsPerfRasterP95.
+  ///
+  /// In en, this message translates to:
+  /// **'Raster p95'**
+  String get settingsPerfRasterP95;
+
   /// Backup page: export tile title
   ///
   /// In en, this message translates to:

@@ -165,11 +165,22 @@ class SettingsOverview extends ConsumerWidget {
     // without a debug attach.
     final developerGroup = _Section(
       title: l10n.settingsDeveloperSection,
-      child: InlineLinkRow(
-        icon: FLucideIcons.bug,
-        label: l10n.settingsLogsTitle,
-        subtitle: l10n.settingsLogsSubtitle,
-        onTap: () => context.goNamed(AppRouteNames.logs),
+      child: Column(
+        children: [
+          InlineLinkRow(
+            icon: FLucideIcons.bug,
+            label: l10n.settingsLogsTitle,
+            subtitle: l10n.settingsLogsSubtitle,
+            onTap: () => context.goNamed(AppRouteNames.logs),
+          ),
+          _SectionDivider(),
+          InlineLinkRow(
+            icon: FLucideIcons.activity,
+            label: l10n.settingsPerfTitle,
+            subtitle: l10n.settingsPerfSubtitle,
+            onTap: () => context.goNamed(AppRouteNames.performance),
+          ),
+        ],
       ),
     );
 
