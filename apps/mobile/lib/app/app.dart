@@ -11,6 +11,7 @@ import '../design_system/design_system.dart';
 import '../features/ai_chat/ui/ask_ai.dart';
 import '../features/shared/forms/optimistic_form_submit.dart';
 import '../l10n/gen/app_localizations.dart';
+import 'domain_composition.dart';
 import 'route_paths.dart';
 import 'router.dart';
 import 'shell_preferences.dart';
@@ -136,13 +137,10 @@ class NaviWealthApp extends ConsumerWidget {
                       // blocks (`activeDomainPacksProvider`). HealthOS /
                       // KnowledgeOS used to be Cmd-K dead zones; this
                       // wires them in alongside Finance automatically.
-                      domainEntries: <CommandPaletteEntry>[
-                        for (final pack in ref.read(activeDomainPacksProvider))
-                          if (pack.commandPaletteEntriesBuilder != null)
-                            ...pack.commandPaletteEntriesBuilder!(
-                              AppLocalizations.of(invokeCtx),
-                            ),
-                      ],
+                      domainEntries: domainCommandPaletteEntries(
+                        ref.read(activeDomainPacksProvider),
+                        AppLocalizations.of(invokeCtx),
+                      ),
                     ),
                     onAskAi: (String query) =>
                         askAi(invokeCtx, ref, prefill: query),

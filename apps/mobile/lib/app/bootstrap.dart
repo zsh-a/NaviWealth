@@ -10,30 +10,22 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../core/ai/agents/agent_registry.dart';
-import '../core/ai/composition/device_tools_provider.dart';
-import '../core/ai/composition/system_prompt_blocks.dart';
 import '../core/ai/llm_credentials/providers.dart' as llm_credentials;
 import '../core/ai/local/embedding/embedder.dart';
 import '../core/ai/local/embedding/model_install_paths.dart';
 import '../core/ai/local/embedding/model_manifest.dart';
 import '../core/ai/local/embedding/rust_gemma_embedder.dart';
 import '../core/ai/local/memory/providers.dart' as memory_providers;
-import '../core/ai/runtime/device/tools/device_tool.dart';
-import '../core/ai/runtime/device/tools/device_tool_registry.dart'
-    show kShellDeviceToolsCore;
 import '../core/auth/providers.dart' as core_auth;
 import '../core/config/app_config.dart';
 import '../core/config/providers.dart';
 import '../core/format/formatters.dart';
-import '../core/lifeos/domain_pack.dart';
 import '../core/logging/app_logger.dart';
 import '../core/logging/crash_reporter.dart';
 import '../core/logging/logging_crash_reporter.dart';
 import '../core/logging/providers.dart';
 import '../core/notifications/providers.dart' as notif_providers;
 import '../core/perf/providers.dart';
-import '../core/shell/domain_shell.dart';
 import '../core/sync/providers.dart';
 import '../design_system/preferences/theme_preferences.dart';
 import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
@@ -47,8 +39,7 @@ import '../features/health/agents/morning_briefing_agent.dart';
 import '../features/health/agents/providers.dart' as health_agent_providers;
 import '../features/health/data/morning_briefing_preferences.dart';
 import '../features/knowledge/composition/knowledge_bootstrap.dart';
-import '../l10n/gen/app_localizations.dart';
-import 'domain_packs.dart';
+import 'domain_composition.dart';
 import 'memory_indexers_bootstrap.dart';
 import 'route_guard.dart';
 
@@ -139,43 +130,10 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       // longer overrides them — Riverpod 3 forbids double-override). Routes
       // `knowledge_*` proposals to the KnowledgeOS applier, rest to Finance.
       ...knowledgeCompositionOverrides(),
-      // LifeOS domain inventory (`docs/lifeos-shell.md` §4): one
-      // [DomainPack] per known domain. The four aggregators below
-      // derive from `activeDomainPacksProvider` — adding a new domain
-      // means landing its barrel + shell + agents under `features/`
-      // and appending one line to `kAllDomainPacks`.
-      domainPackRegistryProvider.overrideWith((ref) => kAllDomainPacks),
-      // D-1.2 (`docs/lifeos-shell.md` §7.1) + D-2.4
-      // (`docs/healthos-domain.md` §4): device tool registry = shell
-      // tools (always-on) + each active domain's tool list.
-      deviceToolsProvider.overrideWith((ref) {
-        final packs = ref.watch(activeDomainPacksProvider);
-        return <DeviceTool>[
-          ...kShellDeviceToolsCore,
-          for (final p in packs) ...p.deviceTools,
-        ];
-      }),
-      // Domain-aware system prompt (`docs/lifeos-shell.md` §4): the
-      // shell base prompt carries only cross-domain invariants; each
-      // active domain contributes its own block in lockstep with its
-      // tool list above so the model never sees instructions for tools
-      // it doesn't have.
-      systemPromptBlocksProvider.overrideWith(
-        (ref) => [
-          for (final p in ref.watch(activeDomainPacksProvider))
-            if (p.systemPromptBlock.isNotEmpty) p.systemPromptBlock,
-        ],
-      ),
-      // D-2.5 (`docs/lifeos-shell.md` §7.3 + `docs/healthos-domain.md`
-      // §8): each pack contributes zero or more agents via its
-      // `agentBuilder`; the builders run with `ref` so agents stay
-      // composition-blind.
-      agentRegistryProvider.overrideWith(
-        (ref) => [
-          for (final p in ref.watch(activeDomainPacksProvider))
-            if (p.agentBuilder != null) ...p.agentBuilder!(ref),
-        ],
-      ),
+      // LifeOS domain inventory + active-domain aggregators
+      // (`docs/lifeos-shell.md` §4): tools, prompt blocks, agents, shell
+      // specs, and the registry all derive from the DomainPack list.
+      ...lifeOsDomainCompositionOverrides(),
       // D-2.5b — wire the Morning Briefing with the LLM synthesizer
       // (falling back to programmatic when no device LLM is configured)
       // and the local notification service so each successful run can
@@ -194,22 +152,6 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
           notifier: notifier,
           hourLocal: hourLocal,
         );
-      }),
-      // D-1.8 + D-2.3 (`docs/lifeos-shell.md` §3): each active pack
-      // contributes its localised shell spec. The dock visibility
-      // flips on as soon as a second spec lands (see
-      // `domainDockVisibleProvider`).
-      activeDomainShellsProvider.overrideWith((ref) {
-        // The spec depends on AppLocalizations for labels, which is
-        // resolved per-render inside the shell, not at container
-        // construction. We side-step by building with the default
-        // (English) locale here — the active locale is re-applied
-        // when the widget tree rebuilds via Riverpod's invalidation.
-        final l10n = lookupAppLocalizations(const Locale('en'));
-        return [
-          for (final p in ref.watch(activeDomainPacksProvider))
-            if (p.shellSpecBuilder != null) p.shellSpecBuilder!(l10n),
-        ];
       }),
       // D-1.7c (`docs/lifeos-shell.md` §6.6): swap in the Rust
       // EmbeddingGemma embedder when the user has configured a model
