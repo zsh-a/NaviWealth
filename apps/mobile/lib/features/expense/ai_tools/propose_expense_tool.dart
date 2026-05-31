@@ -28,7 +28,7 @@ class ProposeExpenseTool implements DeviceTool {
   @override
   String get description =>
       '提议一笔日常消费 / 支出。返回 plan，前端确认后才写入 journal_entries / postings。'
-      '类目从内置 9 类里选：餐饮 / 交通 / 房租 / 娱乐 / 医疗 / 教育 / 购物 / 旅行 / 其它。'
+      '类目从系统支出类目中选择，例如餐饮 / 咖啡 / 生鲜日用 / 订阅 / 购物 / 交通 / 其它。'
       '类目不在闭集时工具会返回 candidates，请你让用户选一个再重新调用。';
 
   @override
@@ -39,7 +39,7 @@ class ProposeExpenseTool implements DeviceTool {
       'amount': {'type': 'number', 'minimum': 0},
       'category': {
         'type': 'string',
-        'description': '中文 label 或 slug，如 餐饮 / food',
+        'description': '中文 label 或 slug，如 餐饮 / dining / 咖啡 / coffee',
       },
       'account_id': {'type': 'string'},
       'account_name': {'type': 'string'},

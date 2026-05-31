@@ -38,14 +38,14 @@ void main() {
       final plan = parseNlQuery('本月咖啡和外卖花了多少', now: now);
       expect(plan, isA<SpendingByCategoryPlan>());
       final p = plan! as SpendingByCategoryPlan;
-      expect(p.categoryHints, containsAll(<String>['coffee', 'food_delivery']));
+      expect(p.categoryHints, containsAll(<String>['coffee', 'dining']));
     });
 
     test('specific merchant phrases use classifier category aliases', () {
       final plan = parseNlQuery('本月 uber eats 花了多少', now: now);
       expect(plan, isA<SpendingByCategoryPlan>());
       final p = plan! as SpendingByCategoryPlan;
-      expect(p.categoryHints, <String>['food_delivery']);
+      expect(p.categoryHints, <String>['dining']);
     });
   });
 

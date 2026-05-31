@@ -29,7 +29,7 @@ void main() {
           occurredAt: DateTime.utc(2026, 5, 1),
         ),
       );
-      expect(c?.categoryHint, 'food_delivery');
+      expect(c?.categoryHint, 'dining');
     });
 
     test('uses full descriptor so multi-word merchants match', () {
@@ -55,7 +55,7 @@ void main() {
           occurredAt: DateTime.utc(2026, 5, 1),
         ),
       );
-      expect(c?.categoryHint, 'grocery');
+      expect(c?.categoryHint, 'groceries');
     });
 
     test('prefers specific food delivery over broad transport merchant', () {
@@ -77,8 +77,8 @@ void main() {
           occurredAt: DateTime.utc(2026, 5, 1),
         ),
       );
-      expect(eats?.categoryHint, 'food_delivery');
-      expect(ride?.categoryHint, 'transport');
+      expect(eats?.categoryHint, 'dining');
+      expect(ride?.categoryHint, 'rideHailing');
     });
 
     test('disambiguates Apple Store from Apple Music', () {
@@ -101,7 +101,7 @@ void main() {
         ),
       );
       expect(store?.categoryHint, 'shopping');
-      expect(music?.categoryHint, 'subscription');
+      expect(music?.categoryHint, 'subscriptions');
     });
 
     test('returns null when merchant is unknown', () {
@@ -161,25 +161,24 @@ void main() {
   group('category helpers', () {
     test('maps fine-grained hints to seeded expense account slugs', () {
       expect(expenseCategorySlugForHint('coffee'), 'coffee');
-      expect(expenseCategorySlugForHint('food_delivery'), 'dining');
+      expect(expenseCategorySlugForHint('dining'), 'dining');
       expect(expenseCategorySlugForHint('food delivery'), 'dining');
       expect(expenseCategorySlugForHint('food-delivery'), 'dining');
       expect(expenseCategorySlugForHint('grocery'), 'groceries');
       expect(expenseCategorySlugForHint('subscription'), 'subscriptions');
       expect(expenseCategorySlugForHint('utilities'), 'utilities');
+      expect(expenseCategorySlugForHint('food'), 'other');
       expect(expenseCategorySlugForHint('unknown'), 'other');
     });
 
     test('extracts category hints from query text with specific aliases', () {
-      expect(categoryHintsForText('本月 uber eats 花了多少'), <String>[
-        'food_delivery',
-      ]);
+      expect(categoryHintsForText('本月 uber eats 花了多少'), <String>['dining']);
       expect(categoryHintsForText('apple store spending'), <String>[
         'shopping',
       ]);
       expect(
         categoryHintsForText('本月咖啡和外卖花了多少'),
-        containsAll(<String>['coffee', 'food_delivery']),
+        containsAll(<String>['coffee', 'dining']),
       );
     });
 

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
+import 'package:naviwealth/domain/values/expense_category_taxonomy.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
 
@@ -399,6 +400,21 @@ void main() {
           'system-account:u-test:expense:pets',
         ]),
       );
+    });
+
+    test('seeded expense accounts cover the canonical taxonomy', () async {
+      await repo.seedSystemAccounts();
+
+      for (final category in kExpenseCategoryTaxonomy) {
+        final account = await repo.findById(
+          AccountRepository.systemAccountIdForPath(
+            category.accountPath,
+            ownerUserId: 'u-test',
+          ),
+        );
+        expect(account, isNotNull, reason: category.slug);
+        expect(account!.category, AccountSide.expense, reason: category.slug);
+      }
     });
 
     test('walkSubtree returns empty list for a deleted root', () async {

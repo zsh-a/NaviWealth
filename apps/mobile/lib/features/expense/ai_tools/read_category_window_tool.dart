@@ -30,6 +30,7 @@ library;
 
 import 'package:decimal/decimal.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
+import 'package:naviwealth/domain/values/expense_category_taxonomy.dart';
 import 'package:naviwealth/features/finance/ai_tools/_shared/scoped/scoped_window.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
@@ -61,7 +62,7 @@ class ReadCategoryWindowTool implements DeviceTool {
     'properties': {
       'category': {
         'type': 'string',
-        'description': '类目（如 food / transport / shopping）',
+        'description': '类目（如 dining / coffee / groceries / shopping）',
       },
       'from': {'type': 'string', 'description': 'ISO 日期或时间，包含；窗口起点'},
       'to': {
@@ -120,7 +121,7 @@ class ReadCategoryWindowTool implements DeviceTool {
     final entries = await ctx.ref.read(
       journalEntriesWithPostingsStreamProvider.future,
     );
-    final accounts = await ctx.ref.read(accountsStreamProvider.future);
+    final accounts = await ctx.ref.read(allAccountsStreamProvider.future);
 
     return shape(
       entries,
@@ -142,6 +143,11 @@ class ReadCategoryWindowTool implements DeviceTool {
   /// decoupled from the write path — same semantics, no coupling.
   static bool _matchesCategory(Account a, String needle) {
     if (a.id == needle) return true;
+    final category = expenseCategoryByInput(needle);
+    if (category != null) {
+      final systemSuffix = ':${category.accountPath}';
+      if (a.id.endsWith(systemSuffix)) return true;
+    }
     final h = a.name.toLowerCase();
     final n = needle.toLowerCase();
     return h == n || h.contains(n) || n.contains(h);
