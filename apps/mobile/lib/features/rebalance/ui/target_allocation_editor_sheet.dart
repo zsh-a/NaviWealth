@@ -181,7 +181,7 @@ class _TargetAllocationEditorSheetState
     final totalValid = _allocation.isValid;
     final totalColor = totalValid
         ? context.theme.colors.primary
-        : Theme.of(context).colorScheme.error;
+        : context.theme.colors.destructive;
     final size = MediaQuery.sizeOf(context);
 
     return SizedBox(
@@ -253,12 +253,11 @@ class _TotalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
     final colors = context.theme.colors;
-    final fg = valid ? colors.primary : colorScheme.error;
+    final fg = valid ? colors.primary : colors.destructive;
     final bg = valid
-        ? colorScheme.primaryContainer.withValues(alpha: AppOpacity.muted)
-        : colorScheme.errorContainer.withValues(alpha: AppOpacity.muted);
+        ? colors.primary.withValues(alpha: AppOpacity.subtle)
+        : colors.destructive.withValues(alpha: AppOpacity.subtle);
 
     return DecoratedBox(
       decoration: BoxDecoration(

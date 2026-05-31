@@ -211,7 +211,6 @@ class _DriftOverview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
     return SoftCard(
@@ -235,13 +234,13 @@ class _DriftOverview extends StatelessWidget {
                       vertical: AppSpacing.s2,
                     ),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
+                      color: context.theme.colors.primary.withValues(alpha: AppOpacity.subtle),
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Text(
                       l10n.rebalanceBalanced,
                       style: context.theme.typography.xs2.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
+                        color: context.theme.colors.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
