@@ -1090,6 +1090,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Primary income inflow. Keep it stable in cash-flow projections.';
 
   @override
+  String get activityEntryDetailInsightDining =>
+      'Dining expense. Review if it aligns with your monthly food budget.';
+
+  @override
+  String get activityEntryDetailInsightTransport =>
+      'Transportation cost. Consider whether it\'s a routine commute or one-off trip.';
+
+  @override
+  String get activityEntryDetailInsightShopping =>
+      'Shopping purchase. Check if it was planned or impulse spending.';
+
+  @override
   String activityEntryDetailLegCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

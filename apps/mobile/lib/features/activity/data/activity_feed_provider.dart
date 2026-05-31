@@ -17,7 +17,7 @@ final activityFeedProvider = StreamProvider.autoDispose<ActivityFeedPage>((
   ref,
 ) {
   final query = ref.watch(activityFeedQueryProvider);
-  final accountsAsync = ref.watch(accountsStreamProvider);
+  final accountsAsync = ref.watch(allAccountsStreamProvider);
 
   if (accountsAsync.hasError) {
     return Stream.error(

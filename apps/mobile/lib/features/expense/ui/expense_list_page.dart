@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -28,9 +30,12 @@ class ExpenseListPage extends ConsumerStatefulWidget {
 class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
   ExpenseFilters _filters = const ExpenseFilters();
   final _keywordController = TextEditingController();
+  Timer? _keywordDebounce;
+  String _appliedKeyword = '';
 
   @override
   void dispose() {
+    _keywordDebounce?.cancel();
     _keywordController.dispose();
     super.dispose();
   }
@@ -58,7 +63,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
               expenseAccountById: expenseAccountById,
               filters: _filters,
               keywordController: _keywordController,
-              onChanged: (f) => setState(() => _filters = f),
+              onChanged: _onFiltersChanged,
             ),
             Expanded(
               child: filtered.isEmpty
@@ -94,8 +99,26 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
     );
   }
 
+  void _onFiltersChanged(ExpenseFilters updated) {
+    final keywordChanged = updated.keyword != _filters.keyword;
+    // Always update _filters so the text controller / clear button stay in sync.
+    setState(() => _filters = updated);
+    if (keywordChanged && updated.keyword.isNotEmpty) {
+      // Typing: debounce the actual filter to avoid rebuilding on every keystroke.
+      _keywordDebounce?.cancel();
+      _keywordDebounce = Timer(const Duration(milliseconds: 300), () {
+        if (!mounted) return;
+        setState(() => _appliedKeyword = updated.keyword.trim().toLowerCase());
+      });
+    } else {
+      // Clearing or non-keyword changes apply immediately.
+      _keywordDebounce?.cancel();
+      _appliedKeyword = updated.keyword.trim().toLowerCase();
+    }
+  }
+
   List<Expense> _applyFilters(List<Expense> all) {
-    final keyword = _filters.keyword.trim().toLowerCase();
+    final keyword = _appliedKeyword;
     return all.where((e) {
       if (_filters.fromAccountId != null &&
           _filters.fromAccountId!.isNotEmpty) {
