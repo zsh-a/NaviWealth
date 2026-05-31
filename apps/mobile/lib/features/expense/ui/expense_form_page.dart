@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
@@ -19,8 +20,8 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../../ai_chat/ui/ai_object_capsule.dart';
+import '../../shared/account_tree_picker.dart';
 import '../../shared/forms/forms.dart';
-import 'category_grid_picker.dart';
 
 /// Quick-entry page for a single expense. Shared between create and
 /// edit flows — when [expenseId] is non-null we hydrate the form from
@@ -235,6 +236,16 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     return l10n.expenseFormEditTitle;
   }
 
+  List<Account> _leafAccounts(List<Account> accounts) {
+    final parentIds = {
+      for (final account in accounts)
+        if (account.parentId != null) account.parentId!,
+    };
+    return accounts
+        .where((account) => !parentIds.contains(account.id))
+        .toList(growable: false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -327,7 +338,10 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                           final expenseAccounts = allAccounts
                               .where((a) => a.category == AccountSide.expense)
                               .toList(growable: false);
-                          if (expenseAccounts.isEmpty) {
+                          final selectableExpenseAccounts = _leafAccounts(
+                            expenseAccounts,
+                          );
+                          if (selectableExpenseAccounts.isEmpty) {
                             return Padding(
                               padding: const EdgeInsets.symmetric(
                                 vertical: AppSpacing.s12,
@@ -335,20 +349,27 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                               child: Text(l10n.expenseFormCategoriesLoading),
                             );
                           }
-                          // Resolve default: explicit pick > first account
+                          // Resolve default: explicit pick > first leaf category.
                           if (_expenseAccountId == null ||
-                              !expenseAccounts.any(
+                              !selectableExpenseAccounts.any(
                                 (a) => a.id == _expenseAccountId,
                               )) {
-                            _expenseAccountId = expenseAccounts.first.id;
+                            _expenseAccountId =
+                                selectableExpenseAccounts.first.id;
                           }
-                          return CategoryGridPicker(
+                          return AccountTreePicker(
                             accounts: expenseAccounts,
-                            selectedId: _expenseAccountId,
-                            onSelect: (id) => setState(() {
-                              _expenseAccountId = id;
-                              dirty.markDirty();
-                            }),
+                            value: _expenseAccountId,
+                            onChanged: (id) {
+                              if (id == null) return;
+                              setState(() {
+                                _expenseAccountId = id;
+                                dirty.markDirty();
+                              });
+                            },
+                            category: AccountSide.expense,
+                            label: l10n.expenseCategoryPickerLabelDefault,
+                            leafOnly: true,
                           );
                         },
                         loading: () => const Padding(
@@ -440,11 +461,7 @@ class _NoAccountsHint extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             alignment: Alignment.center,
-            child: Icon(
-              FLucideIcons.wallet,
-              size: 18,
-              color: semantic.warning,
-            ),
+            child: Icon(FLucideIcons.wallet, size: 18, color: semantic.warning),
           ),
           const SizedBox(width: 12),
           Expanded(
