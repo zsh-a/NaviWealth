@@ -11,8 +11,8 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/ai/local/skills/skills.dart';
 import '../domain/ingest_models.dart';
-import 'csv_ingest_parser.dart';
 import 'ingest_dedup.dart';
+import 'statement_ingest_parser.dart';
 
 class IngestPipeline {
   IngestPipeline({DateTime Function()? clock, String Function()? idGen})
@@ -43,7 +43,7 @@ class IngestPipeline {
       );
     }
 
-    final parsed = parseCsvLedger(
+    final parsed = parseStatementLedger(
       source.payload,
       defaultCurrency: defaultCurrency,
     );

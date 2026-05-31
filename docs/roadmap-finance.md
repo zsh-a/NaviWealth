@@ -28,6 +28,9 @@ Highest product leverage is reducing manual entry:
 
 - Add provider-specific CSV/statement parsers only after real sample files
   or user demand.
+- The parser entry point is now provider-aware (`statement_ingest_parser.dart`)
+  for Alipay, WeChat Pay, and bank debit/credit exports; new providers should
+  extend that detection layer rather than adding ad hoc UI parsing.
 - Keep imported rows in reviewable draft state.
 - Use deterministic parsing first; LLM/OCR can suggest, not silently commit.
 - Add dedup coverage for account, expense, trade, and transfer imports.
