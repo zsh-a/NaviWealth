@@ -11,6 +11,8 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_repo
 import '../../../app/route_paths.dart';
 import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
+import '../../shared/account_l10n.dart';
 import 'activity_entry_detail_page.dart';
 
 /// One row in the unified Activity timeline (iOS Wallet style).
@@ -34,6 +36,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     final classification = classifyEntryKind(
       postings: entry.postings,
       resolveCategory: (id) => accountsById[id]?.category,
@@ -45,7 +48,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
 
     final subtitle = entry.entry.payee?.isNotEmpty == true
         ? entry.entry.payee!
-        : _accountSummary(entry.postings, accountsById);
+        : _accountSummary(l10n, entry.postings, accountsById);
 
     return SoftCard(
       child: FTile(
@@ -172,10 +175,14 @@ String _formatTime(DateTime date) {
   return '$h:$m';
 }
 
-String? _accountSummary(List<Posting> postings, Map<String, Account> accounts) {
+String? _accountSummary(
+  AppLocalizations l10n,
+  List<Posting> postings,
+  Map<String, Account> accounts,
+) {
   for (final p in postings) {
     final a = accounts[p.accountId];
-    if (a != null) return a.name;
+    if (a != null) return localizedAccountName(l10n, a);
   }
   return null;
 }

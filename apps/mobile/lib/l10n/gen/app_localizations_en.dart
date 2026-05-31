@@ -4536,6 +4536,117 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseCategoryPickerRequired => 'Pick a category';
 
   @override
+  String get systemAccountIncome => 'Income';
+
+  @override
+  String get systemAccountIncomeSalary => 'Salary';
+
+  @override
+  String get systemAccountIncomeDividend => 'Dividend';
+
+  @override
+  String get systemAccountIncomeInterest => 'Interest';
+
+  @override
+  String get systemAccountIncomeCapitalGains => 'Capital Gains';
+
+  @override
+  String get systemAccountIncomeOther => 'Other Income';
+
+  @override
+  String get systemAccountExpense => 'Expenses';
+
+  @override
+  String get systemAccountExpenseDining => 'Dining';
+
+  @override
+  String get systemAccountExpenseGroceries => 'Groceries';
+
+  @override
+  String get systemAccountExpenseCoffee => 'Coffee';
+
+  @override
+  String get systemAccountExpenseTransport => 'Transport';
+
+  @override
+  String get systemAccountExpenseRideHailing => 'Ride Hailing';
+
+  @override
+  String get systemAccountExpenseHousing => 'Housing';
+
+  @override
+  String get systemAccountExpenseUtilities => 'Utilities';
+
+  @override
+  String get systemAccountExpenseHousehold => 'Household';
+
+  @override
+  String get systemAccountExpenseShopping => 'Shopping';
+
+  @override
+  String get systemAccountExpenseSubscriptions => 'Subscriptions';
+
+  @override
+  String get systemAccountExpenseEntertainment => 'Entertainment';
+
+  @override
+  String get systemAccountExpenseMedical => 'Medical';
+
+  @override
+  String get systemAccountExpenseFitness => 'Fitness';
+
+  @override
+  String get systemAccountExpenseEducation => 'Education';
+
+  @override
+  String get systemAccountExpenseTravel => 'Travel';
+
+  @override
+  String get systemAccountExpenseCommunication => 'Communication';
+
+  @override
+  String get systemAccountExpenseGift => 'Gift';
+
+  @override
+  String get systemAccountExpenseFamilySupport => 'Family Support';
+
+  @override
+  String get systemAccountExpensePets => 'Pets';
+
+  @override
+  String get systemAccountExpenseTrading => 'Trading';
+
+  @override
+  String get systemAccountExpenseTradingFee => 'Trading Fee';
+
+  @override
+  String get systemAccountExpenseTradingTax => 'Trading Tax';
+
+  @override
+  String get systemAccountExpenseTradingInterest => 'Trading Interest';
+
+  @override
+  String get systemAccountExpenseTax => 'Tax';
+
+  @override
+  String get systemAccountExpenseTaxWithholding => 'Withholding Tax';
+
+  @override
+  String get systemAccountExpenseOther => 'Other Expense';
+
+  @override
+  String get systemAccountEquity => 'Equity';
+
+  @override
+  String get systemAccountEquityOpeningBalance => 'Opening Balance';
+
+  @override
+  String get systemAccountEquitySplits => 'Stock Splits';
+
+  @override
+  String get systemAccountEquityAdjustments => 'Adjustments';
+
+  @override
   String get physicalAssetValuationProjected => 'Projected valuation';
 
   @override

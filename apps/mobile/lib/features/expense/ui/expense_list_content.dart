@@ -8,6 +8,7 @@ import '../../../core/format/formatters.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../shared/account_l10n.dart';
 import 'expense_category_visuals.dart';
 import 'expense_list_models.dart';
 
@@ -30,6 +31,10 @@ class ExpenseFiltersBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final categoryLabelById = {
+      for (final entry in expenseAccountById.entries)
+        entry.key: localizedAccountPath(l10n, entry.value, expenseAccountById),
+    };
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Column(
@@ -72,7 +77,7 @@ class ExpenseFiltersBar extends StatelessWidget {
                 _FilterChip<String?>(
                   label: filters.expenseAccountId == null
                       ? l10n.expenseListAllCategories
-                      : (expenseAccountById[filters.expenseAccountId]?.name ??
+                      : (categoryLabelById[filters.expenseAccountId] ??
                             l10n.expenseListAllCategories),
                   active: filters.expenseAccountId != null,
                   onClear: () =>
@@ -94,7 +99,10 @@ class ExpenseFiltersBar extends StatelessWidget {
                             ),
                             for (final a in expenseAccounts)
                               FTile(
-                                title: Text(a.name),
+                                title: Text(
+                                  categoryLabelById[a.id] ??
+                                      localizedAccountName(l10n, a),
+                                ),
                                 prefix: Icon(a.iconData),
                                 onPress: () => Navigator.of(ctx).pop(a.id),
                               ),
@@ -320,7 +328,11 @@ class _ExpenseRow extends StatelessWidget {
     final accent =
         account?.expenseAccentColor(context) ?? context.theme.colors.primary;
     return FTile(
-      title: Text(account?.name ?? l10n.expenseListUncategorized),
+      title: Text(
+        account == null
+            ? l10n.expenseListUncategorized
+            : localizedAccountName(l10n, account!),
+      ),
       prefix: CircleAvatar(
         backgroundColor: accent.withValues(alpha: 0.15),
         child: Icon(account?.iconData ?? FLucideIcons.banknote, color: accent),

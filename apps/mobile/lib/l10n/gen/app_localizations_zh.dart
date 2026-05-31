@@ -4368,6 +4368,117 @@ class AppLocalizationsZh extends AppLocalizations {
   String get expenseCategoryPickerRequired => '请选择类目';
 
   @override
+  String get systemAccountIncome => '收入';
+
+  @override
+  String get systemAccountIncomeSalary => '工资';
+
+  @override
+  String get systemAccountIncomeDividend => '股息';
+
+  @override
+  String get systemAccountIncomeInterest => '利息收入';
+
+  @override
+  String get systemAccountIncomeCapitalGains => '资本利得';
+
+  @override
+  String get systemAccountIncomeOther => '其他收入';
+
+  @override
+  String get systemAccountExpense => '支出';
+
+  @override
+  String get systemAccountExpenseDining => '餐饮';
+
+  @override
+  String get systemAccountExpenseGroceries => '生鲜日用';
+
+  @override
+  String get systemAccountExpenseCoffee => '咖啡';
+
+  @override
+  String get systemAccountExpenseTransport => '公共交通';
+
+  @override
+  String get systemAccountExpenseRideHailing => '打车';
+
+  @override
+  String get systemAccountExpenseHousing => '住房';
+
+  @override
+  String get systemAccountExpenseUtilities => '水电燃气';
+
+  @override
+  String get systemAccountExpenseHousehold => '家居日用';
+
+  @override
+  String get systemAccountExpenseShopping => '购物';
+
+  @override
+  String get systemAccountExpenseSubscriptions => '订阅';
+
+  @override
+  String get systemAccountExpenseEntertainment => '娱乐';
+
+  @override
+  String get systemAccountExpenseMedical => '医疗';
+
+  @override
+  String get systemAccountExpenseFitness => '运动健身';
+
+  @override
+  String get systemAccountExpenseEducation => '教育';
+
+  @override
+  String get systemAccountExpenseTravel => '旅行';
+
+  @override
+  String get systemAccountExpenseCommunication => '通讯';
+
+  @override
+  String get systemAccountExpenseGift => '礼物';
+
+  @override
+  String get systemAccountExpenseFamilySupport => '家庭支持';
+
+  @override
+  String get systemAccountExpensePets => '宠物';
+
+  @override
+  String get systemAccountExpenseTrading => '交易';
+
+  @override
+  String get systemAccountExpenseTradingFee => '手续费';
+
+  @override
+  String get systemAccountExpenseTradingTax => '交易税费';
+
+  @override
+  String get systemAccountExpenseTradingInterest => '融资利息';
+
+  @override
+  String get systemAccountExpenseTax => '税务';
+
+  @override
+  String get systemAccountExpenseTaxWithholding => '预扣税';
+
+  @override
+  String get systemAccountExpenseOther => '其他支出';
+
+  @override
+  String get systemAccountEquity => '权益';
+
+  @override
+  String get systemAccountEquityOpeningBalance => '期初余额';
+
+  @override
+  String get systemAccountEquitySplits => '拆股';
+
+  @override
+  String get systemAccountEquityAdjustments => '调整';
+
+  @override
   String get physicalAssetValuationProjected => '预计估值';
 
   @override

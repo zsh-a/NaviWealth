@@ -1,6 +1,5 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
@@ -10,6 +9,7 @@ import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/posting.dart';
 import 'package:naviwealth/features/shared/postings_preview.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 const _hlc = Hlc(wallMillis: 1700000000000, counter: 0, nodeId: 'dev');
 final _sync = SyncMeta(
@@ -55,12 +55,8 @@ Posting _p({
 
 Widget _wrap(Widget child) => MaterialApp(
   theme: AppTheme.light(),
-  localizationsDelegates: const [
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-  ],
-  supportedLocales: const [Locale('en', 'US'), Locale('zh', 'CN')],
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
   locale: const Locale('en', 'US'),
   home: Scaffold(
     body: SizedBox(

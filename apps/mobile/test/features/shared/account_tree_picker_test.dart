@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
@@ -8,6 +7,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/shared/account_tree_picker.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 const _hlc = Hlc(wallMillis: 1700000000000, counter: 0, nodeId: 'dev');
 final _sync = SyncMeta(
@@ -47,22 +47,19 @@ Account _account({
   ),
 );
 
-Widget _wrap(Widget child) => MaterialApp(
-  theme: AppTheme.light(),
-  localizationsDelegates: const [
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-  ],
-  supportedLocales: const [Locale('en', 'US'), Locale('zh', 'CN')],
-  locale: const Locale('en', 'US'),
-  home: FTheme(
-    data: FThemes.slate.light.desktop,
-    child: Scaffold(
-      body: Padding(padding: const EdgeInsets.all(16), child: child),
-    ),
-  ),
-);
+Widget _wrap(Widget child, {Locale locale = const Locale('en', 'US')}) =>
+    MaterialApp(
+      theme: AppTheme.light(),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: locale,
+      home: FTheme(
+        data: FThemes.slate.light.desktop,
+        child: Scaffold(
+          body: Padding(padding: const EdgeInsets.all(16), child: child),
+        ),
+      ),
+    );
 
 void main() {
   testWidgets('renders breadcrumb path for nested accounts', (tester) async {
@@ -176,6 +173,38 @@ void main() {
     await tester.tap(interest);
     await tester.pumpAndSettle();
     expect(selected, 'system-account:u:expense:trading:interest');
+  });
+
+  testWidgets('localizes seeded system account paths', (tester) async {
+    final accounts = <Account>[
+      _account(id: 'system-account:u:expense', name: 'System Expenses'),
+      _account(
+        id: 'system-account:u:expense:trading',
+        name: 'Trading',
+        parentId: 'system-account:u:expense',
+      ),
+      _account(
+        id: 'system-account:u:expense:trading:fee',
+        name: 'Trading Fee',
+        parentId: 'system-account:u:expense:trading',
+      ),
+    ];
+
+    await tester.pumpWidget(
+      _wrap(
+        AccountTreePicker(
+          accounts: accounts,
+          value: 'system-account:u:expense:trading:fee',
+          onChanged: (_) {},
+          category: AccountSide.expense,
+          leafOnly: true,
+        ),
+        locale: const Locale('zh', 'CN'),
+      ),
+    );
+
+    expect(find.text('交易 › 手续费'), findsOneWidget);
+    expect(find.text('Trading › Trading Fee'), findsNothing);
   });
 
   testWidgets('archived and deleted rows are hidden by default', (

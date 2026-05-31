@@ -6,6 +6,8 @@ import 'package:naviwealth/features/finance/data/domain/posting.dart';
 
 import '../../core/format/formatters.dart';
 import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
+import 'account_l10n.dart';
 
 /// FIR-128 §1.3 — read-only ledger card that mirrors the Beancount
 /// posting layout: account path on the left, signed `units` and (when
@@ -96,9 +98,10 @@ class _PostingRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final account = accounts[posting.accountId];
+    final l10n = AppLocalizations.of(context);
     final accountLabel = account == null
         ? posting.accountId
-        : _accountPath(account, accounts);
+        : localizedAccountPath(l10n, account, accounts, dropSystemRoot: false);
 
     final cost = posting.cost;
     final price = posting.price;
@@ -185,26 +188,6 @@ class _UnitBalanceRow extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Build a Beancount-style `›`-separated path by walking parent ids.
-/// Cheap enough to recompute on every rebuild because the chain is
-/// bounded by the seeded tree depth (≤ 4 today).
-String _accountPath(Account leaf, Map<String, Account> accounts) {
-  final parts = <String>[leaf.name];
-  Account? cursor = leaf;
-  var hops = 0;
-  while (true) {
-    final parentId = cursor!.parentId;
-    if (parentId == null) break;
-    final parent = accounts[parentId];
-    if (parent == null) break;
-    parts.add(parent.name);
-    cursor = parent;
-    hops += 1;
-    if (hops > 64) break;
-  }
-  return parts.reversed.join(' › ');
 }
 
 String _costLabel(Cost cost) {

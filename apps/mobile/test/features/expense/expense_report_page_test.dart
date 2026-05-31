@@ -60,6 +60,7 @@ Future<ProviderScope> _wrap({
         (ref) => Stream.value(expenses),
       ),
       accountsStreamProvider.overrideWith((ref) => Stream.value(accounts)),
+      allAccountsStreamProvider.overrideWith((ref) => Stream.value(accounts)),
       // FX rates stream — empty list is fine for single-currency tests.
       fxRatesStreamProvider.overrideWith((ref) => Stream.value(const [])),
     ],

@@ -6,6 +6,7 @@ import 'package:naviwealth/features/finance/data/domain/expense.dart';
 import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../shared/account_l10n.dart';
 import '../domain/expense_report.dart';
 import 'expense_category_visuals.dart';
 
@@ -191,9 +192,11 @@ class _Pie extends StatelessWidget {
     final slices = <Slice>[
       for (var i = 0; i < report.byCategory.length; i++)
         Slice(
-          label:
-              categoryById[report.byCategory[i].expenseAccountId]?.name ??
-              l10n.expenseReportUncategorized,
+          label: _categoryLabel(
+            l10n,
+            categoryById[report.byCategory[i].expenseAccountId],
+            l10n.expenseReportUncategorized,
+          ),
           value: report.byCategory[i].total.amount.toDouble(),
           colorOverride:
               categoryById[report.byCategory[i].expenseAccountId]
@@ -258,9 +261,11 @@ class _PieLegend extends StatelessWidget {
                 categoryById[report.byCategory[i].expenseAccountId]
                     ?.expenseAccentColor(context, ordinal: i) ??
                 ChartPalette.of(context).accentAt(i),
-            label:
-                categoryById[report.byCategory[i].expenseAccountId]?.name ??
-                l10n.expenseReportUncategorized,
+            label: _categoryLabel(
+              l10n,
+              categoryById[report.byCategory[i].expenseAccountId],
+              l10n.expenseReportUncategorized,
+            ),
             valueInBase: report.byCategory[i].total.amount.toDouble(),
             currencyCode: report.baseCurrency,
             percent: total == 0
@@ -383,7 +388,9 @@ class _CategoryTile extends StatelessWidget {
     final accent =
         category?.expenseAccentColor(context) ?? context.theme.colors.primary;
     return FTile(
-      title: Text(category?.name ?? l10n.expenseReportUncategorized),
+      title: Text(
+        _categoryLabel(l10n, category, l10n.expenseReportUncategorized),
+      ),
       prefix: CircleAvatar(
         backgroundColor: accent.withValues(alpha: 0.15),
         child: Icon(category?.iconData ?? FLucideIcons.banknote, color: accent),
@@ -406,6 +413,14 @@ class _CategoryTile extends StatelessWidget {
       ),
     );
   }
+}
+
+String _categoryLabel(
+  AppLocalizations l10n,
+  Account? account,
+  String fallback,
+) {
+  return account == null ? fallback : localizedAccountName(l10n, account);
 }
 
 class _CategoryDrillDown extends StatelessWidget {
@@ -447,7 +462,11 @@ class _CategoryDrillDown extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      category?.name ?? l10n.expenseReportUncategorized,
+                      _categoryLabel(
+                        l10n,
+                        category,
+                        l10n.expenseReportUncategorized,
+                      ),
                       style: context.theme.typography.lg,
                     ),
                   ),

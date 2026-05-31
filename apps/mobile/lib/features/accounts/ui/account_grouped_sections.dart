@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/shared/account_l10n.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
@@ -192,7 +193,7 @@ class _AccountRowState extends State<_AccountRow> {
               tag: 'account-${account.id}-name',
               enabled: widget.heroEnabled,
               child: Text(
-                account.name,
+                localizedAccountName(AppLocalizations.of(context), account),
                 style: context.theme.typography.sm.copyWith(
                   fontWeight: FontWeight.w500,
                 ),
