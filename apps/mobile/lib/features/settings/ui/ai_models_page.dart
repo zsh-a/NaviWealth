@@ -279,7 +279,7 @@ class _BundleCard extends ConsumerWidget {
           stateAsync.when(
             loading: () => const Padding(
               padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
-              child: LinearProgressIndicator(),
+              child: FProgress(),
             ),
             error: (e, _) => Text(
               l10n.settingsAiModelsStateLoadFailed('$e'),
@@ -451,7 +451,20 @@ class _FileRow extends StatelessWidget {
           ),
           if (file.status == ModelFileStatus.downloading) ...[
             const SizedBox(height: AppSpacing.s4),
-            LinearProgressIndicator(value: progress, minHeight: 3),
+            FDeterminateProgress(
+              value: progress!,
+              style: FDeterminateProgressStyle(
+                constraints: const BoxConstraints.tightFor(height: 3),
+                trackDecoration: ShapeDecoration(
+                  shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+                  color: context.theme.colors.muted,
+                ),
+                fillDecoration: ShapeDecoration(
+                  shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+                  color: context.theme.colors.primary,
+                ),
+              ),
+            ),
             const SizedBox(height: AppSpacing.s2),
             Text(
               '${_formatBytes(file.bytesDownloaded)}'

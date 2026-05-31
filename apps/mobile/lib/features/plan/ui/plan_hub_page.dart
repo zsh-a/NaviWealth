@@ -154,12 +154,7 @@ class _PlanHero extends ConsumerWidget {
               style: TypographyTokens.numericTitle,
             ),
           const SizedBox(height: AppSpacing.s12),
-          LinearProgressIndicator(
-            value: progress,
-            minHeight: 6,
-            backgroundColor: colors.muted,
-            valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
-          ),
+          FDeterminateProgress(value: progress),
           const SizedBox(height: AppSpacing.s8),
           Text(
             '${l10n.planHeroProgressLabel} $progressPct%',

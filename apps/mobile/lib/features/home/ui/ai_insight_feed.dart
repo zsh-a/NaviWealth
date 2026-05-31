@@ -47,7 +47,7 @@ class AiInsightFeed extends StatelessWidget {
         ),
         for (var i = 0; i < insights.length; i++)
           Padding(
-            padding: EdgeInsets.only(bottom: i == insights.length - 1 ? 0 : 8),
+            padding: EdgeInsets.only(bottom: i == insights.length - 1 ? 0 : AppSpacing.s8),
             child: _StaggeredFadeIn(
               delay: Duration(milliseconds: 60 * i),
               child: _InsightCard(item: insights[i]),
@@ -282,9 +282,7 @@ class _InsightOverlayActions extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s2),
         decoration: BoxDecoration(
-          color: isDark
-              ? colors.background.withValues(alpha: AppOpacity.overlay)
-              : Colors.white.withValues(alpha: AppOpacity.overlay),
+          color: colors.background.withValues(alpha: AppOpacity.overlay),
           borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
             color: colors.foreground.withValues(alpha: isDark ? 0.10 : 0.06),

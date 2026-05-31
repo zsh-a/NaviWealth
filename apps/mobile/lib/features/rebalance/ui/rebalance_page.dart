@@ -231,8 +231,8 @@ class _DriftOverview extends StatelessWidget {
                 if (plan.isBalanced)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
+                      horizontal: AppSpacing.s8,
+                      vertical: AppSpacing.s2,
                     ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primaryContainer,

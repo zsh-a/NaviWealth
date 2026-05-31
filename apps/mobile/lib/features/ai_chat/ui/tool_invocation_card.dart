@@ -58,8 +58,8 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
               onPress: () => setState(() => _expanded = !_expanded),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+                  horizontal: AppSpacing.s12,
+                  vertical: AppSpacing.s8,
                 ),
                 child: Row(
                   children: [
@@ -67,7 +67,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                       pending
                           ? FLucideIcons.hourglass
                           : FLucideIcons.circleCheck,
-                      size: 16,
+                      size: AppIconSizes.sm,
                       color: pending ? colors.mutedForeground : colors.primary,
                     ),
                     const SizedBox(width: AppSpacing.s8),
@@ -203,8 +203,8 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                 onPress: () => setState(() => _showRawJson = true),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 2,
+                    horizontal: AppSpacing.s4,
+                    vertical: AppSpacing.s2,
                   ),
                   child: Text(
                     l10n.aiChatToolShowRawJson,
@@ -221,8 +221,8 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                 onPress: () => setState(() => _showRawJson = false),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 2,
+                    horizontal: AppSpacing.s4,
+                    vertical: AppSpacing.s2,
                   ),
                   child: Text(
                     l10n.aiChatToolShowCompactView,

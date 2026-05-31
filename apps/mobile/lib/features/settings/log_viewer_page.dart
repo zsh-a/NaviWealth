@@ -129,8 +129,8 @@ class _LogTile extends StatelessWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
+                    horizontal: AppSpacing.s6,
+                    vertical: AppSpacing.s2,
                   ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: AppOpacity.medium),

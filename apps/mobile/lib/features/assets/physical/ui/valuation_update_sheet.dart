@@ -103,11 +103,21 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
             const SizedBox(height: AppSpacing.s12),
             InkWell(
               onTap: _saving ? null : _pickDate,
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: l10n.physicalAssetUpdateValuationDate,
-                ),
-                child: Text(dateFormat.format(_asOf)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.physicalAssetUpdateValuationDate,
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s4),
+                  Text(
+                    dateFormat.format(_asOf),
+                    style: context.theme.typography.sm,
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: AppSpacing.s12),

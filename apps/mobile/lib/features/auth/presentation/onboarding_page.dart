@@ -52,8 +52,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
               constraints: const BoxConstraints(maxWidth: 480),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 32,
+                  horizontal: AppSpacing.s24,
+                  vertical: AppSpacing.s32,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -394,12 +394,21 @@ class _DateField extends StatelessWidget {
         );
         if (picked != null) onChanged(picked);
       },
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-        ),
-        child: Text('${value.year}-${_pad(value.month)}-${_pad(value.day)}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: context.theme.typography.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            '${value.year}-${_pad(value.month)}-${_pad(value.day)}',
+            style: context.theme.typography.sm,
+          ),
+        ],
       ),
     );
   }

@@ -424,10 +424,18 @@ class _ProcessingPanel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            LinearProgressIndicator(
-              minHeight: 2,
-              backgroundColor: colors.muted,
-              color: colors.primary,
+            FProgress(
+              style: FProgressStyle(
+                constraints: const BoxConstraints.tightFor(height: 2),
+                trackDecoration: ShapeDecoration(
+                  shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+                  color: colors.muted,
+                ),
+                fillDecoration: ShapeDecoration(
+                  shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+                  color: colors.primary,
+                ),
+              ),
             ),
             Padding(
               padding: EdgeInsets.all(
@@ -459,7 +467,7 @@ class _ProcessingPanel extends StatelessWidget {
                         Text(
                           state.title,
                           style: context.theme.typography.sm.copyWith(
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: AppSpacing.s4),

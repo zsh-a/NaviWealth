@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../../../design_system/design_system.dart';
-
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
+
+import '../../../design_system/design_system.dart';
 import '../../../domain/values/asset_market.dart';
 import '../../../features/finance/data/securities_catalog/asset_search_hit.dart';
 import '../../../features/finance/data/securities_catalog/providers.dart';
@@ -119,7 +119,7 @@ class _SymbolFieldState extends ConsumerState<SymbolField> {
     return asyncSearch.when(
       loading: () => const Padding(
         padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
-        child: LinearProgressIndicator(),
+        child: FProgress(),
       ),
       error: (e, _) => Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),

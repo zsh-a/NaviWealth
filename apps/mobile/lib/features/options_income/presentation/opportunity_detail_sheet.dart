@@ -301,11 +301,8 @@ class _ScoreBreakdown extends StatelessWidget {
                 Expanded(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.full),
-                    child: LinearProgressIndicator(
+                    child: FDeterminateProgress(
                       value: entry.value.toDouble().clamp(0.0, 1.0),
-                      minHeight: 6,
-                      backgroundColor: context.theme.colors.muted,
-                      color: context.theme.colors.primary,
                     ),
                   ),
                 ),

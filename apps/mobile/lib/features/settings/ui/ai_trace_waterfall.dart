@@ -300,7 +300,7 @@ class _SpanDetail extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(_kindIcon(span), size: 14, color: _kindTone(context, span)),
+              Icon(_kindIcon(span), size: AppIconSizes.xs, color: _kindTone(context, span)),
               const SizedBox(width: AppSpacing.s6),
               Expanded(
                 child: Text(

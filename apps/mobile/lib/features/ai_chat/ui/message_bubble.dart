@@ -151,8 +151,8 @@ class _UserBubble extends ConsumerWidget {
                     label: l10n.aiChatSemanticsUserMessage,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                        horizontal: AppSpacing.s12,
+                        vertical: AppSpacing.s8,
                       ),
                       decoration: BoxDecoration(
                         color: colors.primary,

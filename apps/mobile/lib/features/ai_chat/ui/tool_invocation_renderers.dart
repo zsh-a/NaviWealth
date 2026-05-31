@@ -506,7 +506,7 @@ class _BreakdownView extends StatelessWidget {
               children: [
                 for (var i = 0; i < top.length; i++)
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 1),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
                     child: Row(
                       children: [
                         Container(

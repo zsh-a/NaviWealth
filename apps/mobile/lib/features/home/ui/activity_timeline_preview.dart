@@ -58,8 +58,8 @@ class ActivityTimelinePreview extends ConsumerWidget {
                     onPress: () => context.go(AppRoutes.activity),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 2,
+                        horizontal: AppSpacing.s4,
+                        vertical: AppSpacing.s2,
                       ),
                       child: Text(
                         l10n.dashboardActivityPreviewViewAll,

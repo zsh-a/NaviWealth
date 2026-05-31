@@ -235,7 +235,7 @@ class _RankingSection extends ConsumerWidget {
                         code: snapshot.baseCurrency,
                       ),
                     ),
-                    if (row != rows.last) const Divider(height: AppSpacing.s16),
+                    if (row != rows.last) const SizedBox(height: AppSpacing.s16),
                   ],
                 ],
               );
