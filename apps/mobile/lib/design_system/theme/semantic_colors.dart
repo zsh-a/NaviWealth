@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../tokens/color_palette.dart';
 
@@ -101,5 +102,5 @@ class SemanticColors {
 
   /// Resolve the appropriate set from the surrounding theme brightness.
   static SemanticColors of(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? dark : light;
+      FTheme.of(context).colors.brightness == Brightness.dark ? dark : light;
 }

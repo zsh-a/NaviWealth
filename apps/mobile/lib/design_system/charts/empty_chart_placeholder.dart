@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart' show IconData, Icons;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -12,7 +11,7 @@ class EmptyChartPlaceholder extends StatelessWidget {
   const EmptyChartPlaceholder({
     super.key,
     this.message,
-    this.icon = Icons.show_chart,
+    this.icon = FLucideIcons.trendingUp,
   });
 
   final String? message;

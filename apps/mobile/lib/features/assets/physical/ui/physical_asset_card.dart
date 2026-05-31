@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
@@ -17,14 +17,13 @@ class PhysicalAssetCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => context.goNamed(
-            AppRouteNames.wealthPhysicalDetail,
-            pathParameters: {'id': asset.id},
-          ),
-          child: Padding(
+      child: GestureDetector(
+        onTap: () => context.goNamed(
+          AppRouteNames.wealthPhysicalDetail,
+          pathParameters: {'id': asset.id},
+        ),
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s16),
             child: Row(
               children: [
@@ -65,7 +64,6 @@ class PhysicalAssetCard extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 

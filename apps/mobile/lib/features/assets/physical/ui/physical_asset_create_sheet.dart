@@ -172,8 +172,9 @@ class _PhysicalAssetCreateSheetState
                 ),
                 const SizedBox(width: AppSpacing.s12),
                 Expanded(
-                  child: InkWell(
+                  child: GestureDetector(
                     onTap: _saving ? null : _pickPurchaseDate,
+                    behavior: HitTestBehavior.opaque,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

@@ -10,7 +10,7 @@
 /// every other AI surface.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import '../../../design_system/design_system.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -74,9 +74,8 @@ class _UndoRow extends StatelessWidget {
         entry.payload['summary_zh'] as String? ??
         entry.payload['summaryZh'] as String? ??
         entry.kind;
-    return Material(
+    return ColoredBox(
       color: AiTone.surfaceTint(context),
-      elevation: 0,
       child: SafeArea(
         top: false,
         bottom: false,

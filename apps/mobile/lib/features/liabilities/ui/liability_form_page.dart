@@ -384,7 +384,7 @@ class _DateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: () async {
         final picked = await showDatePicker(
           context: context,
@@ -394,6 +394,7 @@ class _DateField extends StatelessWidget {
         );
         if (picked != null) onChanged(picked);
       },
+      behavior: HitTestBehavior.opaque,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

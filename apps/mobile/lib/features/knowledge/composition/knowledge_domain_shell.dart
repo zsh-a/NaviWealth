@@ -6,7 +6,6 @@
 /// MVP — l10n keys land when the dogfood loop confirms wording.
 library;
 
-import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../../../app/route_paths.dart';

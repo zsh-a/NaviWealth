@@ -6,7 +6,7 @@
 /// a "not enough data" message rather than rendering an empty axis.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 

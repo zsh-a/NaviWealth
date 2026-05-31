@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import '../design_system/design_system.dart';
 import 'package:forui/forui.dart';
 import '../design_system/design_system.dart';
@@ -68,10 +68,7 @@ class _DeferredLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     return const FScaffold(
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: Center(child: FCircularProgress()),
-      ),
+      child: Center(child: FCircularProgress()),
     );
   }
 }
@@ -87,42 +84,39 @@ class _DeferredError extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return FScaffold(
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.s24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  FLucideIcons.cloudOff,
-                  size: 48,
-                  color: context.theme.colors.destructive,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                FLucideIcons.cloudOff,
+                size: 48,
+                color: context.theme.colors.destructive,
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              Text(
+                l10n.deferredLoadFailedTitle,
+                style: context.theme.typography.md,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpacing.s4),
+              Text(
+                '$error',
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.mutedForeground,
                 ),
-                const SizedBox(height: AppSpacing.s12),
-                Text(
-                  l10n.deferredLoadFailedTitle,
-                  style: context.theme.typography.md,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppSpacing.s4),
-                Text(
-                  '$error',
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppSpacing.s16),
-                FButton(
-                  variant: FButtonVariant.primary,
-                  onPress: onRetry,
-                  prefix: const Icon(FLucideIcons.refreshCw, size: 16),
-                  child: Text(l10n.deferredLoadRetry),
-                ),
-              ],
-            ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpacing.s16),
+              FButton(
+                variant: FButtonVariant.primary,
+                onPress: onRetry,
+                prefix: const Icon(FLucideIcons.refreshCw, size: 16),
+                child: Text(l10n.deferredLoadRetry),
+              ),
+            ],
           ),
         ),
       ),

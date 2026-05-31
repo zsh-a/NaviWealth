@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
@@ -36,7 +36,7 @@ class AppEmptyState extends StatelessWidget {
     required String title,
     String? message,
     Widget? action,
-    IconData icon = Icons.error_outline,
+    IconData icon = FLucideIcons.circleX,
   }) : this(
          key: key,
          icon: icon,

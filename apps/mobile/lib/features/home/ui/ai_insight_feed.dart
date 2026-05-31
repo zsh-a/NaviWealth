@@ -277,9 +277,7 @@ class _InsightOverlayActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
-    return Material(
-      color: Colors.transparent,
-      child: Container(
+    return Container(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s2),
         decoration: BoxDecoration(
           color: colors.background.withValues(alpha: AppOpacity.overlay),
@@ -313,7 +311,6 @@ class _InsightOverlayActions extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

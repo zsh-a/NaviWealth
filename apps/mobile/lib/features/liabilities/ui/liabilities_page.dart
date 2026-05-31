@@ -106,7 +106,7 @@ class _LiabilityListTile extends StatelessWidget {
       child: FTile(
         title: Text(liability.name),
         prefix: CircleAvatar(
-          backgroundColor: AccentColors.tint(Theme.of(context).brightness),
+          backgroundColor: AccentColors.tint(context.theme.colors.brightness),
           child: Icon(
             _iconFor(liability.type),
             color: context.theme.colors.primary,

@@ -7,7 +7,6 @@
 /// the rationale without retyping the question.
 library;
 
-import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

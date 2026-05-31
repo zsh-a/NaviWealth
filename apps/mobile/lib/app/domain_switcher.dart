@@ -10,7 +10,7 @@
 /// `app_dock_shell.dart` — vertical space isn't at a premium there.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 

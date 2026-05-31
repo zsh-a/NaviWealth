@@ -38,7 +38,7 @@ class EntryKindBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final semantic = SemanticColors.of(context);
-    final brightness = Theme.of(context).brightness;
+    final brightness = context.theme.colors.brightness;
     final visuals = _entryKindVisuals(classification, colors, semantic, brightness);
     final l10n = AppLocalizations.of(context);
 

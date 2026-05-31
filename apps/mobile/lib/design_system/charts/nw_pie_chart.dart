@@ -66,7 +66,7 @@ class _NwPieChartState extends State<NwPieChart> {
     if (widget.slices.isEmpty) {
       return AspectRatio(
         aspectRatio: widget.aspectRatio,
-        child: const EmptyChartPlaceholder(icon: Icons.donut_large),
+        child: const EmptyChartPlaceholder(icon: FLucideIcons.chartPie),
       );
     }
     final palette = ChartPalette.of(context);
@@ -74,7 +74,7 @@ class _NwPieChartState extends State<NwPieChart> {
     if (total <= 0) {
       return AspectRatio(
         aspectRatio: widget.aspectRatio,
-        child: const EmptyChartPlaceholder(icon: Icons.donut_large),
+        child: const EmptyChartPlaceholder(icon: FLucideIcons.chartPie),
       );
     }
 
