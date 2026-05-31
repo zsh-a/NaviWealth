@@ -357,7 +357,7 @@ class _TimelineSection extends ConsumerWidget {
             Text(
               formatters.monthYear(month.month),
               style: context.theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: AppSpacing.s8),
@@ -598,7 +598,7 @@ class _SectionHeading extends StatelessWidget {
           child: Text(
             title,
             style: context.theme.typography.md.copyWith(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),

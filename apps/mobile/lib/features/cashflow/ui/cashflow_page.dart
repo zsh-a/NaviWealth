@@ -348,7 +348,7 @@ class _ChartsPanel extends StatelessWidget {
           Text(
             l10n.cashFlowIncomeExpenseTitle,
             style: context.theme.typography.md.copyWith(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -388,7 +388,7 @@ class _ChartsPanel extends StatelessWidget {
           Text(
             l10n.cashFlowNetTrendTitle,
             style: context.theme.typography.md.copyWith(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -446,7 +446,7 @@ class _CategoryPanel extends StatelessWidget {
           Text(
             l10n.cashFlowCategoryTitle,
             style: context.theme.typography.md.copyWith(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
