@@ -325,9 +325,7 @@ class _DcaResults extends StatelessWidget {
                   Expanded(
                     child: Text(
                       l10n.dcaSimulatorResultTitle,
-                      style: context.theme.typography.lg.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: context.theme.typography.lg,
                     ),
                   ),
                   _FreshnessChip(freshness: state.freshness),

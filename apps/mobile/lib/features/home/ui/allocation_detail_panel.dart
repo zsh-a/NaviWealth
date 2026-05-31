@@ -82,11 +82,11 @@ class _DesktopAllocationInspector extends StatelessWidget {
             decoration: BoxDecoration(
               color: colors.background,
               border: Border(left: BorderSide(color: colors.border)),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x33000000),
+                  color: Colors.black.withValues(alpha: AppOpacity.muted),
                   blurRadius: 24,
-                  offset: Offset(-8, 0),
+                  offset: const Offset(-8, 0),
                 ),
               ],
             ),
@@ -154,9 +154,7 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
                 Expanded(
                   child: Text(
                     l10n.dashboardAllocationTitle,
-                    style: context.theme.typography.lg.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: context.theme.typography.lg,
                   ),
                 ),
                 FButton.icon(
@@ -284,11 +282,11 @@ class _DimensionButton extends StatelessWidget {
               : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: selected
-              ? const [
+              ? [
                   BoxShadow(
-                    color: Color(0x14000000),
+                    color: Colors.black.withValues(alpha: AppOpacity.faint),
                     blurRadius: 4,
-                    offset: Offset(0, 1),
+                    offset: const Offset(0, 1),
                   ),
                 ]
               : null,
@@ -335,7 +333,11 @@ class _AllocationDonut extends StatelessWidget {
         children: [
           CustomPaint(
             size: const Size.square(220),
-            painter: _DonutPainter(groups: groups, total: total),
+            painter: _DonutPainter(
+              groups: groups,
+              total: total,
+              trackColor: context.theme.colors.border.withValues(alpha: AppOpacity.light),
+            ),
           ),
           SizedBox(
             width: 132,
@@ -366,10 +368,11 @@ class _AllocationDonut extends StatelessWidget {
 }
 
 class _DonutPainter extends CustomPainter {
-  _DonutPainter({required this.groups, required this.total});
+  _DonutPainter({required this.groups, required this.total, required this.trackColor});
 
   final List<_AllocationGroup> groups;
   final double total;
+  final Color trackColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -382,7 +385,7 @@ class _DonutPainter extends CustomPainter {
     final track = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = stroke
-      ..color = const Color(0x1A8A94A6);
+      ..color = trackColor;
 
     canvas.drawArc(rect.deflate(stroke / 2), 0, math.pi * 2, false, track);
     if (total <= 0) return;

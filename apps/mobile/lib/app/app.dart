@@ -83,7 +83,7 @@ class NaviWealthApp extends ConsumerWidget {
             primaryForeground: AccentColors.onPrimary(brightness),
             background: isDark
                 ? baseFTheme.colors.background
-                : const Color(0xFFF5F7F9),
+                : ColorPalette.neutral50,
           ),
         );
         // Sync brightnessProvider so marketColorsProvider derives correctly.

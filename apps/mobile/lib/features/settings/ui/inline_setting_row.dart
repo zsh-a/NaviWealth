@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../design_system/design_system.dart';
 import 'package:flutter/services.dart';
-import '../../../design_system/design_system.dart';
 import 'package:forui/forui.dart';
+
+import '../../../design_system/design_system.dart';
 
 /// Single-line setting row in iOS-style inset-grouped lists.
 ///
@@ -195,11 +195,11 @@ class _OptionRow<T> extends StatelessWidget {
     return FTappable(
       onPress: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
         child: Row(
           children: [
             SizedBox(
-              width: 18,
+              width: AppIconSizes.h18,
               child: isSelected
                   ? Icon(FLucideIcons.check, size: AppIconSizes.sm, color: accentColor)
                   : null,

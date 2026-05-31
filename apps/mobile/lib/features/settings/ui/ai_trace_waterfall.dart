@@ -177,7 +177,7 @@ class _WaterfallRow extends StatelessWidget {
               : null,
           borderRadius: BorderRadius.circular(AppRadius.xs),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: AppSpacing.s4),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4, horizontal: AppSpacing.s4),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -242,7 +242,7 @@ class _WaterfallRow extends StatelessWidget {
                           width: barW,
                           decoration: BoxDecoration(
                             color: tone.withValues(
-                              alpha: span.isError ? 0.9 : 0.55,
+                              alpha: span.isError ? AppOpacity.overlay : AppOpacity.prominent,
                             ),
                             borderRadius: BorderRadius.circular(AppRadius.xs),
                           ),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' show IconData, Icons;
+import 'package:flutter/material.dart' show Colors, IconData;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -136,7 +136,7 @@ class _SidebarItem extends StatelessWidget {
 
     final Color background = selected
         ? colors.primary.withValues(alpha: AppOpacity.subtle)
-        : const Color(0x00000000);
+        : Colors.transparent;
 
     final content = Stack(
       children: [

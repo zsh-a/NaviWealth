@@ -419,9 +419,7 @@ class _PortfolioHubBody extends StatelessWidget {
         const SizedBox(height: AppSpacing.s16),
         Text(
           l10n.portfolioHubHoldingsTitle,
-          style: context.theme.typography.lg.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: context.theme.typography.lg,
         ),
         const SizedBox(height: AppSpacing.s10),
         if (groups.isEmpty)
@@ -434,9 +432,7 @@ class _PortfolioHubBody extends StatelessWidget {
         const SizedBox(height: AppSpacing.s12),
         Text(
           l10n.portfolioHubPositionsTitle,
-          style: context.theme.typography.lg.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: context.theme.typography.lg,
         ),
         const SizedBox(height: AppSpacing.s10),
         if (data.holdings.isEmpty)
@@ -467,7 +463,6 @@ class _PortfolioSummary extends StatelessWidget {
           l10n.portfolioHubMarketValueLabel.toUpperCase(),
           style: context.theme.typography.xs2.copyWith(
             color: context.theme.colors.mutedForeground,
-            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: AppSpacing.s4),
@@ -560,9 +555,7 @@ class _SummaryMetric extends StatelessWidget {
             if (amount == null)
               Text(
                 value ?? '—',
-                style: context.theme.typography.lg.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: context.theme.typography.lg,
               )
             else
               AnimatedMoneyText(
@@ -604,9 +597,7 @@ class _EngineExposureSection extends ConsumerWidget {
       children: [
         Text(
           l10n.portfolioHubEnginesTitle,
-          style: context.theme.typography.lg.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: context.theme.typography.lg,
         ),
         const SizedBox(height: AppSpacing.s10),
         LayoutBuilder(
@@ -1175,17 +1166,9 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32),
-      child: Center(
-        child: Text(
-          message,
-          style: context.theme.typography.sm.copyWith(
-            color: context.theme.colors.mutedForeground,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
+    return AppEmptyState(
+      icon: FLucideIcons.chartPie,
+      title: message,
     );
   }
 }

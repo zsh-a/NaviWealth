@@ -313,7 +313,7 @@ class _TrendChart extends StatelessWidget {
               if (fillAvailableHeight)
                 Expanded(child: flatChart)
               else
-                SizedBox(height: 132, child: flatChart),
+                SizedBox(height: AppChartHeights.mini, child: flatChart),
               const SizedBox(height: AppSpacing.s12),
               Text(
                 AppLocalizations.of(context).dashboardTrendFlatHint,
@@ -351,7 +351,7 @@ class _TrendChart extends StatelessWidget {
             if (fillAvailableHeight)
               Expanded(child: chart)
             else
-              SizedBox(height: 220, child: chart),
+              SizedBox(height: AppChartHeights.full, child: chart),
           ],
         );
       },

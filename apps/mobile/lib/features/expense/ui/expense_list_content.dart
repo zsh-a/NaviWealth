@@ -46,7 +46,7 @@ class ExpenseFiltersBar extends StatelessWidget {
             ),
             hint: l10n.expenseListSearchHint,
             prefixBuilder: (ctx, style, variants) => const Padding(
-              padding: EdgeInsetsDirectional.only(start: 12, end: 8),
+              padding: EdgeInsetsDirectional.only(start: AppSpacing.s12, end: AppSpacing.s8),
               child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
             ),
             suffixBuilder: keywordController.text.isEmpty
@@ -362,23 +362,11 @@ class EmptyExpenseList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(FLucideIcons.receipt, size: AppIconSizes.hero),
-            const SizedBox(height: AppSpacing.s12),
-            Text(
-              filtered
-                  ? l10n.expenseListEmptyFiltered
-                  : l10n.expenseListEmptyDefault,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+    return AppEmptyState(
+      icon: FLucideIcons.receipt,
+      title: filtered
+          ? l10n.expenseListEmptyFiltered
+          : l10n.expenseListEmptyDefault,
     );
   }
 }

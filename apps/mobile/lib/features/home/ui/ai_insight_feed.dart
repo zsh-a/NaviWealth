@@ -285,11 +285,11 @@ class _InsightOverlayActions extends StatelessWidget {
           color: colors.background.withValues(alpha: AppOpacity.overlay),
           borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
-            color: colors.foreground.withValues(alpha: isDark ? 0.10 : 0.06),
+            color: colors.foreground.withValues(alpha: isDark ? AppOpacity.subtle : AppOpacity.faint),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.06),
+              color: Colors.black.withValues(alpha: isDark ? AppOpacity.muted : AppOpacity.faint),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -380,7 +380,7 @@ class _StaggeredFadeInState extends State<_StaggeredFadeIn>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 240),
+      duration: Motion.medium,
     );
     Future.delayed(widget.delay, () {
       if (mounted) _controller.forward();

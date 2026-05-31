@@ -871,8 +871,8 @@ class _AllocBlock extends StatelessWidget {
         children: [
           Text(
             currency,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            style: context.theme.typography.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
             ),
           ),
           const SizedBox(height: AppSpacing.s10),
@@ -886,7 +886,7 @@ class _AllocBlock extends StatelessWidget {
                   painter: _DonutPainter(
                     slices: sorted,
                     palette: palette,
-                    background: Theme.of(context).colorScheme.surface,
+                    background: context.theme.colors.background,
                   ),
                 ),
               ),
@@ -913,18 +913,17 @@ class _AllocBlock extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 sorted[i].key,
-                                style: Theme.of(context).textTheme.bodySmall,
+                                style: context.theme.typography.xs,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             Text(
                               '${(sorted[i].weight * 100).toStringAsFixed(1)}%',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    fontFeatures: const [
-                                      FontFeature.tabularFigures(),
-                                    ],
-                                  ),
+                              style: context.theme.typography.xs.copyWith(
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -937,8 +936,8 @@ class _AllocBlock extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           Text(
             '合计成本 ${fmt.format(sorted.fold<int>(0, (a, b) => a + b.totalMinor) / 100.0)} · ${sorted.length} 类持仓',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            style: context.theme.typography.xs2.copyWith(
+              color: context.theme.colors.mutedForeground,
             ),
           ),
         ],

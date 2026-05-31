@@ -110,7 +110,7 @@ class _RebalanceBody extends StatelessWidget {
           padding: padding,
           children: [
             _SchemeSelector(current: scheme),
-            SizedBox(height: isMobile ? 12 : 16),
+            SizedBox(height: isMobile ? AppSpacing.s12 : AppSpacing.s16),
             ResponsiveTwoColumn(
               left: _DriftOverview(plan: plan),
               right: _TradeList(plan: plan),

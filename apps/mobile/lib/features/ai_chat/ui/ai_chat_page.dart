@@ -413,7 +413,7 @@ class _SuggestionTile extends StatelessWidget {
               ),
               Icon(
                 FLucideIcons.chevronRight,
-                size: 12,
+                size: AppIconSizes.xs,
                 color: colors.mutedForeground,
               ),
             ],
@@ -434,7 +434,7 @@ class _BootstrappingPane extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(width: 28, height: 28, child: FCircularProgress()),
+          const SizedBox(width: AppSpacing.s28, height: AppSpacing.s28, child: FCircularProgress()),
           const SizedBox(height: AppSpacing.s12),
           Text(
             l10n.aiChatBootstrappingLabel,

@@ -25,13 +25,13 @@ class DeviationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = SemanticColors.of(context);
     final barColor = switch (severity) {
-      DriftSeverity.ok => colorScheme.primary,
-      DriftSeverity.warning => colorScheme.tertiary,
-      DriftSeverity.critical => colorScheme.error,
+      DriftSeverity.ok => context.theme.colors.primary,
+      DriftSeverity.warning => semantic.warning,
+      DriftSeverity.critical => semantic.danger,
     };
-    final bgBarColor = colorScheme.surfaceContainerHighest;
+    final bgBarColor = context.theme.colors.secondary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
@@ -97,7 +97,7 @@ class DeviationBar extends StatelessWidget {
                       bottom: 0,
                       child: Container(
                         width: 2,
-                        color: colorScheme.onSurfaceVariant,
+                        color: context.theme.colors.mutedForeground,
                       ),
                     ),
                   ],
@@ -119,22 +119,22 @@ class _DeviationChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = SemanticColors.of(context);
     final sign = deviation >= 0 ? '+' : '';
     final text = '$sign${(deviation * 100).toStringAsFixed(1)}%';
 
     final (bg, fg) = switch (severity) {
       DriftSeverity.ok => (
-        colorScheme.primaryContainer,
-        colorScheme.onPrimaryContainer,
+        AccentColors.tint(Theme.of(context).brightness),
+        context.theme.colors.primary,
       ),
       DriftSeverity.warning => (
-        colorScheme.tertiaryContainer,
-        colorScheme.onTertiaryContainer,
+        semantic.warningContainer,
+        semantic.onWarningContainer,
       ),
       DriftSeverity.critical => (
-        colorScheme.errorContainer,
-        colorScheme.onErrorContainer,
+        semantic.dangerContainer,
+        semantic.onDangerContainer,
       ),
     };
 

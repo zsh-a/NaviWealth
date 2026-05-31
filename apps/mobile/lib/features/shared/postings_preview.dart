@@ -157,9 +157,10 @@ class _UnitBalanceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final balanced = total == Decimal.zero;
-    final tone = balanced ? scheme.tertiary : context.theme.colors.destructive;
+    final tone = balanced
+        ? SemanticColors.of(context).success
+        : context.theme.colors.destructive;
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.s2),

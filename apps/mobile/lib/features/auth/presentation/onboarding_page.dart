@@ -66,7 +66,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                     const SizedBox(height: AppSpacing.s20),
                     Text(
                       l10n.onboardingTitle,
-                      style: Theme.of(context).textTheme.headlineSmall,
+                      style: context.theme.typography.lg,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: AppSpacing.s8),
@@ -134,7 +134,7 @@ class _ModeCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             alignment: Alignment.center,
-            child: Icon(icon, color: colors.primary, size: 22),
+            child: Icon(icon, color: colors.primary, size: AppIconSizes.lg),
           ),
           const SizedBox(width: AppSpacing.s14),
           Expanded(

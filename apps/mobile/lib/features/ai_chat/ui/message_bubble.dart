@@ -666,8 +666,8 @@ class _TypingDotsState extends State<_TypingDots>
     return Transform.scale(
       scale: scale,
       child: Container(
-        width: 6,
-        height: 6,
+        width: AppSpacing.s6,
+        height: AppSpacing.s6,
         decoration: BoxDecoration(
           color: widget.color.withValues(alpha: alpha),
           shape: BoxShape.circle,

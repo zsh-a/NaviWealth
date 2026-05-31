@@ -36,11 +36,10 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
     final text = _serialize(talker);
     await Clipboard.setData(ClipboardData(text: text));
     if (!context.mounted) return;
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text(AppLocalizations.of(context).settingsLogsCopiedToast),
-        duration: const Duration(seconds: 2),
-      ),
+    AppMessenger.show(
+      context,
+      ToastKind.info,
+      AppLocalizations.of(context).settingsLogsCopiedToast,
     );
   }
 

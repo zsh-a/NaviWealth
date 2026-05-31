@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' show Colors;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -76,7 +77,7 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
       ),
       child: sessionsAsync.when(
         loading: () => const Center(
-          child: SizedBox(width: 24, height: 24, child: FCircularProgress()),
+          child: SizedBox(width: AppSpacing.s24, height: AppSpacing.s24, child: FCircularProgress()),
         ),
         error: (e, _) => _PanelMessage(
           icon: FLucideIcons.circleAlert,
@@ -410,7 +411,7 @@ class _PanelMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 36, color: iconColor ?? colors.mutedForeground),
+            Icon(icon, size: AppIconSizes.xl, color: iconColor ?? colors.mutedForeground),
             const SizedBox(height: AppSpacing.s12),
             Text(
               message,
@@ -448,11 +449,11 @@ class _SessionTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final lastAt = session.lastMessageAt ?? session.createdAt;
     return ClipRRect(
-      borderRadius: const BorderRadius.all(Radius.circular(12)),
+      borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
       child: ColoredBox(
         color: selected
             ? colors.primary.withValues(alpha: AppOpacity.subtle)
-            : const Color(0x00000000),
+            : Colors.transparent,
         child: FTappable(
           onPress: onTap,
           child: Padding(
@@ -460,11 +461,11 @@ class _SessionTile extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 3,
-                  height: 32,
+                  width: AppSpacing.s4,
+                  height: AppSpacing.s32,
                   decoration: BoxDecoration(
-                    color: selected ? colors.primary : const Color(0x00000000),
-                    borderRadius: const BorderRadius.all(Radius.circular(2)),
+                    color: selected ? colors.primary : Colors.transparent,
+                    borderRadius: const BorderRadius.all(Radius.circular(AppRadius.xxs)),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s8),

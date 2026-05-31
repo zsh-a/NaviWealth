@@ -79,28 +79,9 @@ class _LiabilitiesEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              FLucideIcons.landmark,
-              size: AppIconSizes.hero,
-              color: context.theme.colors.mutedForeground,
-            ),
-            const SizedBox(height: AppSpacing.s16),
-            Text(
-              l10n.liabilitiesEmptyHint,
-              textAlign: TextAlign.center,
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return AppEmptyState(
+      icon: FLucideIcons.landmark,
+      title: l10n.liabilitiesEmptyHint,
     );
   }
 }
@@ -118,7 +99,6 @@ class _LiabilityListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final remaining = summary?.remainingPrincipal;
 
@@ -126,10 +106,10 @@ class _LiabilityListTile extends StatelessWidget {
       child: FTile(
         title: Text(liability.name),
         prefix: CircleAvatar(
-          backgroundColor: theme.colorScheme.primaryContainer,
+          backgroundColor: AccentColors.tint(Theme.of(context).brightness),
           child: Icon(
             _iconFor(liability.type),
-            color: theme.colorScheme.onPrimaryContainer,
+            color: context.theme.colors.primary,
           ),
         ),
         subtitle: Text(

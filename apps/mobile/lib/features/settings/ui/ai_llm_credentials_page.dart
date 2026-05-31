@@ -227,7 +227,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
       const SizedBox(height: AppSpacing.s12),
       if (profiles.isEmpty && _editingId == null)
         SoftCard(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 18),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s20),
           child: Text(
             l10n.aiLlmEmpty,
             style: context.theme.typography.sm.copyWith(
@@ -532,7 +532,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
   );
 
   Widget _tag(BuildContext context, String text, Color color) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: AppSpacing.s2),
+    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
     decoration: BoxDecoration(
       color: color.withValues(alpha: AppOpacity.medium),
       borderRadius: BorderRadius.circular(AppRadius.xs),
