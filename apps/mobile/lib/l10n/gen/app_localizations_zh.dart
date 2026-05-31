@@ -4780,6 +4780,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsLogsSubtitle => '查看实时诊断日志';
 
   @override
+  String get settingsPerfTitle => '性能';
+
+  @override
+  String get settingsPerfSubtitle => '查看最近帧耗时与卡顿';
+
+  @override
+  String get settingsPerfRecentFrames => '最近帧数';
+
+  @override
+  String get settingsPerfJankFrames => '卡顿帧';
+
+  @override
+  String get settingsPerfFrameBudget => '帧预算';
+
+  @override
+  String get settingsPerfTimingTitle => '帧耗时';
+
+  @override
+  String get settingsPerfTotalP50 => '总耗时 p50';
+
+  @override
+  String get settingsPerfTotalP95 => '总耗时 p95';
+
+  @override
+  String get settingsPerfBuildP95 => '构建 p95';
+
+  @override
+  String get settingsPerfRasterP95 => '栅格 p95';
+
+  @override
   String get backupExportTitle => '导出备份';
 
   @override

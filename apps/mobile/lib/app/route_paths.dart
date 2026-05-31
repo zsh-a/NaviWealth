@@ -114,6 +114,7 @@ abstract final class AppRoutes {
   static const settingsFxRates = '/settings/fx-rates';
   static const settingsBackup = '/settings/backup';
   static const settingsLogs = '/settings/logs';
+  static const settingsPerformance = '/settings/performance';
   static const settingsSync = '/settings/sync';
   static const settingsAiTransparency = '/settings/ai-transparency';
   // §5.10.2 — AI chat is no longer a tab; sessions are read/replay-only
@@ -173,6 +174,7 @@ abstract final class AppRouteNames {
   static const fxRates = 'fx-rates';
   static const backup = 'backup';
   static const logs = 'logs';
+  static const performance = 'performance';
   static const sync = 'sync';
   static const aiTransparency = 'ai-transparency';
   static const aiTransparencyDetail = 'ai-transparency-detail';
