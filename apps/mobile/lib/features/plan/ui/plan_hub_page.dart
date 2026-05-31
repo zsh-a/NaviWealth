@@ -324,7 +324,7 @@ class _PlanSectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FCard.raw(
+    return SoftCard(
       child: FTile(
         onPress: () => context.push(spec.path),
         prefix: Container(

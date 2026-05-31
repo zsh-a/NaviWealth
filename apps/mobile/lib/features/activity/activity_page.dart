@@ -162,7 +162,7 @@ class _ActivityRightRail extends ConsumerWidget {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        FCard.raw(
+        SoftCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

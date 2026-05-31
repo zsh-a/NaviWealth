@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import '../../../design_system/design_system.dart';
 import '../../../domain/entities/historical_bar.dart';
 import '../../../domain/services/market_data_service.dart';
 import '../../../domain/values/asset_market.dart';
@@ -48,7 +49,7 @@ class AssetDetailErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard.raw(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Text(

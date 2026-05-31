@@ -248,11 +248,15 @@ class _CollapseToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: FTooltip(
-        tipBuilder: (_, _) =>
-            Text(collapsed ? 'Expand sidebar  (⌘B)' : 'Collapse sidebar  (⌘B)'),
+        tipBuilder: (_, _) => Text(
+          collapsed
+              ? l10n.shellExpandSidebarShortcut
+              : l10n.shellCollapseSidebarShortcut,
+        ),
         child: FTappable(
           onPress: onToggle,
           child: SizedBox(

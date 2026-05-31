@@ -44,7 +44,7 @@ class AssetHoldingCard extends ConsumerWidget {
               )
             : null;
         final marketValueAsset = snap?.marketValueInAssetCurrency;
-        return FCard.raw(
+        return SoftCard(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(

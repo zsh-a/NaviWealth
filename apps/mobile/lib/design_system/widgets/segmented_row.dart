@@ -27,12 +27,14 @@ class SegmentedRow<T> extends StatelessWidget {
     required this.value,
     required this.labelOf,
     required this.onChanged,
+    this.iconOf,
   });
 
   final List<T> options;
   final T value;
   final String Function(T) labelOf;
   final ValueChanged<T> onChanged;
+  final IconData? Function(T)? iconOf;
 
   static const double _minSegmentWidth = 96;
 
@@ -67,6 +69,7 @@ class SegmentedRow<T> extends StatelessWidget {
   }
 
   Widget _button(T option, {required bool expand}) {
+    final icon = iconOf?.call(option);
     final label = Text(
       labelOf(option),
       maxLines: 1,
@@ -77,6 +80,7 @@ class SegmentedRow<T> extends StatelessWidget {
           ? FButtonVariant.primary
           : FButtonVariant.outline,
       onPress: () => onChanged(option),
+      prefix: icon == null ? null : Icon(icon, size: AppIconSizes.sm),
       // In the equal-split (expand) layout the button has a bounded width,
       // but FButton lays its child in a `MainAxisSize.max` Row without a
       // Flexible — so a label wider than the slot overflows instead of

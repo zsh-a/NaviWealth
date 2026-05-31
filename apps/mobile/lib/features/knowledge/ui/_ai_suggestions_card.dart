@@ -25,6 +25,7 @@ import 'package:forui/forui.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/inbox_triage_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
@@ -42,6 +43,7 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tick = ref.watch(aiSuggestionsRefreshProvider);
+    final l10n = AppLocalizations.of(context);
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {
@@ -51,10 +53,10 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
         return triageAsync.when(
           loading: () => const SizedBox.shrink(),
           error: (e, _) => KnowledgeSection.group(
-            title: 'AI 建议',
+            title: l10n.knowledgeAiSuggestionsTitle,
             children: [
               Text(
-                '加载失败：$e',
+                l10n.knowledgeLoadFailed('$e'),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -70,18 +72,21 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
                 final typography = context.theme.typography;
                 final colors = context.theme.colors;
                 return KnowledgeSection.group(
-                  title: 'AI 建议',
+                  title: l10n.knowledgeAiSuggestionsTitle,
                   children: [
                     Text(
-                      '当前无待处理的 AI 建议。新写的 Note 会在 15 分钟内被 triage。',
-                      style: typography.sm
-                          .copyWith(color: colors.mutedForeground),
+                      l10n.knowledgeAiSuggestionsEmpty,
+                      style: typography.sm.copyWith(
+                        color: colors.mutedForeground,
+                      ),
                     ),
                   ],
                 );
               }
               return KnowledgeSection.group(
-                title: 'AI 建议 (${_pendingCount(list)})',
+                title: l10n.knowledgeAiSuggestionsTitleWithCount(
+                  _pendingCount(list),
+                ),
                 children: [
                   for (final rec in list)
                     Padding(
@@ -110,8 +115,7 @@ class _NoteSuggestionGroup extends ConsumerStatefulWidget {
       _NoteSuggestionGroupState();
 }
 
-class _NoteSuggestionGroupState
-    extends ConsumerState<_NoteSuggestionGroup> {
+class _NoteSuggestionGroupState extends ConsumerState<_NoteSuggestionGroup> {
   KnowledgeNote? _note;
   bool _loading = true;
 
@@ -136,18 +140,20 @@ class _NoteSuggestionGroupState
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     if (_loading) return const SizedBox.shrink();
     final note = _note;
     if (note == null) {
       return Text(
-        'Note ${widget.record.noteId} 已删除',
+        l10n.knowledgeNoteDeleted(widget.record.noteId),
         style: typography.xs.copyWith(color: colors.mutedForeground),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       );
     }
-    final pending =
-        widget.record.proposals.where((p) => p.status.isPending).toList();
+    final pending = widget.record.proposals
+        .where((p) => p.status.isPending)
+        .toList();
     if (pending.isEmpty) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s8),
@@ -160,7 +166,7 @@ class _NoteSuggestionGroupState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            note.title.isEmpty ? '(无标题)' : note.title,
+            note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
             style: typography.sm.copyWith(fontWeight: FontWeight.w600),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -317,4 +323,3 @@ Future<void> _applyAccept(
   );
   await repo.upsertNote(updated);
 }
-

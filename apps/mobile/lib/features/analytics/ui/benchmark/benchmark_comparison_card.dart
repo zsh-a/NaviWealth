@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../home/domain/dashboard_time_range.dart';
 import '../../data/benchmark/benchmark_providers.dart';
@@ -21,7 +22,7 @@ class BenchmarkComparisonCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final resultAsync = ref.watch(benchmarkComparisonResultProvider);
 
-    return FCard.raw(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(

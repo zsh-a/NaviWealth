@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../data/fire_providers.dart';
@@ -39,23 +40,21 @@ class _FireSimulationsCardState extends ConsumerState<FireSimulationsCard> {
         objectType: 'fire_plan',
         objectLabel: l10n.fireOsSimulationsTitle,
       ),
-      child: FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: stateAsync.when(
-            loading: () => const SizedBox.shrink(),
-            error: (e, _) => Text(
-              '$e',
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.destructive,
-              ),
+      child: SoftCard(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        child: stateAsync.when(
+          loading: () => const SizedBox.shrink(),
+          error: (e, _) => Text(
+            '$e',
+            style: context.theme.typography.xs.copyWith(
+              color: context.theme.colors.destructive,
             ),
-            data: (baseline) => _Body(
-              baseline: baseline,
-              selected: _selected,
-              onSelect: (i) => setState(() => _selected = i),
-              l10n: l10n,
-            ),
+          ),
+          data: (baseline) => _Body(
+            baseline: baseline,
+            selected: _selected,
+            onSelect: (i) => setState(() => _selected = i),
+            l10n: l10n,
           ),
         ),
       ),

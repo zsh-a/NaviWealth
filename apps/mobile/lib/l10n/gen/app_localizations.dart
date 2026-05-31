@@ -164,6 +164,24 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get navSettingsTooltip;
 
+  /// Title for the LifeOS domain switcher sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Switch domain'**
+  String get shellSwitchDomainTitle;
+
+  /// Desktop sidebar tooltip when the sidebar is collapsed
+  ///
+  /// In en, this message translates to:
+  /// **'Expand sidebar  (⌘B)'**
+  String get shellExpandSidebarShortcut;
+
+  /// Desktop sidebar tooltip when the sidebar is expanded
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse sidebar  (⌘B)'**
+  String get shellCollapseSidebarShortcut;
+
   /// Plan hub page title (IA contract §1: decisions + future state)
   ///
   /// In en, this message translates to:
@@ -8403,6 +8421,42 @@ abstract class AppLocalizations {
   /// **'Data'**
   String get settingsDataSection;
 
+  /// Settings section header for LifeOS domain opt-in management
+  ///
+  /// In en, this message translates to:
+  /// **'LifeOS Domains'**
+  String get settingsDomainsSection;
+
+  /// Settings tile and page title for LifeOS domain management
+  ///
+  /// In en, this message translates to:
+  /// **'Domain management'**
+  String get settingsDomainsTitle;
+
+  /// Settings tile subtitle for LifeOS domain management
+  ///
+  /// In en, this message translates to:
+  /// **'FinanceOS / HealthOS / KnowledgeOS toggles and settings'**
+  String get settingsDomainsSubtitle;
+
+  /// Settings section header for advanced diagnostics and developer-facing tools
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get settingsAdvancedSection;
+
+  /// Settings tile and page title for local AI model management
+  ///
+  /// In en, this message translates to:
+  /// **'AI Models'**
+  String get settingsAiModelsTitle;
+
+  /// Settings tile subtitle for local AI model management
+  ///
+  /// In en, this message translates to:
+  /// **'Download and manage the local EmbeddingGemma model'**
+  String get settingsAiModelsSubtitle;
+
   /// Compact trailing pill on a settings link row indicating the value is auto-tuned by another preference (e.g. risk appetite). Renders uppercase.
   ///
   /// In en, this message translates to:
@@ -8565,6 +8619,12 @@ abstract class AppLocalizations {
   /// **'View real-time diagnostic logs'**
   String get settingsLogsSubtitle;
 
+  /// Toast shown after copying app logs to the clipboard
+  ///
+  /// In en, this message translates to:
+  /// **'Logs copied'**
+  String get settingsLogsCopiedToast;
+
   /// Settings developer diagnostics: performance page title
   ///
   /// In en, this message translates to:
@@ -8624,6 +8684,394 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Raster p95'**
   String get settingsPerfRasterP95;
+
+  /// No description provided for @settingsDomainsIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Each domain is enabled independently. Turning one on activates its AI tools, Memory indexing, and navigation entry.'**
+  String get settingsDomainsIntro;
+
+  /// No description provided for @settingsDomainsFinanceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Always enabled (seed domain)'**
+  String get settingsDomainsFinanceSubtitle;
+
+  /// No description provided for @settingsDomainsEnabledBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get settingsDomainsEnabledBadge;
+
+  /// No description provided for @settingsDomainsHealthEnabledSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview — AI tools and Memory indexing are enabled'**
+  String get settingsDomainsHealthEnabledSubtitle;
+
+  /// No description provided for @settingsDomainsHealthDisabledSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview — turn on AI tools and Memory indexing'**
+  String get settingsDomainsHealthDisabledSubtitle;
+
+  /// No description provided for @settingsDomainsHealthTodaySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View recovery, metrics, and the morning briefing'**
+  String get settingsDomainsHealthTodaySubtitle;
+
+  /// No description provided for @settingsDomainsKnowledgeEnabledSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview — Inbox, Library, Review, AI tools, and Memory indexing are enabled'**
+  String get settingsDomainsKnowledgeEnabledSubtitle;
+
+  /// No description provided for @settingsDomainsKnowledgeDisabledSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview — personal decisions and cognitive memory'**
+  String get settingsDomainsKnowledgeDisabledSubtitle;
+
+  /// No description provided for @settingsDomainsKnowledgeInboxSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture notes, write decisions, and review the library'**
+  String get settingsDomainsKnowledgeInboxSubtitle;
+
+  /// No description provided for @settingsDomainsHealthPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission denied — try again in system Health settings'**
+  String get settingsDomainsHealthPermissionDenied;
+
+  /// No description provided for @settingsDomainsHealthSyncRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get settingsDomainsHealthSyncRunning;
+
+  /// No description provided for @settingsDomainsHealthSyncIdle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import the last 30 days from the system health platform'**
+  String get settingsDomainsHealthSyncIdle;
+
+  /// No description provided for @settingsDomainsHealthSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync failed'**
+  String get settingsDomainsHealthSyncFailed;
+
+  /// No description provided for @settingsDomainsHealthSyncSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync: {upserted} new / {unchanged} unchanged · fetched {total} items'**
+  String settingsDomainsHealthSyncSummary(
+    int upserted,
+    int unchanged,
+    int total,
+  );
+
+  /// No description provided for @settingsDomainsHealthSyncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync health data'**
+  String get settingsDomainsHealthSyncTitle;
+
+  /// No description provided for @settingsDomainsBriefingRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating morning briefing…'**
+  String get settingsDomainsBriefingRunning;
+
+  /// No description provided for @settingsDomainsBriefingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Briefing failed: {error}'**
+  String settingsDomainsBriefingFailed(String error);
+
+  /// No description provided for @settingsDomainsBriefingIdle.
+  ///
+  /// In en, this message translates to:
+  /// **'Runs automatically each day; tap to generate and send now'**
+  String get settingsDomainsBriefingIdle;
+
+  /// No description provided for @settingsDomainsBriefingCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Last run: {summary}'**
+  String settingsDomainsBriefingCompleted(String summary);
+
+  /// No description provided for @settingsDomainsBriefingSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Last skipped: {summary}'**
+  String settingsDomainsBriefingSkipped(String summary);
+
+  /// No description provided for @settingsDomainsBriefingRunFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Last failed: {error}'**
+  String settingsDomainsBriefingRunFailed(String error);
+
+  /// No description provided for @settingsDomainsBriefingFallbackDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get settingsDomainsBriefingFallbackDone;
+
+  /// No description provided for @settingsDomainsBriefingFallbackNoSignals.
+  ///
+  /// In en, this message translates to:
+  /// **'No signals'**
+  String get settingsDomainsBriefingFallbackNoSignals;
+
+  /// No description provided for @settingsDomainsBriefingFallbackUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown error'**
+  String get settingsDomainsBriefingFallbackUnknown;
+
+  /// No description provided for @settingsDomainsBriefingRunTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate morning briefing now'**
+  String get settingsDomainsBriefingRunTitle;
+
+  /// No description provided for @settingsDomainsBriefingTimeHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning briefing time'**
+  String get settingsDomainsBriefingTimeHelp;
+
+  /// No description provided for @settingsDomainsBriefingTimeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Briefing time'**
+  String get settingsDomainsBriefingTimeTitle;
+
+  /// No description provided for @settingsDomainsBriefingTimeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Runs around {hour}:00 each day (background scheduling may drift)'**
+  String settingsDomainsBriefingTimeSubtitle(String hour);
+
+  /// No description provided for @settingsAiModelsCheckingRuntime.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking the embedder path for next launch…'**
+  String get settingsAiModelsCheckingRuntime;
+
+  /// No description provided for @settingsAiModelsRuntimeCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Embedder path check failed: {error}'**
+  String settingsAiModelsRuntimeCheckFailed(String error);
+
+  /// No description provided for @settingsAiModelsRuntimeReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Next launch will load Rust EmbeddingGemma'**
+  String get settingsAiModelsRuntimeReady;
+
+  /// No description provided for @settingsAiModelsRuntimeStub.
+  ///
+  /// In en, this message translates to:
+  /// **'Next launch will still use the stub embedder'**
+  String get settingsAiModelsRuntimeStub;
+
+  /// No description provided for @settingsAiModelsModelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get settingsAiModelsModelLabel;
+
+  /// No description provided for @settingsAiModelsModelMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing: EmbeddingGemma model dir'**
+  String get settingsAiModelsModelMissing;
+
+  /// No description provided for @settingsAiModelsOrtMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing: ONNX Runtime dylib'**
+  String get settingsAiModelsOrtMissing;
+
+  /// No description provided for @settingsAiModelsNativeLibLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'native lib'**
+  String get settingsAiModelsNativeLibLabel;
+
+  /// No description provided for @settingsAiModelsNativeLibPlatform.
+  ///
+  /// In en, this message translates to:
+  /// **'Loaded by the platform plugin'**
+  String get settingsAiModelsNativeLibPlatform;
+
+  /// No description provided for @settingsAiModelsInstalledSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed'**
+  String get settingsAiModelsInstalledSource;
+
+  /// No description provided for @settingsAiModelsMissingSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing'**
+  String get settingsAiModelsMissingSource;
+
+  /// No description provided for @settingsAiModelsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'AI memory retrieval uses the lightweight stub by default. Download EmbeddingGemma and restart the app to enable local multilingual sentence vectors (768-d). Files stay on this device and are never uploaded. ONNX Runtime is bundled with the app.'**
+  String get settingsAiModelsHint;
+
+  /// No description provided for @settingsAiModelsFootnote.
+  ///
+  /// In en, this message translates to:
+  /// **'After download, restart the app so Memory Runtime uses the new embedder. Existing memory records will be re-indexed with the new model in the next indexer cycle; original typed records stay unchanged.'**
+  String get settingsAiModelsFootnote;
+
+  /// No description provided for @settingsAiModelsStateLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load state: {error}'**
+  String settingsAiModelsStateLoadFailed(String error);
+
+  /// No description provided for @settingsAiModelsStatusInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed'**
+  String get settingsAiModelsStatusInstalled;
+
+  /// No description provided for @settingsAiModelsStatusDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading…'**
+  String get settingsAiModelsStatusDownloading;
+
+  /// No description provided for @settingsAiModelsStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get settingsAiModelsStatusFailed;
+
+  /// No description provided for @settingsAiModelsStatusNotInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Not installed'**
+  String get settingsAiModelsStatusNotInstalled;
+
+  /// No description provided for @settingsAiModelsCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get settingsAiModelsCancel;
+
+  /// No description provided for @settingsAiModelsDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get settingsAiModelsDelete;
+
+  /// No description provided for @settingsAiModelsRedownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Redownload'**
+  String get settingsAiModelsRedownload;
+
+  /// No description provided for @settingsAiModelsDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get settingsAiModelsDownload;
+
+  /// No description provided for @settingsAiModelsDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete model?'**
+  String get settingsAiModelsDeleteTitle;
+
+  /// No description provided for @settingsAiModelsDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'After deletion, AI retrieval will fall back to the stub embedder. Redownloading requires network access again.'**
+  String get settingsAiModelsDeleteBody;
+
+  /// No description provided for @knowledgeAiSuggestionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI suggestions'**
+  String get knowledgeAiSuggestionsTitle;
+
+  /// No description provided for @knowledgeAiSuggestionsTitleWithCount.
+  ///
+  /// In en, this message translates to:
+  /// **'AI suggestions ({count})'**
+  String knowledgeAiSuggestionsTitleWithCount(int count);
+
+  /// No description provided for @knowledgeAiSuggestionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending AI suggestions. New notes are triaged within 15 minutes.'**
+  String get knowledgeAiSuggestionsEmpty;
+
+  /// No description provided for @knowledgeLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load: {error}'**
+  String knowledgeLoadFailed(String error);
+
+  /// No description provided for @knowledgeNoteDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Note {noteId} was deleted'**
+  String knowledgeNoteDeleted(String noteId);
+
+  /// No description provided for @knowledgeUntitled.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled'**
+  String get knowledgeUntitled;
+
+  /// No description provided for @knowledgeMarkdownEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get knowledgeMarkdownEdit;
+
+  /// No description provided for @knowledgeMarkdownPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get knowledgeMarkdownPreview;
+
+  /// No description provided for @knowledgeMarkdownPreviewEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No preview yet. Switch back to edit mode to enter content.'**
+  String get knowledgeMarkdownPreviewEmpty;
+
+  /// No description provided for @knowledgeDecisionNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision does not exist or was deleted'**
+  String get knowledgeDecisionNotFound;
+
+  /// No description provided for @knowledgeObjectNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Item does not exist or was deleted'**
+  String get knowledgeObjectNotFound;
+
+  /// No description provided for @knowledgeDeletedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get knowledgeDeletedToast;
 
   /// Backup page: export tile title
   ///

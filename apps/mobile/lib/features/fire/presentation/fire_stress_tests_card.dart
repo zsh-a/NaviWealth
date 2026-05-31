@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../data/fire_providers.dart';
@@ -30,57 +31,51 @@ class FireStressTestsCard extends ConsumerWidget {
         source: 'fire_stress_card',
         objectLabel: l10n.fireOsStressTitle,
       ),
-      child: FCard.raw(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n.fireOsStressTitle, style: context.theme.typography.md),
-              const SizedBox(height: 4),
-              Text(
-                l10n.fireOsStressSubtitle,
+      child: SoftCard(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.fireOsStressTitle, style: context.theme.typography.md),
+            const SizedBox(height: 4),
+            Text(
+              l10n.fireOsStressSubtitle,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+            ),
+            const SizedBox(height: 12),
+            stressAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: SizedBox.shrink(),
+              ),
+              error: (e, _) => Text(
+                '$e',
                 style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
+                  color: context.theme.colors.destructive,
                 ),
               ),
-              const SizedBox(height: 12),
-              stressAsync.when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: SizedBox.shrink(),
-                ),
-                error: (e, _) => Text(
-                  '$e',
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.destructive,
-                  ),
-                ),
-                data: (results) {
-                  if (results.isEmpty) {
-                    return Text(
-                      l10n.fireOsStressEmpty,
-                      style: context.theme.typography.xs.copyWith(
-                        color: context.theme.colors.mutedForeground,
-                      ),
-                    );
-                  }
-                  return Column(
-                    children: [
-                      for (final r in results) ...[
-                        _StressRow(
-                          result: r,
-                          formatters: formatters,
-                          l10n: l10n,
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                    ],
+              data: (results) {
+                if (results.isEmpty) {
+                  return Text(
+                    l10n.fireOsStressEmpty,
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
+                    ),
                   );
-                },
-              ),
-            ],
-          ),
+                }
+                return Column(
+                  children: [
+                    for (final r in results) ...[
+                      _StressRow(result: r, formatters: formatters, l10n: l10n),
+                      const SizedBox(height: 10),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ],
         ),
       ),
     );

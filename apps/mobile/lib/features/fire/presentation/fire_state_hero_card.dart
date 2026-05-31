@@ -6,6 +6,7 @@ import '../../../core/ai/intent/ai_intent_invocation.dart';
 import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../../ai_chat/ui/ask_ai.dart';
@@ -71,53 +72,51 @@ class _HeroBody extends ConsumerWidget {
     final accent = _safetyColor(colors, state.safetyLevel);
     final safetyLabel = _safetyLabel(l10n, state.safetyLevel);
 
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.fireOsHeroTitle,
-                        style: context.theme.typography.md,
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.fireOsHeroTitle,
+                      style: context.theme.typography.md,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.fireOsHeroSubtitle,
+                      style: context.theme.typography.xs.copyWith(
+                        color: colors.mutedForeground,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        l10n.fireOsHeroSubtitle,
-                        style: context.theme.typography.xs.copyWith(
-                          color: colors.mutedForeground,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _SafetyPill(label: safetyLabel, accent: accent),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _MetricsGrid(state: state, formatters: formatters, l10n: l10n),
-            const SizedBox(height: 12),
-            _SuggestedActions(state: state, formatters: formatters, l10n: l10n),
-            if (onExplain != null) ...[
-              const SizedBox(height: 12),
-              Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: onExplain,
-                  prefix: const Icon(FLucideIcons.sparkles, size: 14),
-                  child: const Text('Explain'),
+                    ),
+                  ],
                 ),
               ),
+              _SafetyPill(label: safetyLabel, accent: accent),
             ],
+          ),
+          const SizedBox(height: 16),
+          _MetricsGrid(state: state, formatters: formatters, l10n: l10n),
+          const SizedBox(height: 12),
+          _SuggestedActions(state: state, formatters: formatters, l10n: l10n),
+          if (onExplain != null) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: FButton(
+                variant: FButtonVariant.ghost,
+                onPress: onExplain,
+                prefix: const Icon(FLucideIcons.sparkles, size: 14),
+                child: const Text('Explain'),
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -395,25 +394,19 @@ class _HeroSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 120,
-              height: 18,
-              color: context.theme.colors.muted,
-            ),
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              height: 64,
-              color: context.theme.colors.muted,
-            ),
-          ],
-        ),
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(width: 120, height: 18, color: context.theme.colors.muted),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            height: 64,
+            color: context.theme.colors.muted,
+          ),
+        ],
       ),
     );
   }
@@ -426,29 +419,27 @@ class _HeroErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(
-              FLucideIcons.circleAlert,
-              color: context.theme.colors.destructive,
-              size: 18,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                message,
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.destructive,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Row(
+        children: [
+          Icon(
+            FLucideIcons.circleAlert,
+            color: context.theme.colors.destructive,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.destructive,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

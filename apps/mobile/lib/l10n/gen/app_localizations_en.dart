@@ -42,6 +42,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSettingsTooltip => 'Settings';
 
   @override
+  String get shellSwitchDomainTitle => 'Switch domain';
+
+  @override
+  String get shellExpandSidebarShortcut => 'Expand sidebar  (⌘B)';
+
+  @override
+  String get shellCollapseSidebarShortcut => 'Collapse sidebar  (⌘B)';
+
+  @override
   String get planHubTitle => 'Plan';
 
   @override
@@ -4878,6 +4887,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDataSection => 'Data';
 
   @override
+  String get settingsDomainsSection => 'LifeOS Domains';
+
+  @override
+  String get settingsDomainsTitle => 'Domain management';
+
+  @override
+  String get settingsDomainsSubtitle =>
+      'FinanceOS / HealthOS / KnowledgeOS toggles and settings';
+
+  @override
+  String get settingsAdvancedSection => 'Advanced';
+
+  @override
+  String get settingsAiModelsTitle => 'AI Models';
+
+  @override
+  String get settingsAiModelsSubtitle =>
+      'Download and manage the local EmbeddingGemma model';
+
+  @override
   String get settingsBadgeAuto => 'Auto';
 
   @override
@@ -4967,6 +4996,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLogsSubtitle => 'View real-time diagnostic logs';
 
   @override
+  String get settingsLogsCopiedToast => 'Logs copied';
+
+  @override
   String get settingsPerfTitle => 'Performance';
 
   @override
@@ -4995,6 +5027,245 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsPerfRasterP95 => 'Raster p95';
+
+  @override
+  String get settingsDomainsIntro =>
+      'Each domain is enabled independently. Turning one on activates its AI tools, Memory indexing, and navigation entry.';
+
+  @override
+  String get settingsDomainsFinanceSubtitle => 'Always enabled (seed domain)';
+
+  @override
+  String get settingsDomainsEnabledBadge => 'Enabled';
+
+  @override
+  String get settingsDomainsHealthEnabledSubtitle =>
+      'Preview — AI tools and Memory indexing are enabled';
+
+  @override
+  String get settingsDomainsHealthDisabledSubtitle =>
+      'Preview — turn on AI tools and Memory indexing';
+
+  @override
+  String get settingsDomainsHealthTodaySubtitle =>
+      'View recovery, metrics, and the morning briefing';
+
+  @override
+  String get settingsDomainsKnowledgeEnabledSubtitle =>
+      'Preview — Inbox, Library, Review, AI tools, and Memory indexing are enabled';
+
+  @override
+  String get settingsDomainsKnowledgeDisabledSubtitle =>
+      'Preview — personal decisions and cognitive memory';
+
+  @override
+  String get settingsDomainsKnowledgeInboxSubtitle =>
+      'Capture notes, write decisions, and review the library';
+
+  @override
+  String get settingsDomainsHealthPermissionDenied =>
+      'Permission denied — try again in system Health settings';
+
+  @override
+  String get settingsDomainsHealthSyncRunning => 'Syncing…';
+
+  @override
+  String get settingsDomainsHealthSyncIdle =>
+      'Import the last 30 days from the system health platform';
+
+  @override
+  String get settingsDomainsHealthSyncFailed => 'Last sync failed';
+
+  @override
+  String settingsDomainsHealthSyncSummary(
+    int upserted,
+    int unchanged,
+    int total,
+  ) {
+    return 'Last sync: $upserted new / $unchanged unchanged · fetched $total items';
+  }
+
+  @override
+  String get settingsDomainsHealthSyncTitle => 'Sync health data';
+
+  @override
+  String get settingsDomainsBriefingRunning => 'Generating morning briefing…';
+
+  @override
+  String settingsDomainsBriefingFailed(String error) {
+    return 'Briefing failed: $error';
+  }
+
+  @override
+  String get settingsDomainsBriefingIdle =>
+      'Runs automatically each day; tap to generate and send now';
+
+  @override
+  String settingsDomainsBriefingCompleted(String summary) {
+    return 'Last run: $summary';
+  }
+
+  @override
+  String settingsDomainsBriefingSkipped(String summary) {
+    return 'Last skipped: $summary';
+  }
+
+  @override
+  String settingsDomainsBriefingRunFailed(String error) {
+    return 'Last failed: $error';
+  }
+
+  @override
+  String get settingsDomainsBriefingFallbackDone => 'Done';
+
+  @override
+  String get settingsDomainsBriefingFallbackNoSignals => 'No signals';
+
+  @override
+  String get settingsDomainsBriefingFallbackUnknown => 'Unknown error';
+
+  @override
+  String get settingsDomainsBriefingRunTitle => 'Generate morning briefing now';
+
+  @override
+  String get settingsDomainsBriefingTimeHelp => 'Morning briefing time';
+
+  @override
+  String get settingsDomainsBriefingTimeTitle => 'Briefing time';
+
+  @override
+  String settingsDomainsBriefingTimeSubtitle(String hour) {
+    return 'Runs around $hour:00 each day (background scheduling may drift)';
+  }
+
+  @override
+  String get settingsAiModelsCheckingRuntime =>
+      'Checking the embedder path for next launch…';
+
+  @override
+  String settingsAiModelsRuntimeCheckFailed(String error) {
+    return 'Embedder path check failed: $error';
+  }
+
+  @override
+  String get settingsAiModelsRuntimeReady =>
+      'Next launch will load Rust EmbeddingGemma';
+
+  @override
+  String get settingsAiModelsRuntimeStub =>
+      'Next launch will still use the stub embedder';
+
+  @override
+  String get settingsAiModelsModelLabel => 'Model';
+
+  @override
+  String get settingsAiModelsModelMissing =>
+      'Missing: EmbeddingGemma model dir';
+
+  @override
+  String get settingsAiModelsOrtMissing => 'Missing: ONNX Runtime dylib';
+
+  @override
+  String get settingsAiModelsNativeLibLabel => 'native lib';
+
+  @override
+  String get settingsAiModelsNativeLibPlatform =>
+      'Loaded by the platform plugin';
+
+  @override
+  String get settingsAiModelsInstalledSource => 'Installed';
+
+  @override
+  String get settingsAiModelsMissingSource => 'Missing';
+
+  @override
+  String get settingsAiModelsHint =>
+      'AI memory retrieval uses the lightweight stub by default. Download EmbeddingGemma and restart the app to enable local multilingual sentence vectors (768-d). Files stay on this device and are never uploaded. ONNX Runtime is bundled with the app.';
+
+  @override
+  String get settingsAiModelsFootnote =>
+      'After download, restart the app so Memory Runtime uses the new embedder. Existing memory records will be re-indexed with the new model in the next indexer cycle; original typed records stay unchanged.';
+
+  @override
+  String settingsAiModelsStateLoadFailed(String error) {
+    return 'Failed to load state: $error';
+  }
+
+  @override
+  String get settingsAiModelsStatusInstalled => 'Installed';
+
+  @override
+  String get settingsAiModelsStatusDownloading => 'Downloading…';
+
+  @override
+  String get settingsAiModelsStatusFailed => 'Failed';
+
+  @override
+  String get settingsAiModelsStatusNotInstalled => 'Not installed';
+
+  @override
+  String get settingsAiModelsCancel => 'Cancel';
+
+  @override
+  String get settingsAiModelsDelete => 'Delete';
+
+  @override
+  String get settingsAiModelsRedownload => 'Redownload';
+
+  @override
+  String get settingsAiModelsDownload => 'Download';
+
+  @override
+  String get settingsAiModelsDeleteTitle => 'Delete model?';
+
+  @override
+  String get settingsAiModelsDeleteBody =>
+      'After deletion, AI retrieval will fall back to the stub embedder. Redownloading requires network access again.';
+
+  @override
+  String get knowledgeAiSuggestionsTitle => 'AI suggestions';
+
+  @override
+  String knowledgeAiSuggestionsTitleWithCount(int count) {
+    return 'AI suggestions ($count)';
+  }
+
+  @override
+  String get knowledgeAiSuggestionsEmpty =>
+      'No pending AI suggestions. New notes are triaged within 15 minutes.';
+
+  @override
+  String knowledgeLoadFailed(String error) {
+    return 'Failed to load: $error';
+  }
+
+  @override
+  String knowledgeNoteDeleted(String noteId) {
+    return 'Note $noteId was deleted';
+  }
+
+  @override
+  String get knowledgeUntitled => 'Untitled';
+
+  @override
+  String get knowledgeMarkdownEdit => 'Edit';
+
+  @override
+  String get knowledgeMarkdownPreview => 'Preview';
+
+  @override
+  String get knowledgeMarkdownPreviewEmpty =>
+      'No preview yet. Switch back to edit mode to enter content.';
+
+  @override
+  String get knowledgeDecisionNotFound =>
+      'Decision does not exist or was deleted';
+
+  @override
+  String get knowledgeObjectNotFound => 'Item does not exist or was deleted';
+
+  @override
+  String get knowledgeDeletedToast => 'Deleted';
 
   @override
   String get backupExportTitle => 'Export Backup';

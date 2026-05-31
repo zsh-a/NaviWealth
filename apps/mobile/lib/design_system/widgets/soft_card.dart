@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 
 /// A calmer container than `FCard.raw` — replaces 1px crisp outlines
@@ -21,7 +22,7 @@ class SoftCard extends StatefulWidget {
     required this.child,
     this.padding = EdgeInsets.zero,
     this.onPress,
-    this.borderRadius = 14,
+    this.borderRadius = AppRadius.sm,
     this.tinted = true,
     this.borderless = false,
   });
@@ -94,16 +95,19 @@ class _SoftCardState extends State<SoftCard> {
 
     if (widget.onPress == null) return card;
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTapCancel: () => setState(() => _pressed = false),
-        onTap: widget.onPress,
-        child: card,
+    return Semantics(
+      button: true,
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapUp: (_) => setState(() => _pressed = false),
+          onTapCancel: () => setState(() => _pressed = false),
+          onTap: widget.onPress,
+          child: card,
+        ),
       ),
     );
   }

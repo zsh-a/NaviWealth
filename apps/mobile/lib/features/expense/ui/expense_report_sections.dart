@@ -22,7 +22,7 @@ class ExpenseCategoryPieCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FCard.raw(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -91,7 +91,7 @@ class ExpenseTrendCard extends StatelessWidget {
           colorOverride: palette.accentAt(0),
         ),
     ];
-    return FCard.raw(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -153,7 +153,7 @@ class ExpenseCategoryListCard extends StatelessWidget {
     if (report.byCategory.isEmpty) {
       return const SizedBox.shrink();
     }
-    return FCard.raw(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         child: Column(

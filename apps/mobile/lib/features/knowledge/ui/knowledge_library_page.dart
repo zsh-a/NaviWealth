@@ -17,6 +17,7 @@ import '../../../app/shell_chrome.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
@@ -284,7 +285,9 @@ class _LibraryList extends ConsumerWidget {
                     repo: repo,
                     kind: KnowledgeEntryKind.note,
                     id: n.id,
-                    title: n.title.isEmpty ? '(无标题)' : n.title,
+                    title: n.title.isEmpty
+                        ? AppLocalizations.of(context).knowledgeUntitled
+                        : n.title,
                   ),
                 ),
               ),
@@ -453,7 +456,11 @@ Future<void> _deleteEntry({
       ),
     );
     if (context.mounted) {
-      AppMessenger.show(context, ToastKind.success, '已删除');
+      AppMessenger.show(
+        context,
+        ToastKind.success,
+        AppLocalizations.of(context).knowledgeDeletedToast,
+      );
     }
   } catch (e) {
     if (context.mounted) {
@@ -516,8 +523,9 @@ Widget _buildNoteTile(
 }) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
+  final l10n = AppLocalizations.of(context);
   return KnowledgeSection.item(
-    title: n.title.isEmpty ? '(无标题)' : n.title,
+    title: n.title.isEmpty ? l10n.knowledgeUntitled : n.title,
     trailing: deleteButton,
     children: [
       if (n.bodyMd.isNotEmpty)

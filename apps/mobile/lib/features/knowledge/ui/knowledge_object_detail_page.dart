@@ -15,6 +15,7 @@ import 'package:forui/forui.dart';
 
 import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
@@ -108,7 +109,9 @@ class _KnowledgeObjectDetailPageState
     if (_loading) return const Center(child: FProgress());
     final obj = _object;
     if (obj == null) {
-      return const Center(child: Text('条目不存在或已删除'));
+      return Center(
+        child: Text(AppLocalizations.of(context).knowledgeObjectNotFound),
+      );
     }
     final children = switch (obj) {
       final KnowledgeConcept c => _conceptSections(context, c),

@@ -122,7 +122,7 @@ class _LiabilityListTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final remaining = summary?.remainingPrincipal;
 
-    return FCard.raw(
+    return SoftCard(
       child: FTile(
         title: Text(liability.name),
         prefix: CircleAvatar(

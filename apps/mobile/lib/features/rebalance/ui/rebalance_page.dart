@@ -130,7 +130,7 @@ class _SchemeSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return FCard.raw(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -214,7 +214,7 @@ class _DriftOverview extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
-    return FCard.raw(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -283,7 +283,7 @@ class _TradeList extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
 
     if (plan.isBalanced) {
-      return FCard.raw(
+      return SoftCard(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -301,7 +301,7 @@ class _TradeList extends StatelessWidget {
       );
     }
 
-    return FCard.raw(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

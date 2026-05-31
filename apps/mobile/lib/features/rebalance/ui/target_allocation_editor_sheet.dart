@@ -271,9 +271,7 @@ class _TotalCard extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              valid
-                  ? FLucideIcons.circleCheck
-                  : FLucideIcons.circleAlert,
+              valid ? FLucideIcons.circleCheck : FLucideIcons.circleAlert,
               size: 20,
               color: fg,
             ),
@@ -337,7 +335,7 @@ class _AllocationRow extends StatelessWidget {
     final colors = context.theme.colors;
     final label = AssetCategoryVisuals.label(l10n, category);
 
-    return FCard.raw(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s12),
         child: Column(

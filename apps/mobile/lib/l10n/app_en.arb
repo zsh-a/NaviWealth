@@ -25,6 +25,12 @@
   "@navSearch": { "description": "Bottom nav action that opens the command palette on touch shells" },
   "navSettingsTooltip": "Settings",
   "@navSettingsTooltip": { "description": "Tooltip on the Today header gear that opens /settings" },
+  "shellSwitchDomainTitle": "Switch domain",
+  "@shellSwitchDomainTitle": { "description": "Title for the LifeOS domain switcher sheet" },
+  "shellExpandSidebarShortcut": "Expand sidebar  (⌘B)",
+  "@shellExpandSidebarShortcut": { "description": "Desktop sidebar tooltip when the sidebar is collapsed" },
+  "shellCollapseSidebarShortcut": "Collapse sidebar  (⌘B)",
+  "@shellCollapseSidebarShortcut": { "description": "Desktop sidebar tooltip when the sidebar is expanded" },
 
   "planHubTitle": "Plan",
   "@planHubTitle": { "description": "Plan hub page title (IA contract §1: decisions + future state)" },
@@ -2626,6 +2632,18 @@
   "@settingsAboutSection": { "description": "Settings section header for the About tile (version, commit, etc.)" },
   "settingsDataSection": "Data",
   "@settingsDataSection": { "description": "Settings section header for sync + backup/restore (AI rows moved to the AI section)" },
+  "settingsDomainsSection": "LifeOS Domains",
+  "@settingsDomainsSection": { "description": "Settings section header for LifeOS domain opt-in management" },
+  "settingsDomainsTitle": "Domain management",
+  "@settingsDomainsTitle": { "description": "Settings tile and page title for LifeOS domain management" },
+  "settingsDomainsSubtitle": "FinanceOS / HealthOS / KnowledgeOS toggles and settings",
+  "@settingsDomainsSubtitle": { "description": "Settings tile subtitle for LifeOS domain management" },
+  "settingsAdvancedSection": "Advanced",
+  "@settingsAdvancedSection": { "description": "Settings section header for advanced diagnostics and developer-facing tools" },
+  "settingsAiModelsTitle": "AI Models",
+  "@settingsAiModelsTitle": { "description": "Settings tile and page title for local AI model management" },
+  "settingsAiModelsSubtitle": "Download and manage the local EmbeddingGemma model",
+  "@settingsAiModelsSubtitle": { "description": "Settings tile subtitle for local AI model management" },
   "settingsBadgeAuto": "Auto",
   "@settingsBadgeAuto": { "description": "Compact trailing pill on a settings link row indicating the value is auto-tuned by another preference (e.g. risk appetite). Renders uppercase." },
   "settingsBadgeCustom": "Custom",
@@ -2680,6 +2698,8 @@
   "@settingsLogsTitle": { "description": "Settings tile that opens the log viewer" },
   "settingsLogsSubtitle": "View real-time diagnostic logs",
   "@settingsLogsSubtitle": { "description": "Settings tile subtitle for log viewer" },
+  "settingsLogsCopiedToast": "Logs copied",
+  "@settingsLogsCopiedToast": { "description": "Toast shown after copying app logs to the clipboard" },
   "settingsPerfTitle": "Performance",
   "@settingsPerfTitle": { "description": "Settings developer diagnostics: performance page title" },
   "settingsPerfSubtitle": "Inspect recent frame timing and jank",
@@ -2696,6 +2716,107 @@
   "settingsPerfTotalP95": "Total p95",
   "settingsPerfBuildP95": "Build p95",
   "settingsPerfRasterP95": "Raster p95",
+  "settingsDomainsIntro": "Each domain is enabled independently. Turning one on activates its AI tools, Memory indexing, and navigation entry.",
+  "settingsDomainsFinanceSubtitle": "Always enabled (seed domain)",
+  "settingsDomainsEnabledBadge": "Enabled",
+  "settingsDomainsHealthEnabledSubtitle": "Preview — AI tools and Memory indexing are enabled",
+  "settingsDomainsHealthDisabledSubtitle": "Preview — turn on AI tools and Memory indexing",
+  "settingsDomainsHealthTodaySubtitle": "View recovery, metrics, and the morning briefing",
+  "settingsDomainsKnowledgeEnabledSubtitle": "Preview — Inbox, Library, Review, AI tools, and Memory indexing are enabled",
+  "settingsDomainsKnowledgeDisabledSubtitle": "Preview — personal decisions and cognitive memory",
+  "settingsDomainsKnowledgeInboxSubtitle": "Capture notes, write decisions, and review the library",
+  "settingsDomainsHealthPermissionDenied": "Permission denied — try again in system Health settings",
+  "settingsDomainsHealthSyncRunning": "Syncing…",
+  "settingsDomainsHealthSyncIdle": "Import the last 30 days from the system health platform",
+  "settingsDomainsHealthSyncFailed": "Last sync failed",
+  "settingsDomainsHealthSyncSummary": "Last sync: {upserted} new / {unchanged} unchanged · fetched {total} items",
+  "@settingsDomainsHealthSyncSummary": {
+    "placeholders": {
+      "upserted": { "type": "int" },
+      "unchanged": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "settingsDomainsHealthSyncTitle": "Sync health data",
+  "settingsDomainsBriefingRunning": "Generating morning briefing…",
+  "settingsDomainsBriefingFailed": "Briefing failed: {error}",
+  "@settingsDomainsBriefingFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "settingsDomainsBriefingIdle": "Runs automatically each day; tap to generate and send now",
+  "settingsDomainsBriefingCompleted": "Last run: {summary}",
+  "@settingsDomainsBriefingCompleted": {
+    "placeholders": { "summary": { "type": "String" } }
+  },
+  "settingsDomainsBriefingSkipped": "Last skipped: {summary}",
+  "@settingsDomainsBriefingSkipped": {
+    "placeholders": { "summary": { "type": "String" } }
+  },
+  "settingsDomainsBriefingRunFailed": "Last failed: {error}",
+  "@settingsDomainsBriefingRunFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "settingsDomainsBriefingFallbackDone": "Done",
+  "settingsDomainsBriefingFallbackNoSignals": "No signals",
+  "settingsDomainsBriefingFallbackUnknown": "Unknown error",
+  "settingsDomainsBriefingRunTitle": "Generate morning briefing now",
+  "settingsDomainsBriefingTimeHelp": "Morning briefing time",
+  "settingsDomainsBriefingTimeTitle": "Briefing time",
+  "settingsDomainsBriefingTimeSubtitle": "Runs around {hour}:00 each day (background scheduling may drift)",
+  "@settingsDomainsBriefingTimeSubtitle": {
+    "placeholders": { "hour": { "type": "String" } }
+  },
+  "settingsAiModelsCheckingRuntime": "Checking the embedder path for next launch…",
+  "settingsAiModelsRuntimeCheckFailed": "Embedder path check failed: {error}",
+  "@settingsAiModelsRuntimeCheckFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "settingsAiModelsRuntimeReady": "Next launch will load Rust EmbeddingGemma",
+  "settingsAiModelsRuntimeStub": "Next launch will still use the stub embedder",
+  "settingsAiModelsModelLabel": "Model",
+  "settingsAiModelsModelMissing": "Missing: EmbeddingGemma model dir",
+  "settingsAiModelsOrtMissing": "Missing: ONNX Runtime dylib",
+  "settingsAiModelsNativeLibLabel": "native lib",
+  "settingsAiModelsNativeLibPlatform": "Loaded by the platform plugin",
+  "settingsAiModelsInstalledSource": "Installed",
+  "settingsAiModelsMissingSource": "Missing",
+  "settingsAiModelsHint": "AI memory retrieval uses the lightweight stub by default. Download EmbeddingGemma and restart the app to enable local multilingual sentence vectors (768-d). Files stay on this device and are never uploaded. ONNX Runtime is bundled with the app.",
+  "settingsAiModelsFootnote": "After download, restart the app so Memory Runtime uses the new embedder. Existing memory records will be re-indexed with the new model in the next indexer cycle; original typed records stay unchanged.",
+  "settingsAiModelsStateLoadFailed": "Failed to load state: {error}",
+  "@settingsAiModelsStateLoadFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "settingsAiModelsStatusInstalled": "Installed",
+  "settingsAiModelsStatusDownloading": "Downloading…",
+  "settingsAiModelsStatusFailed": "Failed",
+  "settingsAiModelsStatusNotInstalled": "Not installed",
+  "settingsAiModelsCancel": "Cancel",
+  "settingsAiModelsDelete": "Delete",
+  "settingsAiModelsRedownload": "Redownload",
+  "settingsAiModelsDownload": "Download",
+  "settingsAiModelsDeleteTitle": "Delete model?",
+  "settingsAiModelsDeleteBody": "After deletion, AI retrieval will fall back to the stub embedder. Redownloading requires network access again.",
+  "knowledgeAiSuggestionsTitle": "AI suggestions",
+  "knowledgeAiSuggestionsTitleWithCount": "AI suggestions ({count})",
+  "@knowledgeAiSuggestionsTitleWithCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "knowledgeAiSuggestionsEmpty": "No pending AI suggestions. New notes are triaged within 15 minutes.",
+  "knowledgeLoadFailed": "Failed to load: {error}",
+  "@knowledgeLoadFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "knowledgeNoteDeleted": "Note {noteId} was deleted",
+  "@knowledgeNoteDeleted": {
+    "placeholders": { "noteId": { "type": "String" } }
+  },
+  "knowledgeUntitled": "Untitled",
+  "knowledgeMarkdownEdit": "Edit",
+  "knowledgeMarkdownPreview": "Preview",
+  "knowledgeMarkdownPreviewEmpty": "No preview yet. Switch back to edit mode to enter content.",
+  "knowledgeDecisionNotFound": "Decision does not exist or was deleted",
+  "knowledgeObjectNotFound": "Item does not exist or was deleted",
+  "knowledgeDeletedToast": "Deleted",
   "backupExportTitle": "Export Backup",
   "@backupExportTitle": { "description": "Backup page: export tile title" },
   "backupExportSubtitle": "Create an encrypted backup of all your data",

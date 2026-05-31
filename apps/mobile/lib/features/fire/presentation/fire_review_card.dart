@@ -6,6 +6,7 @@ import 'package:forui/forui.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../core/haptics/haptics.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/fire_providers.dart';
 import '../data/fire_review_cache.dart';
@@ -41,77 +42,72 @@ class _FireReviewCardState extends ConsumerState<FireReviewCard> {
     );
     final liveAsync = ref.watch(fireLiveReviewProvider(_kind));
 
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.fireOsReviewTitle, style: context.theme.typography.md),
-            const SizedBox(height: 4),
-            Text(
-              l10n.fireOsReviewSubtitle,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.fireOsReviewTitle, style: context.theme.typography.md),
+          const SizedBox(height: 4),
+          Text(
+            l10n.fireOsReviewSubtitle,
+            style: context.theme.typography.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
             ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              children: [
-                for (final kind in FireReviewKind.values)
-                  FButton(
-                    variant: _kind == kind
-                        ? FButtonVariant.primary
-                        : FButtonVariant.outline,
-                    onPress: () => setState(() {
-                      _kind = kind;
-                      _savedKey = null;
-                    }),
-                    child: Text(_kindLabel(l10n, kind)),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            liveAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: SizedBox.shrink(),
-              ),
-              error: (e, _) => Text(
-                '$e',
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.destructive,
-                ),
-              ),
-              data: (review) => _ReviewBody(
-                review: review,
-                formatters: formatters,
-                l10n: l10n,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final kind in FireReviewKind.values)
                 FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: _saving ? null : _save,
-                  prefix: const Icon(FLucideIcons.save, size: 14),
-                  child: Text(l10n.fireOsReviewSaveSnapshot),
+                  variant: _kind == kind
+                      ? FButtonVariant.primary
+                      : FButtonVariant.outline,
+                  onPress: () => setState(() {
+                    _kind = kind;
+                    _savedKey = null;
+                  }),
+                  child: Text(_kindLabel(l10n, kind)),
                 ),
-                if (_savedKey != null) ...[
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.fireOsReviewSaved(_savedKey!),
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
-                  ),
-                ],
-              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          liveAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: SizedBox.shrink(),
             ),
-          ],
-        ),
+            error: (e, _) => Text(
+              '$e',
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.destructive,
+              ),
+            ),
+            data: (review) =>
+                _ReviewBody(review: review, formatters: formatters, l10n: l10n),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              FButton(
+                variant: FButtonVariant.outline,
+                onPress: _saving ? null : _save,
+                prefix: const Icon(FLucideIcons.save, size: 14),
+                child: Text(l10n.fireOsReviewSaveSnapshot),
+              ),
+              if (_savedKey != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  l10n.fireOsReviewSaved(_savedKey!),
+                  style: context.theme.typography.xs.copyWith(
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
       ),
     );
   }

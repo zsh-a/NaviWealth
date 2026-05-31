@@ -116,7 +116,7 @@ class _CategoryCard extends StatelessWidget {
       curve: Motion.standardDecelerate,
       decoration: BoxDecoration(
         color: fill,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: border, width: selected ? 1.5 : 1),
       ),
       child: FTappable(

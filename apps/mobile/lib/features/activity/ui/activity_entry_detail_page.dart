@@ -118,7 +118,7 @@ class _HeroAmountCard extends StatelessWidget {
       padding: EdgeInsets.zero,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -213,51 +213,45 @@ class _AiInsightCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              alignment: Alignment.center,
-              child: Icon(
-                FLucideIcons.sparkles,
-                size: 16,
-                color: colors.primary,
-              ),
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(8),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    l10n.activityEntryDetailAiExplanation,
-                    style: context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+            alignment: Alignment.center,
+            child: Icon(FLucideIcons.sparkles, size: 16, color: colors.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.activityEntryDetailAiExplanation,
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    insight,
-                    style: context.theme.typography.sm.copyWith(
-                      color: colors.mutedForeground,
-                      height: 1.4,
-                    ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  insight,
+                  style: context.theme.typography.sm.copyWith(
+                    color: colors.mutedForeground,
+                    height: 1.4,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

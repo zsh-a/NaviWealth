@@ -164,7 +164,7 @@ class _BudgetTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final money = Money(row.amount, row.currency);
-    return FCard.raw(
+    return SoftCard(
       child: FTile(
         prefix: Container(
           width: 36,

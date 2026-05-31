@@ -177,13 +177,7 @@ lib/features/ingest/data/statement_ingest_parser.dart
 # at display time (plus a one-off cache wipe). Track as the same FIR-99
 # follow-up.
 lib/features/options_income/domain/services/opportunity_scorer.dart
-# ─── D-1.7c AI Models / LLM credentials settings (FIR-99 follow-up) ──
-# These two settings pages shipped with the D-1.7c device-AI work and
-# went straight to CN literals (~20 strings each: status chips,
-# explainer paragraphs, action labels). User-facing — should move to
-# ARB in a focused AI-settings l10n pass.
-lib/features/settings/ui/ai_models_page.dart
-lib/features/settings/ui/settings_overview.dart
+# ─── D-1.7c Memory Runtime tool catalog (FIR-99 follow-up) ────────────
 # ─── D-1.7c Memory Runtime tool catalog (FIR-99 follow-up) ────────────
 # `build_context` and `query_memory` are device-AI tools; their CN
 # descriptions / parameter hints are read by the LLM (not the UI),
@@ -276,22 +270,13 @@ lib/features/knowledge/data/llm_capture_classifier.dart
 lib/features/knowledge/data/llm_contradiction_judge.dart
 lib/features/knowledge/data/llm_inbox_triage_classifier.dart
 lib/features/knowledge/data/providers.dart
-lib/features/knowledge/ui/_ai_suggestions_card.dart
 lib/features/knowledge/ui/_decision_lifecycle_sheet.dart
 lib/features/knowledge/ui/_decision_writer.dart
 lib/features/knowledge/ui/_object_writers.dart
 lib/features/knowledge/ui/_routine_writer.dart
-lib/features/knowledge/ui/_widgets.dart
 lib/features/knowledge/ui/knowledge_capture_sheet.dart
 lib/features/knowledge/ui/knowledge_decision_detail_page.dart
 lib/features/knowledge/ui/knowledge_inbox_page.dart
 lib/features/knowledge/ui/knowledge_library_page.dart
 lib/features/knowledge/ui/knowledge_object_detail_page.dart
 lib/features/knowledge/ui/knowledge_review_page.dart
-
-# ─── Settings shell pages (Phase-D, FIR-99 follow-up) ────────────────
-# domains_settings_page.dart (LifeOS domain management) and
-# log_viewer_page.dart shipped with CN literals (titles, action labels,
-# status copy). User-facing — should move to ARB with the settings pass.
-lib/features/settings/log_viewer_page.dart
-lib/features/settings/ui/domains_settings_page.dart

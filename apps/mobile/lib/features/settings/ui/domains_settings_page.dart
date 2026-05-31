@@ -9,6 +9,7 @@ import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as auth_providers;
 import '../../../core/notifications/providers.dart' as notif_providers;
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../health/agents/providers.dart' as health_agent_providers;
 import '../../health/data/health_sync_service.dart';
 import '../../health/data/morning_briefing_preferences.dart';
@@ -33,10 +34,11 @@ class DomainsSettingsPage extends ConsumerWidget {
     final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
     final knowledgeEnabled = optIns?.contains(DomainScope.knowledge) ?? false;
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
 
     return FScaffold(
       header: FHeader.nested(
-        title: const Text('LifeOS 域'),
+        title: Text(l10n.settingsDomainsTitle),
         prefixes: [backHeaderAction(context)],
       ),
       childPad: false,
@@ -51,7 +53,7 @@ class DomainsSettingsPage extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 0, 4, AppSpacing.s12),
             child: Text(
-              '每个域独立开关。打开后该域的 AI 工具、Memory 索引与导航入口会启用。',
+              l10n.settingsDomainsIntro,
               style: context.theme.typography.sm.copyWith(
                 color: colors.mutedForeground,
               ),
@@ -64,8 +66,8 @@ class DomainsSettingsPage extends ConsumerWidget {
                 InlineLinkRow(
                   icon: FLucideIcons.wallet,
                   label: 'FinanceOS',
-                  subtitle: '永远启用 (seed 域)',
-                  trailingBadge: '已启用',
+                  subtitle: l10n.settingsDomainsFinanceSubtitle,
+                  trailingBadge: l10n.settingsDomainsEnabledBadge,
                   onTap: () {},
                 ),
                 _RowDivider(),
@@ -73,8 +75,8 @@ class DomainsSettingsPage extends ConsumerWidget {
                   icon: FLucideIcons.heartPulse,
                   label: 'HealthOS',
                   subtitle: healthEnabled
-                      ? '预览中 — AI 工具 + Memory 索引已启用'
-                      : '预览版 — 打开后 AI 工具 + Memory 索引会启用',
+                      ? l10n.settingsDomainsHealthEnabledSubtitle
+                      : l10n.settingsDomainsHealthDisabledSubtitle,
                   value: healthEnabled,
                   onChanged: (v) {
                     ref
@@ -87,7 +89,7 @@ class DomainsSettingsPage extends ConsumerWidget {
                   InlineLinkRow(
                     icon: FLucideIcons.eye,
                     label: 'HealthOS · Today',
-                    subtitle: '查看今日恢复、指标与早间简报',
+                    subtitle: l10n.settingsDomainsHealthTodaySubtitle,
                     onTap: () => context.goNamed(AppRouteNames.healthToday),
                   ),
                   _RowDivider(),
@@ -102,8 +104,8 @@ class DomainsSettingsPage extends ConsumerWidget {
                   icon: FLucideIcons.brain,
                   label: 'KnowledgeOS',
                   subtitle: knowledgeEnabled
-                      ? '预览中 — Inbox/Library/Review + AI tools + Memory 索引已启用'
-                      : '预览版 — 个人决策与认知演化记忆库 (Decision Log / Recall / Review)',
+                      ? l10n.settingsDomainsKnowledgeEnabledSubtitle
+                      : l10n.settingsDomainsKnowledgeDisabledSubtitle,
                   value: knowledgeEnabled,
                   onChanged: (v) {
                     ref
@@ -116,7 +118,7 @@ class DomainsSettingsPage extends ConsumerWidget {
                   InlineLinkRow(
                     icon: FLucideIcons.inbox,
                     label: 'KnowledgeOS · Inbox',
-                    subtitle: '捕获笔记 / 写决策 / 查看 Library 与 Review',
+                    subtitle: l10n.settingsDomainsKnowledgeInboxSubtitle,
                     onTap: () => context.goNamed(AppRouteNames.knowledgeInbox),
                   ),
                 ],
@@ -164,6 +166,7 @@ class _HealthPlatformSyncRowState
 
   Future<void> _run() async {
     if (_running) return;
+    final l10n = AppLocalizations.of(context);
     setState(() => _running = true);
     try {
       final service = await ref.read(
@@ -177,7 +180,7 @@ class _HealthPlatformSyncRowState
           setState(() {
             _lastResult = HealthSyncResult.skipped(
               startedAt: DateTime.now().toUtc(),
-              errorMessage: '权限被拒绝 — 在系统 Health 设置里再试',
+              errorMessage: l10n.settingsDomainsHealthPermissionDenied,
             );
           });
           return;
@@ -190,20 +193,25 @@ class _HealthPlatformSyncRowState
     }
   }
 
-  String _subtitle() {
+  String _subtitle(AppLocalizations l10n) {
     final r = _lastResult;
-    if (_running) return '正在拉取…';
-    if (r == null) return '从系统健康平台拉取最近 30 天数据';
-    if (!r.ok) return r.errorMessage ?? '上次同步失败';
-    return '上次同步: ${r.upserted} 新写入 / ${r.unchanged} 未变 · 拉取 ${r.totalFetched} 项';
+    if (_running) return l10n.settingsDomainsHealthSyncRunning;
+    if (r == null) return l10n.settingsDomainsHealthSyncIdle;
+    if (!r.ok) return r.errorMessage ?? l10n.settingsDomainsHealthSyncFailed;
+    return l10n.settingsDomainsHealthSyncSummary(
+      r.upserted,
+      r.unchanged,
+      r.totalFetched,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return InlineLinkRow(
       icon: FLucideIcons.refreshCcw,
-      label: '同步健康数据',
-      subtitle: _subtitle(),
+      label: l10n.settingsDomainsHealthSyncTitle,
+      subtitle: _subtitle(l10n),
       onTap: _running ? () {} : _run,
     );
   }
@@ -257,27 +265,34 @@ class _MorningBriefingRunRowState
     }
   }
 
-  String _subtitle() {
-    if (_running) return '正在生成早间简报…';
+  String _subtitle(AppLocalizations l10n) {
+    if (_running) return l10n.settingsDomainsBriefingRunning;
     final err = _errorMessage;
-    if (err != null) return '简报生成失败：$err';
+    if (err != null) return l10n.settingsDomainsBriefingFailed(err);
     final r = _lastResult;
     if (r == null) {
-      return '后台每日自动运行；点按可立即生成并发送通知';
+      return l10n.settingsDomainsBriefingIdle;
     }
     return switch (r.status) {
-      AgentRunStatus.completed => '上次运行：${r.summary ?? "已完成"}',
-      AgentRunStatus.skipped => '上次跳过：${r.summary ?? "暂无信号"}',
-      AgentRunStatus.failed => '上次失败：${r.error ?? "未知错误"}',
+      AgentRunStatus.completed => l10n.settingsDomainsBriefingCompleted(
+        r.summary ?? l10n.settingsDomainsBriefingFallbackDone,
+      ),
+      AgentRunStatus.skipped => l10n.settingsDomainsBriefingSkipped(
+        r.summary ?? l10n.settingsDomainsBriefingFallbackNoSignals,
+      ),
+      AgentRunStatus.failed => l10n.settingsDomainsBriefingRunFailed(
+        r.error ?? l10n.settingsDomainsBriefingFallbackUnknown,
+      ),
     };
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return InlineLinkRow(
       icon: FLucideIcons.sunrise,
-      label: '立即生成早间简报',
-      subtitle: _subtitle(),
+      label: l10n.settingsDomainsBriefingRunTitle,
+      subtitle: _subtitle(l10n),
       onTap: _running ? () {} : _run,
     );
   }
@@ -296,7 +311,7 @@ class _MorningBriefingHourRow extends ConsumerWidget {
     final picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay(hour: current, minute: 0),
-      helpText: 'Morning Briefing 时间',
+      helpText: AppLocalizations.of(context).settingsDomainsBriefingTimeHelp,
       builder: (ctx, child) => MediaQuery(
         data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
         child: child ?? const SizedBox.shrink(),
@@ -310,10 +325,11 @@ class _MorningBriefingHourRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final hour = ref.watch(morningBriefingHourProvider);
     final label = hour.toString().padLeft(2, '0');
+    final l10n = AppLocalizations.of(context);
     return InlineLinkRow(
       icon: FLucideIcons.clock,
-      label: 'Briefing 时间',
-      subtitle: '每日大约 $label:00 触发 (后台调度窗口浮动)',
+      label: l10n.settingsDomainsBriefingTimeTitle,
+      subtitle: l10n.settingsDomainsBriefingTimeSubtitle(label),
       trailingValue: '$label:00',
       onTap: () => _pick(context, ref, hour),
     );

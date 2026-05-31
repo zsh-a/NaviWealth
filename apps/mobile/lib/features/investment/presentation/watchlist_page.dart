@@ -248,102 +248,100 @@ class _WatchlistRow extends StatelessWidget {
         : NumberFormat.simpleCurrency(
             name: quote.currency,
           ).format(quote.price.toDouble());
-    return FCard.raw(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: colors.foreground.withValues(alpha: 0.04),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    _marketIcon(item.market),
-                    size: 19,
-                    color: colors.mutedForeground,
-                  ),
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colors.foreground.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.displaySymbol,
-                        style: context.theme.typography.sm.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                alignment: Alignment.center,
+                child: Icon(
+                  _marketIcon(item.market),
+                  size: 19,
+                  color: colors.mutedForeground,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.displaySymbol,
+                      style: context.theme.typography.sm.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
-                      Text(
-                        _marketLabel(l10n, item.market),
-                        style: context.theme.typography.xs.copyWith(
-                          color: colors.mutedForeground,
-                        ),
+                    ),
+                    Text(
+                      _marketLabel(l10n, item.market),
+                      style: context.theme.typography.xs.copyWith(
+                        color: colors.mutedForeground,
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+              ),
+              if (loadingQuote)
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: FCircularProgress(),
+                )
+              else
+                Text(
+                  price,
+                  style: context.theme.typography.lg.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                if (loadingQuote)
-                  const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: FCircularProgress(),
-                  )
-                else
-                  Text(
-                    price,
-                    style: context.theme.typography.lg.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _FreshnessChip(snapshot: snapshot),
+              if (item.alertRules.above != null)
+                _RuleChip(
+                  label: l10n.watchlistAlertAboveChip(
+                    item.alertRules.above.toString(),
                   ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _FreshnessChip(snapshot: snapshot),
-                if (item.alertRules.above != null)
-                  _RuleChip(
-                    label: l10n.watchlistAlertAboveChip(
-                      item.alertRules.above.toString(),
-                    ),
-                  ),
-                if (item.alertRules.below != null)
-                  _RuleChip(
-                    label: l10n.watchlistAlertBelowChip(
-                      item.alertRules.below.toString(),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: onEdit,
-                  child: Text(l10n.watchlistEditAlertsAction),
                 ),
-                const SizedBox(width: 8),
-                FButton(
-                  variant: FButtonVariant.destructive,
-                  onPress: onRemove,
-                  child: Text(l10n.watchlistRemoveAction),
+              if (item.alertRules.below != null)
+                _RuleChip(
+                  label: l10n.watchlistAlertBelowChip(
+                    item.alertRules.below.toString(),
+                  ),
                 ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              FButton(
+                variant: FButtonVariant.ghost,
+                onPress: onEdit,
+                child: Text(l10n.watchlistEditAlertsAction),
+              ),
+              const SizedBox(width: 8),
+              FButton(
+                variant: FButtonVariant.destructive,
+                onPress: onRemove,
+                child: Text(l10n.watchlistRemoveAction),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

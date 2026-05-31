@@ -72,7 +72,7 @@ class _WheelTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final stageLabel = _stageLabel(cycle.stage);
-    return FCard.raw(
+    return SoftCard(
       child: FTile(
         prefix: Container(
           width: 36,

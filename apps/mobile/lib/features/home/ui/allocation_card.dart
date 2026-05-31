@@ -60,7 +60,7 @@ class AllocationCard extends StatelessWidget {
           object: const AiObjectRef(type: 'chart', id: 'asset_allocation'),
           objectLabel: l10n.dashboardAllocationTitle,
         ),
-        child: FCard.raw(
+        child: SoftCard(
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: LayoutBuilder(

@@ -14,6 +14,7 @@ import 'package:forui/forui.dart';
 
 import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_decision_lifecycle_sheet.dart';
@@ -120,7 +121,9 @@ class _BodyState extends ConsumerState<_Body> {
   Widget _buildBody(BuildContext context, KnowledgeDecision? d) {
     if (_loading) return const Center(child: FProgress());
     if (d == null) {
-      return const Center(child: Text('Decision 不存在或已删除'));
+      return Center(
+        child: Text(AppLocalizations.of(context).knowledgeDecisionNotFound),
+      );
     }
     final typography = context.theme.typography;
     final colors = context.theme.colors;

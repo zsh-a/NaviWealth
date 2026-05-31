@@ -112,7 +112,7 @@ class EquityAllocationContent extends ConsumerWidget {
         if (view.unclassifiedCount > 0)
           _UnclassifiedBanner(count: view.unclassifiedCount),
         if (view.unclassifiedCount > 0) const SizedBox(height: 12),
-        FCard.raw(
+        SoftCard(
           child: Column(
             children: [
               for (final bucket in view.buckets)
@@ -246,7 +246,7 @@ class _UnclassifiedBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FCard.raw(
+    return SoftCard(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         child: Row(
