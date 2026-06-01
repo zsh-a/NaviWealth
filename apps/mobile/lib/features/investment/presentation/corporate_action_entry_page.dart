@@ -624,8 +624,24 @@ class _PreviewCard extends StatelessWidget {
   Widget _kv(String label, String value) => Padding(
     padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
     child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [Text(label), Text(value)],
+      children: [
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s12),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     ),
   );
 }

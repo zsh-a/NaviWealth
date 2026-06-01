@@ -325,7 +325,9 @@ class _DcaResults extends StatelessWidget {
                   Expanded(
                     child: Text(
                       l10n.dcaSimulatorResultTitle,
-                      style: context.theme.typography.lg,
+                      style: context.theme.typography.md.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   _FreshnessChip(freshness: state.freshness),
@@ -531,13 +533,17 @@ class _PositionRow extends StatelessWidget {
               ),
             ),
           ),
-          Text(
-            l10n.dcaSimulatorPositionAverageCost(
-              currency,
-              position.averageCost.toString(),
-            ),
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
+          Flexible(
+            child: Text(
+              l10n.dcaSimulatorPositionAverageCost(
+                currency,
+                position.averageCost.toString(),
+              ),
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

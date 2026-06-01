@@ -463,9 +463,14 @@ class _CategoryDrillDown extends StatelessWidget {
                         category,
                         l10n.expenseReportUncategorized,
                       ),
-                      style: context.theme.typography.lg,
+                      style: context.theme.typography.md.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  const SizedBox(width: AppSpacing.s8),
                   MoneyText(
                     amount: breakdown.total.amount.toDouble(),
                     currencyCode: baseCurrency,

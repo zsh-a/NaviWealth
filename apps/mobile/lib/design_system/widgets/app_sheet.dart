@@ -90,12 +90,16 @@ Future<T?> showAppFormSheet<T>({
     barrierDismissible: !guarded,
     draggable: !guarded,
     builder: guarded
-        ? (sheetContext) => _GuardedSheet(
-            controller: dirtyGuard,
-            confirmDismiss: confirmDismiss,
-            child: Builder(builder: builder),
+        ? (sheetContext) => AppSheetSurface(
+            child: _GuardedSheet(
+              controller: dirtyGuard,
+              confirmDismiss: confirmDismiss,
+              child: Builder(builder: builder),
+            ),
           )
-        : builder,
+        : (sheetContext) => AppSheetSurface(
+            child: Builder(builder: builder),
+          ),
   );
 }
 
