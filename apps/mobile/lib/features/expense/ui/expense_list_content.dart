@@ -262,9 +262,16 @@ class ExpenseGroupedList extends StatelessWidget {
           _ExpenseGroupHeader(:final group) => Padding(
             padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s8),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(group.label, style: context.theme.typography.sm),
+                Flexible(
+                  child: Text(
+                    group.label,
+                    style: context.theme.typography.sm,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s8),
                 Text(
                   l10n.expenseListTotal(formatter.currency(group.total)),
                   style: context.theme.typography.sm.copyWith(

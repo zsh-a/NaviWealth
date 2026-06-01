@@ -410,7 +410,12 @@ class _TimelineRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
         child: Row(
           children: [
-            Text(date, style: TextStyle(color: muted)),
+            Text(
+              date,
+              style: TextStyle(color: muted),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Text(asset, maxLines: 1, overflow: TextOverflow.ellipsis),

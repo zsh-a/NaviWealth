@@ -968,6 +968,8 @@ class _TradeJournalSection extends ConsumerWidget {
                                     fontWeight: FontWeight.w600,
                                     color: colors.primary,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),

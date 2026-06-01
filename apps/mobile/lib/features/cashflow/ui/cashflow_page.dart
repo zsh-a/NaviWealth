@@ -512,6 +512,8 @@ class _CategoryRow extends StatelessWidget {
             style: context.theme.typography.xs.copyWith(
               color: context.theme.colors.mutedForeground,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(width: AppSpacing.s12),
           Flexible(
