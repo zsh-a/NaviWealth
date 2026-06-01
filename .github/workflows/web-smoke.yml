@@ -37,7 +37,7 @@ jobs:
         with:
           channel: stable
           cache: true
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
       - run: flutter pub get
