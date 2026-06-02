@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -20,14 +20,10 @@ class ExpenseReportPage extends ConsumerWidget {
         prefixes: [backHeaderAction(context)],
       ),
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: reportAsync.when(
-          loading: () => const Center(child: FCircularProgress()),
-          error: (e, _) =>
-              Center(child: Text(l10n.expenseReportLoadError('$e'))),
-          data: (report) => ExpenseReportBody(report: report),
-        ),
+      child: reportAsync.when(
+        loading: () => const Center(child: FCircularProgress()),
+        error: (e, _) => Center(child: Text(l10n.expenseReportLoadError('$e'))),
+        data: (report) => ExpenseReportBody(report: report),
       ),
     );
   }
