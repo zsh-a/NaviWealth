@@ -40,6 +40,7 @@ class MessageBubble extends StatelessWidget {
     this.isLastAssistant = false,
     this.isLastUser = false,
     this.suggestCannedReplies = true,
+    this.animateIn = true,
   });
 
   final String sessionId;
@@ -74,6 +75,11 @@ class MessageBubble extends StatelessWidget {
   /// which is destructive and almost never the user intent.
   final bool isLastUser;
 
+  /// Historical messages are often mounted in bulk when the sheet opens.
+  /// Animating each one competes with the sheet transition; only messages
+  /// inserted after the first snapshot should animate in.
+  final bool animateIn;
+
   @override
   Widget build(BuildContext context) {
     final Widget child = switch (message.role) {
@@ -92,6 +98,7 @@ class MessageBubble extends StatelessWidget {
         suggestCannedReplies: suggestCannedReplies,
       ),
     };
+    if (!animateIn) return child;
     return TweenAnimationBuilder<double>(
       key: ValueKey(message.id),
       tween: Tween<double>(begin: 0, end: 1),
@@ -287,7 +294,11 @@ class _AssistantBubble extends StatelessWidget {
         if (_isError) ...[
           Row(
             children: [
-              Icon(FLucideIcons.circleAlert, size: AppIconSizes.sm, color: colors.destructive),
+              Icon(
+                FLucideIcons.circleAlert,
+                size: AppIconSizes.sm,
+                color: colors.destructive,
+              ),
               const SizedBox(width: AppSpacing.s6),
               Text(
                 l10n.aiChatSemanticsAssistantError,
@@ -366,7 +377,10 @@ class _AssistantBubble extends StatelessWidget {
     // legible — matches the SoftCard / AiTone "error is an accent"
     // discipline used across the AI surfaces.
     final bubble = Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s8,
+      ),
       decoration: BoxDecoration(
         color: colors.muted,
         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -581,7 +595,11 @@ class _AssistantBody extends StatelessWidget {
               ).copyWith(color: AiTone.active(context)),
             ),
             const SizedBox(width: AppSpacing.s2),
-            _TypingDots(color: AiTone.active(context).withValues(alpha: AppOpacity.strong)),
+            _TypingDots(
+              color: AiTone.active(
+                context,
+              ).withValues(alpha: AppOpacity.strong),
+            ),
           ],
         );
       }
@@ -758,7 +776,9 @@ class _TruncationFooter extends ConsumerWidget {
         children: [
           Container(
             height: 1,
-            color: context.theme.colors.border.withValues(alpha: AppOpacity.scrim),
+            color: context.theme.colors.border.withValues(
+              alpha: AppOpacity.scrim,
+            ),
           ),
           const SizedBox(height: AppSpacing.s6),
           Row(
@@ -808,7 +828,10 @@ class _ContinueButton extends StatelessWidget {
     return FTappable(
       onPress: enabled ? onPressed : null,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s8,
+          vertical: AppSpacing.s2,
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -863,9 +886,7 @@ class _ReasoningPanelState extends State<_ReasoningPanel> {
                 ),
                 const SizedBox(width: AppSpacing.s4),
                 Icon(
-                  _expanded
-                      ? FLucideIcons.chevronUp
-                      : FLucideIcons.chevronDown,
+                  _expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
                   size: AppIconSizes.sm,
                   color: colors.mutedForeground,
                 ),
@@ -927,9 +948,14 @@ class _SystemNotice extends StatelessWidget {
           container: true,
           label: l10n.aiChatSemanticsSystemNotice,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s4),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s12,
+              vertical: AppSpacing.s4,
+            ),
             decoration: BoxDecoration(
-              color: context.theme.colors.secondary.withValues(alpha: AppOpacity.prominent),
+              color: context.theme.colors.secondary.withValues(
+                alpha: AppOpacity.prominent,
+              ),
               borderRadius: BorderRadius.circular(AppRadius.full),
             ),
             child: Text(
@@ -981,7 +1007,6 @@ class _ReplyChips extends StatelessWidget {
   }
 }
 
-
 /// Inline copy / regenerate row shown under a completed (or errored)
 /// assistant turn. Kept low-contrast on purpose — these are escape
 /// hatches users only reach for when something is off, not primary
@@ -1018,7 +1043,11 @@ class _AssistantActions extends ConsumerWidget {
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: message.content));
               if (!context.mounted) return;
-              AppMessenger.show(context, ToastKind.success, l10n.aiChatMessageCopied);
+              AppMessenger.show(
+                context,
+                ToastKind.success,
+                l10n.aiChatMessageCopied,
+              );
             },
           ),
         if (canRegenerate)
@@ -1056,11 +1085,16 @@ class _ActionButton extends StatelessWidget {
     final enabled = onPressed != null;
     final color = enabled
         ? context.theme.colors.mutedForeground
-        : context.theme.colors.mutedForeground.withValues(alpha: AppOpacity.disabled);
+        : context.theme.colors.mutedForeground.withValues(
+            alpha: AppOpacity.disabled,
+          );
     return FTappable(
       onPress: onPressed,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s4,
+          vertical: AppSpacing.s4,
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

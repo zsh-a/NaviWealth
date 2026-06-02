@@ -26,7 +26,10 @@ class ChatConversationView extends ConsumerStatefulWidget {
   const ChatConversationView({
     super.key,
     required this.sessionId,
-    this.padding = const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: AppSpacing.s16,
+      vertical: AppSpacing.s12,
+    ),
     this.invocationIntent,
     this.onReplyChip,
     this.emptyBuilder,
@@ -68,6 +71,8 @@ class ChatConversationView extends ConsumerStatefulWidget {
 
 class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
   final ScrollController _scroll = ScrollController();
+  final Set<String> _renderedMessageIds = <String>{};
+  bool _renderedInitialSnapshot = false;
 
   /// Whether the viewport is currently anchored at (or within
   /// [_bottomThreshold] of) the bottom of the list. We only follow new
@@ -145,6 +150,7 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
       ),
       data: (messages) {
         if (messages.isEmpty) {
+          _renderedInitialSnapshot = true;
           return widget.emptyBuilder?.call(context) ?? const SizedBox.shrink();
         }
         // Locate the trailing assistant and user messages once per
@@ -163,6 +169,16 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
           }
           if (lastAssistantIdx >= 0 && lastUserIdx >= 0) break;
         }
+        final animateMessageIds = _renderedInitialSnapshot
+            ? <String>{
+                for (final message in messages)
+                  if (!_renderedMessageIds.contains(message.id)) message.id,
+              }
+            : const <String>{};
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _renderedInitialSnapshot = true;
+          _renderedMessageIds.addAll(messages.map((message) => message.id));
+        });
         return Stack(
           children: [
             ListView.builder(
@@ -177,6 +193,7 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
                 isLastAssistant: i == lastAssistantIdx,
                 isLastUser: i == lastUserIdx,
                 suggestCannedReplies: widget.suggestCannedReplies,
+                animateIn: animateMessageIds.contains(messages[i].id),
               ),
             ),
             Positioned(
@@ -235,28 +252,28 @@ class _JumpToBottomChip extends StatelessWidget {
         onTap: onPressed,
         behavior: HitTestBehavior.opaque,
         child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: colors.background,
-              border: Border.all(color: colors.border),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: AppOpacity.light),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              FLucideIcons.arrowDown,
-              size: AppIconSizes.h18,
-              color: colors.foreground,
-            ),
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: colors.background,
+            border: Border.all(color: colors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: AppOpacity.light),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: Icon(
+            FLucideIcons.arrowDown,
+            size: AppIconSizes.h18,
+            color: colors.foreground,
           ),
         ),
+      ),
     );
   }
 }
