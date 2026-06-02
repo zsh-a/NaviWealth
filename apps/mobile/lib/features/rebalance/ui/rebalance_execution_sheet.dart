@@ -99,13 +99,15 @@ class _ExecutionTradeRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$directionLabel ${AssetCategoryVisuals.label(l10n, trade.category)}',
+                  '$directionLabel ${_tradeTargetLabel(l10n, trade)}',
                   style: context.theme.typography.sm,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  l10n.rebalanceExecutionTradeValue,
+                  trade.isAssetTarget
+                      ? AssetCategoryVisuals.label(l10n, trade.category)
+                      : l10n.rebalanceExecutionTradeValue,
                   style: context.theme.typography.xs.copyWith(
                     color: context.theme.colors.mutedForeground,
                   ),
@@ -127,6 +129,9 @@ class _ExecutionTradeRow extends StatelessWidget {
     );
   }
 }
+
+String _tradeTargetLabel(AppLocalizations l10n, SuggestedTrade trade) =>
+    trade.targetLabel ?? AssetCategoryVisuals.label(l10n, trade.category);
 
 class _MoneySummaryRow extends StatelessWidget {
   const _MoneySummaryRow({

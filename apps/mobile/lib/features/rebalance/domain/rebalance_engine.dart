@@ -34,8 +34,18 @@ class RebalanceEngine {
     required TargetAllocation target,
   }) {
     final totalAssets = snapshot.totalAssets;
-    final actualWeights = _computeActualWeights(snapshot, totalAssets);
-    final drifts = _computeDrifts(actualWeights, target);
+    final targetedAssetIds = target.assetTargets.keys.toSet();
+    final actualWeights = _computeActualWeights(
+      snapshot,
+      totalAssets,
+      excludedAssetIds: targetedAssetIds,
+    );
+    final actualAssetWeights = _computeActualAssetWeights(
+      snapshot,
+      totalAssets,
+      target,
+    );
+    final drifts = _computeDrifts(actualWeights, actualAssetWeights, target);
     final trades = _generateTrades(drifts, totalAssets, target);
     final fees = _estimateFees(trades, totalAssets.currency);
     final taxes = _estimateTaxes(trades, totalAssets.currency);
@@ -59,8 +69,9 @@ class RebalanceEngine {
   /// categories (not liabilities) are included.
   Map<AssetCategory, double> _computeActualWeights(
     DashboardSnapshot snapshot,
-    Money totalAssets,
-  ) {
+    Money totalAssets, {
+    Set<String> excludedAssetIds = const {},
+  }) {
     if (totalAssets.amount <= Decimal.zero) {
       return {
         for (final cat in AssetCategory.values)
@@ -71,7 +82,13 @@ class RebalanceEngine {
     final weights = <AssetCategory, double>{};
     for (final alloc in snapshot.allocations) {
       if (alloc.isLiability) continue;
-      weights[alloc.category] = alloc.totalInBase.amount.toDouble() / total;
+      final includedTotal = alloc.items.fold<Decimal>(
+        Decimal.zero,
+        (sum, item) => excludedAssetIds.contains(item.id)
+            ? sum
+            : sum + item.valueInBase.amount,
+      );
+      weights[alloc.category] = includedTotal.toDouble() / total;
     }
     // Ensure all non-liability categories are present.
     for (final cat in AssetCategory.values) {
@@ -82,9 +99,45 @@ class RebalanceEngine {
     return weights;
   }
 
-  /// Compute per-category drift against the target.
+  /// Compute actual weights for explicitly targeted assets. Missing assets
+  /// are retained with zero weight so the user sees that the target is
+  /// underweight rather than silently disappearing.
+  List<_AssetActualWeight> _computeActualAssetWeights(
+    DashboardSnapshot snapshot,
+    Money totalAssets,
+    TargetAllocation target,
+  ) {
+    final itemById = <String, ({CategoryItem item, AssetCategory category})>{};
+    for (final alloc in snapshot.allocations) {
+      if (alloc.isLiability) continue;
+      for (final item in alloc.items) {
+        itemById[item.id] = (item: item, category: alloc.category);
+      }
+    }
+
+    final total = totalAssets.amount.toDouble();
+    return [
+      for (final targetAsset in target.assetTargets.values)
+        _AssetActualWeight(
+          assetId: targetAsset.assetId,
+          label: itemById[targetAsset.assetId]?.item.name ?? targetAsset.label,
+          category:
+              itemById[targetAsset.assetId]?.category ?? targetAsset.category,
+          actualWeight: totalAssets.amount <= Decimal.zero
+              ? 0
+              : (itemById[targetAsset.assetId]?.item.valueInBase.amount
+                            .toDouble() ??
+                        0) /
+                    total,
+          targetWeight: targetAsset.weight,
+        ),
+    ];
+  }
+
+  /// Compute drift against category and asset-level targets.
   List<Drift> _computeDrifts(
     Map<AssetCategory, double> actual,
+    List<_AssetActualWeight> actualAssets,
     TargetAllocation target,
   ) {
     final drifts = <Drift>[];
@@ -100,6 +153,19 @@ class RebalanceEngine {
           actualWeight: actualW,
           targetWeight: targetW,
           severity: severity,
+        ),
+      );
+    }
+    for (final asset in actualAssets) {
+      final dev = asset.actualWeight - asset.targetWeight;
+      drifts.add(
+        Drift(
+          category: asset.category,
+          assetId: asset.assetId,
+          assetLabel: asset.label,
+          actualWeight: asset.actualWeight,
+          targetWeight: asset.targetWeight,
+          severity: _severity(dev.abs()),
         ),
       );
     }
@@ -131,8 +197,11 @@ class RebalanceEngine {
       trades.add(
         SuggestedTrade(
           category: drift.category,
+          assetId: drift.assetId,
+          assetLabel: drift.assetLabel,
           direction: TradeDirection.sell,
           amount: Money(sellAmount, totalAssets.currency),
+          description: drift.assetLabel,
         ),
       );
     }
@@ -145,8 +214,11 @@ class RebalanceEngine {
       trades.add(
         SuggestedTrade(
           category: drift.category,
+          assetId: drift.assetId,
+          assetLabel: drift.assetLabel,
           direction: TradeDirection.buy,
           amount: Money(buyAmount, totalAssets.currency),
+          description: drift.assetLabel,
         ),
       );
     }
@@ -201,4 +273,20 @@ class RebalanceEngine {
         totalAssets.amount.toDouble();
     return feeDrag;
   }
+}
+
+class _AssetActualWeight {
+  const _AssetActualWeight({
+    required this.assetId,
+    required this.label,
+    required this.category,
+    required this.actualWeight,
+    required this.targetWeight,
+  });
+
+  final String assetId;
+  final String label;
+  final AssetCategory category;
+  final double actualWeight;
+  final double targetWeight;
 }

@@ -3244,7 +3244,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get targetAllocationEditorTitle => '自定义目标';
 
   @override
-  String get targetAllocationEditorSubtitle => '调整各类别权重，合计必须等于 100%。';
+  String get targetAllocationEditorSubtitle => '调整类别与单项资产权重，合计必须等于 100%。';
 
   @override
   String get targetAllocationEditorEditAction => '自定义目标';
@@ -3265,6 +3265,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get targetAllocationEditorRangeError => '请输入 0–100';
+
+  @override
+  String get targetAllocationEditorCategoryTargets => '类别目标';
+
+  @override
+  String get targetAllocationEditorAssetTargets => '资产目标';
+
+  @override
+  String get targetAllocationEditorAddAssetTarget => '添加资产目标';
+
+  @override
+  String get targetAllocationEditorNoAssetTargets => '尚未设置单项资产目标。';
+
+  @override
+  String get targetAllocationEditorNoAssetsAvailable => '暂无可添加资产';
 
   @override
   String get targetAllocationEditorPreviewTitle => '目标结构';
