@@ -79,4 +79,30 @@ void main() {
     expect(find.text('手续费 · CNY'), findsOneWidget);
     expect(find.text('Trading Fee · CNY'), findsNothing);
   });
+
+  testWidgets('updates displayed account when lifted value changes', (
+    tester,
+  ) async {
+    final accounts = [
+      _account('cash-1', 'Checking', 'CNY'),
+      _account('cash-2', 'Brokerage cash', 'USD'),
+    ];
+
+    await tester.pumpWidget(
+      _wrap(
+        AccountPicker(accounts: accounts, value: 'cash-1', onChanged: (_) {}),
+      ),
+    );
+    expect(find.text('Checking · CNY'), findsOneWidget);
+
+    await tester.pumpWidget(
+      _wrap(
+        AccountPicker(accounts: accounts, value: 'cash-2', onChanged: (_) {}),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Brokerage cash · USD'), findsOneWidget);
+    expect(find.text('Checking · CNY'), findsNothing);
+  });
 }
