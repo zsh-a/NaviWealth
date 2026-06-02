@@ -63,12 +63,12 @@ void resetAiPrivacyOnboardingForTest() {
 }
 
 Future<void> showAiPrivacyOnboardingSheet(BuildContext context) {
-  return showFSheet<void>(
+  final l10n = AppLocalizations.of(context);
+  return showAppSheet<void>(
     context: context,
-    side: FLayout.btt,
-    mainAxisMaxRatio: null,
-    builder: (BuildContext sheetContext) =>
-        const AppSheetSurface(child: _AiPrivacyOnboardingSheet()),
+    title: l10n.aiPrivacyOnboardingTitle,
+    maxHeightFactor: 0.9,
+    builder: (_) => const _AiPrivacyOnboardingSheet(),
   );
 }
 
@@ -81,94 +81,76 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
     final settings = ref.watch(aiPrivacySettingsProvider);
     final controller = ref.read(aiPrivacySettingsProvider.notifier);
     final colors = context.theme.colors;
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.s20, AppSpacing.s16, AppSpacing.s20, AppSpacing.s24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colors.mutedForeground.withValues(alpha: AppOpacity.disabled),
-                  borderRadius: BorderRadius.circular(AppRadius.xxs),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              FLucideIcons.lock,
+              size: AppIconSizes.md,
+              color: colors.primary,
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            Expanded(
+              child: Text(
+                l10n.aiPrivacyOnboardingBody,
+                style: context.theme.typography.sm.copyWith(
+                  color: colors.mutedForeground,
                 ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.s16),
-            Row(
-              children: <Widget>[
-                Icon(FLucideIcons.lock, size: AppIconSizes.md, color: colors.primary),
-                const SizedBox(width: AppSpacing.s8),
-                Expanded(
-                  child: Text(
-                    l10n.aiPrivacyOnboardingTitle,
-                    style: context.theme.typography.lg.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            Text(
-              l10n.aiPrivacyOnboardingBody,
-              style: context.theme.typography.sm.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s16),
-            _OnboardingChoiceTile(
-              mode: AiPrivacyMode.amountsAllowed,
-              selected: settings.mode,
-              label: l10n.aiPrivacyModeAmountsAllowedLabel,
-              description: l10n.aiPrivacyModeAmountsAllowedDescription,
-              onSelect: controller.setMode,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            _OnboardingChoiceTile(
-              mode: AiPrivacyMode.amountsBucketed,
-              selected: settings.mode,
-              label: l10n.aiPrivacyModeAmountsBucketedLabel,
-              description: l10n.aiPrivacyModeAmountsBucketedDescription,
-              onSelect: controller.setMode,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            _OnboardingChoiceTile(
-              mode: AiPrivacyMode.amountsLocal,
-              selected: settings.mode,
-              label: l10n.aiPrivacyModeAmountsLocalLabel,
-              description: l10n.aiPrivacyModeAmountsLocalDescription,
-              onSelect: controller.setMode,
-            ),
-            const SizedBox(height: AppSpacing.s20),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: FButton(
-                    onPress: () {
-                      Navigator.of(context).pop();
-                      context.goNamed(AppRouteNames.aiPrivacy);
-                    },
-                    variant: FButtonVariant.outline,
-                    child: Text(l10n.aiPrivacyTitle),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s12),
-                Expanded(
-                  child: FButton(
-                    onPress: () => Navigator.of(context).pop(),
-                    child: Text(l10n.aiPrivacyOnboardingConfirm),
-                  ),
-                ),
-              ],
             ),
           ],
         ),
-      ),
+        const SizedBox(height: AppSpacing.s16),
+        _OnboardingChoiceTile(
+          mode: AiPrivacyMode.amountsAllowed,
+          selected: settings.mode,
+          label: l10n.aiPrivacyModeAmountsAllowedLabel,
+          description: l10n.aiPrivacyModeAmountsAllowedDescription,
+          onSelect: controller.setMode,
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        _OnboardingChoiceTile(
+          mode: AiPrivacyMode.amountsBucketed,
+          selected: settings.mode,
+          label: l10n.aiPrivacyModeAmountsBucketedLabel,
+          description: l10n.aiPrivacyModeAmountsBucketedDescription,
+          onSelect: controller.setMode,
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        _OnboardingChoiceTile(
+          mode: AiPrivacyMode.amountsLocal,
+          selected: settings.mode,
+          label: l10n.aiPrivacyModeAmountsLocalLabel,
+          description: l10n.aiPrivacyModeAmountsLocalDescription,
+          onSelect: controller.setMode,
+        ),
+        const SizedBox(height: AppSpacing.s20),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: FButton(
+                onPress: () {
+                  Navigator.of(context).pop();
+                  context.goNamed(AppRouteNames.aiPrivacy);
+                },
+                variant: FButtonVariant.outline,
+                child: Text(l10n.aiPrivacyTitle),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: FButton(
+                onPress: () => Navigator.of(context).pop(),
+                child: Text(l10n.aiPrivacyOnboardingConfirm),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -194,7 +176,10 @@ class _OnboardingChoiceTile extends StatelessWidget {
     final isSelected = mode == selected;
     return SoftCard(
       onPress: () => onSelect(mode),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s14,
+        vertical: AppSpacing.s12,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[

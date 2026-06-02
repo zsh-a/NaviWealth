@@ -33,7 +33,7 @@ class AccountCategoryPicker extends StatelessWidget {
       builder: (context, constraints) {
         // 2 columns under 480, 4 columns at tablet width.
         final cols = constraints.maxWidth >= 600 ? 4 : 2;
-        final aspectRatio = cols == 2 ? 1.35 : 1.6;
+        final aspectRatio = cols == 2 ? 1.2 : 1.1;
         return GridView.count(
           crossAxisCount: cols,
           shrinkWrap: true,
@@ -122,7 +122,12 @@ class _CategoryCard extends StatelessWidget {
       child: FTappable(
         onPress: onTap,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s12, AppSpacing.s12, AppSpacing.s10),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s12,
+            AppSpacing.s12,
+            AppSpacing.s12,
+            AppSpacing.s10,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -137,7 +142,7 @@ class _CategoryCard extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Icon(icon, size: AppIconSizes.h18, color: iconColor),
               ),
-              const Spacer(),
+              const SizedBox(height: AppSpacing.s10),
               Text(
                 label,
                 style: context.theme.typography.sm.copyWith(
