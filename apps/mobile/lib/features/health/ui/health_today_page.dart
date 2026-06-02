@@ -21,6 +21,7 @@ import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as health_agent_providers;
 import '../data/health_sync_service.dart';
 import '../data/providers.dart' as health_data;
@@ -34,12 +35,13 @@ class HealthTodayPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
-      title: '今日 · HealthOS',
+      title: l10n.healthTodayTitle,
       actions: [
         FHeaderAction(
           icon: const Icon(FLucideIcons.scale),
-          semanticsLabel: '记录身体指标',
+          semanticsLabel: l10n.healthRecordBodyMetricAction,
           onPress: () => showBodyMeasurementEntrySheet(
             context: context,
             initialKind: HealthMetricKind.weight,
@@ -198,7 +200,11 @@ class _RecoveryHero extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Icon(_RecoveryTone.icon(verdict), color: color, size: AppIconSizes.md),
+                  Icon(
+                    _RecoveryTone.icon(verdict),
+                    color: color,
+                    size: AppIconSizes.md,
+                  ),
                   const SizedBox(width: AppSpacing.s8),
                   Expanded(
                     child: Text(
@@ -253,7 +259,9 @@ class _MetricGrid extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= Breakpoints.contentThreeColumn ? 3 : 2;
+        final columns = constraints.maxWidth >= Breakpoints.contentThreeColumn
+            ? 3
+            : 2;
         const gap = AppSpacing.s8;
         final itemWidth =
             (constraints.maxWidth - gap * (columns - 1)) / columns;
@@ -685,7 +693,11 @@ class _BriefingCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(FLucideIcons.sun, size: AppIconSizes.md, color: colors.primary),
+              Icon(
+                FLucideIcons.sun,
+                size: AppIconSizes.md,
+                color: colors.primary,
+              ),
               const SizedBox(width: AppSpacing.s8),
               Text(
                 '早间简报',
@@ -788,7 +800,7 @@ class _BriefingSkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: AppSpacing.s20, child: const FProgress()),
+          SizedBox(height: AppSpacing.s20, child: FProgress()),
           SizedBox(height: AppSpacing.s12),
           Text('加载中…'),
         ],
@@ -837,7 +849,10 @@ class _SourcePill extends StatelessWidget {
     final typography = context.theme.typography;
     final label = source == 'llm' ? 'LLM' : '自动';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s2,
+      ),
       decoration: BoxDecoration(
         color: colors.muted,
         borderRadius: BorderRadius.circular(AppRadius.full),

@@ -12699,6 +12699,246 @@ abstract class AppLocalizations {
   /// **'Data is stored only on this device'**
   String get settingsAccountLocalOnlyHint;
 
+  /// Generic date field label
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get commonDate;
+
+  /// Generic note field label
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get commonNote;
+
+  /// Generic acknowledgement button label
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get commonOk;
+
+  /// HealthOS Today tab title
+  ///
+  /// In en, this message translates to:
+  /// **'Today · HealthOS'**
+  String get healthTodayTitle;
+
+  /// Header action semantics for recording a body metric
+  ///
+  /// In en, this message translates to:
+  /// **'Record body metric'**
+  String get healthRecordBodyMetricAction;
+
+  /// Body measurement entry sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Record body metric'**
+  String get healthBodyMeasurementTitle;
+
+  /// Body measurement entry sheet subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'For low-frequency manual metrics like weight and body fat'**
+  String get healthBodyMeasurementSubtitle;
+
+  /// Weight metric label
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get healthMetricWeight;
+
+  /// Body fat metric label
+  ///
+  /// In en, this message translates to:
+  /// **'Body fat'**
+  String get healthMetricBodyFat;
+
+  /// Helper text for weight input
+  ///
+  /// In en, this message translates to:
+  /// **'Unit: kg'**
+  String get healthBodyMeasurementWeightHelper;
+
+  /// Helper text for body fat input
+  ///
+  /// In en, this message translates to:
+  /// **'Unit: %, for example 18.5'**
+  String get healthBodyMeasurementBodyFatHelper;
+
+  /// Validation error for body fat input
+  ///
+  /// In en, this message translates to:
+  /// **'Body fat cannot exceed 100%'**
+  String get healthBodyFatMaxError;
+
+  /// Toast shown when saving a manual health metric fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save: {error}'**
+  String healthBodyMeasurementSaveFailed(String error);
+
+  /// KnowledgeOS Inbox tab title
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox · KnowledgeOS'**
+  String get knowledgeInboxTitle;
+
+  /// Button label for creating a knowledge capture
+  ///
+  /// In en, this message translates to:
+  /// **'New capture'**
+  String get knowledgeCaptureAction;
+
+  /// Placeholder in the KnowledgeOS AI prompt bar
+  ///
+  /// In en, this message translates to:
+  /// **'Capture something or ask a question...'**
+  String get knowledgeAiPromptHint;
+
+  /// Knowledge AI quick action: deduplicate notes
+  ///
+  /// In en, this message translates to:
+  /// **'Deduplicate'**
+  String get knowledgeAiDedupeAction;
+
+  /// Prefill prompt for deduplicating knowledge items
+  ///
+  /// In en, this message translates to:
+  /// **'Check whether my knowledge base has similar or duplicate notes or concepts, and suggest merges where useful.'**
+  String get knowledgeAiDedupePrompt;
+
+  /// Knowledge AI quick action: weekly review
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly review'**
+  String get knowledgeAiWeeklyAction;
+
+  /// Prefill prompt for weekly knowledge review
+  ///
+  /// In en, this message translates to:
+  /// **'Give me this week\'s knowledge review: decisions due for review, stale assumptions, routines due this week, and orphan notes without tags or links.'**
+  String get knowledgeAiWeeklyPrompt;
+
+  /// Knowledge AI quick action: search
+  ///
+  /// In en, this message translates to:
+  /// **'Search knowledge'**
+  String get knowledgeAiSearchAction;
+
+  /// Prefill prompt for searching knowledge
+  ///
+  /// In en, this message translates to:
+  /// **'Search my knowledge base: '**
+  String get knowledgeAiSearchPrompt;
+
+  /// KnowledgeOS Library tab title
+  ///
+  /// In en, this message translates to:
+  /// **'Library · KnowledgeOS'**
+  String get knowledgeLibraryTitle;
+
+  /// No description provided for @knowledgeSegmentDecisions.
+  ///
+  /// In en, this message translates to:
+  /// **'Decisions'**
+  String get knowledgeSegmentDecisions;
+
+  /// No description provided for @knowledgeSegmentNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get knowledgeSegmentNotes;
+
+  /// No description provided for @knowledgeSegmentConcepts.
+  ///
+  /// In en, this message translates to:
+  /// **'Concepts'**
+  String get knowledgeSegmentConcepts;
+
+  /// No description provided for @knowledgeSegmentExperiments.
+  ///
+  /// In en, this message translates to:
+  /// **'Experiments'**
+  String get knowledgeSegmentExperiments;
+
+  /// No description provided for @knowledgeSegmentRoutines.
+  ///
+  /// In en, this message translates to:
+  /// **'Routines'**
+  String get knowledgeSegmentRoutines;
+
+  /// No description provided for @knowledgeNewDecision.
+  ///
+  /// In en, this message translates to:
+  /// **'New Decision'**
+  String get knowledgeNewDecision;
+
+  /// No description provided for @knowledgeNewNote.
+  ///
+  /// In en, this message translates to:
+  /// **'New Note'**
+  String get knowledgeNewNote;
+
+  /// No description provided for @knowledgeNewConcept.
+  ///
+  /// In en, this message translates to:
+  /// **'New Concept'**
+  String get knowledgeNewConcept;
+
+  /// No description provided for @knowledgeNewExperiment.
+  ///
+  /// In en, this message translates to:
+  /// **'New Experiment'**
+  String get knowledgeNewExperiment;
+
+  /// No description provided for @knowledgeNewRoutine.
+  ///
+  /// In en, this message translates to:
+  /// **'New Routine'**
+  String get knowledgeNewRoutine;
+
+  /// No description provided for @knowledgeNewChooserTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New...'**
+  String get knowledgeNewChooserTitle;
+
+  /// No description provided for @knowledgeNewChooserSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision, Principle, and Assumption share the same capture flow'**
+  String get knowledgeNewChooserSubtitle;
+
+  /// No description provided for @knowledgeNewDecisionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary path: question, options, rationale'**
+  String get knowledgeNewDecisionHint;
+
+  /// No description provided for @knowledgeNewPrincipleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A worldview primitive, for example \"edge-first\"'**
+  String get knowledgeNewPrincipleHint;
+
+  /// No description provided for @knowledgeNewAssumptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A falsifiable belief with confidence'**
+  String get knowledgeNewAssumptionHint;
+
+  /// No description provided for @knowledgeNotesHintTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes are captured in Inbox'**
+  String get knowledgeNotesHintTitle;
+
+  /// No description provided for @knowledgeNotesHintBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The Notes segment is for browsing. Close this panel, switch to Inbox, and use the create action there.'**
+  String get knowledgeNotesHintBody;
+
   /// Screen reader label when monetary amount is hidden by privacy mode
   ///
   /// In en, this message translates to:

@@ -17,53 +17,47 @@ class PhysicalAssetCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
-      child: GestureDetector(
-        onTap: () => context.goNamed(
-          AppRouteNames.wealthPhysicalDetail,
-          pathParameters: {'id': asset.id},
-        ),
-        behavior: HitTestBehavior.opaque,
-        child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.s16),
-            child: Row(
-              children: [
-                Icon(
-                  _iconForType(asset.type),
-                  color: context.theme.colors.primary,
-                ),
-                const SizedBox(width: AppSpacing.s12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        asset.name,
-                        style: context.theme.typography.md,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: AppSpacing.s2),
-                      Text(
-                        _subtitleFor(asset, l10n),
-                        style: context.theme.typography.xs.copyWith(
-                          color: context.theme.colors.mutedForeground,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+      onPress: () => context.goNamed(
+        AppRouteNames.wealthPhysicalDetail,
+        pathParameters: {'id': asset.id},
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        child: Row(
+          children: [
+            Icon(_iconForType(asset.type), color: context.theme.colors.primary),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    asset.name,
+                    style: context.theme.typography.md,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                const SizedBox(width: AppSpacing.s12),
-                MoneyText(
-                  amount: asset.currentValuation.toDouble(),
-                  currencyCode: asset.currency,
-                  style: context.theme.typography.md,
-                ),
-              ],
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(
+                    _subtitleFor(asset, l10n),
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-          ),
+            const SizedBox(width: AppSpacing.s12),
+            MoneyText(
+              amount: asset.currentValuation.toDouble(),
+              currencyCode: asset.currency,
+              style: context.theme.typography.md,
+            ),
+          ],
         ),
+      ),
     );
   }
 

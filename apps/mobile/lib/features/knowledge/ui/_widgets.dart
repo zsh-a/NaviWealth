@@ -56,6 +56,7 @@ class KnowledgeSection extends StatelessWidget {
     required this.children,
     this.padding = const EdgeInsets.all(AppSpacing.s16),
     this.trailing,
+    this.onPress,
   });
 
   /// Dense list-item card: s12 padding, no header by convention
@@ -65,12 +66,14 @@ class KnowledgeSection extends StatelessWidget {
     String? title,
     List<Widget> children = const <Widget>[],
     Widget? trailing,
+    VoidCallback? onPress,
   }) : this(
          key: key,
          title: title,
          children: children,
          padding: const EdgeInsets.all(AppSpacing.s12),
          trailing: trailing,
+         onPress: onPress,
        );
 
   /// Grouped section card: s16 padding, expects a title.
@@ -79,12 +82,14 @@ class KnowledgeSection extends StatelessWidget {
     required String title,
     required List<Widget> children,
     Widget? trailing,
+    VoidCallback? onPress,
   }) : this(
          key: key,
          title: title,
          children: children,
          padding: const EdgeInsets.all(AppSpacing.s16),
          trailing: trailing,
+         onPress: onPress,
        );
 
   final String? title;
@@ -94,12 +99,14 @@ class KnowledgeSection extends StatelessWidget {
 
   /// Optional trailing widget in the title row (e.g. a status badge).
   final Widget? trailing;
+  final VoidCallback? onPress;
 
   @override
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     final t = title;
     return SoftCard(
+      onPress: onPress,
       padding: padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
