@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
@@ -400,9 +400,9 @@ class _CategoryTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      prefix: CircleAvatar(
-        backgroundColor: accent.withValues(alpha: AppOpacity.medium),
-        child: Icon(category?.iconData ?? FLucideIcons.banknote, color: accent),
+      prefix: _ExpenseCategoryIcon(
+        icon: category?.iconData ?? FLucideIcons.banknote,
+        color: accent,
       ),
       subtitle: Text(
         l10n.expenseReportItemCount(breakdown.items.length),
@@ -423,6 +423,29 @@ class _CategoryTile extends StatelessWidget {
           baseCurrency: baseCurrency,
         ),
       ),
+    );
+  }
+}
+
+class _ExpenseCategoryIcon extends StatelessWidget {
+  const _ExpenseCategoryIcon({required this.icon, required this.color});
+
+  static const double _size = 40;
+
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: _size,
+      height: _size,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: AppOpacity.medium),
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      alignment: Alignment.center,
+      child: Icon(icon, size: AppIconSizes.h18, color: color),
     );
   }
 }
