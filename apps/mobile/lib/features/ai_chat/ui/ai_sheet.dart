@@ -120,13 +120,11 @@ class _SheetFrame extends StatelessWidget {
         : base;
     return SizedBox(
       height: height,
-      child: AppSheetSurface(
-        child: AnimatedPadding(
-          duration: Motion.fast,
-          curve: Curves.easeOut,
-          padding: EdgeInsets.only(bottom: keyboard),
-          child: child,
-        ),
+      child: AnimatedPadding(
+        duration: Motion.fast,
+        curve: Curves.easeOut,
+        padding: EdgeInsets.only(bottom: keyboard),
+        child: child,
       ),
     );
   }
@@ -325,7 +323,9 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
                                   color: colors.mutedForeground.withValues(
                                     alpha: 0.4,
                                   ),
-                                  borderRadius: BorderRadius.circular(AppRadius.xxs),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.xxs,
+                                  ),
                                 ),
                               ),
                             ),
@@ -436,6 +436,8 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
   bool _kicked = false;
   bool _loginRequired = false;
   String? _errorDetail;
+  bool _overlaySettled = false;
+  Timer? _overlaySettleTimer;
 
   // Conversation-mode: when the user taps "new conversation" we create a
   // fresh thread and pin it here, overriding the resumed default session
@@ -460,9 +462,19 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
   @override
   void initState() {
     super.initState();
-    if (widget.isInvocation) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _kick());
-    }
+    _overlaySettleTimer = Timer(Motion.medium, () {
+      if (!mounted) return;
+      setState(() => _overlaySettled = true);
+      if (widget.isInvocation) {
+        unawaited(_kick());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _overlaySettleTimer?.cancel();
+    super.dispose();
   }
 
   // ── Invocation mode ──────────────────────────────────────────────
@@ -564,7 +576,12 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
           ],
           if (_loginRequired || _errorDetail != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s16),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s16,
+                AppSpacing.s12,
+                AppSpacing.s16,
+                AppSpacing.s16,
+              ),
               child: Text(
                 _loginRequired
                     ? l10n.aiChatLoginRequired
@@ -584,11 +601,16 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
     if (sessionId == null) {
       // The header already shows the invocation context, so the body
       // should feel "AI is about to talk", not "loading…".
-      return const _BodySkeleton();
+      return _BodySkeleton(animated: _overlaySettled);
     }
     return ChatConversationView(
       sessionId: sessionId,
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s16),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s12,
+        AppSpacing.s16,
+        AppSpacing.s16,
+      ),
       invocationIntent: widget.invocation!.intent,
       onReplyChip: (chip) => _sendChip(sessionId, chip),
       loadingBuilder: (_) => const _BodySkeleton(),
@@ -622,6 +644,16 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
             ],
           ),
         ),
+      );
+    }
+
+    if (!_overlaySettled) {
+      return Column(
+        children: [
+          _ConversationHeader(title: l10n.aiChatSheetTitle),
+          const FDivider(),
+          const Expanded(child: _BodySkeleton(animated: false)),
+        ],
       );
     }
 
@@ -710,7 +742,10 @@ class _ConversationHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s12,
+      ),
       child: Row(
         children: [
           const AiSparkle(size: AppIconSizes.sm),
@@ -779,7 +814,12 @@ class _InvocationHeader extends StatelessWidget {
     // Single inline header row: sparkle + intent label + middot +
     // object label, so context stays visible while the body scrolls.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s20, AppSpacing.s4, AppSpacing.s20, AppSpacing.s12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s20,
+        AppSpacing.s4,
+        AppSpacing.s20,
+        AppSpacing.s12,
+      ),
       child: Row(
         children: [
           const AiSparkle(),
@@ -811,7 +851,9 @@ class _InvocationHeader extends StatelessWidget {
 /// Placeholder shape that materialises into the first assistant turn —
 /// three muted bars sized like a chat bubble, pulsing subtly.
 class _BodySkeleton extends StatefulWidget {
-  const _BodySkeleton();
+  const _BodySkeleton({this.animated = true});
+
+  final bool animated;
 
   @override
   State<_BodySkeleton> createState() => _BodySkeletonState();
@@ -822,7 +864,27 @@ class _BodySkeletonState extends State<_BodySkeleton>
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1100),
-  )..repeat(reverse: true);
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.animated) {
+      _ctrl.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(_BodySkeleton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.animated == oldWidget.animated) return;
+    if (widget.animated) {
+      _ctrl.repeat(reverse: true);
+    } else {
+      _ctrl.stop();
+      _ctrl.value = 0;
+    }
+  }
 
   @override
   void dispose() {
@@ -833,11 +895,16 @@ class _BodySkeletonState extends State<_BodySkeleton>
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s24),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s12,
+        AppSpacing.s16,
+        AppSpacing.s24,
+      ),
       child: AnimatedBuilder(
         animation: _ctrl,
         builder: (context, _) {
-          final t = _ctrl.value;
+          final t = widget.animated ? _ctrl.value : 0.0;
           // Lerp between 0.35 and 0.65 alpha — barely perceptible.
           final alpha = 0.35 + 0.30 * t;
           final color = AiTone.surfaceTint(context).withValues(alpha: alpha);
@@ -880,7 +947,12 @@ class _Footer extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s8, AppSpacing.s12, AppSpacing.s8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s12,
+        AppSpacing.s8,
+        AppSpacing.s12,
+        AppSpacing.s8,
+      ),
       child: Row(
         children: [
           FButton(
