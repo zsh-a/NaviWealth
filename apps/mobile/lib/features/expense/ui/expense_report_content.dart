@@ -1,5 +1,5 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
@@ -93,16 +93,20 @@ class _RangeChips extends ConsumerWidget {
       final initial =
           ref.read(expenseReportCustomRangeProvider) ??
           (from: DateTime(now.year, now.month - 2, 1), to: now);
-      final picked = await showDateRangePicker(
+      final picked = await showAppFormSheet<({DateTime from, DateTime to})>(
         context: context,
-        initialDateRange: DateTimeRange(start: initial.from, end: initial.to),
-        firstDate: DateTime(now.year - 5),
-        lastDate: now,
+        maxHeightFactor: 0.82,
+        builder: (_) => _ExpenseReportRangeSheet(
+          initialFrom: initial.from,
+          initialTo: initial.to,
+          firstDate: DateTime(now.year - 5),
+          lastDate: now,
+        ),
       );
       if (picked == null) return;
       ref.read(expenseReportCustomRangeProvider.notifier).state = (
-        from: picked.start,
-        to: picked.end,
+        from: picked.from,
+        to: picked.to,
       );
       ref.read(expenseReportRangePresetProvider.notifier).state = preset;
       return;
@@ -126,6 +130,122 @@ class _RangeChips extends ConsumerWidget {
     }
   }
 }
+
+class _ExpenseReportRangeSheet extends StatefulWidget {
+  const _ExpenseReportRangeSheet({
+    required this.initialFrom,
+    required this.initialTo,
+    required this.firstDate,
+    required this.lastDate,
+  });
+
+  final DateTime initialFrom;
+  final DateTime initialTo;
+  final DateTime firstDate;
+  final DateTime lastDate;
+
+  @override
+  State<_ExpenseReportRangeSheet> createState() =>
+      _ExpenseReportRangeSheetState();
+}
+
+class _ExpenseReportRangeSheetState extends State<_ExpenseReportRangeSheet> {
+  late final FCalendarController<(DateTime, DateTime)?> _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = FCalendarController.range(
+      initial: (_utcDay(widget.initialFrom), _utcDay(widget.initialTo)),
+      selectable: (date) {
+        final day = _utcDay(date);
+        return !day.isBefore(_utcDay(widget.firstDate)) &&
+            !day.isAfter(_utcDay(widget.lastDate));
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final formatter = AppFormatters(locale: Localizations.localeOf(context));
+    return ValueListenableBuilder<(DateTime, DateTime)?>(
+      valueListenable: _controller,
+      builder: (context, selected, _) {
+        return AppSheet(
+          title: l10n.expenseReportRangeCustom,
+          subtitle: selected == null
+              ? null
+              : '${formatter.date(selected.$1)} - ${formatter.date(selected.$2)}',
+          footer: Row(
+            children: [
+              Expanded(
+                child: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => Navigator.of(context).maybePop(),
+                  child: Text(l10n.commonCancel),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: FButton(
+                  onPress: selected == null
+                      ? null
+                      : () => Navigator.of(
+                          context,
+                        ).pop((from: selected.$1, to: selected.$2)),
+                  child: Text(l10n.commonConfirm),
+                ),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colors.muted.withValues(alpha: AppOpacity.subtle),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: colors.foreground.withValues(
+                      alpha: AppOpacity.whisper,
+                    ),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.s8),
+                  child: Center(
+                    child: FCalendar(
+                      control: FCalendarControl.managedRange(
+                        controller: _controller,
+                      ),
+                      start: _utcDay(widget.firstDate),
+                      end: _utcDay(
+                        widget.lastDate.add(const Duration(days: 1)),
+                      ),
+                      today: _utcDay(DateTime.now()),
+                      initialMonth: _utcDay(widget.initialTo),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+DateTime _utcDay(DateTime date) =>
+    DateTime.utc(date.year, date.month, date.day);
 
 class _RangeChip extends StatelessWidget {
   const _RangeChip({

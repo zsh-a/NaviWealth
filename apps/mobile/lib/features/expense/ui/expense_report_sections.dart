@@ -158,12 +158,20 @@ class ExpenseCategoryListCard extends StatelessWidget {
     }
     return SoftCard(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s4,
+          vertical: AppSpacing.s8,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s8, AppSpacing.s12, AppSpacing.s4),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s12,
+                AppSpacing.s8,
+                AppSpacing.s12,
+                AppSpacing.s4,
+              ),
               child: Text(
                 l10n.expenseReportCategoryDetail,
                 style: context.theme.typography.md,
@@ -388,12 +396,20 @@ class _CategoryTile extends StatelessWidget {
     return FTile(
       title: Text(
         _categoryLabel(l10n, category, l10n.expenseReportUncategorized),
+        style: context.theme.typography.sm,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
       prefix: CircleAvatar(
         backgroundColor: accent.withValues(alpha: AppOpacity.medium),
         child: Icon(category?.iconData ?? FLucideIcons.banknote, color: accent),
       ),
-      subtitle: Text(l10n.expenseReportItemCount(breakdown.items.length)),
+      subtitle: Text(
+        l10n.expenseReportItemCount(breakdown.items.length),
+        style: context.theme.typography.xs.copyWith(
+          color: context.theme.colors.mutedForeground,
+        ),
+      ),
       suffix: MoneyText(
         amount: breakdown.total.amount.toDouble(),
         currencyCode: baseCurrency,
@@ -445,7 +461,12 @@ class _CategoryDrillDown extends StatelessWidget {
       maxChildSize: 0.95,
       builder: (ctx, scrollController) {
         return Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s24),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s16,
+            AppSpacing.s8,
+            AppSpacing.s16,
+            AppSpacing.s24,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -525,8 +546,18 @@ class _ExpenseLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FTile(
-      title: Text(expense.note ?? formatter.date(expense.tradeDate)),
-      subtitle: Text(formatter.date(expense.tradeDate)),
+      title: Text(
+        expense.note ?? formatter.date(expense.tradeDate),
+        style: context.theme.typography.sm,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        formatter.date(expense.tradeDate),
+        style: context.theme.typography.xs.copyWith(
+          color: context.theme.colors.mutedForeground,
+        ),
+      ),
       suffix: Text(
         formatter.currency(expense.amount, code: expense.currency),
         style: context.theme.typography.sm.copyWith(
