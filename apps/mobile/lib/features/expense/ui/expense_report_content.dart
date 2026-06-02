@@ -31,7 +31,12 @@ class ExpenseReportBody extends ConsumerWidget {
     };
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s8, AppSpacing.s12, AppSpacing.s24),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s12,
+        AppSpacing.s8,
+        AppSpacing.s12,
+        AppSpacing.s24,
+      ),
       children: [
         const _RangeChips(),
         const SizedBox(height: AppSpacing.s12),
@@ -60,22 +65,19 @@ class _RangeChips extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final selected = ref.watch(expenseReportRangePresetProvider);
-    return SizedBox(
-      height: 40,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
         children: [
-          for (final preset in ExpenseReportRangePreset.values)
-            Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.s8),
-              child: FButton(
-                variant: (preset == selected)
-                    ? FButtonVariant.primary
-                    : FButtonVariant.outline,
-                onPress: () => _select(context, ref, preset),
-                child: Text(_label(preset, l10n)),
-              ),
+          for (final preset in ExpenseReportRangePreset.values) ...[
+            _RangeChip(
+              label: _label(preset, l10n),
+              selected: preset == selected,
+              onTap: () => _select(context, ref, preset),
             ),
+            if (preset != ExpenseReportRangePreset.values.last)
+              const SizedBox(width: AppSpacing.s8),
+          ],
         ],
       ),
     );
@@ -122,6 +124,53 @@ class _RangeChips extends ConsumerWidget {
       case ExpenseReportRangePreset.custom:
         return l10n.expenseReportRangeCustom;
     }
+  }
+}
+
+class _RangeChip extends StatelessWidget {
+  const _RangeChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final fg = selected ? colors.primaryForeground : colors.foreground;
+    final bg = selected ? colors.primary : colors.background;
+    final border = selected
+        ? colors.primary
+        : colors.foreground.withValues(alpha: AppOpacity.whisper);
+    return FTappable(
+      onPress: onTap,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 36),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s14,
+          vertical: AppSpacing.s6,
+        ),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          border: Border.all(color: border),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: context.theme.typography.xs.copyWith(
+            color: fg,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
   }
 }
 
