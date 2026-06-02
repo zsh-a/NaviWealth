@@ -1161,6 +1161,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountsActionsTitle => '添加财富容器';
 
   @override
+  String get wealthActionPanelSubtitle => '选择要纳入净资产的对象。';
+
+  @override
+  String get wealthActionPanelAccountsGroup => '账户容器';
+
+  @override
+  String get wealthActionPanelFinancialGroup => '余额与产品';
+
+  @override
+  String get wealthActionPanelPhysicalGroup => '实物资产';
+
+  @override
+  String get wealthActionPanelLiabilitiesGroup => '负债';
+
+  @override
   String get accountsActionAccountHint => '银行、券商或加密账户';
 
   @override

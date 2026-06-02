@@ -36,8 +36,8 @@ class AccountPicker extends StatelessWidget {
     };
     return FSelect<String>.rich(
       format: (id) => labelById[id] ?? '',
-      control: FSelectControl<String>.managed(
-        initial: effectiveValue,
+      control: FSelectControl<String>.lifted(
+        value: effectiveValue,
         onChange: onChanged,
       ),
       label: Text(label ?? l10n.formAccountPickerLabelDefault),

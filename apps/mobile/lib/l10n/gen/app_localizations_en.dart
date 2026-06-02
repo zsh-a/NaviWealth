@@ -1201,6 +1201,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountsActionsTitle => 'Add wealth container';
 
   @override
+  String get wealthActionPanelSubtitle =>
+      'Choose what you want to add to your net worth.';
+
+  @override
+  String get wealthActionPanelAccountsGroup => 'Accounts';
+
+  @override
+  String get wealthActionPanelFinancialGroup => 'Balances & products';
+
+  @override
+  String get wealthActionPanelPhysicalGroup => 'Physical assets';
+
+  @override
+  String get wealthActionPanelLiabilitiesGroup => 'Liabilities';
+
+  @override
   String get accountsActionAccountHint => 'Bank, brokerage or crypto account';
 
   @override

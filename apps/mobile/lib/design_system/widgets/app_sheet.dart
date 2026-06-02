@@ -97,9 +97,7 @@ Future<T?> showAppFormSheet<T>({
               child: Builder(builder: builder),
             ),
           )
-        : (sheetContext) => AppSheetSurface(
-            child: Builder(builder: builder),
-          ),
+        : (sheetContext) => AppSheetSurface(child: Builder(builder: builder)),
   );
 }
 
@@ -227,7 +225,9 @@ class AppSheet extends StatelessWidget {
     // the top with a keyboard-sized empty band above the keyboard.
     if (footer != null) {
       final hairline = colors.foreground.withValues(
-        alpha: colors.brightness == Brightness.dark ? AppOpacity.light : AppOpacity.subtle,
+        alpha: colors.brightness == Brightness.dark
+            ? AppOpacity.light
+            : AppOpacity.subtle,
       );
       return AppSheetSurface(
         child: Column(
@@ -267,11 +267,13 @@ class AppSheet extends StatelessWidget {
       children: [
         _dragHandle(colors),
         _header(context),
-        AnimatedSize(
-          duration: Motion.fast,
-          curve: Motion.standardDecelerate,
-          alignment: Alignment.topCenter,
-          child: body,
+        Flexible(
+          child: AnimatedSize(
+            duration: Motion.fast,
+            curve: Motion.standardDecelerate,
+            alignment: Alignment.topCenter,
+            child: body,
+          ),
         ),
       ],
     );
@@ -438,13 +440,20 @@ class AppSheetSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
-    final surface = colors.background.withValues(alpha: isDark ? AppOpacity.nearOpaqueDark : AppOpacity.nearOpaque);
-    final hairline = colors.foreground.withValues(alpha: isDark ? AppOpacity.light : AppOpacity.subtle);
+    final surface = colors.background.withValues(
+      alpha: isDark ? AppOpacity.nearOpaqueDark : AppOpacity.nearOpaque,
+    );
+    final hairline = colors.foreground.withValues(
+      alpha: isDark ? AppOpacity.light : AppOpacity.subtle,
+    );
 
     return ClipRRect(
       borderRadius: borderRadius,
       child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: AppBlur.sheet, sigmaY: AppBlur.sheet),
+        filter: ui.ImageFilter.blur(
+          sigmaX: AppBlur.sheet,
+          sigmaY: AppBlur.sheet,
+        ),
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: surface,

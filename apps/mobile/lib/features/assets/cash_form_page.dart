@@ -241,11 +241,15 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
       // Make sure the persisted last-used account is still around. If
       // the user archived/deleted it the persistence is stale; fall back
       // to the first eligible row instead of forcing the user to pick.
-      final hasCurrent =
-          _accountId != null && eligible.any((a) => a.id == _accountId);
-      if (!hasCurrent) {
-        _accountId = eligible.first.id;
-      }
+      // Keep the form currency locked to that effective account as well;
+      // otherwise the picker can display one account while saving another
+      // account/currency pairing.
+      final current = _accountId == null
+          ? null
+          : eligible.where((a) => a.id == _accountId).firstOrNull;
+      final effective = current ?? eligible.first;
+      _accountId = effective.id;
+      _currency = effective.currency;
       _hydratedFromList = true;
     }
     return Form(

@@ -2162,6 +2162,36 @@ abstract class AppLocalizations {
   /// **'Add wealth container'**
   String get accountsActionsTitle;
 
+  /// Subtitle for the Wealth quick-add panel
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what you want to add to your net worth.'**
+  String get wealthActionPanelSubtitle;
+
+  /// Wealth quick-add section heading for account containers
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get wealthActionPanelAccountsGroup;
+
+  /// Wealth quick-add section heading for cash/deposit/wealth products
+  ///
+  /// In en, this message translates to:
+  /// **'Balances & products'**
+  String get wealthActionPanelFinancialGroup;
+
+  /// Wealth quick-add section heading for real estate and vehicles
+  ///
+  /// In en, this message translates to:
+  /// **'Physical assets'**
+  String get wealthActionPanelPhysicalGroup;
+
+  /// Wealth quick-add section heading for liabilities
+  ///
+  /// In en, this message translates to:
+  /// **'Liabilities'**
+  String get wealthActionPanelLiabilitiesGroup;
+
   /// Affordance under New account in the Accounts actions sheet
   ///
   /// In en, this message translates to:
