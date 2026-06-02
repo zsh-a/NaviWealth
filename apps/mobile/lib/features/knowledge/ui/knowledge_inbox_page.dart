@@ -7,7 +7,6 @@
 /// upgrade card in the sheet itself, not by picking the type up front.
 library;
 
-import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -27,8 +26,9 @@ class KnowledgeInboxPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
-      title: '收件箱 · KnowledgeOS',
+      title: l10n.knowledgeInboxTitle,
       child: Stack(
         children: [
           const Positioned.fill(child: _InboxBody()),
@@ -38,7 +38,7 @@ class KnowledgeInboxPage extends ConsumerWidget {
             child: FButton(
               prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
               onPress: () => showKnowledgeCaptureSheet(context, ref),
-              child: const Text('新建捕获'),
+              child: Text(l10n.knowledgeCaptureAction),
             ),
           ),
         ],
@@ -83,95 +83,38 @@ class _AiAssistantBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
+    final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s4, ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => askAi(context, ref, prefill: ''),
-            child: SoftCard(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s12,
-                vertical: AppSpacing.s12,
-              ),
-              child: Row(
-                children: [
-                  Icon(FLucideIcons.sparkles, size: AppIconSizes.sm, color: colors.primary),
-                  const SizedBox(width: AppSpacing.s8),
-                  Expanded(
-                    child: Text(
-                      '记点什么 / 问点什么…',
-                      style: typography.sm.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    FLucideIcons.arrowRight,
-                    size: AppIconSizes.sm,
-                    color: colors.mutedForeground,
-                  ),
-                ],
-              ),
-            ),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s12,
+        AppSpacing.s16,
+        AppSpacing.s4,
+      ),
+      child: DomainAiPromptBar(
+        hint: l10n.knowledgeAiPromptHint,
+        onPress: () => askAi(context, ref, prefill: ''),
+        actions: [
+          DomainAiPromptAction(
+            label: l10n.knowledgeAiDedupeAction,
+            icon: FLucideIcons.gitMerge,
+            onPress: () =>
+                askAi(context, ref, prefill: l10n.knowledgeAiDedupePrompt),
           ),
-          const SizedBox(height: AppSpacing.s8),
-          Wrap(
-            spacing: AppSpacing.s8,
-            runSpacing: AppSpacing.s8,
-            children: [
-              _Chip(
-                label: '查重',
-                icon: FLucideIcons.gitMerge,
-                onTap: () => askAi(
-                  context,
-                  ref,
-                  prefill:
-                      '帮我查一下知识库里有没有内容相近、可能重复的笔记或概念，'
-                      '重复的建议合并。',
-                ),
-              ),
-              _Chip(
-                label: '本周建议',
-                icon: FLucideIcons.lightbulb,
-                onTap: () => askAi(
-                  context,
-                  ref,
-                  prefill:
-                      '根据我的知识库给我这周的建议：到期复盘的决策、'
-                      '长期未校验的假设、本周到期的定期事项、没有标签或链接的孤儿笔记。',
-                ),
-              ),
-              _Chip(
-                label: '搜知识',
-                icon: FLucideIcons.search,
-                onTap: () => askAi(context, ref, prefill: '搜索我的知识库：'),
-              ),
-            ],
+          DomainAiPromptAction(
+            label: l10n.knowledgeAiWeeklyAction,
+            icon: FLucideIcons.lightbulb,
+            onPress: () =>
+                askAi(context, ref, prefill: l10n.knowledgeAiWeeklyPrompt),
+          ),
+          DomainAiPromptAction(
+            label: l10n.knowledgeAiSearchAction,
+            icon: FLucideIcons.search,
+            onPress: () =>
+                askAi(context, ref, prefill: l10n.knowledgeAiSearchPrompt),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.icon, required this.onTap});
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return FButton(
-      variant: FButtonVariant.outline,
-      onPress: onTap,
-      prefix: Icon(icon, size: AppIconSizes.xs),
-      child: Text(label),
     );
   }
 }
@@ -197,8 +140,13 @@ class _NotesList extends ConsumerWidget {
                 final notes = snapshot.data ?? const <KnowledgeNote>[];
                 if (notes.isEmpty) return const _EmptyState();
                 return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, // Bottom padding leaves room for the floating FAB.
-                    AppSpacing.s64, ),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s16,
+                    AppSpacing.s8,
+                    AppSpacing
+                        .s16, // Bottom padding leaves room for the floating FAB.
+                    AppSpacing.s64,
+                  ),
                   itemCount: notes.length,
                   separatorBuilder: (_, _) =>
                       const SizedBox(height: AppSpacing.s8),

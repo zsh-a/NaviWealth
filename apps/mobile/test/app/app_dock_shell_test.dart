@@ -70,12 +70,8 @@ Future<ProviderContainer> _pumpAt(
   return container;
 }
 
-String _currentPath(ProviderContainer container) => container
-    .read(appRouterProvider)
-    .routeInformationProvider
-    .value
-    .uri
-    .path;
+String _currentPath(ProviderContainer container) =>
+    container.read(appRouterProvider).routeInformationProvider.value.uri.path;
 
 void main() {
   setUp(() {
@@ -143,27 +139,30 @@ void main() {
       expect(find.byType(HomePage), findsOneWidget);
     });
 
-    testWidgets('/health renders HealthTodayPage with plain title (no chevron)',
-        (tester) async {
-      final l10n = lookupAppLocalizations(const Locale('en'));
-      final container = await _pumpAt(
-        tester,
-        initialLocation: AppRoutes.healthToday,
-        domains: <DomainShellSpec>[
-          financeDomainShell(l10n),
-          healthDomainShell(l10n),
-        ],
-      );
-      expect(_currentPath(container), AppRoutes.healthToday);
-      expect(find.byType(HealthTodayPage), findsOneWidget);
-      // Plain title — switcher lives in bottom nav long-press only.
-      expect(find.text('今日 · HealthOS'), findsOneWidget);
-      expect(find.text('FinanceOS'), findsNothing);
-      expect(find.text('HealthOS'), findsNothing);
-    });
+    testWidgets(
+      '/health renders HealthTodayPage with plain title (no chevron)',
+      (tester) async {
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        final container = await _pumpAt(
+          tester,
+          initialLocation: AppRoutes.healthToday,
+          domains: <DomainShellSpec>[
+            financeDomainShell(l10n),
+            healthDomainShell(l10n),
+          ],
+        );
+        expect(_currentPath(container), AppRoutes.healthToday);
+        expect(find.byType(HealthTodayPage), findsOneWidget);
+        // Plain title — switcher lives in bottom nav long-press only.
+        expect(find.text(l10n.healthTodayTitle), findsOneWidget);
+        expect(find.text('FinanceOS'), findsNothing);
+        expect(find.text('HealthOS'), findsNothing);
+      },
+    );
 
-    testWidgets('long-press on bottom nav opens the domain switcher sheet',
-        (tester) async {
+    testWidgets('long-press on bottom nav opens the domain switcher sheet', (
+      tester,
+    ) async {
       final l10n = lookupAppLocalizations(const Locale('en'));
       final container = await _pumpAt(
         tester,

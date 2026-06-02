@@ -7351,5 +7351,135 @@ class AppLocalizationsEn extends AppLocalizations {
       'Data is stored only on this device';
 
   @override
+  String get commonDate => 'Date';
+
+  @override
+  String get commonNote => 'Note';
+
+  @override
+  String get commonOk => 'OK';
+
+  @override
+  String get healthTodayTitle => 'Today · HealthOS';
+
+  @override
+  String get healthRecordBodyMetricAction => 'Record body metric';
+
+  @override
+  String get healthBodyMeasurementTitle => 'Record body metric';
+
+  @override
+  String get healthBodyMeasurementSubtitle =>
+      'For low-frequency manual metrics like weight and body fat';
+
+  @override
+  String get healthMetricWeight => 'Weight';
+
+  @override
+  String get healthMetricBodyFat => 'Body fat';
+
+  @override
+  String get healthBodyMeasurementWeightHelper => 'Unit: kg';
+
+  @override
+  String get healthBodyMeasurementBodyFatHelper => 'Unit: %, for example 18.5';
+
+  @override
+  String get healthBodyFatMaxError => 'Body fat cannot exceed 100%';
+
+  @override
+  String healthBodyMeasurementSaveFailed(String error) {
+    return 'Could not save: $error';
+  }
+
+  @override
+  String get knowledgeInboxTitle => 'Inbox · KnowledgeOS';
+
+  @override
+  String get knowledgeCaptureAction => 'New capture';
+
+  @override
+  String get knowledgeAiPromptHint => 'Capture something or ask a question...';
+
+  @override
+  String get knowledgeAiDedupeAction => 'Deduplicate';
+
+  @override
+  String get knowledgeAiDedupePrompt =>
+      'Check whether my knowledge base has similar or duplicate notes or concepts, and suggest merges where useful.';
+
+  @override
+  String get knowledgeAiWeeklyAction => 'Weekly review';
+
+  @override
+  String get knowledgeAiWeeklyPrompt =>
+      'Give me this week\'s knowledge review: decisions due for review, stale assumptions, routines due this week, and orphan notes without tags or links.';
+
+  @override
+  String get knowledgeAiSearchAction => 'Search knowledge';
+
+  @override
+  String get knowledgeAiSearchPrompt => 'Search my knowledge base: ';
+
+  @override
+  String get knowledgeLibraryTitle => 'Library · KnowledgeOS';
+
+  @override
+  String get knowledgeSegmentDecisions => 'Decisions';
+
+  @override
+  String get knowledgeSegmentNotes => 'Notes';
+
+  @override
+  String get knowledgeSegmentConcepts => 'Concepts';
+
+  @override
+  String get knowledgeSegmentExperiments => 'Experiments';
+
+  @override
+  String get knowledgeSegmentRoutines => 'Routines';
+
+  @override
+  String get knowledgeNewDecision => 'New Decision';
+
+  @override
+  String get knowledgeNewNote => 'New Note';
+
+  @override
+  String get knowledgeNewConcept => 'New Concept';
+
+  @override
+  String get knowledgeNewExperiment => 'New Experiment';
+
+  @override
+  String get knowledgeNewRoutine => 'New Routine';
+
+  @override
+  String get knowledgeNewChooserTitle => 'New...';
+
+  @override
+  String get knowledgeNewChooserSubtitle =>
+      'Decision, Principle, and Assumption share the same capture flow';
+
+  @override
+  String get knowledgeNewDecisionHint =>
+      'Primary path: question, options, rationale';
+
+  @override
+  String get knowledgeNewPrincipleHint =>
+      'A worldview primitive, for example \"edge-first\"';
+
+  @override
+  String get knowledgeNewAssumptionHint =>
+      'A falsifiable belief with confidence';
+
+  @override
+  String get knowledgeNotesHintTitle => 'Notes are captured in Inbox';
+
+  @override
+  String get knowledgeNotesHintBody =>
+      'The Notes segment is for browsing. Close this panel, switch to Inbox, and use the create action there.';
+
+  @override
   String get amountHidden => 'Amount hidden';
 }

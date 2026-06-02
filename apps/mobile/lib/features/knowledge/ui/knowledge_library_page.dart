@@ -6,7 +6,6 @@
 /// scope without a Material ancestor.
 library;
 
-import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -28,6 +27,16 @@ import '_widgets.dart';
 
 enum _LibrarySegment { decisions, notes, concepts, experiments, routines }
 
+String _segmentLabel(AppLocalizations l10n, _LibrarySegment segment) {
+  return switch (segment) {
+    _LibrarySegment.decisions => l10n.knowledgeSegmentDecisions,
+    _LibrarySegment.notes => l10n.knowledgeSegmentNotes,
+    _LibrarySegment.concepts => l10n.knowledgeSegmentConcepts,
+    _LibrarySegment.experiments => l10n.knowledgeSegmentExperiments,
+    _LibrarySegment.routines => l10n.knowledgeSegmentRoutines,
+  };
+}
+
 class KnowledgeLibraryPage extends ConsumerStatefulWidget {
   const KnowledgeLibraryPage({super.key});
 
@@ -41,26 +50,26 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
-      title: '资料库 · KnowledgeOS',
+      title: l10n.knowledgeLibraryTitle,
       child: Stack(
         children: [
           Positioned.fill(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s16, ),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s16,
+                AppSpacing.s8,
+                AppSpacing.s16,
+                AppSpacing.s16,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   SegmentedRow<_LibrarySegment>(
                     options: _LibrarySegment.values,
                     value: _segment,
-                    labelOf: (s) => switch (s) {
-                      _LibrarySegment.decisions => 'Decisions',
-                      _LibrarySegment.notes => 'Notes',
-                      _LibrarySegment.concepts => 'Concepts',
-                      _LibrarySegment.experiments => 'Experiments',
-                      _LibrarySegment.routines => 'Routines',
-                    },
+                    labelOf: (s) => _segmentLabel(l10n, s),
                     onChanged: (s) => setState(() => _segment = s),
                   ),
                   const SizedBox(height: AppSpacing.s16),
@@ -90,12 +99,13 @@ class _NewObjectButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final label = switch (segment) {
-      _LibrarySegment.decisions => '新建 Decision',
-      _LibrarySegment.notes => '新建 Note',
-      _LibrarySegment.concepts => '新建 Concept',
-      _LibrarySegment.experiments => '新建 Experiment',
-      _LibrarySegment.routines => '新建 Routine',
+      _LibrarySegment.decisions => l10n.knowledgeNewDecision,
+      _LibrarySegment.notes => l10n.knowledgeNewNote,
+      _LibrarySegment.concepts => l10n.knowledgeNewConcept,
+      _LibrarySegment.experiments => l10n.knowledgeNewExperiment,
+      _LibrarySegment.routines => l10n.knowledgeNewRoutine,
     };
     return FButton(
       prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
@@ -141,6 +151,7 @@ class _DecisionFamilyChooser extends StatelessWidget {
   final WidgetRef ref;
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     Widget tile(String label, String hint, VoidCallback onTap) => Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.s8),
       child: FButton(
@@ -172,25 +183,25 @@ class _DecisionFamilyChooser extends StatelessWidget {
       ),
     );
     return AppSheet(
-      title: '新建…',
-      subtitle: 'Decision / Principle / Assumption 共用同一套录入流程',
+      title: l10n.knowledgeNewChooserTitle,
+      subtitle: l10n.knowledgeNewChooserSubtitle,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           tile(
             'Decision',
-            '主路径 — question / options / rationale',
+            l10n.knowledgeNewDecisionHint,
             () => showNewDecisionSheet(context, ref),
           ),
           tile(
             'Principle',
-            '世界观原语（例如 "edge-first"）',
+            l10n.knowledgeNewPrincipleHint,
             () => showNewPrincipleSheet(context, ref),
           ),
           tile(
             'Assumption',
-            '可证伪的信念 + 置信度',
+            l10n.knowledgeNewAssumptionHint,
             () => showNewAssumptionSheet(context, ref),
           ),
         ],
@@ -205,20 +216,19 @@ Future<void> _showNotesHint(BuildContext context) async {
   await showAppFormSheet<void>(
     context: context,
     builder: (sheetContext) => AppSheet(
-      title: 'Note 在收件箱录入',
+      title: AppLocalizations.of(context).knowledgeNotesHintTitle,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            '资料库的 Note 段是浏览面；录入走收件箱。'
-            '关闭这个面板，切到收件箱标签页，点右下角 + 即可。',
+            AppLocalizations.of(context).knowledgeNotesHintBody,
             style: context.theme.typography.sm,
           ),
           const SizedBox(height: AppSpacing.s12),
           FButton(
             onPress: () => Navigator.of(sheetContext).pop(),
-            child: const Text('好的'),
+            child: Text(AppLocalizations.of(context).commonOk),
           ),
         ],
       ),
@@ -472,43 +482,40 @@ Widget _buildDecisionTile(
 }) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
-  return GestureDetector(
-    behavior: HitTestBehavior.opaque,
-    onTap: () => context.pushNamed(
+  return KnowledgeSection.item(
+    onPress: () => context.pushNamed(
       AppRouteNames.knowledgeDecisionDetail,
       pathParameters: {'id': d.id},
     ),
-    child: KnowledgeSection.item(
-      title: d.question,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          KnowledgeStatusBadge(label: d.status.wire),
-          const SizedBox(width: AppSpacing.s4),
-          deleteButton,
-          const SizedBox(width: AppSpacing.s4),
-          Icon(
-            FLucideIcons.chevronRight,
-            size: AppIconSizes.xs,
-            color: colors.mutedForeground,
-          ),
-        ],
-      ),
+    title: d.question,
+    trailing: Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        if (d.selectedLabel.isNotEmpty)
-          Text(
-            d.selectedLabel,
-            style: typography.sm.copyWith(color: colors.primary),
-          ),
-        if (d.rationaleMd.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s4),
-          Text(
-            knowledgeExcerpt(d.rationaleMd),
-            style: typography.sm.copyWith(color: colors.mutedForeground),
-          ),
-        ],
+        KnowledgeStatusBadge(label: d.status.wire),
+        const SizedBox(width: AppSpacing.s4),
+        deleteButton,
+        const SizedBox(width: AppSpacing.s4),
+        Icon(
+          FLucideIcons.chevronRight,
+          size: AppIconSizes.xs,
+          color: colors.mutedForeground,
+        ),
       ],
     ),
+    children: [
+      if (d.selectedLabel.isNotEmpty)
+        Text(
+          d.selectedLabel,
+          style: typography.sm.copyWith(color: colors.primary),
+        ),
+      if (d.rationaleMd.isNotEmpty) ...[
+        const SizedBox(height: AppSpacing.s4),
+        Text(
+          knowledgeExcerpt(d.rationaleMd),
+          style: typography.sm.copyWith(color: colors.mutedForeground),
+        ),
+      ],
+    ],
   );
 }
 
@@ -540,34 +547,31 @@ Widget _buildConceptTile(
 }) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
-  return GestureDetector(
-    behavior: HitTestBehavior.opaque,
-    onTap: () => context.pushNamed(
+  return KnowledgeSection.item(
+    onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'concept', 'id': c.id},
     ),
-    child: KnowledgeSection.item(
-      title: c.name,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          deleteButton,
-          const SizedBox(width: AppSpacing.s4),
-          Icon(
-            FLucideIcons.chevronRight,
-            size: AppIconSizes.xs,
-            color: colors.mutedForeground,
-          ),
-        ],
-      ),
+    title: c.name,
+    trailing: Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        if (c.summaryMd.isNotEmpty)
-          Text(
-            knowledgeExcerpt(c.summaryMd),
-            style: typography.sm.copyWith(color: colors.mutedForeground),
-          ),
+        deleteButton,
+        const SizedBox(width: AppSpacing.s4),
+        Icon(
+          FLucideIcons.chevronRight,
+          size: AppIconSizes.xs,
+          color: colors.mutedForeground,
+        ),
       ],
     ),
+    children: [
+      if (c.summaryMd.isNotEmpty)
+        Text(
+          knowledgeExcerpt(c.summaryMd),
+          style: typography.sm.copyWith(color: colors.mutedForeground),
+        ),
+    ],
   );
 }
 
@@ -577,30 +581,27 @@ Widget _buildExperimentTile(
   required Widget deleteButton,
 }) {
   final colors = context.theme.colors;
-  return GestureDetector(
-    behavior: HitTestBehavior.opaque,
-    onTap: () => context.pushNamed(
+  return KnowledgeSection.item(
+    onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'experiment', 'id': e.id},
     ),
-    child: KnowledgeSection.item(
-      title: e.hypothesis,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          KnowledgeStatusBadge(label: e.status.wire),
-          const SizedBox(width: AppSpacing.s4),
-          deleteButton,
-          const SizedBox(width: AppSpacing.s4),
-          Icon(
-            FLucideIcons.chevronRight,
-            size: AppIconSizes.xs,
-            color: colors.mutedForeground,
-          ),
-        ],
-      ),
-      children: const [],
+    title: e.hypothesis,
+    trailing: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        KnowledgeStatusBadge(label: e.status.wire),
+        const SizedBox(width: AppSpacing.s4),
+        deleteButton,
+        const SizedBox(width: AppSpacing.s4),
+        Icon(
+          FLucideIcons.chevronRight,
+          size: AppIconSizes.xs,
+          color: colors.mutedForeground,
+        ),
+      ],
     ),
+    children: const [],
   );
 }
 

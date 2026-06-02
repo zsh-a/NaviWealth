@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
 import '../domain/health_metric_kind.dart';
@@ -65,15 +66,16 @@ class _BodyMeasurementEntrySheetState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final dateFormat = DateFormat.yMMMd(
       Localizations.maybeLocaleOf(context)?.toString(),
     );
     return AppSheet(
-      title: '记录身体指标',
-      subtitle: '适合体重、体脂这类低频手动录入数据',
+      title: l10n.healthBodyMeasurementTitle,
+      subtitle: l10n.healthBodyMeasurementSubtitle,
       footer: AppSheetFooter(
-        submitLabel: '保存',
-        cancelLabel: '取消',
+        submitLabel: l10n.commonSave,
+        cancelLabel: l10n.commonCancel,
         onSubmit: _submit,
         busy: _saving,
       ),
@@ -89,7 +91,7 @@ class _BodyMeasurementEntrySheetState
                 HealthMetricKind.bodyFat,
               ],
               value: _kind,
-              labelOf: _labelOf,
+              labelOf: (kind) => _labelOf(l10n, kind),
               onChanged: _saving
                   ? (_) {}
                   : (kind) {
@@ -102,11 +104,11 @@ class _BodyMeasurementEntrySheetState
             ),
             const SizedBox(height: AppSpacing.s12),
             AmountField(
-              label: _kind == HealthMetricKind.weight ? '体重' : '体脂',
+              label: _labelOf(l10n, _kind),
               controller: _valueCtrl,
               helperText: _kind == HealthMetricKind.weight
-                  ? '单位：kg'
-                  : '单位：%，例如 18.5',
+                  ? l10n.healthBodyMeasurementWeightHelper
+                  : l10n.healthBodyMeasurementBodyFatHelper,
               textInputAction: TextInputAction.next,
               onChanged: (_) {
                 if (_valueError == null) return;
@@ -123,29 +125,20 @@ class _BodyMeasurementEntrySheetState
               ),
             ],
             const SizedBox(height: AppSpacing.s12),
-            FTappable(
-              onPress: _saving ? null : _pickDate,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '日期',
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.s4),
-                  Text(
-                    dateFormat.format(_capturedAt),
-                    style: context.theme.typography.sm,
-                  ),
-                ],
+            FormPickerRow(
+              label: l10n.commonDate,
+              value: dateFormat.format(_capturedAt),
+              leading: Icon(
+                FLucideIcons.calendar,
+                size: AppIconSizes.sm,
+                color: context.theme.colors.mutedForeground,
               ),
+              onPress: _saving ? null : _pickDate,
             ),
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(
               control: FTextFieldControl.managed(controller: _noteCtrl),
-              label: const Text('备注'),
+              label: Text(l10n.commonNote),
               maxLines: 3,
               minLines: 1,
             ),
@@ -173,7 +166,9 @@ class _BodyMeasurementEntrySheetState
     if (decimal == null) return;
     final value = double.parse(decimal.toString());
     if (_kind == HealthMetricKind.bodyFat && value > 100) {
-      setState(() => _valueError = '体脂不能超过 100%');
+      setState(
+        () => _valueError = AppLocalizations.of(context).healthBodyFatMaxError,
+      );
       Haptics.error();
       return;
     }
@@ -194,17 +189,22 @@ class _BodyMeasurementEntrySheetState
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
-      AppMessenger.show(context, ToastKind.error, '保存失败：$e');
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).healthBodyMeasurementSaveFailed('$e'),
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
-  static String _labelOf(HealthMetricKind kind) => switch (kind) {
-    HealthMetricKind.weight => '体重',
-    HealthMetricKind.bodyFat => '体脂',
-    _ => kind.wire,
-  };
+  static String _labelOf(AppLocalizations l10n, HealthMetricKind kind) =>
+      switch (kind) {
+        HealthMetricKind.weight => l10n.healthMetricWeight,
+        HealthMetricKind.bodyFat => l10n.healthMetricBodyFat,
+        _ => kind.wire,
+      };
 
   static DateTime _dayAnchor(DateTime day) =>
       DateTime.utc(day.year, day.month, day.day, 12);

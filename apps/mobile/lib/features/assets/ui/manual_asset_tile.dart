@@ -32,52 +32,56 @@ class ManualAssetTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final chips = _chipsFor(asset, l10n);
     return MergeSemantics(
-      child: GestureDetector(
-        onTap: () => _onTap(context),
-        behavior: HitTestBehavior.opaque,
+      child: FTappable(
+        onPress: () => _onTap(context),
         child: Container(
-            color: selected
-                ? context.theme.colors.primary.withValues(alpha: AppOpacity.subtle)
-                : null,
-            constraints: const BoxConstraints(minHeight: 48),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        OptionalHero(
-                          tag: 'asset-${asset.id}-name',
-                          enabled: heroEnabled,
-                          child: Text(
-                            asset.name ?? asset.symbol,
-                            style: context.theme.typography.md,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+          color: selected
+              ? context.theme.colors.primary.withValues(
+                  alpha: AppOpacity.subtle,
+                )
+              : null,
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s16,
+              vertical: AppSpacing.s12,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      OptionalHero(
+                        tag: 'asset-${asset.id}-name',
+                        enabled: heroEnabled,
+                        child: Text(
+                          asset.name ?? asset.symbol,
+                          style: context.theme.typography.md,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        if (chips.isNotEmpty) ...[
-                          const SizedBox(height: AppSpacing.s6),
-                          Wrap(spacing: 6, runSpacing: 4, children: chips),
-                        ],
+                      ),
+                      if (chips.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.s6),
+                        Wrap(spacing: 6, runSpacing: 4, children: chips),
                       ],
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: AppSpacing.s12),
-                  if (value != null)
-                    MoneyText(
-                      amount: value!.toDouble(),
-                      currencyCode: asset.currency,
-                      style: TypographyTokens.numericBody,
-                    ),
-                ],
-              ),
+                ),
+                const SizedBox(width: AppSpacing.s12),
+                if (value != null)
+                  MoneyText(
+                    amount: value!.toDouble(),
+                    currencyCode: asset.currency,
+                    style: TypographyTokens.numericBody,
+                  ),
+              ],
             ),
           ),
         ),
+      ),
     );
   }
 
@@ -162,7 +166,10 @@ class _MetaChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s8,
+          vertical: AppSpacing.s2,
+        ),
         child: Text(label, style: textStyle),
       ),
     );

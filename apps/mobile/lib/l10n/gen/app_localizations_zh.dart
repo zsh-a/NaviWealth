@@ -7052,5 +7052,130 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAccountLocalOnlyHint => '数据仅保存在本机';
 
   @override
+  String get commonDate => '日期';
+
+  @override
+  String get commonNote => '备注';
+
+  @override
+  String get commonOk => '好的';
+
+  @override
+  String get healthTodayTitle => '今日 · HealthOS';
+
+  @override
+  String get healthRecordBodyMetricAction => '记录身体指标';
+
+  @override
+  String get healthBodyMeasurementTitle => '记录身体指标';
+
+  @override
+  String get healthBodyMeasurementSubtitle => '适合体重、体脂这类低频手动录入数据';
+
+  @override
+  String get healthMetricWeight => '体重';
+
+  @override
+  String get healthMetricBodyFat => '体脂';
+
+  @override
+  String get healthBodyMeasurementWeightHelper => '单位：kg';
+
+  @override
+  String get healthBodyMeasurementBodyFatHelper => '单位：%，例如 18.5';
+
+  @override
+  String get healthBodyFatMaxError => '体脂不能超过 100%';
+
+  @override
+  String healthBodyMeasurementSaveFailed(String error) {
+    return '保存失败：$error';
+  }
+
+  @override
+  String get knowledgeInboxTitle => '收件箱 · KnowledgeOS';
+
+  @override
+  String get knowledgeCaptureAction => '新建捕获';
+
+  @override
+  String get knowledgeAiPromptHint => '记点什么 / 问点什么…';
+
+  @override
+  String get knowledgeAiDedupeAction => '查重';
+
+  @override
+  String get knowledgeAiDedupePrompt => '帮我查一下知识库里有没有内容相近、可能重复的笔记或概念，重复的建议合并。';
+
+  @override
+  String get knowledgeAiWeeklyAction => '本周建议';
+
+  @override
+  String get knowledgeAiWeeklyPrompt =>
+      '根据我的知识库给我这周的建议：到期复盘的决策、长期未校验的假设、本周到期的定期事项、没有标签或链接的孤儿笔记。';
+
+  @override
+  String get knowledgeAiSearchAction => '搜知识';
+
+  @override
+  String get knowledgeAiSearchPrompt => '搜索我的知识库：';
+
+  @override
+  String get knowledgeLibraryTitle => '资料库 · KnowledgeOS';
+
+  @override
+  String get knowledgeSegmentDecisions => 'Decisions';
+
+  @override
+  String get knowledgeSegmentNotes => 'Notes';
+
+  @override
+  String get knowledgeSegmentConcepts => 'Concepts';
+
+  @override
+  String get knowledgeSegmentExperiments => 'Experiments';
+
+  @override
+  String get knowledgeSegmentRoutines => 'Routines';
+
+  @override
+  String get knowledgeNewDecision => '新建 Decision';
+
+  @override
+  String get knowledgeNewNote => '新建 Note';
+
+  @override
+  String get knowledgeNewConcept => '新建 Concept';
+
+  @override
+  String get knowledgeNewExperiment => '新建 Experiment';
+
+  @override
+  String get knowledgeNewRoutine => '新建 Routine';
+
+  @override
+  String get knowledgeNewChooserTitle => '新建…';
+
+  @override
+  String get knowledgeNewChooserSubtitle =>
+      'Decision / Principle / Assumption 共用同一套录入流程';
+
+  @override
+  String get knowledgeNewDecisionHint => '主路径：question / options / rationale';
+
+  @override
+  String get knowledgeNewPrincipleHint => '世界观原语，例如 \"edge-first\"';
+
+  @override
+  String get knowledgeNewAssumptionHint => '可证伪的信念 + 置信度';
+
+  @override
+  String get knowledgeNotesHintTitle => 'Note 在收件箱录入';
+
+  @override
+  String get knowledgeNotesHintBody =>
+      '资料库的 Note 段是浏览面；录入走收件箱。关闭这个面板，切到收件箱标签页，使用创建入口即可。';
+
+  @override
   String get amountHidden => '金额已隐藏';
 }
