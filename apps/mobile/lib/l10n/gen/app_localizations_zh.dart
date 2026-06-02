@@ -4668,6 +4668,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cashFormCreateAccountAction => '新建账户';
 
   @override
+  String get cashFormAccountLockedHint =>
+      '该现金余额已绑定上方账户。如需迁移到其他账户，请删除该余额后在目标账户重新录入。';
+
+  @override
+  String get cashFormMissingAccount => '关联账户不可用';
+
+  @override
   String get cashFormBalanceLabel => '余额';
 
   @override
@@ -4681,18 +4688,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cashFormSave => '保存';
-
-  @override
-  String get cashFormDuplicateTitle => '现金已存在';
-
-  @override
-  String get cashFormDuplicateMessage => '该账户已有现金记录，是否编辑现有记录？';
-
-  @override
-  String get cashFormDuplicateCancel => '取消';
-
-  @override
-  String get cashFormDuplicateEdit => '编辑现有';
 
   @override
   String get manualAssetDeleteTitle => '删除资产';

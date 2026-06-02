@@ -8403,6 +8403,18 @@ abstract class AppLocalizations {
   /// **'New account'**
   String get cashFormCreateAccountAction;
 
+  /// Read-only account helper shown when editing a cash balance
+  ///
+  /// In en, this message translates to:
+  /// **'This cash balance is linked to the account above. To move it, delete this balance and record it under another account.'**
+  String get cashFormAccountLockedHint;
+
+  /// Fallback shown when editing a cash balance whose linked account is not available in the active account list
+  ///
+  /// In en, this message translates to:
+  /// **'Linked account unavailable'**
+  String get cashFormMissingAccount;
+
   /// No description provided for @cashFormBalanceLabel.
   ///
   /// In en, this message translates to:
@@ -8432,30 +8444,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get cashFormSave;
-
-  /// No description provided for @cashFormDuplicateTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Cash already exists'**
-  String get cashFormDuplicateTitle;
-
-  /// No description provided for @cashFormDuplicateMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'This account already has a cash balance recorded. Would you like to edit the existing one instead?'**
-  String get cashFormDuplicateMessage;
-
-  /// No description provided for @cashFormDuplicateCancel.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancel'**
-  String get cashFormDuplicateCancel;
-
-  /// No description provided for @cashFormDuplicateEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit existing'**
-  String get cashFormDuplicateEdit;
 
   /// No description provided for @manualAssetDeleteTitle.
   ///

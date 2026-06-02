@@ -17,6 +17,7 @@ import '../../core/ai/write/write.dart';
 import '../../core/haptics/haptics.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../shared/account_l10n.dart';
 import '../shared/forms/forms.dart';
 
 /// Create / edit form for a cash balance asset.
@@ -47,7 +48,9 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
   String? _currency = 'CNY';
   bool _busy = false;
   Asset? _initial;
+  Asset? _selectedExistingCash;
   bool _hydratedFromList = false;
+  int _cashLookupSeq = 0;
 
   static const _eligibleAccountTypes = {
     AccountCategory.bank,
@@ -77,17 +80,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
     final repo = await ref.read(manualAssetRepositoryProvider.future);
     final existing = await repo.findById(widget.assetId!);
     if (existing == null || !mounted) return;
-    final meta = existing.manualMetadata;
-    final accountId = meta is CashMetadata ? meta.accountId : null;
-    final valuation = await repo.cashBalanceFromPostings(existing.id);
-    if (!mounted) return;
-    setState(() {
-      _initial = existing;
-      _balanceController.text = valuation?.toString() ?? '';
-      _nicknameController.text = existing.name ?? '';
-      _currency = existing.currency;
-      _accountId = accountId;
-    });
+    await _hydrateExistingCash(existing, locked: true);
     // Hydrating an existing record is not a user edit.
     dirty.snapshotBaseline();
   }
@@ -99,25 +92,13 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
     try {
       final repo = await ref.read(manualAssetRepositoryProvider.future);
       final balance = Decimal.parse(_balanceController.text.trim());
-      if (_initial == null) {
-        // Check for existing cash on the same account — each account can
-        // have at most one cash asset (double-entry invariant).
-        final existing = await repo.findCashByAccountId(_accountId!);
-        if (existing != null && mounted) {
-          final l10n = AppLocalizations.of(context);
-          final goEdit = await showConfirmDialog(
-            context: context,
-            title: Text(l10n.cashFormDuplicateTitle),
-            body: Text(l10n.cashFormDuplicateMessage),
-            cancelLabel: l10n.cashFormDuplicateCancel,
-            confirmLabel: l10n.cashFormDuplicateEdit,
-          );
-          if (goEdit == true && mounted) {
-            context.go(AppRoutes.wealthAsset(existing.id));
-          }
-          setState(() => _busy = false);
-          return;
-        }
+      var editing = _editingAsset;
+      var createdNew = false;
+      // Check for existing cash on the same account — each account can
+      // have at most one cash asset (double-entry invariant).
+      editing ??= await repo.findCashByAccountId(_accountId!);
+      if (editing == null) {
+        createdNew = true;
         await repo.createCash(
           accountId: _accountId!,
           currency: _currency!,
@@ -128,21 +109,23 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
         );
       } else {
         await repo.recordValuationAdjust(
-          assetId: _initial!.id,
+          assetId: editing.id,
           newValuation: balance,
         );
-        if (_nicknameController.text.trim() != (_initial!.name ?? '')) {
+        if (_nicknameController.text.trim() != (editing.name ?? '')) {
           await repo.updateBasics(
-            id: _initial!.id,
+            id: editing.id,
             name: _nicknameController.text.trim(),
           );
         }
       }
-      unawaited(
-        ref
-            .read(formDefaultsProvider.notifier)
-            .rememberAsset(accountId: _accountId, currency: _currency),
-      );
+      if (createdNew) {
+        unawaited(
+          ref
+              .read(formDefaultsProvider.notifier)
+              .rememberAsset(accountId: _accountId, currency: _currency),
+        );
+      }
       if (!mounted) return;
       dirty.markPristine();
       Haptics.success();
@@ -188,7 +171,9 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
       child: FScaffold(
         header: FHeader.nested(
           title: Text(
-            widget.isEdit ? l10n.cashFormEditTitle : l10n.cashFormCreateTitle,
+            _editingAsset == null
+                ? l10n.cashFormCreateTitle
+                : l10n.cashFormEditTitle,
           ),
           prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
           suffixes: [
@@ -217,7 +202,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
     final eligible = accounts
         .where((a) => _eligibleAccountTypes.contains(a.type))
         .toList(growable: false);
-    if (eligible.isEmpty) {
+    if (!widget.isEdit && eligible.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s16),
@@ -251,7 +236,11 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
       _accountId = effective.id;
       _currency = effective.currency;
       _hydratedFromList = true;
+      _checkExistingCash(effective.id);
     }
+    final linkedAccount = _accountId == null
+        ? null
+        : accounts.where((a) => a.id == _accountId).firstOrNull;
     return Form(
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -260,7 +249,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
           width: double.infinity,
           child: FButton(
             variant: FButtonVariant.primary,
-            onPress: _busy ? null : _save,
+            onPress: _busy ? null : () => unawaited(_save()),
             child: Text(_busy ? l10n.cashFormSaving : l10n.cashFormSave),
           ),
         ),
@@ -278,24 +267,12 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
             ),
             const SizedBox(height: AppSpacing.s8),
           ],
-          AccountPicker(
+          _CashAccountField(
+            isEdit: widget.isEdit,
             accounts: eligible,
             value: _accountId,
-            onChanged: (v) => setState(() {
-              _accountId = v;
-              // Lock currency to the account's currency — double-entry
-              // bookkeeping requires each account to hold a single currency.
-              final account = eligible.where((a) => a.id == v).firstOrNull;
-              if (account != null) _currency = account.currency;
-              dirty.markDirty();
-            }),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          CurrencyPicker(
-            value: _currency,
-            // Disabled — currency is derived from the selected account.
-            onChanged: (_) {},
-            enabled: false,
+            lockedValue: _accountDisplayValue(l10n, linkedAccount),
+            onChanged: (v) => _selectAccount(v, eligible),
           ),
           const SizedBox(height: AppSpacing.s12),
           AmountField(
@@ -316,6 +293,112 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
           ),
         ],
       ),
+    );
+  }
+
+  Asset? get _editingAsset => _initial ?? _selectedExistingCash;
+
+  void _selectAccount(String? accountId, List<Account> eligible) {
+    setState(() {
+      _accountId = accountId;
+      // Cash balance currency is the account currency. Keeping this derived
+      // avoids creating a ledger row whose account and unit disagree.
+      final account = eligible.where((a) => a.id == accountId).firstOrNull;
+      if (account != null) _currency = account.currency;
+      _selectedExistingCash = null;
+      _balanceController.clear();
+      _nicknameController.clear();
+      dirty.markDirty();
+    });
+    _checkExistingCash(accountId);
+  }
+
+  String _accountDisplayValue(AppLocalizations l10n, Account? account) {
+    if (account != null) {
+      return '${localizedAccountName(l10n, account)} · ${account.currency}';
+    }
+    return _accountId?.isNotEmpty == true
+        ? _accountId!
+        : l10n.cashFormMissingAccount;
+  }
+
+  void _checkExistingCash(String? accountId) {
+    if (widget.isEdit || accountId == null) return;
+    final seq = ++_cashLookupSeq;
+    scheduleMicrotask(() async {
+      final repo = await ref.read(manualAssetRepositoryProvider.future);
+      final existing = await repo.findCashByAccountId(accountId);
+      if (!mounted || seq != _cashLookupSeq) return;
+      if (existing == null) return;
+      await _hydrateExistingCash(existing, locked: false);
+    });
+  }
+
+  Future<void> _hydrateExistingCash(Asset asset, {required bool locked}) async {
+    final repo = await ref.read(manualAssetRepositoryProvider.future);
+    final meta = asset.manualMetadata;
+    final accountId = meta is CashMetadata ? meta.accountId : null;
+    final postingBalance = await repo.cashBalanceFromPostings(asset.id);
+    final valuation = postingBalance ?? await repo.latestValuation(asset.id);
+    if (!mounted) return;
+    setState(() {
+      if (locked) {
+        _initial = asset;
+      } else {
+        _selectedExistingCash = asset;
+      }
+      _balanceController.text = (valuation ?? Decimal.zero).toString();
+      _nicknameController.text = asset.name ?? '';
+      _currency = asset.currency;
+      _accountId = accountId;
+    });
+    dirty.snapshotBaseline();
+  }
+}
+
+class _CashAccountField extends StatelessWidget {
+  const _CashAccountField({
+    required this.isEdit,
+    required this.accounts,
+    required this.value,
+    required this.lockedValue,
+    required this.onChanged,
+  });
+
+  final bool isEdit;
+  final List<Account> accounts;
+  final String? value;
+  final String lockedValue;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (!isEdit) {
+      return AccountPicker(
+        accounts: accounts,
+        value: value,
+        onChanged: onChanged,
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FormPickerRow(
+          label: l10n.formAccountPickerLabelDefault,
+          value: lockedValue,
+          leading: const Icon(FLucideIcons.wallet, size: AppIconSizes.sm),
+          trailing: const Icon(FLucideIcons.lock, size: AppIconSizes.sm),
+        ),
+        const SizedBox(height: AppSpacing.s6),
+        Text(
+          l10n.cashFormAccountLockedHint,
+          style: context.theme.typography.xs.copyWith(
+            color: context.theme.colors.mutedForeground,
+          ),
+        ),
+      ],
     );
   }
 }
