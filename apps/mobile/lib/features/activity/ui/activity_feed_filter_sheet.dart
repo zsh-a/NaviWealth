@@ -74,7 +74,10 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
         ),
         if (query.dateRange != null)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.s6, left: AppSpacing.s4),
+            padding: const EdgeInsets.only(
+              top: AppSpacing.s6,
+              left: AppSpacing.s4,
+            ),
             child: Text(
               _formatRange(l10n, query.dateRange!),
               style: context.theme.typography.xs.copyWith(
@@ -86,7 +89,10 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
         _SheetSectionLabel(text: l10n.activityFeedFilterAccount),
         if (accounts.isEmpty)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.s4, bottom: AppSpacing.s8),
+            padding: const EdgeInsets.only(
+              top: AppSpacing.s4,
+              bottom: AppSpacing.s8,
+            ),
             child: Text(
               l10n.activityFeedFilterAccountEmpty,
               style: context.theme.typography.xs.copyWith(
@@ -252,7 +258,10 @@ class _HeaderTextAction extends StatelessWidget {
     return FTappable(
       onPress: onPress,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s8,
+          vertical: AppSpacing.s4,
+        ),
         child: Text(
           label,
           style: context.theme.typography.sm.copyWith(
@@ -306,7 +315,11 @@ class _PillChip extends StatelessWidget {
     return FTappable(
       onPress: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s6),
+        constraints: const BoxConstraints(minHeight: 36),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s14,
+          vertical: AppSpacing.s6,
+        ),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.full),
@@ -314,6 +327,8 @@ class _PillChip extends StatelessWidget {
         alignment: Alignment.center,
         child: Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: context.theme.typography.xs.copyWith(
             color: fg,
             fontWeight: FontWeight.w600,
@@ -340,7 +355,10 @@ class _AccountFilterRow extends StatelessWidget {
     return FTappable(
       onPress: onToggle,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s4,
+          vertical: AppSpacing.s8,
+        ),
         child: Row(
           children: [
             Expanded(
