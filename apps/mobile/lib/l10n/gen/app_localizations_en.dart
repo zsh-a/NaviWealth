@@ -4848,6 +4848,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cashFormCreateAccountAction => 'New account';
 
   @override
+  String get cashFormAccountLockedHint =>
+      'This cash balance is linked to the account above. To move it, delete this balance and record it under another account.';
+
+  @override
+  String get cashFormMissingAccount => 'Linked account unavailable';
+
+  @override
   String get cashFormBalanceLabel => 'Balance';
 
   @override
@@ -4861,19 +4868,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cashFormSave => 'Save';
-
-  @override
-  String get cashFormDuplicateTitle => 'Cash already exists';
-
-  @override
-  String get cashFormDuplicateMessage =>
-      'This account already has a cash balance recorded. Would you like to edit the existing one instead?';
-
-  @override
-  String get cashFormDuplicateCancel => 'Cancel';
-
-  @override
-  String get cashFormDuplicateEdit => 'Edit existing';
 
   @override
   String get manualAssetDeleteTitle => 'Delete asset';
