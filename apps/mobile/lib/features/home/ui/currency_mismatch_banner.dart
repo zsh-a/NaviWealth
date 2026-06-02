@@ -35,7 +35,10 @@ class CurrencyMismatchBanner extends ConsumerWidget {
         onTap: () => _showDetails(context, mismatches, base),
         behavior: HitTestBehavior.opaque,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s16,
+            vertical: AppSpacing.s8,
+          ),
           child: Row(
             children: [
               Icon(
@@ -74,7 +77,6 @@ class CurrencyMismatchBanner extends ConsumerWidget {
     showAppSheet<void>(
       context: context,
       title: l10n.dashboardCurrencyMismatchSheetTitle,
-      scrollable: false,
       builder: (ctx) => Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
