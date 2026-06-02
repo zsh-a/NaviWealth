@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
@@ -15,7 +16,10 @@ enum _AllocationDimension { assetClass, currency }
 Future<void> showAllocationDetailPanel({
   required BuildContext context,
   required DashboardSnapshot snapshot,
-}) {
+}) async {
+  await SchedulerBinding.instance.endOfFrame;
+  if (!context.mounted) return;
+
   final width = MediaQuery.sizeOf(context).width;
   if (Breakpoints.isMobile(width)) {
     final l10n = AppLocalizations.of(context);
@@ -26,12 +30,13 @@ Future<void> showAllocationDetailPanel({
       actions: [
         FButton.icon(
           variant: FButtonVariant.ghost,
-          onPress: () => Navigator.of(context).maybePop(),
+          onPress: () => _deferredMaybePop(context),
           child: const Icon(FLucideIcons.x, size: AppIconSizes.h18),
         ),
       ],
       builder: (_) => _AllocationDetailBody(
         snapshot: snapshot,
+        expandList: false,
         showHandle: false,
         showTitle: false,
       ),
@@ -73,24 +78,24 @@ class _DesktopAllocationInspector extends StatelessWidget {
     return Align(
       alignment: Alignment.centerRight,
       child: SafeArea(
-          left: false,
-          child: Container(
-            width: 430,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              color: colors.background,
-              border: Border(left: BorderSide(color: colors.border)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: AppOpacity.muted),
-                  blurRadius: 24,
-                  offset: const Offset(-8, 0),
-                ),
-              ],
-            ),
-            child: _AllocationDetailBody(snapshot: snapshot),
+        left: false,
+        child: Container(
+          width: 430,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            color: colors.background,
+            border: Border(left: BorderSide(color: colors.border)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: AppOpacity.muted),
+                blurRadius: 24,
+                offset: const Offset(-8, 0),
+              ),
+            ],
           ),
+          child: _AllocationDetailBody(snapshot: snapshot),
         ),
+      ),
     );
   }
 }
@@ -98,11 +103,13 @@ class _DesktopAllocationInspector extends StatelessWidget {
 class _AllocationDetailBody extends StatefulWidget {
   const _AllocationDetailBody({
     required this.snapshot,
+    this.expandList = true,
     this.showHandle = false,
     this.showTitle = true,
   });
 
   final DashboardSnapshot snapshot;
+  final bool expandList;
   final bool showHandle;
   final bool showTitle;
 
@@ -126,7 +133,44 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
           );
     final total = groups.fold<double>(0, (sum, g) => sum + g.value);
 
+    final list = ListView(
+      shrinkWrap: !widget.expandList,
+      physics: widget.expandList
+          ? const AlwaysScrollableScrollPhysics()
+          : const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s20,
+        18,
+        AppSpacing.s20,
+        AppSpacing.s24,
+      ),
+      children: [
+        _AllocationDonut(
+          groups: groups,
+          total: total,
+          currencyCode: widget.snapshot.baseCurrency,
+        ),
+        const SizedBox(height: AppSpacing.s20),
+        for (final group in groups)
+          _BreakdownRow(
+            group: group,
+            total: total,
+            baseCurrency: widget.snapshot.baseCurrency,
+            selected: selected?.key == group.key,
+            onTap: () => setState(() => _selectedKey = group.key),
+          ),
+        if (selected != null) ...[
+          const SizedBox(height: AppSpacing.s20),
+          _DrillDownList(
+            group: selected,
+            baseCurrency: widget.snapshot.baseCurrency,
+          ),
+        ],
+      ],
+    );
+
     return Column(
+      mainAxisSize: widget.expandList ? MainAxisSize.max : MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (widget.showHandle)
@@ -134,7 +178,10 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
             child: Container(
               width: 36,
               height: 4,
-              margin: const EdgeInsets.only(top: AppSpacing.s10, bottom: AppSpacing.s6),
+              margin: const EdgeInsets.only(
+                top: AppSpacing.s10,
+                bottom: AppSpacing.s6,
+              ),
               decoration: BoxDecoration(
                 color: context.theme.colors.mutedForeground.withValues(
                   alpha: 0.35,
@@ -145,7 +192,12 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
           ),
         if (widget.showTitle)
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.s20, AppSpacing.s14, AppSpacing.s12, AppSpacing.s8),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s20,
+              AppSpacing.s14,
+              AppSpacing.s12,
+              AppSpacing.s8,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -156,7 +208,7 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
                 ),
                 FButton.icon(
                   variant: FButtonVariant.ghost,
-                  onPress: () => Navigator.of(context).maybePop(),
+                  onPress: () => _deferredMaybePop(context),
                   child: const Icon(FLucideIcons.x, size: AppIconSizes.h18),
                 ),
               ],
@@ -174,37 +226,16 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
             },
           ),
         ),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.s20, 18, AppSpacing.s20, AppSpacing.s24),
-            children: [
-              _AllocationDonut(
-                groups: groups,
-                total: total,
-                currencyCode: widget.snapshot.baseCurrency,
-              ),
-              const SizedBox(height: AppSpacing.s20),
-              for (final group in groups)
-                _BreakdownRow(
-                  group: group,
-                  total: total,
-                  baseCurrency: widget.snapshot.baseCurrency,
-                  selected: selected?.key == group.key,
-                  onTap: () => setState(() => _selectedKey = group.key),
-                ),
-              if (selected != null) ...[
-                const SizedBox(height: AppSpacing.s20),
-                _DrillDownList(
-                  group: selected,
-                  baseCurrency: widget.snapshot.baseCurrency,
-                ),
-              ],
-            ],
-          ),
-        ),
+        if (widget.expandList) Expanded(child: list) else list,
       ],
     );
   }
+}
+
+Future<void> _deferredMaybePop(BuildContext context) async {
+  await SchedulerBinding.instance.endOfFrame;
+  if (!context.mounted) return;
+  await Navigator.of(context).maybePop();
 }
 
 class _DimensionSwitch extends StatelessWidget {
@@ -226,7 +257,9 @@ class _DimensionSwitch extends StatelessWidget {
     };
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.theme.colors.secondary.withValues(alpha: AppOpacity.scrim),
+        color: context.theme.colors.secondary.withValues(
+          alpha: AppOpacity.scrim,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(
@@ -333,7 +366,9 @@ class _AllocationDonut extends StatelessWidget {
             painter: _DonutPainter(
               groups: groups,
               total: total,
-              trackColor: context.theme.colors.border.withValues(alpha: AppOpacity.light),
+              trackColor: context.theme.colors.border.withValues(
+                alpha: AppOpacity.light,
+              ),
             ),
           ),
           SizedBox(
@@ -365,7 +400,11 @@ class _AllocationDonut extends StatelessWidget {
 }
 
 class _DonutPainter extends CustomPainter {
-  _DonutPainter({required this.groups, required this.total, required this.trackColor});
+  _DonutPainter({
+    required this.groups,
+    required this.total,
+    required this.trackColor,
+  });
 
   final List<_AllocationGroup> groups;
   final double total;
@@ -426,7 +465,10 @@ class _BreakdownRow extends StatelessWidget {
         onPress: onTap,
         child: AnimatedContainer(
           duration: Motion.fast,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s12,
+            vertical: AppSpacing.s10,
+          ),
           decoration: BoxDecoration(
             color: selected
                 ? colors.primary.withValues(alpha: AppOpacity.faint)
@@ -447,7 +489,11 @@ class _BreakdownRow extends StatelessWidget {
                   color: group.color.withValues(alpha: AppOpacity.medium),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
-                child: Icon(group.icon, size: AppIconSizes.h18, color: group.color),
+                child: Icon(
+                  group.icon,
+                  size: AppIconSizes.h18,
+                  color: group.color,
+                ),
               ),
               const SizedBox(width: AppSpacing.s10),
               Expanded(

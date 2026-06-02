@@ -77,4 +77,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('AAPL'), findsOneWidget);
   });
+
+  testWidgets('view breakdown opens mobile allocation sheet', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(429, 673));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(_wrap(AllocationSummary(snapshot: _snapshot())));
+
+    await tester.tap(find.text('View breakdown'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Asset allocation'), findsOneWidget);
+    expect(find.text('Class'), findsOneWidget);
+    expect(find.text('Cash'), findsWidgets);
+  });
 }
