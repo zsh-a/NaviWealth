@@ -210,7 +210,9 @@ class _DriftOverview extends StatelessWidget {
                       vertical: AppSpacing.s2,
                     ),
                     decoration: BoxDecoration(
-                      color: context.theme.colors.primary.withValues(alpha: AppOpacity.subtle),
+                      color: context.theme.colors.primary.withValues(
+                        alpha: AppOpacity.subtle,
+                      ),
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Text(
@@ -235,7 +237,7 @@ class _DriftOverview extends StatelessWidget {
             const SizedBox(height: AppSpacing.s8),
             for (final drift in plan.drifts)
               DeviationBar(
-                label: AssetCategoryVisuals.label(l10n, drift.category),
+                label: _targetLabel(l10n, drift),
                 actualWeight: drift.actualWeight,
                 targetWeight: drift.targetWeight,
                 deviation: drift.deviation,
@@ -378,7 +380,7 @@ class _TradeList extends StatelessWidget {
       tradeDate: DateTime.now(),
       noteBuilder: (trade) => l10n.rebalanceExecutionDraftNote(
         trade.isBuy ? l10n.rebalanceBuy : l10n.rebalanceSell,
-        AssetCategoryVisuals.label(l10n, trade.category),
+        _tradeTargetLabel(l10n, trade),
         trade.amount.amount.toString(),
         trade.amount.currency,
       ),
@@ -406,7 +408,7 @@ class _TradeRow extends StatelessWidget {
         ? context.theme.colors.primary
         : context.theme.colors.mutedForeground;
     final icon = AssetCategoryVisuals.icon(trade.category);
-    final catLabel = AssetCategoryVisuals.label(l10n, trade.category);
+    final label = _tradeTargetLabel(l10n, trade);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
@@ -421,19 +423,23 @@ class _TradeRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.s8),
-          Icon(icon, size: AppIconSizes.h18, color: context.theme.colors.mutedForeground),
+          Icon(
+            icon,
+            size: AppIconSizes.h18,
+            color: context.theme.colors.mutedForeground,
+          ),
           const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$directionLabel $catLabel',
+                  '$directionLabel $label',
                   style: context.theme.typography.sm,
                 ),
-                if (trade.description != null)
+                if (trade.isAssetTarget)
                   Text(
-                    trade.description!,
+                    AssetCategoryVisuals.label(l10n, trade.category),
                     style: context.theme.typography.xs.copyWith(
                       color: context.theme.colors.mutedForeground,
                     ),
@@ -452,6 +458,12 @@ class _TradeRow extends StatelessWidget {
     );
   }
 }
+
+String _targetLabel(AppLocalizations l10n, Drift drift) =>
+    drift.targetLabel ?? AssetCategoryVisuals.label(l10n, drift.category);
+
+String _tradeTargetLabel(AppLocalizations l10n, SuggestedTrade trade) =>
+    trade.targetLabel ?? AssetCategoryVisuals.label(l10n, trade.category);
 
 class _SettingsSheet extends ConsumerWidget {
   const _SettingsSheet();

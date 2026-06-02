@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../home/data/dashboard_providers.dart';
 import '../../home/domain/dashboard_models.dart';
 import '../../home/ui/asset_category_visuals.dart';
 import '../../settings/data/risk_appetite_preferences.dart';
@@ -55,9 +56,13 @@ class TargetAllocationEditorSheet extends ConsumerStatefulWidget {
 
 class _TargetAllocationEditorSheetState
     extends ConsumerState<TargetAllocationEditorSheet> {
-  late final Map<AssetCategory, TextEditingController> _controllers;
-  late Map<AssetCategory, double> _weights;
-  final _fieldErrors = <AssetCategory, String>{};
+  late final Map<AssetCategory, TextEditingController> _categoryControllers;
+  final _assetControllers = <String, TextEditingController>{};
+  final _disposedAssetControllers = <TextEditingController>[];
+  late Map<AssetCategory, double> _categoryWeights;
+  late Map<String, _AssetTargetDraft> _assetTargets;
+  final _categoryErrors = <AssetCategory, String>{};
+  final _assetErrors = <String, String>{};
   bool _showTotalError = false;
   bool _writingController = false;
 
@@ -65,24 +70,52 @@ class _TargetAllocationEditorSheetState
   void initState() {
     super.initState();
     final initial = ref.read(targetAllocationProvider);
-    _weights = {
+    final optionById = {
+      for (final option in _assetOptions(
+        ref.read(dashboardSnapshotProvider).value,
+      ))
+        option.assetId: option,
+    };
+    _categoryWeights = {
       for (final category in _editableCategories)
         category: _roundPercent(initial[category] * 100),
     };
-    _controllers = {
-      for (final entry in _weights.entries)
+    _assetTargets = {
+      for (final target in initial.assetTargets.values)
+        target.assetId: _AssetTargetDraft(
+          assetId: target.assetId,
+          label: optionById[target.assetId]?.label ?? target.label,
+          category: optionById[target.assetId]?.category ?? target.category,
+          weight: _roundPercent(target.weight * 100),
+        ),
+    };
+    _categoryControllers = {
+      for (final entry in _categoryWeights.entries)
         entry.key: TextEditingController(text: _formatInput(entry.value)),
     };
-    for (final controller in _controllers.values) {
+    _assetControllers.addAll({
+      for (final entry in _assetTargets.entries)
+        entry.key: TextEditingController(
+          text: _formatInput(entry.value.weight),
+        ),
+    });
+    for (final controller in [
+      ..._categoryControllers.values,
+      ..._assetControllers.values,
+    ]) {
       controller.addListener(_handleTextEdit);
     }
-    widget.dirty.bindTextControllers(_controllers.values.toList());
+    widget.dirty.bindTextControllers(_categoryControllers.values.toList());
     widget.dirty.snapshotBaseline();
   }
 
   @override
   void dispose() {
-    for (final controller in _controllers.values) {
+    for (final controller in [
+      ..._categoryControllers.values,
+      ..._assetControllers.values,
+      ..._disposedAssetControllers,
+    ]) {
       controller.removeListener(_handleTextEdit);
       controller.dispose();
     }
@@ -92,50 +125,161 @@ class _TargetAllocationEditorSheetState
   void _handleTextEdit() {
     if (_writingController) return;
     final l10n = AppLocalizations.of(context);
-    final nextWeights = Map<AssetCategory, double>.from(_weights);
-    final nextErrors = <AssetCategory, String>{};
+    final nextCategoryWeights = Map<AssetCategory, double>.from(
+      _categoryWeights,
+    );
+    final nextAssetTargets = Map<String, _AssetTargetDraft>.from(_assetTargets);
+    final nextCategoryErrors = <AssetCategory, String>{};
+    final nextAssetErrors = <String, String>{};
 
-    for (final entry in _controllers.entries) {
+    for (final entry in _categoryControllers.entries) {
       final raw = entry.value.text.trim();
       final value = double.tryParse(raw);
       if (raw.isEmpty || value == null) {
-        nextErrors[entry.key] = l10n.targetAllocationEditorRequiredError;
+        nextCategoryErrors[entry.key] =
+            l10n.targetAllocationEditorRequiredError;
         continue;
       }
       if (value < 0 || value > 100) {
-        nextErrors[entry.key] = l10n.targetAllocationEditorRangeError;
+        nextCategoryErrors[entry.key] = l10n.targetAllocationEditorRangeError;
         continue;
       }
-      nextWeights[entry.key] = _roundPercent(value);
+      nextCategoryWeights[entry.key] = _roundPercent(value);
+    }
+
+    for (final entry in _assetControllers.entries) {
+      final raw = entry.value.text.trim();
+      final value = double.tryParse(raw);
+      if (raw.isEmpty || value == null) {
+        nextAssetErrors[entry.key] = l10n.targetAllocationEditorRequiredError;
+        continue;
+      }
+      if (value < 0 || value > 100) {
+        nextAssetErrors[entry.key] = l10n.targetAllocationEditorRangeError;
+        continue;
+      }
+      final current = nextAssetTargets[entry.key];
+      if (current != null) {
+        nextAssetTargets[entry.key] = current.copyWith(
+          weight: _roundPercent(value),
+        );
+      }
     }
 
     setState(() {
-      _weights = nextWeights;
-      _fieldErrors
+      _categoryWeights = nextCategoryWeights;
+      _assetTargets = nextAssetTargets;
+      _categoryErrors
         ..clear()
-        ..addAll(nextErrors);
+        ..addAll(nextCategoryErrors);
+      _assetErrors
+        ..clear()
+        ..addAll(nextAssetErrors);
       _showTotalError = false;
     });
+    widget.dirty.markDirty();
   }
 
-  void _setWeight(AssetCategory category, double value) {
+  void _setCategoryWeight(AssetCategory category, double value) {
     final rounded = _roundPercent(value);
     setState(() {
-      _weights = {..._weights, category: rounded};
-      _fieldErrors.remove(category);
+      _categoryWeights = {..._categoryWeights, category: rounded};
+      _categoryErrors.remove(category);
       _showTotalError = false;
     });
     _writingController = true;
     try {
-      _controllers[category]!.text = _formatInput(rounded);
+      _categoryControllers[category]!.text = _formatInput(rounded);
     } finally {
       _writingController = false;
     }
     widget.dirty.markDirty();
   }
 
+  void _setAssetWeight(String assetId, double value) {
+    final rounded = _roundPercent(value);
+    final current = _assetTargets[assetId];
+    if (current == null) return;
+    setState(() {
+      _assetTargets = {
+        ..._assetTargets,
+        assetId: current.copyWith(weight: rounded),
+      };
+      _assetErrors.remove(assetId);
+      _showTotalError = false;
+    });
+    _writingController = true;
+    try {
+      _assetControllers[assetId]!.text = _formatInput(rounded);
+    } finally {
+      _writingController = false;
+    }
+    widget.dirty.markDirty();
+  }
+
+  void _removeAssetTarget(String assetId) {
+    final controller = _assetControllers.remove(assetId);
+    if (controller != null) {
+      controller.removeListener(_handleTextEdit);
+      _disposedAssetControllers.add(controller);
+    }
+    setState(() {
+      _assetTargets = {..._assetTargets}..remove(assetId);
+      _assetErrors.remove(assetId);
+      _showTotalError = false;
+    });
+    widget.dirty.markDirty();
+  }
+
+  Future<void> _addAssetTarget(List<_AssetOption> options) async {
+    final l10n = AppLocalizations.of(context);
+    final available = options
+        .where((option) => !_assetTargets.containsKey(option.assetId))
+        .toList(growable: false);
+    if (available.isEmpty) return;
+
+    final selected = await showAppSheet<_AssetOption>(
+      context: context,
+      title: l10n.targetAllocationEditorAddAssetTarget,
+      builder: (_) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final option in available)
+            FTile(
+              title: Text(option.label),
+              subtitle: Text(AssetCategoryVisuals.label(l10n, option.category)),
+              prefix: Icon(
+                AssetCategoryVisuals.icon(option.category),
+                size: AppIconSizes.h18,
+              ),
+              onPress: () => Navigator.of(context).pop(option),
+            ),
+        ],
+      ),
+    );
+    if (selected == null) return;
+
+    final controller = TextEditingController(text: '0');
+    controller.addListener(_handleTextEdit);
+    setState(() {
+      _assetTargets = {
+        ..._assetTargets,
+        selected.assetId: _AssetTargetDraft(
+          assetId: selected.assetId,
+          label: selected.label,
+          category: selected.category,
+          weight: 0,
+        ),
+      };
+      _assetControllers[selected.assetId] = controller;
+      _showTotalError = false;
+    });
+    widget.dirty.markDirty();
+  }
+
   Future<void> _save() async {
-    if (_fieldErrors.isNotEmpty) return;
+    if (_categoryErrors.isNotEmpty || _assetErrors.isNotEmpty) return;
     final allocation = _allocation;
     if (!allocation.isValid) {
       setState(() => _showTotalError = true);
@@ -159,14 +303,25 @@ class _TargetAllocationEditorSheetState
   TargetAllocation get _allocation => TargetAllocation(
     weights: {
       for (final category in _editableCategories)
-        category: (_weights[category] ?? 0) / 100,
+        category: (_categoryWeights[category] ?? 0) / 100,
+    },
+    assetTargets: {
+      for (final target in _assetTargets.values)
+        target.assetId: AssetTargetAllocation(
+          assetId: target.assetId,
+          label: target.label,
+          category: target.category,
+          weight: target.weight / 100,
+        ),
     },
   );
 
   double get _totalPct =>
-      _weights.values.fold<double>(0, (sum, value) => sum + value);
+      _categoryWeights.values.fold<double>(0, (sum, value) => sum + value) +
+      _assetTargets.values.fold<double>(0, (sum, value) => sum + value.weight);
 
-  bool get _canSave => _fieldErrors.isEmpty && _allocation.isValid;
+  bool get _canSave =>
+      _categoryErrors.isEmpty && _assetErrors.isEmpty && _allocation.isValid;
 
   String _formatInput(double value) {
     if (value == value.roundToDouble()) return value.round().toString();
@@ -178,6 +333,12 @@ class _TargetAllocationEditorSheetState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final assetOptions = _assetOptions(
+      ref.watch(dashboardSnapshotProvider).value,
+    );
+    final hasAvailableAssets = assetOptions.any(
+      (option) => !_assetTargets.containsKey(option.assetId),
+    );
     final totalValid = _allocation.isValid;
     final totalColor = totalValid
         ? context.theme.colors.primary
@@ -197,17 +358,70 @@ class _TargetAllocationEditorSheetState
               padding: EdgeInsets.zero,
               children: [
                 for (final category in _editableCategories) ...[
+                  if (category == _editableCategories.first) ...[
+                    _SectionLabel(
+                      label: l10n.targetAllocationEditorCategoryTargets,
+                    ),
+                    const SizedBox(height: AppSpacing.s6),
+                  ],
                   _AllocationRow(
-                    category: category,
-                    value: _weights[category] ?? 0,
-                    errorText: _fieldErrors[category],
-                    controller: _controllers[category]!,
-                    onSliderChanged: (value) => _setWeight(category, value),
+                    rowKey: 'category-${category.name}',
+                    label: AssetCategoryVisuals.label(l10n, category),
+                    icon: AssetCategoryVisuals.icon(category),
+                    value: _categoryWeights[category] ?? 0,
+                    errorText: _categoryErrors[category],
+                    controller: _categoryControllers[category]!,
+                    onSliderChanged: (value) =>
+                        _setCategoryWeight(category, value),
                   ),
                   const SizedBox(height: AppSpacing.s8),
                 ],
                 const SizedBox(height: AppSpacing.s4),
-                _TargetPreview(weights: _weights),
+                _SectionLabel(label: l10n.targetAllocationEditorAssetTargets),
+                const SizedBox(height: AppSpacing.s6),
+                if (_assetTargets.isEmpty)
+                  _EmptyAssetTargets(
+                    message: l10n.targetAllocationEditorNoAssetTargets,
+                  )
+                else
+                  for (final target in _assetTargets.values) ...[
+                    _AllocationRow(
+                      rowKey: 'asset-${target.assetId}',
+                      label: target.label,
+                      icon: AssetCategoryVisuals.icon(target.category),
+                      value: target.weight,
+                      errorText: _assetErrors[target.assetId],
+                      controller: _assetControllers[target.assetId]!,
+                      onSliderChanged: (value) =>
+                          _setAssetWeight(target.assetId, value),
+                      onRemove: () => _removeAssetTarget(target.assetId),
+                    ),
+                    const SizedBox(height: AppSpacing.s8),
+                  ],
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: hasAvailableAssets
+                      ? () => _addAssetTarget(assetOptions)
+                      : null,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+                      const SizedBox(width: AppSpacing.s6),
+                      Text(
+                        hasAvailableAssets
+                            ? l10n.targetAllocationEditorAddAssetTarget
+                            : l10n.targetAllocationEditorNoAssetsAvailable,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.s4),
+                _TargetPreview(
+                  categoryWeights: _categoryWeights,
+                  assetTargets: _assetTargets,
+                ),
               ],
             ),
           ),
@@ -239,6 +453,53 @@ class _TargetAllocationEditorSheetState
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: context.theme.typography.xs.copyWith(
+        color: context.theme.colors.mutedForeground,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+}
+
+class _EmptyAssetTargets extends StatelessWidget {
+  const _EmptyAssetTargets({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: context.theme.colors.muted.withValues(
+            alpha: AppOpacity.subtle,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s12),
+          child: Text(
+            message,
+            style: context.theme.typography.xs.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -315,24 +576,29 @@ class _TotalCard extends StatelessWidget {
 
 class _AllocationRow extends StatelessWidget {
   const _AllocationRow({
-    required this.category,
+    required this.rowKey,
+    required this.label,
+    required this.icon,
     required this.value,
     required this.controller,
     required this.onSliderChanged,
     this.errorText,
+    this.onRemove,
   });
 
-  final AssetCategory category;
+  final String rowKey;
+  final String label;
+  final IconData icon;
   final double value;
   final TextEditingController controller;
   final ValueChanged<double> onSliderChanged;
   final String? errorText;
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final label = AssetCategoryVisuals.label(l10n, category);
 
     return SoftCard(
       child: Padding(
@@ -343,7 +609,7 @@ class _AllocationRow extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  AssetCategoryVisuals.icon(category),
+                  icon,
                   size: AppIconSizes.h18,
                   color: colors.mutedForeground,
                 ),
@@ -354,7 +620,7 @@ class _AllocationRow extends StatelessWidget {
                 SizedBox(
                   width: 96,
                   child: FTextFormField(
-                    key: ValueKey('target-allocation-field-${category.name}'),
+                    key: ValueKey('target-allocation-field-$rowKey'),
                     control: FTextFieldControl.managed(controller: controller),
                     label: Text(l10n.targetAllocationEditorPercentLabel),
                     keyboardType: const TextInputType.numberWithOptions(
@@ -373,6 +639,14 @@ class _AllocationRow extends StatelessWidget {
                     forceErrorText: errorText,
                   ),
                 ),
+                if (onRemove != null) ...[
+                  const SizedBox(width: AppSpacing.s6),
+                  FButton.icon(
+                    variant: FButtonVariant.ghost,
+                    onPress: onRemove,
+                    child: const Icon(FLucideIcons.x, size: AppIconSizes.h18),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: AppSpacing.s8),
@@ -395,9 +669,13 @@ class _AllocationRow extends StatelessWidget {
 }
 
 class _TargetPreview extends StatelessWidget {
-  const _TargetPreview({required this.weights});
+  const _TargetPreview({
+    required this.categoryWeights,
+    required this.assetTargets,
+  });
 
-  final Map<AssetCategory, double> weights;
+  final Map<AssetCategory, double> categoryWeights;
+  final Map<String, _AssetTargetDraft> assetTargets;
 
   @override
   Widget build(BuildContext context) {
@@ -418,8 +696,19 @@ class _TargetPreview extends StatelessWidget {
             width: double.infinity,
             child: DeviationBar(
               label: AssetCategoryVisuals.label(l10n, category),
-              actualWeight: (weights[category] ?? 0) / 100,
-              targetWeight: (weights[category] ?? 0) / 100,
+              actualWeight: (categoryWeights[category] ?? 0) / 100,
+              targetWeight: (categoryWeights[category] ?? 0) / 100,
+              deviation: 0,
+              severity: DriftSeverity.ok,
+            ),
+          ),
+        for (final target in assetTargets.values)
+          SizedBox(
+            width: double.infinity,
+            child: DeviationBar(
+              label: target.label,
+              actualWeight: target.weight / 100,
+              targetWeight: target.weight / 100,
               deviation: 0,
               severity: DriftSeverity.ok,
             ),
@@ -427,4 +716,56 @@ class _TargetPreview extends StatelessWidget {
       ],
     );
   }
+}
+
+class _AssetTargetDraft {
+  const _AssetTargetDraft({
+    required this.assetId,
+    required this.label,
+    required this.category,
+    required this.weight,
+  });
+
+  final String assetId;
+  final String label;
+  final AssetCategory category;
+  final double weight;
+
+  _AssetTargetDraft copyWith({double? weight}) => _AssetTargetDraft(
+    assetId: assetId,
+    label: label,
+    category: category,
+    weight: weight ?? this.weight,
+  );
+}
+
+class _AssetOption {
+  const _AssetOption({
+    required this.assetId,
+    required this.label,
+    required this.category,
+  });
+
+  final String assetId;
+  final String label;
+  final AssetCategory category;
+}
+
+List<_AssetOption> _assetOptions(DashboardSnapshot? snapshot) {
+  if (snapshot == null) return const [];
+  final options = <_AssetOption>[];
+  for (final allocation in snapshot.allocations) {
+    if (allocation.isLiability) continue;
+    for (final item in allocation.items) {
+      options.add(
+        _AssetOption(
+          assetId: item.id,
+          label: item.name,
+          category: allocation.category,
+        ),
+      );
+    }
+  }
+  options.sort((a, b) => a.label.compareTo(b.label));
+  return options;
 }

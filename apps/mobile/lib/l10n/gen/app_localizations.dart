@@ -5862,7 +5862,7 @@ abstract class AppLocalizations {
   /// No description provided for @targetAllocationEditorSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Tune category weights; the total must equal 100%.'**
+  /// **'Tune category and asset weights; the total must equal 100%.'**
   String get targetAllocationEditorSubtitle;
 
   /// No description provided for @targetAllocationEditorEditAction.
@@ -5900,6 +5900,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use 0-100'**
   String get targetAllocationEditorRangeError;
+
+  /// No description provided for @targetAllocationEditorCategoryTargets.
+  ///
+  /// In en, this message translates to:
+  /// **'Category targets'**
+  String get targetAllocationEditorCategoryTargets;
+
+  /// No description provided for @targetAllocationEditorAssetTargets.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset targets'**
+  String get targetAllocationEditorAssetTargets;
+
+  /// No description provided for @targetAllocationEditorAddAssetTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Add asset target'**
+  String get targetAllocationEditorAddAssetTarget;
+
+  /// No description provided for @targetAllocationEditorNoAssetTargets.
+  ///
+  /// In en, this message translates to:
+  /// **'No single-asset targets yet.'**
+  String get targetAllocationEditorNoAssetTargets;
+
+  /// No description provided for @targetAllocationEditorNoAssetsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No available assets'**
+  String get targetAllocationEditorNoAssetsAvailable;
 
   /// No description provided for @targetAllocationEditorPreviewTitle.
   ///

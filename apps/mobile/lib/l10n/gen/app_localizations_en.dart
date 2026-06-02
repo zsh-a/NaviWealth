@@ -3385,7 +3385,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get targetAllocationEditorSubtitle =>
-      'Tune category weights; the total must equal 100%.';
+      'Tune category and asset weights; the total must equal 100%.';
 
   @override
   String get targetAllocationEditorEditAction => 'Custom target';
@@ -3406,6 +3406,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get targetAllocationEditorRangeError => 'Use 0-100';
+
+  @override
+  String get targetAllocationEditorCategoryTargets => 'Category targets';
+
+  @override
+  String get targetAllocationEditorAssetTargets => 'Asset targets';
+
+  @override
+  String get targetAllocationEditorAddAssetTarget => 'Add asset target';
+
+  @override
+  String get targetAllocationEditorNoAssetTargets =>
+      'No single-asset targets yet.';
+
+  @override
+  String get targetAllocationEditorNoAssetsAvailable => 'No available assets';
 
   @override
   String get targetAllocationEditorPreviewTitle => 'Target mix';
