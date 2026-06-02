@@ -1,5 +1,5 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
@@ -36,7 +36,12 @@ class ExpenseFiltersBar extends StatelessWidget {
         entry.key: localizedAccountPath(l10n, entry.value, expenseAccountById),
     };
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, 0),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s12,
+        AppSpacing.s16,
+        0,
+      ),
       child: Column(
         children: [
           FTextField(
@@ -46,7 +51,10 @@ class ExpenseFiltersBar extends StatelessWidget {
             ),
             hint: l10n.expenseListSearchHint,
             prefixBuilder: (ctx, style, variants) => const Padding(
-              padding: EdgeInsetsDirectional.only(start: AppSpacing.s12, end: AppSpacing.s8),
+              padding: EdgeInsetsDirectional.only(
+                start: AppSpacing.s12,
+                end: AppSpacing.s8,
+              ),
               child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
             ),
             suffixBuilder: keywordController.text.isEmpty
@@ -93,8 +101,7 @@ class ExpenseFiltersBar extends StatelessWidget {
                           FTile(
                             title: Text(l10n.expenseListAllCategories),
                             prefix: const Icon(FLucideIcons.x),
-                            onPress: () =>
-                                Navigator.of(ctx).pop<String?>(null),
+                            onPress: () => Navigator.of(ctx).pop<String?>(null),
                           ),
                           for (final a in expenseAccounts)
                             FTile(
@@ -173,10 +180,15 @@ class _SegmentChip extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s6,
+        ),
         decoration: selected
             ? BoxDecoration(
-                color: context.theme.colors.primary.withValues(alpha: AppOpacity.medium),
+                color: context.theme.colors.primary.withValues(
+                  alpha: AppOpacity.medium,
+                ),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               )
             : null,
@@ -212,7 +224,9 @@ class _FilterChip<T> extends StatelessWidget {
     return FButton(
       variant: active ? FButtonVariant.secondary : FButtonVariant.outline,
       onPress: onPick,
-      prefix: active ? const Icon(FLucideIcons.check, size: AppIconSizes.xs) : null,
+      prefix: active
+          ? const Icon(FLucideIcons.check, size: AppIconSizes.xs)
+          : null,
       suffix: active
           ? FButton.icon(
               variant: FButtonVariant.ghost,
@@ -260,7 +274,12 @@ class ExpenseGroupedList extends StatelessWidget {
         final item = items[i];
         return switch (item) {
           _ExpenseGroupHeader(:final group) => Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s8),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s16,
+              AppSpacing.s12,
+              AppSpacing.s16,
+              AppSpacing.s8,
+            ),
             child: Row(
               children: [
                 Flexible(
@@ -338,9 +357,9 @@ class _ExpenseRow extends StatelessWidget {
             ? l10n.expenseListUncategorized
             : localizedAccountName(l10n, account!),
       ),
-      prefix: CircleAvatar(
-        backgroundColor: accent.withValues(alpha: AppOpacity.medium),
-        child: Icon(account?.iconData ?? FLucideIcons.banknote, color: accent),
+      prefix: _ExpenseCategoryIcon(
+        icon: account?.iconData ?? FLucideIcons.banknote,
+        color: accent,
       ),
       subtitle: Text(
         [
@@ -357,6 +376,29 @@ class _ExpenseRow extends StatelessWidget {
         ),
       ),
       onPress: onTap,
+    );
+  }
+}
+
+class _ExpenseCategoryIcon extends StatelessWidget {
+  const _ExpenseCategoryIcon({required this.icon, required this.color});
+
+  static const double _size = 40;
+
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: _size,
+      height: _size,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: AppOpacity.medium),
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      alignment: Alignment.center,
+      child: Icon(icon, size: AppIconSizes.h18, color: color),
     );
   }
 }
