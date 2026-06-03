@@ -42,6 +42,9 @@ class AmountField extends StatefulWidget {
 }
 
 class _AmountFieldState extends State<AmountField> {
+  static final RegExp _positiveDecimalPattern = RegExp(r'^\d*\.?\d*$');
+  static final RegExp _signedDecimalPattern = RegExp(r'^-?\d*\.?\d*$');
+
   TextEditingController? _internalController;
 
   TextEditingController get _effectiveController =>
@@ -91,14 +94,16 @@ class _AmountFieldState extends State<AmountField> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final pattern = widget.allowNegative
-        ? RegExp(r'^-?\d*\.?\d*$')
-        : RegExp(r'^\d*\.?\d*$');
+        ? _signedDecimalPattern
+        : _positiveDecimalPattern;
     return FTextFormField(
       control: FTextFieldControl.managed(controller: _effectiveController),
       focusNode: widget.focusNode,
       textInputAction: widget.textInputAction ?? TextInputAction.next,
       onSubmit: widget.onFieldSubmitted,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      autocorrect: false,
+      enableSuggestions: false,
       inputFormatters: [FilteringTextInputFormatter.allow(pattern)],
       label: Text(widget.label),
       hint: widget.currencyCode == null ? null : '${widget.currencyCode} ',

@@ -28,6 +28,24 @@ Widget _wrap(Widget child, {required double keyboardInset}) {
 }
 
 void main() {
+  testWidgets('nested AppSheetSurface only installs one backdrop filter', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        keyboardInset: 0,
+        const AppSheetSurface(
+          child: AppSheetSurface(
+            child: SizedBox(key: Key('content'), height: 120),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('content')), findsOneWidget);
+    expect(find.byType(BackdropFilter), findsOneWidget);
+  });
+
   testWidgets(
     'AppSheet footer branch does not self-pad by the keyboard inset',
     (tester) async {

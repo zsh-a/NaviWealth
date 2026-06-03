@@ -58,7 +58,9 @@ class _SoftCardState extends State<SoftCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.onPress == null) return _buildCard(context, hovered: false, pressed: false);
+    if (widget.onPress == null) {
+      return _buildStaticCard(context);
+    }
 
     return Semantics(
       button: true,
@@ -84,7 +86,34 @@ class _SoftCardState extends State<SoftCard> {
     );
   }
 
-  Widget _buildCard(BuildContext context, {required bool hovered, required bool pressed}) {
+  Widget _buildStaticCard(BuildContext context) {
+    final decoration = _decoration(context, hovered: false, pressed: false);
+    return DecoratedBox(
+      decoration: decoration,
+      child: Padding(padding: widget.padding, child: widget.child),
+    );
+  }
+
+  Widget _buildCard(
+    BuildContext context, {
+    required bool hovered,
+    required bool pressed,
+  }) {
+    final decoration = _decoration(context, hovered: hovered, pressed: pressed);
+    return AnimatedContainer(
+      duration: Motion.fast,
+      curve: Motion.standardDecelerate,
+      decoration: decoration,
+      padding: widget.padding,
+      child: widget.child,
+    );
+  }
+
+  BoxDecoration _decoration(
+    BuildContext context, {
+    required bool hovered,
+    required bool pressed,
+  }) {
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
 
@@ -97,27 +126,25 @@ class _SoftCardState extends State<SoftCard> {
     final tint = !widget.onPress.isNull && (hovered || pressed)
         ? (widget.tinted
               ? (isDark
-                    ? colors.foreground.withValues(alpha: AppOpacity.faint + hoverBoost)
+                    ? colors.foreground.withValues(
+                        alpha: AppOpacity.faint + hoverBoost,
+                      )
                     : Colors.white.withValues(alpha: AppOpacity.nearOpaque))
               : colors.foreground.withValues(alpha: hoverBoost))
         : baseTint;
 
     final borderColor = widget.borderless
         ? Colors.transparent
-        : colors.foreground.withValues(alpha: isDark ? AppOpacity.faint : AppOpacity.whisper);
+        : colors.foreground.withValues(
+            alpha: isDark ? AppOpacity.faint : AppOpacity.whisper,
+          );
 
-    return AnimatedContainer(
-      duration: Motion.fast,
-      curve: Motion.standardDecelerate,
-      decoration: BoxDecoration(
-        color: tint,
-        borderRadius: BorderRadius.circular(widget.borderRadius),
-        border: widget.borderless
-            ? null
-            : Border.all(color: borderColor, width: 1),
-      ),
-      padding: widget.padding,
-      child: widget.child,
+    return BoxDecoration(
+      color: tint,
+      borderRadius: BorderRadius.circular(widget.borderRadius),
+      border: widget.borderless
+          ? null
+          : Border.all(color: borderColor, width: 1),
     );
   }
 }
