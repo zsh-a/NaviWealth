@@ -2,7 +2,7 @@
 ///
 /// **Every AI surface (capsule, pill, sparkle, banner, message bubble,
 /// timeline, etc.) must use these primitives.** Direct
-/// `Icons.auto_awesome_outlined`, `colorScheme.tertiary/secondary`,
+/// Material sparkle icons, `colorScheme.tertiary/secondary`,
 /// `OutlinedButton` for AI affordances, or ad-hoc decoration patterns
 /// are forbidden by §5.8 PR review.
 library;

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -38,9 +37,7 @@ class RouteErrorPage extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  hasError
-                      ? FLucideIcons.globe
-                      : FLucideIcons.circleAlert,
+                  hasError ? FLucideIcons.globe : FLucideIcons.circleAlert,
                   size: 56,
                   color: colors.destructive,
                 ),
@@ -64,7 +61,10 @@ class RouteErrorPage extends StatelessWidget {
                       FButton(
                         variant: FButtonVariant.outline,
                         onPress: () => smartPop(context),
-                        prefix: const Icon(FLucideIcons.arrowLeft, size: AppIconSizes.xs),
+                        prefix: const Icon(
+                          FLucideIcons.arrowLeft,
+                          size: AppIconSizes.xs,
+                        ),
                         child: Text(l10n.routeGoBack),
                       ),
                       const SizedBox(width: AppSpacing.s12),
@@ -72,7 +72,10 @@ class RouteErrorPage extends StatelessWidget {
                     FButton(
                       variant: FButtonVariant.primary,
                       onPress: () => context.go(AppRoutes.home),
-                      prefix: const Icon(FLucideIcons.home, size: AppIconSizes.sm),
+                      prefix: const Icon(
+                        FLucideIcons.home,
+                        size: AppIconSizes.sm,
+                      ),
                       child: Text(l10n.routeGoHome),
                     ),
                   ],

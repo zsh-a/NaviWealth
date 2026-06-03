@@ -1,6 +1,6 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -53,42 +53,49 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
       header: FHeader.nested(
         title: Text(l10n.dcaSimulatorTitle),
         prefixes: [backHeaderAction(context)],
+        suffixes: [
+          FHeaderAction(
+            icon: const Icon(FLucideIcons.refreshCw),
+            onPress: () => ref.read(dcaSimulationProvider.notifier).refresh(),
+          ),
+        ],
       ),
       childPad: false,
-      child: RefreshIndicator(
-        onRefresh: () => ref.read(dcaSimulationProvider.notifier).refresh(),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(Breakpoints.isMobile(MediaQuery.sizeOf(context).width) ? AppSpacing.s16 : AppSpacing.s24,
-            AppSpacing.s8,
-            Breakpoints.isMobile(MediaQuery.sizeOf(context).width) ? AppSpacing.s16 : AppSpacing.s24,
-            80 + MediaQuery.paddingOf(context).bottom,
-          ),
-          children: [
-            _DcaControls(
-              formKey: _formKey,
-              symbols: _symbols,
-              amount: _amount,
-              currency: _currency,
-              market: _market,
-              frequency: _frequency,
-              years: _years,
-              busy: state.isLoading,
-              onMarketChanged: (value) => setState(() => _market = value),
-              onFrequencyChanged: (value) => setState(() => _frequency = value),
-              onYearsChanged: (value) => setState(() => _years = value),
-              onRun: _run,
-            ),
-            const SizedBox(height: AppSpacing.s16),
-            state.when(
-              loading: () => const SkeletonBox(height: 360, radius: 8),
-              error: (error, _) =>
-                  _ErrorState(message: l10n.dcaSimulatorLoadError('$error')),
-              data: (data) =>
-                  _DcaResults(state: data, onDraft: () => _draftTrades(data)),
-            ),
-          ],
+      child: ListView(
+        padding: EdgeInsets.fromLTRB(
+          Breakpoints.isMobile(MediaQuery.sizeOf(context).width)
+              ? AppSpacing.s16
+              : AppSpacing.s24,
+          AppSpacing.s8,
+          Breakpoints.isMobile(MediaQuery.sizeOf(context).width)
+              ? AppSpacing.s16
+              : AppSpacing.s24,
+          80 + MediaQuery.paddingOf(context).bottom,
         ),
+        children: [
+          _DcaControls(
+            formKey: _formKey,
+            symbols: _symbols,
+            amount: _amount,
+            currency: _currency,
+            market: _market,
+            frequency: _frequency,
+            years: _years,
+            busy: state.isLoading,
+            onMarketChanged: (value) => setState(() => _market = value),
+            onFrequencyChanged: (value) => setState(() => _frequency = value),
+            onYearsChanged: (value) => setState(() => _years = value),
+            onRun: _run,
+          ),
+          const SizedBox(height: AppSpacing.s16),
+          state.when(
+            loading: () => const SkeletonBox(height: 360, radius: 8),
+            error: (error, _) =>
+                _ErrorState(message: l10n.dcaSimulatorLoadError('$error')),
+            data: (data) =>
+                _DcaResults(state: data, onDraft: () => _draftTrades(data)),
+          ),
+        ],
       ),
     );
   }
@@ -131,7 +138,9 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
     );
     for (final prefill in prefills) {
       final recorded = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(builder: (_) => TradeEntryFormPage(prefill: prefill)),
+        PageRouteBuilder<bool>(
+          pageBuilder: (_, _, _) => TradeEntryFormPage(prefill: prefill),
+        ),
       );
       if (!mounted || recorded != true) return;
     }
@@ -488,7 +497,9 @@ class _MetricShell extends StatelessWidget {
       width: 148,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: context.theme.colors.foreground.withValues(alpha: AppOpacity.whisper),
+          color: context.theme.colors.foreground.withValues(
+            alpha: AppOpacity.whisper,
+          ),
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Padding(
@@ -567,11 +578,16 @@ class _FreshnessChip extends StatelessWidget {
     };
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.theme.colors.foreground.withValues(alpha: AppOpacity.whisper),
+        color: context.theme.colors.foreground.withValues(
+          alpha: AppOpacity.whisper,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s10,
+          vertical: AppSpacing.s6,
+        ),
         child: Text(label, style: context.theme.typography.xs),
       ),
     );

@@ -59,6 +59,10 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
         prefixes: [backHeaderAction(context)],
         suffixes: [
           FHeaderAction(
+            icon: const Icon(FLucideIcons.refreshCw),
+            onPress: () => ref.invalidate(watchlistQuoteSnapshotsProvider),
+          ),
+          FHeaderAction(
             icon: const Icon(FLucideIcons.plus),
             semanticsLabel: l10n.watchlistAddAction,
             onPress: () => showWatchlistItemSheet(context: context),
@@ -66,20 +70,17 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
         ],
       ),
       childPad: false,
-      child: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(watchlistQuoteSnapshotsProvider),
-        child: items.when(
-          loading: () => const Center(child: FCircularProgress()),
-          error: (error, _) => Center(child: Text('$error')),
-          data: (items) => _WatchlistBody(
-            items: items,
-            snapshots: quotes.value ?? const [],
-            loadingQuotes: quotes.isLoading,
-            onAdd: () => showWatchlistItemSheet(context: context),
-            onEdit: (item) =>
-                showWatchlistItemSheet(context: context, item: item),
-            onRemove: (item) => _removeItem(item),
-          ),
+      child: items.when(
+        loading: () => const Center(child: FCircularProgress()),
+        error: (error, _) => Center(child: Text('$error')),
+        data: (items) => _WatchlistBody(
+          items: items,
+          snapshots: quotes.value ?? const [],
+          loadingQuotes: quotes.isLoading,
+          onAdd: () => showWatchlistItemSheet(context: context),
+          onEdit: (item) =>
+              showWatchlistItemSheet(context: context, item: item),
+          onRemove: (item) => _removeItem(item),
         ),
       ),
     );
@@ -157,7 +158,11 @@ class _WatchlistBody extends StatelessWidget {
     final byId = {for (final snapshot in snapshots) snapshot.item.id: snapshot};
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(hPad, AppSpacing.s8, hPad, 80 + MediaQuery.paddingOf(context).bottom,
+      padding: EdgeInsets.fromLTRB(
+        hPad,
+        AppSpacing.s8,
+        hPad,
+        80 + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
         if (items.isEmpty)
@@ -197,10 +202,7 @@ class _WatchlistEmpty extends StatelessWidget {
             color: context.theme.colors.mutedForeground,
           ),
           const SizedBox(height: AppSpacing.s12),
-          Text(
-            l10n.watchlistEmptyTitle,
-            style: context.theme.typography.lg,
-          ),
+          Text(l10n.watchlistEmptyTitle, style: context.theme.typography.lg),
           const SizedBox(height: AppSpacing.s6),
           Text(
             l10n.watchlistEmptyBody,
@@ -253,7 +255,9 @@ class _WatchlistRow extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: colors.foreground.withValues(alpha: AppOpacity.whisper),
+                  color: colors.foreground.withValues(
+                    alpha: AppOpacity.whisper,
+                  ),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 alignment: Alignment.center,
@@ -290,10 +294,7 @@ class _WatchlistRow extends StatelessWidget {
                   child: FCircularProgress(),
                 )
               else
-                Text(
-                  price,
-                  style: context.theme.typography.lg,
-                ),
+                Text(price, style: context.theme.typography.lg),
             ],
           ),
           const SizedBox(height: AppSpacing.s10),
@@ -366,11 +367,16 @@ class _RuleChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.theme.colors.foreground.withValues(alpha: AppOpacity.whisper),
+        color: context.theme.colors.foreground.withValues(
+          alpha: AppOpacity.whisper,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s10,
+          vertical: AppSpacing.s6,
+        ),
         child: Text(label, style: context.theme.typography.xs),
       ),
     );

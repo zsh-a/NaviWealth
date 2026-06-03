@@ -363,6 +363,12 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
       header: FHeader.nested(
         title: Text(l10n.portfolioHubTitle),
         prefixes: [backHeaderAction(context)],
+        suffixes: [
+          FHeaderAction(
+            icon: const Icon(FLucideIcons.refreshCw),
+            onPress: () => ref.read(portfolioHubProvider.notifier).refresh(),
+          ),
+        ],
       ),
       childPad: false,
       child: state.when(
@@ -373,13 +379,10 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
             child: Text(l10n.portfolioHubLoadError('$error')),
           ),
         ),
-        data: (data) => RefreshIndicator(
-          onRefresh: () => ref.read(portfolioHubProvider.notifier).refresh(),
-          child: _PortfolioHubBody(
-            data: data,
-            view: _view,
-            onViewChanged: (next) => setState(() => _view = next),
-          ),
+        data: (data) => _PortfolioHubBody(
+          data: data,
+          view: _view,
+          onViewChanged: (next) => setState(() => _view = next),
         ),
       ),
     );
@@ -406,7 +409,11 @@ class _PortfolioHubBody extends StatelessWidget {
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(hPad, AppSpacing.s8, hPad, 80 + MediaQuery.paddingOf(context).bottom,
+      padding: EdgeInsets.fromLTRB(
+        hPad,
+        AppSpacing.s8,
+        hPad,
+        80 + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
         _PortfolioSummary(data: data),
@@ -553,10 +560,7 @@ class _SummaryMetric extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.s4),
             if (amount == null)
-              Text(
-                value ?? '—',
-                style: context.theme.typography.lg,
-              )
+              Text(value ?? '—', style: context.theme.typography.lg)
             else
               AnimatedMoneyText(
                 amount: amount,
@@ -595,10 +599,7 @@ class _EngineExposureSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.portfolioHubEnginesTitle,
-          style: context.theme.typography.lg,
-        ),
+        Text(l10n.portfolioHubEnginesTitle, style: context.theme.typography.lg),
         const SizedBox(height: AppSpacing.s10),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -775,7 +776,8 @@ class _EventTimelineCard extends ConsumerWidget {
                 subtitle: '${formatters.date(row.date)} - ${row.subtitle}',
                 amount: row.detail,
               ),
-              if (row != visibleRows.last) const SizedBox(height: AppSpacing.s8),
+              if (row != visibleRows.last)
+                const SizedBox(height: AppSpacing.s8),
             ],
         ],
       ),
@@ -916,7 +918,9 @@ class PortfolioHubViewSegment extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: context.theme.colors.secondary.withValues(alpha: AppOpacity.disabled),
+        color: context.theme.colors.secondary.withValues(
+          alpha: AppOpacity.disabled,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       padding: const EdgeInsets.all(AppSpacing.s2),
@@ -964,7 +968,10 @@ class _ViewChip extends StatelessWidget {
       child: AnimatedContainer(
         duration: Motion.medium,
         curve: Motion.emphasizedDecelerate,
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8, horizontal: AppSpacing.s4),
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.s8,
+          horizontal: AppSpacing.s4,
+        ),
         decoration: BoxDecoration(
           color: selected
               ? context.theme.colors.background
@@ -1147,11 +1154,15 @@ class _WeightBar extends StatelessWidget {
       style: FDeterminateProgressStyle(
         constraints: const BoxConstraints.tightFor(height: 5),
         trackDecoration: ShapeDecoration(
-          shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+          shape: RoundedSuperellipseBorder(
+            borderRadius: context.theme.style.borderRadius.pill,
+          ),
           color: context.theme.colors.secondary,
         ),
         fillDecoration: ShapeDecoration(
-          shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+          shape: RoundedSuperellipseBorder(
+            borderRadius: context.theme.style.borderRadius.pill,
+          ),
           color: context.theme.colors.primary,
         ),
       ),
@@ -1166,10 +1177,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppEmptyState(
-      icon: FLucideIcons.chartPie,
-      title: message,
-    );
+    return AppEmptyState(icon: FLucideIcons.chartPie, title: message);
   }
 }
 
