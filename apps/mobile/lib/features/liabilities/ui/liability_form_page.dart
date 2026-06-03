@@ -232,13 +232,20 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                     onSubmit: (_) => _saving ? null : _save(),
                   ),
                   const SizedBox(height: AppSpacing.s12),
-                  _DateField(
+                  DateField(
                     label: l10n.liabilityFieldStartDate,
-                    value: _startDate,
-                    onChanged: (v) => setState(() {
-                      _startDate = v;
-                      dirty.markDirty();
-                    }),
+                    initialValue: _startDate,
+                    firstDate: DateTime(1990),
+                    lastDate: DateTime(2100),
+                    required: true,
+                    enabled: !_saving,
+                    onChanged: (v) {
+                      if (v == null) return;
+                      setState(() {
+                        _startDate = v;
+                        dirty.markDirty();
+                      });
+                    },
                   ),
                   const SizedBox(height: AppSpacing.s12),
                   FSelect<RepaymentMethod>(
@@ -369,50 +376,4 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
       },
     );
   }
-}
-
-class _DateField extends StatelessWidget {
-  const _DateField({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String label;
-  final DateTime value;
-  final ValueChanged<DateTime> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: value,
-          firstDate: DateTime(1990),
-          lastDate: DateTime(2100),
-        );
-        if (picked != null) onChanged(picked);
-      },
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          Text(
-            '${value.year}-${_pad(value.month)}-${_pad(value.day)}',
-            style: context.theme.typography.sm,
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _pad(int n) => n.toString().padLeft(2, '0');
 }

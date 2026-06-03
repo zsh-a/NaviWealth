@@ -361,7 +361,11 @@ class _BatchProposalView extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(FLucideIcons.layers, size: AppIconSizes.h18, color: colors.foreground),
+              Icon(
+                FLucideIcons.layers,
+                size: AppIconSizes.h18,
+                color: colors.foreground,
+              ),
               const SizedBox(width: AppSpacing.s8),
               Text(
                 l10n.aiChatProposalBatchPending(plan.children.length),
@@ -402,7 +406,10 @@ class _BatchProposalView extends ConsumerWidget {
               FButton(
                 variant: FButtonVariant.primary,
                 onPress: isApplying ? null : onConfirm,
-                prefix: const Icon(FLucideIcons.checkCheck, size: AppIconSizes.xs),
+                prefix: const Icon(
+                  FLucideIcons.checkCheck,
+                  size: AppIconSizes.xs,
+                ),
                 child: Text(
                   isApplying
                       ? l10n.aiChatProposalApplying
@@ -433,12 +440,19 @@ class _BatchChildrenList extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s6,
+      ),
       decoration: BoxDecoration(
-        color: context.theme.colors.background.withValues(alpha: AppOpacity.prominent),
+        color: context.theme.colors.background.withValues(
+          alpha: AppOpacity.prominent,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.xs),
         border: Border.all(
-          color: context.theme.colors.border.withValues(alpha: AppOpacity.disabled),
+          color: context.theme.colors.border.withValues(
+            alpha: AppOpacity.disabled,
+          ),
         ),
       ),
       child: Column(
@@ -512,7 +526,10 @@ class _BatchCollapsedView extends StatelessWidget {
       padding: const EdgeInsets.only(top: AppSpacing.s8),
       child: FCard.raw(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s12,
+            vertical: AppSpacing.s8,
+          ),
           child: Row(
             children: [
               Icon(icon, size: AppIconSizes.sm, color: color),
@@ -697,9 +714,16 @@ class _OneTapView extends ConsumerWidget {
     final registry = ref.watch(proposalKindRegistryProvider);
     return Container(
       margin: const EdgeInsets.only(top: AppSpacing.s8),
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s10, AppSpacing.s8, AppSpacing.s10),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s12,
+        AppSpacing.s10,
+        AppSpacing.s8,
+        AppSpacing.s10,
+      ),
       decoration: BoxDecoration(
-        color: AiTone.surfaceTint(context).withValues(alpha: AppOpacity.prominent),
+        color: AiTone.surfaceTint(
+          context,
+        ).withValues(alpha: AppOpacity.prominent),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Column(
@@ -806,10 +830,19 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
   static const _confirmToken = '确认';
 
   @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onTextChanged);
+  }
+
+  @override
   void dispose() {
+    _controller.removeListener(_onTextChanged);
     _controller.dispose();
     super.dispose();
   }
+
+  void _onTextChanged() => setState(() {});
 
   bool get _matches => _controller.text.trim() == _confirmToken;
 
@@ -833,7 +866,12 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
           onEdit: widget.onEdit,
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s8, AppSpacing.s12, 0),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s12,
+            AppSpacing.s8,
+            AppSpacing.s12,
+            0,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -844,32 +882,9 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
                 ).copyWith(color: AiTone.error(context)),
               ),
               const SizedBox(height: AppSpacing.s6),
-              TextField(
-                controller: _controller,
-                onChanged: (_) => setState(() {}),
-                style: AiType.body(context),
-                decoration: InputDecoration(
-                  hintText: _confirmToken,
-                  hintStyle: AiType.body(
-                    context,
-                  ).copyWith(color: AiTone.muted(context)),
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(color: AiTone.outline(context)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(
-                      color: AiTone.error(context),
-                      width: 1.5,
-                    ),
-                  ),
-                ),
+              FTextField(
+                control: FTextFieldControl.managed(controller: _controller),
+                hint: _confirmToken,
               ),
               if (!_matches)
                 Padding(
@@ -944,7 +959,10 @@ class _CollapsedView extends StatelessWidget {
       padding: const EdgeInsets.only(top: AppSpacing.s8),
       child: FCard.raw(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s12,
+            vertical: AppSpacing.s8,
+          ),
           child: Row(
             children: [
               Icon(icon, size: AppIconSizes.sm, color: color),
@@ -1157,12 +1175,19 @@ class ProposalPayloadDetails extends ConsumerWidget {
         const <ProposalKindRow>[];
     if (rows.isEmpty) return const SizedBox.shrink();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s6,
+      ),
       decoration: BoxDecoration(
-        color: context.theme.colors.background.withValues(alpha: AppOpacity.prominent),
+        color: context.theme.colors.background.withValues(
+          alpha: AppOpacity.prominent,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.xs),
         border: Border.all(
-          color: context.theme.colors.border.withValues(alpha: AppOpacity.disabled),
+          color: context.theme.colors.border.withValues(
+            alpha: AppOpacity.disabled,
+          ),
         ),
       ),
       child: Column(
@@ -1420,7 +1445,10 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
     if (widget.pending.length < 2) return const SizedBox.shrink();
     return Container(
       margin: const EdgeInsets.only(top: AppSpacing.s8),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s6,
+      ),
       decoration: BoxDecoration(
         color: colors.primary.withValues(alpha: AppOpacity.subtle),
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -1428,7 +1456,11 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
       ),
       child: Row(
         children: [
-          Icon(FLucideIcons.layers, size: AppIconSizes.h18, color: colors.primary),
+          Icon(
+            FLucideIcons.layers,
+            size: AppIconSizes.h18,
+            color: colors.primary,
+          ),
           const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: Text(
@@ -1538,13 +1570,20 @@ class _WarningCallout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s10, AppSpacing.s8, AppSpacing.s10, AppSpacing.s8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s10,
+        AppSpacing.s8,
+        AppSpacing.s10,
+        AppSpacing.s8,
+      ),
       decoration: BoxDecoration(
         color: AiTone.surfaceTint(context),
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border(
           left: BorderSide(
-            color: AiTone.active(context).withValues(alpha: AppOpacity.prominent),
+            color: AiTone.active(
+              context,
+            ).withValues(alpha: AppOpacity.prominent),
             width: 2,
           ),
         ),

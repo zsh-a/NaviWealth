@@ -650,16 +650,16 @@ class _AllocationRow extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.s8),
-            Material(
-              type: MaterialType.transparency,
-              child: Slider(
-                value: value.clamp(0, 100).toDouble(),
-                min: 0,
-                max: 100,
-                divisions: 1000,
-                label: '${value.toStringAsFixed(1)}%',
-                onChanged: onSliderChanged,
+            FSlider(
+              control: FSliderControl.liftedContinuous(
+                value: FSliderValue(max: value.clamp(0, 100).toDouble() / 100),
+                stepPercentage: 0.001,
+                onChange: (next) => onSliderChanged(next.max * 100),
               ),
+              tooltipBuilder: (_, next) =>
+                  Text('${(next * 100).toStringAsFixed(1)}%'),
+              semanticValueFormatterCallback: (next) =>
+                  '${(next * 100).toStringAsFixed(1)}%',
             ),
           ],
         ),

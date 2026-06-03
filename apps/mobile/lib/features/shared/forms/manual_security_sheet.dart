@@ -167,7 +167,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
 
     if (!mounted) return;
     // Drop the spinner before opening the picker dialog. Otherwise the
-    // CircularProgressIndicator keeps ticking while we're awaiting the
+    // The progress indicator keeps ticking while we're awaiting the
     // user's choice, which makes `pumpAndSettle` impossible in widget
     // tests and adds zero signal — the search has already returned.
     setState(() => _importing = false);
@@ -208,7 +208,9 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                   ),
                   title: Text(
                     hit.symbol,
-                    style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w600),
+                    style: context.theme.typography.sm.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   subtitle: Text(
                     [
@@ -309,7 +311,10 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                 key: const Key('manual-security-import'),
                 variant: FButtonVariant.ghost,
                 onPress: _importing ? null : _importFromNetwork,
-                prefix: const Icon(FLucideIcons.cloudDownload, size: AppIconSizes.sm),
+                prefix: const Icon(
+                  FLucideIcons.cloudDownload,
+                  size: AppIconSizes.sm,
+                ),
                 child: Text(
                   _importing
                       ? l10n.manualSecurityImporting

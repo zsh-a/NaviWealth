@@ -2,7 +2,6 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/haptics/haptics.dart';
 import '../../../../design_system/design_system.dart';
@@ -66,9 +65,6 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final dateFormat = DateFormat.yMMMd(
-      Localizations.maybeLocaleOf(context)?.toString(),
-    );
     return AppSheet(
       title: l10n.physicalAssetUpdateValuationTitle,
       footer: AppSheetFooter(
@@ -101,25 +97,20 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
               },
             ),
             const SizedBox(height: AppSpacing.s12),
-            GestureDetector(
-              onTap: _saving ? null : _pickDate,
-              behavior: HitTestBehavior.opaque,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.physicalAssetUpdateValuationDate,
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.s4),
-                  Text(
-                    dateFormat.format(_asOf),
-                    style: context.theme.typography.sm,
-                  ),
-                ],
-              ),
+            DateField(
+              label: l10n.physicalAssetUpdateValuationDate,
+              initialValue: _asOf,
+              firstDate: DateTime(1970),
+              lastDate: DateTime.now().add(const Duration(days: 1)),
+              required: true,
+              enabled: !_saving,
+              onChanged: (picked) {
+                if (picked == null) return;
+                setState(() {
+                  _asOf = picked;
+                  widget.dirty.markDirty();
+                });
+              },
             ),
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(
@@ -132,21 +123,6 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
         ),
       ),
     );
-  }
-
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _asOf,
-      firstDate: DateTime(1970),
-      lastDate: DateTime.now().add(const Duration(days: 1)),
-    );
-    if (picked != null) {
-      setState(() {
-        _asOf = picked;
-        widget.dirty.markDirty();
-      });
-    }
   }
 
   Future<void> _submit() async {
