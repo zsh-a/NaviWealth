@@ -1,8 +1,10 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show TextInputAction;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/format/formatters.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -48,6 +50,8 @@ class _BodyMeasurementEntrySheetState
   bool _saving = false;
   String? _valueError;
 
+  static final DateTime _firstCapturedAt = DateTime.utc(1970);
+
   @override
   void initState() {
     super.initState();
@@ -66,9 +70,9 @@ class _BodyMeasurementEntrySheetState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final dateText = MaterialLocalizations.of(
-      context,
-    ).formatMediumDate(_capturedAt);
+    final formatter = AppFormatters(locale: Localizations.localeOf(context));
+    final now = DateTime.now();
+    final today = _calendarDay(now);
     return AppSheet(
       title: l10n.healthBodyMeasurementTitle,
       subtitle: l10n.healthBodyMeasurementSubtitle,
@@ -124,15 +128,26 @@ class _BodyMeasurementEntrySheetState
               ),
             ],
             const SizedBox(height: AppSpacing.s12),
-            FormPickerRow(
-              label: l10n.commonDate,
-              value: dateText,
-              leading: Icon(
-                FLucideIcons.calendar,
-                size: AppIconSizes.sm,
-                color: context.theme.colors.mutedForeground,
+            FDateField.calendar(
+              label: Text(l10n.commonDate),
+              control: FDateFieldControl.lifted(
+                date: _calendarDay(_capturedAt),
+                onChange: _saving
+                    ? (_) {}
+                    : (date) {
+                        if (date == null) return;
+                        setState(() => _capturedAt = _dayAnchor(date));
+                        widget.dirty.markDirty();
+                      },
+                validator: (date) =>
+                    date == null ? l10n.formDateFieldRequired : null,
               ),
-              onPress: _saving ? null : _pickDate,
+              enabled: !_saving,
+              clearable: false,
+              start: _firstCapturedAt,
+              end: today.add(const Duration(days: 1)),
+              today: today,
+              format: (context, value, format) => formatter.date(value),
             ),
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(
@@ -145,18 +160,6 @@ class _BodyMeasurementEntrySheetState
         ),
       ),
     );
-  }
-
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _capturedAt,
-      firstDate: DateTime(1970),
-      lastDate: DateTime.now().add(const Duration(days: 1)),
-    );
-    if (picked == null) return;
-    setState(() => _capturedAt = _dayAnchor(picked));
-    widget.dirty.markDirty();
   }
 
   Future<void> _submit() async {
@@ -207,4 +210,7 @@ class _BodyMeasurementEntrySheetState
 
   static DateTime _dayAnchor(DateTime day) =>
       DateTime.utc(day.year, day.month, day.day, 12);
+
+  static DateTime _calendarDay(DateTime day) =>
+      DateTime.utc(day.year, day.month, day.day);
 }

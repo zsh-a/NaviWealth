@@ -341,7 +341,6 @@ class AppSheetFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     return Row(
       children: [
         Expanded(
@@ -363,14 +362,11 @@ class AppSheetFooter extends StatelessWidget {
                 : FButtonVariant.primary,
             onPress: busy ? null : onSubmit,
             child: busy
-                ? SizedBox(
+                ? const SizedBox(
                     width: AppIconSizes.h18,
                     height: AppIconSizes.h18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: AppSpacing.s2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        colors.primaryForeground,
-                      ),
+                    child: FCircularProgress(
+                      size: FCircularProgressSizeVariant.sm,
                     ),
                   )
                 : Text(submitLabel),

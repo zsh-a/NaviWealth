@@ -4351,6 +4351,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get formDateFieldClearTooltip => '清除';
 
   @override
+  String get formDateFieldTimeLabel => '时间';
+
+  @override
   String get formDateFieldRequired => '请选择日期';
 
   @override

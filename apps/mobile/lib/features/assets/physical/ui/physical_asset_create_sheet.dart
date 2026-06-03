@@ -4,7 +4,6 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:intl/intl.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
 import '../../../../core/haptics/haptics.dart';
@@ -114,9 +113,6 @@ class _PhysicalAssetCreateSheetState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final dateFormat = DateFormat.yMMMd(
-      Localizations.maybeLocaleOf(context)?.toString(),
-    );
     return AppSheet(
       title: _isVehicle
           ? l10n.physicalAssetAddVehicle
@@ -172,25 +168,20 @@ class _PhysicalAssetCreateSheetState
                 ),
                 const SizedBox(width: AppSpacing.s12),
                 Expanded(
-                  child: GestureDetector(
-                    onTap: _saving ? null : _pickPurchaseDate,
-                    behavior: HitTestBehavior.opaque,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.physicalAssetFieldPurchaseDate,
-                          style: context.theme.typography.xs.copyWith(
-                            color: context.theme.colors.mutedForeground,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.s4),
-                        Text(
-                          dateFormat.format(_purchaseDate),
-                          style: context.theme.typography.sm,
-                        ),
-                      ],
-                    ),
+                  child: DateField(
+                    label: l10n.physicalAssetFieldPurchaseDate,
+                    initialValue: _purchaseDate,
+                    firstDate: DateTime(1970),
+                    lastDate: DateTime.now().add(const Duration(days: 1)),
+                    required: true,
+                    enabled: !_saving,
+                    onChanged: (picked) {
+                      if (picked == null) return;
+                      setState(() {
+                        _purchaseDate = picked;
+                        widget.dirty.markDirty();
+                      });
+                    },
                   ),
                 ),
               ],
@@ -284,21 +275,6 @@ class _PhysicalAssetCreateSheetState
         ),
       ),
     );
-  }
-
-  Future<void> _pickPurchaseDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _purchaseDate,
-      firstDate: DateTime(1970),
-      lastDate: DateTime.now().add(const Duration(days: 1)),
-    );
-    if (picked != null) {
-      setState(() {
-        _purchaseDate = picked;
-        widget.dirty.markDirty();
-      });
-    }
   }
 
   Future<void> _submit() async {

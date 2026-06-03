@@ -38,7 +38,7 @@ void main() {
     expect(find.text('1/2/2026'), findsOneWidget);
   });
 
-  testWidgets('can render a date-time value for transaction records', (
+  testWidgets('can render date and time values for transaction records', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -46,6 +46,18 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('1/2/2026 09:30'), findsOneWidget);
+    expect(find.text('1/2/2026'), findsOneWidget);
+    expect(find.text('09:30'), findsOneWidget);
+  });
+
+  testWidgets('uses separate Forui date and time fields for date-time values', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(DateTime(2026, 1, 2, 9, 30), includeTime: true),
+    );
+
+    expect(find.byWidgetPredicate((w) => w is FDateField), findsOneWidget);
+    expect(find.byWidgetPredicate((w) => w is FTimeField), findsOneWidget);
   });
 }

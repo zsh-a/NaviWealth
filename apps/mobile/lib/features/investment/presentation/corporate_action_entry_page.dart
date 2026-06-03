@@ -2,10 +2,10 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
-import 'package:intl/intl.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../shared/forms/forms.dart';
 import '../domain/corporate_action_preview.dart';
 import '../domain/cost_basis/fifo_strategy.dart';
 import '../domain/cost_basis_engine.dart';
@@ -143,21 +143,6 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
     });
   }
 
-  Future<void> _pickEffectiveDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _effectiveDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-    if (picked != null) {
-      setState(() {
-        _effectiveDate = DateTime.utc(picked.year, picked.month, picked.day);
-        _preview = null;
-      });
-    }
-  }
-
   CorporateAction _buildAction(CorporateActionAsset asset) {
     final txId = _nextTxId();
     switch (_type) {
@@ -257,7 +242,6 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final dateFmt = DateFormat.yMd(Localizations.localeOf(context).toString());
     final asset = _selectedAsset;
 
     return FScaffold(
@@ -307,17 +291,24 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
                 description: Text(l10n.corpActionSelectAssetHint),
               ),
               const SizedBox(height: AppSpacing.s16),
-              // Effective date row.
-              FTile(
+              DateField(
                 key: const Key('corp-action-date'),
-                title: Text(l10n.corpActionEffectiveDate),
-                prefix: const Icon(FLucideIcons.calendar),
-                subtitle: Text(dateFmt.format(_effectiveDate)),
-                suffix: FButton.icon(
-                  variant: FButtonVariant.ghost,
-                  onPress: _pickEffectiveDate,
-                  child: const Icon(FLucideIcons.calendarPlus, size: AppIconSizes.md),
-                ),
+                label: l10n.corpActionEffectiveDate,
+                initialValue: _effectiveDate,
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2100),
+                required: true,
+                onChanged: (picked) {
+                  if (picked == null) return;
+                  setState(() {
+                    _effectiveDate = DateTime.utc(
+                      picked.year,
+                      picked.month,
+                      picked.day,
+                    );
+                    _preview = null;
+                  });
+                },
               ),
               const FDivider(),
               // Event type selector.
@@ -626,11 +617,7 @@ class _PreviewCard extends StatelessWidget {
     child: Row(
       children: [
         Flexible(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
         ),
         const SizedBox(width: AppSpacing.s12),
         Flexible(

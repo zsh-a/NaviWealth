@@ -4524,6 +4524,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get formDateFieldClearTooltip => 'Clear';
 
   @override
+  String get formDateFieldTimeLabel => 'Time';
+
+  @override
   String get formDateFieldRequired => 'Pick a date';
 
   @override

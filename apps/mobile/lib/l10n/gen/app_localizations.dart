@@ -7785,6 +7785,12 @@ abstract class AppLocalizations {
   /// **'Clear'**
   String get formDateFieldClearTooltip;
 
+  /// Generic time field label used next to DateField when editing date-time values.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get formDateFieldTimeLabel;
+
   /// DateField validator when the field is required and empty.
   ///
   /// In en, this message translates to:

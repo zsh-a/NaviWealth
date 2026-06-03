@@ -1354,6 +1354,7 @@
   "formNoteFieldLabelDefault": "备注",
 
   "formDateFieldClearTooltip": "清除",
+  "formDateFieldTimeLabel": "时间",
   "formDateFieldRequired": "请选择日期",
 
   "formAccountPickerLabelDefault": "账户",

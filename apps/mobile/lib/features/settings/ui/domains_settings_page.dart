@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -43,11 +43,20 @@ class DomainsSettingsPage extends ConsumerWidget {
       ),
       childPad: false,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.s16,
+          AppSpacing.s16,
+          AppSpacing.s16,
+          AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.s4, 0, AppSpacing.s4, AppSpacing.s12),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s4,
+              0,
+              AppSpacing.s4,
+              AppSpacing.s12,
+            ),
             child: Text(
               l10n.settingsDomainsIntro,
               style: context.theme.typography.sm.copyWith(
@@ -136,7 +145,9 @@ class _RowDivider extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
       child: Container(
         height: 1,
-        color: context.theme.colors.foreground.withValues(alpha: AppOpacity.whisper),
+        color: context.theme.colors.foreground.withValues(
+          alpha: AppOpacity.whisper,
+        ),
       ),
     );
   }
@@ -304,17 +315,20 @@ class _MorningBriefingHourRow extends ConsumerWidget {
   const _MorningBriefingHourRow();
 
   Future<void> _pick(BuildContext context, WidgetRef ref, int current) async {
-    final picked = await showTimePicker(
+    final l10n = AppLocalizations.of(context);
+    final picked = await showAppSheet<int>(
       context: context,
-      initialTime: TimeOfDay(hour: current, minute: 0),
-      helpText: AppLocalizations.of(context).settingsDomainsBriefingTimeHelp,
-      builder: (ctx, child) => MediaQuery(
-        data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
-        child: child ?? const SizedBox.shrink(),
+      title: l10n.settingsDomainsBriefingTimeTitle,
+      subtitle: l10n.settingsDomainsBriefingTimeHelp,
+      footer: FButton(
+        variant: FButtonVariant.outline,
+        onPress: () => Navigator.of(context).maybePop(),
+        child: Text(l10n.commonCancel),
       ),
+      builder: (_) => _MorningBriefingHourSheet(selectedHour: current),
     );
     if (picked == null) return;
-    await ref.read(morningBriefingHourProvider.notifier).set(picked.hour);
+    await ref.read(morningBriefingHourProvider.notifier).set(picked);
   }
 
   @override
@@ -328,6 +342,33 @@ class _MorningBriefingHourRow extends ConsumerWidget {
       subtitle: l10n.settingsDomainsBriefingTimeSubtitle(label),
       trailingValue: '$label:00',
       onTap: () => _pick(context, ref, hour),
+    );
+  }
+}
+
+class _MorningBriefingHourSheet extends StatelessWidget {
+  const _MorningBriefingHourSheet({required this.selectedHour});
+
+  final int selectedHour;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: AppSpacing.s8,
+      runSpacing: AppSpacing.s8,
+      children: [
+        for (var hour = 0; hour < 24; hour++)
+          SizedBox(
+            width: 72,
+            child: FButton(
+              variant: hour == selectedHour
+                  ? FButtonVariant.primary
+                  : FButtonVariant.outline,
+              onPress: () => Navigator.of(context).pop(hour),
+              child: Text('${hour.toString().padLeft(2, '0')}:00'),
+            ),
+          ),
+      ],
     );
   }
 }

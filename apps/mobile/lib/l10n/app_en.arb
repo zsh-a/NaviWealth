@@ -2420,6 +2420,8 @@
 
   "formDateFieldClearTooltip": "Clear",
   "@formDateFieldClearTooltip": { "description": "Tooltip on the icon that clears a tap-to-pick DateField." },
+  "formDateFieldTimeLabel": "Time",
+  "@formDateFieldTimeLabel": { "description": "Generic time field label used next to DateField when editing date-time values." },
   "formDateFieldRequired": "Pick a date",
   "@formDateFieldRequired": { "description": "DateField validator when the field is required and empty." },
 

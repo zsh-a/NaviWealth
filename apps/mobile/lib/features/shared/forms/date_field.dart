@@ -1,11 +1,8 @@
-import 'package:flutter/material.dart'
-    show TimeOfDay, showDatePicker, showTimePicker;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
-import '../../../design_system/design_system.dart';
-
 import '../../../core/format/formatters.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 /// Tap-to-pick date input rendered on top of [FTextFormField].
@@ -20,6 +17,7 @@ class DateField extends StatefulWidget {
     this.required = false,
     this.helperText,
     this.includeTime = false,
+    this.enabled = true,
   });
 
   final String label;
@@ -30,6 +28,7 @@ class DateField extends StatefulWidget {
   final bool required;
   final String? helperText;
   final bool includeTime;
+  final bool enabled;
 
   @override
   State<DateField> createState() => _DateFieldState();
@@ -37,15 +36,12 @@ class DateField extends StatefulWidget {
 
 class _DateFieldState extends State<DateField> {
   late DateTime? _value;
-  final _controller = TextEditingController();
   Locale? _locale;
-  bool _syncQueued = false;
 
   @override
   void initState() {
     super.initState();
     _value = widget.initialValue;
-    _syncController();
   }
 
   @override
@@ -54,7 +50,6 @@ class _DateFieldState extends State<DateField> {
     final locale = Localizations.localeOf(context);
     if (_locale != locale) {
       _locale = locale;
-      _syncController();
     }
   }
 
@@ -63,7 +58,6 @@ class _DateFieldState extends State<DateField> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialValue != widget.initialValue) {
       _value = widget.initialValue;
-      _queueControllerSync();
     }
   }
 
@@ -79,120 +73,208 @@ class _DateFieldState extends State<DateField> {
         : formatters.date(value);
   }
 
-  void _syncController() {
-    final text = _format(_value);
-    if (_controller.text != text) {
-      _controller.text = text;
+  String _formatDate(DateTime value) {
+    final locale = _locale;
+    if (locale == null) {
+      return value.toIso8601String().split('T').first;
     }
-  }
-
-  void _queueControllerSync() {
-    if (_syncQueued) return;
-    _syncQueued = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _syncQueued = false;
-      if (!mounted) return;
-      _syncController();
-    });
+    return AppFormatters(locale: locale).date(value);
   }
 
   void _setValue(DateTime? value) {
-    setState(() {
-      _value = value;
-      _syncController();
-    });
+    setState(() => _value = value);
     widget.onChanged?.call(value);
-  }
-
-  DateTime _clampInitialDate(DateTime date, DateTime first, DateTime last) {
-    if (date.isBefore(first)) return first;
-    if (date.isAfter(last)) return last;
-    return date;
-  }
-
-  Future<void> _pick(BuildContext context) async {
-    final today = DateTime.now();
-    final firstDate =
-        widget.firstDate ?? DateTime(today.year - 30, today.month, today.day);
-    final lastDate =
-        widget.lastDate ?? DateTime(today.year + 30, today.month, today.day);
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _clampInitialDate(_value ?? today, firstDate, lastDate),
-      firstDate: firstDate,
-      lastDate: lastDate,
-    );
-    if (picked == null) return;
-    if (!widget.includeTime) {
-      _setValue(picked);
-      return;
-    }
-
-    if (!context.mounted) return;
-    final existing = _value ?? today;
-    final pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(existing),
-    );
-    if (pickedTime == null) return;
-    _setValue(
-      DateTime(
-        picked.year,
-        picked.month,
-        picked.day,
-        pickedTime.hour,
-        pickedTime.minute,
-      ),
-    );
-  }
-
-  void _clear() {
-    if (widget.required) return;
-    _setValue(null);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FTextFormField(
-      control: FTextFieldControl.managed(controller: _controller),
-      readOnly: true,
-      onTap: () => _pick(context),
+    final today = DateTime.now();
+    final firstDate =
+        widget.firstDate ?? DateTime(today.year - 30, today.month, today.day);
+    final lastDate =
+        widget.lastDate ?? DateTime(today.year + 30, today.month, today.day);
+    if (widget.includeTime) {
+      return _DateTimeField(
+        label: widget.label,
+        value: _value,
+        helperText: widget.helperText,
+        required: widget.required,
+        enabled: widget.enabled,
+        firstDate: firstDate,
+        lastDate: lastDate,
+        format: _format,
+        formatDate: _formatDate,
+        onChanged: _setValue,
+      );
+    }
+    return FDateField.calendar(
+      control: FDateFieldControl.lifted(
+        date: _value == null ? null : _calendarDay(_value!),
+        onChange: (date) {
+          if (date == null) {
+            _setValue(null);
+            return;
+          }
+          final existing = _value;
+          _setValue(
+            widget.includeTime && existing != null
+                ? DateTime(
+                    date.year,
+                    date.month,
+                    date.day,
+                    existing.hour,
+                    existing.minute,
+                    existing.second,
+                    existing.millisecond,
+                    existing.microsecond,
+                  )
+                : date,
+          );
+        },
+        validator: (date) {
+          if (widget.required && date == null) {
+            return l10n.formDateFieldRequired;
+          }
+          return null;
+        },
+      ),
       label: Text(widget.label),
       description: widget.helperText == null ? null : Text(widget.helperText!),
-      suffixBuilder: (ctx, style, variants) => _value == null
-          ? Padding(
-              padding: const EdgeInsetsDirectional.only(end: 8),
-              child: Icon(
-                FLucideIcons.calendarDays,
-                size: AppIconSizes.h18,
-                color: ctx.theme.colors.mutedForeground,
-              ),
-            )
-          : Padding(
-              padding: const EdgeInsetsDirectional.only(end: 4),
-              child: FButton.icon(
-                variant: FButtonVariant.ghost,
-                onPress: widget.required ? null : _clear,
-                child: Icon(
-                  FLucideIcons.x,
-                  size: AppIconSizes.h18,
-                  semanticLabel: l10n.formDateFieldClearTooltip,
-                ),
-              ),
-            ),
-      validator: (_) {
-        if (widget.required && _value == null) {
-          return l10n.formDateFieldRequired;
-        }
-        return null;
-      },
+      enabled: widget.enabled,
+      start: _calendarDay(firstDate),
+      end: _calendarDay(lastDate),
+      today: _calendarDay(today),
+      clearable: !widget.required,
+      format: (context, value, format) => _format(_value ?? value),
     );
   }
 
+  static DateTime _calendarDay(DateTime day) =>
+      DateTime.utc(day.year, day.month, day.day);
+}
+
+class _DateTimeField extends StatelessWidget {
+  const _DateTimeField({
+    required this.label,
+    required this.value,
+    required this.helperText,
+    required this.required,
+    required this.enabled,
+    required this.firstDate,
+    required this.lastDate,
+    required this.format,
+    required this.formatDate,
+    required this.onChanged,
+  });
+
+  final String label;
+  final DateTime? value;
+  final String? helperText;
+  final bool required;
+  final bool enabled;
+  final DateTime firstDate;
+  final DateTime lastDate;
+  final String Function(DateTime? value) format;
+  final String Function(DateTime value) formatDate;
+  final ValueChanged<DateTime?> onChanged;
+
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final dateValue = value == null ? null : _calendarDay(value!);
+    final timeValue = value == null ? null : FTime.fromDateTime(value!);
+    final description = helperText == null ? null : Text(helperText!);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 3,
+          child: FDateField.calendar(
+            control: FDateFieldControl.lifted(
+              date: dateValue,
+              onChange: (date) {
+                if (date == null) {
+                  onChanged(null);
+                  return;
+                }
+                onChanged(_combine(date, timeValue ?? FTime.now()));
+              },
+              validator: (date) {
+                if (required && date == null) {
+                  return l10n.formDateFieldRequired;
+                }
+                return null;
+              },
+            ),
+            label: Text(label),
+            description: description,
+            enabled: enabled,
+            start: _calendarDay(firstDate),
+            end: _calendarDay(lastDate),
+            today: _calendarDay(DateTime.now()),
+            clearable: !required,
+            format: (context, value, format) => formatDate(value),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s12),
+        Expanded(
+          flex: 2,
+          child: FTimeField.picker(
+            control: FTimeFieldControl.lifted(
+              time: timeValue,
+              onChange: (FTime? time) {
+                if (time == null) {
+                  onChanged(null);
+                  return;
+                }
+                onChanged(
+                  _combine(dateValue ?? _calendarDay(DateTime.now()), time),
+                );
+              },
+            ),
+            label: Text(l10n.formDateFieldTimeLabel),
+            enabled: enabled,
+            hour24: true,
+            clearable: !required,
+            forceErrorText: required && timeValue == null
+                ? l10n.formDateFieldRequired
+                : null,
+          ),
+        ),
+      ],
+    );
   }
+
+  DateTime _combine(DateTime date, FTime time) {
+    return _clamp(
+      DateTime(date.year, date.month, date.day, time.hour, time.minute),
+    );
+  }
+
+  DateTime _clamp(DateTime dateTime) {
+    final first = DateTime(
+      firstDate.year,
+      firstDate.month,
+      firstDate.day,
+      0,
+      0,
+    );
+    final last = DateTime(
+      lastDate.year,
+      lastDate.month,
+      lastDate.day,
+      23,
+      59,
+      59,
+      999,
+      999,
+    );
+    if (dateTime.isBefore(first)) return first;
+    if (dateTime.isAfter(last)) return last;
+    return dateTime;
+  }
+
+  static DateTime _calendarDay(DateTime day) =>
+      DateTime.utc(day.year, day.month, day.day);
 }
