@@ -2,7 +2,6 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
@@ -21,7 +20,7 @@ Future<bool?> showBodyMeasurementEntrySheet({
     dirtyGuard: dirty,
     builder: (_) =>
         BodyMeasurementEntrySheet(initialKind: initialKind, dirty: dirty),
-  );
+  ).whenComplete(dirty.dispose);
 }
 
 class BodyMeasurementEntrySheet extends ConsumerStatefulWidget {
@@ -67,9 +66,9 @@ class _BodyMeasurementEntrySheetState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final dateFormat = DateFormat.yMMMd(
-      Localizations.maybeLocaleOf(context)?.toString(),
-    );
+    final dateText = MaterialLocalizations.of(
+      context,
+    ).formatMediumDate(_capturedAt);
     return AppSheet(
       title: l10n.healthBodyMeasurementTitle,
       subtitle: l10n.healthBodyMeasurementSubtitle,
@@ -127,7 +126,7 @@ class _BodyMeasurementEntrySheetState
             const SizedBox(height: AppSpacing.s12),
             FormPickerRow(
               label: l10n.commonDate,
-              value: dateFormat.format(_capturedAt),
+              value: dateText,
               leading: Icon(
                 FLucideIcons.calendar,
                 size: AppIconSizes.sm,

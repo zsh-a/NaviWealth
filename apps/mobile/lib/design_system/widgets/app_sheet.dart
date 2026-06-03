@@ -402,7 +402,8 @@ class _GuardedSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: controller,
-      builder: (context, _) {
+      child: child,
+      builder: (context, child) {
         return PopScope(
           canPop: !controller.isDirty && !controller.busy,
           onPopInvokedWithResult: (didPop, _) async {
@@ -410,11 +411,21 @@ class _GuardedSheet extends StatelessWidget {
             final ok = confirmDismiss == null ? true : await confirmDismiss!();
             if (ok && context.mounted) Navigator.of(context).pop();
           },
-          child: child,
+          child: child!,
         );
       },
     );
   }
+}
+
+class _AppSheetSurfaceScope extends InheritedWidget {
+  const _AppSheetSurfaceScope({required super.child});
+
+  static bool hasSurface(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<_AppSheetSurfaceScope>() != null;
+
+  @override
+  bool updateShouldNotify(_AppSheetSurfaceScope oldWidget) => false;
 }
 
 /// Shared sheet surface for custom sheet bodies that cannot use [AppSheet].
@@ -438,6 +449,8 @@ class AppSheetSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (_AppSheetSurfaceScope.hasSurface(context)) return child;
+
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
     final surface = colors.background.withValues(
@@ -447,20 +460,22 @@ class AppSheetSurface extends StatelessWidget {
       alpha: isDark ? AppOpacity.light : AppOpacity.subtle,
     );
 
-    return ClipRRect(
-      borderRadius: borderRadius,
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(
-          sigmaX: AppBlur.sheet,
-          sigmaY: AppBlur.sheet,
-        ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: surface,
-            border:
-                border ?? Border(top: BorderSide(color: hairline, width: 1)),
+    return _AppSheetSurfaceScope(
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(
+            sigmaX: AppBlur.sheet,
+            sigmaY: AppBlur.sheet,
           ),
-          child: SafeArea(top: safeTop, bottom: safeBottom, child: child),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: surface,
+              border:
+                  border ?? Border(top: BorderSide(color: hairline, width: 1)),
+            ),
+            child: SafeArea(top: safeTop, bottom: safeBottom, child: child),
+          ),
         ),
       ),
     );

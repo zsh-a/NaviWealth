@@ -133,41 +133,45 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
           );
     final total = groups.fold<double>(0, (sum, g) => sum + g.value);
 
-    final list = ListView(
-      shrinkWrap: !widget.expandList,
-      physics: widget.expandList
-          ? const AlwaysScrollableScrollPhysics()
-          : const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s20,
-        18,
-        AppSpacing.s20,
-        AppSpacing.s24,
+    final content = <Widget>[
+      _AllocationDonut(
+        groups: groups,
+        total: total,
+        currencyCode: widget.snapshot.baseCurrency,
       ),
-      children: [
-        _AllocationDonut(
-          groups: groups,
+      const SizedBox(height: AppSpacing.s20),
+      for (final group in groups)
+        _BreakdownRow(
+          group: group,
           total: total,
-          currencyCode: widget.snapshot.baseCurrency,
+          baseCurrency: widget.snapshot.baseCurrency,
+          selected: selected?.key == group.key,
+          onTap: () => setState(() => _selectedKey = group.key),
         ),
+      if (selected != null) ...[
         const SizedBox(height: AppSpacing.s20),
-        for (final group in groups)
-          _BreakdownRow(
-            group: group,
-            total: total,
-            baseCurrency: widget.snapshot.baseCurrency,
-            selected: selected?.key == group.key,
-            onTap: () => setState(() => _selectedKey = group.key),
-          ),
-        if (selected != null) ...[
-          const SizedBox(height: AppSpacing.s20),
-          _DrillDownList(
-            group: selected,
-            baseCurrency: widget.snapshot.baseCurrency,
-          ),
-        ],
+        _DrillDownList(
+          group: selected,
+          baseCurrency: widget.snapshot.baseCurrency,
+        ),
       ],
+    ];
+
+    const contentPadding = EdgeInsets.fromLTRB(
+      AppSpacing.s20,
+      18,
+      AppSpacing.s20,
+      AppSpacing.s24,
     );
+    final list = widget.expandList
+        ? ListView(padding: contentPadding, children: content)
+        : Padding(
+            padding: contentPadding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: content,
+            ),
+          );
 
     return Column(
       mainAxisSize: widget.expandList ? MainAxisSize.max : MainAxisSize.min,
@@ -463,12 +467,7 @@ class _BreakdownRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSpacing.s8),
       child: FTappable(
         onPress: onTap,
-        child: AnimatedContainer(
-          duration: Motion.fast,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s12,
-            vertical: AppSpacing.s10,
-          ),
+        child: DecoratedBox(
           decoration: BoxDecoration(
             color: selected
                 ? colors.primary.withValues(alpha: AppOpacity.faint)
@@ -480,52 +479,58 @@ class _BreakdownRow extends StatelessWidget {
                   : colors.foreground.withValues(alpha: AppOpacity.faint),
             ),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: group.color.withValues(alpha: AppOpacity.medium),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Icon(
-                  group.icon,
-                  size: AppIconSizes.h18,
-                  color: group.color,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s10),
-              Expanded(
-                child: Text(
-                  group.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s12,
+              vertical: AppSpacing.s10,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: group.color.withValues(alpha: AppOpacity.medium),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Icon(
+                    group.icon,
+                    size: AppIconSizes.h18,
+                    color: group.color,
                   ),
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  MoneyText(
-                    amount: group.value,
-                    currencyCode: baseCurrency,
-                    compact: true,
+                const SizedBox(width: AppSpacing.s10),
+                Expanded(
+                  child: Text(
+                    group.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: context.theme.typography.sm.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Text(
-                    '${pct.toStringAsFixed(pct >= 10 ? 0 : 1)}%',
-                    style: context.theme.typography.xs.copyWith(
-                      color: colors.mutedForeground,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    MoneyText(
+                      amount: group.value,
+                      currencyCode: baseCurrency,
+                      compact: true,
+                      style: context.theme.typography.sm.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    Text(
+                      '${pct.toStringAsFixed(pct >= 10 ? 0 : 1)}%',
+                      style: context.theme.typography.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

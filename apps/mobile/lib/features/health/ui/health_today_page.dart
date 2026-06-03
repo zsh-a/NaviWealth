@@ -12,6 +12,8 @@
 /// so HealthOS reads as the same app as Finance / Knowledge.
 library;
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -263,15 +265,27 @@ class _MetricGrid extends ConsumerWidget {
             ? 3
             : 2;
         const gap = AppSpacing.s8;
-        final itemWidth =
-            (constraints.maxWidth - gap * (columns - 1)) / columns;
-        return Wrap(
-          spacing: gap,
-          runSpacing: gap,
-          children: [
-            for (final card in cards) SizedBox(width: itemWidth, child: card),
-          ],
-        );
+        final rows = <Widget>[];
+        for (var i = 0; i < cards.length; i += columns) {
+          final end = math.min(i + columns, cards.length);
+          rows.add(
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var j = i; j < end; j++) ...[
+                  if (j > i) const SizedBox(width: gap),
+                  Expanded(child: cards[j]),
+                ],
+                for (var j = end; j < i + columns; j++) ...[
+                  const SizedBox(width: gap),
+                  const Spacer(),
+                ],
+              ],
+            ),
+          );
+          if (end < cards.length) rows.add(const SizedBox(height: gap));
+        }
+        return Column(children: rows);
       },
     );
   }
