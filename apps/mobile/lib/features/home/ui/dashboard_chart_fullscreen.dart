@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart' show MaterialPageRoute;
-import '../../../design_system/design_system.dart';
 import 'package:flutter/services.dart';
-import '../../../design_system/design_system.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
+
+import '../../../design_system/design_system.dart';
 
 Future<void> showDashboardChartFullscreen({
   required BuildContext context,
@@ -11,9 +10,12 @@ Future<void> showDashboardChartFullscreen({
   required Widget child,
 }) {
   return Navigator.of(context).push<void>(
-    MaterialPageRoute<void>(
+    PageRouteBuilder<void>(
       fullscreenDialog: true,
-      builder: (_) => _DashboardChartFullscreenPage(title: title, child: child),
+      pageBuilder: (_, _, _) =>
+          _DashboardChartFullscreenPage(title: title, child: child),
+      transitionsBuilder: (_, animation, _, child) =>
+          FadeTransition(opacity: animation, child: child),
     ),
   );
 }
@@ -63,7 +65,10 @@ class _DashboardChartFullscreenPageState
       ),
       childPad: false,
       child: SafeArea(
-        child: Padding(padding: const EdgeInsets.all(AppSpacing.s16), child: widget.child),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s16),
+          child: widget.child,
+        ),
       ),
     );
   }

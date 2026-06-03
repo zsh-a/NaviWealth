@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show Colors, Material;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -387,7 +388,9 @@ class _TradeList extends StatelessWidget {
     );
     for (final draft in drafts) {
       final recorded = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(builder: (_) => TradeEntryFormPage(prefill: draft)),
+        PageRouteBuilder<bool>(
+          pageBuilder: (_, _, _) => TradeEntryFormPage(prefill: draft),
+        ),
       );
       if (!context.mounted || recorded != true) return;
     }

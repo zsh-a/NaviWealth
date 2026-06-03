@@ -17,7 +17,6 @@ library;
 
 import 'dart:async';
 
-import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -134,7 +133,12 @@ class _AskAiResultPaneState extends State<AskAiResultPane> {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return Container(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s12,
+        AppSpacing.s16,
+        AppSpacing.s12,
+      ),
       decoration: BoxDecoration(
         color: colors.secondary,
         border: Border(bottom: BorderSide(color: colors.border, width: 1)),
@@ -225,7 +229,10 @@ class _StatusBadge extends StatelessWidget {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s8,
+          vertical: AppSpacing.s2,
+        ),
         decoration: BoxDecoration(
           color: colors.background,
           borderRadius: BorderRadius.circular(AppRadius.xs),
