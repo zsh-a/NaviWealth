@@ -228,17 +228,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        FButton(
+                        AppBusyButton(
                           key: const ValueKey('login.submit'),
                           variant: FButtonVariant.primary,
-                          onPress: _submitting ? null : _submit,
-                          child: Text(
-                            _submitting
-                                ? ''
-                                : _mode == _AuthMode.signIn
-                                ? l10n.authLoginSubmit
-                                : l10n.authRegisterSubmit,
-                          ),
+                          onPress: _submit,
+                          busy: _submitting,
+                          label: _mode == _AuthMode.signIn
+                              ? l10n.authLoginSubmit
+                              : l10n.authRegisterSubmit,
                         ),
                         const SizedBox(height: AppSpacing.s8),
                         FButton(

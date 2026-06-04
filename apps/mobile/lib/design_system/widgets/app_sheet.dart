@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
+import 'app_busy_button.dart';
 import 'form_dirty_controller.dart';
 
 /// Unified bottom-sheet shell — every modal sheet in the app should
@@ -355,21 +356,14 @@ class AppSheetFooter extends StatelessWidget {
         ),
         const SizedBox(width: AppSpacing.s12),
         Expanded(
-          child: FButton(
-            key: submitKey,
+          child: AppBusyButton(
+            buttonKey: submitKey,
             variant: destructive
                 ? FButtonVariant.destructive
                 : FButtonVariant.primary,
-            onPress: busy ? null : onSubmit,
-            child: busy
-                ? const SizedBox(
-                    width: AppIconSizes.h18,
-                    height: AppIconSizes.h18,
-                    child: FCircularProgress(
-                      size: FCircularProgressSizeVariant.sm,
-                    ),
-                  )
-                : Text(submitLabel),
+            onPress: onSubmit,
+            busy: busy,
+            label: submitLabel,
           ),
         ),
       ],

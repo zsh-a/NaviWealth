@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../../l10n/gen/app_localizations.dart';
 import 'back_navigation.dart';
 
 /// Standard back action for [FHeader.nested.prefixes].
@@ -22,7 +23,12 @@ FHeaderAction backHeaderAction(
   Future<bool> Function()? confirmLeave,
 }) {
   return FHeaderAction(
-    icon: const Icon(FLucideIcons.arrowLeft, size: 18),
+    icon: const Icon(
+      FLucideIcons.arrowLeft,
+      key: ValueKey('app.back'),
+      size: 18,
+    ),
+    semanticsLabel: AppLocalizations.of(context).routeGoBack,
     onPress: () async {
       if (confirmLeave != null) {
         final mayLeave = await confirmLeave();

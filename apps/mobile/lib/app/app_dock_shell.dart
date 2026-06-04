@@ -109,6 +109,7 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
 
     return ExitConfirmingSystemBackScope(
       onBack: _handleSystemBackBeforeExit,
+      disarmKey: location,
       child: showDock
           ? _DockChrome(specs: specs, activePath: location, child: widget.child)
           : widget.child,

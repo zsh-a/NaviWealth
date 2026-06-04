@@ -15,6 +15,7 @@ Future<bool?> showConfirmDialog({
 }) {
   return showFDialog<bool>(
     context: context,
+    barrierDismissible: false,
     builder: (ctx, style, animation) => FDialog(
       title: title,
       body: body,

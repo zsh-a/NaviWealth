@@ -21,22 +21,30 @@ class OnboardingPage extends ConsumerStatefulWidget {
 }
 
 class _OnboardingPageState extends ConsumerState<OnboardingPage> {
-  bool _busy = false;
+  _OnboardingChoice? _busyChoice;
 
   Future<void> _pickCloud() async {
-    if (_busy) return;
-    setState(() => _busy = true);
-    await ref.read(authControllerProvider.notifier).chooseCloud();
-    if (!mounted) return;
-    context.go(AppRoutes.login);
+    if (_busyChoice != null) return;
+    setState(() => _busyChoice = _OnboardingChoice.cloud);
+    try {
+      await ref.read(authControllerProvider.notifier).chooseCloud();
+      if (!mounted) return;
+      context.go(AppRoutes.login);
+    } finally {
+      if (mounted) setState(() => _busyChoice = null);
+    }
   }
 
   Future<void> _pickLocal() async {
-    if (_busy) return;
-    setState(() => _busy = true);
-    await ref.read(authControllerProvider.notifier).enterLocalOnlyMode();
-    // Route guard handles the redirect away from /onboarding once the
-    // state flips to AuthLocalOnly.
+    if (_busyChoice != null) return;
+    setState(() => _busyChoice = _OnboardingChoice.local);
+    try {
+      await ref.read(authControllerProvider.notifier).enterLocalOnlyMode();
+      // Route guard handles the redirect away from /onboarding once the
+      // state flips to AuthLocalOnly.
+    } finally {
+      if (mounted) setState(() => _busyChoice = null);
+    }
   }
 
   @override
@@ -83,7 +91,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       icon: FLucideIcons.cloud,
                       title: l10n.onboardingCloudTitle,
                       description: l10n.onboardingCloudDescription,
-                      onTap: _busy ? null : _pickCloud,
+                      busy: _busyChoice == _OnboardingChoice.cloud,
+                      onTap: _busyChoice == null ? _pickCloud : null,
                     ),
                     const SizedBox(height: AppSpacing.s12),
                     _ModeCard(
@@ -91,7 +100,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       icon: FLucideIcons.smartphone,
                       title: l10n.onboardingLocalOnlyTitle,
                       description: l10n.onboardingLocalOnlyDescription,
-                      onTap: _busy ? null : _pickLocal,
+                      busy: _busyChoice == _OnboardingChoice.local,
+                      onTap: _busyChoice == null ? _pickLocal : null,
                     ),
                   ],
                 ),
@@ -104,18 +114,22 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   }
 }
 
+enum _OnboardingChoice { cloud, local }
+
 class _ModeCard extends StatelessWidget {
   const _ModeCard({
     super.key,
     required this.icon,
     required this.title,
     required this.description,
+    required this.busy,
     required this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String description;
+  final bool busy;
   final VoidCallback? onTap;
 
   @override
@@ -123,7 +137,10 @@ class _ModeCard extends StatelessWidget {
     final colors = context.theme.colors;
     return SoftCard(
       onPress: onTap,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 18),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: 18,
+      ),
       child: Row(
         children: [
           Container(
@@ -152,7 +169,18 @@ class _ModeCard extends StatelessWidget {
               ],
             ),
           ),
-          Icon(FLucideIcons.chevronRight, color: colors.mutedForeground, size: AppIconSizes.md),
+          if (busy)
+            const SizedBox(
+              width: AppIconSizes.h18,
+              height: AppIconSizes.h18,
+              child: FCircularProgress(size: FCircularProgressSizeVariant.sm),
+            )
+          else
+            Icon(
+              FLucideIcons.chevronRight,
+              color: colors.mutedForeground,
+              size: AppIconSizes.md,
+            ),
         ],
       ),
     );
