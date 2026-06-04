@@ -1,7 +1,11 @@
-import 'package:flutter/widgets.dart';
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../../core/haptics/haptics.dart';
+import '../theme/semantic_colors.dart';
+import '../tokens/dimens_tokens.dart';
 
 /// Toast severity levels.
 enum ToastKind { success, warning, error, info }
@@ -75,19 +79,6 @@ class AppMessenger {
     if (state == null) return;
     _cachedToaster = state;
 
-    final variant = switch (kind) {
-      ToastKind.error => FToastVariant.destructive,
-      ToastKind.warning => FToastVariant.destructive,
-      ToastKind.success => FToastVariant.primary,
-      ToastKind.info => FToastVariant.primary,
-    };
-    final icon = Icon(switch (kind) {
-      ToastKind.success => FLucideIcons.circleCheck,
-      ToastKind.warning => FLucideIcons.triangleAlert,
-      ToastKind.error => FLucideIcons.circleX,
-      ToastKind.info => FLucideIcons.info,
-    });
-
     // Fire haptic feedback matching the toast severity.
     switch (kind) {
       case ToastKind.success:
@@ -101,23 +92,141 @@ class AppMessenger {
 
     state.show(
       context: usingCachedState ? null : context,
-      builder: (ctx, entry) => FToast(
-        variant: variant,
-        icon: icon,
-        title: Text(message),
-        suffix: actionLabel != null && onAction != null
-            ? FButton(
-                variant: FButtonVariant.ghost,
-                onPress: () {
-                  onAction();
-                  entry.dismiss();
-                },
-                child: Text(actionLabel),
-              )
-            : null,
+      builder: (ctx, entry) => _AppToastSurface(
+        kind: kind,
+        message: message,
+        actionLabel: actionLabel,
+        onAction: onAction == null
+            ? null
+            : () {
+                onAction();
+                entry.dismiss();
+              },
       ),
       duration: duration,
     );
+  }
+}
+
+class _AppToastSurface extends StatelessWidget {
+  const _AppToastSurface({
+    required this.kind,
+    required this.message,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final ToastKind kind;
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final palette = _ToastPalette.resolve(context, kind);
+    final isDark = colors.brightness == Brightness.dark;
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+    final maxWidth = math.min(
+      420.0,
+      math.max(AppSpacing.s64, viewportWidth - AppSpacing.s32),
+    );
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Color.alphaBlend(
+            palette.container.withValues(alpha: isDark ? 0.55 : 0.72),
+            colors.background,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: palette.accent.withValues(alpha: isDark ? 0.34 : 0.26),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.34 : 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s14,
+            vertical: AppSpacing.s12,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(palette.icon, color: palette.accent, size: AppIconSizes.md),
+              const SizedBox(width: AppSpacing.s10),
+              Flexible(
+                child: Text(
+                  message,
+                  style: context.theme.typography.sm.copyWith(
+                    color: colors.foreground,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (actionLabel != null && onAction != null) ...[
+                const SizedBox(width: AppSpacing.s8),
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  size: FButtonSizeVariant.sm,
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: onAction,
+                  child: Text(
+                    actionLabel!,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ToastPalette {
+  const _ToastPalette({
+    required this.accent,
+    required this.container,
+    required this.icon,
+  });
+
+  final Color accent;
+  final Color container;
+  final IconData icon;
+
+  static _ToastPalette resolve(BuildContext context, ToastKind kind) {
+    final semantic = SemanticColors.of(context);
+    return switch (kind) {
+      ToastKind.success => _ToastPalette(
+        accent: semantic.success,
+        container: semantic.successContainer,
+        icon: FLucideIcons.circleCheck,
+      ),
+      ToastKind.warning => _ToastPalette(
+        accent: semantic.warning,
+        container: semantic.warningContainer,
+        icon: FLucideIcons.triangleAlert,
+      ),
+      ToastKind.error => _ToastPalette(
+        accent: semantic.danger,
+        container: semantic.dangerContainer,
+        icon: FLucideIcons.circleX,
+      ),
+      ToastKind.info => _ToastPalette(
+        accent: semantic.info,
+        container: semantic.infoContainer,
+        icon: FLucideIcons.info,
+      ),
+    };
   }
 }
 

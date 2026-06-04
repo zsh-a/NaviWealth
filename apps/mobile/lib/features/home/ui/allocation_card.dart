@@ -61,6 +61,7 @@ class AllocationCard extends StatelessWidget {
           objectLabel: l10n.dashboardAllocationTitle,
         ),
         child: SoftCard(
+          level: SoftCardLevel.raised,
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s20),
             child: LayoutBuilder(
@@ -96,7 +97,10 @@ class AllocationCard extends StatelessWidget {
                           child: FButton.icon(
                             variant: FButtonVariant.ghost,
                             onPress: () => _openFullscreen(context),
-                            child: const Icon(FLucideIcons.maximize, size: AppIconSizes.md),
+                            child: const Icon(
+                              FLucideIcons.maximize,
+                              size: AppIconSizes.md,
+                            ),
                           ),
                         ),
                       ],
@@ -497,7 +501,12 @@ class _SankeyPainter extends CustomPainter {
         layout.assetRect.width,
         targetHeight,
       );
-      _drawRibbon(canvas, source, target, flow.color.withValues(alpha: AppOpacity.muted));
+      _drawRibbon(
+        canvas,
+        source,
+        target,
+        flow.color.withValues(alpha: AppOpacity.muted),
+      );
       nodePaint.color = flow.color;
       canvas.drawRRect(
         RRect.fromRectAndRadius(source, const Radius.circular(AppRadius.xs)),
@@ -633,9 +642,7 @@ class _SankeyPainter extends CustomPainter {
     final subtitle = TextPainter(
       text: TextSpan(
         text: value,
-        style: TypographyTokens.numericCaption.copyWith(
-          color: valueColor,
-        ),
+        style: TypographyTokens.numericCaption.copyWith(color: valueColor),
       ),
       textDirection: TextDirection.ltr,
       textAlign: align,
@@ -744,7 +751,10 @@ class _LegendRow extends StatelessWidget {
           // than this, so the InkWell pads itself out vertically.
           constraints: const BoxConstraints(minHeight: 48),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12, horizontal: AppSpacing.s8),
+            padding: const EdgeInsets.symmetric(
+              vertical: AppSpacing.s12,
+              horizontal: AppSpacing.s8,
+            ),
             child: Row(
               children: [
                 Container(
@@ -822,7 +832,12 @@ class CategoryDrillDownSheet extends StatelessWidget {
         : allocation.totalInBase.amount.toDouble();
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s24),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s16,
+          AppSpacing.s8,
+          AppSpacing.s16,
+          AppSpacing.s24,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

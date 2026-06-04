@@ -56,6 +56,7 @@ class TrendCard extends ConsumerWidget {
           orElse: () => const SizedBox.shrink(),
         ),
         child: SoftCard(
+          level: SoftCardLevel.raised,
           padding: const EdgeInsets.all(AppSpacing.s20),
           borderRadius: 18,
           child: Column(
@@ -81,10 +82,16 @@ class TrendCard extends ConsumerWidget {
                                 title: l10n.dashboardTrendTitle,
                                 child: const _TrendFullscreenContent(),
                               ),
-                        child: const Icon(FLucideIcons.maximize, size: AppIconSizes.md),
+                        child: const Icon(
+                          FLucideIcons.maximize,
+                          size: AppIconSizes.md,
+                        ),
                       ),
                     ),
-                    orElse: () => const SizedBox(width: AppSpacing.s48, height: AppSpacing.s48),
+                    orElse: () => const SizedBox(
+                      width: AppSpacing.s48,
+                      height: AppSpacing.s48,
+                    ),
                   ),
                 ],
               ),
@@ -237,7 +244,10 @@ class _RangeChip extends StatelessWidget {
     return FTappable(
       onPress: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s10,
+          vertical: AppSpacing.s4,
+        ),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.xs),
