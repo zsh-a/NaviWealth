@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(Widget child) {
   return MaterialApp(
     theme: AppTheme.light(),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('en'),
     home: FTheme(data: FThemes.slate.light.desktop, child: child),
   );
 }
@@ -26,7 +30,39 @@ void main() {
       expect(find.text('今日 · HealthOS'), findsOneWidget);
       expect(find.byKey(const Key('body')), findsOneWidget);
       // Tab roots are the back-target — they must not render a back arrow.
-      expect(find.byIcon(Icons.arrow_back_ios_new), findsNothing);
+      expect(find.byKey(const ValueKey('app.back')), findsNothing);
+    });
+
+    testWidgets('keeps header controls reachable when title collapses', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          DomainTabScaffold(
+            title: 'Activity',
+            actions: [
+              FHeaderAction(
+                icon: const Icon(FLucideIcons.search, key: Key('search')),
+                onPress: () {},
+              ),
+            ],
+            child: ListView.builder(
+              itemCount: 60,
+              itemBuilder: (context, index) =>
+                  SizedBox(height: 48, child: Text('row $index')),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Activity'), findsOneWidget);
+      expect(find.byKey(const Key('search')), findsOneWidget);
+
+      await tester.drag(find.text('row 10'), const Offset(0, -260));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Activity'), findsNothing);
+      expect(find.byKey(const Key('search')), findsOneWidget);
     });
   });
 
@@ -44,7 +80,7 @@ void main() {
       expect(find.byKey(const Key('detail')), findsOneWidget);
       // The whole point: a pushed detail page can never forget the back
       // arrow — it comes from the scaffold, not the page.
-      expect(find.byIcon(Icons.arrow_back_ios_new), findsOneWidget);
+      expect(find.byKey(const ValueKey('app.back')), findsOneWidget);
     });
 
     testWidgets('renders trailing actions alongside the back arrow', (
@@ -64,7 +100,7 @@ void main() {
           ),
         ),
       );
-      expect(find.byIcon(Icons.arrow_back_ios_new), findsOneWidget);
+      expect(find.byKey(const ValueKey('app.back')), findsOneWidget);
       expect(find.byKey(const Key('edit')), findsOneWidget);
     });
   });

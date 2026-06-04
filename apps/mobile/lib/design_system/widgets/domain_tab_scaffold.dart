@@ -107,20 +107,28 @@ class _DomainTabScaffoldState extends State<DomainTabScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    final hasControls = widget.leading != null || widget.actions.isNotEmpty;
+    final prefixes = widget.leading == null
+        ? const <Widget>[]
+        : <Widget>[widget.leading!];
     final header = AnimatedSize(
       duration: Motion.medium,
       curve: Motion.standard,
       alignment: Alignment.topCenter,
       child: _headerVisible
           ? FHeader.nested(
-              prefixes: widget.leading == null
-                  ? const <Widget>[]
-                  : <Widget>[widget.leading!],
+              prefixes: prefixes,
               title: Text(widget.title),
               suffixes: widget.actions,
             )
-          // Full-width zero-height placeholder: collapsing to nothing frees
-          // the entire top band (the chosen "顶部全部让出" behaviour).
+          // Keep shell controls reachable while the title collapses away.
+          // Pages with no controls still collapse to zero height.
+          : hasControls
+          ? FHeader.nested(
+              prefixes: prefixes,
+              title: const SizedBox.shrink(),
+              suffixes: widget.actions,
+            )
           : const SizedBox(width: double.infinity),
     );
 

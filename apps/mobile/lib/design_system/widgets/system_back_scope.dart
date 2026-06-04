@@ -60,11 +60,13 @@ class ExitConfirmingSystemBackScope extends StatefulWidget {
     super.key,
     required this.child,
     this.onBack,
+    this.disarmKey,
     this.exitWindow = const Duration(seconds: 2),
   });
 
   final Widget child;
   final SystemBackHandler? onBack;
+  final Object? disarmKey;
   final Duration exitWindow;
 
   @override
@@ -76,6 +78,14 @@ class _ExitConfirmingSystemBackScopeState
     extends State<ExitConfirmingSystemBackScope> {
   bool _exitArmed = false;
   Timer? _exitResetTimer;
+
+  @override
+  void didUpdateWidget(ExitConfirmingSystemBackScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.disarmKey != oldWidget.disarmKey) {
+      _disarmExit();
+    }
+  }
 
   @override
   void dispose() {
@@ -104,6 +114,7 @@ class _ExitConfirmingSystemBackScopeState
       context,
       ToastKind.info,
       AppLocalizations.of(context).pressBackAgainToExit,
+      duration: widget.exitWindow,
     );
     _exitResetTimer?.cancel();
     _exitResetTimer = Timer(widget.exitWindow, () {
@@ -116,7 +127,12 @@ class _ExitConfirmingSystemBackScopeState
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) => _onSystemBack(didPop),
-      child: widget.child,
+      child: Listener(
+        onPointerDown: (_) {
+          if (_exitArmed) _disarmExit();
+        },
+        child: widget.child,
+      ),
     );
   }
 }

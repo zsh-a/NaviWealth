@@ -110,6 +110,31 @@ void main() {
       expect(platformPopCalls, 1);
     });
 
+    testWidgets('navigating after first back disarms root exit', (
+      tester,
+    ) async {
+      var platformPopCalls = 0;
+      _captureSystemNavigatorPop(tester, (_) => platformPopCalls++);
+
+      final router = await _boot(tester, AppRoutes.home);
+      expect(_path(router), AppRoutes.home);
+
+      final first = await tester.binding.handlePopRoute();
+      await _drain(tester);
+      expect(first, isTrue);
+      expect(platformPopCalls, 0);
+
+      router.go(AppRoutes.activity);
+      await _drain(tester);
+      expect(_path(router), AppRoutes.activity);
+
+      final second = await tester.binding.handlePopRoute();
+      await _drain(tester);
+      expect(second, isTrue);
+      expect(_path(router), AppRoutes.home);
+      expect(platformPopCalls, 0);
+    });
+
     testWidgets('/login root → first back arms, second back exits', (
       tester,
     ) async {
