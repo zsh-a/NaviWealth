@@ -2,6 +2,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 
 /// Unified scaffold for a domain's **top-level tab / hub page** (Today,
@@ -124,11 +125,7 @@ class _DomainTabScaffoldState extends State<DomainTabScaffold> {
           // Keep shell controls reachable while the title collapses away.
           // Pages with no controls still collapse to zero height.
           : hasControls
-          ? FHeader.nested(
-              prefixes: prefixes,
-              title: const SizedBox.shrink(),
-              suffixes: widget.actions,
-            )
+          ? _CompactHeaderControls(prefixes: prefixes, actions: widget.actions)
           : const SizedBox(width: double.infinity),
     );
 
@@ -138,6 +135,27 @@ class _DomainTabScaffoldState extends State<DomainTabScaffold> {
         header: header,
         childPad: widget.childPad,
         child: widget.child,
+      ),
+    );
+  }
+}
+
+class _CompactHeaderControls extends StatelessWidget {
+  const _CompactHeaderControls({required this.prefixes, required this.actions});
+
+  final List<Widget> prefixes;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRect(
+      child: SizedBox(
+        height: AppSpacing.s56,
+        child: FHeader.nested(
+          prefixes: prefixes,
+          title: const SizedBox.shrink(),
+          suffixes: actions,
+        ),
       ),
     );
   }

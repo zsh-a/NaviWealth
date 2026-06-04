@@ -4,6 +4,8 @@ import 'package:forui/forui.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 
+enum SoftCardLevel { flat, raised, hero }
+
 /// A calmer container than `FCard.raw` — replaces 1px crisp outlines
 /// with a 6%-alpha border + a 2%-alpha tint pulled from the foreground.
 /// The result reads as a "surface" rather than a "component", giving
@@ -25,6 +27,7 @@ class SoftCard extends StatefulWidget {
     this.borderRadius = AppRadius.sm,
     this.tinted = true,
     this.borderless = false,
+    this.level = SoftCardLevel.flat,
   });
 
   final Widget child;
@@ -40,6 +43,11 @@ class SoftCard extends StatefulWidget {
   /// Drop the border entirely. Useful for inline rows in inset grouped
   /// lists where the outer section already provides the boundary.
   final bool borderless;
+
+  /// Visual depth. Defaults to [SoftCardLevel.flat] for dense repeated
+  /// rows. Use [SoftCardLevel.raised] for primary dashboard cards and
+  /// [SoftCardLevel.hero] for the one most important card on a surface.
+  final SoftCardLevel level;
 
   @override
   State<SoftCard> createState() => _SoftCardState();
@@ -145,7 +153,49 @@ class _SoftCardState extends State<SoftCard> {
       border: widget.borderless
           ? null
           : Border.all(color: borderColor, width: 1),
+      boxShadow: _shadows(
+        colors,
+        isDark: isDark,
+        hovered: hovered,
+        pressed: pressed,
+      ),
     );
+  }
+
+  List<BoxShadow>? _shadows(
+    FColors colors, {
+    required bool isDark,
+    required bool hovered,
+    required bool pressed,
+  }) {
+    final level = pressed && widget.onPress != null
+        ? SoftCardLevel.flat
+        : widget.level;
+    final alphaBoost = hovered && widget.onPress != null ? 0.02 : 0.0;
+    final shadowColor = isDark
+        ? Colors.black.withValues(alpha: 0.30 + alphaBoost)
+        : Colors.black.withValues(alpha: 0.05 + alphaBoost);
+    final ambientColor = colors.foreground.withValues(
+      alpha: isDark ? 0.04 : 0.03,
+    );
+    return switch (level) {
+      SoftCardLevel.flat => null,
+      SoftCardLevel.raised => [
+        BoxShadow(
+          color: shadowColor,
+          blurRadius: 18,
+          offset: const Offset(0, 8),
+        ),
+      ],
+      SoftCardLevel.hero => [
+        BoxShadow(
+          color: shadowColor,
+          blurRadius: 26,
+          offset: const Offset(0, 14),
+        ),
+        BoxShadow(color: ambientColor, blurRadius: 2),
+      ],
+    };
   }
 }
 
