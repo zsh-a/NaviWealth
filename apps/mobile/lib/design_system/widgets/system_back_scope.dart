@@ -1,6 +1,13 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import '../../l10n/gen/app_localizations.dart';
+import 'app_toast.dart';
 import 'back_navigation.dart';
+
+typedef SystemBackHandler = bool Function(BuildContext context);
 
 /// Gives a full-canvas route that lives **outside the dock shell** the
 /// same Android system-back safety net the shell provides via its own
@@ -37,6 +44,79 @@ class SystemBackScope extends StatelessWidget {
         smartPop(context, fallback: fallback);
       },
       child: child,
+    );
+  }
+}
+
+/// Intercepts a root-level system back gesture and requires a second back
+/// within [exitWindow] before leaving the app.
+///
+/// [onBack] can handle app-specific back behavior first (for example:
+/// pop a route, jump from another primary tab to Home, clear a selected
+/// detail). Returning `true` consumes the gesture and disarms any pending
+/// exit confirmation. Returning `false` falls through to the exit arm.
+class ExitConfirmingSystemBackScope extends StatefulWidget {
+  const ExitConfirmingSystemBackScope({
+    super.key,
+    required this.child,
+    this.onBack,
+    this.exitWindow = const Duration(seconds: 2),
+  });
+
+  final Widget child;
+  final SystemBackHandler? onBack;
+  final Duration exitWindow;
+
+  @override
+  State<ExitConfirmingSystemBackScope> createState() =>
+      _ExitConfirmingSystemBackScopeState();
+}
+
+class _ExitConfirmingSystemBackScopeState
+    extends State<ExitConfirmingSystemBackScope> {
+  bool _exitArmed = false;
+  Timer? _exitResetTimer;
+
+  @override
+  void dispose() {
+    _exitResetTimer?.cancel();
+    super.dispose();
+  }
+
+  void _disarmExit() {
+    _exitResetTimer?.cancel();
+    _exitArmed = false;
+  }
+
+  void _onSystemBack(bool didPop) {
+    if (didPop) return;
+    if (widget.onBack?.call(context) ?? false) {
+      _disarmExit();
+      return;
+    }
+    if (_exitArmed) {
+      _exitResetTimer?.cancel();
+      SystemNavigator.pop();
+      return;
+    }
+    _exitArmed = true;
+    AppMessenger.show(
+      context,
+      ToastKind.info,
+      AppLocalizations.of(context).pressBackAgainToExit,
+    );
+    _exitResetTimer?.cancel();
+    _exitResetTimer = Timer(widget.exitWindow, () {
+      if (mounted) _exitArmed = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) => _onSystemBack(didPop),
+      child: widget.child,
     );
   }
 }

@@ -1,7 +1,4 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -49,9 +46,6 @@ class AppDockShell extends ConsumerStatefulWidget {
 
 class _AppDockShellState extends ConsumerState<AppDockShell> {
   late final ShareIntentService _shareIntentService;
-  bool _exitArmed = false;
-  Timer? _exitResetTimer;
-  static const Duration _exitWindow = Duration(seconds: 2);
 
   @override
   void initState() {
@@ -65,7 +59,6 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
 
   @override
   void dispose() {
-    _exitResetTimer?.cancel();
     _shareIntentService.stop();
     super.dispose();
   }
@@ -74,37 +67,22 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
   /// dismiss a modal / clear `?selected=`") to the shared [attemptBack]
   /// primitive so system back, the toolbar arrow, and the Esc shortcut
   /// stay in lockstep; only the app-shell-specific tail (tab-root jump,
-  /// double-back-to-exit) lives here:
+  /// exit confirmation) lives here:
   ///  1–3. delegated to [attemptBack];
   ///  4. at any primary tab root other than Finance Home → jump to /
   ///     (treats Health tabs as primary roots; back from /health goes
   ///     to /home, matching the single-app exit model);
-  ///  5. at Finance Home → double-back-to-exit.
-  void _onSystemBack(bool didPop) {
-    if (didPop) return;
-    if (attemptBack(context)) return;
+  ///  5. at Finance Home → fall through to [ExitConfirmingSystemBackScope].
+  bool _handleSystemBackBeforeExit(BuildContext context) {
+    if (attemptBack(context)) return true;
     final goRouter = GoRouter.of(context);
     final loc = goRouter.routeInformationProvider.value.uri.path;
     if (loc != AppRoutes.home &&
         ref.read(primaryTabPathsProvider).contains(loc)) {
       goRouter.go(AppRoutes.home);
-      return;
+      return true;
     }
-    if (_exitArmed) {
-      _exitResetTimer?.cancel();
-      SystemNavigator.pop();
-      return;
-    }
-    _exitArmed = true;
-    AppMessenger.show(
-      context,
-      ToastKind.info,
-      AppLocalizations.of(context).pressBackAgainToExit,
-    );
-    _exitResetTimer?.cancel();
-    _exitResetTimer = Timer(_exitWindow, () {
-      if (mounted) _exitArmed = false;
-    });
+    return false;
   }
 
   @override
@@ -129,9 +107,8 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
     final showDock = ref.watch(domainDockVisibleProvider);
     final specs = ref.watch(activeDomainShellsProvider);
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) => _onSystemBack(didPop),
+    return ExitConfirmingSystemBackScope(
+      onBack: _handleSystemBackBeforeExit,
       child: showDock
           ? _DockChrome(specs: specs, activePath: location, child: widget.child)
           : widget.child,
@@ -154,8 +131,7 @@ class _DockChrome extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isCompact =
-            constraints.maxWidth < AppDockShell._tabletBreakpoint;
+        final isCompact = constraints.maxWidth < AppDockShell._tabletBreakpoint;
         if (isCompact) {
           // Mobile: the per-page DomainSwitcherTitle (AppBar / FHeader)
           // is the only switch surface — keeps vertical space free.
@@ -236,7 +212,10 @@ class _AskAiDockButton extends StatelessWidget {
         child: Container(
           width: AppSpacing.s40,
           height: AppSpacing.s40,
-          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
+          margin: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s8,
+            vertical: AppSpacing.s4,
+          ),
           decoration: BoxDecoration(
             color: colors.primary.withValues(alpha: AppOpacity.faint),
             borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -246,7 +225,11 @@ class _AskAiDockButton extends StatelessWidget {
             ),
           ),
           alignment: Alignment.center,
-          child: Icon(FLucideIcons.sparkles, color: colors.primary, size: AppIconSizes.md),
+          child: Icon(
+            FLucideIcons.sparkles,
+            color: colors.primary,
+            size: AppIconSizes.md,
+          ),
         ),
       ),
     );
@@ -268,8 +251,9 @@ class _DockIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final iconColor = selected ? colors.primary : colors.mutedForeground;
-    final fill =
-        selected ? colors.primary.withValues(alpha: AppOpacity.subtle) : Colors.transparent;
+    final fill = selected
+        ? colors.primary.withValues(alpha: AppOpacity.subtle)
+        : Colors.transparent;
     return FTooltip(
       tipBuilder: (_, _) => Text(spec.label),
       child: FTappable(
@@ -277,7 +261,10 @@ class _DockIcon extends StatelessWidget {
         child: Container(
           width: AppSpacing.s40,
           height: AppSpacing.s40,
-          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
+          margin: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s8,
+            vertical: AppSpacing.s4,
+          ),
           decoration: BoxDecoration(
             color: fill,
             borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -293,4 +280,3 @@ class _DockIcon extends StatelessWidget {
     );
   }
 }
-
