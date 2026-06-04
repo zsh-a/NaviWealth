@@ -1,6 +1,6 @@
 // App-wide invariant: the Android system back gesture must never exit the
-// app from inside *content*. It may exit only at Home (double-back) or at
-// an auth gate (login / onboarding), which have nowhere to go back to.
+// app from inside *content*. It may exit only after a second back gesture
+// at a true app root (Home or an auth gate such as login / onboarding).
 //
 // This is a regression guard for the class of bug where a content route
 // is mounted outside the dock shell (the only widget with a root
@@ -11,6 +11,7 @@
 // in-shell routes so a future shell refactor can't silently reintroduce it.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -28,18 +29,23 @@ Future<GoRouter> _boot(WidgetTester tester, String initial) async {
   addTearDown(tester.view.reset);
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
-  final container = ProviderContainer(overrides: [
-    sharedPreferencesProvider.overrideWithValue(prefs),
-    domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
-    appRouterProvider
-        .overrideWith((ref) => buildAppRouter(ref, initialLocation: initial)),
-  ]);
+  final container = ProviderContainer(
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
+      appRouterProvider.overrideWith(
+        (ref) => buildAppRouter(ref, initialLocation: initial),
+      ),
+    ],
+  );
   addTearDown(container.dispose);
   await tester.runAsync(() => preloadDeferredRoutesForTest());
-  await tester.pumpWidget(UncontrolledProviderScope(
-    container: container,
-    child: const NaviWealthApp(),
-  ));
+  await tester.pumpWidget(
+    UncontrolledProviderScope(
+      container: container,
+      child: const NaviWealthApp(),
+    ),
+  );
   await _drain(tester);
   return container.read(appRouterProvider);
 }
@@ -54,6 +60,25 @@ Future<void> _drain(WidgetTester tester) async {
 
 String _path(GoRouter r) => r.routeInformationProvider.value.uri.path;
 
+void _captureSystemNavigatorPop(
+  WidgetTester tester,
+  ValueSetter<MethodCall> onCall,
+) {
+  tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+    SystemChannels.platform,
+    (call) async {
+      if (call.method == 'SystemNavigator.pop') onCall(call);
+      return null;
+    },
+  );
+  addTearDown(
+    () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      null,
+    ),
+  );
+}
+
 void main() {
   setUp(() {
     final orig = FlutterError.onError;
@@ -64,9 +89,72 @@ void main() {
     addTearDown(() => FlutterError.onError = orig);
   });
 
+  group('Root exits require a second system back gesture', () {
+    testWidgets('Home root → first back arms, second back exits', (
+      tester,
+    ) async {
+      var platformPopCalls = 0;
+      _captureSystemNavigatorPop(tester, (_) => platformPopCalls++);
+
+      final router = await _boot(tester, AppRoutes.home);
+      expect(_path(router), AppRoutes.home);
+
+      final first = await tester.binding.handlePopRoute();
+      await _drain(tester);
+      expect(first, isTrue);
+      expect(platformPopCalls, 0);
+
+      final second = await tester.binding.handlePopRoute();
+      await _drain(tester);
+      expect(second, isTrue);
+      expect(platformPopCalls, 1);
+    });
+
+    testWidgets('/login root → first back arms, second back exits', (
+      tester,
+    ) async {
+      var platformPopCalls = 0;
+      _captureSystemNavigatorPop(tester, (_) => platformPopCalls++);
+
+      final router = await _boot(tester, AppRoutes.login);
+      expect(_path(router), AppRoutes.login);
+
+      final first = await tester.binding.handlePopRoute();
+      await _drain(tester);
+      expect(first, isTrue);
+      expect(platformPopCalls, 0);
+
+      final second = await tester.binding.handlePopRoute();
+      await _drain(tester);
+      expect(second, isTrue);
+      expect(platformPopCalls, 1);
+    });
+
+    testWidgets('/onboarding root → first back arms, second back exits', (
+      tester,
+    ) async {
+      var platformPopCalls = 0;
+      _captureSystemNavigatorPop(tester, (_) => platformPopCalls++);
+
+      final router = await _boot(tester, AppRoutes.onboarding);
+      expect(_path(router), AppRoutes.onboarding);
+
+      final first = await tester.binding.handlePopRoute();
+      await _drain(tester);
+      expect(first, isTrue);
+      expect(platformPopCalls, 0);
+
+      final second = await tester.binding.handlePopRoute();
+      await _drain(tester);
+      expect(second, isTrue);
+      expect(platformPopCalls, 1);
+    });
+  });
+
   group('Settings (out-of-shell) — must not exit on system back', () {
-    testWidgets('/settings as stack root → handled, lands on Home',
-        (tester) async {
+    testWidgets('/settings as stack root → handled, lands on Home', (
+      tester,
+    ) async {
       final router = await _boot(tester, AppRoutes.settings);
       expect(_path(router), AppRoutes.settings);
       expect(router.canPop(), isFalse, reason: 'settings is the stack root');
@@ -78,23 +166,25 @@ void main() {
       expect(_path(router), AppRoutes.home);
     });
 
-    testWidgets('deep-linked /settings/ai-llm → /settings → Home, never exits',
-        (tester) async {
-      final router = await _boot(tester, AppRoutes.settingsAiLlm);
-      expect(_path(router), AppRoutes.settingsAiLlm);
-      expect(router.canPop(), isTrue, reason: 'parent /settings is in stack');
+    testWidgets(
+      'deep-linked /settings/ai-llm → /settings → Home, never exits',
+      (tester) async {
+        final router = await _boot(tester, AppRoutes.settingsAiLlm);
+        expect(_path(router), AppRoutes.settingsAiLlm);
+        expect(router.canPop(), isTrue, reason: 'parent /settings is in stack');
 
-      final first = await tester.binding.handlePopRoute();
-      await _drain(tester);
-      expect(first, isTrue);
-      expect(_path(router), AppRoutes.settings);
-      expect(router.canPop(), isFalse, reason: 'now at settings root');
+        final first = await tester.binding.handlePopRoute();
+        await _drain(tester);
+        expect(first, isTrue);
+        expect(_path(router), AppRoutes.settings);
+        expect(router.canPop(), isFalse, reason: 'now at settings root');
 
-      final second = await tester.binding.handlePopRoute();
-      await _drain(tester);
-      expect(second, isTrue, reason: 'gesture handled — app must not exit');
-      expect(_path(router), AppRoutes.home);
-    });
+        final second = await tester.binding.handlePopRoute();
+        await _drain(tester);
+        expect(second, isTrue, reason: 'gesture handled — app must not exit');
+        expect(_path(router), AppRoutes.home);
+      },
+    );
   });
 
   group('In-shell deep routes — back walks up, never exits', () {

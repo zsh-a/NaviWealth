@@ -90,12 +90,14 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = '/'}) {
       GoRoute(
         path: AppRoutes.login,
         name: AppRouteNames.login,
-        builder: (context, state) => const LoginPage(),
+        builder: (context, state) =>
+            const ExitConfirmingSystemBackScope(child: LoginPage()),
       ),
       GoRoute(
         path: AppRoutes.onboarding,
         name: AppRouteNames.onboarding,
-        builder: (context, state) => const OnboardingPage(),
+        builder: (context, state) =>
+            const ExitConfirmingSystemBackScope(child: OnboardingPage()),
       ),
       // Settings — global meta, accessed from Today's header gear. Lives
       // outside the dock shell so it covers the full canvas while open and
