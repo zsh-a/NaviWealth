@@ -1,10 +1,8 @@
 import 'package:flutter/widgets.dart';
-import '../design_system/design_system.dart';
 import 'package:forui/forui.dart';
-import '../design_system/design_system.dart';
 
-import '../l10n/gen/app_localizations.dart';
 import '../design_system/design_system.dart';
+import '../l10n/gen/app_localizations.dart';
 
 /// Wraps a route whose page widget lives in a `deferred as` library.
 ///

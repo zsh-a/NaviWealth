@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../design_system/design_system.dart';
 import 'package:flutter/services.dart';
-import '../../design_system/design_system.dart';
 import 'package:forui/forui.dart';
 
+import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'shortcut_bindings.dart';
 
@@ -62,7 +61,12 @@ class _ShortcutHelpSheet extends StatelessWidget {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.s24, AppSpacing.s12, AppSpacing.s24, AppSpacing.s24),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s24,
+          AppSpacing.s12,
+          AppSpacing.s24,
+          AppSpacing.s24,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -87,7 +91,9 @@ class _ShortcutHelpSheet extends StatelessWidget {
                   children: [
                     for (final ShortcutBinding b in dedup.values)
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.s6,
+                        ),
                         child: Row(
                           children: [
                             Expanded(
@@ -101,7 +107,9 @@ class _ShortcutHelpSheet extends StatelessWidget {
                       ),
                     for (final _ManualShortcutEntry e in manualEntries)
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.s6,
+                        ),
                         child: Row(
                           children: [
                             Expanded(child: Text(e.label)),
@@ -163,7 +171,10 @@ class _ActivatorBadge extends StatelessWidget {
       children: <Widget>[
         for (final String label in labels)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s8,
+              vertical: AppSpacing.s4,
+            ),
             decoration: BoxDecoration(
               color: context.theme.colors.secondary,
               borderRadius: BorderRadius.circular(AppRadius.xs),
@@ -210,7 +221,10 @@ class _KeyLabelBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s4,
+      ),
       decoration: BoxDecoration(
         color: context.theme.colors.secondary,
         borderRadius: BorderRadius.circular(AppRadius.xs),

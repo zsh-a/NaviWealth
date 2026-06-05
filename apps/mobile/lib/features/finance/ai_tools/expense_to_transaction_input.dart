@@ -13,8 +13,8 @@ library;
 
 import 'package:decimal/decimal.dart';
 
-import '../data/domain/expense.dart';
 import '../../../core/ai/local/skills/transaction_input.dart';
+import '../data/domain/expense.dart';
 
 TransactionInput expenseToTransactionInput(Expense e) {
   final cents = (e.amount * Decimal.fromInt(100)).floor().toBigInt();

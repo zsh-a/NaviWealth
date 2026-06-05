@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
-import '../../design_system/design_system.dart';
 
 /// FIR-131 wave 3b — curated catalogue mapping the icon-name strings
 /// stored in [Account.icon] to a concrete [IconData] the picker / list

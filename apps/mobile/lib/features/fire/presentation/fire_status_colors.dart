@@ -1,5 +1,5 @@
-import 'package:forui/forui.dart';
 import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
 import '../domain/fire_action.dart';
@@ -23,7 +23,11 @@ Color fireSafetyColor(SemanticColors sem, FireSafetyLevel level) {
   }
 }
 
-Color fireBucketStatusColor(SemanticColors sem, FColors colors, FireBucketStatus status) {
+Color fireBucketStatusColor(
+  SemanticColors sem,
+  FColors colors,
+  FireBucketStatus status,
+) {
   switch (status) {
     case FireBucketStatus.onTrack:
       return sem.success;

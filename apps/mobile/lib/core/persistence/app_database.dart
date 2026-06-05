@@ -1,11 +1,11 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
-import 'domain_enums.dart';
 
 import '../../core/sync/sync_tables.dart';
 import 'connection.dart';
 import 'converters.dart';
+import 'domain_enums.dart';
 import 'event_log_tables.dart';
 import 'health_tables.dart';
 import 'knowledge_tables.dart';

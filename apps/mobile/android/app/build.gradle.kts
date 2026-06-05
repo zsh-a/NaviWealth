@@ -31,7 +31,7 @@ android {
     signingConfigs {
         create("release") {
             val keystorePath = System.getenv("KEYSTORE_FILE")
-            if (keystorePath != null && file(keystorePath).exists()) {
+            if (!keystorePath.isNullOrBlank() && file(keystorePath).exists()) {
                 storeFile = file(keystorePath)
                 storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
                 keyAlias = System.getenv("KEY_ALIAS") ?: ""
@@ -42,8 +42,10 @@ android {
 
     buildTypes {
         release {
-            val releaseKeystore = file(System.getenv("KEYSTORE_FILE") ?: "")
-            signingConfig = if (releaseKeystore.exists()) {
+            val releaseKeystore = System.getenv("KEYSTORE_FILE")
+                ?.takeIf { it.isNotBlank() }
+                ?.let { file(it) }
+            signingConfig = if (releaseKeystore?.exists() == true) {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")

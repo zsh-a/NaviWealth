@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// State types from core; provider still lives in features/.
+import 'package:naviwealth/core/auth/auth_state.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
@@ -6,8 +8,6 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/local_hlc_stamper.dart';
 import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
-// State types from core; provider still lives in features/.
-import 'package:naviwealth/core/auth/auth_state.dart';
 import 'package:naviwealth/features/auth/data/auth_controller.dart'
     show authControllerProvider;
 

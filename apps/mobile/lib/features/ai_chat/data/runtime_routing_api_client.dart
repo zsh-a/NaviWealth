@@ -16,7 +16,6 @@ import 'package:dio/dio.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/runtime/ai_runtime.dart';
 import '../../../core/auth/auth_session.dart';
-import '../domain/chat_events.dart';
 import 'ai_chat_api_client.dart';
 
 /// Surfaced to the user when AI is invoked with no usable on-device
