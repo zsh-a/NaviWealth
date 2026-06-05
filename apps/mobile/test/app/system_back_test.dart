@@ -1,6 +1,7 @@
 // App-wide invariant: the Android system back gesture must never exit the
 // app from inside *content*. It may exit only after a second back gesture
-// at a true app root (Home or an auth gate such as login / onboarding).
+// at a true app root (any primary tab root or an auth gate such as login /
+// onboarding).
 //
 // This is a regression guard for the class of bug where a content route
 // is mounted outside the dock shell (the only widget with a root
@@ -90,25 +91,41 @@ void main() {
   });
 
   group('Root exits require a second system back gesture', () {
-    testWidgets('Home root → first back arms, second back exits', (
-      tester,
-    ) async {
-      var platformPopCalls = 0;
-      _captureSystemNavigatorPop(tester, (_) => platformPopCalls++);
+    const primaryRoots = <String>[
+      AppRoutes.home,
+      AppRoutes.activity,
+      AppRoutes.wealth,
+      AppRoutes.plan,
+      AppRoutes.healthToday,
+      AppRoutes.healthTrend,
+      AppRoutes.healthPlan,
+      AppRoutes.knowledgeInbox,
+      AppRoutes.knowledgeLibrary,
+      AppRoutes.knowledgeReview,
+    ];
 
-      final router = await _boot(tester, AppRoutes.home);
-      expect(_path(router), AppRoutes.home);
+    for (final root in primaryRoots) {
+      testWidgets('$root root → first back arms, second back exits', (
+        tester,
+      ) async {
+        var platformPopCalls = 0;
+        _captureSystemNavigatorPop(tester, (_) => platformPopCalls++);
 
-      final first = await tester.binding.handlePopRoute();
-      await _drain(tester);
-      expect(first, isTrue);
-      expect(platformPopCalls, 0);
+        final router = await _boot(tester, root);
+        expect(_path(router), root);
 
-      final second = await tester.binding.handlePopRoute();
-      await _drain(tester);
-      expect(second, isTrue);
-      expect(platformPopCalls, 1);
-    });
+        final first = await tester.binding.handlePopRoute();
+        await _drain(tester);
+        expect(first, isTrue);
+        expect(_path(router), root);
+        expect(platformPopCalls, 0);
+
+        final second = await tester.binding.handlePopRoute();
+        await _drain(tester);
+        expect(second, isTrue);
+        expect(platformPopCalls, 1);
+      });
+    }
 
     testWidgets('navigating after first back disarms root exit', (
       tester,
@@ -131,8 +148,13 @@ void main() {
       final second = await tester.binding.handlePopRoute();
       await _drain(tester);
       expect(second, isTrue);
-      expect(_path(router), AppRoutes.home);
+      expect(_path(router), AppRoutes.activity);
       expect(platformPopCalls, 0);
+
+      final third = await tester.binding.handlePopRoute();
+      await _drain(tester);
+      expect(third, isTrue);
+      expect(platformPopCalls, 1);
     });
 
     testWidgets('/login root → first back arms, second back exits', (

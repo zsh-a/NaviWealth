@@ -24,7 +24,7 @@ import 'route_paths.dart';
 /// Responsibilities the inner per-domain shells should *not* duplicate:
 ///   * share-intent lifecycle (mounts once, survives domain switches)
 ///   * `aiContextProvider` sync (route + domain, location-driven, global)
-///   * root-level system back handling (pop → jump-to-home → exit-arm)
+///   * root-level system back handling (pop → exit-arm)
 ///   * domain dock chrome — desktop side dock only (≥ 600 px). Mobile
 ///     swaps the always-visible chip row for a per-page chevron in the
 ///     title; see `domain_switcher.dart`. [domainDockVisibleProvider]
@@ -66,22 +66,13 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
   /// Root back-button strategy. Defers steps 1–3 ("pop a pushed page /
   /// dismiss a modal / clear `?selected=`") to the shared [attemptBack]
   /// primitive so system back, the toolbar arrow, and the Esc shortcut
-  /// stay in lockstep; only the app-shell-specific tail (tab-root jump,
-  /// exit confirmation) lives here:
+  /// stay in lockstep; only the app-shell-specific tail (root exit
+  /// confirmation) lives here:
   ///  1–3. delegated to [attemptBack];
-  ///  4. at any primary tab root other than Finance Home → jump to /
-  ///     (treats Health tabs as primary roots; back from /health goes
-  ///     to /home, matching the single-app exit model);
-  ///  5. at Finance Home → fall through to [ExitConfirmingSystemBackScope].
+  ///  4. at any primary tab root → fall through to
+  ///     [ExitConfirmingSystemBackScope].
   bool _handleSystemBackBeforeExit(BuildContext context) {
     if (attemptBack(context)) return true;
-    final goRouter = GoRouter.of(context);
-    final loc = goRouter.routeInformationProvider.value.uri.path;
-    if (loc != AppRoutes.home &&
-        ref.read(primaryTabPathsProvider).contains(loc)) {
-      goRouter.go(AppRoutes.home);
-      return true;
-    }
     return false;
   }
 
