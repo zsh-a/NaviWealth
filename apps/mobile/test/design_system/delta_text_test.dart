@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 
 Widget _wrap(Widget child, {MarketColorMode? mode}) {
@@ -31,9 +32,9 @@ void main() {
         _wrap(const DeltaText(value: 1.5, format: DeltaFormat.percent)),
       );
 
-      // Find the icon — should be arrow_drop_up tinted with the up color.
+      // Find the icon — should be chevron-up tinted with the up color.
       final icon = tester.widget<Icon>(find.byType(Icon));
-      expect(icon.icon, Icons.arrow_drop_up);
+      expect(icon.icon, FLucideIcons.chevronUp);
 
       final ctx = tester.element(find.byType(DeltaText));
       final market = MarketColors.of(ctx);
@@ -69,14 +70,17 @@ void main() {
     await tester.pumpWidget(
       _wrap(const DeltaText(value: 0, format: DeltaFormat.percent)),
     );
-    expect(tester.widget<Icon>(find.byType(Icon)).icon, Icons.remove);
+    expect(tester.widget<Icon>(find.byType(Icon)).icon, FLucideIcons.minus);
   });
 
   testWidgets('DeltaText: negative shows down arrow', (tester) async {
     await tester.pumpWidget(
       _wrap(const DeltaText(value: -3.4, format: DeltaFormat.percent)),
     );
-    expect(tester.widget<Icon>(find.byType(Icon)).icon, Icons.arrow_drop_down);
+    expect(
+      tester.widget<Icon>(find.byType(Icon)).icon,
+      FLucideIcons.chevronDown,
+    );
   });
 
   testWidgets('DeltaText.percentFromRatio renders 2.34% for 0.0234', (

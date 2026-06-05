@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
-import 'domain_enums.dart';
 import 'converters.dart';
+import 'domain_enums.dart';
 
 /// Mixin for sync metadata columns shared by every replicable table.
 ///

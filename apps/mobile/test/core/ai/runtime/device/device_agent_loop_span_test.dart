@@ -8,7 +8,6 @@ import 'package:naviwealth/core/ai/runtime/device/device_agent_loop.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/llm_stream_event.dart';
-import 'package:naviwealth/features/ai_chat/domain/chat_events.dart';
 
 class _ScriptedAdapter {
   _ScriptedAdapter(this._rounds);

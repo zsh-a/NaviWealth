@@ -9,7 +9,6 @@ import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../core/auth/auth_session.dart';
 import '../../../core/auth/providers.dart';
-import '../domain/chat_events.dart';
 import '../domain/chat_models.dart';
 import 'ai_chat_api_client.dart';
 import 'chat_history_store.dart';
