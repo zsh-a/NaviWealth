@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/domain_composition.dart';
+import 'package:naviwealth/core/ai/composition/composite_proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/device_tools_provider.dart';
+import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
+import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
+import 'package:naviwealth/core/ai/composition/proposal_kind_registry.dart';
+import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
@@ -19,15 +24,50 @@ const _tool = _FakeTool('domain_tool');
 const _financePack = DomainPack(
   scope: DomainScope.finance,
   deviceTools: [_tool],
+  proposalKinds: [
+    ProposalKindMeta(
+      kind: 'fake_finance',
+      icon: Icons.account_balance,
+      label: _fakeFinanceProposalLabel,
+      toolName: 'propose_fake_finance',
+    ),
+  ],
+  proposalApplierRouteBuilder: _fakeFinanceProposalRoute,
   systemPromptBlock: 'Finance block',
   commandPaletteEntriesBuilder: _financeEntries,
 );
 
 const _healthPack = DomainPack(
   scope: DomainScope.health,
+  proposalKinds: [
+    ProposalKindMeta(
+      kind: 'fake_health',
+      icon: Icons.monitor_heart,
+      label: _fakeHealthProposalLabel,
+      toolName: 'propose_fake_health',
+    ),
+  ],
+  proposalApplierRouteBuilder: _fakeHealthProposalRoute,
   systemPromptBlock: 'Health block',
   commandPaletteEntriesBuilder: _healthEntries,
 );
+
+String _fakeFinanceProposalLabel(AppLocalizations l10n) => 'Fake finance';
+String _fakeHealthProposalLabel(AppLocalizations l10n) => 'Fake health';
+
+Future<ProposalApplierRoute> _fakeFinanceProposalRoute(Ref ref) async =>
+    const ProposalApplierRoute(
+      applier: _FakeProposalApplier('finance_table'),
+      kinds: {'fake_finance'},
+      tablePrefixes: {'finance_table'},
+    );
+
+Future<ProposalApplierRoute> _fakeHealthProposalRoute(Ref ref) async =>
+    const ProposalApplierRoute(
+      applier: _FakeProposalApplier('health_table'),
+      kinds: {'fake_health'},
+      tablePrefixes: {'health_table'},
+    );
 
 List<CommandPaletteEntry> _financeEntries(AppLocalizations l10n) => [
   CommandPaletteEntry(
@@ -77,6 +117,20 @@ void main() {
         c.read(deviceToolsProvider).map((tool) => tool.name),
         contains('domain_tool'),
       );
+      expect(c.read(proposalKindRegistryProvider).map((meta) => meta.kind), [
+        'fake_finance',
+      ]);
+
+      final applier = await c.read(proposalApplierProvider.future);
+      final state = await applier.apply(
+        const ReadyProposalPlan(
+          proposalId: 'p',
+          kind: 'fake_finance',
+          summaryZh: 's',
+          payload: {},
+        ),
+      );
+      expect(state.appliedTable, 'finance_table');
     },
   );
 
@@ -87,6 +141,13 @@ void main() {
       'Finance block',
       'Health block',
     ]);
+    expect(
+      domainProposalKinds(const [
+        _financePack,
+        _healthPack,
+      ]).map((meta) => meta.kind),
+      ['fake_finance', 'fake_health'],
+    );
     expect(
       domainCommandPaletteEntries(const [
         _financePack,
@@ -116,4 +177,21 @@ class _FakeTool implements DeviceTool {
   ) async {
     return const <String, Object?>{'ok': true};
   }
+}
+
+class _FakeProposalApplier implements ProposalApplier {
+  const _FakeProposalApplier(this.table);
+
+  final String table;
+
+  @override
+  Future<ProposalApplyState> apply(ReadyProposalPlan plan) async {
+    return ProposalApplyState(
+      status: ProposalApplyStatus.applied,
+      appliedTable: table,
+    );
+  }
+
+  @override
+  Future<void> undo(ProposalApplyState state) async {}
 }

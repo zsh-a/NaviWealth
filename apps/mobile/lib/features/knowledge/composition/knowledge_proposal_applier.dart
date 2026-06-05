@@ -2,10 +2,9 @@
 /// (`docs/knowledgeos-domain.md` §15.6).
 ///
 /// Dispatches confirmed KnowledgeOS `propose_*` plans from the chat
-/// propose-card to the matching `KnowledgeRepository` write. Before this
-/// existed, every knowledge proposal confirmed in chat hit the Finance
-/// applier and failed with "unknown proposal kind"; the composite
-/// (`composite_proposal_applier.dart`) now routes KnowledgeOS kinds here.
+/// propose-card to the matching `KnowledgeRepository` write. The
+/// cross-domain composite routes KnowledgeOS kinds here through the
+/// `kKnowledgePack` proposal applier route.
 ///
 /// Handled kinds:
 ///  - `capture_upgrade`        → Capture-sheet-equivalent promotion:
@@ -39,14 +38,7 @@ import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 
-/// Proposal kinds owned by KnowledgeOS. The composite routes these to
-/// [KnowledgeProposalApplier]; everything else falls through to Finance.
-const Set<String> kKnowledgeProposalAppliedKinds = <String>{
-  'capture_upgrade',
-  'knowledge_merge',
-  'knowledge_routine',
-  'knowledge_concept_link',
-};
+export 'knowledge_proposal_kinds.dart' show kKnowledgeProposalAppliedKinds;
 
 /// Drift table-name prefix for KnowledgeOS rows — used by the composite to
 /// route [ProposalApplier.undo] (which carries the table, not the kind).
@@ -440,8 +432,8 @@ String _short(String value, {int max = 40}) {
 }
 
 /// KnowledgeOS applier wiring. Resolves the repo + a per-row [SyncMeta]
-/// factory from the stamper. Used by `knowledge_bootstrap.dart` to build
-/// the composite applier alongside Finance.
+/// factory from the stamper. `kKnowledgePack` uses this provider to build
+/// its cross-domain proposal route.
 final knowledgeProposalApplierProvider =
     FutureProvider<KnowledgeProposalApplier>((ref) async {
       final repo = await ref.watch(knowledgeRepositoryProvider.future);

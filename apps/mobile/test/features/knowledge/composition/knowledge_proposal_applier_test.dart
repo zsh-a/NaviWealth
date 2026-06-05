@@ -218,72 +218,110 @@ void main() {
   });
 
   group('CompositeProposalApplier', () {
-    test(
-      'routes KnowledgeOS applied kinds to knowledge, else fallback',
-      () async {
-        final fallback = _RecordingApplier();
-        final composite = CompositeProposalApplier(
-          routes: [
-            ProposalApplierRoute(
-              applier: applier,
-              kinds: kKnowledgeProposalAppliedKinds,
-              tablePrefix: kKnowledgeTablePrefix,
-            ),
-          ],
-          fallback: fallback,
-        );
-
-        await repo.upsertNote(note('keep', 'a', const []));
-        await repo.upsertNote(note('dup', 'b', const []));
-        final state = await composite.apply(
-          plan('knowledge_merge', {
-            'entity_type': 'note',
-            'primary_id': 'keep',
-            'duplicate_ids': ['dup'],
-          }),
-        );
-        expect(state.appliedTable, 'knowledge_notes');
-        expect(
-          fallback.applied,
-          isEmpty,
-          reason: 'knowledge kind never hits fallback',
-        );
-
-        final captureState = await composite.apply(
-          plan('capture_upgrade', {
-            'detected_kind': 'concept',
-            'source_text': '安全边际是估值留出的缓冲。',
-            'statement': '安全边际',
-          }),
-        );
-        expect(captureState.appliedTable, 'knowledge_notes');
-        expect(fallback.applied, isEmpty);
-
-        await composite.apply(plan('trade', const {}));
-        expect(fallback.applied, <String>['trade']);
-      },
-    );
-
-    test('undo routes by appliedTable prefix', () async {
-      final fallback = _RecordingApplier();
+    test('routes explicitly registered KnowledgeOS applied kinds', () async {
+      final finance = _RecordingApplier();
       final composite = CompositeProposalApplier(
         routes: [
           ProposalApplierRoute(
+            applier: finance,
+            kinds: const {'trade'},
+            tablePrefixes: const {'journal_entries'},
+          ),
+          ProposalApplierRoute(
             applier: applier,
             kinds: kKnowledgeProposalAppliedKinds,
-            tablePrefix: kKnowledgeTablePrefix,
+            tablePrefixes: const {kKnowledgeTablePrefix},
           ),
         ],
-        fallback: fallback,
       );
-      // Finance table → fallback.undo.
+
+      await repo.upsertNote(note('keep', 'a', const []));
+      await repo.upsertNote(note('dup', 'b', const []));
+      final state = await composite.apply(
+        plan('knowledge_merge', {
+          'entity_type': 'note',
+          'primary_id': 'keep',
+          'duplicate_ids': ['dup'],
+        }),
+      );
+      expect(state.appliedTable, 'knowledge_notes');
+      expect(finance.applied, isEmpty);
+
+      final captureState = await composite.apply(
+        plan('capture_upgrade', {
+          'detected_kind': 'concept',
+          'source_text': '安全边际是估值留出的缓冲。',
+          'statement': '安全边际',
+        }),
+      );
+      expect(captureState.appliedTable, 'knowledge_notes');
+      expect(finance.applied, isEmpty);
+
+      await composite.apply(plan('trade', const {}));
+      expect(finance.applied, <String>['trade']);
+    });
+
+    test('undo routes by appliedTable prefix', () async {
+      final finance = _RecordingApplier();
+      final composite = CompositeProposalApplier(
+        routes: [
+          ProposalApplierRoute(
+            applier: finance,
+            kinds: const {'trade'},
+            tablePrefixes: const {'journal_entries'},
+          ),
+          ProposalApplierRoute(
+            applier: applier,
+            kinds: kKnowledgeProposalAppliedKinds,
+            tablePrefixes: const {kKnowledgeTablePrefix},
+          ),
+        ],
+      );
       await composite.undo(
         const ProposalApplyState(
           status: ProposalApplyStatus.applied,
           appliedTable: 'journal_entries',
         ),
       );
-      expect(fallback.undone, <String>['journal_entries']);
+      expect(finance.undone, <String>['journal_entries']);
+    });
+
+    test('unknown kind and table fail without fallback', () async {
+      final composite = CompositeProposalApplier(
+        routes: [
+          ProposalApplierRoute(
+            applier: applier,
+            kinds: kKnowledgeProposalAppliedKinds,
+            tablePrefixes: const {kKnowledgeTablePrefix},
+          ),
+        ],
+      );
+
+      expect(
+        () => composite.apply(plan('trade', const {})),
+        throwsA(
+          isA<ProposalApplyException>().having(
+            (e) => e.message,
+            'message',
+            contains('no proposal applier registered for kind: trade'),
+          ),
+        ),
+      );
+      expect(
+        () => composite.undo(
+          const ProposalApplyState(
+            status: ProposalApplyStatus.applied,
+            appliedTable: 'journal_entries',
+          ),
+        ),
+        throwsA(
+          isA<ProposalApplyException>().having(
+            (e) => e.message,
+            'message',
+            contains('no proposal applier registered for table'),
+          ),
+        ),
+      );
     });
   });
 }

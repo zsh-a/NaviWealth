@@ -13,38 +13,48 @@ import '../../../core/ai/composition/proposal_kind_registry.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
-/// Active KnowledgeOS kinds. `knowledge_bootstrap.dart` merges these into
-/// [proposalKindRegistryProvider] alongside the other domains'.
-List<ProposalKindMeta> get kKnowledgeProposalKinds => [
+/// Active KnowledgeOS kinds. `kKnowledgePack` contributes these to
+/// [proposalKindRegistryProvider] alongside the other active domains.
+const List<ProposalKindMeta> kKnowledgeProposalKinds = [
   ProposalKindMeta(
     kind: 'capture_upgrade',
     icon: FLucideIcons.sparkles,
-    label: (_) => '捕获升级',
+    label: _captureUpgradeLabel,
     toolName: 'propose_capture',
     previewRows: _captureUpgradeRows,
   ),
   ProposalKindMeta(
     kind: 'knowledge_merge',
     icon: FLucideIcons.gitMerge,
-    label: (_) => '合并去重',
+    label: _mergeLabel,
     toolName: 'propose_merge',
     previewRows: _mergeRows,
   ),
   ProposalKindMeta(
     kind: 'knowledge_routine',
     icon: FLucideIcons.repeat,
-    label: (_) => '定期事项',
+    label: _routineLabel,
     toolName: 'propose_routine',
     previewRows: _routineRows,
   ),
   ProposalKindMeta(
     kind: 'knowledge_concept_link',
     icon: FLucideIcons.link,
-    label: (_) => '概念关联',
+    label: _conceptLinkLabel,
     toolName: 'propose_concept_link',
     previewRows: _conceptLinkRows,
   ),
 ];
+
+/// Proposal kinds owned by KnowledgeOS. Derived from the same specs that
+/// render proposal cards so UI registration and apply ownership cannot drift.
+Set<String> get kKnowledgeProposalAppliedKinds =>
+    kKnowledgeProposalKinds.map((m) => m.kind).toSet();
+
+String _captureUpgradeLabel(AppLocalizations l10n) => '捕获升级';
+String _mergeLabel(AppLocalizations l10n) => '合并去重';
+String _routineLabel(AppLocalizations l10n) => '定期事项';
+String _conceptLinkLabel(AppLocalizations l10n) => '概念关联';
 
 List<ProposalKindRow> _captureUpgradeRows(
   AppLocalizations l10n,

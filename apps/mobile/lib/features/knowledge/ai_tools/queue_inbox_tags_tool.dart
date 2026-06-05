@@ -1,4 +1,4 @@
-/// `propose_inbox_tags` — InboxTriageAgent write tool
+/// `queue_inbox_tags` — InboxTriageAgent write tool
 /// (`docs/knowledgeos-domain.md` §4 + §7).
 ///
 /// Suggests tag list + optional `project_tag` for a Note. Returns a
@@ -11,11 +11,11 @@ import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import '../data/inbox_triage_repository.dart';
 import '_inbox_triage_support.dart';
 
-class ProposeInboxTagsTool implements DeviceTool {
-  const ProposeInboxTagsTool();
+class QueueInboxTagsTool implements DeviceTool {
+  const QueueInboxTagsTool();
 
   @override
-  String get name => 'propose_inbox_tags';
+  String get name => 'queue_inbox_tags';
 
   @override
   String get description =>
@@ -38,10 +38,7 @@ class ProposeInboxTagsTool implements DeviceTool {
         'type': 'string',
         'description': '可选 — 关联到某个 project 的短标识(例如 "house-search")。',
       },
-      'reason': {
-        'type': 'string',
-        'description': '一句中文说明为什么这些 tag 合适。会显示给用户。',
-      },
+      'reason': {'type': 'string', 'description': '一句中文说明为什么这些 tag 合适。会显示给用户。'},
     },
     'required': <String>['note_id', 'tags', 'reason'],
   };

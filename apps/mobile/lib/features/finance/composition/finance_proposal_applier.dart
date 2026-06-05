@@ -47,18 +47,16 @@ import '../../options_income/data/trade_journal_repository.dart';
 import '../../options_income/domain/options_strategy_profile.dart';
 import '../../options_income/domain/trade_journal_entry.dart';
 
-/// Proposal kinds owned by FinanceOS. Keep in sync with
-/// [kFinanceProposalKinds] so every rendered card has an apply path.
-const Set<String> kFinanceProposalAppliedKinds = <String>{
-  'trade',
-  'expense',
-  'liability_payment',
-  'account_create',
-  'asset_valuation',
-  'fire_plan_update',
-  'fire_bucket_rule',
-  'options_profile_update',
-  'options_journal_entry',
+export 'finance_proposal_kinds.dart' show kFinanceProposalAppliedKinds;
+
+/// Drift table-name prefixes written by FinanceOS proposal appliers.
+/// Used by the cross-domain composite to route undo explicitly.
+const Set<String> kFinanceProposalAppliedTablePrefixes = {
+  'journal_entries',
+  'accounts',
+  'assets',
+  'fire_',
+  'options_',
 };
 
 class FinanceProposalApplier implements ProposalApplier {

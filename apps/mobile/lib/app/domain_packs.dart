@@ -5,16 +5,22 @@
 /// `features/<domain>/`, then appending one [DomainPack] entry here.
 /// `bootstrap.dart` registers this list as
 /// [domainPackRegistryProvider]; the shell aggregators (device tools,
-/// prompt blocks, shell specs, agent registry, router branches,
-/// primary tab paths, test preloaders) derive from it automatically.
+/// prompt blocks, proposal kinds, proposal applier routes, shell specs, agent
+/// registry, router branches, primary tab paths, test preloaders) derive from
+/// it automatically.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/ai/agents/agent.dart';
+import '../core/ai/composition/composite_proposal_applier.dart';
 import '../core/auth/domain_scope.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../features/finance/composition/finance_command_palette.dart';
+import '../features/finance/composition/finance_proposal_applier.dart'
+    as finance_proposals;
+import '../features/finance/composition/finance_proposal_kinds.dart'
+    show kFinanceProposalKinds;
 import '../features/finance/composition/finance_routes.dart';
 import '../features/finance_ai_tools.dart';
 import '../features/finance_domain_shell.dart';
@@ -27,6 +33,10 @@ import '../features/knowledge/agents/providers.dart'
     as knowledge_agent_providers;
 import '../features/knowledge/composition/knowledge_command_palette.dart';
 import '../features/knowledge/composition/knowledge_domain_shell.dart';
+import '../features/knowledge/composition/knowledge_proposal_applier.dart'
+    as knowledge_proposals;
+import '../features/knowledge/composition/knowledge_proposal_kinds.dart'
+    show kKnowledgeProposalKinds;
 import '../features/knowledge/composition/knowledge_routes.dart';
 import '../features/knowledge_ai_tools.dart';
 import 'route_paths.dart';
@@ -34,6 +44,8 @@ import 'route_paths.dart';
 const DomainPack kFinancePack = DomainPack(
   scope: DomainScope.finance,
   deviceTools: kFinanceDeviceTools,
+  proposalKinds: kFinanceProposalKinds,
+  proposalApplierRouteBuilder: _financeProposalApplierRoute,
   systemPromptBlock: kFinanceSystemPromptBlock,
   shellSpecBuilder: financeDomainShell,
   shellRouteBuilder: financeShellRoute,
@@ -70,6 +82,8 @@ const DomainPack kHealthPack = DomainPack(
 const DomainPack kKnowledgePack = DomainPack(
   scope: DomainScope.knowledge,
   deviceTools: kKnowledgeDeviceTools,
+  proposalKinds: kKnowledgeProposalKinds,
+  proposalApplierRouteBuilder: _knowledgeProposalApplierRoute,
   systemPromptBlock: kKnowledgeSystemPromptBlock,
   shellSpecBuilder: knowledgeDomainShell,
   shellRouteBuilder: knowledgeShellRoute,
@@ -97,3 +111,25 @@ List<Agent> _healthAgents(Ref ref) => <Agent>[
 
 List<Agent> _knowledgeAgents(Ref ref) =>
     ref.watch(knowledge_agent_providers.knowledgeAgentsProvider);
+
+Future<ProposalApplierRoute> _financeProposalApplierRoute(Ref ref) async {
+  final applier = await ref.watch(
+    finance_proposals.financeProposalApplierProvider.future,
+  );
+  return ProposalApplierRoute(
+    applier: applier,
+    kinds: finance_proposals.kFinanceProposalAppliedKinds,
+    tablePrefixes: finance_proposals.kFinanceProposalAppliedTablePrefixes,
+  );
+}
+
+Future<ProposalApplierRoute> _knowledgeProposalApplierRoute(Ref ref) async {
+  final applier = await ref.watch(
+    knowledge_proposals.knowledgeProposalApplierProvider.future,
+  );
+  return ProposalApplierRoute(
+    applier: applier,
+    kinds: knowledge_proposals.kKnowledgeProposalAppliedKinds,
+    tablePrefixes: const {knowledge_proposals.kKnowledgeTablePrefix},
+  );
+}

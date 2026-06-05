@@ -95,18 +95,10 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
       case ProposalApplyStatus.pending:
       case ProposalApplyStatus.errored:
       case ProposalApplyStatus.applying:
-        // Pick the confirmation surface from §5.5
-        // `interactionModeForKindLabel`. oneTap (memo/category/tag/
-        // small-expense) gets a slim Apply row; typed (broker order,
-        // bulk delete — unused today) gates Confirm behind a token
-        // field; everything else keeps the full diff/Confirm card.
-        // `swipe` is treated as `confirmDiff` for now — a real
-        // swipe-to-apply gesture is its own future wave.
-        //
-        // `plan.kind` is the snake_case wire string emitted by the
-        // tool (`'trade'`, `'expense'`, …) so it feeds straight into
-        // `interactionModeForKindLabel` without translation.
-        final mode = interactionModeForKindLabel(plan.kind);
+        final registry = ref.watch(proposalKindRegistryProvider);
+        final mode =
+            registry.metaFor(plan.kind)?.interactionMode ??
+            InteractionMode.confirmDiff;
         return switch (mode) {
           InteractionMode.oneTap => _OneTapView(
             plan: plan,

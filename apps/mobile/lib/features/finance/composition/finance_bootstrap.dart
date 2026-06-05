@@ -46,10 +46,8 @@ List<Override> financeCompositionOverrides() => [
   portfolioSnapshotReaderProvider.overrideWith(
     (ref) => ref.watch(financePortfolioSnapshotReaderProvider),
   ),
-  // NOTE: `proposalApplierProvider` + `proposalKindRegistryProvider` are
-  // composed across domains in `knowledge_bootstrap.dart`
-  // (`docs/knowledgeos-domain.md` §15.6) — Riverpod 3 throws on a
-  // double-override, so the cross-domain composite owns these two seams.
-  // FinanceOS still exposes `financeProposalApplierProvider` +
-  // `kFinanceProposalKinds` as plain providers for that composite to read.
+  // NOTE: `proposalApplierProvider` and `proposalKindRegistryProvider` are
+  // composed from active `DomainPack` entries in `app/domain_composition.dart`.
+  // FinanceOS exposes `financeProposalApplierProvider` and proposal specs for
+  // `kFinancePack` to read instead of overriding those seams here.
 ];

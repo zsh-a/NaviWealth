@@ -4,8 +4,8 @@
 /// The chat surface accepts confirmed `propose_*` plans and dispatches
 /// them to a domain-owned [ProposalApplier] for the actual repository
 /// write + optional undo. Each domain (Finance today, HealthOS later)
-/// provides its own concrete applier; `bootstrap.dart` overrides
-/// [proposalApplierProvider] with the active build's implementation.
+/// provides its own concrete applier; `app/domain_composition.dart` derives
+/// [proposalApplierProvider] from active `DomainPack` routes.
 ///
 /// The shell-only default returns a no-op applier that throws
 /// [ProposalApplyException] on every [ProposalApplier.apply] — this
@@ -47,11 +47,16 @@ class _NoopProposalApplier implements ProposalApplier {
   }
 
   @override
-  Future<void> undo(ProposalApplyState state) async {}
+  Future<void> undo(ProposalApplyState state) async {
+    throw ProposalApplyException(
+      'no proposal applier registered for this build',
+    );
+  }
 }
 
 /// Active applier for the current build. Default is a no-op; domain
-/// composition registers the real implementation in `bootstrap.dart`.
+/// composition registers the real implementation through active
+/// `DomainPack` routes.
 final proposalApplierProvider = FutureProvider<ProposalApplier>(
   (ref) async => const _NoopProposalApplier(),
 );

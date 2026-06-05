@@ -1,4 +1,4 @@
-/// Shared helpers for the `propose_inbox_*` tool trio
+/// Shared helpers for the `queue_inbox_*` tool trio
 /// (`docs/knowledgeos-domain.md` §4 + §7).
 ///
 /// Each tool's `invoke` produces a [ProposalEnvelope] map *and* persists
@@ -23,8 +23,10 @@ export '_tool_support.dart' show proposalEnvelope, badRequest, notePreview;
 
 /// Look up the target note + verify owner. Returns either the note or
 /// a `bad_request` envelope to short-circuit the tool.
-Future<({KnowledgeNote? note, Map<String, Object?>? error})>
-loadOwnedNote(DeviceToolContext ctx, String noteId) async {
+Future<({KnowledgeNote? note, Map<String, Object?>? error})> loadOwnedNote(
+  DeviceToolContext ctx,
+  String noteId,
+) async {
   if (noteId.isEmpty) {
     return (note: null, error: badRequest('note_id 必填。'));
   }
@@ -32,10 +34,7 @@ loadOwnedNote(DeviceToolContext ctx, String noteId) async {
   final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
   final note = await repo.findNote(noteId);
   if (note == null || note.sync.ownerUserId != ownerUserId) {
-    return (
-      note: null,
-      error: badRequest('note_id $noteId 不存在或不属于当前用户。'),
-    );
+    return (note: null, error: badRequest('note_id $noteId 不存在或不属于当前用户。'));
   }
   return (note: note, error: null);
 }

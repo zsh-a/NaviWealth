@@ -149,12 +149,13 @@ Proposal application is a cross-domain seam under `core/ai/composition/`.
 
 Current composition:
 
-- Finance exposes `financeProposalApplierProvider` and `kFinanceProposalKinds`.
-- Knowledge owns the composite override in `features/knowledge/composition/knowledge_bootstrap.dart`.
-- `CompositeProposalApplier` routes `knowledge_*` proposals to Knowledge and falls back to Finance.
-- `proposalKindRegistryProvider` is the union of Finance and Knowledge proposal cards.
+- Each domain contributes proposal card metadata through `DomainPack.proposalKinds`.
+- Each domain contributes proposal apply/undo routing through `DomainPack.proposalApplierRouteBuilder`.
+- `proposalKindRegistryProvider` and `proposalApplierProvider` are derived from active domain packs by `app/domain_composition.dart`.
+- Finance exposes `financeProposalApplierProvider`.
+- `CompositeProposalApplier` routes by explicit domain-owned proposal kinds and applied table prefixes. Unknown kinds or tables fail fast.
 
-Rule: only one provider override may own the composite. Do not double-override proposal appliers from multiple domain bootstrap bundles.
+Rule: proposal metadata and proposal applier routes belong in the owning domain's `DomainPack`, not in bootstrap-time manual unions or domain-specific composite overrides.
 
 ## Agent Runtime
 

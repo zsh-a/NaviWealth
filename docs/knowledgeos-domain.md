@@ -40,7 +40,8 @@ Contributions:
 - Tools: `features/knowledge_ai_tools.dart`.
 - Agents: `features/knowledge/agents/providers.dart`.
 - Command palette: `features/knowledge/composition/knowledge_command_palette.dart`.
-- Proposal composition: `features/knowledge/composition/knowledge_bootstrap.dart`.
+- Proposal kinds: `features/knowledge/composition/knowledge_proposal_kinds.dart`.
+- Proposal applier: `features/knowledge/composition/knowledge_proposal_applier.dart`.
 
 KnowledgeOS is active only when the user enables it in Settings.
 
@@ -123,20 +124,20 @@ Read tools:
 - `review_knowledge_health`
 - `summarize_topic_evolution`
 
-Proposal tools:
+Write/proposal tools:
 
 - `propose_concept_link`
 - `propose_merge`
-- `propose_inbox_classification`
-- `propose_inbox_tags`
-- `propose_link_to_decision`
+- `queue_inbox_classification`
+- `queue_inbox_tags`
+- `queue_link_to_decision`
 - `propose_routine`
 - `propose_capture`
 
 Rules:
 
-- Proposal tools return `ProposalEnvelope`; they do not directly mutate synced KnowledgeOS tables.
-- Inbox triage proposal tools may persist derived envelopes to `knowledge_inbox_triage`.
+- `propose_*` tools return `ProposalEnvelope`; they do not directly mutate synced KnowledgeOS tables.
+- `queue_*` inbox triage tools persist derived envelopes to `knowledge_inbox_triage` for the Review tab; they are not chat proposal-card apply kinds.
 - Before creating new knowledge, prefer search or similarity tools to avoid duplicates.
 - The model must not invent decisions, principles, assumptions, or outcomes. User confirmation is required.
 
@@ -146,18 +147,21 @@ KnowledgeOS owns the cross-domain proposal composite because Riverpod allows one
 
 Key files:
 
-- `features/knowledge/composition/knowledge_bootstrap.dart`
+- `app/domain_composition.dart`
+- `app/domain_packs.dart`
 - `features/knowledge/composition/knowledge_proposal_applier.dart`
 - `features/knowledge/composition/knowledge_proposal_kinds.dart`
 - `core/ai/composition/composite_proposal_applier.dart`
 
 Behavior:
 
-- `knowledge_*` proposal kinds route to `KnowledgeProposalApplier`.
-- Finance proposal kinds fall back to the Finance applier.
-- The proposal card registry is the union of Finance and Knowledge kinds.
+- `CompositeProposalApplier` routes by explicit domain-owned proposal kinds and applied table prefixes.
+- Knowledge proposal kinds route to `KnowledgeProposalApplier`.
+- Finance proposal kinds route to the Finance applier.
+- Unknown proposal kinds or applied tables fail fast.
+- Proposal card metadata and apply routes are contributed through `DomainPack.proposalKinds` and `DomainPack.proposalApplierRouteBuilder`, then aggregated from active domain packs.
 
-Do not override `proposalApplierProvider` from another domain bundle without replacing the composite owner.
+Do not override `proposalApplierProvider` from a domain bundle. Do not manually union proposal card metadata in bootstrap code; add proposal metadata and applier routes to the owning domain pack.
 
 ## Memory Integration
 
