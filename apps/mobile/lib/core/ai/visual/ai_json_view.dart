@@ -11,10 +11,10 @@
 library;
 
 import 'package:flutter/services.dart';
-import '../../../design_system/design_system.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../../../design_system/design_system.dart';
 import 'ai_motion.dart';
 import 'ai_tone.dart';
 import 'ai_typography.dart';
@@ -65,7 +65,9 @@ class AiJsonView extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(AppSpacing.s10),
           decoration: BoxDecoration(
-            color: AiTone.surfaceTint(context).withValues(alpha: AppOpacity.disabled),
+            color: AiTone.surfaceTint(
+              context,
+            ).withValues(alpha: AppOpacity.disabled),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: _JsonNode(value: value, depth: 0, propertyKey: null),

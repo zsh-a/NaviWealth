@@ -7,8 +7,8 @@
 /// the rationale without retyping the question.
 library;
 
-import 'package:forui/forui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../core/ai/composition/chat_rail_content.dart';
@@ -18,8 +18,9 @@ import '../data/providers.dart';
 /// Build the rail content for the active user. Async because the repo
 /// future has to resolve; consumers should treat an empty list as the
 /// not-yet-loaded state.
-final knowledgeChatRailContentProvider =
-    FutureProvider<List<ChatRailContent>>((ref) async {
+final knowledgeChatRailContentProvider = FutureProvider<List<ChatRailContent>>((
+  ref,
+) async {
   final repo = await ref.watch(knowledgeRepositoryProvider.future);
   final ownerUserId = await ref.read(currentUserIdProvider)();
 
@@ -40,8 +41,8 @@ final knowledgeChatRailContentProvider =
           detail: d.rationaleMd.isEmpty
               ? d.selectedLabel
               : (d.rationaleMd.length > 140
-                  ? '${d.rationaleMd.substring(0, 140)}…'
-                  : d.rationaleMd),
+                    ? '${d.rationaleMd.substring(0, 140)}…'
+                    : d.rationaleMd),
           icon: FLucideIcons.brain,
           route: AppRoutes.knowledgeLibrary,
         ),

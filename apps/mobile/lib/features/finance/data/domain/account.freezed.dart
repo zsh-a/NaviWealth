@@ -18,7 +18,7 @@ mixin _$Account {
 /// (asset / liability / income / expense / equity). Defaults to
 /// [AccountSide.asset] for back-compat with code paths that
 /// construct an [Account] without an explicit category.
- AccountSide get category;/// FIR-130 — Beancount-style account tree. NULL on top-level
+ AccountSide get category;/// Beancount-style account tree. NULL on top-level
 /// accounts; on a child the parent's [id] forms the chain. The tree
 /// is enforced as a parent / child relationship at the application
 /// level (no DB constraint) so a sync-borne reorder doesn't fight
@@ -26,7 +26,7 @@ mixin _$Account {
  String? get parentId;/// Material icon name driving the account's avatar in the
 /// picker / list. See [account_icon_catalog.dart] for the
 /// canonical set.
- String? get icon;/// FIR-130 — colour token for the account's avatar (hex or design
+ String? get icon;/// Colour token for the account's avatar (hex or design
 /// token id). Same provenance as [icon].
  String? get color; SyncMeta get sync;
 /// Create a copy of Account
@@ -257,7 +257,7 @@ class _Account implements Account {
 /// [AccountSide.asset] for back-compat with code paths that
 /// construct an [Account] without an explicit category.
 @override@JsonKey() final  AccountSide category;
-/// FIR-130 — Beancount-style account tree. NULL on top-level
+/// Beancount-style account tree. NULL on top-level
 /// accounts; on a child the parent's [id] forms the chain. The tree
 /// is enforced as a parent / child relationship at the application
 /// level (no DB constraint) so a sync-borne reorder doesn't fight
@@ -267,7 +267,7 @@ class _Account implements Account {
 /// picker / list. See [account_icon_catalog.dart] for the
 /// canonical set.
 @override final  String? icon;
-/// FIR-130 — colour token for the account's avatar (hex or design
+/// Colour token for the account's avatar (hex or design
 /// token id). Same provenance as [icon].
 @override final  String? color;
 @override final  SyncMeta sync;

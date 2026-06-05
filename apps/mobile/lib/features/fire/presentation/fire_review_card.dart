@@ -10,11 +10,9 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/fire_providers.dart';
 import '../data/fire_review_cache.dart';
-import '../domain/fire_action.dart';
 import '../domain/fire_review.dart';
 import '../domain/fire_review_engine.dart';
 import 'fire_status_colors.dart';
-import '../domain/fire_state.dart';
 
 /// Periodic-review card.
 ///
@@ -237,7 +235,10 @@ class _DiffPanel extends StatelessWidget {
             safetyLine,
             style: context.theme.typography.xs.copyWith(
               color: diff.safetyLevelChanged
-                  ? fireSafetyColor(SemanticColors.of(context), diff.after.safetyLevel)
+                  ? fireSafetyColor(
+                      SemanticColors.of(context),
+                      diff.after.safetyLevel,
+                    )
                   : colors.foreground,
               fontWeight: diff.safetyLevelChanged
                   ? FontWeight.w600
@@ -281,7 +282,6 @@ class _DiffPanel extends StatelessWidget {
       formatters.currency(abs, code: diff.after.baseCurrency),
     );
   }
-
 }
 
 /// Find the most recent cached review of the same [kind] that doesn't
@@ -311,8 +311,10 @@ class _FindingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final dotColor = fireActionSeverityColor(SemanticColors.of(context), finding.severity);
+    final dotColor = fireActionSeverityColor(
+      SemanticColors.of(context),
+      finding.severity,
+    );
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -385,4 +387,3 @@ String _findingText(AppLocalizations l10n, FireReviewFinding f) {
       return l10n.fireOsReviewFindingStressSafe;
   }
 }
-

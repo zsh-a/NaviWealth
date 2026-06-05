@@ -81,6 +81,8 @@ apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	return
 apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	_totalPct.toStringAsFixed(1),	percent-display
 apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	semanticsLabel: '${totalPct.toStringAsFixed(1)}%',	percent-display
 apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	label: '${value.toStringAsFixed(1)}%',	percent-display
+apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	Text('${(next * 100).toStringAsFixed(1)}%'),	percent-display
+apps/mobile/lib/features/rebalance/ui/target_allocation_editor_sheet.dart	'${(next * 100).toStringAsFixed(1)}%',	percent-display
 apps/mobile/lib/features/settings/ui/ai_trace_waterfall.dart	if (cost != null) AiPill(label: '≈¥${cost.toStringAsFixed(4)}'),	ai-cost-diagnostic
 apps/mobile/lib/features/settings/ui/ai_trace_waterfall.dart	if (n < 1000000) return '${(n / 1000).toStringAsFixed(1)}k';	compact-token-label
 apps/mobile/lib/features/settings/ui/ai_trace_waterfall.dart	return '${(n / 1000000).toStringAsFixed(2)}M';	compact-token-label
@@ -107,6 +109,7 @@ apps/mobile/lib/features/knowledge/ui/_object_writers.dart	child: Text(v.toStrin
 apps/mobile/lib/features/knowledge/ui/knowledge_capture_sheet.dart	'confidence=${classification.confidence.toStringAsFixed(2)} '	confidence-score
 apps/mobile/lib/features/knowledge/ui/knowledge_capture_sheet.dart	'原因:${suggestion.reasonZh} · 置信度 ${suggestion.confidence.toStringAsFixed(2)}',	confidence-score
 apps/mobile/lib/features/knowledge/ui/_decision_writer.dart	'${a.statement}（conf ${a.confidence.toStringAsFixed(2)}）',	confidence-score
+apps/mobile/lib/features/knowledge/composition/knowledge_proposal_kinds.dart	ProposalKindRow('置信度', confidence.toStringAsFixed(2)),	confidence-score
 apps/mobile/lib/features/knowledge/ai_tools/find_similar_knowledge_tool.dart	'similarity': double.parse(cosine.toStringAsFixed(4)),	similarity-score
 apps/mobile/lib/features/knowledge/ai_tools/find_similar_knowledge_tool.dart	'token_overlap': double.parse(overlap.toStringAsFixed(4)),	similarity-score
 apps/mobile/lib/features/knowledge/ai_tools/search_knowledge_tool.dart	'score': double.parse(h.score.toStringAsFixed(4)),	similarity-score

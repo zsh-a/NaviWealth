@@ -11,9 +11,9 @@
 library;
 
 import 'package:flutter/widgets.dart';
-import '../../../design_system/design_system.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../visual/visual.dart';
 import 'drift_undo_stack.dart';
@@ -80,7 +80,10 @@ class _UndoRow extends StatelessWidget {
         top: false,
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s10),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s16,
+            vertical: AppSpacing.s10,
+          ),
           child: Row(
             children: [
               const AiSparkle(),

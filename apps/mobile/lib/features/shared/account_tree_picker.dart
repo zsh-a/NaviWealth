@@ -1,10 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
-
-import '../../../design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
+import '../../../design_system/design_system.dart';
 import '../accounts/account_icon_catalog.dart';
 import 'account_l10n.dart';
 

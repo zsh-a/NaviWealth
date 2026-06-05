@@ -1692,7 +1692,7 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
   final String? note;
   final bool archived;
 
-  /// FIR-126 — accounting classification (asset / liability / income /
+  /// Accounting classification (asset / liability / income /
   /// expense / equity). See [AccountSide] for the why and the
   /// migration in `app_database.dart` (v8) for the back-fill rules.
   ///
@@ -1701,7 +1701,7 @@ class AccountRow extends DataClass implements Insertable<AccountRow> {
   /// category explicitly.
   final AccountSide category;
 
-  /// FIR-130 — id of this account's parent in the Beancount-style tree.
+  /// Id of this account's parent in the Beancount-style tree.
   /// NULL on top-level rows; otherwise points at another row in this
   /// table. No FK at the SQL layer because sync-borne reorders need to
   /// land before the parent has caught up.

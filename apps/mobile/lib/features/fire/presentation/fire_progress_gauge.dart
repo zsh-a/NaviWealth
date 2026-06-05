@@ -1,10 +1,9 @@
 import 'dart:math' as math;
-import '../../../design_system/design_system.dart';
 
 import 'package:flutter/widgets.dart';
-import '../../../design_system/design_system.dart';
 import 'package:forui/forui.dart';
 
+import '../../../design_system/design_system.dart';
 
 /// Half-donut progress gauge: 270° arc with the active sweep starting at
 /// the bottom-left, traveling clockwise. Renders the percentage in the

@@ -10,6 +10,7 @@
 /// `lib/core/persistence/converters.dart`), so adding a value at the **end**
 /// of an enum is forward-compatible, but renaming or reordering existing
 /// values requires a migration that rewrites the persisted name.
+library;
 
 /// Wealth-container category — the user-visible "what kind of account is
 /// this" semantic. Drives icons, defaults, AI behaviour (cash counts toward

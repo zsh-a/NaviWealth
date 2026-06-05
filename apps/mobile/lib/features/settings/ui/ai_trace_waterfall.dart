@@ -16,11 +16,11 @@
 library;
 
 import 'package:flutter/widgets.dart';
-import '../../../design_system/design_system.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/visual/visual.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 /// One flattened row: a span plus its tree depth (for indentation).
@@ -177,7 +177,10 @@ class _WaterfallRow extends StatelessWidget {
               : null,
           borderRadius: BorderRadius.circular(AppRadius.xs),
         ),
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4, horizontal: AppSpacing.s4),
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.s4,
+          horizontal: AppSpacing.s4,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -242,7 +245,9 @@ class _WaterfallRow extends StatelessWidget {
                           width: barW,
                           decoration: BoxDecoration(
                             color: tone.withValues(
-                              alpha: span.isError ? AppOpacity.overlay : AppOpacity.prominent,
+                              alpha: span.isError
+                                  ? AppOpacity.overlay
+                                  : AppOpacity.prominent,
                             ),
                             borderRadius: BorderRadius.circular(AppRadius.xs),
                           ),
@@ -300,7 +305,11 @@ class _SpanDetail extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(_kindIcon(span), size: AppIconSizes.xs, color: _kindTone(context, span)),
+              Icon(
+                _kindIcon(span),
+                size: AppIconSizes.xs,
+                color: _kindTone(context, span),
+              ),
               const SizedBox(width: AppSpacing.s6),
               Expanded(
                 child: Text(

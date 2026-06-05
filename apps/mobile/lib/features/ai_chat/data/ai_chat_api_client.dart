@@ -12,7 +12,6 @@ import 'package:dio/dio.dart';
 
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/auth/auth_session.dart';
-import '../domain/chat_events.dart';
 
 /// Wire shape for one turn. Kept as the typed turn contract between
 /// `ChatRepository` and the device runtime.
