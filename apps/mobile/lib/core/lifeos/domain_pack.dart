@@ -4,9 +4,9 @@
 /// itself once as a [DomainPack] and registers into
 /// [domainPackRegistryProvider]. The four shell aggregators that used
 /// to repeat the same opt-in branching (device tools, system-prompt
-/// blocks, shell specs, agent list) all read [activeDomainPacksProvider]
-/// instead — adding a new domain is now a single entry in the registry,
-/// not a four-site edit in `bootstrap.dart`.
+/// blocks, proposal kinds, proposal applier routes, shell specs, agent list) all read
+/// [activeDomainPacksProvider] instead — adding a new domain is now a
+/// single entry in the registry, not scattered edits in `bootstrap.dart`.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +14,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../l10n/gen/app_localizations.dart';
 import '../ai/agents/agent.dart';
+import '../ai/composition/composite_proposal_applier.dart';
+import '../ai/composition/proposal_kind_registry.dart';
 import '../ai/runtime/device/tools/device_tool.dart';
 import '../auth/domain_scope.dart';
 import '../auth/providers.dart';
@@ -41,6 +43,11 @@ typedef DomainDeferredPreloader = Future<void> Function();
 typedef DomainCommandPaletteBuilder =
     List<CommandPaletteEntry> Function(AppLocalizations l10n);
 
+/// Builds one domain's proposal applier route. Receives [Ref] so the
+/// domain can resolve its concrete applier provider lazily.
+typedef DomainProposalApplierRouteBuilder =
+    Future<ProposalApplierRoute> Function(Ref ref);
+
 /// Static description of one LifeOS domain's shell contributions. Held
 /// as a `const` value next to the domain's tool barrel, so the inventory
 /// list in `lib/app/domain_packs.dart` is the single grep-able answer to
@@ -49,6 +56,8 @@ class DomainPack {
   const DomainPack({
     required this.scope,
     this.deviceTools = const <DeviceTool>[],
+    this.proposalKinds = const <ProposalKindMeta>[],
+    this.proposalApplierRouteBuilder,
     this.systemPromptBlock = '',
     this.shellSpecBuilder,
     this.shellRouteBuilder,
@@ -64,6 +73,13 @@ class DomainPack {
 
   /// Device AI tools advertised when this domain is active.
   final List<DeviceTool> deviceTools;
+
+  /// Chat proposal-card kinds advertised when this domain is active.
+  final List<ProposalKindMeta> proposalKinds;
+
+  /// Proposal apply/undo route owned by this domain. Null when the domain
+  /// contributes no chat proposal-card apply kinds.
+  final DomainProposalApplierRouteBuilder? proposalApplierRouteBuilder;
 
   /// System-prompt block appended onto [kDeviceSystemPromptBase].
   /// Empty string = no prompt contribution.
@@ -118,11 +134,11 @@ final domainPackRegistryProvider = Provider<List<DomainPack>>(
   (ref) => const <DomainPack>[],
 );
 
-/// Packs whose `scope` is in the user's opt-in set. The four shell
-/// aggregators (device tools, system-prompt blocks, agents, domain
-/// shells) all derive from this so the active-domain calculation lives
-/// in exactly one place. Finance is always present — [DomainOptIns]
-/// guarantees it in its constructor.
+/// Packs whose `scope` is in the user's opt-in set. Shell aggregators
+/// (device tools, proposal kinds, proposal applier routes, system-prompt
+/// blocks, agents, domain shells) all derive from this so the active-domain
+/// calculation lives in exactly one place. Finance is always present —
+/// [DomainOptIns] guarantees it in its constructor.
 final activeDomainPacksProvider = Provider<List<DomainPack>>((ref) {
   final all = ref.watch(domainPackRegistryProvider);
   final optIns =

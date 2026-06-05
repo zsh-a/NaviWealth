@@ -8,15 +8,17 @@
 /// through this registry, so a new domain (HealthOS, KnowledgeOS, …)
 /// adds its kinds by registering more metas, no shell edits.
 ///
-/// Default registry is empty. `bootstrap.dart` overrides
-/// [proposalKindRegistryProvider] with the union of every active
-/// domain's contributions.
+/// Default registry is empty. `DomainPack.proposalKinds` contributes
+/// metadata and `domain_composition.dart` overrides
+/// [proposalKindRegistryProvider] with the union of active domains'
+/// contributions.
 library;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
+import '../write/interaction_mode.dart';
 import 'proposal_plan.dart';
 
 /// Per-kind presentation + render hooks.
@@ -27,6 +29,7 @@ class ProposalKindMeta {
     required this.icon,
     required this.label,
     required this.toolName,
+    this.interactionMode = InteractionMode.confirmDiff,
     this.editableFields,
     this.previewRows,
   });
@@ -41,9 +44,11 @@ class ProposalKindMeta {
   /// follows the active locale without rebuilding the registry.
   final String Function(AppLocalizations l10n) label;
 
-  /// Matching tool name, e.g. `'propose_trade'`. Used by
-  /// `interactionModeForKindLabel` and trace lookups.
+  /// Matching tool name, e.g. `'propose_trade'`. Used by trace lookups.
   final String toolName;
+
+  /// Confirmation surface used by the chat propose card.
+  final InteractionMode interactionMode;
 
   /// Optional curated editable field list rendered in the inline
   /// edit sheet. `null` falls back to "no curated fields" → the

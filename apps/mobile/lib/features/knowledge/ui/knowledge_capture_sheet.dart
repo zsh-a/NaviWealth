@@ -15,7 +15,7 @@
 ///   * other kinds (decision / principle / assumption / concept /
 ///     experiment) → tags the Note with `kind:<x>_candidate` and a
 ///     possibly-extracted `scope:<...>` tag, same shape as
-///     `propose_inbox_classification` produces. The Library typed
+///     `queue_inbox_classification` produces. The Library typed
 ///     writers can later promote from the tagged Note.
 /// - ✗ keeps the Note unchanged. Sheet closes.
 library;
@@ -33,10 +33,7 @@ import '../data/capture_kind.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 
-Future<void> showKnowledgeCaptureSheet(
-  BuildContext context,
-  WidgetRef ref,
-) {
+Future<void> showKnowledgeCaptureSheet(BuildContext context, WidgetRef ref) {
   return showAppFormSheet<void>(
     context: context,
     builder: (sheetContext) => _KnowledgeCaptureSheet(ref: ref),
@@ -92,10 +89,8 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
     if (!_canSave) return;
     setState(() => _stage = _CaptureStage.saving);
     try {
-      final repo =
-          await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper =
-          await widget.ref.read(mutationStamperProvider.future);
+      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await widget.ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
       final note = KnowledgeNote(
         id: kKnowledgeUuid.v4(),
@@ -167,10 +162,8 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
     if (note == null || suggestion == null) return;
     setState(() => _stage = _CaptureStage.applying);
     try {
-      final repo =
-          await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper =
-          await widget.ref.read(mutationStamperProvider.future);
+      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await widget.ref.read(mutationStamperProvider.future);
 
       // Resolved title / body that downstream writes use. When the LLM
       // produced a polish, that's the authoritative version going
@@ -297,19 +290,19 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
   @override
   Widget build(BuildContext context) {
     final stage = _stage;
-    final isSuggestStage = stage == _CaptureStage.suggesting ||
-        stage == _CaptureStage.applying;
+    final isSuggestStage =
+        stage == _CaptureStage.suggesting || stage == _CaptureStage.applying;
     return AppSheet(
       title: isSuggestStage
           ? 'AI 建议升级'
           : stage == _CaptureStage.classifying
-              ? '已保存 · AI 思考中'
-              : '写一条想法',
+          ? '已保存 · AI 思考中'
+          : '写一条想法',
       subtitle: isSuggestStage
           ? '一段输入就够 — 类型 / 字段由 AI 抽取，你一键确认'
           : stage == _CaptureStage.classifying
-              ? 'Note 已经落库，AI 正在判断是否值得升级为 Routine / Decision 等'
-              : '自由格式 Markdown — AI 会在保存后建议升级为 Routine / Decision 等',
+          ? 'Note 已经落库，AI 正在判断是否值得升级为 Routine / Decision 等'
+          : '自由格式 Markdown — AI 会在保存后建议升级为 Routine / Decision 等',
       footer: stage == _CaptureStage.composing || stage == _CaptureStage.saving
           ? AppSheetFooter(
               submitLabel: stage == _CaptureStage.saving ? '保存中…' : '保存',
@@ -321,31 +314,27 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
             )
           : null,
       child: switch (stage) {
-        _CaptureStage.composing ||
-        _CaptureStage.saving =>
-          _ComposeBody(
-            titleController: _titleCtrl,
-            bodyController: _bodyCtrl,
-          ),
+        _CaptureStage.composing || _CaptureStage.saving => _ComposeBody(
+          titleController: _titleCtrl,
+          bodyController: _bodyCtrl,
+        ),
         _CaptureStage.classifying => _ClassifyingBody(
-            onSkip: () {
-              // The Note is already persisted from `_saveAndClassify` →
-              // popping here just abandons the in-flight classifier.
-              // The `mounted` guard after the await drops whatever the
-              // LLM returns once it eventually lands.
-              if (mounted) Navigator.of(context).pop();
-            },
-          ),
-        _CaptureStage.suggesting ||
-        _CaptureStage.applying =>
-          _SuggestionBody(
-            suggestion: _suggestion!,
-            originalTitle: _savedNote?.title ?? '',
-            originalBody: _savedNote?.bodyMd ?? '',
-            applying: stage == _CaptureStage.applying,
-            onAccept: _acceptUpgrade,
-            onDismiss: _dismissSuggestion,
-          ),
+          onSkip: () {
+            // The Note is already persisted from `_saveAndClassify` →
+            // popping here just abandons the in-flight classifier.
+            // The `mounted` guard after the await drops whatever the
+            // LLM returns once it eventually lands.
+            if (mounted) Navigator.of(context).pop();
+          },
+        ),
+        _CaptureStage.suggesting || _CaptureStage.applying => _SuggestionBody(
+          suggestion: _suggestion!,
+          originalTitle: _savedNote?.title ?? '',
+          originalBody: _savedNote?.bodyMd ?? '',
+          applying: stage == _CaptureStage.applying,
+          onAccept: _acceptUpgrade,
+          onDismiss: _dismissSuggestion,
+        ),
       },
     );
   }
@@ -510,9 +499,11 @@ class _PolishPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
-    final titleChanged = suggestion.polishedTitle != null &&
+    final titleChanged =
+        suggestion.polishedTitle != null &&
         suggestion.polishedTitle != originalTitle;
-    final bodyChanged = suggestion.polishedBody != null &&
+    final bodyChanged =
+        suggestion.polishedBody != null &&
         suggestion.polishedBody != originalBody;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s12),
@@ -526,12 +517,15 @@ class _PolishPanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(FLucideIcons.wand, size: AppIconSizes.xs, color: colors.primary),
+              Icon(
+                FLucideIcons.wand,
+                size: AppIconSizes.xs,
+                color: colors.primary,
+              ),
               const SizedBox(width: AppSpacing.s4),
               Text(
                 'AI 润色后的版本',
-                style: typography.sm
-                    .copyWith(fontWeight: FontWeight.w600),
+                style: typography.sm.copyWith(fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -629,12 +623,15 @@ class _UpgradePanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(FLucideIcons.sparkles, size: AppIconSizes.xs, color: colors.primary),
+              Icon(
+                FLucideIcons.sparkles,
+                size: AppIconSizes.xs,
+                color: colors.primary,
+              ),
               const SizedBox(width: AppSpacing.s4),
               Text(
                 headline,
-                style: typography.sm
-                    .copyWith(fontWeight: FontWeight.w600),
+                style: typography.sm.copyWith(fontWeight: FontWeight.w600),
               ),
             ],
           ),

@@ -8,7 +8,6 @@ import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dar
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
 import 'package:naviwealth/features/ai_chat/data/runtime_routing_api_client.dart';
-import 'package:naviwealth/features/ai_chat/domain/chat_events.dart';
 import 'package:naviwealth/features/ai_chat/ui/ai_transparency_badge.dart';
 
 AiTrace _trace({
@@ -234,16 +233,16 @@ void main() {
         'propose_expense',
         'propose_fire_bucket_rule',
         'propose_fire_plan_update',
-        'propose_inbox_classification',
-        'propose_inbox_tags',
         'propose_liability_payment',
-        'propose_link_to_decision',
         'propose_merge',
         'propose_options_journal_entry',
         'propose_options_profile_update',
         'propose_routine',
         'propose_trade',
         'query_memory',
+        'queue_inbox_classification',
+        'queue_inbox_tags',
+        'queue_link_to_decision',
         'read_account_window',
         'read_asset_window',
         'read_category_window',

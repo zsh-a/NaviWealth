@@ -57,7 +57,7 @@ enum InboxProposalStatus {
 }
 
 /// One envelope as stored inside the `proposals_json` array. Mirrors
-/// the `ProposalEnvelope` shape returned by `propose_inbox_*` tools.
+/// the `ProposalEnvelope` shape returned by `queue_inbox_*` tools.
 class InboxProposal {
   InboxProposal({
     required this.kind,
@@ -73,24 +73,21 @@ class InboxProposal {
   final InboxProposalStatus status;
   final DateTime? resolvedAt;
 
-  InboxProposal copyWith({
-    InboxProposalStatus? status,
-    DateTime? resolvedAt,
-  }) => InboxProposal(
-    kind: kind,
-    summaryZh: summaryZh,
-    payload: payload,
-    status: status ?? this.status,
-    resolvedAt: resolvedAt ?? this.resolvedAt,
-  );
+  InboxProposal copyWith({InboxProposalStatus? status, DateTime? resolvedAt}) =>
+      InboxProposal(
+        kind: kind,
+        summaryZh: summaryZh,
+        payload: payload,
+        status: status ?? this.status,
+        resolvedAt: resolvedAt ?? this.resolvedAt,
+      );
 
   Map<String, Object?> toJson() => <String, Object?>{
     'kind': kind.wire,
     'summary_zh': summaryZh,
     'payload': payload,
     'status': status.wire,
-    if (resolvedAt != null)
-      'resolved_at': resolvedAt!.millisecondsSinceEpoch,
+    if (resolvedAt != null) 'resolved_at': resolvedAt!.millisecondsSinceEpoch,
   };
 
   static InboxProposal fromJson(Map<String, Object?> j) {
@@ -213,9 +210,8 @@ class InboxTriageRepository {
     final now = (at ?? DateTime.now().toUtc()).toUtc();
     final updated = existing.proposals
         .map(
-          (p) => p.kind == kind
-              ? p.copyWith(status: status, resolvedAt: now)
-              : p,
+          (p) =>
+              p.kind == kind ? p.copyWith(status: status, resolvedAt: now) : p,
         )
         .toList(growable: false);
     await upsert(

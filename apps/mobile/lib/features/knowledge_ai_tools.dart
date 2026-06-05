@@ -16,11 +16,11 @@ import 'knowledge/ai_tools/list_due_routines_tool.dart';
 import 'knowledge/ai_tools/list_open_assumptions_tool.dart';
 import 'knowledge/ai_tools/propose_capture_tool.dart';
 import 'knowledge/ai_tools/propose_concept_link_tool.dart';
-import 'knowledge/ai_tools/propose_inbox_classification_tool.dart';
-import 'knowledge/ai_tools/propose_inbox_tags_tool.dart';
-import 'knowledge/ai_tools/propose_link_to_decision_tool.dart';
 import 'knowledge/ai_tools/propose_merge_tool.dart';
 import 'knowledge/ai_tools/propose_routine_tool.dart';
+import 'knowledge/ai_tools/queue_inbox_classification_tool.dart';
+import 'knowledge/ai_tools/queue_inbox_tags_tool.dart';
+import 'knowledge/ai_tools/queue_link_to_decision_tool.dart';
 import 'knowledge/ai_tools/recall_decision_tool.dart';
 import 'knowledge/ai_tools/review_knowledge_health_tool.dart';
 import 'knowledge/ai_tools/search_knowledge_tool.dart';
@@ -30,7 +30,7 @@ import 'knowledge/ai_tools/summarize_topic_evolution_tool.dart';
 /// All KnowledgeOS device tools. Read-only except for the
 /// `propose_*` tools, each of which returns a ProposalEnvelope and
 /// never writes directly to the synced KnowledgeOS tables.
-/// The `propose_inbox_*` trio additionally persists its envelope into
+/// The `queue_inbox_*` trio additionally persists its envelope into
 /// the local-only `knowledge_inbox_triage` side-table so the Review
 /// tab "AI 建议" card can render it without a second round-trip
 /// (`docs/knowledgeos-domain.md` §5 异步 triage flow).
@@ -45,9 +45,9 @@ const List<DeviceTool> kKnowledgeDeviceTools = <DeviceTool>[
   ReviewKnowledgeHealthTool(),
   ProposeConceptLinkTool(),
   ProposeMergeTool(),
-  ProposeInboxClassificationTool(),
-  ProposeInboxTagsTool(),
-  ProposeLinkToDecisionTool(),
+  QueueInboxClassificationTool(),
+  QueueInboxTagsTool(),
+  QueueLinkToDecisionTool(),
   ProposeRoutineTool(),
   ProposeCaptureTool(),
   SummarizeTopicEvolutionTool(),
@@ -60,142 +60,142 @@ const List<DeviceTool> kKnowledgeDeviceTools = <DeviceTool>[
 /// [allToolDescriptors] by the cross-domain catalog.
 const Map<String, ToolDescriptor> kKnowledgeToolDescriptors =
     <String, ToolDescriptor>{
-  'recall_decision': ToolDescriptor(
-    name: 'recall_decision',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainKnowledge,
-  ),
-  'list_open_assumptions': ToolDescriptor(
-    name: 'list_open_assumptions',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainKnowledge,
-  ),
-  'list_due_reviews': ToolDescriptor(
-    name: 'list_due_reviews',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainKnowledge,
-  ),
-  'list_due_routines': ToolDescriptor(
-    name: 'list_due_routines',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainKnowledge,
-  ),
-  'search_notes': ToolDescriptor(
-    name: 'search_notes',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainKnowledge,
-  ),
-  'find_similar_knowledge': ToolDescriptor(
-    name: 'find_similar_knowledge',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainKnowledge,
-  ),
-  'search_knowledge': ToolDescriptor(
-    name: 'search_knowledge',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainKnowledge,
-  ),
-  'review_knowledge_health': ToolDescriptor(
-    name: 'review_knowledge_health',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainKnowledge,
-  ),
-  'summarize_topic_evolution': ToolDescriptor(
-    name: 'summarize_topic_evolution',
-    access: Access.read,
-    risk: RiskLevel.suggest,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainKnowledge,
-  ),
-  'propose_concept_link': ToolDescriptor(
-    name: 'propose_concept_link',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainKnowledge,
-  ),
-  'propose_merge': ToolDescriptor(
-    name: 'propose_merge',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainKnowledge,
-  ),
-  'propose_inbox_classification': ToolDescriptor(
-    name: 'propose_inbox_classification',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.small,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainKnowledge,
-  ),
-  'propose_inbox_tags': ToolDescriptor(
-    name: 'propose_inbox_tags',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.small,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainKnowledge,
-  ),
-  'propose_link_to_decision': ToolDescriptor(
-    name: 'propose_link_to_decision',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.small,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainKnowledge,
-  ),
-  'propose_routine': ToolDescriptor(
-    name: 'propose_routine',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.small,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainKnowledge,
-  ),
-  'propose_capture': ToolDescriptor(
-    name: 'propose_capture',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.small,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainKnowledge,
-  ),
-};
+      'recall_decision': ToolDescriptor(
+        name: 'recall_decision',
+        access: Access.read,
+        risk: RiskLevel.info,
+        requiresConfirmation: Confirmation.none,
+        allowedContextTier: BudgetTier.small,
+        domain: kDomainKnowledge,
+      ),
+      'list_open_assumptions': ToolDescriptor(
+        name: 'list_open_assumptions',
+        access: Access.read,
+        risk: RiskLevel.info,
+        requiresConfirmation: Confirmation.none,
+        allowedContextTier: BudgetTier.small,
+        domain: kDomainKnowledge,
+      ),
+      'list_due_reviews': ToolDescriptor(
+        name: 'list_due_reviews',
+        access: Access.read,
+        risk: RiskLevel.info,
+        requiresConfirmation: Confirmation.none,
+        allowedContextTier: BudgetTier.small,
+        domain: kDomainKnowledge,
+      ),
+      'list_due_routines': ToolDescriptor(
+        name: 'list_due_routines',
+        access: Access.read,
+        risk: RiskLevel.info,
+        requiresConfirmation: Confirmation.none,
+        allowedContextTier: BudgetTier.small,
+        domain: kDomainKnowledge,
+      ),
+      'search_notes': ToolDescriptor(
+        name: 'search_notes',
+        access: Access.read,
+        risk: RiskLevel.info,
+        requiresConfirmation: Confirmation.none,
+        allowedContextTier: BudgetTier.small,
+        domain: kDomainKnowledge,
+      ),
+      'find_similar_knowledge': ToolDescriptor(
+        name: 'find_similar_knowledge',
+        access: Access.read,
+        risk: RiskLevel.info,
+        requiresConfirmation: Confirmation.none,
+        allowedContextTier: BudgetTier.small,
+        domain: kDomainKnowledge,
+      ),
+      'search_knowledge': ToolDescriptor(
+        name: 'search_knowledge',
+        access: Access.read,
+        risk: RiskLevel.info,
+        requiresConfirmation: Confirmation.none,
+        allowedContextTier: BudgetTier.standard,
+        domain: kDomainKnowledge,
+      ),
+      'review_knowledge_health': ToolDescriptor(
+        name: 'review_knowledge_health',
+        access: Access.read,
+        risk: RiskLevel.info,
+        requiresConfirmation: Confirmation.none,
+        allowedContextTier: BudgetTier.standard,
+        domain: kDomainKnowledge,
+      ),
+      'summarize_topic_evolution': ToolDescriptor(
+        name: 'summarize_topic_evolution',
+        access: Access.read,
+        risk: RiskLevel.suggest,
+        requiresConfirmation: Confirmation.none,
+        allowedContextTier: BudgetTier.standard,
+        domain: kDomainKnowledge,
+      ),
+      'propose_concept_link': ToolDescriptor(
+        name: 'propose_concept_link',
+        access: Access.propose,
+        risk: RiskLevel.propose,
+        requiresConfirmation: Confirmation.oneTap,
+        allowedContextTier: BudgetTier.standard,
+        sideEffect: SideEffect.deviceLocalWrite,
+        domain: kDomainKnowledge,
+      ),
+      'propose_merge': ToolDescriptor(
+        name: 'propose_merge',
+        access: Access.propose,
+        risk: RiskLevel.propose,
+        requiresConfirmation: Confirmation.oneTap,
+        allowedContextTier: BudgetTier.standard,
+        sideEffect: SideEffect.deviceLocalWrite,
+        domain: kDomainKnowledge,
+      ),
+      'queue_inbox_classification': ToolDescriptor(
+        name: 'queue_inbox_classification',
+        access: Access.propose,
+        risk: RiskLevel.propose,
+        requiresConfirmation: Confirmation.oneTap,
+        allowedContextTier: BudgetTier.small,
+        sideEffect: SideEffect.deviceLocalWrite,
+        domain: kDomainKnowledge,
+      ),
+      'queue_inbox_tags': ToolDescriptor(
+        name: 'queue_inbox_tags',
+        access: Access.propose,
+        risk: RiskLevel.propose,
+        requiresConfirmation: Confirmation.oneTap,
+        allowedContextTier: BudgetTier.small,
+        sideEffect: SideEffect.deviceLocalWrite,
+        domain: kDomainKnowledge,
+      ),
+      'queue_link_to_decision': ToolDescriptor(
+        name: 'queue_link_to_decision',
+        access: Access.propose,
+        risk: RiskLevel.propose,
+        requiresConfirmation: Confirmation.oneTap,
+        allowedContextTier: BudgetTier.small,
+        sideEffect: SideEffect.deviceLocalWrite,
+        domain: kDomainKnowledge,
+      ),
+      'propose_routine': ToolDescriptor(
+        name: 'propose_routine',
+        access: Access.propose,
+        risk: RiskLevel.propose,
+        requiresConfirmation: Confirmation.oneTap,
+        allowedContextTier: BudgetTier.small,
+        sideEffect: SideEffect.deviceLocalWrite,
+        domain: kDomainKnowledge,
+      ),
+      'propose_capture': ToolDescriptor(
+        name: 'propose_capture',
+        access: Access.propose,
+        risk: RiskLevel.propose,
+        requiresConfirmation: Confirmation.oneTap,
+        allowedContextTier: BudgetTier.small,
+        sideEffect: SideEffect.deviceLocalWrite,
+        domain: kDomainKnowledge,
+      ),
+    };
 
 /// KnowledgeOS system-prompt block. Appended onto [kDeviceSystemPromptBase]
 /// by `systemPromptBlocksProvider` only when the user has opted into
@@ -203,7 +203,7 @@ const Map<String, ToolDescriptor> kKnowledgeToolDescriptors =
 const String kKnowledgeSystemPromptBlock =
     '[KnowledgeOS 域]\n'
     '- 编辑知识库条目时调用 propose_* 工具，工具返回「待确认计划」：\n'
-    '  • propose_inbox_classification / propose_inbox_tags / propose_link_to_decision（收件箱分诊与归档）\n'
+    '  • queue_inbox_classification / queue_inbox_tags / queue_link_to_decision（收件箱分诊与归档）\n'
     '  • propose_concept_link（在两个概念 / 笔记之间建立关联）\n'
     '  • propose_routine（用户表达「每 X 时间做一次 Y」/「需要定期活跃 / 续期 / 缴费」时调用，'
     'AI 选择合理 interval_days，由用户在 UI 一键确认）\n'

@@ -1,4 +1,4 @@
-/// `propose_inbox_classification` — InboxTriageAgent write tool
+/// `queue_inbox_classification` — InboxTriageAgent write tool
 /// (`docs/knowledgeos-domain.md` §4 + §7).
 ///
 /// Suggests how an inbox note should be re-categorised: stay as a
@@ -18,11 +18,11 @@ const Set<String> _kClassifications = <String>{
   'concept_candidate',
 };
 
-class ProposeInboxClassificationTool implements DeviceTool {
-  const ProposeInboxClassificationTool();
+class QueueInboxClassificationTool implements DeviceTool {
+  const QueueInboxClassificationTool();
 
   @override
-  String get name => 'propose_inbox_classification';
+  String get name => 'queue_inbox_classification';
 
   @override
   String get description =>
@@ -46,10 +46,7 @@ class ProposeInboxClassificationTool implements DeviceTool {
         'minimum': 0,
         'maximum': 1,
       },
-      'reason': {
-        'type': 'string',
-        'description': '一句中文说明为什么这么分类。会显示给用户。',
-      },
+      'reason': {'type': 'string', 'description': '一句中文说明为什么这么分类。会显示给用户。'},
     },
     'required': <String>['note_id', 'kind', 'reason'],
   };

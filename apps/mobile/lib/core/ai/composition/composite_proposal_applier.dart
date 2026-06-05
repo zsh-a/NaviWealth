@@ -5,8 +5,8 @@
 /// The chat surface has exactly one `proposalApplierProvider`, but a
 /// multi-domain build needs Finance *and* KnowledgeOS (and later more) to
 /// each own their `propose_*` kinds. This composite holds one primary
-/// applier per domain keyed by the kinds it claims, with a fallback for
-/// everything unclaimed. Dispatch is by `plan.kind` on apply; undo has no
+/// applier per domain keyed by the kinds it claims. Dispatch is by
+/// `plan.kind` on apply; undo has no
 /// kind, so it routes on the persisted `appliedTable` prefix instead.
 library;
 
@@ -19,7 +19,7 @@ class ProposalApplierRoute {
   const ProposalApplierRoute({
     required this.applier,
     required this.kinds,
-    required this.tablePrefix,
+    required this.tablePrefixes,
   });
 
   final ProposalApplier applier;
@@ -27,36 +27,38 @@ class ProposalApplierRoute {
   /// `propose_*` wire kinds this applier handles (e.g. `knowledge_merge`).
   final Set<String> kinds;
 
-  /// Prefix of the Drift table names this applier writes (e.g.
-  /// `knowledge_`). Used to route [undo] since [ProposalApplyState] keeps
-  /// the table, not the originating kind.
-  final String tablePrefix;
+  /// Prefixes of the Drift table names this applier writes (e.g.
+  /// `knowledge_`, `journal_entries`). Used to route [undo] since
+  /// [ProposalApplyState] keeps the table, not the originating kind.
+  final Set<String> tablePrefixes;
 }
 
 class CompositeProposalApplier implements ProposalApplier {
-  CompositeProposalApplier({required this.routes, required this.fallback});
+  CompositeProposalApplier({required this.routes});
 
   /// Domain routes tried in order on apply (first matching kind wins).
   final List<ProposalApplierRoute> routes;
-
-  /// Applier for any kind no route claims — the previous single-domain
-  /// behaviour (FinanceOS today).
-  final ProposalApplier fallback;
 
   @override
   Future<ProposalApplyState> apply(ReadyProposalPlan plan) {
     for (final r in routes) {
       if (r.kinds.contains(plan.kind)) return r.applier.apply(plan);
     }
-    return fallback.apply(plan);
+    throw ProposalApplyException(
+      'no proposal applier registered for kind: ${plan.kind}',
+    );
   }
 
   @override
   Future<void> undo(ProposalApplyState state) {
     final table = state.appliedTable ?? '';
     for (final r in routes) {
-      if (table.startsWith(r.tablePrefix)) return r.applier.undo(state);
+      if (r.tablePrefixes.any(table.startsWith)) {
+        return r.applier.undo(state);
+      }
     }
-    return fallback.undo(state);
+    throw ProposalApplyException(
+      'no proposal applier registered for table: $table',
+    );
   }
 }

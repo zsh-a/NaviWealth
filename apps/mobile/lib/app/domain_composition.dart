@@ -1,9 +1,9 @@
 /// LifeOS domain-pack composition bundle.
 ///
 /// `bootstrap.dart` owns app-level wiring, but it should not repeat the
-/// same active-pack loops for tools, prompts, agents, shells, and Cmd-K.
-/// This file keeps those aggregations together so adding a domain stays a
-/// registry change plus domain-local contributions.
+/// same active-pack loops for tools, proposal kinds/routes, prompts, agents,
+/// shells, and Cmd-K. This file keeps those aggregations together so adding
+/// a domain stays a registry change plus domain-local contributions.
 library;
 
 import 'package:flutter/widgets.dart';
@@ -12,7 +12,10 @@ import 'package:flutter_riverpod/misc.dart';
 
 import '../core/ai/agents/agent.dart';
 import '../core/ai/agents/agent_registry.dart';
+import '../core/ai/composition/composite_proposal_applier.dart';
 import '../core/ai/composition/device_tools_provider.dart';
+import '../core/ai/composition/proposal_applier.dart';
+import '../core/ai/composition/proposal_kind_registry.dart';
 import '../core/ai/composition/system_prompt_blocks.dart';
 import '../core/ai/runtime/device/tools/device_tool.dart';
 import '../core/ai/runtime/device/tools/device_tool_registry.dart'
@@ -31,6 +34,16 @@ List<Override> lifeOsDomainCompositionOverrides({
     deviceToolsProvider.overrideWith(
       (ref) => domainDeviceTools(ref.watch(activeDomainPacksProvider)),
     ),
+    proposalKindRegistryProvider.overrideWith(
+      (ref) => domainProposalKinds(ref.watch(activeDomainPacksProvider)),
+    ),
+    proposalApplierProvider.overrideWith((ref) async {
+      final routes = await domainProposalApplierRoutes(
+        ref,
+        ref.watch(activeDomainPacksProvider),
+      );
+      return CompositeProposalApplier(routes: routes);
+    }),
     systemPromptBlocksProvider.overrideWith(
       (ref) => domainSystemPromptBlocks(ref.watch(activeDomainPacksProvider)),
     ),
@@ -53,6 +66,22 @@ List<DeviceTool> domainDeviceTools(List<DomainPack> packs) {
     ...kShellDeviceToolsCore,
     for (final p in packs) ...p.deviceTools,
   ];
+}
+
+List<ProposalKindMeta> domainProposalKinds(List<DomainPack> packs) {
+  return [for (final p in packs) ...p.proposalKinds];
+}
+
+Future<List<ProposalApplierRoute>> domainProposalApplierRoutes(
+  Ref ref,
+  List<DomainPack> packs,
+) async {
+  final routes = <ProposalApplierRoute>[];
+  for (final p in packs) {
+    final builder = p.proposalApplierRouteBuilder;
+    if (builder != null) routes.add(await builder(ref));
+  }
+  return routes;
 }
 
 List<String> domainSystemPromptBlocks(List<DomainPack> packs) {

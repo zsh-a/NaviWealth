@@ -11,11 +11,12 @@ import 'package:forui/forui.dart';
 
 import '../../../core/ai/composition/proposal_kind_registry.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
+import '../../../core/ai/write/interaction_mode.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 /// Active Finance kinds. Bootstrap merges these into
 /// [proposalKindRegistryProvider] alongside any other domains.
-List<ProposalKindMeta> get kFinanceProposalKinds => const [
+const List<ProposalKindMeta> kFinanceProposalKinds = [
   ProposalKindMeta(
     kind: 'trade',
     icon: FLucideIcons.trendingUp,
@@ -29,6 +30,7 @@ List<ProposalKindMeta> get kFinanceProposalKinds => const [
     icon: FLucideIcons.receipt,
     label: _expenseLabel,
     toolName: 'propose_expense',
+    interactionMode: InteractionMode.oneTap,
     editableFields: _expenseFields,
     previewRows: _expenseRows,
   ),
@@ -89,6 +91,11 @@ List<ProposalKindMeta> get kFinanceProposalKinds => const [
     previewRows: _optionsJournalEntryRows,
   ),
 ];
+
+/// Proposal kinds owned by FinanceOS. Derived from the same specs that
+/// render proposal cards so UI registration and apply ownership cannot drift.
+Set<String> get kFinanceProposalAppliedKinds =>
+    kFinanceProposalKinds.map((m) => m.kind).toSet();
 
 // ─── Labels ───
 

@@ -1,4 +1,4 @@
-/// `propose_link_to_decision` — InboxTriageAgent write tool
+/// `queue_link_to_decision` — InboxTriageAgent write tool
 /// (`docs/knowledgeos-domain.md` §4 + §7).
 ///
 /// Suggests existing Decision(s) that the inbox Note should be linked
@@ -14,11 +14,11 @@ import '../data/inbox_triage_repository.dart';
 import '../data/providers.dart';
 import '_inbox_triage_support.dart';
 
-class ProposeLinkToDecisionTool implements DeviceTool {
-  const ProposeLinkToDecisionTool();
+class QueueLinkToDecisionTool implements DeviceTool {
+  const QueueLinkToDecisionTool();
 
   @override
-  String get name => 'propose_link_to_decision';
+  String get name => 'queue_link_to_decision';
 
   @override
   String get description =>
@@ -41,11 +41,7 @@ class ProposeLinkToDecisionTool implements DeviceTool {
         'description': '一句中文说明为什么挂到这些 decision。会显示给用户。',
       },
     },
-    'required': <String>[
-      'note_id',
-      'related_decision_ids',
-      'reason',
-    ],
+    'required': <String>['note_id', 'related_decision_ids', 'reason'],
   };
 
   @override
@@ -87,9 +83,7 @@ class ProposeLinkToDecisionTool implements DeviceTool {
       }
     }
     if (valid.isEmpty) {
-      return badRequest(
-        '提供的 decision id 都找不到或不属于当前用户:${invalid.join(", ")}',
-      );
+      return badRequest('提供的 decision id 都找不到或不属于当前用户:${invalid.join(", ")}');
     }
 
     final summary =
