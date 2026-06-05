@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart' show Colors, Material;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -27,24 +26,18 @@ class RebalancePage extends ConsumerWidget {
     final plan = ref.watch(rebalancePlanProvider);
     final scheme = ref.watch(selectedSchemeProvider);
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.rebalanceTitle),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.slidersHorizontal),
-            onPress: () => _openSettings(context, ref),
-          ),
-        ],
-      ),
+    return AppPageScaffold(
+      title: l10n.rebalanceTitle,
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.slidersHorizontal),
+          onPress: () => _openSettings(context, ref),
+        ),
+      ],
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: plan == null
-            ? _EmptyState()
-            : _RebalanceBody(plan: plan, scheme: scheme),
-      ),
+      child: plan == null
+          ? _EmptyState()
+          : _RebalanceBody(plan: plan, scheme: scheme),
     );
   }
 

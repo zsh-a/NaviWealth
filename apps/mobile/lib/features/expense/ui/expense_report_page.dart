@@ -14,11 +14,8 @@ class ExpenseReportPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final reportAsync = ref.watch(expenseReportProvider);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.expenseReportAppBarTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.expenseReportAppBarTitle,
       childPad: false,
       child: reportAsync.when(
         loading: () => const Center(child: FCircularProgress()),

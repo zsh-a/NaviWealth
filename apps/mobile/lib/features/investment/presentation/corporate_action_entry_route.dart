@@ -98,11 +98,8 @@ class _ScaffoldMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(title),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: title,
       child: Center(child: child),
     );
   }

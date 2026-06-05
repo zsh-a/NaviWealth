@@ -36,7 +36,11 @@ class PlanHubPage extends ConsumerWidget {
               ? AppSpacing.s16
               : AppSpacing.s24;
           return ListView(
-            padding: EdgeInsets.fromLTRB(hPad, AppSpacing.s12, hPad, AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
+            padding: EdgeInsets.fromLTRB(
+              hPad,
+              AppSpacing.s12,
+              hPad,
+              AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
             ),
             children: const [
               _PlanHero(),
@@ -326,7 +330,11 @@ class _PlanSectionCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           alignment: Alignment.center,
-          child: Icon(spec.icon, size: AppIconSizes.h18, color: colors.mutedForeground),
+          child: Icon(
+            spec.icon,
+            size: AppIconSizes.h18,
+            color: colors.mutedForeground,
+          ),
         ),
         title: Text(spec.title),
         subtitle: Text(spec.subtitle),
@@ -345,8 +353,9 @@ class PlanScenariosPlaceholderPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FScaffold(
-      header: FHeader.nested(title: Text(l10n.planScenariosSectionTitle)),
+    return AppPageScaffold(
+      title: l10n.planScenariosSectionTitle,
+      showBack: false,
       childPad: false,
       child: Center(
         child: AppEmptyState(
@@ -365,8 +374,9 @@ class PlanGoalsPlaceholderPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FScaffold(
-      header: FHeader.nested(title: Text(l10n.planGoalsSectionTitle)),
+    return AppPageScaffold(
+      title: l10n.planGoalsSectionTitle,
+      showBack: false,
       childPad: false,
       child: Center(
         child: AppEmptyState(

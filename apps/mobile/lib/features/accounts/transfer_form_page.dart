@@ -115,13 +115,9 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         ).routeInformationProvider.value.uri.queryParameters['convert'] ==
         '1';
     return guardedScope(
-      child: FScaffold(
-        header: FHeader.nested(
-          title: Text(convertMode ? l10n.superFabConvert : l10n.transferTitle),
-          prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
-        ),
-        childPad: false,
-        resizeToAvoidBottomInset: false,
+      child: AppFormPageScaffold(
+        title: Text(convertMode ? l10n.superFabConvert : l10n.transferTitle),
+        confirmLeave: handleBackIntent,
         child: accountsAsync.when(
           data: (accounts) => _buildForm(context, accounts, convertMode),
           loading: () => const Center(child: FCircularProgress()),
@@ -225,7 +221,9 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
               child: Container(
                 padding: const EdgeInsets.all(AppSpacing.s12),
                 decoration: BoxDecoration(
-                  color: context.theme.colors.primary.withValues(alpha: AppOpacity.subtle),
+                  color: context.theme.colors.primary.withValues(
+                    alpha: AppOpacity.subtle,
+                  ),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Row(

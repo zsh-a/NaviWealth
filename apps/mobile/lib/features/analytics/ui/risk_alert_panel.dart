@@ -53,7 +53,11 @@ class _AlertList extends StatelessWidget {
             const SizedBox(width: AppSpacing.s8),
             Text(l10n.riskAlertTitle, style: context.theme.typography.md),
             const SizedBox(width: AppSpacing.s8),
-            _AlertCountBadge(count: alerts.length),
+            AppBadge(
+              label: '${alerts.length}',
+              tone: AppBadgeTone.error,
+              size: AppBadgeSize.compact,
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.s12),
@@ -68,29 +72,6 @@ class _AlertList extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _AlertCountBadge extends StatelessWidget {
-  const _AlertCountBadge({required this.count});
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s2),
-      decoration: BoxDecoration(
-        color: context.theme.colors.destructive.withValues(alpha: AppOpacity.subtle),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Text(
-        '$count',
-        style: context.theme.typography.xs2.copyWith(
-          color: context.theme.colors.destructive,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
     );
   }
 }

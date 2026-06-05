@@ -31,11 +31,8 @@ class AiModelsPage extends ConsumerWidget {
     final bundles = ref.watch(knownModelBundlesProvider);
     final resolution = ref.watch(embedderPathResolutionProvider);
     final l10n = AppLocalizations.of(context);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.settingsAiModelsTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.settingsAiModelsTitle,
       childPad: false,
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -78,10 +75,7 @@ class _RuntimeDiagnosticsCard extends StatelessWidget {
       child: resolution.when(
         loading: () => Row(
           children: [
-            const SizedBox.square(
-              dimension: 16,
-              child: FCircularProgress(),
-            ),
+            const SizedBox.square(dimension: 16, child: FCircularProgress()),
             const SizedBox(width: AppSpacing.s8),
             Text(
               l10n.settingsAiModelsCheckingRuntime,
@@ -272,7 +266,11 @@ class _BundleCard extends ConsumerWidget {
                   ],
                 ),
               ),
-              _SizeBadge(bundle: bundle),
+              if (bundle.totalSizeBytes case final total?)
+                AppBadge(
+                  label: _formatBytes(total),
+                  size: AppBadgeSize.compact,
+                ),
             ],
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -295,33 +293,6 @@ class _BundleCard extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SizeBadge extends StatelessWidget {
-  const _SizeBadge({required this.bundle});
-  final ModelBundle bundle;
-  @override
-  Widget build(BuildContext context) {
-    final total = bundle.totalSizeBytes;
-    if (total == null) return const SizedBox.shrink();
-    final colors = context.theme.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s4,
-      ),
-      decoration: BoxDecoration(
-        color: colors.foreground.withValues(alpha: AppOpacity.faint),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Text(
-        _formatBytes(total),
-        style: context.theme.typography.xs2.copyWith(
-          color: colors.mutedForeground,
-        ),
       ),
     );
   }
@@ -458,11 +429,15 @@ class _FileRow extends StatelessWidget {
               style: FDeterminateProgressStyle(
                 constraints: const BoxConstraints.tightFor(height: 3),
                 trackDecoration: ShapeDecoration(
-                  shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: context.theme.style.borderRadius.pill,
+                  ),
                   color: context.theme.colors.muted,
                 ),
                 fillDecoration: ShapeDecoration(
-                  shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: context.theme.style.borderRadius.pill,
+                  ),
                   color: context.theme.colors.primary,
                 ),
               ),
@@ -539,9 +514,7 @@ class _StatusChip extends StatelessWidget {
         children: [
           Text(
             text,
-            style: context.theme.typography.xs2.copyWith(
-              color: color,
-            ),
+            style: context.theme.typography.xs2.copyWith(color: color),
           ),
           if (progress != null) ...[
             const SizedBox(width: AppSpacing.s6),

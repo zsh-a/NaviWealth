@@ -28,11 +28,8 @@ class JournalEntryListPage extends ConsumerWidget {
     final journalAsync = ref.watch(journalEntriesWithPostingsStreamProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.journalTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.journalTitle,
       childPad: false,
       child: journalAsync.when(
         data: (entries) {
@@ -168,7 +165,7 @@ class _JournalEntryRow extends StatelessWidget {
                   padding: const EdgeInsets.only(top: AppSpacing.s4),
                   child: Row(
                     children: [
-                      EntryKindBadge(
+                      EntryKindIndicator(
                         classification: classification,
                         compact: true,
                       ),

@@ -22,11 +22,8 @@ class WheelLifecyclePage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final cyclesAsync = ref.watch(wheelLifecyclesProvider);
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.planWheelTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.planWheelTitle,
       childPad: false,
       child: cyclesAsync.when(
         loading: () => const Center(child: FCircularProgress()),
@@ -47,7 +44,12 @@ class WheelLifecyclePage extends ConsumerWidget {
             );
           }
           return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s24, ),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s16,
+              AppSpacing.s12,
+              AppSpacing.s16,
+              AppSpacing.s24,
+            ),
             itemCount: cycles.length,
             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
             itemBuilder: (context, i) => _WheelTile(cycle: cycles[i]),

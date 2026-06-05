@@ -103,5 +103,19 @@ void main() {
       expect(find.byKey(const ValueKey('app.back')), findsOneWidget);
       expect(find.byKey(const Key('edit')), findsOneWidget);
     });
+
+    testWidgets('accepts a custom title widget', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const ObjectDetailScaffold(
+            titleWidget: Text('Hero title', key: Key('title')),
+            child: Text('detail'),
+          ),
+        ),
+      );
+
+      expect(find.byKey(const Key('title')), findsOneWidget);
+      expect(find.byKey(const ValueKey('app.back')), findsOneWidget);
+    });
   });
 }

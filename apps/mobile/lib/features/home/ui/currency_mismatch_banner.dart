@@ -9,17 +9,17 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../data/dashboard_providers.dart';
 import '../domain/dashboard_models.dart';
 
-/// Warning banner shown above the dashboard when one or more holdings were
+/// Warning notice shown above the dashboard when one or more holdings were
 /// excluded from the totals because no FX rate is available to convert
 /// them into the active base currency.
 ///
 /// Silently dropping foreign-currency rows is what shipped before;
-/// the banner makes the omission visible so users don't read a stale total
+/// the notice makes the omission visible so users don't read a stale total
 /// as ground truth. Tapping it surfaces the offending holdings (currency
 /// + id) so the user can either record the missing rate or fix the
 /// holding's currency.
-class CurrencyMismatchBanner extends ConsumerWidget {
-  const CurrencyMismatchBanner({super.key});
+class CurrencyMismatchNotice extends ConsumerWidget {
+  const CurrencyMismatchNotice({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,39 +29,18 @@ class CurrencyMismatchBanner extends ConsumerWidget {
 
     final l10n = AppLocalizations.of(context);
     final base = ref.watch(dashboardBaseCurrencyProvider);
-    return ColoredBox(
-      color: semantic.dangerContainer,
-      child: GestureDetector(
-        onTap: () => _showDetails(context, mismatches, base),
-        behavior: HitTestBehavior.opaque,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s16,
-            vertical: AppSpacing.s8,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                FLucideIcons.triangleAlert,
-                color: semantic.onDangerContainer,
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: Text(
-                  l10n.dashboardCurrencyMismatchBanner(mismatches.length, base),
-                  style: context.theme.typography.sm.copyWith(
-                    color: semantic.onDangerContainer,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Text(
-                l10n.dashboardCurrencyMismatchAction,
-                style: context.theme.typography.sm.copyWith(
-                  color: semantic.onDangerContainer,
-                ),
-              ),
-            ],
+    return GestureDetector(
+      onTap: () => _showDetails(context, mismatches, base),
+      behavior: HitTestBehavior.opaque,
+      child: AppStatusBanner(
+        kind: AppStatusKind.error,
+        icon: FLucideIcons.triangleAlert,
+        message: l10n.dashboardCurrencyMismatchBanner(mismatches.length, base),
+        action: Text(
+          l10n.dashboardCurrencyMismatchAction,
+          style: context.theme.typography.sm.copyWith(
+            color: semantic.onDangerContainer,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),

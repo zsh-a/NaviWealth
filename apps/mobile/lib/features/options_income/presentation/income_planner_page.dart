@@ -41,25 +41,19 @@ class IncomePlannerPage extends ConsumerWidget {
             onPress: () => showStrategyProfileSheet(context),
           )
         : null;
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.incomePlannerTitle),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [?settingsAction],
-      ),
+    return AppPageScaffold(
+      title: l10n.incomePlannerTitle,
+      actions: [?settingsAction],
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: profileAsync.when(
-          loading: () => const _LoadingState(),
-          error: (e, _) => _ErrorState(message: '$e'),
-          data: (profile) {
-            if (profile == null || !profile.hasAcknowledgedRiskDisclosure) {
-              return const _StartState();
-            }
-            return _ConfiguredBody(profile: profile);
-          },
-        ),
+      child: profileAsync.when(
+        loading: () => const _LoadingState(),
+        error: (e, _) => _ErrorState(message: '$e'),
+        data: (profile) {
+          if (profile == null || !profile.hasAcknowledgedRiskDisclosure) {
+            return const _StartState();
+          }
+          return _ConfiguredBody(profile: profile);
+        },
       ),
     );
   }
@@ -97,11 +91,8 @@ class _UnsupportedOnWebPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.incomePlannerTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.incomePlannerTitle,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s24),
         child: Text(l10n.incomePlannerUnsupportedOnWeb),
@@ -368,9 +359,18 @@ class _OpportunityCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                _StrategyBadge(strategy: opportunity.strategy),
+                AppBadge(
+                  label: optionsStrategyKindShortLabel(
+                    l10n,
+                    opportunity.strategy,
+                  ),
+                  tone: AppBadgeTone.accent,
+                ),
                 const SizedBox(width: AppSpacing.s8),
-                _RiskBadge(risk: opportunity.risk),
+                AppBadge(
+                  label: _riskLabel(l10n, opportunity.risk),
+                  tone: _riskTone(opportunity.risk),
+                ),
                 const Spacer(),
                 Text(
                   '${contract.underlying} ${contract.dte}DTE',
@@ -596,79 +596,18 @@ class _BulletRow extends StatelessWidget {
   }
 }
 
-class _StrategyBadge extends StatelessWidget {
-  const _StrategyBadge({required this.strategy});
-
-  final OptionsStrategyKind strategy;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final label = optionsStrategyKindShortLabel(l10n, strategy);
-    final colors = context.theme.colors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: AppOpacity.light),
-        borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s8,
-          vertical: AppSpacing.s2,
-        ),
-        child: Text(
-          label,
-          style: context.theme.typography.xs.copyWith(
-            color: colors.primary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RiskBadge extends StatelessWidget {
-  const _RiskBadge({required this.risk});
-
-  final OpportunityRiskLevel risk;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
-    final (label, color) = switch (risk) {
-      OpportunityRiskLevel.low => (l10n.incomePlannerRiskLow, colors.primary),
-      OpportunityRiskLevel.moderate => (
-        l10n.incomePlannerRiskModerate,
-        colors.mutedForeground,
-      ),
-      OpportunityRiskLevel.elevated => (
-        l10n.incomePlannerRiskElevated,
-        colors.destructive,
-      ),
+String _riskLabel(AppLocalizations l10n, OpportunityRiskLevel risk) =>
+    switch (risk) {
+      OpportunityRiskLevel.low => l10n.incomePlannerRiskLow,
+      OpportunityRiskLevel.moderate => l10n.incomePlannerRiskModerate,
+      OpportunityRiskLevel.elevated => l10n.incomePlannerRiskElevated,
     };
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: AppOpacity.subtle),
-        borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s8,
-          vertical: AppSpacing.s2,
-        ),
-        child: Text(
-          label,
-          style: context.theme.typography.xs.copyWith(
-            color: color,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-}
+
+AppBadgeTone _riskTone(OpportunityRiskLevel risk) => switch (risk) {
+  OpportunityRiskLevel.low => AppBadgeTone.accent,
+  OpportunityRiskLevel.moderate => AppBadgeTone.neutral,
+  OpportunityRiskLevel.elevated => AppBadgeTone.error,
+};
 
 class _EmptyCard extends StatelessWidget {
   const _EmptyCard({required this.body});
@@ -850,7 +789,9 @@ class _StrategyChip extends StatelessWidget {
     final colors = context.theme.colors;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: enabled ? colors.primary.withValues(alpha: AppOpacity.light) : colors.muted,
+        color: enabled
+            ? colors.primary.withValues(alpha: AppOpacity.light)
+            : colors.muted,
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Padding(
@@ -945,8 +886,8 @@ class _TradeJournalSection extends ConsumerWidget {
                                         '${entry.symbol} · ${entry.optionSymbol}',
                                         style: context.theme.typography.sm
                                             .copyWith(
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                       ),
                                       const SizedBox(height: AppSpacing.s2),
                                       Text(
@@ -956,8 +897,8 @@ class _TradeJournalSection extends ConsumerWidget {
                                         ),
                                         style: context.theme.typography.xs
                                             .copyWith(
-                                          color: colors.mutedForeground,
-                                        ),
+                                              color: colors.mutedForeground,
+                                            ),
                                       ),
                                     ],
                                   ),

@@ -335,7 +335,7 @@ class _AssistantBubble extends StatelessWidget {
             !_isError &&
             message.role == ChatRole.assistant &&
             message.status == ChatMessageStatus.complete)
-          AiTransparencyBadge(messageId: message.id),
+          AiTransparencyIndicator(messageId: message.id),
         // Inline per-message actions: copy (always on completed /
         // errored assistant rows) + regenerate (only on the trailing
         // assistant row, so a mid-thread tap can't silently discard

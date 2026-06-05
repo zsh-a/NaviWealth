@@ -6,7 +6,6 @@
 library;
 
 import 'package:flutter/widgets.dart';
-import '../../../design_system/design_system.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -14,10 +13,11 @@ import 'package:go_router/go_router.dart';
 import '../../../app/route_paths.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/trace/trace.dart';
+import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
-class AiTransparencyBadge extends ConsumerWidget {
-  const AiTransparencyBadge({super.key, required this.messageId});
+class AiTransparencyIndicator extends ConsumerWidget {
+  const AiTransparencyIndicator({super.key, required this.messageId});
 
   final String messageId;
 
@@ -50,7 +50,11 @@ class AiTransparencyBadge extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s4),
-                Icon(FLucideIcons.chevronRight, size: AppIconSizes.xs, color: muted),
+                Icon(
+                  FLucideIcons.chevronRight,
+                  size: AppIconSizes.xs,
+                  color: muted,
+                ),
               ],
             ),
           ),

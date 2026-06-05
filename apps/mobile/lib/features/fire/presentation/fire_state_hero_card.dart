@@ -13,8 +13,8 @@ import '../../ai_chat/ui/ask_ai.dart';
 import '../data/fire_providers.dart';
 import '../domain/fire_action.dart';
 import '../domain/fire_state.dart';
-import 'fire_status_colors.dart';
 import 'fire_ai_capsule.dart';
+import 'fire_status_colors.dart';
 
 /// "自由状态" hero card — the headline of the FIRE OS page.
 ///
@@ -70,7 +70,10 @@ class _HeroBody extends ConsumerWidget {
       appFormattersProvider(Localizations.localeOf(context)),
     );
     final colors = context.theme.colors;
-    final accent = fireSafetyColor(SemanticColors.of(context), state.safetyLevel);
+    final accent = fireSafetyColor(
+      SemanticColors.of(context),
+      state.safetyLevel,
+    );
     final safetyLabel = _safetyLabel(l10n, state.safetyLevel);
 
     return SoftCard(
@@ -98,7 +101,12 @@ class _HeroBody extends ConsumerWidget {
                   ],
                 ),
               ),
-              _SafetyPill(label: safetyLabel, accent: accent),
+              AppBadge(
+                label: safetyLabel,
+                foregroundColor: accent,
+                containerColor: accent.withValues(alpha: AppOpacity.light),
+                borderColor: accent.withValues(alpha: AppOpacity.disabled),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.s16),
@@ -112,38 +120,15 @@ class _HeroBody extends ConsumerWidget {
               child: FButton(
                 variant: FButtonVariant.ghost,
                 onPress: onExplain,
-                prefix: const Icon(FLucideIcons.sparkles, size: AppIconSizes.xs),
+                prefix: const Icon(
+                  FLucideIcons.sparkles,
+                  size: AppIconSizes.xs,
+                ),
                 child: const Text('Explain'),
               ),
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _SafetyPill extends StatelessWidget {
-  const _SafetyPill({required this.label, required this.accent});
-
-  final String label;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: AppOpacity.light),
-        borderRadius: BorderRadius.circular(AppRadius.full),
-        border: Border.all(color: accent.withValues(alpha: AppOpacity.disabled), width: 1),
-      ),
-      child: Text(
-        label,
-        style: context.theme.typography.sm.copyWith(
-          color: accent,
-          fontWeight: FontWeight.w600,
-        ),
       ),
     );
   }
@@ -352,7 +337,10 @@ class _ActionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final severityColor = fireActionSeverityColor(SemanticColors.of(context), action.severity);
+    final severityColor = fireActionSeverityColor(
+      SemanticColors.of(context),
+      action.severity,
+    );
     final title = fireActionTitle(l10n, action);
     final detail = fireActionDetail(l10n, action, formatters);
     return Row(
@@ -523,4 +511,3 @@ String _safetyLabel(AppLocalizations l10n, FireSafetyLevel level) {
       return l10n.fireOsSafetyUnconfigured;
   }
 }
-

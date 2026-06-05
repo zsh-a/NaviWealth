@@ -110,7 +110,11 @@ class EquityAllocationContent extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.s16),
         if (view.unclassifiedCount > 0)
-          _UnclassifiedBanner(count: view.unclassifiedCount),
+          AppStatusBanner(
+            kind: AppStatusKind.warning,
+            message: l10n.analyticsUnclassifiedHint(view.unclassifiedCount),
+            compact: true,
+          ),
         if (view.unclassifiedCount > 0) const SizedBox(height: AppSpacing.s12),
         SoftCard(
           child: Column(
@@ -232,32 +236,6 @@ class _BucketRow extends StatelessWidget {
         ),
       ),
       onPress: onTap,
-    );
-  }
-}
-
-class _UnclassifiedBanner extends StatelessWidget {
-  const _UnclassifiedBanner({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return SoftCard(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s12),
-        child: Row(
-          children: [
-            Icon(
-              FLucideIcons.triangleAlert,
-              color: context.theme.colors.mutedForeground,
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            Expanded(child: Text(l10n.analyticsUnclassifiedHint(count))),
-          ],
-        ),
-      ),
     );
   }
 }

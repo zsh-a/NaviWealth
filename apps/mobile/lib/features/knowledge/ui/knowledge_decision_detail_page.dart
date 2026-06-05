@@ -142,7 +142,7 @@ class _BodyState extends ConsumerState<_Body> {
               ),
             ),
             const SizedBox(width: AppSpacing.s8),
-            KnowledgeStatusBadge(label: d.status.wire),
+            KnowledgeStatusLabel(label: d.status.wire),
           ],
         ),
         const SizedBox(height: AppSpacing.s4),
@@ -334,19 +334,13 @@ class _ContextSnapshotSection extends StatelessWidget {
             style: typography.sm.copyWith(color: colors.mutedForeground),
           ),
         if (finance.isNotEmpty) ...[
-          Text(
-            'Finance',
-            style: typography.xs,
-          ),
+          Text('Finance', style: typography.xs),
           for (final raw in finance.whereType<Map<Object?, Object?>>())
             _SnapshotRow(map: raw.cast<String, Object?>()),
           const SizedBox(height: AppSpacing.s4),
         ],
         if (health.isNotEmpty) ...[
-          Text(
-            'Health',
-            style: typography.xs,
-          ),
+          Text('Health', style: typography.xs),
           for (final raw in health.whereType<Map<Object?, Object?>>())
             _SnapshotRow(map: raw.cast<String, Object?>()),
         ],
@@ -372,7 +366,10 @@ class _SnapshotRow extends StatelessWidget {
         children: [
           if (ts.length >= 10)
             Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.s8, top: AppSpacing.s2),
+              padding: const EdgeInsets.only(
+                right: AppSpacing.s8,
+                top: AppSpacing.s2,
+              ),
               child: Text(
                 ts.substring(5, 10),
                 style: typography.xs.copyWith(color: colors.mutedForeground),

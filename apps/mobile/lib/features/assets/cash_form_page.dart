@@ -168,31 +168,24 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return guardedScope(
-      child: FScaffold(
-        header: FHeader.nested(
-          title: Text(
-            _editingAsset == null
-                ? l10n.cashFormCreateTitle
-                : l10n.cashFormEditTitle,
-          ),
-          prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
-          suffixes: [
-            if (widget.isEdit)
-              FHeaderAction(
-                icon: const Icon(FLucideIcons.trash2),
-                onPress: _busy ? null : _delete,
-              ),
-          ],
+      child: AppFormPageScaffold(
+        title: Text(
+          _editingAsset == null
+              ? l10n.cashFormCreateTitle
+              : l10n.cashFormEditTitle,
         ),
-        childPad: false,
-        resizeToAvoidBottomInset: false,
-        child: Material(
-          color: Colors.transparent,
-          child: accountsAsync.when(
-            loading: () => const Center(child: FCircularProgress()),
-            error: (e, _) => Center(child: Text(l10n.cashFormLoadError('$e'))),
-            data: (accounts) => _buildForm(l10n, accounts),
-          ),
+        confirmLeave: handleBackIntent,
+        actions: [
+          if (widget.isEdit)
+            FHeaderAction(
+              icon: const Icon(FLucideIcons.trash2),
+              onPress: _busy ? null : _delete,
+            ),
+        ],
+        child: accountsAsync.when(
+          loading: () => const Center(child: FCircularProgress()),
+          error: (e, _) => Center(child: Text(l10n.cashFormLoadError('$e'))),
+          data: (accounts) => _buildForm(l10n, accounts),
         ),
       ),
     );

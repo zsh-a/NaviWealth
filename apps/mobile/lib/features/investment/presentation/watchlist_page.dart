@@ -53,22 +53,19 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
       next.whenData((snapshots) => _notifyAlerts(context, snapshots));
     });
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.watchlistTitle),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.refreshCw),
-            onPress: () => ref.invalidate(watchlistQuoteSnapshotsProvider),
-          ),
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.plus),
-            semanticsLabel: l10n.watchlistAddAction,
-            onPress: () => showWatchlistItemSheet(context: context),
-          ),
-        ],
-      ),
+    return AppPageScaffold(
+      title: l10n.watchlistTitle,
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.refreshCw),
+          onPress: () => ref.invalidate(watchlistQuoteSnapshotsProvider),
+        ),
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.plus),
+          semanticsLabel: l10n.watchlistAddAction,
+          onPress: () => showWatchlistItemSheet(context: context),
+        ),
+      ],
       childPad: false,
       child: items.when(
         loading: () => const Center(child: FCircularProgress()),

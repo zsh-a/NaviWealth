@@ -491,7 +491,7 @@ Widget _buildDecisionTile(
     trailing: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        KnowledgeStatusBadge(label: d.status.wire),
+        KnowledgeStatusLabel(label: d.status.wire),
         const SizedBox(width: AppSpacing.s4),
         deleteButton,
         const SizedBox(width: AppSpacing.s4),
@@ -590,7 +590,7 @@ Widget _buildExperimentTile(
     trailing: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        KnowledgeStatusBadge(label: e.status.wire),
+        KnowledgeStatusLabel(label: e.status.wire),
         const SizedBox(width: AppSpacing.s4),
         deleteButton,
         const SizedBox(width: AppSpacing.s4),
@@ -625,7 +625,7 @@ Widget _buildRoutineTile(
     trailing: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        KnowledgeStatusBadge(label: r.status.wire),
+        KnowledgeStatusLabel(label: r.status.wire),
         const SizedBox(width: AppSpacing.s4),
         deleteButton,
       ],

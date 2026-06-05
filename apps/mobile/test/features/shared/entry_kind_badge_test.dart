@@ -49,7 +49,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       _wrap(
-        const EntryKindBadge(
+        const EntryKindIndicator(
           classification: EntryKindClassification(
             kind: EntryKind.trade,
             isInflow: false,
@@ -64,7 +64,7 @@ void main() {
   testWidgets('sell trade shows trending_up icon', (tester) async {
     await tester.pumpWidget(
       _wrap(
-        const EntryKindBadge(
+        const EntryKindIndicator(
           classification: EntryKindClassification(
             kind: EntryKind.trade,
             isInflow: true,
@@ -80,7 +80,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       _wrap(
-        const EntryKindBadge(
+        const EntryKindIndicator(
           classification: EntryKindClassification(kind: EntryKind.expense),
           compact: true,
         ),
@@ -93,7 +93,7 @@ void main() {
   testWidgets('label override replaces the default short name', (tester) async {
     await tester.pumpWidget(
       _wrap(
-        const EntryKindBadge(
+        const EntryKindIndicator(
           classification: EntryKindClassification(
             kind: EntryKind.payment,
             isInflow: false,
@@ -123,7 +123,9 @@ void main() {
     ];
     for (final k in kinds) {
       await tester.pumpWidget(
-        _wrap(EntryKindBadge(classification: EntryKindClassification(kind: k))),
+        _wrap(
+          EntryKindIndicator(classification: EntryKindClassification(kind: k)),
+        ),
       );
       // At least one icon is rendered (anything beyond zero would
       // have failed the build_runner type check).
@@ -134,7 +136,7 @@ void main() {
   testWidgets('other kind uses the explicit localized label', (tester) async {
     await tester.pumpWidget(
       _wrap(
-        const EntryKindBadge(
+        const EntryKindIndicator(
           classification: EntryKindClassification(kind: EntryKind.other),
         ),
       ),

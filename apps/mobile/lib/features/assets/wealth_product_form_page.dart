@@ -233,31 +233,24 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return guardedScope(
-      child: FScaffold(
-        header: FHeader.nested(
-          title: Text(
-            widget.isEdit
-                ? l10n.wealthProductEditTitle
-                : l10n.wealthProductCreateTitle,
-          ),
-          prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
-          suffixes: [
-            if (widget.isEdit)
-              FHeaderAction(
-                icon: const Icon(FLucideIcons.trash2),
-                onPress: _busy ? null : _delete,
-              ),
-          ],
+      child: AppFormPageScaffold(
+        title: Text(
+          widget.isEdit
+              ? l10n.wealthProductEditTitle
+              : l10n.wealthProductCreateTitle,
         ),
-        childPad: false,
-        resizeToAvoidBottomInset: false,
-        child: Material(
-          color: Colors.transparent,
-          child: accountsAsync.when(
-            loading: () => const Center(child: FCircularProgress()),
-            error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
-            data: (accounts) => _buildForm(accounts),
-          ),
+        confirmLeave: handleBackIntent,
+        actions: [
+          if (widget.isEdit)
+            FHeaderAction(
+              icon: const Icon(FLucideIcons.trash2),
+              onPress: _busy ? null : _delete,
+            ),
+        ],
+        child: accountsAsync.when(
+          loading: () => const Center(child: FCircularProgress()),
+          error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
+          data: (accounts) => _buildForm(accounts),
         ),
       ),
     );

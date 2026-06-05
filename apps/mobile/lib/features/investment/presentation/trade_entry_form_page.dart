@@ -414,20 +414,13 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     final accountsAsync = ref.watch(accountsStreamProvider);
 
     return guardedScope(
-      child: FScaffold(
-        header: FHeader.nested(
-          title: Text(l10n.tradeEntryAppBarTitle),
-          prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
-        ),
-        childPad: false,
-        resizeToAvoidBottomInset: false,
-        child: Material(
-          color: Colors.transparent,
-          child: accountsAsync.when(
-            loading: () => const Center(child: FCircularProgress()),
-            error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
-            data: (accounts) => _buildForm(accounts),
-          ),
+      child: AppFormPageScaffold(
+        title: Text(l10n.tradeEntryAppBarTitle),
+        confirmLeave: handleBackIntent,
+        child: accountsAsync.when(
+          loading: () => const Center(child: FCircularProgress()),
+          error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
+          data: (accounts) => _buildForm(accounts),
         ),
       ),
     );

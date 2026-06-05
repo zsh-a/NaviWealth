@@ -118,143 +118,140 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         _lastErrorKind == null &&
         authState is AuthLoggedOut &&
         authState.reason == LoggedOutReason.sessionExpired;
-    return FScaffold(
+    return AppCanvasScaffold(
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: SingleChildScrollView(
-                      keyboardDismissBehavior:
-                          ScrollViewKeyboardDismissBehavior.onDrag,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.s24,
-                        vertical: AppSpacing.s32,
-                      ),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            SvgPicture.asset(
-                              'assets/svg/logo.svg',
-                              width: 80,
-                              height: 80,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s24,
+                      vertical: AppSpacing.s32,
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SvgPicture.asset(
+                            'assets/svg/logo.svg',
+                            width: 80,
+                            height: 80,
+                          ),
+                          const SizedBox(height: AppSpacing.s16),
+                          Text(
+                            l10n.appTitle,
+                            style: context.theme.typography.lg,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: AppSpacing.s8),
+                          Text(
+                            _mode == _AuthMode.signIn
+                                ? l10n.authLoginTitle
+                                : l10n.authRegisterTitle,
+                            style: context.theme.typography.md,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: AppSpacing.s24),
+                          if (showExpiredBanner)
+                            AppStatusBanner(
+                              kind: AppStatusKind.info,
+                              message: l10n.authLoginNoticeSessionExpired,
                             ),
-                            const SizedBox(height: AppSpacing.s16),
-                            Text(
-                              l10n.appTitle,
-                              style: context.theme.typography.lg,
-                              textAlign: TextAlign.center,
-                            ),
+                          if (_lastErrorKind != null) ...[
                             const SizedBox(height: AppSpacing.s8),
-                            Text(
-                              _mode == _AuthMode.signIn
-                                  ? l10n.authLoginTitle
-                                  : l10n.authRegisterTitle,
-                              style: context.theme.typography.md,
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: AppSpacing.s24),
-                            if (showExpiredBanner)
-                              _Banner(
-                                kind: _BannerKind.info,
-                                message: l10n.authLoginNoticeSessionExpired,
-                              ),
-                            if (_lastErrorKind != null) ...[
-                              const SizedBox(height: AppSpacing.s8),
-                              _Banner(
-                                kind: _BannerKind.error,
-                                message: _errorMessage(l10n, _lastErrorKind!),
-                                details: _lastErrorMessage,
-                              ),
-                            ],
-                            const SizedBox(height: AppSpacing.s16),
-                            FTextFormField(
-                              key: const ValueKey('login.email'),
-                              control: FTextFieldControl.managed(
-                                controller: _emailController,
-                              ),
-                              label: Text(l10n.authEmailLabel),
-                              keyboardType: TextInputType.emailAddress,
-                              textInputAction: TextInputAction.next,
-                              autofocus: !kIsWeb,
-                              enabled: !_submitting,
-                              autofillHints: const [
-                                AutofillHints.username,
-                                AutofillHints.email,
-                              ],
-                              validator: (value) =>
-                                  _validateEmail(value, l10n: l10n),
-                              onSubmit: (_) => _passwordFocus.requestFocus(),
-                            ),
-                            const SizedBox(height: AppSpacing.s16),
-                            FTextFormField(
-                              key: const ValueKey('login.password'),
-                              control: FTextFieldControl.managed(
-                                controller: _passwordController,
-                              ),
-                              label: Text(l10n.authPasswordLabel),
-                              focusNode: _passwordFocus,
-                              textInputAction: TextInputAction.done,
-                              obscureText: _obscurePassword,
-                              enabled: !_submitting,
-                              autofillHints: [
-                                _mode == _AuthMode.signIn
-                                    ? AutofillHints.password
-                                    : AutofillHints.newPassword,
-                              ],
-                              validator: (value) =>
-                                  _validatePassword(value, l10n: l10n),
-                              onSubmit: (_) => _submit(),
+                            AppStatusBanner(
+                              kind: AppStatusKind.error,
+                              message: _errorMessage(l10n, _lastErrorKind!),
+                              details: _lastErrorMessage,
                             ),
                           ],
-                        ),
+                          const SizedBox(height: AppSpacing.s16),
+                          FTextFormField(
+                            key: const ValueKey('login.email'),
+                            control: FTextFieldControl.managed(
+                              controller: _emailController,
+                            ),
+                            label: Text(l10n.authEmailLabel),
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            autofocus: !kIsWeb,
+                            enabled: !_submitting,
+                            autofillHints: const [
+                              AutofillHints.username,
+                              AutofillHints.email,
+                            ],
+                            validator: (value) =>
+                                _validateEmail(value, l10n: l10n),
+                            onSubmit: (_) => _passwordFocus.requestFocus(),
+                          ),
+                          const SizedBox(height: AppSpacing.s16),
+                          FTextFormField(
+                            key: const ValueKey('login.password'),
+                            control: FTextFieldControl.managed(
+                              controller: _passwordController,
+                            ),
+                            label: Text(l10n.authPasswordLabel),
+                            focusNode: _passwordFocus,
+                            textInputAction: TextInputAction.done,
+                            obscureText: _obscurePassword,
+                            enabled: !_submitting,
+                            autofillHints: [
+                              _mode == _AuthMode.signIn
+                                  ? AutofillHints.password
+                                  : AutofillHints.newPassword,
+                            ],
+                            validator: (value) =>
+                                _validatePassword(value, l10n: l10n),
+                            onSubmit: (_) => _submit(),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
-              AppFormActionBar(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        AppBusyButton(
-                          key: const ValueKey('login.submit'),
-                          variant: FButtonVariant.primary,
-                          onPress: _submit,
-                          busy: _submitting,
-                          label: _mode == _AuthMode.signIn
-                              ? l10n.authLoginSubmit
-                              : l10n.authRegisterSubmit,
+            ),
+            AppFormActionBar(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AppBusyButton(
+                        key: const ValueKey('login.submit'),
+                        variant: FButtonVariant.primary,
+                        onPress: _submit,
+                        busy: _submitting,
+                        label: _mode == _AuthMode.signIn
+                            ? l10n.authLoginSubmit
+                            : l10n.authRegisterSubmit,
+                      ),
+                      const SizedBox(height: AppSpacing.s8),
+                      FButton(
+                        key: const ValueKey('login.toggleMode'),
+                        variant: FButtonVariant.ghost,
+                        onPress: _submitting ? null : _toggleMode,
+                        child: Text(
+                          _mode == _AuthMode.signIn
+                              ? l10n.authRegisterSwitch
+                              : l10n.authLoginSwitch,
                         ),
-                        const SizedBox(height: AppSpacing.s8),
-                        FButton(
-                          key: const ValueKey('login.toggleMode'),
-                          variant: FButtonVariant.ghost,
-                          onPress: _submitting ? null : _toggleMode,
-                          child: Text(
-                            _mode == _AuthMode.signIn
-                                ? l10n.authRegisterSwitch
-                                : l10n.authLoginSwitch,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -279,62 +276,4 @@ String? _validatePassword(String? raw, {required AppLocalizations l10n}) {
 
 final RegExp _emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
 
-enum _BannerKind { info, error }
-
 enum _AuthMode { signIn, register }
-
-class _Banner extends StatelessWidget {
-  const _Banner({required this.kind, required this.message, this.details});
-
-  final _BannerKind kind;
-  final String message;
-  final String? details;
-
-  @override
-  Widget build(BuildContext context) {
-    final semantic = SemanticColors.of(context);
-    final (background, foreground, icon) = switch (kind) {
-      _BannerKind.info => (
-        semantic.infoContainer,
-        semantic.info,
-        FLucideIcons.info,
-      ),
-      _BannerKind.error => (
-        semantic.dangerContainer,
-        semantic.danger,
-        FLucideIcons.circleAlert,
-      ),
-    };
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: foreground, size: AppIconSizes.md),
-          const SizedBox(width: AppSpacing.s8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(message, style: context.theme.typography.sm),
-                if (details != null && details!.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.s2),
-                  Text(
-                    details!,
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

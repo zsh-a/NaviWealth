@@ -46,21 +46,23 @@ class ActivityEntryDetailPage extends ConsumerWidget {
       postings: entry.postings,
       resolveCategory: (id) => accountsById[id]?.category,
     );
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.activityEntryDetailTitle),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          if (classification.kind == EntryKind.expense)
-            FHeaderAction(
-              icon: const Icon(FLucideIcons.pencil),
-              onPress: () => context.go(AppRoutes.expense(entry.entry.id)),
-            ),
-        ],
-      ),
+    return ObjectDetailScaffold(
+      title: l10n.activityEntryDetailTitle,
+      actions: [
+        if (classification.kind == EntryKind.expense)
+          FHeaderAction(
+            icon: const Icon(FLucideIcons.pencil),
+            onPress: () => context.go(AppRoutes.expense(entry.entry.id)),
+          ),
+      ],
       childPad: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s32),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s16,
+          AppSpacing.s8,
+          AppSpacing.s16,
+          AppSpacing.s32,
+        ),
         children: [
           // AiTouchMark: surfaces when this journal entry was created
           // by an accepted AI proposal. Self-gating: hidden otherwise.
@@ -338,9 +340,10 @@ class _LedgerBreakdownCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),
-              _LedgerMetaPill(
+              AppBadge(
                 label: l10n.activityEntryDetailLegCount(postings.length),
                 icon: FLucideIcons.gitBranch,
+                size: AppBadgeSize.compact,
               ),
             ],
           ),
@@ -377,7 +380,9 @@ class _SubtleDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 1,
-      color: context.theme.colors.foreground.withValues(alpha: AppOpacity.whisper),
+      color: context.theme.colors.foreground.withValues(
+        alpha: AppOpacity.whisper,
+      ),
     );
   }
 }
@@ -443,56 +448,22 @@ class _DetailPostingRow extends StatelessWidget {
               runSpacing: AppSpacing.s4,
               children: [
                 if (cost != null)
-                  _LedgerMetaPill(
+                  AppBadge(
                     label: _costLabel(cost),
                     icon: FLucideIcons.box,
+                    size: AppBadgeSize.compact,
                   ),
                 if (price != null)
-                  _LedgerMetaPill(
+                  AppBadge(
                     label: '@ ${_format(price.perUnit)} ${price.currency}',
                     icon: FLucideIcons.badgeCent,
+                    size: AppBadgeSize.compact,
                   ),
               ],
             ),
           ],
           // account == null 时 accountLabel 已回退为 posting.accountId，
           // 无需额外兜底文本。数据库验证：当前无孤立 posting 数据。
-        ],
-      ),
-    );
-  }
-}
-
-class _LedgerMetaPill extends StatelessWidget {
-  const _LedgerMetaPill({required this.label, required this.icon});
-
-  final String label;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s4,
-      ),
-      decoration: BoxDecoration(
-        color: colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: AppIconSizes.xs, color: colors.mutedForeground),
-          const SizedBox(width: AppSpacing.s4),
-          Text(
-            label,
-            style: context.theme.typography.xs2.copyWith(
-              color: colors.mutedForeground,
-              fontFeatures: TypographyTokens.tabularFigures,
-            ),
-          ),
         ],
       ),
     );

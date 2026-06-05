@@ -83,17 +83,14 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
     );
 
     if (widget.embedded) return body;
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.navExpenses),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.lightbulb),
-            onPress: () => context.go(AppRoutes.expenseReport),
-          ),
-        ],
-      ),
+    return AppPageScaffold(
+      title: l10n.navExpenses,
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.lightbulb),
+          onPress: () => context.go(AppRoutes.expenseReport),
+        ),
+      ],
       childPad: false,
       child: body,
     );

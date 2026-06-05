@@ -123,11 +123,15 @@ class _PassiveIncomeContent extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s12),
-                _DeltaPill(
+                AppBadge(
                   label: changeRatio == null
                       ? l10n.homePassiveIncomeDeltaNew
                       : formatters.signedPercent(changeRatio, decimalDigits: 1),
-                  color: trendColor,
+                  foregroundColor: trendColor,
+                  containerColor: trendColor.withValues(
+                    alpha: AppOpacity.light,
+                  ),
+                  minWidth: 58,
                 ),
               ],
             ),
@@ -193,38 +197,6 @@ class _PassiveIncomeError extends StatelessWidget {
   }
 }
 
-class _DeltaPill extends StatelessWidget {
-  const _DeltaPill({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 58),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s6,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: AppOpacity.light),
-        borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        label,
-        style: context.theme.typography.xs.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-}
-
 class _PassiveIncomeSparkline extends StatelessWidget {
   const _PassiveIncomeSparkline({required this.values, required this.color});
 
@@ -237,7 +209,9 @@ class _PassiveIncomeSparkline extends StatelessWidget {
       painter: _SparklinePainter(
         values: values.map((value) => value.toDouble()).toList(growable: false),
         color: color,
-        guideColor: context.theme.colors.border.withValues(alpha: AppOpacity.scrim),
+        guideColor: context.theme.colors.border.withValues(
+          alpha: AppOpacity.scrim,
+        ),
       ),
     );
   }

@@ -55,34 +55,34 @@ class HomePage extends ConsumerWidget {
       ),
     );
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
-    return FScaffold(
+    return AppCanvasScaffold(
       // The home cockpit owns its hero greeting; we drop the static
       // "Overview" page title in favour of a personalized status line
       // rendered inside [HomeGreetingHeader]. A bare scaffold (no
       // FHeader) keeps the top of the page calm.
       childPad: false,
       child: PageSkeletonShell<DashboardSnapshot>(
-          skeleton: const HomeSkeleton(),
-          isLoading: snapshotAsync.isLoading && !snapshotAsync.hasValue,
-          child: SafeArea(
-            bottom: false,
-            child: snapshotAsync.when(
-              loading: () => const HomeSkeleton(),
-              error: (e, st) => _ErrorBody(error: e),
-              data: (snapshot) => Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // §5.10.5 — first-launch privacy onboarding sheet.
-                  // Renders nothing once the user has confirmed.
-                  const AiPrivacyOnboardingMount(),
-                  const CurrencyMismatchBanner(),
-                  Expanded(child: _DashboardBody(snapshot: snapshot)),
-                ],
-              ),
+        skeleton: const HomeSkeleton(),
+        isLoading: snapshotAsync.isLoading && !snapshotAsync.hasValue,
+        child: SafeArea(
+          bottom: false,
+          child: snapshotAsync.when(
+            loading: () => const HomeSkeleton(),
+            error: (e, st) => _ErrorBody(error: e),
+            data: (snapshot) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // §5.10.5 — first-launch privacy onboarding sheet.
+                // Renders nothing once the user has confirmed.
+                const AiPrivacyOnboardingMount(),
+                const CurrencyMismatchNotice(),
+                Expanded(child: _DashboardBody(snapshot: snapshot)),
+              ],
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 }
 

@@ -20,38 +20,32 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final assetAsync = ref.watch(physicalAssetDetailProvider(id));
-    return FScaffold(
-      header: FHeader.nested(
-        title: assetAsync.maybeWhen(
-          data: (a) => Text(a?.name ?? l10n.physicalAssetNotFound),
+    return ObjectDetailScaffold(
+      title: assetAsync.maybeWhen(
+        data: (a) => a?.name ?? l10n.physicalAssetNotFound,
+        orElse: () => '',
+      ),
+      actions: [
+        assetAsync.maybeWhen(
+          data: (a) => a == null
+              ? const SizedBox.shrink()
+              : FHeaderAction(
+                  icon: const Icon(FLucideIcons.trash2),
+                  onPress: () => _confirmDelete(context, ref, a.id),
+                ),
           orElse: () => const SizedBox.shrink(),
         ),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          assetAsync.maybeWhen(
-            data: (a) => a == null
-                ? const SizedBox.shrink()
-                : FHeaderAction(
-                    icon: const Icon(FLucideIcons.trash2),
-                    onPress: () => _confirmDelete(context, ref, a.id),
-                  ),
-            orElse: () => const SizedBox.shrink(),
-          ),
-        ],
-      ),
+      ],
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: assetAsync.when(
-          loading: () => const Center(child: FCircularProgress()),
-          error: (e, st) => Center(child: Text('$e')),
-          data: (asset) {
-            if (asset == null) {
-              return Center(child: Text(l10n.physicalAssetNotFound));
-            }
-            return _DetailBody(asset: asset);
-          },
-        ),
+      child: assetAsync.when(
+        loading: () => const Center(child: FCircularProgress()),
+        error: (e, st) => Center(child: Text('$e')),
+        data: (asset) {
+          if (asset == null) {
+            return Center(child: Text(l10n.physicalAssetNotFound));
+          }
+          return _DetailBody(asset: asset);
+        },
       ),
     );
   }
@@ -139,7 +133,10 @@ class _DetailBody extends ConsumerWidget {
                   variant: FButtonVariant.primary,
                   onPress: () =>
                       ValuationUpdateSheet.show(context, asset: asset),
-                  prefix: const Icon(FLucideIcons.pencil, size: AppIconSizes.sm),
+                  prefix: const Icon(
+                    FLucideIcons.pencil,
+                    size: AppIconSizes.sm,
+                  ),
                   child: Text(l10n.physicalAssetUpdateValuationAction),
                 ),
               ],

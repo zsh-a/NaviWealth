@@ -49,17 +49,14 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(dcaSimulationProvider);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.dcaSimulatorTitle),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.refreshCw),
-            onPress: () => ref.read(dcaSimulationProvider.notifier).refresh(),
-          ),
-        ],
-      ),
+    return AppPageScaffold(
+      title: l10n.dcaSimulatorTitle,
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.refreshCw),
+          onPress: () => ref.read(dcaSimulationProvider.notifier).refresh(),
+        ),
+      ],
       childPad: false,
       child: ListView(
         padding: EdgeInsets.fromLTRB(

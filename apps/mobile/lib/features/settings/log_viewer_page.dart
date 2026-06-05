@@ -1,5 +1,5 @@
-import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:share_plus/share_plus.dart';
@@ -66,28 +66,25 @@ class _LogViewerPageState extends ConsumerState<LogViewerPage> {
     final l10n = AppLocalizations.of(context);
     final talker = ref.watch(talkerProvider);
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.settingsLogsTitle),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.copy),
-            onPress: () => _copyAll(context, talker),
-          ),
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.share2),
-            onPress: () => _shareAll(talker),
-          ),
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.trash2),
-            onPress: () {
-              talker.cleanHistory();
-              setState(() {});
-            },
-          ),
-        ],
-      ),
+    return AppPageScaffold(
+      title: l10n.settingsLogsTitle,
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.copy),
+          onPress: () => _copyAll(context, talker),
+        ),
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.share2),
+          onPress: () => _shareAll(talker),
+        ),
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.trash2),
+          onPress: () {
+            talker.cleanHistory();
+            setState(() {});
+          },
+        ),
+      ],
       childPad: false,
       child: StreamBuilder<TalkerData>(
         stream: talker.stream,

@@ -53,7 +53,7 @@ class HealthTodayPage extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
         children: const [
-          _HealthDataStatusBanner(),
+          _HealthDataStatusNotice(),
           SizedBox(height: AppSpacing.s12),
           _RecoveryHero(),
           SizedBox(height: AppSpacing.s12),
@@ -66,16 +66,16 @@ class HealthTodayPage extends ConsumerWidget {
   }
 }
 
-class _HealthDataStatusBanner extends ConsumerStatefulWidget {
-  const _HealthDataStatusBanner();
+class _HealthDataStatusNotice extends ConsumerStatefulWidget {
+  const _HealthDataStatusNotice();
 
   @override
-  ConsumerState<_HealthDataStatusBanner> createState() =>
-      _HealthDataStatusBannerState();
+  ConsumerState<_HealthDataStatusNotice> createState() =>
+      _HealthDataStatusNoticeState();
 }
 
-class _HealthDataStatusBannerState
-    extends ConsumerState<_HealthDataStatusBanner> {
+class _HealthDataStatusNoticeState
+    extends ConsumerState<_HealthDataStatusNotice> {
   bool _running = false;
   HealthSyncResult? _lastResult;
 
@@ -118,10 +118,17 @@ class _HealthDataStatusBannerState
   Widget build(BuildContext context) {
     final optIns = ref.watch(core_auth.domainOptInsProvider).value;
     final enabled = optIns?.contains(DomainScope.health) ?? false;
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final result = _lastResult;
 
+    final kind = !enabled
+        ? AppStatusKind.warning
+        : _running
+        ? AppStatusKind.info
+        : result == null
+        ? AppStatusKind.info
+        : result.ok
+        ? AppStatusKind.success
+        : AppStatusKind.error;
     final text = !enabled
         ? 'HealthOS 未启用'
         : _running
@@ -146,27 +153,12 @@ class _HealthDataStatusBannerState
             child: Text(_running ? '同步中' : '同步'),
           );
 
-    return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      child: Row(
-        children: [
-          Icon(
-            enabled ? FLucideIcons.activity : FLucideIcons.circleOff,
-            color: enabled ? colors.primary : colors.mutedForeground,
-            size: AppIconSizes.h18,
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          Expanded(
-            child: Text(
-              text,
-              style: typography.xs.copyWith(color: colors.mutedForeground),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (action != null) ...[const SizedBox(width: AppSpacing.s8), action],
-        ],
-      ),
+    return AppStatusBanner(
+      kind: kind,
+      message: text,
+      icon: enabled ? FLucideIcons.activity : FLucideIcons.circleOff,
+      action: action,
+      compact: true,
     );
   }
 }
@@ -719,7 +711,10 @@ class _BriefingCard extends StatelessWidget {
               ),
               const Spacer(),
               if (source is String && source.isNotEmpty)
-                _SourcePill(source: source),
+                AppBadge(
+                  label: source == 'llm' ? 'LLM' : '自动',
+                  size: AppBadgeSize.compact,
+                ),
               const SizedBox(width: AppSpacing.s8),
               FButton(
                 variant: FButtonVariant.outline,
@@ -847,33 +842,6 @@ class _BriefingError extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SourcePill extends StatelessWidget {
-  const _SourcePill({required this.source});
-
-  final String source;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
-    final label = source == 'llm' ? 'LLM' : '自动';
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s2,
-      ),
-      decoration: BoxDecoration(
-        color: colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-      child: Text(
-        label,
-        style: typography.xs2.copyWith(color: colors.mutedForeground),
       ),
     );
   }

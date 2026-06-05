@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -29,39 +28,33 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.analyticsAppBarTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.analyticsAppBarTitle,
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = !Breakpoints.isMobile(constraints.maxWidth);
-            final basePadding = isWide
-                ? const EdgeInsets.all(AppSpacing.s24)
-                : const EdgeInsets.all(AppSpacing.s16);
-            return ListView(
-              padding: basePadding.copyWith(
-                bottom:
-                    basePadding.bottom +
-                    64 +
-                    MediaQuery.paddingOf(context).bottom,
-              ),
-              children: [
-                ResponsiveTwoColumn(
-                  left: AnalyticsEquityColumn(
-                    dimension: _dimension,
-                    onDimensionChanged: (d) => setState(() => _dimension = d),
-                  ),
-                  right: const _RiskAndBenchmarkColumn(),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = !Breakpoints.isMobile(constraints.maxWidth);
+          final basePadding = isWide
+              ? const EdgeInsets.all(AppSpacing.s24)
+              : const EdgeInsets.all(AppSpacing.s16);
+          return ListView(
+            padding: basePadding.copyWith(
+              bottom:
+                  basePadding.bottom +
+                  64 +
+                  MediaQuery.paddingOf(context).bottom,
+            ),
+            children: [
+              ResponsiveTwoColumn(
+                left: AnalyticsEquityColumn(
+                  dimension: _dimension,
+                  onDimensionChanged: (d) => setState(() => _dimension = d),
                 ),
-              ],
-            );
-          },
-        ),
+                right: const _RiskAndBenchmarkColumn(),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
