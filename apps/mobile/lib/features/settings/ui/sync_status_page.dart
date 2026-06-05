@@ -21,17 +21,14 @@ class SyncStatusPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final eventAsync = ref.watch(syncStatusEventStreamProvider);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.syncStatusTitle),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.refreshCw),
-            onPress: () => _triggerSyncNow(ref),
-          ),
-        ],
-      ),
+    return AppPageScaffold(
+      title: l10n.syncStatusTitle,
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.refreshCw),
+          onPress: () => _triggerSyncNow(ref),
+        ),
+      ],
       childPad: false,
       child: eventAsync.when(
         loading: () => const Center(child: FCircularProgress()),
@@ -133,7 +130,12 @@ class _HeroCard extends StatelessWidget {
     final syncing = event.status == SyncStatus.syncing;
 
     return SoftCard(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s20, AppSpacing.s20, AppSpacing.s12, AppSpacing.s20),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s20,
+        AppSpacing.s20,
+        AppSpacing.s12,
+        AppSpacing.s20,
+      ),
       child: Row(
         children: [
           _StatusOrb(palette: palette, status: event.status),
@@ -274,7 +276,12 @@ class _StatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SoftCard(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s12, AppSpacing.s12, AppSpacing.s12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s12,
+        AppSpacing.s12,
+        AppSpacing.s12,
+        AppSpacing.s12,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -322,7 +329,11 @@ class _ErrorCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(FLucideIcons.triangleAlert, color: semantic.danger, size: AppIconSizes.md),
+          Icon(
+            FLucideIcons.triangleAlert,
+            color: semantic.danger,
+            size: AppIconSizes.md,
+          ),
           const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: SelectableText(
@@ -353,7 +364,11 @@ class _ConflictCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(FLucideIcons.arrowLeftRight, color: semantic.warning, size: AppIconSizes.md),
+          Icon(
+            FLucideIcons.arrowLeftRight,
+            color: semantic.warning,
+            size: AppIconSizes.md,
+          ),
           const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: Column(
@@ -482,7 +497,10 @@ class _LocalCountsCard extends StatelessWidget {
     Widget cell(String id) {
       final value = counts![id] ?? 0;
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s8,
+        ),
         child: Row(
           children: [
             Expanded(
@@ -513,7 +531,12 @@ class _LocalCountsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s8, AppSpacing.s12, AppSpacing.s4),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s12,
+              AppSpacing.s8,
+              AppSpacing.s12,
+              AppSpacing.s4,
+            ),
             child: Text(
               l10n.syncStatusLocalCountsHeader,
               style: context.theme.typography.xs.copyWith(
@@ -676,7 +699,10 @@ class _Row extends StatelessWidget {
             );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s8,
+      ),
       child: Row(
         crossAxisAlignment: wrap
             ? CrossAxisAlignment.start

@@ -25,11 +25,8 @@ class PlanBudgetPage extends ConsumerWidget {
     final monthKey = _currentMonthKey(DateTime.now().toUtc());
     final budgetsAsync = ref.watch(budgetsForMonthProvider(monthKey));
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.planBudgetTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.planBudgetTitle,
       childPad: false,
       child: budgetsAsync.when(
         loading: () => const Center(child: FCircularProgress()),
@@ -76,7 +73,12 @@ class _BudgetBody extends StatelessWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s24, ),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s12,
+        AppSpacing.s16,
+        AppSpacing.s24,
+      ),
       children: [
         _MonthHeaderCard(
           monthKey: monthKey,

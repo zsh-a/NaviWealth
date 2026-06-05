@@ -52,43 +52,37 @@ class _CashFlowPageState extends ConsumerState<CashFlowPage> {
     final request = CashFlowSummaryRequest(period: _period);
     final summaryAsync = ref.watch(cashFlowSummaryProvider(request));
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.cashFlowTitle),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.calendarClock),
-            onPress: () => context.push(AppRoutes.cashflowRecurring),
-          ),
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.wallet),
-            onPress: () => context.push(AppRoutes.cashflowDividends),
-          ),
-        ],
-      ),
+    return AppPageScaffold(
+      title: l10n.cashFlowTitle,
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.calendarClock),
+          onPress: () => context.push(AppRoutes.cashflowRecurring),
+        ),
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.wallet),
+          onPress: () => context.push(AppRoutes.cashflowDividends),
+        ),
+      ],
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: PageSkeletonShell<CashFlowSummary>(
-          skeleton: const CashFlowSkeleton(),
-          isLoading: summaryAsync.isLoading,
-          child: summaryAsync.when(
-            loading: () => const CashFlowSkeleton(),
-            error: (error, _) => _LoadError(
-              message: l10n.cashFlowLoadError('$error'),
-              onRetry: () => ref.invalidate(cashFlowSummaryProvider(request)),
-            ),
-            data: (summary) => summary.buckets.isEmpty
-                ? const _EmptyState()
-                : _CashFlowContent(
-                    period: _period,
-                    summary: summary,
-                    formatter: formatter,
-                    now: ref.watch(cashFlowNowProvider),
-                    onPeriodChanged: _changePeriod,
-                  ),
+      child: PageSkeletonShell<CashFlowSummary>(
+        skeleton: const CashFlowSkeleton(),
+        isLoading: summaryAsync.isLoading,
+        child: summaryAsync.when(
+          loading: () => const CashFlowSkeleton(),
+          error: (error, _) => _LoadError(
+            message: l10n.cashFlowLoadError('$error'),
+            onRetry: () => ref.invalidate(cashFlowSummaryProvider(request)),
           ),
+          data: (summary) => summary.buckets.isEmpty
+              ? const _EmptyState()
+              : _CashFlowContent(
+                  period: _period,
+                  summary: summary,
+                  formatter: formatter,
+                  now: ref.watch(cashFlowNowProvider),
+                  onPeriodChanged: _changePeriod,
+                ),
         ),
       ),
     );

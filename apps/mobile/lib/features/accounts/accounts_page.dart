@@ -1,10 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
 import '../../app/master_detail_layout.dart';
 import '../../app/selection_query.dart';
+import '../../design_system/design_system.dart';
 import 'account_form_page.dart';
 import 'ui/accounts_master.dart';
 
@@ -34,7 +34,7 @@ class AccountsPage extends ConsumerWidget {
         );
         final selected = selectedQueryOf(context);
         if (masterDetail) {
-          return FScaffold(
+          return AppCanvasScaffold(
             childPad: false,
             child: MasterDetailLayout(
               master: AccountsMaster(

@@ -23,14 +23,16 @@ class AiPrivacyPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final settings = ref.watch(aiPrivacySettingsProvider);
     final controller = ref.read(aiPrivacySettingsProvider.notifier);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.aiPrivacyTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.aiPrivacyTitle,
       childPad: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s24),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s16,
+          AppSpacing.s8,
+          AppSpacing.s16,
+          AppSpacing.s24,
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
@@ -74,7 +76,10 @@ class AiPrivacyPage extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s16),
           SoftCard(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s16,
+              vertical: AppSpacing.s12,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -134,7 +139,10 @@ class _ModeRow extends StatelessWidget {
     return FTappable(
       onPress: () => onSelect(mode),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s16,
+          vertical: AppSpacing.s14,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

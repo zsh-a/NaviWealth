@@ -36,11 +36,8 @@ class DomainsSettingsPage extends ConsumerWidget {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.settingsDomainsTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.settingsDomainsTitle,
       childPad: false,
       child: ListView(
         padding: EdgeInsets.fromLTRB(

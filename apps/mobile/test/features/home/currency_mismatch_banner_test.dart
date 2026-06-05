@@ -22,7 +22,7 @@ Widget _wrap({
       locale: const Locale('en', 'US'),
       home: FTheme(
         data: FThemes.slate.light.desktop,
-        child: const Scaffold(body: CurrencyMismatchBanner()),
+        child: const Scaffold(body: CurrencyMismatchNotice()),
       ),
     ),
   );

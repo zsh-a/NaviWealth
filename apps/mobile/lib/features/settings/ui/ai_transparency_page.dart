@@ -47,11 +47,8 @@ class _AiTransparencyPageState extends ConsumerState<AiTransparencyPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final tracesAsync = ref.watch(recentAiTracesProvider);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.settingsAiTransparencyTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.settingsAiTransparencyTitle,
       childPad: false,
       child: CustomScrollView(
         slivers: <Widget>[
@@ -90,7 +87,9 @@ class _AiTransparencyPageState extends ConsumerState<AiTransparencyPage> {
                     SliverList.separated(
                       itemCount: shown.length,
                       separatorBuilder: (_, _) => const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: AppSpacing.s16),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s16,
+                        ),
                         child: FDivider(),
                       ),
                       itemBuilder: (context, i) => _TraceRow(trace: shown[i]),
@@ -122,9 +121,17 @@ class _CaptureToggle extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final verbose = ref.watch(aiTraceVerboseProvider);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s4, AppSpacing.s16, AppSpacing.s4),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s4,
+        AppSpacing.s16,
+        AppSpacing.s4,
+      ),
       child: SoftCard(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s16,
+          vertical: AppSpacing.s12,
+        ),
         child: Row(
           children: [
             Expanded(
@@ -199,9 +206,17 @@ class _AggregateHeader extends StatelessWidget {
       }
     }
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s8,
+        AppSpacing.s16,
+        AppSpacing.s8,
+      ),
       child: SoftCard(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s16,
+          vertical: AppSpacing.s14,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -261,12 +276,20 @@ class _UndoSection extends ConsumerWidget {
         .where((e) => e.expiresAt == null || e.expiresAt!.isAfter(now))
         .toList(growable: false);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s4),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s12,
+        AppSpacing.s16,
+        AppSpacing.s4,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.only(left: AppSpacing.s4, bottom: AppSpacing.s8),
+            padding: const EdgeInsets.only(
+              left: AppSpacing.s4,
+              bottom: AppSpacing.s8,
+            ),
             child: Text(
               l10n.aiTransparencyUndoSectionTitle,
               style: context.theme.typography.sm.copyWith(
@@ -277,7 +300,10 @@ class _UndoSection extends ConsumerWidget {
           ),
           if (live.isEmpty)
             SoftCard(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s14),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s16,
+                vertical: AppSpacing.s14,
+              ),
               child: Text(
                 l10n.aiTransparencyUndoEmpty,
                 style: context.theme.typography.xs.copyWith(
@@ -316,7 +342,10 @@ class _UndoRow extends ConsumerWidget {
         entry.payload['summaryZh'] as String? ??
         entry.kind;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s12,
+      ),
       child: Row(
         children: <Widget>[
           const AiSparkle(),
@@ -385,7 +414,10 @@ class _TraceRow extends StatelessWidget {
         pathParameters: <String, String>{'requestId': trace.requestId},
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s16,
+          vertical: AppSpacing.s12,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -504,11 +536,8 @@ class AiTransparencyDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final traceAsync = ref.watch(aiTraceByIdProvider(requestId));
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.aiTransparencyDetailTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.aiTransparencyDetailTitle,
       childPad: false,
       child: traceAsync.when(
         data: (trace) {
@@ -532,7 +561,12 @@ class _TraceWaterfallBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s24),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s12,
+        AppSpacing.s16,
+        AppSpacing.s24,
+      ),
       children: [
         _HeaderSummary(trace: trace, eventCount: trace.spans.length),
         const SizedBox(height: AppSpacing.s20),

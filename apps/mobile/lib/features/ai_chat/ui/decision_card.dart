@@ -39,7 +39,11 @@ class DecisionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(FLucideIcons.listChecks, size: AppIconSizes.sm, color: colors.primary),
+              Icon(
+                FLucideIcons.listChecks,
+                size: AppIconSizes.sm,
+                color: colors.primary,
+              ),
               const SizedBox(width: AppSpacing.s8),
               Expanded(
                 child: Text(
@@ -61,7 +65,9 @@ class DecisionCard extends StatelessWidget {
             if (i > 0) const SizedBox(height: AppSpacing.s8),
             _OptionTile(
               option: request.options[i],
-              onTap: interactive ? () => onSelect(_replyFor(request.options[i])) : null,
+              onTap: interactive
+                  ? () => onSelect(_replyFor(request.options[i]))
+                  : null,
             ),
           ],
           if (request.allowCustom && interactive) ...[
@@ -78,8 +84,7 @@ class DecisionCard extends StatelessWidget {
 
   /// Structured-but-natural reply written back to the conversation so the
   /// agent continues under the chosen constraint.
-  static String _replyFor(DecisionOption o) =>
-      '我选择「${o.label}」。请在此方案下继续。';
+  static String _replyFor(DecisionOption o) => '我选择「${o.label}」。请在此方案下继续。';
 }
 
 class _OptionTile extends StatelessWidget {
@@ -123,7 +128,12 @@ class _OptionTile extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (option.recommended) _RecommendedBadge(),
+                if (option.recommended)
+                  const AppBadge(
+                    label: '推荐',
+                    tone: AppBadgeTone.accent,
+                    size: AppBadgeSize.compact,
+                  ),
                 if (onTap != null) ...[
                   const SizedBox(width: AppSpacing.s4),
                   Icon(
@@ -142,30 +152,9 @@ class _OptionTile extends StatelessWidget {
               ),
             ],
             for (final pro in option.pros) _Tradeoff(text: pro, positive: true),
-            for (final con in option.cons) _Tradeoff(text: con, positive: false),
+            for (final con in option.cons)
+              _Tradeoff(text: con, positive: false),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RecommendedBadge extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: 1),
-      decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: AppOpacity.light),
-        borderRadius: BorderRadius.circular(AppRadius.xs),
-      ),
-      child: Text(
-        '推荐',
-        style: typography.xs.copyWith(
-          color: colors.primary,
-          fontWeight: FontWeight.w600,
         ),
       ),
     );

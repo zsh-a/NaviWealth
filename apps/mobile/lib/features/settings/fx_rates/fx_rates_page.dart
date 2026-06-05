@@ -23,17 +23,14 @@ class FxRatesPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final ratesAsync = ref.watch(fxRatesStreamProvider);
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.fxRatesAppBarTitle),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.refreshCw),
-            onPress: () => _refresh(context, ref),
-          ),
-        ],
-      ),
+    return AppPageScaffold(
+      title: l10n.fxRatesAppBarTitle,
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.refreshCw),
+          onPress: () => _refresh(context, ref),
+        ),
+      ],
       childPad: false,
       child: ratesAsync.when(
         loading: () => const Center(child: FCircularProgress()),
@@ -118,14 +115,19 @@ class _RateList extends ConsumerWidget {
             return true;
           },
           child: SoftCard(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s14,
+              vertical: AppSpacing.s12,
+            ),
             child: Row(
               children: [
                 Container(
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: colors.foreground.withValues(alpha: AppOpacity.whisper),
+                    color: colors.foreground.withValues(
+                      alpha: AppOpacity.whisper,
+                    ),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   alignment: Alignment.center,

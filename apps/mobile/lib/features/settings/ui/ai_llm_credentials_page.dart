@@ -176,21 +176,28 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
               .cast<LlmProfile?>()
               .firstWhere((_) => true, orElse: () => null)
         : null;
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.settingsAiLlmTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.settingsAiLlmTitle,
       childPad: false,
       resizeToAvoidBottomInset: false,
       child: !supported
           ? ListView(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s24),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s16,
+                AppSpacing.s8,
+                AppSpacing.s16,
+                AppSpacing.s24,
+              ),
               children: [_unsupportedCard(context)],
             )
           : editing
           ? AppFormScaffoldBody(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s16),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s16,
+                AppSpacing.s8,
+                AppSpacing.s16,
+                AppSpacing.s16,
+              ),
               action: _editorActions(context, existing),
               children: _supportedBody(
                 context,
@@ -201,7 +208,12 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
               ),
             )
           : ListView(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s8, AppSpacing.s16, AppSpacing.s24),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s16,
+                AppSpacing.s8,
+                AppSpacing.s16,
+                AppSpacing.s24,
+              ),
               children: _supportedBody(
                 context,
                 asyncCreds: asyncCreds,
@@ -227,7 +239,10 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
       const SizedBox(height: AppSpacing.s12),
       if (profiles.isEmpty && _editingId == null)
         SoftCard(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s20),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s16,
+            vertical: AppSpacing.s20,
+          ),
           child: Text(
             l10n.aiLlmEmpty,
             style: context.theme.typography.sm.copyWith(
@@ -269,7 +284,12 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
       if (p.model != null && p.model!.isNotEmpty) p.model!,
     ].join(' · ');
     final card = SoftCard(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s12, AppSpacing.s12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s12,
+        AppSpacing.s12,
+        AppSpacing.s12,
+      ),
       onPress: isActive ? null : () => _activate(p.id),
       child: Row(
         children: [
@@ -346,7 +366,12 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     final l10n = AppLocalizations.of(context);
     final hasStoredKey = existing?.hasKey ?? false;
     return SoftCard(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s14, AppSpacing.s16, AppSpacing.s16),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s14,
+        AppSpacing.s16,
+        AppSpacing.s16,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -480,7 +505,12 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
   Widget _unsupportedCard(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s14, AppSpacing.s16, AppSpacing.s16),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s14,
+        AppSpacing.s16,
+        AppSpacing.s16,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -532,7 +562,10 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
   );
 
   Widget _tag(BuildContext context, String text, Color color) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppSpacing.s8,
+      vertical: AppSpacing.s2,
+    ),
     decoration: BoxDecoration(
       color: color.withValues(alpha: AppOpacity.medium),
       borderRadius: BorderRadius.circular(AppRadius.xs),
@@ -554,7 +587,11 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     onPress: onPress,
     child: Padding(
       padding: const EdgeInsets.all(AppSpacing.s8),
-      child: Icon(icon, size: AppIconSizes.h18, color: context.theme.colors.mutedForeground),
+      child: Icon(
+        icon,
+        size: AppIconSizes.h18,
+        color: context.theme.colors.mutedForeground,
+      ),
     ),
   );
 

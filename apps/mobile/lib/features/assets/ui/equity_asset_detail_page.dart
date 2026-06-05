@@ -127,81 +127,70 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
       future: _assetFuture,
       builder: (context, snap) {
         if (!snap.hasData) {
-          return const FScaffold(
+          return ObjectDetailScaffold(
+            title: l10n.assetDetailUnknown,
             childPad: false,
-            child: Material(
-              color: Colors.transparent,
-              child: Center(child: FCircularProgress()),
-            ),
+            child: const Center(child: FCircularProgress()),
           );
         }
         final asset = snap.data;
         if (asset == null) {
-          return FScaffold(
+          return ObjectDetailScaffold(
+            title: l10n.assetDetailUnknown,
             childPad: false,
-            child: Material(
-              color: Colors.transparent,
-              child: Center(child: Text(l10n.assetDetailNotFound)),
-            ),
+            child: Center(child: Text(l10n.assetDetailNotFound)),
           );
         }
-        return FScaffold(
-          header: FHeader.nested(
-            title: OptionalHero(
-              tag: 'asset-${asset.id}-name',
-              child: Text(asset.name ?? asset.symbol),
+        return ObjectDetailScaffold(
+          titleWidget: OptionalHero(
+            tag: 'asset-${asset.id}-name',
+            child: Text(asset.name ?? asset.symbol),
+          ),
+          actions: [
+            FHeaderAction(
+              icon: _syncing
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: FCircularProgress(),
+                    )
+                  : const Icon(FLucideIcons.refreshCw),
+              onPress: _syncing ? null : () => _syncMetadata(asset),
             ),
-            prefixes: [backHeaderAction(context)],
-            suffixes: [
-              FHeaderAction(
-                icon: _syncing
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: FCircularProgress(),
-                      )
-                    : const Icon(FLucideIcons.refreshCw),
-                onPress: _syncing ? null : () => _syncMetadata(asset),
+          ],
+          childPad: false,
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.s16),
+            children: [
+              // AI provenance hint for stock/etf/crypto
+              // assets touched by `propose_asset_valuation`. Self-
+              // gating; absent when no recent touch on this id.
+              Align(
+                alignment: Alignment.centerLeft,
+                child: AiTouchMark(entityType: 'assets', entityId: asset.id),
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              AssetSummaryCard(asset: asset),
+              const SizedBox(height: AppSpacing.s12),
+              AssetHoldingCard(asset: asset),
+              const SizedBox(height: AppSpacing.s12),
+              AssetPnLCard(asset: asset),
+              const SizedBox(height: AppSpacing.s12),
+              AssetFxPnlCard(assetId: asset.id),
+              const SizedBox(height: AppSpacing.s12),
+              AssetTrendMiniChartCard(asset: asset),
+              if (_supportsCorporateActions(asset)) ...[
+                const SizedBox(height: AppSpacing.s16),
+                EventTimelineSection(symbol: asset.symbol),
+              ],
+              const SizedBox(height: AppSpacing.s16),
+              FButton(
+                variant: FButtonVariant.primary,
+                onPress: () => context.push(AppRoutes.tradeForAsset(asset.id)),
+                prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+                child: Text(l10n.assetDetailNewTradeLabel),
               ),
             ],
-          ),
-          childPad: false,
-          child: Material(
-            color: Colors.transparent,
-            child: ListView(
-              padding: const EdgeInsets.all(AppSpacing.s16),
-              children: [
-                // AI provenance hint for stock/etf/crypto
-                // assets touched by `propose_asset_valuation`. Self-
-                // gating; absent when no recent touch on this id.
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: AiTouchMark(entityType: 'assets', entityId: asset.id),
-                ),
-                const SizedBox(height: AppSpacing.s8),
-                AssetSummaryCard(asset: asset),
-                const SizedBox(height: AppSpacing.s12),
-                AssetHoldingCard(asset: asset),
-                const SizedBox(height: AppSpacing.s12),
-                AssetPnLCard(asset: asset),
-                const SizedBox(height: AppSpacing.s12),
-                AssetFxPnlCard(assetId: asset.id),
-                const SizedBox(height: AppSpacing.s12),
-                AssetTrendMiniChartCard(asset: asset),
-                if (_supportsCorporateActions(asset)) ...[
-                  const SizedBox(height: AppSpacing.s16),
-                  EventTimelineSection(symbol: asset.symbol),
-                ],
-                const SizedBox(height: AppSpacing.s16),
-                FButton(
-                  variant: FButtonVariant.primary,
-                  onPress: () =>
-                      context.push(AppRoutes.tradeForAsset(asset.id)),
-                  prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
-                  child: Text(l10n.assetDetailNewTradeLabel),
-                ),
-              ],
-            ),
           ),
         );
       },

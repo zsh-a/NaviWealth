@@ -45,32 +45,29 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
     final draftsAsync = ref.watch(pendingIngestDraftsProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const AiSparkle(size: AppIconSizes.sm),
-            const SizedBox(width: AppSpacing.s6),
-            Text(l10n.ingestReviewTitle),
-          ],
-        ),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.camera),
-            onPress: _isBusy ? null : _captureCamera,
-          ),
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.paperclip),
-            onPress: _isBusy ? null : _pickFile,
-          ),
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.clipboard),
-            onPress: _isBusy ? null : _openPasteDialog,
-          ),
+    return AppPageScaffold(
+      titleWidget: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const AiSparkle(size: AppIconSizes.sm),
+          const SizedBox(width: AppSpacing.s6),
+          Text(l10n.ingestReviewTitle),
         ],
       ),
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.camera),
+          onPress: _isBusy ? null : _captureCamera,
+        ),
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.paperclip),
+          onPress: _isBusy ? null : _pickFile,
+        ),
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.clipboard),
+          onPress: _isBusy ? null : _openPasteDialog,
+        ),
+      ],
       childPad: false,
       // §5.10.10 / S5c-native — drag a receipt/statement onto the page
       // (desktop/web). No-op on touch platforms.
@@ -134,11 +131,21 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
       children: [
         if (_busy != null)
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, 0),
-            child: _ProcessingBanner(state: _busy!),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s16,
+              AppSpacing.s12,
+              AppSpacing.s16,
+              0,
+            ),
+            child: _ProcessingNotice(state: _busy!),
           ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s4),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s16,
+            AppSpacing.s12,
+            AppSpacing.s16,
+            AppSpacing.s4,
+          ),
           child: Text(
             l10n.ingestExpenseAccountLabel,
             style: context.theme.typography.xs.copyWith(
@@ -147,7 +154,12 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.s16, 0, AppSpacing.s16, AppSpacing.s8),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s16,
+            0,
+            AppSpacing.s16,
+            AppSpacing.s8,
+          ),
           child: Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -166,7 +178,12 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         const FDivider(),
         Expanded(
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s12),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s16,
+              AppSpacing.s12,
+              AppSpacing.s16,
+              AppSpacing.s12,
+            ),
             itemCount: drafts.length,
             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
             itemBuilder: (context, i) => _DraftCard(
@@ -181,7 +198,12 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.s16, 0, AppSpacing.s16, AppSpacing.s12),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s16,
+                0,
+                AppSpacing.s16,
+                AppSpacing.s12,
+              ),
               child: FButton(
                 variant: FButtonVariant.primary,
                 onPress: _isBusy
@@ -396,8 +418,8 @@ class _ProcessingState extends StatelessWidget {
   }
 }
 
-class _ProcessingBanner extends StatelessWidget {
-  const _ProcessingBanner({required this.state});
+class _ProcessingNotice extends StatelessWidget {
+  const _ProcessingNotice({required this.state});
 
   final _IngestBusyState state;
 
@@ -428,11 +450,15 @@ class _ProcessingPanel extends StatelessWidget {
               style: FProgressStyle(
                 constraints: const BoxConstraints.tightFor(height: 2),
                 trackDecoration: ShapeDecoration(
-                  shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: context.theme.style.borderRadius.pill,
+                  ),
                   color: colors.muted,
                 ),
                 fillDecoration: ShapeDecoration(
-                  shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: context.theme.style.borderRadius.pill,
+                  ),
                   color: colors.primary,
                 ),
               ),
@@ -509,7 +535,10 @@ class _DraftCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final p = draft.parsed;
     return SoftCard(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s14,
+        vertical: AppSpacing.s12,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -562,7 +591,7 @@ class _DraftCard extends StatelessWidget {
                   (draft.confidence * 100).round(),
                 ),
               ),
-              _VerdictPill(verdict: draft.verdict),
+              _VerdictIndicator(verdict: draft.verdict),
             ],
           ),
           const SizedBox(height: AppSpacing.s10),
@@ -657,8 +686,8 @@ class _DraftMetaChip extends StatelessWidget {
   }
 }
 
-class _VerdictPill extends StatelessWidget {
-  const _VerdictPill({required this.verdict});
+class _VerdictIndicator extends StatelessWidget {
+  const _VerdictIndicator({required this.verdict});
 
   final DedupVerdict verdict;
 
@@ -694,37 +723,36 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     return AppEmptyState(
       icon: FLucideIcons.inbox,
       title: l10n.ingestEmptyTitle,
       message: l10n.ingestEmptyBody,
       iconSize: AppIconSizes.xxl,
       action: Wrap(
-              alignment: WrapAlignment.center,
-              spacing: AppSpacing.s8,
-              runSpacing: AppSpacing.s8,
-              children: [
-                FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: onCamera,
-                  prefix: const Icon(FLucideIcons.camera),
-                  child: Text(l10n.ingestCameraAction),
-                ),
-                FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: onImport,
-                  prefix: const Icon(FLucideIcons.paperclip),
-                  child: Text(l10n.ingestImportFileAction),
-                ),
-                FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: onPaste,
-                  prefix: const Icon(FLucideIcons.clipboard),
-                  child: Text(l10n.ingestPasteAction),
-                ),
-              ],
-            ),
+        alignment: WrapAlignment.center,
+        spacing: AppSpacing.s8,
+        runSpacing: AppSpacing.s8,
+        children: [
+          FButton(
+            variant: FButtonVariant.outline,
+            onPress: onCamera,
+            prefix: const Icon(FLucideIcons.camera),
+            child: Text(l10n.ingestCameraAction),
+          ),
+          FButton(
+            variant: FButtonVariant.outline,
+            onPress: onImport,
+            prefix: const Icon(FLucideIcons.paperclip),
+            child: Text(l10n.ingestImportFileAction),
+          ),
+          FButton(
+            variant: FButtonVariant.outline,
+            onPress: onPaste,
+            prefix: const Icon(FLucideIcons.clipboard),
+            child: Text(l10n.ingestPasteAction),
+          ),
+        ],
+      ),
     );
   }
 }

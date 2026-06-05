@@ -134,15 +134,10 @@ Widget _heading(BuildContext context, String text, {String? badge}) {
   return Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Expanded(
-        child: Text(
-          text,
-          style: typography.lg,
-        ),
-      ),
+      Expanded(child: Text(text, style: typography.lg)),
       if (badge != null) ...[
         const SizedBox(width: AppSpacing.s8),
-        KnowledgeStatusBadge(label: badge),
+        KnowledgeStatusLabel(label: badge),
       ],
     ],
   );

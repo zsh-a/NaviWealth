@@ -50,61 +50,58 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FScaffold(
+    return AppCanvasScaffold(
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s24,
-                  vertical: AppSpacing.s32,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SvgPicture.asset(
-                      'assets/svg/logo.svg',
-                      width: 72,
-                      height: 72,
+      child: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s24,
+                vertical: AppSpacing.s32,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SvgPicture.asset(
+                    'assets/svg/logo.svg',
+                    width: 72,
+                    height: 72,
+                  ),
+                  const SizedBox(height: AppSpacing.s20),
+                  Text(
+                    l10n.onboardingTitle,
+                    style: context.theme.typography.lg,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                  Text(
+                    l10n.onboardingSubtitle,
+                    style: context.theme.typography.sm.copyWith(
+                      color: context.theme.colors.mutedForeground,
                     ),
-                    const SizedBox(height: AppSpacing.s20),
-                    Text(
-                      l10n.onboardingTitle,
-                      style: context.theme.typography.lg,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.s8),
-                    Text(
-                      l10n.onboardingSubtitle,
-                      style: context.theme.typography.sm.copyWith(
-                        color: context.theme.colors.mutedForeground,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.s32),
-                    _ModeCard(
-                      key: const ValueKey('onboarding.cloud'),
-                      icon: FLucideIcons.cloud,
-                      title: l10n.onboardingCloudTitle,
-                      description: l10n.onboardingCloudDescription,
-                      busy: _busyChoice == _OnboardingChoice.cloud,
-                      onTap: _busyChoice == null ? _pickCloud : null,
-                    ),
-                    const SizedBox(height: AppSpacing.s12),
-                    _ModeCard(
-                      key: const ValueKey('onboarding.local'),
-                      icon: FLucideIcons.smartphone,
-                      title: l10n.onboardingLocalOnlyTitle,
-                      description: l10n.onboardingLocalOnlyDescription,
-                      busy: _busyChoice == _OnboardingChoice.local,
-                      onTap: _busyChoice == null ? _pickLocal : null,
-                    ),
-                  ],
-                ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.s32),
+                  _ModeCard(
+                    key: const ValueKey('onboarding.cloud'),
+                    icon: FLucideIcons.cloud,
+                    title: l10n.onboardingCloudTitle,
+                    description: l10n.onboardingCloudDescription,
+                    busy: _busyChoice == _OnboardingChoice.cloud,
+                    onTap: _busyChoice == null ? _pickCloud : null,
+                  ),
+                  const SizedBox(height: AppSpacing.s12),
+                  _ModeCard(
+                    key: const ValueKey('onboarding.local'),
+                    icon: FLucideIcons.smartphone,
+                    title: l10n.onboardingLocalOnlyTitle,
+                    description: l10n.onboardingLocalOnlyDescription,
+                    busy: _busyChoice == _OnboardingChoice.local,
+                    onTap: _busyChoice == null ? _pickLocal : null,
+                  ),
+                ],
               ),
             ),
           ),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 
 import '../../../design_system/design_system.dart';
-import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'entry_kind_labels.dart';
 
@@ -15,8 +15,8 @@ import 'entry_kind_labels.dart';
 /// expected to render the badge tightly next to the entry summary
 /// (list rows, AI proposal cards), so the contract here is "smallest
 /// horizontal real estate that still reads at a glance".
-class EntryKindBadge extends StatelessWidget {
-  const EntryKindBadge({
+class EntryKindIndicator extends StatelessWidget {
+  const EntryKindIndicator({
     super.key,
     required this.classification,
     this.compact = false,
@@ -39,7 +39,12 @@ class EntryKindBadge extends StatelessWidget {
     final colors = context.theme.colors;
     final semantic = SemanticColors.of(context);
     final brightness = context.theme.colors.brightness;
-    final visuals = _entryKindVisuals(classification, colors, semantic, brightness);
+    final visuals = _entryKindVisuals(
+      classification,
+      colors,
+      semantic,
+      brightness,
+    );
     final l10n = AppLocalizations.of(context);
 
     final semanticLabel = entryKindLabel(l10n, classification.kind);
@@ -62,7 +67,11 @@ class EntryKindBadge extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(visuals.icon, size: AppIconSizes.xs, color: visuals.foreground),
+              Icon(
+                visuals.icon,
+                size: AppIconSizes.xs,
+                color: visuals.foreground,
+              ),
               if (showLabel) ...[
                 const SizedBox(width: AppSpacing.s4),
                 Text(

@@ -26,11 +26,8 @@ class MonthlyExpenseSettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.settingsMonthlyExpenseLabel),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.settingsMonthlyExpenseLabel,
       childPad: false,
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -97,7 +94,12 @@ class MonthlyExpenseSettings extends ConsumerWidget {
           onChanged: controller.setOverride,
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.s14, AppSpacing.s4, AppSpacing.s14, AppSpacing.s8),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s14,
+            AppSpacing.s4,
+            AppSpacing.s14,
+            AppSpacing.s8,
+          ),
           child: Align(
             alignment: AlignmentDirectional.centerEnd,
             child: FTappable(
@@ -108,7 +110,10 @@ class MonthlyExpenseSettings extends ConsumerWidget {
                 );
               },
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s6,
+                  vertical: AppSpacing.s4,
+                ),
                 child: Text(
                   l10n.settingsMonthlyExpenseResetDefaults,
                   style: context.theme.typography.xs.copyWith(
@@ -132,7 +137,9 @@ class _Divider extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
       child: Container(
         height: 1,
-        color: context.theme.colors.foreground.withValues(alpha: AppOpacity.whisper),
+        color: context.theme.colors.foreground.withValues(
+          alpha: AppOpacity.whisper,
+        ),
       ),
     );
   }
@@ -202,7 +209,12 @@ class _WindowSliderState extends State<_WindowSlider> {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s14, AppSpacing.s10, AppSpacing.s14, AppSpacing.s10),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s14,
+        AppSpacing.s10,
+        AppSpacing.s14,
+        AppSpacing.s10,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -320,7 +332,12 @@ class _OverrideFieldState extends State<_OverrideField> {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s14, AppSpacing.s10, AppSpacing.s14, AppSpacing.s10),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s14,
+        AppSpacing.s10,
+        AppSpacing.s14,
+        AppSpacing.s10,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -25,11 +25,8 @@ class RiskThresholdsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.settingsRiskThresholdsTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.settingsRiskThresholdsTitle,
       childPad: false,
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -123,7 +120,12 @@ class RiskThresholdSettings extends ConsumerWidget {
               .updateCurrency(v),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.s14, AppSpacing.s4, AppSpacing.s14, AppSpacing.s8),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s14,
+            AppSpacing.s4,
+            AppSpacing.s14,
+            AppSpacing.s8,
+          ),
           child: Align(
             alignment: AlignmentDirectional.centerEnd,
             child: FTappable(
@@ -131,7 +133,10 @@ class RiskThresholdSettings extends ConsumerWidget {
                   .read(concentrationThresholdsProvider.notifier)
                   .resetToDefaults(),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s6,
+                  vertical: AppSpacing.s4,
+                ),
                 child: Text(
                   l10n.settingsRiskResetDefaults,
                   style: context.theme.typography.xs.copyWith(
@@ -155,7 +160,9 @@ class _Divider extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
       child: Container(
         height: 1,
-        color: context.theme.colors.foreground.withValues(alpha: AppOpacity.whisper),
+        color: context.theme.colors.foreground.withValues(
+          alpha: AppOpacity.whisper,
+        ),
       ),
     );
   }
@@ -238,10 +245,17 @@ class _ThresholdSliderState extends State<_ThresholdSlider> {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s14,
+        vertical: AppSpacing.s8,
+      ),
       child: Row(
         children: [
-          Icon(widget.icon, size: AppIconSizes.h18, color: colors.mutedForeground),
+          Icon(
+            widget.icon,
+            size: AppIconSizes.h18,
+            color: colors.mutedForeground,
+          ),
           const SizedBox(width: AppSpacing.s12),
           SizedBox(
             width: 72,

@@ -29,11 +29,8 @@ class FireStressSettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.settingsStressTestTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.settingsStressTestTitle,
       childPad: false,
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -126,13 +123,21 @@ class FireStressSettings extends ConsumerWidget {
           onChanged: (v) => update(risk.copyWith(oneOffShockAmount: v)),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.s14, AppSpacing.s4, AppSpacing.s14, AppSpacing.s8),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s14,
+            AppSpacing.s4,
+            AppSpacing.s14,
+            AppSpacing.s8,
+          ),
           child: Align(
             alignment: AlignmentDirectional.centerEnd,
             child: FTappable(
               onPress: () => update(const FireRiskSettings()),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s6,
+                  vertical: AppSpacing.s4,
+                ),
                 child: Text(
                   l10n.settingsStressTestResetDefaults,
                   style: context.theme.typography.xs.copyWith(
@@ -156,7 +161,9 @@ class _Divider extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
       child: Container(
         height: 1,
-        color: context.theme.colors.foreground.withValues(alpha: AppOpacity.whisper),
+        color: context.theme.colors.foreground.withValues(
+          alpha: AppOpacity.whisper,
+        ),
       ),
     );
   }
@@ -233,7 +240,12 @@ class _PercentSliderState extends State<_PercentSlider> {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s14, AppSpacing.s10, AppSpacing.s14, AppSpacing.s10),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s14,
+        AppSpacing.s10,
+        AppSpacing.s14,
+        AppSpacing.s10,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -347,7 +359,12 @@ class _LumpSumFieldState extends State<_LumpSumField> {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s14, AppSpacing.s10, AppSpacing.s14, AppSpacing.s10),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s14,
+        AppSpacing.s10,
+        AppSpacing.s14,
+        AppSpacing.s10,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

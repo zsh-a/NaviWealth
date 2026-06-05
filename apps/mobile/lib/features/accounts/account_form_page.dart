@@ -241,20 +241,16 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
               : Text(l10n.accountFormEditTitle))
         : Text(l10n.accountFormCreateTitle);
     return guardedScope(
-      child: FScaffold(
-        header: FHeader.nested(
-          title: title,
-          prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
-          suffixes: [
-            if (widget.isEdit)
-              FHeaderAction(
-                icon: const Icon(FLucideIcons.trash2),
-                onPress: _busy ? null : _delete,
-              ),
-          ],
-        ),
-        childPad: false,
-        resizeToAvoidBottomInset: false,
+      child: AppFormPageScaffold(
+        title: title,
+        confirmLeave: handleBackIntent,
+        actions: [
+          if (widget.isEdit)
+            FHeaderAction(
+              icon: const Icon(FLucideIcons.trash2),
+              onPress: _busy ? null : _delete,
+            ),
+        ],
         child: loadingExisting
             ? const Center(child: FCircularProgress())
             : Form(
@@ -293,7 +289,10 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                     // [accountSideForCategory] on every selection and
                     // is never user-editable.
                     Padding(
-                      padding: const EdgeInsets.only(left: AppSpacing.s4, bottom: AppSpacing.s8),
+                      padding: const EdgeInsets.only(
+                        left: AppSpacing.s4,
+                        bottom: AppSpacing.s8,
+                      ),
                       child: Text(
                         l10n.accountFormTypeLabel,
                         style: context.theme.typography.sm.copyWith(

@@ -21,35 +21,29 @@ class DividendCenterPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final snapshot = ref.watch(dividendCenterSnapshotProvider);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.dividendCenterTitle),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.creditCard),
-            onPress: () => context.push(AppRoutes.wealthCorporateAction),
-          ),
-        ],
-      ),
+    return AppPageScaffold(
+      title: l10n.dividendCenterTitle,
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.creditCard),
+          onPress: () => context.push(AppRoutes.wealthCorporateAction),
+        ),
+      ],
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: PageSkeletonShell<DividendCenterSnapshot>(
-          skeleton: const DividendCenterSkeleton(),
-          isLoading: snapshot.isLoading,
-          child: snapshot.when(
-            loading: () => const DividendCenterSkeleton(),
-            error: (error, _) => AppEmptyState.error(
-              title: l10n.dividendCenterLoadError('$error'),
-              action: FButton(
-                variant: FButtonVariant.ghost,
-                onPress: () => ref.invalidate(dividendCenterSnapshotProvider),
-                child: Text(l10n.commonRetry),
-              ),
+      child: PageSkeletonShell<DividendCenterSnapshot>(
+        skeleton: const DividendCenterSkeleton(),
+        isLoading: snapshot.isLoading,
+        child: snapshot.when(
+          loading: () => const DividendCenterSkeleton(),
+          error: (error, _) => AppEmptyState.error(
+            title: l10n.dividendCenterLoadError('$error'),
+            action: FButton(
+              variant: FButtonVariant.ghost,
+              onPress: () => ref.invalidate(dividendCenterSnapshotProvider),
+              child: Text(l10n.commonRetry),
             ),
-            data: (data) => _DividendCenterBody(snapshot: data),
           ),
+          data: (data) => _DividendCenterBody(snapshot: data),
         ),
       ),
     );
@@ -64,7 +58,11 @@ class _DividendCenterBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + MediaQuery.paddingOf(context).bottom,
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s16,
+        AppSpacing.s16,
+        AppSpacing.s16 + MediaQuery.paddingOf(context).bottom,
       ),
       child: AdaptiveContentFrame(
         maxWidth: AdaptiveMaxWidth.dashboard,
@@ -235,7 +233,8 @@ class _RankingSection extends ConsumerWidget {
                         code: snapshot.baseCurrency,
                       ),
                     ),
-                    if (row != rows.last) const SizedBox(height: AppSpacing.s16),
+                    if (row != rows.last)
+                      const SizedBox(height: AppSpacing.s16),
                   ],
                 ],
               );

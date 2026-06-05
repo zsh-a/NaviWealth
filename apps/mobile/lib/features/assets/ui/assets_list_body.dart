@@ -20,15 +20,13 @@ class AssetsDetailEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FScaffold(
-      header: FHeader.nested(title: Text(l10n.assetsAppBarTitle)),
+    return AppPageScaffold(
+      title: l10n.assetsAppBarTitle,
+      showBack: false,
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: MasterDetailEmpty(
-          icon: FLucideIcons.wallet,
-          message: l10n.assetsDetailEmpty,
-        ),
+      child: MasterDetailEmpty(
+        icon: FLucideIcons.wallet,
+        message: l10n.assetsDetailEmpty,
       ),
     );
   }

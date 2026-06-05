@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
@@ -28,41 +27,33 @@ class AssetDetailPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final repoAsync = ref.watch(manualAssetRepositoryProvider);
     return repoAsync.when(
-      loading: () => const FScaffold(
+      loading: () => AppPageScaffold(
+        title: l10n.assetDetailUnknown,
         childPad: false,
-        child: Material(
-          color: Colors.transparent,
-          child: AssetDetailSkeleton(),
-        ),
+        child: const AssetDetailSkeleton(),
       ),
-      error: (e, _) => FScaffold(
+      error: (e, _) => AppPageScaffold(
+        title: l10n.assetDetailUnknown,
         childPad: false,
-        child: Material(
-          color: Colors.transparent,
-          child: Center(child: Text(l10n.assetDetailLoadError('$e'))),
-        ),
+        child: Center(child: Text(l10n.assetDetailLoadError('$e'))),
       ),
       data: (repo) {
         return FutureBuilder<Asset?>(
           future: repo.findById(assetId),
           builder: (context, snap) {
             if (!snap.hasData) {
-              return const FScaffold(
+              return AppPageScaffold(
+                title: l10n.assetDetailUnknown,
                 childPad: false,
-                child: Material(
-                  color: Colors.transparent,
-                  child: AssetDetailSkeleton(),
-                ),
+                child: const AssetDetailSkeleton(),
               );
             }
             final asset = snap.data;
             if (asset == null) {
-              return FScaffold(
+              return AppPageScaffold(
+                title: l10n.assetDetailUnknown,
                 childPad: false,
-                child: Material(
-                  color: Colors.transparent,
-                  child: Center(child: Text(l10n.assetDetailNotFound)),
-                ),
+                child: Center(child: Text(l10n.assetDetailNotFound)),
               );
             }
             return switch (asset.type) {
@@ -76,16 +67,10 @@ class AssetDetailPage extends ConsumerWidget {
               AssetType.etf ||
               AssetType.crypto ||
               AssetType.mutualFund => EquityAssetDetailPage(assetId: asset.id),
-              _ => FScaffold(
-                header: FHeader.nested(
-                  title: Text(asset.name ?? asset.symbol),
-                  prefixes: [backHeaderAction(context)],
-                ),
+              _ => AppPageScaffold(
+                title: asset.name ?? asset.symbol,
                 childPad: false,
-                child: Material(
-                  color: Colors.transparent,
-                  child: Center(child: Text(l10n.assetDetailUnsupportedType)),
-                ),
+                child: Center(child: Text(l10n.assetDetailUnsupportedType)),
               ),
             };
           },

@@ -70,8 +70,10 @@ class _MappingSheetState extends ConsumerState<_MappingSheet> {
           padding: EdgeInsets.all(AppSpacing.s16),
           child: SizedBox.shrink(),
         ),
-        error: (e, _) =>
-            Padding(padding: const EdgeInsets.all(AppSpacing.s16), child: Text('$e')),
+        error: (e, _) => Padding(
+          padding: const EdgeInsets.all(AppSpacing.s16),
+          child: Text('$e'),
+        ),
         data: (snapshot) {
           final items = _flattenItems(snapshot);
           _seed(rules, items);
@@ -156,10 +158,11 @@ class _MappingRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s10),
       decoration: BoxDecoration(
-        color: context.theme.colors.muted.withValues(alpha: AppOpacity.muted),
+        color: colors.muted.withValues(alpha: AppOpacity.muted),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Column(
@@ -176,13 +179,15 @@ class _MappingRow extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              _RolePill(
+              _roleBadge(
+                context,
                 label: l10n.fireOsBucketsMappingDefault,
                 selected: value == null,
                 onTap: () => onChanged(null),
               ),
               for (final role in FireBucketRole.values)
-                _RolePill(
+                _roleBadge(
+                  context,
                   label: _roleLabel(l10n, role),
                   selected: value == role,
                   onTap: () => onChanged(role),
@@ -210,36 +215,20 @@ class _MappingRow extends StatelessWidget {
   }
 }
 
-class _RolePill extends StatelessWidget {
-  const _RolePill({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final bg = selected ? colors.primary : Colors.transparent;
-    final fg = selected ? colors.primaryForeground : colors.foreground;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          border: Border.all(color: colors.border),
-        ),
-        child: Text(
-          label,
-          style: context.theme.typography.xs.copyWith(color: fg),
-        ),
-      ),
-    );
-  }
+Widget _roleBadge(
+  BuildContext context, {
+  required String label,
+  required bool selected,
+  required VoidCallback onTap,
+}) {
+  final colors = context.theme.colors;
+  return FTappable(
+    onPress: onTap,
+    child: AppBadge(
+      label: label,
+      foregroundColor: selected ? colors.primaryForeground : colors.foreground,
+      containerColor: selected ? colors.primary : Colors.transparent,
+      borderColor: colors.border,
+    ),
+  );
 }

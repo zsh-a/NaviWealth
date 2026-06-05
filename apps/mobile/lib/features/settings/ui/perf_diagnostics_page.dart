@@ -20,14 +20,15 @@ class PerfDiagnosticsPage extends ConsumerWidget {
     ref.watch(_perfDiagnosticsTickerProvider);
     final stats = ref.watch(frameTimingCollectorProvider).statsForAll();
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.settingsPerfTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.settingsPerfTitle,
       childPad: false,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.s16,
+          AppSpacing.s16,
+          AppSpacing.s16,
+          AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
           _SummaryCard(stats: stats),

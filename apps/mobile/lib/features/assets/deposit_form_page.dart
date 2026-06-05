@@ -227,29 +227,22 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return guardedScope(
-      child: FScaffold(
-        header: FHeader.nested(
-          title: Text(
-            widget.isEdit ? l10n.depositEditTitle : l10n.depositCreateTitle,
-          ),
-          prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
-          suffixes: [
-            if (widget.isEdit)
-              FHeaderAction(
-                icon: const Icon(FLucideIcons.trash2),
-                onPress: _busy ? null : _delete,
-              ),
-          ],
+      child: AppFormPageScaffold(
+        title: Text(
+          widget.isEdit ? l10n.depositEditTitle : l10n.depositCreateTitle,
         ),
-        childPad: false,
-        resizeToAvoidBottomInset: false,
-        child: Material(
-          color: Colors.transparent,
-          child: accountsAsync.when(
-            loading: () => const Center(child: FCircularProgress()),
-            error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
-            data: (accounts) => _buildForm(accounts),
-          ),
+        confirmLeave: handleBackIntent,
+        actions: [
+          if (widget.isEdit)
+            FHeaderAction(
+              icon: const Icon(FLucideIcons.trash2),
+              onPress: _busy ? null : _delete,
+            ),
+        ],
+        child: accountsAsync.when(
+          loading: () => const Center(child: FCircularProgress()),
+          error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
+          data: (accounts) => _buildForm(accounts),
         ),
       ),
     );
@@ -487,10 +480,15 @@ class _DepositKindChip extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s8,
+        ),
         decoration: selected
             ? BoxDecoration(
-                color: context.theme.colors.primary.withValues(alpha: AppOpacity.medium),
+                color: context.theme.colors.primary.withValues(
+                  alpha: AppOpacity.medium,
+                ),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               )
             : null,

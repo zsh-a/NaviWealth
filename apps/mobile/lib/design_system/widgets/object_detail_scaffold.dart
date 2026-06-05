@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import 'back_header_action.dart';
@@ -21,15 +21,21 @@ import 'back_header_action.dart';
 class ObjectDetailScaffold extends StatelessWidget {
   const ObjectDetailScaffold({
     super.key,
-    required this.title,
+    this.title,
+    this.titleWidget,
     required this.child,
     this.actions = const <Widget>[],
     this.childPad = false,
     this.confirmLeave,
-  });
+    this.transparentMaterial = true,
+  }) : assert(title != null || titleWidget != null);
 
   /// Plain header title, e.g. `'概念'` or an object label.
-  final String title;
+  final String? title;
+
+  /// Custom header title widget for pages that need hero transitions or
+  /// richer title composition.
+  final Widget? titleWidget;
 
   /// Page body — usually a `ListView` of cards owning its own padding.
   final Widget child;
@@ -46,17 +52,24 @@ class ObjectDetailScaffold extends StatelessWidget {
   /// resolves `false` the back is cancelled. See `appSubPageHeader`.
   final Future<bool> Function()? confirmLeave;
 
+  /// Wrap the body in a transparent Material so ForUI/Material descendants
+  /// render consistently without every detail page repeating the same shell.
+  final bool transparentMaterial;
+
   @override
   Widget build(BuildContext context) {
+    final body = transparentMaterial
+        ? Material(color: Colors.transparent, child: child)
+        : child;
     return FScaffold(
       header: appSubPageHeader(
         context: context,
-        title: Text(title),
+        title: titleWidget ?? Text(title!),
         suffixes: actions,
         confirmLeave: confirmLeave,
       ),
       childPad: childPad,
-      child: child,
+      child: body,
     );
   }
 }

@@ -22,24 +22,18 @@ class LiabilityDetailPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final summaryAsync = ref.watch(liabilitySummaryProvider(id));
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.liabilitiesAppBarTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.liabilitiesAppBarTitle,
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: summaryAsync.when(
-          loading: () => const Center(child: FCircularProgress()),
-          error: (e, _) => Center(child: Text('$e')),
-          data: (summary) {
-            if (summary == null) {
-              return Center(child: Text(l10n.liabilityNotFound));
-            }
-            return _LiabilityDetailBody(summary: summary);
-          },
-        ),
+      child: summaryAsync.when(
+        loading: () => const Center(child: FCircularProgress()),
+        error: (e, _) => Center(child: Text('$e')),
+        data: (summary) {
+          if (summary == null) {
+            return Center(child: Text(l10n.liabilityNotFound));
+          }
+          return _LiabilityDetailBody(summary: summary);
+        },
       ),
     );
   }
@@ -72,8 +66,10 @@ class _LiabilityDetailBody extends ConsumerWidget {
             padding: EdgeInsets.symmetric(vertical: AppSpacing.s24),
             child: Center(child: FCircularProgress()),
           ),
-          error: (e, _) =>
-              Padding(padding: const EdgeInsets.all(AppSpacing.s16), child: Text('$e')),
+          error: (e, _) => Padding(
+            padding: const EdgeInsets.all(AppSpacing.s16),
+            child: Text('$e'),
+          ),
           data: (schedule) {
             if (schedule.isEmpty) {
               return SoftCard(
@@ -311,7 +307,10 @@ class _AmortizationHeaderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = context.theme.typography.xs2;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s8,
+      ),
       child: Row(
         children: [
           SizedBox(
@@ -372,7 +371,10 @@ class _AmortizationDataRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle = context.theme.typography.xs;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s4,
+      ),
       child: Row(
         children: [
           SizedBox(

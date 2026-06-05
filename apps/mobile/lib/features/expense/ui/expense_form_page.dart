@@ -240,7 +240,9 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     // Show "Edit · Category  ¥120" after the existing record is loaded.
     final parts = <String>[l10n.expenseFormEditTitle];
     if (allAccounts != null && _expenseAccountId != null) {
-      final cat = allAccounts.where((a) => a.id == _expenseAccountId).firstOrNull;
+      final cat = allAccounts
+          .where((a) => a.id == _expenseAccountId)
+          .firstOrNull;
       if (cat != null) parts.add(cat.name);
     }
     final amountText = _amountController.text.trim();
@@ -267,20 +269,16 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     final allAccountsAsync = ref.watch(allAccountsStreamProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
     return guardedScope(
-      child: FScaffold(
-        header: FHeader.nested(
-          title: Text(_pageTitle(l10n, allAccountsAsync.value)),
-          prefixes: [backHeaderAction(context, confirmLeave: handleBackIntent)],
-          suffixes: [
-            if (widget.isEdit)
-              FHeaderAction(
-                icon: const Icon(FLucideIcons.trash2),
-                onPress: _busy ? null : _delete,
-              ),
-          ],
-        ),
-        childPad: false,
-        resizeToAvoidBottomInset: false,
+      child: AppFormPageScaffold(
+        title: Text(_pageTitle(l10n, allAccountsAsync.value)),
+        confirmLeave: handleBackIntent,
+        actions: [
+          if (widget.isEdit)
+            FHeaderAction(
+              icon: const Icon(FLucideIcons.trash2),
+              onPress: _busy ? null : _delete,
+            ),
+        ],
         child: loadingExisting
             ? const Center(child: FCircularProgress())
             : Form(
@@ -459,7 +457,12 @@ class _NoAccountsHint extends StatelessWidget {
     final colors = context.theme.colors;
     final semantic = SemanticColors.of(context);
     return SoftCard(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s14, AppSpacing.s14, AppSpacing.s14, AppSpacing.s12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s14,
+        AppSpacing.s14,
+        AppSpacing.s14,
+        AppSpacing.s12,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -471,7 +474,11 @@ class _NoAccountsHint extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             alignment: Alignment.center,
-            child: Icon(FLucideIcons.wallet, size: AppIconSizes.h18, color: semantic.warning),
+            child: Icon(
+              FLucideIcons.wallet,
+              size: AppIconSizes.h18,
+              color: semantic.warning,
+            ),
           ),
           const SizedBox(width: AppSpacing.s12),
           Expanded(

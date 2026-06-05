@@ -60,21 +60,18 @@ class DevicesPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(devicesProvider);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.authDevicesTitle),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.refreshCw),
-            onPress: () => ref.invalidate(devicesProvider),
-          ),
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.logOut),
-            onPress: () => _confirmLogoutCurrent(context, ref),
-          ),
-        ],
-      ),
+    return AppPageScaffold(
+      title: l10n.authDevicesTitle,
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.refreshCw),
+          onPress: () => ref.invalidate(devicesProvider),
+        ),
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.logOut),
+          onPress: () => _confirmLogoutCurrent(context, ref),
+        ),
+      ],
       childPad: false,
       child: state.when(
         data: (data) => _DevicesList(response: data),
@@ -132,7 +129,9 @@ class _DevicesList extends ConsumerWidget {
                 ? device.name!
                 : l10n.authDeviceUnnamed,
           ),
-          prefix: Icon(isCurrent ? FLucideIcons.badgeCheck : FLucideIcons.monitor),
+          prefix: Icon(
+            isCurrent ? FLucideIcons.badgeCheck : FLucideIcons.monitor,
+          ),
           subtitle: Text(
             l10n.authDeviceLastSeen(
               formatters.dateTime(device.lastSeenAt.toLocal()),
@@ -145,7 +144,10 @@ class _DevicesList extends ConsumerWidget {
                   child: FButton.icon(
                     variant: FButtonVariant.ghost,
                     onPress: () => _confirmRevoke(context, ref, device),
-                    child: const Icon(FLucideIcons.logOut, size: AppIconSizes.h18),
+                    child: const Icon(
+                      FLucideIcons.logOut,
+                      size: AppIconSizes.h18,
+                    ),
                   ),
                 ),
         );

@@ -1,5 +1,5 @@
-import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
@@ -89,10 +89,17 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
           _popover.toggle();
         },
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s10),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s14,
+            vertical: AppSpacing.s10,
+          ),
           child: Row(
             children: [
-              Icon(widget.icon, size: AppIconSizes.h18, color: colors.mutedForeground),
+              Icon(
+                widget.icon,
+                size: AppIconSizes.h18,
+                color: colors.mutedForeground,
+              ),
               const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Text(
@@ -118,7 +125,9 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
               Icon(
                 FLucideIcons.unfoldVertical,
                 size: AppIconSizes.sm,
-                color: colors.mutedForeground.withValues(alpha: AppOpacity.prominent),
+                color: colors.mutedForeground.withValues(
+                  alpha: AppOpacity.prominent,
+                ),
               ),
             ],
           ),
@@ -195,13 +204,20 @@ class _OptionRow<T> extends StatelessWidget {
     return FTappable(
       onPress: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s10,
+        ),
         child: Row(
           children: [
             SizedBox(
               width: AppIconSizes.h18,
               child: isSelected
-                  ? Icon(FLucideIcons.check, size: AppIconSizes.sm, color: accentColor)
+                  ? Icon(
+                      FLucideIcons.check,
+                      size: AppIconSizes.sm,
+                      color: accentColor,
+                    )
                   : null,
             ),
             const SizedBox(width: AppSpacing.s8),
@@ -246,7 +262,10 @@ class InlineSwitchRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s14,
+        vertical: AppSpacing.s10,
+      ),
       child: Row(
         children: [
           Icon(icon, size: AppIconSizes.h18, color: colors.mutedForeground),
@@ -327,7 +346,10 @@ class InlineLinkRow extends StatelessWidget {
     return FTappable(
       onPress: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s14,
+          vertical: AppSpacing.s10,
+        ),
         child: Row(
           children: [
             Icon(icon, size: AppIconSizes.h18, color: colors.mutedForeground),
@@ -366,7 +388,10 @@ class InlineLinkRow extends StatelessWidget {
               ),
             ] else if (trailingBadge != null) ...[
               const SizedBox(width: AppSpacing.s8),
-              _StatusBadge(label: trailingBadge!),
+              AppBadge(
+                label: trailingBadge!.toUpperCase(),
+                size: AppBadgeSize.compact,
+              ),
             ] else if (trailing != null) ...[
               const SizedBox(width: AppSpacing.s8),
               trailing!,
@@ -375,41 +400,11 @@ class InlineLinkRow extends StatelessWidget {
             Icon(
               FLucideIcons.chevronRight,
               size: AppIconSizes.sm,
-              color: colors.mutedForeground.withValues(alpha: AppOpacity.prominent),
+              color: colors.mutedForeground.withValues(
+                alpha: AppOpacity.prominent,
+              ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Compact uppercase pill used by [InlineLinkRow.trailingBadge].
-///
-/// Single styling source-of-truth so AUTO / CUSTOM / NEW etc. all read
-/// the same — a tiny `muted` chip that doesn't compete with the label
-/// or the chevron. If you need accent colors later, add an optional
-/// `tone` parameter; for now everything stays neutral.
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s2),
-      decoration: BoxDecoration(
-        color: colors.foreground.withValues(alpha: AppOpacity.faint),
-        borderRadius: BorderRadius.circular(AppRadius.xs),
-      ),
-      child: Text(
-        label.toUpperCase(),
-        style: context.theme.typography.xs2.copyWith(
-          color: colors.mutedForeground,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
         ),
       ),
     );

@@ -359,17 +359,14 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(portfolioHubProvider);
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.portfolioHubTitle),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.refreshCw),
-            onPress: () => ref.read(portfolioHubProvider.notifier).refresh(),
-          ),
-        ],
-      ),
+    return AppPageScaffold(
+      title: l10n.portfolioHubTitle,
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.refreshCw),
+          onPress: () => ref.read(portfolioHubProvider.notifier).refresh(),
+        ),
+      ],
       childPad: false,
       child: state.when(
         loading: () => const _PortfolioHubSkeleton(),

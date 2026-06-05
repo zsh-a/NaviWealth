@@ -103,39 +103,13 @@ class KnowledgeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
-    final t = title;
-    return SoftCard(
-      onPress: onPress,
+    return AppSection(
+      title: title,
+      titleStyle: titleStyle,
       padding: padding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (t != null) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Text(
-                    t,
-                    style:
-                        titleStyle ??
-                        typography.md.copyWith(fontWeight: FontWeight.w600),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (trailing != null) ...[
-                  const SizedBox(width: AppSpacing.s8),
-                  trailing!,
-                ],
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s8),
-          ],
-          ...children,
-        ],
-      ),
+      trailing: trailing,
+      onPress: onPress,
+      children: children,
     );
   }
 }
@@ -241,29 +215,12 @@ class _MarkdownEditorWithPreviewState extends State<MarkdownEditorWithPreview> {
 /// Replaces the two byte-identical `_StatusBadge` / `_Badge` definitions
 /// that lived in `knowledge_library_page.dart` and
 /// `knowledge_decision_detail_page.dart`.
-class KnowledgeStatusBadge extends StatelessWidget {
-  const KnowledgeStatusBadge({super.key, required this.label});
+class KnowledgeStatusLabel extends StatelessWidget {
+  const KnowledgeStatusLabel({super.key, required this.label});
   final String label;
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        color: colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: colors.border),
-      ),
-      child: Text(
-        label,
-        style: context.theme.typography.xs.copyWith(
-          color: colors.mutedForeground,
-        ),
-      ),
-    );
+    return AppBadge(label: label, outlined: true);
   }
 }

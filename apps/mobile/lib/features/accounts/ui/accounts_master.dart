@@ -97,8 +97,9 @@ class AccountsDetailEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FScaffold(
-      header: FHeader.nested(title: Text(l10n.navAccounts)),
+    return AppPageScaffold(
+      title: l10n.navAccounts,
+      showBack: false,
       childPad: false,
       child: MasterDetailEmpty(
         icon: FLucideIcons.landmark,
@@ -116,37 +117,34 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FScaffold(
-      header: appSubPageHeader(
-        context: context,
-        title: Text(l10n.navAccounts),
-        suffixes: [
-          FHeaderAction(
-            icon: Tooltip(
-              message: l10n.accountsCreateAction,
-              child: const Icon(FLucideIcons.creditCard),
-            ),
-            semanticsLabel: l10n.accountsCreateAction,
-            onPress: () => context.go(AppRoutes.wealthAccountNew),
+    return AppPageScaffold(
+      title: l10n.navAccounts,
+      actions: [
+        FHeaderAction(
+          icon: Tooltip(
+            message: l10n.accountsCreateAction,
+            child: const Icon(FLucideIcons.creditCard),
           ),
-          FHeaderAction(
-            icon: Tooltip(
-              message: l10n.accountsJournalAction,
-              child: const Icon(FLucideIcons.history),
-            ),
-            semanticsLabel: l10n.accountsJournalAction,
-            onPress: () => context.go(AppRoutes.journalEntries),
+          semanticsLabel: l10n.accountsCreateAction,
+          onPress: () => context.go(AppRoutes.wealthAccountNew),
+        ),
+        FHeaderAction(
+          icon: Tooltip(
+            message: l10n.accountsJournalAction,
+            child: const Icon(FLucideIcons.history),
           ),
-          FHeaderAction(
-            icon: Tooltip(
-              message: l10n.accountsTransferAction,
-              child: const Icon(FLucideIcons.arrowLeftRight),
-            ),
-            semanticsLabel: l10n.accountsTransferAction,
-            onPress: () => context.go(AppRoutes.transfer),
+          semanticsLabel: l10n.accountsJournalAction,
+          onPress: () => context.go(AppRoutes.journalEntries),
+        ),
+        FHeaderAction(
+          icon: Tooltip(
+            message: l10n.accountsTransferAction,
+            child: const Icon(FLucideIcons.arrowLeftRight),
           ),
-        ],
-      ),
+          semanticsLabel: l10n.accountsTransferAction,
+          onPress: () => context.go(AppRoutes.transfer),
+        ),
+      ],
       childPad: false,
       child: child,
     );
@@ -190,7 +188,11 @@ class _AccountsByType extends StatelessWidget {
     final width = MediaQuery.sizeOf(context).width;
     final hPad = Breakpoints.isMobile(width) ? 16.0 : 24.0;
     return ListView(
-      padding: EdgeInsets.fromLTRB(hPad, AppSpacing.s4, hPad, 80 + MediaQuery.paddingOf(context).bottom,
+      padding: EdgeInsets.fromLTRB(
+        hPad,
+        AppSpacing.s4,
+        hPad,
+        80 + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
         AccountsGroupedSections(

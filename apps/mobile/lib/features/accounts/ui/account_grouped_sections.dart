@@ -104,7 +104,12 @@ class _AccountsSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.s12, 0, AppSpacing.s12, AppSpacing.s8),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s12,
+              0,
+              AppSpacing.s12,
+              AppSpacing.s8,
+            ),
             child: Text(
               title.toUpperCase(),
               style: context.theme.typography.xs2.copyWith(
@@ -188,7 +193,7 @@ class _AccountRowState extends State<_AccountRow> {
                 widget.onAccountPressed(context, account);
               }
             },
-            prefix: _AccountIconBadge(account: account),
+            prefix: _AccountIconMark(account: account),
             title: OptionalHero(
               tag: 'account-${account.id}-name',
               enabled: widget.heroEnabled,
@@ -248,7 +253,9 @@ class _AccountRowState extends State<_AccountRow> {
                           ? FLucideIcons.chevronUp
                           : FLucideIcons.chevronDown,
                       size: AppIconSizes.h18,
-                      color: colors.mutedForeground.withValues(alpha: AppOpacity.prominent),
+                      color: colors.mutedForeground.withValues(
+                        alpha: AppOpacity.prominent,
+                      ),
                     ),
                   ),
               ],
@@ -282,8 +289,8 @@ class _AccountRowState extends State<_AccountRow> {
   }
 }
 
-class _AccountIconBadge extends StatelessWidget {
-  const _AccountIconBadge({required this.account});
+class _AccountIconMark extends StatelessWidget {
+  const _AccountIconMark({required this.account});
 
   final Account account;
 

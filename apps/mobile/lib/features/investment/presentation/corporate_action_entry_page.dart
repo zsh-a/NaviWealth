@@ -244,107 +244,99 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
     final l10n = AppLocalizations.of(context);
     final asset = _selectedAsset;
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.corpActionTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
-      childPad: false,
-      resizeToAvoidBottomInset: false,
-      child: Material(
-        color: Colors.transparent,
-        child: Form(
-          key: _formKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: AppFormScaffoldBody(
-            action: Row(
-              children: [
-                Expanded(
-                  child: FButton(
-                    key: const Key('corp-action-preview'),
-                    variant: FButtonVariant.outline,
-                    onPress: asset == null ? null : _runPreview,
-                    child: Text(l10n.corpActionPreviewAction),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s12),
-                Expanded(
-                  child: FButton(
-                    key: const Key('corp-action-submit'),
-                    variant: FButtonVariant.primary,
-                    onPress: _preview == null ? null : _submit,
-                    child: Text(l10n.corpActionSubmitAction),
-                  ),
-                ),
-              ],
-            ),
+    return AppFormPageScaffold(
+      title: Text(l10n.corpActionTitle),
+      child: Form(
+        key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child: AppFormScaffoldBody(
+          action: Row(
             children: [
-              // Asset picker.
-              FSelect<CorporateActionAsset>(
-                key: const Key('corp-action-asset'),
-                items: {for (final a in widget.assets) a.displayName: a},
-                control: FSelectControl<CorporateActionAsset>.managed(
-                  initial: asset,
-                  onChange: _onAssetChanged,
+              Expanded(
+                child: FButton(
+                  key: const Key('corp-action-preview'),
+                  variant: FButtonVariant.outline,
+                  onPress: asset == null ? null : _runPreview,
+                  child: Text(l10n.corpActionPreviewAction),
                 ),
-                label: Text(l10n.corpActionSelectAsset),
-                description: Text(l10n.corpActionSelectAssetHint),
               ),
-              const SizedBox(height: AppSpacing.s16),
-              DateField(
-                key: const Key('corp-action-date'),
-                label: l10n.corpActionEffectiveDate,
-                initialValue: _effectiveDate,
-                firstDate: DateTime(2000),
-                lastDate: DateTime(2100),
-                required: true,
-                onChanged: (picked) {
-                  if (picked == null) return;
-                  setState(() {
-                    _effectiveDate = DateTime.utc(
-                      picked.year,
-                      picked.month,
-                      picked.day,
-                    );
-                    _preview = null;
-                  });
-                },
-              ),
-              const FDivider(),
-              // Event type selector.
-              Text(
-                l10n.corpActionEventTypeTitle,
-                style: context.theme.typography.md,
-              ),
-              const SizedBox(height: AppSpacing.s8),
-              _TypeSelector(
-                selected: _type,
-                onChanged: _onTypeChanged,
-                l10n: l10n,
-              ),
-              const SizedBox(height: AppSpacing.s16),
-              // Type-specific fields.
-              ..._fieldsForType(l10n),
-              if (_previewError != null) ...[
-                const SizedBox(height: AppSpacing.s16),
-                SoftCard(
-                  padding: const EdgeInsets.all(AppSpacing.s12),
-                  child: Text(
-                    _previewError!,
-                    style: TextStyle(color: context.theme.colors.destructive),
-                  ),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: FButton(
+                  key: const Key('corp-action-submit'),
+                  variant: FButtonVariant.primary,
+                  onPress: _preview == null ? null : _submit,
+                  child: Text(l10n.corpActionSubmitAction),
                 ),
-              ],
-              if (_preview != null) ...[
-                const SizedBox(height: AppSpacing.s16),
-                _PreviewCard(
-                  key: const Key('corp-action-preview-card'),
-                  preview: _preview!,
-                  l10n: l10n,
-                ),
-              ],
+              ),
             ],
           ),
+          children: [
+            // Asset picker.
+            FSelect<CorporateActionAsset>(
+              key: const Key('corp-action-asset'),
+              items: {for (final a in widget.assets) a.displayName: a},
+              control: FSelectControl<CorporateActionAsset>.managed(
+                initial: asset,
+                onChange: _onAssetChanged,
+              ),
+              label: Text(l10n.corpActionSelectAsset),
+              description: Text(l10n.corpActionSelectAssetHint),
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            DateField(
+              key: const Key('corp-action-date'),
+              label: l10n.corpActionEffectiveDate,
+              initialValue: _effectiveDate,
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100),
+              required: true,
+              onChanged: (picked) {
+                if (picked == null) return;
+                setState(() {
+                  _effectiveDate = DateTime.utc(
+                    picked.year,
+                    picked.month,
+                    picked.day,
+                  );
+                  _preview = null;
+                });
+              },
+            ),
+            const FDivider(),
+            // Event type selector.
+            Text(
+              l10n.corpActionEventTypeTitle,
+              style: context.theme.typography.md,
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            _TypeSelector(
+              selected: _type,
+              onChanged: _onTypeChanged,
+              l10n: l10n,
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            // Type-specific fields.
+            ..._fieldsForType(l10n),
+            if (_previewError != null) ...[
+              const SizedBox(height: AppSpacing.s16),
+              SoftCard(
+                padding: const EdgeInsets.all(AppSpacing.s12),
+                child: Text(
+                  _previewError!,
+                  style: TextStyle(color: context.theme.colors.destructive),
+                ),
+              ),
+            ],
+            if (_preview != null) ...[
+              const SizedBox(height: AppSpacing.s16),
+              _PreviewCard(
+                key: const Key('corp-action-preview-card'),
+                preview: _preview!,
+                l10n: l10n,
+              ),
+            ],
+          ],
         ),
       ),
     );

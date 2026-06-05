@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
 
@@ -53,23 +52,10 @@ class _DashboardChartFullscreenPageState
 
   @override
   Widget build(BuildContext context) {
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(widget.title),
-        prefixes: [
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.x),
-            onPress: () => Navigator.of(context).pop(),
-          ),
-        ],
-      ),
-      childPad: false,
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.s16),
-          child: widget.child,
-        ),
-      ),
+    return AppClosePageScaffold(
+      title: widget.title,
+      onClose: () => Navigator.of(context).pop(),
+      child: widget.child,
     );
   }
 }

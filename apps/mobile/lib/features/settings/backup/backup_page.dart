@@ -23,11 +23,8 @@ class BackupPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.settingsDataTitle),
-        prefixes: [backHeaderAction(context)],
-      ),
+    return AppPageScaffold(
+      title: l10n.settingsDataTitle,
       childPad: false,
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16).copyWith(
@@ -38,7 +35,11 @@ class BackupPage extends ConsumerWidget {
         ),
         children: [
           if (kIsWeb) ...[
-            _WebBackupSecurityBanner(l10n: l10n),
+            AppStatusBanner(
+              kind: AppStatusKind.info,
+              icon: FLucideIcons.shieldCheck,
+              message: l10n.backupWebSecurityWarning,
+            ),
             const SizedBox(height: AppSpacing.s12),
           ],
           SoftCard(
@@ -163,7 +164,11 @@ class BackupPage extends ConsumerWidget {
     try {
       fileBytes = await pickedFile.readAsBytes();
     } catch (e, st) {
-      logger.e('backup_ui: failed to read file bytes', error: e, stackTrace: st);
+      logger.e(
+        'backup_ui: failed to read file bytes',
+        error: e,
+        stackTrace: st,
+      );
     }
 
     if (fileBytes == null) {
@@ -295,32 +300,6 @@ class BackupPage extends ConsumerWidget {
       final dismiss = await completer.future;
       dismiss();
     };
-  }
-}
-
-class _WebBackupSecurityBanner extends StatelessWidget {
-  const _WebBackupSecurityBanner({required this.l10n});
-
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(FLucideIcons.shieldCheck, color: context.theme.colors.primary),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Text(
-              l10n.backupWebSecurityWarning,
-              style: context.theme.typography.sm,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -494,7 +473,10 @@ class _ProgressSheetState extends State<_ProgressSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24, vertical: AppSpacing.s24),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s24,
+        vertical: AppSpacing.s24,
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

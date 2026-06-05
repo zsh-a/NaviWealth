@@ -65,7 +65,9 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     await showAppFormSheet<void>(
       context: context,
       builder: (ctx) => AppSheetSurface(
-        borderRadius: const BorderRadius.horizontal(left: Radius.circular(AppRadius.xl)),
+        borderRadius: const BorderRadius.horizontal(
+          left: Radius.circular(AppRadius.xl),
+        ),
         safeTop: true,
         child: SizedBox(
           width: 320,
@@ -93,11 +95,8 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     // cloud session. `null` only while auth is still settling.
     final userId = ref.watch(activeUserIdProvider);
     if (userId == null) {
-      return FScaffold(
-        header: FHeader.nested(
-          title: Text(l10n.aiChatAppBarTitle),
-          prefixes: [backHeaderAction(context)],
-        ),
+      return AppPageScaffold(
+        title: l10n.aiChatAppBarTitle,
         childPad: false,
         child: const _LoginRequired(),
       );
@@ -130,11 +129,8 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
         }
 
         if (isDesktop) {
-          return FScaffold(
-            header: FHeader.nested(
-              title: Text(l10n.aiChatAppBarTitle),
-              prefixes: [backHeaderAction(context)],
-            ),
+          return AppPageScaffold(
+            title: l10n.aiChatAppBarTitle,
             childPad: false,
             child: MasterDetailLayout(
               master: SessionsPanel(
@@ -157,21 +153,18 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
         }
 
         // mobile + tablet: drawer for sessions.
-        return FScaffold(
-          header: FHeader.nested(
-            title: Text(_titleForActive(userId, activeId, l10n)),
-            prefixes: [backHeaderAction(context)],
-            suffixes: [
-              FHeaderAction(
-                icon: const Icon(FLucideIcons.history),
-                onPress: () => _openSessionsSheet(userId, activeId),
-              ),
-              FHeaderAction(
-                icon: const Icon(FLucideIcons.plus),
-                onPress: () => _newSession(userId),
-              ),
-            ],
-          ),
+        return AppPageScaffold(
+          title: _titleForActive(userId, activeId, l10n),
+          actions: [
+            FHeaderAction(
+              icon: const Icon(FLucideIcons.history),
+              onPress: () => _openSessionsSheet(userId, activeId),
+            ),
+            FHeaderAction(
+              icon: const Icon(FLucideIcons.plus),
+              onPress: () => _newSession(userId),
+            ),
+          ],
           childPad: false,
           child: activeId == null
               ? pendingPane()
@@ -390,7 +383,10 @@ class _SuggestionTile extends StatelessWidget {
       child: FTappable(
         onPress: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s16,
+            vertical: AppSpacing.s12,
+          ),
           child: Row(
             children: [
               Container(
@@ -434,7 +430,11 @@ class _BootstrappingPane extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(width: AppSpacing.s28, height: AppSpacing.s28, child: FCircularProgress()),
+          const SizedBox(
+            width: AppSpacing.s28,
+            height: AppSpacing.s28,
+            child: FCircularProgress(),
+          ),
           const SizedBox(height: AppSpacing.s12),
           Text(
             l10n.aiChatBootstrappingLabel,

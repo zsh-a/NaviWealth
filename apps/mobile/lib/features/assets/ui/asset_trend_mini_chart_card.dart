@@ -62,7 +62,11 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
                     style: context.theme.typography.sm,
                   ),
                 ),
-                if (historyAsync.value?.isStale == true) const _StaleBadge(),
+                if (historyAsync.value?.isStale == true)
+                  AppBadge(
+                    label: l10n.assetDetailStaleBadge,
+                    size: AppBadgeSize.compact,
+                  ),
               ],
             ),
             const SizedBox(height: AppSpacing.s12),
@@ -112,7 +116,10 @@ class _ChartBody extends StatelessWidget {
     }
     final bars = history.value?.data ?? const <HistoricalBar>[];
     if (bars.isEmpty) {
-      return const SizedBox(height: AppChartHeights.standard, child: EmptyChartPlaceholder());
+      return const SizedBox(
+        height: AppChartHeights.standard,
+        child: EmptyChartPlaceholder(),
+      );
     }
 
     final pricePoints = [
@@ -151,28 +158,6 @@ class _ChartBody extends StatelessWidget {
           aspectRatio: chartAspectFor(constraints.maxWidth),
           interpolation: ChartInterpolation.linear,
           semanticLabel: l10n.assetDetailTrendSemanticLabel,
-        ),
-      ),
-    );
-  }
-}
-
-class _StaleBadge extends StatelessWidget {
-  const _StaleBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
-      decoration: BoxDecoration(
-        color: context.theme.colors.secondary,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Text(
-        l10n.assetDetailStaleBadge,
-        style: context.theme.typography.xs2.copyWith(
-          color: context.theme.colors.mutedForeground,
         ),
       ),
     );

@@ -22,46 +22,40 @@ class RecurringTransactionsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final rulesAsync = ref.watch(recurringTransactionsProvider);
-    return FScaffold(
-      header: FHeader.nested(
-        title: Text(l10n.recurringListTitle),
-        prefixes: [backHeaderAction(context)],
-        suffixes: [
-          FHeaderAction(
-            icon: const Icon(FLucideIcons.plus),
-            onPress: () => showRecurringTransactionForm(context, ref),
-          ),
-        ],
-      ),
+    return AppPageScaffold(
+      title: l10n.recurringListTitle,
+      actions: [
+        FHeaderAction(
+          icon: const Icon(FLucideIcons.plus),
+          onPress: () => showRecurringTransactionForm(context, ref),
+        ),
+      ],
       childPad: false,
-      child: Material(
-        color: Colors.transparent,
-        child: PageSkeletonShell<List<RecurringTransaction>>(
-          skeleton: const _RecurringSkeleton(),
-          isLoading: rulesAsync.isLoading,
-          child: rulesAsync.when(
-            loading: () => const _RecurringSkeleton(),
-            error: (error, _) => AppEmptyState.error(
-              title: l10n.recurringLoadError('$error'),
-              action: FButton(
-                variant: FButtonVariant.ghost,
-                onPress: () => ref.invalidate(recurringTransactionsProvider),
-                child: Text(l10n.commonRetry),
-              ),
+      child: PageSkeletonShell<List<RecurringTransaction>>(
+        skeleton: const _RecurringSkeleton(),
+        isLoading: rulesAsync.isLoading,
+        child: rulesAsync.when(
+          loading: () => const _RecurringSkeleton(),
+          error: (error, _) => AppEmptyState.error(
+            title: l10n.recurringLoadError('$error'),
+            action: FButton(
+              variant: FButtonVariant.ghost,
+              onPress: () => ref.invalidate(recurringTransactionsProvider),
+              child: Text(l10n.commonRetry),
             ),
-            data: (rules) => rules.isEmpty
-                ? AppEmptyState(
-                    icon: FLucideIcons.calendarClock,
-                    iconSize: 56,
-                    title: l10n.recurringEmptyTitle,
-                    message: l10n.recurringEmptyBody,
-                    action: FButton(
-                      onPress: () => showRecurringTransactionForm(context, ref),
-                      child: Text(l10n.recurringEmptyCta),
-                    ),
-                  )
-                : _RecurringList(rules: rules),
           ),
+          data: (rules) => rules.isEmpty
+              ? AppEmptyState(
+                  icon: FLucideIcons.calendarClock,
+                  iconSize: 56,
+                  title: l10n.recurringEmptyTitle,
+                  message: l10n.recurringEmptyBody,
+                  action: FButton(
+                    onPress: () => showRecurringTransactionForm(context, ref),
+                    child: Text(l10n.recurringEmptyCta),
+                  ),
+                )
+              : _RecurringList(rules: rules),
         ),
       ),
     );
@@ -76,7 +70,11 @@ class _RecurringList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s16 + MediaQuery.paddingOf(context).bottom,
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s16,
+        AppSpacing.s16,
+        AppSpacing.s16 + MediaQuery.paddingOf(context).bottom,
       ),
       child: AdaptiveContentFrame(
         maxWidth: AdaptiveMaxWidth.page,
@@ -158,7 +156,11 @@ class _RecurringRow extends ConsumerWidget {
           const SizedBox(width: AppSpacing.s8),
           FTappable(
             onPress: () => _showRowActions(context, ref, rule),
-            child: Icon(FLucideIcons.ellipsisVertical, size: AppIconSizes.md, color: muted),
+            child: Icon(
+              FLucideIcons.ellipsisVertical,
+              size: AppIconSizes.md,
+              color: muted,
+            ),
           ),
         ],
       ),
