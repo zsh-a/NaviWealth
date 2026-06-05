@@ -61,14 +61,25 @@ Future<void> _drain(WidgetTester tester) async {
 
 String _path(GoRouter r) => r.routeInformationProvider.value.uri.path;
 
-void _captureSystemNavigatorPop(
-  WidgetTester tester,
-  ValueSetter<MethodCall> onCall,
-) {
+class _PlatformBackCalls {
+  int pop = 0;
+  final frameworkHandlesBack = <bool>[];
+
+  bool? get lastFrameworkHandlesBack => frameworkHandlesBack.lastOrNull;
+}
+
+_PlatformBackCalls _capturePlatformBackCalls(WidgetTester tester) {
+  final calls = _PlatformBackCalls();
   tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
     SystemChannels.platform,
     (call) async {
-      if (call.method == 'SystemNavigator.pop') onCall(call);
+      switch (call.method) {
+        case 'SystemNavigator.pop':
+          calls.pop++;
+        case 'SystemNavigator.setFrameworkHandlesBack':
+          final arg = call.arguments;
+          if (arg is bool) calls.frameworkHandlesBack.add(arg);
+      }
       return null;
     },
   );
@@ -78,6 +89,7 @@ void _captureSystemNavigatorPop(
       null,
     ),
   );
+  return calls;
 }
 
 void main() {
@@ -105,63 +117,100 @@ void main() {
     ];
 
     for (final root in primaryRoots) {
-      testWidgets('$root root → first back arms, second back exits', (
-        tester,
-      ) async {
-        var platformPopCalls = 0;
-        _captureSystemNavigatorPop(tester, (_) => platformPopCalls++);
+      testWidgets(
+        '$root root → first back arms, second back exits',
+        (tester) async {
+          final platform = _capturePlatformBackCalls(tester);
 
-        final router = await _boot(tester, root);
-        expect(_path(router), root);
+          final router = await _boot(tester, root);
+          expect(_path(router), root);
+          expect(
+            platform.lastFrameworkHandlesBack,
+            isTrue,
+            reason: 'Android gesture must be routed to Flutter at app roots',
+          );
+
+          final first = await tester.binding.handlePopRoute();
+          await _drain(tester);
+          expect(first, isTrue);
+          expect(_path(router), root);
+          expect(platform.pop, 0);
+
+          final second = await tester.binding.handlePopRoute();
+          await _drain(tester);
+          expect(second, isTrue);
+          expect(platform.pop, 1);
+        },
+        variant: TargetPlatformVariant.only(TargetPlatform.android),
+      );
+    }
+
+    testWidgets(
+      'navigating after first back disarms root exit',
+      (tester) async {
+        final platform = _capturePlatformBackCalls(tester);
+
+        final router = await _boot(tester, AppRoutes.home);
+        expect(_path(router), AppRoutes.home);
 
         final first = await tester.binding.handlePopRoute();
         await _drain(tester);
         expect(first, isTrue);
-        expect(_path(router), root);
-        expect(platformPopCalls, 0);
+        expect(platform.pop, 0);
+
+        router.go(AppRoutes.activity);
+        await _drain(tester);
+        expect(_path(router), AppRoutes.activity);
+        expect(
+          platform.lastFrameworkHandlesBack,
+          isTrue,
+          reason: 'Android gesture handling must survive tab navigation',
+        );
 
         final second = await tester.binding.handlePopRoute();
         await _drain(tester);
         expect(second, isTrue);
-        expect(platformPopCalls, 1);
-      });
-    }
+        expect(_path(router), AppRoutes.activity);
+        expect(platform.pop, 0);
 
-    testWidgets('navigating after first back disarms root exit', (
-      tester,
-    ) async {
-      var platformPopCalls = 0;
-      _captureSystemNavigatorPop(tester, (_) => platformPopCalls++);
+        final third = await tester.binding.handlePopRoute();
+        await _drain(tester);
+        expect(third, isTrue);
+        expect(platform.pop, 1);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.android),
+    );
 
-      final router = await _boot(tester, AppRoutes.home);
-      expect(_path(router), AppRoutes.home);
+    testWidgets(
+      'Android back handling stays enabled after app resume',
+      (tester) async {
+        final platform = _capturePlatformBackCalls(tester);
 
-      final first = await tester.binding.handlePopRoute();
-      await _drain(tester);
-      expect(first, isTrue);
-      expect(platformPopCalls, 0);
+        final router = await _boot(tester, AppRoutes.healthTrend);
+        expect(_path(router), AppRoutes.healthTrend);
+        expect(platform.lastFrameworkHandlesBack, isTrue);
 
-      router.go(AppRoutes.activity);
-      await _drain(tester);
-      expect(_path(router), AppRoutes.activity);
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        await tester.pump();
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await _drain(tester);
 
-      final second = await tester.binding.handlePopRoute();
-      await _drain(tester);
-      expect(second, isTrue);
-      expect(_path(router), AppRoutes.activity);
-      expect(platformPopCalls, 0);
-
-      final third = await tester.binding.handlePopRoute();
-      await _drain(tester);
-      expect(third, isTrue);
-      expect(platformPopCalls, 1);
-    });
+        expect(_path(router), AppRoutes.healthTrend);
+        expect(
+          platform.lastFrameworkHandlesBack,
+          isTrue,
+          reason: 'Android gesture handling must be restored after resume',
+        );
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.android),
+    );
 
     testWidgets('/login root → first back arms, second back exits', (
       tester,
     ) async {
-      var platformPopCalls = 0;
-      _captureSystemNavigatorPop(tester, (_) => platformPopCalls++);
+      final platform = _capturePlatformBackCalls(tester);
 
       final router = await _boot(tester, AppRoutes.login);
       expect(_path(router), AppRoutes.login);
@@ -169,19 +218,18 @@ void main() {
       final first = await tester.binding.handlePopRoute();
       await _drain(tester);
       expect(first, isTrue);
-      expect(platformPopCalls, 0);
+      expect(platform.pop, 0);
 
       final second = await tester.binding.handlePopRoute();
       await _drain(tester);
       expect(second, isTrue);
-      expect(platformPopCalls, 1);
+      expect(platform.pop, 1);
     });
 
     testWidgets('/onboarding root → first back arms, second back exits', (
       tester,
     ) async {
-      var platformPopCalls = 0;
-      _captureSystemNavigatorPop(tester, (_) => platformPopCalls++);
+      final platform = _capturePlatformBackCalls(tester);
 
       final router = await _boot(tester, AppRoutes.onboarding);
       expect(_path(router), AppRoutes.onboarding);
@@ -189,12 +237,12 @@ void main() {
       final first = await tester.binding.handlePopRoute();
       await _drain(tester);
       expect(first, isTrue);
-      expect(platformPopCalls, 0);
+      expect(platform.pop, 0);
 
       final second = await tester.binding.handlePopRoute();
       await _drain(tester);
       expect(second, isTrue);
-      expect(platformPopCalls, 1);
+      expect(platform.pop, 1);
     });
   });
 

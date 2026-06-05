@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -53,6 +56,7 @@ class NaviWealthApp extends ConsumerWidget {
       // SnackBar/etc; will be removed once Phase 3 lands FToaster.
       scaffoldMessengerKey: scaffoldMessengerKey,
       routerConfig: router,
+      onNavigationNotification: _claimSystemBack,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (BuildContext ctx, Widget? child) {
@@ -95,65 +99,70 @@ class NaviWealthApp extends ConsumerWidget {
           }
         });
         final marketColors = ref.watch(marketColorsProvider);
-        return FTheme(
-          data: fTheme,
-          child: MarketColorsScope(
-            colors: marketColors,
-            child: AppMessenger.init(
-              child: GlobalShortcutsScope(
-                onSwitchPrimaryTab: (int index) {
-                  final paths = ref.read(primaryTabPathsProvider);
-                  if (index < 0 || index >= paths.length) return;
-                  router.go(paths[index]);
-                },
-                onOpenCommandPalette: (BuildContext invokeCtx) {
-                  showCommandPalette(
-                    invokeCtx,
-                    commands: defaultCommandPaletteEntries(
-                      AppLocalizations.of(invokeCtx),
-                      onToggleTheme: () {
-                        final current = ref.read(themeModeProvider);
-                        final next = current == ThemeMode.dark
-                            ? ThemeMode.light
-                            : ThemeMode.dark;
-                        ref.read(themeModeProvider.notifier).set(next);
-                      },
-                      onToggleColorMode: () {
-                        final current = ref.read(marketColorModeProvider);
-                        final next =
-                            MarketColorMode.values[(MarketColorMode.values
-                                        .indexOf(current) +
-                                    1) %
-                                MarketColorMode.values.length];
-                        ref.read(marketColorModeProvider.notifier).set(next);
-                      },
-                      onToggleLanguage: () {
-                        ref.read(localeProvider.notifier).cycle();
-                      },
-                      onAskAi: (BuildContext ctx) => askAi(ctx, ref),
-                      // Every active domain contributes its palette
-                      // entries, merged in domain order — the same
-                      // aggregation pattern as device tools / prompt
-                      // blocks (`activeDomainPacksProvider`). HealthOS /
-                      // KnowledgeOS used to be Cmd-K dead zones; this
-                      // wires them in alongside Finance automatically.
-                      domainEntries: domainCommandPaletteEntries(
-                        ref.read(activeDomainPacksProvider),
+        return _AndroidSystemBackOwner(
+          child: FTheme(
+            data: fTheme,
+            child: MarketColorsScope(
+              colors: marketColors,
+              child: AppMessenger.init(
+                child: GlobalShortcutsScope(
+                  onSwitchPrimaryTab: (int index) {
+                    final paths = ref.read(primaryTabPathsProvider);
+                    if (index < 0 || index >= paths.length) return;
+                    router.go(paths[index]);
+                  },
+                  onOpenCommandPalette: (BuildContext invokeCtx) {
+                    showCommandPalette(
+                      invokeCtx,
+                      commands: defaultCommandPaletteEntries(
                         AppLocalizations.of(invokeCtx),
+                        onToggleTheme: () {
+                          final current = ref.read(themeModeProvider);
+                          final next = current == ThemeMode.dark
+                              ? ThemeMode.light
+                              : ThemeMode.dark;
+                          ref.read(themeModeProvider.notifier).set(next);
+                        },
+                        onToggleColorMode: () {
+                          final current = ref.read(marketColorModeProvider);
+                          final next =
+                              MarketColorMode.values[(MarketColorMode.values
+                                          .indexOf(current) +
+                                      1) %
+                                  MarketColorMode.values.length];
+                          ref.read(marketColorModeProvider.notifier).set(next);
+                        },
+                        onToggleLanguage: () {
+                          ref.read(localeProvider.notifier).cycle();
+                        },
+                        onAskAi: (BuildContext ctx) => askAi(ctx, ref),
+                        // Every active domain contributes its palette
+                        // entries, merged in domain order — the same
+                        // aggregation pattern as device tools / prompt
+                        // blocks (`activeDomainPacksProvider`). HealthOS /
+                        // KnowledgeOS used to be Cmd-K dead zones; this
+                        // wires them in alongside Finance automatically.
+                        domainEntries: domainCommandPaletteEntries(
+                          ref.read(activeDomainPacksProvider),
+                          AppLocalizations.of(invokeCtx),
+                        ),
                       ),
-                    ),
-                    onAskAi: (String query) =>
-                        askAi(invokeCtx, ref, prefill: query),
-                  );
-                },
-                onToggleSidebar: () =>
-                    ref.read(sidebarCollapsedProvider.notifier).toggle(),
-                onOpenAiChat: (BuildContext invokeCtx) => askAi(invokeCtx, ref),
-                onVimGoto: (String target) {
-                  final path = _kVimGotoRoutes[target];
-                  if (path != null) router.go(path);
-                },
-                child: PwaUpdateBanner(child: child ?? const SizedBox.shrink()),
+                      onAskAi: (String query) =>
+                          askAi(invokeCtx, ref, prefill: query),
+                    );
+                  },
+                  onToggleSidebar: () =>
+                      ref.read(sidebarCollapsedProvider.notifier).toggle(),
+                  onOpenAiChat: (BuildContext invokeCtx) =>
+                      askAi(invokeCtx, ref),
+                  onVimGoto: (String target) {
+                    final path = _kVimGotoRoutes[target];
+                    if (path != null) router.go(path);
+                  },
+                  child: PwaUpdateBanner(
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+                ),
               ),
             ),
           ),
@@ -161,4 +170,55 @@ class NaviWealthApp extends ConsumerWidget {
       },
     );
   }
+}
+
+bool _claimSystemBack(NavigationNotification notification) {
+  // Flutter 3.44 lets Android predictive/global back bypass the framework
+  // when the current navigator reports no pop handler. NaviWealth owns root
+  // back globally, so Android must always route the gesture into Flutter.
+  if (defaultTargetPlatform == TargetPlatform.android) {
+    unawaited(SystemNavigator.setFrameworkHandlesBack(true));
+    return true;
+  }
+  unawaited(SystemNavigator.setFrameworkHandlesBack(notification.canHandlePop));
+  return true;
+}
+
+class _AndroidSystemBackOwner extends StatefulWidget {
+  const _AndroidSystemBackOwner({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_AndroidSystemBackOwner> createState() =>
+      _AndroidSystemBackOwnerState();
+}
+
+class _AndroidSystemBackOwnerState extends State<_AndroidSystemBackOwner>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _claim();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _claim();
+  }
+
+  void _claim() {
+    if (defaultTargetPlatform != TargetPlatform.android) return;
+    unawaited(SystemNavigator.setFrameworkHandlesBack(true));
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
