@@ -17,6 +17,13 @@ import '../../../l10n/gen/app_localizations.dart';
 /// [proposalKindRegistryProvider] alongside the other domains'.
 List<ProposalKindMeta> get kKnowledgeProposalKinds => [
   ProposalKindMeta(
+    kind: 'capture_upgrade',
+    icon: FLucideIcons.sparkles,
+    label: (_) => '捕获升级',
+    toolName: 'propose_capture',
+    previewRows: _captureUpgradeRows,
+  ),
+  ProposalKindMeta(
     kind: 'knowledge_merge',
     icon: FLucideIcons.gitMerge,
     label: (_) => '合并去重',
@@ -38,6 +45,24 @@ List<ProposalKindMeta> get kKnowledgeProposalKinds => [
     previewRows: _conceptLinkRows,
   ),
 ];
+
+List<ProposalKindRow> _captureUpgradeRows(
+  AppLocalizations l10n,
+  ReadyProposalPlan plan,
+  Map<String, Object?>? overrides,
+) {
+  final detected = plan.get('detected_kind');
+  final confidence = plan.num_('confidence');
+  final statement = plan.get('statement');
+  final scope = plan.get('scope');
+  return <ProposalKindRow>[
+    if (detected != null) ProposalKindRow('类型', detected),
+    if (statement != null) ProposalKindRow('内容', statement),
+    if (scope != null) ProposalKindRow('范围', scope),
+    if (confidence != null)
+      ProposalKindRow('置信度', confidence.toStringAsFixed(2)),
+  ];
+}
 
 List<ProposalKindRow> _conceptLinkRows(
   AppLocalizations l10n,

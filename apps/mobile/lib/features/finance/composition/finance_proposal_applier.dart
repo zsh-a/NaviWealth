@@ -41,6 +41,25 @@ import '../../investment/domain/trade_entry/trade_draft.dart'
 import '../../investment/domain/trade_entry/trade_entry_service.dart';
 import '../../liabilities/data/liability_repository.dart';
 import '../../liabilities/data/providers.dart';
+import '../../options_income/data/options_strategy_profile_repository.dart';
+import '../../options_income/data/providers.dart';
+import '../../options_income/data/trade_journal_repository.dart';
+import '../../options_income/domain/options_strategy_profile.dart';
+import '../../options_income/domain/trade_journal_entry.dart';
+
+/// Proposal kinds owned by FinanceOS. Keep in sync with
+/// [kFinanceProposalKinds] so every rendered card has an apply path.
+const Set<String> kFinanceProposalAppliedKinds = <String>{
+  'trade',
+  'expense',
+  'liability_payment',
+  'account_create',
+  'asset_valuation',
+  'fire_plan_update',
+  'fire_bucket_rule',
+  'options_profile_update',
+  'options_journal_entry',
+};
 
 class FinanceProposalApplier implements ProposalApplier {
   FinanceProposalApplier({
@@ -50,6 +69,8 @@ class FinanceProposalApplier implements ProposalApplier {
     required this.accountRepo,
     required this.manualAssetRepo,
     required this.liabilityRepo,
+    required this.optionsProfileRepo,
+    required this.tradeJournalRepo,
     required this.currentUserId,
     this.aiTouchedStore,
     this.firePlanWriter,
@@ -62,6 +83,8 @@ class FinanceProposalApplier implements ProposalApplier {
   final AccountRepository accountRepo;
   final ManualAssetRepository manualAssetRepo;
   final LiabilityRepository liabilityRepo;
+  final OptionsStrategyProfileRepository optionsProfileRepo;
+  final TradeJournalRepository tradeJournalRepo;
 
   /// When present, every successful [apply] records an AI-
   /// touch entry keyed by `(entityType, entityId)`. Optional so
@@ -105,6 +128,9 @@ class FinanceProposalApplier implements ProposalApplier {
         await accountRepo.softDelete(id);
       case 'assets':
         await manualAssetRepo.softDelete(id, reason: 'undo');
+      case 'options_trade_journal':
+        final entry = await tradeJournalRepo.get(id);
+        if (entry != null) await tradeJournalRepo.remove(entry);
       default:
         throw ProposalApplyException('unknown undo table: $table');
     }
@@ -126,6 +152,8 @@ class FinanceProposalApplier implements ProposalApplier {
         'asset_valuation' => await _applyAssetValuation(plan, at),
         'fire_plan_update' => await _applyFirePlanUpdate(plan, at),
         'fire_bucket_rule' => await _applyFireBucketRule(plan, at),
+        'options_profile_update' => await _applyOptionsProfileUpdate(plan),
+        'options_journal_entry' => await _applyOptionsJournalEntry(plan, at),
         _ => throw ProposalApplyException(
           'unknown proposal kind: ${plan.kind}',
         ),
@@ -501,6 +529,79 @@ class FinanceProposalApplier implements ProposalApplier {
     );
   }
 
+  Future<ProposalApplyState> _applyOptionsProfileUpdate(
+    ReadyProposalPlan plan,
+  ) async {
+    final after = plan.payload['after'];
+    if (after is! Map) {
+      throw ProposalApplyException(
+        'options_profile_update payload missing `after` field',
+      );
+    }
+    final ownerUserId = await currentUserId();
+    final current = await optionsProfileRepo.get(ownerUserId);
+    if (current == null) {
+      throw ProposalApplyException('Income Planner profile 尚未初始化');
+    }
+    final updated = current.copyWith(
+      mode: _parseOptionsMode(after['mode']) ?? current.mode,
+      minDte: _optionalInt(after['min_dte']) ?? current.minDte,
+      maxDte: _optionalInt(after['max_dte']) ?? current.maxDte,
+      minAnnualizedYield:
+          _optionalDecimalRaw(after['min_annualized_yield']) ??
+          current.minAnnualizedYield,
+      minOpenInterest:
+          _optionalInt(after['min_open_interest']) ?? current.minOpenInterest,
+      minVolume: _optionalInt(after['min_volume']) ?? current.minVolume,
+      maxCapitalPerTradePct:
+          _optionalDecimalRaw(after['max_capital_per_trade_pct']) ??
+          current.maxCapitalPerTradePct,
+      avoidEarnings:
+          _optionalBool(after['avoid_earnings']) ?? current.avoidEarnings,
+      avoidMacroEvents:
+          _optionalBool(after['avoid_macro_events']) ??
+          current.avoidMacroEvents,
+      onlyOnApprovedUnderlyings:
+          _optionalBool(after['only_on_approved_underlyings']) ??
+          current.onlyOnApprovedUnderlyings,
+    );
+    final saved = await optionsProfileRepo.upsert(updated);
+    return ProposalApplyState(
+      status: ProposalApplyStatus.applied,
+      appliedEntityId: saved.sync.ownerUserId,
+      appliedTable: 'options_strategy_profile',
+      shortLabel: '已更新${plan.summaryZh}',
+    );
+  }
+
+  Future<ProposalApplyState> _applyOptionsJournalEntry(
+    ReadyProposalPlan plan,
+    DateTime at,
+  ) async {
+    final strategy = parseOptionsStrategyKind(_requireString(plan, 'strategy'));
+    if (strategy == null) {
+      throw ProposalApplyException('不支持的期权策略: ${plan.get('strategy')}');
+    }
+    final openedAt = _parseRequiredDate(plan, 'opened_at_iso');
+    final entry = await tradeJournalRepo.create(
+      strategy: strategy,
+      symbol: _requireString(plan, 'underlying').toUpperCase(),
+      optionSymbol: _requireString(plan, 'option_symbol'),
+      openedAt: openedAt,
+      entryCredit: _requireDecimal(plan, 'entry_credit'),
+      currency: (plan.get('currency') ?? 'USD').toUpperCase(),
+      status: parseTradeJournalStatus(plan.get('status') ?? 'open'),
+      notes: plan.get('notes'),
+    );
+    return ProposalApplyState(
+      status: ProposalApplyStatus.applied,
+      appliedEntityId: entry.id,
+      appliedTable: 'options_trade_journal',
+      appliedAt: at,
+      shortLabel: '已记录${plan.summaryZh}',
+    );
+  }
+
   // ─── parsing helpers ─────────────────────────────────────────────────
 
   String _requireString(ReadyProposalPlan plan, String key) {
@@ -536,10 +637,56 @@ class FinanceProposalApplier implements ProposalApplier {
     return d;
   }
 
+  Decimal? _optionalDecimalRaw(Object? raw) {
+    if (raw == null) return null;
+    final s = raw is String ? raw : raw.toString();
+    if (s.isEmpty) return null;
+    return Decimal.tryParse(s);
+  }
+
+  int? _optionalInt(Object? raw) {
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    if (raw is String && raw.isNotEmpty) return int.tryParse(raw);
+    return null;
+  }
+
+  bool? _optionalBool(Object? raw) {
+    if (raw is bool) return raw;
+    if (raw is String) {
+      return switch (raw) {
+        'true' => true,
+        'false' => false,
+        _ => null,
+      };
+    }
+    return null;
+  }
+
   DateTime? _parseDate(String? s) {
     if (s == null || s.isEmpty) return null;
     final parsed = DateTime.tryParse(s);
     return parsed?.toLocal();
+  }
+
+  DateTime _parseRequiredDate(ReadyProposalPlan plan, String key) {
+    final raw = _requireString(plan, key);
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) {
+      throw ProposalApplyException('字段 $key 不是合法日期: $raw');
+    }
+    return parsed.toUtc();
+  }
+
+  OptionsStrategyMode? _parseOptionsMode(Object? raw) {
+    if (raw is! String || raw.isEmpty) return null;
+    return switch (raw) {
+      'conservative' => OptionsStrategyMode.conservative,
+      'balanced' => OptionsStrategyMode.balanced,
+      'aggressive' => OptionsStrategyMode.aggressive,
+      'custom' => OptionsStrategyMode.custom,
+      _ => throw ProposalApplyException('不支持的 Income Planner mode: $raw'),
+    };
   }
 
   TradeType _parseTradeType(String? s) {
@@ -650,6 +797,12 @@ final financeProposalApplierProvider = FutureProvider<ProposalApplier>((
   final accountRepo = await ref.watch(accountRepositoryProvider.future);
   final manualAssetRepo = await ref.watch(manualAssetRepositoryProvider.future);
   final liabilityRepo = await ref.watch(liabilityRepositoryProvider.future);
+  final optionsProfileRepo = await ref.watch(
+    optionsStrategyProfileRepositoryProvider.future,
+  );
+  final tradeJournalRepo = await ref.watch(
+    tradeJournalRepositoryProvider.future,
+  );
   final currentUserId = ref.watch(currentUserIdProvider);
   final touched = ref.watch(aiTouchedStoreProvider);
   return FinanceProposalApplier(
@@ -659,6 +812,8 @@ final financeProposalApplierProvider = FutureProvider<ProposalApplier>((
     accountRepo: accountRepo,
     manualAssetRepo: manualAssetRepo,
     liabilityRepo: liabilityRepo,
+    optionsProfileRepo: optionsProfileRepo,
+    tradeJournalRepo: tradeJournalRepo,
     currentUserId: currentUserId,
     aiTouchedStore: touched,
     firePlanWriter: (after) =>
