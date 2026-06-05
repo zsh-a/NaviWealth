@@ -41,7 +41,8 @@ void main() {
 
   tearDown(() async => db.close());
 
-  KnowledgeNote note(String id, String title, List<String> tags) => KnowledgeNote(
+  KnowledgeNote note(String id, String title, List<String> tags) =>
+      KnowledgeNote(
         id: id,
         title: title,
         bodyMd: '',
@@ -64,15 +65,69 @@ void main() {
       );
 
   group('KnowledgeProposalApplier', () {
+    test(
+      'capture_upgrade (routine) creates routine and tombstones note',
+      () async {
+        await repo.upsertNote(note('n1', '港卡活跃', const ['card']));
+
+        final state = await applier.apply(
+          plan('capture_upgrade', {
+            'detected_kind': 'routine',
+            'note_id': 'n1',
+            'statement': '港卡保持活跃',
+            'interval_days': 180,
+            'scope': 'finance/cards',
+          }),
+        );
+
+        expect(state.status, ProposalApplyStatus.applied);
+        expect(state.appliedTable, 'knowledge_routines');
+        final routine = await repo.findRoutine(state.appliedEntityId!);
+        expect(routine, isNotNull);
+        expect(routine!.statement, '港卡保持活跃');
+
+        final tempNote = await repo.findNote('n1');
+        expect(tempNote!.sync.deletedAt, isNotNull);
+      },
+    );
+
+    test('capture_upgrade (concept) tags an existing note candidate', () async {
+      await repo.upsertNote(note('n1', 'Edge-first', const ['ops']));
+
+      final state = await applier.apply(
+        plan('capture_upgrade', {
+          'detected_kind': 'concept',
+          'note_id': 'n1',
+          'source_text': 'Edge-first 是默认先部署到边缘节点的策略。',
+          'statement': 'Edge-first',
+          'scope': 'architecture',
+          'polished_body': 'Edge-first 是默认先部署到边缘节点的策略。',
+        }),
+      );
+
+      expect(state.status, ProposalApplyStatus.applied);
+      expect(state.appliedTable, 'knowledge_notes');
+
+      final updated = await repo.findNote('n1');
+      expect(updated!.tags.toSet(), {
+        'ops',
+        'kind:concept_candidate',
+        'scope:architecture',
+      });
+      expect(updated.bodyMd, 'Edge-first 是默认先部署到边缘节点的策略。');
+    });
+
     test('knowledge_merge (note) merges and tombstones', () async {
       await repo.upsertNote(note('keep', '港卡续期', const ['hk']));
       await repo.upsertNote(note('dup', '香港卡续', const ['reminder']));
 
-      final state = await applier.apply(plan('knowledge_merge', {
-        'entity_type': 'note',
-        'primary_id': 'keep',
-        'duplicate_ids': ['dup'],
-      }));
+      final state = await applier.apply(
+        plan('knowledge_merge', {
+          'entity_type': 'note',
+          'primary_id': 'keep',
+          'duplicate_ids': ['dup'],
+        }),
+      );
 
       expect(state.status, ProposalApplyStatus.applied);
       expect(state.appliedEntityId, 'keep');
@@ -88,11 +143,13 @@ void main() {
     });
 
     test('knowledge_routine creates a routine row', () async {
-      final state = await applier.apply(plan('knowledge_routine', {
-        'statement': '港卡活跃',
-        'interval_days': 180,
-        'scope': 'finance/cards/hk',
-      }));
+      final state = await applier.apply(
+        plan('knowledge_routine', {
+          'statement': '港卡活跃',
+          'interval_days': 180,
+          'scope': 'finance/cards/hk',
+        }),
+      );
       expect(state.status, ProposalApplyStatus.applied);
       expect(state.appliedTable, 'knowledge_routines');
 
@@ -102,45 +159,52 @@ void main() {
       expect(r.intervalDays, 180);
     });
 
-    test('knowledge_concept_link links both concepts bidirectionally', () async {
-      KnowledgeConcept concept(String id, String name) => KnowledgeConcept(
-            id: id,
-            name: name,
-            aliases: const [],
-            summaryMd: '',
-            relatedConceptIds: const [],
-            createdAt: created,
-            sync: SyncMeta(
-              ownerUserId: _owner,
-              updatedAt: created,
-              updatedByDevice: 'dev',
-              hlc: Hlc.zero('dev'),
-            ),
-          );
-      await repo.upsertConcept(concept('c1', 'FIRE'));
-      await repo.upsertConcept(concept('c2', '安全边际'));
+    test(
+      'knowledge_concept_link links both concepts bidirectionally',
+      () async {
+        KnowledgeConcept concept(String id, String name) => KnowledgeConcept(
+          id: id,
+          name: name,
+          aliases: const [],
+          summaryMd: '',
+          relatedConceptIds: const [],
+          createdAt: created,
+          sync: SyncMeta(
+            ownerUserId: _owner,
+            updatedAt: created,
+            updatedByDevice: 'dev',
+            hlc: Hlc.zero('dev'),
+          ),
+        );
+        await repo.upsertConcept(concept('c1', 'FIRE'));
+        await repo.upsertConcept(concept('c2', '安全边际'));
 
-      final state = await applier.apply(plan('knowledge_concept_link', {
-        'from_concept_id': 'c1',
-        'to_concept_id': 'c2',
-        'relation': 'relates_to',
-      }));
-      expect(state.status, ProposalApplyStatus.applied);
-      expect(state.appliedTable, 'knowledge_concepts');
+        final state = await applier.apply(
+          plan('knowledge_concept_link', {
+            'from_concept_id': 'c1',
+            'to_concept_id': 'c2',
+            'relation': 'relates_to',
+          }),
+        );
+        expect(state.status, ProposalApplyStatus.applied);
+        expect(state.appliedTable, 'knowledge_concepts');
 
-      final c1 = await repo.findConcept('c1');
-      final c2 = await repo.findConcept('c2');
-      expect(c1!.relatedConceptIds, contains('c2'));
-      expect(c2!.relatedConceptIds, contains('c1'));
-    });
+        final c1 = await repo.findConcept('c1');
+        final c2 = await repo.findConcept('c2');
+        expect(c1!.relatedConceptIds, contains('c2'));
+        expect(c2!.relatedConceptIds, contains('c1'));
+      },
+    );
 
     test('merge with unsupported entity_type throws', () async {
       expect(
-        () => applier.apply(plan('knowledge_merge', {
-          'entity_type': 'decision',
-          'primary_id': 'a',
-          'duplicate_ids': ['b'],
-        })),
+        () => applier.apply(
+          plan('knowledge_merge', {
+            'entity_type': 'decision',
+            'primary_id': 'a',
+            'duplicate_ids': ['b'],
+          }),
+        ),
         throwsA(isA<ProposalApplyException>()),
       );
     });
@@ -154,32 +218,51 @@ void main() {
   });
 
   group('CompositeProposalApplier', () {
-    test('routes knowledge_* to knowledge, else fallback', () async {
-      final fallback = _RecordingApplier();
-      final composite = CompositeProposalApplier(
-        routes: [
-          ProposalApplierRoute(
-            applier: applier,
-            kinds: kKnowledgeProposalAppliedKinds,
-            tablePrefix: kKnowledgeTablePrefix,
-          ),
-        ],
-        fallback: fallback,
-      );
+    test(
+      'routes KnowledgeOS applied kinds to knowledge, else fallback',
+      () async {
+        final fallback = _RecordingApplier();
+        final composite = CompositeProposalApplier(
+          routes: [
+            ProposalApplierRoute(
+              applier: applier,
+              kinds: kKnowledgeProposalAppliedKinds,
+              tablePrefix: kKnowledgeTablePrefix,
+            ),
+          ],
+          fallback: fallback,
+        );
 
-      await repo.upsertNote(note('keep', 'a', const []));
-      await repo.upsertNote(note('dup', 'b', const []));
-      final state = await composite.apply(plan('knowledge_merge', {
-        'entity_type': 'note',
-        'primary_id': 'keep',
-        'duplicate_ids': ['dup'],
-      }));
-      expect(state.appliedTable, 'knowledge_notes');
-      expect(fallback.applied, isEmpty, reason: 'knowledge kind never hits fallback');
+        await repo.upsertNote(note('keep', 'a', const []));
+        await repo.upsertNote(note('dup', 'b', const []));
+        final state = await composite.apply(
+          plan('knowledge_merge', {
+            'entity_type': 'note',
+            'primary_id': 'keep',
+            'duplicate_ids': ['dup'],
+          }),
+        );
+        expect(state.appliedTable, 'knowledge_notes');
+        expect(
+          fallback.applied,
+          isEmpty,
+          reason: 'knowledge kind never hits fallback',
+        );
 
-      await composite.apply(plan('trade', const {}));
-      expect(fallback.applied, <String>['trade']);
-    });
+        final captureState = await composite.apply(
+          plan('capture_upgrade', {
+            'detected_kind': 'concept',
+            'source_text': '安全边际是估值留出的缓冲。',
+            'statement': '安全边际',
+          }),
+        );
+        expect(captureState.appliedTable, 'knowledge_notes');
+        expect(fallback.applied, isEmpty);
+
+        await composite.apply(plan('trade', const {}));
+        expect(fallback.applied, <String>['trade']);
+      },
+    );
 
     test('undo routes by appliedTable prefix', () async {
       final fallback = _RecordingApplier();
@@ -194,10 +277,12 @@ void main() {
         fallback: fallback,
       );
       // Finance table → fallback.undo.
-      await composite.undo(const ProposalApplyState(
-        status: ProposalApplyStatus.applied,
-        appliedTable: 'journal_entries',
-      ));
+      await composite.undo(
+        const ProposalApplyState(
+          status: ProposalApplyStatus.applied,
+          appliedTable: 'journal_entries',
+        ),
+      );
       expect(fallback.undone, <String>['journal_entries']);
     });
   });

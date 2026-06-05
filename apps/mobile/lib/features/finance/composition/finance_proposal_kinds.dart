@@ -73,6 +73,21 @@ List<ProposalKindMeta> get kFinanceProposalKinds => const [
     toolName: 'propose_fire_bucket_rule',
     previewRows: _fireBucketRuleRows,
   ),
+  ProposalKindMeta(
+    kind: 'options_profile_update',
+    icon: FLucideIcons.slidersHorizontal,
+    label: _optionsProfileUpdateLabel,
+    toolName: 'propose_options_profile_update',
+    previewRows: _optionsProfileUpdateRows,
+  ),
+  ProposalKindMeta(
+    kind: 'options_journal_entry',
+    icon: FLucideIcons.candlestickChart,
+    label: _optionsJournalEntryLabel,
+    toolName: 'propose_options_journal_entry',
+    editableFields: _optionsJournalEntryFields,
+    previewRows: _optionsJournalEntryRows,
+  ),
 ];
 
 // ─── Labels ───
@@ -89,6 +104,8 @@ String _firePlanUpdateLabel(AppLocalizations l) =>
     l.aiChatProposalKindFirePlanUpdate;
 String _fireBucketRuleLabel(AppLocalizations l) =>
     l.aiChatProposalKindFireBucketRule;
+String _optionsProfileUpdateLabel(AppLocalizations l) => 'Income Planner 偏好';
+String _optionsJournalEntryLabel(AppLocalizations l) => '期权流水';
 
 // ─── Editable fields ───
 
@@ -167,6 +184,20 @@ List<ProposalKindEditField> _assetValuationFields(AppLocalizations l) => [
   ProposalKindEditField(payloadKey: 'note', label: l.aiChatFieldNote),
 ];
 
+List<ProposalKindEditField> _optionsJournalEntryFields(AppLocalizations l) => [
+  const ProposalKindEditField(
+    payloadKey: 'entry_credit',
+    label: '权利金',
+    numeric: true,
+  ),
+  ProposalKindEditField(
+    payloadKey: 'opened_at_iso',
+    label: l.aiChatFieldDate,
+    hint: l.aiChatFieldDateHint,
+  ),
+  const ProposalKindEditField(payloadKey: 'notes', label: '备注'),
+];
+
 // ─── Preview rows ───
 
 String? _read(
@@ -199,7 +230,10 @@ List<ProposalKindRow> _tradeRows(
   String? r(String k) => _read(plan, overrides, k);
   return [
     if (r('type') != null)
-      ProposalKindRow(l10n.aiChatRowOperation, _tradeTypeLabel(l10n, r('type')!)),
+      ProposalKindRow(
+        l10n.aiChatRowOperation,
+        _tradeTypeLabel(l10n, r('type')!),
+      ),
     if (r('asset_symbol') != null || r('asset_name') != null)
       ProposalKindRow(
         l10n.aiChatRowAsset,
@@ -320,5 +354,44 @@ List<ProposalKindRow> _fireBucketRuleRows(
   String? r(String k) => _read(plan, overrides, k);
   return [
     if (r('role') != null) ProposalKindRow(l10n.aiChatRowNote, plan.summaryZh),
+  ];
+}
+
+List<ProposalKindRow> _optionsProfileUpdateRows(
+  AppLocalizations l10n,
+  ReadyProposalPlan plan,
+  Map<String, Object?>? overrides,
+) {
+  final after = plan.payload['after'];
+  if (after is! Map) {
+    return [ProposalKindRow(l10n.aiChatRowNote, plan.summaryZh)];
+  }
+  return after.entries
+      .map(
+        (entry) =>
+            ProposalKindRow(entry.key.toString(), entry.value.toString()),
+      )
+      .toList(growable: false);
+}
+
+List<ProposalKindRow> _optionsJournalEntryRows(
+  AppLocalizations l10n,
+  ReadyProposalPlan plan,
+  Map<String, Object?>? overrides,
+) {
+  String? r(String k) => _read(plan, overrides, k);
+  return [
+    if (r('strategy') != null) ProposalKindRow('策略', r('strategy')!),
+    if (r('underlying') != null) ProposalKindRow('标的', r('underlying')!),
+    if (r('option_symbol') != null) ProposalKindRow('合约', r('option_symbol')!),
+    if (r('entry_credit') != null)
+      ProposalKindRow(
+        '权利金',
+        '${r('entry_credit')} ${r('currency') ?? ''}'.trim(),
+      ),
+    if (r('status') != null) ProposalKindRow('状态', r('status')!),
+    if (r('opened_at_iso') != null)
+      ProposalKindRow(l10n.aiChatRowDate, r('opened_at_iso')!),
+    if (r('notes') != null) ProposalKindRow(l10n.aiChatRowNote, r('notes')!),
   ];
 }

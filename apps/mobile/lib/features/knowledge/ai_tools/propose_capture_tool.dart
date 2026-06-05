@@ -40,13 +40,11 @@ class ProposeCaptureTool implements DeviceTool {
   Map<String, Object?> get inputSchema => <String, Object?>{
     'type': 'object',
     'properties': {
-      'text': {
-        'type': 'string',
-        'description': '用户刚输入的自由文本(整段)。',
-      },
+      'text': {'type': 'string', 'description': '用户刚输入的自由文本(整段)。'},
       'note_id': {
         'type': 'string',
-        'description': '可选 — 若文本已落 KnowledgeNote,把 id 也传进来,前端 apply 时可一次性删除/升级。',
+        'description':
+            '可选 — 若文本已落 KnowledgeNote,把 id 也传进来,前端 apply 时可一次性删除/升级。',
       },
     },
     'required': <String>['text'],
@@ -67,8 +65,7 @@ class ProposeCaptureTool implements DeviceTool {
     final classifier = ctx.ref.read(captureClassifierProvider);
     final classification = await classifier.classify(text: text);
 
-    if (classification.kind == CaptureKind.note &&
-        !classification.hasPolish) {
+    if (classification.kind == CaptureKind.note && !classification.hasPolish) {
       return <String, Object?>{
         'proposal_id': kKnowledgeUuid.v4(),
         'kind': 'capture_no_upgrade',
@@ -78,8 +75,7 @@ class ProposeCaptureTool implements DeviceTool {
           'detected_kind': CaptureKind.note.wire,
           'confidence': classification.confidence,
         },
-        'note':
-            '没有强信号升级为其它类型;前端无需追问,Note 已是合理表达。',
+        'note': '没有强信号升级为其它类型;前端无需追问,Note 已是合理表达。',
       };
     }
 
@@ -87,8 +83,10 @@ class ProposeCaptureTool implements DeviceTool {
       'detected_kind': classification.kind.wire,
       'confidence': classification.confidence,
       'reason': classification.reasonZh,
+      'source_text': text,
       if (noteId != null && noteId.isNotEmpty) 'note_id': noteId,
-      if (classification.statement != null) 'statement': classification.statement,
+      if (classification.statement != null)
+        'statement': classification.statement,
       if (classification.intervalDays != null)
         'interval_days': classification.intervalDays,
       if (classification.scope != null) 'scope': classification.scope,
