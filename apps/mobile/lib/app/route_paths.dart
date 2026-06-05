@@ -270,9 +270,8 @@ DomainScope? domainForRoute(List<DomainPack> packs, String path) {
 }
 
 /// Primary shell tab paths in display order across all registered
-/// domains. Used by the system-back handler in `app_dock_shell.dart` to
-/// detect "at a primary tab root" (where back jumps to Home instead of
-/// popping up) and by the global Cmd-1..N tab switcher in `app.dart`.
+/// domains. Used by root-tab affordances and by the global Cmd-1..N tab
+/// switcher in `app.dart`.
 /// Settings is not a tab (IA contract §1).
 ///
 /// Reads [domainPackRegistryProvider] so the list rebuilds automatically
