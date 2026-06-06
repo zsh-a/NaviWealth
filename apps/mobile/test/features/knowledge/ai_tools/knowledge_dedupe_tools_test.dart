@@ -29,21 +29,21 @@ MemoryRecord _noteMem({
   required String title,
   String summary = '',
 }) => MemoryRecord(
-      id: 'know:notes:semantic:$sourceId',
-      kind: MemoryKind.episodic,
-      ownerUserId: _kOwner,
-      scope: '*',
-      source: 'know:notes',
-      sourceId: sourceId,
-      title: title,
-      summary: summary.isEmpty ? title : summary,
-      payload: const {},
-      entities: const {},
-      importance: 0.6,
-      confidence: 0.85,
-      createdAt: DateTime.utc(2026, 5, 24),
-      updatedAt: DateTime.utc(2026, 5, 24),
-    );
+  id: 'know:notes:semantic:$sourceId',
+  kind: MemoryKind.episodic,
+  ownerUserId: _kOwner,
+  scope: '*',
+  source: 'know:notes',
+  sourceId: sourceId,
+  title: title,
+  summary: summary.isEmpty ? title : summary,
+  payload: const {},
+  entities: const {},
+  importance: 0.6,
+  confidence: 0.85,
+  createdAt: DateTime.utc(2026, 5, 24),
+  updatedAt: DateTime.utc(2026, 5, 24),
+);
 
 Future<MemoryRuntime> _seededRuntime(List<MemoryRecord> seed) async {
   final db = makeTestDatabase();
@@ -56,6 +56,49 @@ Future<MemoryRuntime> _seededRuntime(List<MemoryRecord> seed) async {
     await rt.remember(m);
   }
   return rt;
+}
+
+Future<ProviderContainer> _seededSearchContainer(
+  List<MemoryRecord> seed,
+) async {
+  final db = makeTestDatabase();
+  final repo = KnowledgeRepository(db: db, outbox: InMemoryOutboxStore());
+  final rt = MemoryRuntime(
+    embedder: StubEmbedder(),
+    memoryStore: SqliteMemoryStore(db: db),
+    eventStore: SqliteEventStore(db: db),
+  );
+  final sync = SyncMeta(
+    ownerUserId: _kOwner,
+    updatedAt: DateTime.utc(2026, 5, 24),
+    updatedByDevice: 'dev',
+    hlc: Hlc.zero('dev'),
+  );
+  for (final memory in seed) {
+    await rt.remember(memory);
+    if (memory.source == 'know:notes' && memory.sourceId != null) {
+      await repo.upsertNote(
+        KnowledgeNote(
+          id: memory.sourceId!,
+          title: memory.title,
+          bodyMd: memory.summary,
+          tags: const [],
+          createdAt: sync.updatedAt,
+          sync: sync,
+        ),
+      );
+    }
+  }
+  final c = ProviderContainer(
+    overrides: [
+      memoryRuntimeProvider.overrideWith((ref) async => rt),
+      knowledgeRepositoryProvider.overrideWith((ref) async => repo),
+      currentUserIdProvider.overrideWithValue(() async => _kOwner),
+    ],
+  );
+  addTearDown(c.dispose);
+  addTearDown(db.close);
+  return c;
 }
 
 Future<T> _withRef<T>(ProviderContainer c, Future<T> Function(Ref ref) body) {
@@ -96,10 +139,12 @@ void main() {
 
     test('rejects empty text', () async {
       final rt = await _seededRuntime(const []);
-      final c = ProviderContainer(overrides: [
-        memoryRuntimeProvider.overrideWith((ref) async => rt),
-        currentUserIdProvider.overrideWithValue(() async => _kOwner),
-      ]);
+      final c = ProviderContainer(
+        overrides: [
+          memoryRuntimeProvider.overrideWith((ref) async => rt),
+          currentUserIdProvider.overrideWithValue(() async => _kOwner),
+        ],
+      );
       addTearDown(c.dispose);
       final out = await _invoke(c, tool, const {'text': '   '});
       expect(out['code'], 'bad_request');
@@ -110,15 +155,10 @@ void main() {
       // text to get a deterministic positive cosine for both notes (CJK
       // strings collapse to one opaque token → random sign). We're
       // exercising the tool mechanics, not embedder quality.
-      final rt = await _seededRuntime([
+      final c = await _seededSearchContainer([
         _noteMem(sourceId: 'n1', title: 'hong kong card renewal reminder'),
         _noteMem(sourceId: 'n2', title: 'hong kong card renewal note'),
       ]);
-      final c = ProviderContainer(overrides: [
-        memoryRuntimeProvider.overrideWith((ref) async => rt),
-        currentUserIdProvider.overrideWithValue(() async => _kOwner),
-      ]);
-      addTearDown(c.dispose);
 
       final out = await _invoke(c, tool, const {
         'text': 'hong kong card renewal',
@@ -136,20 +176,16 @@ void main() {
         'threshold': 0.0,
         'exclude_id': 'n1',
       });
-      final exIds =
-          (excluded['candidates'] as List).map((e) => (e as Map)['id']).toSet();
+      final exIds = (excluded['candidates'] as List)
+          .map((e) => (e as Map)['id'])
+          .toSet();
       expect(exIds, isNot(contains('n1')));
     });
 
     test('types filter with no matching source returns empty', () async {
-      final rt = await _seededRuntime([
+      final c = await _seededSearchContainer([
         _noteMem(sourceId: 'n1', title: '只索引了 note'),
       ]);
-      final c = ProviderContainer(overrides: [
-        memoryRuntimeProvider.overrideWith((ref) async => rt),
-        currentUserIdProvider.overrideWithValue(() async => _kOwner),
-      ]);
-      addTearDown(c.dispose);
 
       final out = await _invoke(c, tool, const {
         'text': 'whatever',
@@ -165,11 +201,11 @@ void main() {
     final created = DateTime.utc(2026, 1, 1);
 
     SyncMeta meta() => SyncMeta(
-          ownerUserId: _kOwner,
-          updatedAt: created,
-          updatedByDevice: 'dev',
-          hlc: Hlc.zero('dev'),
-        );
+      ownerUserId: _kOwner,
+      updatedAt: created,
+      updatedByDevice: 'dev',
+      hlc: Hlc.zero('dev'),
+    );
 
     Future<ProviderContainer> repoContainer(
       Future<void> Function(KnowledgeRepository repo) seed,
@@ -177,9 +213,11 @@ void main() {
       final db = makeTestDatabase();
       final repo = KnowledgeRepository(db: db, outbox: InMemoryOutboxStore());
       await seed(repo);
-      final c = ProviderContainer(overrides: [
-        knowledgeRepositoryProvider.overrideWith((ref) async => repo),
-      ]);
+      final c = ProviderContainer(
+        overrides: [
+          knowledgeRepositoryProvider.overrideWith((ref) async => repo),
+        ],
+      );
       addTearDown(c.dispose);
       addTearDown(db.close);
       return c;
@@ -187,10 +225,12 @@ void main() {
 
     test('descriptor mirror match', () {
       expect(tool.name, 'propose_merge');
-      expect(
-        tool.inputSchema['required'],
-        <String>['entity_type', 'primary_id', 'duplicate_ids', 'reason'],
-      );
+      expect(tool.inputSchema['required'], <String>[
+        'entity_type',
+        'primary_id',
+        'duplicate_ids',
+        'reason',
+      ]);
       final d = lookupToolDescriptor('propose_merge');
       expect(d, isNotNull);
       expect(d!.access, Access.propose);
@@ -200,22 +240,26 @@ void main() {
 
     test('builds a knowledge_merge envelope with diff', () async {
       final c = await repoContainer((repo) async {
-        await repo.upsertNote(KnowledgeNote(
-          id: 'keep',
-          title: '港卡续期',
-          bodyMd: '',
-          tags: const ['hk'],
-          createdAt: created,
-          sync: meta(),
-        ));
-        await repo.upsertNote(KnowledgeNote(
-          id: 'dup',
-          title: '香港卡续',
-          bodyMd: '',
-          tags: const ['reminder'],
-          createdAt: created,
-          sync: meta(),
-        ));
+        await repo.upsertNote(
+          KnowledgeNote(
+            id: 'keep',
+            title: '港卡续期',
+            bodyMd: '',
+            tags: const ['hk'],
+            createdAt: created,
+            sync: meta(),
+          ),
+        );
+        await repo.upsertNote(
+          KnowledgeNote(
+            id: 'dup',
+            title: '香港卡续',
+            bodyMd: '',
+            tags: const ['reminder'],
+            createdAt: created,
+            sync: meta(),
+          ),
+        );
       });
 
       final out = await _invoke(c, tool, const {
@@ -253,14 +297,16 @@ void main() {
 
     test('reports missing ids as not_found', () async {
       final c = await repoContainer((repo) async {
-        await repo.upsertNote(KnowledgeNote(
-          id: 'keep',
-          title: 't',
-          bodyMd: '',
-          tags: const [],
-          createdAt: created,
-          sync: meta(),
-        ));
+        await repo.upsertNote(
+          KnowledgeNote(
+            id: 'keep',
+            title: 't',
+            bodyMd: '',
+            tags: const [],
+            createdAt: created,
+            sync: meta(),
+          ),
+        );
       });
       final out = await _invoke(c, tool, const {
         'entity_type': 'note',

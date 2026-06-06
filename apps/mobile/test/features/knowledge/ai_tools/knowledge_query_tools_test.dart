@@ -14,8 +14,10 @@ import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/features/knowledge/ai_tools/recall_decision_tool.dart';
 import 'package:naviwealth/features/knowledge/ai_tools/review_knowledge_health_tool.dart';
 import 'package:naviwealth/features/knowledge/ai_tools/search_knowledge_tool.dart';
+import 'package:naviwealth/features/knowledge/ai_tools/search_notes_tool.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
@@ -47,6 +49,74 @@ Future<Map<String, Object?>> _invoke(
   });
 }
 
+Future<void> _upsertMemorySource(
+  KnowledgeRepository repo,
+  MemoryRecord memory,
+  SyncMeta sync,
+) async {
+  final sourceId = memory.sourceId;
+  if (sourceId == null) return;
+  final title = memory.title;
+  final summary = memory.summary;
+  switch (memory.source) {
+    case 'know:notes':
+      await repo.upsertNote(
+        KnowledgeNote(
+          id: sourceId,
+          title: title,
+          bodyMd: summary,
+          tags: const [],
+          createdAt: sync.updatedAt,
+          sync: sync,
+        ),
+      );
+      return;
+    case 'know:concepts':
+      await repo.upsertConcept(
+        KnowledgeConcept(
+          id: sourceId,
+          name: title,
+          aliases: const [],
+          summaryMd: summary,
+          relatedConceptIds: const [],
+          createdAt: sync.updatedAt,
+          sync: sync,
+        ),
+      );
+      return;
+    case 'know:decisions':
+      await repo.upsertDecision(
+        KnowledgeDecision(
+          id: sourceId,
+          question: title,
+          options: const [],
+          selectedLabel: '',
+          rationaleMd: summary,
+          principleIds: const [],
+          assumptionIds: const [],
+          status: DecisionStatus.active,
+          decidedAt: sync.updatedAt,
+          sync: sync,
+        ),
+      );
+      return;
+    case 'know:routines':
+      await repo.upsertRoutine(
+        KnowledgeRoutine(
+          id: sourceId,
+          statement: title,
+          intervalDays: 180,
+          nextDueAt: sync.updatedAt.add(const Duration(days: 180)),
+          scope: '*',
+          status: RoutineStatus.active,
+          createdAt: sync.updatedAt,
+          sync: sync,
+        ),
+      );
+      return;
+  }
+}
+
 void main() {
   final created = DateTime.utc(2026, 1, 1);
   SyncMeta meta() => SyncMeta(
@@ -59,19 +129,27 @@ void main() {
   group('SearchKnowledgeTool', () {
     const tool = SearchKnowledgeTool();
 
-    Future<ProviderContainer> seededMemory(List<MemoryRecord> seed) async {
+    Future<ProviderContainer> seededMemory(
+      List<MemoryRecord> seed, {
+      bool hydrate = true,
+    }) async {
       final db = makeTestDatabase();
       final rt = MemoryRuntime(
         embedder: StubEmbedder(),
         memoryStore: SqliteMemoryStore(db: db),
         eventStore: SqliteEventStore(db: db),
       );
+      final repo = KnowledgeRepository(db: db, outbox: InMemoryOutboxStore());
       for (final m in seed) {
         await rt.remember(m);
+        if (hydrate) {
+          await _upsertMemorySource(repo, m, meta());
+        }
       }
       final c = ProviderContainer(
         overrides: [
           memoryRuntimeProvider.overrideWith((ref) async => rt),
+          knowledgeRepositoryProvider.overrideWith((ref) async => repo),
           currentUserIdProvider.overrideWithValue(() async => _owner),
         ],
       );
@@ -153,6 +231,119 @@ void main() {
       final results = (out['results'] as List).cast<Object?>();
       expect(results.single as Map, containsPair('kind', 'routine'));
       expect(results.single as Map, containsPair('id', 'r1'));
+    });
+
+    test('skips stale memory rows without source objects', () async {
+      final c = await seededMemory([
+        mem('know:notes', 'missing', 'ghost note'),
+      ], hydrate: false);
+      final out = await _invoke(c, tool, const {'query': 'ghost note'});
+      expect(out['results'], isEmpty);
+    });
+  });
+
+  group('SearchNotesTool', () {
+    const tool = SearchNotesTool();
+
+    test(
+      'falls back to hydrated Drift lexical search when memory is empty',
+      () async {
+        final db = makeTestDatabase();
+        final repo = KnowledgeRepository(db: db, outbox: InMemoryOutboxStore());
+        await repo.upsertNote(
+          KnowledgeNote(
+            id: 'n1',
+            title: '港卡续期',
+            bodyMd: '每 6 个月做一次活跃交易',
+            tags: const ['hk'],
+            projectTag: 'banking',
+            createdAt: created,
+            sync: meta(),
+          ),
+        );
+        final rt = MemoryRuntime(
+          embedder: StubEmbedder(),
+          memoryStore: SqliteMemoryStore(db: db),
+          eventStore: SqliteEventStore(db: db),
+        );
+        final c = ProviderContainer(
+          overrides: [
+            memoryRuntimeProvider.overrideWith((ref) async => rt),
+            knowledgeRepositoryProvider.overrideWith((ref) async => repo),
+            currentUserIdProvider.overrideWithValue(() async => _owner),
+          ],
+        );
+        addTearDown(c.dispose);
+        addTearDown(db.close);
+
+        final out = await _invoke(c, tool, const {
+          'query': '港卡',
+          'tags': ['hk'],
+          'project': 'banking',
+        });
+        final notes = (out['notes'] as List).cast<Object?>();
+        expect(notes.single as Map, containsPair('id', 'n1'));
+        expect(notes.single as Map, contains('lexical_score'));
+      },
+    );
+  });
+
+  group('RecallDecisionTool', () {
+    const tool = RecallDecisionTool();
+
+    test('uses semantic memory then hydrates the decision source', () async {
+      final db = makeTestDatabase();
+      final repo = KnowledgeRepository(db: db, outbox: InMemoryOutboxStore());
+      final decision = KnowledgeDecision(
+        id: 'd1',
+        question: '是否继续持有 NVDA?',
+        options: const [],
+        selectedLabel: '继续持有',
+        rationaleMd: '长期 AI 需求仍然成立',
+        principleIds: const [],
+        assumptionIds: const [],
+        status: DecisionStatus.active,
+        decidedAt: created,
+        sync: meta(),
+      );
+      await repo.upsertDecision(decision);
+      final rt = MemoryRuntime(
+        embedder: StubEmbedder(),
+        memoryStore: SqliteMemoryStore(db: db),
+        eventStore: SqliteEventStore(db: db),
+      );
+      await rt.remember(
+        MemoryRecord(
+          id: 'know:decisions:episodic:d1',
+          kind: MemoryKind.episodic,
+          ownerUserId: _owner,
+          scope: '*',
+          source: 'know:decisions',
+          sourceId: 'd1',
+          title: decision.question,
+          summary: decision.rationaleMd,
+          payload: const {},
+          entities: const {},
+          importance: 0.85,
+          confidence: 0.9,
+          createdAt: created,
+          updatedAt: created,
+        ),
+      );
+      final c = ProviderContainer(
+        overrides: [
+          memoryRuntimeProvider.overrideWith((ref) async => rt),
+          knowledgeRepositoryProvider.overrideWith((ref) async => repo),
+          currentUserIdProvider.overrideWithValue(() async => _owner),
+        ],
+      );
+      addTearDown(c.dispose);
+      addTearDown(db.close);
+
+      final out = await _invoke(c, tool, const {'query': 'AI demand NVDA'});
+      final decisions = (out['decisions'] as List).cast<Object?>();
+      expect(decisions.single as Map, containsPair('id', 'd1'));
+      expect(decisions.single as Map, contains('score'));
     });
   });
 
