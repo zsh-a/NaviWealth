@@ -50,6 +50,11 @@ final marketCacheProvider = FutureProvider<MarketCache>((ref) async {
   );
 });
 
+TalkerDioLogger _marketDioLogger(Ref ref) => TalkerDioLogger(
+  talker: ref.read(talkerProvider),
+  settings: const TalkerDioLoggerSettings(printResponseData: false),
+);
+
 /// Shared cookie + crumb session for Yahoo Finance. Yahoo started
 /// gating `query1`/`query2` endpoints behind a per-session crumb token
 /// in 2023; without it the API returns `401 Invalid Crumb`. The session
@@ -64,7 +69,7 @@ final yahooCrumbSessionProvider = Provider<YahooCrumbSession>((ref) {
 /// is mobile-only; pure-quote consumers don't pay the construction cost.
 final yfinanceOptionsProviderProvider = Provider<OptionsChainProvider>((ref) {
   final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
-  dio.interceptors.add(TalkerDioLogger(talker: ref.read(talkerProvider)));
+  dio.interceptors.add(_marketDioLogger(ref));
   final http = MarketHttpClient(
     providerName: 'yfinance_options',
     rateLimiter: RateLimiter(
@@ -85,7 +90,7 @@ final yfinanceOptionsProviderProvider = Provider<OptionsChainProvider>((ref) {
 
 final yfinanceProviderProvider = Provider<MarketProvider>((ref) {
   final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
-  dio.interceptors.add(TalkerDioLogger(talker: ref.read(talkerProvider)));
+  dio.interceptors.add(_marketDioLogger(ref));
   final http = MarketHttpClient(
     providerName: 'yfinance',
     rateLimiter: RateLimiter(
@@ -103,7 +108,7 @@ final yfinanceProviderProvider = Provider<MarketProvider>((ref) {
 
 final coingeckoProviderProvider = Provider<MarketProvider>((ref) {
   final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
-  dio.interceptors.add(TalkerDioLogger(talker: ref.read(talkerProvider)));
+  dio.interceptors.add(_marketDioLogger(ref));
   final http = MarketHttpClient(
     providerName: 'coingecko',
     // CoinGecko Demo API free tier ≈ 30 calls / minute.
@@ -121,7 +126,7 @@ final coingeckoProviderProvider = Provider<MarketProvider>((ref) {
 
 final sinaProviderProvider = Provider<MarketProvider>((ref) {
   final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
-  dio.interceptors.add(TalkerDioLogger(talker: ref.read(talkerProvider)));
+  dio.interceptors.add(_marketDioLogger(ref));
   final http = MarketHttpClient(
     providerName: 'sina',
     // Sina hq has no published quota; rate-limit conservatively.
