@@ -5172,6 +5172,57 @@ class AppLocalizationsZh extends AppLocalizations {
       '删除后 AI 检索会自动回到 stub embedder。重新下载需要再走一次网络。';
 
   @override
+  String get settingsAiModelsActiveRuntimeTitle => '当前运行的 embedder';
+
+  @override
+  String get settingsAiModelsActiveRuntimeLoading => '正在检查当前运行的 embedder…';
+
+  @override
+  String settingsAiModelsActiveRuntimeFailed(String error) {
+    return '当前 embedder 检查失败：$error';
+  }
+
+  @override
+  String get settingsAiModelsActiveRuntimeNative => 'Native';
+
+  @override
+  String get settingsAiModelsActiveRuntimeStub => 'Stub';
+
+  @override
+  String get settingsAiModelsActiveRuntimeUnknown => '不可用';
+
+  @override
+  String get settingsAiModelsFingerprintLabel => 'fingerprint';
+
+  @override
+  String get settingsAiModelsDimensionLabel => '维度';
+
+  @override
+  String get settingsAiModelsMemoryRowsLabel => '记忆';
+
+  @override
+  String get settingsAiModelsVectorRowsLabel => '向量';
+
+  @override
+  String get settingsAiModelsCurrentVectorsLabel => '当前';
+
+  @override
+  String get settingsAiModelsStaleVectorsLabel => '过期';
+
+  @override
+  String get settingsAiModelsEventsLabel => '事件';
+
+  @override
+  String get settingsAiModelsSourcesTitle => '已索引来源';
+
+  @override
+  String get settingsAiModelsNoSources => '还没有索引任何记忆来源。';
+
+  @override
+  String get settingsAiModelsStaleVectorsHint =>
+      '部分向量由其他 embedder fingerprint 生成，会在下次 indexer 周期刷新。';
+
+  @override
   String get knowledgeAiSuggestionsTitle => 'AI 建议';
 
   @override

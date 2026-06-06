@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/ai/local/embedding/embedder_diagnostics.dart';
 import '../../../core/ai/local/embedding/embedder_path_resolution.dart';
 import '../../../core/ai/local/embedding/model_install_state.dart';
 import '../../../core/ai/local/embedding/model_manifest.dart';
@@ -44,6 +45,8 @@ class AiModelsPage extends ConsumerWidget {
             children: [
               _RuntimeDiagnosticsCard(resolution: resolution),
               const SizedBox(height: AppSpacing.s12),
+              const _ActiveEmbedderCard(),
+              const SizedBox(height: AppSpacing.s12),
               const _Hint(),
               const SizedBox(height: AppSpacing.s16),
               for (final bundle in bundles) ...[
@@ -55,6 +58,248 @@ class AiModelsPage extends ConsumerWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _ActiveEmbedderCard extends ConsumerWidget {
+  const _ActiveEmbedderCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final diagnostics = ref.watch(embedderDiagnosticsProvider);
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final semantic = SemanticColors.of(context);
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: diagnostics.when(
+        loading: () => Row(
+          children: [
+            const SizedBox.square(dimension: 16, child: FCircularProgress()),
+            const SizedBox(width: AppSpacing.s8),
+            Text(
+              l10n.settingsAiModelsActiveRuntimeLoading,
+              style: context.theme.typography.sm,
+            ),
+          ],
+        ),
+        error: (e, _) => Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              FLucideIcons.circleAlert,
+              size: AppIconSizes.h18,
+              color: semantic.danger,
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            Expanded(
+              child: Text(
+                l10n.settingsAiModelsActiveRuntimeFailed('$e'),
+                style: context.theme.typography.xs.copyWith(
+                  color: semantic.danger,
+                ),
+              ),
+            ),
+          ],
+        ),
+        data: (d) {
+          final isNative = d.kind == EmbedderRuntimeKind.native;
+          final isStub = d.kind == EmbedderRuntimeKind.stub;
+          final statusColor = isNative
+              ? semantic.success
+              : isStub
+              ? semantic.warning
+              : semantic.danger;
+          final statusLabel = switch (d.kind) {
+            EmbedderRuntimeKind.native =>
+              l10n.settingsAiModelsActiveRuntimeNative,
+            EmbedderRuntimeKind.stub => l10n.settingsAiModelsActiveRuntimeStub,
+            EmbedderRuntimeKind.unknown =>
+              l10n.settingsAiModelsActiveRuntimeUnknown,
+          };
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    isNative ? FLucideIcons.cpu : FLucideIcons.activity,
+                    size: AppIconSizes.h18,
+                    color: statusColor,
+                  ),
+                  const SizedBox(width: AppSpacing.s8),
+                  Expanded(
+                    child: Text(
+                      l10n.settingsAiModelsActiveRuntimeTitle,
+                      style: context.theme.typography.sm.copyWith(
+                        color: colors.foreground,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  _StatusChip(text: statusLabel, color: statusColor),
+                ],
+              ),
+              if (d.error != null) ...[
+                const SizedBox(height: AppSpacing.s8),
+                Text(
+                  d.error!,
+                  style: context.theme.typography.xs.copyWith(
+                    color: semantic.danger,
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.s10),
+              _RuntimeRow(
+                label: l10n.settingsAiModelsFingerprintLabel,
+                value: d.fingerprint.isEmpty ? '—' : d.fingerprint,
+              ),
+              const SizedBox(height: AppSpacing.s4),
+              _RuntimeRow(
+                label: l10n.settingsAiModelsDimensionLabel,
+                value: d.dimension == 0 ? '—' : '${d.dimension}',
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              Wrap(
+                spacing: AppSpacing.s8,
+                runSpacing: AppSpacing.s8,
+                children: [
+                  _MetricTile(
+                    label: l10n.settingsAiModelsMemoryRowsLabel,
+                    value: d.memoryCount,
+                  ),
+                  _MetricTile(
+                    label: l10n.settingsAiModelsVectorRowsLabel,
+                    value: d.vectorCount,
+                  ),
+                  _MetricTile(
+                    label: l10n.settingsAiModelsCurrentVectorsLabel,
+                    value: d.currentVectorCount,
+                  ),
+                  _MetricTile(
+                    label: l10n.settingsAiModelsStaleVectorsLabel,
+                    value: d.staleVectorCount,
+                    color: d.hasStaleVectors
+                        ? semantic.warning
+                        : colors.mutedForeground,
+                  ),
+                  _MetricTile(
+                    label: l10n.settingsAiModelsEventsLabel,
+                    value: d.eventCount,
+                  ),
+                ],
+              ),
+              if (d.hasStaleVectors) ...[
+                const SizedBox(height: AppSpacing.s8),
+                Text(
+                  l10n.settingsAiModelsStaleVectorsHint,
+                  style: context.theme.typography.xs.copyWith(
+                    color: semantic.warning,
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.s12),
+              Text(
+                l10n.settingsAiModelsSourcesTitle,
+                style: context.theme.typography.xs.copyWith(
+                  color: colors.mutedForeground,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s6),
+              if (d.sourceStats.isEmpty)
+                Text(
+                  l10n.settingsAiModelsNoSources,
+                  style: context.theme.typography.xs.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                )
+              else
+                for (final source in d.sourceStats)
+                  _SourceStatRow(source: source),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({required this.label, required this.value, this.color});
+
+  final String label;
+  final int value;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final valueColor = color ?? colors.foreground;
+    return Container(
+      constraints: const BoxConstraints(minWidth: 94),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s10,
+        vertical: AppSpacing.s8,
+      ),
+      decoration: BoxDecoration(
+        color: colors.muted,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$value',
+            style: TypographyTokens.numericCaption.copyWith(
+              color: valueColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s2),
+          Text(
+            label,
+            style: context.theme.typography.xs2.copyWith(
+              color: colors.mutedForeground,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SourceStatRow extends StatelessWidget {
+  const _SourceStatRow({required this.source});
+
+  final EmbedderSourceStats source;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              source.source,
+              overflow: TextOverflow.ellipsis,
+              style: TypographyTokens.numericCaption.copyWith(
+                color: colors.foreground,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          Text(
+            '${source.vectors}/${source.memories}',
+            style: TypographyTokens.numericCaption.copyWith(
+              color: colors.mutedForeground,
+            ),
+          ),
+        ],
       ),
     );
   }
