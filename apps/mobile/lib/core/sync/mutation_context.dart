@@ -96,7 +96,7 @@ final mutationStamperProvider = FutureProvider<MutationStamper>((ref) async {
 
   final engine = await ref.watch(syncEngineProvider.future);
   if (engine == null) {
-    throw StateError('MutationStamper requires an authenticated session.');
+    return _unauthenticatedMutationStamper();
   }
   final session = ref.watch(authSessionProvider);
   final user = ref.watch(currentUserIdProvider);
@@ -111,3 +111,11 @@ final mutationStamperProvider = FutureProvider<MutationStamper>((ref) async {
     stampHlc: engine.stampHlc,
   );
 });
+
+MutationStamper _unauthenticatedMutationStamper() {
+  Future<Never> fail() async {
+    throw StateError('MutationStamper requires an authenticated session.');
+  }
+
+  return MutationStamper(currentUserId: fail, deviceId: fail, stampHlc: fail);
+}

@@ -155,55 +155,11 @@ class _PeriodSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Wrap(
-      spacing: AppSpacing.s8,
-      runSpacing: AppSpacing.s8,
-      children: [
-        for (final candidate in CashFlowPeriod.values)
-          _PeriodChip(
-            label: _periodLabel(l10n, candidate),
-            selected: candidate == period,
-            onTap: () => onChanged(candidate),
-          ),
-      ],
-    );
-  }
-}
-
-class _PeriodChip extends StatelessWidget {
-  const _PeriodChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return FTappable(
-      onPress: onTap,
-      child: AnimatedContainer(
-        duration: Motion.fast,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s12,
-          vertical: AppSpacing.s8,
-        ),
-        decoration: BoxDecoration(
-          color: selected ? colors.primary : colors.muted,
-          borderRadius: BorderRadius.circular(AppRadius.full),
-        ),
-        child: Text(
-          label,
-          style: context.theme.typography.sm.copyWith(
-            color: selected ? colors.primaryForeground : colors.foreground,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
+    return SegmentedRow<CashFlowPeriod>(
+      options: CashFlowPeriod.values,
+      value: period,
+      labelOf: (candidate) => _periodLabel(l10n, candidate),
+      onChanged: onChanged,
     );
   }
 }

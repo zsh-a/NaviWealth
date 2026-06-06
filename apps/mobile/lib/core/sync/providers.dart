@@ -95,14 +95,14 @@ final syncOutboxDepthProvider = FutureProvider<int>((ref) async {
 });
 
 final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
+  final session = ref.watch(authSessionProvider);
+  if (session == null) return null;
+
   final db = await ref.watch(appDatabaseProvider.future);
   final resetCursor = await _ensureSyncApplierVersion(db);
   if (resetCursor) {
     ref.read(loggerProvider).i('sync: reset pull cursor for v2 row-state');
   }
-  final session = ref.watch(authSessionProvider);
-  if (session == null) return null;
-
   final outbox = DriftOutboxStore(db);
   final engine = SyncEngine(
     api: ref.watch(syncApiClientProvider),
