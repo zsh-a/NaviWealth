@@ -7767,6 +7767,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeCommandReview => 'Knowledge · Review';
 
   @override
+  String get knowledgeProposalCaptureUpgrade => 'Capture upgrade';
+
+  @override
+  String get knowledgeProposalMerge => 'Merge duplicates';
+
+  @override
+  String get knowledgeProposalRoutine => 'Routine';
+
+  @override
+  String get knowledgeProposalConceptLink => 'Concept link';
+
+  @override
   String get knowledgeInboxEmptyTitle => 'Inbox is empty';
 
   @override

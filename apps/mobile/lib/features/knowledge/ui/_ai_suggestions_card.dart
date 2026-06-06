@@ -47,18 +47,30 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) return const SizedBox.shrink();
+        if (!ownerSnap.hasData) {
+          return KnowledgeSection.group(
+            title: l10n.knowledgeAiSuggestionsTitle,
+            children: const [
+              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
+            ],
+          );
+        }
         final owner = ownerSnap.data!;
         final triageAsync = ref.watch(inboxTriageRepositoryProvider);
         return triageAsync.when(
-          loading: () => const SizedBox.shrink(),
+          loading: () => KnowledgeSection.group(
+            title: l10n.knowledgeAiSuggestionsTitle,
+            children: const [
+              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
+            ],
+          ),
           error: (e, _) => KnowledgeSection.group(
             title: l10n.knowledgeAiSuggestionsTitle,
             children: [
-              Text(
-                l10n.knowledgeLoadFailed('$e'),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+              KnowledgeErrorState(
+                title: l10n.knowledgeLoadFailed('$e'),
+                onRetry: () => ref.invalidate(inboxTriageRepositoryProvider),
+                density: KnowledgeStateDensity.section,
               ),
             ],
           ),
@@ -67,18 +79,26 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
             future: triage.listPending(ownerUserId: owner),
             key: ValueKey<int>(tick),
             builder: (context, snap) {
-              final list = snap.data ?? const <InboxTriageRecord>[];
-              if (list.isEmpty) {
-                final typography = context.theme.typography;
-                final colors = context.theme.colors;
+              if (snap.hasError) {
                 return KnowledgeSection.group(
                   title: l10n.knowledgeAiSuggestionsTitle,
                   children: [
-                    Text(
-                      l10n.knowledgeAiSuggestionsEmpty,
-                      style: typography.sm.copyWith(
-                        color: colors.mutedForeground,
-                      ),
+                    KnowledgeErrorState(
+                      title: l10n.knowledgeLoadFailed('${snap.error}'),
+                      density: KnowledgeStateDensity.section,
+                    ),
+                  ],
+                );
+              }
+              final list = snap.data ?? const <InboxTriageRecord>[];
+              if (list.isEmpty) {
+                return KnowledgeSection.group(
+                  title: l10n.knowledgeAiSuggestionsTitle,
+                  children: [
+                    KnowledgeEmptyState(
+                      icon: FLucideIcons.sparkles,
+                      title: l10n.knowledgeAiSuggestionsEmpty,
+                      density: KnowledgeStateDensity.section,
                     ),
                   ],
                 );
@@ -141,14 +161,17 @@ class _NoteSuggestionGroupState extends ConsumerState<_NoteSuggestionGroup> {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    if (_loading) return const SizedBox.shrink();
+    if (_loading) {
+      return const KnowledgeLoadingState(
+        density: KnowledgeStateDensity.section,
+      );
+    }
     final note = _note;
     if (note == null) {
-      return Text(
-        l10n.knowledgeNoteDeleted(widget.record.noteId),
-        style: typography.xs.copyWith(color: colors.mutedForeground),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+      return KnowledgeEmptyState(
+        icon: FLucideIcons.fileX,
+        title: l10n.knowledgeNoteDeleted(widget.record.noteId),
+        density: KnowledgeStateDensity.section,
       );
     }
     final pending = widget.record.proposals

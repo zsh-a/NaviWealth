@@ -520,15 +520,33 @@ class _AssumptionTargetPicker extends ConsumerWidget {
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) return const SizedBox.shrink();
+        if (!ownerSnap.hasData) {
+          return const KnowledgeLoadingState(
+            density: KnowledgeStateDensity.section,
+          );
+        }
         final owner = ownerSnap.data!;
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         return repoAsync.when(
-          loading: () => const SizedBox.shrink(),
-          error: (_, _) => const SizedBox.shrink(),
+          loading: () => const KnowledgeLoadingState(
+            density: KnowledgeStateDensity.section,
+          ),
+          error: (e, _) => KnowledgeErrorState(
+            title: AppLocalizations.of(context).knowledgeLoadFailed('$e'),
+            onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
+            density: KnowledgeStateDensity.section,
+          ),
           data: (repo) => StreamBuilder<List<KnowledgeAssumption>>(
             stream: repo.watchAssumptions(ownerUserId: owner),
             builder: (context, snap) {
+              if (snap.hasError) {
+                return KnowledgeErrorState(
+                  title: AppLocalizations.of(
+                    context,
+                  ).knowledgeLoadFailed('${snap.error}'),
+                  density: KnowledgeStateDensity.section,
+                );
+              }
               final all = (snap.data ?? const <KnowledgeAssumption>[])
                   .where((a) => a.status == AssumptionStatus.active)
                   .toList(growable: false);

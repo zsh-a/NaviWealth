@@ -125,14 +125,16 @@ class _NotesList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final repoAsync = ref.watch(knowledgeRepositoryProvider);
+    final l10n = AppLocalizations.of(context);
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) return const _Centered(child: FProgress());
+        if (!ownerSnap.hasData) return const KnowledgeLoadingState();
         final owner = ownerSnap.data!;
         return repoAsync.when(
-          loading: () => const _Centered(child: FProgress()),
-          error: (e, _) => _ErrorState(
+          loading: () => const KnowledgeLoadingState(),
+          error: (e, _) => KnowledgeErrorState(
+            title: AppLocalizations.of(context).knowledgeInboxLoadFailedTitle,
             message: '$e',
             onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
           ),
@@ -141,7 +143,13 @@ class _NotesList extends ConsumerWidget {
               stream: repo.watchNotes(ownerUserId: owner, limit: 50),
               builder: (context, snapshot) {
                 final notes = snapshot.data ?? const <KnowledgeNote>[];
-                if (notes.isEmpty) return const _EmptyState();
+                if (notes.isEmpty) {
+                  return KnowledgeEmptyState(
+                    icon: FLucideIcons.inbox,
+                    title: l10n.knowledgeInboxEmptyTitle,
+                    message: l10n.knowledgeInboxEmptyBody,
+                  );
+                }
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.s16,
@@ -173,68 +181,15 @@ class _NoteCard extends StatelessWidget {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return KnowledgeSection.item(
+      title: note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
+      children: [
+        if (note.bodyMd.isNotEmpty)
           Text(
-            note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
-            style: typography.md.copyWith(fontWeight: FontWeight.w600),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+            knowledgeExcerpt(note.bodyMd),
+            style: typography.sm.copyWith(color: colors.mutedForeground),
           ),
-          if (note.bodyMd.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              knowledgeExcerpt(note.bodyMd),
-              style: typography.sm.copyWith(color: colors.mutedForeground),
-            ),
-          ],
-        ],
-      ),
+      ],
     );
   }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return AppEmptyState(
-      icon: FLucideIcons.inbox,
-      title: l10n.knowledgeInboxEmptyTitle,
-      message: l10n.knowledgeInboxEmptyBody,
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return AppEmptyState.error(
-      title: l10n.knowledgeInboxLoadFailedTitle,
-      message: message,
-      action: FButton(
-        variant: FButtonVariant.ghost,
-        onPress: onRetry,
-        child: Text(l10n.commonRetry),
-      ),
-    );
-  }
-}
-
-class _Centered extends StatelessWidget {
-  const _Centered({required this.child});
-  final Widget child;
-  @override
-  Widget build(BuildContext context) => Center(child: child);
 }

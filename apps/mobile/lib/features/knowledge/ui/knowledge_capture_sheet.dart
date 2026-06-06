@@ -33,6 +33,7 @@ import '../data/capture_classifier.dart';
 import '../data/capture_kind.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '_widgets.dart';
 
 Future<void> showKnowledgeCaptureSheet(BuildContext context, WidgetRef ref) {
   return showAppFormSheet<void>(
@@ -586,7 +587,6 @@ class _DiffRow extends StatelessWidget {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    String trim(String s) => s.length > 240 ? '${s.substring(0, 240)}…' : s;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -596,12 +596,12 @@ class _DiffRow extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.s2),
         Text(
-          l10n.knowledgeCaptureOriginalDiffValue(trim(before)),
+          l10n.knowledgeCaptureOriginalDiffValue(knowledgeExcerpt(before)),
           style: typography.sm.copyWith(color: colors.mutedForeground),
         ),
         const SizedBox(height: AppSpacing.s2),
         Text(
-          '→ ${trim(after)}',
+          '→ ${knowledgeExcerpt(after)}',
           style: typography.sm.copyWith(color: colors.primary),
         ),
       ],

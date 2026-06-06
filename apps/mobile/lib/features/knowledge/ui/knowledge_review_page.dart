@@ -74,18 +74,30 @@ class _DueRoutinesCard extends ConsumerWidget {
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) return const SizedBox.shrink();
+        if (!ownerSnap.hasData) {
+          return KnowledgeSection.group(
+            title: l10n.knowledgeReviewRoutinesTitle,
+            children: const [
+              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
+            ],
+          );
+        }
         final owner = ownerSnap.data!;
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         return repoAsync.when(
-          loading: () => const SizedBox.shrink(),
+          loading: () => KnowledgeSection.group(
+            title: l10n.knowledgeReviewRoutinesTitle,
+            children: const [
+              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
+            ],
+          ),
           error: (e, _) => KnowledgeSection.group(
             title: l10n.knowledgeReviewRoutinesTitle,
             children: [
-              Text(
-                l10n.knowledgeReviewLoadFailed('$e'),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+              KnowledgeErrorState(
+                title: l10n.knowledgeReviewLoadFailed('$e'),
+                onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
+                density: KnowledgeStateDensity.section,
               ),
             ],
           ),
@@ -96,21 +108,29 @@ class _DueRoutinesCard extends ConsumerWidget {
               // query, only as a future.
               stream: repo.watchRoutines(ownerUserId: owner),
               builder: (context, snap) {
+                if (snap.hasError) {
+                  return KnowledgeSection.group(
+                    title: l10n.knowledgeReviewRoutinesTitle,
+                    children: [
+                      KnowledgeErrorState(
+                        title: l10n.knowledgeReviewLoadFailed('${snap.error}'),
+                        density: KnowledgeStateDensity.section,
+                      ),
+                    ],
+                  );
+                }
                 final now = DateTime.now();
                 final due = (snap.data ?? const <KnowledgeRoutine>[])
                     .where((r) => shouldShowRoutineInReview(r, now))
                     .toList(growable: false);
-                final typography = context.theme.typography;
-                final colors = context.theme.colors;
                 return KnowledgeSection.group(
                   title: l10n.knowledgeReviewRoutinesTitle,
                   children: [
                     if (due.isEmpty)
-                      Text(
-                        l10n.knowledgeReviewRoutinesEmpty,
-                        style: typography.sm.copyWith(
-                          color: colors.mutedForeground,
-                        ),
+                      KnowledgeEmptyState(
+                        icon: FLucideIcons.repeat,
+                        title: l10n.knowledgeReviewRoutinesEmpty,
+                        density: KnowledgeStateDensity.section,
                       )
                     else
                       ...due
@@ -169,7 +189,9 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
         AppMessenger.show(
           context,
           ToastKind.success,
-          l10n.knowledgeReviewRoutineDone(_formatDate(next)),
+          l10n.knowledgeReviewRoutineDone(
+            knowledgeDate(context, next, long: true),
+          ),
         );
       }
     } catch (e) {
@@ -240,12 +262,6 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
   }
 }
 
-String _formatDate(DateTime date) {
-  final local = date.toLocal();
-  String two(int n) => n.toString().padLeft(2, '0');
-  return '${local.year}-${two(local.month)}-${two(local.day)}';
-}
-
 class _DueReviewsCard extends ConsumerWidget {
   const _DueReviewsCard();
 
@@ -255,18 +271,30 @@ class _DueReviewsCard extends ConsumerWidget {
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) return const SizedBox.shrink();
+        if (!ownerSnap.hasData) {
+          return KnowledgeSection.group(
+            title: l10n.knowledgeReviewDecisionsTitle,
+            children: const [
+              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
+            ],
+          );
+        }
         final owner = ownerSnap.data!;
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         return repoAsync.when(
-          loading: () => const SizedBox.shrink(),
+          loading: () => KnowledgeSection.group(
+            title: l10n.knowledgeReviewDecisionsTitle,
+            children: const [
+              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
+            ],
+          ),
           error: (e, _) => KnowledgeSection.group(
             title: l10n.knowledgeReviewDecisionsTitle,
             children: [
-              Text(
-                l10n.knowledgeReviewLoadFailed('$e'),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+              KnowledgeErrorState(
+                title: l10n.knowledgeReviewLoadFailed('$e'),
+                onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
+                density: KnowledgeStateDensity.section,
               ),
             ],
           ),
@@ -277,6 +305,17 @@ class _DueReviewsCard extends ConsumerWidget {
                 asOf: DateTime.now().toUtc(),
               ),
               builder: (context, snap) {
+                if (snap.hasError) {
+                  return KnowledgeSection.group(
+                    title: l10n.knowledgeReviewDecisionsTitle,
+                    children: [
+                      KnowledgeErrorState(
+                        title: l10n.knowledgeReviewLoadFailed('${snap.error}'),
+                        density: KnowledgeStateDensity.section,
+                      ),
+                    ],
+                  );
+                }
                 final list = snap.data ?? const [];
                 final typography = context.theme.typography;
                 final colors = context.theme.colors;
@@ -284,11 +323,10 @@ class _DueReviewsCard extends ConsumerWidget {
                   title: l10n.knowledgeReviewDecisionsTitle,
                   children: [
                     if (list.isEmpty)
-                      Text(
-                        l10n.knowledgeReviewDecisionsEmpty,
-                        style: typography.sm.copyWith(
-                          color: colors.mutedForeground,
-                        ),
+                      KnowledgeEmptyState(
+                        icon: FLucideIcons.calendar,
+                        title: l10n.knowledgeReviewDecisionsEmpty,
+                        density: KnowledgeStateDensity.section,
                       )
                     else
                       ...list
@@ -348,16 +386,48 @@ class _StaleAssumptionsCard extends ConsumerWidget {
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) return const SizedBox.shrink();
+        if (!ownerSnap.hasData) {
+          return KnowledgeSection.group(
+            title: l10n.knowledgeReviewAssumptionsTitle,
+            children: const [
+              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
+            ],
+          );
+        }
         final owner = ownerSnap.data!;
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         return repoAsync.when(
-          loading: () => const SizedBox.shrink(),
-          error: (e, _) => const SizedBox.shrink(),
+          loading: () => KnowledgeSection.group(
+            title: l10n.knowledgeReviewAssumptionsTitle,
+            children: const [
+              KnowledgeLoadingState(density: KnowledgeStateDensity.section),
+            ],
+          ),
+          error: (e, _) => KnowledgeSection.group(
+            title: l10n.knowledgeReviewAssumptionsTitle,
+            children: [
+              KnowledgeErrorState(
+                title: l10n.knowledgeReviewLoadFailed('$e'),
+                onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
+                density: KnowledgeStateDensity.section,
+              ),
+            ],
+          ),
           data: (repo) {
             return FutureBuilder(
               future: repo.listOpenAssumptions(ownerUserId: owner),
               builder: (context, snap) {
+                if (snap.hasError) {
+                  return KnowledgeSection.group(
+                    title: l10n.knowledgeReviewAssumptionsTitle,
+                    children: [
+                      KnowledgeErrorState(
+                        title: l10n.knowledgeReviewLoadFailed('${snap.error}'),
+                        density: KnowledgeStateDensity.section,
+                      ),
+                    ],
+                  );
+                }
                 final all = snap.data ?? const [];
                 final now = DateTime.now().toUtc();
                 final stale = all
@@ -366,18 +436,16 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                     )
                     .toList();
                 final typography = context.theme.typography;
-                final colors = context.theme.colors;
                 return KnowledgeSection.group(
                   title: l10n.knowledgeReviewAssumptionsTitle,
                   children: [
                     if (stale.isEmpty)
-                      Text(
-                        l10n.knowledgeReviewAssumptionsEmpty(
+                      KnowledgeEmptyState(
+                        icon: FLucideIcons.badgeCheck,
+                        title: l10n.knowledgeReviewAssumptionsEmpty(
                           kAssumptionStaleDays,
                         ),
-                        style: typography.sm.copyWith(
-                          color: colors.mutedForeground,
-                        ),
+                        density: KnowledgeStateDensity.section,
                       )
                     else
                       ...stale

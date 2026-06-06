@@ -14,6 +14,7 @@ import '../../../app/route_paths.dart';
 import '../../../core/ai/composition/chat_rail_content.dart';
 import '../../../core/auth/current_user.dart';
 import '../data/providers.dart';
+import '../domain/knowledge_text.dart';
 
 /// Build the rail content for the active user. Async because the repo
 /// future has to resolve; consumers should treat an empty list as the
@@ -35,14 +36,16 @@ final knowledgeChatRailContentProvider = FutureProvider<List<ChatRailContent>>((
       .map(
         (d) => ChatRailContent(
           id: 'knowledge:decision:${d.id}',
-          headline: d.question.length > 60
-              ? '${d.question.substring(0, 60)}…'
-              : d.question,
+          headline: knowledgeExcerpt(
+            d.question,
+            max: kKnowledgeHeadlineExcerptMaxChars,
+          ),
           detail: d.rationaleMd.isEmpty
               ? d.selectedLabel
-              : (d.rationaleMd.length > 140
-                    ? '${d.rationaleMd.substring(0, 140)}…'
-                    : d.rationaleMd),
+              : knowledgeExcerpt(
+                  d.rationaleMd,
+                  max: kKnowledgeSupportingExcerptMaxChars,
+                ),
           icon: FLucideIcons.brain,
           route: AppRoutes.knowledgeLibrary,
         ),
