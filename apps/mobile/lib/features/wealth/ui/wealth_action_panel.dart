@@ -238,7 +238,9 @@ class _WealthActionTile extends StatelessWidget {
           Icon(
             FLucideIcons.chevronRight,
             size: AppIconSizes.sm,
-            color: colors.mutedForeground.withValues(alpha: 0.55),
+            color: colors.mutedForeground.withValues(
+              alpha: AppOpacity.prominent,
+            ),
           ),
         ],
       ),

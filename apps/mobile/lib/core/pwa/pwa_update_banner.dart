@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' show Colors;
+import 'package:flutter/material.dart' show Theme;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -54,7 +54,9 @@ class _PwaUpdateBannerState extends ConsumerState<PwaUpdateBanner> {
                   color: colors.foreground,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: AppOpacity.muted),
+                      color: Theme.of(
+                        context,
+                      ).shadowColor.withValues(alpha: AppOpacity.muted),
                       blurRadius: 12,
                       offset: const Offset(0, -2),
                     ),

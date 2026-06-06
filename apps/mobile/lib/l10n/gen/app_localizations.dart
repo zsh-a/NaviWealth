@@ -7467,6 +7467,24 @@ abstract class AppLocalizations {
   /// **'Note'**
   String get aiChatFieldNote;
 
+  /// No description provided for @aiChatFieldNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get aiChatFieldNotes;
+
+  /// No description provided for @aiChatFieldOptionPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium'**
+  String get aiChatFieldOptionPremium;
+
+  /// No description provided for @aiChatRecommendedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get aiChatRecommendedBadge;
+
   /// No description provided for @aiChatFieldAmount.
   ///
   /// In en, this message translates to:
@@ -9450,6 +9468,207 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Decision does not exist or was deleted'**
   String get knowledgeDecisionNotFound;
+
+  /// No description provided for @knowledgeDecisionDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision details'**
+  String get knowledgeDecisionDetailTitle;
+
+  /// No description provided for @knowledgeDecisionDecidedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Decided on {date}'**
+  String knowledgeDecisionDecidedAt(Object date);
+
+  /// No description provided for @knowledgeDecisionDecidedAtWithReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Decided on {decidedDate} · Review {reviewDate}'**
+  String knowledgeDecisionDecidedAtWithReview(
+    Object decidedDate,
+    Object reviewDate,
+  );
+
+  /// No description provided for @knowledgeConceptDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Concept'**
+  String get knowledgeConceptDetailTitle;
+
+  /// No description provided for @knowledgeExperimentDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Experiment'**
+  String get knowledgeExperimentDetailTitle;
+
+  /// No description provided for @knowledgePrincipleDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Principle'**
+  String get knowledgePrincipleDetailTitle;
+
+  /// No description provided for @knowledgeAssumptionDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assumption'**
+  String get knowledgeAssumptionDetailTitle;
+
+  /// No description provided for @knowledgeObjectDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get knowledgeObjectDetailTitle;
+
+  /// No description provided for @knowledgeDetailOptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Options'**
+  String get knowledgeDetailOptionsTitle;
+
+  /// No description provided for @knowledgeDetailRationaleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rationale'**
+  String get knowledgeDetailRationaleTitle;
+
+  /// No description provided for @knowledgeDetailPrinciplesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Referenced principles'**
+  String get knowledgeDetailPrinciplesTitle;
+
+  /// No description provided for @knowledgeDetailAssumptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Referenced assumptions'**
+  String get knowledgeDetailAssumptionsTitle;
+
+  /// No description provided for @knowledgeDetailActualOutcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual outcome'**
+  String get knowledgeDetailActualOutcomeTitle;
+
+  /// No description provided for @knowledgeDetailExpectedOutcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected outcome'**
+  String get knowledgeDetailExpectedOutcomeTitle;
+
+  /// No description provided for @knowledgeDetailMetricsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Metrics'**
+  String get knowledgeDetailMetricsTitle;
+
+  /// No description provided for @knowledgeDetailEvolutionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cognitive trail'**
+  String get knowledgeDetailEvolutionTitle;
+
+  /// No description provided for @knowledgeDetailSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get knowledgeDetailSummaryTitle;
+
+  /// No description provided for @knowledgeDetailRelatedConceptsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Related concepts'**
+  String get knowledgeDetailRelatedConceptsTitle;
+
+  /// No description provided for @knowledgeDetailMethodTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Method'**
+  String get knowledgeDetailMethodTitle;
+
+  /// No description provided for @knowledgeDetailResultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Result'**
+  String get knowledgeDetailResultTitle;
+
+  /// No description provided for @knowledgeDetailConclusionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Conclusion'**
+  String get knowledgeDetailConclusionTitle;
+
+  /// No description provided for @knowledgeDetailEvidenceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence'**
+  String get knowledgeDetailEvidenceTitle;
+
+  /// No description provided for @knowledgeDetailAliases.
+  ///
+  /// In en, this message translates to:
+  /// **'Aliases: {aliases}'**
+  String knowledgeDetailAliases(Object aliases);
+
+  /// No description provided for @knowledgeDetailRelatedConceptCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} related'**
+  String knowledgeDetailRelatedConceptCount(Object count);
+
+  /// No description provided for @knowledgeDetailEvidenceCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} references'**
+  String knowledgeDetailEvidenceCount(Object count);
+
+  /// No description provided for @knowledgeDetailScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope: {scope}'**
+  String knowledgeDetailScope(Object scope);
+
+  /// No description provided for @knowledgeDetailConfidenceScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Confidence {confidence} · scope {scope}'**
+  String knowledgeDetailConfidenceScope(Object confidence, Object scope);
+
+  /// No description provided for @knowledgeDetailContextSnapshotTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cross-domain state at the time'**
+  String get knowledgeDetailContextSnapshotTitle;
+
+  /// No description provided for @knowledgeDetailContextSnapshotCaptured.
+  ///
+  /// In en, this message translates to:
+  /// **'Captured on {date} · {days}-day window'**
+  String knowledgeDetailContextSnapshotCaptured(Object date, Object days);
+
+  /// No description provided for @knowledgeDetailContextSnapshotEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No Finance / Health events in that window.'**
+  String get knowledgeDetailContextSnapshotEmpty;
+
+  /// No description provided for @knowledgeLibraryDeleteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get knowledgeLibraryDeleteTooltip;
+
+  /// No description provided for @knowledgeLibraryDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete entry?'**
+  String get knowledgeLibraryDeleteTitle;
+
+  /// No description provided for @knowledgeLibraryDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{title}\" will be removed from Library and cleaned from AI memory after the next index sync.'**
+  String knowledgeLibraryDeleteBody(Object title);
 
   /// No description provided for @knowledgeObjectNotFound.
   ///
@@ -12885,6 +13104,264 @@ abstract class AppLocalizations {
   /// **'Plan · HealthOS'**
   String get healthPlanTitle;
 
+  /// No description provided for @healthTabToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get healthTabToday;
+
+  /// No description provided for @healthTabTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Trends'**
+  String get healthTabTrend;
+
+  /// No description provided for @healthTabPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan'**
+  String get healthTabPlan;
+
+  /// No description provided for @healthCommandToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Health · Today'**
+  String get healthCommandToday;
+
+  /// No description provided for @healthCommandTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Health · Trends'**
+  String get healthCommandTrend;
+
+  /// No description provided for @healthCommandPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Health · Plan'**
+  String get healthCommandPlan;
+
+  /// No description provided for @healthInputMetricsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Input metrics'**
+  String get healthInputMetricsTitle;
+
+  /// No description provided for @healthConfidenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confidence'**
+  String get healthConfidenceLabel;
+
+  /// No description provided for @healthConfidenceLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get healthConfidenceLow;
+
+  /// No description provided for @healthConfidenceMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get healthConfidenceMedium;
+
+  /// No description provided for @healthRecentHrvLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'HRV (recent average)'**
+  String get healthRecentHrvLabel;
+
+  /// No description provided for @healthRecentSleepLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep (recent average)'**
+  String get healthRecentSleepLabel;
+
+  /// No description provided for @healthRecentRhrLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Resting heart rate (recent average)'**
+  String get healthRecentRhrLabel;
+
+  /// No description provided for @healthRecentVo2MaxLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'VO₂max (recent average)'**
+  String get healthRecentVo2MaxLabel;
+
+  /// No description provided for @healthSleepMetricLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep'**
+  String get healthSleepMetricLabel;
+
+  /// No description provided for @healthHrvMetricLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'HRV'**
+  String get healthHrvMetricLabel;
+
+  /// No description provided for @healthHeartRateMetricLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Heart rate'**
+  String get healthHeartRateMetricLabel;
+
+  /// No description provided for @healthWorkoutMetricLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout'**
+  String get healthWorkoutMetricLabel;
+
+  /// No description provided for @healthStepsMetricLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Steps'**
+  String get healthStepsMetricLabel;
+
+  /// No description provided for @healthEnergyMetricLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Energy'**
+  String get healthEnergyMetricLabel;
+
+  /// No description provided for @healthLoadingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get healthLoadingLabel;
+
+  /// No description provided for @healthTrendGroupRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery'**
+  String get healthTrendGroupRecovery;
+
+  /// No description provided for @healthTrendGroupActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get healthTrendGroupActivity;
+
+  /// No description provided for @healthTrendGroupBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Body'**
+  String get healthTrendGroupBody;
+
+  /// No description provided for @healthTrendLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Load failed: {error}'**
+  String healthTrendLoadFailed(Object error);
+
+  /// No description provided for @healthTrendNotEnoughData.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough data yet.'**
+  String get healthTrendNotEnoughData;
+
+  /// No description provided for @healthTrendHrvSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Heart-rate variability (last 30 days)'**
+  String get healthTrendHrvSubtitle;
+
+  /// No description provided for @healthTrendSleepSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nightly hours (last 30 days)'**
+  String get healthTrendSleepSubtitle;
+
+  /// No description provided for @healthTrendHeartRateSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily average heart rate (last 30 days)'**
+  String get healthTrendHeartRateSubtitle;
+
+  /// No description provided for @healthTrendRespiratoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Respiration'**
+  String get healthTrendRespiratoryTitle;
+
+  /// No description provided for @healthTrendRespiratorySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily average respiratory rate (last 30 days)'**
+  String get healthTrendRespiratorySubtitle;
+
+  /// No description provided for @healthTrendWorkoutSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily minutes (last 30 days)'**
+  String get healthTrendWorkoutSubtitle;
+
+  /// No description provided for @healthTrendStepsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily steps (last 30 days)'**
+  String get healthTrendStepsSubtitle;
+
+  /// No description provided for @healthTrendWalkingDistanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Walking distance'**
+  String get healthTrendWalkingDistanceTitle;
+
+  /// No description provided for @healthTrendWalkingDistanceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily kilometers (last 30 days)'**
+  String get healthTrendWalkingDistanceSubtitle;
+
+  /// No description provided for @healthTrendFlightsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Flights climbed'**
+  String get healthTrendFlightsTitle;
+
+  /// No description provided for @healthTrendFlightsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily flights climbed (last 30 days)'**
+  String get healthTrendFlightsSubtitle;
+
+  /// No description provided for @healthTrendWeightTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get healthTrendWeightTitle;
+
+  /// No description provided for @healthTrendWeightSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight records (last 30 days)'**
+  String get healthTrendWeightSubtitle;
+
+  /// No description provided for @healthTrendBodyFatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Body fat'**
+  String get healthTrendBodyFatTitle;
+
+  /// No description provided for @healthTrendBodyFatSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Body fat percentage (last 30 days)'**
+  String get healthTrendBodyFatSubtitle;
+
+  /// No description provided for @healthTrendVo2MaxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'VO₂max'**
+  String get healthTrendVo2MaxTitle;
+
+  /// No description provided for @healthTrendVo2MaxSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Max oxygen uptake (last 30 days)'**
+  String get healthTrendVo2MaxSubtitle;
+
   /// Header action semantics for recording a body metric
   ///
   /// In en, this message translates to:
@@ -12945,11 +13422,299 @@ abstract class AppLocalizations {
   /// **'Inbox · KnowledgeOS'**
   String get knowledgeInboxTitle;
 
+  /// No description provided for @knowledgeTabInbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox'**
+  String get knowledgeTabInbox;
+
+  /// No description provided for @knowledgeTabLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get knowledgeTabLibrary;
+
+  /// No description provided for @knowledgeTabReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get knowledgeTabReview;
+
+  /// No description provided for @knowledgeCommandInbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge · Inbox'**
+  String get knowledgeCommandInbox;
+
+  /// No description provided for @knowledgeCommandLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge · Library'**
+  String get knowledgeCommandLibrary;
+
+  /// No description provided for @knowledgeCommandReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge · Review'**
+  String get knowledgeCommandReview;
+
+  /// No description provided for @knowledgeInboxEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox is empty'**
+  String get knowledgeInboxEmptyTitle;
+
+  /// No description provided for @knowledgeInboxEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the create action to capture a thought. AI can suggest whether it should stay a Note or become a Routine, Decision, or other knowledge object.'**
+  String get knowledgeInboxEmptyBody;
+
+  /// No description provided for @knowledgeInboxLoadFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox failed to load'**
+  String get knowledgeInboxLoadFailedTitle;
+
   /// Button label for creating a knowledge capture
   ///
   /// In en, this message translates to:
   /// **'New capture'**
   String get knowledgeCaptureAction;
+
+  /// No description provided for @knowledgeCaptureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture a thought'**
+  String get knowledgeCaptureTitle;
+
+  /// No description provided for @knowledgeCaptureTitleField.
+  ///
+  /// In en, this message translates to:
+  /// **'Title (optional)'**
+  String get knowledgeCaptureTitleField;
+
+  /// No description provided for @knowledgeCaptureBodyField.
+  ///
+  /// In en, this message translates to:
+  /// **'Content'**
+  String get knowledgeCaptureBodyField;
+
+  /// No description provided for @knowledgeCaptureTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'\"Bank card needs regular activity\"'**
+  String get knowledgeCaptureTitleHint;
+
+  /// No description provided for @knowledgeCaptureBodyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'\"Make one bank-card activity transaction every 6 months, otherwise it may become dormant\"'**
+  String get knowledgeCaptureBodyHint;
+
+  /// No description provided for @knowledgeCaptureSavedClassifyingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved � AI is thinking'**
+  String get knowledgeCaptureSavedClassifyingTitle;
+
+  /// No description provided for @knowledgeCaptureSuggestionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI suggestion'**
+  String get knowledgeCaptureSuggestionTitle;
+
+  /// No description provided for @knowledgeCaptureComposeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Write free-form Markdown. AI can suggest an upgrade after saving.'**
+  String get knowledgeCaptureComposeSubtitle;
+
+  /// No description provided for @knowledgeCaptureClassifyingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The Note is saved. AI is checking whether it should become a Routine, Decision, or another knowledge object.'**
+  String get knowledgeCaptureClassifyingSubtitle;
+
+  /// No description provided for @knowledgeCaptureSuggestionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the extracted type and fields before applying.'**
+  String get knowledgeCaptureSuggestionSubtitle;
+
+  /// No description provided for @knowledgeCaptureSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get knowledgeCaptureSave;
+
+  /// No description provided for @knowledgeCaptureSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving...'**
+  String get knowledgeCaptureSaving;
+
+  /// No description provided for @knowledgeCaptureCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get knowledgeCaptureCancel;
+
+  /// No description provided for @knowledgeCaptureClassifyingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Reasoning can take 20-30 seconds. The Note is already saved, so you can skip waiting.'**
+  String get knowledgeCaptureClassifyingBody;
+
+  /// No description provided for @knowledgeCaptureSkipClassification.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep as Note'**
+  String get knowledgeCaptureSkipClassification;
+
+  /// No description provided for @knowledgeCaptureApplySuggestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply suggestion'**
+  String get knowledgeCaptureApplySuggestion;
+
+  /// No description provided for @knowledgeCaptureApplyPolish.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply polish'**
+  String get knowledgeCaptureApplyPolish;
+
+  /// No description provided for @knowledgeCaptureApplying.
+  ///
+  /// In en, this message translates to:
+  /// **'Applying...'**
+  String get knowledgeCaptureApplying;
+
+  /// No description provided for @knowledgeCaptureKeepOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep original'**
+  String get knowledgeCaptureKeepOriginal;
+
+  /// No description provided for @knowledgeCaptureNotePolishOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'AI classified this as a note, so it will only polish the text. Reason: {reason}'**
+  String knowledgeCaptureNotePolishOnly(Object reason);
+
+  /// No description provided for @knowledgeCapturePolishedVersionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI polished version'**
+  String get knowledgeCapturePolishedVersionTitle;
+
+  /// No description provided for @knowledgeCaptureTitleDiffLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get knowledgeCaptureTitleDiffLabel;
+
+  /// No description provided for @knowledgeCaptureBodyDiffLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Body'**
+  String get knowledgeCaptureBodyDiffLabel;
+
+  /// No description provided for @knowledgeCaptureEmptyValue.
+  ///
+  /// In en, this message translates to:
+  /// **'(empty)'**
+  String get knowledgeCaptureEmptyValue;
+
+  /// No description provided for @knowledgeCaptureOriginalDiffValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Original: {value}'**
+  String knowledgeCaptureOriginalDiffValue(Object value);
+
+  /// No description provided for @knowledgeCaptureKindRoutineDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Looks like a recurring item'**
+  String get knowledgeCaptureKindRoutineDescription;
+
+  /// No description provided for @knowledgeCaptureKindDecisionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Looks like it weighs options'**
+  String get knowledgeCaptureKindDecisionDescription;
+
+  /// No description provided for @knowledgeCaptureKindAssumptionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Looks like it states a belief'**
+  String get knowledgeCaptureKindAssumptionDescription;
+
+  /// No description provided for @knowledgeCaptureKindPrincipleDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Looks like it states a principle'**
+  String get knowledgeCaptureKindPrincipleDescription;
+
+  /// No description provided for @knowledgeCaptureKindConceptDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Looks like it defines a concept'**
+  String get knowledgeCaptureKindConceptDescription;
+
+  /// No description provided for @knowledgeCaptureKindExperimentDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Looks like it describes an experiment'**
+  String get knowledgeCaptureKindExperimentDescription;
+
+  /// No description provided for @knowledgeCaptureKindNoteDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep as Note'**
+  String get knowledgeCaptureKindNoteDescription;
+
+  /// No description provided for @knowledgeCaptureRoutineUpgradeDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Will create a Routine: \"{statement}\", every {intervalDays} days'**
+  String knowledgeCaptureRoutineUpgradeDetail(
+    Object intervalDays,
+    Object statement,
+  );
+
+  /// No description provided for @knowledgeCaptureRoutineScopeDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope = {scope}.'**
+  String knowledgeCaptureRoutineScopeDetail(Object scope);
+
+  /// No description provided for @knowledgeCaptureRoutineReminderDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'AI will remind you 7 days before it is due.'**
+  String get knowledgeCaptureRoutineReminderDetail;
+
+  /// No description provided for @knowledgeCaptureSuggestionReasonConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason: {reason} · confidence {confidence}'**
+  String knowledgeCaptureSuggestionReasonConfidence(
+    Object confidence,
+    Object reason,
+  );
+
+  /// No description provided for @knowledgeCaptureSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture failed: {error}'**
+  String knowledgeCaptureSaveFailed(Object error);
+
+  /// No description provided for @knowledgeCaptureApplyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not apply suggestion: {error}'**
+  String knowledgeCaptureApplyFailed(Object error);
 
   /// Placeholder in the KnowledgeOS AI prompt bar
   ///
@@ -12999,11 +13764,235 @@ abstract class AppLocalizations {
   /// **'Library · KnowledgeOS'**
   String get knowledgeLibraryTitle;
 
+  /// No description provided for @knowledgeLibraryEmptyDecisionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No Decisions yet'**
+  String get knowledgeLibraryEmptyDecisionsTitle;
+
+  /// No description provided for @knowledgeLibraryEmptyDecisionsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the create action to record the first decision worth reviewing.'**
+  String get knowledgeLibraryEmptyDecisionsBody;
+
+  /// No description provided for @knowledgeLibraryEmptyNotesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No Notes in the library yet'**
+  String get knowledgeLibraryEmptyNotesTitle;
+
+  /// No description provided for @knowledgeLibraryEmptyNotesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes are captured from Inbox. This view is for browsing.'**
+  String get knowledgeLibraryEmptyNotesBody;
+
+  /// No description provided for @knowledgeLibraryEmptyConceptsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No Concept nodes yet'**
+  String get knowledgeLibraryEmptyConceptsTitle;
+
+  /// No description provided for @knowledgeLibraryEmptyConceptsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Concepts power [[soft links]] and AI associations.'**
+  String get knowledgeLibraryEmptyConceptsBody;
+
+  /// No description provided for @knowledgeLibraryEmptyExperimentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No active Experiments'**
+  String get knowledgeLibraryEmptyExperimentsTitle;
+
+  /// No description provided for @knowledgeLibraryEmptyExperimentsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Experiments usually attach to an Assumption that needs validation.'**
+  String get knowledgeLibraryEmptyExperimentsBody;
+
+  /// No description provided for @knowledgeLibraryEmptyRoutinesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No Routines yet'**
+  String get knowledgeLibraryEmptyRoutinesTitle;
+
+  /// No description provided for @knowledgeLibraryEmptyRoutinesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring reminders. After you create one, AI can surface it near the next due date.'**
+  String get knowledgeLibraryEmptyRoutinesBody;
+
+  /// No description provided for @knowledgeRoutineOverdueDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days overdue'**
+  String knowledgeRoutineOverdueDays(Object days);
+
+  /// No description provided for @knowledgeRoutineDueToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Due today'**
+  String get knowledgeRoutineDueToday;
+
+  /// No description provided for @knowledgeRoutineDueInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Due in {days} days'**
+  String knowledgeRoutineDueInDays(Object days);
+
+  /// No description provided for @knowledgeRoutineLibraryMeta.
+  ///
+  /// In en, this message translates to:
+  /// **'{dueLabel} · every {intervalDays} days · {scope}'**
+  String knowledgeRoutineLibraryMeta(
+    Object dueLabel,
+    Object intervalDays,
+    Object scope,
+  );
+
+  /// No description provided for @knowledgeLibrarySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search this segment'**
+  String get knowledgeLibrarySearchHint;
+
+  /// No description provided for @knowledgeLibrarySearchClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get knowledgeLibrarySearchClear;
+
+  /// No description provided for @knowledgeLibrarySearchEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching knowledge'**
+  String get knowledgeLibrarySearchEmptyTitle;
+
+  /// No description provided for @knowledgeLibrarySearchEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a different keyword or switch segments.'**
+  String get knowledgeLibrarySearchEmptyBody;
+
+  /// No description provided for @knowledgeLibraryLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Load failed: {error}'**
+  String knowledgeLibraryLoadFailed(Object error);
+
+  /// No description provided for @knowledgeLibraryDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete failed: {error}'**
+  String knowledgeLibraryDeleteFailed(Object error);
+
   /// No description provided for @knowledgeReviewTitle.
   ///
   /// In en, this message translates to:
   /// **'Review · KnowledgeOS'**
   String get knowledgeReviewTitle;
+
+  /// No description provided for @knowledgeReviewRoutinesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Routines due this week'**
+  String get knowledgeReviewRoutinesTitle;
+
+  /// No description provided for @knowledgeReviewRoutinesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No routines are due in the next 7 days.'**
+  String get knowledgeReviewRoutinesEmpty;
+
+  /// No description provided for @knowledgeReviewDecisionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Decisions due for review'**
+  String get knowledgeReviewDecisionsTitle;
+
+  /// No description provided for @knowledgeReviewDecisionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No decisions are due for review.'**
+  String get knowledgeReviewDecisionsEmpty;
+
+  /// No description provided for @knowledgeReviewDecisionOverdueDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days'**
+  String knowledgeReviewDecisionOverdueDays(Object days);
+
+  /// No description provided for @knowledgeReviewAssumptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stale assumptions'**
+  String get knowledgeReviewAssumptionsTitle;
+
+  /// No description provided for @knowledgeReviewAssumptionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'All active assumptions were verified within {days} days.'**
+  String knowledgeReviewAssumptionsEmpty(Object days);
+
+  /// No description provided for @knowledgeReviewRoutineMeta.
+  ///
+  /// In en, this message translates to:
+  /// **'{dueLabel} · every {intervalDays} days'**
+  String knowledgeReviewRoutineMeta(Object dueLabel, Object intervalDays);
+
+  /// No description provided for @knowledgeReviewAssumptionStaleSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'· {statement} ({days} days, conf {confidence})'**
+  String knowledgeReviewAssumptionStaleSummary(
+    Object confidence,
+    Object days,
+    Object statement,
+  );
+
+  /// No description provided for @knowledgeReviewLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Load failed: {error}'**
+  String knowledgeReviewLoadFailed(Object error);
+
+  /// No description provided for @knowledgeReviewRoutineDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done. Next due {date}'**
+  String knowledgeReviewRoutineDone(Object date);
+
+  /// No description provided for @knowledgeReviewRoutineDoneFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not mark routine done: {error}'**
+  String knowledgeReviewRoutineDoneFailed(Object error);
+
+  /// No description provided for @knowledgeReviewMarkDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get knowledgeReviewMarkDone;
+
+  /// No description provided for @knowledgeReviewVerifyAssumption.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get knowledgeReviewVerifyAssumption;
+
+  /// No description provided for @knowledgeReviewAssumptionVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Assumption verified.'**
+  String get knowledgeReviewAssumptionVerified;
+
+  /// No description provided for @knowledgeReviewAssumptionVerifyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not verify assumption: {error}'**
+  String knowledgeReviewAssumptionVerifyFailed(Object error);
 
   /// No description provided for @knowledgeSegmentDecisions.
   ///
@@ -13094,6 +14083,492 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A falsifiable belief with confidence'**
   String get knowledgeNewAssumptionHint;
+
+  /// No description provided for @knowledgeDecisionWriterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Decision'**
+  String get knowledgeDecisionWriterTitle;
+
+  /// No description provided for @knowledgeDecisionWriterSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision as memory: question, options, rationale, review'**
+  String get knowledgeDecisionWriterSubtitle;
+
+  /// No description provided for @knowledgeDecisionAddOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Add option'**
+  String get knowledgeDecisionAddOption;
+
+  /// No description provided for @knowledgeDecisionClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get knowledgeDecisionClear;
+
+  /// No description provided for @knowledgeDecisionExpectedOutcomeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected outcome (optional)'**
+  String get knowledgeDecisionExpectedOutcomeLabel;
+
+  /// No description provided for @knowledgeAssumptionWriterSubtitle2.
+  ///
+  /// In en, this message translates to:
+  /// **'Falsifiable belief with confidence for future review'**
+  String get knowledgeAssumptionWriterSubtitle2;
+
+  /// No description provided for @knowledgeConceptWriterSubtitle2.
+  ///
+  /// In en, this message translates to:
+  /// **'Anchor for soft links and AI cross references'**
+  String get knowledgeConceptWriterSubtitle2;
+
+  /// No description provided for @knowledgeExperimentWriterSubtitle2.
+  ///
+  /// In en, this message translates to:
+  /// **'Validate an assumption with an explicit method'**
+  String get knowledgeExperimentWriterSubtitle2;
+
+  /// No description provided for @knowledgeWriterAliasLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Aliases'**
+  String get knowledgeWriterAliasLabel;
+
+  /// No description provided for @knowledgeRoutineMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get knowledgeRoutineMonthly;
+
+  /// No description provided for @knowledgeRoutineQuarterly.
+  ///
+  /// In en, this message translates to:
+  /// **'Quarterly'**
+  String get knowledgeRoutineQuarterly;
+
+  /// No description provided for @knowledgeRoutineSemiannual.
+  ///
+  /// In en, this message translates to:
+  /// **'Every 6 months'**
+  String get knowledgeRoutineSemiannual;
+
+  /// No description provided for @knowledgeRoutineYearly.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly'**
+  String get knowledgeRoutineYearly;
+
+  /// No description provided for @knowledgeDecisionQuestionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Question'**
+  String get knowledgeDecisionQuestionLabel;
+
+  /// No description provided for @knowledgeDecisionQuestionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'\"Upgrade to QQQ + BOXX dynamic hedging?\"'**
+  String get knowledgeDecisionQuestionHint;
+
+  /// No description provided for @knowledgeDecisionOptionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Options'**
+  String get knowledgeDecisionOptionsLabel;
+
+  /// No description provided for @knowledgeDecisionOptionLabelHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Option {index}'**
+  String knowledgeDecisionOptionLabelHint(Object index);
+
+  /// No description provided for @knowledgeDecisionOptionRationaleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Why choose this option (optional)'**
+  String get knowledgeDecisionOptionRationaleHint;
+
+  /// No description provided for @knowledgeDecisionNoReferenceCandidates.
+  ///
+  /// In en, this message translates to:
+  /// **'No Principle or Assumption has been declared yet. You can save the Decision now and attach references later.'**
+  String get knowledgeDecisionNoReferenceCandidates;
+
+  /// No description provided for @knowledgeDecisionRationaleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rationale (Markdown)'**
+  String get knowledgeDecisionRationaleLabel;
+
+  /// No description provided for @knowledgeDecisionRationaleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Why this option: constraints and the judgment at the time'**
+  String get knowledgeDecisionRationaleHint;
+
+  /// No description provided for @knowledgeDecisionExpectedOutcomeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'How success will be judged: metrics or signals'**
+  String get knowledgeDecisionExpectedOutcomeHint;
+
+  /// No description provided for @knowledgeDecisionReviewDateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review date'**
+  String get knowledgeDecisionReviewDateTitle;
+
+  /// No description provided for @knowledgeDecisionReviewDateOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Review date (optional)'**
+  String get knowledgeDecisionReviewDateOptional;
+
+  /// No description provided for @knowledgeDecisionReviewDateScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Review on {date}'**
+  String knowledgeDecisionReviewDateScheduled(Object date);
+
+  /// No description provided for @knowledgeDecisionReviewDateChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get knowledgeDecisionReviewDateChoose;
+
+  /// No description provided for @knowledgeDecisionReviewDateChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get knowledgeDecisionReviewDateChange;
+
+  /// No description provided for @knowledgeDecisionReviewDateInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'+{days} days'**
+  String knowledgeDecisionReviewDateInDays(Object days);
+
+  /// No description provided for @knowledgeDecisionReviewDateInOneYear.
+  ///
+  /// In en, this message translates to:
+  /// **'+1 year'**
+  String get knowledgeDecisionReviewDateInOneYear;
+
+  /// No description provided for @knowledgeDecisionLifecycleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Decision'**
+  String get knowledgeDecisionLifecycleTitle;
+
+  /// No description provided for @knowledgeDecisionLifecycleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Status, actual outcome, and cognitive trail'**
+  String get knowledgeDecisionLifecycleSubtitle;
+
+  /// No description provided for @knowledgeDecisionActualOutcomeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual outcome (Markdown, optional)'**
+  String get knowledgeDecisionActualOutcomeLabel;
+
+  /// No description provided for @knowledgeDecisionStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get knowledgeDecisionStatusLabel;
+
+  /// No description provided for @knowledgeDecisionStatusDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get knowledgeDecisionStatusDraft;
+
+  /// No description provided for @knowledgeDecisionStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get knowledgeDecisionStatusActive;
+
+  /// No description provided for @knowledgeDecisionStatusPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get knowledgeDecisionStatusPaused;
+
+  /// No description provided for @knowledgeDecisionStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get knowledgeDecisionStatusExpired;
+
+  /// No description provided for @knowledgeDecisionStatusVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get knowledgeDecisionStatusVerified;
+
+  /// No description provided for @knowledgeDecisionStatusFalsified.
+  ///
+  /// In en, this message translates to:
+  /// **'Falsified'**
+  String get knowledgeDecisionStatusFalsified;
+
+  /// No description provided for @knowledgeDecisionStatusSuperseded.
+  ///
+  /// In en, this message translates to:
+  /// **'Superseded'**
+  String get knowledgeDecisionStatusSuperseded;
+
+  /// No description provided for @knowledgeDecisionActualOutcomeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For review: what actually happened and how it differed from expectations'**
+  String get knowledgeDecisionActualOutcomeHint;
+
+  /// No description provided for @knowledgeDecisionSupersededByLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Superseded by Decision'**
+  String get knowledgeDecisionSupersededByLabel;
+
+  /// No description provided for @knowledgeDecisionSupersededByEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No other Decision is available yet. Record the new decision first, then come back to mark the relationship.'**
+  String get knowledgeDecisionSupersededByEmpty;
+
+  /// No description provided for @knowledgePrincipleWriterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Principle'**
+  String get knowledgePrincipleWriterTitle;
+
+  /// No description provided for @knowledgePrincipleWriterSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-lived worldview primitive, not falsifiable'**
+  String get knowledgePrincipleWriterSubtitle;
+
+  /// No description provided for @knowledgePrincipleStatementHint.
+  ///
+  /// In en, this message translates to:
+  /// **'\"Default edge-first\" / \"Avoid high-maintenance systems\"'**
+  String get knowledgePrincipleStatementHint;
+
+  /// No description provided for @knowledgePrincipleRationaleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Why this worldview should become a Principle'**
+  String get knowledgePrincipleRationaleHint;
+
+  /// No description provided for @knowledgeAssumptionWriterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Assumption'**
+  String get knowledgeAssumptionWriterTitle;
+
+  /// No description provided for @knowledgeAssumptionWriterSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Falsifiable belief with confidence'**
+  String get knowledgeAssumptionWriterSubtitle;
+
+  /// No description provided for @knowledgeAssumptionStatementHint.
+  ///
+  /// In en, this message translates to:
+  /// **'\"Long-term index growth beats inflation\"'**
+  String get knowledgeAssumptionStatementHint;
+
+  /// No description provided for @knowledgeConceptWriterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Concept'**
+  String get knowledgeConceptWriterTitle;
+
+  /// No description provided for @knowledgeConceptWriterSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Named node for search and soft links'**
+  String get knowledgeConceptWriterSubtitle;
+
+  /// No description provided for @knowledgeConceptNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Concept name, for example \"edge-first\"'**
+  String get knowledgeConceptNameHint;
+
+  /// No description provided for @knowledgeConceptAliasesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Comma-separated aliases'**
+  String get knowledgeConceptAliasesHint;
+
+  /// No description provided for @knowledgeConceptSummaryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'1-2 sentence definition for [[soft link]] tooltips'**
+  String get knowledgeConceptSummaryHint;
+
+  /// No description provided for @knowledgeExperimentWriterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Experiment'**
+  String get knowledgeExperimentWriterTitle;
+
+  /// No description provided for @knowledgeExperimentWriterSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Test an assumption with method and metrics'**
+  String get knowledgeExperimentWriterSubtitle;
+
+  /// No description provided for @knowledgeExperimentHypothesisHint.
+  ///
+  /// In en, this message translates to:
+  /// **'\"Covered call 60 DTE on QQQ outperforms 30 DTE\"'**
+  String get knowledgeExperimentHypothesisHint;
+
+  /// No description provided for @knowledgeExperimentMethodHint.
+  ///
+  /// In en, this message translates to:
+  /// **'How to run it, for how long, and with what data'**
+  String get knowledgeExperimentMethodHint;
+
+  /// No description provided for @knowledgeExperimentMetricsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Comma-separated, for example \"yield, drawdown, sharpe\"'**
+  String get knowledgeExperimentMetricsHint;
+
+  /// No description provided for @knowledgeExperimentNoActiveAssumptions.
+  ///
+  /// In en, this message translates to:
+  /// **'No active Assumptions are available. You can leave this empty.'**
+  String get knowledgeExperimentNoActiveAssumptions;
+
+  /// No description provided for @knowledgeExperimentTargetAssumptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Target Assumption (optional)'**
+  String get knowledgeExperimentTargetAssumptionLabel;
+
+  /// No description provided for @knowledgeRoutineWriterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Routine'**
+  String get knowledgeRoutineWriterTitle;
+
+  /// No description provided for @knowledgeRoutineWriterSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring reminder. AI can surface it near next due date.'**
+  String get knowledgeRoutineWriterSubtitle;
+
+  /// No description provided for @knowledgeRoutineStatementHint.
+  ///
+  /// In en, this message translates to:
+  /// **'\"Activate bank card\" / \"Monthly reconciliation\"'**
+  String get knowledgeRoutineStatementHint;
+
+  /// No description provided for @knowledgeWriterStatementLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Statement'**
+  String get knowledgeWriterStatementLabel;
+
+  /// No description provided for @knowledgeWriterRationaleMarkdownLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rationale (Markdown)'**
+  String get knowledgeWriterRationaleMarkdownLabel;
+
+  /// No description provided for @knowledgeWriterScopeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope'**
+  String get knowledgeWriterScopeLabel;
+
+  /// No description provided for @knowledgeWriterScopeOptionalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope tag (optional)'**
+  String get knowledgeWriterScopeOptionalLabel;
+
+  /// No description provided for @knowledgeWriterEvidenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence IDs'**
+  String get knowledgeWriterEvidenceLabel;
+
+  /// No description provided for @knowledgeWriterConfidenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confidence'**
+  String get knowledgeWriterConfidenceLabel;
+
+  /// No description provided for @knowledgeWriterNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get knowledgeWriterNameLabel;
+
+  /// No description provided for @knowledgeWriterAliasesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Aliases'**
+  String get knowledgeWriterAliasesLabel;
+
+  /// No description provided for @knowledgeWriterSummaryMarkdownLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary (Markdown)'**
+  String get knowledgeWriterSummaryMarkdownLabel;
+
+  /// No description provided for @knowledgeWriterHypothesisLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hypothesis'**
+  String get knowledgeWriterHypothesisLabel;
+
+  /// No description provided for @knowledgeWriterMethodMarkdownLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Method (Markdown)'**
+  String get knowledgeWriterMethodMarkdownLabel;
+
+  /// No description provided for @knowledgeWriterMetricsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Metrics'**
+  String get knowledgeWriterMetricsLabel;
+
+  /// No description provided for @knowledgeWriterResultMarkdownLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Result (Markdown, optional)'**
+  String get knowledgeWriterResultMarkdownLabel;
+
+  /// No description provided for @knowledgeWriterConclusionMarkdownLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Conclusion (Markdown, optional)'**
+  String get knowledgeWriterConclusionMarkdownLabel;
+
+  /// No description provided for @knowledgeRoutineStatementLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'What to do'**
+  String get knowledgeRoutineStatementLabel;
+
+  /// No description provided for @knowledgeRoutineFrequencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Frequency'**
+  String get knowledgeRoutineFrequencyLabel;
 
   /// No description provided for @knowledgeNotesHintTitle.
   ///

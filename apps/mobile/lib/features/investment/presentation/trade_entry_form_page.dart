@@ -599,8 +599,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   Widget _buildTypeSelector() {
     final l10n = AppLocalizations.of(context);
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: AppSpacing.s8,
+      runSpacing: AppSpacing.s8,
       children: [
         for (final t in _tradeTypes)
           FButton(

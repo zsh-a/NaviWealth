@@ -297,8 +297,8 @@ class _WatchlistRow extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s10),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: AppSpacing.s8,
+            runSpacing: AppSpacing.s8,
             children: [
               _FreshnessChip(snapshot: snapshot),
               if (item.alertRules.above != null)

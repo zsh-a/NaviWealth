@@ -65,7 +65,11 @@ class ManualAssetTile extends StatelessWidget {
                       ),
                       if (chips.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.s6),
-                        Wrap(spacing: 6, runSpacing: 4, children: chips),
+                        Wrap(
+                          spacing: AppSpacing.s6,
+                          runSpacing: AppSpacing.s4,
+                          children: chips,
+                        ),
                       ],
                     ],
                   ),

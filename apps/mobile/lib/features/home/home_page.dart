@@ -302,7 +302,7 @@ class _NetWorthHeader extends ConsumerWidget {
             ),
             child: hasData
                 ? Wrap(
-                    spacing: 6,
+                    spacing: AppSpacing.s6,
                     children: [
                       Text(
                         '${l10n.dashboardNetWorthAssetsLabel} '

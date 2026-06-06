@@ -42,7 +42,11 @@ class ActivityTimelinePreview extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.only(left: AppSpacing.s4, top: AppSpacing.s4, bottom: AppSpacing.s8),
+              padding: const EdgeInsets.only(
+                left: AppSpacing.s4,
+                top: AppSpacing.s4,
+                bottom: AppSpacing.s8,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -84,11 +88,13 @@ class ActivityTimelinePreview extends ConsumerWidget {
                     ),
                     if (i < entries.length - 1)
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s12,
+                        ),
                         child: Container(
                           height: 1,
                           color: context.theme.colors.foreground.withValues(
-                            alpha: 0.06,
+                            alpha: AppOpacity.faint,
                           ),
                         ),
                       ),
@@ -129,7 +135,10 @@ class _PreviewRow extends StatelessWidget {
     return FTappable(
       onPress: () => context.go(AppRoutes.activity),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s14,
+          vertical: AppSpacing.s10,
+        ),
         child: Row(
           children: [
             Container(

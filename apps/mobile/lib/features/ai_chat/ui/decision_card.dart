@@ -9,6 +9,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import 'decision_request.dart';
 
 class DecisionCard extends StatelessWidget {
@@ -129,8 +130,8 @@ class _OptionTile extends StatelessWidget {
                   ),
                 ),
                 if (option.recommended)
-                  const AppBadge(
-                    label: '推荐',
+                  AppBadge(
+                    label: AppLocalizations.of(context).aiChatRecommendedBadge,
                     tone: AppBadgeTone.accent,
                     size: AppBadgeSize.compact,
                   ),

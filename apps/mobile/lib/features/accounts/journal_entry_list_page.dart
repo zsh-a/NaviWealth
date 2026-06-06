@@ -40,7 +40,20 @@ class JournalEntryListPage extends ConsumerWidget {
           return _JournalList(entries: entries, accountsById: accountsById);
         },
         loading: () => const Center(child: FCircularProgress()),
-        error: (_, _) => Center(child: Text(l10n.commonLoadFailed)),
+        error: (_, _) => Center(
+          child: AppEmptyState.error(
+            title: l10n.commonLoadFailed,
+            action: FButton(
+              variant: FButtonVariant.ghost,
+              onPress: () {
+                ref
+                  ..invalidate(journalEntriesWithPostingsStreamProvider)
+                  ..invalidate(accountsStreamProvider);
+              },
+              child: Text(l10n.commonRetry),
+            ),
+          ),
+        ),
       ),
     );
   }

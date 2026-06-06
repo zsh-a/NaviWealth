@@ -293,7 +293,9 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
                 border: Border.all(color: colors.border, width: 1),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: AppOpacity.muted),
+                    color: Theme.of(
+                      context,
+                    ).shadowColor.withValues(alpha: AppOpacity.muted),
                     blurRadius: 24,
                     offset: const Offset(0, 12),
                   ),

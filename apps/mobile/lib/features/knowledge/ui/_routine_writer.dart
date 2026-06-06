@@ -22,6 +22,7 @@ import 'package:forui/forui.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 
@@ -41,12 +42,15 @@ class _RoutineWriter extends StatefulWidget {
 /// Preset cadences. 180 days = ~6 months covers the prototypical "港卡
 /// 需要定期活跃" case; 30 / 90 / 365 round out monthly / quarterly /
 /// annual.
-const List<({int days, String label})> _kIntervalPresets = [
-  (days: 30, label: '每月'),
-  (days: 90, label: '每季'),
-  (days: 180, label: '每 6 个月'),
-  (days: 365, label: '每年'),
-];
+const List<int> _kIntervalPresets = [30, 90, 180, 365];
+
+String _intervalPresetLabel(AppLocalizations l10n, int days) => switch (days) {
+  30 => l10n.knowledgeRoutineMonthly,
+  90 => l10n.knowledgeRoutineQuarterly,
+  180 => l10n.knowledgeRoutineSemiannual,
+  365 => l10n.knowledgeRoutineYearly,
+  _ => '$days d',
+};
 
 class _RoutineWriterState extends State<_RoutineWriter> {
   final _statementCtrl = TextEditingController();
@@ -83,9 +87,7 @@ class _RoutineWriterState extends State<_RoutineWriter> {
           statement: _statementCtrl.text.trim(),
           intervalDays: _intervalDays,
           nextDueAt: nextDue,
-          scope: _scopeCtrl.text.trim().isEmpty
-              ? '*'
-              : _scopeCtrl.text.trim(),
+          scope: _scopeCtrl.text.trim().isEmpty ? '*' : _scopeCtrl.text.trim(),
           status: RoutineStatus.active,
           createdAt: stamp.now,
           sync: SyncMeta(
@@ -106,11 +108,13 @@ class _RoutineWriterState extends State<_RoutineWriter> {
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     return AppSheet(
-      title: '新建 Routine',
-      subtitle: '定期提醒 — AI 会在临近 next_due_at 时主动提示',
+      title: AppLocalizations.of(context).knowledgeRoutineWriterTitle,
+      subtitle: AppLocalizations.of(context).knowledgeRoutineWriterSubtitle,
       footer: AppSheetFooter(
-        submitLabel: _saving ? '保存中…' : '保存',
-        cancelLabel: '取消',
+        submitLabel: _saving
+            ? AppLocalizations.of(context).commonSaving
+            : AppLocalizations.of(context).commonSave,
+        cancelLabel: AppLocalizations.of(context).commonCancel,
         busy: _saving || _statementCtrl.text.trim().isEmpty,
         onSubmit: () {
           _save();
@@ -122,12 +126,14 @@ class _RoutineWriterState extends State<_RoutineWriter> {
         children: [
           FTextField(
             control: FTextFieldControl.managed(controller: _statementCtrl),
-            label: const Text('要做什么'),
-            hint: '"港卡做一次活跃交易" / "每月对账"',
+            label: Text(
+              AppLocalizations.of(context).knowledgeRoutineStatementLabel,
+            ),
+            hint: AppLocalizations.of(context).knowledgeRoutineStatementHint,
           ),
           const SizedBox(height: AppSpacing.s12),
           Text(
-            '频率',
+            AppLocalizations.of(context).knowledgeRoutineFrequencyLabel,
             style: typography.sm.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: AppSpacing.s4),
@@ -136,15 +142,20 @@ class _RoutineWriterState extends State<_RoutineWriter> {
             children: [
               for (final preset in _kIntervalPresets)
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s2,
+                  ),
                   child: FButton(
-                    variant: _intervalDays == preset.days
+                    variant: _intervalDays == preset
                         ? FButtonVariant.primary
                         : FButtonVariant.outline,
-                    onPress: () =>
-                        setState(() => _intervalDays = preset.days),
-                    child: Text(preset.label),
+                    onPress: () => setState(() => _intervalDays = preset),
+                    child: Text(
+                      _intervalPresetLabel(
+                        AppLocalizations.of(context),
+                        preset,
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -152,7 +163,9 @@ class _RoutineWriterState extends State<_RoutineWriter> {
           const SizedBox(height: AppSpacing.s12),
           FTextField(
             control: FTextFieldControl.managed(controller: _scopeCtrl),
-            label: const Text('范围标签（可选）'),
+            label: Text(
+              AppLocalizations.of(context).knowledgeWriterScopeOptionalLabel,
+            ),
             hint: '"*" / "finance/cards/hk" / "investing"',
           ),
         ],

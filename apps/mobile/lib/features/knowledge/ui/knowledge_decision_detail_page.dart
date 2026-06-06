@@ -106,7 +106,7 @@ class _BodyState extends ConsumerState<_Body> {
   Widget build(BuildContext context) {
     final d = _decision;
     return ObjectDetailScaffold(
-      title: '决策详情',
+      title: AppLocalizations.of(context).knowledgeDecisionDetailTitle,
       actions: [
         if (d != null)
           FHeaderAction(
@@ -127,6 +127,15 @@ class _BodyState extends ConsumerState<_Body> {
     }
     final typography = context.theme.typography;
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
+    final decidedDate = d.decidedAt.toLocal().toIso8601String().substring(
+      0,
+      10,
+    );
+    final reviewDate = d.reviewDate?.toLocal().toIso8601String().substring(
+      0,
+      10,
+    );
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
@@ -147,13 +156,17 @@ class _BodyState extends ConsumerState<_Body> {
         ),
         const SizedBox(height: AppSpacing.s4),
         Text(
-          '决策于 ${d.decidedAt.toLocal().toIso8601String().substring(0, 10)}'
-          '${d.reviewDate != null ? '  ·  复盘 ${d.reviewDate!.toLocal().toIso8601String().substring(0, 10)}' : ''}',
+          reviewDate == null
+              ? l10n.knowledgeDecisionDecidedAt(decidedDate)
+              : l10n.knowledgeDecisionDecidedAtWithReview(
+                  decidedDate,
+                  reviewDate,
+                ),
           style: typography.xs.copyWith(color: colors.mutedForeground),
         ),
         const SizedBox(height: AppSpacing.s16),
         KnowledgeSection.group(
-          title: '选项',
+          title: AppLocalizations.of(context).knowledgeDetailOptionsTitle,
           children: [
             for (final opt in d.options)
               Padding(
@@ -206,14 +219,14 @@ class _BodyState extends ConsumerState<_Body> {
         if (d.rationaleMd.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
           KnowledgeSection.group(
-            title: '理由',
+            title: AppLocalizations.of(context).knowledgeDetailRationaleTitle,
             children: [AiMarkdown(text: d.rationaleMd)],
           ),
         ],
         if (_principles.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
           KnowledgeSection.group(
-            title: '引用的 Principle',
+            title: AppLocalizations.of(context).knowledgeDetailPrinciplesTitle,
             children: [
               for (final p in _principles)
                 Padding(
@@ -231,7 +244,7 @@ class _BodyState extends ConsumerState<_Body> {
         if (_assumptions.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
           KnowledgeSection.group(
-            title: '引用的 Assumption',
+            title: AppLocalizations.of(context).knowledgeDetailAssumptionsTitle,
             children: [
               for (final a in _assumptions)
                 Padding(
@@ -249,14 +262,18 @@ class _BodyState extends ConsumerState<_Body> {
         if (d.expectedOutcome != null && d.expectedOutcome!.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
           KnowledgeSection.group(
-            title: '预期结果',
+            title: AppLocalizations.of(
+              context,
+            ).knowledgeDetailExpectedOutcomeTitle,
             children: [Text(d.expectedOutcome!, style: typography.sm)],
           ),
         ],
         if (d.actualOutcomeMd != null && d.actualOutcomeMd!.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
           KnowledgeSection.group(
-            title: '实际结果',
+            title: AppLocalizations.of(
+              context,
+            ).knowledgeDetailActualOutcomeTitle,
             children: [AiMarkdown(text: d.actualOutcomeMd!)],
           ),
         ],
@@ -267,7 +284,7 @@ class _BodyState extends ConsumerState<_Body> {
         if (_chain.length > 1) ...[
           const SizedBox(height: AppSpacing.s12),
           KnowledgeSection.group(
-            title: '认知演化链',
+            title: AppLocalizations.of(context).knowledgeDetailEvolutionTitle,
             children: [
               for (var i = 0; i < _chain.length; i++)
                 Padding(
@@ -317,20 +334,24 @@ class _ContextSnapshotSection extends StatelessWidget {
     final health = (snapshot['recent_health_events'] as List?) ?? const [];
     final capturedAt = snapshot['captured_at'] as String?;
     final window = snapshot['window_days'];
+    final l10n = AppLocalizations.of(context);
     return KnowledgeSection.group(
-      title: '当时的跨域状态',
+      title: l10n.knowledgeDetailContextSnapshotTitle,
       children: [
         if (capturedAt != null)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.s4),
             child: Text(
-              '采样于 ${capturedAt.substring(0, 10)} · 窗口 ${window ?? "—"} 天',
+              l10n.knowledgeDetailContextSnapshotCaptured(
+                capturedAt.substring(0, 10),
+                '${window ?? "—"}',
+              ),
               style: typography.xs.copyWith(color: colors.mutedForeground),
             ),
           ),
         if (finance.isEmpty && health.isEmpty)
           Text(
-            '当时窗口内无 Finance / Health 事件。',
+            l10n.knowledgeDetailContextSnapshotEmpty,
             style: typography.sm.copyWith(color: colors.mutedForeground),
           ),
         if (finance.isNotEmpty) ...[

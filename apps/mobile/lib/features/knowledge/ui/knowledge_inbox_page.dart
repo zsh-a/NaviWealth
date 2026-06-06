@@ -132,7 +132,10 @@ class _NotesList extends ConsumerWidget {
         final owner = ownerSnap.data!;
         return repoAsync.when(
           loading: () => const _Centered(child: FProgress()),
-          error: (e, _) => _ErrorState(message: '$e'),
+          error: (e, _) => _ErrorState(
+            message: '$e',
+            onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
+          ),
           data: (repo) {
             return StreamBuilder<List<KnowledgeNote>>(
               stream: repo.watchNotes(ownerUserId: owner, limit: 50),
@@ -196,24 +199,36 @@ class _NoteCard extends StatelessWidget {
 
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
+
   @override
   Widget build(BuildContext context) {
-    return const AppEmptyState(
+    final l10n = AppLocalizations.of(context);
+    return AppEmptyState(
       icon: FLucideIcons.inbox,
-      title: '收件箱空空如也',
-      message:
-          '点击右下角 + 写一条想法 — AI 会判断它是 Note / Routine / Decision，'
-          '一键确认升级。',
+      title: l10n.knowledgeInboxEmptyTitle,
+      message: l10n.knowledgeInboxEmptyBody,
     );
   }
 }
 
 class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message});
+  const _ErrorState({required this.message, required this.onRetry});
+
   final String message;
+  final VoidCallback onRetry;
+
   @override
   Widget build(BuildContext context) {
-    return AppEmptyState.error(title: '收件箱加载失败', message: message);
+    final l10n = AppLocalizations.of(context);
+    return AppEmptyState.error(
+      title: l10n.knowledgeInboxLoadFailedTitle,
+      message: message,
+      action: FButton(
+        variant: FButtonVariant.ghost,
+        onPress: onRetry,
+        child: Text(l10n.commonRetry),
+      ),
+    );
   }
 }
 

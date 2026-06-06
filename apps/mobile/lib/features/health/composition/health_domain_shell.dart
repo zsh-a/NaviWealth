@@ -21,7 +21,7 @@ import '../../../l10n/gen/app_localizations.dart';
 /// labels). When D-2.2 ships and the UI is final, swap to localised
 /// strings here without changing the bootstrap call.
 DomainShellSpec healthDomainShell(AppLocalizations l10n) {
-  return const DomainShellSpec(
+  return DomainShellSpec(
     scope: DomainScope.health,
     label: 'HealthOS',
     icon: FLucideIcons.heart,
@@ -30,19 +30,19 @@ DomainShellSpec healthDomainShell(AppLocalizations l10n) {
       DomainShellTab(
         icon: FLucideIcons.sun,
         selectedIcon: FLucideIcons.sun,
-        label: '今日',
+        label: l10n.healthTabToday,
         routePath: AppRoutes.healthToday,
       ),
       DomainShellTab(
         icon: FLucideIcons.trendingUp,
         selectedIcon: FLucideIcons.trendingUp,
-        label: '趋势',
+        label: l10n.healthTabTrend,
         routePath: AppRoutes.healthTrend,
       ),
       DomainShellTab(
         icon: FLucideIcons.lightbulb,
         selectedIcon: FLucideIcons.lightbulb,
-        label: '计划',
+        label: l10n.healthTabPlan,
         routePath: AppRoutes.healthPlan,
       ),
     ],

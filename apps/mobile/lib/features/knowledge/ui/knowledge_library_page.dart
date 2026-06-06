@@ -24,6 +24,7 @@ import '_decision_writer.dart';
 import '_object_writers.dart';
 import '_routine_writer.dart';
 import '_widgets.dart';
+import 'knowledge_capture_sheet.dart';
 
 enum _LibrarySegment { decisions, notes, concepts, experiments, routines }
 
@@ -47,6 +48,25 @@ class KnowledgeLibraryPage extends ConsumerStatefulWidget {
 
 class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   _LibrarySegment _segment = _LibrarySegment.decisions;
+  final _searchCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _searchCtrl.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl
+      ..removeListener(_onSearchChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +93,33 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                     onChanged: (s) => setState(() => _segment = s),
                   ),
                   const SizedBox(height: AppSpacing.s16),
-                  Expanded(child: _LibraryList(segment: _segment)),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FTextField(
+                          control: FTextFieldControl.managed(
+                            controller: _searchCtrl,
+                          ),
+                          hint: l10n.knowledgeLibrarySearchHint,
+                        ),
+                      ),
+                      if (_searchCtrl.text.isNotEmpty) ...[
+                        const SizedBox(width: AppSpacing.s8),
+                        FButton.icon(
+                          variant: FButtonVariant.ghost,
+                          onPress: _searchCtrl.clear,
+                          child: const Icon(FLucideIcons.x),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.s12),
+                  Expanded(
+                    child: _LibraryList(
+                      segment: _segment,
+                      query: _searchCtrl.text,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -124,8 +170,7 @@ class _NewObjectButton extends ConsumerWidget {
         // tap deep without 4 FABs.
         await _showDecisionFamilyChooser(context, ref);
       case _LibrarySegment.notes:
-        // Notes are also written from the Inbox tab; same sheet.
-        await _showNotesHint(context);
+        await showKnowledgeCaptureSheet(context, ref);
       case _LibrarySegment.concepts:
         await showNewConceptSheet(context, ref);
       case _LibrarySegment.experiments:
@@ -210,35 +255,10 @@ class _DecisionFamilyChooser extends StatelessWidget {
   }
 }
 
-Future<void> _showNotesHint(BuildContext context) async {
-  // Notes are written from Inbox — surface that affordance instead of
-  // duplicating the sheet here. Tiny sheet, single CTA.
-  await showAppFormSheet<void>(
-    context: context,
-    builder: (sheetContext) => AppSheet(
-      title: AppLocalizations.of(context).knowledgeNotesHintTitle,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            AppLocalizations.of(context).knowledgeNotesHintBody,
-            style: context.theme.typography.sm,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          FButton(
-            onPress: () => Navigator.of(sheetContext).pop(),
-            child: Text(AppLocalizations.of(context).commonOk),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
 class _LibraryList extends ConsumerWidget {
-  const _LibraryList({required this.segment});
+  const _LibraryList({required this.segment, required this.query});
   final _LibrarySegment segment;
+  final String query;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -250,16 +270,27 @@ class _LibraryList extends ConsumerWidget {
         }
         final owner = ownerSnap.data!;
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
+        final l10n = AppLocalizations.of(context);
         return repoAsync.when(
           loading: () => const Center(child: FProgress()),
-          error: (e, _) =>
-              Text('加载失败：$e', maxLines: 3, overflow: TextOverflow.ellipsis),
+          error: (e, _) => Text(
+            l10n.knowledgeLibraryLoadFailed('$e'),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
           data: (repo) => switch (segment) {
             _LibrarySegment.decisions => _SegmentList<KnowledgeDecision>(
               stream: repo.watchDecisions(ownerUserId: owner),
+              query: query,
+              searchableText: (d) => [
+                d.question,
+                d.selectedLabel,
+                d.rationaleMd,
+                d.expectedOutcome,
+              ].whereType<String>().join('\n'),
               emptyIcon: FLucideIcons.gitBranch,
-              emptyTitle: '还没有 Decision',
-              emptyMessage: '点右下角 + 新建 Decision，记录第一条值得复盘的判断。',
+              emptyTitle: l10n.knowledgeLibraryEmptyDecisionsTitle,
+              emptyMessage: l10n.knowledgeLibraryEmptyDecisionsBody,
               tileBuilder: (context, d) => _buildDecisionTile(
                 context,
                 d,
@@ -277,9 +308,16 @@ class _LibraryList extends ConsumerWidget {
             ),
             _LibrarySegment.notes => _SegmentList<KnowledgeNote>(
               stream: repo.watchNotes(ownerUserId: owner),
+              query: query,
+              searchableText: (n) => [
+                n.title,
+                n.bodyMd,
+                n.projectTag,
+                ...n.tags,
+              ].whereType<String>().join('\n'),
               emptyIcon: FLucideIcons.fileText,
-              emptyTitle: '资料库里还没有 Note',
-              emptyMessage: 'Note 在收件箱录入；这里只做浏览。',
+              emptyTitle: l10n.knowledgeLibraryEmptyNotesTitle,
+              emptyMessage: l10n.knowledgeLibraryEmptyNotesBody,
               tileBuilder: (context, n) => _buildNoteTile(
                 context,
                 n,
@@ -299,9 +337,15 @@ class _LibraryList extends ConsumerWidget {
             ),
             _LibrarySegment.concepts => _SegmentList<KnowledgeConcept>(
               stream: repo.watchConcepts(ownerUserId: owner),
+              query: query,
+              searchableText: (c) => [
+                c.name,
+                c.summaryMd,
+                ...c.aliases,
+              ].whereType<String>().join('\n'),
               emptyIcon: FLucideIcons.folderTree,
-              emptyTitle: '还没有 Concept 节点',
-              emptyMessage: 'Concept 用于 [[soft links]] 和 AI 关联。',
+              emptyTitle: l10n.knowledgeLibraryEmptyConceptsTitle,
+              emptyMessage: l10n.knowledgeLibraryEmptyConceptsBody,
               tileBuilder: (context, c) => _buildConceptTile(
                 context,
                 c,
@@ -319,9 +363,16 @@ class _LibraryList extends ConsumerWidget {
             ),
             _LibrarySegment.experiments => _SegmentList<KnowledgeExperiment>(
               stream: repo.watchExperiments(ownerUserId: owner),
+              query: query,
+              searchableText: (e) => [
+                e.hypothesis,
+                e.methodMd,
+                e.resultMd,
+                ...e.metrics,
+              ].whereType<String>().join('\n'),
               emptyIcon: FLucideIcons.flaskConical,
-              emptyTitle: '没有进行中的 Experiment',
-              emptyMessage: 'Experiment 通常挂在一条待验证的 Assumption 上。',
+              emptyTitle: l10n.knowledgeLibraryEmptyExperimentsTitle,
+              emptyMessage: l10n.knowledgeLibraryEmptyExperimentsBody,
               tileBuilder: (context, e) => _buildExperimentTile(
                 context,
                 e,
@@ -339,9 +390,11 @@ class _LibraryList extends ConsumerWidget {
             ),
             _LibrarySegment.routines => _SegmentList<KnowledgeRoutine>(
               stream: repo.watchRoutines(ownerUserId: owner),
+              query: query,
+              searchableText: (r) => [r.statement, r.scope].join('\n'),
               emptyIcon: FLucideIcons.calendarClock,
-              emptyTitle: '还没有 Routine',
-              emptyMessage: '定期提醒（例如「港卡每 6 个月活跃一次」）。新建后 AI 会在到期前主动提示。',
+              emptyTitle: l10n.knowledgeLibraryEmptyRoutinesTitle,
+              emptyMessage: l10n.knowledgeLibraryEmptyRoutinesBody,
               tileBuilder: (context, r) => _buildRoutineTile(
                 context,
                 r,
@@ -372,6 +425,8 @@ class _LibraryList extends ConsumerWidget {
 class _SegmentList<T> extends StatelessWidget {
   const _SegmentList({
     required this.stream,
+    required this.query,
+    required this.searchableText,
     required this.emptyIcon,
     required this.emptyTitle,
     required this.emptyMessage,
@@ -379,6 +434,8 @@ class _SegmentList<T> extends StatelessWidget {
   });
 
   final Stream<List<T>> stream;
+  final String query;
+  final String Function(T item) searchableText;
   final IconData emptyIcon;
   final String emptyTitle;
   final String emptyMessage;
@@ -386,10 +443,12 @@ class _SegmentList<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final normalizedQuery = query.trim().toLowerCase();
     return StreamBuilder<List<T>>(
       stream: stream,
       builder: (context, snap) {
-        final items = snap.data ?? const [];
+        final items = snap.data ?? <T>[];
         if (items.isEmpty) {
           return AppEmptyState(
             icon: emptyIcon,
@@ -397,10 +456,29 @@ class _SegmentList<T> extends StatelessWidget {
             message: emptyMessage,
           );
         }
+
+        final visibleItems = normalizedQuery.isEmpty
+            ? items
+            : items
+                  .where(
+                    (item) => searchableText(
+                      item,
+                    ).toLowerCase().contains(normalizedQuery),
+                  )
+                  .toList(growable: false);
+
+        if (visibleItems.isEmpty) {
+          return AppEmptyState(
+            icon: FLucideIcons.search,
+            title: l10n.knowledgeLibrarySearchEmptyTitle,
+            message: l10n.knowledgeLibrarySearchEmptyBody,
+          );
+        }
+
         return ListView.separated(
-          itemCount: items.length,
+          itemCount: visibleItems.length,
           separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
-          itemBuilder: (context, i) => tileBuilder(context, items[i]),
+          itemBuilder: (context, i) => tileBuilder(context, visibleItems[i]),
         );
       },
     );
@@ -415,7 +493,8 @@ class _DeleteEntryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FTooltip(
-      tipBuilder: (_, _) => const Text('删除'),
+      tipBuilder: (_, _) =>
+          Text(AppLocalizations.of(context).knowledgeLibraryDeleteTooltip),
       child: FButton.icon(
         variant: FButtonVariant.ghost,
         onPress: onPressed,
@@ -439,10 +518,10 @@ Future<void> _deleteEntry({
 }) async {
   final confirmed = await showConfirmDialog(
     context: context,
-    title: const Text('删除条目？'),
-    body: Text('”$title” 会从资料库移除，并在下次索引同步后从 AI 记忆中清理。'),
-    confirmLabel: '删除',
-    cancelLabel: '取消',
+    title: Text(AppLocalizations.of(context).knowledgeLibraryDeleteTitle),
+    body: Text(AppLocalizations.of(context).knowledgeLibraryDeleteBody(title)),
+    confirmLabel: AppLocalizations.of(context).commonDelete,
+    cancelLabel: AppLocalizations.of(context).commonCancel,
     destructive: true,
   );
   if (confirmed != true) return;
@@ -470,7 +549,11 @@ Future<void> _deleteEntry({
     }
   } catch (e) {
     if (context.mounted) {
-      AppMessenger.show(context, ToastKind.error, '删除失败：$e');
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).knowledgeLibraryDeleteFailed('$e'),
+      );
     }
   }
 }
@@ -612,13 +695,14 @@ Widget _buildRoutineTile(
 }) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
+  final l10n = AppLocalizations.of(context);
   final now = DateTime.now();
   final days = r.daysUntilDue(now);
   final dueLabel = days < 0
-      ? '已逾期 ${-days} 天'
+      ? l10n.knowledgeRoutineOverdueDays(-days)
       : days == 0
-      ? '今日到期'
-      : '$days 天后到期';
+      ? l10n.knowledgeRoutineDueToday
+      : l10n.knowledgeRoutineDueInDays(days);
   final dueColor = days < 0 ? colors.destructive : colors.mutedForeground;
   return KnowledgeSection.item(
     title: r.statement,
@@ -632,7 +716,7 @@ Widget _buildRoutineTile(
     ),
     children: [
       Text(
-        '$dueLabel · 每 ${r.intervalDays} 天 · ${r.scope}',
+        l10n.knowledgeRoutineLibraryMeta(dueLabel, r.intervalDays, r.scope),
         style: typography.sm.copyWith(color: dueColor),
       ),
     ],

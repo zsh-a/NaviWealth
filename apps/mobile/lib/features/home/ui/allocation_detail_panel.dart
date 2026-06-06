@@ -190,7 +190,7 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
               ),
               decoration: BoxDecoration(
                 color: context.theme.colors.mutedForeground.withValues(
-                  alpha: 0.35,
+                  alpha: AppOpacity.muted,
                 ),
                 borderRadius: BorderRadius.circular(AppRadius.xxs),
               ),

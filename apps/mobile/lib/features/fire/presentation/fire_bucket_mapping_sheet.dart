@@ -176,8 +176,8 @@ class _MappingRow extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s6),
           Wrap(
-            spacing: 6,
-            runSpacing: 6,
+            spacing: AppSpacing.s6,
+            runSpacing: AppSpacing.s6,
             children: [
               _roleBadge(
                 context,

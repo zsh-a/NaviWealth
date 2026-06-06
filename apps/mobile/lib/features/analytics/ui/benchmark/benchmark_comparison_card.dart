@@ -64,8 +64,8 @@ class _BenchmarkSelectionChips extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final selection = ref.watch(benchmarkComparisonSelectionProvider);
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: AppSpacing.s8,
+      runSpacing: AppSpacing.s8,
       children: [
         for (final index in BenchmarkIndex.values)
           FButton(

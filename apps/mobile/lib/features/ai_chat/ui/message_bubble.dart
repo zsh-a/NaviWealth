@@ -1033,8 +1033,8 @@ class _AssistantActions extends ConsumerWidget {
     if (!canCopy && !canRegenerate) return const SizedBox.shrink();
     final turn = ref.watch(chatControllerProvider(sessionId));
     return Wrap(
-      spacing: 4,
-      runSpacing: 2,
+      spacing: AppSpacing.s4,
+      runSpacing: AppSpacing.s2,
       children: [
         if (canCopy)
           _ActionButton(

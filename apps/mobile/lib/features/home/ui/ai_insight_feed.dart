@@ -36,7 +36,11 @@ class AiInsightFeed extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: AppSpacing.s4, bottom: AppSpacing.s8, top: AppSpacing.s4),
+          padding: const EdgeInsets.only(
+            left: AppSpacing.s4,
+            bottom: AppSpacing.s8,
+            top: AppSpacing.s4,
+          ),
           child: Text(
             l10n.dashboardAiInsightsTitle,
             style: context.theme.typography.sm.copyWith(
@@ -47,7 +51,9 @@ class AiInsightFeed extends StatelessWidget {
         ),
         for (var i = 0; i < insights.length; i++)
           Padding(
-            padding: EdgeInsets.only(bottom: i == insights.length - 1 ? 0 : AppSpacing.s8),
+            padding: EdgeInsets.only(
+              bottom: i == insights.length - 1 ? 0 : AppSpacing.s8,
+            ),
             child: _StaggeredFadeIn(
               delay: Duration(milliseconds: 60 * i),
               child: _InsightCard(item: insights[i]),
@@ -112,7 +118,10 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
       ),
       child: SoftCard(
         onPress: !tappable ? null : (item.onTap ?? () => context.push(route!)),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s14,
+          vertical: AppSpacing.s12,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -127,7 +136,11 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   alignment: Alignment.center,
-                  child: Icon(item.icon, size: AppIconSizes.h18, color: iconTint),
+                  child: Icon(
+                    item.icon,
+                    size: AppIconSizes.h18,
+                    color: iconTint,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.s12),
                 Expanded(
@@ -160,7 +173,9 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
                   Icon(
                     FLucideIcons.chevronRight,
                     size: AppIconSizes.h18,
-                    color: colors.mutedForeground.withValues(alpha: AppOpacity.prominent),
+                    color: colors.mutedForeground.withValues(
+                      alpha: AppOpacity.prominent,
+                    ),
                   ),
                 ],
               ],
@@ -195,7 +210,10 @@ class _ExpandedDetail extends StatelessWidget {
     final colors = context.theme.colors;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s10,
+      ),
       decoration: BoxDecoration(
         color: colors.muted,
         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -278,39 +296,46 @@ class _InsightOverlayActions extends StatelessWidget {
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
     return Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4, vertical: AppSpacing.s2),
-        decoration: BoxDecoration(
-          color: colors.background.withValues(alpha: AppOpacity.overlay),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(
-            color: colors.foreground.withValues(alpha: isDark ? AppOpacity.subtle : AppOpacity.faint),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s4,
+        vertical: AppSpacing.s2,
+      ),
+      decoration: BoxDecoration(
+        color: colors.background.withValues(alpha: AppOpacity.overlay),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(
+          color: colors.foreground.withValues(
+            alpha: isDark ? AppOpacity.subtle : AppOpacity.faint,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? AppOpacity.muted : AppOpacity.faint),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _OverlayIconButton(
-              icon: expanded
-                  ? FLucideIcons.foldVertical
-                  : FLucideIcons.unfoldVertical,
-              tooltip: l10n.dashboardInsightActionExpand,
-              onTap: onExpand,
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).shadowColor.withValues(
+              alpha: isDark ? AppOpacity.muted : AppOpacity.faint,
             ),
-            askCapsule,
-            _OverlayIconButton(
-              icon: FLucideIcons.x,
-              tooltip: l10n.dashboardInsightActionDismiss,
-              onTap: onDismiss,
-            ),
-          ],
-        ),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _OverlayIconButton(
+            icon: expanded
+                ? FLucideIcons.foldVertical
+                : FLucideIcons.unfoldVertical,
+            tooltip: l10n.dashboardInsightActionExpand,
+            onTap: onExpand,
+          ),
+          askCapsule,
+          _OverlayIconButton(
+            icon: FLucideIcons.x,
+            tooltip: l10n.dashboardInsightActionDismiss,
+            onTap: onDismiss,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -334,8 +359,15 @@ class _OverlayIconButton extends StatelessWidget {
       child: FTappable(
         onPress: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: AppSpacing.s4),
-          child: Icon(icon, size: AppIconSizes.xs, color: colors.mutedForeground),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s6,
+            vertical: AppSpacing.s4,
+          ),
+          child: Icon(
+            icon,
+            size: AppIconSizes.xs,
+            color: colors.mutedForeground,
+          ),
         ),
       ),
     );
@@ -375,10 +407,7 @@ class _StaggeredFadeInState extends State<_StaggeredFadeIn>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: Motion.medium,
-    );
+    _controller = AnimationController(vsync: this, duration: Motion.medium);
     Future.delayed(widget.delay, () {
       if (mounted) _controller.forward();
     });

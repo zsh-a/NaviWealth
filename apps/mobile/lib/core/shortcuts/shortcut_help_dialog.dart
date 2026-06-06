@@ -167,7 +167,7 @@ class _ActivatorBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<String> labels = _labelsFor(activator);
     return Wrap(
-      spacing: 4,
+      spacing: AppSpacing.s4,
       children: <Widget>[
         for (final String label in labels)
           Container(

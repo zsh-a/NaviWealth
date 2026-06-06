@@ -161,8 +161,8 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
             AppSpacing.s8,
           ),
           child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: AppSpacing.s8,
+            runSpacing: AppSpacing.s8,
             children: [
               for (final a in payable)
                 AiPill(

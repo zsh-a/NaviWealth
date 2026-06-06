@@ -14,7 +14,7 @@ import '../../../core/shell/domain_shell.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 DomainShellSpec knowledgeDomainShell(AppLocalizations l10n) {
-  return const DomainShellSpec(
+  return DomainShellSpec(
     scope: DomainScope.knowledge,
     label: 'KnowledgeOS',
     icon: FLucideIcons.brain,
@@ -23,19 +23,19 @@ DomainShellSpec knowledgeDomainShell(AppLocalizations l10n) {
       DomainShellTab(
         icon: FLucideIcons.inbox,
         selectedIcon: FLucideIcons.inbox,
-        label: '收件箱',
+        label: l10n.knowledgeTabInbox,
         routePath: AppRoutes.knowledgeInbox,
       ),
       DomainShellTab(
         icon: FLucideIcons.bookOpen,
         selectedIcon: FLucideIcons.bookOpen,
-        label: '资料库',
+        label: l10n.knowledgeTabLibrary,
         routePath: AppRoutes.knowledgeLibrary,
       ),
       DomainShellTab(
         icon: FLucideIcons.clipboardCheck,
         selectedIcon: FLucideIcons.clipboardCheck,
-        label: '复盘',
+        label: l10n.knowledgeTabReview,
         routePath: AppRoutes.knowledgeReview,
       ),
     ],

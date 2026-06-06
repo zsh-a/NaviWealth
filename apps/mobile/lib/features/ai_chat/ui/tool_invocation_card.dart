@@ -102,7 +102,9 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                       ),
                     ),
                     Icon(
-                      _expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+                      _expanded
+                          ? FLucideIcons.chevronUp
+                          : FLucideIcons.chevronDown,
                       size: AppIconSizes.h18,
                       color: context.theme.colors.mutedForeground,
                     ),
@@ -112,10 +114,15 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
             ),
             if (jumps.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.s12, 0, AppSpacing.s12, AppSpacing.s8),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s12,
+                  0,
+                  AppSpacing.s12,
+                  AppSpacing.s8,
+                ),
                 child: Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
+                  spacing: AppSpacing.s8,
+                  runSpacing: AppSpacing.s4,
                   children: [
                     for (final jump in jumps)
                       FButton(
@@ -128,7 +135,12 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
               ),
             if (_expanded)
               Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.s12, 0, AppSpacing.s12, AppSpacing.s12),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s12,
+                  0,
+                  AppSpacing.s12,
+                  AppSpacing.s12,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -243,7 +255,9 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
               color: context.theme.colors.background,
               borderRadius: BorderRadius.circular(AppRadius.xs),
               border: Border.all(
-                color: context.theme.colors.border.withValues(alpha: AppOpacity.disabled),
+                color: context.theme.colors.border.withValues(
+                  alpha: AppOpacity.disabled,
+                ),
               ),
             ),
             child: body,
@@ -265,12 +279,10 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: TypographyTokens.labelSmall.fontSize,
+          style: TypographyTokens.labelSmall.copyWith(
             height: 1.2,
             fontWeight: FontWeight.w500,
             color: colors.mutedForeground,
-            letterSpacing: 0.2,
           ),
         ),
         const SizedBox(height: AppSpacing.s4),
@@ -343,7 +355,8 @@ IconData toolIcon(String wireName) {
     'get_fire_state' || 'get_fire_plan' => FLucideIcons.flag,
     'get_fire_buckets' => FLucideIcons.folderTree,
     'get_fire_review' => FLucideIcons.history,
-    'get_fire_stress_tests' || 'simulate_fire_plan' => FLucideIcons.flaskConical,
+    'get_fire_stress_tests' ||
+    'simulate_fire_plan' => FLucideIcons.flaskConical,
     // Options income
     'get_options_income_opportunities' => FLucideIcons.piggyBank,
     'get_options_strategy_profile' => FLucideIcons.handshake,

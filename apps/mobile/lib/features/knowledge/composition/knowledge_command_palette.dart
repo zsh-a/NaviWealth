@@ -24,7 +24,7 @@ List<CommandPaletteEntry> knowledgeCommandPaletteEntries(
   return <CommandPaletteEntry>[
     CommandPaletteEntry(
       id: 'nav.knowledge.inbox',
-      label: '知识 · 收件箱',
+      label: l10n.knowledgeCommandInbox,
       icon: FLucideIcons.inbox,
       keywords: const <String>[
         AppRoutes.knowledgeInbox,
@@ -40,7 +40,7 @@ List<CommandPaletteEntry> knowledgeCommandPaletteEntries(
     ),
     CommandPaletteEntry(
       id: 'nav.knowledge.library',
-      label: '知识 · 资料库',
+      label: l10n.knowledgeCommandLibrary,
       icon: FLucideIcons.bookOpen,
       keywords: const <String>[
         AppRoutes.knowledgeLibrary,
@@ -56,7 +56,7 @@ List<CommandPaletteEntry> knowledgeCommandPaletteEntries(
     ),
     CommandPaletteEntry(
       id: 'nav.knowledge.review',
-      label: '知识 · 复盘',
+      label: l10n.knowledgeCommandReview,
       icon: FLucideIcons.scrollText,
       keywords: const <String>[
         AppRoutes.knowledgeReview,

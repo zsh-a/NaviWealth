@@ -126,8 +126,8 @@ class _RollupHeader extends StatelessWidget {
     final tok = trace.tokenTotals;
     final cost = estimateTraceCostCny(trace);
     return Wrap(
-      spacing: 6,
-      runSpacing: 6,
+      spacing: AppSpacing.s6,
+      runSpacing: AppSpacing.s6,
       children: [
         AiPill(label: '${trace.totalDurationMs} ms'),
         AiPill(label: l10n.aiTraceRoundsCount(trace.llmRoundCount)),

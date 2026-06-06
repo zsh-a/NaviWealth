@@ -23,21 +23,25 @@ import 'package:forui/forui.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_widgets.dart';
 
 /// Human (zh) label for each [DecisionStatus]. Kept next to the sheet so
 /// the status chooser and any future badge localisation share one source.
-String decisionStatusLabel(DecisionStatus s) => switch (s) {
-  DecisionStatus.draft => '草稿',
-  DecisionStatus.active => '进行中',
-  DecisionStatus.paused => '暂停',
-  DecisionStatus.expired => '已过期',
-  DecisionStatus.verified => '已验证',
-  DecisionStatus.falsified => '已证伪',
-  DecisionStatus.superseded => '已被取代',
-};
+String decisionStatusLabel(BuildContext context, DecisionStatus s) {
+  final l10n = AppLocalizations.of(context);
+  return switch (s) {
+    DecisionStatus.draft => l10n.knowledgeDecisionStatusDraft,
+    DecisionStatus.active => l10n.knowledgeDecisionStatusActive,
+    DecisionStatus.paused => l10n.knowledgeDecisionStatusPaused,
+    DecisionStatus.expired => l10n.knowledgeDecisionStatusExpired,
+    DecisionStatus.verified => l10n.knowledgeDecisionStatusVerified,
+    DecisionStatus.falsified => l10n.knowledgeDecisionStatusFalsified,
+    DecisionStatus.superseded => l10n.knowledgeDecisionStatusSuperseded,
+  };
+}
 
 /// Opens the lifecycle editor for [decision]. Resolves to `true` when a
 /// change was saved (the caller reloads), `null`/`false` otherwise.
@@ -63,8 +67,9 @@ class _DecisionLifecycleSheet extends StatefulWidget {
 
 class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
   late DecisionStatus _status = widget.decision.status;
-  late final TextEditingController _outcomeCtrl =
-      TextEditingController(text: widget.decision.actualOutcomeMd ?? '');
+  late final TextEditingController _outcomeCtrl = TextEditingController(
+    text: widget.decision.actualOutcomeMd ?? '',
+  );
   late String? _supersededBy = widget.decision.supersededByDecisionId;
   List<KnowledgeDecision> _candidates = const <KnowledgeDecision>[];
   bool _saving = false;
@@ -88,8 +93,9 @@ class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
     );
     if (!mounted) return;
     setState(() {
-      _candidates =
-          all.where((d) => d.id != widget.decision.id).toList(growable: false);
+      _candidates = all
+          .where((d) => d.id != widget.decision.id)
+          .toList(growable: false);
     });
   }
 
@@ -114,8 +120,9 @@ class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
       final outcome = _outcomeCtrl.text.trim();
       // Only a `superseded` decision keeps the supersededBy link; clearing
       // the status clears the pointer so the chain doesn't show a stale edge.
-      final supersededBy =
-          _status == DecisionStatus.superseded ? _supersededBy : null;
+      final supersededBy = _status == DecisionStatus.superseded
+          ? _supersededBy
+          : null;
       final updated = KnowledgeDecision(
         id: d.id,
         question: d.question,
@@ -150,11 +157,13 @@ class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
     return AppSheet(
-      title: '更新 Decision',
-      subtitle: '状态 / 实际结果 / 认知演化链',
+      title: AppLocalizations.of(context).knowledgeDecisionLifecycleTitle,
+      subtitle: AppLocalizations.of(context).knowledgeDecisionLifecycleSubtitle,
       footer: AppSheetFooter(
-        submitLabel: _saving ? '保存中…' : '保存',
-        cancelLabel: '取消',
+        submitLabel: _saving
+            ? AppLocalizations.of(context).commonSaving
+            : AppLocalizations.of(context).commonSave,
+        cancelLabel: AppLocalizations.of(context).commonCancel,
         busy: !_canSave,
         onSubmit: _save,
       ),
@@ -163,7 +172,7 @@ class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            '状态',
+            AppLocalizations.of(context).knowledgeDecisionStatusLabel,
             style: typography.sm.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: AppSpacing.s8),
@@ -177,30 +186,33 @@ class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
                       ? FButtonVariant.primary
                       : FButtonVariant.outline,
                   onPress: () => setState(() => _status = s),
-                  child: Text(decisionStatusLabel(s)),
+                  child: Text(decisionStatusLabel(context, s)),
                 ),
             ],
           ),
           const SizedBox(height: AppSpacing.s16),
           MarkdownEditorWithPreview(
             controller: _outcomeCtrl,
-            label: '实际结果（Markdown，可选）',
-            hint: '复盘时填：实际发生了什么、和预期的差距',
+            label: AppLocalizations.of(
+              context,
+            ).knowledgeDecisionActualOutcomeLabel,
+            hint: AppLocalizations.of(
+              context,
+            ).knowledgeDecisionActualOutcomeHint,
             minLines: 2,
             maxLines: 6,
           ),
           if (_status == DecisionStatus.superseded) ...[
             const SizedBox(height: AppSpacing.s16),
             Text(
-              '被哪条 Decision 取代',
+              AppLocalizations.of(context).knowledgeDecisionSupersededByLabel,
               style: typography.sm.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: AppSpacing.s4),
             if (_candidates.isEmpty)
               Text(
-                '还没有其它 Decision 可指向——先记录新决策,再回来标记取代关系。',
-                style:
-                    typography.xs.copyWith(color: colors.mutedForeground),
+                AppLocalizations.of(context).knowledgeDecisionSupersededByEmpty,
+                style: typography.xs.copyWith(color: colors.mutedForeground),
               )
             else
               for (final c in _candidates)
@@ -208,8 +220,9 @@ class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
                   behavior: HitTestBehavior.opaque,
                   onTap: () => setState(() => _supersededBy = c.id),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.s4,
+                    ),
                     child: Row(
                       children: [
                         Icon(
@@ -224,7 +237,7 @@ class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
                         const SizedBox(width: AppSpacing.s8),
                         Expanded(
                           child: Text(
-                            '${c.question}（${decisionStatusLabel(c.status)}）',
+                            '${c.question}（${decisionStatusLabel(context, c.status)}）',
                             style: typography.sm,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,

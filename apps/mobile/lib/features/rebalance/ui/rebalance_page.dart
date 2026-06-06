@@ -109,8 +109,8 @@ class _SchemeSelector extends ConsumerWidget {
             Text(l10n.rebalanceSchemeTitle, style: context.theme.typography.sm),
             const SizedBox(height: AppSpacing.s8),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppSpacing.s8,
+              runSpacing: AppSpacing.s8,
               children: [
                 for (final preset in AllocationSchemePreset.values)
                   if (preset != AllocationSchemePreset.custom)

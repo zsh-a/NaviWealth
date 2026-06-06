@@ -324,7 +324,9 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
                 padding: const EdgeInsets.all(AppSpacing.s12),
                 child: Text(
                   _previewError!,
-                  style: TextStyle(color: context.theme.colors.destructive),
+                  style: context.theme.typography.sm.copyWith(
+                    color: context.theme.colors.destructive,
+                  ),
                 ),
               ),
             ],
@@ -519,8 +521,8 @@ class _TypeSelector extends StatelessWidget {
       (CorporateActionType.drip, l10n.corpActionTypeDrip),
     ];
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: AppSpacing.s8,
+      runSpacing: AppSpacing.s8,
       children: [
         for (final (type, label) in entries)
           FButton(

@@ -192,8 +192,8 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
             ),
             const SizedBox(height: AppSpacing.s8),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppSpacing.s8,
+              runSpacing: AppSpacing.s8,
               children: [
                 for (final mode in FireLifestyleMode.values)
                   FButton(
