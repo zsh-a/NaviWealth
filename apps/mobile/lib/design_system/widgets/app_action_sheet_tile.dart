@@ -59,7 +59,7 @@ class AppActionSheetTile extends StatelessWidget with FTileMixin {
       suffix: Icon(
         FLucideIcons.chevronRight,
         size: AppIconSizes.md,
-        color: colors.mutedForeground.withValues(alpha: 0.55),
+        color: colors.mutedForeground.withValues(alpha: AppOpacity.scrim),
       ),
     );
   }

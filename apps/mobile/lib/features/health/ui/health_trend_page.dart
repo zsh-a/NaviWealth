@@ -15,6 +15,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
@@ -38,8 +39,9 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
-      title: '趋势 · HealthOS',
+      title: l10n.healthTrendTitle,
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
         children: [

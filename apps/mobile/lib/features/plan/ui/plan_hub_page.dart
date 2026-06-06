@@ -68,7 +68,17 @@ class _PlanHero extends ConsumerWidget {
     return viewAsync.when(
       loading: () => const SoftCard(
         padding: EdgeInsets.all(AppSpacing.s20),
-        child: SizedBox(height: 96, child: Center(child: FCircularProgress())),
+        borderRadius: AppRadius.xlg,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SkeletonBox(width: 120, height: 16, radius: AppRadius.xs),
+            SizedBox(height: AppSpacing.s8),
+            SkeletonBox(width: 220, height: 34, radius: AppRadius.sm),
+            SizedBox(height: AppSpacing.s16),
+            SkeletonBox(height: 10, radius: AppRadius.full),
+          ],
+        ),
       ),
       error: (_, _) => _emptyHero(context, l10n),
       data: (view) {
@@ -98,7 +108,7 @@ class _PlanHero extends ConsumerWidget {
     final colors = context.theme.colors;
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s20),
-      borderRadius: 18,
+      borderRadius: AppRadius.xlg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -135,7 +145,7 @@ class _PlanHero extends ConsumerWidget {
     final progressPct = (progress * 100).clamp(0, 100).toStringAsFixed(0);
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s20),
-      borderRadius: 18,
+      borderRadius: AppRadius.xlg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

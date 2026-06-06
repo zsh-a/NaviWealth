@@ -31,6 +31,7 @@ import 'route_paths.dart';
 
 /// Width at or above which the persistent left dock + sidebar own the
 /// global chrome, so the header/greeting don't repeat it.
+const double kTabBarOffset = 80;
 const double _desktopChromeBreakpoint = Breakpoints.desktop;
 
 bool _showInlineChrome(BuildContext context) =>

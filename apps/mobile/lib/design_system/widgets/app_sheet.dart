@@ -300,7 +300,7 @@ class AppSheet extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: colors.mutedForeground.withValues(alpha: AppOpacity.muted),
-            borderRadius: BorderRadius.circular(AppSpacing.s2),
+            borderRadius: BorderRadius.circular(AppRadius.xxs),
           ),
         ),
       ),

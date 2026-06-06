@@ -201,8 +201,8 @@ class _DateRangeRow extends StatelessWidget {
       (_DateRange.thisYear, l10n.activityFeedFilterRangeThisYear),
     ];
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: AppSpacing.s8,
+      runSpacing: AppSpacing.s8,
       children: [
         for (final (range, label) in entries)
           _PillChip(

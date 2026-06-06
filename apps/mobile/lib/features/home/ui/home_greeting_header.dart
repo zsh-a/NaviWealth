@@ -60,7 +60,12 @@ class HomeGreetingHeader extends ConsumerWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s20, AppSpacing.s8, AppSpacing.s20, AppSpacing.s14),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s20,
+        AppSpacing.s8,
+        AppSpacing.s20,
+        AppSpacing.s14,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -99,7 +104,7 @@ class HomeGreetingHeader extends ConsumerWidget {
                   for (var i = 0; i < statusFragments.length; i++) ...[
                     Text(
                       statusFragments[i].text,
-                      style: TextStyle(
+                      style: context.theme.typography.sm.copyWith(
                         color: statusFragments[i].color,
                         fontWeight: FontWeight.w500,
                       ),
@@ -107,8 +112,10 @@ class HomeGreetingHeader extends ConsumerWidget {
                     if (i < statusFragments.length - 1)
                       Text(
                         '·',
-                        style: TextStyle(
-                          color: colors.mutedForeground.withValues(alpha: AppOpacity.scrim),
+                        style: context.theme.typography.sm.copyWith(
+                          color: colors.mutedForeground.withValues(
+                            alpha: AppOpacity.scrim,
+                          ),
                         ),
                       ),
                   ],

@@ -47,7 +47,15 @@ class IncomePlannerPage extends ConsumerWidget {
       childPad: false,
       child: profileAsync.when(
         loading: () => const _LoadingState(),
-        error: (e, _) => _ErrorState(message: '$e'),
+        error: (e, _) => AppEmptyState.error(
+          title: l10n.commonLoadFailed,
+          message: '$e',
+          action: FButton(
+            variant: FButtonVariant.ghost,
+            onPress: () => ref.invalidate(optionsStrategyProfileProvider),
+            child: Text(l10n.commonRetry),
+          ),
+        ),
         data: (profile) {
           if (profile == null || !profile.hasAcknowledgedRiskDisclosure) {
             return const _StartState();
@@ -65,23 +73,6 @@ class _LoadingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(child: FCircularProgress());
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.s24),
-      child: Text(
-        message,
-        style: TextStyle(color: context.theme.colors.destructive),
-      ),
-    );
   }
 }
 
@@ -172,7 +163,15 @@ class _ConfiguredBody extends ConsumerWidget {
         const SizedBox(height: AppSpacing.s8),
         approvedAsync.when(
           loading: () => const _LoadingTile(),
-          error: (e, _) => _ErrorState(message: '$e'),
+          error: (e, _) => AppEmptyState.error(
+            title: l10n.commonLoadFailed,
+            message: '$e',
+            action: FButton(
+              variant: FButtonVariant.ghost,
+              onPress: () => ref.invalidate(approvedUnderlyingsProvider),
+              child: Text(l10n.commonRetry),
+            ),
+          ),
           data: (items) => items.isEmpty
               ? const _ApprovedEmpty()
               : _ApprovedList(items: items),

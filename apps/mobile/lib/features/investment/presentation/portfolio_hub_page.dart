@@ -12,6 +12,7 @@ import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../app/route_paths.dart';
+import '../../../app/shell_chrome.dart';
 import '../../../core/async/async_notifier_convention.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
@@ -401,7 +402,7 @@ class _PortfolioHubBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final width = MediaQuery.sizeOf(context).width;
-    final hPad = Breakpoints.isMobile(width) ? 16.0 : 24.0;
+    final hPad = Breakpoints.isMobile(width) ? AppSpacing.s16 : AppSpacing.s24;
     final groups = data.groupsFor(view, l10n);
 
     return ListView(
@@ -410,7 +411,7 @@ class _PortfolioHubBody extends StatelessWidget {
         hPad,
         AppSpacing.s8,
         hPad,
-        80 + MediaQuery.paddingOf(context).bottom,
+        kTabBarOffset + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
         _PortfolioSummary(data: data),

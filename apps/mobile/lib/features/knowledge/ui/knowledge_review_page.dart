@@ -13,6 +13,7 @@ import '../../../app/shell_chrome.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../agents/assumption_agent.dart';
 import '../agents/routine_due_agent.dart';
 import '../data/providers.dart';
@@ -45,8 +46,9 @@ class KnowledgeReviewPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
-      title: '复盘 · KnowledgeOS',
+      title: l10n.knowledgeReviewTitle,
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
         children: const <Widget>[
@@ -189,7 +191,11 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Row(
         children: [
-          Icon(FLucideIcons.repeat, size: AppIconSizes.xs, color: colors.mutedForeground),
+          Icon(
+            FLucideIcons.repeat,
+            size: AppIconSizes.xs,
+            color: colors.mutedForeground,
+          ),
           const SizedBox(width: AppSpacing.s4),
           Expanded(
             child: Column(
@@ -270,7 +276,9 @@ class _DueReviewsCard extends ConsumerWidget {
                           .take(kReviewCardMaxItems)
                           .map(
                             (d) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.s4,
+                              ),
                               child: Row(
                                 children: [
                                   Icon(
@@ -351,7 +359,9 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                           .take(kReviewCardMaxItems)
                           .map(
                             (a) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.s4,
+                              ),
                               child: Text(
                                 '· ${a.statement}（${a.daysSinceVerify(now)} 天, conf ${a.confidence.toStringAsFixed(2)}）',
                                 style: typography.sm,

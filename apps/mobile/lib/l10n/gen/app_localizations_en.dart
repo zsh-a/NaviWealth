@@ -7444,6 +7444,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthTodayTitle => 'Today · HealthOS';
 
   @override
+  String get healthTrendTitle => 'Trends · HealthOS';
+
+  @override
+  String get healthPlanTitle => 'Plan · HealthOS';
+
+  @override
   String get healthRecordBodyMetricAction => 'Record body metric';
 
   @override
@@ -7504,6 +7510,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeLibraryTitle => 'Library · KnowledgeOS';
+
+  @override
+  String get knowledgeReviewTitle => 'Review · KnowledgeOS';
 
   @override
   String get knowledgeSegmentDecisions => 'Decisions';

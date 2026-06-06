@@ -16,6 +16,7 @@ import 'package:forui/forui.dart';
 
 import '../../../app/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import 'health_today_providers.dart';
 
 class HealthPlanPage extends ConsumerWidget {
@@ -23,9 +24,10 @@ class HealthPlanPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final async = ref.watch(recoverySignalProvider);
     return ShellTabScaffold(
-      title: '计划 · HealthOS',
+      title: l10n.healthPlanTitle,
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
         children: [
@@ -254,10 +256,7 @@ class _LoadingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return const SoftCard(
       padding: EdgeInsets.all(AppSpacing.s16),
-      child: SizedBox(
-        height: 80,
-        child: Center(child: FCircularProgress()),
-      ),
+      child: SizedBox(height: 80, child: Center(child: FCircularProgress())),
     );
   }
 }

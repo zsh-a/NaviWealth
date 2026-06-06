@@ -37,26 +37,6 @@ Future<bool?> showConfirmDialog({
   );
 }
 
-/// Show a forui-styled bottom sheet that hosts a form.
-///
-/// Drop-in replacement for `showFSheet`: pop with
-/// `Navigator.of(ctx).pop(value)` to return a value to the awaiter.
-Future<T?> showFormSheet<T>({
-  required BuildContext context,
-  required WidgetBuilder builder,
-  bool useRootNavigator = false,
-  double? mainAxisMaxRatio,
-  bool isScrollControlled = false,
-}) {
-  return showFSheet<T>(
-    context: context,
-    side: FLayout.btt,
-    useRootNavigator: useRootNavigator,
-    mainAxisMaxRatio: isScrollControlled ? null : mainAxisMaxRatio,
-    builder: (ctx) => SafeArea(child: builder(ctx)),
-  );
-}
-
 /// Show a forui-styled dialog that hosts arbitrary [child] content with
 /// a single OK action. Returns `true` when OK is pressed, `null` on
 /// barrier dismiss.

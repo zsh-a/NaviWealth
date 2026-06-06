@@ -58,7 +58,7 @@ class TrendCard extends ConsumerWidget {
         child: SoftCard(
           level: SoftCardLevel.raised,
           padding: const EdgeInsets.all(AppSpacing.s20),
-          borderRadius: 18,
+          borderRadius: AppRadius.xlg,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
