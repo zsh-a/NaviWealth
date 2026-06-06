@@ -7,6 +7,8 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/ai/llm_credentials/providers.dart'
     show llmCredentialsProvider;
+import '../../../core/ai/local/memory/providers.dart'
+    show memoryRuntimeProvider;
 import '../../../core/logging/providers.dart' show loggerProvider;
 import '../../../core/persistence/providers.dart';
 import '../../../core/sync/outbox_provider.dart';
@@ -16,6 +18,7 @@ import 'contradiction_judge.dart';
 import 'inbox_triage_classifier.dart';
 import 'inbox_triage_repository.dart';
 import 'knowledge_repository.dart';
+import 'knowledge_search_service.dart';
 import 'llm_capture_classifier.dart';
 import 'llm_contradiction_judge.dart';
 import 'llm_inbox_triage_classifier.dart';
@@ -31,6 +34,17 @@ final knowledgeRepositoryProvider = FutureProvider<KnowledgeRepository>((
   final db = await ref.watch(appDatabaseProvider.future);
   final outbox = await ref.watch(outboxStoreProvider.future);
   return KnowledgeRepository(db: db, outbox: outbox);
+});
+
+final knowledgeSearchServiceProvider = FutureProvider<KnowledgeSearchService>((
+  ref,
+) async {
+  final repository = await ref.watch(knowledgeRepositoryProvider.future);
+  final memoryRuntime = await ref.watch(memoryRuntimeProvider.future);
+  return KnowledgeSearchService(
+    repository: repository,
+    memoryRuntime: memoryRuntime,
+  );
 });
 
 final inboxTriageRepositoryProvider = FutureProvider<InboxTriageRepository>((

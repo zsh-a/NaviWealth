@@ -13,11 +13,12 @@
 /// [kKnowledgeMemorySources] (filtered by the `types` input) and merge.
 library;
 
-import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
 import '../data/knowledge_object_memory_indexers.dart';
+import '../data/knowledge_search_service.dart';
+import '../data/providers.dart';
 
 class FindSimilarKnowledgeTool implements DeviceTool {
   const FindSimilarKnowledgeTool();
@@ -83,10 +84,10 @@ class FindSimilarKnowledgeTool implements DeviceTool {
     }
     final excludeId = (input['exclude_id'] as String?)?.trim();
     final threshold = (input['threshold'] is num)
-        ? (input['threshold'] as num).toDouble().clamp(0.0, 1.0)
+        ? (input['threshold'] as num).toDouble().clamp(0.0, 1.0).toDouble()
         : kDefaultThreshold;
     final topK = (input['top_k'] is num)
-        ? (input['top_k'] as num).toInt().clamp(1, 20)
+        ? (input['top_k'] as num).toInt().clamp(1, 20).toInt()
         : 5;
 
     final typesRaw = input['types'];
@@ -101,87 +102,29 @@ class FindSimilarKnowledgeTool implements DeviceTool {
       return <String, Object?>{'candidates': const <Object?>[]};
     }
 
-    final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
+    final service = await ctx.ref.read(knowledgeSearchServiceProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final queryTokens = _tokenize(text);
-
-    final candidates = <Map<String, Object?>>[];
-    for (final entry in sources.entries) {
-      final type = entry.key;
-      final source = entry.value;
-      final hits = await runtime.recall(
-        ownerUserId: ownerUserId,
-        queryText: text,
-        source: source,
-        // Pull a cushion above top_k so the threshold + exclude filter
-        // still leaves enough per source.
-        topK: (topK * 2).clamp(topK, 20),
-      );
-      for (final h in hits) {
-        final sourceId = h.record.sourceId;
-        if (sourceId == null) continue;
-        if (excludeId != null && sourceId == excludeId) continue;
-        final cosine = h.semanticSim ?? 0.0;
-        if (cosine < threshold) continue;
-        final overlap = _tokenOverlap(
-          queryTokens,
-          _tokenize('${h.record.title} ${h.record.summary}'),
-        );
-        candidates.add(<String, Object?>{
-          'id': sourceId,
-          'kind': type,
-          'title': h.record.title,
-          'similarity': double.parse(cosine.toStringAsFixed(4)),
-          'token_overlap': double.parse(overlap.toStringAsFixed(4)),
-          'source': source,
-        });
-      }
-    }
-
-    candidates.sort((a, b) {
-      final sa = (a['similarity'] as num).toDouble();
-      final sb = (b['similarity'] as num).toDouble();
-      final c = sb.compareTo(sa);
-      if (c != 0) return c;
-      // Tie-break on token overlap so a literal near-match wins.
-      return (b['token_overlap'] as num).toDouble().compareTo(
-        (a['token_overlap'] as num).toDouble(),
-      );
-    });
+    final candidates = await service.findSimilarKnowledge(
+      ownerUserId: ownerUserId,
+      text: text,
+      types: wantTypes,
+      excludeId: excludeId,
+      threshold: threshold,
+      topK: topK,
+    );
 
     return <String, Object?>{
-      'candidates': candidates.take(topK).toList(growable: false),
+      'candidates': candidates.map(_hitToWire).toList(growable: false),
     };
   }
 
-  /// Lowercased word/CJK-bigram token set. CJK has no spaces, so we add
-  /// character bigrams for those runs; ASCII falls back to word splitting.
-  static Set<String> _tokenize(String s) {
-    final lower = s.toLowerCase();
-    final tokens = <String>{};
-    for (final word in lower.split(RegExp(r'[^a-z0-9一-鿿]+'))) {
-      if (word.isEmpty) continue;
-      if (RegExp(r'[一-鿿]').hasMatch(word)) {
-        // CJK run → character bigrams (+ singletons for length-1 words).
-        if (word.length == 1) {
-          tokens.add(word);
-        } else {
-          for (var i = 0; i < word.length - 1; i++) {
-            tokens.add(word.substring(i, i + 2));
-          }
-        }
-      } else {
-        tokens.add(word);
-      }
-    }
-    return tokens;
-  }
-
-  /// Jaccard overlap of two token sets, 0 when either is empty.
-  static double _tokenOverlap(Set<String> a, Set<String> b) {
-    if (a.isEmpty || b.isEmpty) return 0;
-    final inter = a.where(b.contains).length;
-    final union = (<String>{...a, ...b}).length;
-    return union == 0 ? 0 : inter / union;
-  }
+  static Map<String, Object?> _hitToWire(KnowledgeSimilarityHit hit) =>
+      <String, Object?>{
+        'id': hit.id,
+        'kind': hit.kind,
+        'title': hit.title,
+        'similarity': double.parse(hit.similarity.toStringAsFixed(4)),
+        'token_overlap': double.parse(hit.tokenOverlap.toStringAsFixed(4)),
+        'source': hit.source,
+      };
 }

@@ -10,11 +10,12 @@
 /// `find_similar_knowledge` for that).
 library;
 
-import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
 import '../data/knowledge_object_memory_indexers.dart';
+import '../data/knowledge_search_service.dart';
+import '../data/providers.dart';
 
 class SearchKnowledgeTool implements DeviceTool {
   const SearchKnowledgeTool();
@@ -80,41 +81,35 @@ class SearchKnowledgeTool implements DeviceTool {
       return <String, Object?>{'results': const <Object?>[]};
     }
 
-    final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
+    final service = await ctx.ref.read(knowledgeSearchServiceProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
 
-    final results = <Map<String, Object?>>[];
-    for (final entry in sources.entries) {
-      final hits = await runtime.recall(
-        ownerUserId: ownerUserId,
-        queryText: query,
-        source: entry.value,
-        topK: topK,
-      );
-      for (final h in hits) {
-        final sourceId = h.record.sourceId;
-        if (sourceId == null) continue;
-        results.add(<String, Object?>{
-          'id': sourceId,
-          'kind': entry.key,
-          'title': h.record.title,
-          'excerpt': _excerpt(h.record.summary),
-          'score': double.parse(h.score.toStringAsFixed(4)),
-        });
-      }
-    }
-
-    results.sort(
-      (a, b) => (b['score'] as num).toDouble().compareTo(
-        (a['score'] as num).toDouble(),
-      ),
+    final results = await service.searchKnowledge(
+      ownerUserId: ownerUserId,
+      query: query,
+      types: wantTypes,
+      topK: topK,
     );
 
     return <String, Object?>{
-      'results': results.take(topK).toList(growable: false),
+      'results': results.map(_hitToWire).toList(growable: false),
     };
   }
 
-  static String _excerpt(String s, [int n = 160]) =>
-      s.length <= n ? s : '${s.substring(0, n)}…';
+  static Map<String, Object?> _hitToWire(KnowledgeSearchHit hit) =>
+      <String, Object?>{
+        'id': hit.id,
+        'kind': hit.kind,
+        'title': hit.title,
+        'excerpt': hit.excerpt,
+        'score': double.parse(hit.score.toStringAsFixed(4)),
+        'semantic_score': hit.semanticScore == null
+            ? null
+            : double.parse(hit.semanticScore!.toStringAsFixed(4)),
+        'semantic_sim': hit.semanticSim == null
+            ? null
+            : double.parse(hit.semanticSim!.toStringAsFixed(4)),
+        'lexical_score': double.parse(hit.lexicalScore.toStringAsFixed(4)),
+        'matched_fields': hit.matchedFields,
+      };
 }

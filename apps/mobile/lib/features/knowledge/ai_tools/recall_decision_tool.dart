@@ -8,8 +8,8 @@ library;
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
+import '../data/knowledge_search_service.dart';
 import '../data/providers.dart';
-import '../domain/knowledge_models.dart';
 
 class RecallDecisionTool implements DeviceTool {
   const RecallDecisionTool();
@@ -30,14 +30,8 @@ class RecallDecisionTool implements DeviceTool {
   Map<String, Object?> get inputSchema => <String, Object?>{
     'type': 'object',
     'properties': {
-      'query': {
-        'type': 'string',
-        'description': '自然语言关键词或短语。',
-      },
-      'topic': {
-        'type': 'string',
-        'description': '可选窄化关键词。',
-      },
+      'query': {'type': 'string', 'description': '自然语言关键词或短语。'},
+      'topic': {'type': 'string', 'description': '可选窄化关键词。'},
       'time_range': {
         'type': 'object',
         'properties': {
@@ -45,12 +39,7 @@ class RecallDecisionTool implements DeviceTool {
           'to': {'type': 'string', 'description': 'ISO8601 终点。'},
         },
       },
-      'limit': {
-        'type': 'integer',
-        'minimum': 1,
-        'maximum': 50,
-        'default': 10,
-      },
+      'limit': {'type': 'integer', 'minimum': 1, 'maximum': 50, 'default': 10},
     },
     'required': <String>['query'],
   };
@@ -73,54 +62,48 @@ class RecallDecisionTool implements DeviceTool {
       to = DateTime.tryParse((range['to'] as String?) ?? '');
     }
 
-    final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
+    final service = await ctx.ref.read(knowledgeSearchServiceProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final decisions = await repo.listDecisions(
+    final hits = await service.recallDecisions(
       ownerUserId: ownerUserId,
-      limit: 500,
+      query: query,
+      topic: topic,
+      from: from,
+      to: to,
+      limit: limit,
     );
-
-    bool matches(KnowledgeDecision d) {
-      if (from != null && d.decidedAt.isBefore(from)) return false;
-      if (to != null && d.decidedAt.isAfter(to)) return false;
-      bool textMatch(String s) {
-        final lower = s.toLowerCase();
-        if (!lower.contains(query)) return false;
-        if (topic != null && topic.isNotEmpty && !lower.contains(topic)) {
-          return false;
-        }
-        return true;
-      }
-      // Search in question, rationale, selected. OR'd within fields,
-      // AND'd against `topic` (when set).
-      if (query.isEmpty) return topic == null || topic.isEmpty;
-      return textMatch(d.question) ||
-          textMatch(d.rationaleMd) ||
-          textMatch(d.selectedLabel);
-    }
-
     final now = DateTime.now().toUtc();
-    final hits = decisions.where(matches).take(limit).toList(growable: false);
     return <String, Object?>{
       'decisions': hits
-          .map(
-            (d) => <String, Object?>{
-              'id': d.id,
-              'question': d.question,
-              'selected': d.selectedLabel,
-              'rationale': d.rationaleMd,
-              'principle_ids': d.principleIds,
-              'assumption_ids': d.assumptionIds,
-              'expected_outcome': d.expectedOutcome,
-              'actual_outcome': d.actualOutcomeMd,
-              'status': d.status.wire,
-              'decided_at': d.decidedAt.toUtc().toIso8601String(),
-              'review_date': d.reviewDate?.toUtc().toIso8601String(),
-              'age_days':
-                  now.difference(d.decidedAt.toUtc()).inDays.clamp(0, 100000),
-            },
-          )
+          .map((hit) => _decisionToWire(hit, now))
           .toList(growable: false),
+    };
+  }
+
+  static Map<String, Object?> _decisionToWire(
+    KnowledgeDecisionSearchHit hit,
+    DateTime now,
+  ) {
+    final d = hit.decision;
+    return <String, Object?>{
+      'id': d.id,
+      'question': d.question,
+      'selected': d.selectedLabel,
+      'rationale': d.rationaleMd,
+      'principle_ids': d.principleIds,
+      'assumption_ids': d.assumptionIds,
+      'expected_outcome': d.expectedOutcome,
+      'actual_outcome': d.actualOutcomeMd,
+      'status': d.status.wire,
+      'decided_at': d.decidedAt.toUtc().toIso8601String(),
+      'review_date': d.reviewDate?.toUtc().toIso8601String(),
+      'age_days': now.difference(d.decidedAt.toUtc()).inDays.clamp(0, 100000),
+      'score': double.parse(hit.hit.score.toStringAsFixed(4)),
+      'semantic_sim': hit.hit.semanticSim == null
+          ? null
+          : double.parse(hit.hit.semanticSim!.toStringAsFixed(4)),
+      'lexical_score': double.parse(hit.hit.lexicalScore.toStringAsFixed(4)),
+      'matched_fields': hit.hit.matchedFields,
     };
   }
 }
