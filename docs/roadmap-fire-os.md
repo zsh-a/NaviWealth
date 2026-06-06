@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # NaviWealth FIRE OS 计划文档
 
 > 文档版本：2026-05-20
@@ -638,3 +639,122 @@ risk_settings{}` 的多字段聚合体。挤进 KV 会把 schema 演化挪到 JS
 最终判断标准：
 
 > NaviWealth FIRE OS 不只是帮用户变得更有钱，而是帮助用户长期保持自由。
+=======
+# Roadmap — AI-native FIRE OS
+
+> **类型**: 路线图（方向，非承诺）。`features/fire/` 的形态升级计划，**不是新 app、不新增主 tab**。
+> **现状基线**: `features/fire/` 是确定性计算器——`FireCalculator` 把 `FireGoal` + 当前净值 +
+> 三档年化投影成 `FireDashboardView`（FV-of-annuity + 4% 规则 + ±20% 敏感度）。
+> `FireGoal` 当前存 SharedPreferences（`fire_goal_preferences.dart`，FIR-73）。
+> **目标**: 演进为持续回答「我的资产/现金流/风险是否还撑得起想要的自由生活」的系统。
+> 协议依赖 [`docs/ai-architecture.md`](./ai-architecture.md)（device-only runtime）与
+> [`docs/sync-protocol.md`](./sync-protocol.md)（v1.0 frozen，本计划不改协议）。
+
+---
+
+## 已签决策
+
+| 决策 | 结论 |
+|---|---|
+| 范围 | 全量蓝图分阶段（Phase 1/2/3，见下） |
+| 数据存储 | Profile / Buckets / Risk / Memory **全部走同步 Drift 表**（Phase 1 把 FireGoal 从 prefs 迁到表，撤销 FIR-73 的 prefs-only）|
+| 导航 | `/accounts/fire` 下的 hub（状态/桶/规划/风险/报表子页），不新增主 tab |
+| AI 部署 | 沿用 device-only（W-D7 后无云 AI）；FIRE 状态**设备端计算**，不做 D1 read-model |
+| AI 写入 | 沿用 `ProposalEnvelope` / propose-card；AI **不直接执行**交易/转账，无新协议 |
+
+**产品论点**：资产是输入，自由度是输出。一等公民是 `FireStateSnapshot{ status,
+withdrawalRate, runwayMonths, stress }`，净资产只是它的输入。建议必须落到行动
+（AI 输出走 `ProposalEnvelope`，纯文字洞察也带 `suggestedActions[]`）。
+
+## 架构形态（目标态）
+
+```
+UI    /accounts/fire hub：状态/桶/规划/风险/报表（FCard/AppSpacing/AppRadius，复用现有图表）
+State features/fire/data：fireStateSnapshotProvider 等（设备端 read-model，不上 D1）
+AI    kDeviceTools 中的 FIRE 工具 + ToolDescriptor 策略门 + system prompt 注入
+Engine features/fire/domain/{models,engine,policies,reports}（纯 Dart，无 IO）
+Data  Drift +5 表（SyncableTable，OpLog 同步）+ 复用 dashboard/expense/cashflow/RebalanceEngine
+```
+
+引擎约束：纯函数 / stateless / 无 `DateTime.now()` 隐式调用；`ProjectionEngine`
+（= 现 `FireCalculator` 重命名，**数学逐位兼容**，旧 golden/单测不破）只新增
+`liveAnnualReturn`（XIRR）与 `WithdrawalPolicy` 注入点。复用不重写：`RebalanceEngine`
+（补桶建议）、`holdingsSnapshotProvider`、dashboard/expense/cashflow providers。
+
+### 数据模型（5 张新表，均 `SyncableTable`，一次 schema bump）
+
+| 表 | 作用 |
+|----|------|
+| `FireProfile` | 自由计划一等输入（单行/用户）：target / 月支出 / 月结余 / 通胀 / 提取策略 / target_runway_months / base_currency。取代 `FireGoal` 的 prefs 存储 |
+| `FireBucket` | 钱的「角色」：`cash`/`growth`/`defense`/`risk`/`dream`。首次进入种 5 默认桶 |
+| `FireBucketMembership` | account/asset → bucket 多对一（PK `(owner,entity_type,entity_id)`，天然幂等）。不复制金额，永远从真源派生 |
+| `FireRiskItem` | 破坏自由的事件清单（medical / family_support / market_drawdown / income_loss / …）+ 覆盖状态 |
+| `FireMemory` | AI 的 FIRE 长期记忆（constraint/intent/preference/milestone）。**走同步**（区别于 local-only 的 `ai_traces`/`ai_undo_stack`）|
+
+持久化用 minor-unit `int`（与项目其余金额列一致），引擎内用 `Decimal`/`Money`，
+provider 层转换。不新增 D1 read-model；后端 `migrations/` 不动。
+
+### 顶层契约 `FireStateSnapshot`（UI 与 AI 共享同一不可变快照）
+
+`{ status(secure|cautious|tight|atRisk), headline, drivers[], currentWithdrawalRate,
+realWithdrawalRate, runwayMonths?, cashBurnoutDate?, buckets[], stress, risks[],
+projection(=现 FireDashboardView 兼容), suggestedActions[] }`。确定性建议由
+`policies/` 直接产出，**不依赖 LLM**；AI 价值是解释/模拟/个性化，不是凭空生成数字。
+**不要让 AI 自己重算状态**——AI 消费引擎结论。
+
+### AI 集成（沿用 device-only agent，零新协议）
+
+新增 FIRE 工具注册进 `kDeviceTools` + 配对 `ToolDescriptor`
+（`./tool/check-tool-descriptors.sh` CI 校验）：
+
+| 工具 | Access | SideEffect | Confirm |
+|---|---|---|---|
+| `get_fire_state` / `get_fire_projection` / `run_fire_stress_test` / `get_fire_buckets` / `get_fire_risks` | `read` | `none` | `none` |
+| `propose_fire_action` / `remember_fire_intent` | `propose` | `deviceLocalWrite` | `oneTap` |
+
+**硬约束**：FIRE 工具集**无** `externalWrite`/`externalCall`——AI 不能下单/转账/改持仓。
+`BaseContext` 注入 `FireStateSnapshot` 摘要；`FireMemory` 中
+`active && confidence≥阈值` 注入 system prompt 的「计划约束」段。所有 sheet/dialog
+走 `showAppSheet`/`showAppFormSheet`/`AppSheetFooter`（CI 守护，见 CLAUDE.md 模态约定）。
+
+## 分阶段
+
+### Phase 1 — 自由状态可见（引擎 + 状态 + 只读 AI）
+
+- 引擎重构 `domain/{models,engine,policies}`；`ProjectionEngine` 行为兼容（旧测试不破）
+- `FreedomStateMachine` + `RunwayCalculator` + `WithdrawalRate` + `StressTester`
+- Drift：`FireProfile`（迁移 prefs→表）、`FireBucket` + `Membership`（默认 5 桶种子）
+- `fireStateSnapshotProvider` + 状态页 UI
+- AI 只读工具 `get_fire_state` / `get_fire_projection` / `run_fire_stress_test` + 状态摘要注入
+- **退出标准**：状态页落地；AI 能基于真实数据解释状态并给确定性建议；旧 FIRE
+  golden/单测全绿；新引擎单测覆盖 4 状态 + runway + stress 边界
+
+### Phase 2 — 行动闭环（propose + 桶管理 + 报表 + 记忆）
+
+- `BucketAllocator` + 桶页（拖拽映射、缺口、补桶建议经 `RebalanceEngine`）
+- `propose_fire_action` / `remember_fire_intent`（`ProposalEnvelope` + undo）
+- `FireRiskItem` + 风险页；`FireMemory` 注入 system prompt
+- 动态提取策略 `WithdrawalPolicy.dynamic`（简化护栏，参数进 `thresholds.dart`）
+- 月报 `MonthlyReportBuilder`（数字引擎出、叙述 AI 出）
+- 与 [`roadmap-midterm-execution.md`](./roadmap-midterm-execution.md) MT M3 对齐：FIRE 拉
+  「计划交易/RecurringTransactions」作为现金流确定性骨架
+- **退出标准**：建议→一键确认→落库→可撤销；月报可读；记忆跨会话生效
+
+### Phase 3 — 深化与可选
+
+多档计划（`FireProfile` 多行）/ 情景对比；蒙特卡洛（替换/补充确定性投影）；
+报表脱敏分享版；预留插件点（健康/时间，默认不实现，不进主线）。
+
+## 待产品确认 / 风险（不阻塞）
+
+| 项 | 默认假设 |
+|---|---|
+| 报表分享脱敏边界 | Phase 3 才做；默认全脱敏（只导状态/比率/月数）|
+| 动态提取算法（Guyton-Klinger vs 护栏）| Phase 2 用简化护栏 |
+| XIRR 接入（`fireLiveAnnualReturnProvider` 现为占位返回 null）| Phase 1 用 neutralRate，Phase 2 接真实现金流 XIRR |
+| 健康/时间模块是否纳入「自由」 | 不进 Phase 1-3 主线，仅留接口 |
+
+技术风险：`ProjectionEngine` 重命名/搬迁动 golden → 重构期保持纯数学逐位兼容，
+import 路径用 facade 过渡；minor-int↔`Decimal` 转换在 provider 层集中 + 属性测试；
+schema bump 建议 Phase 1 一次建全 5 表（迁移代价集中、低风险）。
+>>>>>>> Stashed changes
