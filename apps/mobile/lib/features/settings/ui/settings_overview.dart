@@ -4,7 +4,6 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
-import '../../../core/ai/visual/visual.dart';
 import '../../../core/config/app_version.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../core/logging/crash_reporting_preference.dart';
@@ -319,13 +318,18 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s24, AppSpacing.s12, AppSpacing.s8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s12,
+        AppSpacing.s20,
+        AppSpacing.s12,
+        AppSpacing.s6,
+      ),
       child: Text(
         title.toUpperCase(),
         style: context.theme.typography.xs2.copyWith(
           color: context.theme.colors.mutedForeground,
           fontWeight: FontWeight.w600,
-          letterSpacing: 0.6,
+          letterSpacing: 0,
         ),
       ),
     );
@@ -342,7 +346,9 @@ class _SectionDivider extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
       child: Container(
         height: 1,
-        color: context.theme.colors.foreground.withValues(alpha: AppOpacity.whisper),
+        color: context.theme.colors.foreground.withValues(
+          alpha: AppOpacity.whisper,
+        ),
       ),
     );
   }
@@ -437,7 +443,12 @@ class _AppearanceSection extends ConsumerWidget {
           onChanged: (m) => ref.read(marketColorModeProvider.notifier).set(m),
         ),
         const Padding(
-          padding: EdgeInsets.fromLTRB(AppSpacing.s14, 0, AppSpacing.s14, AppSpacing.s8),
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.s14,
+            0,
+            AppSpacing.s14,
+            AppSpacing.s8,
+          ),
           child: _MarketColorPreview(),
         ),
         _SectionDivider(),
@@ -499,10 +510,17 @@ class _AboutTile extends ConsumerWidget {
       },
     );
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s14,
+        vertical: AppSpacing.s10,
+      ),
       child: Row(
         children: [
-          Icon(FLucideIcons.info, size: AppIconSizes.h18, color: colors.mutedForeground),
+          Icon(
+            FLucideIcons.info,
+            size: AppIconSizes.h18,
+            color: colors.mutedForeground,
+          ),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
@@ -582,7 +600,12 @@ class _RiskAppetiteRow extends ConsumerWidget {
     final colors = context.theme.colors;
     final appetite = ref.watch(riskAppetiteProvider);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s14, AppSpacing.s10, AppSpacing.s14, AppSpacing.s10),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s14,
+        AppSpacing.s10,
+        AppSpacing.s14,
+        AppSpacing.s10,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -601,19 +624,14 @@ class _RiskAppetiteRow extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.s8),
-          // The row is intentionally tight — chips share a stadium
-          // shape and the active one paints in the AI active tone, so
-          // selection is glanceable without verbose copy.
           Wrap(
             spacing: 6,
             runSpacing: 6,
             children: [
               for (final option in _appetiteOptionsForChips(l10n))
-                AiPill(
+                _SettingsChoicePill(
                   label: option.label,
-                  state: appetite == option.value
-                      ? AiPillState.selected
-                      : AiPillState.neutral,
+                  selected: appetite == option.value,
                   onTap: () => _onPick(ref, option.value),
                 ),
             ],
@@ -648,6 +666,54 @@ class _RiskAppetiteRow extends ConsumerWidget {
           .read(concentrationThresholdsProvider.notifier)
           .applyAll(concentrationThresholdsForAppetite(next));
     }
+  }
+}
+
+class _SettingsChoicePill extends StatelessWidget {
+  const _SettingsChoicePill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return FTappable(
+      onPress: onTap,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 34),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s6,
+        ),
+        decoration: BoxDecoration(
+          color: selected
+              ? colors.primary.withValues(alpha: AppOpacity.subtle)
+              : colors.muted.withValues(alpha: AppOpacity.faint),
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          border: Border.all(
+            color: selected
+                ? colors.primary.withValues(alpha: AppOpacity.prominent)
+                : colors.border.withValues(alpha: AppOpacity.muted),
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: context.theme.typography.xs.copyWith(
+            color: selected ? colors.primary : colors.foreground,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -784,7 +850,10 @@ class _LocalModeStatusRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s14,
+        vertical: AppSpacing.s10,
+      ),
       child: Row(
         children: [
           Icon(

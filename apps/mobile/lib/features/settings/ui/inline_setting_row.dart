@@ -89,9 +89,9 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
           _popover.toggle();
         },
         child: Padding(
-          padding: const EdgeInsets.symmetric(
+          padding: EdgeInsets.symmetric(
             horizontal: AppSpacing.s14,
-            vertical: AppSpacing.s10,
+            vertical: widget.subtitle == null ? AppSpacing.s10 : AppSpacing.s8,
           ),
           child: Row(
             children: [
@@ -102,15 +102,34 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
               ),
               const SizedBox(width: AppSpacing.s12),
               Expanded(
-                child: Text(
-                  widget.label,
-                  style: context.theme.typography.sm,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.label,
+                      style: context.theme.typography.sm,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (widget.subtitle != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.s2),
+                        child: Text(
+                          widget.subtitle!,
+                          style: context.theme.typography.xs.copyWith(
+                            color: colors.mutedForeground,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              const SizedBox(width: AppSpacing.s8),
-              Flexible(
+              const SizedBox(width: AppSpacing.s10),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 172),
                 child: Text(
                   selectedLabel,
                   style: context.theme.typography.sm.copyWith(
@@ -123,10 +142,10 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
               ),
               const SizedBox(width: AppSpacing.s4),
               Icon(
-                FLucideIcons.unfoldVertical,
-                size: AppIconSizes.sm,
+                FLucideIcons.chevronDown,
+                size: AppIconSizes.xs,
                 color: colors.mutedForeground.withValues(
-                  alpha: AppOpacity.prominent,
+                  alpha: AppOpacity.muted,
                 ),
               ),
             ],

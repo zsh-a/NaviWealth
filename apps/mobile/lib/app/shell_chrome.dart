@@ -6,7 +6,7 @@
 /// and a per-domain tab layer. Before this file those global actions were
 /// scattered: Search was a Finance-only middle slot in the bottom nav,
 /// Settings hung off the Finance Today header avatar, and domain switching
-/// was a hidden long-press. This file folds all three into the one header
+/// was a hidden gesture. This file folds global actions into the one header
 /// each tab page already renders ([ShellTabScaffold]) plus an in-content
 /// variant ([ShellActionRow]) for the Today greeting, which has no
 /// `FHeader`.
@@ -76,10 +76,7 @@ class ShellTabScaffold extends StatelessWidget {
       childPad: childPad,
       collapseOnScroll: collapseOnScroll,
       leading: inline ? const DomainSwitcherChip() : null,
-      actions: [
-        ...actions,
-        if (inline) ...shellGlobalActions(context),
-      ],
+      actions: [...actions, if (inline) ...shellGlobalActions(context)],
       child: child,
     );
   }
