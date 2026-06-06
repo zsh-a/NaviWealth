@@ -5375,6 +5375,58 @@ class AppLocalizationsEn extends AppLocalizations {
       'After deletion, AI retrieval will fall back to the stub embedder. Redownloading requires network access again.';
 
   @override
+  String get settingsAiModelsActiveRuntimeTitle => 'Running embedder';
+
+  @override
+  String get settingsAiModelsActiveRuntimeLoading =>
+      'Checking the active embedder…';
+
+  @override
+  String settingsAiModelsActiveRuntimeFailed(String error) {
+    return 'Active embedder check failed: $error';
+  }
+
+  @override
+  String get settingsAiModelsActiveRuntimeNative => 'Native';
+
+  @override
+  String get settingsAiModelsActiveRuntimeStub => 'Stub';
+
+  @override
+  String get settingsAiModelsActiveRuntimeUnknown => 'Unavailable';
+
+  @override
+  String get settingsAiModelsFingerprintLabel => 'fingerprint';
+
+  @override
+  String get settingsAiModelsDimensionLabel => 'dimension';
+
+  @override
+  String get settingsAiModelsMemoryRowsLabel => 'Memories';
+
+  @override
+  String get settingsAiModelsVectorRowsLabel => 'Vectors';
+
+  @override
+  String get settingsAiModelsCurrentVectorsLabel => 'Current';
+
+  @override
+  String get settingsAiModelsStaleVectorsLabel => 'Stale';
+
+  @override
+  String get settingsAiModelsEventsLabel => 'Events';
+
+  @override
+  String get settingsAiModelsSourcesTitle => 'Indexed sources';
+
+  @override
+  String get settingsAiModelsNoSources => 'No memory sources indexed yet.';
+
+  @override
+  String get settingsAiModelsStaleVectorsHint =>
+      'Some vectors were created by a different embedder fingerprint. They will be refreshed by the next indexer cycle.';
+
+  @override
   String get knowledgeAiSuggestionsTitle => 'AI suggestions';
 
   @override

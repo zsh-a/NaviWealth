@@ -9295,6 +9295,102 @@ abstract class AppLocalizations {
   /// **'After deletion, AI retrieval will fall back to the stub embedder. Redownloading requires network access again.'**
   String get settingsAiModelsDeleteBody;
 
+  /// No description provided for @settingsAiModelsActiveRuntimeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Running embedder'**
+  String get settingsAiModelsActiveRuntimeTitle;
+
+  /// No description provided for @settingsAiModelsActiveRuntimeLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking the active embedder…'**
+  String get settingsAiModelsActiveRuntimeLoading;
+
+  /// No description provided for @settingsAiModelsActiveRuntimeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Active embedder check failed: {error}'**
+  String settingsAiModelsActiveRuntimeFailed(String error);
+
+  /// No description provided for @settingsAiModelsActiveRuntimeNative.
+  ///
+  /// In en, this message translates to:
+  /// **'Native'**
+  String get settingsAiModelsActiveRuntimeNative;
+
+  /// No description provided for @settingsAiModelsActiveRuntimeStub.
+  ///
+  /// In en, this message translates to:
+  /// **'Stub'**
+  String get settingsAiModelsActiveRuntimeStub;
+
+  /// No description provided for @settingsAiModelsActiveRuntimeUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get settingsAiModelsActiveRuntimeUnknown;
+
+  /// No description provided for @settingsAiModelsFingerprintLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'fingerprint'**
+  String get settingsAiModelsFingerprintLabel;
+
+  /// No description provided for @settingsAiModelsDimensionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'dimension'**
+  String get settingsAiModelsDimensionLabel;
+
+  /// No description provided for @settingsAiModelsMemoryRowsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Memories'**
+  String get settingsAiModelsMemoryRowsLabel;
+
+  /// No description provided for @settingsAiModelsVectorRowsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Vectors'**
+  String get settingsAiModelsVectorRowsLabel;
+
+  /// No description provided for @settingsAiModelsCurrentVectorsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get settingsAiModelsCurrentVectorsLabel;
+
+  /// No description provided for @settingsAiModelsStaleVectorsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stale'**
+  String get settingsAiModelsStaleVectorsLabel;
+
+  /// No description provided for @settingsAiModelsEventsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get settingsAiModelsEventsLabel;
+
+  /// No description provided for @settingsAiModelsSourcesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Indexed sources'**
+  String get settingsAiModelsSourcesTitle;
+
+  /// No description provided for @settingsAiModelsNoSources.
+  ///
+  /// In en, this message translates to:
+  /// **'No memory sources indexed yet.'**
+  String get settingsAiModelsNoSources;
+
+  /// No description provided for @settingsAiModelsStaleVectorsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Some vectors were created by a different embedder fingerprint. They will be refreshed by the next indexer cycle.'**
+  String get settingsAiModelsStaleVectorsHint;
+
   /// No description provided for @knowledgeAiSuggestionsTitle.
   ///
   /// In en, this message translates to:
