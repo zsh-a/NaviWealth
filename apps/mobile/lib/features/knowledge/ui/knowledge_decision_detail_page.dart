@@ -39,6 +39,7 @@ class _Body extends ConsumerStatefulWidget {
 
 class _BodyState extends ConsumerState<_Body> {
   KnowledgeDecision? _decision;
+  Object? _error;
   List<KnowledgeDecision> _chain = const <KnowledgeDecision>[];
   List<KnowledgePrinciple> _principles = const <KnowledgePrinciple>[];
   List<KnowledgeAssumption> _assumptions = const <KnowledgeAssumption>[];
@@ -51,49 +52,62 @@ class _BodyState extends ConsumerState<_Body> {
   }
 
   Future<void> _load() async {
-    final repo = await ref.read(knowledgeRepositoryProvider.future);
-    final d = await repo.findDecision(widget.decisionId);
-    if (d == null) {
-      if (mounted) setState(() => _loading = false);
-      return;
-    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final repo = await ref.read(knowledgeRepositoryProvider.future);
+      final d = await repo.findDecision(widget.decisionId);
+      if (d == null) {
+        if (mounted) setState(() => _loading = false);
+        return;
+      }
 
-    // Walk supersededBy chain backwards (current → ancestor) until null.
-    final chain = <KnowledgeDecision>[d];
-    var cursor = d;
-    final visited = <String>{d.id};
-    while (cursor.supersededByDecisionId != null &&
-        !visited.contains(cursor.supersededByDecisionId)) {
-      final next = await repo.findDecision(cursor.supersededByDecisionId!);
-      if (next == null) break;
-      visited.add(next.id);
-      chain.add(next);
-      cursor = next;
-    }
+      // Walk supersededBy chain backwards (current → ancestor) until null.
+      final chain = <KnowledgeDecision>[d];
+      var cursor = d;
+      final visited = <String>{d.id};
+      while (cursor.supersededByDecisionId != null &&
+          !visited.contains(cursor.supersededByDecisionId)) {
+        final next = await repo.findDecision(cursor.supersededByDecisionId!);
+        if (next == null) break;
+        visited.add(next.id);
+        chain.add(next);
+        cursor = next;
+      }
 
-    // Resolve referenced principles / assumptions by id so a decision that
-    // cites a since-retired principle or falsified assumption still shows it
-    // (listActive/listOpen would silently drop those — exactly the rows a
-    // post-mortem cares about).
-    final principles = <KnowledgePrinciple>[];
-    final assumptions = <KnowledgeAssumption>[];
-    for (final id in d.principleIds) {
-      final p = await repo.findPrinciple(id);
-      if (p != null) principles.add(p);
-    }
-    for (final id in d.assumptionIds) {
-      final a = await repo.findAssumption(id);
-      if (a != null) assumptions.add(a);
-    }
+      // Resolve referenced principles / assumptions by id so a decision that
+      // cites a since-retired principle or falsified assumption still shows it
+      // (listActive/listOpen would silently drop those — exactly the rows a
+      // post-mortem cares about).
+      final principles = <KnowledgePrinciple>[];
+      final assumptions = <KnowledgeAssumption>[];
+      for (final id in d.principleIds) {
+        final p = await repo.findPrinciple(id);
+        if (p != null) principles.add(p);
+      }
+      for (final id in d.assumptionIds) {
+        final a = await repo.findAssumption(id);
+        if (a != null) assumptions.add(a);
+      }
 
-    if (mounted) {
-      setState(() {
-        _decision = d;
-        _chain = chain;
-        _principles = principles;
-        _assumptions = assumptions;
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _decision = d;
+          _chain = chain;
+          _principles = principles;
+          _assumptions = assumptions;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e;
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -119,23 +133,27 @@ class _BodyState extends ConsumerState<_Body> {
   }
 
   Widget _buildBody(BuildContext context, KnowledgeDecision? d) {
-    if (_loading) return const Center(child: FProgress());
+    if (_loading) return const KnowledgeLoadingState();
+    final error = _error;
+    if (error != null) {
+      return KnowledgeErrorState(
+        title: AppLocalizations.of(context).knowledgeLoadFailed('$error'),
+        onRetry: _load,
+      );
+    }
     if (d == null) {
-      return Center(
-        child: Text(AppLocalizations.of(context).knowledgeDecisionNotFound),
+      return KnowledgeEmptyState(
+        icon: FLucideIcons.fileQuestion,
+        title: AppLocalizations.of(context).knowledgeDecisionNotFound,
       );
     }
     final typography = context.theme.typography;
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    final decidedDate = d.decidedAt.toLocal().toIso8601String().substring(
-      0,
-      10,
-    );
-    final reviewDate = d.reviewDate?.toLocal().toIso8601String().substring(
-      0,
-      10,
-    );
+    final decidedDate = knowledgeDate(context, d.decidedAt, long: true);
+    final reviewDate = d.reviewDate == null
+        ? null
+        : knowledgeDate(context, d.reviewDate!, long: true);
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
@@ -343,7 +361,7 @@ class _ContextSnapshotSection extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: AppSpacing.s4),
             child: Text(
               l10n.knowledgeDetailContextSnapshotCaptured(
-                capturedAt.substring(0, 10),
+                knowledgeDateFromIso(context, capturedAt),
                 '${window ?? "—"}',
               ),
               style: typography.xs.copyWith(color: colors.mutedForeground),

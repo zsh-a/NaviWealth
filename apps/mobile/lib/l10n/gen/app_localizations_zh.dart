@@ -7460,6 +7460,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeCommandReview => '知识 · 复盘';
 
   @override
+  String get knowledgeProposalCaptureUpgrade => '捕获升级';
+
+  @override
+  String get knowledgeProposalMerge => '合并去重';
+
+  @override
+  String get knowledgeProposalRoutine => '定期事项';
+
+  @override
+  String get knowledgeProposalConceptLink => '概念关联';
+
+  @override
   String get knowledgeInboxEmptyTitle => '收件箱空空如也';
 
   @override

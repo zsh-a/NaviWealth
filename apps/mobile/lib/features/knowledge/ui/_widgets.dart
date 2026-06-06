@@ -25,21 +25,195 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/ai/visual/ai_markdown.dart';
+import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+
+export '../domain/knowledge_text.dart';
 
 /// Max items a Review-tab summary card lists per section. Kept here so the
 /// three cards (Routines / Decisions / Assumptions) stay in agreement.
 const int kReviewCardMaxItems = 5;
 
-/// Max chars shown for a body / summary / rationale excerpt in a list card.
-const int kKnowledgeExcerptMaxChars = 200;
+/// Locale-aware KnowledgeOS date display. Use this instead of slicing
+/// ISO strings in UI code.
+String knowledgeDate(BuildContext context, DateTime date, {bool long = false}) {
+  final formatter = AppFormatters(locale: Localizations.localeOf(context));
+  final local = date.toLocal();
+  return long ? formatter.longDate(local) : formatter.date(local);
+}
 
-/// Truncate [text] to [max] chars with a trailing ellipsis. Shared by the
-/// Library + Inbox list cards (was an inline `length > 200 ? substring …`
-/// repeated per card type).
-String knowledgeExcerpt(String text, {int max = kKnowledgeExcerptMaxChars}) =>
-    text.length > max ? '${text.substring(0, max)}…' : text;
+String knowledgeDateFromIso(
+  BuildContext context,
+  String value, {
+  bool long = false,
+}) {
+  final parsed = DateTime.tryParse(value);
+  if (parsed == null) {
+    return value.length > 10 ? value.substring(0, 10) : value;
+  }
+  return knowledgeDate(context, parsed, long: long);
+}
+
+enum KnowledgeStateDensity { page, section }
+
+/// Unified KnowledgeOS loading placeholder.
+class KnowledgeLoadingState extends StatelessWidget {
+  const KnowledgeLoadingState({
+    super.key,
+    this.density = KnowledgeStateDensity.page,
+  });
+
+  final KnowledgeStateDensity density;
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (density) {
+      KnowledgeStateDensity.page => const Center(child: FProgress()),
+      KnowledgeStateDensity.section => const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
+        child: FProgress(),
+      ),
+    };
+  }
+}
+
+/// Unified KnowledgeOS empty placeholder. Page density delegates to the
+/// design-system empty state; section density keeps the same icon/message
+/// language inside summary cards without taking over the full viewport.
+class KnowledgeEmptyState extends StatelessWidget {
+  const KnowledgeEmptyState({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.message,
+    this.density = KnowledgeStateDensity.page,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? message;
+  final KnowledgeStateDensity density;
+
+  @override
+  Widget build(BuildContext context) {
+    if (density == KnowledgeStateDensity.page) {
+      return AppEmptyState(icon: icon, title: title, message: message);
+    }
+    return _KnowledgeStateRow(
+      icon: icon,
+      title: title,
+      message: message,
+      tone: AppEmptyStateTone.neutral,
+    );
+  }
+}
+
+/// Unified KnowledgeOS load-failure placeholder with optional retry.
+class KnowledgeErrorState extends StatelessWidget {
+  const KnowledgeErrorState({
+    super.key,
+    required this.title,
+    this.message,
+    this.onRetry,
+    this.density = KnowledgeStateDensity.page,
+  });
+
+  final String title;
+  final String? message;
+  final VoidCallback? onRetry;
+  final KnowledgeStateDensity density;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final retryButton = onRetry == null
+        ? null
+        : FButton(
+            variant: FButtonVariant.ghost,
+            prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
+            onPress: onRetry,
+            child: Text(l10n.commonRetry),
+          );
+    if (density == KnowledgeStateDensity.page) {
+      return AppEmptyState.error(
+        title: title,
+        message: message,
+        action: retryButton,
+      );
+    }
+    return _KnowledgeStateRow(
+      icon: FLucideIcons.circleX,
+      title: title,
+      message: message,
+      action: retryButton,
+      tone: AppEmptyStateTone.error,
+    );
+  }
+}
+
+class _KnowledgeStateRow extends StatelessWidget {
+  const _KnowledgeStateRow({
+    required this.icon,
+    required this.title,
+    this.message,
+    this.action,
+    required this.tone,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? message;
+  final Widget? action;
+  final AppEmptyStateTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    final iconColor = switch (tone) {
+      AppEmptyStateTone.neutral => colors.primary,
+      AppEmptyStateTone.error => colors.destructive,
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.s2),
+            child: Icon(icon, size: AppIconSizes.sm, color: iconColor),
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+                ),
+                if (message != null) ...[
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(
+                    message!,
+                    style: typography.xs.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ],
+                if (action != null) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  action!,
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// SoftCard with optional title and a children column.
 ///

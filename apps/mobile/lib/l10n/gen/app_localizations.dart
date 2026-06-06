@@ -13458,6 +13458,30 @@ abstract class AppLocalizations {
   /// **'Knowledge · Review'**
   String get knowledgeCommandReview;
 
+  /// No description provided for @knowledgeProposalCaptureUpgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture upgrade'**
+  String get knowledgeProposalCaptureUpgrade;
+
+  /// No description provided for @knowledgeProposalMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge duplicates'**
+  String get knowledgeProposalMerge;
+
+  /// No description provided for @knowledgeProposalRoutine.
+  ///
+  /// In en, this message translates to:
+  /// **'Routine'**
+  String get knowledgeProposalRoutine;
+
+  /// No description provided for @knowledgeProposalConceptLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Concept link'**
+  String get knowledgeProposalConceptLink;
+
   /// No description provided for @knowledgeInboxEmptyTitle.
   ///
   /// In en, this message translates to:

@@ -266,17 +266,16 @@ class _LibraryList extends ConsumerWidget {
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {
         if (!ownerSnap.hasData) {
-          return const Center(child: FProgress());
+          return const KnowledgeLoadingState();
         }
         final owner = ownerSnap.data!;
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         final l10n = AppLocalizations.of(context);
         return repoAsync.when(
-          loading: () => const Center(child: FProgress()),
-          error: (e, _) => Text(
-            l10n.knowledgeLibraryLoadFailed('$e'),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
+          loading: () => const KnowledgeLoadingState(),
+          error: (e, _) => KnowledgeErrorState(
+            title: l10n.knowledgeLibraryLoadFailed('$e'),
+            onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
           ),
           data: (repo) => switch (segment) {
             _LibrarySegment.decisions => _SegmentList<KnowledgeDecision>(
@@ -448,9 +447,14 @@ class _SegmentList<T> extends StatelessWidget {
     return StreamBuilder<List<T>>(
       stream: stream,
       builder: (context, snap) {
+        if (snap.hasError) {
+          return KnowledgeErrorState(
+            title: l10n.knowledgeLibraryLoadFailed('${snap.error}'),
+          );
+        }
         final items = snap.data ?? <T>[];
         if (items.isEmpty) {
-          return AppEmptyState(
+          return KnowledgeEmptyState(
             icon: emptyIcon,
             title: emptyTitle,
             message: emptyMessage,
@@ -468,7 +472,7 @@ class _SegmentList<T> extends StatelessWidget {
                   .toList(growable: false);
 
         if (visibleItems.isEmpty) {
-          return AppEmptyState(
+          return KnowledgeEmptyState(
             icon: FLucideIcons.search,
             title: l10n.knowledgeLibrarySearchEmptyTitle,
             message: l10n.knowledgeLibrarySearchEmptyBody,

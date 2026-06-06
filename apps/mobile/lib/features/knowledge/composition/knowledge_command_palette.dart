@@ -15,9 +15,8 @@ import '../../../l10n/gen/app_localizations.dart';
 /// destinations, which is what unblocks keyboard navigation into the
 /// domain.
 ///
-/// Labels stay literal (matching the domain shell, not yet localised);
-/// keywords carry the route path plus English aliases for locale-blind
-/// search.
+/// Labels come from l10n; keywords carry the route path plus English aliases
+/// for locale-blind search.
 List<CommandPaletteEntry> knowledgeCommandPaletteEntries(
   AppLocalizations l10n,
 ) {

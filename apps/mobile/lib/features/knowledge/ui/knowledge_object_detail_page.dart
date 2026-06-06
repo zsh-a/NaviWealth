@@ -53,6 +53,7 @@ class KnowledgeObjectDetailPage extends ConsumerStatefulWidget {
 class _KnowledgeObjectDetailPageState
     extends ConsumerState<KnowledgeObjectDetailPage> {
   Object? _object;
+  Object? _error;
   bool _loading = true;
 
   KnowledgeObjectKind? get _kind => KnowledgeObjectKind.parse(widget.kind);
@@ -64,18 +65,31 @@ class _KnowledgeObjectDetailPageState
   }
 
   Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     final kind = _kind;
     if (kind == null) {
       if (mounted) setState(() => _loading = false);
       return;
     }
-    final repo = await ref.read(knowledgeRepositoryProvider.future);
-    final obj = await _fetch(repo, kind, widget.id);
-    if (mounted) {
-      setState(() {
-        _object = obj;
-        _loading = false;
-      });
+    try {
+      final repo = await ref.read(knowledgeRepositoryProvider.future);
+      final obj = await _fetch(repo, kind, widget.id);
+      if (mounted) {
+        setState(() {
+          _object = obj;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e;
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -114,11 +128,19 @@ class _KnowledgeObjectDetailPageState
   };
 
   Widget _buildBody() {
-    if (_loading) return const Center(child: FProgress());
+    if (_loading) return const KnowledgeLoadingState();
+    final error = _error;
+    if (error != null) {
+      return KnowledgeErrorState(
+        title: AppLocalizations.of(context).knowledgeLoadFailed('$error'),
+        onRetry: _load,
+      );
+    }
     final obj = _object;
     if (obj == null) {
-      return Center(
-        child: Text(AppLocalizations.of(context).knowledgeObjectNotFound),
+      return KnowledgeEmptyState(
+        icon: FLucideIcons.fileQuestion,
+        title: AppLocalizations.of(context).knowledgeObjectNotFound,
       );
     }
     final children = switch (obj) {

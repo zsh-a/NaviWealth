@@ -266,10 +266,7 @@ class _DecisionWriterState extends State<_DecisionWriter> {
                       : AppLocalizations.of(
                           context,
                         ).knowledgeDecisionReviewDateScheduled(
-                          _reviewDate!.toLocal().toIso8601String().substring(
-                            0,
-                            10,
-                          ),
+                          knowledgeDate(context, _reviewDate!, long: true),
                         ),
                   style: typography.sm.copyWith(color: colors.mutedForeground),
                 ),
@@ -430,18 +427,44 @@ class _PrincipleAssumptionPicker extends ConsumerWidget {
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) return const SizedBox.shrink();
+        if (!ownerSnap.hasData) {
+          return const KnowledgeLoadingState(
+            density: KnowledgeStateDensity.section,
+          );
+        }
         final owner = ownerSnap.data!;
         final repoAsync = ref.watch(knowledgeRepositoryProvider);
         return repoAsync.when(
-          loading: () => const SizedBox.shrink(),
-          error: (_, _) => const SizedBox.shrink(),
+          loading: () => const KnowledgeLoadingState(
+            density: KnowledgeStateDensity.section,
+          ),
+          error: (e, _) => KnowledgeErrorState(
+            title: AppLocalizations.of(context).knowledgeLoadFailed('$e'),
+            onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
+            density: KnowledgeStateDensity.section,
+          ),
           data: (repo) => StreamBuilder<List<KnowledgePrinciple>>(
             stream: repo.watchPrinciples(ownerUserId: owner),
             builder: (context, principlesSnap) {
+              if (principlesSnap.hasError) {
+                return KnowledgeErrorState(
+                  title: AppLocalizations.of(
+                    context,
+                  ).knowledgeLoadFailed('${principlesSnap.error}'),
+                  density: KnowledgeStateDensity.section,
+                );
+              }
               return StreamBuilder<List<KnowledgeAssumption>>(
                 stream: repo.watchAssumptions(ownerUserId: owner),
                 builder: (context, assumptionsSnap) {
+                  if (assumptionsSnap.hasError) {
+                    return KnowledgeErrorState(
+                      title: AppLocalizations.of(
+                        context,
+                      ).knowledgeLoadFailed('${assumptionsSnap.error}'),
+                      density: KnowledgeStateDensity.section,
+                    );
+                  }
                   final principles =
                       (principlesSnap.data ?? const <KnowledgePrinciple>[])
                           .where((p) => p.status == PrincipleStatus.active)

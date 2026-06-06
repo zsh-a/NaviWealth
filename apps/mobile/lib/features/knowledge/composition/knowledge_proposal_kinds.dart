@@ -2,9 +2,8 @@
 /// (`docs/lifeos-shell.md` §4, `docs/knowledgeos-domain.md` §15.6).
 ///
 /// Presentation metadata for the KnowledgeOS `propose_*` kinds the chat
-/// propose-card renders. Labels are literal strings (KnowledgeOS UI is
-/// pre-l10n — §14.2 P3); the `l10n` arg is ignored. Adding a kind = one
-/// entry here + one branch in `KnowledgeProposalApplier`.
+/// propose-card renders. Adding a kind = one entry here + one branch in
+/// `KnowledgeProposalApplier`.
 library;
 
 import 'package:forui/forui.dart';
@@ -51,10 +50,12 @@ const List<ProposalKindMeta> kKnowledgeProposalKinds = [
 Set<String> get kKnowledgeProposalAppliedKinds =>
     kKnowledgeProposalKinds.map((m) => m.kind).toSet();
 
-String _captureUpgradeLabel(AppLocalizations l10n) => '捕获升级';
-String _mergeLabel(AppLocalizations l10n) => '合并去重';
-String _routineLabel(AppLocalizations l10n) => '定期事项';
-String _conceptLinkLabel(AppLocalizations l10n) => '概念关联';
+String _captureUpgradeLabel(AppLocalizations l10n) =>
+    l10n.knowledgeProposalCaptureUpgrade;
+String _mergeLabel(AppLocalizations l10n) => l10n.knowledgeProposalMerge;
+String _routineLabel(AppLocalizations l10n) => l10n.knowledgeProposalRoutine;
+String _conceptLinkLabel(AppLocalizations l10n) =>
+    l10n.knowledgeProposalConceptLink;
 
 List<ProposalKindRow> _captureUpgradeRows(
   AppLocalizations l10n,
