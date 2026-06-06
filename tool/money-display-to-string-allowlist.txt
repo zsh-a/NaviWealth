@@ -101,18 +101,30 @@ apps/mobile/lib/features/health/ui/health_today_page.dart	? '${(wm.value / 1000.
 apps/mobile/lib/features/health/agents/briefing_synthesizer.dart	return 'HRV ${value.toStringAsFixed(0)}ms';	hrv-display
 apps/mobile/lib/features/fire/ai_tools/propose_fire_bucket_rule_tool.dart	final pctPart = pct != null ? '(${(pct * 100).toStringAsFixed(0)}%)' : '';	percent-display
 apps/mobile/lib/features/fire/ai_tools/simulate_fire_plan_tool.dart	if (raw is num) return Decimal.parse(raw.toDouble().toStringAsFixed(2));	decimal-rounding-before-currency-formatter
-apps/mobile/lib/features/knowledge/ui/knowledge_review_page.dart	'· ${a.statement}（${a.daysSinceVerify(now)} 天, conf ${a.confidence.toStringAsFixed(2)}）',	confidence-score
-apps/mobile/lib/features/knowledge/ui/knowledge_object_detail_page.dart	'置信度 ${a.confidence.toStringAsFixed(2)} · scope ${a.scope}',	confidence-score
-apps/mobile/lib/features/knowledge/ui/knowledge_decision_detail_page.dart	'· ${a.statement}（conf ${a.confidence.toStringAsFixed(2)}）',	confidence-score
-apps/mobile/lib/features/knowledge/ui/_object_writers.dart	'置信度：${_confidence.toStringAsFixed(2)}',	confidence-score
+apps/mobile/lib/features/knowledge/ui/knowledge_review_page.dart	widget.assumption.confidence.toStringAsFixed(2),	confidence-score
+apps/mobile/lib/features/knowledge/ui/knowledge_object_detail_page.dart	'${targetAssumption.status.wire} · ${targetAssumption.confidence.toStringAsFixed(2)}',	confidence-score
+apps/mobile/lib/features/knowledge/ui/knowledge_object_detail_page.dart	value: a.confidence.toStringAsFixed(2),	confidence-score
+apps/mobile/lib/features/knowledge/ui/knowledge_decision_detail_page.dart	'${a.status.wire} · ${a.confidence.toStringAsFixed(2)}',	confidence-score
+apps/mobile/lib/features/knowledge/ui/_object_writers.dart	'${_confidence.toStringAsFixed(2)}',	confidence-score
+apps/mobile/lib/features/knowledge/ui/_object_writers.dart	tooltipBuilder: (_, next) => Text(next.toStringAsFixed(2)),	confidence-score
+apps/mobile/lib/features/knowledge/ui/_object_writers.dart	next.toStringAsFixed(2),	confidence-score
 apps/mobile/lib/features/knowledge/ui/_object_writers.dart	child: Text(v.toStringAsFixed(2)),	confidence-score
-apps/mobile/lib/features/knowledge/ui/knowledge_capture_sheet.dart	'confidence=${classification.confidence.toStringAsFixed(2)} '	confidence-score
-apps/mobile/lib/features/knowledge/ui/knowledge_capture_sheet.dart	'原因:${suggestion.reasonZh} · 置信度 ${suggestion.confidence.toStringAsFixed(2)}',	confidence-score
 apps/mobile/lib/features/knowledge/ui/_decision_writer.dart	'${a.statement}（conf ${a.confidence.toStringAsFixed(2)}）',	confidence-score
-apps/mobile/lib/features/knowledge/composition/knowledge_proposal_kinds.dart	ProposalKindRow('置信度', confidence.toStringAsFixed(2)),	confidence-score
-apps/mobile/lib/features/knowledge/ai_tools/find_similar_knowledge_tool.dart	'similarity': double.parse(cosine.toStringAsFixed(4)),	similarity-score
-apps/mobile/lib/features/knowledge/ai_tools/find_similar_knowledge_tool.dart	'token_overlap': double.parse(overlap.toStringAsFixed(4)),	similarity-score
-apps/mobile/lib/features/knowledge/ai_tools/search_knowledge_tool.dart	'score': double.parse(h.score.toStringAsFixed(4)),	similarity-score
+apps/mobile/lib/features/knowledge/ui/knowledge_capture_sheet.dart	'confidence=${classification.confidence.toStringAsFixed(2)} '	confidence-score
+apps/mobile/lib/features/knowledge/ui/knowledge_capture_sheet.dart	suggestion.confidence.toStringAsFixed(2),	confidence-score
+apps/mobile/lib/features/knowledge/composition/knowledge_proposal_kinds.dart	confidence.toStringAsFixed(2),	confidence-score
+apps/mobile/lib/features/knowledge/ai_tools/find_similar_knowledge_tool.dart	'similarity': double.parse(hit.similarity.toStringAsFixed(4)),	similarity-score
+apps/mobile/lib/features/knowledge/ai_tools/find_similar_knowledge_tool.dart	'token_overlap': double.parse(hit.tokenOverlap.toStringAsFixed(4)),	similarity-score
+apps/mobile/lib/features/knowledge/ai_tools/search_knowledge_tool.dart	'score': double.parse(hit.score.toStringAsFixed(4)),	similarity-score
+apps/mobile/lib/features/knowledge/ai_tools/search_knowledge_tool.dart	: double.parse(hit.semanticScore!.toStringAsFixed(4)),	similarity-score
+apps/mobile/lib/features/knowledge/ai_tools/search_knowledge_tool.dart	: double.parse(hit.semanticSim!.toStringAsFixed(4)),	similarity-score
+apps/mobile/lib/features/knowledge/ai_tools/search_knowledge_tool.dart	'lexical_score': double.parse(hit.lexicalScore.toStringAsFixed(4)),	similarity-score
+apps/mobile/lib/features/knowledge/ai_tools/search_notes_tool.dart	'score': double.parse(hit.score.toStringAsFixed(4)),	similarity-score
+apps/mobile/lib/features/knowledge/ai_tools/search_notes_tool.dart	: double.parse(hit.semanticSim!.toStringAsFixed(4)),	similarity-score
+apps/mobile/lib/features/knowledge/ai_tools/search_notes_tool.dart	'lexical_score': double.parse(hit.lexicalScore.toStringAsFixed(4)),	similarity-score
+apps/mobile/lib/features/knowledge/ai_tools/recall_decision_tool.dart	'score': double.parse(hit.hit.score.toStringAsFixed(4)),	similarity-score
+apps/mobile/lib/features/knowledge/ai_tools/recall_decision_tool.dart	: double.parse(hit.hit.semanticSim!.toStringAsFixed(4)),	similarity-score
+apps/mobile/lib/features/knowledge/ai_tools/recall_decision_tool.dart	'lexical_score': double.parse(hit.hit.lexicalScore.toStringAsFixed(4)),	similarity-score
 apps/mobile/lib/features/knowledge/data/llm_capture_classifier.dart	'confidence=${parsed.confidence.toStringAsFixed(2)} '	confidence-score
 apps/mobile/lib/features/knowledge/data/llm_capture_classifier.dart	reasonZh: 'LLM 给出 $kindRaw 但置信度仅 ${confidence.toStringAsFixed(2)},保留为 Note',	confidence-score
 apps/mobile/lib/features/finance/composition/finance_proposal_applier.dart	if (raw is num) return Decimal.parse(raw.toDouble().toStringAsFixed(2));	decimal-rounding-before-currency-formatter
