@@ -49,8 +49,26 @@ class WealthHubPage extends ConsumerWidget {
         ),
       ],
       child: accountsAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (_, _) => Center(child: Text(l10n.commonLoadFailed)),
+        loading: () => const PageSkeletonShell<Object>(
+          isLoading: true,
+          skeleton: WealthHubSkeleton(),
+          child: SizedBox.shrink(),
+        ),
+        error: (_, _) => Center(
+          child: AppEmptyState.error(
+            title: l10n.commonLoadFailed,
+            action: FButton(
+              variant: FButtonVariant.ghost,
+              onPress: () {
+                ref
+                  ..invalidate(accountsStreamProvider)
+                  ..invalidate(accountBalancesByIdProvider)
+                  ..invalidate(dashboardSnapshotProvider);
+              },
+              child: Text(l10n.commonRetry),
+            ),
+          ),
+        ),
         data: (accounts) {
           final containers = accounts
               .where((a) => !a.archived)
@@ -58,13 +76,18 @@ class WealthHubPage extends ConsumerWidget {
               .toList();
           final balances = balancesAsync.value ?? const {};
           final snapshot = snapshotAsync.value;
-          return _WealthHubBody(
-            accounts: containers,
-            balances: balances,
-            baseCurrency: snapshot?.baseCurrency ?? 'USD',
-            netWorth: snapshot?.netWorth.amount ?? Decimal.zero,
-            totalAssets: snapshot?.totalAssets.amount ?? Decimal.zero,
-            totalLiabilities: snapshot?.totalLiabilities.amount ?? Decimal.zero,
+          return PageSkeletonShell<Object>(
+            isLoading: false,
+            skeleton: const WealthHubSkeleton(),
+            child: _WealthHubBody(
+              accounts: containers,
+              balances: balances,
+              baseCurrency: snapshot?.baseCurrency ?? 'USD',
+              netWorth: snapshot?.netWorth.amount ?? Decimal.zero,
+              totalAssets: snapshot?.totalAssets.amount ?? Decimal.zero,
+              totalLiabilities:
+                  snapshot?.totalLiabilities.amount ?? Decimal.zero,
+            ),
           );
         },
       ),
@@ -148,7 +171,7 @@ class _NetWorthHero extends ConsumerWidget {
     final formatters = context.formatters(ref);
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s20),
-      borderRadius: 18,
+      borderRadius: AppRadius.xlg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

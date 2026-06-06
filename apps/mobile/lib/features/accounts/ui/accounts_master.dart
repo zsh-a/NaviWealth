@@ -186,7 +186,7 @@ class _AccountsByType extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final hPad = Breakpoints.isMobile(width) ? 16.0 : 24.0;
+    final hPad = Breakpoints.isMobile(width) ? AppSpacing.s16 : AppSpacing.s24;
     return ListView(
       padding: EdgeInsets.fromLTRB(
         hPad,

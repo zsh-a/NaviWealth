@@ -616,8 +616,8 @@ class _ColorPickerSection extends StatelessWidget {
         Text(l10n.accountFormColorHeading, style: context.theme.typography.xs),
         const SizedBox(height: AppSpacing.s4),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: AppSpacing.s8,
+          runSpacing: AppSpacing.s8,
           children: [
             _ColorSwatch(
               isSelected: selected == null,

@@ -310,7 +310,9 @@ class _RankRow extends StatelessWidget {
         textAlign: TextAlign.end,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: color == null ? null : TextStyle(color: color),
+        style: color == null
+            ? null
+            : context.theme.typography.sm.copyWith(color: color),
       ),
     );
     return Padding(
@@ -411,7 +413,7 @@ class _TimelineRow extends StatelessWidget {
           children: [
             Text(
               date,
-              style: TextStyle(color: muted),
+              style: context.theme.typography.sm.copyWith(color: muted),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -435,7 +437,7 @@ class _TimelineRow extends StatelessWidget {
                 textAlign: TextAlign.end,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: muted),
+                style: context.theme.typography.sm.copyWith(color: muted),
               ),
             ),
           ],

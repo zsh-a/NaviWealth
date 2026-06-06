@@ -42,8 +42,21 @@ class ActivityFeed extends ConsumerWidget {
           hasMore: page.hasMore,
         );
       },
-      loading: () => const Center(child: FCircularProgress()),
-      error: (_, _) => Center(child: Text(l10n.commonLoadFailed)),
+      loading: () => const PageSkeletonShell<Object>(
+        isLoading: true,
+        skeleton: ActivityFeedSkeleton(),
+        child: SizedBox.shrink(),
+      ),
+      error: (_, _) => Center(
+        child: AppEmptyState.error(
+          title: l10n.commonLoadFailed,
+          action: FButton(
+            variant: FButtonVariant.ghost,
+            onPress: () => ref.invalidate(activityFeedProvider),
+            child: Text(l10n.commonRetry),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -182,9 +195,6 @@ class _EmptyFeed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppEmptyState(
-      icon: FLucideIcons.workflow,
-      title: message,
-    );
+    return AppEmptyState(icon: FLucideIcons.workflow, title: message);
   }
 }

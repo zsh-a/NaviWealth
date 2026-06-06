@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'accent_colors.dart';
 
@@ -85,8 +86,8 @@ class AppTheme {
           : VisualDensity.adaptivePlatformDensity,
       splashFactory: NoSplash.splashFactory,
       highlightColor: Colors.transparent,
-      hoverColor: accent.withValues(alpha: 0.04),
-      focusColor: accent.withValues(alpha: 0.06),
+      hoverColor: accent.withValues(alpha: AppOpacity.whisper),
+      focusColor: accent.withValues(alpha: AppOpacity.faint),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
           TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),

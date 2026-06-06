@@ -356,7 +356,7 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
                           child: CustomPaint(
                             painter: _ResizeGripPainter(
                               color: colors.mutedForeground.withValues(
-                                alpha: 0.55,
+                                alpha: AppOpacity.scrim,
                               ),
                             ),
                           ),

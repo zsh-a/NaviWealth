@@ -74,7 +74,8 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
       ],
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isDesktop = constraints.maxWidth >= Breakpoints.contentTwoColumn;
+          final isDesktop =
+              constraints.maxWidth >= Breakpoints.contentTwoColumn;
           return isDesktop
               ? AdaptiveContentFrame(
                   maxWidth: AdaptiveMaxWidth.dashboard,
@@ -167,7 +168,12 @@ class _ActivityRightRail extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s12),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s16,
+                  AppSpacing.s16,
+                  AppSpacing.s16,
+                  AppSpacing.s12,
+                ),
                 child: Text(
                   l10n.navActivity,
                   style: context.theme.typography.md.copyWith(
@@ -178,15 +184,20 @@ class _ActivityRightRail extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
                 child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                  spacing: AppSpacing.s8,
+                  runSpacing: AppSpacing.s8,
                   children: [for (final chip in chips) _FilterChip(spec: chip)],
                 ),
               ),
               const SizedBox(height: AppSpacing.s16),
               const FDivider(),
               Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, 0),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s16,
+                  AppSpacing.s12,
+                  AppSpacing.s16,
+                  0,
+                ),
                 child: FButton(
                   variant: FButtonVariant.primary,
                   onPress: onAdd,
@@ -196,7 +207,12 @@ class _ActivityRightRail extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.s8),
               Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.s16, 0, AppSpacing.s16, AppSpacing.s16),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s16,
+                  0,
+                  AppSpacing.s16,
+                  AppSpacing.s16,
+                ),
                 child: FButton(
                   variant: FButtonVariant.outline,
                   onPress: onFilter,
@@ -259,7 +275,10 @@ class _ActivityKindFilterRow extends ConsumerWidget {
       height: 44,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s16,
+          vertical: AppSpacing.s8,
+        ),
         itemCount: chips.length,
         separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s8),
         itemBuilder: (context, i) => _FilterChip(spec: chips[i]),
@@ -293,7 +312,10 @@ class _FilterChip extends StatelessWidget {
     return FTappable(
       onPress: spec.onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14, vertical: AppSpacing.s6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s14,
+          vertical: AppSpacing.s6,
+        ),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.full),

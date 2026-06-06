@@ -184,7 +184,9 @@ class _LeadingGlyph extends StatelessWidget {
     }
     return Text(
       account.parentId == null ? '•' : '›',
-      style: TextStyle(color: context.theme.colors.mutedForeground),
+      style: context.theme.typography.sm.copyWith(
+        color: context.theme.colors.mutedForeground,
+      ),
     );
   }
 }

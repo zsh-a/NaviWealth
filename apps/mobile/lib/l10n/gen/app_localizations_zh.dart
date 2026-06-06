@@ -7143,6 +7143,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthTodayTitle => '今日 · HealthOS';
 
   @override
+  String get healthTrendTitle => '趋势 · HealthOS';
+
+  @override
+  String get healthPlanTitle => '计划 · HealthOS';
+
+  @override
   String get healthRecordBodyMetricAction => '记录身体指标';
 
   @override
@@ -7201,6 +7207,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeLibraryTitle => '资料库 · KnowledgeOS';
+
+  @override
+  String get knowledgeReviewTitle => '复盘 · KnowledgeOS';
 
   @override
   String get knowledgeSegmentDecisions => 'Decisions';

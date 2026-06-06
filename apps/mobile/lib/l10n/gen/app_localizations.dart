@@ -12873,6 +12873,18 @@ abstract class AppLocalizations {
   /// **'Today · HealthOS'**
   String get healthTodayTitle;
 
+  /// No description provided for @healthTrendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trends · HealthOS'**
+  String get healthTrendTitle;
+
+  /// No description provided for @healthPlanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan · HealthOS'**
+  String get healthPlanTitle;
+
   /// Header action semantics for recording a body metric
   ///
   /// In en, this message translates to:
@@ -12986,6 +12998,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Library · KnowledgeOS'**
   String get knowledgeLibraryTitle;
+
+  /// No description provided for @knowledgeReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review · KnowledgeOS'**
+  String get knowledgeReviewTitle;
 
   /// No description provided for @knowledgeSegmentDecisions.
   ///

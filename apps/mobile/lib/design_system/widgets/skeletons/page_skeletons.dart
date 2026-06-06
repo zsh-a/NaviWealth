@@ -103,15 +103,21 @@ class HomeSkeleton extends StatelessWidget {
       builder: (context, constraints) {
         final isWide = !Breakpoints.isMobile(constraints.maxWidth);
         final padding = isWide
-            ? const EdgeInsets.all(24)
-            : const EdgeInsets.all(16);
+            ? const EdgeInsets.all(AppSpacing.s24)
+            : const EdgeInsets.all(AppSpacing.s16);
         const allocation = SkeletonCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 120, height: 18, radius: 4),
+              SkeletonBox(width: 120, height: 18, radius: AppRadius.xs),
               SizedBox(height: AppSpacing.s16),
-              Center(child: SkeletonBox(width: 200, height: 200, radius: 9999)),
+              Center(
+                child: SkeletonBox(
+                  width: 200,
+                  height: 200,
+                  radius: AppRadius.full,
+                ),
+              ),
               SizedBox(height: AppSpacing.s16),
               SkeletonBox(height: 14),
               SizedBox(height: AppSpacing.s8),
@@ -123,11 +129,11 @@ class HomeSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 140, height: 18, radius: 4),
+              SkeletonBox(width: 140, height: 18, radius: AppRadius.xs),
               SizedBox(height: AppSpacing.s12),
-              SkeletonBox(height: 32, radius: 8),
+              SkeletonBox(height: 32, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s12),
-              SkeletonBox(height: 220, radius: 8),
+              SkeletonBox(height: 220, radius: AppRadius.sm),
             ],
           ),
         );
@@ -135,11 +141,11 @@ class HomeSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 88, height: 14, radius: 4),
+              SkeletonBox(width: 88, height: 14, radius: AppRadius.xs),
               SizedBox(height: AppSpacing.s8),
-              SkeletonBox(width: 220, height: 36, radius: 8),
+              SkeletonBox(width: 220, height: 36, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s8),
-              SkeletonBox(width: 180, height: 12, radius: 4),
+              SkeletonBox(width: 180, height: 12, radius: AppRadius.xs),
             ],
           ),
         );
@@ -175,6 +181,175 @@ class HomeSkeleton extends StatelessWidget {
   }
 }
 
+/// Mirrors `WealthHubPage`: net-worth hero, perspective cards, and account rows.
+class WealthHubSkeleton extends StatelessWidget {
+  const WealthHubSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = !Breakpoints.isMobile(constraints.maxWidth);
+        final padding = isWide
+            ? const EdgeInsets.all(AppSpacing.s24)
+            : const EdgeInsets.all(AppSpacing.s16);
+
+        const hero = SkeletonCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 96, height: 14, radius: AppRadius.xs),
+              SizedBox(height: AppSpacing.s8),
+              SkeletonBox(width: 220, height: 36, radius: AppRadius.sm),
+              SizedBox(height: AppSpacing.s16),
+              Row(
+                children: [
+                  Expanded(
+                    child: SkeletonBox(height: 42, radius: AppRadius.sm),
+                  ),
+                  SizedBox(width: AppSpacing.s12),
+                  Expanded(
+                    child: SkeletonBox(height: 42, radius: AppRadius.sm),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+
+        const perspective = SkeletonCard(
+          padding: EdgeInsets.all(AppSpacing.s16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 128, height: 16, radius: AppRadius.xs),
+              SizedBox(height: AppSpacing.s12),
+              SkeletonBox(height: 14),
+              SizedBox(height: AppSpacing.s8),
+              SkeletonBox(height: 14, width: 180),
+            ],
+          ),
+        );
+
+        final accounts = SkeletonCard(
+          padding: const EdgeInsets.all(AppSpacing.s16),
+          child: Column(
+            children: [
+              for (var i = 0; i < 4; i++) ...[
+                if (i != 0) const FDivider(),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
+                  child: Row(
+                    children: [
+                      SkeletonBox(
+                        width: 36,
+                        height: 36,
+                        radius: AppRadius.full,
+                      ),
+                      SizedBox(width: AppSpacing.s12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SkeletonBox(width: 140, height: 14),
+                            SizedBox(height: AppSpacing.s6),
+                            SkeletonBox(width: 88, height: 12),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: AppSpacing.s12),
+                      SkeletonBox(width: 80, height: 16),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+
+        if (isWide) {
+          return ListView(
+            padding: padding,
+            children: [
+              hero,
+              const SizedBox(height: AppSpacing.s16),
+              const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: perspective),
+                  SizedBox(width: AppSpacing.s16),
+                  Expanded(child: perspective),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s16),
+              accounts,
+            ],
+          );
+        }
+
+        return ListView(
+          padding: padding,
+          children: [
+            hero,
+            const SizedBox(height: AppSpacing.s12),
+            perspective,
+            const SizedBox(height: AppSpacing.s12),
+            accounts,
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Mirrors `ActivityFeed`: filter chips above grouped timeline rows.
+class ActivityFeedSkeleton extends StatelessWidget {
+  const ActivityFeedSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      children: [
+        const Row(
+          children: [
+            SkeletonBox(width: 64, height: 32, radius: AppRadius.full),
+            SizedBox(width: AppSpacing.s8),
+            SkeletonBox(width: 76, height: 32, radius: AppRadius.full),
+            SizedBox(width: AppSpacing.s8),
+            SkeletonBox(width: 76, height: 32, radius: AppRadius.full),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s16),
+        for (var i = 0; i < 5; i++) ...[
+          if (i != 0) const SizedBox(height: AppSpacing.s12),
+          const SkeletonCard(
+            padding: EdgeInsets.all(AppSpacing.s16),
+            child: Row(
+              children: [
+                SkeletonBox(width: 40, height: 40, radius: AppRadius.full),
+                SizedBox(width: AppSpacing.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SkeletonBox(width: 160, height: 14),
+                      SizedBox(height: AppSpacing.s6),
+                      SkeletonBox(width: 112, height: 12),
+                    ],
+                  ),
+                ),
+                SizedBox(width: AppSpacing.s12),
+                SkeletonBox(width: 88, height: 16),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 /// Mirrors `AssetsPage`: section header + a card of repeated rows for the
 /// manual-asset book and another for physical assets.
 class AssetsListSkeleton extends StatelessWidget {
@@ -184,10 +359,13 @@ class AssetsListSkeleton extends StatelessWidget {
 
   Widget _row() {
     return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s12,
+      ),
       child: Row(
         children: [
-          SkeletonBox(width: 36, height: 36, radius: 9999),
+          SkeletonBox(width: 36, height: 36, radius: AppRadius.full),
           SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
@@ -209,10 +387,10 @@ class AssetsListSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
         const Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
           child: SkeletonBox(width: 100, height: 18),
         ),
         FCard.raw(
@@ -227,7 +405,7 @@ class AssetsListSkeleton extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.s12),
         const Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
           child: SkeletonBox(width: 120, height: 18),
         ),
         FCard.raw(child: Column(children: [_row(), const FDivider(), _row()])),
@@ -244,28 +422,28 @@ class AssetDetailSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       children: const [
         SkeletonCard(
-          padding: EdgeInsets.all(20),
+          padding: EdgeInsets.all(AppSpacing.s20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 88, height: 14, radius: 4),
+              SkeletonBox(width: 88, height: 14, radius: AppRadius.xs),
               SizedBox(height: AppSpacing.s8),
-              SkeletonBox(width: 220, height: 32, radius: 8),
+              SkeletonBox(width: 220, height: 32, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s8),
-              SkeletonBox(width: 160, height: 12, radius: 4),
+              SkeletonBox(width: 160, height: 12, radius: AppRadius.xs),
             ],
           ),
         ),
         SizedBox(height: AppSpacing.s12),
         SkeletonCard(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSpacing.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 80, height: 14, radius: 4),
+              SkeletonBox(width: 80, height: 14, radius: AppRadius.xs),
               SizedBox(height: AppSpacing.s12),
               SkeletonBox(height: 18),
               SizedBox(height: AppSpacing.s8),
@@ -275,13 +453,13 @@ class AssetDetailSkeleton extends StatelessWidget {
         ),
         SizedBox(height: AppSpacing.s12),
         SkeletonCard(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSpacing.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 120, height: 16, radius: 4),
+              SkeletonBox(width: 120, height: 16, radius: AppRadius.xs),
               SizedBox(height: AppSpacing.s12),
-              SkeletonBox(height: 180, radius: 8),
+              SkeletonBox(height: 180, radius: AppRadius.sm),
             ],
           ),
         ),
@@ -300,11 +478,11 @@ class AnalyticsSkeleton extends StatelessWidget {
     const left = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SkeletonBox(width: 160, height: 20, radius: 4),
+        SkeletonBox(width: 160, height: 20, radius: AppRadius.xs),
         SizedBox(height: AppSpacing.s8),
-        SkeletonBox(width: 240, height: 14, radius: 4),
+        SkeletonBox(width: 240, height: 14, radius: AppRadius.xs),
         SizedBox(height: AppSpacing.s16),
-        SkeletonBox(height: 40, radius: 8),
+        SkeletonBox(height: 40, radius: AppRadius.sm),
         SizedBox(height: AppSpacing.s16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -314,22 +492,22 @@ class AnalyticsSkeleton extends StatelessWidget {
           ],
         ),
         SizedBox(height: AppSpacing.s16),
-        SkeletonBox(height: 220, radius: 8),
+        SkeletonBox(height: 220, radius: AppRadius.sm),
         SizedBox(height: AppSpacing.s16),
-        SkeletonBox(height: 56, radius: 8),
+        SkeletonBox(height: 56, radius: AppRadius.sm),
         SizedBox(height: AppSpacing.s8),
-        SkeletonBox(height: 56, radius: 8),
+        SkeletonBox(height: 56, radius: AppRadius.sm),
       ],
     );
     const right = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SkeletonCard(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSpacing.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 140, height: 16, radius: 4),
+              SkeletonBox(width: 140, height: 16, radius: AppRadius.xs),
               SizedBox(height: AppSpacing.s8),
               SkeletonBox(height: 14),
               SizedBox(height: AppSpacing.s4),
@@ -339,13 +517,13 @@ class AnalyticsSkeleton extends StatelessWidget {
         ),
         SizedBox(height: AppSpacing.s24),
         SkeletonCard(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSpacing.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 160, height: 16, radius: 4),
+              SkeletonBox(width: 160, height: 16, radius: AppRadius.xs),
               SizedBox(height: AppSpacing.s12),
-              SkeletonBox(height: 140, radius: 8),
+              SkeletonBox(height: 140, radius: AppRadius.sm),
             ],
           ),
         ),
@@ -355,7 +533,9 @@ class AnalyticsSkeleton extends StatelessWidget {
       builder: (context, constraints) {
         final isWide = !Breakpoints.isMobile(constraints.maxWidth);
         return ListView(
-          padding: isWide ? const EdgeInsets.all(24) : const EdgeInsets.all(16),
+          padding: isWide
+              ? const EdgeInsets.all(AppSpacing.s24)
+              : const EdgeInsets.all(AppSpacing.s16),
           children: const [ResponsiveTwoColumn(left: left, right: right)],
         );
       },
@@ -371,7 +551,7 @@ class FireSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       children: const [
         SkeletonCard(
           child: Column(
@@ -379,7 +559,13 @@ class FireSkeleton extends StatelessWidget {
             children: [
               SkeletonBox(width: 120, height: 18),
               SizedBox(height: AppSpacing.s12),
-              Center(child: SkeletonBox(width: 200, height: 200, radius: 9999)),
+              Center(
+                child: SkeletonBox(
+                  width: 200,
+                  height: 200,
+                  radius: AppRadius.full,
+                ),
+              ),
               SizedBox(height: AppSpacing.s16),
               SkeletonBox(height: 14),
               SizedBox(height: AppSpacing.s4),
@@ -389,13 +575,13 @@ class FireSkeleton extends StatelessWidget {
         ),
         SizedBox(height: AppSpacing.s12),
         SkeletonCard(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSpacing.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SkeletonBox(width: 140, height: 16),
               SizedBox(height: AppSpacing.s8),
-              SkeletonBox(width: 200, height: 28, radius: 8),
+              SkeletonBox(width: 200, height: 28, radius: AppRadius.sm),
               SizedBox(height: AppSpacing.s4),
               SkeletonBox(width: 160, height: 12),
             ],
@@ -403,13 +589,13 @@ class FireSkeleton extends StatelessWidget {
         ),
         SizedBox(height: AppSpacing.s12),
         SkeletonCard(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.all(AppSpacing.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SkeletonBox(width: 160, height: 16),
               SizedBox(height: AppSpacing.s12),
-              SkeletonBox(height: 180, radius: 8),
+              SkeletonBox(height: 180, radius: AppRadius.sm),
             ],
           ),
         ),
@@ -426,39 +612,41 @@ class CashFlowSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const kpi = SkeletonCard(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SkeletonBox(width: 72, height: 12, radius: 4),
+          SkeletonBox(width: 72, height: 12, radius: AppRadius.xs),
           SizedBox(height: AppSpacing.s8),
-          SkeletonBox(width: 120, height: 24, radius: 8),
+          SkeletonBox(width: 120, height: 24, radius: AppRadius.sm),
         ],
       ),
     );
     const charts = SkeletonCard(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SkeletonBox(width: 140, height: 16, radius: 4),
+          SkeletonBox(width: 140, height: 16, radius: AppRadius.xs),
           SizedBox(height: AppSpacing.s12),
-          SkeletonBox(height: 180, radius: 8),
+          SkeletonBox(height: 180, radius: AppRadius.sm),
           SizedBox(height: AppSpacing.s20),
-          SkeletonBox(width: 140, height: 16, radius: 4),
+          SkeletonBox(width: 140, height: 16, radius: AppRadius.xs),
           SizedBox(height: AppSpacing.s12),
-          SkeletonBox(height: 220, radius: 8),
+          SkeletonBox(height: 220, radius: AppRadius.sm),
         ],
       ),
     );
     const category = SkeletonCard(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SkeletonBox(width: 120, height: 16, radius: 4),
+          SkeletonBox(width: 120, height: 16, radius: AppRadius.xs),
           SizedBox(height: AppSpacing.s12),
-          Center(child: SkeletonBox(width: 160, height: 160, radius: 9999)),
+          Center(
+            child: SkeletonBox(width: 160, height: 160, radius: AppRadius.full),
+          ),
           SizedBox(height: AppSpacing.s12),
           SkeletonBox(height: 14),
           SizedBox(height: AppSpacing.s8),
@@ -472,15 +660,17 @@ class CashFlowSkeleton extends StatelessWidget {
       builder: (context, constraints) {
         final isWide = !Breakpoints.isMobile(constraints.maxWidth);
         return ListView(
-          padding: isWide ? const EdgeInsets.all(24) : const EdgeInsets.all(16),
+          padding: isWide
+              ? const EdgeInsets.all(AppSpacing.s24)
+              : const EdgeInsets.all(AppSpacing.s16),
           children: const [
             Row(
               children: [
-                SkeletonBox(width: 64, height: 32, radius: 9999),
+                SkeletonBox(width: 64, height: 32, radius: AppRadius.full),
                 SizedBox(width: AppSpacing.s8),
-                SkeletonBox(width: 64, height: 32, radius: 9999),
+                SkeletonBox(width: 64, height: 32, radius: AppRadius.full),
                 SizedBox(width: AppSpacing.s8),
-                SkeletonBox(width: 64, height: 32, radius: 9999),
+                SkeletonBox(width: 64, height: 32, radius: AppRadius.full),
               ],
             ),
             SizedBox(height: AppSpacing.s16),
@@ -511,23 +701,23 @@ class DividendCenterSkeleton extends StatelessWidget {
   const DividendCenterSkeleton({super.key});
 
   static Widget _metric() => const SkeletonCard(
-    padding: EdgeInsets.all(16),
+    padding: EdgeInsets.all(AppSpacing.s16),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SkeletonBox(width: 64, height: 12, radius: 4),
+        SkeletonBox(width: 64, height: 12, radius: AppRadius.xs),
         SizedBox(height: AppSpacing.s8),
-        SkeletonBox(width: 96, height: 22, radius: 8),
+        SkeletonBox(width: 96, height: 22, radius: AppRadius.sm),
       ],
     ),
   );
 
   static Widget _listCard(int rows) => SkeletonCard(
-    padding: const EdgeInsets.all(16),
+    padding: const EdgeInsets.all(AppSpacing.s16),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SkeletonBox(width: 140, height: 16, radius: 4),
+        const SkeletonBox(width: 140, height: 16, radius: AppRadius.xs),
         const SizedBox(height: AppSpacing.s12),
         for (var i = 0; i < rows; i++) ...[
           if (i != 0) const SizedBox(height: AppSpacing.s12),
@@ -543,7 +733,9 @@ class DividendCenterSkeleton extends StatelessWidget {
       builder: (context, constraints) {
         final isWide = !Breakpoints.isMobile(constraints.maxWidth);
         return ListView(
-          padding: isWide ? const EdgeInsets.all(24) : const EdgeInsets.all(16),
+          padding: isWide
+              ? const EdgeInsets.all(AppSpacing.s24)
+              : const EdgeInsets.all(AppSpacing.s16),
           children: [
             IntrinsicHeight(
               child: Row(
@@ -570,12 +762,14 @@ class DividendCenterSkeleton extends StatelessWidget {
             _listCard(6),
             const SizedBox(height: AppSpacing.s16),
             const SkeletonCard(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpacing.s16),
               child: Row(
                 children: [
-                  SkeletonBox(width: 24, height: 24, radius: 9999),
+                  SkeletonBox(width: 24, height: 24, radius: AppRadius.full),
                   SizedBox(width: AppSpacing.s12),
-                  Expanded(child: SkeletonBox(height: 42, radius: 8)),
+                  Expanded(
+                    child: SkeletonBox(height: 42, radius: AppRadius.sm),
+                  ),
                 ],
               ),
             ),
@@ -599,7 +793,7 @@ class AiChatSkeleton extends StatelessWidget {
       children: [
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.s16),
             children: const [
               _ChatBubbleSkeleton(alignEnd: false),
               SizedBox(height: AppSpacing.s12),
@@ -610,8 +804,11 @@ class AiChatSkeleton extends StatelessWidget {
           ),
         ),
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: SkeletonBox(height: 48, radius: 16),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.s12,
+            vertical: AppSpacing.s8,
+          ),
+          child: SkeletonBox(height: 48, radius: AppRadius.lg),
         ),
       ],
     );
@@ -633,10 +830,10 @@ class _ChatBubbleSkeleton extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 280),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.s12),
           decoration: BoxDecoration(
             color: context.theme.colors.muted,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           child: Column(
             crossAxisAlignment: alignEnd

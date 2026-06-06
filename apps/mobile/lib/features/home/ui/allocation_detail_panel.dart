@@ -87,7 +87,9 @@ class _DesktopAllocationInspector extends StatelessWidget {
             border: Border(left: BorderSide(color: colors.border)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: AppOpacity.muted),
+                color: Theme.of(
+                  context,
+                ).shadowColor.withValues(alpha: AppOpacity.muted),
                 blurRadius: 24,
                 offset: const Offset(-8, 0),
               ),
@@ -318,7 +320,9 @@ class _DimensionButton extends StatelessWidget {
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: AppOpacity.faint),
+                    color: Theme.of(
+                      context,
+                    ).shadowColor.withValues(alpha: AppOpacity.faint),
                     blurRadius: 4,
                     offset: const Offset(0, 1),
                   ),

@@ -652,7 +652,7 @@ class _CrosshairPainter extends CustomPainter {
 
   // Cached Paint objects — reused across frames.
   late final _hairlinePaint = Paint()
-    ..color = color.withValues(alpha: 0.35)
+    ..color = color.withValues(alpha: AppOpacity.muted)
     ..strokeWidth = 1
     ..style = PaintingStyle.stroke;
   late final _dotFillPaint = Paint()..style = PaintingStyle.fill;

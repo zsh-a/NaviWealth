@@ -84,7 +84,7 @@ class _DomainRow extends StatelessWidget {
             Icon(
               selected ? spec.selectedIcon : spec.icon,
               color: iconColor,
-              size: 22,
+              size: AppIconSizes.mlg,
             ),
             const SizedBox(width: AppSpacing.s12),
             Expanded(

@@ -997,8 +997,8 @@ class _ReplyChips extends StatelessWidget {
     // sent on tap — the model sees natural language, never the id.
     final labels = [for (final id in ids) localizedReplyChip(l10n, id)];
     return Wrap(
-      spacing: 6,
-      runSpacing: 6,
+      spacing: AppSpacing.s6,
+      runSpacing: AppSpacing.s6,
       children: [
         for (final label in labels)
           AiPill(label: label, onTap: () => onTap(label)),

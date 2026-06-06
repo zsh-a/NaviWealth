@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
+import '../../../app/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/services/market_data_service.dart';
 import '../../../domain/values/asset_market.dart';
@@ -151,7 +152,7 @@ class _WatchlistBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final hPad = Breakpoints.isMobile(width) ? 16.0 : 24.0;
+    final hPad = Breakpoints.isMobile(width) ? AppSpacing.s16 : AppSpacing.s24;
     final byId = {for (final snapshot in snapshots) snapshot.item.id: snapshot};
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -159,7 +160,7 @@ class _WatchlistBody extends StatelessWidget {
         hPad,
         AppSpacing.s8,
         hPad,
-        80 + MediaQuery.paddingOf(context).bottom,
+        kTabBarOffset + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
         if (items.isEmpty)
