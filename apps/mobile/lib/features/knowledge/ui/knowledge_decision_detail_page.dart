@@ -11,7 +11,9 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -172,17 +174,23 @@ class _BodyState extends ConsumerState<_Body> {
             KnowledgeStatusLabel(label: d.status.wire),
           ],
         ),
-        const SizedBox(height: AppSpacing.s4),
-        Text(
-          reviewDate == null
-              ? l10n.knowledgeDecisionDecidedAt(decidedDate)
-              : l10n.knowledgeDecisionDecidedAtWithReview(
-                  decidedDate,
-                  reviewDate,
-                ),
-          style: typography.xs.copyWith(color: colors.mutedForeground),
+        const SizedBox(height: AppSpacing.s12),
+        KnowledgeSection.group(
+          title: l10n.knowledgeDetailMetadataTitle,
+          trailing: KnowledgeStatusLabel(label: d.status.wire),
+          children: [
+            Text(
+              reviewDate == null
+                  ? l10n.knowledgeDecisionDecidedAt(decidedDate)
+                  : l10n.knowledgeDecisionDecidedAtWithReview(
+                      decidedDate,
+                      reviewDate,
+                    ),
+              style: typography.sm.copyWith(color: colors.mutedForeground),
+            ),
+          ],
         ),
-        const SizedBox(height: AppSpacing.s16),
+        const SizedBox(height: AppSpacing.s12),
         KnowledgeSection.group(
           title: AppLocalizations.of(context).knowledgeDetailOptionsTitle,
           children: [
@@ -247,13 +255,12 @@ class _BodyState extends ConsumerState<_Body> {
             title: AppLocalizations.of(context).knowledgeDetailPrinciplesTitle,
             children: [
               for (final p in _principles)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
-                  child: Text(
-                    '· ${p.statement}',
-                    style: typography.sm,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
+                _RelatedKnowledgeLink(
+                  label: p.statement,
+                  status: p.status.wire,
+                  onPress: () => context.pushNamed(
+                    AppRouteNames.knowledgeObjectDetail,
+                    pathParameters: {'kind': 'principle', 'id': p.id},
                   ),
                 ),
             ],
@@ -265,13 +272,13 @@ class _BodyState extends ConsumerState<_Body> {
             title: AppLocalizations.of(context).knowledgeDetailAssumptionsTitle,
             children: [
               for (final a in _assumptions)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
-                  child: Text(
-                    '· ${a.statement}（conf ${a.confidence.toStringAsFixed(2)}）',
-                    style: typography.sm,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
+                _RelatedKnowledgeLink(
+                  label: a.statement,
+                  status:
+                      '${a.status.wire} · ${a.confidence.toStringAsFixed(2)}',
+                  onPress: () => context.pushNamed(
+                    AppRouteNames.knowledgeObjectDetail,
+                    pathParameters: {'kind': 'assumption', 'id': a.id},
                   ),
                 ),
             ],
@@ -332,6 +339,62 @@ class _BodyState extends ConsumerState<_Body> {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _RelatedKnowledgeLink extends StatelessWidget {
+  const _RelatedKnowledgeLink({
+    required this.label,
+    required this.status,
+    required this.onPress,
+  });
+
+  final String label;
+  final String status;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = context.theme.typography;
+    final colors = context.theme.colors;
+    return FTappable(
+      onPress: onPress,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: typography.sm,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(
+                    status,
+                    style: typography.xs.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.xs,
+              color: colors.mutedForeground,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

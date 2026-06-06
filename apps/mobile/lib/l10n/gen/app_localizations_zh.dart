@@ -5244,6 +5244,33 @@ class AppLocalizationsZh extends AppLocalizations {
       '当前无待处理的 AI 建议。新写的 Note 会在 15 分钟内被 triage。';
 
   @override
+  String get knowledgeAiSuggestionDetails => '详情';
+
+  @override
+  String get knowledgeAiSuggestionHideDetails => '收起详情';
+
+  @override
+  String get knowledgeAiSuggestionPayloadTitle => '建议字段';
+
+  @override
+  String get knowledgeAiSuggestionSnoozeOneDay => '明天提醒';
+
+  @override
+  String get knowledgeAiSuggestionSnoozedToast => '这条建议会在明天重新出现。';
+
+  @override
+  String get knowledgeAiSuggestionFeedbackLabel => '这条建议有帮助吗？';
+
+  @override
+  String get knowledgeAiSuggestionFeedbackGood => '有帮助';
+
+  @override
+  String get knowledgeAiSuggestionFeedbackBad => '没帮助';
+
+  @override
+  String get knowledgeAiSuggestionFeedbackToast => '反馈已保存。';
+
+  @override
   String knowledgeLoadFailed(String error) {
     return '加载失败：$error';
   }
@@ -5301,6 +5328,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeDetailOptionsTitle => '选项';
+
+  @override
+  String get knowledgeDetailMetadataTitle => '元数据';
 
   @override
   String get knowledgeDetailRationaleTitle => '理由';
@@ -5377,6 +5407,42 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get knowledgeDetailContextSnapshotEmpty =>
       '当时窗口内无 Finance / Health 事件。';
+
+  @override
+  String get knowledgeDetailCreatedLabel => '创建';
+
+  @override
+  String get knowledgeDetailUpdatedLabel => '更新';
+
+  @override
+  String get knowledgeDetailAliasesLabel => '别名';
+
+  @override
+  String get knowledgeDetailStartedLabel => '开始';
+
+  @override
+  String get knowledgeDetailEndedLabel => '结束';
+
+  @override
+  String get knowledgeDetailTargetAssumptionTitle => '目标 Assumption';
+
+  @override
+  String get knowledgeDetailScopeLabel => '范围';
+
+  @override
+  String get knowledgeDetailDeclaredLabel => '声明';
+
+  @override
+  String get knowledgeDetailConfidenceLabel => '置信度';
+
+  @override
+  String get knowledgeDetailLastVerifiedLabel => '上次验证';
+
+  @override
+  String get knowledgeDetailDecisionsTitle => '相关 Decision';
+
+  @override
+  String get knowledgeDetailExperimentsTitle => '相关 Experiment';
 
   @override
   String get knowledgeLibraryDeleteTooltip => '删除';
@@ -7472,6 +7538,44 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeProposalConceptLink => '概念关联';
 
   @override
+  String get knowledgeProposalRowType => '类型';
+
+  @override
+  String get knowledgeProposalRowContent => '内容';
+
+  @override
+  String get knowledgeProposalRowScope => '范围';
+
+  @override
+  String get knowledgeProposalRowConfidence => '置信度';
+
+  @override
+  String get knowledgeProposalRowLink => '关联';
+
+  @override
+  String get knowledgeProposalRowRelation => '关系';
+
+  @override
+  String get knowledgeProposalRowKeep => '保留';
+
+  @override
+  String get knowledgeProposalRowSoftMerge => '合并（软删）';
+
+  @override
+  String get knowledgeProposalRowMergedTags => '合并后标签';
+
+  @override
+  String get knowledgeProposalRowItem => '事项';
+
+  @override
+  String get knowledgeProposalRowInterval => '周期';
+
+  @override
+  String knowledgeProposalIntervalDays(int days) {
+    return '每 $days 天';
+  }
+
+  @override
   String get knowledgeInboxEmptyTitle => '收件箱空空如也';
 
   @override
@@ -7706,7 +7810,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeLibrarySearchHint => '搜索当前分段';
 
   @override
+  String get knowledgeLibraryFilterAll => '全部';
+
+  @override
   String get knowledgeLibrarySearchClear => '清除搜索';
+
+  @override
+  String get knowledgeLibrarySearchRecent => '最近';
+
+  @override
+  String get knowledgeLibrarySearchSuggestions => '建议';
 
   @override
   String get knowledgeLibrarySearchEmptyTitle => '没有匹配的知识';
@@ -7742,6 +7855,27 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String knowledgeReviewDecisionOverdueDays(Object days) {
     return '$days 天';
+  }
+
+  @override
+  String get knowledgeReviewDecisionReviewed => '已复盘';
+
+  @override
+  String get knowledgeReviewMarkAllDecisionsReviewed => '全部标记复盘';
+
+  @override
+  String knowledgeReviewDecisionNextReview(Object date) {
+    return '下次复盘 $date';
+  }
+
+  @override
+  String knowledgeReviewDecisionsBulkReviewed(int count) {
+    return '已为 $count 个 Decision 安排下次复盘';
+  }
+
+  @override
+  String knowledgeReviewDecisionReviewFailed(Object error) {
+    return '更新复盘日期失败：$error';
   }
 
   @override
@@ -7785,7 +7919,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeReviewMarkDone => '完成';
 
   @override
+  String get knowledgeReviewMarkAllDone => '全部完成';
+
+  @override
+  String knowledgeReviewRoutinesBulkDone(int count) {
+    return '已完成 $count 个 Routine';
+  }
+
+  @override
   String get knowledgeReviewVerifyAssumption => '校验';
+
+  @override
+  String get knowledgeReviewVerifyAllAssumptions => '全部校验';
+
+  @override
+  String knowledgeReviewAssumptionsBulkVerified(int count) {
+    return '已校验 $count 个 Assumption';
+  }
 
   @override
   String get knowledgeReviewAssumptionVerified => 'Assumption 已校验。';
@@ -7934,6 +8084,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeDecisionReviewDateInOneYear => '+1 年';
+
+  @override
+  String get knowledgeDecisionReviewDateCustomLabel => '自定义日期';
+
+  @override
+  String get knowledgeDecisionReviewDateCustomHint => 'YYYY-MM-DD';
+
+  @override
+  String get knowledgeDecisionReviewDateCustomApply => '使用日期';
+
+  @override
+  String get knowledgeDecisionReviewDateInvalid => '请输入有效日期，格式为 YYYY-MM-DD。';
+
+  @override
+  String get knowledgeDecisionReviewDatePast => '请选择今天或未来日期。';
 
   @override
   String get knowledgeDecisionLifecycleTitle => '更新 Decision';
@@ -8090,6 +8255,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeWriterConclusionMarkdownLabel => '结论（Markdown，可选）';
+
+  @override
+  String get knowledgeWriterCoreSectionTitle => '核心内容';
+
+  @override
+  String get knowledgeWriterEvidenceSectionTitle => '证据与理由';
+
+  @override
+  String get knowledgeWriterReferencesSectionTitle => '关联';
+
+  @override
+  String get knowledgeWriterPlanningSectionTitle => '计划';
+
+  @override
+  String get knowledgeWriterCadenceSectionTitle => '节奏';
 
   @override
   String get knowledgeRoutineStatementLabel => '要做什么';

@@ -12,7 +12,9 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -54,6 +56,12 @@ class _KnowledgeObjectDetailPageState
     extends ConsumerState<KnowledgeObjectDetailPage> {
   Object? _object;
   Object? _error;
+  List<KnowledgeConcept> _relatedConcepts = const <KnowledgeConcept>[];
+  KnowledgeAssumption? _targetAssumption;
+  List<KnowledgeNote> _evidenceNotes = const <KnowledgeNote>[];
+  List<KnowledgeDecision> _referencingDecisions = const <KnowledgeDecision>[];
+  List<KnowledgeExperiment> _targetingExperiments =
+      const <KnowledgeExperiment>[];
   bool _loading = true;
 
   KnowledgeObjectKind? get _kind => KnowledgeObjectKind.parse(widget.kind);
@@ -77,9 +85,15 @@ class _KnowledgeObjectDetailPageState
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final obj = await _fetch(repo, kind, widget.id);
+      final related = await _fetchRelated(repo, obj);
       if (mounted) {
         setState(() {
           _object = obj;
+          _relatedConcepts = related.relatedConcepts;
+          _targetAssumption = related.targetAssumption;
+          _evidenceNotes = related.evidenceNotes;
+          _referencingDecisions = related.referencingDecisions;
+          _targetingExperiments = related.targetingExperiments;
           _loading = false;
         });
       }
@@ -104,6 +118,64 @@ class _KnowledgeObjectDetailPageState
       KnowledgeObjectKind.principle => repo.findPrinciple(id),
       KnowledgeObjectKind.assumption => repo.findAssumption(id),
     };
+  }
+
+  Future<_ObjectRelatedData> _fetchRelated(
+    KnowledgeRepository repo,
+    Object? obj,
+  ) async {
+    if (obj == null) return const _ObjectRelatedData();
+    switch (obj) {
+      case final KnowledgeConcept c:
+        final related = <KnowledgeConcept>[];
+        for (final id in c.relatedConceptIds) {
+          final concept = await repo.findConcept(id);
+          if (concept != null) related.add(concept);
+        }
+        return _ObjectRelatedData(relatedConcepts: related);
+      case final KnowledgeExperiment e:
+        final targetId = e.targetAssumptionId;
+        if (targetId == null || targetId.isEmpty) {
+          return const _ObjectRelatedData();
+        }
+        return _ObjectRelatedData(
+          targetAssumption: await repo.findAssumption(targetId),
+        );
+      case final KnowledgePrinciple p:
+        final decisions = await repo.listDecisions(
+          ownerUserId: p.sync.ownerUserId,
+          limit: 1000,
+        );
+        return _ObjectRelatedData(
+          referencingDecisions: decisions
+              .where((d) => d.principleIds.contains(p.id))
+              .toList(growable: false),
+        );
+      case final KnowledgeAssumption a:
+        final notes = <KnowledgeNote>[];
+        for (final id in a.evidenceIds) {
+          final note = await repo.findNote(id);
+          if (note != null) notes.add(note);
+        }
+        final decisions = await repo.listDecisions(
+          ownerUserId: a.sync.ownerUserId,
+          limit: 1000,
+        );
+        final experiments = await repo.listExperiments(
+          ownerUserId: a.sync.ownerUserId,
+          limit: 1000,
+        );
+        return _ObjectRelatedData(
+          evidenceNotes: notes,
+          referencingDecisions: decisions
+              .where((d) => d.assumptionIds.contains(a.id))
+              .toList(growable: false),
+          targetingExperiments: experiments
+              .where((e) => e.targetAssumptionId == a.id)
+              .toList(growable: false),
+        );
+    }
+    return const _ObjectRelatedData();
   }
 
   @override
@@ -144,10 +216,28 @@ class _KnowledgeObjectDetailPageState
       );
     }
     final children = switch (obj) {
-      final KnowledgeConcept c => _conceptSections(context, c),
-      final KnowledgeExperiment e => _experimentSections(context, e),
-      final KnowledgePrinciple p => _principleSections(context, p),
-      final KnowledgeAssumption a => _assumptionSections(context, a),
+      final KnowledgeConcept c => _conceptSections(
+        context,
+        c,
+        relatedConcepts: _relatedConcepts,
+      ),
+      final KnowledgeExperiment e => _experimentSections(
+        context,
+        e,
+        targetAssumption: _targetAssumption,
+      ),
+      final KnowledgePrinciple p => _principleSections(
+        context,
+        p,
+        referencingDecisions: _referencingDecisions,
+      ),
+      final KnowledgeAssumption a => _assumptionSections(
+        context,
+        a,
+        evidenceNotes: _evidenceNotes,
+        referencingDecisions: _referencingDecisions,
+        targetingExperiments: _targetingExperiments,
+      ),
       _ => const <Widget>[],
     };
     return ListView(
@@ -155,6 +245,22 @@ class _KnowledgeObjectDetailPageState
       children: children,
     );
   }
+}
+
+class _ObjectRelatedData {
+  const _ObjectRelatedData({
+    this.relatedConcepts = const <KnowledgeConcept>[],
+    this.targetAssumption,
+    this.evidenceNotes = const <KnowledgeNote>[],
+    this.referencingDecisions = const <KnowledgeDecision>[],
+    this.targetingExperiments = const <KnowledgeExperiment>[],
+  });
+
+  final List<KnowledgeConcept> relatedConcepts;
+  final KnowledgeAssumption? targetAssumption;
+  final List<KnowledgeNote> evidenceNotes;
+  final List<KnowledgeDecision> referencingDecisions;
+  final List<KnowledgeExperiment> targetingExperiments;
 }
 
 // ── Per-type section builders ──────────────────────────────────────────────
@@ -173,50 +279,108 @@ Widget _heading(BuildContext context, String text, {String? badge}) {
   );
 }
 
-List<Widget> _conceptSections(BuildContext context, KnowledgeConcept c) {
-  final typography = context.theme.typography;
-  final colors = context.theme.colors;
+List<Widget> _conceptSections(
+  BuildContext context,
+  KnowledgeConcept c, {
+  required List<KnowledgeConcept> relatedConcepts,
+}) {
   return [
     _heading(context, c.name),
-    if (c.aliases.isNotEmpty) ...[
-      const SizedBox(height: AppSpacing.s4),
-      Text(
-        AppLocalizations.of(
-          context,
-        ).knowledgeDetailAliases(c.aliases.join(' · ')),
-        style: typography.xs.copyWith(color: colors.mutedForeground),
-      ),
-    ],
+    const SizedBox(height: AppSpacing.s12),
+    _MetadataSection(
+      children: [
+        _MetaPill(
+          label: AppLocalizations.of(context).knowledgeDetailCreatedLabel,
+          value: knowledgeDate(context, c.createdAt, long: true),
+        ),
+        _MetaPill(
+          label: AppLocalizations.of(context).knowledgeDetailUpdatedLabel,
+          value: knowledgeDate(context, c.sync.updatedAt, long: true),
+        ),
+        if (c.aliases.isNotEmpty)
+          _MetaPill(
+            label: AppLocalizations.of(context).knowledgeDetailAliasesLabel,
+            value: c.aliases.join(' · '),
+          ),
+      ],
+    ),
     if (c.summaryMd.isNotEmpty) ...[
-      const SizedBox(height: AppSpacing.s16),
+      const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
         title: AppLocalizations.of(context).knowledgeDetailSummaryTitle,
         children: [AiMarkdown(text: c.summaryMd)],
       ),
     ],
-    if (c.relatedConceptIds.isNotEmpty) ...[
+    if (relatedConcepts.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
         title: AppLocalizations.of(context).knowledgeDetailRelatedConceptsTitle,
         children: [
-          Text(
-            AppLocalizations.of(
-              context,
-            ).knowledgeDetailRelatedConceptCount(c.relatedConceptIds.length),
-            style: typography.sm,
-          ),
+          for (final concept in relatedConcepts)
+            _RelatedObjectLink(
+              label: concept.name,
+              meta: concept.aliases.isEmpty
+                  ? AppLocalizations.of(context).knowledgeConceptDetailTitle
+                  : concept.aliases.join(' · '),
+              onPress: () => context.pushNamed(
+                AppRouteNames.knowledgeObjectDetail,
+                pathParameters: {'kind': 'concept', 'id': concept.id},
+              ),
+            ),
         ],
       ),
     ],
   ];
 }
 
-List<Widget> _experimentSections(BuildContext context, KnowledgeExperiment e) {
+List<Widget> _experimentSections(
+  BuildContext context,
+  KnowledgeExperiment e, {
+  required KnowledgeAssumption? targetAssumption,
+}) {
   final typography = context.theme.typography;
   return [
     _heading(context, e.hypothesis, badge: e.status.wire),
+    const SizedBox(height: AppSpacing.s12),
+    _MetadataSection(
+      trailing: KnowledgeStatusLabel(label: e.status.wire),
+      children: [
+        _MetaPill(
+          label: AppLocalizations.of(context).knowledgeDetailStartedLabel,
+          value: knowledgeDate(context, e.startedAt, long: true),
+        ),
+        if (e.endedAt != null)
+          _MetaPill(
+            label: AppLocalizations.of(context).knowledgeDetailEndedLabel,
+            value: knowledgeDate(context, e.endedAt!, long: true),
+          ),
+        _MetaPill(
+          label: AppLocalizations.of(context).knowledgeDetailUpdatedLabel,
+          value: knowledgeDate(context, e.sync.updatedAt, long: true),
+        ),
+      ],
+    ),
+    if (targetAssumption != null) ...[
+      const SizedBox(height: AppSpacing.s12),
+      KnowledgeSection.group(
+        title: AppLocalizations.of(
+          context,
+        ).knowledgeDetailTargetAssumptionTitle,
+        children: [
+          _RelatedObjectLink(
+            label: targetAssumption.statement,
+            meta:
+                '${targetAssumption.status.wire} · ${targetAssumption.confidence.toStringAsFixed(2)}',
+            onPress: () => context.pushNamed(
+              AppRouteNames.knowledgeObjectDetail,
+              pathParameters: {'kind': 'assumption', 'id': targetAssumption.id},
+            ),
+          ),
+        ],
+      ),
+    ],
     if (e.methodMd.isNotEmpty) ...[
-      const SizedBox(height: AppSpacing.s16),
+      const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
         title: AppLocalizations.of(context).knowledgeDetailMethodTitle,
         children: [AiMarkdown(text: e.methodMd)],
@@ -246,52 +410,268 @@ List<Widget> _experimentSections(BuildContext context, KnowledgeExperiment e) {
   ];
 }
 
-List<Widget> _principleSections(BuildContext context, KnowledgePrinciple p) {
-  final typography = context.theme.typography;
-  final colors = context.theme.colors;
+List<Widget> _principleSections(
+  BuildContext context,
+  KnowledgePrinciple p, {
+  required List<KnowledgeDecision> referencingDecisions,
+}) {
   return [
     _heading(context, p.statement, badge: p.status.wire),
-    const SizedBox(height: AppSpacing.s4),
-    Text(
-      AppLocalizations.of(context).knowledgeDetailScope(p.scope),
-      style: typography.xs.copyWith(color: colors.mutedForeground),
+    const SizedBox(height: AppSpacing.s12),
+    _MetadataSection(
+      trailing: KnowledgeStatusLabel(label: p.status.wire),
+      children: [
+        _MetaPill(
+          label: AppLocalizations.of(context).knowledgeDetailScopeLabel,
+          value: p.scope,
+        ),
+        _MetaPill(
+          label: AppLocalizations.of(context).knowledgeDetailDeclaredLabel,
+          value: knowledgeDate(context, p.declaredAt, long: true),
+        ),
+        _MetaPill(
+          label: AppLocalizations.of(context).knowledgeDetailUpdatedLabel,
+          value: knowledgeDate(context, p.sync.updatedAt, long: true),
+        ),
+      ],
     ),
     if (p.rationaleMd.isNotEmpty) ...[
-      const SizedBox(height: AppSpacing.s16),
+      const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
         title: AppLocalizations.of(context).knowledgeDetailRationaleTitle,
         children: [AiMarkdown(text: p.rationaleMd)],
       ),
     ],
+    if (referencingDecisions.isNotEmpty) ...[
+      const SizedBox(height: AppSpacing.s12),
+      _DecisionLinksSection(decisions: referencingDecisions),
+    ],
   ];
 }
 
-List<Widget> _assumptionSections(BuildContext context, KnowledgeAssumption a) {
-  final typography = context.theme.typography;
-  final colors = context.theme.colors;
+List<Widget> _assumptionSections(
+  BuildContext context,
+  KnowledgeAssumption a, {
+  required List<KnowledgeNote> evidenceNotes,
+  required List<KnowledgeDecision> referencingDecisions,
+  required List<KnowledgeExperiment> targetingExperiments,
+}) {
   return [
     _heading(context, a.statement, badge: a.status.wire),
-    const SizedBox(height: AppSpacing.s4),
-    Text(
-      AppLocalizations.of(context).knowledgeDetailConfidenceScope(
-        a.confidence.toStringAsFixed(2),
-        a.scope,
-      ),
-      style: typography.xs.copyWith(color: colors.mutedForeground),
+    const SizedBox(height: AppSpacing.s12),
+    _MetadataSection(
+      trailing: KnowledgeStatusLabel(label: a.status.wire),
+      children: [
+        _MetaPill(
+          label: AppLocalizations.of(context).knowledgeDetailConfidenceLabel,
+          value: a.confidence.toStringAsFixed(2),
+        ),
+        _MetaPill(
+          label: AppLocalizations.of(context).knowledgeDetailScopeLabel,
+          value: a.scope,
+        ),
+        _MetaPill(
+          label: AppLocalizations.of(context).knowledgeDetailDeclaredLabel,
+          value: knowledgeDate(context, a.declaredAt, long: true),
+        ),
+        if (a.lastVerifiedAt != null)
+          _MetaPill(
+            label: AppLocalizations.of(
+              context,
+            ).knowledgeDetailLastVerifiedLabel,
+            value: knowledgeDate(context, a.lastVerifiedAt!, long: true),
+          ),
+        _MetaPill(
+          label: AppLocalizations.of(context).knowledgeDetailUpdatedLabel,
+          value: knowledgeDate(context, a.sync.updatedAt, long: true),
+        ),
+      ],
     ),
-    if (a.evidenceIds.isNotEmpty) ...[
-      const SizedBox(height: AppSpacing.s16),
+    if (evidenceNotes.isNotEmpty) ...[
+      const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
         title: AppLocalizations.of(context).knowledgeDetailEvidenceTitle,
         children: [
-          Text(
-            AppLocalizations.of(
-              context,
-            ).knowledgeDetailEvidenceCount(a.evidenceIds.length),
-            style: typography.sm,
-          ),
+          for (final note in evidenceNotes)
+            _RelatedObjectLink(
+              label: note.title.isEmpty
+                  ? AppLocalizations.of(context).knowledgeUntitled
+                  : note.title,
+              meta: knowledgeExcerpt(note.bodyMd),
+            ),
+        ],
+      ),
+    ],
+    if (referencingDecisions.isNotEmpty) ...[
+      const SizedBox(height: AppSpacing.s12),
+      _DecisionLinksSection(decisions: referencingDecisions),
+    ],
+    if (targetingExperiments.isNotEmpty) ...[
+      const SizedBox(height: AppSpacing.s12),
+      KnowledgeSection.group(
+        title: AppLocalizations.of(context).knowledgeDetailExperimentsTitle,
+        children: [
+          for (final experiment in targetingExperiments)
+            _RelatedObjectLink(
+              label: experiment.hypothesis,
+              meta: experiment.status.wire,
+              onPress: () => context.pushNamed(
+                AppRouteNames.knowledgeObjectDetail,
+                pathParameters: {'kind': 'experiment', 'id': experiment.id},
+              ),
+            ),
         ],
       ),
     ],
   ];
+}
+
+class _MetadataSection extends StatelessWidget {
+  const _MetadataSection({required this.children, this.trailing});
+
+  final List<Widget> children;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return KnowledgeSection.group(
+      title: AppLocalizations.of(context).knowledgeDetailMetadataTitle,
+      trailing: trailing,
+      children: [
+        Wrap(
+          spacing: AppSpacing.s8,
+          runSpacing: AppSpacing.s8,
+          children: children,
+        ),
+      ],
+    );
+  }
+}
+
+class _MetaPill extends StatelessWidget {
+  const _MetaPill({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s6,
+      ),
+      decoration: BoxDecoration(
+        color: colors.muted,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: typography.xs.copyWith(color: colors.mutedForeground),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: AppSpacing.s2),
+          Text(
+            value,
+            style: typography.sm.copyWith(fontWeight: FontWeight.w500),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DecisionLinksSection extends StatelessWidget {
+  const _DecisionLinksSection({required this.decisions});
+
+  final List<KnowledgeDecision> decisions;
+
+  @override
+  Widget build(BuildContext context) {
+    return KnowledgeSection.group(
+      title: AppLocalizations.of(context).knowledgeDetailDecisionsTitle,
+      children: [
+        for (final decision in decisions)
+          _RelatedObjectLink(
+            label: decision.question,
+            meta: decision.status.wire,
+            onPress: () => context.pushNamed(
+              AppRouteNames.knowledgeDecisionDetail,
+              pathParameters: {'id': decision.id},
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _RelatedObjectLink extends StatelessWidget {
+  const _RelatedObjectLink({
+    required this.label,
+    required this.meta,
+    this.onPress,
+  });
+
+  final String label;
+  final String meta;
+  final VoidCallback? onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = context.theme.typography;
+    final colors = context.theme.colors;
+    final row = Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: typography.sm,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (meta.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(
+                    meta,
+                    style: typography.xs.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (onPress != null) ...[
+            const SizedBox(width: AppSpacing.s8),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.xs,
+              color: colors.mutedForeground,
+            ),
+          ],
+        ],
+      ),
+    );
+    final press = onPress;
+    return press == null ? row : FTappable(onPress: press, child: row);
+  }
 }

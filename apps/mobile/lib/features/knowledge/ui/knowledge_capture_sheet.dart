@@ -326,35 +326,45 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
               },
             )
           : null,
-      child: switch (stage) {
-        _CaptureStage.composing || _CaptureStage.saving => _ComposeBody(
-          titleController: _titleCtrl,
-          bodyController: _bodyCtrl,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 180),
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: SizeTransition(sizeFactor: animation, child: child),
         ),
-        _CaptureStage.classifying => _ClassifyingBody(
-          onSkip: () {
-            // The Note is already persisted from `_saveAndClassify` →
-            // popping here just abandons the in-flight classifier.
-            // The `mounted` guard after the await drops whatever the
-            // LLM returns once it eventually lands.
-            if (mounted) Navigator.of(context).pop();
-          },
-        ),
-        _CaptureStage.suggesting || _CaptureStage.applying => _SuggestionBody(
-          suggestion: _suggestion!,
-          originalTitle: _savedNote?.title ?? '',
-          originalBody: _savedNote?.bodyMd ?? '',
-          applying: stage == _CaptureStage.applying,
-          onAccept: _acceptUpgrade,
-          onDismiss: _dismissSuggestion,
-        ),
-      },
+        child: switch (stage) {
+          _CaptureStage.composing || _CaptureStage.saving => _ComposeBody(
+            key: const ValueKey<String>('compose'),
+            titleController: _titleCtrl,
+            bodyController: _bodyCtrl,
+          ),
+          _CaptureStage.classifying => _ClassifyingBody(
+            key: const ValueKey<String>('classifying'),
+            onSkip: () {
+              // The Note is already persisted from `_saveAndClassify` →
+              // popping here just abandons the in-flight classifier.
+              // The `mounted` guard after the await drops whatever the
+              // LLM returns once it eventually lands.
+              if (mounted) Navigator.of(context).pop();
+            },
+          ),
+          _CaptureStage.suggesting || _CaptureStage.applying => _SuggestionBody(
+            key: const ValueKey<String>('suggestion'),
+            suggestion: _suggestion!,
+            originalTitle: _savedNote?.title ?? '',
+            originalBody: _savedNote?.bodyMd ?? '',
+            applying: stage == _CaptureStage.applying,
+            onAccept: _acceptUpgrade,
+            onDismiss: _dismissSuggestion,
+          ),
+        },
+      ),
     );
   }
 }
 
 class _ClassifyingBody extends StatelessWidget {
-  const _ClassifyingBody({required this.onSkip});
+  const _ClassifyingBody({super.key, required this.onSkip});
 
   /// Bail out of the wait — the Note is already saved, the in-flight
   /// classifier becomes an orphan and its eventual result is dropped
@@ -403,6 +413,7 @@ class _ClassifyingBody extends StatelessWidget {
 
 class _ComposeBody extends StatelessWidget {
   const _ComposeBody({
+    super.key,
     required this.titleController,
     required this.bodyController,
   });
@@ -435,6 +446,7 @@ class _ComposeBody extends StatelessWidget {
 
 class _SuggestionBody extends StatelessWidget {
   const _SuggestionBody({
+    super.key,
     required this.suggestion,
     required this.originalTitle,
     required this.originalBody,

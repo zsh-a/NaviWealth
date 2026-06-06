@@ -16,6 +16,7 @@
 /// auto-capture is §14.2 P1 work.
 library;
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -150,14 +151,13 @@ class _DecisionWriterState extends State<_DecisionWriter> {
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     return AppSheet(
-      title: AppLocalizations.of(context).knowledgeDecisionWriterTitle,
-      subtitle: AppLocalizations.of(context).knowledgeDecisionWriterSubtitle,
+      title: l10n.knowledgeDecisionWriterTitle,
+      subtitle: l10n.knowledgeDecisionWriterSubtitle,
       footer: AppSheetFooter(
-        submitLabel: _saving
-            ? AppLocalizations.of(context).commonSaving
-            : AppLocalizations.of(context).commonSave,
-        cancelLabel: AppLocalizations.of(context).commonCancel,
+        submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
+        cancelLabel: l10n.commonCancel,
         busy: _saving || !_canSave,
         onSubmit: () {
           _save();
@@ -167,138 +167,140 @@ class _DecisionWriterState extends State<_DecisionWriter> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          FTextField(
-            control: FTextFieldControl.managed(controller: _questionCtrl),
-            label: Text(
-              AppLocalizations.of(context).knowledgeDecisionQuestionLabel,
-            ),
-            hint: AppLocalizations.of(context).knowledgeDecisionQuestionHint,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          Text(
-            AppLocalizations.of(context).knowledgeDecisionOptionsLabel,
-            style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          for (var i = 0; i < _options.length; i++)
-            _OptionEditorTile(
-              draft: _options[i],
-              index: i,
-              selected:
-                  _options[i].labelCtrl.text.trim().isNotEmpty &&
-                  _selectedLabel == _options[i].labelCtrl.text.trim(),
-              onSelect: () {
-                final label = _options[i].labelCtrl.text.trim();
-                if (label.isEmpty) return;
-                setState(() => _selectedLabel = label);
-              },
-              onRemove: _options.length <= 2
-                  ? null
-                  : () => setState(() {
-                      _options.removeAt(i).dispose();
-                      _selectedLabel = _activeLabel();
-                    }),
-            ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: FButton(
-              variant: FButtonVariant.outline,
-              prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.xs),
-              onPress: () => setState(() {
-                final draft = _OptionDraft();
-                draft.labelCtrl.addListener(_onAnyChange);
-                _options.add(draft);
-              }),
-              child: Text(
-                AppLocalizations.of(context).knowledgeDecisionAddOption,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          MarkdownEditorWithPreview(
-            controller: _rationaleCtrl,
-            label: AppLocalizations.of(
-              context,
-            ).knowledgeWriterRationaleMarkdownLabel,
-            hint: AppLocalizations.of(context).knowledgeDecisionRationaleHint,
-            minLines: 3,
-            maxLines: 6,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          _PrincipleAssumptionPicker(
-            ref: widget.ref,
-            principleIds: _principleIds,
-            assumptionIds: _assumptionIds,
-            onPrincipleToggle: (id) => setState(() {
-              _principleIds.contains(id)
-                  ? _principleIds.remove(id)
-                  : _principleIds.add(id);
-            }),
-            onAssumptionToggle: (id) => setState(() {
-              _assumptionIds.contains(id)
-                  ? _assumptionIds.remove(id)
-                  : _assumptionIds.add(id);
-            }),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          FTextField(
-            control: FTextFieldControl.managed(controller: _expectedCtrl),
-            label: Text(
-              AppLocalizations.of(
-                context,
-              ).knowledgeDecisionExpectedOutcomeLabel,
-            ),
-            hint: AppLocalizations.of(
-              context,
-            ).knowledgeDecisionExpectedOutcomeHint,
-            maxLines: 3,
-            minLines: 1,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          Row(
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterCoreSectionTitle,
             children: [
-              Expanded(
-                child: Text(
-                  _reviewDate == null
-                      ? AppLocalizations.of(
-                          context,
-                        ).knowledgeDecisionReviewDateOptional
-                      : AppLocalizations.of(
-                          context,
-                        ).knowledgeDecisionReviewDateScheduled(
-                          knowledgeDate(context, _reviewDate!, long: true),
-                        ),
-                  style: typography.sm.copyWith(color: colors.mutedForeground),
-                ),
+              FTextField(
+                control: FTextFieldControl.managed(controller: _questionCtrl),
+                label: Text(l10n.knowledgeDecisionQuestionLabel),
+                hint: l10n.knowledgeDecisionQuestionHint,
               ),
-              FButton(
-                variant: FButtonVariant.outline,
-                onPress: () async {
-                  final picked = await _pickReviewDate(context);
-                  if (picked != null) {
-                    setState(() => _reviewDate = picked);
-                  }
-                },
-                child: Text(
-                  _reviewDate == null
-                      ? AppLocalizations.of(
-                          context,
-                        ).knowledgeDecisionReviewDateChoose
-                      : AppLocalizations.of(
-                          context,
-                        ).knowledgeDecisionReviewDateChange,
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeWriterSection(
+            title: l10n.knowledgeDecisionOptionsLabel,
+            children: [
+              for (var i = 0; i < _options.length; i++)
+                _OptionEditorTile(
+                  draft: _options[i],
+                  index: i,
+                  selected:
+                      _options[i].labelCtrl.text.trim().isNotEmpty &&
+                      _selectedLabel == _options[i].labelCtrl.text.trim(),
+                  onSelect: () {
+                    final label = _options[i].labelCtrl.text.trim();
+                    if (label.isEmpty) return;
+                    setState(() => _selectedLabel = label);
+                  },
+                  onRemove: _options.length <= 2
+                      ? null
+                      : () => setState(() {
+                          _options.removeAt(i).dispose();
+                          _selectedLabel = _activeLabel();
+                        }),
                 ),
-              ),
-              if (_reviewDate != null) ...[
-                const SizedBox(width: AppSpacing.s8),
-                FButton(
+              Align(
+                alignment: Alignment.centerLeft,
+                child: FButton(
                   variant: FButtonVariant.outline,
-                  onPress: () => setState(() => _reviewDate = null),
-                  child: Text(
-                    AppLocalizations.of(context).knowledgeDecisionClear,
-                  ),
+                  prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.xs),
+                  onPress: () => setState(() {
+                    final draft = _OptionDraft();
+                    draft.labelCtrl.addListener(_onAnyChange);
+                    _options.add(draft);
+                  }),
+                  child: Text(l10n.knowledgeDecisionAddOption),
                 ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterEvidenceSectionTitle,
+            children: [
+              MarkdownEditorWithPreview(
+                controller: _rationaleCtrl,
+                label: l10n.knowledgeWriterRationaleMarkdownLabel,
+                hint: l10n.knowledgeDecisionRationaleHint,
+                minLines: 3,
+                maxLines: 6,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterReferencesSectionTitle,
+            collapsible: true,
+            initiallyExpanded: false,
+            children: [
+              _PrincipleAssumptionPicker(
+                ref: widget.ref,
+                principleIds: _principleIds,
+                assumptionIds: _assumptionIds,
+                onPrincipleToggle: (id) => setState(() {
+                  _principleIds.contains(id)
+                      ? _principleIds.remove(id)
+                      : _principleIds.add(id);
+                }),
+                onAssumptionToggle: (id) => setState(() {
+                  _assumptionIds.contains(id)
+                      ? _assumptionIds.remove(id)
+                      : _assumptionIds.add(id);
+                }),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterPlanningSectionTitle,
+            collapsible: true,
+            children: [
+              FTextField(
+                control: FTextFieldControl.managed(controller: _expectedCtrl),
+                label: Text(l10n.knowledgeDecisionExpectedOutcomeLabel),
+                hint: l10n.knowledgeDecisionExpectedOutcomeHint,
+                maxLines: 3,
+                minLines: 1,
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _reviewDate == null
+                          ? l10n.knowledgeDecisionReviewDateOptional
+                          : l10n.knowledgeDecisionReviewDateScheduled(
+                              knowledgeDate(context, _reviewDate!, long: true),
+                            ),
+                      style: typography.sm.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                  ),
+                  FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: () async {
+                      final picked = await _pickReviewDate(context);
+                      if (picked != null) {
+                        setState(() => _reviewDate = picked);
+                      }
+                    },
+                    child: Text(
+                      _reviewDate == null
+                          ? l10n.knowledgeDecisionReviewDateChoose
+                          : l10n.knowledgeDecisionReviewDateChange,
+                    ),
+                  ),
+                  if (_reviewDate != null) ...[
+                    const SizedBox(width: AppSpacing.s8),
+                    FButton(
+                      variant: FButtonVariant.outline,
+                      onPress: () => setState(() => _reviewDate = null),
+                      child: Text(l10n.knowledgeDecisionClear),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
         ],
@@ -359,15 +361,14 @@ class _OptionEditorTile extends StatelessWidget {
           children: [
             Row(
               children: [
-                FButton.icon(
-                  variant: selected
-                      ? FButtonVariant.primary
-                      : FButtonVariant.outline,
-                  onPress: onSelect,
-                  child: Icon(
-                    selected ? FLucideIcons.check : FLucideIcons.circle,
-                    size: AppIconSizes.xs,
-                  ),
+                FRadio(
+                  value: selected,
+                  onChange: draft.labelCtrl.text.trim().isEmpty
+                      ? null
+                      : (_) => onSelect(),
+                  semanticsLabel: AppLocalizations.of(
+                    context,
+                  ).knowledgeDecisionOptionLabelHint(index + 1),
                 ),
                 const SizedBox(width: AppSpacing.s8),
                 Expanded(
@@ -571,36 +572,14 @@ class _CheckboxList extends StatelessWidget {
   final ValueChanged<String> onToggle;
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final item in items)
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => onToggle(item.id),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-              child: Row(
-                children: [
-                  Icon(
-                    item.selected
-                        ? FLucideIcons.checkSquare2
-                        : FLucideIcons.square,
-                    size: AppIconSizes.xs,
-                  ),
-                  const SizedBox(width: AppSpacing.s8),
-                  Expanded(
-                    child: Text(
-                      item.label,
-                      style: typography.sm,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          KnowledgeSelectableRow(
+            label: item.label,
+            selected: item.selected,
+            onPress: () => onToggle(item.id),
           ),
       ],
     );
@@ -609,49 +588,104 @@ class _CheckboxList extends StatelessWidget {
 
 Future<DateTime?> _pickReviewDate(BuildContext context) async {
   final now = DateTime.now();
-  // Minimal date picker — Forui has no native one; we offer +30 / +90
-  // / +180 day shortcuts in a small sheet. Custom dates land later
-  // (P2; calendar widget is a separate dependency call).
+  // Minimal date picker — Forui has no native calendar widget; we offer common
+  // shortcuts plus a strict YYYY-MM-DD custom input without adding a dependency.
   return showAppFormSheet<DateTime>(
     context: context,
     builder: (sheetContext) => _ReviewDateSheet(now: now),
   );
 }
 
-class _ReviewDateSheet extends StatelessWidget {
+class _ReviewDateSheet extends StatefulWidget {
   const _ReviewDateSheet({required this.now});
   final DateTime now;
+
+  @override
+  State<_ReviewDateSheet> createState() => _ReviewDateSheetState();
+}
+
+class _ReviewDateSheetState extends State<_ReviewDateSheet> {
+  final _customCtrl = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _customCtrl.dispose();
+    super.dispose();
+  }
+
+  DateTime? _parseCustomDate(BuildContext context) {
+    final raw = _customCtrl.text.trim();
+    final l10n = AppLocalizations.of(context);
+    final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(raw);
+    if (match == null) {
+      setState(() => _error = l10n.knowledgeDecisionReviewDateInvalid);
+      return null;
+    }
+    final year = int.parse(match.group(1)!);
+    final month = int.parse(match.group(2)!);
+    final day = int.parse(match.group(3)!);
+    final parsed = DateTime(year, month, day);
+    if (parsed.year != year || parsed.month != month || parsed.day != day) {
+      setState(() => _error = l10n.knowledgeDecisionReviewDateInvalid);
+      return null;
+    }
+    final today = DateTime(widget.now.year, widget.now.month, widget.now.day);
+    if (parsed.isBefore(today)) {
+      setState(() => _error = l10n.knowledgeDecisionReviewDatePast);
+      return null;
+    }
+    setState(() => _error = null);
+    return parsed;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
     Widget choice(int days, String label) => FButton(
       variant: FButtonVariant.outline,
-      onPress: () => Navigator.of(context).pop(now.add(Duration(days: days))),
+      onPress: () =>
+          Navigator.of(context).pop(widget.now.add(Duration(days: days))),
       child: Text(label),
     );
     return AppSheet(
-      title: AppLocalizations.of(context).knowledgeDecisionReviewDateTitle,
+      title: l10n.knowledgeDecisionReviewDateTitle,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          choice(
-            30,
-            AppLocalizations.of(context).knowledgeDecisionReviewDateInDays(30),
-          ),
+          choice(30, l10n.knowledgeDecisionReviewDateInDays(30)),
           const SizedBox(height: AppSpacing.s8),
-          choice(
-            90,
-            AppLocalizations.of(context).knowledgeDecisionReviewDateInDays(90),
-          ),
+          choice(90, l10n.knowledgeDecisionReviewDateInDays(90)),
           const SizedBox(height: AppSpacing.s8),
-          choice(
-            180,
-            AppLocalizations.of(context).knowledgeDecisionReviewDateInDays(180),
-          ),
+          choice(180, l10n.knowledgeDecisionReviewDateInDays(180)),
           const SizedBox(height: AppSpacing.s8),
-          choice(
-            365,
-            AppLocalizations.of(context).knowledgeDecisionReviewDateInOneYear,
+          choice(365, l10n.knowledgeDecisionReviewDateInOneYear),
+          const SizedBox(height: AppSpacing.s12),
+          const FDivider(),
+          const SizedBox(height: AppSpacing.s12),
+          FTextField(
+            control: FTextFieldControl.managed(controller: _customCtrl),
+            label: Text(l10n.knowledgeDecisionReviewDateCustomLabel),
+            hint: l10n.knowledgeDecisionReviewDateCustomHint,
+            textInputAction: TextInputAction.done,
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: AppSpacing.s6),
+            Text(
+              _error!,
+              style: typography.xs.copyWith(color: colors.destructive),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.s8),
+          FButton(
+            onPress: () {
+              final parsed = _parseCustomDate(context);
+              if (parsed != null) Navigator.of(context).pop(parsed);
+            },
+            child: Text(l10n.knowledgeDecisionReviewDateCustomApply),
           ),
         ],
       ),

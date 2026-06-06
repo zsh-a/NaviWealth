@@ -2,11 +2,14 @@
 ///
 /// 3 cards: due Routines (next_due_at within 7d), due Decisions
 /// (review_date passed) and stale Assumptions (active && > 90d
-/// unverified). Forui-only chrome — no Material.
+/// unverified). Forui chrome with a Material pull-to-refresh wrapper.
 library;
 
+import 'package:flutter/material.dart'
+    show AlwaysScrollableScrollPhysics, RefreshIndicator, ReorderableListView;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
 
 import '../../../app/shell_chrome.dart';
@@ -20,6 +23,15 @@ import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_ai_suggestions_card.dart';
 import '_widgets.dart';
+
+const int _kDecisionReviewRescheduleDays = 90;
+const String _kReviewRoutineOrderPrefsKey = 'knowledge.review.routine_order.v1';
+const String _kReviewDecisionOrderPrefsKey =
+    'knowledge.review.decision_order.v1';
+const String _kReviewAssumptionOrderPrefsKey =
+    'knowledge.review.assumption_order.v1';
+
+final _reviewActionsRefreshProvider = StateProvider<int>((ref) => 0);
 
 @visibleForTesting
 bool shouldShowRoutineInReview(
@@ -41,6 +53,42 @@ bool _isSameLocalDay(DateTime a, DateTime b) {
       localA.day == localB.day;
 }
 
+List<T> _orderedReviewItems<T>({
+  required List<T> items,
+  required List<String> order,
+  required String Function(T item) idOf,
+}) {
+  final indexById = <String, int>{
+    for (var i = 0; i < order.length; i++) order[i]: i,
+  };
+  final out = List<T>.of(items);
+  out.sort((a, b) {
+    final ai = indexById[idOf(a)];
+    final bi = indexById[idOf(b)];
+    if (ai == null && bi == null) return 0;
+    if (ai == null) return 1;
+    if (bi == null) return -1;
+    return ai.compareTo(bi);
+  });
+  return out;
+}
+
+Future<void> _persistReviewOrder({
+  required WidgetRef ref,
+  required String prefsKey,
+  required List<String> visibleIds,
+}) async {
+  final prefs = ref.read(sharedPreferencesProvider);
+  final stored = prefs.getStringList(prefsKey) ?? const <String>[];
+  final visible = visibleIds.toSet();
+  await prefs.setStringList(prefsKey, <String>[
+    ...visibleIds,
+    for (final id in stored)
+      if (!visible.contains(id)) id,
+  ]);
+  ref.read(_reviewActionsRefreshProvider.notifier).state++;
+}
+
 class KnowledgeReviewPage extends ConsumerWidget {
   const KnowledgeReviewPage({super.key});
 
@@ -49,20 +97,35 @@ class KnowledgeReviewPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
       title: l10n.knowledgeReviewTitle,
-      child: ListView(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        children: const <Widget>[
-          KnowledgeAiSuggestionsCard(),
-          SizedBox(height: AppSpacing.s16),
-          _DueRoutinesCard(),
-          SizedBox(height: AppSpacing.s16),
-          _DueReviewsCard(),
-          SizedBox(height: AppSpacing.s16),
-          _StaleAssumptionsCard(),
-        ],
+      child: RefreshIndicator(
+        onRefresh: () => _refreshReview(ref),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppSpacing.s16),
+          children: const <Widget>[
+            KnowledgeAiSuggestionsCard(),
+            SizedBox(height: AppSpacing.s16),
+            _DueRoutinesCard(),
+            SizedBox(height: AppSpacing.s16),
+            _DueReviewsCard(),
+            SizedBox(height: AppSpacing.s16),
+            _StaleAssumptionsCard(),
+          ],
+        ),
       ),
     );
   }
+}
+
+Future<void> _refreshReview(WidgetRef ref) async {
+  ref.invalidate(knowledgeRepositoryProvider);
+  ref.invalidate(inboxTriageRepositoryProvider);
+  ref.read(aiSuggestionsRefreshProvider.notifier).state++;
+  ref.read(_reviewActionsRefreshProvider.notifier).state++;
+  await Future.wait([
+    ref.read(knowledgeRepositoryProvider.future),
+    ref.read(inboxTriageRepositoryProvider.future),
+  ]);
 }
 
 class _DueRoutinesCard extends ConsumerWidget {
@@ -123,8 +186,31 @@ class _DueRoutinesCard extends ConsumerWidget {
                 final due = (snap.data ?? const <KnowledgeRoutine>[])
                     .where((r) => shouldShowRoutineInReview(r, now))
                     .toList(growable: false);
+                final ordered = _orderedReviewItems<KnowledgeRoutine>(
+                  items: due,
+                  order:
+                      ref
+                          .read(sharedPreferencesProvider)
+                          .getStringList(_kReviewRoutineOrderPrefsKey) ??
+                      const <String>[],
+                  idOf: (r) => r.id,
+                );
+                final visible = ordered
+                    .take(kReviewCardMaxItems)
+                    .toList(growable: false);
                 return KnowledgeSection.group(
                   title: l10n.knowledgeReviewRoutinesTitle,
+                  trailing: due.isEmpty
+                      ? null
+                      : _ReviewBulkActionButton(
+                          label: l10n.knowledgeReviewMarkAllDone,
+                          icon: FLucideIcons.checkCheck,
+                          onPress: () => _markRoutinesDone(
+                            context: context,
+                            ref: ref,
+                            routines: due,
+                          ),
+                        ),
                   children: [
                     if (due.isEmpty)
                       KnowledgeEmptyState(
@@ -133,9 +219,16 @@ class _DueRoutinesCard extends ConsumerWidget {
                         density: KnowledgeStateDensity.section,
                       )
                     else
-                      ...due
-                          .take(kReviewCardMaxItems)
-                          .map((r) => _DueRoutineRow(routine: r)),
+                      _ReviewReorderableList<KnowledgeRoutine>(
+                        items: visible,
+                        idOf: (r) => r.id,
+                        itemBuilder: (r) => _DueRoutineRow(routine: r),
+                        onOrderChanged: (ids) => _persistReviewOrder(
+                          ref: ref,
+                          prefsKey: _kReviewRoutineOrderPrefsKey,
+                          visibleIds: ids,
+                        ),
+                      ),
                   ],
                 );
               },
@@ -144,6 +237,270 @@ class _DueRoutinesCard extends ConsumerWidget {
         );
       },
     );
+  }
+}
+
+class _ReviewBulkActionButton extends StatefulWidget {
+  const _ReviewBulkActionButton({
+    required this.label,
+    required this.icon,
+    required this.onPress,
+  });
+
+  final String label;
+  final IconData icon;
+  final Future<void> Function() onPress;
+
+  @override
+  State<_ReviewBulkActionButton> createState() =>
+      _ReviewBulkActionButtonState();
+}
+
+class _ReviewBulkActionButtonState extends State<_ReviewBulkActionButton> {
+  bool _busy = false;
+
+  Future<void> _run() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await widget.onPress();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FButton(
+      variant: FButtonVariant.outline,
+      size: FButtonSizeVariant.sm,
+      prefix: Icon(widget.icon, size: AppIconSizes.xs),
+      onPress: _busy ? null : _run,
+      child: Text(_busy ? '...' : widget.label),
+    );
+  }
+}
+
+class _SwipeReviewAction extends StatelessWidget {
+  const _SwipeReviewAction({
+    required this.dismissKey,
+    required this.label,
+    required this.icon,
+    required this.onComplete,
+    required this.child,
+  });
+
+  final Key dismissKey;
+  final String label;
+  final IconData icon;
+  final Future<bool> Function() onComplete;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Dismissible(
+      key: dismissKey,
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (_) => onComplete(),
+      background: const SizedBox.shrink(),
+      secondaryBackground: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
+        decoration: BoxDecoration(
+          color: colors.primary,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              label,
+              style: context.theme.typography.sm.copyWith(
+                color: colors.primaryForeground,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            Icon(icon, size: AppIconSizes.sm, color: colors.primaryForeground),
+          ],
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _ReviewReorderableList<T> extends StatefulWidget {
+  const _ReviewReorderableList({
+    required this.items,
+    required this.idOf,
+    required this.itemBuilder,
+    required this.onOrderChanged,
+  });
+
+  final List<T> items;
+  final String Function(T item) idOf;
+  final Widget Function(T item) itemBuilder;
+  final ValueChanged<List<String>> onOrderChanged;
+
+  @override
+  State<_ReviewReorderableList<T>> createState() =>
+      _ReviewReorderableListState<T>();
+}
+
+class _ReviewReorderableListState<T> extends State<_ReviewReorderableList<T>> {
+  late List<T> _items = List<T>.of(widget.items);
+
+  @override
+  void didUpdateWidget(covariant _ReviewReorderableList<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldIds = _items.map(widget.idOf).join('\u0001');
+    final nextIds = widget.items.map(widget.idOf).join('\u0001');
+    if (oldIds != nextIds) {
+      _items = List<T>.of(widget.items);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return ReorderableListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      buildDefaultDragHandles: false,
+      itemCount: _items.length,
+      onReorderItem: (oldIndex, newIndex) {
+        setState(() {
+          final moved = _items.removeAt(oldIndex);
+          _items.insert(newIndex, moved);
+        });
+        widget.onOrderChanged(_items.map(widget.idOf).toList(growable: false));
+      },
+      itemBuilder: (context, index) {
+        final item = _items[index];
+        return Row(
+          key: ValueKey<String>('review-order-${widget.idOf(item)}'),
+          children: [
+            Expanded(child: widget.itemBuilder(item)),
+            const SizedBox(width: AppSpacing.s4),
+            ReorderableDragStartListener(
+              index: index,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.s6),
+                child: Icon(
+                  FLucideIcons.gripVertical,
+                  size: AppIconSizes.xs,
+                  color: colors.mutedForeground,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+Future<void> _markRoutinesDone({
+  required BuildContext context,
+  required WidgetRef ref,
+  required List<KnowledgeRoutine> routines,
+}) async {
+  if (routines.isEmpty) return;
+  final l10n = AppLocalizations.of(context);
+  try {
+    final repo = await ref.read(knowledgeRepositoryProvider.future);
+    final stamper = await ref.read(mutationStamperProvider.future);
+    for (final r in routines) {
+      final stamp = await stamper.stamp();
+      final next = stamp.now.add(Duration(days: r.intervalDays));
+      await repo.upsertRoutine(
+        KnowledgeRoutine(
+          id: r.id,
+          statement: r.statement,
+          intervalDays: r.intervalDays,
+          nextDueAt: next,
+          lastDoneAt: stamp.now,
+          scope: r.scope,
+          status: r.status,
+          createdAt: r.createdAt,
+          sync: SyncMeta(
+            ownerUserId: stamp.ownerUserId,
+            updatedAt: stamp.now,
+            updatedByDevice: stamp.deviceId,
+            hlc: stamp.hlc,
+          ),
+        ),
+      );
+    }
+    ref.read(_reviewActionsRefreshProvider.notifier).state++;
+    if (context.mounted) {
+      AppMessenger.show(
+        context,
+        ToastKind.success,
+        l10n.knowledgeReviewRoutinesBulkDone(routines.length),
+      );
+    }
+  } catch (e) {
+    if (context.mounted) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.knowledgeReviewRoutineDoneFailed('$e'),
+      );
+    }
+  }
+}
+
+Future<void> _verifyAssumptions({
+  required BuildContext context,
+  required WidgetRef ref,
+  required List<KnowledgeAssumption> assumptions,
+}) async {
+  if (assumptions.isEmpty) return;
+  final l10n = AppLocalizations.of(context);
+  try {
+    final repo = await ref.read(knowledgeRepositoryProvider.future);
+    final stamper = await ref.read(mutationStamperProvider.future);
+    for (final a in assumptions) {
+      final stamp = await stamper.stamp();
+      await repo.upsertAssumption(
+        KnowledgeAssumption(
+          id: a.id,
+          statement: a.statement,
+          confidence: a.confidence,
+          scope: a.scope,
+          evidenceIds: a.evidenceIds,
+          status: a.status,
+          declaredAt: a.declaredAt,
+          lastVerifiedAt: stamp.now,
+          mergedIntoId: a.mergedIntoId,
+          sync: SyncMeta(
+            ownerUserId: stamp.ownerUserId,
+            updatedAt: stamp.now,
+            updatedByDevice: stamp.deviceId,
+            hlc: stamp.hlc,
+          ),
+        ),
+      );
+    }
+    ref.read(_reviewActionsRefreshProvider.notifier).state++;
+    if (context.mounted) {
+      AppMessenger.show(
+        context,
+        ToastKind.success,
+        l10n.knowledgeReviewAssumptionsBulkVerified(assumptions.length),
+      );
+    }
+  } catch (e) {
+    if (context.mounted) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.knowledgeReviewAssumptionVerifyFailed('$e'),
+      );
+    }
   }
 }
 
@@ -157,8 +514,8 @@ class _DueRoutineRow extends ConsumerStatefulWidget {
 class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
   bool _busy = false;
 
-  Future<void> _markDone() async {
-    if (_busy) return;
+  Future<bool> _markDone() async {
+    if (_busy) return false;
     setState(() => _busy = true);
     final l10n = AppLocalizations.of(context);
     try {
@@ -186,6 +543,7 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
         ),
       );
       if (mounted) {
+        ref.read(_reviewActionsRefreshProvider.notifier).state++;
         AppMessenger.show(
           context,
           ToastKind.success,
@@ -194,6 +552,7 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
           ),
         );
       }
+      return true;
     } catch (e) {
       if (mounted) {
         AppMessenger.show(
@@ -202,6 +561,7 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
           l10n.knowledgeReviewRoutineDoneFailed('$e'),
         );
       }
+      return false;
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -220,43 +580,49 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
         ? l10n.knowledgeRoutineDueToday
         : l10n.knowledgeRoutineDueInDays(days);
     final dueColor = days < 0 ? colors.destructive : colors.mutedForeground;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-      child: Row(
-        children: [
-          Icon(
-            FLucideIcons.repeat,
-            size: AppIconSizes.xs,
-            color: colors.mutedForeground,
-          ),
-          const SizedBox(width: AppSpacing.s4),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.routine.statement,
-                  style: typography.sm,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  l10n.knowledgeReviewRoutineMeta(
-                    dueLabel,
-                    widget.routine.intervalDays,
-                  ),
-                  style: typography.xs.copyWith(color: dueColor),
-                ),
-              ],
+    return _SwipeReviewAction(
+      dismissKey: ValueKey<String>('routine-review-${widget.routine.id}'),
+      label: l10n.knowledgeReviewMarkDone,
+      icon: FLucideIcons.check,
+      onComplete: _markDone,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+        child: Row(
+          children: [
+            Icon(
+              FLucideIcons.repeat,
+              size: AppIconSizes.xs,
+              color: colors.mutedForeground,
             ),
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          FButton(
-            variant: FButtonVariant.outline,
-            onPress: _busy ? null : _markDone,
-            child: Text(_busy ? '...' : l10n.knowledgeReviewMarkDone),
-          ),
-        ],
+            const SizedBox(width: AppSpacing.s4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.routine.statement,
+                    style: typography.sm,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    l10n.knowledgeReviewRoutineMeta(
+                      dueLabel,
+                      widget.routine.intervalDays,
+                    ),
+                    style: typography.xs.copyWith(color: dueColor),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            FButton(
+              variant: FButtonVariant.outline,
+              onPress: _busy ? null : () => _markDone(),
+              child: Text(_busy ? '...' : l10n.knowledgeReviewMarkDone),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -299,7 +665,9 @@ class _DueReviewsCard extends ConsumerWidget {
             ],
           ),
           data: (repo) {
-            return FutureBuilder(
+            final tick = ref.watch(_reviewActionsRefreshProvider);
+            return FutureBuilder<List<KnowledgeDecision>>(
+              key: ValueKey<int>(tick),
               future: repo.listDueReviews(
                 ownerUserId: owner,
                 asOf: DateTime.now().toUtc(),
@@ -317,10 +685,31 @@ class _DueReviewsCard extends ConsumerWidget {
                   );
                 }
                 final list = snap.data ?? const [];
-                final typography = context.theme.typography;
-                final colors = context.theme.colors;
+                final ordered = _orderedReviewItems<KnowledgeDecision>(
+                  items: list,
+                  order:
+                      ref
+                          .read(sharedPreferencesProvider)
+                          .getStringList(_kReviewDecisionOrderPrefsKey) ??
+                      const <String>[],
+                  idOf: (d) => d.id,
+                );
+                final visible = ordered
+                    .take(kReviewCardMaxItems)
+                    .toList(growable: false);
                 return KnowledgeSection.group(
                   title: l10n.knowledgeReviewDecisionsTitle,
+                  trailing: list.isEmpty
+                      ? null
+                      : _ReviewBulkActionButton(
+                          label: l10n.knowledgeReviewMarkAllDecisionsReviewed,
+                          icon: FLucideIcons.calendarCheck,
+                          onPress: () => _markDecisionsReviewed(
+                            context: context,
+                            ref: ref,
+                            decisions: list,
+                          ),
+                        ),
                   children: [
                     if (list.isEmpty)
                       KnowledgeEmptyState(
@@ -329,43 +718,16 @@ class _DueReviewsCard extends ConsumerWidget {
                         density: KnowledgeStateDensity.section,
                       )
                     else
-                      ...list
-                          .take(kReviewCardMaxItems)
-                          .map(
-                            (d) => Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: AppSpacing.s4,
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    FLucideIcons.calendar,
-                                    size: AppIconSizes.xs,
-                                    color: colors.mutedForeground,
-                                  ),
-                                  const SizedBox(width: AppSpacing.s4),
-                                  Expanded(
-                                    child: Text(
-                                      d.question,
-                                      style: typography.sm,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const SizedBox(width: AppSpacing.s4),
-                                  Text(
-                                    l10n.knowledgeReviewDecisionOverdueDays(
-                                      d.daysOverdue(DateTime.now().toUtc()) ??
-                                          0,
-                                    ),
-                                    style: typography.xs.copyWith(
-                                      color: colors.mutedForeground,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                      _ReviewReorderableList<KnowledgeDecision>(
+                        items: visible,
+                        idOf: (d) => d.id,
+                        itemBuilder: (d) => _DueDecisionRow(decision: d),
+                        onOrderChanged: (ids) => _persistReviewOrder(
+                          ref: ref,
+                          prefsKey: _kReviewDecisionOrderPrefsKey,
+                          visibleIds: ids,
+                        ),
+                      ),
                   ],
                 );
               },
@@ -374,6 +736,167 @@ class _DueReviewsCard extends ConsumerWidget {
         );
       },
     );
+  }
+}
+
+class _DueDecisionRow extends ConsumerStatefulWidget {
+  const _DueDecisionRow({required this.decision});
+
+  final KnowledgeDecision decision;
+
+  @override
+  ConsumerState<_DueDecisionRow> createState() => _DueDecisionRowState();
+}
+
+class _DueDecisionRowState extends ConsumerState<_DueDecisionRow> {
+  bool _busy = false;
+
+  Future<bool> _markReviewed() async {
+    if (_busy) return false;
+    setState(() => _busy = true);
+    final l10n = AppLocalizations.of(context);
+    try {
+      final next = await _upsertDecisionReviewDate(
+        ref: ref,
+        decision: widget.decision,
+      );
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          l10n.knowledgeReviewDecisionNextReview(
+            knowledgeDate(context, next, long: true),
+          ),
+        );
+      }
+      return true;
+    } catch (e) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          l10n.knowledgeReviewDecisionReviewFailed('$e'),
+        );
+      }
+      return false;
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final typography = context.theme.typography;
+    final colors = context.theme.colors;
+    final overdueDays =
+        widget.decision.daysOverdue(DateTime.now().toUtc()) ?? 0;
+    return _SwipeReviewAction(
+      dismissKey: ValueKey<String>('decision-review-${widget.decision.id}'),
+      label: l10n.knowledgeReviewDecisionReviewed,
+      icon: FLucideIcons.calendarCheck,
+      onComplete: _markReviewed,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+        child: Row(
+          children: [
+            Icon(
+              FLucideIcons.calendar,
+              size: AppIconSizes.xs,
+              color: colors.mutedForeground,
+            ),
+            const SizedBox(width: AppSpacing.s4),
+            Expanded(
+              child: Text(
+                widget.decision.question,
+                style: typography.sm,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s4),
+            Text(
+              l10n.knowledgeReviewDecisionOverdueDays(overdueDays),
+              style: typography.xs.copyWith(color: colors.mutedForeground),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            FButton(
+              variant: FButtonVariant.outline,
+              onPress: _busy ? null : () => _markReviewed(),
+              child: Text(_busy ? '...' : l10n.knowledgeReviewDecisionReviewed),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+Future<DateTime> _upsertDecisionReviewDate({
+  required WidgetRef ref,
+  required KnowledgeDecision decision,
+}) async {
+  final repo = await ref.read(knowledgeRepositoryProvider.future);
+  final stamper = await ref.read(mutationStamperProvider.future);
+  final stamp = await stamper.stamp();
+  final nextReview = stamp.now
+      .add(const Duration(days: _kDecisionReviewRescheduleDays))
+      .toUtc();
+  await repo.upsertDecision(
+    KnowledgeDecision(
+      id: decision.id,
+      question: decision.question,
+      options: decision.options,
+      selectedLabel: decision.selectedLabel,
+      rationaleMd: decision.rationaleMd,
+      principleIds: decision.principleIds,
+      assumptionIds: decision.assumptionIds,
+      expectedOutcome: decision.expectedOutcome,
+      reviewDate: nextReview,
+      actualOutcomeMd: decision.actualOutcomeMd,
+      status: decision.status,
+      supersededByDecisionId: decision.supersededByDecisionId,
+      contextSnapshot: decision.contextSnapshot,
+      decidedAt: decision.decidedAt,
+      mergedIntoId: decision.mergedIntoId,
+      sync: SyncMeta(
+        ownerUserId: stamp.ownerUserId,
+        updatedAt: stamp.now,
+        updatedByDevice: stamp.deviceId,
+        hlc: stamp.hlc,
+      ),
+    ),
+  );
+  return nextReview;
+}
+
+Future<void> _markDecisionsReviewed({
+  required BuildContext context,
+  required WidgetRef ref,
+  required List<KnowledgeDecision> decisions,
+}) async {
+  if (decisions.isEmpty) return;
+  final l10n = AppLocalizations.of(context);
+  try {
+    for (final d in decisions) {
+      await _upsertDecisionReviewDate(ref: ref, decision: d);
+    }
+    ref.read(_reviewActionsRefreshProvider.notifier).state++;
+    if (context.mounted) {
+      AppMessenger.show(
+        context,
+        ToastKind.success,
+        l10n.knowledgeReviewDecisionsBulkReviewed(decisions.length),
+      );
+    }
+  } catch (e) {
+    if (context.mounted) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.knowledgeReviewDecisionReviewFailed('$e'),
+      );
+    }
   }
 }
 
@@ -414,7 +937,9 @@ class _StaleAssumptionsCard extends ConsumerWidget {
             ],
           ),
           data: (repo) {
+            final tick = ref.watch(_reviewActionsRefreshProvider);
             return FutureBuilder(
+              key: ValueKey<int>(tick),
               future: repo.listOpenAssumptions(ownerUserId: owner),
               builder: (context, snap) {
                 if (snap.hasError) {
@@ -435,9 +960,31 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                       (a) => a.daysSinceVerify(now) >= kAssumptionStaleDays,
                     )
                     .toList();
-                final typography = context.theme.typography;
+                final ordered = _orderedReviewItems<KnowledgeAssumption>(
+                  items: stale,
+                  order:
+                      ref
+                          .read(sharedPreferencesProvider)
+                          .getStringList(_kReviewAssumptionOrderPrefsKey) ??
+                      const <String>[],
+                  idOf: (a) => a.id,
+                );
+                final visible = ordered
+                    .take(kReviewCardMaxItems)
+                    .toList(growable: false);
                 return KnowledgeSection.group(
                   title: l10n.knowledgeReviewAssumptionsTitle,
+                  trailing: stale.isEmpty
+                      ? null
+                      : _ReviewBulkActionButton(
+                          label: l10n.knowledgeReviewVerifyAllAssumptions,
+                          icon: FLucideIcons.badgeCheck,
+                          onPress: () => _verifyAssumptions(
+                            context: context,
+                            ref: ref,
+                            assumptions: stale,
+                          ),
+                        ),
                   children: [
                     if (stale.isEmpty)
                       KnowledgeEmptyState(
@@ -448,33 +995,17 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                         density: KnowledgeStateDensity.section,
                       )
                     else
-                      ...stale
-                          .take(kReviewCardMaxItems)
-                          .map(
-                            (a) => Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: AppSpacing.s4,
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      l10n.knowledgeReviewAssumptionStaleSummary(
-                                        a.statement,
-                                        a.daysSinceVerify(now),
-                                        a.confidence.toStringAsFixed(2),
-                                      ),
-                                      style: typography.sm,
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const SizedBox(width: AppSpacing.s8),
-                                  _VerifyAssumptionButton(assumption: a),
-                                ],
-                              ),
-                            ),
-                          ),
+                      _ReviewReorderableList<KnowledgeAssumption>(
+                        items: visible,
+                        idOf: (a) => a.id,
+                        itemBuilder: (a) =>
+                            _StaleAssumptionRow(assumption: a, now: now),
+                        onOrderChanged: (ids) => _persistReviewOrder(
+                          ref: ref,
+                          prefsKey: _kReviewAssumptionOrderPrefsKey,
+                          visibleIds: ids,
+                        ),
+                      ),
                   ],
                 );
               },
@@ -486,22 +1017,22 @@ class _StaleAssumptionsCard extends ConsumerWidget {
   }
 }
 
-class _VerifyAssumptionButton extends ConsumerStatefulWidget {
-  const _VerifyAssumptionButton({required this.assumption});
+class _StaleAssumptionRow extends ConsumerStatefulWidget {
+  const _StaleAssumptionRow({required this.assumption, required this.now});
 
   final KnowledgeAssumption assumption;
+  final DateTime now;
 
   @override
-  ConsumerState<_VerifyAssumptionButton> createState() =>
-      _VerifyAssumptionButtonState();
+  ConsumerState<_StaleAssumptionRow> createState() =>
+      _StaleAssumptionRowState();
 }
 
-class _VerifyAssumptionButtonState
-    extends ConsumerState<_VerifyAssumptionButton> {
+class _StaleAssumptionRowState extends ConsumerState<_StaleAssumptionRow> {
   bool _busy = false;
 
-  Future<void> _verify() async {
-    if (_busy) return;
+  Future<bool> _verify() async {
+    if (_busy) return false;
     setState(() => _busy = true);
     final l10n = AppLocalizations.of(context);
     try {
@@ -529,12 +1060,14 @@ class _VerifyAssumptionButtonState
         ),
       );
       if (mounted) {
+        ref.read(_reviewActionsRefreshProvider.notifier).state++;
         AppMessenger.show(
           context,
           ToastKind.success,
           l10n.knowledgeReviewAssumptionVerified,
         );
       }
+      return true;
     } catch (e) {
       if (mounted) {
         AppMessenger.show(
@@ -543,6 +1076,7 @@ class _VerifyAssumptionButtonState
           l10n.knowledgeReviewAssumptionVerifyFailed('$e'),
         );
       }
+      return false;
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -551,10 +1085,37 @@ class _VerifyAssumptionButtonState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FButton(
-      variant: FButtonVariant.outline,
-      onPress: _busy ? null : _verify,
-      child: Text(l10n.knowledgeReviewVerifyAssumption),
+    final typography = context.theme.typography;
+    return _SwipeReviewAction(
+      dismissKey: ValueKey<String>('assumption-review-${widget.assumption.id}'),
+      label: l10n.knowledgeReviewVerifyAssumption,
+      icon: FLucideIcons.badgeCheck,
+      onComplete: _verify,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.knowledgeReviewAssumptionStaleSummary(
+                  widget.assumption.statement,
+                  widget.assumption.daysSinceVerify(widget.now),
+                  widget.assumption.confidence.toStringAsFixed(2),
+                ),
+                style: typography.sm,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            FButton(
+              variant: FButtonVariant.outline,
+              onPress: _busy ? null : () => _verify(),
+              child: Text(_busy ? '...' : l10n.knowledgeReviewVerifyAssumption),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -217,6 +217,7 @@ class _ProposalRow extends ConsumerStatefulWidget {
 
 class _ProposalRowState extends ConsumerState<_ProposalRow> {
   bool _busy = false;
+  bool _expanded = false;
 
   Future<void> _accept() async {
     if (_busy) return;
@@ -251,36 +252,258 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
     }
   }
 
+  Future<void> _snooze() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final triage = await ref.read(inboxTriageRepositoryProvider.future);
+      await triage.snooze(
+        noteId: widget.note.id,
+        kind: widget.proposal.kind,
+        until: DateTime.now().toUtc().add(const Duration(days: 1)),
+      );
+      ref.read(aiSuggestionsRefreshProvider.notifier).state++;
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          AppLocalizations.of(context).knowledgeAiSuggestionSnoozedToast,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _recordFeedback(InboxProposalFeedback feedback) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final triage = await ref.read(inboxTriageRepositoryProvider.future);
+      await triage.recordFeedback(
+        noteId: widget.note.id,
+        kind: widget.proposal.kind,
+        feedback: feedback,
+      );
+      ref.read(aiSuggestionsRefreshProvider.notifier).state++;
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          AppLocalizations.of(context).knowledgeAiSuggestionFeedbackToast,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: Text(
-            widget.proposal.summaryZh,
-            style: typography.sm.copyWith(color: colors.mutedForeground),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
+                widget.proposal.summaryZh,
+                style: typography.sm.copyWith(color: colors.mutedForeground),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            FTooltip(
+              tipBuilder: (_, _) => Text(
+                _expanded
+                    ? l10n.knowledgeAiSuggestionHideDetails
+                    : l10n.knowledgeAiSuggestionDetails,
+              ),
+              child: FButton.icon(
+                variant: FButtonVariant.outline,
+                onPress: _busy
+                    ? null
+                    : () => setState(() => _expanded = !_expanded),
+                child: Icon(
+                  _expanded ? FLucideIcons.chevronUp : FLucideIcons.list,
+                  size: AppIconSizes.xs,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s4),
+            FTooltip(
+              tipBuilder: (_, _) =>
+                  Text(l10n.knowledgeAiSuggestionSnoozeOneDay),
+              child: FButton.icon(
+                variant: FButtonVariant.outline,
+                onPress: _busy ? null : _snooze,
+                child: const Icon(FLucideIcons.clock, size: AppIconSizes.xs),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s4),
+            FButton.icon(
+              variant: FButtonVariant.outline,
+              onPress: _busy ? null : _accept,
+              child: const Icon(FLucideIcons.check, size: AppIconSizes.xs),
+            ),
+            const SizedBox(width: AppSpacing.s4),
+            FButton.icon(
+              variant: FButtonVariant.outline,
+              onPress: _busy ? null : _dismiss,
+              child: const Icon(FLucideIcons.x, size: AppIconSizes.xs),
+            ),
+          ],
         ),
-        const SizedBox(width: AppSpacing.s8),
-        FButton.icon(
-          variant: FButtonVariant.outline,
-          onPress: _busy ? null : _accept,
-          child: const Icon(FLucideIcons.check, size: AppIconSizes.xs),
-        ),
-        const SizedBox(width: AppSpacing.s4),
-        FButton.icon(
-          variant: FButtonVariant.outline,
-          onPress: _busy ? null : _dismiss,
-          child: const Icon(FLucideIcons.x, size: AppIconSizes.xs),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 160),
+          child: _expanded
+              ? Padding(
+                  key: const ValueKey<String>('details'),
+                  padding: const EdgeInsets.only(top: AppSpacing.s8),
+                  child: _ProposalDetailsPanel(
+                    proposal: widget.proposal,
+                    busy: _busy,
+                    onFeedback: _recordFeedback,
+                  ),
+                )
+              : const SizedBox.shrink(key: ValueKey<String>('collapsed')),
         ),
       ],
     );
   }
+}
+
+class _ProposalDetailsPanel extends StatelessWidget {
+  const _ProposalDetailsPanel({
+    required this.proposal,
+    required this.busy,
+    required this.onFeedback,
+  });
+
+  final InboxProposal proposal;
+  final bool busy;
+  final ValueChanged<InboxProposalFeedback> onFeedback;
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = context.theme.typography;
+    final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
+    final entries = proposal.payload.entries
+        .where((entry) => entry.value != null)
+        .toList(growable: false);
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.s8),
+      decoration: BoxDecoration(
+        color: colors.background,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${l10n.knowledgeAiSuggestionPayloadTitle} · ${proposal.kind.wire}',
+            style: typography.xs.copyWith(fontWeight: FontWeight.w600),
+          ),
+          if (entries.isNotEmpty) const SizedBox(height: AppSpacing.s6),
+          for (final entry in entries)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 104,
+                    child: Text(
+                      entry.key,
+                      style: typography.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s8),
+                  Expanded(
+                    child: Text(
+                      _formatPayloadValue(entry.value),
+                      style: typography.xs,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (entries.isNotEmpty) const SizedBox(height: AppSpacing.s8),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.knowledgeAiSuggestionFeedbackLabel,
+                  style: typography.xs.copyWith(color: colors.mutedForeground),
+                ),
+              ),
+              FTooltip(
+                tipBuilder: (_, _) =>
+                    Text(l10n.knowledgeAiSuggestionFeedbackGood),
+                child: FButton.icon(
+                  variant: proposal.feedback == InboxProposalFeedback.positive
+                      ? FButtonVariant.primary
+                      : FButtonVariant.outline,
+                  size: FButtonSizeVariant.sm,
+                  onPress: busy
+                      ? null
+                      : () => onFeedback(InboxProposalFeedback.positive),
+                  child: const Icon(
+                    FLucideIcons.thumbsUp,
+                    size: AppIconSizes.xs,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s6),
+              FTooltip(
+                tipBuilder: (_, _) =>
+                    Text(l10n.knowledgeAiSuggestionFeedbackBad),
+                child: FButton.icon(
+                  variant: proposal.feedback == InboxProposalFeedback.negative
+                      ? FButtonVariant.primary
+                      : FButtonVariant.outline,
+                  size: FButtonSizeVariant.sm,
+                  onPress: busy
+                      ? null
+                      : () => onFeedback(InboxProposalFeedback.negative),
+                  child: const Icon(
+                    FLucideIcons.thumbsDown,
+                    size: AppIconSizes.xs,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _formatPayloadValue(Object? value) {
+  if (value == null) return '';
+  if (value is List) {
+    return value.map(_formatPayloadValue).where((s) => s.isNotEmpty).join(', ');
+  }
+  if (value is Map) {
+    return value.entries
+        .map((entry) => '${entry.key}: ${_formatPayloadValue(entry.value)}')
+        .join(', ');
+  }
+  return '$value';
 }
 
 extension on InboxProposalStatus {

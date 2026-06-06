@@ -67,11 +67,16 @@ List<ProposalKindRow> _captureUpgradeRows(
   final statement = plan.get('statement');
   final scope = plan.get('scope');
   return <ProposalKindRow>[
-    if (detected != null) ProposalKindRow('类型', detected),
-    if (statement != null) ProposalKindRow('内容', statement),
-    if (scope != null) ProposalKindRow('范围', scope),
+    if (detected != null)
+      ProposalKindRow(l10n.knowledgeProposalRowType, detected),
+    if (statement != null)
+      ProposalKindRow(l10n.knowledgeProposalRowContent, statement),
+    if (scope != null) ProposalKindRow(l10n.knowledgeProposalRowScope, scope),
     if (confidence != null)
-      ProposalKindRow('置信度', confidence.toStringAsFixed(2)),
+      ProposalKindRow(
+        l10n.knowledgeProposalRowConfidence,
+        confidence.toStringAsFixed(2),
+      ),
   ];
 }
 
@@ -83,9 +88,10 @@ List<ProposalKindRow> _conceptLinkRows(
   final from = plan.get('from_concept_name') ?? plan.get('from_concept_id');
   final to = plan.get('to_concept_name') ?? plan.get('to_concept_id');
   return <ProposalKindRow>[
-    if (from != null && to != null) ProposalKindRow('关联', '$from ↔ $to'),
+    if (from != null && to != null)
+      ProposalKindRow(l10n.knowledgeProposalRowLink, '$from ↔ $to'),
     if (plan.get('relation') != null)
-      ProposalKindRow('关系', plan.get('relation')!),
+      ProposalKindRow(l10n.knowledgeProposalRowRelation, plan.get('relation')!),
   ];
 }
 
@@ -100,11 +106,20 @@ List<ProposalKindRow> _mergeRows(
   final removed = m['removed'];
   final tags = m['merged_tags'];
   return <ProposalKindRow>[
-    ProposalKindRow('保留', (m['kept'] as String?) ?? '—'),
+    ProposalKindRow(
+      l10n.knowledgeProposalRowKeep,
+      (m['kept'] as String?) ?? '—',
+    ),
     if (removed is List && removed.isNotEmpty)
-      ProposalKindRow('合并(软删)', removed.whereType<String>().join('、')),
+      ProposalKindRow(
+        l10n.knowledgeProposalRowSoftMerge,
+        removed.whereType<String>().join('、'),
+      ),
     if (tags is List && tags.isNotEmpty)
-      ProposalKindRow('合并后标签', tags.whereType<String>().join('、')),
+      ProposalKindRow(
+        l10n.knowledgeProposalRowMergedTags,
+        tags.whereType<String>().join('、'),
+      ),
   ];
 }
 
@@ -115,8 +130,16 @@ List<ProposalKindRow> _routineRows(
 ) {
   final interval = plan.num_('interval_days')?.toInt();
   return <ProposalKindRow>[
-    ProposalKindRow('事项', plan.get('statement') ?? '—'),
-    if (interval != null) ProposalKindRow('周期', '每 $interval 天'),
-    if (plan.get('scope') != null) ProposalKindRow('范围', plan.get('scope')!),
+    ProposalKindRow(
+      l10n.knowledgeProposalRowItem,
+      plan.get('statement') ?? '—',
+    ),
+    if (interval != null)
+      ProposalKindRow(
+        l10n.knowledgeProposalRowInterval,
+        l10n.knowledgeProposalIntervalDays(interval),
+      ),
+    if (plan.get('scope') != null)
+      ProposalKindRow(l10n.knowledgeProposalRowScope, plan.get('scope')!),
   ];
 }

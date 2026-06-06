@@ -57,6 +57,8 @@ String knowledgeDateFromIso(
 
 enum KnowledgeStateDensity { page, section }
 
+enum KnowledgeSelectionMode { checkbox, radio }
+
 /// Unified KnowledgeOS loading placeholder.
 class KnowledgeLoadingState extends StatelessWidget {
   const KnowledgeLoadingState({
@@ -69,12 +71,204 @@ class KnowledgeLoadingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (density) {
-      KnowledgeStateDensity.page => const Center(child: FProgress()),
-      KnowledgeStateDensity.section => const Padding(
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.s8),
-        child: FProgress(),
+      KnowledgeStateDensity.page => const _KnowledgePageSkeleton(),
+      KnowledgeStateDensity.section => const _KnowledgeSectionSkeleton(),
+    };
+  }
+}
+
+class _KnowledgePageSkeleton extends StatelessWidget {
+  const _KnowledgePageSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      itemCount: 5,
+      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
+      itemBuilder: (context, index) => const SkeletonCard(
+        padding: EdgeInsets.all(AppSpacing.s12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: SkeletonBox(height: 18, radius: AppRadius.xs)),
+                SizedBox(width: AppSpacing.s16),
+                SkeletonBox(width: 64, height: 22, radius: AppRadius.sm),
+              ],
+            ),
+            SizedBox(height: AppSpacing.s10),
+            SkeletonBox(height: 14, radius: AppRadius.xs),
+            SizedBox(height: AppSpacing.s6),
+            SkeletonBox(width: 220, height: 14, radius: AppRadius.xs),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _KnowledgeSectionSkeleton extends StatelessWidget {
+  const _KnowledgeSectionSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SkeletonBox(height: 14, radius: AppRadius.xs),
+          SizedBox(height: AppSpacing.s8),
+          SkeletonBox(width: 220, height: 14, radius: AppRadius.xs),
+          SizedBox(height: AppSpacing.s8),
+          SkeletonBox(width: 160, height: 14, radius: AppRadius.xs),
+        ],
+      ),
+    );
+  }
+}
+
+/// Consistent selectable row for KnowledgeOS sheets.
+class KnowledgeSelectableRow extends StatelessWidget {
+  const KnowledgeSelectableRow({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onPress,
+    this.detail,
+    this.mode = KnowledgeSelectionMode.checkbox,
+    this.enabled = true,
+    this.maxLines = 3,
+  });
+
+  final String label;
+  final String? detail;
+  final bool selected;
+  final VoidCallback onPress;
+  final KnowledgeSelectionMode mode;
+  final bool enabled;
+  final int maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = context.theme.typography;
+    final colors = context.theme.colors;
+    final control = switch (mode) {
+      KnowledgeSelectionMode.checkbox => FCheckbox(
+        value: selected,
+        onChange: enabled ? (_) => onPress() : null,
+      ),
+      KnowledgeSelectionMode.radio => FRadio(
+        value: selected,
+        onChange: enabled ? (_) => onPress() : null,
+        semanticsLabel: label,
       ),
     };
+    return FTappable(
+      onPress: enabled ? onPress : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s2),
+              child: control,
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: typography.sm.copyWith(
+                      color: enabled ? null : colors.mutedForeground,
+                    ),
+                    maxLines: maxLines,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (detail != null) ...[
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      detail!,
+                      style: typography.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Text with a lightweight query highlight for KnowledgeOS search results.
+class KnowledgeHighlightedText extends StatelessWidget {
+  const KnowledgeHighlightedText({
+    super.key,
+    required this.text,
+    required this.query,
+    required this.style,
+    this.highlightStyle,
+    this.maxLines,
+    this.overflow = TextOverflow.ellipsis,
+  });
+
+  final String text;
+  final String query;
+  final TextStyle style;
+  final TextStyle? highlightStyle;
+  final int? maxLines;
+  final TextOverflow overflow;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalizedQuery = query.trim().toLowerCase();
+    if (normalizedQuery.isEmpty) {
+      return Text(text, style: style, maxLines: maxLines, overflow: overflow);
+    }
+
+    final lower = text.toLowerCase();
+    final spans = <TextSpan>[];
+    var cursor = 0;
+    while (cursor < text.length) {
+      final match = lower.indexOf(normalizedQuery, cursor);
+      if (match < 0) {
+        spans.add(TextSpan(text: text.substring(cursor), style: style));
+        break;
+      }
+      if (match > cursor) {
+        spans.add(TextSpan(text: text.substring(cursor, match), style: style));
+      }
+      final end = match + normalizedQuery.length;
+      spans.add(
+        TextSpan(
+          text: text.substring(match, end),
+          style:
+              highlightStyle ??
+              style.copyWith(
+                color: context.theme.colors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      );
+      cursor = end;
+    }
+    return RichText(
+      text: TextSpan(style: style, children: spans),
+      maxLines: maxLines,
+      overflow: overflow,
+    );
   }
 }
 
@@ -396,5 +590,125 @@ class KnowledgeStatusLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppBadge(label: label, outlined: true);
+  }
+}
+
+/// Section shell for KnowledgeOS writer sheets.
+///
+/// Keeps dense forms scannable without turning every field into its own card.
+/// Use [collapsible] for optional/reference-heavy sections.
+class KnowledgeWriterSection extends StatefulWidget {
+  const KnowledgeWriterSection({
+    super.key,
+    required this.title,
+    required this.children,
+    this.subtitle,
+    this.trailing,
+    this.collapsible = false,
+    this.initiallyExpanded = true,
+  });
+
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+  final bool collapsible;
+  final bool initiallyExpanded;
+  final List<Widget> children;
+
+  @override
+  State<KnowledgeWriterSection> createState() => _KnowledgeWriterSectionState();
+}
+
+class _KnowledgeWriterSectionState extends State<KnowledgeWriterSection> {
+  late bool _expanded = widget.initiallyExpanded || !widget.collapsible;
+
+  @override
+  void didUpdateWidget(covariant KnowledgeWriterSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.collapsible && !_expanded) {
+      _expanded = true;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    final header = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                widget.title,
+                style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+              ),
+              if (widget.subtitle != null) ...[
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  widget.subtitle!,
+                  style: typography.xs.copyWith(color: colors.mutedForeground),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (widget.trailing != null) ...[
+          const SizedBox(width: AppSpacing.s8),
+          widget.trailing!,
+        ],
+        if (widget.collapsible) ...[
+          const SizedBox(width: AppSpacing.s8),
+          Icon(
+            _expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+            size: AppIconSizes.xs,
+            color: colors.mutedForeground,
+          ),
+        ],
+      ],
+    );
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      decoration: BoxDecoration(
+        color: colors.background,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.collapsible)
+            FTappable(
+              onPress: () => setState(() => _expanded = !_expanded),
+              child: header,
+            )
+          else
+            header,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 160),
+            child: _expanded
+                ? Column(
+                    key: const ValueKey<String>('expanded'),
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: AppSpacing.s12),
+                      for (var i = 0; i < widget.children.length; i++) ...[
+                        if (i > 0) const SizedBox(height: AppSpacing.s12),
+                        widget.children[i],
+                      ],
+                    ],
+                  )
+                : const SizedBox.shrink(key: ValueKey<String>('collapsed')),
+          ),
+        ],
+      ),
+    );
   }
 }
