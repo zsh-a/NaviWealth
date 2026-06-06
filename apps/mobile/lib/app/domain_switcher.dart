@@ -1,10 +1,10 @@
 /// On-demand OS switcher for the multi-domain shell
 /// (`docs/lifeos-shell.md` §3, dogfood Option B follow-up).
 ///
-/// Switcher entry on mobile is a **long-press on the bottom navigation
-/// bar** — no per-page chrome, no always-visible chip. This file owns
-/// the sheet that renders when long-press fires. The sheet is also the
-/// fallback for any other entry that wants to surface the picker.
+/// Mobile exposes a compact current-domain chip above the bottom navigation;
+/// long-press on the bottom navigation remains a fallback. This file owns
+/// the sheet shared by both entries and any other surface that wants to
+/// expose the picker.
 ///
 /// Desktop (≥ 600 px) keeps its always-visible left dock in
 /// `app_dock_shell.dart` — vertical space isn't at a premium there.
@@ -96,7 +96,12 @@ class _DomainRow extends StatelessWidget {
                 ),
               ),
             ),
-            if (selected) Icon(FLucideIcons.check, size: AppIconSizes.h18, color: colors.primary),
+            if (selected)
+              Icon(
+                FLucideIcons.check,
+                size: AppIconSizes.h18,
+                color: colors.primary,
+              ),
           ],
         ),
       ),

@@ -53,58 +53,72 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     return AppCanvasScaffold(
       childPad: false,
       child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s24,
-                vertical: AppSpacing.s32,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final topInset = constraints.maxHeight < 720
+                ? AppSpacing.s32
+                : AppSpacing.s64;
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.s24,
+                topInset,
+                AppSpacing.s24,
+                AppSpacing.s32,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SvgPicture.asset(
-                    'assets/svg/logo.svg',
-                    width: 72,
-                    height: 72,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 440),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: SvgPicture.asset(
+                          'assets/svg/logo.svg',
+                          width: 64,
+                          height: 64,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.s20),
+                      Text(
+                        l10n.onboardingTitle,
+                        style: context.theme.typography.xl.copyWith(
+                          fontWeight: FontWeight.w600,
+                          height: 1.12,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSpacing.s8),
+                      Text(
+                        l10n.onboardingSubtitle,
+                        style: context.theme.typography.sm.copyWith(
+                          color: context.theme.colors.mutedForeground,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSpacing.s28),
+                      _ModeCard(
+                        key: const ValueKey('onboarding.cloud'),
+                        icon: FLucideIcons.cloud,
+                        title: l10n.onboardingCloudTitle,
+                        description: l10n.onboardingCloudDescription,
+                        busy: _busyChoice == _OnboardingChoice.cloud,
+                        onTap: _busyChoice == null ? _pickCloud : null,
+                      ),
+                      const SizedBox(height: AppSpacing.s12),
+                      _ModeCard(
+                        key: const ValueKey('onboarding.local'),
+                        icon: FLucideIcons.smartphone,
+                        title: l10n.onboardingLocalOnlyTitle,
+                        description: l10n.onboardingLocalOnlyDescription,
+                        busy: _busyChoice == _OnboardingChoice.local,
+                        onTap: _busyChoice == null ? _pickLocal : null,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.s20),
-                  Text(
-                    l10n.onboardingTitle,
-                    style: context.theme.typography.lg,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppSpacing.s8),
-                  Text(
-                    l10n.onboardingSubtitle,
-                    style: context.theme.typography.sm.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppSpacing.s32),
-                  _ModeCard(
-                    key: const ValueKey('onboarding.cloud'),
-                    icon: FLucideIcons.cloud,
-                    title: l10n.onboardingCloudTitle,
-                    description: l10n.onboardingCloudDescription,
-                    busy: _busyChoice == _OnboardingChoice.cloud,
-                    onTap: _busyChoice == null ? _pickCloud : null,
-                  ),
-                  const SizedBox(height: AppSpacing.s12),
-                  _ModeCard(
-                    key: const ValueKey('onboarding.local'),
-                    icon: FLucideIcons.smartphone,
-                    title: l10n.onboardingLocalOnlyTitle,
-                    description: l10n.onboardingLocalOnlyDescription,
-                    busy: _busyChoice == _OnboardingChoice.local,
-                    onTap: _busyChoice == null ? _pickLocal : null,
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
@@ -133,11 +147,11 @@ class _ModeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return SoftCard(
-      level: SoftCardLevel.raised,
+      level: SoftCardLevel.flat,
       onPress: onTap,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s16,
-        vertical: 18,
+        vertical: AppSpacing.s16,
       ),
       child: Row(
         children: [
@@ -145,7 +159,7 @@ class _ModeCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: AppOpacity.medium),
+              color: colors.primary.withValues(alpha: AppOpacity.subtle),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             alignment: Alignment.center,

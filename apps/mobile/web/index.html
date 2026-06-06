@@ -198,6 +198,7 @@
     }
 
     function trackWaiting(reg) {
+      if (!reg) return;
       if (reg.waiting) {
         bridge._waiting = reg.waiting;
         notify();
@@ -220,9 +221,11 @@
           .register('service_worker.js', { scope: './' })
           .then(function (reg) {
             trackWaiting(reg);
+          if (reg && typeof reg.addEventListener === 'function') {
             reg.addEventListener('updatefound', function () {
               trackWaiting(reg);
             });
+          }
             // Periodically poll the server for an updated SW. Browsers also
             // do this on navigation but the SPA navigation under go_router
             // doesn't trigger document loads, so without an explicit kick

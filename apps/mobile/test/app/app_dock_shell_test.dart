@@ -4,9 +4,9 @@
 // Two invariants:
 //   1. Finance-only (default): no switcher UI surfaces at all;
 //      layout is identical to the pre-D-2.3b single-shell baseline.
-//   2. Health opt-in: a per-page DomainSwitcherTitle / chip is the
-//      switch surface on mobile (no always-visible top dock row), and
-//      tapping it shows a sheet that routes to the picked domain.
+//   2. Health opt-in: mobile exposes a compact current-domain switcher
+//      above the bottom nav, and tapping it shows a sheet that routes to
+//      the picked domain.
 //      Desktop keeps the always-visible left dock at ≥ 600 px.
 
 import 'package:flutter/material.dart';
@@ -101,24 +101,21 @@ void main() {
   });
 
   group('Multi-domain dock (Health opt-in)', () {
-    testWidgets(
-      'mobile: no always-visible top dock row — long-press on nav is the only entry',
-      (tester) async {
-        final l10n = lookupAppLocalizations(const Locale('en'));
-        await _pumpAt(
-          tester,
-          domains: <DomainShellSpec>[
-            financeDomainShell(l10n),
-            healthDomainShell(l10n),
-          ],
-        );
-        // No persistent "FinanceOS"/"HealthOS" label anywhere — the
-        // labels only appear inside the long-press sheet.
-        expect(find.text('FinanceOS'), findsNothing);
-        expect(find.text('HealthOS'), findsNothing);
-        expect(find.byType(HomePage), findsOneWidget);
-      },
-    );
+    testWidgets('mobile exposes current-domain switcher above bottom nav', (
+      tester,
+    ) async {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await _pumpAt(
+        tester,
+        domains: <DomainShellSpec>[
+          financeDomainShell(l10n),
+          healthDomainShell(l10n),
+        ],
+      );
+      expect(find.text('FinanceOS'), findsOneWidget);
+      expect(find.text('HealthOS'), findsNothing);
+      expect(find.byType(HomePage), findsOneWidget);
+    });
 
     testWidgets('desktop renders left dock icons + Finance tabs', (
       tester,
@@ -153,14 +150,13 @@ void main() {
         );
         expect(_currentPath(container), AppRoutes.healthToday);
         expect(find.byType(HealthTodayPage), findsOneWidget);
-        // Plain title — switcher lives in bottom nav long-press only.
         expect(find.text(l10n.healthTodayTitle), findsOneWidget);
         expect(find.text('FinanceOS'), findsNothing);
-        expect(find.text('HealthOS'), findsNothing);
+        expect(find.text('HealthOS'), findsOneWidget);
       },
     );
 
-    testWidgets('long-press on bottom nav opens the domain switcher sheet', (
+    testWidgets('tapping the mobile domain switcher opens the sheet', (
       tester,
     ) async {
       final l10n = lookupAppLocalizations(const Locale('en'));
@@ -171,15 +167,13 @@ void main() {
           healthDomainShell(l10n),
         ],
       );
-      // Long-press the first nav item (Home). Any tab works — the
-      // sheet is the same.
-      await tester.longPress(find.text(l10n.navToday));
+      await tester.tap(find.text('FinanceOS'));
       // Drive the sheet animation manually; pumpAndSettle never
       // settles because the home dashboard owns a periodic ticker.
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       // Sheet exposes both domain labels.
-      expect(find.text('FinanceOS'), findsOneWidget);
+      expect(find.text('FinanceOS'), findsNWidgets(2));
       expect(find.text('HealthOS'), findsOneWidget);
 
       // Tapping HealthOS in the sheet navigates to /health.

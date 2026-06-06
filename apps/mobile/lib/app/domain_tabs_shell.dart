@@ -20,11 +20,7 @@ import 'route_paths.dart';
 /// dock chrome is rendered by the *outer* `AppDockShell` (see
 /// `app_dock_shell.dart`) — this widget is dock-agnostic.
 class DomainTabsShell extends ConsumerStatefulWidget {
-  const DomainTabsShell({
-    super.key,
-    required this.shell,
-    required this.spec,
-  });
+  const DomainTabsShell({super.key, required this.shell, required this.spec});
 
   final StatefulNavigationShell shell;
   final DomainShellSpec spec;
@@ -68,10 +64,7 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
   }
 
   void _onSelected(int i) {
-    widget.shell.goBranch(
-      i,
-      initialLocation: i == widget.shell.currentIndex,
-    );
+    widget.shell.goBranch(i, initialLocation: i == widget.shell.currentIndex);
   }
 
   @override
@@ -143,6 +136,14 @@ class _MobileLayout extends ConsumerWidget {
     // the inner FBottomNavigationBar via the default hit-test behaviour.
     final specs = ref.watch(activeDomainShellsProvider);
     final hasSwitcher = specs.length >= 2;
+    final activePath = GoRouter.of(
+      context,
+    ).routeInformationProvider.value.uri.path;
+    final activeSpec = hasSwitcher
+        ? activeSpecForPath(specs, activePath)
+        : null;
+    final showMobileDomainSwitch =
+        hasSwitcher && Breakpoints.isMobile(MediaQuery.sizeOf(context).width);
 
     return FScaffold(
       childPad: false,
@@ -159,6 +160,8 @@ class _MobileLayout extends ConsumerWidget {
           // Persistent undo banner sits between content and
           // the bottom nav. Hidden when the stack is empty.
           const PersistentUndoBanner(),
+          if (showMobileDomainSwitch && activeSpec != null)
+            _MobileDomainSwitchBar(active: activeSpec, specs: specs),
           GestureDetector(
             behavior: HitTestBehavior.deferToChild,
             onLongPress: hasSwitcher
@@ -238,7 +241,10 @@ class _TabletRailSettings extends StatelessWidget {
     return FTappable(
       onPress: () => GoRouter.of(context).push(AppRoutes.settings),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
+        margin: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s8,
+          vertical: AppSpacing.s4,
+        ),
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -265,6 +271,73 @@ class _TabletRailSettings extends StatelessWidget {
   }
 }
 
+class _MobileDomainSwitchBar extends StatelessWidget {
+  const _MobileDomainSwitchBar({required this.active, required this.specs});
+
+  final DomainShellSpec active;
+  final List<DomainShellSpec> specs;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s12,
+        AppSpacing.s4,
+        AppSpacing.s12,
+        AppSpacing.s2,
+      ),
+      child: Semantics(
+        label: '${l10n.shellSwitchDomainTitle}: ${active.label}',
+        button: true,
+        child: FTappable(
+          onPress: () => showDomainSwitcherSheet(context, specs),
+          child: Container(
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
+            decoration: BoxDecoration(
+              color: colors.muted.withValues(alpha: AppOpacity.faint),
+              borderRadius: BorderRadius.circular(AppRadius.full),
+              border: Border.all(
+                color: colors.border.withValues(alpha: AppOpacity.muted),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  active.selectedIcon,
+                  size: AppIconSizes.sm,
+                  color: colors.primary,
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Flexible(
+                  child: Text(
+                    active.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.theme.typography.sm.copyWith(
+                      color: colors.foreground,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s6),
+                Icon(
+                  FLucideIcons.chevronUp,
+                  size: AppIconSizes.xs,
+                  color: colors.mutedForeground,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TabletRailItem extends StatelessWidget {
   const _TabletRailItem({
     required this.tab,
@@ -284,7 +357,10 @@ class _TabletRailItem extends StatelessWidget {
     return FTappable(
       onPress: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
+        margin: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s8,
+          vertical: AppSpacing.s4,
+        ),
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s10),
         decoration: BoxDecoration(
           color: fill,
