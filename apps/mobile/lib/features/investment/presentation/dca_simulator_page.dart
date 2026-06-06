@@ -405,8 +405,8 @@ class _MetricGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Wrap(
-      spacing: 10,
-      runSpacing: 10,
+      spacing: AppSpacing.s10,
+      runSpacing: AppSpacing.s10,
       children: [
         _MoneyMetric(
           label: l10n.dcaSimulatorTotalInvested,

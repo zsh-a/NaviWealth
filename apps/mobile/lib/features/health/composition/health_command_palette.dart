@@ -21,7 +21,7 @@ List<CommandPaletteEntry> healthCommandPaletteEntries(AppLocalizations l10n) {
   return <CommandPaletteEntry>[
     CommandPaletteEntry(
       id: 'nav.health.today',
-      label: '健康 · 今日',
+      label: l10n.healthCommandToday,
       icon: FLucideIcons.heart,
       keywords: const <String>[
         AppRoutes.healthToday,
@@ -36,7 +36,7 @@ List<CommandPaletteEntry> healthCommandPaletteEntries(AppLocalizations l10n) {
     ),
     CommandPaletteEntry(
       id: 'nav.health.trend',
-      label: '健康 · 趋势',
+      label: l10n.healthCommandTrend,
       icon: FLucideIcons.trendingUp,
       keywords: const <String>[
         AppRoutes.healthTrend,
@@ -52,7 +52,7 @@ List<CommandPaletteEntry> healthCommandPaletteEntries(AppLocalizations l10n) {
     ),
     CommandPaletteEntry(
       id: 'nav.health.plan',
-      label: '健康 · 计划',
+      label: l10n.healthCommandPlan,
       icon: FLucideIcons.zap,
       keywords: const <String>[
         AppRoutes.healthPlan,

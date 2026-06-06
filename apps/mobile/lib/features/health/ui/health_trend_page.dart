@@ -48,11 +48,11 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
           SegmentedRow<_TrendGroup>(
             options: _TrendGroup.values,
             value: _group,
-            labelOf: _trendGroupLabel,
+            labelOf: (group) => _trendGroupLabel(l10n, group),
             onChanged: (value) => setState(() => _group = value),
           ),
           const SizedBox(height: AppSpacing.s12),
-          for (final spec in _trendSpecs(_group)) ...[
+          for (final spec in _trendSpecs(l10n, _group)) ...[
             _TrendCard(spec: spec),
             const SizedBox(height: AppSpacing.s12),
           ],
@@ -61,11 +61,12 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
     );
   }
 
-  static String _trendGroupLabel(_TrendGroup group) => switch (group) {
-    _TrendGroup.recovery => '恢复',
-    _TrendGroup.activity => '活动',
-    _TrendGroup.body => '身体',
-  };
+  static String _trendGroupLabel(AppLocalizations l10n, _TrendGroup group) =>
+      switch (group) {
+        _TrendGroup.recovery => l10n.healthTrendGroupRecovery,
+        _TrendGroup.activity => l10n.healthTrendGroupActivity,
+        _TrendGroup.body => l10n.healthTrendGroupBody,
+      };
 }
 
 class _TrendCard extends ConsumerWidget {
@@ -103,7 +104,7 @@ class _TrendCard extends ConsumerWidget {
               loading: () => const Center(child: FCircularProgress()),
               error: (e, _) => Center(
                 child: Text(
-                  '加载失败：$e',
+                  AppLocalizations.of(context).healthTrendLoadFailed('$e'),
                   style: typography.xs.copyWith(color: colors.destructive),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
@@ -113,7 +114,7 @@ class _TrendCard extends ConsumerWidget {
                 if (points.length < 2) {
                   return Center(
                     child: Text(
-                      '数据还不够。',
+                      AppLocalizations.of(context).healthTrendNotEnoughData,
                       style: typography.xs.copyWith(
                         color: colors.mutedForeground,
                       ),
@@ -146,69 +147,70 @@ class _TrendSpec {
   final HealthMetricKind kind;
 }
 
-List<_TrendSpec> _trendSpecs(_TrendGroup group) => switch (group) {
-  _TrendGroup.recovery => const [
-    _TrendSpec(
-      title: 'HRV',
-      subtitle: '心率变异性（近 30 天）',
-      kind: HealthMetricKind.hrvDaily,
-    ),
-    _TrendSpec(
-      title: '睡眠',
-      subtitle: '每晚小时数（近 30 天）',
-      kind: HealthMetricKind.sleepSession,
-    ),
-    _TrendSpec(
-      title: '心率',
-      subtitle: '每日平均心率（近 30 天）',
-      kind: HealthMetricKind.heartRateDaily,
-    ),
-    _TrendSpec(
-      title: '呼吸',
-      subtitle: '每日平均呼吸率（近 30 天）',
-      kind: HealthMetricKind.respiratoryRateDaily,
-    ),
-  ],
-  _TrendGroup.activity => const [
-    _TrendSpec(
-      title: '运动',
-      subtitle: '每天分钟数（近 30 天）',
-      kind: HealthMetricKind.workoutSession,
-    ),
-    _TrendSpec(
-      title: '步数',
-      subtitle: '每天步数（近 30 天）',
-      kind: HealthMetricKind.stepsDaily,
-    ),
-    _TrendSpec(
-      title: '步行距离',
-      subtitle: '每天公里数（近 30 天）',
-      kind: HealthMetricKind.distanceWalkingRunningDaily,
-    ),
-    _TrendSpec(
-      title: '楼层',
-      subtitle: '每天爬楼层数（近 30 天）',
-      kind: HealthMetricKind.floorsClimbedDaily,
-    ),
-  ],
-  _TrendGroup.body => const [
-    _TrendSpec(
-      title: '体重',
-      subtitle: '体重记录（近 30 天）',
-      kind: HealthMetricKind.weight,
-    ),
-    _TrendSpec(
-      title: '体脂',
-      subtitle: '体脂比例（近 30 天）',
-      kind: HealthMetricKind.bodyFat,
-    ),
-    _TrendSpec(
-      title: 'VO₂max',
-      subtitle: '最大摄氧量（近 30 天）',
-      kind: HealthMetricKind.vo2Max,
-    ),
-  ],
-};
+List<_TrendSpec> _trendSpecs(AppLocalizations l10n, _TrendGroup group) =>
+    switch (group) {
+      _TrendGroup.recovery => [
+        _TrendSpec(
+          title: l10n.healthHrvMetricLabel,
+          subtitle: l10n.healthTrendHrvSubtitle,
+          kind: HealthMetricKind.hrvDaily,
+        ),
+        _TrendSpec(
+          title: l10n.healthSleepMetricLabel,
+          subtitle: l10n.healthTrendSleepSubtitle,
+          kind: HealthMetricKind.sleepSession,
+        ),
+        _TrendSpec(
+          title: l10n.healthHeartRateMetricLabel,
+          subtitle: l10n.healthTrendHeartRateSubtitle,
+          kind: HealthMetricKind.heartRateDaily,
+        ),
+        _TrendSpec(
+          title: l10n.healthTrendRespiratoryTitle,
+          subtitle: l10n.healthTrendRespiratorySubtitle,
+          kind: HealthMetricKind.respiratoryRateDaily,
+        ),
+      ],
+      _TrendGroup.activity => [
+        _TrendSpec(
+          title: l10n.healthWorkoutMetricLabel,
+          subtitle: l10n.healthTrendWorkoutSubtitle,
+          kind: HealthMetricKind.workoutSession,
+        ),
+        _TrendSpec(
+          title: l10n.healthStepsMetricLabel,
+          subtitle: l10n.healthTrendStepsSubtitle,
+          kind: HealthMetricKind.stepsDaily,
+        ),
+        _TrendSpec(
+          title: l10n.healthTrendWalkingDistanceTitle,
+          subtitle: l10n.healthTrendWalkingDistanceSubtitle,
+          kind: HealthMetricKind.distanceWalkingRunningDaily,
+        ),
+        _TrendSpec(
+          title: l10n.healthTrendFlightsTitle,
+          subtitle: l10n.healthTrendFlightsSubtitle,
+          kind: HealthMetricKind.floorsClimbedDaily,
+        ),
+      ],
+      _TrendGroup.body => [
+        _TrendSpec(
+          title: l10n.healthTrendWeightTitle,
+          subtitle: l10n.healthTrendWeightSubtitle,
+          kind: HealthMetricKind.weight,
+        ),
+        _TrendSpec(
+          title: l10n.healthTrendBodyFatTitle,
+          subtitle: l10n.healthTrendBodyFatSubtitle,
+          kind: HealthMetricKind.bodyFat,
+        ),
+        _TrendSpec(
+          title: l10n.healthTrendVo2MaxTitle,
+          subtitle: l10n.healthTrendVo2MaxSubtitle,
+          kind: HealthMetricKind.vo2Max,
+        ),
+      ],
+    };
 
 /// Trend series for one kind, ordered by [HealthMetric.capturedAt]
 /// ascending so the line chart reads left-to-right oldest → newest.

@@ -97,7 +97,10 @@ class _StressRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final verdictColor = fireStressVerdictColor(SemanticColors.of(context), result.verdict);
+    final verdictColor = fireStressVerdictColor(
+      SemanticColors.of(context),
+      result.verdict,
+    );
     final scenarioLabel = _scenarioLabel(l10n, result, formatters);
     final verdictLabel = _verdictLabel(l10n, result.verdict);
     final wrLabel = result.withdrawalRateAfter.isFinite
@@ -133,11 +136,16 @@ class _StressRow extends StatelessWidget {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s8,
+                vertical: AppSpacing.s2,
+              ),
               decoration: BoxDecoration(
                 color: verdictColor.withValues(alpha: AppOpacity.light),
                 borderRadius: BorderRadius.circular(AppRadius.full),
-                border: Border.all(color: verdictColor.withValues(alpha: AppOpacity.disabled)),
+                border: Border.all(
+                  color: verdictColor.withValues(alpha: AppOpacity.disabled),
+                ),
               ),
               child: Text(
                 verdictLabel,
@@ -151,8 +159,8 @@ class _StressRow extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.s4),
         Wrap(
-          spacing: 12,
-          runSpacing: 4,
+          spacing: AppSpacing.s12,
+          runSpacing: AppSpacing.s4,
           children: [
             Text(
               wrLabel,
@@ -219,4 +227,3 @@ String _verdictLabel(AppLocalizations l10n, FireStressVerdict v) {
       return l10n.fireOsStressVerdictDanger;
   }
 }
-

@@ -13,6 +13,7 @@ import 'package:forui/forui.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_widgets.dart';
@@ -76,19 +77,15 @@ class _PrincipleWriterState extends State<_PrincipleWriter> {
     if (_saving || _stmtCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
     try {
-      final repo =
-          await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper =
-          await widget.ref.read(mutationStamperProvider.future);
+      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await widget.ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
       await repo.upsertPrinciple(
         KnowledgePrinciple(
           id: kKnowledgeUuid.v4(),
           statement: _stmtCtrl.text.trim(),
           rationaleMd: _rationaleCtrl.text,
-          scope: _scopeCtrl.text.trim().isEmpty
-              ? '*'
-              : _scopeCtrl.text.trim(),
+          scope: _scopeCtrl.text.trim().isEmpty ? '*' : _scopeCtrl.text.trim(),
           status: PrincipleStatus.active,
           declaredAt: stamp.now,
           sync: SyncMeta(
@@ -107,11 +104,13 @@ class _PrincipleWriterState extends State<_PrincipleWriter> {
 
   @override
   Widget build(BuildContext context) => AppSheet(
-    title: '新建 Principle',
-    subtitle: '长期世界观原语 — 不可证伪',
+    title: AppLocalizations.of(context).knowledgePrincipleWriterTitle,
+    subtitle: AppLocalizations.of(context).knowledgePrincipleWriterSubtitle,
     footer: AppSheetFooter(
-      submitLabel: _saving ? '保存中…' : '保存',
-      cancelLabel: '取消',
+      submitLabel: _saving
+          ? AppLocalizations.of(context).commonSaving
+          : AppLocalizations.of(context).commonSave,
+      cancelLabel: AppLocalizations.of(context).commonCancel,
       busy: _saving || _stmtCtrl.text.trim().isEmpty,
       onSubmit: () {
         _save();
@@ -123,21 +122,25 @@ class _PrincipleWriterState extends State<_PrincipleWriter> {
       children: [
         FTextField(
           control: FTextFieldControl.managed(controller: _stmtCtrl),
-          label: const Text('陈述'),
-          hint: '"默认 edge-first" / "避免高维护成本系统"',
-            ),
+          label: Text(
+            AppLocalizations.of(context).knowledgeWriterStatementLabel,
+          ),
+          hint: AppLocalizations.of(context).knowledgePrincipleStatementHint,
+        ),
         const SizedBox(height: AppSpacing.s12),
         MarkdownEditorWithPreview(
           controller: _rationaleCtrl,
-          label: '理由（Markdown）',
-          hint: '为什么把这个世界观定为 Principle',
+          label: AppLocalizations.of(
+            context,
+          ).knowledgeWriterRationaleMarkdownLabel,
+          hint: AppLocalizations.of(context).knowledgePrincipleRationaleHint,
           minLines: 2,
           maxLines: 4,
         ),
         const SizedBox(height: AppSpacing.s12),
         FTextField(
           control: FTextFieldControl.managed(controller: _scopeCtrl),
-          label: const Text('适用范围'),
+          label: Text(AppLocalizations.of(context).knowledgeWriterScopeLabel),
           hint: '"*" / "investing" / "life"',
         ),
       ],
@@ -179,19 +182,15 @@ class _AssumptionWriterState extends State<_AssumptionWriter> {
     if (_saving || _stmtCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
     try {
-      final repo =
-          await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper =
-          await widget.ref.read(mutationStamperProvider.future);
+      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await widget.ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
       await repo.upsertAssumption(
         KnowledgeAssumption(
           id: kKnowledgeUuid.v4(),
           statement: _stmtCtrl.text.trim(),
           confidence: _confidence,
-          scope: _scopeCtrl.text.trim().isEmpty
-              ? '*'
-              : _scopeCtrl.text.trim(),
+          scope: _scopeCtrl.text.trim().isEmpty ? '*' : _scopeCtrl.text.trim(),
           evidenceIds: const <String>[],
           status: AssumptionStatus.active,
           declaredAt: stamp.now,
@@ -214,11 +213,13 @@ class _AssumptionWriterState extends State<_AssumptionWriter> {
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     return AppSheet(
-      title: '新建 Assumption',
-      subtitle: '可证伪 — 设置置信度，后续会被复盘',
+      title: AppLocalizations.of(context).knowledgeAssumptionWriterTitle,
+      subtitle: AppLocalizations.of(context).knowledgeAssumptionWriterSubtitle2,
       footer: AppSheetFooter(
-        submitLabel: _saving ? '保存中…' : '保存',
-        cancelLabel: '取消',
+        submitLabel: _saving
+            ? AppLocalizations.of(context).commonSaving
+            : AppLocalizations.of(context).commonSave,
+        cancelLabel: AppLocalizations.of(context).commonCancel,
         busy: _saving || _stmtCtrl.text.trim().isEmpty,
         onSubmit: () {
           _save();
@@ -230,12 +231,15 @@ class _AssumptionWriterState extends State<_AssumptionWriter> {
         children: [
           FTextField(
             control: FTextFieldControl.managed(controller: _stmtCtrl),
-            label: const Text('陈述'),
-            hint: '"长期指数增长高于通胀"',
+            label: Text(
+              AppLocalizations.of(context).knowledgeWriterStatementLabel,
+            ),
+            hint: AppLocalizations.of(context).knowledgeAssumptionStatementHint,
           ),
           const SizedBox(height: AppSpacing.s12),
           Text(
-            '置信度：${_confidence.toStringAsFixed(2)}',
+            '${AppLocalizations.of(context).knowledgeWriterConfidenceLabel}: '
+            '${_confidence.toStringAsFixed(2)}',
             style: typography.sm,
           ),
           const SizedBox(height: AppSpacing.s4),
@@ -248,8 +252,9 @@ class _AssumptionWriterState extends State<_AssumptionWriter> {
             children: [
               for (final v in const <double>[0.3, 0.5, 0.7, 0.85, 0.95])
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s2,
+                  ),
                   child: FButton(
                     variant: _confidence == v
                         ? FButtonVariant.primary
@@ -263,7 +268,7 @@ class _AssumptionWriterState extends State<_AssumptionWriter> {
           const SizedBox(height: AppSpacing.s12),
           FTextField(
             control: FTextFieldControl.managed(controller: _scopeCtrl),
-            label: const Text('适用范围'),
+            label: Text(AppLocalizations.of(context).knowledgeWriterScopeLabel),
             hint: '"*" / "investing" / "fire"',
           ),
         ],
@@ -307,10 +312,8 @@ class _ConceptWriterState extends State<_ConceptWriter> {
     if (_saving || _nameCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
     try {
-      final repo =
-          await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper =
-          await widget.ref.read(mutationStamperProvider.future);
+      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await widget.ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
       final aliases = _aliasesCtrl.text
           .split(',')
@@ -341,11 +344,13 @@ class _ConceptWriterState extends State<_ConceptWriter> {
 
   @override
   Widget build(BuildContext context) => AppSheet(
-    title: '新建 Concept',
-    subtitle: '用于 [[soft links]] 和 AI 提示交叉引用的锚点',
+    title: AppLocalizations.of(context).knowledgeConceptWriterTitle,
+    subtitle: AppLocalizations.of(context).knowledgeConceptWriterSubtitle2,
     footer: AppSheetFooter(
-      submitLabel: _saving ? '保存中…' : '保存',
-      cancelLabel: '取消',
+      submitLabel: _saving
+          ? AppLocalizations.of(context).commonSaving
+          : AppLocalizations.of(context).commonSave,
+      cancelLabel: AppLocalizations.of(context).commonCancel,
       busy: _saving || _nameCtrl.text.trim().isEmpty,
       onSubmit: () {
         _save();
@@ -357,20 +362,22 @@ class _ConceptWriterState extends State<_ConceptWriter> {
       children: [
         FTextField(
           control: FTextFieldControl.managed(controller: _nameCtrl),
-          label: const Text('名称'),
-          hint: 'Concept 名称（例如 "edge-first"）',
-            ),
+          label: Text(AppLocalizations.of(context).knowledgeWriterNameLabel),
+          hint: AppLocalizations.of(context).knowledgeConceptNameHint,
+        ),
         const SizedBox(height: AppSpacing.s12),
         FTextField(
           control: FTextFieldControl.managed(controller: _aliasesCtrl),
-          label: const Text('别名'),
-          hint: '逗号分隔的同义词',
+          label: Text(AppLocalizations.of(context).knowledgeWriterAliasLabel),
+          hint: AppLocalizations.of(context).knowledgeConceptAliasesHint,
         ),
         const SizedBox(height: AppSpacing.s12),
         MarkdownEditorWithPreview(
           controller: _summaryCtrl,
-          label: '摘要（Markdown）',
-          hint: '1–2 句定义，用作 [[soft link]] 的 tooltip',
+          label: AppLocalizations.of(
+            context,
+          ).knowledgeWriterSummaryMarkdownLabel,
+          hint: AppLocalizations.of(context).knowledgeConceptSummaryHint,
           minLines: 2,
           maxLines: 4,
         ),
@@ -415,10 +422,8 @@ class _ExperimentWriterState extends State<_ExperimentWriter> {
     if (_saving || _hypoCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
     try {
-      final repo =
-          await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper =
-          await widget.ref.read(mutationStamperProvider.future);
+      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await widget.ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
       final metrics = _metricsCtrl.text
           .split(',')
@@ -450,11 +455,13 @@ class _ExperimentWriterState extends State<_ExperimentWriter> {
 
   @override
   Widget build(BuildContext context) => AppSheet(
-    title: '新建 Experiment',
-    subtitle: '验证一个假设 — 通常挂在一条 Assumption 上',
+    title: AppLocalizations.of(context).knowledgeExperimentWriterTitle,
+    subtitle: AppLocalizations.of(context).knowledgeExperimentWriterSubtitle2,
     footer: AppSheetFooter(
-      submitLabel: _saving ? '保存中…' : '保存',
-      cancelLabel: '取消',
+      submitLabel: _saving
+          ? AppLocalizations.of(context).commonSaving
+          : AppLocalizations.of(context).commonSave,
+      cancelLabel: AppLocalizations.of(context).commonCancel,
       busy: _saving || _hypoCtrl.text.trim().isEmpty,
       onSubmit: () {
         _save();
@@ -466,22 +473,26 @@ class _ExperimentWriterState extends State<_ExperimentWriter> {
       children: [
         FTextField(
           control: FTextFieldControl.managed(controller: _hypoCtrl),
-          label: const Text('假设'),
-          hint: '"covered call 60 DTE on QQQ 优于 30 DTE"',
-            ),
+          label: Text(
+            AppLocalizations.of(context).knowledgeWriterHypothesisLabel,
+          ),
+          hint: AppLocalizations.of(context).knowledgeExperimentHypothesisHint,
+        ),
         const SizedBox(height: AppSpacing.s12),
         MarkdownEditorWithPreview(
           controller: _methodCtrl,
-          label: '方法（Markdown）',
-          hint: '怎么做、跑多久、用什么数据',
+          label: AppLocalizations.of(
+            context,
+          ).knowledgeWriterMethodMarkdownLabel,
+          hint: AppLocalizations.of(context).knowledgeExperimentMethodHint,
           minLines: 2,
           maxLines: 4,
         ),
         const SizedBox(height: AppSpacing.s12),
         FTextField(
           control: FTextFieldControl.managed(controller: _metricsCtrl),
-          label: const Text('指标'),
-          hint: '逗号分隔（例如 "yield, drawdown, sharpe"）',
+          label: Text(AppLocalizations.of(context).knowledgeWriterMetricsLabel),
+          hint: AppLocalizations.of(context).knowledgeExperimentMetricsHint,
         ),
         const SizedBox(height: AppSpacing.s12),
         _AssumptionTargetPicker(
@@ -523,7 +534,9 @@ class _AssumptionTargetPicker extends ConsumerWidget {
                   .toList(growable: false);
               if (all.isEmpty) {
                 return Text(
-                  '没有 active 的 Assumption 可挂（留空也可以）',
+                  AppLocalizations.of(
+                    context,
+                  ).knowledgeExperimentNoActiveAssumptions,
                   style: context.theme.typography.xs.copyWith(
                     color: context.theme.colors.mutedForeground,
                   ),
@@ -534,19 +547,20 @@ class _AssumptionTargetPicker extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    '目标 Assumption（可选）',
-                    style: typography.sm
-                        .copyWith(fontWeight: FontWeight.w600),
+                    AppLocalizations.of(
+                      context,
+                    ).knowledgeExperimentTargetAssumptionLabel,
+                    style: typography.sm.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: AppSpacing.s4),
                   for (final a in all)
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTap: () =>
-                          onChange(selectedId == a.id ? null : a.id),
+                      onTap: () => onChange(selectedId == a.id ? null : a.id),
                       child: Padding(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.s4,
+                        ),
                         child: Row(
                           children: [
                             Icon(

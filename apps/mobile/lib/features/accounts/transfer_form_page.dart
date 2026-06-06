@@ -121,7 +121,16 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         child: accountsAsync.when(
           data: (accounts) => _buildForm(context, accounts, convertMode),
           loading: () => const Center(child: FCircularProgress()),
-          error: (_, _) => Center(child: Text(l10n.commonLoadFailed)),
+          error: (_, _) => Center(
+            child: AppEmptyState.error(
+              title: l10n.commonLoadFailed,
+              action: FButton(
+                variant: FButtonVariant.ghost,
+                onPress: () => ref.invalidate(accountsStreamProvider),
+                child: Text(l10n.commonRetry),
+              ),
+            ),
+          ),
         ),
       ),
     );

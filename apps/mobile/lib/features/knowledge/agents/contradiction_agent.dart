@@ -83,17 +83,18 @@ class ContradictionAgent implements Agent {
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final ContradictionJudge activeJudge =
-        judgeOverride ??
-        await ctx.ref.read(contradictionJudgeProvider.future);
+        judgeOverride ?? await ctx.ref.read(contradictionJudgeProvider.future);
 
     final decisions = await repo.listDecisions(
       ownerUserId: ownerUserId,
       limit: 200,
     );
-    final principles =
-        await repo.listActivePrinciples(ownerUserId: ownerUserId);
-    final openAssumptions =
-        await repo.listOpenAssumptions(ownerUserId: ownerUserId);
+    final principles = await repo.listActivePrinciples(
+      ownerUserId: ownerUserId,
+    );
+    final openAssumptions = await repo.listOpenAssumptions(
+      ownerUserId: ownerUserId,
+    );
 
     final issues = <_Contradiction>[];
 
@@ -161,7 +162,7 @@ class ContradictionAgent implements Agent {
       ownerUserId: ownerUserId,
       start: start,
       finished: finished,
-      title: 'Decision contradictions detected',
+      title: '检测到 Decision 冲突',
       summary: summary,
       payload: <String, Object?>{
         'issues': issues

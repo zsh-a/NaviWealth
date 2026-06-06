@@ -4355,6 +4355,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatFieldNote => 'Note';
 
   @override
+  String get aiChatFieldNotes => 'Notes';
+
+  @override
+  String get aiChatFieldOptionPremium => 'Premium';
+
+  @override
+  String get aiChatRecommendedBadge => 'Recommended';
+
+  @override
   String get aiChatFieldAmount => 'Amount';
 
   @override
@@ -5464,6 +5473,128 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get knowledgeDecisionNotFound =>
       'Decision does not exist or was deleted';
+
+  @override
+  String get knowledgeDecisionDetailTitle => 'Decision details';
+
+  @override
+  String knowledgeDecisionDecidedAt(Object date) {
+    return 'Decided on $date';
+  }
+
+  @override
+  String knowledgeDecisionDecidedAtWithReview(
+    Object decidedDate,
+    Object reviewDate,
+  ) {
+    return 'Decided on $decidedDate · Review $reviewDate';
+  }
+
+  @override
+  String get knowledgeConceptDetailTitle => 'Concept';
+
+  @override
+  String get knowledgeExperimentDetailTitle => 'Experiment';
+
+  @override
+  String get knowledgePrincipleDetailTitle => 'Principle';
+
+  @override
+  String get knowledgeAssumptionDetailTitle => 'Assumption';
+
+  @override
+  String get knowledgeObjectDetailTitle => 'Details';
+
+  @override
+  String get knowledgeDetailOptionsTitle => 'Options';
+
+  @override
+  String get knowledgeDetailRationaleTitle => 'Rationale';
+
+  @override
+  String get knowledgeDetailPrinciplesTitle => 'Referenced principles';
+
+  @override
+  String get knowledgeDetailAssumptionsTitle => 'Referenced assumptions';
+
+  @override
+  String get knowledgeDetailActualOutcomeTitle => 'Actual outcome';
+
+  @override
+  String get knowledgeDetailExpectedOutcomeTitle => 'Expected outcome';
+
+  @override
+  String get knowledgeDetailMetricsTitle => 'Metrics';
+
+  @override
+  String get knowledgeDetailEvolutionTitle => 'Cognitive trail';
+
+  @override
+  String get knowledgeDetailSummaryTitle => 'Summary';
+
+  @override
+  String get knowledgeDetailRelatedConceptsTitle => 'Related concepts';
+
+  @override
+  String get knowledgeDetailMethodTitle => 'Method';
+
+  @override
+  String get knowledgeDetailResultTitle => 'Result';
+
+  @override
+  String get knowledgeDetailConclusionTitle => 'Conclusion';
+
+  @override
+  String get knowledgeDetailEvidenceTitle => 'Evidence';
+
+  @override
+  String knowledgeDetailAliases(Object aliases) {
+    return 'Aliases: $aliases';
+  }
+
+  @override
+  String knowledgeDetailRelatedConceptCount(Object count) {
+    return '$count related';
+  }
+
+  @override
+  String knowledgeDetailEvidenceCount(Object count) {
+    return '$count references';
+  }
+
+  @override
+  String knowledgeDetailScope(Object scope) {
+    return 'Scope: $scope';
+  }
+
+  @override
+  String knowledgeDetailConfidenceScope(Object confidence, Object scope) {
+    return 'Confidence $confidence · scope $scope';
+  }
+
+  @override
+  String get knowledgeDetailContextSnapshotTitle =>
+      'Cross-domain state at the time';
+
+  @override
+  String knowledgeDetailContextSnapshotCaptured(Object date, Object days) {
+    return 'Captured on $date · $days-day window';
+  }
+
+  @override
+  String get knowledgeDetailContextSnapshotEmpty =>
+      'No Finance / Health events in that window.';
+
+  @override
+  String get knowledgeLibraryDeleteTooltip => 'Delete';
+
+  @override
+  String get knowledgeLibraryDeleteTitle => 'Delete entry?';
+
+  @override
+  String knowledgeLibraryDeleteBody(Object title) {
+    return '\"$title\" will be removed from Library and cleaned from AI memory after the next index sync.';
+  }
 
   @override
   String get knowledgeObjectNotFound => 'Item does not exist or was deleted';
@@ -7450,6 +7581,141 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthPlanTitle => 'Plan · HealthOS';
 
   @override
+  String get healthTabToday => 'Today';
+
+  @override
+  String get healthTabTrend => 'Trends';
+
+  @override
+  String get healthTabPlan => 'Plan';
+
+  @override
+  String get healthCommandToday => 'Health · Today';
+
+  @override
+  String get healthCommandTrend => 'Health · Trends';
+
+  @override
+  String get healthCommandPlan => 'Health · Plan';
+
+  @override
+  String get healthInputMetricsTitle => 'Input metrics';
+
+  @override
+  String get healthConfidenceLabel => 'Confidence';
+
+  @override
+  String get healthConfidenceLow => 'Low';
+
+  @override
+  String get healthConfidenceMedium => 'Medium';
+
+  @override
+  String get healthRecentHrvLabel => 'HRV (recent average)';
+
+  @override
+  String get healthRecentSleepLabel => 'Sleep (recent average)';
+
+  @override
+  String get healthRecentRhrLabel => 'Resting heart rate (recent average)';
+
+  @override
+  String get healthRecentVo2MaxLabel => 'VO₂max (recent average)';
+
+  @override
+  String get healthSleepMetricLabel => 'Sleep';
+
+  @override
+  String get healthHrvMetricLabel => 'HRV';
+
+  @override
+  String get healthHeartRateMetricLabel => 'Heart rate';
+
+  @override
+  String get healthWorkoutMetricLabel => 'Workout';
+
+  @override
+  String get healthStepsMetricLabel => 'Steps';
+
+  @override
+  String get healthEnergyMetricLabel => 'Energy';
+
+  @override
+  String get healthLoadingLabel => 'Loading...';
+
+  @override
+  String get healthTrendGroupRecovery => 'Recovery';
+
+  @override
+  String get healthTrendGroupActivity => 'Activity';
+
+  @override
+  String get healthTrendGroupBody => 'Body';
+
+  @override
+  String healthTrendLoadFailed(Object error) {
+    return 'Load failed: $error';
+  }
+
+  @override
+  String get healthTrendNotEnoughData => 'Not enough data yet.';
+
+  @override
+  String get healthTrendHrvSubtitle => 'Heart-rate variability (last 30 days)';
+
+  @override
+  String get healthTrendSleepSubtitle => 'Nightly hours (last 30 days)';
+
+  @override
+  String get healthTrendHeartRateSubtitle =>
+      'Daily average heart rate (last 30 days)';
+
+  @override
+  String get healthTrendRespiratoryTitle => 'Respiration';
+
+  @override
+  String get healthTrendRespiratorySubtitle =>
+      'Daily average respiratory rate (last 30 days)';
+
+  @override
+  String get healthTrendWorkoutSubtitle => 'Daily minutes (last 30 days)';
+
+  @override
+  String get healthTrendStepsSubtitle => 'Daily steps (last 30 days)';
+
+  @override
+  String get healthTrendWalkingDistanceTitle => 'Walking distance';
+
+  @override
+  String get healthTrendWalkingDistanceSubtitle =>
+      'Daily kilometers (last 30 days)';
+
+  @override
+  String get healthTrendFlightsTitle => 'Flights climbed';
+
+  @override
+  String get healthTrendFlightsSubtitle =>
+      'Daily flights climbed (last 30 days)';
+
+  @override
+  String get healthTrendWeightTitle => 'Weight';
+
+  @override
+  String get healthTrendWeightSubtitle => 'Weight records (last 30 days)';
+
+  @override
+  String get healthTrendBodyFatTitle => 'Body fat';
+
+  @override
+  String get healthTrendBodyFatSubtitle => 'Body fat percentage (last 30 days)';
+
+  @override
+  String get healthTrendVo2MaxTitle => 'VO₂max';
+
+  @override
+  String get healthTrendVo2MaxSubtitle => 'Max oxygen uptake (last 30 days)';
+
+  @override
   String get healthRecordBodyMetricAction => 'Record body metric';
 
   @override
@@ -7483,7 +7749,182 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeInboxTitle => 'Inbox · KnowledgeOS';
 
   @override
+  String get knowledgeTabInbox => 'Inbox';
+
+  @override
+  String get knowledgeTabLibrary => 'Library';
+
+  @override
+  String get knowledgeTabReview => 'Review';
+
+  @override
+  String get knowledgeCommandInbox => 'Knowledge · Inbox';
+
+  @override
+  String get knowledgeCommandLibrary => 'Knowledge · Library';
+
+  @override
+  String get knowledgeCommandReview => 'Knowledge · Review';
+
+  @override
+  String get knowledgeInboxEmptyTitle => 'Inbox is empty';
+
+  @override
+  String get knowledgeInboxEmptyBody =>
+      'Use the create action to capture a thought. AI can suggest whether it should stay a Note or become a Routine, Decision, or other knowledge object.';
+
+  @override
+  String get knowledgeInboxLoadFailedTitle => 'Inbox failed to load';
+
+  @override
   String get knowledgeCaptureAction => 'New capture';
+
+  @override
+  String get knowledgeCaptureTitle => 'Capture a thought';
+
+  @override
+  String get knowledgeCaptureTitleField => 'Title (optional)';
+
+  @override
+  String get knowledgeCaptureBodyField => 'Content';
+
+  @override
+  String get knowledgeCaptureTitleHint =>
+      '\"Bank card needs regular activity\"';
+
+  @override
+  String get knowledgeCaptureBodyHint =>
+      '\"Make one bank-card activity transaction every 6 months, otherwise it may become dormant\"';
+
+  @override
+  String get knowledgeCaptureSavedClassifyingTitle => 'Saved � AI is thinking';
+
+  @override
+  String get knowledgeCaptureSuggestionTitle => 'AI suggestion';
+
+  @override
+  String get knowledgeCaptureComposeSubtitle =>
+      'Write free-form Markdown. AI can suggest an upgrade after saving.';
+
+  @override
+  String get knowledgeCaptureClassifyingSubtitle =>
+      'The Note is saved. AI is checking whether it should become a Routine, Decision, or another knowledge object.';
+
+  @override
+  String get knowledgeCaptureSuggestionSubtitle =>
+      'Review the extracted type and fields before applying.';
+
+  @override
+  String get knowledgeCaptureSave => 'Save';
+
+  @override
+  String get knowledgeCaptureSaving => 'Saving...';
+
+  @override
+  String get knowledgeCaptureCancel => 'Cancel';
+
+  @override
+  String get knowledgeCaptureClassifyingBody =>
+      'Reasoning can take 20-30 seconds. The Note is already saved, so you can skip waiting.';
+
+  @override
+  String get knowledgeCaptureSkipClassification => 'Keep as Note';
+
+  @override
+  String get knowledgeCaptureApplySuggestion => 'Apply suggestion';
+
+  @override
+  String get knowledgeCaptureApplyPolish => 'Apply polish';
+
+  @override
+  String get knowledgeCaptureApplying => 'Applying...';
+
+  @override
+  String get knowledgeCaptureKeepOriginal => 'Keep original';
+
+  @override
+  String knowledgeCaptureNotePolishOnly(Object reason) {
+    return 'AI classified this as a note, so it will only polish the text. Reason: $reason';
+  }
+
+  @override
+  String get knowledgeCapturePolishedVersionTitle => 'AI polished version';
+
+  @override
+  String get knowledgeCaptureTitleDiffLabel => 'Title';
+
+  @override
+  String get knowledgeCaptureBodyDiffLabel => 'Body';
+
+  @override
+  String get knowledgeCaptureEmptyValue => '(empty)';
+
+  @override
+  String knowledgeCaptureOriginalDiffValue(Object value) {
+    return 'Original: $value';
+  }
+
+  @override
+  String get knowledgeCaptureKindRoutineDescription =>
+      'Looks like a recurring item';
+
+  @override
+  String get knowledgeCaptureKindDecisionDescription =>
+      'Looks like it weighs options';
+
+  @override
+  String get knowledgeCaptureKindAssumptionDescription =>
+      'Looks like it states a belief';
+
+  @override
+  String get knowledgeCaptureKindPrincipleDescription =>
+      'Looks like it states a principle';
+
+  @override
+  String get knowledgeCaptureKindConceptDescription =>
+      'Looks like it defines a concept';
+
+  @override
+  String get knowledgeCaptureKindExperimentDescription =>
+      'Looks like it describes an experiment';
+
+  @override
+  String get knowledgeCaptureKindNoteDescription => 'Keep as Note';
+
+  @override
+  String knowledgeCaptureRoutineUpgradeDetail(
+    Object intervalDays,
+    Object statement,
+  ) {
+    return 'Will create a Routine: \"$statement\", every $intervalDays days';
+  }
+
+  @override
+  String knowledgeCaptureRoutineScopeDetail(Object scope) {
+    return 'Scope = $scope.';
+  }
+
+  @override
+  String get knowledgeCaptureRoutineReminderDetail =>
+      'AI will remind you 7 days before it is due.';
+
+  @override
+  String knowledgeCaptureSuggestionReasonConfidence(
+    Object confidence,
+    Object reason,
+  ) {
+    return 'Reason: $reason · confidence $confidence';
+  }
+
+  @override
+  String knowledgeCaptureSaveFailed(Object error) {
+    return 'Capture failed: $error';
+  }
+
+  @override
+  String knowledgeCaptureApplyFailed(Object error) {
+    return 'Could not apply suggestion: $error';
+  }
 
   @override
   String get knowledgeAiPromptHint => 'Capture something or ask a question...';
@@ -7512,7 +7953,157 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeLibraryTitle => 'Library · KnowledgeOS';
 
   @override
+  String get knowledgeLibraryEmptyDecisionsTitle => 'No Decisions yet';
+
+  @override
+  String get knowledgeLibraryEmptyDecisionsBody =>
+      'Use the create action to record the first decision worth reviewing.';
+
+  @override
+  String get knowledgeLibraryEmptyNotesTitle => 'No Notes in the library yet';
+
+  @override
+  String get knowledgeLibraryEmptyNotesBody =>
+      'Notes are captured from Inbox. This view is for browsing.';
+
+  @override
+  String get knowledgeLibraryEmptyConceptsTitle => 'No Concept nodes yet';
+
+  @override
+  String get knowledgeLibraryEmptyConceptsBody =>
+      'Concepts power [[soft links]] and AI associations.';
+
+  @override
+  String get knowledgeLibraryEmptyExperimentsTitle => 'No active Experiments';
+
+  @override
+  String get knowledgeLibraryEmptyExperimentsBody =>
+      'Experiments usually attach to an Assumption that needs validation.';
+
+  @override
+  String get knowledgeLibraryEmptyRoutinesTitle => 'No Routines yet';
+
+  @override
+  String get knowledgeLibraryEmptyRoutinesBody =>
+      'Recurring reminders. After you create one, AI can surface it near the next due date.';
+
+  @override
+  String knowledgeRoutineOverdueDays(Object days) {
+    return '$days days overdue';
+  }
+
+  @override
+  String get knowledgeRoutineDueToday => 'Due today';
+
+  @override
+  String knowledgeRoutineDueInDays(Object days) {
+    return 'Due in $days days';
+  }
+
+  @override
+  String knowledgeRoutineLibraryMeta(
+    Object dueLabel,
+    Object intervalDays,
+    Object scope,
+  ) {
+    return '$dueLabel · every $intervalDays days · $scope';
+  }
+
+  @override
+  String get knowledgeLibrarySearchHint => 'Search this segment';
+
+  @override
+  String get knowledgeLibrarySearchClear => 'Clear search';
+
+  @override
+  String get knowledgeLibrarySearchEmptyTitle => 'No matching knowledge';
+
+  @override
+  String get knowledgeLibrarySearchEmptyBody =>
+      'Try a different keyword or switch segments.';
+
+  @override
+  String knowledgeLibraryLoadFailed(Object error) {
+    return 'Load failed: $error';
+  }
+
+  @override
+  String knowledgeLibraryDeleteFailed(Object error) {
+    return 'Delete failed: $error';
+  }
+
+  @override
   String get knowledgeReviewTitle => 'Review · KnowledgeOS';
+
+  @override
+  String get knowledgeReviewRoutinesTitle => 'Routines due this week';
+
+  @override
+  String get knowledgeReviewRoutinesEmpty =>
+      'No routines are due in the next 7 days.';
+
+  @override
+  String get knowledgeReviewDecisionsTitle => 'Decisions due for review';
+
+  @override
+  String get knowledgeReviewDecisionsEmpty =>
+      'No decisions are due for review.';
+
+  @override
+  String knowledgeReviewDecisionOverdueDays(Object days) {
+    return '$days days';
+  }
+
+  @override
+  String get knowledgeReviewAssumptionsTitle => 'Stale assumptions';
+
+  @override
+  String knowledgeReviewAssumptionsEmpty(Object days) {
+    return 'All active assumptions were verified within $days days.';
+  }
+
+  @override
+  String knowledgeReviewRoutineMeta(Object dueLabel, Object intervalDays) {
+    return '$dueLabel · every $intervalDays days';
+  }
+
+  @override
+  String knowledgeReviewAssumptionStaleSummary(
+    Object confidence,
+    Object days,
+    Object statement,
+  ) {
+    return '· $statement ($days days, conf $confidence)';
+  }
+
+  @override
+  String knowledgeReviewLoadFailed(Object error) {
+    return 'Load failed: $error';
+  }
+
+  @override
+  String knowledgeReviewRoutineDone(Object date) {
+    return 'Done. Next due $date';
+  }
+
+  @override
+  String knowledgeReviewRoutineDoneFailed(Object error) {
+    return 'Could not mark routine done: $error';
+  }
+
+  @override
+  String get knowledgeReviewMarkDone => 'Done';
+
+  @override
+  String get knowledgeReviewVerifyAssumption => 'Verify';
+
+  @override
+  String get knowledgeReviewAssumptionVerified => 'Assumption verified.';
+
+  @override
+  String knowledgeReviewAssumptionVerifyFailed(Object error) {
+    return 'Could not verify assumption: $error';
+  }
 
   @override
   String get knowledgeSegmentDecisions => 'Decisions';
@@ -7562,6 +8153,287 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get knowledgeNewAssumptionHint =>
       'A falsifiable belief with confidence';
+
+  @override
+  String get knowledgeDecisionWriterTitle => 'New Decision';
+
+  @override
+  String get knowledgeDecisionWriterSubtitle =>
+      'Decision as memory: question, options, rationale, review';
+
+  @override
+  String get knowledgeDecisionAddOption => 'Add option';
+
+  @override
+  String get knowledgeDecisionClear => 'Clear';
+
+  @override
+  String get knowledgeDecisionExpectedOutcomeLabel =>
+      'Expected outcome (optional)';
+
+  @override
+  String get knowledgeAssumptionWriterSubtitle2 =>
+      'Falsifiable belief with confidence for future review';
+
+  @override
+  String get knowledgeConceptWriterSubtitle2 =>
+      'Anchor for soft links and AI cross references';
+
+  @override
+  String get knowledgeExperimentWriterSubtitle2 =>
+      'Validate an assumption with an explicit method';
+
+  @override
+  String get knowledgeWriterAliasLabel => 'Aliases';
+
+  @override
+  String get knowledgeRoutineMonthly => 'Monthly';
+
+  @override
+  String get knowledgeRoutineQuarterly => 'Quarterly';
+
+  @override
+  String get knowledgeRoutineSemiannual => 'Every 6 months';
+
+  @override
+  String get knowledgeRoutineYearly => 'Yearly';
+
+  @override
+  String get knowledgeDecisionQuestionLabel => 'Question';
+
+  @override
+  String get knowledgeDecisionQuestionHint =>
+      '\"Upgrade to QQQ + BOXX dynamic hedging?\"';
+
+  @override
+  String get knowledgeDecisionOptionsLabel => 'Options';
+
+  @override
+  String knowledgeDecisionOptionLabelHint(Object index) {
+    return 'Option $index';
+  }
+
+  @override
+  String get knowledgeDecisionOptionRationaleHint =>
+      'Why choose this option (optional)';
+
+  @override
+  String get knowledgeDecisionNoReferenceCandidates =>
+      'No Principle or Assumption has been declared yet. You can save the Decision now and attach references later.';
+
+  @override
+  String get knowledgeDecisionRationaleLabel => 'Rationale (Markdown)';
+
+  @override
+  String get knowledgeDecisionRationaleHint =>
+      'Why this option: constraints and the judgment at the time';
+
+  @override
+  String get knowledgeDecisionExpectedOutcomeHint =>
+      'How success will be judged: metrics or signals';
+
+  @override
+  String get knowledgeDecisionReviewDateTitle => 'Review date';
+
+  @override
+  String get knowledgeDecisionReviewDateOptional => 'Review date (optional)';
+
+  @override
+  String knowledgeDecisionReviewDateScheduled(Object date) {
+    return 'Review on $date';
+  }
+
+  @override
+  String get knowledgeDecisionReviewDateChoose => 'Choose';
+
+  @override
+  String get knowledgeDecisionReviewDateChange => 'Change';
+
+  @override
+  String knowledgeDecisionReviewDateInDays(Object days) {
+    return '+$days days';
+  }
+
+  @override
+  String get knowledgeDecisionReviewDateInOneYear => '+1 year';
+
+  @override
+  String get knowledgeDecisionLifecycleTitle => 'Update Decision';
+
+  @override
+  String get knowledgeDecisionLifecycleSubtitle =>
+      'Status, actual outcome, and cognitive trail';
+
+  @override
+  String get knowledgeDecisionActualOutcomeLabel =>
+      'Actual outcome (Markdown, optional)';
+
+  @override
+  String get knowledgeDecisionStatusLabel => 'Status';
+
+  @override
+  String get knowledgeDecisionStatusDraft => 'Draft';
+
+  @override
+  String get knowledgeDecisionStatusActive => 'Active';
+
+  @override
+  String get knowledgeDecisionStatusPaused => 'Paused';
+
+  @override
+  String get knowledgeDecisionStatusExpired => 'Expired';
+
+  @override
+  String get knowledgeDecisionStatusVerified => 'Verified';
+
+  @override
+  String get knowledgeDecisionStatusFalsified => 'Falsified';
+
+  @override
+  String get knowledgeDecisionStatusSuperseded => 'Superseded';
+
+  @override
+  String get knowledgeDecisionActualOutcomeHint =>
+      'For review: what actually happened and how it differed from expectations';
+
+  @override
+  String get knowledgeDecisionSupersededByLabel => 'Superseded by Decision';
+
+  @override
+  String get knowledgeDecisionSupersededByEmpty =>
+      'No other Decision is available yet. Record the new decision first, then come back to mark the relationship.';
+
+  @override
+  String get knowledgePrincipleWriterTitle => 'New Principle';
+
+  @override
+  String get knowledgePrincipleWriterSubtitle =>
+      'Long-lived worldview primitive, not falsifiable';
+
+  @override
+  String get knowledgePrincipleStatementHint =>
+      '\"Default edge-first\" / \"Avoid high-maintenance systems\"';
+
+  @override
+  String get knowledgePrincipleRationaleHint =>
+      'Why this worldview should become a Principle';
+
+  @override
+  String get knowledgeAssumptionWriterTitle => 'New Assumption';
+
+  @override
+  String get knowledgeAssumptionWriterSubtitle =>
+      'Falsifiable belief with confidence';
+
+  @override
+  String get knowledgeAssumptionStatementHint =>
+      '\"Long-term index growth beats inflation\"';
+
+  @override
+  String get knowledgeConceptWriterTitle => 'New Concept';
+
+  @override
+  String get knowledgeConceptWriterSubtitle =>
+      'Named node for search and soft links';
+
+  @override
+  String get knowledgeConceptNameHint =>
+      'Concept name, for example \"edge-first\"';
+
+  @override
+  String get knowledgeConceptAliasesHint => 'Comma-separated aliases';
+
+  @override
+  String get knowledgeConceptSummaryHint =>
+      '1-2 sentence definition for [[soft link]] tooltips';
+
+  @override
+  String get knowledgeExperimentWriterTitle => 'New Experiment';
+
+  @override
+  String get knowledgeExperimentWriterSubtitle =>
+      'Test an assumption with method and metrics';
+
+  @override
+  String get knowledgeExperimentHypothesisHint =>
+      '\"Covered call 60 DTE on QQQ outperforms 30 DTE\"';
+
+  @override
+  String get knowledgeExperimentMethodHint =>
+      'How to run it, for how long, and with what data';
+
+  @override
+  String get knowledgeExperimentMetricsHint =>
+      'Comma-separated, for example \"yield, drawdown, sharpe\"';
+
+  @override
+  String get knowledgeExperimentNoActiveAssumptions =>
+      'No active Assumptions are available. You can leave this empty.';
+
+  @override
+  String get knowledgeExperimentTargetAssumptionLabel =>
+      'Target Assumption (optional)';
+
+  @override
+  String get knowledgeRoutineWriterTitle => 'New Routine';
+
+  @override
+  String get knowledgeRoutineWriterSubtitle =>
+      'Recurring reminder. AI can surface it near next due date.';
+
+  @override
+  String get knowledgeRoutineStatementHint =>
+      '\"Activate bank card\" / \"Monthly reconciliation\"';
+
+  @override
+  String get knowledgeWriterStatementLabel => 'Statement';
+
+  @override
+  String get knowledgeWriterRationaleMarkdownLabel => 'Rationale (Markdown)';
+
+  @override
+  String get knowledgeWriterScopeLabel => 'Scope';
+
+  @override
+  String get knowledgeWriterScopeOptionalLabel => 'Scope tag (optional)';
+
+  @override
+  String get knowledgeWriterEvidenceLabel => 'Evidence IDs';
+
+  @override
+  String get knowledgeWriterConfidenceLabel => 'Confidence';
+
+  @override
+  String get knowledgeWriterNameLabel => 'Name';
+
+  @override
+  String get knowledgeWriterAliasesLabel => 'Aliases';
+
+  @override
+  String get knowledgeWriterSummaryMarkdownLabel => 'Summary (Markdown)';
+
+  @override
+  String get knowledgeWriterHypothesisLabel => 'Hypothesis';
+
+  @override
+  String get knowledgeWriterMethodMarkdownLabel => 'Method (Markdown)';
+
+  @override
+  String get knowledgeWriterMetricsLabel => 'Metrics';
+
+  @override
+  String get knowledgeWriterResultMarkdownLabel =>
+      'Result (Markdown, optional)';
+
+  @override
+  String get knowledgeWriterConclusionMarkdownLabel =>
+      'Conclusion (Markdown, optional)';
+
+  @override
+  String get knowledgeRoutineStatementLabel => 'What to do';
+
+  @override
+  String get knowledgeRoutineFrequencyLabel => 'Frequency';
 
   @override
   String get knowledgeNotesHintTitle => 'Notes are captured in Inbox';

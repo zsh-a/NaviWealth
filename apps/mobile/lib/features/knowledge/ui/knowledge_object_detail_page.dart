@@ -94,15 +94,23 @@ class _KnowledgeObjectDetailPageState
 
   @override
   Widget build(BuildContext context) {
-    return ObjectDetailScaffold(title: _title, child: _buildBody());
+    return ObjectDetailScaffold(title: _title(context), child: _buildBody());
   }
 
-  String get _title => switch (_kind) {
-    KnowledgeObjectKind.concept => '概念',
-    KnowledgeObjectKind.experiment => '实验',
-    KnowledgeObjectKind.principle => '原则',
-    KnowledgeObjectKind.assumption => '假设',
-    null => '详情',
+  String _title(BuildContext context) => switch (_kind) {
+    KnowledgeObjectKind.concept => AppLocalizations.of(
+      context,
+    ).knowledgeConceptDetailTitle,
+    KnowledgeObjectKind.experiment => AppLocalizations.of(
+      context,
+    ).knowledgeExperimentDetailTitle,
+    KnowledgeObjectKind.principle => AppLocalizations.of(
+      context,
+    ).knowledgePrincipleDetailTitle,
+    KnowledgeObjectKind.assumption => AppLocalizations.of(
+      context,
+    ).knowledgeAssumptionDetailTitle,
+    null => AppLocalizations.of(context).knowledgeObjectDetailTitle,
   };
 
   Widget _buildBody() {
@@ -151,23 +159,30 @@ List<Widget> _conceptSections(BuildContext context, KnowledgeConcept c) {
     if (c.aliases.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s4),
       Text(
-        '别名:${c.aliases.join(' · ')}',
+        AppLocalizations.of(
+          context,
+        ).knowledgeDetailAliases(c.aliases.join(' · ')),
         style: typography.xs.copyWith(color: colors.mutedForeground),
       ),
     ],
     if (c.summaryMd.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s16),
       KnowledgeSection.group(
-        title: '摘要',
+        title: AppLocalizations.of(context).knowledgeDetailSummaryTitle,
         children: [AiMarkdown(text: c.summaryMd)],
       ),
     ],
     if (c.relatedConceptIds.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
-        title: '相关概念',
+        title: AppLocalizations.of(context).knowledgeDetailRelatedConceptsTitle,
         children: [
-          Text('${c.relatedConceptIds.length} 个关联', style: typography.sm),
+          Text(
+            AppLocalizations.of(
+              context,
+            ).knowledgeDetailRelatedConceptCount(c.relatedConceptIds.length),
+            style: typography.sm,
+          ),
         ],
       ),
     ],
@@ -181,28 +196,28 @@ List<Widget> _experimentSections(BuildContext context, KnowledgeExperiment e) {
     if (e.methodMd.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s16),
       KnowledgeSection.group(
-        title: '方法',
+        title: AppLocalizations.of(context).knowledgeDetailMethodTitle,
         children: [AiMarkdown(text: e.methodMd)],
       ),
     ],
     if (e.metrics.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
-        title: '指标',
+        title: AppLocalizations.of(context).knowledgeDetailMetricsTitle,
         children: [Text(e.metrics.join(' · '), style: typography.sm)],
       ),
     ],
     if (e.resultMd != null && e.resultMd!.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
-        title: '结果',
+        title: AppLocalizations.of(context).knowledgeDetailResultTitle,
         children: [AiMarkdown(text: e.resultMd!)],
       ),
     ],
     if (e.conclusionMd != null && e.conclusionMd!.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
-        title: '结论',
+        title: AppLocalizations.of(context).knowledgeDetailConclusionTitle,
         children: [AiMarkdown(text: e.conclusionMd!)],
       ),
     ],
@@ -216,13 +231,13 @@ List<Widget> _principleSections(BuildContext context, KnowledgePrinciple p) {
     _heading(context, p.statement, badge: p.status.wire),
     const SizedBox(height: AppSpacing.s4),
     Text(
-      'scope: ${p.scope}',
+      AppLocalizations.of(context).knowledgeDetailScope(p.scope),
       style: typography.xs.copyWith(color: colors.mutedForeground),
     ),
     if (p.rationaleMd.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s16),
       KnowledgeSection.group(
-        title: '理由',
+        title: AppLocalizations.of(context).knowledgeDetailRationaleTitle,
         children: [AiMarkdown(text: p.rationaleMd)],
       ),
     ],
@@ -236,14 +251,24 @@ List<Widget> _assumptionSections(BuildContext context, KnowledgeAssumption a) {
     _heading(context, a.statement, badge: a.status.wire),
     const SizedBox(height: AppSpacing.s4),
     Text(
-      '置信度 ${a.confidence.toStringAsFixed(2)} · scope ${a.scope}',
+      AppLocalizations.of(context).knowledgeDetailConfidenceScope(
+        a.confidence.toStringAsFixed(2),
+        a.scope,
+      ),
       style: typography.xs.copyWith(color: colors.mutedForeground),
     ),
     if (a.evidenceIds.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s16),
       KnowledgeSection.group(
-        title: '证据',
-        children: [Text('${a.evidenceIds.length} 条引用', style: typography.sm)],
+        title: AppLocalizations.of(context).knowledgeDetailEvidenceTitle,
+        children: [
+          Text(
+            AppLocalizations.of(
+              context,
+            ).knowledgeDetailEvidenceCount(a.evidenceIds.length),
+            style: typography.sm,
+          ),
+        ],
       ),
     ],
   ];

@@ -393,7 +393,7 @@ class _BatchProposalView extends ConsumerWidget {
           ],
           const SizedBox(height: AppSpacing.s12),
           Wrap(
-            spacing: 8,
+            spacing: AppSpacing.s8,
             children: [
               FButton(
                 variant: FButtonVariant.primary,
@@ -640,8 +640,8 @@ class _ExpandedView extends ConsumerWidget {
           ],
           const SizedBox(height: AppSpacing.s12),
           Wrap(
-            spacing: 8,
-            runSpacing: 4,
+            spacing: AppSpacing.s8,
+            runSpacing: AppSpacing.s4,
             children: [
               FButton(
                 variant: FButtonVariant.primary,
@@ -1122,8 +1122,8 @@ class _ClarificationView extends ConsumerWidget {
                 // chat pipeline. Disabled while a turn is in flight
                 // (`turn.isBusy`) to avoid stacking duplicate selects.
                 Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
+                  spacing: AppSpacing.s8,
+                  runSpacing: AppSpacing.s4,
                   children: [
                     for (final c in plan.candidates)
                       AiPill(

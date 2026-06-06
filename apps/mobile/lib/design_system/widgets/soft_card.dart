@@ -155,6 +155,7 @@ class _SoftCardState extends State<SoftCard> {
           : Border.all(color: borderColor, width: 1),
       boxShadow: _shadows(
         colors,
+        shadowColor: Theme.of(context).shadowColor,
         isDark: isDark,
         hovered: hovered,
         pressed: pressed,
@@ -164,6 +165,7 @@ class _SoftCardState extends State<SoftCard> {
 
   List<BoxShadow>? _shadows(
     FColors colors, {
+    required Color shadowColor,
     required bool isDark,
     required bool hovered,
     required bool pressed,
@@ -172,20 +174,18 @@ class _SoftCardState extends State<SoftCard> {
         ? SoftCardLevel.flat
         : widget.level;
     final alphaBoost = hovered && widget.onPress != null ? 0.02 : 0.0;
-    final shadowColor = isDark
-        ? Colors.black.withValues(alpha: 0.30 + alphaBoost)
-        : Colors.black.withValues(alpha: 0.05 + alphaBoost);
+    final keyColor = shadowColor.withValues(
+      alpha: isDark
+          ? AppOpacity.muted + alphaBoost
+          : AppOpacity.whisper + alphaBoost,
+    );
     final ambientColor = colors.foreground.withValues(
       alpha: isDark ? 0.04 : 0.03,
     );
     return switch (level) {
       SoftCardLevel.flat => null,
       SoftCardLevel.raised => [
-        BoxShadow(
-          color: shadowColor,
-          blurRadius: 18,
-          offset: const Offset(0, 8),
-        ),
+        BoxShadow(color: keyColor, blurRadius: 18, offset: const Offset(0, 8)),
       ],
       SoftCardLevel.hero => [
         BoxShadow(

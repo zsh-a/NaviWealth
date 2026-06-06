@@ -294,8 +294,8 @@ class _ScenarioLegend extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final palette = ChartPalette.of(context);
     return Wrap(
-      spacing: 12,
-      runSpacing: 8,
+      spacing: AppSpacing.s12,
+      runSpacing: AppSpacing.s8,
       children: [
         for (final s in view.scenarios)
           _LegendDot(
@@ -326,7 +326,12 @@ class _ScenariosTable extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s8, ),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s16,
+              AppSpacing.s16,
+              AppSpacing.s16,
+              AppSpacing.s8,
+            ),
             child: Align(
               alignment: AlignmentDirectional.centerStart,
               child: Text(

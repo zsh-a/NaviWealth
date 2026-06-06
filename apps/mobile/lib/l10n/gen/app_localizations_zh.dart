@@ -4182,6 +4182,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatFieldNote => '备注';
 
   @override
+  String get aiChatFieldNotes => '备注';
+
+  @override
+  String get aiChatFieldOptionPremium => '权利金';
+
+  @override
+  String get aiChatRecommendedBadge => '推荐';
+
+  @override
   String get aiChatFieldAmount => '金额';
 
   @override
@@ -5258,6 +5267,127 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeDecisionNotFound => 'Decision 不存在或已删除';
+
+  @override
+  String get knowledgeDecisionDetailTitle => '决策详情';
+
+  @override
+  String knowledgeDecisionDecidedAt(Object date) {
+    return '决策于 $date';
+  }
+
+  @override
+  String knowledgeDecisionDecidedAtWithReview(
+    Object decidedDate,
+    Object reviewDate,
+  ) {
+    return '决策于 $decidedDate · 复盘 $reviewDate';
+  }
+
+  @override
+  String get knowledgeConceptDetailTitle => '概念';
+
+  @override
+  String get knowledgeExperimentDetailTitle => '实验';
+
+  @override
+  String get knowledgePrincipleDetailTitle => '原则';
+
+  @override
+  String get knowledgeAssumptionDetailTitle => '假设';
+
+  @override
+  String get knowledgeObjectDetailTitle => '详情';
+
+  @override
+  String get knowledgeDetailOptionsTitle => '选项';
+
+  @override
+  String get knowledgeDetailRationaleTitle => '理由';
+
+  @override
+  String get knowledgeDetailPrinciplesTitle => '引用的 Principle';
+
+  @override
+  String get knowledgeDetailAssumptionsTitle => '引用的 Assumption';
+
+  @override
+  String get knowledgeDetailActualOutcomeTitle => '实际结果';
+
+  @override
+  String get knowledgeDetailExpectedOutcomeTitle => '预期结果';
+
+  @override
+  String get knowledgeDetailMetricsTitle => '指标';
+
+  @override
+  String get knowledgeDetailEvolutionTitle => '认知演化链';
+
+  @override
+  String get knowledgeDetailSummaryTitle => '摘要';
+
+  @override
+  String get knowledgeDetailRelatedConceptsTitle => '相关概念';
+
+  @override
+  String get knowledgeDetailMethodTitle => '方法';
+
+  @override
+  String get knowledgeDetailResultTitle => '结果';
+
+  @override
+  String get knowledgeDetailConclusionTitle => '结论';
+
+  @override
+  String get knowledgeDetailEvidenceTitle => '证据';
+
+  @override
+  String knowledgeDetailAliases(Object aliases) {
+    return '别名：$aliases';
+  }
+
+  @override
+  String knowledgeDetailRelatedConceptCount(Object count) {
+    return '$count 个关联';
+  }
+
+  @override
+  String knowledgeDetailEvidenceCount(Object count) {
+    return '$count 条引用';
+  }
+
+  @override
+  String knowledgeDetailScope(Object scope) {
+    return '范围：$scope';
+  }
+
+  @override
+  String knowledgeDetailConfidenceScope(Object confidence, Object scope) {
+    return '置信度 $confidence · 范围 $scope';
+  }
+
+  @override
+  String get knowledgeDetailContextSnapshotTitle => '当时的跨域状态';
+
+  @override
+  String knowledgeDetailContextSnapshotCaptured(Object date, Object days) {
+    return '采样于 $date · $days 天窗口';
+  }
+
+  @override
+  String get knowledgeDetailContextSnapshotEmpty =>
+      '当时窗口内无 Finance / Health 事件。';
+
+  @override
+  String get knowledgeLibraryDeleteTooltip => '删除';
+
+  @override
+  String get knowledgeLibraryDeleteTitle => '删除条目？';
+
+  @override
+  String knowledgeLibraryDeleteBody(Object title) {
+    return '“$title” 会从资料库移除，并在下次索引同步后从 AI 记忆中清理。';
+  }
 
   @override
   String get knowledgeObjectNotFound => '条目不存在或已删除';
@@ -7149,6 +7279,137 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthPlanTitle => '计划 · HealthOS';
 
   @override
+  String get healthTabToday => '今日';
+
+  @override
+  String get healthTabTrend => '趋势';
+
+  @override
+  String get healthTabPlan => '计划';
+
+  @override
+  String get healthCommandToday => '健康 · 今日';
+
+  @override
+  String get healthCommandTrend => '健康 · 趋势';
+
+  @override
+  String get healthCommandPlan => '健康 · 计划';
+
+  @override
+  String get healthInputMetricsTitle => '输入指标';
+
+  @override
+  String get healthConfidenceLabel => '置信度';
+
+  @override
+  String get healthConfidenceLow => '低';
+
+  @override
+  String get healthConfidenceMedium => '中';
+
+  @override
+  String get healthRecentHrvLabel => 'HRV（近期均值）';
+
+  @override
+  String get healthRecentSleepLabel => '睡眠（近期均值）';
+
+  @override
+  String get healthRecentRhrLabel => '静息心率（近期均值）';
+
+  @override
+  String get healthRecentVo2MaxLabel => 'VO₂max（近期均值）';
+
+  @override
+  String get healthSleepMetricLabel => '睡眠';
+
+  @override
+  String get healthHrvMetricLabel => 'HRV';
+
+  @override
+  String get healthHeartRateMetricLabel => '心率';
+
+  @override
+  String get healthWorkoutMetricLabel => '运动';
+
+  @override
+  String get healthStepsMetricLabel => '步数';
+
+  @override
+  String get healthEnergyMetricLabel => '能量';
+
+  @override
+  String get healthLoadingLabel => '加载中…';
+
+  @override
+  String get healthTrendGroupRecovery => '恢复';
+
+  @override
+  String get healthTrendGroupActivity => '活动';
+
+  @override
+  String get healthTrendGroupBody => '身体';
+
+  @override
+  String healthTrendLoadFailed(Object error) {
+    return '加载失败：$error';
+  }
+
+  @override
+  String get healthTrendNotEnoughData => '数据还不够。';
+
+  @override
+  String get healthTrendHrvSubtitle => '心率变异性（近 30 天）';
+
+  @override
+  String get healthTrendSleepSubtitle => '每晚小时数（近 30 天）';
+
+  @override
+  String get healthTrendHeartRateSubtitle => '每日平均心率（近 30 天）';
+
+  @override
+  String get healthTrendRespiratoryTitle => '呼吸';
+
+  @override
+  String get healthTrendRespiratorySubtitle => '每日平均呼吸率（近 30 天）';
+
+  @override
+  String get healthTrendWorkoutSubtitle => '每天分钟数（近 30 天）';
+
+  @override
+  String get healthTrendStepsSubtitle => '每天步数（近 30 天）';
+
+  @override
+  String get healthTrendWalkingDistanceTitle => '步行距离';
+
+  @override
+  String get healthTrendWalkingDistanceSubtitle => '每天公里数（近 30 天）';
+
+  @override
+  String get healthTrendFlightsTitle => '楼层';
+
+  @override
+  String get healthTrendFlightsSubtitle => '每天爬楼层数（近 30 天）';
+
+  @override
+  String get healthTrendWeightTitle => '体重';
+
+  @override
+  String get healthTrendWeightSubtitle => '体重记录（近 30 天）';
+
+  @override
+  String get healthTrendBodyFatTitle => '体脂';
+
+  @override
+  String get healthTrendBodyFatSubtitle => '体脂比例（近 30 天）';
+
+  @override
+  String get healthTrendVo2MaxTitle => 'VO₂max';
+
+  @override
+  String get healthTrendVo2MaxSubtitle => '最大摄氧量（近 30 天）';
+
+  @override
   String get healthRecordBodyMetricAction => '记录身体指标';
 
   @override
@@ -7181,7 +7442,172 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeInboxTitle => '收件箱 · KnowledgeOS';
 
   @override
+  String get knowledgeTabInbox => '收件箱';
+
+  @override
+  String get knowledgeTabLibrary => '资料库';
+
+  @override
+  String get knowledgeTabReview => '复盘';
+
+  @override
+  String get knowledgeCommandInbox => '知识 · 收件箱';
+
+  @override
+  String get knowledgeCommandLibrary => '知识 · 资料库';
+
+  @override
+  String get knowledgeCommandReview => '知识 · 复盘';
+
+  @override
+  String get knowledgeInboxEmptyTitle => '收件箱空空如也';
+
+  @override
+  String get knowledgeInboxEmptyBody =>
+      '使用创建入口写一条想法。AI 会判断它适合保留为 Note，还是升级为 Routine、Decision 或其他知识对象。';
+
+  @override
+  String get knowledgeInboxLoadFailedTitle => '收件箱加载失败';
+
+  @override
   String get knowledgeCaptureAction => '新建捕获';
+
+  @override
+  String get knowledgeCaptureTitle => '写一条想法';
+
+  @override
+  String get knowledgeCaptureTitleField => '标题（可选）';
+
+  @override
+  String get knowledgeCaptureBodyField => '内容';
+
+  @override
+  String get knowledgeCaptureTitleHint => '\"港卡需要定期活跃\"';
+
+  @override
+  String get knowledgeCaptureBodyHint => '\"港卡每 6 个月做一次活跃交易，否则会休眠\"';
+
+  @override
+  String get knowledgeCaptureSavedClassifyingTitle => '已保存 · AI 思考中';
+
+  @override
+  String get knowledgeCaptureSuggestionTitle => 'AI 建议';
+
+  @override
+  String get knowledgeCaptureComposeSubtitle =>
+      '自由格式 Markdown。保存后 AI 会判断是否值得升级。';
+
+  @override
+  String get knowledgeCaptureClassifyingSubtitle =>
+      'Note 已经落库，AI 正在判断是否适合升级为 Routine / Decision 等知识对象。';
+
+  @override
+  String get knowledgeCaptureSuggestionSubtitle => '应用前先确认 AI 抽取的类型和字段。';
+
+  @override
+  String get knowledgeCaptureSave => '保存';
+
+  @override
+  String get knowledgeCaptureSaving => '保存中…';
+
+  @override
+  String get knowledgeCaptureCancel => '取消';
+
+  @override
+  String get knowledgeCaptureClassifyingBody =>
+      '推理模型可能需要 20-30 秒。Note 已经保存，等不及可以直接跳过。';
+
+  @override
+  String get knowledgeCaptureSkipClassification => '保留为 Note，不等了';
+
+  @override
+  String get knowledgeCaptureApplySuggestion => '应用建议';
+
+  @override
+  String get knowledgeCaptureApplyPolish => '应用润色';
+
+  @override
+  String get knowledgeCaptureApplying => '应用中…';
+
+  @override
+  String get knowledgeCaptureKeepOriginal => '保留原文';
+
+  @override
+  String knowledgeCaptureNotePolishOnly(Object reason) {
+    return 'AI 判定 kind = note，只润色不升级。原因：$reason';
+  }
+
+  @override
+  String get knowledgeCapturePolishedVersionTitle => 'AI 润色后的版本';
+
+  @override
+  String get knowledgeCaptureTitleDiffLabel => '标题';
+
+  @override
+  String get knowledgeCaptureBodyDiffLabel => '正文';
+
+  @override
+  String get knowledgeCaptureEmptyValue => '（空）';
+
+  @override
+  String knowledgeCaptureOriginalDiffValue(Object value) {
+    return '原：$value';
+  }
+
+  @override
+  String get knowledgeCaptureKindRoutineDescription => '看起来是一个定期事项';
+
+  @override
+  String get knowledgeCaptureKindDecisionDescription => '看起来在权衡某个选项';
+
+  @override
+  String get knowledgeCaptureKindAssumptionDescription => '看起来在声明一条信念';
+
+  @override
+  String get knowledgeCaptureKindPrincipleDescription => '看起来在声明一条原则';
+
+  @override
+  String get knowledgeCaptureKindConceptDescription => '看起来在定义一个概念';
+
+  @override
+  String get knowledgeCaptureKindExperimentDescription => '看起来在描述一个实验';
+
+  @override
+  String get knowledgeCaptureKindNoteDescription => '保留为 Note';
+
+  @override
+  String knowledgeCaptureRoutineUpgradeDetail(
+    Object intervalDays,
+    Object statement,
+  ) {
+    return '会建一条 Routine：“$statement”，每 $intervalDays 天提醒一次';
+  }
+
+  @override
+  String knowledgeCaptureRoutineScopeDetail(Object scope) {
+    return 'scope = $scope。';
+  }
+
+  @override
+  String get knowledgeCaptureRoutineReminderDetail => 'AI 会在到期前 7 天自动提醒。';
+
+  @override
+  String knowledgeCaptureSuggestionReasonConfidence(
+    Object confidence,
+    Object reason,
+  ) {
+    return '原因：$reason · 置信度 $confidence';
+  }
+
+  @override
+  String knowledgeCaptureSaveFailed(Object error) {
+    return '捕捉失败：$error';
+  }
+
+  @override
+  String knowledgeCaptureApplyFailed(Object error) {
+    return '应用建议失败：$error';
+  }
 
   @override
   String get knowledgeAiPromptHint => '记点什么 / 问点什么…';
@@ -7209,7 +7635,153 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeLibraryTitle => '资料库 · KnowledgeOS';
 
   @override
+  String get knowledgeLibraryEmptyDecisionsTitle => '还没有 Decision';
+
+  @override
+  String get knowledgeLibraryEmptyDecisionsBody =>
+      '点右下角 + 新建 Decision，记录第一条值得复盘的判断。';
+
+  @override
+  String get knowledgeLibraryEmptyNotesTitle => '资料库里还没有 Note';
+
+  @override
+  String get knowledgeLibraryEmptyNotesBody => 'Note 在收件箱录入；这里只做浏览。';
+
+  @override
+  String get knowledgeLibraryEmptyConceptsTitle => '还没有 Concept 节点';
+
+  @override
+  String get knowledgeLibraryEmptyConceptsBody =>
+      'Concept 用于 [[soft links]] 和 AI 关联。';
+
+  @override
+  String get knowledgeLibraryEmptyExperimentsTitle => '没有进行中的 Experiment';
+
+  @override
+  String get knowledgeLibraryEmptyExperimentsBody =>
+      'Experiment 通常挂在一条待验证的 Assumption 上。';
+
+  @override
+  String get knowledgeLibraryEmptyRoutinesTitle => '还没有 Routine';
+
+  @override
+  String get knowledgeLibraryEmptyRoutinesBody =>
+      '定期提醒（例如「港卡每 6 个月活跃一次」）。新建后 AI 会在到期前主动提示。';
+
+  @override
+  String knowledgeRoutineOverdueDays(Object days) {
+    return '已逾期 $days 天';
+  }
+
+  @override
+  String get knowledgeRoutineDueToday => '今日到期';
+
+  @override
+  String knowledgeRoutineDueInDays(Object days) {
+    return '$days 天后到期';
+  }
+
+  @override
+  String knowledgeRoutineLibraryMeta(
+    Object dueLabel,
+    Object intervalDays,
+    Object scope,
+  ) {
+    return '$dueLabel · 每 $intervalDays 天 · $scope';
+  }
+
+  @override
+  String get knowledgeLibrarySearchHint => '搜索当前分段';
+
+  @override
+  String get knowledgeLibrarySearchClear => '清除搜索';
+
+  @override
+  String get knowledgeLibrarySearchEmptyTitle => '没有匹配的知识';
+
+  @override
+  String get knowledgeLibrarySearchEmptyBody => '换个关键词，或切换到其他分段。';
+
+  @override
+  String knowledgeLibraryLoadFailed(Object error) {
+    return '加载失败：$error';
+  }
+
+  @override
+  String knowledgeLibraryDeleteFailed(Object error) {
+    return '删除失败：$error';
+  }
+
+  @override
   String get knowledgeReviewTitle => '复盘 · KnowledgeOS';
+
+  @override
+  String get knowledgeReviewRoutinesTitle => '本周到期的 Routine';
+
+  @override
+  String get knowledgeReviewRoutinesEmpty => '未来 7 天内没有到期的 Routine。';
+
+  @override
+  String get knowledgeReviewDecisionsTitle => '待复盘的 Decision';
+
+  @override
+  String get knowledgeReviewDecisionsEmpty => '当前没有到期的 Decision 复盘。';
+
+  @override
+  String knowledgeReviewDecisionOverdueDays(Object days) {
+    return '$days 天';
+  }
+
+  @override
+  String get knowledgeReviewAssumptionsTitle => '未校验的 Assumption';
+
+  @override
+  String knowledgeReviewAssumptionsEmpty(Object days) {
+    return '所有 active 的 Assumption 都在 $days 天内校验过。';
+  }
+
+  @override
+  String knowledgeReviewRoutineMeta(Object dueLabel, Object intervalDays) {
+    return '$dueLabel · 每 $intervalDays 天';
+  }
+
+  @override
+  String knowledgeReviewAssumptionStaleSummary(
+    Object confidence,
+    Object days,
+    Object statement,
+  ) {
+    return '· $statement（$days 天，conf $confidence）';
+  }
+
+  @override
+  String knowledgeReviewLoadFailed(Object error) {
+    return '加载失败：$error';
+  }
+
+  @override
+  String knowledgeReviewRoutineDone(Object date) {
+    return '已完成，下次 $date';
+  }
+
+  @override
+  String knowledgeReviewRoutineDoneFailed(Object error) {
+    return '完成失败：$error';
+  }
+
+  @override
+  String get knowledgeReviewMarkDone => '完成';
+
+  @override
+  String get knowledgeReviewVerifyAssumption => '校验';
+
+  @override
+  String get knowledgeReviewAssumptionVerified => 'Assumption 已校验。';
+
+  @override
+  String knowledgeReviewAssumptionVerifyFailed(Object error) {
+    return '校验失败：$error';
+  }
 
   @override
   String get knowledgeSegmentDecisions => 'Decisions';
@@ -7256,6 +7828,262 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeNewAssumptionHint => '可证伪的信念 + 置信度';
+
+  @override
+  String get knowledgeDecisionWriterTitle => '新建 Decision';
+
+  @override
+  String get knowledgeDecisionWriterSubtitle => '决策即记忆：问题 / 选项 / 理由 / 复盘';
+
+  @override
+  String get knowledgeDecisionAddOption => '添加选项';
+
+  @override
+  String get knowledgeDecisionClear => '清除';
+
+  @override
+  String get knowledgeDecisionExpectedOutcomeLabel => '预期结果（可选）';
+
+  @override
+  String get knowledgeAssumptionWriterSubtitle2 => '可证伪的信念，设置置信度以便后续复盘';
+
+  @override
+  String get knowledgeConceptWriterSubtitle2 => '用于 soft links 和 AI 交叉引用的锚点';
+
+  @override
+  String get knowledgeExperimentWriterSubtitle2 => '用明确方法验证一条 Assumption';
+
+  @override
+  String get knowledgeWriterAliasLabel => '别名';
+
+  @override
+  String get knowledgeRoutineMonthly => '每月';
+
+  @override
+  String get knowledgeRoutineQuarterly => '每季';
+
+  @override
+  String get knowledgeRoutineSemiannual => '每 6 个月';
+
+  @override
+  String get knowledgeRoutineYearly => '每年';
+
+  @override
+  String get knowledgeDecisionQuestionLabel => '问题';
+
+  @override
+  String get knowledgeDecisionQuestionHint => '\"是否升级到 QQQ + BOXX 动态对冲?\"';
+
+  @override
+  String get knowledgeDecisionOptionsLabel => '选项';
+
+  @override
+  String knowledgeDecisionOptionLabelHint(Object index) {
+    return '选项 $index';
+  }
+
+  @override
+  String get knowledgeDecisionOptionRationaleHint => '为什么选这个选项（可选）';
+
+  @override
+  String get knowledgeDecisionNoReferenceCandidates =>
+      '还没声明 Principle / Assumption — Decision 可以先存，之后回来挂引用。';
+
+  @override
+  String get knowledgeDecisionRationaleLabel => '理由（Markdown）';
+
+  @override
+  String get knowledgeDecisionRationaleHint => '为什么选这个选项 — 限制条件、当时的判断';
+
+  @override
+  String get knowledgeDecisionExpectedOutcomeHint => '如何判断成功 — 用什么指标 / 信号';
+
+  @override
+  String get knowledgeDecisionReviewDateTitle => '复盘日期';
+
+  @override
+  String get knowledgeDecisionReviewDateOptional => '复盘日期（可选）';
+
+  @override
+  String knowledgeDecisionReviewDateScheduled(Object date) {
+    return '复盘于 $date';
+  }
+
+  @override
+  String get knowledgeDecisionReviewDateChoose => '选择';
+
+  @override
+  String get knowledgeDecisionReviewDateChange => '修改';
+
+  @override
+  String knowledgeDecisionReviewDateInDays(Object days) {
+    return '+$days 天';
+  }
+
+  @override
+  String get knowledgeDecisionReviewDateInOneYear => '+1 年';
+
+  @override
+  String get knowledgeDecisionLifecycleTitle => '更新 Decision';
+
+  @override
+  String get knowledgeDecisionLifecycleSubtitle => '状态 / 实际结果 / 认知演化链';
+
+  @override
+  String get knowledgeDecisionActualOutcomeLabel => '实际结果（Markdown，可选）';
+
+  @override
+  String get knowledgeDecisionStatusLabel => '状态';
+
+  @override
+  String get knowledgeDecisionStatusDraft => '草稿';
+
+  @override
+  String get knowledgeDecisionStatusActive => '进行中';
+
+  @override
+  String get knowledgeDecisionStatusPaused => '暂停';
+
+  @override
+  String get knowledgeDecisionStatusExpired => '已过期';
+
+  @override
+  String get knowledgeDecisionStatusVerified => '已验证';
+
+  @override
+  String get knowledgeDecisionStatusFalsified => '已证伪';
+
+  @override
+  String get knowledgeDecisionStatusSuperseded => '已被取代';
+
+  @override
+  String get knowledgeDecisionActualOutcomeHint => '复盘时填：实际发生了什么、和预期的差距';
+
+  @override
+  String get knowledgeDecisionSupersededByLabel => '被哪条 Decision 取代';
+
+  @override
+  String get knowledgeDecisionSupersededByEmpty =>
+      '还没有其它 Decision 可指向——先记录新决策，再回来标记取代关系。';
+
+  @override
+  String get knowledgePrincipleWriterTitle => '新建 Principle';
+
+  @override
+  String get knowledgePrincipleWriterSubtitle => '长期世界观原语，不可证伪';
+
+  @override
+  String get knowledgePrincipleStatementHint =>
+      '\"默认 edge-first\" / \"避免高维护成本系统\"';
+
+  @override
+  String get knowledgePrincipleRationaleHint => '为什么把这个世界观定为 Principle';
+
+  @override
+  String get knowledgeAssumptionWriterTitle => '新建 Assumption';
+
+  @override
+  String get knowledgeAssumptionWriterSubtitle => '可证伪的信念 + 置信度';
+
+  @override
+  String get knowledgeAssumptionStatementHint => '\"长期指数增长高于通胀\"';
+
+  @override
+  String get knowledgeConceptWriterTitle => '新建 Concept';
+
+  @override
+  String get knowledgeConceptWriterSubtitle => '用于搜索和 soft links 的命名节点';
+
+  @override
+  String get knowledgeConceptNameHint => 'Concept 名称（例如 \"edge-first\"）';
+
+  @override
+  String get knowledgeConceptAliasesHint => '逗号分隔的同义词';
+
+  @override
+  String get knowledgeConceptSummaryHint =>
+      '1–2 句定义，用作 [[soft link]] 的 tooltip';
+
+  @override
+  String get knowledgeExperimentWriterTitle => '新建 Experiment';
+
+  @override
+  String get knowledgeExperimentWriterSubtitle => '用方法和指标验证一条 Assumption';
+
+  @override
+  String get knowledgeExperimentHypothesisHint =>
+      '\"covered call 60 DTE on QQQ 优于 30 DTE\"';
+
+  @override
+  String get knowledgeExperimentMethodHint => '怎么做、跑多久、用什么数据';
+
+  @override
+  String get knowledgeExperimentMetricsHint =>
+      '逗号分隔（例如 \"yield, drawdown, sharpe\"）';
+
+  @override
+  String get knowledgeExperimentNoActiveAssumptions =>
+      '没有 active 的 Assumption 可挂（留空也可以）';
+
+  @override
+  String get knowledgeExperimentTargetAssumptionLabel => '目标 Assumption（可选）';
+
+  @override
+  String get knowledgeRoutineWriterTitle => '新建 Routine';
+
+  @override
+  String get knowledgeRoutineWriterSubtitle => '定期提醒，AI 会在临近 next_due_at 时主动提示';
+
+  @override
+  String get knowledgeRoutineStatementHint => '\"港卡做一次活跃交易\" / \"每月对账\"';
+
+  @override
+  String get knowledgeWriterStatementLabel => '陈述';
+
+  @override
+  String get knowledgeWriterRationaleMarkdownLabel => '理由（Markdown）';
+
+  @override
+  String get knowledgeWriterScopeLabel => '适用范围';
+
+  @override
+  String get knowledgeWriterScopeOptionalLabel => '范围标签（可选）';
+
+  @override
+  String get knowledgeWriterEvidenceLabel => '证据 ID';
+
+  @override
+  String get knowledgeWriterConfidenceLabel => '置信度';
+
+  @override
+  String get knowledgeWriterNameLabel => '名称';
+
+  @override
+  String get knowledgeWriterAliasesLabel => '别名';
+
+  @override
+  String get knowledgeWriterSummaryMarkdownLabel => '摘要（Markdown）';
+
+  @override
+  String get knowledgeWriterHypothesisLabel => '假设';
+
+  @override
+  String get knowledgeWriterMethodMarkdownLabel => '方法（Markdown）';
+
+  @override
+  String get knowledgeWriterMetricsLabel => '指标';
+
+  @override
+  String get knowledgeWriterResultMarkdownLabel => '结果（Markdown，可选）';
+
+  @override
+  String get knowledgeWriterConclusionMarkdownLabel => '结论（Markdown，可选）';
+
+  @override
+  String get knowledgeRoutineStatementLabel => '要做什么';
+
+  @override
+  String get knowledgeRoutineFrequencyLabel => '频率';
 
   @override
   String get knowledgeNotesHintTitle => 'Note 在收件箱录入';

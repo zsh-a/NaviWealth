@@ -132,7 +132,10 @@ class _HoldingsTable extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s8,
+            vertical: AppSpacing.s4,
+          ),
           child: Row(
             children: [
               Expanded(
@@ -170,7 +173,10 @@ class _HoldingsTable extends StatelessWidget {
         for (final row in visible) _holdingRowTile(context, row),
         if (hidden > 0)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.s4, left: AppSpacing.s8),
+            padding: const EdgeInsets.only(
+              top: AppSpacing.s4,
+              left: AppSpacing.s8,
+            ),
             child: Text(
               '还有 $hidden 项未展示',
               style: context.theme.typography.xs.copyWith(
@@ -187,11 +193,16 @@ class _HoldingsTable extends StatelessWidget {
     final primary = row.symbol ?? row.name ?? row.assetId;
     final secondary = row.symbol != null && row.name != null ? row.name! : null;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s6,
+      ),
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(
-            color: context.theme.colors.border.withValues(alpha: AppOpacity.muted),
+            color: context.theme.colors.border.withValues(
+              alpha: AppOpacity.muted,
+            ),
           ),
         ),
       ),
@@ -299,7 +310,10 @@ class _XirrSummary extends StatelessWidget {
         : '全部历史';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s4,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -377,7 +391,10 @@ class _NetWorthSparkline extends StatelessWidget {
     ];
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s4,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -486,7 +503,10 @@ class _BreakdownView extends StatelessWidget {
     ];
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s4,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -506,7 +526,9 @@ class _BreakdownView extends StatelessWidget {
               children: [
                 for (var i = 0; i < top.length; i++)
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.s2,
+                    ),
                     child: Row(
                       children: [
                         Container(
@@ -618,7 +640,10 @@ class _RiskAlertList extends StatelessWidget {
         for (final a in visible) _alertTile(context, a),
         if (hidden > 0)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.s4, left: AppSpacing.s8),
+            padding: const EdgeInsets.only(
+              top: AppSpacing.s4,
+              left: AppSpacing.s8,
+            ),
             child: Text(
               '还有 $hidden 项未展示',
               style: context.theme.typography.xs.copyWith(
@@ -651,7 +676,10 @@ class _RiskAlertList extends StatelessWidget {
     };
     return Container(
       margin: const EdgeInsets.only(top: AppSpacing.s4),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s6,
+      ),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(AppRadius.xs),
@@ -720,7 +748,10 @@ class _EmptyResult extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s8,
+      ),
       child: Row(
         children: [
           Icon(
@@ -777,8 +808,8 @@ class AssetAllocationView extends StatelessWidget {
       colors.primary,
       colors.secondary,
       colors.mutedForeground,
-      colors.primary.withValues(alpha: 0.3),
-      colors.secondary.withValues(alpha: 0.15),
+      colors.primary.withValues(alpha: AppOpacity.muted),
+      colors.secondary.withValues(alpha: AppOpacity.medium),
       colors.border,
     ];
 
@@ -861,7 +892,9 @@ class _AllocBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
-        color: context.theme.colors.secondary.withValues(alpha: AppOpacity.disabled),
+        color: context.theme.colors.secondary.withValues(
+          alpha: AppOpacity.disabled,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
@@ -896,7 +929,9 @@ class _AllocBlock extends StatelessWidget {
                   children: [
                     for (var i = 0; i < sorted.length; i++)
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.s2,
+                        ),
                         child: Row(
                           children: [
                             Container(
@@ -1022,11 +1057,7 @@ class RecurringPatternsView extends StatelessWidget {
     );
   }
 
-  Widget _patternRow(
-    BuildContext context,
-    Object? entry,
-    NumberFormat fmt,
-  ) {
+  Widget _patternRow(BuildContext context, Object? entry, NumberFormat fmt) {
     final mp = _asMap(entry);
     if (mp == null) return const SizedBox.shrink();
     final merchant = _asString(mp['merchant_key']) ?? '(unknown)';
@@ -1044,9 +1075,14 @@ class RecurringPatternsView extends StatelessWidget {
       _ => cadence,
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s10,
+      ),
       decoration: BoxDecoration(
-        color: context.theme.colors.secondary.withValues(alpha: AppOpacity.disabled),
+        color: context.theme.colors.secondary.withValues(
+          alpha: AppOpacity.disabled,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
@@ -1057,7 +1093,9 @@ class RecurringPatternsView extends StatelessWidget {
               children: [
                 Text(
                   merchant,
-                  style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w500),
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.s2),
                 Row(
@@ -1155,10 +1193,15 @@ class SubscriptionChangesView extends StatelessWidget {
     final delta = _asDouble(mp['delta_ratio']) ?? 0.0;
     final since = _asDate(mp['since']);
     final up = next.abs() > prev.abs();
-    final accent = up ? context.theme.colors.destructive : context.theme.colors.primary;
+    final accent = up
+        ? context.theme.colors.destructive
+        : context.theme.colors.primary;
     final fmt = NumberFormat.decimalPattern();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s10,
+      ),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: AppOpacity.faint),
         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -1178,7 +1221,9 @@ class SubscriptionChangesView extends StatelessWidget {
               children: [
                 Text(
                   merchant,
-                  style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w500),
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.s2),
                 Text(
@@ -1255,9 +1300,14 @@ class RefundLinksView extends StatelessWidget {
     final amountMinor = int.tryParse(_asString(mp['amount_minor']) ?? '') ?? 0;
     final currency = _asString(mp['currency']) ?? '';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s10,
+      ),
       decoration: BoxDecoration(
-        color: context.theme.colors.secondary.withValues(alpha: AppOpacity.disabled),
+        color: context.theme.colors.secondary.withValues(
+          alpha: AppOpacity.disabled,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
@@ -1289,7 +1339,11 @@ class RefundLinksView extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s4),
                 Row(
                   children: [
-                    Icon(FLucideIcons.arrowUpRight, size: AppIconSizes.xs, color: context.theme.colors.primary),
+                    Icon(
+                      FLucideIcons.arrowUpRight,
+                      size: AppIconSizes.xs,
+                      color: context.theme.colors.primary,
+                    ),
                     const SizedBox(width: AppSpacing.s4),
                     Expanded(
                       child: Text(

@@ -34,7 +34,7 @@ class AppActionSheetTile extends StatelessWidget with FTileMixin {
         width: AppSpacing.s40,
         height: AppSpacing.s40,
         decoration: BoxDecoration(
-          color: colors.primary.withValues(alpha: 0.10),
+          color: colors.primary.withValues(alpha: AppOpacity.subtle),
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         alignment: Alignment.center,

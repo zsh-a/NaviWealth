@@ -95,8 +95,8 @@ class _Body extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.s12),
         Wrap(
-          spacing: 6,
-          runSpacing: 6,
+          spacing: AppSpacing.s6,
+          runSpacing: AppSpacing.s6,
           children: [
             for (var i = 0; i < presets.length; i++)
               _PresetChip(
@@ -137,7 +137,10 @@ class _PresetChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s10,
+          vertical: AppSpacing.s4,
+        ),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.full),
@@ -195,8 +198,8 @@ class _DeltaPanel extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s6),
           Wrap(
-            spacing: 12,
-            runSpacing: 4,
+            spacing: AppSpacing.s12,
+            runSpacing: AppSpacing.s4,
             children: [
               Text(
                 wrLabel,
@@ -214,7 +217,10 @@ class _DeltaPanel extends StatelessWidget {
                 Text(
                   '${baseline.safetyLevel.name} → ${result.safetyLevel.name}',
                   style: context.theme.typography.xs.copyWith(
-                    color: fireSafetyColor(SemanticColors.of(context), result.safetyLevel),
+                    color: fireSafetyColor(
+                      SemanticColors.of(context),
+                      result.safetyLevel,
+                    ),
                     fontWeight: FontWeight.w600,
                   ),
                 ),

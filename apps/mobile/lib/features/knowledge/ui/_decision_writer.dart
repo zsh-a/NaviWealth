@@ -22,6 +22,7 @@ import 'package:forui/forui.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/decision_context_snapper.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
@@ -45,10 +46,7 @@ class _DecisionWriterState extends State<_DecisionWriter> {
   final _questionCtrl = TextEditingController();
   final _rationaleCtrl = TextEditingController();
   final _expectedCtrl = TextEditingController();
-  final List<_OptionDraft> _options = [
-    _OptionDraft(),
-    _OptionDraft(),
-  ];
+  final List<_OptionDraft> _options = [_OptionDraft(), _OptionDraft()];
   String? _selectedLabel;
   final Set<String> _principleIds = <String>{};
   final Set<String> _assumptionIds = <String>{};
@@ -95,10 +93,8 @@ class _DecisionWriterState extends State<_DecisionWriter> {
     if (!_canSave) return;
     setState(() => _saving = true);
     try {
-      final repo =
-          await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper =
-          await widget.ref.read(mutationStamperProvider.future);
+      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await widget.ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
       final activeOptions = _options
           .where((o) => o.labelCtrl.text.trim().isNotEmpty)
@@ -155,11 +151,13 @@ class _DecisionWriterState extends State<_DecisionWriter> {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
     return AppSheet(
-      title: '新建 Decision',
-      subtitle: '决策即记忆 — 问题 / 选项 / 理由 / 复盘',
+      title: AppLocalizations.of(context).knowledgeDecisionWriterTitle,
+      subtitle: AppLocalizations.of(context).knowledgeDecisionWriterSubtitle,
       footer: AppSheetFooter(
-        submitLabel: _saving ? '保存中…' : '保存',
-        cancelLabel: '取消',
+        submitLabel: _saving
+            ? AppLocalizations.of(context).commonSaving
+            : AppLocalizations.of(context).commonSave,
+        cancelLabel: AppLocalizations.of(context).commonCancel,
         busy: _saving || !_canSave,
         onSubmit: () {
           _save();
@@ -171,12 +169,14 @@ class _DecisionWriterState extends State<_DecisionWriter> {
         children: [
           FTextField(
             control: FTextFieldControl.managed(controller: _questionCtrl),
-            label: const Text('问题'),
-            hint: '"是否升级到 QQQ + BOXX 动态对冲?"',
+            label: Text(
+              AppLocalizations.of(context).knowledgeDecisionQuestionLabel,
+            ),
+            hint: AppLocalizations.of(context).knowledgeDecisionQuestionHint,
           ),
           const SizedBox(height: AppSpacing.s12),
           Text(
-            '选项',
+            AppLocalizations.of(context).knowledgeDecisionOptionsLabel,
             style: typography.sm.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: AppSpacing.s4),
@@ -184,7 +184,8 @@ class _DecisionWriterState extends State<_DecisionWriter> {
             _OptionEditorTile(
               draft: _options[i],
               index: i,
-              selected: _options[i].labelCtrl.text.trim().isNotEmpty &&
+              selected:
+                  _options[i].labelCtrl.text.trim().isNotEmpty &&
                   _selectedLabel == _options[i].labelCtrl.text.trim(),
               onSelect: () {
                 final label = _options[i].labelCtrl.text.trim();
@@ -208,14 +209,18 @@ class _DecisionWriterState extends State<_DecisionWriter> {
                 draft.labelCtrl.addListener(_onAnyChange);
                 _options.add(draft);
               }),
-              child: const Text('添加选项'),
+              child: Text(
+                AppLocalizations.of(context).knowledgeDecisionAddOption,
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
           MarkdownEditorWithPreview(
             controller: _rationaleCtrl,
-            label: '理由（Markdown）',
-            hint: '为什么选这个选项 — 限制条件、当时的判断',
+            label: AppLocalizations.of(
+              context,
+            ).knowledgeWriterRationaleMarkdownLabel,
+            hint: AppLocalizations.of(context).knowledgeDecisionRationaleHint,
             minLines: 3,
             maxLines: 6,
           ),
@@ -238,8 +243,14 @@ class _DecisionWriterState extends State<_DecisionWriter> {
           const SizedBox(height: AppSpacing.s12),
           FTextField(
             control: FTextFieldControl.managed(controller: _expectedCtrl),
-            label: const Text('预期结果（可选）'),
-            hint: '如何判断成功 — 用什么指标 / 信号',
+            label: Text(
+              AppLocalizations.of(
+                context,
+              ).knowledgeDecisionExpectedOutcomeLabel,
+            ),
+            hint: AppLocalizations.of(
+              context,
+            ).knowledgeDecisionExpectedOutcomeHint,
             maxLines: 3,
             minLines: 1,
           ),
@@ -249,10 +260,18 @@ class _DecisionWriterState extends State<_DecisionWriter> {
               Expanded(
                 child: Text(
                   _reviewDate == null
-                      ? '复盘日期（可选）'
-                      : '复盘于 ${_reviewDate!.toLocal().toIso8601String().substring(0, 10)}',
-                  style: typography.sm
-                      .copyWith(color: colors.mutedForeground),
+                      ? AppLocalizations.of(
+                          context,
+                        ).knowledgeDecisionReviewDateOptional
+                      : AppLocalizations.of(
+                          context,
+                        ).knowledgeDecisionReviewDateScheduled(
+                          _reviewDate!.toLocal().toIso8601String().substring(
+                            0,
+                            10,
+                          ),
+                        ),
+                  style: typography.sm.copyWith(color: colors.mutedForeground),
                 ),
               ),
               FButton(
@@ -263,14 +282,24 @@ class _DecisionWriterState extends State<_DecisionWriter> {
                     setState(() => _reviewDate = picked);
                   }
                 },
-                child: Text(_reviewDate == null ? '选择' : '修改'),
+                child: Text(
+                  _reviewDate == null
+                      ? AppLocalizations.of(
+                          context,
+                        ).knowledgeDecisionReviewDateChoose
+                      : AppLocalizations.of(
+                          context,
+                        ).knowledgeDecisionReviewDateChange,
+                ),
               ),
               if (_reviewDate != null) ...[
                 const SizedBox(width: AppSpacing.s8),
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: () => setState(() => _reviewDate = null),
-                  child: const Text('清除'),
+                  child: Text(
+                    AppLocalizations.of(context).knowledgeDecisionClear,
+                  ),
                 ),
               ],
             ],
@@ -293,8 +322,8 @@ class _DecisionWriterState extends State<_DecisionWriter> {
 
 class _OptionDraft {
   _OptionDraft({String label = '', String rationale = ''})
-      : labelCtrl = TextEditingController(text: label),
-        rationaleCtrl = TextEditingController(text: rationale);
+    : labelCtrl = TextEditingController(text: label),
+      rationaleCtrl = TextEditingController(text: rationale);
   final TextEditingController labelCtrl;
   final TextEditingController rationaleCtrl;
   void dispose() {
@@ -325,9 +354,7 @@ class _OptionEditorTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.s8),
         decoration: BoxDecoration(
-          border: Border.all(
-            color: selected ? colors.primary : colors.border,
-          ),
+          border: Border.all(color: selected ? colors.primary : colors.border),
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Column(
@@ -341,9 +368,7 @@ class _OptionEditorTile extends StatelessWidget {
                       : FButtonVariant.outline,
                   onPress: onSelect,
                   child: Icon(
-                    selected
-                        ? FLucideIcons.check
-                        : FLucideIcons.circle,
+                    selected ? FLucideIcons.check : FLucideIcons.circle,
                     size: AppIconSizes.xs,
                   ),
                 ),
@@ -353,7 +378,9 @@ class _OptionEditorTile extends StatelessWidget {
                     control: FTextFieldControl.managed(
                       controller: draft.labelCtrl,
                     ),
-                    hint: '选项 ${index + 1}',
+                    hint: AppLocalizations.of(
+                      context,
+                    ).knowledgeDecisionOptionLabelHint(index + 1),
                   ),
                 ),
                 if (onRemove != null) ...[
@@ -371,7 +398,9 @@ class _OptionEditorTile extends StatelessWidget {
               control: FTextFieldControl.managed(
                 controller: draft.rationaleCtrl,
               ),
-              hint: '为什么选这个选项（可选）',
+              hint: AppLocalizations.of(
+                context,
+              ).knowledgeDecisionOptionRationaleHint,
               maxLines: 2,
               minLines: 1,
             ),
@@ -413,29 +442,35 @@ class _PrincipleAssumptionPicker extends ConsumerWidget {
               return StreamBuilder<List<KnowledgeAssumption>>(
                 stream: repo.watchAssumptions(ownerUserId: owner),
                 builder: (context, assumptionsSnap) {
-                  final principles = (principlesSnap.data ??
-                          const <KnowledgePrinciple>[])
-                      .where((p) => p.status == PrincipleStatus.active)
-                      .toList(growable: false);
-                  final assumptions = (assumptionsSnap.data ??
-                          const <KnowledgeAssumption>[])
-                      .where((a) => a.status == AssumptionStatus.active)
-                      .toList(growable: false);
+                  final principles =
+                      (principlesSnap.data ?? const <KnowledgePrinciple>[])
+                          .where((p) => p.status == PrincipleStatus.active)
+                          .toList(growable: false);
+                  final assumptions =
+                      (assumptionsSnap.data ?? const <KnowledgeAssumption>[])
+                          .where((a) => a.status == AssumptionStatus.active)
+                          .toList(growable: false);
                   if (principles.isEmpty && assumptions.isEmpty) {
                     final typography = context.theme.typography;
                     final colors = context.theme.colors;
                     return Text(
-                      '还没声明 Principle / Assumption — Decision 可以先存，'
-                      '之后回来挂引用。',
-                      style: typography.xs
-                          .copyWith(color: colors.mutedForeground),
+                      AppLocalizations.of(
+                        context,
+                      ).knowledgeDecisionNoReferenceCandidates,
+                      style: typography.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
                     );
                   }
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (principles.isNotEmpty) ...[
-                        const _SectionLabel(text: '引用的 Principle'),
+                        _SectionLabel(
+                          text: AppLocalizations.of(
+                            context,
+                          ).knowledgeDetailPrinciplesTitle,
+                        ),
                         _CheckboxList(
                           items: principles
                               .map(
@@ -452,7 +487,11 @@ class _PrincipleAssumptionPicker extends ConsumerWidget {
                       if (assumptions.isNotEmpty) ...[
                         if (principles.isNotEmpty)
                           const SizedBox(height: AppSpacing.s8),
-                        const _SectionLabel(text: '引用的 Assumption'),
+                        _SectionLabel(
+                          text: AppLocalizations.of(
+                            context,
+                          ).knowledgeDetailAssumptionsTitle,
+                        ),
                         _CheckboxList(
                           items: assumptions
                               .map(
@@ -460,8 +499,7 @@ class _PrincipleAssumptionPicker extends ConsumerWidget {
                                   id: a.id,
                                   label:
                                       '${a.statement}（conf ${a.confidence.toStringAsFixed(2)}）',
-                                  selected:
-                                      assumptionIds.contains(a.id),
+                                  selected: assumptionIds.contains(a.id),
                                 ),
                               )
                               .toList(growable: false),
@@ -488,8 +526,7 @@ class _SectionLabel extends StatelessWidget {
     padding: const EdgeInsets.only(bottom: AppSpacing.s4),
     child: Text(
       text,
-      style: context.theme.typography.sm
-          .copyWith(fontWeight: FontWeight.w600),
+      style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w600),
     ),
   );
 }
@@ -565,23 +602,34 @@ class _ReviewDateSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget choice(int days, String label) => FButton(
       variant: FButtonVariant.outline,
-      onPress: () =>
-          Navigator.of(context).pop(now.add(Duration(days: days))),
+      onPress: () => Navigator.of(context).pop(now.add(Duration(days: days))),
       child: Text(label),
     );
     return AppSheet(
-      title: '复盘日期',
+      title: AppLocalizations.of(context).knowledgeDecisionReviewDateTitle,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          choice(30, '+30 天'),
+          choice(
+            30,
+            AppLocalizations.of(context).knowledgeDecisionReviewDateInDays(30),
+          ),
           const SizedBox(height: AppSpacing.s8),
-          choice(90, '+90 天'),
+          choice(
+            90,
+            AppLocalizations.of(context).knowledgeDecisionReviewDateInDays(90),
+          ),
           const SizedBox(height: AppSpacing.s8),
-          choice(180, '+180 天'),
+          choice(
+            180,
+            AppLocalizations.of(context).knowledgeDecisionReviewDateInDays(180),
+          ),
           const SizedBox(height: AppSpacing.s8),
-          choice(365, '+1 年'),
+          choice(
+            365,
+            AppLocalizations.of(context).knowledgeDecisionReviewDateInOneYear,
+          ),
         ],
       ),
     );

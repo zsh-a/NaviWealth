@@ -100,7 +100,7 @@ class _SkeletonBoxState extends State<SkeletonBox>
     final colors = context.theme.colors;
     final base = colors.muted;
     final highlight = Color.alphaBlend(
-      colors.foreground.withValues(alpha: 0.08),
+      colors.foreground.withValues(alpha: AppOpacity.faint),
       base,
     );
 

@@ -192,9 +192,9 @@ List<ProposalKindEditField> _assetValuationFields(AppLocalizations l) => [
 ];
 
 List<ProposalKindEditField> _optionsJournalEntryFields(AppLocalizations l) => [
-  const ProposalKindEditField(
+  ProposalKindEditField(
     payloadKey: 'entry_credit',
-    label: '权利金',
+    label: l.aiChatFieldOptionPremium,
     numeric: true,
   ),
   ProposalKindEditField(
@@ -202,7 +202,7 @@ List<ProposalKindEditField> _optionsJournalEntryFields(AppLocalizations l) => [
     label: l.aiChatFieldDate,
     hint: l.aiChatFieldDateHint,
   ),
-  const ProposalKindEditField(payloadKey: 'notes', label: '备注'),
+  ProposalKindEditField(payloadKey: 'notes', label: l.aiChatFieldNotes),
 ];
 
 // ─── Preview rows ───

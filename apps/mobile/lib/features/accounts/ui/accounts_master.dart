@@ -50,7 +50,20 @@ class AccountsMaster extends ConsumerWidget {
               );
       },
       loading: () => const Center(child: FCircularProgress()),
-      error: (_, _) => Center(child: Text(l10n.commonLoadFailed)),
+      error: (_, _) => Center(
+        child: AppEmptyState.error(
+          title: l10n.commonLoadFailed,
+          action: FButton(
+            variant: FButtonVariant.ghost,
+            onPress: () {
+              ref
+                ..invalidate(accountsStreamProvider)
+                ..invalidate(accountBalancesByIdProvider);
+            },
+            child: Text(l10n.commonRetry),
+          ),
+        ),
+      ),
     );
 
     return MasterDetailShortcuts(

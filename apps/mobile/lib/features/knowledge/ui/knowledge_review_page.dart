@@ -70,6 +70,7 @@ class _DueRoutinesCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {
@@ -79,9 +80,13 @@ class _DueRoutinesCard extends ConsumerWidget {
         return repoAsync.when(
           loading: () => const SizedBox.shrink(),
           error: (e, _) => KnowledgeSection.group(
-            title: '本周到期的 Routine',
+            title: l10n.knowledgeReviewRoutinesTitle,
             children: [
-              Text('加载失败：$e', maxLines: 3, overflow: TextOverflow.ellipsis),
+              Text(
+                l10n.knowledgeReviewLoadFailed('$e'),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
           data: (repo) {
@@ -98,11 +103,11 @@ class _DueRoutinesCard extends ConsumerWidget {
                 final typography = context.theme.typography;
                 final colors = context.theme.colors;
                 return KnowledgeSection.group(
-                  title: '本周到期的 Routine',
+                  title: l10n.knowledgeReviewRoutinesTitle,
                   children: [
                     if (due.isEmpty)
                       Text(
-                        '未来 7 天内没有到期的 Routine。',
+                        l10n.knowledgeReviewRoutinesEmpty,
                         style: typography.sm.copyWith(
                           color: colors.mutedForeground,
                         ),
@@ -135,6 +140,7 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
   Future<void> _markDone() async {
     if (_busy) return;
     setState(() => _busy = true);
+    final l10n = AppLocalizations.of(context);
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
@@ -163,12 +169,16 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
         AppMessenger.show(
           context,
           ToastKind.success,
-          '已完成，下次 ${_formatDate(next)}',
+          l10n.knowledgeReviewRoutineDone(_formatDate(next)),
         );
       }
     } catch (e) {
       if (mounted) {
-        AppMessenger.show(context, ToastKind.error, '完成失败：$e');
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          l10n.knowledgeReviewRoutineDoneFailed('$e'),
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -177,15 +187,16 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final typography = context.theme.typography;
     final colors = context.theme.colors;
     final now = DateTime.now();
     final days = widget.routine.daysUntilDue(now);
     final dueLabel = days < 0
-        ? '已逾期 ${-days} 天'
+        ? l10n.knowledgeRoutineOverdueDays(-days)
         : days == 0
-        ? '今日到期'
-        : '$days 天后';
+        ? l10n.knowledgeRoutineDueToday
+        : l10n.knowledgeRoutineDueInDays(days);
     final dueColor = days < 0 ? colors.destructive : colors.mutedForeground;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
@@ -208,7 +219,10 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  '$dueLabel · 每 ${widget.routine.intervalDays} 天',
+                  l10n.knowledgeReviewRoutineMeta(
+                    dueLabel,
+                    widget.routine.intervalDays,
+                  ),
                   style: typography.xs.copyWith(color: dueColor),
                 ),
               ],
@@ -218,7 +232,7 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
           FButton(
             variant: FButtonVariant.outline,
             onPress: _busy ? null : _markDone,
-            child: Text(_busy ? '...' : '已处理'),
+            child: Text(_busy ? '...' : l10n.knowledgeReviewMarkDone),
           ),
         ],
       ),
@@ -237,6 +251,7 @@ class _DueReviewsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {
@@ -246,9 +261,13 @@ class _DueReviewsCard extends ConsumerWidget {
         return repoAsync.when(
           loading: () => const SizedBox.shrink(),
           error: (e, _) => KnowledgeSection.group(
-            title: '待复盘的 Decision',
+            title: l10n.knowledgeReviewDecisionsTitle,
             children: [
-              Text('加载失败：$e', maxLines: 3, overflow: TextOverflow.ellipsis),
+              Text(
+                l10n.knowledgeReviewLoadFailed('$e'),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
           data: (repo) {
@@ -262,11 +281,11 @@ class _DueReviewsCard extends ConsumerWidget {
                 final typography = context.theme.typography;
                 final colors = context.theme.colors;
                 return KnowledgeSection.group(
-                  title: '待复盘的 Decision',
+                  title: l10n.knowledgeReviewDecisionsTitle,
                   children: [
                     if (list.isEmpty)
                       Text(
-                        '当前没有到期的 Decision。',
+                        l10n.knowledgeReviewDecisionsEmpty,
                         style: typography.sm.copyWith(
                           color: colors.mutedForeground,
                         ),
@@ -297,7 +316,10 @@ class _DueReviewsCard extends ConsumerWidget {
                                   ),
                                   const SizedBox(width: AppSpacing.s4),
                                   Text(
-                                    '${d.daysOverdue(DateTime.now().toUtc()) ?? 0} 天',
+                                    l10n.knowledgeReviewDecisionOverdueDays(
+                                      d.daysOverdue(DateTime.now().toUtc()) ??
+                                          0,
+                                    ),
                                     style: typography.xs.copyWith(
                                       color: colors.mutedForeground,
                                     ),
@@ -322,6 +344,7 @@ class _StaleAssumptionsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {
@@ -345,11 +368,13 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                 final typography = context.theme.typography;
                 final colors = context.theme.colors;
                 return KnowledgeSection.group(
-                  title: '未校验的 Assumption',
+                  title: l10n.knowledgeReviewAssumptionsTitle,
                   children: [
                     if (stale.isEmpty)
                       Text(
-                        '所有 active 的 Assumption 都在 $kAssumptionStaleDays 天内校验过。',
+                        l10n.knowledgeReviewAssumptionsEmpty(
+                          kAssumptionStaleDays,
+                        ),
                         style: typography.sm.copyWith(
                           color: colors.mutedForeground,
                         ),
@@ -362,11 +387,23 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                               padding: const EdgeInsets.symmetric(
                                 vertical: AppSpacing.s4,
                               ),
-                              child: Text(
-                                '· ${a.statement}（${a.daysSinceVerify(now)} 天, conf ${a.confidence.toStringAsFixed(2)}）',
-                                style: typography.sm,
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      l10n.knowledgeReviewAssumptionStaleSummary(
+                                        a.statement,
+                                        a.daysSinceVerify(now),
+                                        a.confidence.toStringAsFixed(2),
+                                      ),
+                                      style: typography.sm,
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.s8),
+                                  _VerifyAssumptionButton(assumption: a),
+                                ],
                               ),
                             ),
                           ),
@@ -377,6 +414,79 @@ class _StaleAssumptionsCard extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _VerifyAssumptionButton extends ConsumerStatefulWidget {
+  const _VerifyAssumptionButton({required this.assumption});
+
+  final KnowledgeAssumption assumption;
+
+  @override
+  ConsumerState<_VerifyAssumptionButton> createState() =>
+      _VerifyAssumptionButtonState();
+}
+
+class _VerifyAssumptionButtonState
+    extends ConsumerState<_VerifyAssumptionButton> {
+  bool _busy = false;
+
+  Future<void> _verify() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final l10n = AppLocalizations.of(context);
+    try {
+      final repo = await ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await ref.read(mutationStamperProvider.future);
+      final stamp = await stamper.stamp();
+      final a = widget.assumption;
+      await repo.upsertAssumption(
+        KnowledgeAssumption(
+          id: a.id,
+          statement: a.statement,
+          confidence: a.confidence,
+          scope: a.scope,
+          evidenceIds: a.evidenceIds,
+          status: a.status,
+          declaredAt: a.declaredAt,
+          lastVerifiedAt: stamp.now,
+          mergedIntoId: a.mergedIntoId,
+          sync: SyncMeta(
+            ownerUserId: stamp.ownerUserId,
+            updatedAt: stamp.now,
+            updatedByDevice: stamp.deviceId,
+            hlc: stamp.hlc,
+          ),
+        ),
+      );
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          l10n.knowledgeReviewAssumptionVerified,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          l10n.knowledgeReviewAssumptionVerifyFailed('$e'),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return FButton(
+      variant: FButtonVariant.outline,
+      onPress: _busy ? null : _verify,
+      child: Text(l10n.knowledgeReviewVerifyAssumption),
     );
   }
 }

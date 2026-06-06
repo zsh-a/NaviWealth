@@ -53,6 +53,7 @@ class _RecoveryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final l10n = AppLocalizations.of(context);
     final verdict = out['verdict']?.toString() ?? 'insufficient_data';
     final score = out['score'];
     final inputs = (out['inputs'] as Map?)?.cast<String, Object?>() ?? const {};
@@ -69,7 +70,7 @@ class _RecoveryCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.s8),
               Text(
-                '恢复',
+                l10n.healthTrendGroupRecovery,
                 style: typography.sm.copyWith(fontWeight: FontWeight.w600),
               ),
               const Spacer(),
@@ -115,25 +116,30 @@ class _RecoveryCard extends StatelessWidget {
           ],
           const SizedBox(height: AppSpacing.s24),
           Text(
-            '输入指标',
+            l10n.healthInputMetricsTitle,
             style: typography.xs.copyWith(color: colors.mutedForeground),
           ),
           const SizedBox(height: AppSpacing.s8),
-          _InputRow(label: '置信度', value: score == null ? '低' : '中'),
           _InputRow(
-            label: 'HRV（近期均值）',
+            label: l10n.healthConfidenceLabel,
+            value: score == null
+                ? l10n.healthConfidenceLow
+                : l10n.healthConfidenceMedium,
+          ),
+          _InputRow(
+            label: l10n.healthRecentHrvLabel,
             value: _format(inputs['latest_hrv_ms'], unit: 'ms'),
           ),
           _InputRow(
-            label: '睡眠（近期均值）',
+            label: l10n.healthRecentSleepLabel,
             value: _format(inputs['avg_sleep_hours'], unit: 'h'),
           ),
           _InputRow(
-            label: '静息心率（近期均值）',
+            label: l10n.healthRecentRhrLabel,
             value: _format(inputs['latest_rhr_bpm'], unit: 'bpm'),
           ),
           _InputRow(
-            label: 'VO₂max（近期均值）',
+            label: l10n.healthRecentVo2MaxLabel,
             value: _format(inputs['latest_vo2_max'], unit: 'ml/(kg·min)'),
           ),
         ],

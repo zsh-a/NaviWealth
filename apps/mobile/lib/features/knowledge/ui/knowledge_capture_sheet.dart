@@ -28,6 +28,7 @@ import '../../../core/logging/providers.dart' show loggerProvider;
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/capture_classifier.dart';
 import '../data/capture_kind.dart';
 import '../data/providers.dart';
@@ -148,11 +149,15 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
         );
         Navigator.of(context).pop();
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(() => _stage = _CaptureStage.composing);
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).knowledgeCaptureSaveFailed('$e'),
+        );
       }
-      rethrow;
     }
   }
 
@@ -273,11 +278,15 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
           }
       }
       if (mounted) Navigator.of(context).pop();
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(() => _stage = _CaptureStage.suggesting);
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).knowledgeCaptureApplyFailed('$e'),
+        );
       }
-      rethrow;
     }
   }
 
@@ -289,24 +298,27 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final stage = _stage;
     final isSuggestStage =
         stage == _CaptureStage.suggesting || stage == _CaptureStage.applying;
     return AppSheet(
       title: isSuggestStage
-          ? 'AI 建议升级'
+          ? l10n.knowledgeCaptureSuggestionTitle
           : stage == _CaptureStage.classifying
-          ? '已保存 · AI 思考中'
-          : '写一条想法',
+          ? l10n.knowledgeCaptureSavedClassifyingTitle
+          : l10n.knowledgeCaptureTitle,
       subtitle: isSuggestStage
-          ? '一段输入就够 — 类型 / 字段由 AI 抽取，你一键确认'
+          ? l10n.knowledgeCaptureSuggestionSubtitle
           : stage == _CaptureStage.classifying
-          ? 'Note 已经落库，AI 正在判断是否值得升级为 Routine / Decision 等'
-          : '自由格式 Markdown — AI 会在保存后建议升级为 Routine / Decision 等',
+          ? l10n.knowledgeCaptureClassifyingSubtitle
+          : l10n.knowledgeCaptureComposeSubtitle,
       footer: stage == _CaptureStage.composing || stage == _CaptureStage.saving
           ? AppSheetFooter(
-              submitLabel: stage == _CaptureStage.saving ? '保存中…' : '保存',
-              cancelLabel: '取消',
+              submitLabel: stage == _CaptureStage.saving
+                  ? l10n.knowledgeCaptureSaving
+                  : l10n.knowledgeCaptureSave,
+              cancelLabel: l10n.knowledgeCaptureCancel,
               busy: !_canSave,
               onSubmit: () {
                 _saveAndClassify();
@@ -352,6 +364,7 @@ class _ClassifyingBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final typography = context.theme.typography;
     final colors = context.theme.colors;
     // FProgress is a linear track that wants `constraints.maxWidth` from
@@ -368,7 +381,7 @@ class _ClassifyingBody extends StatelessWidget {
           const FProgress(),
           const SizedBox(height: AppSpacing.s12),
           Text(
-            '推理模型可能需要 20-30 秒。Note 已经保存,等不及可以直接跳过。',
+            l10n.knowledgeCaptureClassifyingBody,
             textAlign: TextAlign.center,
             style: typography.sm.copyWith(color: colors.mutedForeground),
           ),
@@ -378,7 +391,7 @@ class _ClassifyingBody extends StatelessWidget {
             child: FButton(
               variant: FButtonVariant.outline,
               onPress: onSkip,
-              child: const Text('保留为 Note,不等了'),
+              child: Text(l10n.knowledgeCaptureSkipClassification),
             ),
           ),
         ],
@@ -403,14 +416,14 @@ class _ComposeBody extends StatelessWidget {
       children: [
         FTextField(
           control: FTextFieldControl.managed(controller: titleController),
-          label: const Text('标题（可选）'),
-          hint: '"港卡需要定期活跃"',
+          label: Text(AppLocalizations.of(context).knowledgeCaptureTitleField),
+          hint: AppLocalizations.of(context).knowledgeCaptureTitleHint,
         ),
         const SizedBox(height: AppSpacing.s12),
         FTextField(
           control: FTextFieldControl.managed(controller: bodyController),
-          label: const Text('内容'),
-          hint: '"港卡每 6 个月做一次活跃交易，否则会休眠"',
+          label: Text(AppLocalizations.of(context).knowledgeCaptureBodyField),
+          hint: AppLocalizations.of(context).knowledgeCaptureBodyHint,
           minLines: 4,
           maxLines: 8,
         ),
@@ -437,10 +450,13 @@ class _SuggestionBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final acceptLabel = applying
-        ? '应用中…'
-        : (suggestion.isUpgrade ? '✓ 应用建议' : '✓ 应用润色');
-    final dismissLabel = suggestion.isUpgrade ? '保留原文' : '保留原文';
+        ? l10n.knowledgeCaptureApplying
+        : (suggestion.isUpgrade
+              ? l10n.knowledgeCaptureApplySuggestion
+              : l10n.knowledgeCaptureApplyPolish);
+    final dismissLabel = l10n.knowledgeCaptureKeepOriginal;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -458,7 +474,7 @@ class _SuggestionBody extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.s8),
             child: Text(
-              'AI 判定 kind = note,只润色不升级。原因:${suggestion.reasonZh}',
+              l10n.knowledgeCaptureNotePolishOnly(suggestion.reasonZh),
               style: context.theme.typography.xs.copyWith(
                 color: context.theme.colors.mutedForeground,
               ),
@@ -499,6 +515,7 @@ class _PolishPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     final titleChanged =
         suggestion.polishedTitle != null &&
         suggestion.polishedTitle != originalTitle;
@@ -524,7 +541,7 @@ class _PolishPanel extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.s4),
               Text(
-                'AI 润色后的版本',
+                l10n.knowledgeCapturePolishedVersionTitle,
                 style: typography.sm.copyWith(fontWeight: FontWeight.w600),
               ),
             ],
@@ -532,16 +549,20 @@ class _PolishPanel extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           if (titleChanged) ...[
             _DiffRow(
-              label: '标题',
-              before: originalTitle.isEmpty ? '(空)' : originalTitle,
+              label: l10n.knowledgeCaptureTitleDiffLabel,
+              before: originalTitle.isEmpty
+                  ? l10n.knowledgeCaptureEmptyValue
+                  : originalTitle,
               after: suggestion.polishedTitle!,
             ),
             if (bodyChanged) const SizedBox(height: AppSpacing.s8),
           ],
           if (bodyChanged)
             _DiffRow(
-              label: '正文',
-              before: originalBody.isEmpty ? '(空)' : originalBody,
+              label: l10n.knowledgeCaptureBodyDiffLabel,
+              before: originalBody.isEmpty
+                  ? l10n.knowledgeCaptureEmptyValue
+                  : originalBody,
               after: suggestion.polishedBody!,
             ),
         ],
@@ -564,6 +585,7 @@ class _DiffRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     String trim(String s) => s.length > 240 ? '${s.substring(0, 240)}…' : s;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -574,7 +596,7 @@ class _DiffRow extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.s2),
         Text(
-          '原:${trim(before)}',
+          l10n.knowledgeCaptureOriginalDiffValue(trim(before)),
           style: typography.sm.copyWith(color: colors.mutedForeground),
         ),
         const SizedBox(height: AppSpacing.s2),
@@ -595,20 +617,19 @@ class _UpgradePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     final headline = switch (suggestion.kind) {
-      CaptureKind.routine => '看起来是一个定期事项',
-      CaptureKind.decision => '看起来在权衡某个选项',
-      CaptureKind.assumption => '看起来在声明一条信念',
-      CaptureKind.principle => '看起来在声明一条原则',
-      CaptureKind.concept => '看起来在定义一个概念',
-      CaptureKind.experiment => '看起来在描述一个实验',
-      CaptureKind.note => '保留为 Note',
+      CaptureKind.routine => l10n.knowledgeCaptureKindRoutineDescription,
+      CaptureKind.decision => l10n.knowledgeCaptureKindDecisionDescription,
+      CaptureKind.assumption => l10n.knowledgeCaptureKindAssumptionDescription,
+      CaptureKind.principle => l10n.knowledgeCaptureKindPrincipleDescription,
+      CaptureKind.concept => l10n.knowledgeCaptureKindConceptDescription,
+      CaptureKind.experiment => l10n.knowledgeCaptureKindExperimentDescription,
+      CaptureKind.note => l10n.knowledgeCaptureKindNoteDescription,
     };
     final detail = switch (suggestion.kind) {
       CaptureKind.routine =>
-        '会建一条 Routine:"${suggestion.statement ?? ''}",每 ${suggestion.intervalDays ?? 180} 天提醒一次'
-            '${suggestion.scope != null && suggestion.scope != '*' ? '，scope = ${suggestion.scope}' : ''}。'
-            'AI 会在到期前 7 天自动提醒。',
+        '${l10n.knowledgeCaptureRoutineUpgradeDetail(suggestion.statement ?? '', suggestion.intervalDays ?? 180)}${suggestion.scope != null && suggestion.scope != '*' ? ' ${l10n.knowledgeCaptureRoutineScopeDetail(suggestion.scope!)}' : ''} ${l10n.knowledgeCaptureRoutineReminderDetail}',
       _ => suggestion.reasonZh,
     };
     return Container(
@@ -642,7 +663,10 @@ class _UpgradePanel extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s4),
           Text(
-            '原因:${suggestion.reasonZh} · 置信度 ${suggestion.confidence.toStringAsFixed(2)}',
+            l10n.knowledgeCaptureSuggestionReasonConfidence(
+              suggestion.reasonZh,
+              suggestion.confidence.toStringAsFixed(2),
+            ),
             style: typography.xs.copyWith(color: colors.mutedForeground),
           ),
         ],

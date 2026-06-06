@@ -291,7 +291,7 @@ class _SleepCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _MetricCard(
       icon: FLucideIcons.moon,
-      label: '睡眠',
+      label: AppLocalizations.of(context).healthSleepMetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -313,7 +313,7 @@ class _HrvCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _MetricCard(
       icon: FLucideIcons.heartPulse,
-      label: 'HRV',
+      label: AppLocalizations.of(context).healthHrvMetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -337,7 +337,7 @@ class _HeartRateCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _MetricCard(
       icon: FLucideIcons.heartPulse,
-      label: '心率',
+      label: AppLocalizations.of(context).healthHeartRateMetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -361,7 +361,7 @@ class _WorkoutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _MetricCard(
       icon: FLucideIcons.dumbbell,
-      label: '运动',
+      label: AppLocalizations.of(context).healthWorkoutMetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -384,7 +384,7 @@ class _StepsCard extends ConsumerWidget {
     final walking = ref.watch(latestWalkingDistanceProvider);
     return _MetricCard(
       icon: FLucideIcons.footprints,
-      label: '步数',
+      label: AppLocalizations.of(context).healthStepsMetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -413,7 +413,7 @@ class _ActiveEnergyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _MetricCard(
       icon: FLucideIcons.flame,
-      label: '能量',
+      label: AppLocalizations.of(context).healthEnergyMetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -804,14 +804,14 @@ class _BriefingSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SoftCard(
-      padding: EdgeInsets.all(AppSpacing.s16),
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: AppSpacing.s20, child: FProgress()),
-          SizedBox(height: AppSpacing.s12),
-          Text('加载中…'),
+          const SizedBox(height: AppSpacing.s20, child: FProgress()),
+          const SizedBox(height: AppSpacing.s12),
+          Text(AppLocalizations.of(context).healthLoadingLabel),
         ],
       ),
     );

@@ -56,7 +56,7 @@ class _FireReviewCardState extends ConsumerState<FireReviewCard> {
           ),
           const SizedBox(height: AppSpacing.s12),
           Wrap(
-            spacing: 8,
+            spacing: AppSpacing.s8,
             children: [
               for (final kind in FireReviewKind.values)
                 FButton(

@@ -553,8 +553,8 @@ class _MarketColorPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: AppSpacing.s8,
+      runSpacing: AppSpacing.s8,
       children: [
         DeltaChip(value: 1.23, format: DeltaFormat.percent),
         DeltaChip(value: -0.42, format: DeltaFormat.percent),
@@ -625,8 +625,8 @@ class _RiskAppetiteRow extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s8),
           Wrap(
-            spacing: 6,
-            runSpacing: 6,
+            spacing: AppSpacing.s6,
+            runSpacing: AppSpacing.s6,
             children: [
               for (final option in _appetiteOptionsForChips(l10n))
                 _SettingsChoicePill(

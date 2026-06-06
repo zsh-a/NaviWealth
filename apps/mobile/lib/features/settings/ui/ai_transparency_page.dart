@@ -226,8 +226,8 @@ class _AggregateHeader extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.s8),
             Wrap(
-              spacing: 6,
-              runSpacing: 6,
+              spacing: AppSpacing.s6,
+              runSpacing: AppSpacing.s6,
               children: [
                 AiPill(
                   label: l10n.aiTransparencyErrors(errors),
@@ -443,8 +443,8 @@ class _TraceRow extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.s6),
                   Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
+                    spacing: AppSpacing.s6,
+                    runSpacing: AppSpacing.s6,
                     children: [
                       if (source != null)
                         AiPill(label: source, state: AiPillState.selected),
