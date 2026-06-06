@@ -66,8 +66,8 @@ class _PassiveIncomeContent extends ConsumerWidget {
     return SoftCard(
       onPress: () => context.push(AppRoutes.cashflowDividends),
       padding: const EdgeInsets.all(AppSpacing.s16),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 154),
+      child: SizedBox(
+        height: 154,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
