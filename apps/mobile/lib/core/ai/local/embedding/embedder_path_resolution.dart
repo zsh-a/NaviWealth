@@ -7,6 +7,7 @@ library;
 
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -59,6 +60,15 @@ Future<EmbedderPathResolution> resolveEmbedderPaths(
   EmbedderHostPlatform? hostPlatform,
   bool Function(String path)? fileExists,
 }) async {
+  if (kIsWeb) {
+    return const EmbedderPathResolution(
+      modelDir: '',
+      ortDylibPath: '',
+      modelSource: EmbedderModelPathSource.missing,
+      ortSource: EmbedderOrtPathSource.missing,
+    );
+  }
+
   var modelDir = config.rustEmbedderModelDir;
   var modelSource = modelDir.isEmpty
       ? EmbedderModelPathSource.missing
@@ -142,6 +152,8 @@ String? discoverBundledOrtDylib({
 }
 
 EmbedderHostPlatform currentEmbedderHostPlatform() {
+  if (kIsWeb) return EmbedderHostPlatform.other;
+
   if (Platform.isAndroid) return EmbedderHostPlatform.android;
   if (Platform.isMacOS) return EmbedderHostPlatform.macos;
   if (Platform.isLinux) return EmbedderHostPlatform.linux;

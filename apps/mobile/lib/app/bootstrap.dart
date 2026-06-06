@@ -247,14 +247,17 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
 
   // Start foreground data sync. PriceSyncCoordinator owns both quote
   // warming and FX refresh so dashboard valuations have one startup path.
-  container.read(syncSchedulerBootstrapProvider);
-  container.read(priceSyncCoordinatorBootstrapProvider);
-  _scheduleMemoryRuntimeStartupTasks(container: container, logger: logger);
-  // Eager-bind Memory Layer indexers (`docs/lifeos-shell.md` §6, D-1.7).
-  // Reading this provider subscribes the trade-journal indexer (and any
-  // future domain indexers) to their source streams so semantic memory
-  // stays current without UI involvement.
-  container.read(memoryLayerBootstrapProvider);
+  final authState = container.read(authControllerProvider).value;
+  if (authState is AuthLoggedIn || authState is AuthLocalOnly) {
+    container.read(syncSchedulerBootstrapProvider);
+    container.read(priceSyncCoordinatorBootstrapProvider);
+    _scheduleMemoryRuntimeStartupTasks(container: container, logger: logger);
+    container.read(memoryLayerBootstrapProvider);
+  } else {
+    logger.i('Foreground sync startup tasks skipped until auth is ready');
+    logger.i('Memory Runtime startup tasks skipped until auth is ready');
+    logger.i('Memory Layer indexers skipped until auth is ready');
+  }
   // Drive the platform background scheduler from the
   // Health domain opt-in. Eager-read so the provider mounts now
   // and reacts to subsequent toggles (workmanager register / cancel

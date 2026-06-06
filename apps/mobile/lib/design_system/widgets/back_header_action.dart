@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../../l10n/gen/app_localizations.dart';
+import '../tokens/dimens_tokens.dart';
 import 'back_navigation.dart';
 
 /// Standard back action for [FHeader.nested.prefixes].
@@ -69,8 +70,33 @@ FHeader appSubPageHeader({
   Future<bool> Function()? confirmLeave,
 }) {
   return FHeader.nested(
-    title: title,
+    title: _AppHeaderTitle(title),
     prefixes: [backHeaderAction(context, confirmLeave: confirmLeave)],
     suffixes: suffixes,
   );
+}
+
+class _AppHeaderTitle extends StatelessWidget {
+  const _AppHeaderTitle(this.child);
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = context.theme.typography;
+    final colors = context.theme.colors;
+    return DefaultTextStyle.merge(
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: typography.lg.copyWith(
+        color: colors.foreground,
+        fontWeight: FontWeight.w600,
+        height: 1.15,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
+        child: child,
+      ),
+    );
+  }
 }

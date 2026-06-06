@@ -119,7 +119,7 @@ class _DomainTabScaffoldState extends State<DomainTabScaffold> {
       child: _headerVisible
           ? FHeader.nested(
               prefixes: prefixes,
-              title: Text(widget.title),
+              title: _DomainHeaderTitle(widget.title),
               suffixes: widget.actions,
             )
           // Keep shell controls reachable while the title collapses away.
@@ -135,6 +135,28 @@ class _DomainTabScaffoldState extends State<DomainTabScaffold> {
         header: header,
         childPad: widget.childPad,
         child: widget.child,
+      ),
+    );
+  }
+}
+
+class _DomainHeaderTitle extends StatelessWidget {
+  const _DomainHeaderTitle(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = context.theme.typography;
+    final colors = context.theme.colors;
+    return Text(
+      title,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: typography.lg.copyWith(
+        color: colors.foreground,
+        fontWeight: FontWeight.w600,
+        height: 1.15,
       ),
     );
   }
