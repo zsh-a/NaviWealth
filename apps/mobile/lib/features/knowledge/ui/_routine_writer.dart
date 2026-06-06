@@ -25,6 +25,7 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '_widgets.dart';
 
 Future<void> showNewRoutineSheet(BuildContext context, WidgetRef ref) =>
     showAppFormSheet<void>(
@@ -106,15 +107,13 @@ class _RoutineWriterState extends State<_RoutineWriter> {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
+    final l10n = AppLocalizations.of(context);
     return AppSheet(
-      title: AppLocalizations.of(context).knowledgeRoutineWriterTitle,
-      subtitle: AppLocalizations.of(context).knowledgeRoutineWriterSubtitle,
+      title: l10n.knowledgeRoutineWriterTitle,
+      subtitle: l10n.knowledgeRoutineWriterSubtitle,
       footer: AppSheetFooter(
-        submitLabel: _saving
-            ? AppLocalizations.of(context).commonSaving
-            : AppLocalizations.of(context).commonSave,
-        cancelLabel: AppLocalizations.of(context).commonCancel,
+        submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
+        cancelLabel: l10n.commonCancel,
         busy: _saving || _statementCtrl.text.trim().isEmpty,
         onSubmit: () {
           _save();
@@ -124,49 +123,40 @@ class _RoutineWriterState extends State<_RoutineWriter> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          FTextField(
-            control: FTextFieldControl.managed(controller: _statementCtrl),
-            label: Text(
-              AppLocalizations.of(context).knowledgeRoutineStatementLabel,
-            ),
-            hint: AppLocalizations.of(context).knowledgeRoutineStatementHint,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          Text(
-            AppLocalizations.of(context).knowledgeRoutineFrequencyLabel,
-            style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterCoreSectionTitle,
             children: [
-              for (final preset in _kIntervalPresets)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s2,
-                  ),
-                  child: FButton(
-                    variant: _intervalDays == preset
-                        ? FButtonVariant.primary
-                        : FButtonVariant.outline,
-                    onPress: () => setState(() => _intervalDays = preset),
-                    child: Text(
-                      _intervalPresetLabel(
-                        AppLocalizations.of(context),
-                        preset,
-                      ),
-                    ),
-                  ),
-                ),
+              FTextField(
+                control: FTextFieldControl.managed(controller: _statementCtrl),
+                label: Text(l10n.knowledgeRoutineStatementLabel),
+                hint: l10n.knowledgeRoutineStatementHint,
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextField(
-            control: FTextFieldControl.managed(controller: _scopeCtrl),
-            label: Text(
-              AppLocalizations.of(context).knowledgeWriterScopeOptionalLabel,
-            ),
-            hint: '"*" / "finance/cards/hk" / "investing"',
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterCadenceSectionTitle,
+            children: [
+              Wrap(
+                spacing: AppSpacing.s8,
+                runSpacing: AppSpacing.s8,
+                children: [
+                  for (final preset in _kIntervalPresets)
+                    FButton(
+                      variant: _intervalDays == preset
+                          ? FButtonVariant.primary
+                          : FButtonVariant.outline,
+                      onPress: () => setState(() => _intervalDays = preset),
+                      child: Text(_intervalPresetLabel(l10n, preset)),
+                    ),
+                ],
+              ),
+              FTextField(
+                control: FTextFieldControl.managed(controller: _scopeCtrl),
+                label: Text(l10n.knowledgeWriterScopeOptionalLabel),
+                hint: '"*" / "finance/cards/hk" / "investing"',
+              ),
+            ],
           ),
         ],
       ),

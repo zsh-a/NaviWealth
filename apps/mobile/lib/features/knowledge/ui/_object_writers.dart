@@ -103,49 +103,56 @@ class _PrincipleWriterState extends State<_PrincipleWriter> {
   }
 
   @override
-  Widget build(BuildContext context) => AppSheet(
-    title: AppLocalizations.of(context).knowledgePrincipleWriterTitle,
-    subtitle: AppLocalizations.of(context).knowledgePrincipleWriterSubtitle,
-    footer: AppSheetFooter(
-      submitLabel: _saving
-          ? AppLocalizations.of(context).commonSaving
-          : AppLocalizations.of(context).commonSave,
-      cancelLabel: AppLocalizations.of(context).commonCancel,
-      busy: _saving || _stmtCtrl.text.trim().isEmpty,
-      onSubmit: () {
-        _save();
-      },
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        FTextField(
-          control: FTextFieldControl.managed(controller: _stmtCtrl),
-          label: Text(
-            AppLocalizations.of(context).knowledgeWriterStatementLabel,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppSheet(
+      title: l10n.knowledgePrincipleWriterTitle,
+      subtitle: l10n.knowledgePrincipleWriterSubtitle,
+      footer: AppSheetFooter(
+        submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
+        cancelLabel: l10n.commonCancel,
+        busy: _saving || _stmtCtrl.text.trim().isEmpty,
+        onSubmit: () {
+          _save();
+        },
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterCoreSectionTitle,
+            children: [
+              FTextField(
+                control: FTextFieldControl.managed(controller: _stmtCtrl),
+                label: Text(l10n.knowledgeWriterStatementLabel),
+                hint: l10n.knowledgePrincipleStatementHint,
+              ),
+            ],
           ),
-          hint: AppLocalizations.of(context).knowledgePrincipleStatementHint,
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        MarkdownEditorWithPreview(
-          controller: _rationaleCtrl,
-          label: AppLocalizations.of(
-            context,
-          ).knowledgeWriterRationaleMarkdownLabel,
-          hint: AppLocalizations.of(context).knowledgePrincipleRationaleHint,
-          minLines: 2,
-          maxLines: 4,
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        FTextField(
-          control: FTextFieldControl.managed(controller: _scopeCtrl),
-          label: Text(AppLocalizations.of(context).knowledgeWriterScopeLabel),
-          hint: '"*" / "investing" / "life"',
-        ),
-      ],
-    ),
-  );
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterEvidenceSectionTitle,
+            collapsible: true,
+            children: [
+              MarkdownEditorWithPreview(
+                controller: _rationaleCtrl,
+                label: l10n.knowledgeWriterRationaleMarkdownLabel,
+                hint: l10n.knowledgePrincipleRationaleHint,
+                minLines: 2,
+                maxLines: 4,
+              ),
+              FTextField(
+                control: FTextFieldControl.managed(controller: _scopeCtrl),
+                label: Text(l10n.knowledgeWriterScopeLabel),
+                hint: '"*" / "investing" / "life"',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ── Assumption ───────────────────────────────────────────────────────────
@@ -212,14 +219,13 @@ class _AssumptionWriterState extends State<_AssumptionWriter> {
   @override
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
+    final l10n = AppLocalizations.of(context);
     return AppSheet(
-      title: AppLocalizations.of(context).knowledgeAssumptionWriterTitle,
-      subtitle: AppLocalizations.of(context).knowledgeAssumptionWriterSubtitle2,
+      title: l10n.knowledgeAssumptionWriterTitle,
+      subtitle: l10n.knowledgeAssumptionWriterSubtitle2,
       footer: AppSheetFooter(
-        submitLabel: _saving
-            ? AppLocalizations.of(context).commonSaving
-            : AppLocalizations.of(context).commonSave,
-        cancelLabel: AppLocalizations.of(context).commonCancel,
+        submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
+        cancelLabel: l10n.commonCancel,
         busy: _saving || _stmtCtrl.text.trim().isEmpty,
         onSubmit: () {
           _save();
@@ -229,47 +235,57 @@ class _AssumptionWriterState extends State<_AssumptionWriter> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          FTextField(
-            control: FTextFieldControl.managed(controller: _stmtCtrl),
-            label: Text(
-              AppLocalizations.of(context).knowledgeWriterStatementLabel,
-            ),
-            hint: AppLocalizations.of(context).knowledgeAssumptionStatementHint,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          Text(
-            '${AppLocalizations.of(context).knowledgeWriterConfidenceLabel}: '
-            '${_confidence.toStringAsFixed(2)}',
-            style: typography.sm,
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          // Five preset confidence levels. Forui's slider needs its
-          // own controller dance; preset buttons are cheaper and good
-          // enough for a 0..1 dial that authors rarely tune past
-          // tenths.
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterCoreSectionTitle,
             children: [
-              for (final v in const <double>[0.3, 0.5, 0.7, 0.85, 0.95])
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s2,
-                  ),
-                  child: FButton(
-                    variant: _confidence == v
-                        ? FButtonVariant.primary
-                        : FButtonVariant.outline,
-                    onPress: () => setState(() => _confidence = v),
-                    child: Text(v.toStringAsFixed(2)),
-                  ),
-                ),
+              FTextField(
+                control: FTextFieldControl.managed(controller: _stmtCtrl),
+                label: Text(l10n.knowledgeWriterStatementLabel),
+                hint: l10n.knowledgeAssumptionStatementHint,
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextField(
-            control: FTextFieldControl.managed(controller: _scopeCtrl),
-            label: Text(AppLocalizations.of(context).knowledgeWriterScopeLabel),
-            hint: '"*" / "investing" / "fire"',
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterEvidenceSectionTitle,
+            collapsible: true,
+            children: [
+              Text(
+                '${l10n.knowledgeWriterConfidenceLabel}: '
+                '${_confidence.toStringAsFixed(2)}',
+                style: typography.sm,
+              ),
+              FSlider(
+                control: FSliderControl.liftedContinuous(
+                  value: FSliderValue(max: _confidence.clamp(0, 1).toDouble()),
+                  stepPercentage: 0.01,
+                  onChange: (next) =>
+                      setState(() => _confidence = next.max.clamp(0, 1)),
+                ),
+                tooltipBuilder: (_, next) => Text(next.toStringAsFixed(2)),
+                semanticValueFormatterCallback: (next) =>
+                    next.toStringAsFixed(2),
+              ),
+              Wrap(
+                spacing: AppSpacing.s8,
+                runSpacing: AppSpacing.s8,
+                children: [
+                  for (final v in const <double>[0.3, 0.5, 0.7, 0.85, 0.95])
+                    FButton(
+                      variant: (_confidence - v).abs() < 0.005
+                          ? FButtonVariant.primary
+                          : FButtonVariant.outline,
+                      onPress: () => setState(() => _confidence = v),
+                      child: Text(v.toStringAsFixed(2)),
+                    ),
+                ],
+              ),
+              FTextField(
+                control: FTextFieldControl.managed(controller: _scopeCtrl),
+                label: Text(l10n.knowledgeWriterScopeLabel),
+                hint: '"*" / "investing" / "fire"',
+              ),
+            ],
           ),
         ],
       ),
@@ -343,47 +359,56 @@ class _ConceptWriterState extends State<_ConceptWriter> {
   }
 
   @override
-  Widget build(BuildContext context) => AppSheet(
-    title: AppLocalizations.of(context).knowledgeConceptWriterTitle,
-    subtitle: AppLocalizations.of(context).knowledgeConceptWriterSubtitle2,
-    footer: AppSheetFooter(
-      submitLabel: _saving
-          ? AppLocalizations.of(context).commonSaving
-          : AppLocalizations.of(context).commonSave,
-      cancelLabel: AppLocalizations.of(context).commonCancel,
-      busy: _saving || _nameCtrl.text.trim().isEmpty,
-      onSubmit: () {
-        _save();
-      },
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        FTextField(
-          control: FTextFieldControl.managed(controller: _nameCtrl),
-          label: Text(AppLocalizations.of(context).knowledgeWriterNameLabel),
-          hint: AppLocalizations.of(context).knowledgeConceptNameHint,
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        FTextField(
-          control: FTextFieldControl.managed(controller: _aliasesCtrl),
-          label: Text(AppLocalizations.of(context).knowledgeWriterAliasLabel),
-          hint: AppLocalizations.of(context).knowledgeConceptAliasesHint,
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        MarkdownEditorWithPreview(
-          controller: _summaryCtrl,
-          label: AppLocalizations.of(
-            context,
-          ).knowledgeWriterSummaryMarkdownLabel,
-          hint: AppLocalizations.of(context).knowledgeConceptSummaryHint,
-          minLines: 2,
-          maxLines: 4,
-        ),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppSheet(
+      title: l10n.knowledgeConceptWriterTitle,
+      subtitle: l10n.knowledgeConceptWriterSubtitle2,
+      footer: AppSheetFooter(
+        submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
+        cancelLabel: l10n.commonCancel,
+        busy: _saving || _nameCtrl.text.trim().isEmpty,
+        onSubmit: () {
+          _save();
+        },
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterCoreSectionTitle,
+            children: [
+              FTextField(
+                control: FTextFieldControl.managed(controller: _nameCtrl),
+                label: Text(l10n.knowledgeWriterNameLabel),
+                hint: l10n.knowledgeConceptNameHint,
+              ),
+              FTextField(
+                control: FTextFieldControl.managed(controller: _aliasesCtrl),
+                label: Text(l10n.knowledgeWriterAliasLabel),
+                hint: l10n.knowledgeConceptAliasesHint,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterEvidenceSectionTitle,
+            collapsible: true,
+            children: [
+              MarkdownEditorWithPreview(
+                controller: _summaryCtrl,
+                label: l10n.knowledgeWriterSummaryMarkdownLabel,
+                hint: l10n.knowledgeConceptSummaryHint,
+                minLines: 2,
+                maxLines: 4,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ── Experiment ───────────────────────────────────────────────────────────
@@ -454,55 +479,68 @@ class _ExperimentWriterState extends State<_ExperimentWriter> {
   }
 
   @override
-  Widget build(BuildContext context) => AppSheet(
-    title: AppLocalizations.of(context).knowledgeExperimentWriterTitle,
-    subtitle: AppLocalizations.of(context).knowledgeExperimentWriterSubtitle2,
-    footer: AppSheetFooter(
-      submitLabel: _saving
-          ? AppLocalizations.of(context).commonSaving
-          : AppLocalizations.of(context).commonSave,
-      cancelLabel: AppLocalizations.of(context).commonCancel,
-      busy: _saving || _hypoCtrl.text.trim().isEmpty,
-      onSubmit: () {
-        _save();
-      },
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        FTextField(
-          control: FTextFieldControl.managed(controller: _hypoCtrl),
-          label: Text(
-            AppLocalizations.of(context).knowledgeWriterHypothesisLabel,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppSheet(
+      title: l10n.knowledgeExperimentWriterTitle,
+      subtitle: l10n.knowledgeExperimentWriterSubtitle2,
+      footer: AppSheetFooter(
+        submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
+        cancelLabel: l10n.commonCancel,
+        busy: _saving || _hypoCtrl.text.trim().isEmpty,
+        onSubmit: () {
+          _save();
+        },
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterCoreSectionTitle,
+            children: [
+              FTextField(
+                control: FTextFieldControl.managed(controller: _hypoCtrl),
+                label: Text(l10n.knowledgeWriterHypothesisLabel),
+                hint: l10n.knowledgeExperimentHypothesisHint,
+              ),
+            ],
           ),
-          hint: AppLocalizations.of(context).knowledgeExperimentHypothesisHint,
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        MarkdownEditorWithPreview(
-          controller: _methodCtrl,
-          label: AppLocalizations.of(
-            context,
-          ).knowledgeWriterMethodMarkdownLabel,
-          hint: AppLocalizations.of(context).knowledgeExperimentMethodHint,
-          minLines: 2,
-          maxLines: 4,
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        FTextField(
-          control: FTextFieldControl.managed(controller: _metricsCtrl),
-          label: Text(AppLocalizations.of(context).knowledgeWriterMetricsLabel),
-          hint: AppLocalizations.of(context).knowledgeExperimentMetricsHint,
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        _AssumptionTargetPicker(
-          ref: widget.ref,
-          selectedId: _targetAssumptionId,
-          onChange: (id) => setState(() => _targetAssumptionId = id),
-        ),
-      ],
-    ),
-  );
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterPlanningSectionTitle,
+            children: [
+              MarkdownEditorWithPreview(
+                controller: _methodCtrl,
+                label: l10n.knowledgeWriterMethodMarkdownLabel,
+                hint: l10n.knowledgeExperimentMethodHint,
+                minLines: 2,
+                maxLines: 4,
+              ),
+              FTextField(
+                control: FTextFieldControl.managed(controller: _metricsCtrl),
+                label: Text(l10n.knowledgeWriterMetricsLabel),
+                hint: l10n.knowledgeExperimentMetricsHint,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeWriterSection(
+            title: l10n.knowledgeWriterReferencesSectionTitle,
+            collapsible: true,
+            initiallyExpanded: false,
+            children: [
+              _AssumptionTargetPicker(
+                ref: widget.ref,
+                selectedId: _targetAssumptionId,
+                onChange: (id) => setState(() => _targetAssumptionId = id),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _AssumptionTargetPicker extends ConsumerWidget {
@@ -560,7 +598,6 @@ class _AssumptionTargetPicker extends ConsumerWidget {
                   ),
                 );
               }
-              final typography = context.theme.typography;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -568,37 +605,17 @@ class _AssumptionTargetPicker extends ConsumerWidget {
                     AppLocalizations.of(
                       context,
                     ).knowledgeExperimentTargetAssumptionLabel,
-                    style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+                    style: context.theme.typography.sm.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.s4),
                   for (final a in all)
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => onChange(selectedId == a.id ? null : a.id),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.s4,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              selectedId == a.id
-                                  ? FLucideIcons.checkSquare2
-                                  : FLucideIcons.square,
-                              size: AppIconSizes.xs,
-                            ),
-                            const SizedBox(width: AppSpacing.s8),
-                            Expanded(
-                              child: Text(
-                                a.statement,
-                                style: typography.sm,
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                    KnowledgeSelectableRow(
+                      label: a.statement,
+                      selected: selectedId == a.id,
+                      mode: KnowledgeSelectionMode.radio,
+                      onPress: () => onChange(selectedId == a.id ? null : a.id),
                     ),
                 ],
               );

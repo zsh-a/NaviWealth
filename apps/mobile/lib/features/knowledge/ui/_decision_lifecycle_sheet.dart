@@ -216,36 +216,13 @@ class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
               )
             else
               for (final c in _candidates)
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => setState(() => _supersededBy = c.id),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.s4,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          c.id == _supersededBy
-                              ? FLucideIcons.checkCircle2
-                              : FLucideIcons.circle,
-                          size: AppIconSizes.xs,
-                          color: c.id == _supersededBy
-                              ? colors.primary
-                              : colors.mutedForeground,
-                        ),
-                        const SizedBox(width: AppSpacing.s8),
-                        Expanded(
-                          child: Text(
-                            '${c.question}（${decisionStatusLabel(context, c.status)}）',
-                            style: typography.sm,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                KnowledgeSelectableRow(
+                  label: c.question,
+                  detail: decisionStatusLabel(context, c.status),
+                  selected: c.id == _supersededBy,
+                  mode: KnowledgeSelectionMode.radio,
+                  maxLines: 2,
+                  onPress: () => setState(() => _supersededBy = c.id),
                 ),
           ],
         ],

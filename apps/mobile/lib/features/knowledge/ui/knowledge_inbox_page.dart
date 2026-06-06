@@ -7,6 +7,8 @@
 /// upgrade card in the sheet itself, not by picking the type up front.
 library;
 
+import 'package:flutter/material.dart'
+    show AlwaysScrollableScrollPhysics, RefreshIndicator;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -150,18 +152,22 @@ class _NotesList extends ConsumerWidget {
                     message: l10n.knowledgeInboxEmptyBody,
                   );
                 }
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.s16,
-                    AppSpacing.s8,
-                    AppSpacing
-                        .s16, // Bottom padding leaves room for the floating FAB.
-                    AppSpacing.s64,
+                return RefreshIndicator(
+                  onRefresh: () => _refreshKnowledgeRepository(ref),
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.s16,
+                      AppSpacing.s8,
+                      AppSpacing
+                          .s16, // Bottom padding leaves room for the floating FAB.
+                      AppSpacing.s64,
+                    ),
+                    itemCount: notes.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AppSpacing.s8),
+                    itemBuilder: (context, i) => _NoteCard(note: notes[i]),
                   ),
-                  itemCount: notes.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(height: AppSpacing.s8),
-                  itemBuilder: (context, i) => _NoteCard(note: notes[i]),
                 );
               },
             );
@@ -170,6 +176,11 @@ class _NotesList extends ConsumerWidget {
       },
     );
   }
+}
+
+Future<void> _refreshKnowledgeRepository(WidgetRef ref) async {
+  ref.invalidate(knowledgeRepositoryProvider);
+  await ref.read(knowledgeRepositoryProvider.future);
 }
 
 class _NoteCard extends StatelessWidget {

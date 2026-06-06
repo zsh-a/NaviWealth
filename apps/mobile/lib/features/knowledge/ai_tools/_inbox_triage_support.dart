@@ -70,7 +70,9 @@ Future<void> persistEnvelope({
         // §7: dismissed 提议不再重提 — keep the user's verdict.
         merged.add(p);
       } else {
-        merged.add(fresh);
+        merged.add(
+          fresh.copyWith(snoozedUntil: p.snoozedUntil, feedback: p.feedback),
+        );
       }
       replaced = true;
     } else {

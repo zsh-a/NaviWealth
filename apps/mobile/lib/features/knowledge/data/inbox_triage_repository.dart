@@ -56,6 +56,25 @@ enum InboxProposalStatus {
   }
 }
 
+/// Optional user feedback on a pending suggestion. It does not resolve the
+/// proposal; it is local signal for future triage quality and UX inspection.
+enum InboxProposalFeedback {
+  positive,
+  negative;
+
+  String get wire => switch (this) {
+    positive => 'positive',
+    negative => 'negative',
+  };
+
+  static InboxProposalFeedback? parse(String? s) {
+    for (final v in values) {
+      if (v.wire == s) return v;
+    }
+    return null;
+  }
+}
+
 /// One envelope as stored inside the `proposals_json` array. Mirrors
 /// the `ProposalEnvelope` shape returned by `queue_inbox_*` tools.
 class InboxProposal {
@@ -65,22 +84,37 @@ class InboxProposal {
     required this.payload,
     required this.status,
     DateTime? resolvedAt,
-  }) : resolvedAt = resolvedAt?.toUtc();
+    DateTime? snoozedUntil,
+    this.feedback,
+  }) : resolvedAt = resolvedAt?.toUtc(),
+       snoozedUntil = snoozedUntil?.toUtc();
 
   final InboxProposalKind kind;
   final String summaryZh;
   final Map<String, Object?> payload;
   final InboxProposalStatus status;
   final DateTime? resolvedAt;
+  final DateTime? snoozedUntil;
+  final InboxProposalFeedback? feedback;
 
-  InboxProposal copyWith({InboxProposalStatus? status, DateTime? resolvedAt}) =>
-      InboxProposal(
-        kind: kind,
-        summaryZh: summaryZh,
-        payload: payload,
-        status: status ?? this.status,
-        resolvedAt: resolvedAt ?? this.resolvedAt,
-      );
+  bool isVisiblePending(DateTime now) =>
+      status == InboxProposalStatus.pending &&
+      (snoozedUntil == null || !snoozedUntil!.isAfter(now.toUtc()));
+
+  InboxProposal copyWith({
+    InboxProposalStatus? status,
+    DateTime? resolvedAt,
+    DateTime? snoozedUntil,
+    InboxProposalFeedback? feedback,
+  }) => InboxProposal(
+    kind: kind,
+    summaryZh: summaryZh,
+    payload: payload,
+    status: status ?? this.status,
+    resolvedAt: resolvedAt ?? this.resolvedAt,
+    snoozedUntil: snoozedUntil ?? this.snoozedUntil,
+    feedback: feedback ?? this.feedback,
+  );
 
   Map<String, Object?> toJson() => <String, Object?>{
     'kind': kind.wire,
@@ -88,11 +122,15 @@ class InboxProposal {
     'payload': payload,
     'status': status.wire,
     if (resolvedAt != null) 'resolved_at': resolvedAt!.millisecondsSinceEpoch,
+    if (snoozedUntil != null)
+      'snoozed_until': snoozedUntil!.millisecondsSinceEpoch,
+    if (feedback != null) 'feedback': feedback!.wire,
   };
 
   static InboxProposal fromJson(Map<String, Object?> j) {
     final payload = j['payload'];
     final resolvedAt = j['resolved_at'];
+    final snoozedUntil = j['snoozed_until'];
     return InboxProposal(
       kind: InboxProposalKind.parse((j['kind'] as String?) ?? ''),
       summaryZh: (j['summary_zh'] as String?) ?? '',
@@ -103,6 +141,10 @@ class InboxProposal {
       resolvedAt: resolvedAt is int
           ? DateTime.fromMillisecondsSinceEpoch(resolvedAt, isUtc: true)
           : null,
+      snoozedUntil: snoozedUntil is int
+          ? DateTime.fromMillisecondsSinceEpoch(snoozedUntil, isUtc: true)
+          : null,
+      feedback: InboxProposalFeedback.parse(j['feedback'] as String?),
     );
   }
 }
@@ -121,8 +163,10 @@ class InboxTriageRecord {
   final DateTime lastTriagedAt;
   final List<InboxProposal> proposals;
 
-  Iterable<InboxProposal> get pending =>
-      proposals.where((p) => p.status == InboxProposalStatus.pending);
+  Iterable<InboxProposal> pendingAt(DateTime now) =>
+      proposals.where((p) => p.isVisiblePending(now));
+
+  Iterable<InboxProposal> get pending => pendingAt(DateTime.now().toUtc());
 
   /// The agent must not re-propose a kind that the user has already
   /// dismissed for this note (§7 "dismissed 提议不再重提").
@@ -157,6 +201,7 @@ class InboxTriageRepository {
     int limit = 20,
   }) async {
     if (limit <= 0) return const <InboxTriageRecord>[];
+    final now = DateTime.now().toUtc();
     final rows = await _db
         .customSelect(
           'SELECT note_id, owner_user_id, last_triaged_at, proposals_json '
@@ -171,7 +216,7 @@ class InboxTriageRepository {
     final out = <InboxTriageRecord>[];
     for (final row in rows) {
       final rec = _rowToRecord(row.data);
-      if (rec.pending.isEmpty) continue;
+      if (rec.pendingAt(now).isEmpty) continue;
       out.add(rec);
       if (out.length >= limit) break;
     }
@@ -213,6 +258,50 @@ class InboxTriageRepository {
           (p) =>
               p.kind == kind ? p.copyWith(status: status, resolvedAt: now) : p,
         )
+        .toList(growable: false);
+    await upsert(
+      InboxTriageRecord(
+        noteId: existing.noteId,
+        ownerUserId: existing.ownerUserId,
+        lastTriagedAt: existing.lastTriagedAt,
+        proposals: updated,
+      ),
+    );
+  }
+
+  /// Hide a still-pending proposal until [until]. The status remains
+  /// pending, so it returns to the Review tab automatically after the
+  /// snooze expires.
+  Future<void> snooze({
+    required String noteId,
+    required InboxProposalKind kind,
+    required DateTime until,
+  }) => _updateProposal(
+    noteId: noteId,
+    kind: kind,
+    update: (p) => p.copyWith(snoozedUntil: until.toUtc()),
+  );
+
+  /// Persist lightweight quality feedback without resolving the proposal.
+  Future<void> recordFeedback({
+    required String noteId,
+    required InboxProposalKind kind,
+    required InboxProposalFeedback feedback,
+  }) => _updateProposal(
+    noteId: noteId,
+    kind: kind,
+    update: (p) => p.copyWith(feedback: feedback),
+  );
+
+  Future<void> _updateProposal({
+    required String noteId,
+    required InboxProposalKind kind,
+    required InboxProposal Function(InboxProposal) update,
+  }) async {
+    final existing = await findForNote(noteId);
+    if (existing == null) return;
+    final updated = existing.proposals
+        .map((p) => p.kind == kind ? update(p) : p)
         .toList(growable: false);
     await upsert(
       InboxTriageRecord(

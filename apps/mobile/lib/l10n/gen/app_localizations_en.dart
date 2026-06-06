@@ -5448,6 +5448,35 @@ class AppLocalizationsEn extends AppLocalizations {
       'No pending AI suggestions. New notes are triaged within 15 minutes.';
 
   @override
+  String get knowledgeAiSuggestionDetails => 'Details';
+
+  @override
+  String get knowledgeAiSuggestionHideDetails => 'Hide details';
+
+  @override
+  String get knowledgeAiSuggestionPayloadTitle => 'Suggested fields';
+
+  @override
+  String get knowledgeAiSuggestionSnoozeOneDay => 'Remind tomorrow';
+
+  @override
+  String get knowledgeAiSuggestionSnoozedToast =>
+      'Suggestion will return tomorrow.';
+
+  @override
+  String get knowledgeAiSuggestionFeedbackLabel =>
+      'Was this suggestion useful?';
+
+  @override
+  String get knowledgeAiSuggestionFeedbackGood => 'Useful';
+
+  @override
+  String get knowledgeAiSuggestionFeedbackBad => 'Not useful';
+
+  @override
+  String get knowledgeAiSuggestionFeedbackToast => 'Feedback saved.';
+
+  @override
   String knowledgeLoadFailed(String error) {
     return 'Failed to load: $error';
   }
@@ -5507,6 +5536,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeDetailOptionsTitle => 'Options';
+
+  @override
+  String get knowledgeDetailMetadataTitle => 'Metadata';
 
   @override
   String get knowledgeDetailRationaleTitle => 'Rationale';
@@ -5584,6 +5616,42 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get knowledgeDetailContextSnapshotEmpty =>
       'No Finance / Health events in that window.';
+
+  @override
+  String get knowledgeDetailCreatedLabel => 'Created';
+
+  @override
+  String get knowledgeDetailUpdatedLabel => 'Updated';
+
+  @override
+  String get knowledgeDetailAliasesLabel => 'Aliases';
+
+  @override
+  String get knowledgeDetailStartedLabel => 'Started';
+
+  @override
+  String get knowledgeDetailEndedLabel => 'Ended';
+
+  @override
+  String get knowledgeDetailTargetAssumptionTitle => 'Target assumption';
+
+  @override
+  String get knowledgeDetailScopeLabel => 'Scope';
+
+  @override
+  String get knowledgeDetailDeclaredLabel => 'Declared';
+
+  @override
+  String get knowledgeDetailConfidenceLabel => 'Confidence';
+
+  @override
+  String get knowledgeDetailLastVerifiedLabel => 'Last verified';
+
+  @override
+  String get knowledgeDetailDecisionsTitle => 'Related decisions';
+
+  @override
+  String get knowledgeDetailExperimentsTitle => 'Related experiments';
 
   @override
   String get knowledgeLibraryDeleteTooltip => 'Delete';
@@ -7779,6 +7847,44 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeProposalConceptLink => 'Concept link';
 
   @override
+  String get knowledgeProposalRowType => 'Type';
+
+  @override
+  String get knowledgeProposalRowContent => 'Content';
+
+  @override
+  String get knowledgeProposalRowScope => 'Scope';
+
+  @override
+  String get knowledgeProposalRowConfidence => 'Confidence';
+
+  @override
+  String get knowledgeProposalRowLink => 'Link';
+
+  @override
+  String get knowledgeProposalRowRelation => 'Relation';
+
+  @override
+  String get knowledgeProposalRowKeep => 'Keep';
+
+  @override
+  String get knowledgeProposalRowSoftMerge => 'Merge (soft delete)';
+
+  @override
+  String get knowledgeProposalRowMergedTags => 'Merged tags';
+
+  @override
+  String get knowledgeProposalRowItem => 'Item';
+
+  @override
+  String get knowledgeProposalRowInterval => 'Interval';
+
+  @override
+  String knowledgeProposalIntervalDays(int days) {
+    return 'Every $days days';
+  }
+
+  @override
   String get knowledgeInboxEmptyTitle => 'Inbox is empty';
 
   @override
@@ -8025,7 +8131,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeLibrarySearchHint => 'Search this segment';
 
   @override
+  String get knowledgeLibraryFilterAll => 'All';
+
+  @override
   String get knowledgeLibrarySearchClear => 'Clear search';
+
+  @override
+  String get knowledgeLibrarySearchRecent => 'Recent';
+
+  @override
+  String get knowledgeLibrarySearchSuggestions => 'Suggestions';
 
   @override
   String get knowledgeLibrarySearchEmptyTitle => 'No matching knowledge';
@@ -8064,6 +8179,27 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String knowledgeReviewDecisionOverdueDays(Object days) {
     return '$days days';
+  }
+
+  @override
+  String get knowledgeReviewDecisionReviewed => 'Reviewed';
+
+  @override
+  String get knowledgeReviewMarkAllDecisionsReviewed => 'Mark all reviewed';
+
+  @override
+  String knowledgeReviewDecisionNextReview(Object date) {
+    return 'Next review $date';
+  }
+
+  @override
+  String knowledgeReviewDecisionsBulkReviewed(int count) {
+    return 'Rescheduled $count decisions for review';
+  }
+
+  @override
+  String knowledgeReviewDecisionReviewFailed(Object error) {
+    return 'Could not update review date: $error';
   }
 
   @override
@@ -8107,7 +8243,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeReviewMarkDone => 'Done';
 
   @override
+  String get knowledgeReviewMarkAllDone => 'Mark all done';
+
+  @override
+  String knowledgeReviewRoutinesBulkDone(int count) {
+    return 'Marked $count routines done';
+  }
+
+  @override
   String get knowledgeReviewVerifyAssumption => 'Verify';
+
+  @override
+  String get knowledgeReviewVerifyAllAssumptions => 'Verify all';
+
+  @override
+  String knowledgeReviewAssumptionsBulkVerified(int count) {
+    return 'Verified $count assumptions';
+  }
 
   @override
   String get knowledgeReviewAssumptionVerified => 'Assumption verified.';
@@ -8268,6 +8420,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeDecisionReviewDateInOneYear => '+1 year';
+
+  @override
+  String get knowledgeDecisionReviewDateCustomLabel => 'Custom date';
+
+  @override
+  String get knowledgeDecisionReviewDateCustomHint => 'YYYY-MM-DD';
+
+  @override
+  String get knowledgeDecisionReviewDateCustomApply => 'Use date';
+
+  @override
+  String get knowledgeDecisionReviewDateInvalid =>
+      'Enter a valid date as YYYY-MM-DD.';
+
+  @override
+  String get knowledgeDecisionReviewDatePast =>
+      'Choose today or a future date.';
 
   @override
   String get knowledgeDecisionLifecycleTitle => 'Update Decision';
@@ -8440,6 +8609,21 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get knowledgeWriterConclusionMarkdownLabel =>
       'Conclusion (Markdown, optional)';
+
+  @override
+  String get knowledgeWriterCoreSectionTitle => 'Core';
+
+  @override
+  String get knowledgeWriterEvidenceSectionTitle => 'Evidence and rationale';
+
+  @override
+  String get knowledgeWriterReferencesSectionTitle => 'References';
+
+  @override
+  String get knowledgeWriterPlanningSectionTitle => 'Planning';
+
+  @override
+  String get knowledgeWriterCadenceSectionTitle => 'Cadence';
 
   @override
   String get knowledgeRoutineStatementLabel => 'What to do';

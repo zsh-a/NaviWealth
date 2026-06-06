@@ -347,6 +347,52 @@ void main() {
       expect(rec.proposals.single.payload['kind'], 'decision_candidate');
     });
 
+    test(
+      'snooze hides pending proposals until due and stores feedback',
+      () async {
+        await triage.upsert(
+          InboxTriageRecord(
+            noteId: 'n1',
+            ownerUserId: _owner,
+            lastTriagedAt: _created,
+            proposals: <InboxProposal>[
+              InboxProposal(
+                kind: InboxProposalKind.classification,
+                summaryZh: 'old',
+                payload: const <String, Object?>{'note_id': 'n1'},
+                status: InboxProposalStatus.pending,
+              ),
+            ],
+          ),
+        );
+
+        await triage.snooze(
+          noteId: 'n1',
+          kind: InboxProposalKind.classification,
+          until: DateTime.now().toUtc().add(const Duration(days: 2)),
+        );
+        await triage.recordFeedback(
+          noteId: 'n1',
+          kind: InboxProposalKind.classification,
+          feedback: InboxProposalFeedback.negative,
+        );
+
+        expect(await triage.listPending(ownerUserId: _owner), isEmpty);
+        var rec = await triage.findForNote('n1');
+        expect(rec!.proposals.single.feedback, InboxProposalFeedback.negative);
+
+        await triage.snooze(
+          noteId: 'n1',
+          kind: InboxProposalKind.classification,
+          until: DateTime.now().toUtc().subtract(const Duration(days: 1)),
+        );
+        final visible = await triage.listPending(ownerUserId: _owner);
+        expect(visible, hasLength(1));
+        rec = visible.single;
+        expect(rec.pending.single.kind, InboxProposalKind.classification);
+      },
+    );
+
     test('no-LLM path == heuristic path (parity)', () async {
       // Two identical notes; one agent runs the heuristic classifier
       // directly, the other runs an LLM client that always throws (so it

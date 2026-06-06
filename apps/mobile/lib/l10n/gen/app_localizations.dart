@@ -9427,6 +9427,60 @@ abstract class AppLocalizations {
   /// **'No pending AI suggestions. New notes are triaged within 15 minutes.'**
   String get knowledgeAiSuggestionsEmpty;
 
+  /// No description provided for @knowledgeAiSuggestionDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get knowledgeAiSuggestionDetails;
+
+  /// No description provided for @knowledgeAiSuggestionHideDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide details'**
+  String get knowledgeAiSuggestionHideDetails;
+
+  /// No description provided for @knowledgeAiSuggestionPayloadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested fields'**
+  String get knowledgeAiSuggestionPayloadTitle;
+
+  /// No description provided for @knowledgeAiSuggestionSnoozeOneDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind tomorrow'**
+  String get knowledgeAiSuggestionSnoozeOneDay;
+
+  /// No description provided for @knowledgeAiSuggestionSnoozedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestion will return tomorrow.'**
+  String get knowledgeAiSuggestionSnoozedToast;
+
+  /// No description provided for @knowledgeAiSuggestionFeedbackLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Was this suggestion useful?'**
+  String get knowledgeAiSuggestionFeedbackLabel;
+
+  /// No description provided for @knowledgeAiSuggestionFeedbackGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Useful'**
+  String get knowledgeAiSuggestionFeedbackGood;
+
+  /// No description provided for @knowledgeAiSuggestionFeedbackBad.
+  ///
+  /// In en, this message translates to:
+  /// **'Not useful'**
+  String get knowledgeAiSuggestionFeedbackBad;
+
+  /// No description provided for @knowledgeAiSuggestionFeedbackToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback saved.'**
+  String get knowledgeAiSuggestionFeedbackToast;
+
   /// No description provided for @knowledgeLoadFailed.
   ///
   /// In en, this message translates to:
@@ -9525,6 +9579,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Options'**
   String get knowledgeDetailOptionsTitle;
+
+  /// No description provided for @knowledgeDetailMetadataTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Metadata'**
+  String get knowledgeDetailMetadataTitle;
 
   /// No description provided for @knowledgeDetailRationaleTitle.
   ///
@@ -9651,6 +9711,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No Finance / Health events in that window.'**
   String get knowledgeDetailContextSnapshotEmpty;
+
+  /// No description provided for @knowledgeDetailCreatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get knowledgeDetailCreatedLabel;
+
+  /// No description provided for @knowledgeDetailUpdatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated'**
+  String get knowledgeDetailUpdatedLabel;
+
+  /// No description provided for @knowledgeDetailAliasesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Aliases'**
+  String get knowledgeDetailAliasesLabel;
+
+  /// No description provided for @knowledgeDetailStartedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Started'**
+  String get knowledgeDetailStartedLabel;
+
+  /// No description provided for @knowledgeDetailEndedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended'**
+  String get knowledgeDetailEndedLabel;
+
+  /// No description provided for @knowledgeDetailTargetAssumptionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Target assumption'**
+  String get knowledgeDetailTargetAssumptionTitle;
+
+  /// No description provided for @knowledgeDetailScopeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope'**
+  String get knowledgeDetailScopeLabel;
+
+  /// No description provided for @knowledgeDetailDeclaredLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Declared'**
+  String get knowledgeDetailDeclaredLabel;
+
+  /// No description provided for @knowledgeDetailConfidenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confidence'**
+  String get knowledgeDetailConfidenceLabel;
+
+  /// No description provided for @knowledgeDetailLastVerifiedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Last verified'**
+  String get knowledgeDetailLastVerifiedLabel;
+
+  /// No description provided for @knowledgeDetailDecisionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Related decisions'**
+  String get knowledgeDetailDecisionsTitle;
+
+  /// No description provided for @knowledgeDetailExperimentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Related experiments'**
+  String get knowledgeDetailExperimentsTitle;
 
   /// No description provided for @knowledgeLibraryDeleteTooltip.
   ///
@@ -13482,6 +13614,78 @@ abstract class AppLocalizations {
   /// **'Concept link'**
   String get knowledgeProposalConceptLink;
 
+  /// No description provided for @knowledgeProposalRowType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get knowledgeProposalRowType;
+
+  /// No description provided for @knowledgeProposalRowContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Content'**
+  String get knowledgeProposalRowContent;
+
+  /// No description provided for @knowledgeProposalRowScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope'**
+  String get knowledgeProposalRowScope;
+
+  /// No description provided for @knowledgeProposalRowConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Confidence'**
+  String get knowledgeProposalRowConfidence;
+
+  /// No description provided for @knowledgeProposalRowLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get knowledgeProposalRowLink;
+
+  /// No description provided for @knowledgeProposalRowRelation.
+  ///
+  /// In en, this message translates to:
+  /// **'Relation'**
+  String get knowledgeProposalRowRelation;
+
+  /// No description provided for @knowledgeProposalRowKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get knowledgeProposalRowKeep;
+
+  /// No description provided for @knowledgeProposalRowSoftMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge (soft delete)'**
+  String get knowledgeProposalRowSoftMerge;
+
+  /// No description provided for @knowledgeProposalRowMergedTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Merged tags'**
+  String get knowledgeProposalRowMergedTags;
+
+  /// No description provided for @knowledgeProposalRowItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get knowledgeProposalRowItem;
+
+  /// No description provided for @knowledgeProposalRowInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Interval'**
+  String get knowledgeProposalRowInterval;
+
+  /// No description provided for @knowledgeProposalIntervalDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {days} days'**
+  String knowledgeProposalIntervalDays(int days);
+
   /// No description provided for @knowledgeInboxEmptyTitle.
   ///
   /// In en, this message translates to:
@@ -13882,11 +14086,29 @@ abstract class AppLocalizations {
   /// **'Search this segment'**
   String get knowledgeLibrarySearchHint;
 
+  /// No description provided for @knowledgeLibraryFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get knowledgeLibraryFilterAll;
+
   /// No description provided for @knowledgeLibrarySearchClear.
   ///
   /// In en, this message translates to:
   /// **'Clear search'**
   String get knowledgeLibrarySearchClear;
+
+  /// No description provided for @knowledgeLibrarySearchRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get knowledgeLibrarySearchRecent;
+
+  /// No description provided for @knowledgeLibrarySearchSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions'**
+  String get knowledgeLibrarySearchSuggestions;
 
   /// No description provided for @knowledgeLibrarySearchEmptyTitle.
   ///
@@ -13948,6 +14170,36 @@ abstract class AppLocalizations {
   /// **'{days} days'**
   String knowledgeReviewDecisionOverdueDays(Object days);
 
+  /// No description provided for @knowledgeReviewDecisionReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed'**
+  String get knowledgeReviewDecisionReviewed;
+
+  /// No description provided for @knowledgeReviewMarkAllDecisionsReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all reviewed'**
+  String get knowledgeReviewMarkAllDecisionsReviewed;
+
+  /// No description provided for @knowledgeReviewDecisionNextReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Next review {date}'**
+  String knowledgeReviewDecisionNextReview(Object date);
+
+  /// No description provided for @knowledgeReviewDecisionsBulkReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Rescheduled {count} decisions for review'**
+  String knowledgeReviewDecisionsBulkReviewed(int count);
+
+  /// No description provided for @knowledgeReviewDecisionReviewFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update review date: {error}'**
+  String knowledgeReviewDecisionReviewFailed(Object error);
+
   /// No description provided for @knowledgeReviewAssumptionsTitle.
   ///
   /// In en, this message translates to:
@@ -14000,11 +14252,35 @@ abstract class AppLocalizations {
   /// **'Done'**
   String get knowledgeReviewMarkDone;
 
+  /// No description provided for @knowledgeReviewMarkAllDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all done'**
+  String get knowledgeReviewMarkAllDone;
+
+  /// No description provided for @knowledgeReviewRoutinesBulkDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked {count} routines done'**
+  String knowledgeReviewRoutinesBulkDone(int count);
+
   /// No description provided for @knowledgeReviewVerifyAssumption.
   ///
   /// In en, this message translates to:
   /// **'Verify'**
   String get knowledgeReviewVerifyAssumption;
+
+  /// No description provided for @knowledgeReviewVerifyAllAssumptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify all'**
+  String get knowledgeReviewVerifyAllAssumptions;
+
+  /// No description provided for @knowledgeReviewAssumptionsBulkVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified {count} assumptions'**
+  String knowledgeReviewAssumptionsBulkVerified(int count);
 
   /// No description provided for @knowledgeReviewAssumptionVerified.
   ///
@@ -14281,6 +14557,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'+1 year'**
   String get knowledgeDecisionReviewDateInOneYear;
+
+  /// No description provided for @knowledgeDecisionReviewDateCustomLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom date'**
+  String get knowledgeDecisionReviewDateCustomLabel;
+
+  /// No description provided for @knowledgeDecisionReviewDateCustomHint.
+  ///
+  /// In en, this message translates to:
+  /// **'YYYY-MM-DD'**
+  String get knowledgeDecisionReviewDateCustomHint;
+
+  /// No description provided for @knowledgeDecisionReviewDateCustomApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Use date'**
+  String get knowledgeDecisionReviewDateCustomApply;
+
+  /// No description provided for @knowledgeDecisionReviewDateInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid date as YYYY-MM-DD.'**
+  String get knowledgeDecisionReviewDateInvalid;
+
+  /// No description provided for @knowledgeDecisionReviewDatePast.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose today or a future date.'**
+  String get knowledgeDecisionReviewDatePast;
 
   /// No description provided for @knowledgeDecisionLifecycleTitle.
   ///
@@ -14581,6 +14887,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Conclusion (Markdown, optional)'**
   String get knowledgeWriterConclusionMarkdownLabel;
+
+  /// No description provided for @knowledgeWriterCoreSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Core'**
+  String get knowledgeWriterCoreSectionTitle;
+
+  /// No description provided for @knowledgeWriterEvidenceSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence and rationale'**
+  String get knowledgeWriterEvidenceSectionTitle;
+
+  /// No description provided for @knowledgeWriterReferencesSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'References'**
+  String get knowledgeWriterReferencesSectionTitle;
+
+  /// No description provided for @knowledgeWriterPlanningSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Planning'**
+  String get knowledgeWriterPlanningSectionTitle;
+
+  /// No description provided for @knowledgeWriterCadenceSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cadence'**
+  String get knowledgeWriterCadenceSectionTitle;
 
   /// No description provided for @knowledgeRoutineStatementLabel.
   ///
