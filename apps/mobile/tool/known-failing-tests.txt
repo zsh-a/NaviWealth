@@ -9,5 +9,7 @@
 # sign-off and a brief reason.
 #
 # Add new lines ONLY with reviewer sign-off and a brief reason.
-flow/navigation_flow_test.dart  Timer leak on dispose — pre-existing, not regressed by recent changes
-flow/net_worth_flow_test.dart   Timer leak on dispose — same root cause as navigation_flow_test
+# flow/navigation_flow_test.dart — Timer leak on dispose, pre-existing
+# flow/net_worth_flow_test.dart — Timer leak on dispose, same root cause
+flow/navigation_flow_test.dart
+flow/net_worth_flow_test.dart
