@@ -786,13 +786,10 @@ class _SelectableReviewRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Padding(
-          padding: const EdgeInsets.only(
-            top: AppSpacing.s8,
-            right: AppSpacing.s8,
-          ),
+          padding: const EdgeInsets.only(right: AppSpacing.s8),
           child: FCheckbox(value: selected, onChange: (_) => onChanged()),
         ),
         Expanded(child: child),

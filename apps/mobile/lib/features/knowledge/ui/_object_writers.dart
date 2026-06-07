@@ -24,10 +24,30 @@ Future<void> showNewPrincipleSheet(BuildContext context, WidgetRef _) =>
       builder: (_) => const _PrincipleWriter(),
     );
 
+Future<void> showEditPrincipleSheet(
+  BuildContext context,
+  WidgetRef _,
+  KnowledgePrinciple principle,
+) =>
+    showAppFormSheet<void>(
+      context: context,
+      builder: (_) => _PrincipleWriter(initial: principle),
+    );
+
 Future<void> showNewAssumptionSheet(BuildContext context, WidgetRef _) =>
     showAppFormSheet<void>(
       context: context,
       builder: (_) => const _AssumptionWriter(),
+    );
+
+Future<void> showEditAssumptionSheet(
+  BuildContext context,
+  WidgetRef _,
+  KnowledgeAssumption assumption,
+) =>
+    showAppFormSheet<void>(
+      context: context,
+      builder: (_) => _AssumptionWriter(initial: assumption),
     );
 
 Future<void> showNewConceptSheet(BuildContext context, WidgetRef _) =>
@@ -36,24 +56,51 @@ Future<void> showNewConceptSheet(BuildContext context, WidgetRef _) =>
       builder: (_) => const _ConceptWriter(),
     );
 
+Future<void> showEditConceptSheet(
+  BuildContext context,
+  WidgetRef _,
+  KnowledgeConcept concept,
+) =>
+    showAppFormSheet<void>(
+      context: context,
+      builder: (_) => _ConceptWriter(initial: concept),
+    );
+
 Future<void> showNewExperimentSheet(BuildContext context, WidgetRef _) =>
     showAppFormSheet<void>(
       context: context,
       builder: (_) => const _ExperimentWriter(),
     );
 
+Future<void> showEditExperimentSheet(
+  BuildContext context,
+  WidgetRef _,
+  KnowledgeExperiment experiment,
+) =>
+    showAppFormSheet<void>(
+      context: context,
+      builder: (_) => _ExperimentWriter(initial: experiment),
+    );
+
 // ── Principle ────────────────────────────────────────────────────────────
 
 class _PrincipleWriter extends ConsumerStatefulWidget {
-  const _PrincipleWriter();
+  const _PrincipleWriter({this.initial});
+  final KnowledgePrinciple? initial;
   @override
   ConsumerState<_PrincipleWriter> createState() => _PrincipleWriterState();
 }
 
 class _PrincipleWriterState extends ConsumerState<_PrincipleWriter> {
-  final _stmtCtrl = TextEditingController();
-  final _rationaleCtrl = TextEditingController();
-  final _scopeCtrl = TextEditingController(text: '*');
+  late final _stmtCtrl = TextEditingController(
+    text: widget.initial?.statement ?? '',
+  );
+  late final _rationaleCtrl = TextEditingController(
+    text: widget.initial?.rationaleMd ?? '',
+  );
+  late final _scopeCtrl = TextEditingController(
+    text: widget.initial?.scope ?? '*',
+  );
   bool _saving = false;
 
   @override
@@ -79,14 +126,15 @@ class _PrincipleWriterState extends ConsumerState<_PrincipleWriter> {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
+      final existing = widget.initial;
       await repo.upsertPrinciple(
         KnowledgePrinciple(
-          id: kKnowledgeUuid.v4(),
+          id: existing?.id ?? kKnowledgeUuid.v4(),
           statement: _stmtCtrl.text.trim(),
           rationaleMd: _rationaleCtrl.text,
           scope: _scopeCtrl.text.trim().isEmpty ? '*' : _scopeCtrl.text.trim(),
-          status: PrincipleStatus.active,
-          declaredAt: stamp.now,
+          status: existing?.status ?? PrincipleStatus.active,
+          declaredAt: existing?.declaredAt ?? stamp.now,
           sync: SyncMeta(
             ownerUserId: stamp.ownerUserId,
             updatedAt: stamp.now,
@@ -158,15 +206,20 @@ class _PrincipleWriterState extends ConsumerState<_PrincipleWriter> {
 // ── Assumption ───────────────────────────────────────────────────────────
 
 class _AssumptionWriter extends ConsumerStatefulWidget {
-  const _AssumptionWriter();
+  const _AssumptionWriter({this.initial});
+  final KnowledgeAssumption? initial;
   @override
   ConsumerState<_AssumptionWriter> createState() => _AssumptionWriterState();
 }
 
 class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
-  final _stmtCtrl = TextEditingController();
-  final _scopeCtrl = TextEditingController(text: '*');
-  double _confidence = 0.7;
+  late final _stmtCtrl = TextEditingController(
+    text: widget.initial?.statement ?? '',
+  );
+  late final _scopeCtrl = TextEditingController(
+    text: widget.initial?.scope ?? '*',
+  );
+  late double _confidence = widget.initial?.confidence ?? 0.7;
   bool _saving = false;
 
   @override
@@ -191,16 +244,18 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
+      final existing = widget.initial;
       await repo.upsertAssumption(
         KnowledgeAssumption(
-          id: kKnowledgeUuid.v4(),
+          id: existing?.id ?? kKnowledgeUuid.v4(),
           statement: _stmtCtrl.text.trim(),
           confidence: _confidence,
           scope: _scopeCtrl.text.trim().isEmpty ? '*' : _scopeCtrl.text.trim(),
-          evidenceIds: const <String>[],
-          status: AssumptionStatus.active,
-          declaredAt: stamp.now,
-          lastVerifiedAt: stamp.now,
+          evidenceIds: existing?.evidenceIds ?? const <String>[],
+          status: existing?.status ?? AssumptionStatus.active,
+          declaredAt: existing?.declaredAt ?? stamp.now,
+          lastVerifiedAt: existing?.lastVerifiedAt,
+          mergedIntoId: existing?.mergedIntoId,
           sync: SyncMeta(
             ownerUserId: stamp.ownerUserId,
             updatedAt: stamp.now,
@@ -295,15 +350,20 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
 // ── Concept ──────────────────────────────────────────────────────────────
 
 class _ConceptWriter extends ConsumerStatefulWidget {
-  const _ConceptWriter();
+  const _ConceptWriter({this.initial});
+  final KnowledgeConcept? initial;
   @override
   ConsumerState<_ConceptWriter> createState() => _ConceptWriterState();
 }
 
 class _ConceptWriterState extends ConsumerState<_ConceptWriter> {
-  final _nameCtrl = TextEditingController();
-  final _aliasesCtrl = TextEditingController();
-  final _summaryCtrl = TextEditingController();
+  late final _nameCtrl = TextEditingController(text: widget.initial?.name ?? '');
+  late final _aliasesCtrl = TextEditingController(
+    text: widget.initial?.aliases.join(', ') ?? '',
+  );
+  late final _summaryCtrl = TextEditingController(
+    text: widget.initial?.summaryMd ?? '',
+  );
   bool _saving = false;
 
   @override
@@ -334,14 +394,15 @@ class _ConceptWriterState extends ConsumerState<_ConceptWriter> {
           .map((s) => s.trim())
           .where((s) => s.isNotEmpty)
           .toList(growable: false);
+      final existing = widget.initial;
       await repo.upsertConcept(
         KnowledgeConcept(
-          id: kKnowledgeUuid.v4(),
+          id: existing?.id ?? kKnowledgeUuid.v4(),
           name: _nameCtrl.text.trim(),
           aliases: aliases,
           summaryMd: _summaryCtrl.text,
-          relatedConceptIds: const <String>[],
-          createdAt: stamp.now,
+          relatedConceptIds: existing?.relatedConceptIds ?? const <String>[],
+          createdAt: existing?.createdAt ?? stamp.now,
           sync: SyncMeta(
             ownerUserId: stamp.ownerUserId,
             updatedAt: stamp.now,
@@ -413,16 +474,23 @@ class _ConceptWriterState extends ConsumerState<_ConceptWriter> {
 // ── Experiment ───────────────────────────────────────────────────────────
 
 class _ExperimentWriter extends ConsumerStatefulWidget {
-  const _ExperimentWriter();
+  const _ExperimentWriter({this.initial});
+  final KnowledgeExperiment? initial;
   @override
   ConsumerState<_ExperimentWriter> createState() => _ExperimentWriterState();
 }
 
 class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
-  final _hypoCtrl = TextEditingController();
-  final _methodCtrl = TextEditingController();
-  final _metricsCtrl = TextEditingController();
-  String? _targetAssumptionId;
+  late final _hypoCtrl = TextEditingController(
+    text: widget.initial?.hypothesis ?? '',
+  );
+  late final _methodCtrl = TextEditingController(
+    text: widget.initial?.methodMd ?? '',
+  );
+  late final _metricsCtrl = TextEditingController(
+    text: widget.initial?.metrics.join(', ') ?? '',
+  );
+  late String? _targetAssumptionId = widget.initial?.targetAssumptionId;
   bool _saving = false;
 
   @override
@@ -453,15 +521,20 @@ class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
           .map((s) => s.trim())
           .where((s) => s.isNotEmpty)
           .toList(growable: false);
+      final existing = widget.initial;
       await repo.upsertExperiment(
         KnowledgeExperiment(
-          id: kKnowledgeUuid.v4(),
+          id: existing?.id ?? kKnowledgeUuid.v4(),
           hypothesis: _hypoCtrl.text.trim(),
           methodMd: _methodCtrl.text,
           metrics: metrics,
-          status: ExperimentStatus.planned,
+          status: existing?.status ?? ExperimentStatus.planned,
           targetAssumptionId: _targetAssumptionId,
-          startedAt: stamp.now,
+          startedAt: existing?.startedAt ?? stamp.now,
+          endedAt: existing?.endedAt,
+          resultMd: existing?.resultMd,
+          conclusionMd: existing?.conclusionMd,
+          mergedIntoId: existing?.mergedIntoId,
           sync: SyncMeta(
             ownerUserId: stamp.ownerUserId,
             updatedAt: stamp.now,

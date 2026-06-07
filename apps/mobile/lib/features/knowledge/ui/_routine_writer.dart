@@ -33,8 +33,19 @@ Future<void> showNewRoutineSheet(BuildContext context, WidgetRef _) =>
       builder: (_) => const _RoutineWriter(),
     );
 
+Future<void> showEditRoutineSheet(
+  BuildContext context,
+  WidgetRef _,
+  KnowledgeRoutine routine,
+) =>
+    showAppFormSheet<void>(
+      context: context,
+      builder: (_) => _RoutineWriter(initial: routine),
+    );
+
 class _RoutineWriter extends ConsumerStatefulWidget {
-  const _RoutineWriter();
+  const _RoutineWriter({this.initial});
+  final KnowledgeRoutine? initial;
   @override
   ConsumerState<_RoutineWriter> createState() => _RoutineWriterState();
 }
@@ -53,9 +64,13 @@ String _intervalPresetLabel(AppLocalizations l10n, int days) => switch (days) {
 };
 
 class _RoutineWriterState extends ConsumerState<_RoutineWriter> {
-  final _statementCtrl = TextEditingController();
-  final _scopeCtrl = TextEditingController(text: '*');
-  int _intervalDays = 180;
+  late final _statementCtrl = TextEditingController(
+    text: widget.initial?.statement ?? '',
+  );
+  late final _scopeCtrl = TextEditingController(
+    text: widget.initial?.scope ?? '*',
+  );
+  late int _intervalDays = widget.initial?.intervalDays ?? 180;
   bool _saving = false;
 
   @override
@@ -80,16 +95,22 @@ class _RoutineWriterState extends ConsumerState<_RoutineWriter> {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
-      final nextDue = stamp.now.add(Duration(days: _intervalDays));
+      final existing = widget.initial;
+      // In edit mode, preserve the existing nextDueAt unless the interval
+      // changed — then recalculate from now.
+      final nextDue = existing != null && existing.intervalDays == _intervalDays
+          ? existing.nextDueAt
+          : stamp.now.add(Duration(days: _intervalDays));
       await repo.upsertRoutine(
         KnowledgeRoutine(
-          id: kKnowledgeUuid.v4(),
+          id: existing?.id ?? kKnowledgeUuid.v4(),
           statement: _statementCtrl.text.trim(),
           intervalDays: _intervalDays,
           nextDueAt: nextDue,
+          lastDoneAt: existing?.lastDoneAt,
           scope: _scopeCtrl.text.trim().isEmpty ? '*' : _scopeCtrl.text.trim(),
-          status: RoutineStatus.active,
-          createdAt: stamp.now,
+          status: existing?.status ?? RoutineStatus.active,
+          createdAt: existing?.createdAt ?? stamp.now,
           sync: SyncMeta(
             ownerUserId: stamp.ownerUserId,
             updatedAt: stamp.now,
