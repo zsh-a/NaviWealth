@@ -118,4 +118,48 @@ void main() {
       expect(find.byKey(const ValueKey('app.back')), findsOneWidget);
     });
   });
+
+  group('FloatingGlassNavBar', () {
+    testWidgets('keeps center action within the compact dock height', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          Center(
+            child: SizedBox(
+              width: 360,
+              child: FloatingGlassNavBar(
+                items: const [
+                  FloatingNavTab(
+                    icon: FLucideIcons.inbox,
+                    selectedIcon: FLucideIcons.inbox,
+                    label: 'Inbox',
+                  ),
+                  FloatingNavTab(
+                    icon: FLucideIcons.bookOpen,
+                    selectedIcon: FLucideIcons.bookOpen,
+                    label: 'Library',
+                  ),
+                  FloatingNavTab(
+                    icon: FLucideIcons.clipboardCheck,
+                    selectedIcon: FLucideIcons.clipboardCheck,
+                    label: 'Review',
+                  ),
+                ],
+                selectedIndex: 1,
+                onIndexChanged: (_) {},
+                onCenterAction: () {},
+                centerLabel: 'AI',
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        tester.getSize(find.byType(FloatingGlassNavBar)).height,
+        kFloatingGlassNavBarHeight,
+      );
+    });
+  });
 }
