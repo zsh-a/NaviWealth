@@ -21,6 +21,8 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '_object_writers.dart';
+import '_routine_writer.dart';
 import '_widgets.dart';
 
 /// The kinds this page can render. Mirrors the `:kind` path segment.
@@ -184,7 +186,41 @@ class _KnowledgeObjectDetailPageState
 
   @override
   Widget build(BuildContext context) {
-    return ObjectDetailScaffold(title: _title(context), child: _buildBody());
+    return ObjectDetailScaffold(
+      title: _title(context),
+      actions: [
+        if (_canEdit)
+          FHeaderAction(
+            icon: const Icon(FLucideIcons.pencil),
+            onPress: () => _editObject(context),
+          ),
+      ],
+      child: _buildBody(),
+    );
+  }
+
+  bool get _canEdit =>
+      _object != null &&
+      _kind != null &&
+      _kind != KnowledgeObjectKind.note; // Note edit via capture sheet future.
+
+  void _editObject(BuildContext context) {
+    final obj = _object;
+    if (obj == null) return;
+    switch (obj) {
+      case final KnowledgeConcept c:
+        showEditConceptSheet(context, ref, c);
+      case final KnowledgePrinciple p:
+        showEditPrincipleSheet(context, ref, p);
+      case final KnowledgeAssumption a:
+        showEditAssumptionSheet(context, ref, a);
+      case final KnowledgeExperiment e:
+        showEditExperimentSheet(context, ref, e);
+      case final KnowledgeRoutine r:
+        showEditRoutineSheet(context, ref, r);
+      default:
+        break;
+    }
   }
 
   String _title(BuildContext context) => switch (_kind) {
