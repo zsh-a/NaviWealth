@@ -172,6 +172,8 @@ class _NetWorthHero extends ConsumerWidget {
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s20),
       borderRadius: AppRadius.xlg,
+      borderless: true,
+      tinted: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

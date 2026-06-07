@@ -119,6 +119,8 @@ class _AccountsSection extends StatelessWidget {
             ),
           ),
           SoftCard(
+            borderless: true,
+            tinted: false,
             child: Column(
               children: [
                 for (var i = 0; i < accounts.length; i++) ...[
@@ -132,7 +134,20 @@ class _AccountsSection extends StatelessWidget {
                     allowExpansion: allowExpansion,
                     onAccountPressed: onAccountPressed,
                   ),
-                  if (i < accounts.length - 1) const FDivider(),
+                  if (i < accounts.length - 1)
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(
+                        start: AppSpacing.s56,
+                      ),
+                      child: SizedBox(
+                        height: 1,
+                        child: ColoredBox(
+                          color: colors.border.withValues(
+                            alpha: AppOpacity.faint,
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ],
             ),

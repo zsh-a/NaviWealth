@@ -1078,42 +1078,118 @@ class _HoldingRowCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
+    final pnl = holding.unrealizedPnlInBase;
+    final pnlColor = MarketColors.of(context).forDelta(pnl.toDouble());
     return SoftCard(
+      borderless: true,
+      tinted: false,
       child: FTappable(
         onPress: () => context.push(AppRoutes.wealthAsset(holding.assetId)),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s12),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: _TitleSubtitle(
-                  title: holding.title,
-                  subtitle:
-                      '${holding.assetTypeLabel(l10n)} · ${holding.subtitle}',
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              Row(
                 children: [
-                  AnimatedMoneyText(
-                    amount: holding.marketValueInBase.toDouble(),
-                    currencyCode: holding.baseCurrency,
-                    style: context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w700,
+                  Expanded(
+                    child: _TitleSubtitle(
+                      title: holding.title,
+                      subtitle:
+                          '${holding.assetTypeLabel(l10n)} · '
+                          '${holding.subtitle} · ${holding.assetCurrency}',
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.s4),
-                  Text(
-                    _formatRatio(context, holding.weight.toDouble()),
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      AnimatedMoneyText(
+                        amount: holding.marketValueInBase.toDouble(),
+                        currencyCode: holding.baseCurrency,
+                        style: context.theme.typography.sm.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.s4),
+                      AnimatedMoneyText(
+                        amount: pnl.toDouble(),
+                        currencyCode: holding.baseCurrency,
+                        showSign: true,
+                        style: context.theme.typography.xs.copyWith(
+                          color: pnlColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s10),
+              Row(
+                children: [
+                  _HoldingMetric(
+                    label: l10n.assetDetailCurrentQuantity,
+                    value: formatters.number(
+                      holding.quantity.toDouble(),
+                      decimalDigits: _quantityDigits(holding.quantity),
                     ),
+                  ),
+                  const SizedBox(width: AppSpacing.s12),
+                  _HoldingMetric(
+                    label: l10n.assetDetailSeriesCostBasis,
+                    value: formatters.currency(
+                      holding.costBasisInBase,
+                      code: holding.baseCurrency,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s12),
+                  _HoldingMetric(
+                    label: l10n.targetAllocationEditorPercentLabel,
+                    value: _formatRatio(context, holding.weight.toDouble()),
                   ),
                 ],
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _HoldingMetric extends StatelessWidget {
+  const _HoldingMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.theme.typography.xs.copyWith(
+              color: colors.mutedForeground,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s2),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.theme.typography.xs.copyWith(
+              color: colors.foreground,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1278,6 +1354,15 @@ String _formatRatio(BuildContext context, double value) {
     ..minimumFractionDigits = digits
     ..maximumFractionDigits = digits;
   return format.format(value);
+}
+
+int _quantityDigits(Decimal quantity) {
+  if (quantity == quantity.round()) return 0;
+  final abs = quantity.abs().toDouble();
+  if (abs == 0) return 0;
+  if (abs < 1) return 4;
+  if (abs < 100) return 2;
+  return 1;
 }
 
 String _assetCode(String assetId) {

@@ -53,6 +53,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
     return SoftCard(
       borderless: true,
       borderRadius: AppRadius.xlg,
+      tinted: false,
       child: FTile(
         onPress: () => _openDetail(context),
         prefix: Container(
@@ -62,7 +63,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
             color: colors.background,
             shape: BoxShape.circle,
             border: Border.all(
-              color: colors.border.withValues(alpha: AppOpacity.prominent),
+              color: colors.border.withValues(alpha: AppOpacity.faint),
             ),
           ),
           alignment: Alignment.center,
