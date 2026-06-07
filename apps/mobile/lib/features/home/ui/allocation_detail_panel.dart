@@ -669,7 +669,7 @@ class _PaletteSeed {
 
   Color next() {
     const colors = [
-      ColorPalette.teal500,
+      ColorPalette.cyanBrand500,
       ColorPalette.brand400,
       ExpenseCategoryColors.amberLight,
       ColorPalette.red500,

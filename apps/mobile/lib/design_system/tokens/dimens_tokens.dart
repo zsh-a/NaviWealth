@@ -1,3 +1,5 @@
+import 'package:flutter/painting.dart';
+
 /// Spacing + corner-radius scale.
 ///
 /// Dart mirror of the `spacing` / `radius` groups in
@@ -41,6 +43,9 @@ class AppRadius {
   static const double xlg = 18;
   static const double xl = 20;
   static const double xxl = 28;
+  static const double card = 20; // spec: normal cards 16-24
+  static const double cardLg = 40; // spec: large cards 32-40
+  static const double nav = 40; // spec: bottom nav 36-44
   static const double full = 9999;
 }
 
@@ -140,6 +145,44 @@ class AppBlur {
 
   /// Standard sheet / dialog blur.
   static const double sheet = 18;
+
+  /// Floating glass nav bar blur.
+  static const double nav = 18;
+}
+
+/// Canonical shadow sets keyed by surface role.
+///
+/// Shadows use the navy text color (#002A38) at low opacity for a soft,
+/// tinted look that matches the fintech spec — no harsh black shadows.
+class AppShadow {
+  const AppShadow._();
+
+  /// Standard card shadow — subtle depth.
+  static const List<BoxShadow> card = [
+    BoxShadow(
+      color: Color(0x0A000000),
+      blurRadius: 24,
+      offset: Offset(0, 8),
+    ),
+  ];
+
+  /// Card hover / pressed state — slightly deeper.
+  static const List<BoxShadow> cardHover = [
+    BoxShadow(
+      color: Color(0x12000000),
+      blurRadius: 32,
+      offset: Offset(0, 12),
+    ),
+  ];
+
+  /// Floating glass nav bar — soft ambient glow.
+  static const List<BoxShadow> nav = [
+    BoxShadow(
+      color: Color(0x0D000000),
+      blurRadius: 28,
+      offset: Offset(0, 10),
+    ),
+  ];
 }
 
 /// Canonical chart container heights.

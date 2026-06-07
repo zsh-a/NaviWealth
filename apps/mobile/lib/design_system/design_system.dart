@@ -43,6 +43,7 @@ export 'widgets/delta_text.dart';
 export 'widgets/domain_ai_prompt_bar.dart';
 export 'widgets/domain_tab_scaffold.dart';
 export 'widgets/fade_slide_in.dart';
+export 'widgets/floating_glass_nav.dart';
 export 'widgets/form_dirty_controller.dart';
 export 'widgets/form_picker_row.dart';
 export 'widgets/forui_dialogs.dart';

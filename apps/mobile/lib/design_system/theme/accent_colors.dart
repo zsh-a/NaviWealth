@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/color_palette.dart';
 
-/// Single source of truth for the accent (teal) brand color used across
+/// Single source of truth for the accent (cyan brand) color used across
 /// `ColorScheme.primary`, the Forui `FColors.primary` override, chart
 /// "primary series", and any insight / action card emphasis.
 ///
@@ -13,29 +13,33 @@ class AccentColors {
 
   /// Foreground / interaction color (used as `colors.primary`).
   ///
-  /// Light mode → teal600 (good contrast on white surfaces).
-  /// Dark mode  → teal400 (lifts off slate surfaces without glare).
+  /// Light mode → cyanBrand500 (#22C8D2, strong turquoise).
+  /// Dark mode  → cyanBrand400 (#5BE7EA, bright turquoise).
   static Color primary(Brightness brightness) => brightness == Brightness.dark
-      ? ColorPalette.teal400
-      : ColorPalette.teal600;
+      ? ColorPalette.cyanBrand400
+      : ColorPalette.cyanBrand500;
 
   /// Color drawn on top of `primary` (button labels, badge text).
   ///
-  /// Both modes use a near-white tone so we don't have to flip with
-  /// brightness — teal600 / teal400 both pass WCAG AA on white.
+  /// Both modes use a near-white tone — cyanBrand500 / cyanBrand400 both
+  /// pass WCAG AA on white.
   static Color onPrimary(Brightness brightness) => brightness == Brightness.dark
-      ? ColorPalette.neutral950
+      ? ColorPalette.navy950
       : ColorPalette.neutral0;
 
   /// Soft tinted background (insight cards, chip backgrounds).
   static Color tint(Brightness brightness) => brightness == Brightness.dark
-      ? ColorPalette.teal900
-      : ColorPalette.teal50;
+      ? ColorPalette.cyanBrand900
+      : ColorPalette.cyanBrand50;
 
   /// Mid-saturation series color used by charts.
-  static const Color series = ColorPalette.teal500;
+  static const Color series = ColorPalette.cyanBrand500;
 
   /// Translucent overlay for area-fill gradients beneath sparklines.
   static Color areaFill(Brightness brightness) =>
       primary(brightness).withValues(alpha: 0.12);
+
+  /// Warm orange secondary accent — low-frequency highlights (badges,
+  /// special callouts). Not used for primary interactions.
+  static const Color secondary = Color(0xFFFA6400);
 }
