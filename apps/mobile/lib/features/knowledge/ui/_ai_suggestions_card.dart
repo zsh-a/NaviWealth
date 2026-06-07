@@ -380,7 +380,7 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
           ],
         ),
         AnimatedSwitcher(
-          duration: const Duration(milliseconds: 160),
+          duration: Motion.fast,
           child: _expanded
               ? Padding(
                   key: const ValueKey<String>('details'),

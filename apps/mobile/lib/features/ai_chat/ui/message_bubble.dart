@@ -649,7 +649,7 @@ class _TypingDotsState extends State<_TypingDots>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1200),
+    duration: Motion.typingCycle,
   )..repeat();
 
   @override
@@ -707,7 +707,7 @@ class _StreamingCaretState extends State<_StreamingCaret>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 900),
+    duration: Motion.caretBlink,
   )..repeat(reverse: true);
 
   @override

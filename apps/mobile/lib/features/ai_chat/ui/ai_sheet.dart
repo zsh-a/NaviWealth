@@ -122,7 +122,7 @@ class _SheetFrame extends StatelessWidget {
       height: height,
       child: AnimatedPadding(
         duration: Motion.fast,
-        curve: Curves.easeOut,
+        curve: AiMotion.standard,
         padding: EdgeInsets.only(bottom: keyboard),
         child: child,
       ),
@@ -865,7 +865,7 @@ class _BodySkeletonState extends State<_BodySkeleton>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1100),
+    duration: Motion.shimmerCycle,
   );
 
   @override

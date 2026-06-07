@@ -30,7 +30,7 @@ class AnimatedMoneyText extends StatefulWidget {
     this.showSign = false,
     this.semanticsLabel,
     this.duration = Motion.ticker,
-    this.shortDuration = const Duration(milliseconds: 320),
+    this.shortDuration = Motion.ambient,
     this.curve = Motion.emphasizedDecelerate,
     this.shortDeltaThreshold = 0.05,
     this.minDeltaThreshold = 0,

@@ -14,6 +14,23 @@ class Motion {
   static const Duration slow = Duration(milliseconds: 360);
   static const Duration ticker = Duration(milliseconds: 800);
 
+  /// Ambient transitions — money text short ticks, keyboard inset, etc.
+  /// Sits between [medium] and [slow] for cases that need a slightly
+  /// longer, more relaxed feel than a standard component change.
+  static const Duration ambient = Duration(milliseconds: 300);
+
+  // Looping cycle durations — for continuously repeating animations.
+  // These are decorative and should not be used for one-shot transitions.
+
+  /// Skeleton shimmer sweep period.
+  static const Duration shimmerCycle = Duration(milliseconds: 1400);
+
+  /// AI typing dots loop period.
+  static const Duration typingCycle = Duration(milliseconds: 1200);
+
+  /// Streaming caret blink period.
+  static const Duration caretBlink = Duration(milliseconds: 900);
+
   // Easings — Material 3 emphasized + decelerate.
   static const Curve emphasized = Cubic(0.2, 0.0, 0.0, 1.0);
   static const Curve emphasizedDecelerate = Cubic(0.05, 0.7, 0.1, 1.0);
