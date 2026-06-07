@@ -421,6 +421,8 @@ List<Widget> _conceptSections(
               meta: concept.aliases.isEmpty
                   ? AppLocalizations.of(context).knowledgeConceptDetailTitle
                   : concept.aliases.join(' · '),
+              icon: FLucideIcons.folderTree,
+              iconColor: const Color(0xFF8B5CF6),
               onPress: () => context.pushNamed(
                 AppRouteNames.knowledgeObjectDetail,
                 pathParameters: {'kind': 'concept', 'id': concept.id},
@@ -470,6 +472,8 @@ List<Widget> _experimentSections(
             label: targetAssumption.statement,
             meta:
                 '${targetAssumption.status.wire} · ${targetAssumption.confidence.toStringAsFixed(2)}',
+            icon: FLucideIcons.lightbulb,
+            iconColor: const Color(0xFFF59E0B),
             onPress: () => context.pushNamed(
               AppRouteNames.knowledgeObjectDetail,
               pathParameters: {'kind': 'assumption', 'id': targetAssumption.id},
@@ -597,6 +601,8 @@ List<Widget> _assumptionSections(
                   ? AppLocalizations.of(context).knowledgeUntitled
                   : note.title,
               meta: knowledgeExcerpt(note.bodyMd),
+              icon: FLucideIcons.fileText,
+              iconColor: context.theme.colors.mutedForeground,
             ),
         ],
       ),
@@ -614,6 +620,8 @@ List<Widget> _assumptionSections(
             _RelatedObjectLink(
               label: experiment.hypothesis,
               meta: experiment.status.wire,
+              icon: FLucideIcons.flaskConical,
+              iconColor: const Color(0xFF06B6D4),
               onPress: () => context.pushNamed(
                 AppRouteNames.knowledgeObjectDetail,
                 pathParameters: {'kind': 'experiment', 'id': experiment.id},
@@ -780,6 +788,8 @@ class _DecisionLinksSection extends StatelessWidget {
           _RelatedObjectLink(
             label: decision.question,
             meta: decision.status.wire,
+            icon: FLucideIcons.gitBranch,
+            iconColor: context.theme.colors.primary,
             onPress: () => context.pushNamed(
               AppRouteNames.knowledgeDecisionDetail,
               pathParameters: {'id': decision.id},
@@ -795,11 +805,15 @@ class _RelatedObjectLink extends StatelessWidget {
     required this.label,
     required this.meta,
     this.onPress,
+    this.icon,
+    this.iconColor,
   });
 
   final String label;
   final String meta;
   final VoidCallback? onPress;
+  final IconData? icon;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -810,6 +824,23 @@ class _RelatedObjectLink extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (icon != null) ...[
+            Container(
+              width: 24,
+              height: 24,
+              margin: const EdgeInsets.only(right: AppSpacing.s8, top: 2),
+              decoration: BoxDecoration(
+                color: (iconColor ?? colors.primary)
+                    .withValues(alpha: AppOpacity.subtle),
+                borderRadius: BorderRadius.circular(AppRadius.xs),
+              ),
+              child: Icon(
+                icon,
+                size: 13,
+                color: iconColor ?? colors.primary,
+              ),
+            ),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -840,7 +871,8 @@ class _RelatedObjectLink extends StatelessWidget {
             Icon(
               FLucideIcons.chevronRight,
               size: AppIconSizes.xs,
-              color: colors.mutedForeground,
+              color: colors.mutedForeground
+                  .withValues(alpha: AppOpacity.muted),
             ),
           ],
         ],

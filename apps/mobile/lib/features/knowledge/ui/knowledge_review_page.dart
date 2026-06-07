@@ -724,40 +724,42 @@ class _ReviewSelectionToolbarState extends State<_ReviewSelectionToolbar> {
     final hasSelection = widget.selectedCount > 0;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-      child: Wrap(
-        spacing: AppSpacing.s8,
-        runSpacing: AppSpacing.s6,
-        crossAxisAlignment: WrapCrossAlignment.center,
+      child: Row(
         children: [
           Text(
             l10n.knowledgeReviewSelectedCount(widget.selectedCount),
             style: typography.xs.copyWith(color: colors.mutedForeground),
           ),
+          const Spacer(),
           FButton(
-            variant: FButtonVariant.outline,
+            variant: FButtonVariant.ghost,
             size: FButtonSizeVariant.sm,
             onPress: widget.totalCount == 0 ? null : widget.onSelectAll,
             child: Text(l10n.knowledgeReviewSelectAll),
           ),
+          const SizedBox(width: AppSpacing.s4),
           FButton(
             variant: FButtonVariant.ghost,
             size: FButtonSizeVariant.sm,
             onPress: hasSelection ? widget.onClear : null,
             child: Text(l10n.knowledgeReviewClearSelection),
           ),
-          FButton(
-            variant: FButtonVariant.primary,
-            size: FButtonSizeVariant.sm,
-            prefix: _reviewActionPrefix(busy: _busy, icon: widget.icon),
-            onPress: hasSelection && !_busy ? _run : null,
-            child: Text(
-              _reviewActionLabel(
-                context,
-                busy: _busy,
-                label: widget.actionLabel,
+          if (hasSelection) ...[
+            const SizedBox(width: AppSpacing.s4),
+            FButton(
+              variant: FButtonVariant.primary,
+              size: FButtonSizeVariant.sm,
+              prefix: _reviewActionPrefix(busy: _busy, icon: widget.icon),
+              onPress: !_busy ? _run : null,
+              child: Text(
+                _reviewActionLabel(
+                  context,
+                  busy: _busy,
+                  label: widget.actionLabel,
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -804,6 +806,52 @@ String _reviewActionLabel(
   required String label,
 }) {
   return busy ? AppLocalizations.of(context).commonSaving : label;
+}
+
+/// Compact icon-only action button for review rows. Shows a spinner
+/// while busy, the action icon otherwise. Much smaller footprint than
+/// the full text button it replaces.
+class _ReviewIconButton extends StatelessWidget {
+  const _ReviewIconButton({
+    required this.icon,
+    required this.busy,
+    required this.tooltip,
+    required this.onPress,
+  });
+
+  final IconData icon;
+  final bool busy;
+  final String tooltip;
+  final Future<bool> Function() onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return FTooltip(
+      tipBuilder: (_, _) => Text(tooltip),
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: colors.primary.withValues(alpha: AppOpacity.subtle),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(
+            color: colors.primary.withValues(alpha: AppOpacity.light),
+          ),
+        ),
+        child: FTappable(
+          onPress: busy ? null : () => onPress(),
+          child: Center(
+            child: busy
+                ? const FCircularProgress(
+                    size: FCircularProgressSizeVariant.xs,
+                  )
+                : Icon(icon, size: AppIconSizes.xs, color: colors.primary),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _SwipeReviewAction extends StatelessWidget {
@@ -1139,18 +1187,12 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
                 ],
               ),
             ),
-            const SizedBox(width: AppSpacing.s8),
-            FButton(
-              variant: FButtonVariant.outline,
-              prefix: _reviewActionPrefix(busy: _busy),
-              onPress: _busy ? null : () => _markDone(),
-              child: Text(
-                _reviewActionLabel(
-                  context,
-                  busy: _busy,
-                  label: l10n.knowledgeReviewMarkDone,
-                ),
-              ),
+            const SizedBox(width: AppSpacing.s4),
+            _ReviewIconButton(
+              icon: FLucideIcons.check,
+              busy: _busy,
+              tooltip: l10n.knowledgeReviewMarkDone,
+              onPress: _markDone,
             ),
           ],
         ),
@@ -1359,18 +1401,12 @@ class _DueDecisionRowState extends ConsumerState<_DueDecisionRow> {
               l10n.knowledgeReviewDecisionOverdueDays(overdueDays),
               style: typography.xs.copyWith(color: colors.mutedForeground),
             ),
-            const SizedBox(width: AppSpacing.s8),
-            FButton(
-              variant: FButtonVariant.outline,
-              prefix: _reviewActionPrefix(busy: _busy),
-              onPress: _busy ? null : () => _markReviewed(),
-              child: Text(
-                _reviewActionLabel(
-                  context,
-                  busy: _busy,
-                  label: l10n.knowledgeReviewDecisionReviewed,
-                ),
-              ),
+            const SizedBox(width: AppSpacing.s4),
+            _ReviewIconButton(
+              icon: FLucideIcons.calendarCheck,
+              busy: _busy,
+              tooltip: l10n.knowledgeReviewDecisionReviewed,
+              onPress: _markReviewed,
             ),
           ],
         ),
@@ -1663,18 +1699,12 @@ class _StaleAssumptionRowState extends ConsumerState<_StaleAssumptionRow> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: AppSpacing.s8),
-            FButton(
-              variant: FButtonVariant.outline,
-              prefix: _reviewActionPrefix(busy: _busy),
-              onPress: _busy ? null : () => _verify(),
-              child: Text(
-                _reviewActionLabel(
-                  context,
-                  busy: _busy,
-                  label: l10n.knowledgeReviewVerifyAssumption,
-                ),
-              ),
+            const SizedBox(width: AppSpacing.s4),
+            _ReviewIconButton(
+              icon: FLucideIcons.badgeCheck,
+              busy: _busy,
+              tooltip: l10n.knowledgeReviewVerifyAssumption,
+              onPress: _verify,
             ),
           ],
         ),
