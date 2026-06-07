@@ -40,11 +40,11 @@ class PlanHubPage extends ConsumerWidget {
               hPad,
               AppSpacing.s12,
               hPad,
-              AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
+              kTabBarOffset + MediaQuery.paddingOf(context).bottom,
             ),
             children: const [
               _PlanHero(),
-              SizedBox(height: AppSpacing.s20),
+              SizedBox(height: AppSpacing.s16),
               _PlanSectionGrid(),
             ],
           );
@@ -261,48 +261,16 @@ class _PlanSectionGrid extends StatelessWidget {
         path: AppRoutes.planGoals,
       ),
     ];
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final twoColumn = constraints.maxWidth >= 620;
-        if (!twoColumn) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final spec in sections) ...[
-                _PlanSectionCard(spec: spec),
-                const SizedBox(height: AppSpacing.s12),
-              ],
-            ],
-          );
-        }
-        // Two-column grid for tablet+desktop.
-        final rows = <Widget>[];
-        for (var i = 0; i < sections.length; i += 2) {
-          final left = sections[i];
-          final right = i + 1 < sections.length ? sections[i + 1] : null;
-          rows.add(
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.s12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: _PlanSectionCard(spec: left)),
-                  const SizedBox(width: AppSpacing.s12),
-                  Expanded(
-                    child: right == null
-                        ? const SizedBox()
-                        : _PlanSectionCard(spec: right),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: rows,
-        );
-      },
+    return AppGroupedActionList(
+      actions: [
+        for (final spec in sections)
+          AppGroupedAction(
+            icon: spec.icon,
+            title: spec.title,
+            subtitle: spec.subtitle,
+            onPress: () => context.push(spec.path),
+          ),
+      ],
     );
   }
 }
@@ -319,39 +287,6 @@ class _PlanSectionSpec {
   final String title;
   final String subtitle;
   final String path;
-}
-
-class _PlanSectionCard extends StatelessWidget {
-  const _PlanSectionCard({required this.spec});
-
-  final _PlanSectionSpec spec;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return SoftCard(
-      child: FTile(
-        onPress: () => context.push(spec.path),
-        prefix: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: colors.foreground.withValues(alpha: AppOpacity.whisper),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          alignment: Alignment.center,
-          child: Icon(
-            spec.icon,
-            size: AppIconSizes.h18,
-            color: colors.mutedForeground,
-          ),
-        ),
-        title: Text(spec.title),
-        subtitle: Text(spec.subtitle),
-        suffix: const Icon(FLucideIcons.chevronRight, size: AppIconSizes.h18),
-      ),
-    );
-  }
 }
 
 /// Placeholder page for /plan/scenarios.

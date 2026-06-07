@@ -205,13 +205,13 @@ class _ActivityRightRail extends ConsumerWidget {
                     _QuickLinkTile(
                       icon: FLucideIcons.receipt,
                       label: l10n.activityExpenseListLink,
-                      onTap: () => context.go(AppRoutes.activityExpenses),
+                      onTap: () => context.push(AppRoutes.activityExpenses),
                     ),
                     const SizedBox(height: AppSpacing.s8),
                     _QuickLinkTile(
                       icon: FLucideIcons.pieChart,
                       label: l10n.activityExpenseReportLink,
-                      onTap: () => context.go(AppRoutes.expenseReport),
+                      onTap: () => context.push(AppRoutes.expenseReport),
                     ),
                   ],
                 ),
@@ -385,7 +385,7 @@ class _ExpenseQuickLinks extends StatelessWidget {
             child: _QuickLinkTile(
               icon: FLucideIcons.receipt,
               label: l10n.activityExpenseListLink,
-              onTap: () => context.go(AppRoutes.activityExpenses),
+              onTap: () => context.push(AppRoutes.activityExpenses),
             ),
           ),
           const SizedBox(width: AppSpacing.s8),
@@ -393,7 +393,7 @@ class _ExpenseQuickLinks extends StatelessWidget {
             child: _QuickLinkTile(
               icon: FLucideIcons.pieChart,
               label: l10n.activityExpenseReportLink,
-              onTap: () => context.go(AppRoutes.expenseReport),
+              onTap: () => context.push(AppRoutes.expenseReport),
             ),
           ),
         ],
@@ -428,7 +428,11 @@ class _QuickLinkTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           alignment: Alignment.center,
-          child: Icon(icon, size: AppIconSizes.h18, color: colors.mutedForeground),
+          child: Icon(
+            icon,
+            size: AppIconSizes.h18,
+            color: colors.mutedForeground,
+          ),
         ),
         title: Text(
           label,
