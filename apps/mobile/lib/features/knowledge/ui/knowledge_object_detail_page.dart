@@ -694,6 +694,7 @@ class _MetadataSectionState extends State<_MetadataSection> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
     final needsCollapse =
         widget.children.length > _kMetadataCollapseThreshold;
     final visibleChildren = needsCollapse && !_expanded
@@ -704,23 +705,25 @@ class _MetadataSectionState extends State<_MetadataSection> {
       trailing: widget.trailing,
       children: [
         Wrap(
-          spacing: AppSpacing.s8,
-          runSpacing: AppSpacing.s8,
+          spacing: AppSpacing.s6,
+          runSpacing: AppSpacing.s6,
           children: visibleChildren,
         ),
         if (needsCollapse) ...[
           const SizedBox(height: AppSpacing.s4),
           Center(
-            child: GestureDetector(
-              onTap: () => setState(() => _expanded = !_expanded),
+            child: FTappable(
+              onPress: () => setState(() => _expanded = !_expanded),
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.s4),
-                child: Icon(
-                  _expanded
-                      ? FLucideIcons.chevronUp
-                      : FLucideIcons.chevronDown,
-                  size: AppIconSizes.sm,
-                  color: context.theme.colors.mutedForeground,
+                child: AnimatedRotation(
+                  duration: Motion.fast,
+                  turns: _expanded ? 0.5 : 0,
+                  child: Icon(
+                    FLucideIcons.chevronDown,
+                    size: AppIconSizes.sm,
+                    color: colors.mutedForeground,
+                  ),
                 ),
               ),
             ),
@@ -731,6 +734,8 @@ class _MetadataSectionState extends State<_MetadataSection> {
   }
 }
 
+/// Compact metadata chip. Borderless, muted fill — scannable without
+/// visual weight.
 class _MetaPill extends StatelessWidget {
   const _MetaPill({required this.label, required this.value});
 
@@ -744,12 +749,11 @@ class _MetaPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s6,
+        vertical: AppSpacing.s4,
       ),
       decoration: BoxDecoration(
-        color: colors.muted,
+        color: colors.muted.withValues(alpha: AppOpacity.subtle),
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: colors.border),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

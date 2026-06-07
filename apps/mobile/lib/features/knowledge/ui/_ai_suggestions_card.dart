@@ -189,9 +189,8 @@ class _NoteSuggestionGroupState extends ConsumerState<_NoteSuggestionGroup> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s8),
       decoration: BoxDecoration(
-        color: colors.muted,
+        color: colors.muted.withValues(alpha: AppOpacity.subtle),
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,37 +332,50 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
                     : l10n.knowledgeAiSuggestionDetails,
               ),
               child: FButton.icon(
-                variant: FButtonVariant.outline,
+                variant: FButtonVariant.ghost,
                 onPress: _busy
                     ? null
                     : () => setState(() => _expanded = !_expanded),
                 child: Icon(
                   _expanded ? FLucideIcons.chevronUp : FLucideIcons.list,
                   size: AppIconSizes.xs,
+                  color: colors.mutedForeground,
                 ),
               ),
             ),
-            const SizedBox(width: AppSpacing.s4),
+            const SizedBox(width: AppSpacing.s2),
             FTooltip(
               tipBuilder: (_, _) =>
                   Text(l10n.knowledgeAiSuggestionSnoozeOneDay),
               child: FButton.icon(
-                variant: FButtonVariant.outline,
+                variant: FButtonVariant.ghost,
                 onPress: _busy ? null : _snooze,
-                child: const Icon(FLucideIcons.clock, size: AppIconSizes.xs),
+                child: Icon(
+                  FLucideIcons.clock,
+                  size: AppIconSizes.xs,
+                  color: colors.mutedForeground,
+                ),
               ),
             ),
-            const SizedBox(width: AppSpacing.s4),
+            const SizedBox(width: AppSpacing.s2),
             FButton.icon(
-              variant: FButtonVariant.outline,
+              variant: FButtonVariant.ghost,
               onPress: _busy ? null : _accept,
-              child: const Icon(FLucideIcons.check, size: AppIconSizes.xs),
+              child: Icon(
+                FLucideIcons.check,
+                size: AppIconSizes.xs,
+                color: colors.primary,
+              ),
             ),
-            const SizedBox(width: AppSpacing.s4),
+            const SizedBox(width: AppSpacing.s2),
             FButton.icon(
-              variant: FButtonVariant.outline,
+              variant: FButtonVariant.ghost,
               onPress: _busy ? null : _dismiss,
-              child: const Icon(FLucideIcons.x, size: AppIconSizes.xs),
+              child: Icon(
+                FLucideIcons.x,
+                size: AppIconSizes.xs,
+                color: colors.mutedForeground,
+              ),
             ),
           ],
         ),

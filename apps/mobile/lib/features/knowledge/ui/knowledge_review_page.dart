@@ -359,19 +359,15 @@ class _ReviewQuickAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
-    final isDark =
-        MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.background,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: colors.border),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? colors.foreground : const Color(0xFF000000))
-                .withValues(alpha: isDark ? AppOpacity.muted : AppOpacity.faint),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+            color: colors.primary.withValues(alpha: AppOpacity.subtle),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
