@@ -22,6 +22,7 @@ import 'package:dio/dio.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import '../../../core/logging/app_logger.dart';
+import '../domain/knowledge_text.dart';
 import 'capture_classifier.dart';
 import 'capture_kind.dart';
 
@@ -204,8 +205,7 @@ class LlmCaptureClassifier implements CaptureClassifier {
   /// stays one row per call.
   static String _preview(String s) {
     final flat = s.replaceAll(RegExp(r'\s+'), ' ').trim();
-    if (flat.length <= 80) return flat;
-    return '${flat.substring(0, 80)}…';
+    return knowledgeExcerpt(flat, max: kKnowledgeHeadlineExcerptMaxChars);
   }
 
   static String? _extractText(AnthropicCompletion completion) {
@@ -297,7 +297,8 @@ class LlmCaptureClassifier implements CaptureClassifier {
       return CaptureClassification(
         kind: CaptureKind.note,
         confidence: confidence,
-        reasonZh: 'LLM 给出 $kindRaw 但置信度仅 ${confidence.toStringAsFixed(2)},保留为 Note',
+        reasonZh:
+            'LLM 给出 $kindRaw 但置信度仅 ${confidence.toStringAsFixed(2)},保留为 Note',
         polishedTitle: polishedTitle,
         polishedBody: polishedBody,
       );
@@ -312,11 +313,10 @@ class LlmCaptureClassifier implements CaptureClassifier {
       if (intervalDays > 3650) intervalDays = 3650;
     }
 
-    final statementRaw = _nullIfEmpty(
-      (json['statement'] as String?)?.trim(),
-    );
+    final statementRaw = _nullIfEmpty((json['statement'] as String?)?.trim());
     final scopeRawTrimmed = (json['scope'] as String?)?.trim();
-    final scope = (scopeRawTrimmed == null ||
+    final scope =
+        (scopeRawTrimmed == null ||
             scopeRawTrimmed.isEmpty ||
             scopeRawTrimmed == '*')
         ? null
@@ -334,8 +334,7 @@ class LlmCaptureClassifier implements CaptureClassifier {
     );
   }
 
-  static String? _nullIfEmpty(String? s) =>
-      (s == null || s.isEmpty) ? null : s;
+  static String? _nullIfEmpty(String? s) => (s == null || s.isEmpty) ? null : s;
 
   static double? _coerceDouble(Object? v) {
     if (v is num) return v.toDouble();

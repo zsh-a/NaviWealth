@@ -90,7 +90,9 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
                   ],
                 );
               }
-              final list = snap.data ?? const <InboxTriageRecord>[];
+              final list = (snap.data ?? const <InboxTriageRecord>[])
+                  .where((record) => record.pending.isNotEmpty)
+                  .toList(growable: false);
               if (list.isEmpty) {
                 return KnowledgeSection.group(
                   title: l10n.knowledgeAiSuggestionsTitle,
@@ -177,7 +179,13 @@ class _NoteSuggestionGroupState extends ConsumerState<_NoteSuggestionGroup> {
     final pending = widget.record.proposals
         .where((p) => p.status.isPending)
         .toList();
-    if (pending.isEmpty) return const SizedBox.shrink();
+    if (pending.isEmpty) {
+      return KnowledgeEmptyState(
+        icon: FLucideIcons.sparkles,
+        title: l10n.knowledgeAiSuggestionsEmpty,
+        density: KnowledgeStateDensity.section,
+      );
+    }
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s8),
       decoration: BoxDecoration(

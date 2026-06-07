@@ -37,6 +37,7 @@ import '../data/capture_kind.dart';
 import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '../domain/knowledge_text.dart';
 
 export 'knowledge_proposal_kinds.dart' show kKnowledgeProposalAppliedKinds;
 
@@ -410,9 +411,16 @@ String _captureTitle(ReadyProposalPlan plan, KnowledgeNote? existing) {
     return existing.title.trim();
   }
   final statement = plan.get('statement');
-  if (statement != null) return _short(statement, max: 60);
+  if (statement != null) {
+    return _short(statement, max: kKnowledgeHeadlineExcerptMaxChars);
+  }
   final source = plan.get('source_text');
-  if (source != null) return _short(source.split('\n').first.trim(), max: 60);
+  if (source != null) {
+    return _short(
+      source.split('\n').first.trim(),
+      max: kKnowledgeHeadlineExcerptMaxChars,
+    );
+  }
   return '';
 }
 
@@ -425,10 +433,9 @@ String _captureBody(ReadyProposalPlan plan, KnowledgeNote? existing) {
   return plan.get('source_text') ?? plan.get('statement') ?? '';
 }
 
-String _short(String value, {int max = 40}) {
+String _short(String value, {int max = kKnowledgeInlineExcerptMaxChars}) {
   final trimmed = value.trim();
-  if (trimmed.length <= max) return trimmed;
-  return '${trimmed.substring(0, max)}…';
+  return knowledgeExcerpt(trimmed, max: max);
 }
 
 /// KnowledgeOS applier wiring. Resolves the repo + a per-row [SyncMeta]

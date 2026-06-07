@@ -13,7 +13,9 @@ import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
+import '_agent_l10n.dart';
 import '_agent_memory.dart';
 
 const String kKnowledgeAssumptionAgentId = 'knowledge_assumption';
@@ -36,9 +38,8 @@ class AssumptionAgent implements Agent {
   /// 月初。30d interval keeps cadence honest; no preferred hour so the
   /// agent fires whenever the runner ticks after the window opens.
   @override
-  AgentSchedule get schedule => const AgentSchedule(
-    interval: Duration(days: 30),
-  );
+  AgentSchedule get schedule =>
+      const AgentSchedule(interval: Duration(days: 30));
 
   @override
   Future<AgentRunResult> run(AgentContext ctx) async {
@@ -46,6 +47,7 @@ class AssumptionAgent implements Agent {
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
+    final l10n = knowledgeAgentL10n(ctx.ref);
 
     final open = await repo.listOpenAssumptions(ownerUserId: ownerUserId);
     final stale = open
@@ -58,22 +60,21 @@ class AssumptionAgent implements Agent {
         agentId: kKnowledgeAssumptionAgentId,
         startedAt: start,
         finishedAt: finished,
-        reason: 'no stale active assumptions',
+        reason: l10n.knowledgeAgentAssumptionNoStale,
       );
     }
 
-    final summary = _summarize(stale.length, stale.first.statement);
+    final summary = _summarize(l10n, stale.length, stale.first.statement);
     final built = buildAgentMemory(
       source: kKnowledgeAssumptionMemorySource,
       kind: MemoryKind.episodic,
       ownerUserId: ownerUserId,
       start: start,
       finished: finished,
-      title: '本月待校验假设',
+      title: l10n.knowledgeAgentAssumptionTitle,
       summary: summary,
       payload: <String, Object?>{
-        'stale_assumption_ids':
-            stale.map((a) => a.id).toList(growable: false),
+        'stale_assumption_ids': stale.map((a) => a.id).toList(growable: false),
         'threshold_days': kAssumptionStaleDays,
       },
       entities: <String>{'knowledge_assumption', 'assumption_review'},
@@ -93,8 +94,17 @@ class AssumptionAgent implements Agent {
     );
   }
 
-  String _summarize(int count, String first) {
-    if (count == 1) return '1 条 active 假设 > $kAssumptionStaleDays 天未校验:$first';
-    return '$count 条 active 假设 > $kAssumptionStaleDays 天未校验,首条:$first';
+  String _summarize(AppLocalizations l10n, int count, String first) {
+    if (count == 1) {
+      return l10n.knowledgeAgentAssumptionSummaryOne(
+        kAssumptionStaleDays,
+        first,
+      );
+    }
+    return l10n.knowledgeAgentAssumptionSummaryMany(
+      count,
+      kAssumptionStaleDays,
+      first,
+    );
   }
 }

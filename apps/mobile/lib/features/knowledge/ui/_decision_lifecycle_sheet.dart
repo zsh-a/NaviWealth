@@ -154,16 +154,13 @@ class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
-    final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     return AppSheet(
-      title: AppLocalizations.of(context).knowledgeDecisionLifecycleTitle,
-      subtitle: AppLocalizations.of(context).knowledgeDecisionLifecycleSubtitle,
+      title: l10n.knowledgeDecisionLifecycleTitle,
+      subtitle: l10n.knowledgeDecisionLifecycleSubtitle,
       footer: AppSheetFooter(
-        submitLabel: _saving
-            ? AppLocalizations.of(context).commonSaving
-            : AppLocalizations.of(context).commonSave,
-        cancelLabel: AppLocalizations.of(context).commonCancel,
+        submitLabel: _saving ? l10n.commonSaving : l10n.commonSave,
+        cancelLabel: l10n.commonCancel,
         busy: !_canSave,
         onSubmit: _save,
       ),
@@ -171,59 +168,61 @@ class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            AppLocalizations.of(context).knowledgeDecisionStatusLabel,
-            style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Wrap(
-            spacing: AppSpacing.s8,
-            runSpacing: AppSpacing.s8,
+          KnowledgeWriterSection(
+            title: l10n.knowledgeDecisionStatusLabel,
             children: [
-              for (final s in DecisionStatus.values)
-                FButton(
-                  variant: s == _status
-                      ? FButtonVariant.primary
-                      : FButtonVariant.outline,
-                  onPress: () => setState(() => _status = s),
-                  child: Text(decisionStatusLabel(context, s)),
-                ),
+              Wrap(
+                spacing: AppSpacing.s8,
+                runSpacing: AppSpacing.s8,
+                children: [
+                  for (final s in DecisionStatus.values)
+                    FButton(
+                      variant: s == _status
+                          ? FButtonVariant.primary
+                          : FButtonVariant.outline,
+                      onPress: () => setState(() => _status = s),
+                      child: Text(decisionStatusLabel(context, s)),
+                    ),
+                ],
+              ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s16),
-          MarkdownEditorWithPreview(
-            controller: _outcomeCtrl,
-            label: AppLocalizations.of(
-              context,
-            ).knowledgeDecisionActualOutcomeLabel,
-            hint: AppLocalizations.of(
-              context,
-            ).knowledgeDecisionActualOutcomeHint,
-            minLines: 2,
-            maxLines: 6,
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeWriterSection(
+            title: l10n.knowledgeDecisionActualOutcomeLabel,
+            children: [
+              MarkdownEditorWithPreview(
+                controller: _outcomeCtrl,
+                hint: l10n.knowledgeDecisionActualOutcomeHint,
+                minLines: 2,
+                maxLines: 6,
+              ),
+            ],
           ),
           if (_status == DecisionStatus.superseded) ...[
-            const SizedBox(height: AppSpacing.s16),
-            Text(
-              AppLocalizations.of(context).knowledgeDecisionSupersededByLabel,
-              style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+            const SizedBox(height: AppSpacing.s12),
+            KnowledgeWriterSection(
+              title: l10n.knowledgeDecisionSupersededByLabel,
+              collapsible: true,
+              children: [
+                if (_candidates.isEmpty)
+                  KnowledgeEmptyState(
+                    icon: FLucideIcons.gitBranch,
+                    title: l10n.knowledgeDecisionSupersededByEmpty,
+                    density: KnowledgeStateDensity.section,
+                  )
+                else
+                  for (final c in _candidates)
+                    KnowledgeSelectableRow(
+                      label: c.question,
+                      detail: decisionStatusLabel(context, c.status),
+                      selected: c.id == _supersededBy,
+                      mode: KnowledgeSelectionMode.radio,
+                      maxLines: 2,
+                      onPress: () => setState(() => _supersededBy = c.id),
+                    ),
+              ],
             ),
-            const SizedBox(height: AppSpacing.s4),
-            if (_candidates.isEmpty)
-              Text(
-                AppLocalizations.of(context).knowledgeDecisionSupersededByEmpty,
-                style: typography.xs.copyWith(color: colors.mutedForeground),
-              )
-            else
-              for (final c in _candidates)
-                KnowledgeSelectableRow(
-                  label: c.question,
-                  detail: decisionStatusLabel(context, c.status),
-                  selected: c.id == _supersededBy,
-                  mode: KnowledgeSelectionMode.radio,
-                  maxLines: 2,
-                  onPress: () => setState(() => _supersededBy = c.id),
-                ),
           ],
         ],
       ),

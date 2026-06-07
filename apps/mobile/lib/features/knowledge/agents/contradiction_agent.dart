@@ -37,6 +37,7 @@ import '../data/knowledge_object_memory_indexers.dart'
     show kKnowledgeDecisionMemorySource, kKnowledgeNoteMemorySource;
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '_agent_l10n.dart';
 import '_agent_memory.dart';
 
 const String kKnowledgeContradictionAgentId = 'knowledge_contradiction';
@@ -82,6 +83,7 @@ class ContradictionAgent implements Agent {
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
+    final l10n = knowledgeAgentL10n(ctx.ref);
     final ContradictionJudge activeJudge =
         judgeOverride ?? await ctx.ref.read(contradictionJudgeProvider.future);
 
@@ -118,8 +120,7 @@ class ContradictionAgent implements Agent {
             decisionQuestion: d.question,
             kind: 'assumption_invalidated',
             referenceId: aid,
-            detail:
-                '决策仍引用 assumption $aid,但该假设当前不在 active 集合(可能已 falsified/retired)。',
+            detail: l10n.knowledgeAgentContradictionInvalidatedAssumption(aid),
           ),
         );
       }
@@ -147,14 +148,21 @@ class ContradictionAgent implements Agent {
         agentId: kKnowledgeContradictionAgentId,
         startedAt: start,
         finishedAt: finished,
-        reason: 'no contradictions detected in last 90d window',
+        reason: l10n.knowledgeAgentContradictionNone,
       );
     }
 
     final firstIssue = issues.first;
     final summary = issues.length == 1
-        ? '检出 1 处 ${firstIssue.kind}:${firstIssue.detail}'
-        : '检出 ${issues.length} 处冲突,首条:${firstIssue.kind} → ${firstIssue.detail}';
+        ? l10n.knowledgeAgentContradictionSummaryOne(
+            firstIssue.detail,
+            firstIssue.kind,
+          )
+        : l10n.knowledgeAgentContradictionSummaryMany(
+            issues.length,
+            firstIssue.detail,
+            firstIssue.kind,
+          );
 
     final built = buildAgentMemory(
       source: kKnowledgeContradictionMemorySource,
@@ -162,7 +170,7 @@ class ContradictionAgent implements Agent {
       ownerUserId: ownerUserId,
       start: start,
       finished: finished,
-      title: '检测到 Decision 冲突',
+      title: l10n.knowledgeAgentContradictionTitle,
       summary: summary,
       payload: <String, Object?>{
         'issues': issues

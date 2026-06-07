@@ -10,6 +10,7 @@ import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
 import '../data/providers.dart';
+import '../domain/knowledge_text.dart';
 
 class SummarizeTopicEvolutionTool implements DeviceTool {
   const SummarizeTopicEvolutionTool();
@@ -39,12 +40,7 @@ class SummarizeTopicEvolutionTool implements DeviceTool {
           'to': {'type': 'string'},
         },
       },
-      'limit': {
-        'type': 'integer',
-        'minimum': 1,
-        'maximum': 100,
-        'default': 30,
-      },
+      'limit': {'type': 'integer', 'minimum': 1, 'maximum': 100, 'default': 30},
     },
     'required': <String>['concept_or_topic'],
   };
@@ -54,8 +50,9 @@ class SummarizeTopicEvolutionTool implements DeviceTool {
     DeviceToolContext ctx,
     Map<String, Object?> input,
   ) async {
-    final topic =
-        ((input['concept_or_topic'] as String?) ?? '').trim().toLowerCase();
+    final topic = ((input['concept_or_topic'] as String?) ?? '')
+        .trim()
+        .toLowerCase();
     if (topic.isEmpty) {
       return <String, Object?>{
         'error': 'concept_or_topic 必填',
@@ -77,8 +74,10 @@ class SummarizeTopicEvolutionTool implements DeviceTool {
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
 
     final notes = await repo.listNotes(ownerUserId: ownerUserId, limit: 1000);
-    final decisions =
-        await repo.listDecisions(ownerUserId: ownerUserId, limit: 1000);
+    final decisions = await repo.listDecisions(
+      ownerUserId: ownerUserId,
+      limit: 1000,
+    );
 
     bool inWindow(DateTime ts) {
       if (from != null && ts.isBefore(from)) return false;
@@ -90,17 +89,17 @@ class SummarizeTopicEvolutionTool implements DeviceTool {
 
     for (final n in notes) {
       if (!inWindow(n.createdAt)) continue;
-      final hay = '${n.title} ${n.bodyMd} ${n.tags.join(' ')} '
-              '${n.projectTag ?? ''}'
-          .toLowerCase();
+      final hay =
+          '${n.title} ${n.bodyMd} ${n.tags.join(' ')} '
+                  '${n.projectTag ?? ''}'
+              .toLowerCase();
       if (!hay.contains(topic)) continue;
       events.add(<String, Object?>{
         'ts': n.createdAt.toUtc().toIso8601String(),
         'source': 'note',
         'id': n.id,
         'title': n.title,
-        'change_summary':
-            n.bodyMd.length <= 200 ? n.bodyMd : '${n.bodyMd.substring(0, 200)}…',
+        'change_summary': knowledgeExcerpt(n.bodyMd),
       });
     }
 
@@ -117,15 +116,11 @@ class SummarizeTopicEvolutionTool implements DeviceTool {
         'title': d.question,
         'status': d.status.wire,
         'superseded_by': d.supersededByDecisionId,
-        'change_summary': d.rationaleMd.length <= 200
-            ? d.rationaleMd
-            : '${d.rationaleMd.substring(0, 200)}…',
+        'change_summary': knowledgeExcerpt(d.rationaleMd),
       });
     }
 
-    events.sort(
-      (a, b) => (a['ts'] as String).compareTo(b['ts'] as String),
-    );
+    events.sort((a, b) => (a['ts'] as String).compareTo(b['ts'] as String));
     final out = events.take(limit).toList(growable: false);
     return <String, Object?>{'timeline': out};
   }

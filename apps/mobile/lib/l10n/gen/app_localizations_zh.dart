@@ -5271,6 +5271,133 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeAiSuggestionFeedbackToast => '反馈已保存。';
 
   @override
+  String get knowledgeAgentAssumptionTitle => '本月待校验假设';
+
+  @override
+  String get knowledgeAgentAssumptionNoStale => '暂无长期未校验的 active 假设。';
+
+  @override
+  String knowledgeAgentAssumptionSummaryOne(Object days, Object first) {
+    return '1 条 active 假设超过 $days 天未校验：$first';
+  }
+
+  @override
+  String knowledgeAgentAssumptionSummaryMany(
+    Object count,
+    Object days,
+    Object first,
+  ) {
+    return '$count 条 active 假设超过 $days 天未校验，首条：$first';
+  }
+
+  @override
+  String get knowledgeAgentReviewTitle => '本周复盘';
+
+  @override
+  String get knowledgeAgentReviewNothingDue => '本周暂无待复盘事项。';
+
+  @override
+  String knowledgeAgentReviewDecisionOne(Object first) {
+    return '1 个 Decision 到期可复盘：$first';
+  }
+
+  @override
+  String knowledgeAgentReviewDecisionMany(Object count, Object first) {
+    return '$count 个 Decision 到期可复盘，首条：$first';
+  }
+
+  @override
+  String knowledgeAgentReviewAssumptionOne(Object days, Object first) {
+    return '1 条假设超过 $days 天未校验：$first';
+  }
+
+  @override
+  String knowledgeAgentReviewAssumptionMany(
+    Object count,
+    Object days,
+    Object first,
+  ) {
+    return '$count 条假设超过 $days 天未校验，首条：$first';
+  }
+
+  @override
+  String get knowledgeAgentRoutineTitle => '本周到期的 Routine';
+
+  @override
+  String knowledgeAgentRoutineNoneDue(Object days) {
+    return '未来 $days 天内暂无到期 Routine。';
+  }
+
+  @override
+  String knowledgeAgentRoutineLeadOverdue(Object days, Object statement) {
+    return '$statement（已逾期 $days 天）';
+  }
+
+  @override
+  String knowledgeAgentRoutineLeadToday(Object statement) {
+    return '$statement（今日到期）';
+  }
+
+  @override
+  String knowledgeAgentRoutineLeadUpcoming(Object days, Object statement) {
+    return '$statement（$days 天后到期）';
+  }
+
+  @override
+  String knowledgeAgentRoutineSummaryMixed(
+    Object first,
+    Object overdueCount,
+    Object upcomingCount,
+  ) {
+    return '$overdueCount 条已逾期 + $upcomingCount 条本周到期，首条：$first';
+  }
+
+  @override
+  String knowledgeAgentRoutineSummaryOverdueOne(Object first) {
+    return '1 条 Routine 已逾期：$first';
+  }
+
+  @override
+  String knowledgeAgentRoutineSummaryOverdueMany(Object count, Object first) {
+    return '$count 条 Routine 已逾期，首条：$first';
+  }
+
+  @override
+  String knowledgeAgentRoutineSummaryUpcomingOne(Object first) {
+    return '1 条 Routine 本周到期：$first';
+  }
+
+  @override
+  String knowledgeAgentRoutineSummaryUpcomingMany(Object count, Object first) {
+    return '$count 条 Routine 本周到期，首条：$first';
+  }
+
+  @override
+  String get knowledgeAgentContradictionTitle => '检测到 Decision 冲突';
+
+  @override
+  String get knowledgeAgentContradictionNone => '过去 90 天未检测到冲突。';
+
+  @override
+  String knowledgeAgentContradictionInvalidatedAssumption(Object assumptionId) {
+    return '这个 Decision 仍引用 assumption $assumptionId，但该假设当前不在 active 集合（可能已 falsified / retired）。';
+  }
+
+  @override
+  String knowledgeAgentContradictionSummaryOne(Object detail, Object kind) {
+    return '检出 1 处 $kind：$detail';
+  }
+
+  @override
+  String knowledgeAgentContradictionSummaryMany(
+    Object count,
+    Object detail,
+    Object kind,
+  ) {
+    return '检出 $count 处冲突，首条：$kind → $detail';
+  }
+
+  @override
   String knowledgeLoadFailed(String error) {
     return '加载失败：$error';
   }
@@ -5405,8 +5532,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get knowledgeDetailContextSnapshotEmpty =>
-      '当时窗口内无 Finance / Health 事件。';
+  String get knowledgeDetailContextSnapshotEmpty => '当时窗口内无跨域事件。';
+
+  @override
+  String get knowledgeDetailContextSnapshotFinance => '财务';
+
+  @override
+  String get knowledgeDetailContextSnapshotHealth => '健康';
 
   @override
   String get knowledgeDetailCreatedLabel => '创建';
@@ -7607,6 +7739,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeCaptureSavedClassifyingTitle => '已保存 · AI 思考中';
 
   @override
+  String get knowledgeCaptureSavedPreviewTitle => '已保存的捕获';
+
+  @override
   String get knowledgeCaptureSuggestionTitle => 'AI 建议';
 
   @override
@@ -7813,6 +7948,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeLibraryFilterAll => '全部';
 
   @override
+  String get knowledgeLibraryDateFilterAll => '任意日期';
+
+  @override
+  String get knowledgeLibraryDateFilterToday => '今天';
+
+  @override
+  String get knowledgeLibraryDateFilterWeek => '7 天内';
+
+  @override
+  String get knowledgeLibraryDateFilterMonth => '30 天内';
+
+  @override
+  String get knowledgeLibraryDateFilterOutsideMonth => '30 天外';
+
+  @override
   String get knowledgeLibrarySearchClear => '清除搜索';
 
   @override
@@ -7862,6 +8012,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeReviewMarkAllDecisionsReviewed => '全部标记复盘';
+
+  @override
+  String get knowledgeReviewMarkSelectedDecisionsReviewed => '标记所选复盘';
 
   @override
   String knowledgeReviewDecisionNextReview(Object date) {
@@ -7922,6 +8075,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeReviewMarkAllDone => '全部完成';
 
   @override
+  String get knowledgeReviewMarkSelectedDone => '完成所选';
+
+  @override
   String knowledgeReviewRoutinesBulkDone(int count) {
     return '已完成 $count 个 Routine';
   }
@@ -7931,6 +8087,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeReviewVerifyAllAssumptions => '全部校验';
+
+  @override
+  String get knowledgeReviewVerifySelectedAssumptions => '校验所选';
 
   @override
   String knowledgeReviewAssumptionsBulkVerified(int count) {
@@ -7943,6 +8102,17 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String knowledgeReviewAssumptionVerifyFailed(Object error) {
     return '校验失败：$error';
+  }
+
+  @override
+  String get knowledgeReviewSelectAll => '全选';
+
+  @override
+  String get knowledgeReviewClearSelection => '清空';
+
+  @override
+  String knowledgeReviewSelectedCount(int count) {
+    return '已选 $count 个';
   }
 
   @override

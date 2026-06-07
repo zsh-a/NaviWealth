@@ -10,6 +10,10 @@ const int kKnowledgeExcerptMaxChars = 200;
 /// Short headline excerpt derived from the shared excerpt budget.
 const int kKnowledgeHeadlineExcerptMaxChars = kKnowledgeExcerptMaxChars ~/ 3;
 
+/// Inline label excerpt derived from the shared headline budget.
+const int kKnowledgeInlineExcerptMaxChars =
+    kKnowledgeHeadlineExcerptMaxChars ~/ 2;
+
 /// Supporting-detail excerpt derived from the shared excerpt budget.
 const int kKnowledgeSupportingExcerptMaxChars =
     kKnowledgeExcerptMaxChars - kKnowledgeHeadlineExcerptMaxChars;

@@ -18,8 +18,10 @@ import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/notifications/notification_service.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '_agent_l10n.dart';
 import '_agent_memory.dart';
 
 const String kKnowledgeRoutineAgentId = 'knowledge_routine_due';
@@ -59,6 +61,7 @@ class RoutineDueAgent implements Agent {
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
+    final l10n = knowledgeAgentL10n(ctx.ref);
 
     final due = await repo.listDueRoutines(
       ownerUserId: ownerUserId,
@@ -72,7 +75,7 @@ class RoutineDueAgent implements Agent {
         agentId: kKnowledgeRoutineAgentId,
         startedAt: start,
         finishedAt: finished,
-        reason: 'no routines due in the next 7 days',
+        reason: l10n.knowledgeAgentRoutineNoneDue(kRoutineDueLookahead.inDays),
       );
     }
 
@@ -82,6 +85,7 @@ class RoutineDueAgent implements Agent {
     final upcoming = due.where((r) => !r.isDue(start)).toList(growable: false);
 
     final summary = _summarize(
+      l10n: l10n,
       overdueCount: overdue.length,
       upcomingCount: upcoming.length,
       first: due.first,
@@ -94,7 +98,7 @@ class RoutineDueAgent implements Agent {
       ownerUserId: ownerUserId,
       start: start,
       finished: finished,
-      title: '本周到期的 Routine',
+      title: l10n.knowledgeAgentRoutineTitle,
       summary: summary,
       payload: <String, Object?>{
         'context':
@@ -113,7 +117,7 @@ class RoutineDueAgent implements Agent {
 
     final n = notifier;
     if (n != null) {
-      await _maybeNotify(start.toLocal(), summary, n);
+      await _maybeNotify(start.toLocal(), l10n, summary, n);
     }
 
     return AgentRunResult(
@@ -131,6 +135,7 @@ class RoutineDueAgent implements Agent {
   }
 
   static String _summarize({
+    required AppLocalizations l10n,
     required int overdueCount,
     required int upcomingCount,
     required KnowledgeRoutine first,
@@ -138,23 +143,38 @@ class RoutineDueAgent implements Agent {
   }) {
     final days = first.daysUntilDue(now);
     final leadFirst = days < 0
-        ? '${first.statement}（已逾期 ${-days} 天）'
+        ? l10n.knowledgeAgentRoutineLeadOverdue(-days, first.statement)
         : days == 0
-        ? '${first.statement}（今日到期）'
-        : '${first.statement}（$days 天后到期）';
+        ? l10n.knowledgeAgentRoutineLeadToday(first.statement)
+        : l10n.knowledgeAgentRoutineLeadUpcoming(days, first.statement);
     if (overdueCount > 0 && upcomingCount > 0) {
-      return '$overdueCount 条已逾期 + $upcomingCount 条本周到期，首条:$leadFirst';
+      return l10n.knowledgeAgentRoutineSummaryMixed(
+        leadFirst,
+        overdueCount,
+        upcomingCount,
+      );
     }
     if (overdueCount > 0) {
-      if (overdueCount == 1) return '1 条 Routine 已逾期:$leadFirst';
-      return '$overdueCount 条 Routine 已逾期，首条:$leadFirst';
+      if (overdueCount == 1) {
+        return l10n.knowledgeAgentRoutineSummaryOverdueOne(leadFirst);
+      }
+      return l10n.knowledgeAgentRoutineSummaryOverdueMany(
+        overdueCount,
+        leadFirst,
+      );
     }
-    if (upcomingCount == 1) return '1 条 Routine 本周到期:$leadFirst';
-    return '$upcomingCount 条 Routine 本周到期，首条:$leadFirst';
+    if (upcomingCount == 1) {
+      return l10n.knowledgeAgentRoutineSummaryUpcomingOne(leadFirst);
+    }
+    return l10n.knowledgeAgentRoutineSummaryUpcomingMany(
+      upcomingCount,
+      leadFirst,
+    );
   }
 
   Future<void> _maybeNotify(
     DateTime localDay,
+    AppLocalizations l10n,
     String summary,
     NotificationService n,
   ) async {
@@ -162,7 +182,7 @@ class RoutineDueAgent implements Agent {
       if (!await n.hasPermissions()) return;
       await n.showNow(
         id: KnowledgeNotifications.idForRoutineDigest(localDay),
-        title: '本周到期的 Routine',
+        title: l10n.knowledgeAgentRoutineTitle,
         body: summary,
         payload: kKnowledgeRoutineAgentId,
         channel: NotificationChannelSpec.knowledgeReview,

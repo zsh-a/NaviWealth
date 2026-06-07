@@ -9481,6 +9481,172 @@ abstract class AppLocalizations {
   /// **'Feedback saved.'**
   String get knowledgeAiSuggestionFeedbackToast;
 
+  /// No description provided for @knowledgeAgentAssumptionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assumptions to verify this month'**
+  String get knowledgeAgentAssumptionTitle;
+
+  /// No description provided for @knowledgeAgentAssumptionNoStale.
+  ///
+  /// In en, this message translates to:
+  /// **'No stale active assumptions.'**
+  String get knowledgeAgentAssumptionNoStale;
+
+  /// No description provided for @knowledgeAgentAssumptionSummaryOne.
+  ///
+  /// In en, this message translates to:
+  /// **'1 active assumption has not been verified for more than {days} days: {first}'**
+  String knowledgeAgentAssumptionSummaryOne(Object days, Object first);
+
+  /// No description provided for @knowledgeAgentAssumptionSummaryMany.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} active assumptions have not been verified for more than {days} days. First: {first}'**
+  String knowledgeAgentAssumptionSummaryMany(
+    Object count,
+    Object days,
+    Object first,
+  );
+
+  /// No description provided for @knowledgeAgentReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly review'**
+  String get knowledgeAgentReviewTitle;
+
+  /// No description provided for @knowledgeAgentReviewNothingDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is due for review this week.'**
+  String get knowledgeAgentReviewNothingDue;
+
+  /// No description provided for @knowledgeAgentReviewDecisionOne.
+  ///
+  /// In en, this message translates to:
+  /// **'1 decision is due for review: {first}'**
+  String knowledgeAgentReviewDecisionOne(Object first);
+
+  /// No description provided for @knowledgeAgentReviewDecisionMany.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} decisions are due for review. First: {first}'**
+  String knowledgeAgentReviewDecisionMany(Object count, Object first);
+
+  /// No description provided for @knowledgeAgentReviewAssumptionOne.
+  ///
+  /// In en, this message translates to:
+  /// **'1 assumption has not been verified for more than {days} days: {first}'**
+  String knowledgeAgentReviewAssumptionOne(Object days, Object first);
+
+  /// No description provided for @knowledgeAgentReviewAssumptionMany.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} assumptions have not been verified for more than {days} days. First: {first}'**
+  String knowledgeAgentReviewAssumptionMany(
+    Object count,
+    Object days,
+    Object first,
+  );
+
+  /// No description provided for @knowledgeAgentRoutineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Routines due this week'**
+  String get knowledgeAgentRoutineTitle;
+
+  /// No description provided for @knowledgeAgentRoutineNoneDue.
+  ///
+  /// In en, this message translates to:
+  /// **'No routines due in the next {days} days.'**
+  String knowledgeAgentRoutineNoneDue(Object days);
+
+  /// No description provided for @knowledgeAgentRoutineLeadOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'{statement} (overdue by {days} days)'**
+  String knowledgeAgentRoutineLeadOverdue(Object days, Object statement);
+
+  /// No description provided for @knowledgeAgentRoutineLeadToday.
+  ///
+  /// In en, this message translates to:
+  /// **'{statement} (due today)'**
+  String knowledgeAgentRoutineLeadToday(Object statement);
+
+  /// No description provided for @knowledgeAgentRoutineLeadUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'{statement} (due in {days} days)'**
+  String knowledgeAgentRoutineLeadUpcoming(Object days, Object statement);
+
+  /// No description provided for @knowledgeAgentRoutineSummaryMixed.
+  ///
+  /// In en, this message translates to:
+  /// **'{overdueCount} overdue + {upcomingCount} due this week. First: {first}'**
+  String knowledgeAgentRoutineSummaryMixed(
+    Object first,
+    Object overdueCount,
+    Object upcomingCount,
+  );
+
+  /// No description provided for @knowledgeAgentRoutineSummaryOverdueOne.
+  ///
+  /// In en, this message translates to:
+  /// **'1 Routine is overdue: {first}'**
+  String knowledgeAgentRoutineSummaryOverdueOne(Object first);
+
+  /// No description provided for @knowledgeAgentRoutineSummaryOverdueMany.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Routines are overdue. First: {first}'**
+  String knowledgeAgentRoutineSummaryOverdueMany(Object count, Object first);
+
+  /// No description provided for @knowledgeAgentRoutineSummaryUpcomingOne.
+  ///
+  /// In en, this message translates to:
+  /// **'1 Routine is due this week: {first}'**
+  String knowledgeAgentRoutineSummaryUpcomingOne(Object first);
+
+  /// No description provided for @knowledgeAgentRoutineSummaryUpcomingMany.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Routines are due this week. First: {first}'**
+  String knowledgeAgentRoutineSummaryUpcomingMany(Object count, Object first);
+
+  /// No description provided for @knowledgeAgentContradictionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision conflicts detected'**
+  String get knowledgeAgentContradictionTitle;
+
+  /// No description provided for @knowledgeAgentContradictionNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No contradictions detected in the last 90-day window.'**
+  String get knowledgeAgentContradictionNone;
+
+  /// No description provided for @knowledgeAgentContradictionInvalidatedAssumption.
+  ///
+  /// In en, this message translates to:
+  /// **'This decision still references assumption {assumptionId}, but that assumption is no longer active (possibly falsified or retired).'**
+  String knowledgeAgentContradictionInvalidatedAssumption(Object assumptionId);
+
+  /// No description provided for @knowledgeAgentContradictionSummaryOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected 1 {kind} issue: {detail}'**
+  String knowledgeAgentContradictionSummaryOne(Object detail, Object kind);
+
+  /// No description provided for @knowledgeAgentContradictionSummaryMany.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected {count} conflicts. First: {kind} → {detail}'**
+  String knowledgeAgentContradictionSummaryMany(
+    Object count,
+    Object detail,
+    Object kind,
+  );
+
   /// No description provided for @knowledgeLoadFailed.
   ///
   /// In en, this message translates to:
@@ -9709,8 +9875,20 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeDetailContextSnapshotEmpty.
   ///
   /// In en, this message translates to:
-  /// **'No Finance / Health events in that window.'**
+  /// **'No cross-domain events in that window.'**
   String get knowledgeDetailContextSnapshotEmpty;
+
+  /// No description provided for @knowledgeDetailContextSnapshotFinance.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance'**
+  String get knowledgeDetailContextSnapshotFinance;
+
+  /// No description provided for @knowledgeDetailContextSnapshotHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'Health'**
+  String get knowledgeDetailContextSnapshotHealth;
 
   /// No description provided for @knowledgeDetailCreatedLabel.
   ///
@@ -13743,8 +13921,14 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeCaptureSavedClassifyingTitle.
   ///
   /// In en, this message translates to:
-  /// **'Saved � AI is thinking'**
+  /// **'Saved - AI is thinking'**
   String get knowledgeCaptureSavedClassifyingTitle;
+
+  /// No description provided for @knowledgeCaptureSavedPreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved capture'**
+  String get knowledgeCaptureSavedPreviewTitle;
 
   /// No description provided for @knowledgeCaptureSuggestionTitle.
   ///
@@ -14092,6 +14276,36 @@ abstract class AppLocalizations {
   /// **'All'**
   String get knowledgeLibraryFilterAll;
 
+  /// No description provided for @knowledgeLibraryDateFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Any date'**
+  String get knowledgeLibraryDateFilterAll;
+
+  /// No description provided for @knowledgeLibraryDateFilterToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get knowledgeLibraryDateFilterToday;
+
+  /// No description provided for @knowledgeLibraryDateFilterWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'7 days'**
+  String get knowledgeLibraryDateFilterWeek;
+
+  /// No description provided for @knowledgeLibraryDateFilterMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'30 days'**
+  String get knowledgeLibraryDateFilterMonth;
+
+  /// No description provided for @knowledgeLibraryDateFilterOutsideMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'30+ days'**
+  String get knowledgeLibraryDateFilterOutsideMonth;
+
   /// No description provided for @knowledgeLibrarySearchClear.
   ///
   /// In en, this message translates to:
@@ -14182,6 +14396,12 @@ abstract class AppLocalizations {
   /// **'Mark all reviewed'**
   String get knowledgeReviewMarkAllDecisionsReviewed;
 
+  /// No description provided for @knowledgeReviewMarkSelectedDecisionsReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark selected reviewed'**
+  String get knowledgeReviewMarkSelectedDecisionsReviewed;
+
   /// No description provided for @knowledgeReviewDecisionNextReview.
   ///
   /// In en, this message translates to:
@@ -14258,6 +14478,12 @@ abstract class AppLocalizations {
   /// **'Mark all done'**
   String get knowledgeReviewMarkAllDone;
 
+  /// No description provided for @knowledgeReviewMarkSelectedDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark selected done'**
+  String get knowledgeReviewMarkSelectedDone;
+
   /// No description provided for @knowledgeReviewRoutinesBulkDone.
   ///
   /// In en, this message translates to:
@@ -14276,6 +14502,12 @@ abstract class AppLocalizations {
   /// **'Verify all'**
   String get knowledgeReviewVerifyAllAssumptions;
 
+  /// No description provided for @knowledgeReviewVerifySelectedAssumptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify selected'**
+  String get knowledgeReviewVerifySelectedAssumptions;
+
   /// No description provided for @knowledgeReviewAssumptionsBulkVerified.
   ///
   /// In en, this message translates to:
@@ -14293,6 +14525,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not verify assumption: {error}'**
   String knowledgeReviewAssumptionVerifyFailed(Object error);
+
+  /// No description provided for @knowledgeReviewSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get knowledgeReviewSelectAll;
+
+  /// No description provided for @knowledgeReviewClearSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get knowledgeReviewClearSelection;
+
+  /// No description provided for @knowledgeReviewSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String knowledgeReviewSelectedCount(int count);
 
   /// No description provided for @knowledgeSegmentDecisions.
   ///
