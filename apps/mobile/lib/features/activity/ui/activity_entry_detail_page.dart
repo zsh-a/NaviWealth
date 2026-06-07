@@ -433,7 +433,7 @@ class _DetailPostingRow extends StatelessWidget {
               const SizedBox(width: AppSpacing.s12),
               SignedMoneyText(
                 amount: posting.units,
-                unit: posting.unit,
+                unit: _displayUnit(posting.unit),
                 formatters: formatters,
                 style: context.theme.typography.sm.copyWith(
                   fontWeight: FontWeight.w600,
@@ -496,7 +496,7 @@ class _DetailUnitBalanceRow extends StatelessWidget {
           const SizedBox(width: AppSpacing.s6),
           Expanded(
             child: Text(
-              'Σ $unit',
+              'Σ ${_displayUnit(unit)}',
               style: context.theme.typography.xs.copyWith(
                 color: colors.destructive,
                 fontWeight: FontWeight.w600,
@@ -505,7 +505,7 @@ class _DetailUnitBalanceRow extends StatelessWidget {
           ),
           SignedMoneyText(
             amount: total,
-            unit: unit,
+            unit: _displayUnit(unit),
             formatters: formatters,
             style: context.theme.typography.xs.copyWith(
               fontWeight: FontWeight.w600,
@@ -700,6 +700,13 @@ String _format(Decimal value) {
   if (!text.contains('.')) return text;
   final trimmed = text.replaceFirst(RegExp(r'\.?0+$'), '');
   return trimmed.isEmpty ? '0' : trimmed;
+}
+
+/// Strip the `market:` prefix from an asset unit ID so the UI shows
+/// `AAPL` instead of `usStock:AAPL`.
+String _displayUnit(String unit) {
+  final colon = unit.indexOf(':');
+  return colon >= 0 ? unit.substring(colon + 1) : unit;
 }
 
 Map<String, Decimal> _computeUnitTotals(List<Posting> postings) {

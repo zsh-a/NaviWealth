@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
+import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_builders.dart';
@@ -298,6 +299,14 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             ownerUserId: uid,
           );
 
+          // Auto-generate a human-readable narration when the user left the
+          // note field empty. The asset name is resolved from the catalog
+          // so the feed shows "Buy 10 AAPL (Apple Inc.)" instead of the
+          // raw asset unit ID.
+          final effectiveNarration = (note != null && note.trim().isNotEmpty)
+              ? note
+              : _tradeNarration(type, quantity, asset);
+
           if (type == TradeType.buy) {
             final build = JournalEntryBuilders.buy(
               date: tx.tradeDate,
@@ -315,7 +324,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               taxAmount: tx.tax,
               taxAccountId: tx.tax != null ? taxAccountId : null,
               taxCurrency: tx.tax != null ? currency : null,
-              narration: note,
+              narration: effectiveNarration,
             );
             await jeRepo.create(entry: build.entry, postings: build.postings);
             await priceRepo.record(
@@ -369,7 +378,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
               taxAmount: tx.tax,
               taxAccountId: tx.tax != null ? taxAccountId : null,
               taxCurrency: tx.tax != null ? currency : null,
-              narration: note,
+              narration: effectiveNarration,
             );
             await jeRepo.create(entry: build.entry, postings: build.postings);
             await priceRepo.record(
@@ -624,3 +633,23 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 }
 
 Decimal? _nonZeroOr(Decimal? v) => v == null || v == Decimal.zero ? null : v;
+
+/// Build a human-readable narration for a trade when the user did not
+/// type a note. Uses the asset symbol + name so the Activity feed shows
+/// e.g. "Buy 10 AAPL (Apple Inc.)" instead of the raw asset unit ID.
+String _tradeNarration(TradeType type, Decimal qty, Asset asset) {
+  final verb = type == TradeType.buy ? 'Buy' : 'Sell';
+  final symbol = asset.symbol;
+  final name = asset.name;
+  final qtyStr = _trimQty(qty);
+  return name != null && name.trim().isNotEmpty
+      ? '$verb $qtyStr $symbol ($name)'
+      : '$verb $qtyStr $symbol';
+}
+
+String _trimQty(Decimal v) {
+  final s = v.toString();
+  if (!s.contains('.')) return s;
+  final trimmed = s.replaceFirst(RegExp(r'\.?0+$'), '');
+  return trimmed.isEmpty ? '0' : trimmed;
+}
