@@ -219,6 +219,7 @@ class _NoteCard extends StatelessWidget {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
+    final candidateKind = _extractCandidateKind(note.tags);
     return KnowledgeSection.item(
       title: note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
       children: [
@@ -227,7 +228,59 @@ class _NoteCard extends StatelessWidget {
             knowledgeExcerpt(note.bodyMd),
             style: typography.sm.copyWith(color: colors.mutedForeground),
           ),
+        const SizedBox(height: AppSpacing.s6),
+        Row(
+          children: [
+            Icon(
+              FLucideIcons.clock,
+              size: AppIconSizes.xs,
+              color: colors.mutedForeground,
+            ),
+            const SizedBox(width: AppSpacing.s4),
+            Text(
+              knowledgeDate(context, note.createdAt),
+              style: typography.xs.copyWith(color: colors.mutedForeground),
+            ),
+            if (candidateKind != null) ...[
+              const SizedBox(width: AppSpacing.s8),
+              KnowledgeStatusLabel(label: candidateKind),
+            ],
+            if (note.projectTag != null &&
+                note.projectTag!.isNotEmpty) ...[
+              const SizedBox(width: AppSpacing.s8),
+              Icon(
+                FLucideIcons.folder,
+                size: AppIconSizes.xs,
+                color: colors.mutedForeground,
+              ),
+              const SizedBox(width: AppSpacing.s4),
+              Flexible(
+                child: Text(
+                  note.projectTag!,
+                  style: typography.xs.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ],
+        ),
       ],
     );
   }
+}
+
+/// Extracts the AI-assigned candidate kind (e.g. "routine_candidate" → "routine")
+/// from the note's tags, or null if none.
+String? _extractCandidateKind(List<String> tags) {
+  const prefix = 'kind:';
+  const suffix = '_candidate';
+  for (final tag in tags) {
+    if (tag.startsWith(prefix) && tag.endsWith(suffix)) {
+      return tag.substring(prefix.length, tag.length - suffix.length);
+    }
+  }
+  return null;
 }
