@@ -48,7 +48,7 @@ class AppTheme {
     // navy-tinted background for brand consistency.
     final pageBackground = isDark
         ? const Color(0xFF0A1F28)
-        : const Color(0xFFFBFEFE);
+        : const Color(0xFFF6F9F9);
     final scheme = ColorScheme(
       brightness: brightness,
       primary: accent,

@@ -130,8 +130,8 @@ class _SoftCardState extends State<SoftCard> {
     // barely-blue wash so dashboard cards read like soft app panels.
     final lightSurface = switch (widget.level) {
       SoftCardLevel.flat => Colors.white,
-      SoftCardLevel.raised => const Color(0xFFF3FCFD),
-      SoftCardLevel.hero => const Color(0xFFEFFBFC),
+      SoftCardLevel.raised => const Color(0xFFF7FBFB),
+      SoftCardLevel.hero => const Color(0xFFF1F7F8),
     };
     final baseTint = widget.tinted
         ? (isDark ? colors.card : lightSurface)
@@ -150,7 +150,7 @@ class _SoftCardState extends State<SoftCard> {
         ? Colors.transparent
         : (isDark
               ? colors.border.withValues(alpha: AppOpacity.faint)
-              : const Color(0xFFE6F1F3));
+              : const Color(0xFFE3ECEE));
 
     return BoxDecoration(
       color: tint,

@@ -58,10 +58,10 @@ class FloatingGlassNavBar extends StatelessWidget {
     // Glass surface: translucent white/navy with backdrop blur.
     final glassColor = isDark
         ? const Color(0xFF0F2A35).withValues(alpha: AppOpacity.overlay)
-        : const Color(0xFFF4FCFD).withValues(alpha: AppOpacity.nearOpaque);
+        : const Color(0xFFF7FAFA).withValues(alpha: AppOpacity.nearOpaque);
     final borderColor = isDark
         ? Colors.white.withValues(alpha: AppOpacity.faint)
-        : Colors.white.withValues(alpha: AppOpacity.overlay);
+        : const Color(0xFFE3ECEE).withValues(alpha: AppOpacity.strong);
 
     return Container(
       decoration: BoxDecoration(
@@ -276,8 +276,8 @@ class _CenterActionButtonState extends State<_CenterActionButton>
   @override
   Widget build(BuildContext context) {
     final buttonColor = widget.isDark
-        ? ColorPalette.cyanBrand400
-        : ColorPalette.cyanBrand500;
+        ? ColorPalette.cyanBrand500
+        : ColorPalette.cyanBrand600;
     final iconColor = widget.isDark
         ? ColorPalette.navy950
         : ColorPalette.navy950;
