@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
+import '../tokens/motion_tokens.dart';
 
 /// Full-screen form body with a scrollable field area and a pinned action bar.
 ///
@@ -33,8 +34,8 @@ class AppFormScaffoldBody extends StatelessWidget {
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return AnimatedPadding(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOutCubic,
+      duration: Motion.ambient,
+      curve: Motion.standardDecelerate,
       padding: EdgeInsets.only(bottom: keyboardInset),
       child: Column(
         children: [

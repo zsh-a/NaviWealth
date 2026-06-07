@@ -49,16 +49,18 @@ class AiInsightFeed extends StatelessWidget {
             ),
           ),
         ),
-        for (var i = 0; i < insights.length; i++)
-          Padding(
-            padding: EdgeInsets.only(
-              bottom: i == insights.length - 1 ? 0 : AppSpacing.s8,
-            ),
-            child: _StaggeredFadeIn(
-              delay: Duration(milliseconds: 60 * i),
-              child: _InsightCard(item: insights[i]),
-            ),
-          ),
+        StaggeredColumn(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < insights.length; i++)
+              Padding(
+                padding: EdgeInsets.only(
+                  bottom: i == insights.length - 1 ? 0 : AppSpacing.s8,
+                ),
+                child: _InsightCard(item: insights[i]),
+              ),
+          ],
+        ),
       ],
     );
   }
@@ -386,54 +388,4 @@ String _insightStableId(InsightItem item) {
     item.maturityCount?.toString() ?? '',
     item.anomalyPct?.toStringAsFixed(2) ?? '',
   ].where((s) => s.isNotEmpty).join('|');
-}
-
-/// Tiny entrance animation: 6dp upward translate + opacity 0 → 1 over
-/// 240ms, gated by [delay] so a list of cards stagger in.
-class _StaggeredFadeIn extends StatefulWidget {
-  const _StaggeredFadeIn({required this.child, required this.delay});
-
-  final Widget child;
-  final Duration delay;
-
-  @override
-  State<_StaggeredFadeIn> createState() => _StaggeredFadeInState();
-}
-
-class _StaggeredFadeInState extends State<_StaggeredFadeIn>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: Motion.medium);
-    Future.delayed(widget.delay, () {
-      if (mounted) _controller.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        final t = Curves.easeOutCubic.transform(_controller.value);
-        return Opacity(
-          opacity: t,
-          child: Transform.translate(
-            offset: Offset(0, 6 * (1 - t)),
-            child: child,
-          ),
-        );
-      },
-      child: widget.child,
-    );
-  }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
+import '../tokens/motion_tokens.dart';
 
 /// Pulsing placeholder rectangle for skeleton screens.
 ///
@@ -47,7 +48,7 @@ class SkeletonBox extends StatefulWidget {
 
 class _SkeletonBoxState extends State<SkeletonBox>
     with SingleTickerProviderStateMixin {
-  static const Duration _period = Duration(milliseconds: 1400);
+  static const Duration _period = Motion.shimmerCycle;
 
   late final AnimationController _controller;
 

@@ -53,14 +53,21 @@ class FadeSlideIn extends StatefulWidget {
 class _FadeSlideInState extends State<FadeSlideIn>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  bool _started = false;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: widget.duration);
+  }
 
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    if (reduceMotion) {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+
+    if (MediaQuery.disableAnimationsOf(context)) {
       _controller.value = 1;
       return;
     }

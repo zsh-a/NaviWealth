@@ -112,7 +112,7 @@ class _SplitterState extends State<_Splitter> {
           width: AppSpacing.s16,
           child: Center(
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
+              duration: Motion.fast,
               width: highlight ? 2 : 1,
               color: highlight ? context.theme.colors.primary : widget.color,
             ),

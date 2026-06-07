@@ -18,12 +18,13 @@ import 'package:forui/forui.dart';
 
 import '../../tokens/breakpoints.dart';
 import '../../tokens/dimens_tokens.dart';
+import '../../tokens/motion_tokens.dart';
 import '../responsive_two_column.dart';
 import '../skeleton.dart';
 
 /// Minimum visible time for a page-level skeleton. Shorter than this and
 /// the human eye reads the swap as a flash rather than a hand-off.
-const Duration _kMinSkeletonDisplay = Duration(milliseconds: 120);
+const Duration _kMinSkeletonDisplay = Motion.fast;
 
 /// Wraps an async builder so the skeleton phase is held for at least
 /// [minDisplay] before the resolved widget swaps in. The data widget is
@@ -77,7 +78,7 @@ class _PageSkeletonShellState<T> extends State<PageSkeletonShell<T>> {
   Widget build(BuildContext context) {
     final showSkeleton = widget.isLoading || !_minElapsed;
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 160),
+      duration: Motion.fast,
       child: showSkeleton
           ? KeyedSubtree(
               key: const ValueKey('page-skeleton'),
