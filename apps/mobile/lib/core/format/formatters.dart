@@ -202,4 +202,90 @@ class AppFormatters {
   String monthYear(DateTime value) {
     return DateFormat.yMMM(_localeName).format(value);
   }
+
+  // ---------- Relative time ----------
+
+  /// Human-readable relative time string ("3 minutes ago", "昨天", etc.).
+  ///
+  /// [justNow], [minutesAgo], [hoursAgo], [daysAgo] are localized templates
+  /// with a single `{n}` placeholder (e.g. l10n.aiChatRelativeMinutesAgo).
+  /// [dateFallback] formats dates older than [maxDays] days.
+  /// [maxDays] controls when the fallback date is used (default 7).
+  static String relativeTime(
+    DateTime when, {
+    required String justNow,
+    required String Function(int) minutesAgo,
+    required String Function(int) hoursAgo,
+    required String Function(int) daysAgo,
+    required String Function(DateTime) dateFallback,
+    int maxDays = 7,
+  }) {
+    final diff = DateTime.now().difference(when.toLocal());
+    if (diff.inMinutes < 1) return justNow;
+    if (diff.inMinutes < 60) return minutesAgo(diff.inMinutes);
+    if (diff.inHours < 24) return hoursAgo(diff.inHours);
+    if (diff.inDays < maxDays) return daysAgo(diff.inDays);
+    return dateFallback(when.toLocal());
+  }
+
+  // ---------- Static helpers ----------
+
+  /// Currency code → display glyph. Falls back to [code] itself for unknowns.
+  static String currencyGlyph(String code) {
+    switch (code.toUpperCase()) {
+      case 'CNY':
+      case 'JPY':
+        return '¥';
+      case 'USD':
+        return r'$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'HKD':
+        return r'HK$';
+      default:
+        return code;
+    }
+  }
+
+  /// Converts a [DateTime] to a UTC `YYYY-MM-DD` string key.
+  static String utcDayKey(DateTime t) =>
+      t.toUtc().toIso8601String().substring(0, 10);
+}
+
+/// Lightweight static formatting helpers that use the system default locale.
+/// Use [AppFormatters] when a specific locale is required.
+class Fmt {
+  Fmt._();
+
+  /// Locale-default number formatting.
+  static String number(num value, {int? decimalDigits}) {
+    final formatter = NumberFormat.decimalPattern();
+    if (decimalDigits != null) {
+      formatter.minimumFractionDigits = decimalDigits;
+      formatter.maximumFractionDigits = decimalDigits;
+    }
+    return formatter.format(value);
+  }
+
+  /// Signed percentage with explicit + for positives.
+  /// [value] is the ratio (0.123 → "+12.3%").
+  static String signedPercent(num value, {int decimalDigits = 2}) {
+    final formatter = NumberFormat.decimalPercentPattern(
+      decimalDigits: decimalDigits,
+    );
+    final base = formatter.format(value.abs());
+    if (value > 0) return '+$base';
+    if (value < 0) return '-$base';
+    return base;
+  }
+}
+
+/// Extension on [Decimal] for safe double→Decimal conversion.
+extension DecimalX on Decimal {
+  /// Creates a [Decimal] from a [double] with the given number of fraction
+  /// [scale] digits, avoiding IEEE-754 drift.
+  static Decimal fromDouble(double v, {int scale = 2}) =>
+      Decimal.parse(v.toStringAsFixed(scale));
 }

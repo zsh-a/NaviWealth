@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 
+import '../../../core/format/formatters.dart';
 import '../../../domain/values/money.dart';
 import 'fire_action.dart';
 import 'fire_bucket.dart';
@@ -311,7 +312,7 @@ FireState simulateFireState({
       baseline.annualSpendSource == FireAnnualSpendSource.trailing12m;
   Money? trailing;
   if (useTrailing) {
-    final factor = Decimal.parse(trailingScale.toStringAsFixed(4));
+    final factor = DecimalX.fromDouble(trailingScale, scale: 4);
     trailing = Money(
       baseline.annualSpend.amount * factor,
       baseline.baseCurrency,

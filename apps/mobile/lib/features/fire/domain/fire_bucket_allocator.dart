@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../core/format/formatters.dart';
 import '../../../domain/values/money.dart';
 import '../../home/domain/dashboard_models.dart';
 import 'fire_bucket.dart';
@@ -105,7 +106,7 @@ FireBucketAllocation allocateBuckets({
       final pct = rule?.allocationPct;
       final factor = pct == null
           ? Decimal.one
-          : Decimal.parse(pct.clamp(0.0, 1.0).toStringAsFixed(4));
+          : DecimalX.fromDouble(pct.clamp(0.0, 1.0), scale: 4);
       final contribution = item.valueInBase.amount * factor;
       totals[role] = totals[role]! + contribution;
       assetIds[role]!.add(item.id);
@@ -117,7 +118,7 @@ FireBucketAllocation allocateBuckets({
       monthlyExpense.amount * Decimal.fromInt(plan.targetCashBucketMonths);
   final riskReserveTarget =
       plan.totalReserves.amount +
-      Decimal.parse(plan.riskSettings.oneOffShockAmount.toStringAsFixed(2));
+      DecimalX.fromDouble(plan.riskSettings.oneOffShockAmount);
 
   Money money(Decimal d) => Money(d, plan.baseCurrency);
 

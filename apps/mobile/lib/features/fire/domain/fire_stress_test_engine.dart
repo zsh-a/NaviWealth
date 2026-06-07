@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 
+import '../../../core/format/formatters.dart';
 import '../../../domain/values/money.dart';
 import 'fire_action.dart';
 import 'fire_plan.dart';
@@ -42,7 +43,7 @@ FireStressResult _marketDrawdown(FireState state, FireStressParams? override) {
   final pct =
       (override?.drawdownPct ?? state.plan.riskSettings.marketDrawdownPct)
           .clamp(0.0, 0.99);
-  final factor = Decimal.parse((1 - pct).toStringAsFixed(4));
+  final factor = DecimalX.fromDouble(1 - pct, scale: 4);
   final investableAfter = Money(
     state.investableAssets.amount * factor,
     state.baseCurrency,
@@ -80,7 +81,7 @@ FireStressResult _expenseSurge(FireState state, FireStressParams? override) {
   final pct =
       (override?.expenseShockPct ?? state.plan.riskSettings.expenseShockPct)
           .clamp(0.0, 5.0);
-  final factor = Decimal.parse((1 + pct).toStringAsFixed(4));
+  final factor = DecimalX.fromDouble(1 + pct, scale: 4);
   final annualSpendAfter = Money(
     state.annualSpend.amount * factor,
     state.baseCurrency,
@@ -119,7 +120,7 @@ FireStressResult _expenseSurge(FireState state, FireStressParams? override) {
 FireStressResult _oneOffShock(FireState state, FireStressParams? override) {
   final raw = override?.amount ?? state.plan.riskSettings.oneOffShockAmount;
   final amount = raw < 0 ? 0.0 : raw;
-  final shock = Decimal.parse(amount.toStringAsFixed(2));
+  final shock = DecimalX.fromDouble(amount);
   final liquidAfter = Money(
     state.liquidAssets.amount - shock,
     state.baseCurrency,
@@ -163,7 +164,7 @@ FireStressResult _fxShock(FireState state, FireStressParams? override) {
   // numbers say "safe" — surfacing the input gap explicitly.
   final pct = (override?.fxShockPct ?? state.plan.riskSettings.fxShockPct)
       .clamp(0.0, 0.99);
-  final factor = Decimal.parse((1 - pct).toStringAsFixed(4));
+  final factor = DecimalX.fromDouble(1 - pct, scale: 4);
   final investableAfter = Money(
     state.investableAssets.amount * factor,
     state.baseCurrency,

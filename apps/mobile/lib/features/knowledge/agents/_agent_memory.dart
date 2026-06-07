@@ -9,6 +9,7 @@
 library;
 
 import '../../../core/ai/contracts/memory_record.dart';
+import '../../../core/format/formatters.dart';
 
 /// Build the day-keyed memory an agent run records. Returns the record plus
 /// its `memoryId` so the caller can echo the id into its `AgentRunResult`.
@@ -52,10 +53,4 @@ import '../../../core/ai/contracts/memory_record.dart';
   );
 }
 
-String _utcDayKey(DateTime value) {
-  final utc = value.toUtc();
-  final year = utc.year.toString().padLeft(4, '0');
-  final month = utc.month.toString().padLeft(2, '0');
-  final day = utc.day.toString().padLeft(2, '0');
-  return '$year-$month-$day';
-}
+String _utcDayKey(DateTime value) => AppFormatters.utcDayKey(value);

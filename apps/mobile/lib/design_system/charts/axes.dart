@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/format/formatters.dart';
+
 /// Date-axis label format presets. Picked to match the time-window buttons
 /// across analytics / FIRE pages (1M / 3M / YTD / 1Y / 3Y / ALL).
 enum AxisDateFormat {
@@ -136,23 +138,7 @@ class ValueAxis {
     }
   }
 
-  static String _glyph(String code) {
-    switch (code.toUpperCase()) {
-      case 'CNY':
-      case 'JPY':
-        return '¥';
-      case 'USD':
-        return '\$';
-      case 'EUR':
-        return '€';
-      case 'GBP':
-        return '£';
-      case 'HKD':
-        return 'HK\$';
-      default:
-        return code;
-    }
-  }
+  static String _glyph(String code) => AppFormatters.currencyGlyph(code);
 }
 
 enum ValueAxisFormat { auto, currency, percent, decimal }

@@ -22,6 +22,7 @@ import '../../../app/shell_chrome.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
+import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as health_agent_providers;
@@ -289,16 +290,17 @@ class _SleepCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _MetricCard(
       icon: FLucideIcons.moon,
-      label: AppLocalizations.of(context).healthSleepMetricLabel,
+      label: l10n.healthSleepMetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
         data: (m) {
           if (m == null) return const _ValueDash();
           final hours = _secondsToHours(m.value, m.unit);
-          return _ValueBig(value: '${_round(hours)}h', sub: _ago(m.capturedAt));
+          return _ValueBig(value: '${_round(hours)}h', sub: _ago(l10n, m.capturedAt));
         },
       ),
     );
@@ -311,9 +313,10 @@ class _HrvCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _MetricCard(
       icon: FLucideIcons.heartPulse,
-      label: AppLocalizations.of(context).healthHrvMetricLabel,
+      label: l10n.healthHrvMetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -321,7 +324,7 @@ class _HrvCard extends StatelessWidget {
           if (m == null) return const _ValueDash();
           return _ValueBig(
             value: '${_round(m.value)} ${m.unit}',
-            sub: _ago(m.capturedAt),
+            sub: _ago(l10n, m.capturedAt),
           );
         },
       ),
@@ -335,9 +338,10 @@ class _HeartRateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _MetricCard(
       icon: FLucideIcons.heartPulse,
-      label: AppLocalizations.of(context).healthHeartRateMetricLabel,
+      label: l10n.healthHeartRateMetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -345,7 +349,7 @@ class _HeartRateCard extends StatelessWidget {
           if (m == null) return const _ValueDash();
           return _ValueBig(
             value: '${_round(m.value)} ${m.unit}',
-            sub: _ago(m.capturedAt),
+            sub: _ago(l10n, m.capturedAt),
           );
         },
       ),
@@ -359,16 +363,17 @@ class _WorkoutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _MetricCard(
       icon: FLucideIcons.dumbbell,
-      label: AppLocalizations.of(context).healthWorkoutMetricLabel,
+      label: l10n.healthWorkoutMetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
         data: (m) {
           if (m == null) return const _ValueDash();
           final minutes = (m.value / 60).round();
-          return _ValueBig(value: '${minutes}min', sub: _ago(m.capturedAt));
+          return _ValueBig(value: '${minutes}min', sub: _ago(l10n, m.capturedAt));
         },
       ),
     );
@@ -381,10 +386,11 @@ class _StepsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final walking = ref.watch(latestWalkingDistanceProvider);
     return _MetricCard(
       icon: FLucideIcons.footprints,
-      label: AppLocalizations.of(context).healthStepsMetricLabel,
+      label: l10n.healthStepsMetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -396,8 +402,8 @@ class _StepsCard extends ConsumerWidget {
           final stepsDay = _utcDayKey(m.capturedAt);
           final wm = walking.asData?.value;
           final sub = wm != null && _utcDayKey(wm.capturedAt) == stepsDay
-              ? '${(wm.value / 1000.0).toStringAsFixed(1)} km · ${_ago(m.capturedAt)}'
-              : _ago(m.capturedAt);
+              ? '${(wm.value / 1000.0).toStringAsFixed(1)} km · ${_ago(l10n, m.capturedAt)}'
+              : _ago(l10n, m.capturedAt);
           return _ValueBig(value: _formatSteps(m.value), sub: sub);
         },
       ),
@@ -411,9 +417,10 @@ class _ActiveEnergyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _MetricCard(
       icon: FLucideIcons.flame,
-      label: AppLocalizations.of(context).healthEnergyMetricLabel,
+      label: l10n.healthEnergyMetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -421,7 +428,7 @@ class _ActiveEnergyCard extends StatelessWidget {
           if (m == null) return const _ValueDash();
           return _ValueBig(
             value: '${m.value.round()} kcal',
-            sub: _ago(m.capturedAt),
+            sub: _ago(l10n, m.capturedAt),
           );
         },
       ),
@@ -582,33 +589,22 @@ double _secondsToHours(double value, String unit) => switch (unit) {
 
 double _round(double v) => (v * 100).round() / 100.0;
 
-String _utcDayKey(DateTime t) => t.toUtc().toIso8601String().substring(0, 10);
+String _utcDayKey(DateTime t) => AppFormatters.utcDayKey(t);
 
-String _formatSteps(double v) {
-  final n = v.round();
-  final s = n.toString();
-  final buf = StringBuffer();
-  for (var i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
-    buf.write(s[i]);
-  }
-  return buf.toString();
-}
+String _formatSteps(double v) => Fmt.number(v.round());
 
-String _ago(DateTime when) {
-  final now = DateTime.now();
-  final diff = now.difference(when.toLocal());
-  if (diff.inMinutes < 1) return '刚刚';
-  if (diff.inMinutes < 60) return '${diff.inMinutes} 分钟前';
-  if (diff.inHours < 24) return '${diff.inHours} 小时前';
-  final days = diff.inDays;
-  if (days == 1) return '昨天';
-  if (days < 7) return '$days 天前';
-  final local = when.toLocal();
-  final mm = local.month.toString().padLeft(2, '0');
-  final dd = local.day.toString().padLeft(2, '0');
-  return '$mm-$dd';
-}
+String _ago(AppLocalizations l10n, DateTime when) => AppFormatters.relativeTime(
+      when,
+      justNow: l10n.aiChatRelativeJustNow,
+      minutesAgo: l10n.aiChatRelativeMinutesAgo,
+      hoursAgo: l10n.aiChatRelativeHoursAgo,
+      daysAgo: l10n.aiChatRelativeDaysAgo,
+      dateFallback: (d) {
+        final mm = d.month.toString().padLeft(2, '0');
+        final dd = d.day.toString().padLeft(2, '0');
+        return '$mm-$dd';
+      },
+    );
 
 class _BriefingPanel extends ConsumerStatefulWidget {
   const _BriefingPanel();
@@ -684,6 +680,7 @@ class _BriefingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final r = record;
     if (r == null) return _BriefingEmpty(running: running, onRun: onRun);
     final outcome = r.payload['outcome'];
@@ -739,7 +736,7 @@ class _BriefingCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s8),
           Text(
-            _formatRelative(r.updatedAt),
+            _ago(l10n, r.updatedAt),
             style: typography.xs.copyWith(color: colors.mutedForeground),
           ),
         ],
@@ -845,19 +842,4 @@ class _BriefingError extends StatelessWidget {
       ),
     );
   }
-}
-
-String _formatRelative(DateTime when) {
-  final now = DateTime.now();
-  final diff = now.difference(when.toLocal());
-  if (diff.inMinutes < 1) return '刚刚';
-  if (diff.inMinutes < 60) return '${diff.inMinutes} 分钟前';
-  if (diff.inHours < 24) return '${diff.inHours} 小时前';
-  final days = diff.inDays;
-  if (days == 1) return '昨天';
-  if (days < 7) return '$days 天前';
-  final local = when.toLocal();
-  final mm = local.month.toString().padLeft(2, '0');
-  final dd = local.day.toString().padLeft(2, '0');
-  return '${local.year}-$mm-$dd';
 }

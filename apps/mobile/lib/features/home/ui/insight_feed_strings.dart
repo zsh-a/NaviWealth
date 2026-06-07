@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 
+import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/insight_models.dart';
 import 'asset_category_visuals.dart';
@@ -36,7 +37,7 @@ String insightDetail(AppLocalizations l10n, InsightItem item) {
       item.maturityDays ?? 0,
     ),
     InsightKind.anomaly => l10n.dashboardInsightAnomalyValue(
-      _signedPercent(item.anomalyPct ?? 0),
+      Fmt.signedPercent(item.anomalyPct ?? 0, decimalDigits: 0),
     ),
     InsightKind.duplicateCharge => _duplicateCharge(l10n, item),
     InsightKind.monthlySummary => _monthlySummary(l10n, item),
@@ -105,23 +106,7 @@ String _formatMoney(int amountMinor, String currency) {
   return formatted;
 }
 
-String _glyphFor(String code) {
-  switch (code.toUpperCase()) {
-    case 'CNY':
-    case 'JPY':
-      return '¥';
-    case 'USD':
-      return r'$';
-    case 'EUR':
-      return '€';
-    case 'GBP':
-      return '£';
-    case 'HKD':
-      return r'HK$';
-    default:
-      return '$code ';
-  }
-}
+String _glyphFor(String code) => AppFormatters.currencyGlyph(code);
 
 String _fireProgress(AppLocalizations l10n, InsightItem item) {
   final months = item.monthsToTarget ?? 0;
@@ -145,9 +130,3 @@ String _drift(AppLocalizations l10n, InsightItem item) {
   return l10n.dashboardInsightDriftValue(label, direction, pp);
 }
 
-String _signedPercent(double ratio) {
-  final pct = (ratio.abs() * 100).round();
-  if (ratio > 0) return '+$pct%';
-  if (ratio < 0) return '-$pct%';
-  return '0%';
-}

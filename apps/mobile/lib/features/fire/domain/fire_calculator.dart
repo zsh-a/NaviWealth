@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:decimal/decimal.dart';
 
+import '../../../core/format/formatters.dart';
 import 'fire_goal.dart';
 import 'fire_projection.dart';
 
@@ -267,7 +268,7 @@ class FireCalculator {
   /// multiply by (`0.8`, `1.2`, `0.04`) are exact at 4 digits, so the
   /// rounding here is bit-for-bit reproducible.
   static Decimal _scaleDecimal(Decimal value, double factor) {
-    final f = Decimal.parse(factor.toStringAsFixed(4));
+    final f = DecimalX.fromDouble(factor, scale: 4);
     return value * f;
   }
 }

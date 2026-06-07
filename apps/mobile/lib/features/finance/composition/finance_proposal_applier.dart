@@ -10,6 +10,7 @@ library;
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/domain/values/expense_category_taxonomy.dart';
@@ -828,7 +829,7 @@ Future<void> _applyFirePlanUpdateProposal({
   final plan = ref.read(firePlanProvider);
   Decimal? d(String key) {
     final raw = after[key];
-    if (raw is num) return Decimal.parse(raw.toDouble().toStringAsFixed(2));
+    if (raw is num) return DecimalX.fromDouble(raw.toDouble());
     if (raw is String) return Decimal.tryParse(raw);
     return null;
   }
