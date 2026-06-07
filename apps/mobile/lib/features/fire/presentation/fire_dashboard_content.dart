@@ -592,6 +592,4 @@ Color _colorForTier(
   }
 }
 
-Decimal _toFixedDecimal(double value) {
-  return Decimal.parse(value.toStringAsFixed(2));
-}
+Decimal _toFixedDecimal(double value) => DecimalX.fromDouble(value);

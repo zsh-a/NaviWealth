@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../../../core/format/formatters.dart';
+import '../../../core/format/providers.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -70,7 +70,7 @@ class _BodyMeasurementEntrySheetState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final formatter = AppFormatters(locale: Localizations.localeOf(context));
+    final formatter = context.formatters(ref);
     final now = DateTime.now();
     final today = _calendarDay(now);
     return AppSheet(

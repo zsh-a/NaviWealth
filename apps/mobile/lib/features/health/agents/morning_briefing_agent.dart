@@ -27,6 +27,7 @@ import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/format/formatters.dart';
 import '../../../core/notifications/notification_service.dart';
 import '../data/morning_briefing_preferences.dart';
 import 'briefing_synthesizer.dart';
@@ -138,7 +139,7 @@ class MorningBriefingAgent implements Agent {
       );
     }
 
-    final dayKey = startedAt.toUtc().toIso8601String().substring(0, 10);
+    final dayKey = AppFormatters.utcDayKey(startedAt);
     final inputs = BriefingInputs(
       dayKey: dayKey,
       healthEvents: healthEvents,

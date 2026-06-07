@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/format/formatters.dart';
+
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
@@ -634,21 +636,6 @@ class _PreviewCard extends StatelessWidget {
     ).format(amount.toDouble());
   }
 
-  static String _currencySymbol(String code) {
-    switch (code.toUpperCase()) {
-      case 'CNY':
-      case 'JPY':
-        return '¥';
-      case 'USD':
-        return '\$';
-      case 'EUR':
-        return '€';
-      case 'GBP':
-        return '£';
-      case 'HKD':
-        return 'HK\$';
-      default:
-        return code;
-    }
-  }
+  static String _currencySymbol(String code) =>
+      AppFormatters.currencyGlyph(code);
 }

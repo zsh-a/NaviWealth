@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/auth/current_user.dart';
+import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
@@ -590,15 +591,13 @@ class _ActionRow extends StatelessWidget {
   }
 }
 
-String _formatRelative(AppLocalizations l10n, DateTime when) {
-  final now = DateTime.now().toUtc();
-  final diff = now.difference(when.toUtc());
-  if (diff.inMinutes < 1) return l10n.aiChatRelativeJustNow;
-  if (diff.inHours < 1) return l10n.aiChatRelativeMinutesAgo(diff.inMinutes);
-  if (diff.inDays < 1) return l10n.aiChatRelativeHoursAgo(diff.inHours);
-  if (diff.inDays < 7) return l10n.aiChatRelativeDaysAgo(diff.inDays);
-  final local = when.toLocal();
-  final m = local.month.toString().padLeft(2, '0');
-  final d = local.day.toString().padLeft(2, '0');
-  return '${local.year}-$m-$d';
-}
+String _formatRelative(AppLocalizations l10n, DateTime when) =>
+    AppFormatters.relativeTime(
+      when,
+      justNow: l10n.aiChatRelativeJustNow,
+      minutesAgo: l10n.aiChatRelativeMinutesAgo,
+      hoursAgo: l10n.aiChatRelativeHoursAgo,
+      daysAgo: l10n.aiChatRelativeDaysAgo,
+      dateFallback: (d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+          '${d.day.toString().padLeft(2, '0')}',
+    );

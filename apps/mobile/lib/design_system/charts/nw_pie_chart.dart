@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
+import 'package:intl/intl.dart';
 
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
@@ -215,15 +216,7 @@ class _NwPieChartState extends State<NwPieChart> {
     );
   }
 
-  String _formatCompact(double value) {
-    final sign = value < 0 ? '-' : '';
-    final abs = value.abs();
-    if (abs >= 1e12) return '$sign${(abs / 1e12).toStringAsFixed(1)}T';
-    if (abs >= 1e9) return '$sign${(abs / 1e9).toStringAsFixed(1)}B';
-    if (abs >= 1e6) return '$sign${(abs / 1e6).toStringAsFixed(1)}M';
-    if (abs >= 1e3) return '$sign${(abs / 1e3).toStringAsFixed(1)}K';
-    return value.toStringAsFixed(0);
-  }
+  String _formatCompact(double value) => NumberFormat.compact().format(value);
 
   PieTouchData _buildTouchData() {
     return PieTouchData(

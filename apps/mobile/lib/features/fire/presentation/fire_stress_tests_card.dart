@@ -1,4 +1,3 @@
-import 'package:decimal/decimal.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -204,7 +203,7 @@ String _scenarioLabel(
     case FireStressScenario.oneOffShock:
       final amount = r.params.amount ?? 0;
       final amountStr = formatters.currency(
-        Decimal.parse(amount.toStringAsFixed(2)),
+        DecimalX.fromDouble(amount),
         code: r.netWorthAfter.currency,
       );
       return l10n.fireOsStressScenarioOneOffShock(amountStr);

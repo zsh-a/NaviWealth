@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:intl/intl.dart';
 
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/entities/fx_rate.dart' as dom;
 import '../../../l10n/gen/app_localizations.dart';
@@ -82,7 +82,7 @@ class _RateList extends ConsumerWidget {
         ),
       );
     }
-    final dateFmt = DateFormat.yMMMd();
+    final formatters = context.formatters(ref);
     // Most-recent first.
     final ordered = [...rates]..sort((a, b) => b.date.compareTo(a.date));
     final semantic = SemanticColors.of(context);
@@ -152,7 +152,7 @@ class _RateList extends ConsumerWidget {
                       ),
                       const SizedBox(height: AppSpacing.s2),
                       Text(
-                        '${dateFmt.format(r.date)} · ${r.source}',
+                        '${formatters.date(r.date)} · ${r.source}',
                         style: context.theme.typography.xs.copyWith(
                           color: colors.mutedForeground,
                         ),

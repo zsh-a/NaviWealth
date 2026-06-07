@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/format/formatters.dart';
+import '../../../../core/format/providers.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/physical_asset.dart';
@@ -79,9 +81,7 @@ class _DetailBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final dateFormat = DateFormat.yMMMd(
-      Localizations.maybeLocaleOf(context)?.toString(),
-    );
+    final formatters = context.formatters(ref);
     final historyAsync = ref.watch(
       physicalAssetValuationHistoryProvider(asset.id),
     );
@@ -112,7 +112,7 @@ class _DetailBody extends ConsumerWidget {
                 if (asset.lastValuationAt != null) ...[
                   const SizedBox(height: AppSpacing.s4),
                   Text(
-                    dateFormat.format(asset.lastValuationAt!),
+                    formatters.date(asset.lastValuationAt!),
                     style: context.theme.typography.xs.copyWith(
                       color: context.theme.colors.mutedForeground,
                     ),
@@ -143,7 +143,7 @@ class _DetailBody extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.s12),
-        _FactsCard(asset: asset, dateFormat: dateFormat),
+        _FactsCard(asset: asset, formatters: formatters),
         const SizedBox(height: AppSpacing.s12),
         SoftCard(
           child: Padding(
@@ -174,7 +174,7 @@ class _DetailBody extends ConsumerWidget {
                           (p) => _HistoryRow(
                             point: p,
                             currency: asset.currency,
-                            dateFormat: dateFormat,
+                            formatters: formatters,
                           ),
                         ),
                       ],
@@ -231,10 +231,10 @@ class _DetailBody extends ConsumerWidget {
 }
 
 class _FactsCard extends StatelessWidget {
-  const _FactsCard({required this.asset, required this.dateFormat});
+  const _FactsCard({required this.asset, required this.formatters});
 
   final PhysicalAsset asset;
-  final DateFormat dateFormat;
+  final AppFormatters formatters;
 
   @override
   Widget build(BuildContext context) {
@@ -242,7 +242,7 @@ class _FactsCard extends StatelessWidget {
     final entries = <(String, String)>[
       (
         l10n.physicalAssetFieldPurchaseDate,
-        dateFormat.format(asset.purchaseDate),
+        formatters.date(asset.purchaseDate),
       ),
       (
         l10n.physicalAssetFieldPurchasePrice,
@@ -304,12 +304,12 @@ class _HistoryRow extends StatelessWidget {
   const _HistoryRow({
     required this.point,
     required this.currency,
-    required this.dateFormat,
+    required this.formatters,
   });
 
   final ValuationPoint point;
   final String currency;
-  final DateFormat dateFormat;
+  final AppFormatters formatters;
 
   @override
   Widget build(BuildContext context) {
@@ -329,7 +329,7 @@ class _HistoryRow extends StatelessWidget {
               children: [
                 Text(label, style: context.theme.typography.xs),
                 Text(
-                  dateFormat.format(point.asOf),
+                  formatters.date(point.asOf),
                   style: context.theme.typography.sm,
                 ),
                 if (point.note != null && point.note!.isNotEmpty)

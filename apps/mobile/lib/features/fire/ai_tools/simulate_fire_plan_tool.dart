@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
+import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/fire/domain/fire_state.dart';
@@ -62,7 +63,7 @@ class SimulateFirePlanTool implements DeviceTool {
 
     Decimal? dec(String key) {
       final raw = input[key];
-      if (raw is num) return Decimal.parse(raw.toDouble().toStringAsFixed(2));
+      if (raw is num) return DecimalX.fromDouble(raw.toDouble());
       return null;
     }
 

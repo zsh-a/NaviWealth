@@ -183,23 +183,7 @@ class MoneyText extends StatelessWidget {
     }
   }
 
-  String _defaultGlyphFor(String code) {
-    switch (code.toUpperCase()) {
-      case 'CNY':
-      case 'JPY':
-        return '¥';
-      case 'USD':
-        return '\$';
-      case 'EUR':
-        return '€';
-      case 'GBP':
-        return '£';
-      case 'HKD':
-        return 'HK\$';
-      default:
-        return code;
-    }
-  }
+  String _defaultGlyphFor(String code) => AppFormatters.currencyGlyph(code);
 }
 
 /// Signed ledger amount text with shared unit formatting and semantic
