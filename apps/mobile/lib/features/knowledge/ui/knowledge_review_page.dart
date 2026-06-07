@@ -5,6 +5,7 @@
 /// unverified). Forui chrome with widget-layer pull-to-refresh.
 library;
 
+import 'package:flutter/material.dart' show Theme;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -361,16 +362,19 @@ class _ReviewQuickAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.background,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: colors.border),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x33000000),
+            color: Theme.of(context).shadowColor.withValues(
+              alpha: isDark ? AppOpacity.muted : AppOpacity.faint,
+            ),
             blurRadius: 16,
-            offset: Offset(0, 8),
+            offset: const Offset(0, 8),
           ),
         ],
       ),

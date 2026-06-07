@@ -23,6 +23,7 @@ library;
 
 import 'dart:async';
 
+import 'package:flutter/material.dart' show Theme;
 import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
@@ -132,6 +133,7 @@ class KnowledgeFloatingActionSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AnimatedScale(
       duration: const Duration(milliseconds: 120),
       curve: Curves.easeOutCubic,
@@ -141,11 +143,13 @@ class KnowledgeFloatingActionSurface extends StatelessWidget {
           color: colors.background,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: colors.border),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Color(0x33000000),
+              color: Theme.of(context).shadowColor.withValues(
+                alpha: isDark ? AppOpacity.muted : AppOpacity.faint,
+              ),
               blurRadius: 18,
-              offset: Offset(0, 10),
+              offset: const Offset(0, 10),
             ),
           ],
         ),

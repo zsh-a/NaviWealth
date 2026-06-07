@@ -417,15 +417,13 @@ class _LibraryList extends ConsumerWidget {
                 context,
                 d,
                 query: query,
-                deleteButton: _DeleteEntryButton(
-                  onPressed: () => _deleteEntry(
-                    context: context,
-                    ref: ref,
-                    repo: repo,
-                    kind: KnowledgeEntryKind.decision,
-                    id: d.id,
-                    title: d.question,
-                  ),
+                onDelete: () => _deleteEntry(
+                  context: context,
+                  ref: ref,
+                  repo: repo,
+                  kind: KnowledgeEntryKind.decision,
+                  id: d.id,
+                  title: d.question,
                 ),
               ),
             ),
@@ -454,15 +452,13 @@ class _LibraryList extends ConsumerWidget {
                 context,
                 p,
                 query: query,
-                deleteButton: _DeleteEntryButton(
-                  onPressed: () => _deleteEntry(
-                    context: context,
-                    ref: ref,
-                    repo: repo,
-                    kind: KnowledgeEntryKind.principle,
-                    id: p.id,
-                    title: p.statement,
-                  ),
+                onDelete: () => _deleteEntry(
+                  context: context,
+                  ref: ref,
+                  repo: repo,
+                  kind: KnowledgeEntryKind.principle,
+                  id: p.id,
+                  title: p.statement,
                 ),
               ),
             ),
@@ -494,15 +490,13 @@ class _LibraryList extends ConsumerWidget {
                 context,
                 a,
                 query: query,
-                deleteButton: _DeleteEntryButton(
-                  onPressed: () => _deleteEntry(
-                    context: context,
-                    ref: ref,
-                    repo: repo,
-                    kind: KnowledgeEntryKind.assumption,
-                    id: a.id,
-                    title: a.statement,
-                  ),
+                onDelete: () => _deleteEntry(
+                  context: context,
+                  ref: ref,
+                  repo: repo,
+                  kind: KnowledgeEntryKind.assumption,
+                  id: a.id,
+                  title: a.statement,
                 ),
               ),
             ),
@@ -533,17 +527,15 @@ class _LibraryList extends ConsumerWidget {
                 context,
                 n,
                 query: query,
-                deleteButton: _DeleteEntryButton(
-                  onPressed: () => _deleteEntry(
-                    context: context,
-                    ref: ref,
-                    repo: repo,
-                    kind: KnowledgeEntryKind.note,
-                    id: n.id,
-                    title: n.title.isEmpty
-                        ? AppLocalizations.of(context).knowledgeUntitled
-                        : n.title,
-                  ),
+                onDelete: () => _deleteEntry(
+                  context: context,
+                  ref: ref,
+                  repo: repo,
+                  kind: KnowledgeEntryKind.note,
+                  id: n.id,
+                  title: n.title.isEmpty
+                      ? AppLocalizations.of(context).knowledgeUntitled
+                      : n.title,
                 ),
               ),
             ),
@@ -570,15 +562,13 @@ class _LibraryList extends ConsumerWidget {
                 context,
                 c,
                 query: query,
-                deleteButton: _DeleteEntryButton(
-                  onPressed: () => _deleteEntry(
-                    context: context,
-                    ref: ref,
-                    repo: repo,
-                    kind: KnowledgeEntryKind.concept,
-                    id: c.id,
-                    title: c.name,
-                  ),
+                onDelete: () => _deleteEntry(
+                  context: context,
+                  ref: ref,
+                  repo: repo,
+                  kind: KnowledgeEntryKind.concept,
+                  id: c.id,
+                  title: c.name,
                 ),
               ),
             ),
@@ -607,15 +597,13 @@ class _LibraryList extends ConsumerWidget {
                 context,
                 e,
                 query: query,
-                deleteButton: _DeleteEntryButton(
-                  onPressed: () => _deleteEntry(
-                    context: context,
-                    ref: ref,
-                    repo: repo,
-                    kind: KnowledgeEntryKind.experiment,
-                    id: e.id,
-                    title: e.hypothesis,
-                  ),
+                onDelete: () => _deleteEntry(
+                  context: context,
+                  ref: ref,
+                  repo: repo,
+                  kind: KnowledgeEntryKind.experiment,
+                  id: e.id,
+                  title: e.hypothesis,
                 ),
               ),
             ),
@@ -639,15 +627,13 @@ class _LibraryList extends ConsumerWidget {
                 context,
                 r,
                 query: query,
-                deleteButton: _DeleteEntryButton(
-                  onPressed: () => _deleteEntry(
-                    context: context,
-                    ref: ref,
-                    repo: repo,
-                    kind: KnowledgeEntryKind.routine,
-                    id: r.id,
-                    title: r.statement,
-                  ),
+                onDelete: () => _deleteEntry(
+                  context: context,
+                  ref: ref,
+                  repo: repo,
+                  kind: KnowledgeEntryKind.routine,
+                  id: r.id,
+                  title: r.statement,
                 ),
               ),
             ),
@@ -1120,6 +1106,9 @@ class _FilterChipRow extends StatelessWidget {
       return FButton(
         variant: active ? FButtonVariant.primary : FButtonVariant.outline,
         size: FButtonSizeVariant.sm,
+        prefix: active
+            ? const Icon(FLucideIcons.check, size: AppIconSizes.xs)
+            : null,
         onPress: () => onChanged(value),
         child: Text(label),
       );
@@ -1166,6 +1155,9 @@ class _DateFilterChipRow extends StatelessWidget {
       return FButton(
         variant: active ? FButtonVariant.primary : FButtonVariant.outline,
         size: FButtonSizeVariant.sm,
+        prefix: active
+            ? const Icon(FLucideIcons.check, size: AppIconSizes.xs)
+            : null,
         onPress: () => onChanged(filter),
         child: Text(_dateFilterLabel(l10n, filter)),
       );
@@ -1276,29 +1268,33 @@ Future<void> _deleteEntry({
   }
 }
 
-Widget _buildDecisionTile(
-  BuildContext context,
-  KnowledgeDecision d, {
+/// Unified Library tile shell. Encodes the shared layout:
+/// `KnowledgeSection.item` → `_LibraryTileHeader` (title + trailing row
+/// with optional status badge + delete + chevron) → optional subtitle.
+Widget _buildLibraryTile(
+  BuildContext context, {
+  required String title,
   required String query,
-  required Widget deleteButton,
+  required VoidCallback onPress,
+  required VoidCallback onDelete,
+  String? statusBadge,
+  List<Widget> subtitle = const <Widget>[],
 }) {
-  final typography = context.theme.typography;
   final colors = context.theme.colors;
   return KnowledgeSection.item(
-    onPress: () => context.pushNamed(
-      AppRouteNames.knowledgeDecisionDetail,
-      pathParameters: {'id': d.id},
-    ),
+    onPress: onPress,
     children: [
       _LibraryTileHeader(
-        title: d.question,
+        title: title,
         query: query,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            KnowledgeStatusLabel(label: d.status.wire),
-            const SizedBox(width: AppSpacing.s4),
-            deleteButton,
+            if (statusBadge != null) ...[
+              KnowledgeStatusLabel(label: statusBadge),
+              const SizedBox(width: AppSpacing.s4),
+            ],
+            _DeleteEntryButton(onPressed: onDelete),
             const SizedBox(width: AppSpacing.s4),
             Icon(
               FLucideIcons.chevronRight,
@@ -1308,21 +1304,46 @@ Widget _buildDecisionTile(
           ],
         ),
       ),
-      if (d.selectedLabel.isNotEmpty)
-        KnowledgeHighlightedText(
-          text: d.selectedLabel,
-          query: query,
-          style: typography.sm.copyWith(color: colors.primary),
-        ),
-      if (d.rationaleMd.isNotEmpty) ...[
-        const SizedBox(height: AppSpacing.s4),
-        KnowledgeHighlightedText(
-          text: knowledgeExcerpt(d.rationaleMd),
-          query: query,
-          style: typography.sm.copyWith(color: colors.mutedForeground),
-        ),
-      ],
+      ...subtitle,
     ],
+  );
+}
+
+Widget _buildDecisionTile(
+  BuildContext context,
+  KnowledgeDecision d, {
+  required String query,
+  required VoidCallback onDelete,
+}) {
+  final typography = context.theme.typography;
+  final colors = context.theme.colors;
+  final subtitle = <Widget>[
+    if (d.selectedLabel.isNotEmpty)
+      KnowledgeHighlightedText(
+        text: d.selectedLabel,
+        query: query,
+        style: typography.sm.copyWith(color: colors.primary),
+      ),
+    if (d.rationaleMd.isNotEmpty) ...[
+      const SizedBox(height: AppSpacing.s4),
+      KnowledgeHighlightedText(
+        text: knowledgeExcerpt(d.rationaleMd),
+        query: query,
+        style: typography.sm.copyWith(color: colors.mutedForeground),
+      ),
+    ],
+  ];
+  return _buildLibraryTile(
+    context,
+    title: d.question,
+    query: query,
+    statusBadge: d.status.wire,
+    onPress: () => context.pushNamed(
+      AppRouteNames.knowledgeDecisionDetail,
+      pathParameters: {'id': d.id},
+    ),
+    onDelete: onDelete,
+    subtitle: subtitle,
   );
 }
 
@@ -1330,40 +1351,29 @@ Widget _buildNoteTile(
   BuildContext context,
   KnowledgeNote n, {
   required String query,
-  required Widget deleteButton,
+  required VoidCallback onDelete,
 }) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
   final l10n = AppLocalizations.of(context);
-  return KnowledgeSection.item(
+  final subtitle = <Widget>[
+    if (n.bodyMd.isNotEmpty)
+      KnowledgeHighlightedText(
+        text: knowledgeExcerpt(n.bodyMd),
+        query: query,
+        style: typography.sm.copyWith(color: colors.mutedForeground),
+      ),
+  ];
+  return _buildLibraryTile(
+    context,
+    title: n.title.isEmpty ? l10n.knowledgeUntitled : n.title,
+    query: query,
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'note', 'id': n.id},
     ),
-    children: [
-      _LibraryTileHeader(
-        title: n.title.isEmpty ? l10n.knowledgeUntitled : n.title,
-        query: query,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            deleteButton,
-            const SizedBox(width: AppSpacing.s4),
-            Icon(
-              FLucideIcons.chevronRight,
-              size: AppIconSizes.xs,
-              color: colors.mutedForeground,
-            ),
-          ],
-        ),
-      ),
-      if (n.bodyMd.isNotEmpty)
-        KnowledgeHighlightedText(
-          text: knowledgeExcerpt(n.bodyMd),
-          query: query,
-          style: typography.sm.copyWith(color: colors.mutedForeground),
-        ),
-    ],
+    onDelete: onDelete,
+    subtitle: subtitle,
   );
 }
 
@@ -1371,48 +1381,36 @@ Widget _buildPrincipleTile(
   BuildContext context,
   KnowledgePrinciple p, {
   required String query,
-  required Widget deleteButton,
+  required VoidCallback onDelete,
 }) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
   final l10n = AppLocalizations.of(context);
-  return KnowledgeSection.item(
+  final subtitle = <Widget>[
+    Text(
+      l10n.knowledgeDetailScope(p.scope),
+      style: typography.sm.copyWith(color: colors.mutedForeground),
+    ),
+    if (p.rationaleMd.isNotEmpty) ...[
+      const SizedBox(height: AppSpacing.s4),
+      KnowledgeHighlightedText(
+        text: knowledgeExcerpt(p.rationaleMd),
+        query: query,
+        style: typography.sm.copyWith(color: colors.mutedForeground),
+      ),
+    ],
+  ];
+  return _buildLibraryTile(
+    context,
+    title: p.statement,
+    query: query,
+    statusBadge: p.status.wire,
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'principle', 'id': p.id},
     ),
-    children: [
-      _LibraryTileHeader(
-        title: p.statement,
-        query: query,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            KnowledgeStatusLabel(label: p.status.wire),
-            const SizedBox(width: AppSpacing.s4),
-            deleteButton,
-            const SizedBox(width: AppSpacing.s4),
-            Icon(
-              FLucideIcons.chevronRight,
-              size: AppIconSizes.xs,
-              color: colors.mutedForeground,
-            ),
-          ],
-        ),
-      ),
-      Text(
-        l10n.knowledgeDetailScope(p.scope),
-        style: typography.sm.copyWith(color: colors.mutedForeground),
-      ),
-      if (p.rationaleMd.isNotEmpty) ...[
-        const SizedBox(height: AppSpacing.s4),
-        KnowledgeHighlightedText(
-          text: knowledgeExcerpt(p.rationaleMd),
-          query: query,
-          style: typography.sm.copyWith(color: colors.mutedForeground),
-        ),
-      ],
-    ],
+    onDelete: onDelete,
+    subtitle: subtitle,
   );
 }
 
@@ -1420,43 +1418,31 @@ Widget _buildAssumptionTile(
   BuildContext context,
   KnowledgeAssumption a, {
   required String query,
-  required Widget deleteButton,
+  required VoidCallback onDelete,
 }) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
   final l10n = AppLocalizations.of(context);
-  return KnowledgeSection.item(
+  final subtitle = <Widget>[
+    Text(
+      l10n.knowledgeDetailConfidenceScope(
+        a.confidence.toStringAsFixed(2),
+        a.scope,
+      ),
+      style: typography.sm.copyWith(color: colors.mutedForeground),
+    ),
+  ];
+  return _buildLibraryTile(
+    context,
+    title: a.statement,
+    query: query,
+    statusBadge: a.status.wire,
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'assumption', 'id': a.id},
     ),
-    children: [
-      _LibraryTileHeader(
-        title: a.statement,
-        query: query,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            KnowledgeStatusLabel(label: a.status.wire),
-            const SizedBox(width: AppSpacing.s4),
-            deleteButton,
-            const SizedBox(width: AppSpacing.s4),
-            Icon(
-              FLucideIcons.chevronRight,
-              size: AppIconSizes.xs,
-              color: colors.mutedForeground,
-            ),
-          ],
-        ),
-      ),
-      Text(
-        l10n.knowledgeDetailConfidenceScope(
-          a.confidence.toStringAsFixed(2),
-          a.scope,
-        ),
-        style: typography.sm.copyWith(color: colors.mutedForeground),
-      ),
-    ],
+    onDelete: onDelete,
+    subtitle: subtitle,
   );
 }
 
@@ -1464,39 +1450,28 @@ Widget _buildConceptTile(
   BuildContext context,
   KnowledgeConcept c, {
   required String query,
-  required Widget deleteButton,
+  required VoidCallback onDelete,
 }) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
-  return KnowledgeSection.item(
+  final subtitle = <Widget>[
+    if (c.summaryMd.isNotEmpty)
+      KnowledgeHighlightedText(
+        text: knowledgeExcerpt(c.summaryMd),
+        query: query,
+        style: typography.sm.copyWith(color: colors.mutedForeground),
+      ),
+  ];
+  return _buildLibraryTile(
+    context,
+    title: c.name,
+    query: query,
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'concept', 'id': c.id},
     ),
-    children: [
-      _LibraryTileHeader(
-        title: c.name,
-        query: query,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            deleteButton,
-            const SizedBox(width: AppSpacing.s4),
-            Icon(
-              FLucideIcons.chevronRight,
-              size: AppIconSizes.xs,
-              color: colors.mutedForeground,
-            ),
-          ],
-        ),
-      ),
-      if (c.summaryMd.isNotEmpty)
-        KnowledgeHighlightedText(
-          text: knowledgeExcerpt(c.summaryMd),
-          query: query,
-          style: typography.sm.copyWith(color: colors.mutedForeground),
-        ),
-    ],
+    onDelete: onDelete,
+    subtitle: subtitle,
   );
 }
 
@@ -1504,34 +1479,18 @@ Widget _buildExperimentTile(
   BuildContext context,
   KnowledgeExperiment e, {
   required String query,
-  required Widget deleteButton,
+  required VoidCallback onDelete,
 }) {
-  final colors = context.theme.colors;
-  return KnowledgeSection.item(
+  return _buildLibraryTile(
+    context,
+    title: e.hypothesis,
+    query: query,
+    statusBadge: e.status.wire,
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'experiment', 'id': e.id},
     ),
-    children: [
-      _LibraryTileHeader(
-        title: e.hypothesis,
-        query: query,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            KnowledgeStatusLabel(label: e.status.wire),
-            const SizedBox(width: AppSpacing.s4),
-            deleteButton,
-            const SizedBox(width: AppSpacing.s4),
-            Icon(
-              FLucideIcons.chevronRight,
-              size: AppIconSizes.xs,
-              color: colors.mutedForeground,
-            ),
-          ],
-        ),
-      ),
-    ],
+    onDelete: onDelete,
   );
 }
 
@@ -1539,7 +1498,7 @@ Widget _buildRoutineTile(
   BuildContext context,
   KnowledgeRoutine r, {
   required String query,
-  required Widget deleteButton,
+  required VoidCallback onDelete,
 }) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
@@ -1552,35 +1511,23 @@ Widget _buildRoutineTile(
       ? l10n.knowledgeRoutineDueToday
       : l10n.knowledgeRoutineDueInDays(days);
   final dueColor = days < 0 ? colors.destructive : colors.mutedForeground;
-  return KnowledgeSection.item(
+  final subtitle = <Widget>[
+    Text(
+      l10n.knowledgeRoutineLibraryMeta(dueLabel, r.intervalDays, r.scope),
+      style: typography.sm.copyWith(color: dueColor),
+    ),
+  ];
+  return _buildLibraryTile(
+    context,
+    title: r.statement,
+    query: query,
+    statusBadge: r.status.wire,
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'routine', 'id': r.id},
     ),
-    children: [
-      _LibraryTileHeader(
-        title: r.statement,
-        query: query,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            KnowledgeStatusLabel(label: r.status.wire),
-            const SizedBox(width: AppSpacing.s4),
-            deleteButton,
-            const SizedBox(width: AppSpacing.s4),
-            Icon(
-              FLucideIcons.chevronRight,
-              size: AppIconSizes.xs,
-              color: colors.mutedForeground,
-            ),
-          ],
-        ),
-      ),
-      Text(
-        l10n.knowledgeRoutineLibraryMeta(dueLabel, r.intervalDays, r.scope),
-        style: typography.sm.copyWith(color: dueColor),
-      ),
-    ],
+    onDelete: onDelete,
+    subtitle: subtitle,
   );
 }
 

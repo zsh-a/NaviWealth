@@ -761,23 +761,56 @@ class _DiffRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
-    final l10n = AppLocalizations.of(context);
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           label,
           style: typography.xs.copyWith(color: colors.mutedForeground),
         ),
-        const SizedBox(height: AppSpacing.s2),
-        Text(
-          l10n.knowledgeCaptureOriginalDiffValue(knowledgeExcerpt(before)),
-          style: typography.sm.copyWith(color: colors.mutedForeground),
+        const SizedBox(height: AppSpacing.s4),
+        // Original — muted, stricken
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.s8),
+          decoration: BoxDecoration(
+            color: colors.muted,
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+          ),
+          child: Text(
+            knowledgeExcerpt(before),
+            style: typography.sm.copyWith(
+              color: colors.mutedForeground,
+              decoration: TextDecoration.lineThrough,
+              decorationColor: colors.mutedForeground,
+            ),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-        const SizedBox(height: AppSpacing.s2),
-        Text(
-          '→ ${knowledgeExcerpt(after)}',
-          style: typography.sm.copyWith(color: colors.primary),
+        const SizedBox(height: AppSpacing.s4),
+        // Arrow indicator
+        Icon(
+          FLucideIcons.arrowDown,
+          size: AppIconSizes.xs,
+          color: colors.primary,
+        ),
+        const SizedBox(height: AppSpacing.s4),
+        // Improved — primary tint
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.s8),
+          decoration: BoxDecoration(
+            color: colors.primary.withValues(alpha: AppOpacity.subtle),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+            border: Border.all(
+              color: colors.primary.withValues(alpha: AppOpacity.light),
+            ),
+          ),
+          child: Text(
+            knowledgeExcerpt(after),
+            style: typography.sm.copyWith(color: colors.foreground),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
