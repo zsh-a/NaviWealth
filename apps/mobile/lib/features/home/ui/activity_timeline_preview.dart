@@ -78,6 +78,8 @@ class ActivityTimelinePreview extends ConsumerWidget {
               ),
             ),
             SoftCard(
+              borderless: true,
+              tinted: false,
               child: Column(
                 children: [
                   for (var i = 0; i < entries.length; i++) ...[
@@ -141,15 +143,17 @@ class _PreviewRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: AppOpacity.light),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+            SizedBox(
+              width: AppSpacing.s32,
+              height: AppSpacing.s32,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Icon(
+                  iconData,
+                  size: AppIconSizes.md,
+                  color: iconColor.withValues(alpha: AppOpacity.prominent),
+                ),
               ),
-              alignment: Alignment.center,
-              child: Icon(iconData, size: AppIconSizes.sm, color: iconColor),
             ),
             const SizedBox(width: AppSpacing.s12),
             Expanded(

@@ -55,7 +55,11 @@ class AllocationSummary extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: AppSpacing.s4, top: AppSpacing.s4, bottom: AppSpacing.s8),
+          padding: const EdgeInsets.only(
+            left: AppSpacing.s4,
+            top: AppSpacing.s4,
+            bottom: AppSpacing.s8,
+          ),
           child: Text(
             l10n.dashboardAllocationSummaryTitle,
             style: context.theme.typography.sm.copyWith(
@@ -65,7 +69,14 @@ class AllocationSummary extends StatelessWidget {
           ),
         ),
         SoftCard(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s16, AppSpacing.s8),
+          borderless: true,
+          level: SoftCardLevel.raised,
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s16,
+            AppSpacing.s16,
+            AppSpacing.s16,
+            AppSpacing.s8,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -76,7 +87,8 @@ class AllocationSummary extends StatelessWidget {
                   segment: s,
                   baseCurrency: snapshot.baseCurrency,
                 ),
-                if (s != segments.take(3).last) const SizedBox(height: AppSpacing.s8),
+                if (s != segments.take(3).last)
+                  const SizedBox(height: AppSpacing.s8),
               ],
               const SizedBox(height: AppSpacing.s4),
               Align(

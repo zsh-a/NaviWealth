@@ -95,18 +95,29 @@ class _PerspectiveBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final isDark = colors.brightness == Brightness.dark;
+    final background = isDark
+        ? colors.card.withValues(alpha: AppOpacity.muted)
+        : const Color(0xFFF1F5F5);
     final aggregation = buildWealthAggregation(
       snapshot: snapshot,
       perspective: perspective,
       categoryLabel: (c) => AssetCategoryVisuals.label(l10n, c),
     );
     if (aggregation.buckets.isEmpty) {
-      return SoftCard(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Text(
-          l10n.wealthPerspectiveEmpty,
-          style: context.theme.typography.sm.copyWith(
-            color: context.theme.colors.mutedForeground,
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(AppRadius.xlg),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s16),
+          child: Text(
+            l10n.wealthPerspectiveEmpty,
+            style: context.theme.typography.sm.copyWith(
+              color: colors.mutedForeground,
+            ),
           ),
         ),
       );
@@ -114,34 +125,35 @@ class _PerspectiveBody extends ConsumerWidget {
     final formatters = context.formatters(ref);
     final totalAmount = aggregation.total.amount;
     final base = aggregation.total.currency;
-    return SoftCard(
-      child: Column(
-        children: [
-          for (var i = 0; i < aggregation.buckets.length; i++) ...[
-            if (i > 0)
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppRadius.xlg),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10),
+        child: Column(
+          children: [
+            for (var i = 0; i < aggregation.buckets.length; i++) ...[
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
-                child: Container(
-                  height: 1,
-                  color: context.theme.colors.foreground.withValues(
-                    alpha: AppOpacity.faint,
-                  ),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
+                child: _BucketRow(
+                  bucket: aggregation.buckets[i],
+                  totalAmount: totalAmount.toDouble(),
+                  baseCurrency: base,
+                  formatters: formatters,
                 ),
               ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s12,
-                vertical: AppSpacing.s12,
-              ),
-              child: _BucketRow(
-                bucket: aggregation.buckets[i],
-                totalAmount: totalAmount.toDouble(),
-                baseCurrency: base,
-                formatters: formatters,
-              ),
-            ),
+              if (i != aggregation.buckets.length - 1)
+                SizedBox(
+                  height: 1,
+                  child: ColoredBox(
+                    color: colors.border.withValues(alpha: AppOpacity.faint),
+                  ),
+                ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -162,55 +174,76 @@ class _BucketRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final value = bucket.valueInBase.amount.toDouble();
     final share = totalAmount == 0 ? 0.0 : value / totalAmount;
-    return Row(
+    final clampedShare = share.clamp(0.0, 1.0).toDouble();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
+        Row(
+          children: [
+            Expanded(
+              child: Text(
                 bucket.label,
                 style: context.theme.typography.sm.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
-              ),
-              const SizedBox(height: AppSpacing.s2),
-              Text(
-                l10n.wealthPerspectiveItemCount(bucket.itemCount),
-                style: context.theme.typography.xs.copyWith(
-                  color: colors.mutedForeground,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: AppSpacing.s8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              formatters.currency(
-                bucket.valueInBase.amount,
-                code: baseCurrency,
-              ),
-              style: context.theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w600,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(height: AppSpacing.s2),
-            Text(
-              formatters.percent(share, decimalDigits: 1),
-              style: context.theme.typography.xs.copyWith(
-                color: colors.mutedForeground,
-              ),
+            const SizedBox(width: AppSpacing.s12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  formatters.currency(
+                    bucket.valueInBase.amount,
+                    code: baseCurrency,
+                  ),
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  formatters.percent(share, decimalDigits: 1),
+                  style: context.theme.typography.xs.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                ),
+              ],
             ),
           ],
+        ),
+        const SizedBox(height: AppSpacing.s10),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          child: SizedBox(
+            height: 4,
+            child: Stack(
+              children: [
+                ColoredBox(
+                  color: colors.foreground.withValues(
+                    alpha: AppOpacity.whisper,
+                  ),
+                  child: const SizedBox.expand(),
+                ),
+                FractionallySizedBox(
+                  widthFactor: clampedShare,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: ColoredBox(
+                    color: colors.primary.withValues(
+                      alpha: AppOpacity.disabled,
+                    ),
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );

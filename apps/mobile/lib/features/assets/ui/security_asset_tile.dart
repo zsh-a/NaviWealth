@@ -33,67 +33,71 @@ class SecurityAssetTile extends StatelessWidget {
     final qtyLabel = hasQty
         ? l10n.securitiesHoldingQuantity('$qty')
         : l10n.securitiesHoldingFlat;
+    final title = _securityTitle(asset);
 
     return MergeSemantics(
       child: GestureDetector(
         onTap: () => _onTap(context),
         behavior: HitTestBehavior.opaque,
         child: Container(
-            color: selected
-                ? context.theme.colors.primary.withValues(alpha: AppOpacity.subtle)
-                : null,
-            constraints: const BoxConstraints(minHeight: 56),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        OptionalHero(
-                          tag: 'asset-${asset.id}-name',
-                          enabled: heroEnabled,
-                          child: Text(
-                            asset.name == null || asset.name!.isEmpty
-                                ? asset.symbol
-                                : '${asset.symbol} \u00B7 ${asset.name}',
-                            style: context.theme.typography.md,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+          color: selected
+              ? context.theme.colors.primary.withValues(
+                  alpha: AppOpacity.subtle,
+                )
+              : null,
+          constraints: const BoxConstraints(minHeight: 56),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s16,
+              vertical: AppSpacing.s12,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      OptionalHero(
+                        tag: 'asset-${asset.id}-name',
+                        enabled: heroEnabled,
+                        child: Text(
+                          title,
+                          style: context.theme.typography.md,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: AppSpacing.s4),
-                        Text(
-                          qtyLabel,
-                          style: context.theme.typography.xs.copyWith(
-                            color: context.theme.colors.mutedForeground,
-                            fontFeatures: hasQty
-                                ? TypographyTokens.tabularFigures
-                                : null,
-                          ),
+                      ),
+                      const SizedBox(height: AppSpacing.s4),
+                      Text(
+                        qtyLabel,
+                        style: context.theme.typography.xs.copyWith(
+                          color: context.theme.colors.mutedForeground,
+                          fontFeatures: hasQty
+                              ? TypographyTokens.tabularFigures
+                              : null,
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s12),
+                if (displayValue != null)
+                  OptionalHero(
+                    tag: 'asset-${asset.id}-value',
+                    enabled: heroEnabled,
+                    child: MoneyText(
+                      amount: displayValue.toDouble(),
+                      currencyCode: asset.currency,
+                      style: TypographyTokens.numericBody,
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.s12),
-                  if (displayValue != null)
-                    OptionalHero(
-                      tag: 'asset-${asset.id}-value',
-                      enabled: heroEnabled,
-                      child: MoneyText(
-                        amount: displayValue.toDouble(),
-                        currencyCode: asset.currency,
-                        style: TypographyTokens.numericBody,
-                      ),
-                    ),
-                ],
-              ),
+              ],
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 
   void _onTap(BuildContext context) {
@@ -103,5 +107,14 @@ class SecurityAssetTile extends StatelessWidget {
     } else {
       context.go(AppRoutes.wealthAsset(asset.id));
     }
+  }
+
+  String _securityTitle(Asset asset) {
+    final name = asset.name?.trim();
+    if (name == null || name.isEmpty) return asset.symbol;
+    if (name.toUpperCase() == asset.symbol.trim().toUpperCase()) {
+      return asset.symbol;
+    }
+    return '${asset.symbol} · $name';
   }
 }

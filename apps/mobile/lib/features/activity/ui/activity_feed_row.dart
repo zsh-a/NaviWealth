@@ -54,69 +54,81 @@ class ActivityFeedEntryRow extends StatelessWidget {
       borderless: true,
       borderRadius: AppRadius.xlg,
       tinted: false,
-      child: FTile(
+      child: FTappable(
         onPress: () => _openDetail(context),
-        prefix: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: colors.background,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: colors.border.withValues(alpha: AppOpacity.faint),
-            ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s12,
+            vertical: AppSpacing.s10,
           ),
-          alignment: Alignment.center,
-          child: Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: iconTint.withValues(alpha: AppOpacity.light),
-              borderRadius: BorderRadius.circular(AppRadius.xs),
-            ),
-            alignment: Alignment.center,
-            child: Icon(iconData, size: AppIconSizes.sm, color: iconTint),
-          ),
-        ),
-        title: Text(
-          entry.entry.narration.isEmpty ? '—' : entry.entry.narration,
-          style: context.theme.typography.sm.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: subtitle == null
-            ? null
-            : Text(
-                subtitle,
-                style: context.theme.typography.xs.copyWith(
-                  color: colors.mutedForeground,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-        suffix: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (headline != null)
-              SignedMoneyText(
-                amount: headline.units,
-                unit: headline.unit,
-                formatters: formatter,
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w600,
+          child: Row(
+            children: [
+              SizedBox(
+                width: AppSpacing.s32,
+                height: AppSpacing.s32,
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Icon(
+                    iconData,
+                    size: AppIconSizes.md,
+                    color: iconTint.withValues(alpha: AppOpacity.prominent),
+                  ),
                 ),
               ),
-            const SizedBox(height: AppSpacing.s2),
-            Text(
-              timeStr,
-              style: context.theme.typography.xs.copyWith(
-                color: colors.mutedForeground,
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.entry.narration.isEmpty
+                          ? '—'
+                          : entry.entry.narration,
+                      style: context.theme.typography.sm.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: AppSpacing.s2),
+                      Text(
+                        subtitle,
+                        style: context.theme.typography.xs.copyWith(
+                          color: colors.mutedForeground,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: AppSpacing.s12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (headline != null)
+                    SignedMoneyText(
+                      amount: headline.units,
+                      unit: headline.unit,
+                      formatters: formatter,
+                      style: context.theme.typography.sm.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(
+                    timeStr,
+                    style: context.theme.typography.xs.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

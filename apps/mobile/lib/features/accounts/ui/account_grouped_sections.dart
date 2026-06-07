@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -57,24 +58,31 @@ class AccountsGroupedSections extends StatelessWidget {
 }
 
 Map<AccountCategory, List<Account>> _groupByCategory(List<Account> accounts) {
-  const order = [
-    AccountCategory.cash,
-    AccountCategory.bank,
-    AccountCategory.broker,
-    AccountCategory.crypto,
-    AccountCategory.credit,
-    AccountCategory.loan,
-    AccountCategory.asset,
-    AccountCategory.liability,
-  ];
+  final grouped = <AccountCategory, List<Account>>{};
+  for (final account in accounts) {
+    grouped.putIfAbsent(account.type, () => []).add(account);
+  }
+
   final out = <AccountCategory, List<Account>>{};
-  for (final cat in order) {
-    final group = accounts.where((a) => a.type == cat).toList();
+  for (final cat in _accountCategoryOrder) {
+    final group = grouped[cat];
+    if (group == null) continue;
     if (group.isEmpty) continue;
     out[cat] = group;
   }
   return out;
 }
+
+const _accountCategoryOrder = [
+  AccountCategory.cash,
+  AccountCategory.bank,
+  AccountCategory.broker,
+  AccountCategory.crypto,
+  AccountCategory.credit,
+  AccountCategory.loan,
+  AccountCategory.asset,
+  AccountCategory.liability,
+];
 
 class _AccountsSection extends StatelessWidget {
   const _AccountsSection({
@@ -98,58 +106,67 @@ class _AccountsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final isDark = colors.brightness == Brightness.dark;
+    final background = isDark
+        ? colors.card.withValues(alpha: AppOpacity.muted)
+        : const Color(0xFFF1F5F5);
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.s20),
+      padding: const EdgeInsets.only(bottom: AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s12,
+              AppSpacing.s4,
               0,
-              AppSpacing.s12,
+              AppSpacing.s4,
               AppSpacing.s8,
             ),
             child: Text(
-              title.toUpperCase(),
-              style: context.theme.typography.xs2.copyWith(
+              title,
+              style: context.theme.typography.sm.copyWith(
                 color: colors.mutedForeground,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
-          SoftCard(
-            borderless: true,
-            tinted: false,
-            child: Column(
-              children: [
-                for (var i = 0; i < accounts.length; i++) ...[
-                  _AccountRow(
-                    account: accounts[i],
-                    balances:
-                        balances[accounts[i].id] ??
-                        AccountBalances.empty(accounts[i].id),
-                    selected: accounts[i].id == selectedId,
-                    heroEnabled: heroEnabled,
-                    allowExpansion: allowExpansion,
-                    onAccountPressed: onAccountPressed,
-                  ),
-                  if (i < accounts.length - 1)
-                    Padding(
-                      padding: const EdgeInsetsDirectional.only(
-                        start: AppSpacing.s56,
-                      ),
-                      child: SizedBox(
-                        height: 1,
-                        child: ColoredBox(
-                          color: colors.border.withValues(
-                            alpha: AppOpacity.faint,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(AppRadius.xlg),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10),
+              child: Column(
+                children: [
+                  for (var i = 0; i < accounts.length; i++) ...[
+                    _AccountRow(
+                      account: accounts[i],
+                      balances:
+                          balances[accounts[i].id] ??
+                          AccountBalances.empty(accounts[i].id),
+                      selected: accounts[i].id == selectedId,
+                      heroEnabled: heroEnabled,
+                      allowExpansion: allowExpansion,
+                      onAccountPressed: onAccountPressed,
+                    ),
+                    if (i < accounts.length - 1)
+                      Padding(
+                        padding: const EdgeInsetsDirectional.only(
+                          start: AppSpacing.s48,
+                        ),
+                        child: SizedBox(
+                          height: 1,
+                          child: ColoredBox(
+                            color: colors.border.withValues(
+                              alpha: AppOpacity.faint,
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ],
@@ -187,89 +204,117 @@ class _AccountRowState extends State<_AccountRow> {
     final colors = context.theme.colors;
     final account = widget.account;
     final balances = widget.balances;
-    final isExpandable = widget.allowExpansion && balances.isMultiUnit;
     final primaryLeg =
         balances.legFor(account.currency) ??
         (balances.legs.isNotEmpty ? balances.legs.first : null);
+    final detailLegs = primaryLeg == null
+        ? balances.legs
+        : balances.legs
+              .where((leg) => leg.unit != primaryLeg.unit)
+              .toList(growable: false);
+    final isExpandable = widget.allowExpansion && detailLegs.isNotEmpty;
+    final accountName = localizedAccountName(
+      AppLocalizations.of(context),
+      account,
+    );
+    final institution = account.institution;
+    final hasInstitution = institution != null && institution.isNotEmpty;
 
     return DecoratedBox(
       decoration: BoxDecoration(
         color: widget.selected
-            ? colors.primary.withValues(alpha: AppOpacity.subtle)
+            ? colors.primary.withValues(alpha: AppOpacity.whisper)
             : Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
         children: [
-          FTile(
-            onPress: () {
-              if (isExpandable) {
-                setState(() => _expanded = !_expanded);
-              } else {
-                widget.onAccountPressed(context, account);
-              }
-            },
-            prefix: _AccountIconMark(account: account),
-            title: OptionalHero(
-              tag: 'account-${account.id}-name',
-              enabled: widget.heroEnabled,
-              child: Text(
-                localizedAccountName(AppLocalizations.of(context), account),
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s2,
+              vertical: AppSpacing.s12,
             ),
-            subtitle:
-                account.institution != null && account.institution!.isNotEmpty
-                ? Text(
-                    account.institution!,
-                    style: context.theme.typography.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  )
-                : null,
-            suffix: Row(
-              mainAxisSize: MainAxisSize.min,
+            child: Row(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (primaryLeg != null)
-                      _PrimaryAmount(leg: primaryLeg)
-                    else
-                      Text(
-                        '-',
-                        style: context.theme.typography.sm.copyWith(
-                          color: colors.mutedForeground,
-                        ),
-                      ),
-                    if (balances.isMultiUnit)
-                      Padding(
-                        padding: const EdgeInsets.only(top: AppSpacing.s2),
-                        child: Text(
-                          _multiHint(balances),
-                          style: context.theme.typography.xs2.copyWith(
-                            color: colors.mutedForeground,
+                Expanded(
+                  child: Semantics(
+                    button: true,
+                    label: accountName,
+                    child: FTappable(
+                      onPress: () => widget.onAccountPressed(context, account),
+                      child: Row(
+                        children: [
+                          _AccountIconMark(
+                            account: account,
+                            selected: widget.selected,
                           ),
-                        ),
+                          const SizedBox(width: AppSpacing.s16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                OptionalHero(
+                                  tag: 'account-${account.id}-name',
+                                  enabled: widget.heroEnabled,
+                                  child: Text(
+                                    accountName,
+                                    style: context.theme.typography.sm.copyWith(
+                                      color: colors.foreground,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (hasInstitution) ...[
+                                  const SizedBox(height: AppSpacing.s2),
+                                  Text(
+                                    institution,
+                                    style: context.theme.typography.xs.copyWith(
+                                      color: colors.mutedForeground,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.s12),
+                          if (primaryLeg != null)
+                            _PrimaryAmount(leg: primaryLeg)
+                          else
+                            Text(
+                              '-',
+                              style: context.theme.typography.sm.copyWith(
+                                color: colors.mutedForeground,
+                              ),
+                            ),
+                        ],
                       ),
-                  ],
+                    ),
+                  ),
                 ),
                 if (isExpandable)
                   Padding(
-                    padding: const EdgeInsetsDirectional.only(start: 4),
-                    child: Icon(
-                      _expanded
-                          ? FLucideIcons.chevronUp
-                          : FLucideIcons.chevronDown,
-                      size: AppIconSizes.h18,
-                      color: colors.mutedForeground.withValues(
-                        alpha: AppOpacity.prominent,
+                    padding: const EdgeInsetsDirectional.only(
+                      start: AppSpacing.s4,
+                    ),
+                    child: FTappable(
+                      onPress: () => setState(() => _expanded = !_expanded),
+                      child: SizedBox(
+                        width: AppSpacing.s32,
+                        height: AppSpacing.s32,
+                        child: Icon(
+                          _expanded
+                              ? FLucideIcons.chevronUp
+                              : FLucideIcons.chevronDown,
+                          size: AppIconSizes.h18,
+                          color: colors.mutedForeground.withValues(
+                            alpha: AppOpacity.prominent,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -279,54 +324,42 @@ class _AccountRowState extends State<_AccountRow> {
           if (isExpandable && _expanded)
             Padding(
               padding: const EdgeInsetsDirectional.only(
-                start: 64,
-                end: 14,
-                bottom: 10,
+                start: AppSpacing.s48,
+                end: AppSpacing.s2,
+                bottom: AppSpacing.s10,
               ),
               child: Column(
-                children: [
-                  for (final leg in balances.legs)
-                    if (leg.unit != account.currency ||
-                        balances.legs.length > 1)
-                      _SubLegRow(leg: leg),
-                ],
+                children: [for (final leg in detailLegs) _SubLegRow(leg: leg)],
               ),
             ),
         ],
       ),
     );
   }
-
-  String _multiHint(AccountBalances balances) {
-    final units = balances.legs.map((l) => l.unit).toList();
-    if (units.length <= 3) return units.join(' · ');
-    return '${units.take(2).join(' · ')} · +${units.length - 2}';
-  }
 }
 
 class _AccountIconMark extends StatelessWidget {
-  const _AccountIconMark({required this.account});
+  const _AccountIconMark({required this.account, required this.selected});
 
   final Account account;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final accent = _accountAccent(context, account);
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: AppOpacity.subtle),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      alignment: Alignment.center,
-      child: Icon(
-        resolveAccountIcon(account.icon) ?? _iconFor(account.type),
-        size: AppIconSizes.h18,
-        color: accent == colors.mutedForeground
-            ? colors.mutedForeground
-            : accent,
+    return SizedBox(
+      width: AppSpacing.s32,
+      height: AppSpacing.s32,
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Icon(
+          resolveAccountIcon(account.icon) ?? _iconFor(account.type),
+          size: AppIconSizes.md,
+          color: selected
+              ? colors.primary
+              : accent.withValues(alpha: AppOpacity.prominent),
+        ),
       ),
     );
   }
@@ -383,6 +416,7 @@ class _SubLegRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
+    final formatters = context.formatters(ref);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Row(
@@ -396,16 +430,25 @@ class _SubLegRow extends ConsumerWidget {
               ),
             ),
           ),
-          SignedMoneyText(
-            amount: leg.units,
-            unit: leg.unit,
-            formatters: context.formatters(ref),
-            showPositiveSign: false,
-            colorBySign: false,
-            style: context.theme.typography.sm,
+          Text(
+            formatters.number(
+              leg.units.toDouble(),
+              decimalDigits: _balanceQuantityDigits(leg.units),
+            ),
+            style: context.theme.typography.sm.copyWith(
+              fontFeatures: TypographyTokens.tabularFigures,
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+int _balanceQuantityDigits(Decimal quantity) {
+  final value = quantity.toDouble().abs();
+  if (value == 0) return 0;
+  if (value >= 100) return 0;
+  if (value >= 1) return 2;
+  return 4;
 }

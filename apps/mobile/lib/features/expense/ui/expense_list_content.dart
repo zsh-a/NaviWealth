@@ -261,10 +261,14 @@ class ExpenseGroupedList extends StatelessWidget {
     final items = <_ExpenseListItem>[];
     for (final group in groups) {
       items.add(_ExpenseGroupHeader(group));
-      for (final expense in group.expenses) {
-        items.add(_ExpenseListRow(expense));
+      for (var i = 0; i < group.expenses.length; i++) {
+        items.add(
+          _ExpenseListRow(
+            expense: group.expenses[i],
+            showDivider: i < group.expenses.length - 1,
+          ),
+        );
       }
-      items.add(const _ExpenseListDivider());
     }
 
     return ListView.builder(
@@ -301,13 +305,13 @@ class ExpenseGroupedList extends StatelessWidget {
               ],
             ),
           ),
-          _ExpenseListRow(:final expense) => _ExpenseRow(
+          _ExpenseListRow(:final expense, :final showDivider) => _ExpenseRow(
             expense: expense,
             account: expenseAccountById[expense.expenseAccountId],
             formatter: formatter,
             onTap: () => onTap(expense),
+            showDivider: showDivider,
           ),
-          _ExpenseListDivider() => const FDivider(),
         };
       },
     );
@@ -325,13 +329,10 @@ class _ExpenseGroupHeader extends _ExpenseListItem {
 }
 
 class _ExpenseListRow extends _ExpenseListItem {
-  const _ExpenseListRow(this.expense);
+  const _ExpenseListRow({required this.expense, required this.showDivider});
 
   final Expense expense;
-}
-
-class _ExpenseListDivider extends _ExpenseListItem {
-  const _ExpenseListDivider();
+  final bool showDivider;
 }
 
 class _ExpenseRow extends StatelessWidget {
@@ -340,64 +341,100 @@ class _ExpenseRow extends StatelessWidget {
     required this.account,
     required this.formatter,
     required this.onTap,
+    required this.showDivider,
   });
 
   final Expense expense;
   final Account? account;
   final AppFormatters formatter;
   final VoidCallback onTap;
+  final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final accent =
         account?.expenseAccentColor(context) ?? context.theme.colors.primary;
-    return FTile(
-      title: Text(
-        account == null
-            ? l10n.expenseListUncategorized
-            : localizedAccountName(l10n, account!),
-      ),
-      prefix: _ExpenseCategoryIcon(
-        icon: account?.iconData ?? FLucideIcons.banknote,
-        color: accent,
-      ),
-      subtitle: Text(
-        [
-          formatter.date(expense.tradeDate),
-          if (expense.note != null && expense.note!.isNotEmpty) expense.note!,
-        ].join(' · '),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      suffix: MoneyText(
-        amount: expense.amount.toDouble(),
-        currencyCode: expense.currency,
-      ),
-      onPress: onTap,
-    );
-  }
-}
-
-class _ExpenseCategoryIcon extends StatelessWidget {
-  const _ExpenseCategoryIcon({required this.icon, required this.color});
-
-  static const double _size = 40;
-
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: _size,
-      height: _size,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: AppOpacity.medium),
-        borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-      alignment: Alignment.center,
-      child: Icon(icon, size: AppIconSizes.h18, color: color),
+    final title = account == null
+        ? l10n.expenseListUncategorized
+        : localizedAccountName(l10n, account!);
+    final subtitle = [
+      formatter.date(expense.tradeDate),
+      if (expense.note != null && expense.note!.isNotEmpty) expense.note!,
+    ].join(' · ');
+    return Column(
+      children: [
+        FTappable(
+          onPress: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s16,
+              vertical: AppSpacing.s10,
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: AppSpacing.s32,
+                  height: AppSpacing.s32,
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Icon(
+                      account?.iconData ?? FLucideIcons.banknote,
+                      size: AppIconSizes.md,
+                      color: accent.withValues(alpha: AppOpacity.prominent),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: context.theme.typography.sm.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: AppSpacing.s2),
+                      Text(
+                        subtitle,
+                        style: context.theme.typography.xs.copyWith(
+                          color: context.theme.colors.mutedForeground,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s12),
+                MoneyText(
+                  amount: expense.amount.toDouble(),
+                  currencyCode: expense.currency,
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (showDivider)
+          Padding(
+            padding: const EdgeInsetsDirectional.only(start: AppSpacing.s64),
+            child: SizedBox(
+              height: 1,
+              child: ColoredBox(
+                color: context.theme.colors.border.withValues(
+                  alpha: AppOpacity.faint,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
