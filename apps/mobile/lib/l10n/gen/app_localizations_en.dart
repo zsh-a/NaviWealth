@@ -5477,6 +5477,136 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeAiSuggestionFeedbackToast => 'Feedback saved.';
 
   @override
+  String get knowledgeAgentAssumptionTitle =>
+      'Assumptions to verify this month';
+
+  @override
+  String get knowledgeAgentAssumptionNoStale => 'No stale active assumptions.';
+
+  @override
+  String knowledgeAgentAssumptionSummaryOne(Object days, Object first) {
+    return '1 active assumption has not been verified for more than $days days: $first';
+  }
+
+  @override
+  String knowledgeAgentAssumptionSummaryMany(
+    Object count,
+    Object days,
+    Object first,
+  ) {
+    return '$count active assumptions have not been verified for more than $days days. First: $first';
+  }
+
+  @override
+  String get knowledgeAgentReviewTitle => 'Weekly review';
+
+  @override
+  String get knowledgeAgentReviewNothingDue =>
+      'Nothing is due for review this week.';
+
+  @override
+  String knowledgeAgentReviewDecisionOne(Object first) {
+    return '1 decision is due for review: $first';
+  }
+
+  @override
+  String knowledgeAgentReviewDecisionMany(Object count, Object first) {
+    return '$count decisions are due for review. First: $first';
+  }
+
+  @override
+  String knowledgeAgentReviewAssumptionOne(Object days, Object first) {
+    return '1 assumption has not been verified for more than $days days: $first';
+  }
+
+  @override
+  String knowledgeAgentReviewAssumptionMany(
+    Object count,
+    Object days,
+    Object first,
+  ) {
+    return '$count assumptions have not been verified for more than $days days. First: $first';
+  }
+
+  @override
+  String get knowledgeAgentRoutineTitle => 'Routines due this week';
+
+  @override
+  String knowledgeAgentRoutineNoneDue(Object days) {
+    return 'No routines due in the next $days days.';
+  }
+
+  @override
+  String knowledgeAgentRoutineLeadOverdue(Object days, Object statement) {
+    return '$statement (overdue by $days days)';
+  }
+
+  @override
+  String knowledgeAgentRoutineLeadToday(Object statement) {
+    return '$statement (due today)';
+  }
+
+  @override
+  String knowledgeAgentRoutineLeadUpcoming(Object days, Object statement) {
+    return '$statement (due in $days days)';
+  }
+
+  @override
+  String knowledgeAgentRoutineSummaryMixed(
+    Object first,
+    Object overdueCount,
+    Object upcomingCount,
+  ) {
+    return '$overdueCount overdue + $upcomingCount due this week. First: $first';
+  }
+
+  @override
+  String knowledgeAgentRoutineSummaryOverdueOne(Object first) {
+    return '1 Routine is overdue: $first';
+  }
+
+  @override
+  String knowledgeAgentRoutineSummaryOverdueMany(Object count, Object first) {
+    return '$count Routines are overdue. First: $first';
+  }
+
+  @override
+  String knowledgeAgentRoutineSummaryUpcomingOne(Object first) {
+    return '1 Routine is due this week: $first';
+  }
+
+  @override
+  String knowledgeAgentRoutineSummaryUpcomingMany(Object count, Object first) {
+    return '$count Routines are due this week. First: $first';
+  }
+
+  @override
+  String get knowledgeAgentContradictionTitle => 'Decision conflicts detected';
+
+  @override
+  String get knowledgeAgentContradictionNone =>
+      'No contradictions detected in the last 90-day window.';
+
+  @override
+  String knowledgeAgentContradictionInvalidatedAssumption(Object assumptionId) {
+    return 'This decision still references assumption $assumptionId, but that assumption is no longer active (possibly falsified or retired).';
+  }
+
+  @override
+  String knowledgeAgentContradictionSummaryOne(Object detail, Object kind) {
+    return 'Detected 1 $kind issue: $detail';
+  }
+
+  @override
+  String knowledgeAgentContradictionSummaryMany(
+    Object count,
+    Object detail,
+    Object kind,
+  ) {
+    return 'Detected $count conflicts. First: $kind → $detail';
+  }
+
+  @override
   String knowledgeLoadFailed(String error) {
     return 'Failed to load: $error';
   }
@@ -5615,7 +5745,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeDetailContextSnapshotEmpty =>
-      'No Finance / Health events in that window.';
+      'No cross-domain events in that window.';
+
+  @override
+  String get knowledgeDetailContextSnapshotFinance => 'Finance';
+
+  @override
+  String get knowledgeDetailContextSnapshotHealth => 'Health';
 
   @override
   String get knowledgeDetailCreatedLabel => 'Created';
@@ -7915,7 +8051,10 @@ class AppLocalizationsEn extends AppLocalizations {
       '\"Make one bank-card activity transaction every 6 months, otherwise it may become dormant\"';
 
   @override
-  String get knowledgeCaptureSavedClassifyingTitle => 'Saved � AI is thinking';
+  String get knowledgeCaptureSavedClassifyingTitle => 'Saved - AI is thinking';
+
+  @override
+  String get knowledgeCaptureSavedPreviewTitle => 'Saved capture';
 
   @override
   String get knowledgeCaptureSuggestionTitle => 'AI suggestion';
@@ -8134,6 +8273,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeLibraryFilterAll => 'All';
 
   @override
+  String get knowledgeLibraryDateFilterAll => 'Any date';
+
+  @override
+  String get knowledgeLibraryDateFilterToday => 'Today';
+
+  @override
+  String get knowledgeLibraryDateFilterWeek => '7 days';
+
+  @override
+  String get knowledgeLibraryDateFilterMonth => '30 days';
+
+  @override
+  String get knowledgeLibraryDateFilterOutsideMonth => '30+ days';
+
+  @override
   String get knowledgeLibrarySearchClear => 'Clear search';
 
   @override
@@ -8186,6 +8340,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeReviewMarkAllDecisionsReviewed => 'Mark all reviewed';
+
+  @override
+  String get knowledgeReviewMarkSelectedDecisionsReviewed =>
+      'Mark selected reviewed';
 
   @override
   String knowledgeReviewDecisionNextReview(Object date) {
@@ -8246,6 +8404,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeReviewMarkAllDone => 'Mark all done';
 
   @override
+  String get knowledgeReviewMarkSelectedDone => 'Mark selected done';
+
+  @override
   String knowledgeReviewRoutinesBulkDone(int count) {
     return 'Marked $count routines done';
   }
@@ -8255,6 +8416,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeReviewVerifyAllAssumptions => 'Verify all';
+
+  @override
+  String get knowledgeReviewVerifySelectedAssumptions => 'Verify selected';
 
   @override
   String knowledgeReviewAssumptionsBulkVerified(int count) {
@@ -8267,6 +8431,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String knowledgeReviewAssumptionVerifyFailed(Object error) {
     return 'Could not verify assumption: $error';
+  }
+
+  @override
+  String get knowledgeReviewSelectAll => 'Select all';
+
+  @override
+  String get knowledgeReviewClearSelection => 'Clear';
+
+  @override
+  String knowledgeReviewSelectedCount(int count) {
+    return '$count selected';
   }
 
   @override

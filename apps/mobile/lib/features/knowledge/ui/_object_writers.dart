@@ -134,6 +134,7 @@ class _PrincipleWriterState extends State<_PrincipleWriter> {
           KnowledgeWriterSection(
             title: l10n.knowledgeWriterEvidenceSectionTitle,
             collapsible: true,
+            initiallyExpanded: false,
             children: [
               MarkdownEditorWithPreview(
                 controller: _rationaleCtrl,
@@ -395,6 +396,7 @@ class _ConceptWriterState extends State<_ConceptWriter> {
           KnowledgeWriterSection(
             title: l10n.knowledgeWriterEvidenceSectionTitle,
             collapsible: true,
+            initiallyExpanded: false,
             children: [
               MarkdownEditorWithPreview(
                 controller: _summaryCtrl,
@@ -589,13 +591,12 @@ class _AssumptionTargetPicker extends ConsumerWidget {
                   .where((a) => a.status == AssumptionStatus.active)
                   .toList(growable: false);
               if (all.isEmpty) {
-                return Text(
-                  AppLocalizations.of(
+                return KnowledgeEmptyState(
+                  icon: FLucideIcons.badgeCheck,
+                  title: AppLocalizations.of(
                     context,
                   ).knowledgeExperimentNoActiveAssumptions,
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  density: KnowledgeStateDensity.section,
                 );
               }
               return Column(

@@ -14,6 +14,7 @@
 /// heuristic returns synchronously inside the future.
 library;
 
+import '../domain/knowledge_text.dart';
 import 'capture_kind.dart';
 
 class CaptureClassification {
@@ -147,13 +148,11 @@ class HeuristicCaptureClassifier implements CaptureClassifier {
   }
 
   static String _statementFromText(String text) {
-    final line = text.split(RegExp(r'[\n。]')).firstWhere(
-          (s) => s.trim().isNotEmpty,
-          orElse: () => text,
-        );
+    final line = text
+        .split(RegExp(r'[\n。]'))
+        .firstWhere((s) => s.trim().isNotEmpty, orElse: () => text);
     final trimmed = line.trim();
-    if (trimmed.length <= 60) return trimmed;
-    return '${trimmed.substring(0, 60)}…';
+    return knowledgeExcerpt(trimmed, max: kKnowledgeHeadlineExcerptMaxChars);
   }
 
   static String? _scopeGuess(String lower) {
@@ -163,9 +162,7 @@ class HeuristicCaptureClassifier implements CaptureClassifier {
         lower.contains('信用') && lower.contains('卡')) {
       return 'finance/cards';
     }
-    if (lower.contains('税') ||
-        lower.contains('报税') ||
-        lower.contains('tax')) {
+    if (lower.contains('税') || lower.contains('报税') || lower.contains('tax')) {
       return 'finance/tax';
     }
     if (lower.contains('定投') ||

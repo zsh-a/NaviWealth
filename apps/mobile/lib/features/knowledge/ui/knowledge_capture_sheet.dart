@@ -303,6 +303,10 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
     final stage = _stage;
     final isSuggestStage =
         stage == _CaptureStage.suggesting || stage == _CaptureStage.applying;
+    final showSavedPreview =
+        stage == _CaptureStage.classifying || isSuggestStage;
+    final savedTitle = _savedNote?.title ?? _titleCtrl.text;
+    final savedBody = _savedNote?.bodyMd ?? _bodyCtrl.text;
     return AppSheet(
       title: isSuggestStage
           ? l10n.knowledgeCaptureSuggestionTitle
@@ -326,41 +330,99 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
               },
             )
           : null,
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 180),
-        transitionBuilder: (child, animation) => FadeTransition(
-          opacity: animation,
-          child: SizeTransition(sizeFactor: animation, child: child),
-        ),
-        child: switch (stage) {
-          _CaptureStage.composing || _CaptureStage.saving => _ComposeBody(
-            key: const ValueKey<String>('compose'),
-            titleController: _titleCtrl,
-            bodyController: _bodyCtrl,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: _capturePreviewTransition,
+            child: showSavedPreview
+                ? _SavedCapturePreview(
+                    key: const ValueKey<String>('saved-capture-preview'),
+                    sectionTitle: stage == _CaptureStage.classifying
+                        ? l10n.knowledgeCaptureSavedClassifyingTitle
+                        : l10n.knowledgeCaptureSavedPreviewTitle,
+                    promoted: isSuggestStage,
+                    title: savedTitle,
+                    body: savedBody,
+                  )
+                : const SizedBox.shrink(
+                    key: ValueKey<String>('no-saved-capture-preview'),
+                  ),
           ),
-          _CaptureStage.classifying => _ClassifyingBody(
-            key: const ValueKey<String>('classifying'),
-            onSkip: () {
-              // The Note is already persisted from `_saveAndClassify` →
-              // popping here just abandons the in-flight classifier.
-              // The `mounted` guard after the await drops whatever the
-              // LLM returns once it eventually lands.
-              if (mounted) Navigator.of(context).pop();
+          if (showSavedPreview) const SizedBox(height: AppSpacing.s12),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: _captureStageTransition,
+            child: switch (stage) {
+              _CaptureStage.composing || _CaptureStage.saving => _ComposeBody(
+                key: const ValueKey<String>('compose'),
+                titleController: _titleCtrl,
+                bodyController: _bodyCtrl,
+              ),
+              _CaptureStage.classifying => _ClassifyingBody(
+                key: const ValueKey<String>('classifying'),
+                onSkip: () {
+                  // The Note is already persisted from `_saveAndClassify` →
+                  // popping here just abandons the in-flight classifier.
+                  // The `mounted` guard after the await drops whatever the
+                  // LLM returns once it eventually lands.
+                  if (mounted) Navigator.of(context).pop();
+                },
+              ),
+              _CaptureStage.suggesting ||
+              _CaptureStage.applying => _SuggestionBody(
+                key: const ValueKey<String>('suggestion'),
+                suggestion: _suggestion!,
+                originalTitle: savedTitle,
+                originalBody: savedBody,
+                applying: stage == _CaptureStage.applying,
+                onAccept: _acceptUpgrade,
+                onDismiss: _dismissSuggestion,
+              ),
             },
           ),
-          _CaptureStage.suggesting || _CaptureStage.applying => _SuggestionBody(
-            key: const ValueKey<String>('suggestion'),
-            suggestion: _suggestion!,
-            originalTitle: _savedNote?.title ?? '',
-            originalBody: _savedNote?.bodyMd ?? '',
-            applying: stage == _CaptureStage.applying,
-            onAccept: _acceptUpgrade,
-            onDismiss: _dismissSuggestion,
-          ),
-        },
+        ],
       ),
     );
   }
+}
+
+Widget _captureStageTransition(Widget child, Animation<double> animation) {
+  final curved = animation.drive(CurveTween(curve: Curves.easeOutCubic));
+  final offset = Tween<Offset>(
+    begin: const Offset(0, 0.04),
+    end: Offset.zero,
+  ).animate(curved);
+  return FadeTransition(
+    opacity: curved,
+    child: SizeTransition(
+      sizeFactor: curved,
+      alignment: Alignment.topCenter,
+      child: SlideTransition(position: offset, child: child),
+    ),
+  );
+}
+
+Widget _capturePreviewTransition(Widget child, Animation<double> animation) {
+  final curved = animation.drive(CurveTween(curve: Curves.easeOutCubic));
+  final offset = Tween<Offset>(
+    begin: const Offset(0, -0.06),
+    end: Offset.zero,
+  ).animate(curved);
+  return FadeTransition(
+    opacity: curved,
+    child: SizeTransition(
+      sizeFactor: curved,
+      alignment: Alignment.topCenter,
+      child: SlideTransition(position: offset, child: child),
+    ),
+  );
 }
 
 class _ClassifyingBody extends StatelessWidget {
@@ -411,6 +473,116 @@ class _ClassifyingBody extends StatelessWidget {
   }
 }
 
+class _SavedCapturePreview extends StatelessWidget {
+  const _SavedCapturePreview({
+    super.key,
+    required this.sectionTitle,
+    required this.promoted,
+    required this.title,
+    required this.body,
+  });
+
+  final String sectionTitle;
+  final bool promoted;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    final hasTitle = title.trim().isNotEmpty;
+    return KnowledgeWriterSection(
+      title: sectionTitle,
+      trailing: Icon(
+        FLucideIcons.fileCheck,
+        size: AppIconSizes.xs,
+        color: colors.primary,
+      ),
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (hasTitle) ...[
+              Text(
+                l10n.knowledgeCaptureTitleDiffLabel,
+                style: typography.xs.copyWith(color: colors.mutedForeground),
+              ),
+              const SizedBox(height: AppSpacing.s2),
+              _CaptureSharedTextLine(
+                text: knowledgeExcerpt(title),
+                promoted: promoted,
+                style: typography.sm,
+                maxLines: 2,
+              ),
+              const SizedBox(height: AppSpacing.s8),
+            ],
+            Text(
+              l10n.knowledgeCaptureBodyDiffLabel,
+              style: typography.xs.copyWith(color: colors.mutedForeground),
+            ),
+            const SizedBox(height: AppSpacing.s2),
+            _CaptureSharedTextLine(
+              text: knowledgeExcerpt(body),
+              promoted: promoted,
+              style: typography.sm.copyWith(color: colors.mutedForeground),
+              maxLines: 3,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _CaptureSharedTextLine extends StatelessWidget {
+  const _CaptureSharedTextLine({
+    required this.text,
+    required this.promoted,
+    required this.style,
+    required this.maxLines,
+  });
+
+  final String text;
+  final bool promoted;
+  final TextStyle style;
+  final int maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(end: promoted ? 1 : 0),
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+      builder: (context, progress, child) {
+        final scale = 0.985 + 0.015 * progress;
+        final dy = -6 * (1 - progress);
+        final color = Color.lerp(
+          style.color ?? colors.foreground,
+          colors.primary,
+          progress * 0.18,
+        );
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: Transform.scale(
+            scale: scale,
+            alignment: Alignment.centerLeft,
+            child: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              style: style.copyWith(color: color),
+              child: child!,
+            ),
+          ),
+        );
+      },
+      child: Text(text, maxLines: maxLines, overflow: TextOverflow.ellipsis),
+    );
+  }
+}
+
 class _ComposeBody extends StatelessWidget {
   const _ComposeBody({
     super.key,
@@ -422,20 +594,19 @@ class _ComposeBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    final l10n = AppLocalizations.of(context);
+    return KnowledgeWriterSection(
+      title: l10n.knowledgeCaptureTitle,
       children: [
         FTextField(
           control: FTextFieldControl.managed(controller: titleController),
-          label: Text(AppLocalizations.of(context).knowledgeCaptureTitleField),
-          hint: AppLocalizations.of(context).knowledgeCaptureTitleHint,
+          label: Text(l10n.knowledgeCaptureTitleField),
+          hint: l10n.knowledgeCaptureTitleHint,
         ),
-        const SizedBox(height: AppSpacing.s12),
         FTextField(
           control: FTextFieldControl.managed(controller: bodyController),
-          label: Text(AppLocalizations.of(context).knowledgeCaptureBodyField),
-          hint: AppLocalizations.of(context).knowledgeCaptureBodyHint,
+          label: Text(l10n.knowledgeCaptureBodyField),
+          hint: l10n.knowledgeCaptureBodyHint,
           minLines: 4,
           maxLines: 8,
         ),
@@ -504,6 +675,11 @@ class _SuggestionBody extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.s8),
             FButton(
+              prefix: applying
+                  ? const FCircularProgress(
+                      size: FCircularProgressSizeVariant.xs,
+                    )
+                  : null,
               onPress: applying ? null : onAccept,
               child: Text(acceptLabel),
             ),
@@ -526,7 +702,6 @@ class _PolishPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     final titleChanged =
@@ -535,51 +710,38 @@ class _PolishPanel extends StatelessWidget {
     final bodyChanged =
         suggestion.polishedBody != null &&
         suggestion.polishedBody != originalBody;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      decoration: BoxDecoration(
-        color: colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: colors.border),
+    return KnowledgeWriterSection(
+      title: l10n.knowledgeCapturePolishedVersionTitle,
+      trailing: Icon(
+        FLucideIcons.wand,
+        size: AppIconSizes.xs,
+        color: colors.primary,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                FLucideIcons.wand,
-                size: AppIconSizes.xs,
-                color: colors.primary,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (titleChanged) ...[
+              _DiffRow(
+                label: l10n.knowledgeCaptureTitleDiffLabel,
+                before: originalTitle.isEmpty
+                    ? l10n.knowledgeCaptureEmptyValue
+                    : originalTitle,
+                after: suggestion.polishedTitle!,
               ),
-              const SizedBox(width: AppSpacing.s4),
-              Text(
-                l10n.knowledgeCapturePolishedVersionTitle,
-                style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-              ),
+              if (bodyChanged) const SizedBox(height: AppSpacing.s8),
             ],
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          if (titleChanged) ...[
-            _DiffRow(
-              label: l10n.knowledgeCaptureTitleDiffLabel,
-              before: originalTitle.isEmpty
-                  ? l10n.knowledgeCaptureEmptyValue
-                  : originalTitle,
-              after: suggestion.polishedTitle!,
-            ),
-            if (bodyChanged) const SizedBox(height: AppSpacing.s8),
+            if (bodyChanged)
+              _DiffRow(
+                label: l10n.knowledgeCaptureBodyDiffLabel,
+                before: originalBody.isEmpty
+                    ? l10n.knowledgeCaptureEmptyValue
+                    : originalBody,
+                after: suggestion.polishedBody!,
+              ),
           ],
-          if (bodyChanged)
-            _DiffRow(
-              label: l10n.knowledgeCaptureBodyDiffLabel,
-              before: originalBody.isEmpty
-                  ? l10n.knowledgeCaptureEmptyValue
-                  : originalBody,
-              after: suggestion.polishedBody!,
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -644,45 +806,32 @@ class _UpgradePanel extends StatelessWidget {
         '${l10n.knowledgeCaptureRoutineUpgradeDetail(suggestion.statement ?? '', suggestion.intervalDays ?? 180)}${suggestion.scope != null && suggestion.scope != '*' ? ' ${l10n.knowledgeCaptureRoutineScopeDetail(suggestion.scope!)}' : ''} ${l10n.knowledgeCaptureRoutineReminderDetail}',
       _ => suggestion.reasonZh,
     };
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      decoration: BoxDecoration(
-        color: colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: colors.border),
+    return KnowledgeWriterSection(
+      title: headline,
+      trailing: Icon(
+        FLucideIcons.sparkles,
+        size: AppIconSizes.xs,
+        color: colors.primary,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                FLucideIcons.sparkles,
-                size: AppIconSizes.xs,
-                color: colors.primary,
-              ),
-              const SizedBox(width: AppSpacing.s4),
-              Text(
-                headline,
-                style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          Text(
-            detail,
-            style: typography.sm.copyWith(color: colors.mutedForeground),
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          Text(
-            l10n.knowledgeCaptureSuggestionReasonConfidence(
-              suggestion.reasonZh,
-              suggestion.confidence.toStringAsFixed(2),
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              detail,
+              style: typography.sm.copyWith(color: colors.mutedForeground),
             ),
-            style: typography.xs.copyWith(color: colors.mutedForeground),
-          ),
-        ],
-      ),
+            const SizedBox(height: AppSpacing.s4),
+            Text(
+              l10n.knowledgeCaptureSuggestionReasonConfidence(
+                suggestion.reasonZh,
+                suggestion.confidence.toStringAsFixed(2),
+              ),
+              style: typography.xs.copyWith(color: colors.mutedForeground),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

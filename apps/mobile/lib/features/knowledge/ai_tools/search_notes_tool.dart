@@ -17,6 +17,7 @@ import 'package:naviwealth/core/auth/current_user.dart';
 
 import '../data/knowledge_search_service.dart';
 import '../data/providers.dart';
+import '../domain/knowledge_text.dart';
 
 class SearchNotesTool implements DeviceTool {
   const SearchNotesTool();
@@ -96,10 +97,11 @@ class SearchNotesTool implements DeviceTool {
     final q = query.trim().toLowerCase();
     final hitIndex = q.isEmpty ? 0 : body.toLowerCase().indexOf(q);
     if (hitIndex < 0) {
-      return body.length <= 120 ? body : '${body.substring(0, 120)}…';
+      return knowledgeExcerpt(body, max: kKnowledgeSupportingExcerptMaxChars);
     }
-    final start = (hitIndex - 60).clamp(0, body.length).toInt();
-    final end = (hitIndex + 60).clamp(0, body.length).toInt();
+    const contextRadius = kKnowledgeHeadlineExcerptMaxChars;
+    final start = (hitIndex - contextRadius).clamp(0, body.length).toInt();
+    final end = (hitIndex + contextRadius).clamp(0, body.length).toInt();
     return '${start > 0 ? '…' : ''}${body.substring(start, end)}'
         '${end < body.length ? '…' : ''}';
   }

@@ -2,14 +2,11 @@
 ///
 /// 4 segments: Decisions / Notes / Concepts / Experiments. Decisions
 /// surface a status badge per the 7-state lifecycle in §9. Forui-only
-/// — no Material widgets so the page renders correctly inside any
-/// scope; Material is used only for the platform pull-to-refresh wrapper.
+/// — Forui + Flutter widgets so the page renders correctly inside any scope.
 library;
 
 import 'dart:async';
 
-import 'package:flutter/material.dart'
-    show AlwaysScrollableScrollPhysics, RefreshIndicator;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,6 +22,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '../domain/knowledge_search_suggestions.dart';
 import '_decision_writer.dart';
 import '_object_writers.dart';
 import '_routine_writer.dart';
@@ -32,6 +30,8 @@ import '_widgets.dart';
 import 'knowledge_capture_sheet.dart';
 
 enum _LibrarySegment { decisions, notes, concepts, experiments, routines }
+
+enum KnowledgeLibraryDateFilter { all, today, week, month, outsideMonth }
 
 const String _kKnowledgeLibrarySearchHistoryPrefsKey =
     'knowledge.library.search_history.v1';
@@ -58,6 +58,40 @@ String _segmentLabel(AppLocalizations l10n, _LibrarySegment segment) {
     _LibrarySegment.concepts => l10n.knowledgeSegmentConcepts,
     _LibrarySegment.experiments => l10n.knowledgeSegmentExperiments,
     _LibrarySegment.routines => l10n.knowledgeSegmentRoutines,
+  };
+}
+
+String _dateFilterLabel(
+  AppLocalizations l10n,
+  KnowledgeLibraryDateFilter filter,
+) {
+  return switch (filter) {
+    KnowledgeLibraryDateFilter.all => l10n.knowledgeLibraryDateFilterAll,
+    KnowledgeLibraryDateFilter.today => l10n.knowledgeLibraryDateFilterToday,
+    KnowledgeLibraryDateFilter.week => l10n.knowledgeLibraryDateFilterWeek,
+    KnowledgeLibraryDateFilter.month => l10n.knowledgeLibraryDateFilterMonth,
+    KnowledgeLibraryDateFilter.outsideMonth =>
+      l10n.knowledgeLibraryDateFilterOutsideMonth,
+  };
+}
+
+bool matchesKnowledgeLibraryDateFilter(
+  DateTime date,
+  KnowledgeLibraryDateFilter filter,
+  DateTime now,
+) {
+  if (filter == KnowledgeLibraryDateFilter.all) return true;
+  final dateLocal = date.toLocal();
+  final nowLocal = now.toLocal();
+  final localDate = DateTime(dateLocal.year, dateLocal.month, dateLocal.day);
+  final localNow = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
+  final days = localDate.difference(localNow).inDays.abs();
+  return switch (filter) {
+    KnowledgeLibraryDateFilter.all => true,
+    KnowledgeLibraryDateFilter.today => days == 0,
+    KnowledgeLibraryDateFilter.week => days <= 7,
+    KnowledgeLibraryDateFilter.month => days <= 30,
+    KnowledgeLibraryDateFilter.outsideMonth => days > 30,
   };
 }
 
@@ -135,6 +169,12 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
       _kKnowledgeLibrarySearchHistoryPrefsKey,
       List<String>.unmodifiable(_searchHistory),
     );
+  }
+
+  void _clearSearchHistory() {
+    if (_searchHistory.isEmpty) return;
+    setState(_searchHistory.clear);
+    unawaited(_persistSearchHistory());
   }
 
   void _applySearch(String query) {
@@ -232,6 +272,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                         query: _searchCtrl.text,
                         searchHistory: _searchHistory,
                         onSearchSelected: _applySearch,
+                        onSearchHistoryClear: _clearSearchHistory,
                         onRefresh: () => _refreshKnowledgeRepository(ref),
                       ),
                     ),
@@ -317,15 +358,17 @@ class _NewObjectButton extends ConsumerWidget {
                 )
               : const SizedBox.shrink(key: ValueKey<String>('no-actions')),
         ),
-        FButton(
-          prefix: Icon(
-            decisionMenuOpen ? FLucideIcons.x : FLucideIcons.plus,
-            size: AppIconSizes.sm,
-          ),
-          onPress: () => _onPress(context, ref),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 140),
-            child: Text(label, key: ValueKey<String>(label)),
+        KnowledgeFloatingActionSurface(
+          child: FButton(
+            prefix: Icon(
+              decisionMenuOpen ? FLucideIcons.x : FLucideIcons.plus,
+              size: AppIconSizes.sm,
+            ),
+            onPress: () => _onPress(context, ref),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 140),
+              child: Text(label, key: ValueKey<String>(label)),
+            ),
           ),
         ),
       ],
@@ -465,6 +508,7 @@ class _LibraryList extends ConsumerWidget {
     required this.query,
     required this.searchHistory,
     required this.onSearchSelected,
+    required this.onSearchHistoryClear,
     required this.onRefresh,
   });
 
@@ -472,6 +516,7 @@ class _LibraryList extends ConsumerWidget {
   final String query;
   final List<String> searchHistory;
   final ValueChanged<String> onSearchSelected;
+  final VoidCallback onSearchHistoryClear;
   final Future<void> Function() onRefresh;
 
   @override
@@ -508,12 +553,15 @@ class _LibraryList extends ConsumerWidget {
                     ? null
                     : knowledgeDate(context, d.reviewDate!),
               ].whereType<String>().toList(growable: false),
+              filterFacets: (_, _) => const <String>[],
+              dateOf: (d) => d.decidedAt,
               emptyIcon: FLucideIcons.gitBranch,
               emptyTitle: l10n.knowledgeLibraryEmptyDecisionsTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyDecisionsBody,
               statusOf: (d) => d.status.wire,
               searchHistory: searchHistory,
               onSearchSelected: onSearchSelected,
+              onSearchHistoryClear: onSearchHistoryClear,
               onRefresh: onRefresh,
               tileBuilder: (context, d, query) => _buildDecisionTile(
                 context,
@@ -544,11 +592,15 @@ class _LibraryList extends ConsumerWidget {
                 n.projectTag,
                 ...n.tags,
               ].whereType<String>().toList(growable: false),
+              filterFacets: (_, n) =>
+                  [n.projectTag, ...n.tags].whereType<String>().toList(),
+              dateOf: (n) => n.createdAt,
               emptyIcon: FLucideIcons.fileText,
               emptyTitle: l10n.knowledgeLibraryEmptyNotesTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyNotesBody,
               searchHistory: searchHistory,
               onSearchSelected: onSearchSelected,
+              onSearchHistoryClear: onSearchHistoryClear,
               onRefresh: onRefresh,
               tileBuilder: (context, n, query) => _buildNoteTile(
                 context,
@@ -578,11 +630,14 @@ class _LibraryList extends ConsumerWidget {
               ].whereType<String>().join('\n'),
               searchSuggestions: (_, c) =>
                   [c.name, ...c.aliases].toList(growable: false),
+              filterFacets: (_, c) => [...c.aliases],
+              dateOf: (c) => c.createdAt,
               emptyIcon: FLucideIcons.folderTree,
               emptyTitle: l10n.knowledgeLibraryEmptyConceptsTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyConceptsBody,
               searchHistory: searchHistory,
               onSearchSelected: onSearchSelected,
+              onSearchHistoryClear: onSearchHistoryClear,
               onRefresh: onRefresh,
               tileBuilder: (context, c, query) => _buildConceptTile(
                 context,
@@ -611,12 +666,15 @@ class _LibraryList extends ConsumerWidget {
               ].whereType<String>().join('\n'),
               searchSuggestions: (_, e) =>
                   [e.status.wire, ...e.metrics].toList(growable: false),
+              filterFacets: (_, e) => [...e.metrics],
+              dateOf: (e) => e.startedAt,
               emptyIcon: FLucideIcons.flaskConical,
               emptyTitle: l10n.knowledgeLibraryEmptyExperimentsTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyExperimentsBody,
               statusOf: (e) => e.status.wire,
               searchHistory: searchHistory,
               onSearchSelected: onSearchSelected,
+              onSearchHistoryClear: onSearchHistoryClear,
               onRefresh: onRefresh,
               tileBuilder: (context, e, query) => _buildExperimentTile(
                 context,
@@ -640,12 +698,15 @@ class _LibraryList extends ConsumerWidget {
               searchableText: (r) => [r.statement, r.scope].join('\n'),
               searchSuggestions: (_, r) =>
                   [r.status.wire, r.scope].toList(growable: false),
+              filterFacets: (_, r) => [r.scope],
+              dateOf: (r) => r.nextDueAt,
               emptyIcon: FLucideIcons.calendarClock,
               emptyTitle: l10n.knowledgeLibraryEmptyRoutinesTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyRoutinesBody,
               statusOf: (r) => r.status.wire,
               searchHistory: searchHistory,
               onSearchSelected: onSearchSelected,
+              onSearchHistoryClear: onSearchHistoryClear,
               onRefresh: onRefresh,
               tileBuilder: (context, r, query) => _buildRoutineTile(
                 context,
@@ -681,13 +742,16 @@ class _SegmentList<T> extends StatefulWidget {
     required this.query,
     required this.searchableText,
     required this.searchSuggestions,
+    required this.filterFacets,
     required this.emptyIcon,
     required this.emptyTitle,
     required this.emptyMessage,
     required this.tileBuilder,
     required this.searchHistory,
     required this.onSearchSelected,
+    required this.onSearchHistoryClear,
     required this.onRefresh,
+    required this.dateOf,
     this.statusOf,
   });
 
@@ -695,13 +759,16 @@ class _SegmentList<T> extends StatefulWidget {
   final String query;
   final String Function(T item) searchableText;
   final List<String> Function(BuildContext context, T item) searchSuggestions;
+  final List<String> Function(BuildContext context, T item) filterFacets;
   final IconData emptyIcon;
   final String emptyTitle;
   final String emptyMessage;
   final Widget Function(BuildContext, T, String query) tileBuilder;
   final List<String> searchHistory;
   final ValueChanged<String> onSearchSelected;
+  final VoidCallback onSearchHistoryClear;
   final Future<void> Function() onRefresh;
+  final DateTime Function(T item)? dateOf;
   final String Function(T item)? statusOf;
 
   @override
@@ -710,12 +777,16 @@ class _SegmentList<T> extends StatefulWidget {
 
 class _SegmentListState<T> extends State<_SegmentList<T>> {
   String? _statusFilter;
+  String? _facetFilter;
+  KnowledgeLibraryDateFilter _dateFilter = KnowledgeLibraryDateFilter.all;
 
   @override
   void didUpdateWidget(covariant _SegmentList<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.emptyTitle != widget.emptyTitle) {
       _statusFilter = null;
+      _facetFilter = null;
+      _dateFilter = KnowledgeLibraryDateFilter.all;
     }
   }
 
@@ -749,11 +820,16 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
         if (_statusFilter != null && !statuses.contains(_statusFilter)) {
           _statusFilter = null;
         }
+        final facets = _facetsFor(context, items);
+        if (_facetFilter != null && !facets.contains(_facetFilter)) {
+          _facetFilter = null;
+        }
         final searchAssist = _SearchAssistRow(
           history: widget.searchHistory,
           suggestions: _suggestionsFor(context, items, normalizedQuery),
           query: normalizedQuery,
           onSelected: widget.onSearchSelected,
+          onHistoryClear: widget.onSearchHistoryClear,
         );
 
         final statusFilteredItems = _statusFilter == null || statusOf == null
@@ -761,10 +837,32 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
             : items
                   .where((item) => statusOf(item) == _statusFilter)
                   .toList(growable: false);
-
-        final visibleItems = normalizedQuery.isEmpty
+        final facetedItems = _facetFilter == null
             ? statusFilteredItems
             : statusFilteredItems
+                  .where(
+                    (item) => widget
+                        .filterFacets(context, item)
+                        .contains(_facetFilter),
+                  )
+                  .toList(growable: false);
+        final dateOf = widget.dateOf;
+        final dateFilteredItems =
+            dateOf == null || _dateFilter == KnowledgeLibraryDateFilter.all
+            ? facetedItems
+            : facetedItems
+                  .where(
+                    (item) => matchesKnowledgeLibraryDateFilter(
+                      dateOf(item),
+                      _dateFilter,
+                      DateTime.now(),
+                    ),
+                  )
+                  .toList(growable: false);
+
+        final visibleItems = normalizedQuery.isEmpty
+            ? dateFilteredItems
+            : dateFilteredItems
                   .where(
                     (item) => widget
                         .searchableText(item)
@@ -781,10 +879,27 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
               if (searchAssist.hasContent)
                 const SizedBox(height: AppSpacing.s12),
               if (statuses.length > 1) ...[
-                _StatusFilterRow(
-                  statuses: statuses,
+                _FilterChipRow(
+                  icon: FLucideIcons.listFilter,
+                  values: statuses,
                   selected: _statusFilter,
                   onChanged: (status) => setState(() => _statusFilter = status),
+                ),
+                const SizedBox(height: AppSpacing.s12),
+              ],
+              if (dateOf != null) ...[
+                _DateFilterChipRow(
+                  selected: _dateFilter,
+                  onChanged: (filter) => setState(() => _dateFilter = filter),
+                ),
+                const SizedBox(height: AppSpacing.s12),
+              ],
+              if (facets.isNotEmpty) ...[
+                _FilterChipRow(
+                  icon: FLucideIcons.tags,
+                  values: facets,
+                  selected: _facetFilter,
+                  onChanged: (facet) => setState(() => _facetFilter = facet),
                 ),
                 const SizedBox(height: AppSpacing.s12),
               ],
@@ -799,7 +914,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
           );
         }
 
-        final list = RefreshIndicator(
+        final list = KnowledgePullToRefresh(
           onRefresh: widget.onRefresh,
           child: ListView.separated(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -809,7 +924,28 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
                 widget.tileBuilder(context, visibleItems[i], widget.query),
           ),
         );
-        if (statuses.length <= 1) {
+        final filterRows = <Widget>[
+          if (statuses.length > 1)
+            _FilterChipRow(
+              icon: FLucideIcons.listFilter,
+              values: statuses,
+              selected: _statusFilter,
+              onChanged: (status) => setState(() => _statusFilter = status),
+            ),
+          if (dateOf != null)
+            _DateFilterChipRow(
+              selected: _dateFilter,
+              onChanged: (filter) => setState(() => _dateFilter = filter),
+            ),
+          if (facets.isNotEmpty)
+            _FilterChipRow(
+              icon: FLucideIcons.tags,
+              values: facets,
+              selected: _facetFilter,
+              onChanged: (facet) => setState(() => _facetFilter = facet),
+            ),
+        ];
+        if (filterRows.isEmpty) {
           if (!searchAssist.hasContent) return list;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -826,12 +962,11 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
           children: [
             searchAssist,
             if (searchAssist.hasContent) const SizedBox(height: AppSpacing.s12),
-            _StatusFilterRow(
-              statuses: statuses,
-              selected: _statusFilter,
-              onChanged: (status) => setState(() => _statusFilter = status),
-            ),
-            const SizedBox(height: AppSpacing.s12),
+            for (var i = 0; i < filterRows.length; i++) ...[
+              if (i > 0) const SizedBox(height: AppSpacing.s8),
+              filterRows[i],
+            ],
+            if (filterRows.isNotEmpty) const SizedBox(height: AppSpacing.s12),
             Expanded(child: list),
           ],
         );
@@ -844,21 +979,28 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
     List<T> items,
     String query,
   ) {
+    return rankKnowledgeSearchSuggestions(
+      weightedSuggestions: [
+        for (final item in items) ...widget.searchSuggestions(context, item),
+      ],
+      searchableTexts: [for (final item in items) widget.searchableText(item)],
+      query: query,
+    );
+  }
+
+  List<String> _facetsFor(BuildContext context, List<T> items) {
     final seen = <String>{};
     final out = <String>[];
     for (final item in items) {
-      for (final raw in widget.searchSuggestions(context, item)) {
+      for (final raw in widget.filterFacets(context, item)) {
         final value = raw.trim();
         if (value.length < 2) continue;
-        if (query.isNotEmpty && !value.toLowerCase().contains(query)) {
-          continue;
-        }
-        final key = value.toLowerCase();
-        if (!seen.add(key)) continue;
+        if (!seen.add(value.toLowerCase())) continue;
         out.add(value);
-        if (out.length >= 8) return out;
+        if (out.length >= 12) return out;
       }
     }
+    out.sort();
     return out;
   }
 }
@@ -869,12 +1011,14 @@ class _SearchAssistRow extends StatelessWidget {
     required this.suggestions,
     required this.query,
     required this.onSelected,
+    required this.onHistoryClear,
   });
 
   final List<String> history;
   final List<String> suggestions;
   final String query;
   final ValueChanged<String> onSelected;
+  final VoidCallback onHistoryClear;
 
   bool get hasContent =>
       suggestions.isNotEmpty ||
@@ -898,6 +1042,7 @@ class _SearchAssistRow extends StatelessWidget {
           values: visibleHistory,
           icon: FLucideIcons.history,
           onSelected: onSelected,
+          onClear: query.isEmpty ? onHistoryClear : null,
         ),
       if (suggestions.isNotEmpty)
         _SearchAssistGroup(
@@ -926,12 +1071,14 @@ class _SearchAssistGroup extends StatelessWidget {
     required this.values,
     required this.icon,
     required this.onSelected,
+    this.onClear,
   });
 
   final String label;
   final List<String> values;
   final IconData icon;
   final ValueChanged<String> onSelected;
+  final VoidCallback? onClear;
 
   @override
   Widget build(BuildContext context) {
@@ -951,6 +1098,19 @@ class _SearchAssistGroup extends StatelessWidget {
                 label,
                 style: typography.xs.copyWith(color: colors.mutedForeground),
               ),
+              if (onClear != null) ...[
+                const SizedBox(width: AppSpacing.s4),
+                FButton.icon(
+                  variant: FButtonVariant.ghost,
+                  size: FButtonSizeVariant.sm,
+                  onPress: onClear,
+                  child: Icon(
+                    FLucideIcons.x,
+                    size: AppIconSizes.xs,
+                    color: colors.mutedForeground,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -979,14 +1139,16 @@ class _SearchAssistGroup extends StatelessWidget {
   }
 }
 
-class _StatusFilterRow extends StatelessWidget {
-  const _StatusFilterRow({
-    required this.statuses,
+class _FilterChipRow extends StatelessWidget {
+  const _FilterChipRow({
+    required this.icon,
+    required this.values,
     required this.selected,
     required this.onChanged,
   });
 
-  final List<String> statuses;
+  final IconData icon;
+  final List<String> values;
   final String? selected;
   final ValueChanged<String?> onChanged;
 
@@ -1003,17 +1165,75 @@ class _StatusFilterRow extends StatelessWidget {
       );
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          chip(l10n.knowledgeLibraryFilterAll, null),
-          for (final status in statuses) ...[
-            const SizedBox(width: AppSpacing.s8),
-            chip(status, status),
-          ],
-        ],
-      ),
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: AppIconSizes.xs,
+          color: context.theme.colors.mutedForeground,
+        ),
+        const SizedBox(width: AppSpacing.s8),
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                chip(l10n.knowledgeLibraryFilterAll, null),
+                for (final value in values) ...[
+                  const SizedBox(width: AppSpacing.s8),
+                  chip(value, value),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DateFilterChipRow extends StatelessWidget {
+  const _DateFilterChipRow({required this.selected, required this.onChanged});
+
+  final KnowledgeLibraryDateFilter selected;
+  final ValueChanged<KnowledgeLibraryDateFilter> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    Widget chip(KnowledgeLibraryDateFilter filter) {
+      final active = selected == filter;
+      return FButton(
+        variant: active ? FButtonVariant.primary : FButtonVariant.outline,
+        size: FButtonSizeVariant.sm,
+        onPress: () => onChanged(filter),
+        child: Text(_dateFilterLabel(l10n, filter)),
+      );
+    }
+
+    return Row(
+      children: [
+        Icon(
+          FLucideIcons.calendarDays,
+          size: AppIconSizes.xs,
+          color: context.theme.colors.mutedForeground,
+        ),
+        const SizedBox(width: AppSpacing.s8),
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final filter in KnowledgeLibraryDateFilter.values) ...[
+                  if (filter != KnowledgeLibraryDateFilter.values.first)
+                    const SizedBox(width: AppSpacing.s8),
+                  chip(filter),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

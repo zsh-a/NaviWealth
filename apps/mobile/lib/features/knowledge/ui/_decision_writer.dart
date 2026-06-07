@@ -255,6 +255,7 @@ class _DecisionWriterState extends State<_DecisionWriter> {
           KnowledgeWriterSection(
             title: l10n.knowledgeWriterPlanningSectionTitle,
             collapsible: true,
+            initiallyExpanded: false,
             children: [
               FTextField(
                 control: FTextFieldControl.managed(controller: _expectedCtrl),
@@ -475,15 +476,12 @@ class _PrincipleAssumptionPicker extends ConsumerWidget {
                           .where((a) => a.status == AssumptionStatus.active)
                           .toList(growable: false);
                   if (principles.isEmpty && assumptions.isEmpty) {
-                    final typography = context.theme.typography;
-                    final colors = context.theme.colors;
-                    return Text(
-                      AppLocalizations.of(
+                    return KnowledgeEmptyState(
+                      icon: FLucideIcons.link,
+                      title: AppLocalizations.of(
                         context,
                       ).knowledgeDecisionNoReferenceCandidates,
-                      style: typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
+                      density: KnowledgeStateDensity.section,
                     );
                   }
                   return Column(
@@ -644,11 +642,12 @@ class _ReviewDateSheetState extends State<_ReviewDateSheet> {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final typography = context.theme.typography;
-    Widget choice(int days, String label) => FButton(
-      variant: FButtonVariant.outline,
+    Widget choice(int days, String label) => KnowledgeSelectableRow(
+      label: label,
+      selected: false,
+      mode: KnowledgeSelectionMode.radio,
       onPress: () =>
           Navigator.of(context).pop(widget.now.add(Duration(days: days))),
-      child: Text(label),
     );
     return AppSheet(
       title: l10n.knowledgeDecisionReviewDateTitle,
@@ -656,36 +655,37 @@ class _ReviewDateSheetState extends State<_ReviewDateSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          choice(30, l10n.knowledgeDecisionReviewDateInDays(30)),
-          const SizedBox(height: AppSpacing.s8),
-          choice(90, l10n.knowledgeDecisionReviewDateInDays(90)),
-          const SizedBox(height: AppSpacing.s8),
-          choice(180, l10n.knowledgeDecisionReviewDateInDays(180)),
-          const SizedBox(height: AppSpacing.s8),
-          choice(365, l10n.knowledgeDecisionReviewDateInOneYear),
-          const SizedBox(height: AppSpacing.s12),
-          const FDivider(),
-          const SizedBox(height: AppSpacing.s12),
-          FTextField(
-            control: FTextFieldControl.managed(controller: _customCtrl),
-            label: Text(l10n.knowledgeDecisionReviewDateCustomLabel),
-            hint: l10n.knowledgeDecisionReviewDateCustomHint,
-            textInputAction: TextInputAction.done,
+          KnowledgeWriterSection(
+            title: l10n.knowledgeDecisionReviewDateTitle,
+            children: [
+              choice(30, l10n.knowledgeDecisionReviewDateInDays(30)),
+              choice(90, l10n.knowledgeDecisionReviewDateInDays(90)),
+              choice(180, l10n.knowledgeDecisionReviewDateInDays(180)),
+              choice(365, l10n.knowledgeDecisionReviewDateInOneYear),
+            ],
           ),
-          if (_error != null) ...[
-            const SizedBox(height: AppSpacing.s6),
-            Text(
-              _error!,
-              style: typography.xs.copyWith(color: colors.destructive),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.s8),
-          FButton(
-            onPress: () {
-              final parsed = _parseCustomDate(context);
-              if (parsed != null) Navigator.of(context).pop(parsed);
-            },
-            child: Text(l10n.knowledgeDecisionReviewDateCustomApply),
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeWriterSection(
+            title: l10n.knowledgeDecisionReviewDateCustomLabel,
+            children: [
+              FTextField(
+                control: FTextFieldControl.managed(controller: _customCtrl),
+                hint: l10n.knowledgeDecisionReviewDateCustomHint,
+                textInputAction: TextInputAction.done,
+              ),
+              if (_error != null)
+                Text(
+                  _error!,
+                  style: typography.xs.copyWith(color: colors.destructive),
+                ),
+              FButton(
+                onPress: () {
+                  final parsed = _parseCustomDate(context);
+                  if (parsed != null) Navigator.of(context).pop(parsed);
+                },
+                child: Text(l10n.knowledgeDecisionReviewDateCustomApply),
+              ),
+            ],
           ),
         ],
       ),

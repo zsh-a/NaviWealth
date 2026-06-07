@@ -29,6 +29,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../domain/knowledge_models.dart';
+import '../domain/knowledge_text.dart';
 import 'knowledge_repository.dart';
 import 'providers.dart';
 
@@ -71,8 +72,8 @@ const Map<String, String> kKnowledgeDedupeMemorySources = <String, String>{
   'decision': kKnowledgeDecisionMemorySource,
 };
 
-String _truncate(String s, [int n = 280]) =>
-    s.length > n ? '${s.substring(0, n)}…' : s;
+String _truncate(String s, [int n = kKnowledgeExcerptMaxChars]) =>
+    knowledgeExcerpt(s, max: n);
 
 Future<void> _forgetMissingSourceIds(
   MemoryRuntime runtime, {

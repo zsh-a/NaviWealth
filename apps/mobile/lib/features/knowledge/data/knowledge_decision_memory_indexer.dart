@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
 import '../domain/knowledge_models.dart';
+import '../domain/knowledge_text.dart';
 import 'knowledge_object_memory_indexers.dart'
     show kKnowledgeDecisionMemorySource, subscribeKnowledgeIndexer;
 
@@ -79,7 +80,7 @@ class KnowledgeDecisionMemoryIndexer {
   String _summarize(KnowledgeDecision d) {
     final tail = d.rationaleMd.isEmpty
         ? ''
-        : ' — ${d.rationaleMd.length > 200 ? '${d.rationaleMd.substring(0, 200)}…' : d.rationaleMd}';
+        : ' — ${knowledgeExcerpt(d.rationaleMd)}';
     final sel = d.selectedLabel.isEmpty ? '(undecided)' : d.selectedLabel;
     return '${d.question} → $sel$tail';
   }

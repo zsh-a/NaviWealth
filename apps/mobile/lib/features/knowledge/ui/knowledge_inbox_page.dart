@@ -7,8 +7,6 @@
 /// upgrade card in the sheet itself, not by picking the type up front.
 library;
 
-import 'package:flutter/material.dart'
-    show AlwaysScrollableScrollPhysics, RefreshIndicator;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -63,10 +61,12 @@ class _KnowledgeInboxPageState extends ConsumerState<KnowledgeInboxPage> {
             bottom: AppSpacing.s16,
             child: KnowledgeFloatingActionMotion(
               hidden: _fabHidden,
-              child: FButton(
-                prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
-                onPress: () => showKnowledgeCaptureSheet(context, ref),
-                child: Text(l10n.knowledgeCaptureAction),
+              child: KnowledgeFloatingActionSurface(
+                child: FButton(
+                  prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+                  onPress: () => showKnowledgeCaptureSheet(context, ref),
+                  child: Text(l10n.knowledgeCaptureAction),
+                ),
               ),
             ),
           ),
@@ -179,7 +179,7 @@ class _NotesList extends ConsumerWidget {
                     message: l10n.knowledgeInboxEmptyBody,
                   );
                 }
-                return RefreshIndicator(
+                return KnowledgePullToRefresh(
                   onRefresh: () => _refreshKnowledgeRepository(ref),
                   child: ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),

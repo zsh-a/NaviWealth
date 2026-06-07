@@ -436,13 +436,16 @@ class _ContextSnapshotSection extends StatelessWidget {
             style: typography.sm.copyWith(color: colors.mutedForeground),
           ),
         if (finance.isNotEmpty) ...[
-          Text('Finance', style: typography.xs),
+          Text(
+            l10n.knowledgeDetailContextSnapshotFinance,
+            style: typography.xs,
+          ),
           for (final raw in finance.whereType<Map<Object?, Object?>>())
             _SnapshotRow(map: raw.cast<String, Object?>()),
           const SizedBox(height: AppSpacing.s4),
         ],
         if (health.isNotEmpty) ...[
-          Text('Health', style: typography.xs),
+          Text(l10n.knowledgeDetailContextSnapshotHealth, style: typography.xs),
           for (final raw in health.whereType<Map<Object?, Object?>>())
             _SnapshotRow(map: raw.cast<String, Object?>()),
         ],
@@ -466,14 +469,14 @@ class _SnapshotRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (ts.length >= 10)
+          if (ts.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(
                 right: AppSpacing.s8,
                 top: AppSpacing.s2,
               ),
               child: Text(
-                ts.substring(5, 10),
+                knowledgeMonthDayFromIso(context, ts),
                 style: typography.xs.copyWith(color: colors.mutedForeground),
               ),
             ),

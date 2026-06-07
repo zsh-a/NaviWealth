@@ -9,6 +9,7 @@
 library;
 
 import '../data/providers.dart' show kKnowledgeUuid;
+import '../domain/knowledge_text.dart';
 
 /// Default `note` carried on every KnowledgeOS proposal envelope: the UI
 /// must surface `summary_zh` and only commit on explicit user confirmation
@@ -38,8 +39,10 @@ Map<String, Object?> proposalEnvelope({
 
 /// Standard `bad_request` tool result. Returned (not thrown) so the agent
 /// loop relays the message back to the model.
-Map<String, Object?> badRequest(String message) =>
-    <String, Object?>{'error': message, 'code': 'bad_request'};
+Map<String, Object?> badRequest(String message) => <String, Object?>{
+  'error': message,
+  'code': 'bad_request',
+};
 
 /// Standard `not_found` tool result carrying the offending [missing] ids.
 Map<String, Object?> notFound(String message, List<String> missing) =>
@@ -52,8 +55,12 @@ Map<String, Object?> notFound(String message, List<String> missing) =>
 /// Short label for a note in a proposal summary: prefer the title, else a
 /// truncated body, else a placeholder. Shared by the inbox `propose_*`
 /// trio (was `_preview` / `_titlePreview` duplicated per file).
-String notePreview(String title, String body, {int max = 30}) {
+String notePreview(
+  String title,
+  String body, {
+  int max = kKnowledgeInlineExcerptMaxChars,
+}) {
   if (title.isNotEmpty) return title;
   if (body.isEmpty) return '(untitled)';
-  return body.length > max ? '${body.substring(0, max)}…' : body;
+  return knowledgeExcerpt(body, max: max);
 }

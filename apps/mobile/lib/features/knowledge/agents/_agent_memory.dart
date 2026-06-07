@@ -28,7 +28,7 @@ import '../../../core/ai/contracts/memory_record.dart';
   required double confidence,
   String scope = '*',
 }) {
-  final dayKey = start.toUtc().toIso8601String().substring(0, 10);
+  final dayKey = _utcDayKey(start);
   final memoryId = '$source:$dayKey';
   return (
     memoryId: memoryId,
@@ -50,4 +50,12 @@ import '../../../core/ai/contracts/memory_record.dart';
       updatedAt: finished,
     ),
   );
+}
+
+String _utcDayKey(DateTime value) {
+  final utc = value.toUtc();
+  final year = utc.year.toString().padLeft(4, '0');
+  final month = utc.month.toString().padLeft(2, '0');
+  final day = utc.day.toString().padLeft(2, '0');
+  return '$year-$month-$day';
 }

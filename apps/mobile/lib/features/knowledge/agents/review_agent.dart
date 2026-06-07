@@ -3,8 +3,7 @@
 ///
 /// Runs Sunday 09:00 local. Surfaces "what needs review this week" —
 /// both Decisions whose `review_date` has passed **and** active
-/// Assumptions left unverified past [kAssumptionStaleDays] (§5: "自动列出
-/// review_date 到期的 Decision + 未验证的 assumption"). Writes one episodic
+/// Assumptions left unverified past [kAssumptionStaleDays]. Writes one episodic
 /// memory; the Review tab reads the same repo, so the memory is a recall
 /// affordance for AI chat, not a UI primary path.
 library;
@@ -14,7 +13,9 @@ import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
+import '_agent_l10n.dart';
 import '_agent_memory.dart';
 import 'assumption_agent.dart' show kAssumptionStaleDays;
 
@@ -33,10 +34,8 @@ class ReviewAgent implements Agent {
   /// "每周日 09:00 local". MVP fires on daily ticks at hour 9 and
   /// the underlying [AgentSchedule] gate keeps the cadence at ≥ 7d.
   @override
-  AgentSchedule get schedule => const AgentSchedule(
-    interval: Duration(days: 7),
-    preferredHourLocal: 9,
-  );
+  AgentSchedule get schedule =>
+      const AgentSchedule(interval: Duration(days: 7), preferredHourLocal: 9);
 
   @override
   Future<AgentRunResult> run(AgentContext ctx) async {
@@ -44,6 +43,7 @@ class ReviewAgent implements Agent {
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
+    final l10n = knowledgeAgentL10n(ctx.ref);
 
     final due = await repo.listDueReviews(
       ownerUserId: ownerUserId,
@@ -60,16 +60,18 @@ class ReviewAgent implements Agent {
         agentId: kKnowledgeReviewAgentId,
         startedAt: start,
         finishedAt: finished,
-        reason: 'nothing due for review this week',
+        reason: l10n.knowledgeAgentReviewNothingDue,
       );
     }
 
     final summary = _summarize(
+      l10n: l10n,
       dueCount: due.length,
       staleCount: staleAssumptions.length,
       firstDue: due.isNotEmpty ? due.first.question : null,
-      firstStale:
-          staleAssumptions.isNotEmpty ? staleAssumptions.first.statement : null,
+      firstStale: staleAssumptions.isNotEmpty
+          ? staleAssumptions.first.statement
+          : null,
     );
     final built = buildAgentMemory(
       source: kKnowledgeReviewMemorySource,
@@ -77,13 +79,14 @@ class ReviewAgent implements Agent {
       ownerUserId: ownerUserId,
       start: start,
       finished: finished,
-      title: '本周复盘',
+      title: l10n.knowledgeAgentReviewTitle,
       summary: summary,
       payload: <String, Object?>{
         'context': 'weekly review tick at ${start.toUtc().toIso8601String()}',
         'due_decision_ids': due.map((d) => d.id).toList(growable: false),
-        'stale_assumption_ids':
-            staleAssumptions.map((a) => a.id).toList(growable: false),
+        'stale_assumption_ids': staleAssumptions
+            .map((a) => a.id)
+            .toList(growable: false),
         'assumption_threshold_days': kAssumptionStaleDays,
       },
       entities: <String>{'knowledge_review', 'weekly_review'},
@@ -107,6 +110,7 @@ class ReviewAgent implements Agent {
   }
 
   String _summarize({
+    required AppLocalizations l10n,
     required int dueCount,
     required int staleCount,
     String? firstDue,
@@ -114,14 +118,25 @@ class ReviewAgent implements Agent {
   }) {
     final parts = <String>[];
     if (dueCount > 0) {
-      parts.add(dueCount == 1
-          ? '1 个 decision 到期可复盘:$firstDue'
-          : '$dueCount 个 decision 到期可复盘,首条:$firstDue');
+      parts.add(
+        dueCount == 1
+            ? l10n.knowledgeAgentReviewDecisionOne(firstDue ?? '')
+            : l10n.knowledgeAgentReviewDecisionMany(dueCount, firstDue ?? ''),
+      );
     }
     if (staleCount > 0) {
-      parts.add(staleCount == 1
-          ? '1 条假设 > $kAssumptionStaleDays 天未校验:$firstStale'
-          : '$staleCount 条假设 > $kAssumptionStaleDays 天未校验,首条:$firstStale');
+      parts.add(
+        staleCount == 1
+            ? l10n.knowledgeAgentReviewAssumptionOne(
+                kAssumptionStaleDays,
+                firstStale ?? '',
+              )
+            : l10n.knowledgeAgentReviewAssumptionMany(
+                staleCount,
+                kAssumptionStaleDays,
+                firstStale ?? '',
+              ),
+      );
     }
     return parts.join('；');
   }

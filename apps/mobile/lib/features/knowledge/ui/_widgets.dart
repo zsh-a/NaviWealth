@@ -21,6 +21,9 @@
 /// scannable lists tighten to s12, summary panels relax to s16.
 library;
 
+import 'dart:async';
+
+import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -50,9 +53,32 @@ String knowledgeDateFromIso(
 }) {
   final parsed = DateTime.tryParse(value);
   if (parsed == null) {
-    return value.length > 10 ? value.substring(0, 10) : value;
+    final datePrefix = RegExp(r'^\d{4}-\d{2}-\d{2}').firstMatch(value);
+    return datePrefix?.group(0) ?? value;
   }
   return knowledgeDate(context, parsed, long: long);
+}
+
+String knowledgeMonthDayFromIso(BuildContext context, String value) {
+  final parsed = DateTime.tryParse(value);
+  final locale = Localizations.localeOf(context);
+  if (parsed != null) {
+    return _knowledgeMonthDay(locale, parsed.toLocal());
+  }
+
+  final match = RegExp(r'^\d{4}-(\d{2})-(\d{2})').firstMatch(value);
+  if (match == null) return value;
+  final month = int.tryParse(match.group(1) ?? '');
+  final day = int.tryParse(match.group(2) ?? '');
+  if (month == null || day == null) return value;
+  return _knowledgeMonthDay(locale, DateTime(2000, month, day));
+}
+
+String _knowledgeMonthDay(Locale locale, DateTime date) {
+  if (locale.languageCode == 'zh') {
+    return '${date.month}月${date.day}日';
+  }
+  return '${date.month}/${date.day}';
 }
 
 enum KnowledgeStateDensity { page, section }
@@ -62,6 +88,7 @@ enum KnowledgeSelectionMode { checkbox, radio }
 const Duration _kKnowledgeFloatingActionMotionDuration = Duration(
   milliseconds: 180,
 );
+const double _kKnowledgeRefreshTriggerExtent = 64;
 
 /// Shared hide/show motion for KnowledgeOS floating create actions.
 class KnowledgeFloatingActionMotion extends StatelessWidget {
@@ -89,6 +116,152 @@ class KnowledgeFloatingActionMotion extends StatelessWidget {
           child: child,
         ),
       ),
+    );
+  }
+}
+
+/// Visual shell for primary floating KnowledgeOS actions.
+///
+/// Keeps Inbox / Library / Review action affordances visually consistent
+/// without depending on platform-specific floating button widgets.
+class KnowledgeFloatingActionSurface extends StatelessWidget {
+  const KnowledgeFloatingActionSurface({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOutCubic,
+      scale: 1,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.background,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: colors.border),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x33000000),
+              blurRadius: 18,
+              offset: Offset(0, 10),
+            ),
+          ],
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+/// Pull-to-refresh wrapper implemented with Flutter widgets + Forui progress.
+class KnowledgePullToRefresh extends StatefulWidget {
+  const KnowledgePullToRefresh({
+    super.key,
+    required this.onRefresh,
+    required this.child,
+  });
+
+  final Future<void> Function() onRefresh;
+  final Widget child;
+
+  @override
+  State<KnowledgePullToRefresh> createState() => _KnowledgePullToRefreshState();
+}
+
+class _KnowledgePullToRefreshState extends State<KnowledgePullToRefresh> {
+  double _dragExtent = 0;
+  bool _refreshing = false;
+
+  bool _onNotification(ScrollNotification notification) {
+    final metrics = notification.metrics;
+    if (metrics.axis != Axis.vertical) return false;
+
+    if (notification is ScrollUpdateNotification &&
+        notification.dragDetails != null &&
+        metrics.pixels <= metrics.minScrollExtent) {
+      final delta = notification.scrollDelta ?? 0;
+      if (delta < 0) {
+        setState(() {
+          _dragExtent = (_dragExtent - delta).clamp(
+            0,
+            _kKnowledgeRefreshTriggerExtent,
+          );
+        });
+      }
+    }
+
+    if (notification is OverscrollNotification &&
+        notification.dragDetails != null &&
+        notification.overscroll < 0) {
+      setState(() {
+        _dragExtent = (_dragExtent - notification.overscroll).clamp(
+          0,
+          _kKnowledgeRefreshTriggerExtent,
+        );
+      });
+    }
+
+    if (notification is ScrollEndNotification ||
+        notification is UserScrollNotification &&
+            notification.direction == ScrollDirection.idle) {
+      if (_dragExtent >= _kKnowledgeRefreshTriggerExtent && !_refreshing) {
+        unawaited(_refresh());
+      } else if (!_refreshing && _dragExtent != 0) {
+        setState(() => _dragExtent = 0);
+      }
+    }
+    return false;
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _refreshing = true;
+      _dragExtent = _kKnowledgeRefreshTriggerExtent;
+    });
+    try {
+      await widget.onRefresh();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _refreshing = false;
+          _dragExtent = 0;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final visible = _refreshing || _dragExtent > 0;
+    final progress = (_dragExtent / _kKnowledgeRefreshTriggerExtent).clamp(
+      0.0,
+      1.0,
+    );
+    return Stack(
+      children: [
+        NotificationListener<ScrollNotification>(
+          onNotification: _onNotification,
+          child: widget.child,
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: IgnorePointer(
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 120),
+              opacity: visible ? 1 : 0,
+              child: Transform.scale(
+                scaleY: _refreshing ? 1 : progress,
+                alignment: Alignment.topCenter,
+                child: const FProgress(),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

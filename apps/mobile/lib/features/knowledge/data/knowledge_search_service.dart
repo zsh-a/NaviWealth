@@ -9,6 +9,7 @@ library;
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 
 import '../domain/knowledge_models.dart';
+import '../domain/knowledge_text.dart';
 import 'knowledge_object_memory_indexers.dart';
 import 'knowledge_repository.dart';
 
@@ -708,10 +709,8 @@ class KnowledgeLexicalMatch {
   }
 }
 
-String _excerpt(String s, [int n = 160]) {
-  if (s.length <= n) return s;
-  return '${s.substring(0, n)}…';
-}
+String _excerpt(String s, [int n = kKnowledgeSupportingExcerptMaxChars]) =>
+    knowledgeExcerpt(s, max: n);
 
 Set<String> _tokenize(String s) {
   final lower = s.toLowerCase();
