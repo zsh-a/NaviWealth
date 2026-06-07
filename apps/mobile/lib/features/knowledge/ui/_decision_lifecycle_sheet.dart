@@ -171,19 +171,53 @@ class _DecisionLifecycleSheetState
           KnowledgeWriterSection(
             title: l10n.knowledgeDecisionStatusLabel,
             children: [
-              Wrap(
-                spacing: AppSpacing.s8,
-                runSpacing: AppSpacing.s8,
-                children: [
-                  for (final s in DecisionStatus.values)
-                    FButton(
-                      variant: s == _status
-                          ? FButtonVariant.primary
-                          : FButtonVariant.outline,
+              SizedBox(
+                height: 32,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: DecisionStatus.values.length,
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(width: AppSpacing.s4),
+                  itemBuilder: (context, i) {
+                    final s = DecisionStatus.values[i];
+                    final active = s == _status;
+                    final colors = context.theme.colors;
+                    return FTappable(
                       onPress: () => setState(() => _status = s),
-                      child: Text(decisionStatusLabel(context, s)),
-                    ),
-                ],
+                      child: AnimatedContainer(
+                        duration: Motion.fast,
+                        curve: Motion.standardDecelerate,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s8,
+                          vertical: AppSpacing.s4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: active
+                              ? colors.primary
+                                  .withValues(alpha: AppOpacity.subtle)
+                              : null,
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                          border: Border.all(
+                            color: active
+                                ? colors.primary
+                                    .withValues(alpha: AppOpacity.light)
+                                : colors.border,
+                          ),
+                        ),
+                        child: Text(
+                          decisionStatusLabel(context, s),
+                          style: context.theme.typography.xs.copyWith(
+                            color: active
+                                ? colors.primary
+                                : colors.mutedForeground,
+                            fontWeight:
+                                active ? FontWeight.w600 : FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
             ],
           ),
