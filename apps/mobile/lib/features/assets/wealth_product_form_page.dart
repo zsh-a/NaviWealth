@@ -247,8 +247,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
               onPress: _busy ? null : _delete,
             ),
         ],
-        child: accountsAsync.when(
-          loading: () => const Center(child: FCircularProgress()),
+        child: accountsAsync.whenOrLoading(
           error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
           data: (accounts) => _buildForm(accounts),
         ),

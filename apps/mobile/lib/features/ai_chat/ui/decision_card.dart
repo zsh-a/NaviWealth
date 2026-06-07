@@ -58,7 +58,7 @@ class DecisionCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.s4),
             Text(
               request.context,
-              style: typography.xs.copyWith(color: colors.mutedForeground),
+              style: context.captionStyle,
             ),
           ],
           const SizedBox(height: AppSpacing.s8),
@@ -75,7 +75,7 @@ class DecisionCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.s8),
             Text(
               '或在下方直接输入你的方案。',
-              style: typography.xs.copyWith(color: colors.mutedForeground),
+              style: context.captionStyle,
             ),
           ],
         ],
@@ -149,7 +149,7 @@ class _OptionTile extends StatelessWidget {
               const SizedBox(height: AppSpacing.s2),
               Text(
                 option.description,
-                style: typography.xs.copyWith(color: colors.mutedForeground),
+                style: context.captionStyle,
               ),
             ],
             for (final pro in option.pros) _Tradeoff(text: pro, positive: true),
@@ -171,7 +171,6 @@ class _Tradeoff extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.s2),
       child: Row(
@@ -186,7 +185,7 @@ class _Tradeoff extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: typography.xs.copyWith(color: colors.mutedForeground),
+              style: context.captionStyle,
             ),
           ),
         ],

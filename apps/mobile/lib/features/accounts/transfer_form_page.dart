@@ -118,9 +118,8 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
       child: AppFormPageScaffold(
         title: Text(convertMode ? l10n.superFabConvert : l10n.transferTitle),
         confirmLeave: handleBackIntent,
-        child: accountsAsync.when(
+        child: accountsAsync.whenOrLoading(
           data: (accounts) => _buildForm(context, accounts, convertMode),
-          loading: () => const Center(child: FCircularProgress()),
           error: (_, _) => Center(
             child: AppEmptyState.error(
               title: l10n.commonLoadFailed,

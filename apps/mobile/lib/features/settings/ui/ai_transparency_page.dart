@@ -539,15 +539,13 @@ class AiTransparencyDetailPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.aiTransparencyDetailTitle,
       childPad: false,
-      child: traceAsync.when(
+      child: traceAsync.whenOrLoading(
         data: (trace) {
           if (trace == null) {
             return Center(child: Text(l10n.aiTransparencyTraceNotFound));
           }
           return _TraceWaterfallBody(trace: trace);
-        },
-        loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) =>
+        },        error: (e, _) =>
             Center(child: Text(l10n.aiTransparencyLoadError('$e'))),
       ),
     );

@@ -31,9 +31,7 @@ class LiabilitiesPage extends ConsumerWidget {
     final summariesAsync = ref.watch(allLiabilitySummariesProvider);
     final summaries = summariesAsync.value ?? const {};
 
-    final body = asyncList.when(
-      loading: () => const Center(child: FCircularProgress()),
-      error: (e, _) => Center(child: Text('$e')),
+    final body = asyncList.whenOrError(
       data: (items) {
         if (items.isEmpty) {
           return _LiabilitiesEmptyState(l10n: l10n);

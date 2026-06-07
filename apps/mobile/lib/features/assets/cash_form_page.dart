@@ -182,8 +182,7 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
               onPress: _busy ? null : _delete,
             ),
         ],
-        child: accountsAsync.when(
-          loading: () => const Center(child: FCircularProgress()),
+        child: accountsAsync.whenOrLoading(
           error: (e, _) => Center(child: Text(l10n.cashFormLoadError('$e'))),
           data: (accounts) => _buildForm(l10n, accounts),
         ),

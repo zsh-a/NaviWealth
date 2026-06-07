@@ -66,9 +66,7 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
         ),
       ],
       childPad: false,
-      child: items.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (error, _) => Center(child: Text('$error')),
+      child: items.whenOrError(
         data: (items) => _WatchlistBody(
           items: items,
           snapshots: quotes.value ?? const [],

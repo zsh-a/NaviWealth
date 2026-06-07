@@ -102,7 +102,7 @@ class _RecoveryCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s12),
           Text(
             '今日建议',
-            style: typography.xs.copyWith(color: colors.mutedForeground),
+            style: context.captionStyle,
           ),
           const SizedBox(height: AppSpacing.s8),
           for (final item in _planActions(verdict))
@@ -111,13 +111,13 @@ class _RecoveryCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.s8),
             Text(
               out['note'] as String,
-              style: typography.xs.copyWith(color: colors.mutedForeground),
+              style: context.captionStyle,
             ),
           ],
           const SizedBox(height: AppSpacing.s24),
           Text(
             l10n.healthInputMetricsTitle,
-            style: typography.xs.copyWith(color: colors.mutedForeground),
+            style: context.captionStyle,
           ),
           const SizedBox(height: AppSpacing.s8),
           _InputRow(
@@ -237,7 +237,6 @@ class _InputRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final typography = context.theme.typography;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
@@ -246,7 +245,7 @@ class _InputRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: typography.xs.copyWith(color: colors.mutedForeground),
+              style: context.captionStyle,
             ),
           ),
           Text(value, style: typography.sm),
@@ -322,13 +321,11 @@ class _DisclaimerCard extends StatelessWidget {
   const _DisclaimerCard();
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
       child: Text(
         '不是医学诊断,仅供日常作息判断。HealthOS 不会自动调整你的日程。',
-        style: typography.xs.copyWith(color: colors.mutedForeground),
+        style: context.captionStyle,
       ),
     );
   }

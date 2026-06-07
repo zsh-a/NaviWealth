@@ -25,8 +25,7 @@ class ExpenseReportPage extends ConsumerWidget {
         ),
       ],
       childPad: false,
-      child: reportAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
+      child: reportAsync.whenOrLoading(
         error: (e, _) => Center(child: Text(l10n.expenseReportLoadError('$e'))),
         data: (report) => ExpenseReportBody(report: report),
       ),

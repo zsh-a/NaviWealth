@@ -100,7 +100,7 @@ class FireStressSettings extends ConsumerWidget {
           max: 0.60,
           onChanged: (v) => update(risk.copyWith(marketDrawdownPct: v)),
         ),
-        _Divider(),
+        const AppDivider(),
         _PercentSlider(
           label: l10n.settingsStressTestExpenseShockLabel,
           subtitle: l10n.settingsStressTestExpenseShockSubtitle,
@@ -108,7 +108,7 @@ class FireStressSettings extends ConsumerWidget {
           max: 0.50,
           onChanged: (v) => update(risk.copyWith(expenseShockPct: v)),
         ),
-        _Divider(),
+        const AppDivider(),
         _PercentSlider(
           label: l10n.settingsStressTestFxShockLabel,
           subtitle: l10n.settingsStressTestFxShockSubtitle,
@@ -116,7 +116,7 @@ class FireStressSettings extends ConsumerWidget {
           max: 0.30,
           onChanged: (v) => update(risk.copyWith(fxShockPct: v)),
         ),
-        _Divider(),
+        const AppDivider(),
         _LumpSumField(
           value: risk.oneOffShockAmount,
           baseCurrency: baseCurrency,
@@ -154,20 +154,7 @@ class FireStressSettings extends ConsumerWidget {
   }
 }
 
-class _Divider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
-      child: Container(
-        height: 1,
-        color: context.theme.colors.foreground.withValues(
-          alpha: AppOpacity.whisper,
-        ),
-      ),
-    );
-  }
-}
+
 
 /// Slider for a percentage parameter in [0, max], rendered with a
 /// trailing percent badge so the user always sees the magnitude

@@ -391,7 +391,7 @@ class _ReviewQuickAction extends StatelessWidget {
               ),
               Text(
                 hint,
-                style: typography.xs.copyWith(color: colors.mutedForeground),
+                style: context.captionStyle,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -720,8 +720,6 @@ class _ReviewSelectionToolbarState extends State<_ReviewSelectionToolbar> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final hasSelection = widget.selectedCount > 0;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.s4),
@@ -729,7 +727,7 @@ class _ReviewSelectionToolbarState extends State<_ReviewSelectionToolbar> {
         children: [
           Text(
             l10n.knowledgeReviewSelectedCount(widget.selectedCount),
-            style: typography.xs.copyWith(color: colors.mutedForeground),
+            style: context.captionStyle,
           ),
           const Spacer(),
           FButton(
@@ -1400,7 +1398,7 @@ class _DueDecisionRowState extends ConsumerState<_DueDecisionRow> {
             const SizedBox(width: AppSpacing.s4),
             Text(
               l10n.knowledgeReviewDecisionOverdueDays(overdueDays),
-              style: typography.xs.copyWith(color: colors.mutedForeground),
+              style: context.captionStyle,
             ),
             const SizedBox(width: AppSpacing.s4),
             _ReviewIconButton(

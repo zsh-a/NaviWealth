@@ -46,7 +46,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
     final expensesAsync = ref.watch(journalExpensesStreamProvider);
     final accountsAsync = ref.watch(allAccountsStreamProvider);
 
-    final body = expensesAsync.when(
+    final body = expensesAsync.whenOrLoading(
       data: (all) {
         final accounts = accountsAsync.value ?? const <Account>[];
         final expenseAccountById = {
@@ -77,9 +77,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
             ),
           ],
         );
-      },
-      loading: () => const Center(child: FCircularProgress()),
-      error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
+      },      error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
     );
 
     if (widget.embedded) return body;

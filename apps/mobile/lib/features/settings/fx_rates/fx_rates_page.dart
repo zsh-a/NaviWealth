@@ -32,9 +32,7 @@ class FxRatesPage extends ConsumerWidget {
         ),
       ],
       childPad: false,
-      child: ratesAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) => Center(child: Text('$e')),
+      child: ratesAsync.whenOrError(
         data: (rates) => _RateList(rates: rates),
       ),
     );

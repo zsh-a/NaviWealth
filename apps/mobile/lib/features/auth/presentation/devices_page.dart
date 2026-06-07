@@ -73,9 +73,8 @@ class DevicesPage extends ConsumerWidget {
         ),
       ],
       childPad: false,
-      child: state.when(
+      child: state.whenOrLoading(
         data: (data) => _DevicesList(response: data),
-        loading: () => const Center(child: FCircularProgress()),
         error: (error, _) => _ErrorView(
           message: l10n.authDevicesLoadError,
           details: error is AuthException ? error.message : '$error',

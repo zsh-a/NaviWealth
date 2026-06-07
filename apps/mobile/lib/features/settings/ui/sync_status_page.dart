@@ -30,8 +30,7 @@ class SyncStatusPage extends ConsumerWidget {
         ),
       ],
       childPad: false,
-      child: eventAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
+      child: eventAsync.whenOrLoading(
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s24),

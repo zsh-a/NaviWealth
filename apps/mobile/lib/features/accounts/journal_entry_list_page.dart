@@ -31,16 +31,14 @@ class JournalEntryListPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.journalTitle,
       childPad: false,
-      child: journalAsync.when(
+      child: journalAsync.whenOrLoading(
         data: (entries) {
           if (entries.isEmpty) return const _EmptyJournal();
           final accountsById = <String, Account>{
             for (final a in accountsAsync.value ?? const <Account>[]) a.id: a,
           };
           return _JournalList(entries: entries, accountsById: accountsById);
-        },
-        loading: () => const Center(child: FCircularProgress()),
-        error: (_, _) => Center(
+        },        error: (_, _) => Center(
           child: AppEmptyState.error(
             title: l10n.commonLoadFailed,
             action: FButton(

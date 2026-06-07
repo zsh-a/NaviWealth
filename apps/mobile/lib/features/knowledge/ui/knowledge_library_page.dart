@@ -1075,7 +1075,6 @@ class _SearchAssistGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final visibleValues = values.take(6).toList(growable: false);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -1087,7 +1086,7 @@ class _SearchAssistGroup extends StatelessWidget {
             const SizedBox(width: AppSpacing.s4),
             Text(
               label,
-              style: typography.xs.copyWith(color: colors.mutedForeground),
+              style: context.captionStyle,
             ),
             if (onClear != null) ...[
               const SizedBox(width: AppSpacing.s4),
@@ -1562,7 +1561,7 @@ Widget _buildDecisionTile(
       KnowledgeHighlightedText(
         text: knowledgeExcerpt(d.rationaleMd),
         query: query,
-        style: typography.sm.copyWith(color: colors.mutedForeground),
+        style: context.bodyCaptionStyle,
       ),
     ],
   ];
@@ -1588,7 +1587,6 @@ Widget _buildNoteTile(
   required String query,
   required VoidCallback onDelete,
 }) {
-  final typography = context.theme.typography;
   final colors = context.theme.colors;
   final l10n = AppLocalizations.of(context);
   final subtitle = <Widget>[
@@ -1596,7 +1594,7 @@ Widget _buildNoteTile(
       KnowledgeHighlightedText(
         text: knowledgeExcerpt(n.bodyMd),
         query: query,
-        style: typography.sm.copyWith(color: colors.mutedForeground),
+        style: context.bodyCaptionStyle,
       ),
   ];
   return _buildLibraryTile(
@@ -1620,20 +1618,18 @@ Widget _buildPrincipleTile(
   required String query,
   required VoidCallback onDelete,
 }) {
-  final typography = context.theme.typography;
-  final colors = context.theme.colors;
   final l10n = AppLocalizations.of(context);
   final subtitle = <Widget>[
     Text(
       l10n.knowledgeDetailScope(p.scope),
-      style: typography.sm.copyWith(color: colors.mutedForeground),
+      style: context.bodyCaptionStyle,
     ),
     if (p.rationaleMd.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s4),
       KnowledgeHighlightedText(
         text: knowledgeExcerpt(p.rationaleMd),
         query: query,
-        style: typography.sm.copyWith(color: colors.mutedForeground),
+        style: context.bodyCaptionStyle,
       ),
     ],
   ];
@@ -1659,8 +1655,6 @@ Widget _buildAssumptionTile(
   required String query,
   required VoidCallback onDelete,
 }) {
-  final typography = context.theme.typography;
-  final colors = context.theme.colors;
   final l10n = AppLocalizations.of(context);
   final subtitle = <Widget>[
     Text(
@@ -1668,7 +1662,7 @@ Widget _buildAssumptionTile(
         a.confidence.toStringAsFixed(2),
         a.scope,
       ),
-      style: typography.sm.copyWith(color: colors.mutedForeground),
+      style: context.bodyCaptionStyle,
     ),
   ];
   return _buildLibraryTile(
@@ -1693,14 +1687,12 @@ Widget _buildConceptTile(
   required String query,
   required VoidCallback onDelete,
 }) {
-  final typography = context.theme.typography;
-  final colors = context.theme.colors;
   final subtitle = <Widget>[
     if (c.summaryMd.isNotEmpty)
       KnowledgeHighlightedText(
         text: knowledgeExcerpt(c.summaryMd),
         query: query,
-        style: typography.sm.copyWith(color: colors.mutedForeground),
+        style: context.bodyCaptionStyle,
       ),
   ];
   return _buildLibraryTile(
