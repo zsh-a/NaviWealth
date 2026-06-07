@@ -427,7 +427,7 @@ class _ProposalDetailsPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
-                    width: 104,
+                    width: 104, // Payload key column — keeps label/value ratio stable.
                     child: Text(
                       entry.key,
                       style: typography.xs.copyWith(

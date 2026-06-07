@@ -7,7 +7,6 @@
 /// upgrade card in the sheet itself, not by picking the type up front.
 library;
 
-import 'package:flutter/material.dart' show RefreshIndicator;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -29,21 +28,8 @@ class KnowledgeInboxPage extends ConsumerStatefulWidget {
   ConsumerState<KnowledgeInboxPage> createState() => _KnowledgeInboxPageState();
 }
 
-class _KnowledgeInboxPageState extends ConsumerState<KnowledgeInboxPage> {
-  bool _fabHidden = false;
-
-  bool _onScrollUpdate(ScrollUpdateNotification notification) {
-    if (notification.metrics.axis != Axis.vertical) return false;
-
-    final delta = notification.scrollDelta ?? 0;
-    if (delta > 4 && !_fabHidden) {
-      setState(() => _fabHidden = true);
-    } else if (delta < -4 && _fabHidden) {
-      setState(() => _fabHidden = false);
-    }
-    return false;
-  }
-
+class _KnowledgeInboxPageState extends ConsumerState<KnowledgeInboxPage>
+    with KnowledgeFabScrollHideMixin {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -53,7 +39,7 @@ class _KnowledgeInboxPageState extends ConsumerState<KnowledgeInboxPage> {
         children: [
           Positioned.fill(
             child: NotificationListener<ScrollUpdateNotification>(
-              onNotification: _onScrollUpdate,
+              onNotification: onScrollUpdate,
               child: const _InboxBody(),
             ),
           ),
@@ -61,7 +47,7 @@ class _KnowledgeInboxPageState extends ConsumerState<KnowledgeInboxPage> {
             right: AppSpacing.s16,
             bottom: AppSpacing.s16,
             child: KnowledgeFloatingActionMotion(
-              hidden: _fabHidden,
+              hidden: fabHidden,
               child: KnowledgeFloatingActionSurface(
                 child: FButton(
                   prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
@@ -180,7 +166,7 @@ class _NotesList extends ConsumerWidget {
                     message: l10n.knowledgeInboxEmptyBody,
                   );
                 }
-                return RefreshIndicator(
+                return KnowledgePullToRefresh(
                   onRefresh: () => _refreshKnowledgeRepository(ref),
                   child: ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),

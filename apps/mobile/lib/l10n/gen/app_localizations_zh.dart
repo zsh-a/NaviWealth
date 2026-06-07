@@ -5442,6 +5442,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeNoteDetailTitle => 'Note';
 
   @override
+  String get knowledgeNoteEditTitle => '编辑笔记';
+
+  @override
+  String get knowledgeNoteEditSubtitle => '修改标题、内容和元数据。';
+
+  @override
+  String get knowledgeNoteSourceUrlLabel => '来源链接';
+
+  @override
+  String get knowledgeNoteTagsHint => '\"投资\", \"fire\", \"银行卡\"';
+
+  @override
+  String get knowledgeNoteProjectHint => '\"fire计划\", \"健康2026\"';
+
+  @override
   String get knowledgeConceptDetailTitle => '概念';
 
   @override
