@@ -362,9 +362,16 @@ class _AccountSection extends ConsumerWidget {
         ref.watch(authControllerProvider).value is AuthLocalOnly;
 
     if (isLocalOnly) {
-      return _LocalModeStatusRow(
+      return InlineLinkRow(
+        icon: FLucideIcons.smartphone,
         label: l10n.settingsAccountLocalOnlyBadge,
-        subtitle: l10n.settingsAccountLocalOnlyHint,
+        subtitle: l10n.settingsUpgradeToCloudHint,
+        trailing: Icon(
+          FLucideIcons.cloud,
+          size: AppIconSizes.h18,
+          color: context.theme.colors.primary,
+        ),
+        onTap: () => context.go('${AppRoutes.login}?mode=upgrade'),
       );
     }
     return InlineLinkRow(
@@ -372,6 +379,94 @@ class _AccountSection extends ConsumerWidget {
       label: l10n.settingsDevicesTitle,
       subtitle: l10n.settingsDevicesSubtitle,
       onTap: () => context.goNamed(AppRouteNames.devices),
+      trailing: Icon(
+        FLucideIcons.logOut,
+        size: AppIconSizes.h18,
+        color: context.theme.colors.mutedForeground,
+      ),
+      onTrailingTap: () => _showSwitchToLocalSheet(context, ref),
+    );
+  }
+
+  static Future<void> _showSwitchToLocalSheet(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    await showAppSheet<bool>(
+      context: context,
+      title: l10n.settingsSwitchToLocalConfirmTitle,
+      builder: (_) => const _SwitchToLocalSheetBody(),
+    );
+  }
+}
+
+/// Sheet body for confirming the cloud → local-only downgrade.
+/// Handles its own busy state internally.
+class _SwitchToLocalSheetBody extends ConsumerStatefulWidget {
+  const _SwitchToLocalSheetBody();
+
+  @override
+  ConsumerState<_SwitchToLocalSheetBody> createState() =>
+      _SwitchToLocalSheetBodyState();
+}
+
+class _SwitchToLocalSheetBodyState
+    extends ConsumerState<_SwitchToLocalSheetBody> {
+  bool _busy = false;
+
+  Future<void> _confirm() async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(authControllerProvider.notifier).switchToLocalOnly();
+      if (mounted) Navigator.of(context).pop(true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        0,
+        AppSpacing.s16,
+        AppSpacing.s24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.settingsSwitchToLocalConfirmBody,
+            style: context.theme.typography.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s20),
+          FButton(
+            variant: FButtonVariant.outline,
+            onPress: _busy ? null : () => Navigator.of(context).pop(false),
+            child: Text(l10n.commonCancel),
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          FButton(
+            variant: FButtonVariant.primary,
+            onPress: _busy ? null : _confirm,
+            child: _busy
+                ? const SizedBox(
+                    width: AppIconSizes.h18,
+                    height: AppIconSizes.h18,
+                    child: FCircularProgress(
+                      size: FCircularProgressSizeVariant.sm,
+                    ),
+                  )
+                : Text(l10n.settingsSwitchToLocal),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -840,48 +935,3 @@ class _MonthlyExpenseLink extends ConsumerWidget {
 
 /// Non-tappable status row shown in place of the Devices link for
 /// local-only users. Mirrors [InlineLinkRow]'s layout sans chevron.
-class _LocalModeStatusRow extends StatelessWidget {
-  const _LocalModeStatusRow({required this.label, required this.subtitle});
-
-  final String label;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s14,
-        vertical: AppSpacing.s10,
-      ),
-      child: Row(
-        children: [
-          Icon(
-            FLucideIcons.smartphone,
-            size: AppIconSizes.h18,
-            color: colors.mutedForeground,
-          ),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(label, style: context.theme.typography.sm),
-                Padding(
-                  padding: const EdgeInsets.only(top: AppSpacing.s2),
-                  child: Text(
-                    subtitle,
-                    style: context.theme.typography.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

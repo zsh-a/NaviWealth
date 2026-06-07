@@ -2124,6 +2124,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authLoginNoticeSessionExpired => '登录已过期，请重新登录。';
 
   @override
+  String get authUpgradeRegisterHint => '创建新账号并同步已有数据';
+
+  @override
+  String get authUpgradeConnectHint => '登录已有账号（本地数据将单独保留）';
+
+  @override
+  String get authUpgradeRegisterSubmit => '创建并同步';
+
+  @override
+  String get authUpgradeConnectSubmit => '登录并同步';
+
+  @override
   String get settingsDevicesTitle => '已登录设备';
 
   @override
@@ -7498,7 +7510,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAccountLocalOnlyBadge => '本地模式';
 
   @override
-  String get settingsAccountLocalOnlyHint => '数据仅保存在本机';
+  String get settingsUpgradeToCloudHint => '跨设备同步数据';
+
+  @override
+  String get settingsSwitchToLocal => '切换到本地模式';
+
+  @override
+  String get settingsSwitchToLocalConfirmTitle => '切换到本地模式？';
+
+  @override
+  String get settingsSwitchToLocalConfirmBody => '云同步将被禁用。数据将保留在本机，但不再同步到其他设备。';
 
   @override
   String get commonDate => '日期';

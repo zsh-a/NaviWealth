@@ -2204,6 +2204,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your session expired. Please sign in again.';
 
   @override
+  String get authUpgradeRegisterHint =>
+      'Create a new cloud account and sync your existing data';
+
+  @override
+  String get authUpgradeConnectHint =>
+      'Sign in to an existing account (local data is kept separately)';
+
+  @override
+  String get authUpgradeRegisterSubmit => 'Create & Sync';
+
+  @override
+  String get authUpgradeConnectSubmit => 'Sign In & Sync';
+
+  @override
   String get settingsDevicesTitle => 'Devices';
 
   @override
@@ -7806,8 +7820,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAccountLocalOnlyBadge => 'Local mode';
 
   @override
-  String get settingsAccountLocalOnlyHint =>
-      'Data is stored only on this device';
+  String get settingsUpgradeToCloudHint => 'Sync data across devices';
+
+  @override
+  String get settingsSwitchToLocal => 'Switch to Local Mode';
+
+  @override
+  String get settingsSwitchToLocalConfirmTitle => 'Switch to Local Mode?';
+
+  @override
+  String get settingsSwitchToLocalConfirmBody =>
+      'Cloud sync will be disabled. Your data will remain on this device but will no longer sync to other devices.';
 
   @override
   String get commonDate => 'Date';

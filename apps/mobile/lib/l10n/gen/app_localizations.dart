@@ -3968,6 +3968,30 @@ abstract class AppLocalizations {
   /// **'Your session expired. Please sign in again.'**
   String get authLoginNoticeSessionExpired;
 
+  /// Subtitle on the login page when a local-only user is registering for cloud sync.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a new cloud account and sync your existing data'**
+  String get authUpgradeRegisterHint;
+
+  /// Subtitle on the login page when a local-only user is signing in to an existing cloud account.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to an existing account (local data is kept separately)'**
+  String get authUpgradeConnectHint;
+
+  /// Submit button when a local-only user registers to upgrade to cloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Create & Sync'**
+  String get authUpgradeRegisterSubmit;
+
+  /// Submit button when a local-only user signs in to connect to cloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In & Sync'**
+  String get authUpgradeConnectSubmit;
+
   /// Settings row that opens the device list.
   ///
   /// In en, this message translates to:
@@ -13456,11 +13480,29 @@ abstract class AppLocalizations {
   /// **'Local mode'**
   String get settingsAccountLocalOnlyBadge;
 
-  /// Account-section subtitle clarifying that local mode does not sync
+  /// Subtitle for the upgrade-to-cloud row.
   ///
   /// In en, this message translates to:
-  /// **'Data is stored only on this device'**
-  String get settingsAccountLocalOnlyHint;
+  /// **'Sync data across devices'**
+  String get settingsUpgradeToCloudHint;
+
+  /// Button for cloud users to downgrade to local-only mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Local Mode'**
+  String get settingsSwitchToLocal;
+
+  /// Confirmation dialog title for switching to local mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Local Mode?'**
+  String get settingsSwitchToLocalConfirmTitle;
+
+  /// Confirmation dialog body for switching to local mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud sync will be disabled. Your data will remain on this device but will no longer sync to other devices.'**
+  String get settingsSwitchToLocalConfirmBody;
 
   /// Generic date field label
   ///

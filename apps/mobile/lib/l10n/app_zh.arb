@@ -675,6 +675,11 @@
 
   "authLoginNoticeSessionExpired": "登录已过期，请重新登录。",
 
+  "authUpgradeRegisterHint": "创建新账号并同步已有数据",
+  "authUpgradeConnectHint": "登录已有账号（本地数据将单独保留）",
+  "authUpgradeRegisterSubmit": "创建并同步",
+  "authUpgradeConnectSubmit": "登录并同步",
+
   "settingsDevicesTitle": "已登录设备",
   "settingsDevicesSubtitle": "查看已登录的设备并远程登出",
 
@@ -2334,7 +2339,10 @@
   "onboardingLocalOnlyTitle": "仅本地",
   "onboardingLocalOnlyDescription": "数据留在本机，不进行同步",
   "settingsAccountLocalOnlyBadge": "本地模式",
-  "settingsAccountLocalOnlyHint": "数据仅保存在本机",
+  "settingsUpgradeToCloudHint": "跨设备同步数据",
+  "settingsSwitchToLocal": "切换到本地模式",
+  "settingsSwitchToLocalConfirmTitle": "切换到本地模式？",
+  "settingsSwitchToLocalConfirmBody": "云同步将被禁用。数据将保留在本机，但不再同步到其他设备。",
   "commonDate": "日期",
   "commonNote": "备注",
   "commonOk": "好的",

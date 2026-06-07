@@ -343,6 +343,7 @@ class InlineLinkRow extends StatelessWidget {
     this.trailingValue,
     this.trailingBadge,
     this.trailing,
+    this.onTrailingTap,
   }) : assert(
          (trailingValue == null ? 0 : 1) +
                  (trailingBadge == null ? 0 : 1) +
@@ -358,6 +359,10 @@ class InlineLinkRow extends StatelessWidget {
   final String? trailingValue;
   final String? trailingBadge;
   final Widget? trailing;
+
+  /// Called when [trailing] is tapped. Stops the tap from propagating
+  /// to the row's [onTap]. Ignored when [trailing] is null.
+  final VoidCallback? onTrailingTap;
 
   @override
   Widget build(BuildContext context) {
@@ -413,7 +418,11 @@ class InlineLinkRow extends StatelessWidget {
               ),
             ] else if (trailing != null) ...[
               const SizedBox(width: AppSpacing.s8),
-              trailing!,
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onTrailingTap,
+                child: trailing!,
+              ),
             ],
             const SizedBox(width: AppSpacing.s4),
             Icon(

@@ -46,18 +46,39 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     });
     try {
       final controller = ref.read(authControllerProvider.notifier);
-      if (_mode == _AuthMode.signIn) {
-        await controller.login(
-          email: _emailController.text,
-          password: _passwordController.text,
-          deviceName: _suggestedDeviceName(),
-        );
+      final isUpgrade = ref.read(authControllerProvider).value is AuthLocalOnly;
+      final email = _emailController.text;
+      final password = _passwordController.text;
+      final deviceName = _suggestedDeviceName();
+      if (isUpgrade) {
+        // Local-only user upgrading to cloud.
+        if (_mode == _AuthMode.signIn) {
+          await controller.connectToCloud(
+            email: email,
+            password: password,
+            deviceName: deviceName,
+          );
+        } else {
+          await controller.upgradeToCloud(
+            email: email,
+            password: password,
+            deviceName: deviceName,
+          );
+        }
       } else {
-        await controller.register(
-          email: _emailController.text,
-          password: _passwordController.text,
-          deviceName: _suggestedDeviceName(),
-        );
+        if (_mode == _AuthMode.signIn) {
+          await controller.login(
+            email: email,
+            password: password,
+            deviceName: deviceName,
+          );
+        } else {
+          await controller.register(
+            email: email,
+            password: password,
+            deviceName: deviceName,
+          );
+        }
       }
       // The router redirect will pick up the AuthLoggedIn transition and
       // bounce us to the original destination (or `/`).
@@ -112,6 +133,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final authState = ref.watch(authControllerProvider).value;
+    final isUpgrade = authState is AuthLocalOnly;
     // Banner is purely informational — once the user types anything we
     // suppress it (cleared on submit) so the form doesn't keep nagging.
     final showExpiredBanner =
@@ -158,6 +180,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             style: context.theme.typography.md,
                             textAlign: TextAlign.center,
                           ),
+                          if (isUpgrade) ...[
+                            const SizedBox(height: AppSpacing.s4),
+                            Text(
+                              _mode == _AuthMode.signIn
+                                  ? l10n.authUpgradeConnectHint
+                                  : l10n.authUpgradeRegisterHint,
+                              style: context.theme.typography.sm.copyWith(
+                                color: context.theme.colors.mutedForeground,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                           const SizedBox(height: AppSpacing.s24),
                           if (showExpiredBanner)
                             AppStatusBanner(
@@ -231,9 +265,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         variant: FButtonVariant.primary,
                         onPress: _submit,
                         busy: _submitting,
-                        label: _mode == _AuthMode.signIn
-                            ? l10n.authLoginSubmit
-                            : l10n.authRegisterSubmit,
+                        label: isUpgrade
+                            ? (_mode == _AuthMode.signIn
+                                  ? l10n.authUpgradeConnectSubmit
+                                  : l10n.authUpgradeRegisterSubmit)
+                            : (_mode == _AuthMode.signIn
+                                  ? l10n.authLoginSubmit
+                                  : l10n.authRegisterSubmit),
                       ),
                       const SizedBox(height: AppSpacing.s8),
                       FButton(
