@@ -12,6 +12,10 @@ import 'desktop_sidebar.dart';
 import 'domain_switcher.dart';
 import 'route_paths.dart';
 
+const double _kMobileDockHorizontalPadding = AppSpacing.s28;
+const double _kMobileDockTopPadding = AppSpacing.s4;
+const double _kMobileDockBottomPadding = AppSpacing.s10;
+
 /// Per-domain shell builder. One [DomainTabsShell] per LifeOS domain;
 /// each lives at `features/<domain>/composition/<domain>_routes.dart`
 /// inside that domain's `StatefulShellRoute.indexedStack(builder: ...)`.
@@ -117,6 +121,12 @@ class _MobileLayout extends ConsumerWidget {
   final ValueChanged<int> onDestinationSelected;
   final Widget child;
 
+  double _dockReserve(BuildContext context) =>
+      kFloatingGlassNavBarHeight +
+      _kMobileDockTopPadding +
+      _kMobileDockBottomPadding +
+      MediaQuery.paddingOf(context).bottom;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Long-press still opens the cross-domain switcher as a power-user
@@ -146,7 +156,9 @@ class _MobileLayout extends ConsumerWidget {
           valueListenable: appSheetOverlayDepthListenable,
           builder: (context, sheetDepth, _) {
             final sheetOpen = sheetDepth > 0;
-            final showNav = onTabRoot && !sheetOpen;
+            final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+            final showNav = onTabRoot && !sheetOpen && !keyboardOpen;
+            final dockReserve = showNav ? _dockReserve(context) : 0.0;
 
             return FScaffold(
               childPad: false,
@@ -159,7 +171,15 @@ class _MobileLayout extends ConsumerWidget {
               resizeToAvoidBottomInset: false,
               child: Stack(
                 children: [
-                  Positioned.fill(child: child),
+                  AnimatedPositioned(
+                    duration: Motion.medium,
+                    curve: Motion.standard,
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: dockReserve,
+                    child: child,
+                  ),
                   Positioned(
                     left: 0,
                     right: 0,
@@ -176,10 +196,10 @@ class _MobileLayout extends ConsumerWidget {
                               // Floating glass nav bar with center AI button.
                               Padding(
                                 padding: EdgeInsets.fromLTRB(
-                                  AppSpacing.s28,
-                                  AppSpacing.s4,
-                                  AppSpacing.s28,
-                                  AppSpacing.s16 +
+                                  _kMobileDockHorizontalPadding,
+                                  _kMobileDockTopPadding,
+                                  _kMobileDockHorizontalPadding,
+                                  _kMobileDockBottomPadding +
                                       MediaQuery.paddingOf(context).bottom,
                                 ),
                                 child: GestureDetector(

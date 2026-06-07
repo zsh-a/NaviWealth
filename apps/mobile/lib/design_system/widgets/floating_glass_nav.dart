@@ -7,12 +7,14 @@ import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 
+const double kFloatingGlassNavBarHeight = AppSpacing.s64;
+
 /// A floating glass-morphism bottom navigation bar.
 ///
-/// Renders as a pill-shaped, translucent bar that floats above the content
-/// with a backdrop blur effect. Matches the fintech UI spec: soft cyan-white
-/// fill, large radius, subtle shadow, and an optional elevated center action
-/// button (e.g. Ask AI).
+/// Renders as a compact, translucent dock that floats above the content
+/// with a backdrop blur effect. The optional center action sits inside the
+/// same height as the tab destinations so the dock does not cover page-level
+/// floating actions.
 ///
 /// The bar splits tabs evenly around the optional center button:
 ///   [tab₀] [tab₁] ··· [centerAction] ··· [tab₂] [tab₃]
@@ -64,6 +66,7 @@ class FloatingGlassNavBar extends StatelessWidget {
         : const Color(0xFFE3ECEE).withValues(alpha: AppOpacity.strong);
 
     return Container(
+      height: kFloatingGlassNavBarHeight,
       decoration: BoxDecoration(
         color: glassColor,
         borderRadius: BorderRadius.circular(AppRadius.nav),
@@ -80,34 +83,42 @@ class FloatingGlassNavBar extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.s8,
-              vertical: AppSpacing.s8,
+              vertical: AppSpacing.s6,
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 // Left tabs.
                 for (var i = 0; i < _leftCount; i++)
-                  _NavTabButton(
-                    tab: items[i],
-                    selected: i == selectedIndex,
-                    onTap: () => onIndexChanged(i),
-                    isDark: isDark,
+                  Expanded(
+                    child: _NavTabButton(
+                      tab: items[i],
+                      selected: i == selectedIndex,
+                      onTap: () => onIndexChanged(i),
+                      isDark: isDark,
+                    ),
                   ),
                 // Center action button (optional).
                 if (onCenterAction != null)
-                  _CenterActionButton(
-                    icon: centerIcon,
-                    label: centerLabel,
-                    onTap: onCenterAction!,
-                    isDark: isDark,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s4,
+                    ),
+                    child: _CenterActionButton(
+                      icon: centerIcon,
+                      label: centerLabel,
+                      onTap: onCenterAction!,
+                      isDark: isDark,
+                    ),
                   ),
                 // Right tabs.
                 for (var i = _leftCount; i < items.length; i++)
-                  _NavTabButton(
-                    tab: items[i],
-                    selected: i == selectedIndex,
-                    onTap: () => onIndexChanged(i),
-                    isDark: isDark,
+                  Expanded(
+                    child: _NavTabButton(
+                      tab: items[i],
+                      selected: i == selectedIndex,
+                      onTap: () => onIndexChanged(i),
+                      isDark: isDark,
+                    ),
                   ),
               ],
             ),
@@ -170,13 +181,22 @@ class _NavTabButton extends StatelessWidget {
         child: AnimatedContainer(
           duration: Motion.fast,
           curve: Motion.standardDecelerate,
+          height: 52,
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s12,
-            vertical: AppSpacing.s6,
+            horizontal: AppSpacing.s6,
+            vertical: AppSpacing.s4,
           ),
           decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadius.full),
+            color: selected
+                ? (isDark
+                      ? ColorPalette.cyanBrand400.withValues(
+                          alpha: AppOpacity.light,
+                        )
+                      : ColorPalette.navy950.withValues(
+                          alpha: AppOpacity.faint,
+                        ))
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -184,8 +204,8 @@ class _NavTabButton extends StatelessWidget {
               AnimatedContainer(
                 duration: Motion.fast,
                 curve: Motion.standardDecelerate,
-                width: 34,
-                height: 34,
+                width: 26,
+                height: 26,
                 decoration: BoxDecoration(
                   color: badgeColor,
                   shape: BoxShape.circle,
@@ -207,10 +227,9 @@ class _NavTabButton extends StatelessWidget {
                 child: Icon(
                   selected ? tab.selectedIcon : tab.icon,
                   color: iconColor,
-                  size: AppIconSizes.md,
+                  size: AppIconSizes.h18,
                 ),
               ),
-              const SizedBox(height: 2),
               Text(
                 tab.label,
                 style: TextStyle(
@@ -295,16 +314,16 @@ class _CenterActionButtonState extends State<_CenterActionButton>
         child: ScaleTransition(
           scale: _scale,
           child: Container(
-            width: AppSpacing.s64,
-            height: AppSpacing.s64,
+            width: AppSpacing.s56,
+            height: 52,
             decoration: BoxDecoration(
               color: buttonColor,
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               boxShadow: [
                 BoxShadow(
                   color: buttonColor.withValues(alpha: 0.3),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
+                  blurRadius: 14,
+                  offset: const Offset(0, 5),
                 ),
               ],
             ),
