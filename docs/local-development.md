@@ -2,6 +2,8 @@
 
 End-to-end setup for running NaviWealth locally (backend + Flutter app).
 
+NaviWealth is a Personal LifeOS with three opt-in domains (FinanceOS, HealthOS, KnowledgeOS). AI runs device-only with user-supplied LLM keys — no backend AI relay. See [`lifeos-architecture-northstar.md`](lifeos-architecture-northstar.md) for boundaries and [`ai-architecture.md`](ai-architecture.md) for the device AI design.
+
 ---
 
 ## Prerequisites

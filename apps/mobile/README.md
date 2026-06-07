@@ -1,6 +1,6 @@
 # NaviWealth Mobile (Flutter)
 
-跨端三平台 App（iOS / Android / Web）。本 README 覆盖工程基线；功能架构详见仓库根目录的 [`CLAUDE.md`](../../CLAUDE.md)。
+跨端三平台 App（iOS / Android / Web），Personal LifeOS 的客户端。本 README 覆盖工程基线；功能架构详见仓库根目录的 [`CLAUDE.md`](../../CLAUDE.md)。
 
 ## 运行
 
@@ -27,20 +27,59 @@ tool/build-cn-fonts.sh     # app-cn-base.woff2 + app-cn-ext.woff2（CN 字体子
 
 ```
 lib/
-├── app/             MaterialApp、go_router、bootstrap、route guards、master-detail layout
-├── core/            横切关注点：async / auth / backup / command_palette / config /
-│                    format / haptics / logging / perf / pwa / security / shortcuts / sync
-├── data/            audit / db (Drift) / domain (freezed models) / market /
-│                    repositories / securities_catalog
-├── domain/          纯领域服务：entities / services / values
-├── features/        功能模块（feature-first，14 个）：accounts / activity / ai_chat /
-│                    analytics / assets / auth / expense / fire / home / investment /
-│                    liabilities / rebalance / settings / shared
-├── design_system/   W3C tokens / 主题 / 图表 / 通用 widgets（基于 Forui）
-└── l10n/            en + zh ARB
+├── app/                   启动、路由、域注册（DomainPack）、组合根、Shell chrome
+│   ├── bootstrap.dart     Provider overrides 和 Shell 组合
+│   ├── domain_packs.dart  生产域清单（Finance / Health / Knowledge）
+│   ├── router_builder.go  外层 dock Shell + 域路由
+│   └── app_dock_shell.go  多域导航 chrome
+├── core/                  跨域基础设施（域中立）
+│   ├── ai/                运行时契约、设备端 agent loop、本地记忆、嵌入、组合接缝
+│   ├── auth/              JWT / session / 域启用（DomainScope）
+│   ├── persistence/       Drift adapter 和共享表（含 health / knowledge 表声明）
+│   ├── shell/             多域 IA 原语（DomainShell spec）
+│   ├── sync/              Sync v2 行状态客户端和同步信封类型
+│   ├── lifeos/            DomainPack 注册契约
+│   ├── background/        后台任务调度
+│   ├── notifications/     通知通道
+│   ├── audit/             域中立事件日志
+│   ├── backup/            备份与恢复
+│   ├── command_palette/   跨域命令面板
+│   └── ...                config / format / haptics / logging / perf / pwa / security
+├── features/              域业务代码（feature-first）
+│   ├── finance/           FinanceOS 组合根、数据、域模型
+│   ├── health/            HealthOS 数据、UI、AI 工具、Agent（用户启用）
+│   ├── knowledge/         KnowledgeOS 数据、UI、AI 工具、Agent（用户启用）
+│   ├── ai_chat/           跨域 AI 对话 UI
+│   ├── accounts/          账户管理
+│   ├── assets/            资产总览
+│   ├── cashflow/          现金流分析
+│   ├── investment/        投资组合
+│   ├── options_income/    期权收入引擎
+│   ├── fire/              FIRE 追踪与压力测试
+│   ├── activity/          交易活动
+│   ├── expense/           支出管理
+│   ├── rebalance/         再平衡提醒
+│   ├── settings/          设置（含域启用页）
+│   ├── shared/            跨域共享 UI 组件
+│   └── ...                analytics / auth / home / ingest / liabilities / plan / wealth
+├── design_system/         W3C 设计令牌 / 主题 / 图表 / 通用 widgets（基于 Forui）
+├── domain/                遗留纯金融中立值/服务（仍被 Finance 共享）
+└── l10n/                  en + zh ARB
 ```
 
-每个 feature 内部按 `ui/`（或 `presentation/`）/ `data/` / `domain/` 组织。新增功能默认进入 `lib/features/<feature>/`。
+每个 feature 内部按 `ui/`（或 `presentation/`）/ `data/` / `domain/` 组织。域级 feature 额外包含 `ai_tools/`、`agents/`、`composition/`。新增功能默认进入 `lib/features/<feature>/`。
+
+## 域架构
+
+NaviWealth 是 Personal LifeOS，通过 `DomainPack` 注册多域：
+
+| 域 | 启用方式 | Shell 标签页 | AI 工具 | Agent |
+|---|---|---|---|---|
+| FinanceOS | 始终开启 | Today / Activity / Wealth / Plan | 8+ 设备工具 | — |
+| HealthOS | 用户启用 | Today / Trend / Plan | 5 设备工具 | Morning Briefing |
+| KnowledgeOS | 用户启用 | Inbox / Library / Review | 16 设备工具 | Review / Assumption / Contradiction / Inbox Triage / Routine Due |
+
+域启用状态通过 `domainOptInsProvider` 管理，所有工具、提示、Shell spec、Agent 和命令面板条目从 active packs 派生。
 
 ## 关键依赖
 
@@ -51,9 +90,22 @@ lib/
 | UI 组件 | `forui`（FCard / FButton / FTheme(zinc)） |
 | 数据模型 | `freezed` + `json_serializable` |
 | 本地存储 | `drift` + `drift_flutter`（Web 走 sqlite3 wasm） |
+| 健康数据 | `package:health`（HealthKit / Health Connect，仅原生端） |
+| 原生嵌入 | `flutter_rust_bridge`（EmbeddingGemma ONNX） |
 | HTTP | `dio` |
 | i18n / 数字货币 | `intl` |
 | 日志 | `logger` |
+
+## 设备端 AI
+
+AI 仅在设备端运行，无后端中继：
+
+- 用户自带 LLM key（Anthropic 或 OpenAI 兼容端点），存储为 `LlmProfile`
+- `DeviceAgentLoop` 在端侧完成 prompt 组装 / provider 调用 / tool dispatch / proposal
+- 工具注册聚合：`deviceToolsProvider`，基于 active `DomainPack`s
+- 提示聚合：`systemPromptBlocksProvider`，同样基于 active packs
+- 写入工具返回 `ProposalEnvelope` 或要求显式确认
+- Web 端无 AI 运行时
 
 ## Web 路由
 
@@ -113,5 +165,15 @@ wrangler pages deploy --branch main
 1. `analyze + test (coverage)` — `dart format --set-exit-if-changed`、`flutter analyze --fatal-infos`、`flutter test --coverage --exclude-tags=golden`、Codecov 上传
 2. `golden regression (mobile)` — `flutter test test/golden --tags=golden`，PR 上 byte-diff 失败
 3. `build web` — `flutter build web --release`
+
+架构 lint gates（CI 和本地均可运行）：
+
+```bash
+./tool/lint-no-finance-in-core.sh        # core/ 不含 finance 导入
+./tool/lint-cross-feature-imports.sh     # feature 间无跨域导入
+./tool/lint-row-family-prefix.sh         # sync 行族前缀正确
+./tool/lint-domain-neutral-contracts.sh  # 域中立契约不含域类型
+./tool/check-tool-descriptors.sh         # 工具描述符与注册一致
+```
 
 Android / iOS 构建在 `release.yml` 里跟着 tag 跑，不属于 PR 必需 check。
