@@ -348,9 +348,9 @@ class _KnowledgeCaptureSheetState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
+            duration: Motion.medium,
+            switchInCurve: Motion.standardDecelerate,
+            switchOutCurve: Motion.standardAccelerate,
             transitionBuilder: _capturePreviewTransition,
             child: showSavedPreview
                 ? _SavedCapturePreview(
@@ -368,9 +368,9 @@ class _KnowledgeCaptureSheetState
           ),
           if (showSavedPreview) const SizedBox(height: AppSpacing.s12),
           AnimatedSwitcher(
-            duration: const Duration(milliseconds: 180),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
+            duration: Motion.medium,
+            switchInCurve: Motion.standardDecelerate,
+            switchOutCurve: Motion.standardAccelerate,
             transitionBuilder: _captureStageTransition,
             child: switch (stage) {
               _CaptureStage.composing || _CaptureStage.saving => _ComposeBody(
@@ -407,7 +407,7 @@ class _KnowledgeCaptureSheetState
 }
 
 Widget _captureStageTransition(Widget child, Animation<double> animation) {
-  final curved = animation.drive(CurveTween(curve: Curves.easeOutCubic));
+  final curved = animation.drive(CurveTween(curve: Motion.standardDecelerate));
   final offset = Tween<Offset>(
     begin: const Offset(0, 0.04),
     end: Offset.zero,
@@ -423,7 +423,7 @@ Widget _captureStageTransition(Widget child, Animation<double> animation) {
 }
 
 Widget _capturePreviewTransition(Widget child, Animation<double> animation) {
-  final curved = animation.drive(CurveTween(curve: Curves.easeOutCubic));
+  final curved = animation.drive(CurveTween(curve: Motion.standardDecelerate));
   final offset = Tween<Offset>(
     begin: const Offset(0, -0.06),
     end: Offset.zero,
@@ -576,8 +576,8 @@ class _CaptureSharedTextLine extends StatelessWidget {
     final colors = context.theme.colors;
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(end: promoted ? 1 : 0),
-      duration: const Duration(milliseconds: 240),
-      curve: Curves.easeOutCubic,
+      duration: Motion.medium,
+      curve: Motion.standardDecelerate,
       builder: (context, progress, child) {
         final scale = 0.985 + 0.015 * progress;
         final dy = -6 * (1 - progress);
@@ -592,8 +592,8 @@ class _CaptureSharedTextLine extends StatelessWidget {
             scale: scale,
             alignment: Alignment.centerLeft,
             child: AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOutCubic,
+              duration: Motion.fast,
+              curve: Motion.standardDecelerate,
               style: style.copyWith(color: color),
               child: child!,
             ),

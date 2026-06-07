@@ -50,9 +50,17 @@ class _KnowledgeInboxPageState extends ConsumerState<KnowledgeInboxPage>
               hidden: fabHidden,
               child: KnowledgeFloatingActionSurface(
                 child: FButton(
-                  prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+                  variant: FButtonVariant.ghost,
+                  prefix: const Icon(
+                    FLucideIcons.plus,
+                    size: AppIconSizes.sm,
+                    color: Color(0xFFFFFFFF),
+                  ),
                   onPress: () => showKnowledgeCaptureSheet(context, ref),
-                  child: Text(l10n.knowledgeCaptureAction),
+                  child: Text(
+                    l10n.knowledgeCaptureAction,
+                    style: const TextStyle(color: Color(0xFFFFFFFF)),
+                  ),
                 ),
               ),
             ),
