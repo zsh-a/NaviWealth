@@ -5653,6 +5653,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeNoteDetailTitle => 'Note';
 
   @override
+  String get knowledgeNoteEditTitle => 'Edit note';
+
+  @override
+  String get knowledgeNoteEditSubtitle =>
+      'Update title, content, and metadata.';
+
+  @override
+  String get knowledgeNoteSourceUrlLabel => 'Source URL';
+
+  @override
+  String get knowledgeNoteTagsHint => '\"investing\", \"fire\", \"banking\"';
+
+  @override
+  String get knowledgeNoteProjectHint => '\"fire-plan\", \"health-2026\"';
+
+  @override
   String get knowledgeConceptDetailTitle => 'Concept';
 
   @override

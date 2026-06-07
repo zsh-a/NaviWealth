@@ -7,7 +7,6 @@ library;
 
 import 'dart:async';
 
-import 'package:flutter/material.dart' show RefreshIndicator;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -166,12 +165,12 @@ class KnowledgeLibraryPage extends ConsumerStatefulWidget {
       _KnowledgeLibraryPageState();
 }
 
-class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
+class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage>
+    with KnowledgeFabScrollHideMixin {
   _LibrarySegment _segment = _LibrarySegment.decisions;
   final _searchCtrl = TextEditingController();
   final _searchFocus = FocusNode();
   final List<String> _searchHistory = <String>[];
-  bool _fabHidden = false;
 
   @override
   void initState() {
@@ -253,18 +252,6 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
     _searchFocus.requestFocus();
   }
 
-  bool _onScrollUpdate(ScrollUpdateNotification notification) {
-    if (notification.metrics.axis != Axis.vertical) return false;
-
-    final delta = notification.scrollDelta ?? 0;
-    if (delta > 4 && !_fabHidden) {
-      setState(() => _fabHidden = true);
-    } else if (delta < -4 && _fabHidden) {
-      setState(() => _fabHidden = false);
-    }
-    return false;
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -274,7 +261,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
         children: [
           Positioned.fill(
             child: NotificationListener<ScrollUpdateNotification>(
-              onNotification: _onScrollUpdate,
+              onNotification: onScrollUpdate,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.s16,
@@ -291,7 +278,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                       labelOf: (s) => _segmentLabel(l10n, s),
                       onChanged: (s) => setState(() {
                         _segment = s;
-                        _fabHidden = false;
+                        fabHidden = false;
                       }),
                     ),
                     const SizedBox(height: AppSpacing.s16),
@@ -308,8 +295,8 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                               textInputAction: TextInputAction.search,
                               prefixBuilder: (_, _, _) => const Padding(
                                 padding: EdgeInsetsDirectional.only(
-                                  start: 12,
-                                  end: 8,
+                                  start: AppSpacing.s12,
+                                  end: AppSpacing.s8,
                                 ),
                                 child: Icon(
                                   FLucideIcons.search,
@@ -351,7 +338,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
             right: AppSpacing.s16,
             bottom: AppSpacing.s16,
             child: KnowledgeFloatingActionMotion(
-              hidden: _fabHidden,
+              hidden: fabHidden,
               child: _NewObjectButton(segment: _segment),
             ),
           ),
@@ -897,7 +884,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
           );
         }
 
-        final list = RefreshIndicator(
+        final list = KnowledgePullToRefresh(
           onRefresh: widget.onRefresh,
           child: ListView.separated(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -1176,7 +1163,7 @@ class _SearchAssistChip extends StatelessWidget {
                     padding: const EdgeInsets.all(AppSpacing.s2),
                     child: Icon(
                       FLucideIcons.x,
-                      size: 10,
+                      size: AppIconSizes.xs,
                       color: colors.mutedForeground,
                     ),
                   ),

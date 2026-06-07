@@ -9716,6 +9716,36 @@ abstract class AppLocalizations {
   /// **'Note'**
   String get knowledgeNoteDetailTitle;
 
+  /// No description provided for @knowledgeNoteEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit note'**
+  String get knowledgeNoteEditTitle;
+
+  /// No description provided for @knowledgeNoteEditSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update title, content, and metadata.'**
+  String get knowledgeNoteEditSubtitle;
+
+  /// No description provided for @knowledgeNoteSourceUrlLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Source URL'**
+  String get knowledgeNoteSourceUrlLabel;
+
+  /// No description provided for @knowledgeNoteTagsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'\"investing\", \"fire\", \"banking\"'**
+  String get knowledgeNoteTagsHint;
+
+  /// No description provided for @knowledgeNoteProjectHint.
+  ///
+  /// In en, this message translates to:
+  /// **'\"fire-plan\", \"health-2026\"'**
+  String get knowledgeNoteProjectHint;
+
   /// No description provided for @knowledgeConceptDetailTitle.
   ///
   /// In en, this message translates to:

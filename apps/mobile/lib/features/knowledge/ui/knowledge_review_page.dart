@@ -5,7 +5,6 @@
 /// unverified). Forui chrome with widget-layer pull-to-refresh.
 library;
 
-import 'package:flutter/material.dart' show RefreshIndicator, Theme;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -96,21 +95,14 @@ class KnowledgeReviewPage extends ConsumerStatefulWidget {
       _KnowledgeReviewPageState();
 }
 
-class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage> {
+class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
+    with KnowledgeFabScrollHideMixin {
   bool _actionsOpen = false;
-  bool _fabHidden = false;
 
-  bool _onScrollUpdate(ScrollUpdateNotification notification) {
-    if (notification.metrics.axis != Axis.vertical) return false;
+  @override
+  bool onScrollUpdate(ScrollUpdateNotification notification) {
     if (_actionsOpen) return false;
-
-    final delta = notification.scrollDelta ?? 0;
-    if (delta > 4 && !_fabHidden) {
-      setState(() => _fabHidden = true);
-    } else if (delta < -4 && _fabHidden) {
-      setState(() => _fabHidden = false);
-    }
-    return false;
+    return super.onScrollUpdate(notification);
   }
 
   @override
@@ -122,8 +114,8 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage> {
         children: [
           Positioned.fill(
             child: NotificationListener<ScrollUpdateNotification>(
-              onNotification: _onScrollUpdate,
-              child: RefreshIndicator(
+              onNotification: onScrollUpdate,
+              child: KnowledgePullToRefresh(
                 onRefresh: () => _refreshReview(ref),
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -157,12 +149,12 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage> {
             right: AppSpacing.s16,
             bottom: AppSpacing.s16,
             child: KnowledgeFloatingActionMotion(
-              hidden: _fabHidden && !_actionsOpen,
+              hidden: fabHidden && !_actionsOpen,
               child: _ReviewFloatingActions(
                 open: _actionsOpen,
                 onOpenChanged: (open) => setState(() {
                   _actionsOpen = open;
-                  if (open) _fabHidden = false;
+                  if (open) fabHidden = false;
                 }),
               ),
             ),
@@ -362,7 +354,8 @@ class _ReviewQuickAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark =
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.background,
@@ -370,9 +363,8 @@ class _ReviewQuickAction extends StatelessWidget {
         border: Border.all(color: colors.border),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).shadowColor.withValues(
-              alpha: isDark ? AppOpacity.muted : AppOpacity.faint,
-            ),
+            color: (isDark ? colors.foreground : const Color(0xFF000000))
+                .withValues(alpha: isDark ? AppOpacity.muted : AppOpacity.faint),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),

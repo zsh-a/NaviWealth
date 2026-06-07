@@ -199,15 +199,14 @@ class _KnowledgeObjectDetailPageState
     );
   }
 
-  bool get _canEdit =>
-      _object != null &&
-      _kind != null &&
-      _kind != KnowledgeObjectKind.note; // Note edit via capture sheet future.
+  bool get _canEdit => _object != null && _kind != null;
 
   void _editObject(BuildContext context) {
     final obj = _object;
     if (obj == null) return;
     switch (obj) {
+      case final KnowledgeNote n:
+        showEditNoteSheet(context, ref, n);
       case final KnowledgeConcept c:
         showEditConceptSheet(context, ref, c);
       case final KnowledgePrinciple p:

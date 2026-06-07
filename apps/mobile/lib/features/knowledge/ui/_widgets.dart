@@ -21,7 +21,9 @@
 /// scannable lists tighten to s12, summary panels relax to s16.
 library;
 
-import 'package:flutter/material.dart' show Theme;
+import 'dart:async';
+
+import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -86,6 +88,27 @@ enum KnowledgeSelectionMode { checkbox, radio }
 const Duration _kKnowledgeFloatingActionMotionDuration = Duration(
   milliseconds: 180,
 );
+const double _kKnowledgeRefreshTriggerExtent = 64;
+
+/// Mixin for pages that hide/show a FAB on scroll direction.
+///
+/// Provides [fabHidden] and [onScrollUpdate]. The concrete [State] must
+/// call [onScrollUpdate] from a [NotificationListener<ScrollUpdateNotification>]
+/// and pass [fabHidden] to [KnowledgeFloatingActionMotion.hidden].
+mixin KnowledgeFabScrollHideMixin<T extends StatefulWidget> on State<T> {
+  bool fabHidden = false;
+
+  bool onScrollUpdate(ScrollUpdateNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return false;
+    final delta = notification.scrollDelta ?? 0;
+    if (delta > 4 && !fabHidden) {
+      setState(() => fabHidden = true);
+    } else if (delta < -4 && fabHidden) {
+      setState(() => fabHidden = false);
+    }
+    return false;
+  }
+}
 
 /// Shared hide/show motion for KnowledgeOS floating create actions.
 class KnowledgeFloatingActionMotion extends StatelessWidget {
@@ -129,7 +152,8 @@ class KnowledgeFloatingActionSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark =
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     return AnimatedScale(
       duration: const Duration(milliseconds: 120),
       curve: Curves.easeOutCubic,
@@ -141,9 +165,8 @@ class KnowledgeFloatingActionSurface extends StatelessWidget {
           border: Border.all(color: colors.border),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).shadowColor.withValues(
-                alpha: isDark ? AppOpacity.muted : AppOpacity.faint,
-              ),
+              color: (isDark ? colors.foreground : const Color(0xFF000000))
+                  .withValues(alpha: isDark ? AppOpacity.muted : AppOpacity.faint),
               blurRadius: 18,
               offset: const Offset(0, 10),
             ),
@@ -151,6 +174,117 @@ class KnowledgeFloatingActionSurface extends StatelessWidget {
         ),
         child: child,
       ),
+    );
+  }
+}
+
+/// Pull-to-refresh wrapper implemented with Flutter widgets + Forui progress.
+class KnowledgePullToRefresh extends StatefulWidget {
+  const KnowledgePullToRefresh({
+    super.key,
+    required this.onRefresh,
+    required this.child,
+  });
+
+  final Future<void> Function() onRefresh;
+  final Widget child;
+
+  @override
+  State<KnowledgePullToRefresh> createState() => _KnowledgePullToRefreshState();
+}
+
+class _KnowledgePullToRefreshState extends State<KnowledgePullToRefresh> {
+  double _dragExtent = 0;
+  bool _refreshing = false;
+
+  bool _onNotification(ScrollNotification notification) {
+    final metrics = notification.metrics;
+    if (metrics.axis != Axis.vertical) return false;
+
+    if (notification is ScrollUpdateNotification &&
+        notification.dragDetails != null &&
+        metrics.pixels <= metrics.minScrollExtent) {
+      final delta = notification.scrollDelta ?? 0;
+      if (delta < 0) {
+        setState(() {
+          _dragExtent = (_dragExtent - delta).clamp(
+            0,
+            _kKnowledgeRefreshTriggerExtent,
+          );
+        });
+      }
+    }
+
+    if (notification is OverscrollNotification &&
+        notification.dragDetails != null &&
+        notification.overscroll < 0) {
+      setState(() {
+        _dragExtent = (_dragExtent - notification.overscroll).clamp(
+          0,
+          _kKnowledgeRefreshTriggerExtent,
+        );
+      });
+    }
+
+    if (notification is ScrollEndNotification ||
+        notification is UserScrollNotification &&
+            notification.direction == ScrollDirection.idle) {
+      if (_dragExtent >= _kKnowledgeRefreshTriggerExtent && !_refreshing) {
+        unawaited(_refresh());
+      } else if (!_refreshing && _dragExtent != 0) {
+        setState(() => _dragExtent = 0);
+      }
+    }
+    return false;
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _refreshing = true;
+      _dragExtent = _kKnowledgeRefreshTriggerExtent;
+    });
+    try {
+      await widget.onRefresh();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _refreshing = false;
+          _dragExtent = 0;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final visible = _refreshing || _dragExtent > 0;
+    final progress = (_dragExtent / _kKnowledgeRefreshTriggerExtent).clamp(
+      0.0,
+      1.0,
+    );
+    return Stack(
+      children: [
+        NotificationListener<ScrollNotification>(
+          onNotification: _onNotification,
+          child: widget.child,
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: IgnorePointer(
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 120),
+              opacity: visible ? 1 : 0,
+              child: Transform.scale(
+                scaleY: _refreshing ? 1 : progress,
+                alignment: Alignment.topCenter,
+                child: const FProgress(),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
