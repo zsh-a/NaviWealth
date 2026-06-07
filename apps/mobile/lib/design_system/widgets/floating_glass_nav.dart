@@ -57,11 +57,11 @@ class FloatingGlassNavBar extends StatelessWidget {
 
     // Glass surface: translucent white/navy with backdrop blur.
     final glassColor = isDark
-        ? const Color(0xFF0F2A35).withValues(alpha: AppOpacity.strong)
-        : Colors.white.withValues(alpha: AppOpacity.strong);
+        ? const Color(0xFF0F2A35).withValues(alpha: AppOpacity.overlay)
+        : const Color(0xFFF4FCFD).withValues(alpha: AppOpacity.nearOpaque);
     final borderColor = isDark
         ? Colors.white.withValues(alpha: AppOpacity.faint)
-        : const Color(0xFFEAF0F6).withValues(alpha: AppOpacity.strong);
+        : Colors.white.withValues(alpha: AppOpacity.overlay);
 
     return Container(
       decoration: BoxDecoration(
@@ -79,8 +79,8 @@ class FloatingGlassNavBar extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s4,
-              vertical: AppSpacing.s6,
+              horizontal: AppSpacing.s8,
+              vertical: AppSpacing.s8,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -151,20 +151,14 @@ class _NavTabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Selected: dark navy circle bg + cyan icon + bold label.
-    // Unselected: transparent bg + muted icon + label.
     final iconColor = selected
-        ? (isDark
-            ? ColorPalette.cyanBrand400
-            : ColorPalette.cyanBrand500)
+        ? (isDark ? ColorPalette.navy950 : ColorPalette.neutral0)
         : (isDark ? ColorPalette.navy400 : ColorPalette.navy300);
     final labelColor = selected
         ? (isDark ? ColorPalette.navy50 : ColorPalette.navy900)
         : (isDark ? ColorPalette.navy400 : ColorPalette.navy300);
-    final bgColor = selected
-        ? (isDark
-            ? ColorPalette.navy800
-            : ColorPalette.cyanBrand50)
+    final badgeColor = selected
+        ? (isDark ? ColorPalette.cyanBrand400 : ColorPalette.navy950)
         : Colors.transparent;
 
     return Semantics(
@@ -177,20 +171,44 @@ class _NavTabButton extends StatelessWidget {
           duration: Motion.fast,
           curve: Motion.standardDecelerate,
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s10,
+            horizontal: AppSpacing.s12,
             vertical: AppSpacing.s6,
           ),
           decoration: BoxDecoration(
-            color: bgColor,
+            color: Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                selected ? tab.selectedIcon : tab.icon,
-                color: iconColor,
-                size: AppIconSizes.lg,
+              AnimatedContainer(
+                duration: Motion.fast,
+                curve: Motion.standardDecelerate,
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: badgeColor,
+                  shape: BoxShape.circle,
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                            color:
+                                (isDark
+                                        ? ColorPalette.cyanBrand400
+                                        : ColorPalette.navy950)
+                                    .withValues(alpha: AppOpacity.light),
+                            blurRadius: 14,
+                            offset: const Offset(0, 5),
+                          ),
+                        ]
+                      : null,
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  selected ? tab.selectedIcon : tab.icon,
+                  color: iconColor,
+                  size: AppIconSizes.md,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
@@ -243,9 +261,10 @@ class _CenterActionButtonState extends State<_CenterActionButton>
       lowerBound: 0.0,
       upperBound: 1.0,
     );
-    _scale = Tween<double>(begin: 1.0, end: 0.94).animate(
-      CurvedAnimation(parent: _controller, curve: Motion.standard),
-    );
+    _scale = Tween<double>(
+      begin: 1.0,
+      end: 0.94,
+    ).animate(CurvedAnimation(parent: _controller, curve: Motion.standard));
   }
 
   @override
@@ -276,8 +295,8 @@ class _CenterActionButtonState extends State<_CenterActionButton>
         child: ScaleTransition(
           scale: _scale,
           child: Container(
-            width: AppSpacing.s56,
-            height: AppSpacing.s56,
+            width: AppSpacing.s64,
+            height: AppSpacing.s64,
             decoration: BoxDecoration(
               color: buttonColor,
               shape: BoxShape.circle,

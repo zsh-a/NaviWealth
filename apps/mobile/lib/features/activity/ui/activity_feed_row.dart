@@ -51,17 +51,31 @@ class ActivityFeedEntryRow extends StatelessWidget {
         : _accountSummary(l10n, entry.postings, accountsById);
 
     return SoftCard(
+      borderless: true,
+      borderRadius: AppRadius.xlg,
       child: FTile(
         onPress: () => _openDetail(context),
         prefix: Container(
-          width: 36,
-          height: 36,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
-            color: iconTint.withValues(alpha: AppOpacity.light),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            color: colors.background,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: colors.border.withValues(alpha: AppOpacity.prominent),
+            ),
           ),
           alignment: Alignment.center,
-          child: Icon(iconData, size: AppIconSizes.h18, color: iconTint),
+          child: Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: iconTint.withValues(alpha: AppOpacity.light),
+              borderRadius: BorderRadius.circular(AppRadius.xs),
+            ),
+            alignment: Alignment.center,
+            child: Icon(iconData, size: AppIconSizes.sm, color: iconTint),
+          ),
         ),
         title: Text(
           entry.entry.narration.isEmpty ? '—' : entry.entry.narration,
