@@ -8077,6 +8077,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeCaptureAction => 'New capture';
 
   @override
+  String get knowledgeCreateEntry => 'New Entry';
+
+  @override
   String get knowledgeCaptureTitle => 'Capture a thought';
 
   @override
