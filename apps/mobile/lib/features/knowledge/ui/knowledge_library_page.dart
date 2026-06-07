@@ -75,6 +75,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   final _searchFocus = FocusNode();
   final List<String> _searchHistory = <String>[];
   bool _decisionMenuOpen = false;
+  bool _fabHidden = false;
 
   @override
   void initState() {
@@ -145,6 +146,19 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
     _searchFocus.requestFocus();
   }
 
+  bool _onScrollUpdate(ScrollUpdateNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return false;
+    if (_decisionMenuOpen) return false;
+
+    final delta = notification.scrollDelta ?? 0;
+    if (delta > 4 && !_fabHidden) {
+      setState(() => _fabHidden = true);
+    } else if (delta < -4 && _fabHidden) {
+      setState(() => _fabHidden = false);
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -153,72 +167,76 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
       child: Stack(
         children: [
           Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s16,
-                AppSpacing.s8,
-                AppSpacing.s16,
-                AppSpacing.s16,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SegmentedRow<_LibrarySegment>(
-                    options: _LibrarySegment.values,
-                    value: _segment,
-                    labelOf: (s) => _segmentLabel(l10n, s),
-                    onChanged: (s) => setState(() {
-                      _segment = s;
-                      _decisionMenuOpen = false;
-                    }),
-                  ),
-                  const SizedBox(height: AppSpacing.s16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Focus(
-                          onKeyEvent: _onSearchKey,
-                          child: FTextField(
-                            control: FTextFieldControl.managed(
-                              controller: _searchCtrl,
-                            ),
-                            focusNode: _searchFocus,
-                            textInputAction: TextInputAction.search,
-                            prefixBuilder: (_, _, _) => const Padding(
-                              padding: EdgeInsetsDirectional.only(
-                                start: 12,
-                                end: 8,
+            child: NotificationListener<ScrollUpdateNotification>(
+              onNotification: _onScrollUpdate,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s16,
+                  AppSpacing.s8,
+                  AppSpacing.s16,
+                  AppSpacing.s16,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SegmentedRow<_LibrarySegment>(
+                      options: _LibrarySegment.values,
+                      value: _segment,
+                      labelOf: (s) => _segmentLabel(l10n, s),
+                      onChanged: (s) => setState(() {
+                        _segment = s;
+                        _decisionMenuOpen = false;
+                        _fabHidden = false;
+                      }),
+                    ),
+                    const SizedBox(height: AppSpacing.s16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Focus(
+                            onKeyEvent: _onSearchKey,
+                            child: FTextField(
+                              control: FTextFieldControl.managed(
+                                controller: _searchCtrl,
                               ),
-                              child: Icon(
-                                FLucideIcons.search,
-                                size: AppIconSizes.h18,
+                              focusNode: _searchFocus,
+                              textInputAction: TextInputAction.search,
+                              prefixBuilder: (_, _, _) => const Padding(
+                                padding: EdgeInsetsDirectional.only(
+                                  start: 12,
+                                  end: 8,
+                                ),
+                                child: Icon(
+                                  FLucideIcons.search,
+                                  size: AppIconSizes.h18,
+                                ),
                               ),
+                              hint: l10n.knowledgeLibrarySearchHint,
                             ),
-                            hint: l10n.knowledgeLibrarySearchHint,
                           ),
                         ),
-                      ),
-                      if (_searchCtrl.text.isNotEmpty) ...[
-                        const SizedBox(width: AppSpacing.s8),
-                        FButton.icon(
-                          variant: FButtonVariant.ghost,
-                          onPress: _searchCtrl.clear,
-                          child: const Icon(FLucideIcons.x),
-                        ),
+                        if (_searchCtrl.text.isNotEmpty) ...[
+                          const SizedBox(width: AppSpacing.s8),
+                          FButton.icon(
+                            variant: FButtonVariant.ghost,
+                            onPress: _searchCtrl.clear,
+                            child: const Icon(FLucideIcons.x),
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.s12),
-                  Expanded(
-                    child: _LibraryList(
-                      segment: _segment,
-                      query: _searchCtrl.text,
-                      searchHistory: _searchHistory,
-                      onSearchSelected: _applySearch,
-                      onRefresh: () => _refreshKnowledgeRepository(ref),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: AppSpacing.s12),
+                    Expanded(
+                      child: _LibraryList(
+                        segment: _segment,
+                        query: _searchCtrl.text,
+                        searchHistory: _searchHistory,
+                        onSearchSelected: _applySearch,
+                        onRefresh: () => _refreshKnowledgeRepository(ref),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -232,11 +250,16 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
           Positioned(
             right: AppSpacing.s16,
             bottom: AppSpacing.s16,
-            child: _NewObjectButton(
-              segment: _segment,
-              decisionMenuOpen: _decisionMenuOpen,
-              onDecisionMenuChanged: (open) =>
-                  setState(() => _decisionMenuOpen = open),
+            child: KnowledgeFloatingActionMotion(
+              hidden: _fabHidden && !_decisionMenuOpen,
+              child: _NewObjectButton(
+                segment: _segment,
+                decisionMenuOpen: _decisionMenuOpen,
+                onDecisionMenuChanged: (open) => setState(() {
+                  _decisionMenuOpen = open;
+                  if (open) _fabHidden = false;
+                }),
+              ),
             ),
           ),
         ],

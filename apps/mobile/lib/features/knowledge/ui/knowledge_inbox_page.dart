@@ -23,24 +23,51 @@ import '../domain/knowledge_models.dart';
 import '_widgets.dart';
 import 'knowledge_capture_sheet.dart';
 
-class KnowledgeInboxPage extends ConsumerWidget {
+class KnowledgeInboxPage extends ConsumerStatefulWidget {
   const KnowledgeInboxPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<KnowledgeInboxPage> createState() => _KnowledgeInboxPageState();
+}
+
+class _KnowledgeInboxPageState extends ConsumerState<KnowledgeInboxPage> {
+  bool _fabHidden = false;
+
+  bool _onScrollUpdate(ScrollUpdateNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return false;
+
+    final delta = notification.scrollDelta ?? 0;
+    if (delta > 4 && !_fabHidden) {
+      setState(() => _fabHidden = true);
+    } else if (delta < -4 && _fabHidden) {
+      setState(() => _fabHidden = false);
+    }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return ShellTabScaffold(
       title: l10n.knowledgeInboxTitle,
       child: Stack(
         children: [
-          const Positioned.fill(child: _InboxBody()),
+          Positioned.fill(
+            child: NotificationListener<ScrollUpdateNotification>(
+              onNotification: _onScrollUpdate,
+              child: const _InboxBody(),
+            ),
+          ),
           Positioned(
             right: AppSpacing.s16,
             bottom: AppSpacing.s16,
-            child: FButton(
-              prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
-              onPress: () => showKnowledgeCaptureSheet(context, ref),
-              child: Text(l10n.knowledgeCaptureAction),
+            child: KnowledgeFloatingActionMotion(
+              hidden: _fabHidden,
+              child: FButton(
+                prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+                onPress: () => showKnowledgeCaptureSheet(context, ref),
+                child: Text(l10n.knowledgeCaptureAction),
+              ),
             ),
           ),
         ],
