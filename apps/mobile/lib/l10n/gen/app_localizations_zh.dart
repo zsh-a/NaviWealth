@@ -7763,6 +7763,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeCaptureAction => '新建捕获';
 
   @override
+  String get knowledgeCreateEntry => '新建条目';
+
+  @override
   String get knowledgeCaptureTitle => '写一条想法';
 
   @override

@@ -347,7 +347,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage>
             bottom: AppSpacing.s16,
             child: KnowledgeFloatingActionMotion(
               hidden: fabHidden,
-              child: _NewObjectButton(segment: _segment),
+              child: _LibraryCreateFab(activeSegment: _segment),
             ),
           ),
         ],
@@ -356,24 +356,14 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage>
   }
 }
 
-/// Forui-native floating action affordance for the active Library segment.
-class _NewObjectButton extends ConsumerWidget {
-  const _NewObjectButton({required this.segment});
+/// Icon-only FAB that opens the knowledge type picker sheet.
+class _LibraryCreateFab extends ConsumerWidget {
+  const _LibraryCreateFab({required this.activeSegment});
 
-  final _LibrarySegment segment;
+  final _LibrarySegment activeSegment;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final label = switch (segment) {
-      _LibrarySegment.decisions => l10n.knowledgeNewDecision,
-      _LibrarySegment.principles => l10n.knowledgeNewPrinciple,
-      _LibrarySegment.assumptions => l10n.knowledgeNewAssumption,
-      _LibrarySegment.notes => l10n.knowledgeNewNote,
-      _LibrarySegment.concepts => l10n.knowledgeNewConcept,
-      _LibrarySegment.experiments => l10n.knowledgeNewExperiment,
-      _LibrarySegment.routines => l10n.knowledgeNewRoutine,
-    };
     return KnowledgeFloatingActionSurface(
       child: FButton(
         variant: FButtonVariant.ghost,
@@ -382,36 +372,60 @@ class _NewObjectButton extends ConsumerWidget {
           size: AppIconSizes.sm,
           color: Color(0xFFFFFFFF),
         ),
-        onPress: () => _onPress(context, ref),
-        child: AnimatedSwitcher(
-          duration: Motion.fast,
-          child: Text(
-            label,
-            key: ValueKey<String>(label),
-            style: const TextStyle(color: Color(0xFFFFFFFF)),
-          ),
-        ),
+        onPress: () => _openCreateSheet(context, ref),
+        child: const SizedBox.shrink(),
       ),
     );
   }
 
-  Future<void> _onPress(BuildContext context, WidgetRef ref) async {
-    switch (segment) {
-      case _LibrarySegment.decisions:
-        await showNewDecisionSheet(context, ref);
-      case _LibrarySegment.principles:
-        await showNewPrincipleSheet(context, ref);
-      case _LibrarySegment.assumptions:
-        await showNewAssumptionSheet(context, ref);
-      case _LibrarySegment.notes:
-        await showKnowledgeCaptureSheet(context, ref);
-      case _LibrarySegment.concepts:
-        await showNewConceptSheet(context, ref);
-      case _LibrarySegment.experiments:
-        await showNewExperimentSheet(context, ref);
-      case _LibrarySegment.routines:
-        await showNewRoutineSheet(context, ref);
-    }
+  Future<void> _openCreateSheet(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final activeLabel = _segmentLabel(l10n, activeSegment);
+    final options = [
+      KnowledgeCreateOption(
+        icon: FLucideIcons.gitBranch,
+        label: l10n.knowledgeNewDecision,
+        onSelected: () => showNewDecisionSheet(context, ref),
+      ),
+      KnowledgeCreateOption(
+        icon: FLucideIcons.badgeCheck,
+        label: l10n.knowledgeNewPrinciple,
+        onSelected: () => showNewPrincipleSheet(context, ref),
+      ),
+      KnowledgeCreateOption(
+        icon: FLucideIcons.lightbulb,
+        label: l10n.knowledgeNewAssumption,
+        onSelected: () => showNewAssumptionSheet(context, ref),
+      ),
+      KnowledgeCreateOption(
+        icon: FLucideIcons.fileText,
+        label: l10n.knowledgeNewNote,
+        onSelected: () => showKnowledgeCaptureSheet(context, ref),
+      ),
+      KnowledgeCreateOption(
+        icon: FLucideIcons.folderTree,
+        label: l10n.knowledgeNewConcept,
+        onSelected: () => showNewConceptSheet(context, ref),
+      ),
+      KnowledgeCreateOption(
+        icon: FLucideIcons.flaskConical,
+        label: l10n.knowledgeNewExperiment,
+        onSelected: () => showNewExperimentSheet(context, ref),
+      ),
+      KnowledgeCreateOption(
+        icon: FLucideIcons.calendarClock,
+        label: l10n.knowledgeNewRoutine,
+        onSelected: () => showNewRoutineSheet(context, ref),
+      ),
+    ];
+    await showKnowledgeCreateSheet(
+      context,
+      options: options,
+      activeLabel: activeLabel,
+    );
   }
 }
 

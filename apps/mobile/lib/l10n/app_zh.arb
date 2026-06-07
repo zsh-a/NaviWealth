@@ -2423,6 +2423,7 @@
   "knowledgeInboxEmptyBody": "使用创建入口写一条想法。AI 会判断它适合保留为 Note，还是升级为 Routine、Decision 或其他知识对象。",
   "knowledgeInboxLoadFailedTitle": "收件箱加载失败",
   "knowledgeCaptureAction": "新建捕获",
+  "knowledgeCreateEntry": "新建条目",
   "knowledgeCaptureTitle": "写一条想法",
   "knowledgeCaptureTitleField": "标题（可选）",
   "knowledgeCaptureBodyField": "内容",

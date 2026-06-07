@@ -13972,6 +13972,12 @@ abstract class AppLocalizations {
   /// **'New capture'**
   String get knowledgeCaptureAction;
 
+  /// Title for the knowledge type picker bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'New Entry'**
+  String get knowledgeCreateEntry;
+
   /// No description provided for @knowledgeCaptureTitle.
   ///
   /// In en, this message translates to:

@@ -1,10 +1,10 @@
 /// KnowledgeOS Inbox tab (`docs/knowledgeos-domain.md` §5).
 ///
-/// Renders captured Notes. The FAB opens [showKnowledgeCaptureSheet] —
-/// a unified AI-native capture (single textarea + post-save inline
-/// upgrade suggestion). The old typed `_NewNoteSheet` is gone; promoting
-/// a capture to Decision / Routine / etc. happens through the inline
-/// upgrade card in the sheet itself, not by picking the type up front.
+/// Renders captured Notes. The FAB opens a type picker sheet
+/// ([showKnowledgeCreateSheet]) — Note is highlighted as the default
+/// Inbox action, but the user can create any knowledge type directly.
+/// Post-save AI classification still offers inline upgrades within the
+/// Note capture sheet.
 library;
 
 import 'package:flutter/widgets.dart';
@@ -18,6 +18,9 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/ui/ask_ai.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '_decision_writer.dart';
+import '_object_writers.dart';
+import '_routine_writer.dart';
 import '_widgets.dart';
 import 'knowledge_capture_sheet.dart';
 
@@ -48,25 +51,81 @@ class _KnowledgeInboxPageState extends ConsumerState<KnowledgeInboxPage>
             bottom: AppSpacing.s16,
             child: KnowledgeFloatingActionMotion(
               hidden: fabHidden,
-              child: KnowledgeFloatingActionSurface(
-                child: FButton(
-                  variant: FButtonVariant.ghost,
-                  prefix: const Icon(
-                    FLucideIcons.plus,
-                    size: AppIconSizes.sm,
-                    color: Color(0xFFFFFFFF),
-                  ),
-                  onPress: () => showKnowledgeCaptureSheet(context, ref),
-                  child: Text(
-                    l10n.knowledgeCaptureAction,
-                    style: const TextStyle(color: Color(0xFFFFFFFF)),
-                  ),
-                ),
-              ),
+              child: const _InboxCreateFab(),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Icon-only FAB that opens the knowledge type picker sheet.
+class _InboxCreateFab extends ConsumerWidget {
+  const _InboxCreateFab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return KnowledgeFloatingActionSurface(
+      child: FButton(
+        variant: FButtonVariant.ghost,
+        prefix: const Icon(
+          FLucideIcons.plus,
+          size: AppIconSizes.sm,
+          color: Color(0xFFFFFFFF),
+        ),
+        onPress: () => _openCreateSheet(context, ref),
+        child: const SizedBox.shrink(),
+      ),
+    );
+  }
+
+  Future<void> _openCreateSheet(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final options = [
+      KnowledgeCreateOption(
+        icon: FLucideIcons.gitBranch,
+        label: l10n.knowledgeNewDecision,
+        onSelected: () => showNewDecisionSheet(context, ref),
+      ),
+      KnowledgeCreateOption(
+        icon: FLucideIcons.badgeCheck,
+        label: l10n.knowledgeNewPrinciple,
+        onSelected: () => showNewPrincipleSheet(context, ref),
+      ),
+      KnowledgeCreateOption(
+        icon: FLucideIcons.lightbulb,
+        label: l10n.knowledgeNewAssumption,
+        onSelected: () => showNewAssumptionSheet(context, ref),
+      ),
+      KnowledgeCreateOption(
+        icon: FLucideIcons.fileText,
+        label: l10n.knowledgeNewNote,
+        onSelected: () => showKnowledgeCaptureSheet(context, ref),
+      ),
+      KnowledgeCreateOption(
+        icon: FLucideIcons.folderTree,
+        label: l10n.knowledgeNewConcept,
+        onSelected: () => showNewConceptSheet(context, ref),
+      ),
+      KnowledgeCreateOption(
+        icon: FLucideIcons.flaskConical,
+        label: l10n.knowledgeNewExperiment,
+        onSelected: () => showNewExperimentSheet(context, ref),
+      ),
+      KnowledgeCreateOption(
+        icon: FLucideIcons.calendarClock,
+        label: l10n.knowledgeNewRoutine,
+        onSelected: () => showNewRoutineSheet(context, ref),
+      ),
+    ];
+    await showKnowledgeCreateSheet(
+      context,
+      options: options,
+      activeLabel: l10n.knowledgeNewNote,
     );
   }
 }
