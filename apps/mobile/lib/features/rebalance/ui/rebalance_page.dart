@@ -419,10 +419,21 @@ class _TradeRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.s8),
-          Icon(
-            icon,
-            size: AppIconSizes.h18,
-            color: context.theme.colors.mutedForeground,
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: context.theme.colors.foreground.withValues(
+                alpha: AppOpacity.whisper,
+              ),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              icon,
+              size: AppIconSizes.h18,
+              color: context.theme.colors.mutedForeground,
+            ),
           ),
           const SizedBox(width: AppSpacing.s8),
           Expanded(

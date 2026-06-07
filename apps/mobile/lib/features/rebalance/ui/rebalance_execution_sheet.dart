@@ -88,10 +88,21 @@ class _ExecutionTradeRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.s8),
-          Icon(
-            AssetCategoryVisuals.icon(trade.category),
-            color: context.theme.colors.mutedForeground,
-            size: AppIconSizes.md,
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: context.theme.colors.foreground.withValues(
+                alpha: AppOpacity.whisper,
+              ),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              AssetCategoryVisuals.icon(trade.category),
+              color: context.theme.colors.mutedForeground,
+              size: AppIconSizes.h18,
+            ),
           ),
           const SizedBox(width: AppSpacing.s8),
           Expanded(

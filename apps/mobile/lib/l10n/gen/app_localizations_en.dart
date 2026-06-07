@@ -8890,4 +8890,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activityExpenseReportLink => 'Expense Report';
+
+  @override
+  String get tradeVerbBuy => 'Buy';
+
+  @override
+  String get tradeVerbSell => 'Sell';
 }

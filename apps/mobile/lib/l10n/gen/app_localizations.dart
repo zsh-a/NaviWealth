@@ -15341,6 +15341,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Expense Report'**
   String get activityExpenseReportLink;
+
+  /// Trade narration verb: buy
+  ///
+  /// In en, this message translates to:
+  /// **'Buy'**
+  String get tradeVerbBuy;
+
+  /// Trade narration verb: sell
+  ///
+  /// In en, this message translates to:
+  /// **'Sell'**
+  String get tradeVerbSell;
 }
 
 class _AppLocalizationsDelegate

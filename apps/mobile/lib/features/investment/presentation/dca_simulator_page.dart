@@ -4,6 +4,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../app/shell_chrome.dart';
+import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/services/market_data_service.dart';
 import '../../../domain/values/asset_market.dart';
@@ -67,7 +69,7 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
           Breakpoints.isMobile(MediaQuery.sizeOf(context).width)
               ? AppSpacing.s16
               : AppSpacing.s24,
-          80 + MediaQuery.paddingOf(context).bottom,
+          kTabBarOffset + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
           _DcaControls(
@@ -404,6 +406,7 @@ class _MetricGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     return Wrap(
       spacing: AppSpacing.s10,
       runSpacing: AppSpacing.s10,
@@ -420,7 +423,7 @@ class _MetricGrid extends StatelessWidget {
         ),
         _TextMetric(
           label: l10n.dcaSimulatorCumulativeReturn,
-          value: _formatPercent(result.cumulativeReturn),
+          value: formatters.percent(result.cumulativeReturn.toDouble(), decimalDigits: 1),
         ),
         _MoneyMetric(
           label: l10n.dcaSimulatorAverageCost,
@@ -429,7 +432,7 @@ class _MetricGrid extends StatelessWidget {
         ),
         _TextMetric(
           label: l10n.dcaSimulatorMaxDrawdown,
-          value: _formatPercent(result.maxDrawdown),
+          value: formatters.percent(result.maxDrawdown.toDouble(), decimalDigits: 1),
         ),
       ],
     );
@@ -529,6 +532,7 @@ class _PositionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
       child: Row(
@@ -545,7 +549,7 @@ class _PositionRow extends StatelessWidget {
             child: Text(
               l10n.dcaSimulatorPositionAverageCost(
                 currency,
-                position.averageCost.toString(),
+                formatters.currency(position.averageCost, code: currency),
               ),
               style: context.theme.typography.xs.copyWith(
                 color: context.theme.colors.mutedForeground,
@@ -616,7 +620,3 @@ List<String> _parseSymbols(String raw) => [
     if (token.trim().isNotEmpty) token.trim().toUpperCase(),
 ];
 
-String _formatPercent(Decimal ratio) {
-  final value = ratio.toDouble() * 100;
-  return '${value.toStringAsFixed(1)}%';
-}
