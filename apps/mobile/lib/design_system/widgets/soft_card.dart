@@ -126,26 +126,31 @@ class _SoftCardState extends State<SoftCard> {
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
 
-    // Spec: cards are white (#FFFFFF) with subtle border, no heavy tint.
-    // Dark mode: navy-tinted surface.
+    // Reference style: flat rows stay white; elevated surfaces pick up a
+    // barely-blue wash so dashboard cards read like soft app panels.
+    final lightSurface = switch (widget.level) {
+      SoftCardLevel.flat => Colors.white,
+      SoftCardLevel.raised => const Color(0xFFF3FCFD),
+      SoftCardLevel.hero => const Color(0xFFEFFBFC),
+    };
     final baseTint = widget.tinted
-        ? (isDark ? colors.card : Colors.white)
+        ? (isDark ? colors.card : lightSurface)
         : Colors.transparent;
     final hoverBoost = isDark ? 0.03 : 0.02;
     final tint = !widget.onPress.isNull && (hovered || pressed)
         ? (widget.tinted
               ? (isDark
                     ? colors.card.withValues(alpha: 1.0 - hoverBoost)
-                    : Colors.white.withValues(alpha: 1.0 - hoverBoost))
+                    : lightSurface.withValues(alpha: 1.0 - hoverBoost))
               : colors.foreground.withValues(alpha: hoverBoost))
         : baseTint;
 
-    // Spec: soft border (#E8F1F2), barely visible.
+    // Spec: soft border (#E6F1F3), barely visible.
     final borderColor = widget.borderless
         ? Colors.transparent
         : (isDark
-            ? colors.border.withValues(alpha: AppOpacity.faint)
-            : const Color(0xFFEAF0F6));
+              ? colors.border.withValues(alpha: AppOpacity.faint)
+              : const Color(0xFFE6F1F3));
 
     return BoxDecoration(
       color: tint,
@@ -178,16 +183,15 @@ class _SoftCardState extends State<SoftCard> {
             ? AppShadow.cardHover
             : AppShadow.card,
       SoftCardLevel.hero => [
-          ...AppShadow.card,
-          BoxShadow(
-            color: (isDark
-                    ? ColorPalette.cyanBrand400
-                    : ColorPalette.cyanBrand500)
-                .withValues(alpha: AppOpacity.whisper),
-            blurRadius: 32,
-            offset: const Offset(0, 12),
-          ),
-        ],
+        ...AppShadow.card,
+        BoxShadow(
+          color:
+              (isDark ? ColorPalette.cyanBrand400 : ColorPalette.cyanBrand500)
+                  .withValues(alpha: AppOpacity.whisper),
+          blurRadius: 32,
+          offset: const Offset(0, 12),
+        ),
+      ],
     };
   }
 }

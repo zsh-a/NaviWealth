@@ -159,29 +159,18 @@ class AppShadow {
 
   /// Standard card shadow — subtle depth.
   static const List<BoxShadow> card = [
-    BoxShadow(
-      color: Color(0x0A000000),
-      blurRadius: 24,
-      offset: Offset(0, 8),
-    ),
+    BoxShadow(color: Color(0x0A002A38), blurRadius: 28, offset: Offset(0, 10)),
   ];
 
   /// Card hover / pressed state — slightly deeper.
   static const List<BoxShadow> cardHover = [
-    BoxShadow(
-      color: Color(0x12000000),
-      blurRadius: 32,
-      offset: Offset(0, 12),
-    ),
+    BoxShadow(color: Color(0x14002A38), blurRadius: 36, offset: Offset(0, 14)),
   ];
 
   /// Floating glass nav bar — soft ambient glow.
   static const List<BoxShadow> nav = [
-    BoxShadow(
-      color: Color(0x0D000000),
-      blurRadius: 28,
-      offset: Offset(0, 10),
-    ),
+    BoxShadow(color: Color(0x1A002A38), blurRadius: 36, offset: Offset(0, 14)),
+    BoxShadow(color: Color(0x0A3BC6D9), blurRadius: 20, offset: Offset(0, -2)),
   ];
 }
 
