@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
+import 'package:intl/intl.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -561,22 +562,22 @@ class _PreviewCard extends StatelessWidget {
             _kv(l10n.corpActionPreviewSharesOnRecord, '${dividend.shareCount}'),
             _kv(
               l10n.corpActionPreviewGross,
-              '${dividend.grossAmount} ${dividend.currency}',
+              _fmtCurrency(dividend.grossAmount, dividend.currency),
             ),
             _kv(
               l10n.corpActionPreviewTax,
-              '${dividend.withholdingTax} ${dividend.currency}',
+              _fmtCurrency(dividend.withholdingTax, dividend.currency),
             ),
             _kv(
               l10n.corpActionPreviewNet,
-              '${dividend.netAmount} ${dividend.currency}',
+              _fmtCurrency(dividend.netAmount, dividend.currency),
             ),
           ] else if (preview.action is CashDividendAction)
             Text(l10n.corpActionNoEligibleHolding),
           if (preview.cashFlow != Decimal.zero)
             _kv(
               l10n.corpActionPreviewCashFlow,
-              '${preview.cashFlow} ${preview.cashFlowCurrency}',
+              _fmtCurrency(preview.cashFlow, preview.cashFlowCurrency),
             ),
           for (final delta in preview.lotDeltas)
             Padding(
@@ -625,4 +626,29 @@ class _PreviewCard extends StatelessWidget {
       ],
     ),
   );
+
+  static String _fmtCurrency(Decimal amount, String currency) {
+    return NumberFormat.currency(
+      name: currency,
+      symbol: _currencySymbol(currency),
+    ).format(amount.toDouble());
+  }
+
+  static String _currencySymbol(String code) {
+    switch (code.toUpperCase()) {
+      case 'CNY':
+      case 'JPY':
+        return '¥';
+      case 'USD':
+        return '\$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'HKD':
+        return 'HK\$';
+      default:
+        return code;
+    }
+  }
 }

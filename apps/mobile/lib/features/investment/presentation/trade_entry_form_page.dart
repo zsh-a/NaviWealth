@@ -305,7 +305,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
           // raw asset unit ID.
           final effectiveNarration = (note != null && note.trim().isNotEmpty)
               ? note
-              : _tradeNarration(type, quantity, asset);
+              : _tradeNarration(type, quantity, asset, l10n);
 
           if (type == TradeType.buy) {
             final build = JournalEntryBuilders.buy(
@@ -637,8 +637,13 @@ Decimal? _nonZeroOr(Decimal? v) => v == null || v == Decimal.zero ? null : v;
 /// Build a human-readable narration for a trade when the user did not
 /// type a note. Uses the asset symbol + name so the Activity feed shows
 /// e.g. "Buy 10 AAPL (Apple Inc.)" instead of the raw asset unit ID.
-String _tradeNarration(TradeType type, Decimal qty, Asset asset) {
-  final verb = type == TradeType.buy ? 'Buy' : 'Sell';
+String _tradeNarration(
+  TradeType type,
+  Decimal qty,
+  Asset asset,
+  AppLocalizations l10n,
+) {
+  final verb = type == TradeType.buy ? l10n.tradeVerbBuy : l10n.tradeVerbSell;
   final symbol = asset.symbol;
   final name = asset.name;
   final qtyStr = _trimQty(qty);

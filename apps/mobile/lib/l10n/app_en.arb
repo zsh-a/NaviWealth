@@ -4722,5 +4722,9 @@
   "activityExpenseListLink": "Expenses",
   "@activityExpenseListLink": { "description": "Activity page quick link: navigate to expense list" },
   "activityExpenseReportLink": "Expense Report",
-  "@activityExpenseReportLink": { "description": "Activity page quick link: navigate to expense report" }
+  "@activityExpenseReportLink": { "description": "Activity page quick link: navigate to expense report" },
+  "tradeVerbBuy": "Buy",
+  "@tradeVerbBuy": { "description": "Trade narration verb: buy" },
+  "tradeVerbSell": "Sell",
+  "@tradeVerbSell": { "description": "Trade narration verb: sell" }
 }

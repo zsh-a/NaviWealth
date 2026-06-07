@@ -8530,4 +8530,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get activityExpenseReportLink => '支出报表';
+
+  @override
+  String get tradeVerbBuy => '买入';
+
+  @override
+  String get tradeVerbSell => '卖出';
 }

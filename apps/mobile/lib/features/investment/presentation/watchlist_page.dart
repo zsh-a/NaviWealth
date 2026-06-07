@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:intl/intl.dart';
-
 import '../../../app/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../domain/services/market_data_service.dart';
@@ -237,11 +235,6 @@ class _WatchlistRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final quote = snapshot?.quote;
-    final price = quote == null
-        ? l10n.watchlistPriceUnavailable
-        : NumberFormat.simpleCurrency(
-            name: quote.currency,
-          ).format(quote.price.toDouble());
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
@@ -291,8 +284,17 @@ class _WatchlistRow extends StatelessWidget {
                   height: 18,
                   child: FCircularProgress(),
                 )
+              else if (quote == null)
+                Text(
+                  l10n.watchlistPriceUnavailable,
+                  style: context.theme.typography.lg,
+                )
               else
-                Text(price, style: context.theme.typography.lg),
+                MoneyText(
+                  amount: quote.price.toDouble(),
+                  currencyCode: quote.currency,
+                  style: context.theme.typography.lg,
+                ),
             ],
           ),
           const SizedBox(height: AppSpacing.s10),

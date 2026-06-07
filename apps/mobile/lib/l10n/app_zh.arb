@@ -2660,5 +2660,7 @@
   "knowledgeNotesHintBody": "资料库的 Note 段是浏览面；录入走收件箱。关闭这个面板，切到收件箱标签页，使用创建入口即可。",
   "amountHidden": "金额已隐藏",
   "activityExpenseListLink": "支出",
-  "activityExpenseReportLink": "支出报表"
+  "activityExpenseReportLink": "支出报表",
+  "tradeVerbBuy": "买入",
+  "tradeVerbSell": "卖出"
 }
