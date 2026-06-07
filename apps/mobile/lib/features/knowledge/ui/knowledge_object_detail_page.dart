@@ -633,23 +633,56 @@ List<Widget> _routineSections(BuildContext context, KnowledgeRoutine r) {
   ];
 }
 
-class _MetadataSection extends StatelessWidget {
+const int _kMetadataCollapseThreshold = 4;
+
+class _MetadataSection extends StatefulWidget {
   const _MetadataSection({required this.children, this.trailing});
 
   final List<Widget> children;
   final Widget? trailing;
 
   @override
+  State<_MetadataSection> createState() => _MetadataSectionState();
+}
+
+class _MetadataSectionState extends State<_MetadataSection> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final needsCollapse =
+        widget.children.length > _kMetadataCollapseThreshold;
+    final visibleChildren = needsCollapse && !_expanded
+        ? widget.children.take(_kMetadataCollapseThreshold).toList()
+        : widget.children;
     return KnowledgeSection.group(
-      title: AppLocalizations.of(context).knowledgeDetailMetadataTitle,
-      trailing: trailing,
+      title: l10n.knowledgeDetailMetadataTitle,
+      trailing: widget.trailing,
       children: [
         Wrap(
           spacing: AppSpacing.s8,
           runSpacing: AppSpacing.s8,
-          children: children,
+          children: visibleChildren,
         ),
+        if (needsCollapse) ...[
+          const SizedBox(height: AppSpacing.s4),
+          Center(
+            child: GestureDetector(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.s4),
+                child: Icon(
+                  _expanded
+                      ? FLucideIcons.chevronUp
+                      : FLucideIcons.chevronDown,
+                  size: AppIconSizes.sm,
+                  color: context.theme.colors.mutedForeground,
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
