@@ -8524,4 +8524,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get amountHidden => '金额已隐藏';
+
+  @override
+  String get activityExpenseListLink => '支出';
+
+  @override
+  String get activityExpenseReportLink => '支出报表';
 }
