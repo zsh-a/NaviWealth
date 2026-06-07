@@ -319,18 +319,30 @@ class _KnowledgeCaptureSheetState
           : stage == _CaptureStage.classifying
           ? l10n.knowledgeCaptureClassifyingSubtitle
           : l10n.knowledgeCaptureComposeSubtitle,
-      footer: stage == _CaptureStage.composing || stage == _CaptureStage.saving
-          ? AppSheetFooter(
-              submitLabel: stage == _CaptureStage.saving
-                  ? l10n.knowledgeCaptureSaving
-                  : l10n.knowledgeCaptureSave,
-              cancelLabel: l10n.knowledgeCaptureCancel,
-              busy: !_canSave,
-              onSubmit: () {
-                _saveAndClassify();
-              },
-            )
-          : null,
+      footer: switch (stage) {
+        _CaptureStage.composing || _CaptureStage.saving => AppSheetFooter(
+          submitLabel: stage == _CaptureStage.saving
+              ? l10n.knowledgeCaptureSaving
+              : l10n.knowledgeCaptureSave,
+          cancelLabel: l10n.knowledgeCaptureCancel,
+          busy: !_canSave,
+          onSubmit: () {
+            _saveAndClassify();
+          },
+        ),
+        _CaptureStage.suggesting || _CaptureStage.applying => AppSheetFooter(
+          submitLabel: stage == _CaptureStage.applying
+              ? l10n.knowledgeCaptureApplying
+              : (_suggestion!.isUpgrade
+                    ? l10n.knowledgeCaptureApplySuggestion
+                    : l10n.knowledgeCaptureApplyPolish),
+          cancelLabel: l10n.knowledgeCaptureKeepOriginal,
+          busy: stage == _CaptureStage.applying,
+          onSubmit: _acceptUpgrade,
+          onCancel: _dismissSuggestion,
+        ),
+        _ => null,
+      },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -441,19 +453,28 @@ class _ClassifyingBody extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final typography = context.theme.typography;
     final colors = context.theme.colors;
-    // FProgress is a linear track that wants `constraints.maxWidth` from
-    // its parent (no intrinsic horizontal size). Putting it in a Row
-    // would hand it unbounded width → layout fails inside
-    // AppSheet's AnimatedSize. Column with `stretch` keeps width
-    // bounded by the sheet.
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const FProgress(),
-          const SizedBox(height: AppSpacing.s12),
+          // Skeleton shimmer lines to suggest "AI is reading your text"
+          // instead of a bare progress bar.
+          ...List.generate(3, (i) {
+            final widths = <double>[double.infinity, 200, 140];
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: i < 2 ? AppSpacing.s8 : 0,
+              ),
+              child: SkeletonBox(
+                height: 14,
+                width: widths[i],
+                radius: AppRadius.xs,
+              ),
+            );
+          }),
+          const SizedBox(height: AppSpacing.s16),
           Text(
             l10n.knowledgeCaptureClassifyingBody,
             textAlign: TextAlign.center,
@@ -636,12 +657,6 @@ class _SuggestionBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final acceptLabel = applying
-        ? l10n.knowledgeCaptureApplying
-        : (suggestion.isUpgrade
-              ? l10n.knowledgeCaptureApplySuggestion
-              : l10n.knowledgeCaptureApplyPolish);
-    final dismissLabel = l10n.knowledgeCaptureKeepOriginal;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -665,27 +680,6 @@ class _SuggestionBody extends StatelessWidget {
               ),
             ),
           ),
-        const SizedBox(height: AppSpacing.s12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FButton(
-              variant: FButtonVariant.outline,
-              onPress: applying ? null : onDismiss,
-              child: Text(dismissLabel),
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            FButton(
-              prefix: applying
-                  ? const FCircularProgress(
-                      size: FCircularProgressSizeVariant.xs,
-                    )
-                  : null,
-              onPress: applying ? null : onAccept,
-              child: Text(acceptLabel),
-            ),
-          ],
-        ),
       ],
     );
   }

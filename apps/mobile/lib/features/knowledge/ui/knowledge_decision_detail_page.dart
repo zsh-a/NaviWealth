@@ -177,7 +177,6 @@ class _BodyState extends ConsumerState<_Body> {
         const SizedBox(height: AppSpacing.s12),
         KnowledgeSection.group(
           title: l10n.knowledgeDetailMetadataTitle,
-          trailing: KnowledgeStatusLabel(label: d.status.wire),
           children: [
             Text(
               reviewDate == null
@@ -258,6 +257,8 @@ class _BodyState extends ConsumerState<_Body> {
                 _RelatedKnowledgeLink(
                   label: p.statement,
                   status: p.status.wire,
+                  icon: FLucideIcons.badgeCheck,
+                  iconColor: const Color(0xFF10B981),
                   onPress: () => context.pushNamed(
                     AppRouteNames.knowledgeObjectDetail,
                     pathParameters: {'kind': 'principle', 'id': p.id},
@@ -276,6 +277,8 @@ class _BodyState extends ConsumerState<_Body> {
                   label: a.statement,
                   status:
                       '${a.status.wire} · ${a.confidence.toStringAsFixed(2)}',
+                  icon: FLucideIcons.lightbulb,
+                  iconColor: const Color(0xFFF59E0B),
                   onPress: () => context.pushNamed(
                     AppRouteNames.knowledgeObjectDetail,
                     pathParameters: {'kind': 'assumption', 'id': a.id},
@@ -304,12 +307,17 @@ class _BodyState extends ConsumerState<_Body> {
         ],
         if (d.contextSnapshot != null) ...[
           const SizedBox(height: AppSpacing.s12),
-          _ContextSnapshotSection(snapshot: d.contextSnapshot!),
+          _ContextSnapshotSection(
+            snapshot: d.contextSnapshot!,
+            collapsible: true,
+          ),
         ],
         if (_chain.length > 1) ...[
           const SizedBox(height: AppSpacing.s12),
-          KnowledgeSection.group(
+          KnowledgeWriterSection(
             title: AppLocalizations.of(context).knowledgeDetailEvolutionTitle,
+            collapsible: true,
+            initiallyExpanded: false,
             children: [
               for (var i = 0; i < _chain.length; i++)
                 Padding(
@@ -348,11 +356,15 @@ class _RelatedKnowledgeLink extends StatelessWidget {
     required this.label,
     required this.status,
     required this.onPress,
+    this.icon,
+    this.iconColor,
   });
 
   final String label;
   final String status;
   final VoidCallback onPress;
+  final IconData? icon;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -365,6 +377,23 @@ class _RelatedKnowledgeLink extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (icon != null) ...[
+              Container(
+                width: 24,
+                height: 24,
+                margin: const EdgeInsets.only(right: AppSpacing.s8, top: 2),
+                decoration: BoxDecoration(
+                  color: (iconColor ?? colors.primary)
+                      .withValues(alpha: AppOpacity.subtle),
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
+                ),
+                child: Icon(
+                  icon,
+                  size: 13,
+                  color: iconColor ?? colors.primary,
+                ),
+              ),
+            ],
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,7 +419,8 @@ class _RelatedKnowledgeLink extends StatelessWidget {
             Icon(
               FLucideIcons.chevronRight,
               size: AppIconSizes.xs,
-              color: colors.mutedForeground,
+              color: colors.mutedForeground
+                  .withValues(alpha: AppOpacity.muted),
             ),
           ],
         ),
@@ -404,8 +434,12 @@ class _RelatedKnowledgeLink extends StatelessWidget {
 /// shape is owned by `DecisionContextSnapper`; this widget is the
 /// only reader and tolerates missing keys silently.
 class _ContextSnapshotSection extends StatelessWidget {
-  const _ContextSnapshotSection({required this.snapshot});
+  const _ContextSnapshotSection({
+    required this.snapshot,
+    this.collapsible = false,
+  });
   final Map<String, Object?> snapshot;
+  final bool collapsible;
 
   @override
   Widget build(BuildContext context) {
@@ -416,40 +450,49 @@ class _ContextSnapshotSection extends StatelessWidget {
     final capturedAt = snapshot['captured_at'] as String?;
     final window = snapshot['window_days'];
     final l10n = AppLocalizations.of(context);
+    final children = <Widget>[
+      if (capturedAt != null)
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.s4),
+          child: Text(
+            l10n.knowledgeDetailContextSnapshotCaptured(
+              knowledgeDateFromIso(context, capturedAt),
+              '${window ?? "—"}',
+            ),
+            style: typography.xs.copyWith(color: colors.mutedForeground),
+          ),
+        ),
+      if (finance.isEmpty && health.isEmpty)
+        Text(
+          l10n.knowledgeDetailContextSnapshotEmpty,
+          style: typography.sm.copyWith(color: colors.mutedForeground),
+        ),
+      if (finance.isNotEmpty) ...[
+        Text(
+          l10n.knowledgeDetailContextSnapshotFinance,
+          style: typography.xs,
+        ),
+        for (final raw in finance.whereType<Map<Object?, Object?>>())
+          _SnapshotRow(map: raw.cast<String, Object?>()),
+        const SizedBox(height: AppSpacing.s4),
+      ],
+      if (health.isNotEmpty) ...[
+        Text(l10n.knowledgeDetailContextSnapshotHealth, style: typography.xs),
+        for (final raw in health.whereType<Map<Object?, Object?>>())
+          _SnapshotRow(map: raw.cast<String, Object?>()),
+      ],
+    ];
+    if (collapsible) {
+      return KnowledgeWriterSection(
+        title: l10n.knowledgeDetailContextSnapshotTitle,
+        collapsible: true,
+        initiallyExpanded: false,
+        children: children,
+      );
+    }
     return KnowledgeSection.group(
       title: l10n.knowledgeDetailContextSnapshotTitle,
-      children: [
-        if (capturedAt != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-            child: Text(
-              l10n.knowledgeDetailContextSnapshotCaptured(
-                knowledgeDateFromIso(context, capturedAt),
-                '${window ?? "—"}',
-              ),
-              style: typography.xs.copyWith(color: colors.mutedForeground),
-            ),
-          ),
-        if (finance.isEmpty && health.isEmpty)
-          Text(
-            l10n.knowledgeDetailContextSnapshotEmpty,
-            style: typography.sm.copyWith(color: colors.mutedForeground),
-          ),
-        if (finance.isNotEmpty) ...[
-          Text(
-            l10n.knowledgeDetailContextSnapshotFinance,
-            style: typography.xs,
-          ),
-          for (final raw in finance.whereType<Map<Object?, Object?>>())
-            _SnapshotRow(map: raw.cast<String, Object?>()),
-          const SizedBox(height: AppSpacing.s4),
-        ],
-        if (health.isNotEmpty) ...[
-          Text(l10n.knowledgeDetailContextSnapshotHealth, style: typography.xs),
-          for (final raw in health.whereType<Map<Object?, Object?>>())
-            _SnapshotRow(map: raw.cast<String, Object?>()),
-        ],
-      ],
+      children: children,
     );
   }
 }

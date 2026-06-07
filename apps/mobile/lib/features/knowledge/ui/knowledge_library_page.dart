@@ -39,6 +39,16 @@ enum _LibrarySegment {
   routines,
 }
 
+IconData _segmentIcon(_LibrarySegment segment) => switch (segment) {
+  _LibrarySegment.decisions => FLucideIcons.gitBranch,
+  _LibrarySegment.principles => FLucideIcons.badgeCheck,
+  _LibrarySegment.assumptions => FLucideIcons.lightbulb,
+  _LibrarySegment.notes => FLucideIcons.fileText,
+  _LibrarySegment.concepts => FLucideIcons.folderTree,
+  _LibrarySegment.experiments => FLucideIcons.flaskConical,
+  _LibrarySegment.routines => FLucideIcons.calendarClock,
+};
+
 enum KnowledgeLibraryDateFilter { all, today, week, month, outsideMonth }
 
 const String _kKnowledgeLibrarySearchHistoryPrefsKey =
@@ -272,10 +282,8 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SegmentedRow<_LibrarySegment>(
-                      options: _LibrarySegment.values,
-                      value: _segment,
-                      labelOf: (s) => _segmentLabel(l10n, s),
+                    _LibraryTabBar(
+                      selected: _segment,
                       onChanged: (s) => setState(() {
                         _segment = s;
                         fabHidden = false;
@@ -1193,19 +1201,6 @@ class _FilterChipRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    Widget chip(String label, String? value) {
-      final active = selected == value;
-      return FButton(
-        variant: active ? FButtonVariant.primary : FButtonVariant.outline,
-        size: FButtonSizeVariant.sm,
-        prefix: active
-            ? const Icon(FLucideIcons.check, size: AppIconSizes.xs)
-            : null,
-        onPress: () => onChanged(value),
-        child: Text(label),
-      );
-    }
-
     return Row(
       children: [
         Icon(
@@ -1213,22 +1208,81 @@ class _FilterChipRow extends StatelessWidget {
           size: AppIconSizes.xs,
           color: context.theme.colors.mutedForeground,
         ),
-        const SizedBox(width: AppSpacing.s8),
+        const SizedBox(width: AppSpacing.s6),
         Expanded(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                chip(l10n.knowledgeLibraryFilterAll, null),
-                for (final value in values) ...[
-                  const SizedBox(width: AppSpacing.s8),
-                  chip(value, value),
-                ],
+                _FilterPill(
+                  label: l10n.knowledgeLibraryFilterAll,
+                  active: selected == null,
+                  onTap: () => onChanged(null),
+                ),
+                for (final value in values)
+                  _FilterPill(
+                    label: value,
+                    active: selected == value,
+                    onTap: () => onChanged(value),
+                  ),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Lightweight pill chip for filter rows. Compact padding, muted
+/// border, no heavy button chrome — scannable without dominating
+/// the viewport.
+class _FilterPill extends StatelessWidget {
+  const _FilterPill({
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return Padding(
+      padding: const EdgeInsets.only(left: AppSpacing.s4),
+      child: FTappable(
+        onPress: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s8,
+            vertical: AppSpacing.s4,
+          ),
+          decoration: BoxDecoration(
+            color: active
+                ? colors.primary.withValues(alpha: AppOpacity.subtle)
+                : null,
+            borderRadius: BorderRadius.circular(AppRadius.full),
+            border: Border.all(
+              color: active
+                  ? colors.primary.withValues(alpha: AppOpacity.light)
+                  : colors.border,
+            ),
+          ),
+          child: Text(
+            label,
+            style: typography.xs.copyWith(
+              color: active ? colors.primary : colors.mutedForeground,
+              fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1242,19 +1296,6 @@ class _DateFilterChipRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    Widget chip(KnowledgeLibraryDateFilter filter) {
-      final active = selected == filter;
-      return FButton(
-        variant: active ? FButtonVariant.primary : FButtonVariant.outline,
-        size: FButtonSizeVariant.sm,
-        prefix: active
-            ? const Icon(FLucideIcons.check, size: AppIconSizes.xs)
-            : null,
-        onPress: () => onChanged(filter),
-        child: Text(_dateFilterLabel(l10n, filter)),
-      );
-    }
-
     return Row(
       children: [
         Icon(
@@ -1262,17 +1303,18 @@ class _DateFilterChipRow extends StatelessWidget {
           size: AppIconSizes.xs,
           color: context.theme.colors.mutedForeground,
         ),
-        const SizedBox(width: AppSpacing.s8),
+        const SizedBox(width: AppSpacing.s6),
         Expanded(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                for (final filter in KnowledgeLibraryDateFilter.values) ...[
-                  if (filter != KnowledgeLibraryDateFilter.values.first)
-                    const SizedBox(width: AppSpacing.s8),
-                  chip(filter),
-                ],
+                for (final filter in KnowledgeLibraryDateFilter.values)
+                  _FilterPill(
+                    label: _dateFilterLabel(l10n, filter),
+                    active: selected == filter,
+                    onTap: () => onChanged(filter),
+                  ),
               ],
             ),
           ),
@@ -1282,28 +1324,80 @@ class _DateFilterChipRow extends StatelessWidget {
   }
 }
 
-class _DeleteEntryButton extends StatelessWidget {
-  const _DeleteEntryButton({required this.onPressed});
+/// Horizontally scrollable tab bar for the 7 Library segments.
+///
+/// Replaces [SegmentedRow] which crammed all 7 labels into a single
+/// non-scrollable row — unreadable on small screens. Each tab is a
+/// compact pill: icon-only when unselected to save space, expanding
+/// to icon + label for the active segment.
+class _LibraryTabBar extends StatelessWidget {
+  const _LibraryTabBar({required this.selected, required this.onChanged});
 
-  final VoidCallback onPressed;
+  final _LibrarySegment selected;
+  final ValueChanged<_LibrarySegment> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return FTooltip(
-      tipBuilder: (_, _) =>
-          Text(AppLocalizations.of(context).knowledgeLibraryDeleteTooltip),
-      child: FButton.icon(
-        variant: FButtonVariant.ghost,
-        onPress: onPressed,
-        child: Icon(
-          FLucideIcons.trash2,
-          size: AppIconSizes.sm,
-          color: context.theme.colors.destructive,
-        ),
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _LibrarySegment.values.length,
+        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s6),
+        itemBuilder: (context, i) {
+          final segment = _LibrarySegment.values[i];
+          final active = segment == selected;
+          return FTappable(
+            onPress: () => onChanged(segment),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              curve: Curves.easeOutCubic,
+              padding: EdgeInsets.symmetric(
+                horizontal: active ? AppSpacing.s12 : AppSpacing.s8,
+                vertical: AppSpacing.s6,
+              ),
+              decoration: BoxDecoration(
+                color: active
+                    ? colors.primary.withValues(alpha: AppOpacity.subtle)
+                    : colors.background,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(
+                  color: active
+                      ? colors.primary.withValues(alpha: AppOpacity.light)
+                      : colors.border,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _segmentIcon(segment),
+                    size: AppIconSizes.xs,
+                    color: active ? colors.primary : colors.mutedForeground,
+                  ),
+                  if (active) ...[
+                    const SizedBox(width: AppSpacing.s4),
+                    Text(
+                      _segmentLabel(l10n, segment),
+                      style: typography.xs.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 }
+
 
 Future<void> _refreshKnowledgeRepository(WidgetRef ref) async {
   ref.invalidate(knowledgeRepositoryProvider);
@@ -1361,43 +1455,81 @@ Future<void> _deleteEntry({
 }
 
 /// Unified Library tile shell. Encodes the shared layout:
-/// `KnowledgeSection.item` → `_LibraryTileHeader` (title + trailing row
-/// with optional status badge + delete + chevron) → optional subtitle.
+/// `KnowledgeSection.item` → type icon + `_LibraryTileHeader` (title
+/// + trailing row with optional status badge + chevron) → optional subtitle.
 Widget _buildLibraryTile(
   BuildContext context, {
   required String title,
   required String query,
   required VoidCallback onPress,
   required VoidCallback onDelete,
+  IconData? typeIcon,
+  Color? typeColor,
   String? statusBadge,
   List<Widget> subtitle = const <Widget>[],
 }) {
   final colors = context.theme.colors;
-  return KnowledgeSection.item(
-    onPress: onPress,
-    children: [
-      _LibraryTileHeader(
-        title: title,
-        query: query,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (statusBadge != null) ...[
-              KnowledgeStatusLabel(label: statusBadge),
-              const SizedBox(width: AppSpacing.s4),
-            ],
-            _DeleteEntryButton(onPressed: onDelete),
-            const SizedBox(width: AppSpacing.s4),
-            Icon(
-              FLucideIcons.chevronRight,
-              size: AppIconSizes.xs,
-              color: colors.mutedForeground,
-            ),
-          ],
-        ),
+  return Dismissible(
+    key: ValueKey<String>('lib-tile-$title'),
+    direction: DismissDirection.endToStart,
+    confirmDismiss: (_) async {
+      onDelete();
+      return false;
+    },
+    background: Container(
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.only(right: AppSpacing.s16),
+      decoration: BoxDecoration(
+        color: colors.destructive.withValues(alpha: AppOpacity.subtle),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
-      ...subtitle,
-    ],
+      child: Icon(
+        FLucideIcons.trash2,
+        size: AppIconSizes.sm,
+        color: colors.destructive,
+      ),
+    ),
+    child: KnowledgeSection.item(
+      onPress: onPress,
+      children: [
+        _LibraryTileHeader(
+          title: title,
+          query: query,
+          leading: typeIcon != null
+              ? Container(
+                  width: 28,
+                  height: 28,
+                  margin: const EdgeInsets.only(right: AppSpacing.s8),
+                  decoration: BoxDecoration(
+                    color: (typeColor ?? colors.primary)
+                        .withValues(alpha: AppOpacity.subtle),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Icon(
+                    typeIcon,
+                    size: AppIconSizes.xs,
+                    color: typeColor ?? colors.primary,
+                  ),
+                )
+              : null,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (statusBadge != null) ...[
+                KnowledgeStatusLabel(label: statusBadge),
+                const SizedBox(width: AppSpacing.s4),
+              ],
+              Icon(
+                FLucideIcons.chevronRight,
+                size: AppIconSizes.xs,
+                color: colors.mutedForeground.withValues(alpha: AppOpacity.muted),
+              ),
+            ],
+          ),
+        ),
+        ...subtitle,
+      ],
+    ),
   );
 }
 
@@ -1430,6 +1562,8 @@ Widget _buildDecisionTile(
     title: d.question,
     query: query,
     statusBadge: d.status.wire,
+    typeIcon: FLucideIcons.gitBranch,
+    typeColor: colors.primary,
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeDecisionDetail,
       pathParameters: {'id': d.id},
@@ -1460,6 +1594,8 @@ Widget _buildNoteTile(
     context,
     title: n.title.isEmpty ? l10n.knowledgeUntitled : n.title,
     query: query,
+    typeIcon: FLucideIcons.fileText,
+    typeColor: colors.mutedForeground,
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'note', 'id': n.id},
@@ -1497,6 +1633,8 @@ Widget _buildPrincipleTile(
     title: p.statement,
     query: query,
     statusBadge: p.status.wire,
+    typeIcon: FLucideIcons.badgeCheck,
+    typeColor: const Color(0xFF10B981),
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'principle', 'id': p.id},
@@ -1529,6 +1667,8 @@ Widget _buildAssumptionTile(
     title: a.statement,
     query: query,
     statusBadge: a.status.wire,
+    typeIcon: FLucideIcons.lightbulb,
+    typeColor: const Color(0xFFF59E0B),
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'assumption', 'id': a.id},
@@ -1558,6 +1698,8 @@ Widget _buildConceptTile(
     context,
     title: c.name,
     query: query,
+    typeIcon: FLucideIcons.folderTree,
+    typeColor: const Color(0xFF8B5CF6),
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'concept', 'id': c.id},
@@ -1578,6 +1720,8 @@ Widget _buildExperimentTile(
     title: e.hypothesis,
     query: query,
     statusBadge: e.status.wire,
+    typeIcon: FLucideIcons.flaskConical,
+    typeColor: const Color(0xFF06B6D4),
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'experiment', 'id': e.id},
@@ -1614,6 +1758,8 @@ Widget _buildRoutineTile(
     title: r.statement,
     query: query,
     statusBadge: r.status.wire,
+    typeIcon: FLucideIcons.calendarClock,
+    typeColor: const Color(0xFFF97316),
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'routine', 'id': r.id},
@@ -1628,11 +1774,13 @@ class _LibraryTileHeader extends StatelessWidget {
     required this.title,
     required this.query,
     required this.trailing,
+    this.leading,
   });
 
   final String title;
   final String query;
   final Widget trailing;
+  final Widget? leading;
 
   @override
   Widget build(BuildContext context) {
@@ -1641,6 +1789,7 @@ class _LibraryTileHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          ?leading,
           Expanded(
             child: KnowledgeHighlightedText(
               text: title,
