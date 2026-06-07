@@ -33,7 +33,8 @@ class SyncBackfill {
   /// Order is irrelevant — v2 rows are independent.
   /// Tables to backfill. Must match `kSyncableTables` in `row_applier.dart`,
   /// minus tables that lack the `SyncableTable` mixin (e.g. `fx_rates`).
-  static const _tables = <String>[
+  /// Also used by [AuthController._migrateOwnerUserId] for mode switching.
+  static const tables = <String>[
     'accounts',
     'assets',
     'liabilities',
@@ -75,7 +76,7 @@ class SyncBackfill {
     if (existing != null) return 0;
 
     var queued = 0;
-    for (final table in _tables) {
+    for (final table in tables) {
       queued += await _backfillTable(table);
     }
 

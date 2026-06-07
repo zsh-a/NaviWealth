@@ -1,15 +1,19 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/route_guard.dart';
 import '../../../core/auth/auth_errors.dart';
 import '../../../core/auth/auth_session.dart';
 import '../../../core/auth/auth_state.dart';
+import '../../../core/auth/current_user.dart' show kLocalOnlyUserId;
 import '../../../core/auth/device_identity_store.dart';
 import '../../../core/auth/providers.dart';
 import '../../../core/auth/token_store.dart';
 import '../../../core/logging/providers.dart';
+import '../../../core/persistence/providers.dart';
+import '../../../core/sync/sync_backfill.dart' show SyncBackfill;
 import 'app_mode_store.dart';
 
 // Re-export state types for backward compatibility — existing feature-level
@@ -163,13 +167,154 @@ class AuthController extends AsyncNotifier<AuthState> {
 
   /// Opt into local-only mode. Persists the mode flag, drops any stale
   /// token, and emits [AuthLocalOnly] so the router lands the user on
-  /// home. One-way per product decision.
+  /// home.
   Future<void> enterLocalOnlyMode() async {
     await ref.read(appModeStoreProvider).write(AppMode.localOnly);
     await ref.read(tokenStoreProvider).clear();
     state = const AsyncData(AuthLocalOnly());
     ref.invalidate(appModeProvider);
     _bumpRouterRedirect();
+  }
+
+  /// Register a new cloud account and migrate local-only data.
+  ///
+  /// Used when a [AuthLocalOnly] user wants to upgrade to cloud sync.
+  /// All rows with `owner_user_id = 'local-user'` are re-assigned to the
+  /// new backend userId so [SyncBackfill] can enqueue them for first push.
+  Future<void> upgradeToCloud({
+    required String email,
+    required String password,
+    String? deviceName,
+  }) async {
+    final api = ref.read(authApiClientProvider);
+    final store = ref.read(tokenStoreProvider);
+    final deviceIdentity = ref.read(deviceIdentityStoreProvider);
+    final logger = ref.read(loggerProvider);
+    final deviceId = await deviceIdentity.getOrCreate();
+
+    final session = await api.register(
+      email: email,
+      password: password,
+      deviceName: deviceName,
+      deviceId: deviceId,
+    );
+
+    // Migrate local-only rows to the new cloud userId.
+    final migrated = await _migrateOwnerUserId(
+      from: kLocalOnlyUserId,
+      to: session.userId,
+    );
+    logger.i('auth_upgrade_migrated rows=$migrated');
+
+    // Clear backfill markers so SyncBackfill re-enqueues everything.
+    await _clearBackfillMarkers();
+
+    await _persistCloudSession(
+      session: session,
+      requestedDeviceId: deviceId,
+      store: store,
+      deviceIdentity: deviceIdentity,
+    );
+    logger.i('auth_upgrade_success user=${session.userId}');
+  }
+
+  /// Log into an existing cloud account without migrating local data.
+  ///
+  /// Used when a [AuthLocalOnly] user already has a cloud account and
+  /// wants to connect. Local-only rows remain in the DB with
+  /// `owner_user_id = 'local-user'` — they are not merged.
+  Future<void> connectToCloud({
+    required String email,
+    required String password,
+    String? deviceName,
+  }) async {
+    final api = ref.read(authApiClientProvider);
+    final store = ref.read(tokenStoreProvider);
+    final deviceIdentity = ref.read(deviceIdentityStoreProvider);
+    final logger = ref.read(loggerProvider);
+    final deviceId = await deviceIdentity.getOrCreate();
+
+    final session = await api.login(
+      email: email,
+      password: password,
+      deviceName: deviceName,
+      deviceId: deviceId,
+    );
+    await _persistCloudSession(
+      session: session,
+      requestedDeviceId: deviceId,
+      store: store,
+      deviceIdentity: deviceIdentity,
+    );
+    logger.i('auth_connect_success user=${session.userId}');
+  }
+
+  /// Downgrade from cloud to local-only mode.
+  ///
+  /// Migrates all cloud-owned rows back to `owner_user_id = 'local-user'`,
+  /// clears the session, and switches to [AuthLocalOnly]. Data stays in
+  /// the local DB; sync is fully disabled.
+  Future<void> switchToLocalOnly() async {
+    final session = currentSession();
+    final logger = ref.read(loggerProvider);
+
+    if (session != null) {
+      final migrated = await _migrateOwnerUserId(
+        from: session.userId,
+        to: kLocalOnlyUserId,
+      );
+      logger.i('auth_downgrade_migrated rows=$migrated');
+
+      // Best-effort remote logout — don't block on failure.
+      final api = ref.read(authApiClientProvider);
+      try {
+        await api.logoutDevice(session, session.deviceId);
+      } on AuthException catch (e) {
+        logger.w('auth_downgrade_logout_failed kind=${e.kind.name}');
+      }
+    }
+
+    // Clear backfill markers so next upgrade re-enqueues.
+    await _clearBackfillMarkers();
+
+    await ref.read(appModeStoreProvider).write(AppMode.localOnly);
+    await ref.read(tokenStoreProvider).clear();
+    state = const AsyncData(AuthLocalOnly());
+    ref.invalidate(appModeProvider);
+    _bumpRouterRedirect();
+    logger.i('auth_downgrade_success');
+  }
+
+  /// Batch-update `owner_user_id` across all syncable tables that carry
+  /// the column. Runs in a single Drift transaction.
+  Future<int> _migrateOwnerUserId({
+    required String from,
+    required String to,
+  }) async {
+    final db = await ref.read(appDatabaseProvider.future);
+    var total = 0;
+    await db.transaction(() async {
+      for (final table in SyncBackfill.tables) {
+        final result = await db.customUpdate(
+          'UPDATE $table SET owner_user_id = ? WHERE owner_user_id = ?',
+          variables: [
+            drift.Variable.withString(to),
+            drift.Variable.withString(from),
+          ],
+        );
+        total += result;
+      }
+    });
+    return total;
+  }
+
+  /// Clear all SyncBackfill markers so the next engine creation
+  /// re-enqueues every local row.
+  Future<void> _clearBackfillMarkers() async {
+    final db = await ref.read(appDatabaseProvider.future);
+    await db.customStatement(
+      "DELETE FROM sync_meta WHERE key LIKE 'sync.backfill.%'",
+    );
   }
 
   /// Mark the user's mode preference as `cloud` so the next router redirect

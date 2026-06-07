@@ -37,10 +37,11 @@ class AuthRouteGuard implements RouteGuard {
     // router refresh listenable.
     if (value == null) return null;
 
-    // Local-only users have all in-app routes open; only the auth-mode
-    // public pages bounce them home.
+    // Local-only users have all in-app routes open. Auth-mode public
+    // pages bounce them home, except /login which is reachable for the
+    // upgrade-to-cloud flow.
     if (value is AuthLocalOnly) {
-      if (_isPublicPath(location)) return '/';
+      if (location == kOnboardingPath) return '/';
       return null;
     }
 
