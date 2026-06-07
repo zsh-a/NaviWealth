@@ -7,6 +7,7 @@
 /// upgrade card in the sheet itself, not by picking the type up front.
 library;
 
+import 'package:flutter/material.dart' show RefreshIndicator;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -179,7 +180,7 @@ class _NotesList extends ConsumerWidget {
                     message: l10n.knowledgeInboxEmptyBody,
                   );
                 }
-                return KnowledgePullToRefresh(
+                return RefreshIndicator(
                   onRefresh: () => _refreshKnowledgeRepository(ref),
                   child: ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),

@@ -5,7 +5,7 @@
 /// unverified). Forui chrome with widget-layer pull-to-refresh.
 library;
 
-import 'package:flutter/material.dart' show Theme;
+import 'package:flutter/material.dart' show RefreshIndicator, Theme;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -123,7 +123,7 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage> {
           Positioned.fill(
             child: NotificationListener<ScrollUpdateNotification>(
               onNotification: _onScrollUpdate,
-              child: KnowledgePullToRefresh(
+              child: RefreshIndicator(
                 onRefresh: () => _refreshReview(ref),
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
