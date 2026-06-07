@@ -27,17 +27,16 @@ import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_widgets.dart';
 
-Future<void> showNewRoutineSheet(BuildContext context, WidgetRef ref) =>
+Future<void> showNewRoutineSheet(BuildContext context, WidgetRef _) =>
     showAppFormSheet<void>(
       context: context,
-      builder: (_) => _RoutineWriter(ref: ref),
+      builder: (_) => const _RoutineWriter(),
     );
 
-class _RoutineWriter extends StatefulWidget {
-  const _RoutineWriter({required this.ref});
-  final WidgetRef ref;
+class _RoutineWriter extends ConsumerStatefulWidget {
+  const _RoutineWriter();
   @override
-  State<_RoutineWriter> createState() => _RoutineWriterState();
+  ConsumerState<_RoutineWriter> createState() => _RoutineWriterState();
 }
 
 /// Preset cadences. 180 days = ~6 months covers the prototypical "港卡
@@ -53,7 +52,7 @@ String _intervalPresetLabel(AppLocalizations l10n, int days) => switch (days) {
   _ => '$days d',
 };
 
-class _RoutineWriterState extends State<_RoutineWriter> {
+class _RoutineWriterState extends ConsumerState<_RoutineWriter> {
   final _statementCtrl = TextEditingController();
   final _scopeCtrl = TextEditingController(text: '*');
   int _intervalDays = 180;
@@ -78,8 +77,8 @@ class _RoutineWriterState extends State<_RoutineWriter> {
     if (_saving || _statementCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
     try {
-      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper = await widget.ref.read(mutationStamperProvider.future);
+      final repo = await ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
       final nextDue = stamp.now.add(Duration(days: _intervalDays));
       await repo.upsertRoutine(

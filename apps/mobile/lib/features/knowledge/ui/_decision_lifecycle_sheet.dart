@@ -47,25 +47,25 @@ String decisionStatusLabel(BuildContext context, DecisionStatus s) {
 /// change was saved (the caller reloads), `null`/`false` otherwise.
 Future<bool?> showDecisionLifecycleSheet(
   BuildContext context,
-  WidgetRef ref,
+  WidgetRef _,
   KnowledgeDecision decision,
 ) {
   return showAppFormSheet<bool>(
     context: context,
-    builder: (_) => _DecisionLifecycleSheet(ref: ref, decision: decision),
+    builder: (_) => _DecisionLifecycleSheet(decision: decision),
   );
 }
 
-class _DecisionLifecycleSheet extends StatefulWidget {
-  const _DecisionLifecycleSheet({required this.ref, required this.decision});
-  final WidgetRef ref;
+class _DecisionLifecycleSheet extends ConsumerStatefulWidget {
+  const _DecisionLifecycleSheet({required this.decision});
   final KnowledgeDecision decision;
   @override
-  State<_DecisionLifecycleSheet> createState() =>
+  ConsumerState<_DecisionLifecycleSheet> createState() =>
       _DecisionLifecycleSheetState();
 }
 
-class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
+class _DecisionLifecycleSheetState
+    extends ConsumerState<_DecisionLifecycleSheet> {
   late DecisionStatus _status = widget.decision.status;
   late final TextEditingController _outcomeCtrl = TextEditingController(
     text: widget.decision.actualOutcomeMd ?? '',
@@ -87,7 +87,7 @@ class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
   }
 
   Future<void> _loadCandidates() async {
-    final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
+    final repo = await ref.read(knowledgeRepositoryProvider.future);
     final all = await repo.listDecisions(
       ownerUserId: widget.decision.sync.ownerUserId,
     );
@@ -113,8 +113,8 @@ class _DecisionLifecycleSheetState extends State<_DecisionLifecycleSheet> {
     if (!_canSave) return;
     setState(() => _saving = true);
     try {
-      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper = await widget.ref.read(mutationStamperProvider.future);
+      final repo = await ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
       final d = widget.decision;
       final outcome = _outcomeCtrl.text.trim();
