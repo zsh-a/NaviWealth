@@ -66,17 +66,19 @@ class _PassiveIncomeContent extends ConsumerWidget {
     return SoftCard(
       onPress: () => context.push(AppRoutes.cashflowDividends),
       padding: const EdgeInsets.all(AppSpacing.s16),
-      child: SizedBox(
-        height: 154,
+      borderRadius: AppRadius.xlg,
+      borderless: true,
+      level: SoftCardLevel.raised,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 140),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            DashboardCardHeader(
+            AppMetricHeader(
               icon: FLucideIcons.piggyBank,
               title: l10n.homePassiveIncomeTitle,
-              color: AccentColors.series,
             ),
-            const Spacer(),
+            const SizedBox(height: AppSpacing.s16),
             Text(
               hasData
                   ? formatters.compactCurrency(
@@ -113,7 +115,7 @@ class _PassiveIncomeContent extends ConsumerWidget {
               children: [
                 Expanded(
                   child: SizedBox(
-                    height: 34,
+                    height: 28,
                     child: _PassiveIncomeSparkline(
                       values: metrics.monthlyTotals
                           .map((money) => money.amount)
@@ -155,8 +157,11 @@ class _PassiveIncomeSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return const SoftCard(
       padding: EdgeInsets.all(AppSpacing.s16),
+      borderRadius: AppRadius.xlg,
+      borderless: true,
+      level: SoftCardLevel.raised,
       child: SizedBox(
-        height: 154,
+        height: 140,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -184,8 +189,11 @@ class _PassiveIncomeError extends StatelessWidget {
     final colors = context.theme.colors;
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s16),
+      borderRadius: AppRadius.xlg,
+      borderless: true,
+      level: SoftCardLevel.raised,
       child: SizedBox(
-        height: 154,
+        height: 140,
         child: Text(
           AppLocalizations.of(context).homeCashFlowCardError,
           style: context.theme.typography.sm.copyWith(
