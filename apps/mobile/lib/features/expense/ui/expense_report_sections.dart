@@ -26,6 +26,8 @@ class ExpenseCategoryPieCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return SoftCard(
+      borderless: true,
+      level: SoftCardLevel.raised,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s20),
         child: Column(
@@ -95,6 +97,8 @@ class ExpenseTrendCard extends StatelessWidget {
         ),
     ];
     return SoftCard(
+      borderless: true,
+      level: SoftCardLevel.raised,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s20),
         child: Column(
@@ -157,6 +161,8 @@ class ExpenseCategoryListCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
     return SoftCard(
+      borderless: true,
+      tinted: false,
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s4,
@@ -393,28 +399,7 @@ class _CategoryTile extends StatelessWidget {
     final category = categoryById[breakdown.expenseAccountId];
     final accent =
         category?.expenseAccentColor(context) ?? context.theme.colors.primary;
-    return FTile(
-      title: Text(
-        _categoryLabel(l10n, category, l10n.expenseReportUncategorized),
-        style: context.theme.typography.sm,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      prefix: _ExpenseCategoryIcon(
-        icon: category?.iconData ?? FLucideIcons.banknote,
-        color: accent,
-      ),
-      subtitle: Text(
-        l10n.expenseReportItemCount(breakdown.items.length),
-        style: context.theme.typography.xs.copyWith(
-          color: context.theme.colors.mutedForeground,
-        ),
-      ),
-      suffix: MoneyText(
-        amount: breakdown.total.amount.toDouble(),
-        currencyCode: baseCurrency,
-        compact: true,
-      ),
+    return FTappable(
       onPress: () => showAppFormSheet<void>(
         context: context,
         builder: (ctx) => _CategoryDrillDown(
@@ -423,29 +408,64 @@ class _CategoryTile extends StatelessWidget {
           baseCurrency: baseCurrency,
         ),
       ),
-    );
-  }
-}
-
-class _ExpenseCategoryIcon extends StatelessWidget {
-  const _ExpenseCategoryIcon({required this.icon, required this.color});
-
-  static const double _size = 40;
-
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: _size,
-      height: _size,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: AppOpacity.medium),
-        borderRadius: BorderRadius.circular(AppRadius.full),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s10,
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: AppSpacing.s32,
+              height: AppSpacing.s32,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Icon(
+                  category?.iconData ?? FLucideIcons.banknote,
+                  size: AppIconSizes.md,
+                  color: accent.withValues(alpha: AppOpacity.prominent),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _categoryLabel(
+                      l10n,
+                      category,
+                      l10n.expenseReportUncategorized,
+                    ),
+                    style: context.theme.typography.sm.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(
+                    l10n.expenseReportItemCount(breakdown.items.length),
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            MoneyText(
+              amount: breakdown.total.amount.toDouble(),
+              currencyCode: baseCurrency,
+              compact: true,
+              style: context.theme.typography.sm.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
       ),
-      alignment: Alignment.center,
-      child: Icon(icon, size: AppIconSizes.h18, color: color),
     );
   }
 }
@@ -568,26 +588,48 @@ class _ExpenseLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FTile(
-      title: Text(
-        expense.note ?? formatter.date(expense.tradeDate),
-        style: context.theme.typography.sm,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Text(
-        formatter.date(expense.tradeDate),
-        style: context.theme.typography.xs.copyWith(
-          color: context.theme.colors.mutedForeground,
-        ),
-      ),
-      suffix: Text(
-        formatter.currency(expense.amount, code: expense.currency),
-        style: context.theme.typography.sm.copyWith(
-          fontFeatures: TypographyTokens.tabularFigures,
-        ),
-      ),
+    return FTappable(
       onPress: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s2,
+          vertical: AppSpacing.s10,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    expense.note ?? formatter.date(expense.tradeDate),
+                    style: context.theme.typography.sm.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(
+                    formatter.date(expense.tradeDate),
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.mutedForeground,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Text(
+              formatter.currency(expense.amount, code: expense.currency),
+              style: context.theme.typography.sm.copyWith(
+                fontWeight: FontWeight.w700,
+                fontFeatures: TypographyTokens.tabularFigures,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

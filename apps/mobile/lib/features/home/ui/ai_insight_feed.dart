@@ -120,6 +120,8 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
       ),
       child: SoftCard(
         onPress: !tappable ? null : (item.onTap ?? () => context.push(route!)),
+        borderless: true,
+        level: SoftCardLevel.raised,
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s14,
           vertical: AppSpacing.s12,
@@ -130,18 +132,16 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
           children: [
             Row(
               children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: iconTint.withValues(alpha: AppOpacity.medium),
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    item.icon,
-                    size: AppIconSizes.h18,
-                    color: iconTint,
+                SizedBox(
+                  width: AppSpacing.s32,
+                  height: AppSpacing.s32,
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Icon(
+                      item.icon,
+                      size: AppIconSizes.md,
+                      color: iconTint.withValues(alpha: AppOpacity.prominent),
+                    ),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s12),

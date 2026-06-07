@@ -258,12 +258,14 @@ class PortfolioHoldingRow {
     required HoldingSnapshot snapshot,
     required Asset? asset,
   }) {
+    final title = asset?.name?.isNotEmpty == true
+        ? asset!.name!
+        : asset?.symbol ?? snapshot.assetId;
+    final code = asset?.symbol ?? snapshot.assetId;
     return PortfolioHoldingRow(
       assetId: snapshot.assetId,
-      title: asset?.name?.isNotEmpty == true
-          ? asset!.name!
-          : asset?.symbol ?? snapshot.assetId,
-      subtitle: asset?.symbol ?? snapshot.assetId,
+      title: title,
+      subtitle: _sameDisplayText(title, code) ? '' : code,
       assetType: asset?.type ?? AssetType.custom,
       assetCurrency: snapshot.assetCurrency,
       quantity: snapshot.quantity,
@@ -416,10 +418,6 @@ class _PortfolioHubBody extends StatelessWidget {
       children: [
         _PortfolioSummary(data: data),
         const SizedBox(height: AppSpacing.s16),
-        const _DcaSimulatorEntry(),
-        const SizedBox(height: AppSpacing.s16),
-        _EngineExposureSection(data: data),
-        const SizedBox(height: AppSpacing.s16),
         PortfolioHubViewSegment(value: view, onChanged: onViewChanged),
         const SizedBox(height: AppSpacing.s12),
         _PortfolioSectionTitle(title: l10n.portfolioHubHoldingsTitle),
@@ -439,6 +437,10 @@ class _PortfolioHubBody extends StatelessWidget {
             _HoldingRowCard(holding: holding),
             const SizedBox(height: AppSpacing.s10),
           ],
+        const SizedBox(height: AppSpacing.s8),
+        _EngineExposureSection(data: data),
+        const SizedBox(height: AppSpacing.s16),
+        const _DcaSimulatorEntry(),
       ],
     );
   }
@@ -521,16 +523,23 @@ class _DcaSimulatorEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
-      child: FTile(
-        onPress: () => context.push(AppRoutes.planDca),
-        prefix: Icon(
-          FLucideIcons.calendarClock,
-          color: context.theme.colors.mutedForeground,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: context.theme.colors.muted.withValues(alpha: AppOpacity.muted),
+        borderRadius: BorderRadius.circular(AppRadius.xlg),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
+        child: FTile(
+          onPress: () => context.push(AppRoutes.planDca),
+          prefix: Icon(
+            FLucideIcons.calendarClock,
+            color: context.theme.colors.mutedForeground,
+          ),
+          title: Text(l10n.dcaSimulatorTitle),
+          subtitle: Text(l10n.dcaSimulatorAccountsEntrySubtitle),
+          suffix: const Icon(FLucideIcons.chevronRight, size: AppIconSizes.h18),
         ),
-        title: Text(l10n.dcaSimulatorTitle),
-        subtitle: Text(l10n.dcaSimulatorAccountsEntrySubtitle),
-        suffix: const Icon(FLucideIcons.chevronRight, size: AppIconSizes.h18),
       ),
     );
   }
@@ -1081,6 +1090,7 @@ class _HoldingRowCard extends StatelessWidget {
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final pnl = holding.unrealizedPnlInBase;
     final pnlColor = MarketColors.of(context).forDelta(pnl.toDouble());
+    final subtitle = _holdingSubtitle(l10n, holding);
     return SoftCard(
       borderless: true,
       tinted: false,
@@ -1096,9 +1106,7 @@ class _HoldingRowCard extends StatelessWidget {
                   Expanded(
                     child: _TitleSubtitle(
                       title: holding.title,
-                      subtitle:
-                          '${holding.assetTypeLabel(l10n)} · '
-                          '${holding.subtitle} · ${holding.assetCurrency}',
+                      subtitle: subtitle,
                     ),
                   ),
                   Column(
@@ -1133,14 +1141,6 @@ class _HoldingRowCard extends StatelessWidget {
                     value: formatters.number(
                       holding.quantity.toDouble(),
                       decimalDigits: _quantityDigits(holding.quantity),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s12),
-                  _HoldingMetric(
-                    label: l10n.assetDetailSeriesCostBasis,
-                    value: formatters.currency(
-                      holding.costBasisInBase,
-                      code: holding.baseCurrency,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.s12),
@@ -1354,6 +1354,18 @@ String _formatRatio(BuildContext context, double value) {
     ..minimumFractionDigits = digits
     ..maximumFractionDigits = digits;
   return format.format(value);
+}
+
+String _holdingSubtitle(AppLocalizations l10n, PortfolioHoldingRow holding) {
+  return [
+    holding.assetTypeLabel(l10n),
+    if (holding.subtitle.isNotEmpty) holding.subtitle,
+    holding.assetCurrency,
+  ].join(' · ');
+}
+
+bool _sameDisplayText(String a, String b) {
+  return a.trim().toUpperCase() == b.trim().toUpperCase();
 }
 
 int _quantityDigits(Decimal quantity) {

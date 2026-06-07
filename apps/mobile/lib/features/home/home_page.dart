@@ -162,8 +162,6 @@ class _DashboardBody extends ConsumerWidget {
                     children: [
                       const HomeGreetingHeader(),
                       _NetWorthHeader(snapshot: snapshot),
-                      const SizedBox(height: AppSpacing.s20),
-                      const _CashFlowCardsGrid(),
                       if (insights.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.s20),
                         AiInsightFeed(insights: insights),
@@ -172,6 +170,8 @@ class _DashboardBody extends ConsumerWidget {
                       AllocationSummary(snapshot: snapshot),
                       const SizedBox(height: AppSpacing.s20),
                       const ActivityTimelinePreview(),
+                      const SizedBox(height: AppSpacing.s20),
+                      const _CashFlowCardsGrid(),
                       const SizedBox(height: AppSpacing.s20),
                       const TrendCard(),
                     ],
@@ -235,6 +235,8 @@ class _NetWorthHeader extends ConsumerWidget {
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s20),
       borderRadius: AppRadius.xlg,
+      borderless: true,
+      tinted: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
