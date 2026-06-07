@@ -153,10 +153,13 @@ class _DomainHeaderTitle extends StatelessWidget {
       title,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: typography.lg.copyWith(
+      // Spec: page title 28-34, bold 700. Using typography.xl (closest
+      // forui scale) with w700 for the heavy, confident fintech look.
+      style: typography.xl.copyWith(
         color: colors.foreground,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         height: 1.15,
+        letterSpacing: -0.3,
       ),
     );
   }

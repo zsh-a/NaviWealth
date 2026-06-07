@@ -8,20 +8,50 @@ import 'package:flutter/material.dart';
 class ColorPalette {
   const ColorPalette._();
 
-  // ── Accent (Tailwind teal) — primary interaction color over Slate base ──
-  // Adopted as the brand interaction hue to give NaviWealth a calm
-  // blue-green identity (vs. generic SaaS blue). Pairs well against Slate
-  // grayscale surfaces and stays distinct from MarketColors.profit emerald.
+  // ── Accent (Tailwind teal) — legacy brand interaction color ─────────────
+  // Retained for backward compatibility; new code should use cyanBrand.
   static const Color teal50 = Color(0xFFF0FDFA);
   static const Color teal100 = Color(0xFFCCFBF1);
   static const Color teal200 = Color(0xFF99F6E4);
   static const Color teal300 = Color(0xFF5EEAD4);
-  static const Color teal400 = Color(0xFF2DD4BF); // dark mode primary fg
+  static const Color teal400 = Color(0xFF2DD4BF);
   static const Color teal500 = Color(0xFF14B8A6);
-  static const Color teal600 = Color(0xFF0D9488); // light mode primary fg
+  static const Color teal600 = Color(0xFF0D9488);
   static const Color teal700 = Color(0xFF0F766E);
   static const Color teal800 = Color(0xFF115E59);
   static const Color teal900 = Color(0xFF134E4A);
+
+  // ── Cyan brand (spec primary) — bright turquoise interaction color ─────
+  // The primary brand hue per the fintech UI spec. cyanBrand500 is the
+  // light-mode foreground; cyanBrand400 is the dark-mode foreground.
+  static const Color cyanBrand50 = Color(0xFFEAFBFC);
+  static const Color cyanBrand100 = Color(0xFFD0F7F9);
+  static const Color cyanBrand200 = Color(0xFFA8EFF2);
+  static const Color cyanBrand300 = Color(0xFF7AE8EC);
+  static const Color cyanBrand400 = Color(0xFF6BE8E8); // dark mode primary fg
+  static const Color cyanBrand500 = Color(0xFF3BC6D9); // light mode primary fg
+  static const Color cyanBrand600 = Color(0xFF17A8B0);
+  static const Color cyanBrand700 = Color(0xFF138A90);
+  static const Color cyanBrand800 = Color(0xFF0F6D72);
+  static const Color cyanBrand900 = Color(0xFF0A4F52);
+
+  // ── Navy (spec text) — deep blue-black, not pure black ────────────────
+  // Primary text color per the fintech UI spec. navy900 is the default
+  // foreground; navy300 is the muted/secondary text.
+  static const Color navy50 = Color(0xFFF0F5F7);
+  static const Color navy100 = Color(0xFFD8E3E7);
+  static const Color navy200 = Color(0xFFB5C5CB);
+  static const Color navy300 = Color(0xFF8F9BB3);
+  static const Color navy400 = Color(0xFF6B838A);
+  static const Color navy500 = Color(0xFF4D666D);
+  static const Color navy600 = Color(0xFF3A5058);
+  static const Color navy700 = Color(0xFF2A3B42);
+  static const Color navy800 = Color(0xFF1A2830);
+  static const Color navy900 = Color(0xFF111827);
+  static const Color navy950 = Color(0xFF002A38);
+
+  // ── Secondary accent (warm orange) — low-frequency highlights ─────────
+  static const Color secondary500 = Color(0xFFFA6400);
 
   // ── Brand (NaviWealth blue, derived from legacy seed 0xFF1F6FEB) ────────
   // Retained as info / secondary accent (Sync banner, FxRate badges, etc.).

@@ -71,12 +71,12 @@ class SemanticColors {
     onDanger: ColorPalette.neutral0,
     dangerContainer: ColorPalette.red50,
     onDangerContainer: ColorPalette.red900,
-    info: ColorPalette.cyan500,
+    info: ColorPalette.cyanBrand500,
     onInfo: ColorPalette.neutral0,
-    infoContainer: ColorPalette.cyan50,
-    onInfoContainer: ColorPalette.cyan700,
-    divider: ColorPalette.neutral200,
-    scrim: Color(0x66000000),
+    infoContainer: ColorPalette.cyanBrand50,
+    onInfoContainer: ColorPalette.cyanBrand900,
+    divider: ColorPalette.navy100,
+    scrim: Color(0x66002A38),
   );
 
   static const SemanticColors dark = SemanticColors(
@@ -92,12 +92,12 @@ class SemanticColors {
     onDanger: ColorPalette.red900,
     dangerContainer: Color(0xFF3F1010),
     onDangerContainer: ColorPalette.red100,
-    info: Color(0xFF67D6F0),
-    onInfo: ColorPalette.cyan700,
-    infoContainer: Color(0xFF06303C),
-    onInfoContainer: ColorPalette.cyan100,
-    divider: Color(0xFF26303D),
-    scrim: Color(0x99000000),
+    info: ColorPalette.cyanBrand400,
+    onInfo: ColorPalette.navy950,
+    infoContainer: Color(0xFF0A3540),
+    onInfoContainer: ColorPalette.cyanBrand100,
+    divider: ColorPalette.navy800,
+    scrim: Color(0x99002A38),
   );
 
   /// Resolve the appropriate set from the surrounding theme brightness.

@@ -43,9 +43,12 @@ class AppTheme {
     // matching FColors.copyWith on the forui surface.
     final accent = AccentColors.primary(brightness);
     final onAccent = AccentColors.onPrimary(brightness);
-    // Off-white page background — pure white reads as bare canvas and
-    // washes out the SoftCard tint. Mirror app.dart's FColors override.
-    final pageBackground = isDark ? f.background : const Color(0xFFF5F7F9);
+    // Cool-white page background per fintech spec — not pure white (which
+    // reads as bare canvas) and not warm gray. Dark mode uses a deep
+    // navy-tinted background for brand consistency.
+    final pageBackground = isDark
+        ? const Color(0xFF0A1F28)
+        : const Color(0xFFF5F7FA);
     final scheme = ColorScheme(
       brightness: brightness,
       primary: accent,

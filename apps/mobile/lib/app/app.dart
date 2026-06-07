@@ -71,11 +71,10 @@ class NaviWealthApp extends ConsumerWidget {
             (defaultTargetPlatform == TargetPlatform.iOS ||
                 defaultTargetPlatform == TargetPlatform.android);
         final baseFTheme = isTouch ? platform.touch : platform.desktop;
-        // Layer teal accent over Slate so the brand interaction color reads
-        // calm-finance-teal instead of slate-grey. Also nudge the page
-        // background off pure white into a cool gray (#F5F7F9) so soft
-        // cards feel "lifted" against it — the previous near-white
-        // background read as a bare canvas, washing out the SoftCard tint.
+        // Layer cyan brand accent over Slate and override the page
+        // background + text colors to match the fintech spec:
+        //   Light: cool-white (#F8FCFC), navy text, cyan accent.
+        //   Dark:  deep navy (#0A1F28), light navy text, bright cyan accent.
         //
         // Forui 0.22 dropped `colors` from `FThemeData.copyWith` — colour
         // overrides now require rebuilding via the factory constructor.
@@ -86,8 +85,23 @@ class NaviWealthApp extends ConsumerWidget {
             primary: AccentColors.primary(brightness),
             primaryForeground: AccentColors.onPrimary(brightness),
             background: isDark
-                ? baseFTheme.colors.background
-                : ColorPalette.neutral50,
+                ? const Color(0xFF0A1F28)
+                : const Color(0xFFF5F7FA),
+            foreground: isDark
+                ? ColorPalette.navy50
+                : ColorPalette.navy900,
+            mutedForeground: isDark
+                ? ColorPalette.navy400
+                : ColorPalette.navy300,
+            card: isDark
+                ? const Color(0xFF0F2A35)
+                : const Color(0xFFFFFFFF),
+            border: isDark
+                ? ColorPalette.navy800
+                : const Color(0xFFEAF0F6),
+            muted: isDark
+                ? const Color(0xFF0F2A35)
+                : const Color(0xFFF1FAFA),
           ),
         );
         // Sync brightnessProvider so marketColorsProvider derives correctly.

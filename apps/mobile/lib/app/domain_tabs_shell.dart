@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../core/ai/write/persistent_undo_banner.dart';
 import '../core/shell/domain_shell.dart';
 import '../design_system/design_system.dart';
+import '../features/ai_chat/ui/ask_ai.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'desktop_sidebar.dart';
 import 'domain_switcher.dart';
@@ -118,32 +119,20 @@ class _MobileLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Pure tab nav — Search no longer steals a slot here. The global
-    // Search / Settings actions live in each page's header
-    // (`app/shell_chrome.dart`); Finance is back to its 4 tabs, matching
-    // every other domain's bottom-nav shape.
-    final children = <FBottomNavigationBarItem>[
-      for (var i = 0; i < tabs.length; i++)
-        FBottomNavigationBarItem(
-          icon: Icon(i == selectedIndex ? tabs[i].selectedIcon : tabs[i].icon),
-          label: Text(tabs[i].label),
-        ),
-    ];
-
     // Long-press still opens the cross-domain switcher as a power-user
     // shortcut; the discoverable entry is now the header domain chip.
-    // GestureDetector only intercepts long-press — taps pass through to
-    // the inner FBottomNavigationBar via the default hit-test behaviour.
     final specs = ref.watch(activeDomainShellsProvider);
     final hasSwitcher = specs.length >= 2;
-    final activePath = GoRouter.of(
-      context,
-    ).routeInformationProvider.value.uri.path;
-    final activeSpec = hasSwitcher
-        ? activeSpecForPath(specs, activePath)
-        : null;
-    final showMobileDomainSwitch =
-        hasSwitcher && Breakpoints.isMobile(MediaQuery.sizeOf(context).width);
+
+    // Convert domain tabs to FloatingNavTab items.
+    final navTabs = [
+      for (final tab in tabs)
+        FloatingNavTab(
+          icon: tab.icon,
+          selectedIcon: tab.selectedIcon,
+          label: tab.label,
+        ),
+    ];
 
     return FScaffold(
       childPad: false,
@@ -160,18 +149,26 @@ class _MobileLayout extends ConsumerWidget {
           // Persistent undo banner sits between content and
           // the bottom nav. Hidden when the stack is empty.
           const PersistentUndoBanner(),
-          if (showMobileDomainSwitch && activeSpec != null)
-            _MobileDomainSwitchBar(active: activeSpec, specs: specs),
-          GestureDetector(
-            behavior: HitTestBehavior.deferToChild,
-            onLongPress: hasSwitcher
-                ? () => showDomainSwitcherSheet(context, specs)
-                : null,
-            child: FBottomNavigationBar(
-              index: selectedIndex,
-              onChange: onDestinationSelected,
-              safeAreaBottom: true,
-              children: children,
+          // Floating glass nav bar with center AI button.
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.s24,
+              AppSpacing.s4,
+              AppSpacing.s24,
+              AppSpacing.s20 + MediaQuery.paddingOf(context).bottom,
+            ),
+            child: GestureDetector(
+              behavior: HitTestBehavior.deferToChild,
+              onLongPress: hasSwitcher
+                  ? () => showDomainSwitcherSheet(context, specs)
+                  : null,
+              child: FloatingGlassNavBar(
+                items: navTabs,
+                selectedIndex: selectedIndex,
+                onIndexChanged: onDestinationSelected,
+                onCenterAction: () => askAi(context, ref),
+                centerLabel: 'AI',
+              ),
             ),
           ),
         ],
@@ -265,73 +262,6 @@ class _TabletRailSettings extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MobileDomainSwitchBar extends StatelessWidget {
-  const _MobileDomainSwitchBar({required this.active, required this.specs});
-
-  final DomainShellSpec active;
-  final List<DomainShellSpec> specs;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s12,
-        AppSpacing.s4,
-        AppSpacing.s12,
-        AppSpacing.s2,
-      ),
-      child: Semantics(
-        label: '${l10n.shellSwitchDomainTitle}: ${active.label}',
-        button: true,
-        child: FTappable(
-          onPress: () => showDomainSwitcherSheet(context, specs),
-          child: Container(
-            height: 40,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
-            decoration: BoxDecoration(
-              color: colors.muted.withValues(alpha: AppOpacity.faint),
-              borderRadius: BorderRadius.circular(AppRadius.full),
-              border: Border.all(
-                color: colors.border.withValues(alpha: AppOpacity.muted),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  active.selectedIcon,
-                  size: AppIconSizes.sm,
-                  color: colors.primary,
-                ),
-                const SizedBox(width: AppSpacing.s8),
-                Flexible(
-                  child: Text(
-                    active.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.theme.typography.sm.copyWith(
-                      color: colors.foreground,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s6),
-                Icon(
-                  FLucideIcons.chevronUp,
-                  size: AppIconSizes.xs,
-                  color: colors.mutedForeground,
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

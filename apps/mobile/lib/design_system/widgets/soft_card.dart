@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 
@@ -24,7 +25,7 @@ class SoftCard extends StatefulWidget {
     required this.child,
     this.padding = EdgeInsets.zero,
     this.onPress,
-    this.borderRadius = AppRadius.sm,
+    this.borderRadius = AppRadius.card,
     this.tinted = true,
     this.borderless = false,
     this.level = SoftCardLevel.flat,
@@ -125,27 +126,26 @@ class _SoftCardState extends State<SoftCard> {
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
 
+    // Spec: cards are white (#FFFFFF) with subtle border, no heavy tint.
+    // Dark mode: navy-tinted surface.
     final baseTint = widget.tinted
-        ? (isDark
-              ? colors.foreground.withValues(alpha: AppOpacity.faint)
-              : Colors.white.withValues(alpha: AppOpacity.overlay))
+        ? (isDark ? colors.card : Colors.white)
         : Colors.transparent;
-    final hoverBoost = isDark ? 0.03 : AppOpacity.faint;
+    final hoverBoost = isDark ? 0.03 : 0.02;
     final tint = !widget.onPress.isNull && (hovered || pressed)
         ? (widget.tinted
               ? (isDark
-                    ? colors.foreground.withValues(
-                        alpha: AppOpacity.faint + hoverBoost,
-                      )
-                    : Colors.white.withValues(alpha: AppOpacity.nearOpaque))
+                    ? colors.card.withValues(alpha: 1.0 - hoverBoost)
+                    : Colors.white.withValues(alpha: 1.0 - hoverBoost))
               : colors.foreground.withValues(alpha: hoverBoost))
         : baseTint;
 
+    // Spec: soft border (#E8F1F2), barely visible.
     final borderColor = widget.borderless
         ? Colors.transparent
-        : colors.foreground.withValues(
-            alpha: isDark ? AppOpacity.faint : AppOpacity.whisper,
-          );
+        : (isDark
+            ? colors.border.withValues(alpha: AppOpacity.faint)
+            : const Color(0xFFEAF0F6));
 
     return BoxDecoration(
       color: tint,
@@ -155,7 +155,6 @@ class _SoftCardState extends State<SoftCard> {
           : Border.all(color: borderColor, width: 1),
       boxShadow: _shadows(
         colors,
-        shadowColor: Theme.of(context).shadowColor,
         isDark: isDark,
         hovered: hovered,
         pressed: pressed,
@@ -165,7 +164,6 @@ class _SoftCardState extends State<SoftCard> {
 
   List<BoxShadow>? _shadows(
     FColors colors, {
-    required Color shadowColor,
     required bool isDark,
     required bool hovered,
     required bool pressed,
@@ -173,28 +171,23 @@ class _SoftCardState extends State<SoftCard> {
     final level = pressed && widget.onPress != null
         ? SoftCardLevel.flat
         : widget.level;
-    final alphaBoost = hovered && widget.onPress != null ? 0.02 : 0.0;
-    final keyColor = shadowColor.withValues(
-      alpha: isDark
-          ? AppOpacity.muted + alphaBoost
-          : AppOpacity.whisper + alphaBoost,
-    );
-    final ambientColor = colors.foreground.withValues(
-      alpha: isDark ? 0.04 : 0.03,
-    );
     return switch (level) {
       SoftCardLevel.flat => null,
-      SoftCardLevel.raised => [
-        BoxShadow(color: keyColor, blurRadius: 18, offset: const Offset(0, 8)),
-      ],
+      SoftCardLevel.raised =>
+        hovered && widget.onPress != null
+            ? AppShadow.cardHover
+            : AppShadow.card,
       SoftCardLevel.hero => [
-        BoxShadow(
-          color: shadowColor,
-          blurRadius: 26,
-          offset: const Offset(0, 14),
-        ),
-        BoxShadow(color: ambientColor, blurRadius: 2),
-      ],
+          ...AppShadow.card,
+          BoxShadow(
+            color: (isDark
+                    ? ColorPalette.cyanBrand400
+                    : ColorPalette.cyanBrand500)
+                .withValues(alpha: AppOpacity.whisper),
+            blurRadius: 32,
+            offset: const Offset(0, 12),
+          ),
+        ],
     };
   }
 }

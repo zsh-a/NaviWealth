@@ -125,19 +125,28 @@ class DomainSwitcherChip extends ConsumerWidget {
     final active = activeSpecForPath(specs, path);
     final colors = context.theme.colors;
 
+    // Spec-style pill selector: soft cyan-gray background, large radius,
+    // no hard border, icon + chevron.
     return Semantics(
       label: active.label,
       button: true,
       child: FTappable(
         onPress: () => showDomainSwitcherSheet(context, specs),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s12,
+            vertical: AppSpacing.s6,
+          ),
+          decoration: BoxDecoration(
+            color: colors.muted,
+            borderRadius: BorderRadius.circular(AppRadius.full),
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 active.selectedIcon,
-                size: AppIconSizes.md,
+                size: AppIconSizes.sm,
                 color: colors.primary,
               ),
               const SizedBox(width: AppSpacing.s4),
