@@ -181,6 +181,11 @@ String? _accountSummary(
   Map<String, Account> accounts,
 ) {
   for (final p in postings) {
+    // Asset posting: show the symbol (e.g. "AAPL") instead of the
+    // raw unit ID ("usStock:AAPL").
+    if (p.unit.contains(':')) {
+      return p.unit.substring(p.unit.indexOf(':') + 1);
+    }
     final a = accounts[p.accountId];
     if (a != null) return localizedAccountName(l10n, a);
   }

@@ -953,9 +953,17 @@ class JournalEntryBuilders {
   }
 
   static String _defaultBuyNarration(Decimal qty, String unit) =>
-      'Buy ${_trim(qty)} $unit';
+      'Buy ${_trim(qty)} ${_displayUnit(unit)}';
   static String _defaultSellNarration(Decimal qty, String unit) =>
-      'Sell ${_trim(qty)} $unit';
+      'Sell ${_trim(qty)} ${_displayUnit(unit)}';
+
+  /// Strip the `market:` prefix from an asset unit ID so the narration
+  /// shows `AAPL` instead of `usStock:AAPL`.
+  static String _displayUnit(String unit) {
+    final colon = unit.indexOf(':');
+    return colon >= 0 ? unit.substring(colon + 1) : unit;
+  }
+
   static String _trim(Decimal v) {
     final s = v.toString();
     if (!s.contains('.')) return s;
