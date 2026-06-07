@@ -8,6 +8,17 @@ import '../tokens/motion_tokens.dart';
 import 'app_busy_button.dart';
 import 'form_dirty_controller.dart';
 
+final ValueNotifier<int> appSheetOverlayDepthListenable = ValueNotifier<int>(0);
+
+void _beginAppSheetOverlay() {
+  appSheetOverlayDepthListenable.value++;
+}
+
+void _endAppSheetOverlay() {
+  final current = appSheetOverlayDepthListenable.value;
+  appSheetOverlayDepthListenable.value = current <= 0 ? 0 : current - 1;
+}
+
 /// Unified bottom-sheet shell — every modal sheet in the app should
 /// reach the screen through [showAppSheet] / [showAppFormSheet] so the
 /// drag handle, title row, surface tint, padding, keyboard avoidance and
@@ -36,35 +47,40 @@ Future<T?> showAppSheet<T>({
   double? maxHeightFactor,
   FormDirtyController? dirtyGuard,
   Future<bool> Function()? confirmDismiss,
-}) {
+}) async {
   final guarded = dirtyGuard != null;
-  return showFSheet<T>(
-    context: context,
-    side: FLayout.btt,
-    mainAxisMaxRatio: maxHeightFactor,
-    // When the sheet is guarding unsaved input the barrier-tap and
-    // swipe-down vectors must be closed: forui dismisses both with a
-    // direct `Navigator.pop`, which bypasses [PopScope]. The footer
-    // Cancel and system back (both guarded) remain the only way out.
-    barrierDismissible: !guarded,
-    draggable: !guarded,
-    builder: (sheetContext) {
-      final sheet = AppSheet(
-        title: title,
-        subtitle: subtitle,
-        actions: actions,
-        footer: footer,
-        scrollable: scrollable,
-        child: Builder(builder: builder),
-      );
-      if (!guarded) return sheet;
-      return _GuardedSheet(
-        controller: dirtyGuard,
-        confirmDismiss: confirmDismiss,
-        child: sheet,
-      );
-    },
-  );
+  _beginAppSheetOverlay();
+  try {
+    return await showFSheet<T>(
+      context: context,
+      side: FLayout.btt,
+      mainAxisMaxRatio: maxHeightFactor,
+      // When the sheet is guarding unsaved input the barrier-tap and
+      // swipe-down vectors must be closed: forui dismisses both with a
+      // direct `Navigator.pop`, which bypasses [PopScope]. The footer
+      // Cancel and system back (both guarded) remain the only way out.
+      barrierDismissible: !guarded,
+      draggable: !guarded,
+      builder: (sheetContext) {
+        final sheet = AppSheet(
+          title: title,
+          subtitle: subtitle,
+          actions: actions,
+          footer: footer,
+          scrollable: scrollable,
+          child: Builder(builder: builder),
+        );
+        if (!guarded) return sheet;
+        return _GuardedSheet(
+          controller: dirtyGuard,
+          confirmDismiss: confirmDismiss,
+          child: sheet,
+        );
+      },
+    );
+  } finally {
+    _endAppSheetOverlay();
+  }
 }
 
 /// Preset for form sheets ("add asset", "edit goal", …).
@@ -80,26 +96,31 @@ Future<T?> showAppFormSheet<T>({
   double maxHeightFactor = 0.94,
   FormDirtyController? dirtyGuard,
   Future<bool> Function()? confirmDismiss,
-}) {
+}) async {
   final guarded = dirtyGuard != null;
-  return showFSheet<T>(
-    context: context,
-    side: FLayout.btt,
-    mainAxisMaxRatio: maxHeightFactor,
-    // See [showAppSheet]: barrier-tap / swipe-down bypass PopScope, so
-    // they are disabled while the form holds unsaved input.
-    barrierDismissible: !guarded,
-    draggable: !guarded,
-    builder: guarded
-        ? (sheetContext) => AppSheetSurface(
-            child: _GuardedSheet(
-              controller: dirtyGuard,
-              confirmDismiss: confirmDismiss,
-              child: Builder(builder: builder),
-            ),
-          )
-        : (sheetContext) => AppSheetSurface(child: Builder(builder: builder)),
-  );
+  _beginAppSheetOverlay();
+  try {
+    return await showFSheet<T>(
+      context: context,
+      side: FLayout.btt,
+      mainAxisMaxRatio: maxHeightFactor,
+      // See [showAppSheet]: barrier-tap / swipe-down bypass PopScope, so
+      // they are disabled while the form holds unsaved input.
+      barrierDismissible: !guarded,
+      draggable: !guarded,
+      builder: guarded
+          ? (sheetContext) => AppSheetSurface(
+              child: _GuardedSheet(
+                controller: dirtyGuard,
+                confirmDismiss: confirmDismiss,
+                child: Builder(builder: builder),
+              ),
+            )
+          : (sheetContext) => AppSheetSurface(child: Builder(builder: builder)),
+    );
+  } finally {
+    _endAppSheetOverlay();
+  }
 }
 
 /// Internal shell — wraps the body with the unified chrome. Public
