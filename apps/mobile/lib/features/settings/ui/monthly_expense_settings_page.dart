@@ -87,7 +87,7 @@ class MonthlyExpenseSettings extends ConsumerWidget {
           windowMonths: prefs.windowMonths,
           onChanged: controller.setWindow,
         ),
-        _Divider(),
+        const AppDivider(),
         _OverrideField(
           value: prefs.override,
           baseCurrency: baseCurrency,
@@ -130,20 +130,7 @@ class MonthlyExpenseSettings extends ConsumerWidget {
   }
 }
 
-class _Divider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
-      child: Container(
-        height: 1,
-        color: context.theme.colors.foreground.withValues(
-          alpha: AppOpacity.whisper,
-        ),
-      ),
-    );
-  }
-}
+
 
 class _WindowSlider extends StatefulWidget {
   const _WindowSlider({required this.windowMonths, required this.onChanged});

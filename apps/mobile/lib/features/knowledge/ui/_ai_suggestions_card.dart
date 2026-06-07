@@ -307,7 +307,6 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return Column(
@@ -319,7 +318,7 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
             Expanded(
               child: Text(
                 widget.proposal.summaryZh,
-                style: typography.sm.copyWith(color: colors.mutedForeground),
+                style: context.bodyCaptionStyle,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -467,7 +466,7 @@ class _ProposalDetailsPanel extends StatelessWidget {
               Expanded(
                 child: Text(
                   l10n.knowledgeAiSuggestionFeedbackLabel,
-                  style: typography.xs.copyWith(color: colors.mutedForeground),
+                  style: context.captionStyle,
                 ),
               ),
               FTooltip(

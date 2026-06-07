@@ -220,7 +220,7 @@ class _RecoveryHero extends ConsumerWidget {
               const SizedBox(height: AppSpacing.s4),
               Text(
                 _RecoveryTone.suggestion(verdict),
-                style: typography.sm.copyWith(color: colors.mutedForeground),
+                style: context.bodyCaptionStyle,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -449,7 +449,6 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
@@ -463,7 +462,7 @@ class _MetricCard extends StatelessWidget {
                 child: Text(
                   label,
                   overflow: TextOverflow.ellipsis,
-                  style: typography.xs.copyWith(color: colors.mutedForeground),
+                  style: context.captionStyle,
                 ),
               ),
             ],
@@ -483,14 +482,13 @@ class _ValueBig extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final typography = context.theme.typography;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(value, style: typography.xl),
         const SizedBox(height: AppSpacing.s2),
-        Text(sub, style: typography.xs.copyWith(color: colors.mutedForeground)),
+        Text(sub, style: context.captionStyle),
       ],
     );
   }
@@ -510,7 +508,7 @@ class _ValueDash extends StatelessWidget {
         const SizedBox(height: AppSpacing.s2),
         Text(
           '暂无数据',
-          style: typography.xs.copyWith(color: colors.mutedForeground),
+          style: context.captionStyle,
         ),
       ],
     );
@@ -737,7 +735,7 @@ class _BriefingCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           Text(
             _ago(l10n, r.updatedAt),
-            style: typography.xs.copyWith(color: colors.mutedForeground),
+            style: context.captionStyle,
           ),
         ],
       ),
@@ -772,7 +770,7 @@ class _BriefingEmpty extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s4),
                 Text(
                   '同步数据后可生成今日简报。',
-                  style: typography.xs.copyWith(color: colors.mutedForeground),
+                  style: context.captionStyle,
                 ),
               ],
             ),

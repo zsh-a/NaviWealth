@@ -1,6 +1,5 @@
-import 'dart:ui' show Locale;
-
 import 'package:decimal/decimal.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
@@ -289,3 +288,18 @@ extension DecimalX on Decimal {
   static Decimal fromDouble(double v, {int scale = 2}) =>
       Decimal.parse(v.toStringAsFixed(scale));
 }
+
+/// Parses a user-input string into [Decimal], returning `null` for empty,
+/// whitespace-only, or unparseable input. Trims whitespace automatically.
+Decimal? parseDecimal(String? input) {
+  if (input == null) return null;
+  final trimmed = input.trim();
+  if (trimmed.isEmpty) return null;
+  return Decimal.tryParse(trimmed);
+}
+
+/// Reads a [TextEditingController]'s text and parses it to [Decimal].
+/// Returns `null` for empty or unparseable input.
+Decimal? parseDecimalController(TextEditingController controller) =>
+    parseDecimal(controller.text);
+

@@ -39,8 +39,7 @@ class PhysicalAssetDetailPage extends ConsumerWidget {
         ),
       ],
       childPad: false,
-      child: assetAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
+      child: assetAsync.whenOrLoading(
         error: (e, st) => Center(child: Text('$e')),
         data: (asset) {
           if (asset == null) {
@@ -156,8 +155,7 @@ class _DetailBody extends ConsumerWidget {
                   style: context.theme.typography.md,
                 ),
                 const SizedBox(height: AppSpacing.s12),
-                historyAsync.when(
-                  loading: () => const Center(child: FCircularProgress()),
+                historyAsync.whenOrLoading(
                   error: (e, st) => Text('$e'),
                   data: (history) {
                     final projection = _projectionFor(asset, history);

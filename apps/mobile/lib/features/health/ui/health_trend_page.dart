@@ -93,15 +93,14 @@ class _TrendCard extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s2),
           Text(
             spec.subtitle,
-            style: typography.xs.copyWith(color: colors.mutedForeground),
+            style: context.captionStyle,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: AppSpacing.s12),
           SizedBox(
             height: 160,
-            child: async.when(
-              loading: () => const Center(child: FCircularProgress()),
+            child: async.whenOrLoading(
               error: (e, _) => Center(
                 child: Text(
                   AppLocalizations.of(context).healthTrendLoadFailed('$e'),

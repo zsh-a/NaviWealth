@@ -25,9 +25,7 @@ class LiabilityDetailPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.liabilitiesAppBarTitle,
       childPad: false,
-      child: summaryAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
-        error: (e, _) => Center(child: Text('$e')),
+      child: summaryAsync.whenOrError(
         data: (summary) {
           if (summary == null) {
             return Center(child: Text(l10n.liabilityNotFound));

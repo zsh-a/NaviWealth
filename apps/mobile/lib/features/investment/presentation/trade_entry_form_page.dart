@@ -426,8 +426,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       child: AppFormPageScaffold(
         title: Text(l10n.tradeEntryAppBarTitle),
         confirmLeave: handleBackIntent,
-        child: accountsAsync.when(
-          loading: () => const Center(child: FCircularProgress()),
+        child: accountsAsync.whenOrLoading(
           error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
           data: (accounts) => _buildForm(accounts),
         ),

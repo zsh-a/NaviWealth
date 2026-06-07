@@ -37,7 +37,7 @@ class AccountsMaster extends ConsumerWidget {
         .map((a) => a.id)
         .toList();
 
-    final body = accountsAsync.when(
+    final body = accountsAsync.whenOrLoading(
       data: (accounts) {
         final visibleAccounts = accounts.where((a) => !a.archived).toList();
         return visibleAccounts.isEmpty
@@ -48,9 +48,7 @@ class AccountsMaster extends ConsumerWidget {
                 selectedId: selectedId,
                 inMasterDetail: inMasterDetail,
               );
-      },
-      loading: () => const Center(child: FCircularProgress()),
-      error: (_, _) => Center(
+      },      error: (_, _) => Center(
         child: AppEmptyState.error(
           title: l10n.commonLoadFailed,
           action: FButton(

@@ -72,7 +72,7 @@ class DomainsSettingsPage extends ConsumerWidget {
                   trailingBadge: l10n.settingsDomainsEnabledBadge,
                   onTap: () {},
                 ),
-                _RowDivider(),
+                const AppDivider(),
                 InlineSwitchRow(
                   icon: FLucideIcons.heartPulse,
                   label: 'HealthOS',
@@ -87,21 +87,21 @@ class DomainsSettingsPage extends ConsumerWidget {
                   },
                 ),
                 if (healthEnabled) ...[
-                  _RowDivider(),
+                  const AppDivider(),
                   InlineLinkRow(
                     icon: FLucideIcons.eye,
                     label: 'HealthOS · Today',
                     subtitle: l10n.settingsDomainsHealthTodaySubtitle,
                     onTap: () => context.goNamed(AppRouteNames.healthToday),
                   ),
-                  _RowDivider(),
+                  const AppDivider(),
                   const _HealthPlatformSyncRow(),
-                  _RowDivider(),
+                  const AppDivider(),
                   const _MorningBriefingRunRow(),
-                  _RowDivider(),
+                  const AppDivider(),
                   const _MorningBriefingHourRow(),
                 ],
-                _RowDivider(),
+                const AppDivider(),
                 InlineSwitchRow(
                   icon: FLucideIcons.brain,
                   label: 'KnowledgeOS',
@@ -116,7 +116,7 @@ class DomainsSettingsPage extends ConsumerWidget {
                   },
                 ),
                 if (knowledgeEnabled) ...[
-                  _RowDivider(),
+                  const AppDivider(),
                   InlineLinkRow(
                     icon: FLucideIcons.inbox,
                     label: 'KnowledgeOS · Inbox',
@@ -133,22 +133,7 @@ class DomainsSettingsPage extends ConsumerWidget {
   }
 }
 
-/// Single-pixel ribbon divider between rows in a [SoftCard], matching the
-/// settings-overview look (alpha 0.05, 14px horizontal inset).
-class _RowDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
-      child: Container(
-        height: 1,
-        color: context.theme.colors.foreground.withValues(
-          alpha: AppOpacity.whisper,
-        ),
-      ),
-    );
-  }
-}
+
 
 /// D-2.2 — manual "Sync from HealthKit / Health Connect" trigger.
 ///

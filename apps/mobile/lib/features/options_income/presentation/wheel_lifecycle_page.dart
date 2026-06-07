@@ -25,8 +25,7 @@ class WheelLifecyclePage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.planWheelTitle,
       childPad: false,
-      child: cyclesAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
+      child: cyclesAsync.whenOrLoading(
         error: (_, _) => Center(
           child: AppEmptyState(
             icon: FLucideIcons.refreshCw,

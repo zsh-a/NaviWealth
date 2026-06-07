@@ -451,8 +451,6 @@ class _ClassifyingBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final typography = context.theme.typography;
-    final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),
       child: Column(
@@ -478,7 +476,7 @@ class _ClassifyingBody extends StatelessWidget {
           Text(
             l10n.knowledgeCaptureClassifyingBody,
             textAlign: TextAlign.center,
-            style: typography.sm.copyWith(color: colors.mutedForeground),
+            style: context.bodyCaptionStyle,
           ),
           const SizedBox(height: AppSpacing.s12),
           Align(
@@ -529,7 +527,7 @@ class _SavedCapturePreview extends StatelessWidget {
             if (hasTitle) ...[
               Text(
                 l10n.knowledgeCaptureTitleDiffLabel,
-                style: typography.xs.copyWith(color: colors.mutedForeground),
+                style: context.captionStyle,
               ),
               const SizedBox(height: AppSpacing.s2),
               _CaptureSharedTextLine(
@@ -542,13 +540,13 @@ class _SavedCapturePreview extends StatelessWidget {
             ],
             Text(
               l10n.knowledgeCaptureBodyDiffLabel,
-              style: typography.xs.copyWith(color: colors.mutedForeground),
+              style: context.captionStyle,
             ),
             const SizedBox(height: AppSpacing.s2),
             _CaptureSharedTextLine(
               text: knowledgeExcerpt(body),
               promoted: promoted,
-              style: typography.sm.copyWith(color: colors.mutedForeground),
+              style: context.bodyCaptionStyle,
               maxLines: 3,
             ),
           ],
@@ -760,7 +758,7 @@ class _DiffRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: typography.xs.copyWith(color: colors.mutedForeground),
+          style: context.captionStyle,
         ),
         const SizedBox(height: AppSpacing.s4),
         // Original — muted, stricken
@@ -817,7 +815,6 @@ class _UpgradePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     final headline = switch (suggestion.kind) {
@@ -847,7 +844,7 @@ class _UpgradePanel extends StatelessWidget {
           children: [
             Text(
               detail,
-              style: typography.sm.copyWith(color: colors.mutedForeground),
+              style: context.bodyCaptionStyle,
             ),
             const SizedBox(height: AppSpacing.s4),
             Text(
@@ -855,7 +852,7 @@ class _UpgradePanel extends StatelessWidget {
                 suggestion.reasonZh,
                 suggestion.confidence.toStringAsFixed(2),
               ),
-              style: typography.xs.copyWith(color: colors.mutedForeground),
+              style: context.captionStyle,
             ),
           ],
         ),

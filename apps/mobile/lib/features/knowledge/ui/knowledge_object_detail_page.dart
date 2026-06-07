@@ -761,7 +761,7 @@ class _MetaPill extends StatelessWidget {
         children: [
           Text(
             label,
-            style: typography.xs.copyWith(color: colors.mutedForeground),
+            style: context.captionStyle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

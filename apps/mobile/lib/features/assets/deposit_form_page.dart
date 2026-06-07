@@ -239,8 +239,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
               onPress: _busy ? null : _delete,
             ),
         ],
-        child: accountsAsync.when(
-          loading: () => const Center(child: FCircularProgress()),
+        child: accountsAsync.whenOrLoading(
           error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
           data: (accounts) => _buildForm(accounts),
         ),

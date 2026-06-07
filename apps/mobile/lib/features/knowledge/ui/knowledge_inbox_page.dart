@@ -221,7 +221,7 @@ class _NoteCard extends StatelessWidget {
         if (note.bodyMd.isNotEmpty)
           Text(
             knowledgeExcerpt(note.bodyMd),
-            style: typography.sm.copyWith(color: colors.mutedForeground),
+            style: context.bodyCaptionStyle,
           ),
         const SizedBox(height: AppSpacing.s6),
         Row(
@@ -234,7 +234,7 @@ class _NoteCard extends StatelessWidget {
             const SizedBox(width: AppSpacing.s4),
             Text(
               knowledgeDate(context, note.createdAt),
-              style: typography.xs.copyWith(color: colors.mutedForeground),
+              style: context.captionStyle,
             ),
             if (candidateKind != null) ...[
               const SizedBox(width: AppSpacing.s8),

@@ -185,7 +185,7 @@ class _BodyState extends ConsumerState<_Body> {
                       decidedDate,
                       reviewDate,
                     ),
-              style: typography.sm.copyWith(color: colors.mutedForeground),
+              style: context.bodyCaptionStyle,
             ),
           ],
         ),
@@ -444,7 +444,6 @@ class _ContextSnapshotSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
-    final colors = context.theme.colors;
     final finance = (snapshot['recent_finance_events'] as List?) ?? const [];
     final health = (snapshot['recent_health_events'] as List?) ?? const [];
     final capturedAt = snapshot['captured_at'] as String?;
@@ -459,13 +458,13 @@ class _ContextSnapshotSection extends StatelessWidget {
               knowledgeDateFromIso(context, capturedAt),
               '${window ?? "—"}',
             ),
-            style: typography.xs.copyWith(color: colors.mutedForeground),
+            style: context.captionStyle,
           ),
         ),
       if (finance.isEmpty && health.isEmpty)
         Text(
           l10n.knowledgeDetailContextSnapshotEmpty,
-          style: typography.sm.copyWith(color: colors.mutedForeground),
+          style: context.bodyCaptionStyle,
         ),
       if (finance.isNotEmpty) ...[
         Text(
@@ -503,7 +502,6 @@ class _SnapshotRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
-    final colors = context.theme.colors;
     final ts = (map['timestamp'] as String?) ?? '';
     final summary = (map['summary'] as String?) ?? '';
     final title = (map['title'] as String?) ?? '';
@@ -520,7 +518,7 @@ class _SnapshotRow extends StatelessWidget {
               ),
               child: Text(
                 knowledgeMonthDayFromIso(context, ts),
-                style: typography.xs.copyWith(color: colors.mutedForeground),
+                style: context.captionStyle,
               ),
             ),
           Expanded(

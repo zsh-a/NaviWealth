@@ -92,7 +92,7 @@ class RiskThresholdSettings extends ConsumerWidget {
           onChanged: (v) =>
               ref.read(concentrationThresholdsProvider.notifier).updateAsset(v),
         ),
-        _Divider(),
+        const AppDivider(),
         _ThresholdSlider(
           icon: FLucideIcons.layoutGrid,
           label: l10n.settingsRiskSectorLabel,
@@ -101,7 +101,7 @@ class RiskThresholdSettings extends ConsumerWidget {
               .read(concentrationThresholdsProvider.notifier)
               .updateSector(v),
         ),
-        _Divider(),
+        const AppDivider(),
         _ThresholdSlider(
           icon: FLucideIcons.globe,
           label: l10n.settingsRiskRegionLabel,
@@ -110,7 +110,7 @@ class RiskThresholdSettings extends ConsumerWidget {
               .read(concentrationThresholdsProvider.notifier)
               .updateRegion(v),
         ),
-        _Divider(),
+        const AppDivider(),
         _ThresholdSlider(
           icon: FLucideIcons.arrowLeftRight,
           label: l10n.settingsRiskCurrencyLabel,
@@ -153,20 +153,7 @@ class RiskThresholdSettings extends ConsumerWidget {
   }
 }
 
-class _Divider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
-      child: Container(
-        height: 1,
-        color: context.theme.colors.foreground.withValues(
-          alpha: AppOpacity.whisper,
-        ),
-      ),
-    );
-  }
-}
+
 
 /// Compact slider row — icon + label · slider · trailing percent.
 ///

@@ -874,7 +874,7 @@ class _KnowledgeWriterSectionState extends State<KnowledgeWriterSection> {
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   widget.subtitle!,
-                  style: typography.xs.copyWith(color: colors.mutedForeground),
+                  style: context.captionStyle,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),

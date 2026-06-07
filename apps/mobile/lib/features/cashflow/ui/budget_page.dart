@@ -28,8 +28,7 @@ class PlanBudgetPage extends ConsumerWidget {
     return AppPageScaffold(
       title: l10n.planBudgetTitle,
       childPad: false,
-      child: budgetsAsync.when(
-        loading: () => const Center(child: FCircularProgress()),
+      child: budgetsAsync.whenOrLoading(
         error: (_, _) => Center(
           child: AppEmptyState(
             icon: FLucideIcons.piggyBank,

@@ -75,12 +75,10 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         onDragDone: _isBusy ? (_) {} : _onDrop,
         child: Material(
           color: Colors.transparent,
-          child: accountsAsync.when(
-            loading: () => const Center(child: FCircularProgress()),
+          child: accountsAsync.whenOrLoading(
             error: (e, _) =>
                 Center(child: Text(l10n.ingestAccountsLoadError('$e'))),
-            data: (accounts) => draftsAsync.when(
-              loading: () => const Center(child: FCircularProgress()),
+            data: (accounts) => draftsAsync.whenOrLoading(
               error: (e, _) =>
                   Center(child: Text(l10n.ingestQueueLoadError('$e'))),
               data: (drafts) => _content(l10n, accounts, drafts),
