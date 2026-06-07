@@ -72,7 +72,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
                       expenses: filtered,
                       expenseAccountById: expenseAccountById,
                       grouping: _filters.grouping,
-                      onTap: (e) => context.go(AppRoutes.expense(e.id)),
+                      onTap: (e) => context.push(AppRoutes.expense(e.id)),
                     ),
             ),
           ],
@@ -88,7 +88,7 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
       actions: [
         FHeaderAction(
           icon: const Icon(FLucideIcons.lightbulb),
-          onPress: () => context.go(AppRoutes.expenseReport),
+          onPress: () => context.push(AppRoutes.expenseReport),
         ),
       ],
       childPad: false,

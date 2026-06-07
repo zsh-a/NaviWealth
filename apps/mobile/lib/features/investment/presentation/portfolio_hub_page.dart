@@ -415,18 +415,14 @@ class _PortfolioHubBody extends StatelessWidget {
       ),
       children: [
         _PortfolioSummary(data: data),
-        const SizedBox(height: AppSpacing.s20),
-        const _DcaSimulatorEntry(),
-        const SizedBox(height: AppSpacing.s20),
-        _EngineExposureSection(data: data),
-        const SizedBox(height: AppSpacing.s20),
-        PortfolioHubViewSegment(value: view, onChanged: onViewChanged),
         const SizedBox(height: AppSpacing.s16),
-        Text(
-          l10n.portfolioHubHoldingsTitle,
-          style: context.theme.typography.lg,
-        ),
-        const SizedBox(height: AppSpacing.s10),
+        const _DcaSimulatorEntry(),
+        const SizedBox(height: AppSpacing.s16),
+        _EngineExposureSection(data: data),
+        const SizedBox(height: AppSpacing.s16),
+        PortfolioHubViewSegment(value: view, onChanged: onViewChanged),
+        const SizedBox(height: AppSpacing.s12),
+        _PortfolioSectionTitle(title: l10n.portfolioHubHoldingsTitle),
         if (groups.isEmpty)
           _EmptyState(message: l10n.portfolioHubEmpty)
         else
@@ -434,12 +430,8 @@ class _PortfolioHubBody extends StatelessWidget {
             _GroupRowCard(group: group),
             const SizedBox(height: AppSpacing.s10),
           ],
-        const SizedBox(height: AppSpacing.s12),
-        Text(
-          l10n.portfolioHubPositionsTitle,
-          style: context.theme.typography.lg,
-        ),
-        const SizedBox(height: AppSpacing.s10),
+        const SizedBox(height: AppSpacing.s8),
+        _PortfolioSectionTitle(title: l10n.portfolioHubPositionsTitle),
         if (data.holdings.isEmpty)
           _EmptyState(message: l10n.portfolioHubEmpty)
         else
@@ -448,6 +440,27 @@ class _PortfolioHubBody extends StatelessWidget {
             const SizedBox(height: AppSpacing.s10),
           ],
       ],
+    );
+  }
+}
+
+class _PortfolioSectionTitle extends StatelessWidget {
+  const _PortfolioSectionTitle({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(2, AppSpacing.s4, 2, AppSpacing.s10),
+      child: Text(
+        title,
+        style: context.theme.typography.sm.copyWith(
+          color: colors.mutedForeground,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }
