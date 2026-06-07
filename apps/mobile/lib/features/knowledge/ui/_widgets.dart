@@ -59,6 +59,40 @@ enum KnowledgeStateDensity { page, section }
 
 enum KnowledgeSelectionMode { checkbox, radio }
 
+const Duration _kKnowledgeFloatingActionMotionDuration = Duration(
+  milliseconds: 180,
+);
+
+/// Shared hide/show motion for KnowledgeOS floating create actions.
+class KnowledgeFloatingActionMotion extends StatelessWidget {
+  const KnowledgeFloatingActionMotion({
+    super.key,
+    required this.hidden,
+    required this.child,
+  });
+
+  final bool hidden;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      ignoring: hidden,
+      child: AnimatedSlide(
+        duration: _kKnowledgeFloatingActionMotionDuration,
+        curve: Curves.easeOutCubic,
+        offset: hidden ? const Offset(0, 1.25) : Offset.zero,
+        child: AnimatedOpacity(
+          duration: _kKnowledgeFloatingActionMotionDuration,
+          curve: Curves.easeOutCubic,
+          opacity: hidden ? 0 : 1,
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
 /// Unified KnowledgeOS loading placeholder.
 class KnowledgeLoadingState extends StatelessWidget {
   const KnowledgeLoadingState({
