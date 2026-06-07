@@ -186,6 +186,11 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
     unawaited(_persistSearchHistory());
   }
 
+  void _removeSearchHistoryItem(String value) {
+    setState(() => _searchHistory.remove(value));
+    unawaited(_persistSearchHistory());
+  }
+
   void _applySearch(String query) {
     _searchCtrl.value = TextEditingValue(
       text: query,
@@ -280,6 +285,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                         searchHistory: _searchHistory,
                         onSearchSelected: _applySearch,
                         onSearchHistoryClear: _clearSearchHistory,
+                        onSearchHistoryItemDelete: _removeSearchHistoryItem,
                         onRefresh: () => _refreshKnowledgeRepository(ref),
                       ),
                     ),
@@ -359,6 +365,7 @@ class _LibraryList extends ConsumerWidget {
     required this.searchHistory,
     required this.onSearchSelected,
     required this.onSearchHistoryClear,
+    required this.onSearchHistoryItemDelete,
     required this.onRefresh,
   });
 
@@ -367,6 +374,7 @@ class _LibraryList extends ConsumerWidget {
   final List<String> searchHistory;
   final ValueChanged<String> onSearchSelected;
   final VoidCallback onSearchHistoryClear;
+  final ValueChanged<String> onSearchHistoryItemDelete;
   final Future<void> Function() onRefresh;
 
   @override
@@ -412,6 +420,7 @@ class _LibraryList extends ConsumerWidget {
               searchHistory: searchHistory,
               onSearchSelected: onSearchSelected,
               onSearchHistoryClear: onSearchHistoryClear,
+              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
               onRefresh: onRefresh,
               tileBuilder: (context, d, query) => _buildDecisionTile(
                 context,
@@ -447,6 +456,7 @@ class _LibraryList extends ConsumerWidget {
               searchHistory: searchHistory,
               onSearchSelected: onSearchSelected,
               onSearchHistoryClear: onSearchHistoryClear,
+              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
               onRefresh: onRefresh,
               tileBuilder: (context, p, query) => _buildPrincipleTile(
                 context,
@@ -485,6 +495,7 @@ class _LibraryList extends ConsumerWidget {
               searchHistory: searchHistory,
               onSearchSelected: onSearchSelected,
               onSearchHistoryClear: onSearchHistoryClear,
+              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
               onRefresh: onRefresh,
               tileBuilder: (context, a, query) => _buildAssumptionTile(
                 context,
@@ -522,6 +533,7 @@ class _LibraryList extends ConsumerWidget {
               searchHistory: searchHistory,
               onSearchSelected: onSearchSelected,
               onSearchHistoryClear: onSearchHistoryClear,
+              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
               onRefresh: onRefresh,
               tileBuilder: (context, n, query) => _buildNoteTile(
                 context,
@@ -557,6 +569,7 @@ class _LibraryList extends ConsumerWidget {
               searchHistory: searchHistory,
               onSearchSelected: onSearchSelected,
               onSearchHistoryClear: onSearchHistoryClear,
+              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
               onRefresh: onRefresh,
               tileBuilder: (context, c, query) => _buildConceptTile(
                 context,
@@ -592,6 +605,7 @@ class _LibraryList extends ConsumerWidget {
               searchHistory: searchHistory,
               onSearchSelected: onSearchSelected,
               onSearchHistoryClear: onSearchHistoryClear,
+              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
               onRefresh: onRefresh,
               tileBuilder: (context, e, query) => _buildExperimentTile(
                 context,
@@ -622,6 +636,7 @@ class _LibraryList extends ConsumerWidget {
               searchHistory: searchHistory,
               onSearchSelected: onSearchSelected,
               onSearchHistoryClear: onSearchHistoryClear,
+              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
               onRefresh: onRefresh,
               tileBuilder: (context, r, query) => _buildRoutineTile(
                 context,
@@ -663,6 +678,7 @@ class _SegmentList<T> extends StatefulWidget {
     required this.searchHistory,
     required this.onSearchSelected,
     required this.onSearchHistoryClear,
+    this.onSearchHistoryItemDelete,
     required this.onRefresh,
     required this.dateOf,
     this.statusOf,
@@ -680,6 +696,7 @@ class _SegmentList<T> extends StatefulWidget {
   final List<String> searchHistory;
   final ValueChanged<String> onSearchSelected;
   final VoidCallback onSearchHistoryClear;
+  final ValueChanged<String>? onSearchHistoryItemDelete;
   final Future<void> Function() onRefresh;
   final DateTime Function(T item)? dateOf;
   final String Function(T item)? statusOf;
@@ -743,6 +760,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
           query: normalizedQuery,
           onSelected: widget.onSearchSelected,
           onHistoryClear: widget.onSearchHistoryClear,
+          onHistoryItemDelete: widget.onSearchHistoryItemDelete,
         );
 
         final statusFilteredItems = _statusFilter == null || statusOf == null
@@ -925,6 +943,7 @@ class _SearchAssistRow extends StatelessWidget {
     required this.query,
     required this.onSelected,
     required this.onHistoryClear,
+    this.onHistoryItemDelete,
   });
 
   final List<String> history;
@@ -932,6 +951,7 @@ class _SearchAssistRow extends StatelessWidget {
   final String query;
   final ValueChanged<String> onSelected;
   final VoidCallback onHistoryClear;
+  final ValueChanged<String>? onHistoryItemDelete;
 
   bool get hasContent =>
       suggestions.isNotEmpty ||
@@ -956,6 +976,7 @@ class _SearchAssistRow extends StatelessWidget {
           icon: FLucideIcons.history,
           onSelected: onSelected,
           onClear: query.isEmpty ? onHistoryClear : null,
+          onItemDelete: onHistoryItemDelete,
         ),
       if (suggestions.isNotEmpty)
         _SearchAssistGroup(
@@ -985,6 +1006,7 @@ class _SearchAssistGroup extends StatelessWidget {
     required this.icon,
     required this.onSelected,
     this.onClear,
+    this.onItemDelete,
   });
 
   final String label;
@@ -992,6 +1014,7 @@ class _SearchAssistGroup extends StatelessWidget {
   final IconData icon;
   final ValueChanged<String> onSelected;
   final VoidCallback? onClear;
+  final ValueChanged<String>? onItemDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -1036,6 +1059,9 @@ class _SearchAssistGroup extends StatelessWidget {
                   _SearchAssistChip(
                     value: visibleValues[i],
                     onPress: () => onSelected(visibleValues[i]),
+                    onDelete: onItemDelete != null
+                        ? () => onItemDelete!(visibleValues[i])
+                        : null,
                   ),
                 ],
               ],
@@ -1048,10 +1074,15 @@ class _SearchAssistGroup extends StatelessWidget {
 }
 
 class _SearchAssistChip extends StatelessWidget {
-  const _SearchAssistChip({required this.value, required this.onPress});
+  const _SearchAssistChip({
+    required this.value,
+    required this.onPress,
+    this.onDelete,
+  });
 
   final String value;
   final VoidCallback onPress;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -1066,18 +1097,40 @@ class _SearchAssistChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s8,
-            vertical: AppSpacing.s4,
+          padding: EdgeInsets.only(
+            left: AppSpacing.s8,
+            right: onDelete != null ? AppSpacing.s4 : AppSpacing.s8,
+            top: AppSpacing.s4,
+            bottom: AppSpacing.s4,
           ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 128),
-            child: Text(
-              value,
-              style: typography.xs.copyWith(fontWeight: FontWeight.w600),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 112),
+                child: Text(
+                  value,
+                  style: typography.xs.copyWith(fontWeight: FontWeight.w600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (onDelete != null) ...[
+                const SizedBox(width: AppSpacing.s2),
+                GestureDetector(
+                  onTap: onDelete,
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.s2),
+                    child: Icon(
+                      FLucideIcons.x,
+                      size: 10,
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),

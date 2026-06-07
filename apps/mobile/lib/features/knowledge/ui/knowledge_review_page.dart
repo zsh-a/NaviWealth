@@ -448,18 +448,89 @@ void _toggleReviewSelection(Set<String> selectedIds, String id) {
   if (!selectedIds.add(id)) selectedIds.remove(id);
 }
 
-class _DueRoutinesCard extends ConsumerStatefulWidget {
-  const _DueRoutinesCard();
+/// Shared selection toolbar + reorderable list for Review cards.
+/// Encapsulates the `_selectedIds` set, `_ReviewSelectionToolbar`,
+/// and `_ReviewReorderableList` pattern that all three cards repeat.
+class _ReviewSelectableList<T> extends StatefulWidget {
+  const _ReviewSelectableList({
+    required this.items,
+    required this.idOf,
+    required this.itemBuilder,
+    required this.actionLabel,
+    required this.icon,
+    required this.onBulkAction,
+    required this.orderPrefsKey,
+    required this.onOrderChanged,
+  });
+
+  final List<T> items;
+  final String Function(T item) idOf;
+  final Widget Function(T item) itemBuilder;
+  final String actionLabel;
+  final IconData icon;
+  final Future<void> Function(List<T> selected) onBulkAction;
+  final String orderPrefsKey;
+  final ValueChanged<List<String>> onOrderChanged;
 
   @override
-  ConsumerState<_DueRoutinesCard> createState() => _DueRoutinesCardState();
+  State<_ReviewSelectableList<T>> createState() =>
+      _ReviewSelectableListState<T>();
 }
 
-class _DueRoutinesCardState extends ConsumerState<_DueRoutinesCard> {
+class _ReviewSelectableListState<T>
+    extends State<_ReviewSelectableList<T>> {
   final Set<String> _selectedIds = <String>{};
 
   @override
   Widget build(BuildContext context) {
+    final visibleIds = {for (final item in widget.items) widget.idOf(item)};
+    _selectedIds.removeWhere((id) => !visibleIds.contains(id));
+    final selected = widget.items
+        .where((item) => _selectedIds.contains(widget.idOf(item)))
+        .toList(growable: false);
+    return Column(
+      children: [
+        _ReviewSelectionToolbar(
+          selectedCount: selected.length,
+          totalCount: widget.items.length,
+          actionLabel: widget.actionLabel,
+          icon: widget.icon,
+          onSelectAll: () => setState(() {
+            _selectedIds
+              ..clear()
+              ..addAll(visibleIds);
+          }),
+          onClear: () => setState(_selectedIds.clear),
+          onRun: selected.isEmpty
+              ? null
+              : () async {
+                  await widget.onBulkAction(selected);
+                  if (mounted) setState(_selectedIds.clear);
+                },
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        _ReviewReorderableList<T>(
+          items: widget.items,
+          idOf: widget.idOf,
+          itemBuilder: (item) => _SelectableReviewRow(
+            selected: _selectedIds.contains(widget.idOf(item)),
+            onChanged: () => setState(
+              () => _toggleReviewSelection(_selectedIds, widget.idOf(item)),
+            ),
+            child: widget.itemBuilder(item),
+          ),
+          onOrderChanged: widget.onOrderChanged,
+        ),
+      ],
+    );
+  }
+}
+
+class _DueRoutinesCard extends ConsumerWidget {
+  const _DueRoutinesCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
@@ -493,9 +564,6 @@ class _DueRoutinesCardState extends ConsumerState<_DueRoutinesCard> {
           ),
           data: (repo) {
             return StreamBuilder<List<KnowledgeRoutine>>(
-              // Watch + filter in-memory so a `markDone` bumps the list
-              // immediately. The agent-side `listDueRoutines` is the same
-              // query, only as a future.
               stream: repo.watchRoutines(ownerUserId: owner),
               builder: (context, snap) {
                 if (snap.hasError) {
@@ -525,11 +593,6 @@ class _DueRoutinesCardState extends ConsumerState<_DueRoutinesCard> {
                 final visible = ordered
                     .take(kReviewCardMaxItems)
                     .toList(growable: false);
-                final visibleIds = {for (final r in visible) r.id};
-                _selectedIds.removeWhere((id) => !visibleIds.contains(id));
-                final selected = visible
-                    .where((r) => _selectedIds.contains(r.id))
-                    .toList(growable: false);
                 return KnowledgeSection.group(
                   title: l10n.knowledgeReviewRoutinesTitle,
                   trailing: due.isEmpty
@@ -551,51 +614,23 @@ class _DueRoutinesCardState extends ConsumerState<_DueRoutinesCard> {
                         density: KnowledgeStateDensity.section,
                       )
                     else
-                      Column(
-                        children: [
-                          _ReviewSelectionToolbar(
-                            selectedCount: selected.length,
-                            totalCount: visible.length,
-                            actionLabel: l10n.knowledgeReviewMarkSelectedDone,
-                            icon: FLucideIcons.checkCheck,
-                            onSelectAll: () => setState(() {
-                              _selectedIds
-                                ..clear()
-                                ..addAll(visibleIds);
-                            }),
-                            onClear: () => setState(_selectedIds.clear),
-                            onRun: selected.isEmpty
-                                ? null
-                                : () async {
-                                    await _markRoutinesDone(
-                                      context: context,
-                                      ref: ref,
-                                      routines: selected,
-                                    );
-                                    if (mounted) {
-                                      setState(_selectedIds.clear);
-                                    }
-                                  },
-                          ),
-                          const SizedBox(height: AppSpacing.s8),
-                          _ReviewReorderableList<KnowledgeRoutine>(
-                            items: visible,
-                            idOf: (r) => r.id,
-                            itemBuilder: (r) => _SelectableReviewRow(
-                              selected: _selectedIds.contains(r.id),
-                              onChanged: () => setState(
-                                () =>
-                                    _toggleReviewSelection(_selectedIds, r.id),
-                              ),
-                              child: _DueRoutineRow(routine: r),
-                            ),
-                            onOrderChanged: (ids) => _persistReviewOrder(
-                              ref: ref,
-                              prefsKey: _kReviewRoutineOrderPrefsKey,
-                              visibleIds: ids,
-                            ),
-                          ),
-                        ],
+                      _ReviewSelectableList<KnowledgeRoutine>(
+                        items: visible,
+                        idOf: (r) => r.id,
+                        itemBuilder: (r) => _DueRoutineRow(routine: r),
+                        actionLabel: l10n.knowledgeReviewMarkSelectedDone,
+                        icon: FLucideIcons.checkCheck,
+                        onBulkAction: (selected) => _markRoutinesDone(
+                          context: context,
+                          ref: ref,
+                          routines: selected,
+                        ),
+                        orderPrefsKey: _kReviewRoutineOrderPrefsKey,
+                        onOrderChanged: (ids) => _persistReviewOrder(
+                          ref: ref,
+                          prefsKey: _kReviewRoutineOrderPrefsKey,
+                          visibleIds: ids,
+                        ),
                       ),
                   ],
                 );
@@ -1135,18 +1170,11 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
   }
 }
 
-class _DueReviewsCard extends ConsumerStatefulWidget {
+class _DueReviewsCard extends ConsumerWidget {
   const _DueReviewsCard();
 
   @override
-  ConsumerState<_DueReviewsCard> createState() => _DueReviewsCardState();
-}
-
-class _DueReviewsCardState extends ConsumerState<_DueReviewsCard> {
-  final Set<String> _selectedIds = <String>{};
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
@@ -1211,11 +1239,6 @@ class _DueReviewsCardState extends ConsumerState<_DueReviewsCard> {
                 final visible = ordered
                     .take(kReviewCardMaxItems)
                     .toList(growable: false);
-                final visibleIds = {for (final d in visible) d.id};
-                _selectedIds.removeWhere((id) => !visibleIds.contains(id));
-                final selected = visible
-                    .where((d) => _selectedIds.contains(d.id))
-                    .toList(growable: false);
                 return KnowledgeSection.group(
                   title: l10n.knowledgeReviewDecisionsTitle,
                   trailing: list.isEmpty
@@ -1237,52 +1260,24 @@ class _DueReviewsCardState extends ConsumerState<_DueReviewsCard> {
                         density: KnowledgeStateDensity.section,
                       )
                     else
-                      Column(
-                        children: [
-                          _ReviewSelectionToolbar(
-                            selectedCount: selected.length,
-                            totalCount: visible.length,
-                            actionLabel: l10n
-                                .knowledgeReviewMarkSelectedDecisionsReviewed,
-                            icon: FLucideIcons.calendarCheck,
-                            onSelectAll: () => setState(() {
-                              _selectedIds
-                                ..clear()
-                                ..addAll(visibleIds);
-                            }),
-                            onClear: () => setState(_selectedIds.clear),
-                            onRun: selected.isEmpty
-                                ? null
-                                : () async {
-                                    await _markDecisionsReviewed(
-                                      context: context,
-                                      ref: ref,
-                                      decisions: selected,
-                                    );
-                                    if (mounted) {
-                                      setState(_selectedIds.clear);
-                                    }
-                                  },
-                          ),
-                          const SizedBox(height: AppSpacing.s8),
-                          _ReviewReorderableList<KnowledgeDecision>(
-                            items: visible,
-                            idOf: (d) => d.id,
-                            itemBuilder: (d) => _SelectableReviewRow(
-                              selected: _selectedIds.contains(d.id),
-                              onChanged: () => setState(
-                                () =>
-                                    _toggleReviewSelection(_selectedIds, d.id),
-                              ),
-                              child: _DueDecisionRow(decision: d),
-                            ),
-                            onOrderChanged: (ids) => _persistReviewOrder(
-                              ref: ref,
-                              prefsKey: _kReviewDecisionOrderPrefsKey,
-                              visibleIds: ids,
-                            ),
-                          ),
-                        ],
+                      _ReviewSelectableList<KnowledgeDecision>(
+                        items: visible,
+                        idOf: (d) => d.id,
+                        itemBuilder: (d) => _DueDecisionRow(decision: d),
+                        actionLabel: l10n
+                            .knowledgeReviewMarkSelectedDecisionsReviewed,
+                        icon: FLucideIcons.calendarCheck,
+                        onBulkAction: (selected) => _markDecisionsReviewed(
+                          context: context,
+                          ref: ref,
+                          decisions: selected,
+                        ),
+                        orderPrefsKey: _kReviewDecisionOrderPrefsKey,
+                        onOrderChanged: (ids) => _persistReviewOrder(
+                          ref: ref,
+                          prefsKey: _kReviewDecisionOrderPrefsKey,
+                          visibleIds: ids,
+                        ),
                       ),
                   ],
                 );
@@ -1463,19 +1458,11 @@ Future<void> _markDecisionsReviewed({
   }
 }
 
-class _StaleAssumptionsCard extends ConsumerStatefulWidget {
+class _StaleAssumptionsCard extends ConsumerWidget {
   const _StaleAssumptionsCard();
 
   @override
-  ConsumerState<_StaleAssumptionsCard> createState() =>
-      _StaleAssumptionsCardState();
-}
-
-class _StaleAssumptionsCardState extends ConsumerState<_StaleAssumptionsCard> {
-  final Set<String> _selectedIds = <String>{};
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
@@ -1543,11 +1530,6 @@ class _StaleAssumptionsCardState extends ConsumerState<_StaleAssumptionsCard> {
                 final visible = ordered
                     .take(kReviewCardMaxItems)
                     .toList(growable: false);
-                final visibleIds = {for (final a in visible) a.id};
-                _selectedIds.removeWhere((id) => !visibleIds.contains(id));
-                final selected = visible
-                    .where((a) => _selectedIds.contains(a.id))
-                    .toList(growable: false);
                 return KnowledgeSection.group(
                   title: l10n.knowledgeReviewAssumptionsTitle,
                   trailing: stale.isEmpty
@@ -1571,55 +1553,25 @@ class _StaleAssumptionsCardState extends ConsumerState<_StaleAssumptionsCard> {
                         density: KnowledgeStateDensity.section,
                       )
                     else
-                      Column(
-                        children: [
-                          _ReviewSelectionToolbar(
-                            selectedCount: selected.length,
-                            totalCount: visible.length,
-                            actionLabel:
-                                l10n.knowledgeReviewVerifySelectedAssumptions,
-                            icon: FLucideIcons.badgeCheck,
-                            onSelectAll: () => setState(() {
-                              _selectedIds
-                                ..clear()
-                                ..addAll(visibleIds);
-                            }),
-                            onClear: () => setState(_selectedIds.clear),
-                            onRun: selected.isEmpty
-                                ? null
-                                : () async {
-                                    await _verifyAssumptions(
-                                      context: context,
-                                      ref: ref,
-                                      assumptions: selected,
-                                    );
-                                    if (mounted) {
-                                      setState(_selectedIds.clear);
-                                    }
-                                  },
-                          ),
-                          const SizedBox(height: AppSpacing.s8),
-                          _ReviewReorderableList<KnowledgeAssumption>(
-                            items: visible,
-                            idOf: (a) => a.id,
-                            itemBuilder: (a) => _SelectableReviewRow(
-                              selected: _selectedIds.contains(a.id),
-                              onChanged: () => setState(
-                                () =>
-                                    _toggleReviewSelection(_selectedIds, a.id),
-                              ),
-                              child: _StaleAssumptionRow(
-                                assumption: a,
-                                now: now,
-                              ),
-                            ),
-                            onOrderChanged: (ids) => _persistReviewOrder(
-                              ref: ref,
-                              prefsKey: _kReviewAssumptionOrderPrefsKey,
-                              visibleIds: ids,
-                            ),
-                          ),
-                        ],
+                      _ReviewSelectableList<KnowledgeAssumption>(
+                        items: visible,
+                        idOf: (a) => a.id,
+                        itemBuilder: (a) =>
+                            _StaleAssumptionRow(assumption: a, now: now),
+                        actionLabel:
+                            l10n.knowledgeReviewVerifySelectedAssumptions,
+                        icon: FLucideIcons.badgeCheck,
+                        onBulkAction: (selected) => _verifyAssumptions(
+                          context: context,
+                          ref: ref,
+                          assumptions: selected,
+                        ),
+                        orderPrefsKey: _kReviewAssumptionOrderPrefsKey,
+                        onOrderChanged: (ids) => _persistReviewOrder(
+                          ref: ref,
+                          prefsKey: _kReviewAssumptionOrderPrefsKey,
+                          visibleIds: ids,
+                        ),
                       ),
                   ],
                 );
