@@ -8244,6 +8244,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use the create action to record the first decision worth reviewing.';
 
   @override
+  String get knowledgeLibraryEmptyPrinciplesTitle => 'No Principles yet';
+
+  @override
+  String get knowledgeLibraryEmptyPrinciplesBody =>
+      'Use Principles for durable worldview rules that guide decisions.';
+
+  @override
+  String get knowledgeLibraryEmptyAssumptionsTitle => 'No Assumptions yet';
+
+  @override
+  String get knowledgeLibraryEmptyAssumptionsBody =>
+      'Use Assumptions for falsifiable beliefs with confidence and review cadence.';
+
+  @override
   String get knowledgeLibraryEmptyNotesTitle => 'No Notes in the library yet';
 
   @override
@@ -8475,6 +8489,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeSegmentDecisions => 'Decisions';
 
   @override
+  String get knowledgeSegmentPrinciples => 'Principles';
+
+  @override
+  String get knowledgeSegmentAssumptions => 'Assumptions';
+
+  @override
   String get knowledgeSegmentNotes => 'Notes';
 
   @override
@@ -8488,6 +8508,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeNewDecision => 'New Decision';
+
+  @override
+  String get knowledgeNewPrinciple => 'New Principle';
+
+  @override
+  String get knowledgeNewAssumption => 'New Assumption';
 
   @override
   String get knowledgeNewNote => 'New Note';

@@ -1,8 +1,8 @@
 /// KnowledgeOS Library tab (`docs/knowledgeos-domain.md` §5).
 ///
-/// 4 segments: Decisions / Notes / Concepts / Experiments. Decisions
-/// surface a status badge per the 7-state lifecycle in §9. Forui-only
-/// — Forui + Flutter widgets so the page renders correctly inside any scope.
+/// Library segments for the KnowledgeOS object families. Decisions surface a
+/// status badge per the 7-state lifecycle in §9. Forui-only — Forui + Flutter
+/// widgets so the page renders correctly inside any scope.
 library;
 
 import 'dart:async';
@@ -29,7 +29,15 @@ import '_routine_writer.dart';
 import '_widgets.dart';
 import 'knowledge_capture_sheet.dart';
 
-enum _LibrarySegment { decisions, notes, concepts, experiments, routines }
+enum _LibrarySegment {
+  decisions,
+  principles,
+  assumptions,
+  notes,
+  concepts,
+  experiments,
+  routines,
+}
 
 enum KnowledgeLibraryDateFilter { all, today, week, month, outsideMonth }
 
@@ -54,6 +62,8 @@ List<String> _normalizedSearchHistory(Iterable<String> raw) {
 String _segmentLabel(AppLocalizations l10n, _LibrarySegment segment) {
   return switch (segment) {
     _LibrarySegment.decisions => l10n.knowledgeSegmentDecisions,
+    _LibrarySegment.principles => l10n.knowledgeSegmentPrinciples,
+    _LibrarySegment.assumptions => l10n.knowledgeSegmentAssumptions,
     _LibrarySegment.notes => l10n.knowledgeSegmentNotes,
     _LibrarySegment.concepts => l10n.knowledgeSegmentConcepts,
     _LibrarySegment.experiments => l10n.knowledgeSegmentExperiments,
@@ -108,7 +118,6 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   final _searchCtrl = TextEditingController();
   final _searchFocus = FocusNode();
   final List<String> _searchHistory = <String>[];
-  bool _decisionMenuOpen = false;
   bool _fabHidden = false;
 
   @override
@@ -188,7 +197,6 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
 
   bool _onScrollUpdate(ScrollUpdateNotification notification) {
     if (notification.metrics.axis != Axis.vertical) return false;
-    if (_decisionMenuOpen) return false;
 
     final delta = notification.scrollDelta ?? 0;
     if (delta > 4 && !_fabHidden) {
@@ -225,7 +233,6 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                       labelOf: (s) => _segmentLabel(l10n, s),
                       onChanged: (s) => setState(() {
                         _segment = s;
-                        _decisionMenuOpen = false;
                         _fabHidden = false;
                       }),
                     ),
@@ -281,26 +288,12 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
               ),
             ),
           ),
-          if (_decisionMenuOpen)
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: () => setState(() => _decisionMenuOpen = false),
-              ),
-            ),
           Positioned(
             right: AppSpacing.s16,
             bottom: AppSpacing.s16,
             child: KnowledgeFloatingActionMotion(
-              hidden: _fabHidden && !_decisionMenuOpen,
-              child: _NewObjectButton(
-                segment: _segment,
-                decisionMenuOpen: _decisionMenuOpen,
-                onDecisionMenuChanged: (open) => setState(() {
-                  _decisionMenuOpen = open;
-                  if (open) _fabHidden = false;
-                }),
-              ),
+              hidden: _fabHidden,
+              child: _NewObjectButton(segment: _segment),
             ),
           ),
         ],
@@ -309,194 +302,53 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   }
 }
 
-/// Forui-native floating action affordance. The Decision segment expands
-/// inline into Decision / Principle / Assumption actions instead of opening a
-/// second chooser sheet before the writer.
+/// Forui-native floating action affordance for the active Library segment.
 class _NewObjectButton extends ConsumerWidget {
-  const _NewObjectButton({
-    required this.segment,
-    required this.decisionMenuOpen,
-    required this.onDecisionMenuChanged,
-  });
+  const _NewObjectButton({required this.segment});
 
   final _LibrarySegment segment;
-  final bool decisionMenuOpen;
-  final ValueChanged<bool> onDecisionMenuChanged;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final label = switch (segment) {
       _LibrarySegment.decisions => l10n.knowledgeNewDecision,
+      _LibrarySegment.principles => l10n.knowledgeNewPrinciple,
+      _LibrarySegment.assumptions => l10n.knowledgeNewAssumption,
       _LibrarySegment.notes => l10n.knowledgeNewNote,
       _LibrarySegment.concepts => l10n.knowledgeNewConcept,
       _LibrarySegment.experiments => l10n.knowledgeNewExperiment,
       _LibrarySegment.routines => l10n.knowledgeNewRoutine,
     };
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 160),
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: SizeTransition(
-              sizeFactor: animation,
-              alignment: Alignment.bottomCenter,
-              child: child,
-            ),
-          ),
-          child: segment == _LibrarySegment.decisions && decisionMenuOpen
-              ? Padding(
-                  key: const ValueKey<String>('decision-actions'),
-                  padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-                  child: _DecisionQuickActions(
-                    onSelected: () => onDecisionMenuChanged(false),
-                  ),
-                )
-              : const SizedBox.shrink(key: ValueKey<String>('no-actions')),
+    return KnowledgeFloatingActionSurface(
+      child: FButton(
+        prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+        onPress: () => _onPress(context, ref),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 140),
+          child: Text(label, key: ValueKey<String>(label)),
         ),
-        KnowledgeFloatingActionSurface(
-          child: FButton(
-            prefix: Icon(
-              decisionMenuOpen ? FLucideIcons.x : FLucideIcons.plus,
-              size: AppIconSizes.sm,
-            ),
-            onPress: () => _onPress(context, ref),
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 140),
-              child: Text(label, key: ValueKey<String>(label)),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
   Future<void> _onPress(BuildContext context, WidgetRef ref) async {
     switch (segment) {
       case _LibrarySegment.decisions:
-        onDecisionMenuChanged(!decisionMenuOpen);
+        await showNewDecisionSheet(context, ref);
+      case _LibrarySegment.principles:
+        await showNewPrincipleSheet(context, ref);
+      case _LibrarySegment.assumptions:
+        await showNewAssumptionSheet(context, ref);
       case _LibrarySegment.notes:
-        onDecisionMenuChanged(false);
         await showKnowledgeCaptureSheet(context, ref);
       case _LibrarySegment.concepts:
-        onDecisionMenuChanged(false);
         await showNewConceptSheet(context, ref);
       case _LibrarySegment.experiments:
-        onDecisionMenuChanged(false);
         await showNewExperimentSheet(context, ref);
       case _LibrarySegment.routines:
-        onDecisionMenuChanged(false);
         await showNewRoutineSheet(context, ref);
     }
-  }
-}
-
-class _DecisionQuickActions extends ConsumerWidget {
-  const _DecisionQuickActions({required this.onSelected});
-
-  final VoidCallback onSelected;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        _DecisionQuickAction(
-          icon: FLucideIcons.gitBranchPlus,
-          label: l10n.knowledgeNewDecision,
-          hint: l10n.knowledgeNewDecisionHint,
-          onPress: () {
-            showNewDecisionSheet(context, ref);
-            onSelected();
-          },
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        _DecisionQuickAction(
-          icon: FLucideIcons.badgeCheck,
-          label: l10n.knowledgePrincipleWriterTitle,
-          hint: l10n.knowledgeNewPrincipleHint,
-          onPress: () {
-            showNewPrincipleSheet(context, ref);
-            onSelected();
-          },
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        _DecisionQuickAction(
-          icon: FLucideIcons.lightbulb,
-          label: l10n.knowledgeAssumptionWriterTitle,
-          hint: l10n.knowledgeNewAssumptionHint,
-          onPress: () {
-            showNewAssumptionSheet(context, ref);
-            onSelected();
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _DecisionQuickAction extends StatelessWidget {
-  const _DecisionQuickAction({
-    required this.icon,
-    required this.label,
-    required this.hint,
-    required this.onPress,
-  });
-
-  final IconData icon;
-  final String label;
-  final String hint;
-  final VoidCallback onPress;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.background,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: colors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33000000),
-            blurRadius: 16,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: FButton(
-        variant: FButtonVariant.ghost,
-        prefix: Icon(icon, size: AppIconSizes.sm, color: colors.primary),
-        onPress: onPress,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 220),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                hint,
-                style: typography.xs.copyWith(color: colors.mutedForeground),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 
@@ -573,6 +425,83 @@ class _LibraryList extends ConsumerWidget {
                     kind: KnowledgeEntryKind.decision,
                     id: d.id,
                     title: d.question,
+                  ),
+                ),
+              ),
+            ),
+            _LibrarySegment.principles => _SegmentList<KnowledgePrinciple>(
+              stream: repo.watchPrinciples(ownerUserId: owner),
+              query: query,
+              searchableText: (p) => [
+                p.statement,
+                p.rationaleMd,
+                p.scope,
+                p.status.wire,
+              ].join('\n'),
+              searchSuggestions: (_, p) =>
+                  [p.status.wire, p.scope].toList(growable: false),
+              filterFacets: (_, p) => [p.scope],
+              dateOf: (p) => p.declaredAt,
+              emptyIcon: FLucideIcons.badgeCheck,
+              emptyTitle: l10n.knowledgeLibraryEmptyPrinciplesTitle,
+              emptyMessage: l10n.knowledgeLibraryEmptyPrinciplesBody,
+              statusOf: (p) => p.status.wire,
+              searchHistory: searchHistory,
+              onSearchSelected: onSearchSelected,
+              onSearchHistoryClear: onSearchHistoryClear,
+              onRefresh: onRefresh,
+              tileBuilder: (context, p, query) => _buildPrincipleTile(
+                context,
+                p,
+                query: query,
+                deleteButton: _DeleteEntryButton(
+                  onPressed: () => _deleteEntry(
+                    context: context,
+                    ref: ref,
+                    repo: repo,
+                    kind: KnowledgeEntryKind.principle,
+                    id: p.id,
+                    title: p.statement,
+                  ),
+                ),
+              ),
+            ),
+            _LibrarySegment.assumptions => _SegmentList<KnowledgeAssumption>(
+              stream: repo.watchAssumptions(ownerUserId: owner),
+              query: query,
+              searchableText: (a) => [
+                a.statement,
+                a.scope,
+                a.status.wire,
+                a.confidence.toStringAsFixed(2),
+              ].join('\n'),
+              searchSuggestions: (_, a) => [
+                a.status.wire,
+                a.scope,
+                a.confidence.toStringAsFixed(2),
+              ],
+              filterFacets: (_, a) => [a.scope],
+              dateOf: (a) => a.declaredAt,
+              emptyIcon: FLucideIcons.lightbulb,
+              emptyTitle: l10n.knowledgeLibraryEmptyAssumptionsTitle,
+              emptyMessage: l10n.knowledgeLibraryEmptyAssumptionsBody,
+              statusOf: (a) => a.status.wire,
+              searchHistory: searchHistory,
+              onSearchSelected: onSearchSelected,
+              onSearchHistoryClear: onSearchHistoryClear,
+              onRefresh: onRefresh,
+              tileBuilder: (context, a, query) => _buildAssumptionTile(
+                context,
+                a,
+                query: query,
+                deleteButton: _DeleteEntryButton(
+                  onPressed: () => _deleteEntry(
+                    context: context,
+                    ref: ref,
+                    repo: repo,
+                    kind: KnowledgeEntryKind.assumption,
+                    id: a.id,
+                    title: a.statement,
                   ),
                 ),
               ),
@@ -1434,6 +1363,99 @@ Widget _buildNoteTile(
           query: query,
           style: typography.sm.copyWith(color: colors.mutedForeground),
         ),
+    ],
+  );
+}
+
+Widget _buildPrincipleTile(
+  BuildContext context,
+  KnowledgePrinciple p, {
+  required String query,
+  required Widget deleteButton,
+}) {
+  final typography = context.theme.typography;
+  final colors = context.theme.colors;
+  final l10n = AppLocalizations.of(context);
+  return KnowledgeSection.item(
+    onPress: () => context.pushNamed(
+      AppRouteNames.knowledgeObjectDetail,
+      pathParameters: {'kind': 'principle', 'id': p.id},
+    ),
+    children: [
+      _LibraryTileHeader(
+        title: p.statement,
+        query: query,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            KnowledgeStatusLabel(label: p.status.wire),
+            const SizedBox(width: AppSpacing.s4),
+            deleteButton,
+            const SizedBox(width: AppSpacing.s4),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.xs,
+              color: colors.mutedForeground,
+            ),
+          ],
+        ),
+      ),
+      Text(
+        l10n.knowledgeDetailScope(p.scope),
+        style: typography.sm.copyWith(color: colors.mutedForeground),
+      ),
+      if (p.rationaleMd.isNotEmpty) ...[
+        const SizedBox(height: AppSpacing.s4),
+        KnowledgeHighlightedText(
+          text: knowledgeExcerpt(p.rationaleMd),
+          query: query,
+          style: typography.sm.copyWith(color: colors.mutedForeground),
+        ),
+      ],
+    ],
+  );
+}
+
+Widget _buildAssumptionTile(
+  BuildContext context,
+  KnowledgeAssumption a, {
+  required String query,
+  required Widget deleteButton,
+}) {
+  final typography = context.theme.typography;
+  final colors = context.theme.colors;
+  final l10n = AppLocalizations.of(context);
+  return KnowledgeSection.item(
+    onPress: () => context.pushNamed(
+      AppRouteNames.knowledgeObjectDetail,
+      pathParameters: {'kind': 'assumption', 'id': a.id},
+    ),
+    children: [
+      _LibraryTileHeader(
+        title: a.statement,
+        query: query,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            KnowledgeStatusLabel(label: a.status.wire),
+            const SizedBox(width: AppSpacing.s4),
+            deleteButton,
+            const SizedBox(width: AppSpacing.s4),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.xs,
+              color: colors.mutedForeground,
+            ),
+          ],
+        ),
+      ),
+      Text(
+        l10n.knowledgeDetailConfidenceScope(
+          a.confidence.toStringAsFixed(2),
+          a.scope,
+        ),
+        style: typography.sm.copyWith(color: colors.mutedForeground),
+      ),
     ],
   );
 }
