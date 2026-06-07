@@ -7,6 +7,7 @@ library;
 
 import 'dart:async';
 
+import 'package:flutter/material.dart' show RefreshIndicator;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -83,6 +84,58 @@ String _dateFilterLabel(
     KnowledgeLibraryDateFilter.outsideMonth =>
       l10n.knowledgeLibraryDateFilterOutsideMonth,
   };
+}
+
+/// Weighted search: ranks prefix matches above substring matches, and
+/// suggestion-field matches above full-text matches. Returns items
+/// sorted by relevance (best first), filtered to only matching items.
+List<T> _rankedSearch<T>({
+  required List<T> items,
+  required String query,
+  required String Function(T item) searchableText,
+  required List<String> Function(T item) searchSuggestions,
+}) {
+  final scored = <(T, double)>[];
+  for (final item in items) {
+    final score = _searchRelevanceScore(
+      query: query,
+      fullText: searchableText(item),
+      suggestions: searchSuggestions(item),
+    );
+    if (score > 0) scored.add((item, score));
+  }
+  scored.sort((a, b) => b.$2.compareTo(a.$2));
+  return scored.map((e) => e.$1).toList(growable: false);
+}
+
+/// Returns a relevance score > 0 if the item matches, 0 otherwise.
+/// Higher is better.
+double _searchRelevanceScore({
+  required String query,
+  required String fullText,
+  required List<String> suggestions,
+}) {
+  final lowerQuery = query.toLowerCase();
+  final lowerFull = fullText.toLowerCase();
+
+  // No match at all.
+  if (!lowerFull.contains(lowerQuery)) return 0;
+
+  double score = 1; // Base: substring match in full text.
+
+  // Boost for matching in suggestion fields (title, status, tags).
+  for (final s in suggestions) {
+    final lower = s.toLowerCase();
+    if (lower.contains(lowerQuery)) {
+      score += 2;
+      if (lower.startsWith(lowerQuery)) score += 3;
+    }
+  }
+
+  // Boost for prefix match in full text.
+  if (lowerFull.startsWith(lowerQuery)) score += 2;
+
+  return score;
 }
 
 bool matchesKnowledgeLibraryDateFilter(
@@ -793,14 +846,13 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
 
         final visibleItems = normalizedQuery.isEmpty
             ? dateFilteredItems
-            : dateFilteredItems
-                  .where(
-                    (item) => widget
-                        .searchableText(item)
-                        .toLowerCase()
-                        .contains(normalizedQuery),
-                  )
-                  .toList(growable: false);
+            : _rankedSearch(
+                items: dateFilteredItems,
+                query: normalizedQuery,
+                searchableText: widget.searchableText,
+                searchSuggestions: (item) =>
+                    widget.searchSuggestions(context, item),
+              );
 
         if (visibleItems.isEmpty) {
           return Column(
@@ -845,7 +897,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
           );
         }
 
-        final list = KnowledgePullToRefresh(
+        final list = RefreshIndicator(
           onRefresh: widget.onRefresh,
           child: ListView.separated(
             physics: const AlwaysScrollableScrollPhysics(),
