@@ -266,7 +266,7 @@ class _ReviewFloatingActionsState
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         AnimatedSwitcher(
-          duration: const Duration(milliseconds: 160),
+          duration: Motion.fast,
           transitionBuilder: (child, animation) => FadeTransition(
             opacity: animation,
             child: SizeTransition(
@@ -319,14 +319,19 @@ class _ReviewFloatingActionsState
           tipBuilder: (_, _) => Text(l10n.knowledgeReviewTitle),
           child: KnowledgeFloatingActionSurface(
             child: FButton(
+              variant: FButtonVariant.ghost,
               prefix: Icon(
                 widget.open ? FLucideIcons.x : FLucideIcons.listChecks,
                 size: AppIconSizes.sm,
+                color: const Color(0xFFFFFFFF),
               ),
               onPress: _busyAction == null
                   ? () => widget.onOpenChanged(!widget.open)
                   : null,
-              child: Text(l10n.knowledgeReviewTitle),
+              child: Text(
+                l10n.knowledgeReviewTitle,
+                style: const TextStyle(color: Color(0xFFFFFFFF)),
+              ),
             ),
           ),
         ),

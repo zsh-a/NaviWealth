@@ -376,11 +376,20 @@ class _NewObjectButton extends ConsumerWidget {
     };
     return KnowledgeFloatingActionSurface(
       child: FButton(
-        prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+        variant: FButtonVariant.ghost,
+        prefix: const Icon(
+          FLucideIcons.plus,
+          size: AppIconSizes.sm,
+          color: Color(0xFFFFFFFF),
+        ),
         onPress: () => _onPress(context, ref),
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 140),
-          child: Text(label, key: ValueKey<String>(label)),
+          duration: Motion.fast,
+          child: Text(
+            label,
+            key: ValueKey<String>(label),
+            style: const TextStyle(color: Color(0xFFFFFFFF)),
+          ),
         ),
       ),
     );
@@ -1257,8 +1266,8 @@ class _FilterPill extends StatelessWidget {
       child: FTappable(
         onPress: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          curve: Curves.easeOutCubic,
+          duration: Motion.fast,
+          curve: Motion.standardDecelerate,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.s8,
             vertical: AppSpacing.s4,
@@ -1353,8 +1362,8 @@ class _LibraryTabBar extends StatelessWidget {
           return FTappable(
             onPress: () => onChanged(segment),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              curve: Curves.easeOutCubic,
+              duration: Motion.fast,
+              curve: Motion.standardDecelerate,
               padding: EdgeInsets.symmetric(
                 horizontal: active ? AppSpacing.s12 : AppSpacing.s8,
                 vertical: AppSpacing.s6,
