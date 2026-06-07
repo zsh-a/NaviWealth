@@ -14242,6 +14242,30 @@ abstract class AppLocalizations {
   /// **'Use the create action to record the first decision worth reviewing.'**
   String get knowledgeLibraryEmptyDecisionsBody;
 
+  /// No description provided for @knowledgeLibraryEmptyPrinciplesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No Principles yet'**
+  String get knowledgeLibraryEmptyPrinciplesTitle;
+
+  /// No description provided for @knowledgeLibraryEmptyPrinciplesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Principles for durable worldview rules that guide decisions.'**
+  String get knowledgeLibraryEmptyPrinciplesBody;
+
+  /// No description provided for @knowledgeLibraryEmptyAssumptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No Assumptions yet'**
+  String get knowledgeLibraryEmptyAssumptionsTitle;
+
+  /// No description provided for @knowledgeLibraryEmptyAssumptionsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Assumptions for falsifiable beliefs with confidence and review cadence.'**
+  String get knowledgeLibraryEmptyAssumptionsBody;
+
   /// No description provided for @knowledgeLibraryEmptyNotesTitle.
   ///
   /// In en, this message translates to:
@@ -14604,6 +14628,18 @@ abstract class AppLocalizations {
   /// **'Decisions'**
   String get knowledgeSegmentDecisions;
 
+  /// No description provided for @knowledgeSegmentPrinciples.
+  ///
+  /// In en, this message translates to:
+  /// **'Principles'**
+  String get knowledgeSegmentPrinciples;
+
+  /// No description provided for @knowledgeSegmentAssumptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Assumptions'**
+  String get knowledgeSegmentAssumptions;
+
   /// No description provided for @knowledgeSegmentNotes.
   ///
   /// In en, this message translates to:
@@ -14633,6 +14669,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New Decision'**
   String get knowledgeNewDecision;
+
+  /// No description provided for @knowledgeNewPrinciple.
+  ///
+  /// In en, this message translates to:
+  /// **'New Principle'**
+  String get knowledgeNewPrinciple;
+
+  /// No description provided for @knowledgeNewAssumption.
+  ///
+  /// In en, this message translates to:
+  /// **'New Assumption'**
+  String get knowledgeNewAssumption;
 
   /// No description provided for @knowledgeNewNote.
   ///

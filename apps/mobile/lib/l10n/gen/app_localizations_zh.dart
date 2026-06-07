@@ -7920,6 +7920,20 @@ class AppLocalizationsZh extends AppLocalizations {
       '点右下角 + 新建 Decision，记录第一条值得复盘的判断。';
 
   @override
+  String get knowledgeLibraryEmptyPrinciplesTitle => '还没有 Principle';
+
+  @override
+  String get knowledgeLibraryEmptyPrinciplesBody =>
+      'Principle 用来记录长期稳定、会影响判断的世界观规则。';
+
+  @override
+  String get knowledgeLibraryEmptyAssumptionsTitle => '还没有 Assumption';
+
+  @override
+  String get knowledgeLibraryEmptyAssumptionsBody =>
+      'Assumption 用来记录可证伪的信念、置信度和后续验证。';
+
+  @override
   String get knowledgeLibraryEmptyNotesTitle => '资料库里还没有 Note';
 
   @override
@@ -8146,6 +8160,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeSegmentDecisions => 'Decisions';
 
   @override
+  String get knowledgeSegmentPrinciples => 'Principles';
+
+  @override
+  String get knowledgeSegmentAssumptions => 'Assumptions';
+
+  @override
   String get knowledgeSegmentNotes => 'Notes';
 
   @override
@@ -8159,6 +8179,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeNewDecision => '新建 Decision';
+
+  @override
+  String get knowledgeNewPrinciple => '新建 Principle';
+
+  @override
+  String get knowledgeNewAssumption => '新建 Assumption';
 
   @override
   String get knowledgeNewNote => '新建 Note';
