@@ -97,14 +97,6 @@ class KnowledgeReviewPage extends ConsumerStatefulWidget {
 
 class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
     with KnowledgeFabScrollHideMixin {
-  bool _actionsOpen = false;
-
-  @override
-  bool onScrollUpdate(ScrollUpdateNotification notification) {
-    if (_actionsOpen) return false;
-    return super.onScrollUpdate(notification);
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -138,25 +130,12 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
               ),
             ),
           ),
-          if (_actionsOpen)
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: () => setState(() => _actionsOpen = false),
-              ),
-            ),
           Positioned(
             right: AppSpacing.s16,
             bottom: AppSpacing.s16,
             child: KnowledgeFloatingActionMotion(
-              hidden: fabHidden && !_actionsOpen,
-              child: _ReviewFloatingActions(
-                open: _actionsOpen,
-                onOpenChanged: (open) => setState(() {
-                  _actionsOpen = open;
-                  if (open) fabHidden = false;
-                }),
-              ),
+              hidden: fabHidden,
+              child: const _ReviewCreateFab(),
             ),
           ),
         ],
@@ -176,228 +155,106 @@ Future<void> _refreshReview(WidgetRef ref) async {
   ]);
 }
 
-class _ReviewFloatingActions extends ConsumerStatefulWidget {
-  const _ReviewFloatingActions({
-    required this.open,
-    required this.onOpenChanged,
-  });
-
-  final bool open;
-  final ValueChanged<bool> onOpenChanged;
+/// Icon-only FAB that opens the review batch-actions sheet.
+class _ReviewCreateFab extends ConsumerWidget {
+  const _ReviewCreateFab();
 
   @override
-  ConsumerState<_ReviewFloatingActions> createState() =>
-      _ReviewFloatingActionsState();
-}
-
-class _ReviewFloatingActionsState
-    extends ConsumerState<_ReviewFloatingActions> {
-  String? _busyAction;
-
-  Future<void> _run(String action, Future<void> Function() task) async {
-    if (_busyAction != null) return;
-    setState(() => _busyAction = action);
-    try {
-      await task();
-      widget.onOpenChanged(false);
-    } finally {
-      if (mounted) setState(() => _busyAction = null);
-    }
-  }
-
-  Future<void> _markAllRoutinesDone() async {
-    final l10n = AppLocalizations.of(context);
-    final routines = await _loadReviewRoutines(ref);
-    if (!mounted) return;
-    if (routines.isEmpty) {
-      AppMessenger.show(
-        context,
-        ToastKind.info,
-        l10n.knowledgeReviewRoutinesEmpty,
-      );
-      return;
-    }
-    await _markRoutinesDone(context: context, ref: ref, routines: routines);
-  }
-
-  Future<void> _markAllDecisionsReviewed() async {
-    final l10n = AppLocalizations.of(context);
-    final decisions = await _loadReviewDecisions(ref);
-    if (!mounted) return;
-    if (decisions.isEmpty) {
-      AppMessenger.show(
-        context,
-        ToastKind.info,
-        l10n.knowledgeReviewDecisionsEmpty,
-      );
-      return;
-    }
-    await _markDecisionsReviewed(
-      context: context,
-      ref: ref,
-      decisions: decisions,
-    );
-  }
-
-  Future<void> _verifyAllAssumptions() async {
-    final l10n = AppLocalizations.of(context);
-    final assumptions = await _loadReviewAssumptions(ref);
-    if (!mounted) return;
-    if (assumptions.isEmpty) {
-      AppMessenger.show(
-        context,
-        ToastKind.info,
-        l10n.knowledgeReviewAssumptionsEmpty(kAssumptionStaleDays),
-      );
-      return;
-    }
-    await _verifyAssumptions(
-      context: context,
-      ref: ref,
-      assumptions: assumptions,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        AnimatedSwitcher(
-          duration: Motion.fast,
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: SizeTransition(
-              sizeFactor: animation,
-              alignment: Alignment.bottomCenter,
-              child: child,
-            ),
-          ),
-          child: widget.open
-              ? Padding(
-                  key: const ValueKey<String>('review-actions'),
-                  padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _ReviewQuickAction(
-                        icon: FLucideIcons.checkCheck,
-                        label: l10n.knowledgeReviewMarkAllDone,
-                        hint: l10n.knowledgeReviewRoutinesTitle,
-                        busy: _busyAction == 'routines',
-                        onPress: () => _run('routines', _markAllRoutinesDone),
-                      ),
-                      const SizedBox(height: AppSpacing.s8),
-                      _ReviewQuickAction(
-                        icon: FLucideIcons.calendarCheck,
-                        label: l10n.knowledgeReviewMarkAllDecisionsReviewed,
-                        hint: l10n.knowledgeReviewDecisionsTitle,
-                        busy: _busyAction == 'decisions',
-                        onPress: () =>
-                            _run('decisions', _markAllDecisionsReviewed),
-                      ),
-                      const SizedBox(height: AppSpacing.s8),
-                      _ReviewQuickAction(
-                        icon: FLucideIcons.badgeCheck,
-                        label: l10n.knowledgeReviewVerifyAllAssumptions,
-                        hint: l10n.knowledgeReviewAssumptionsTitle,
-                        busy: _busyAction == 'assumptions',
-                        onPress: () =>
-                            _run('assumptions', _verifyAllAssumptions),
-                      ),
-                    ],
-                  ),
-                )
-              : const SizedBox.shrink(
-                  key: ValueKey<String>('no-review-actions'),
-                ),
-        ),
-        FTooltip(
-          tipBuilder: (_, _) => Text(l10n.knowledgeReviewTitle),
-          child: KnowledgeFloatingActionSurface(
-            child: FButton(
-              variant: FButtonVariant.ghost,
-              prefix: Icon(
-                widget.open ? FLucideIcons.x : FLucideIcons.listChecks,
-                size: AppIconSizes.sm,
-                color: const Color(0xFFFFFFFF),
-              ),
-              onPress: _busyAction == null
-                  ? () => widget.onOpenChanged(!widget.open)
-                  : null,
-              child: Text(
-                l10n.knowledgeReviewTitle,
-                style: const TextStyle(color: Color(0xFFFFFFFF)),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ReviewQuickAction extends StatelessWidget {
-  const _ReviewQuickAction({
-    required this.icon,
-    required this.label,
-    required this.hint,
-    required this.busy,
-    required this.onPress,
-  });
-
-  final IconData icon;
-  final String label;
-  final String hint;
-  final bool busy;
-  final VoidCallback onPress;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.background,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        boxShadow: [
-          BoxShadow(
-            color: colors.primary.withValues(alpha: AppOpacity.subtle),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    return KnowledgeFloatingActionSurface(
       child: FButton(
         variant: FButtonVariant.ghost,
-        prefix: busy
-            ? const FCircularProgress(size: FCircularProgressSizeVariant.xs)
-            : Icon(icon, size: AppIconSizes.sm, color: colors.primary),
-        onPress: busy ? null : onPress,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 240),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                busy ? AppLocalizations.of(context).commonSaving : label,
-                style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                hint,
-                style: context.captionStyle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+        prefix: const Icon(
+          FLucideIcons.listChecks,
+          size: AppIconSizes.sm,
+          color: Color(0xFFFFFFFF),
         ),
+        onPress: () => _openActionsSheet(context, ref),
+        child: const SizedBox.shrink(),
+      ),
+    );
+  }
+
+  Future<void> _openActionsSheet(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    await showAppSheet<void>(
+      context: context,
+      title: l10n.knowledgeReviewTitle,
+      builder: (sheetContext) => AppActionSheetList(
+        children: [
+          AppActionSheetTile(
+            icon: FLucideIcons.checkCheck,
+            title: l10n.knowledgeReviewMarkAllDone,
+            subtitle: l10n.knowledgeReviewRoutinesTitle,
+            onPress: () async {
+              Navigator.of(sheetContext).pop();
+              final routines = await _loadReviewRoutines(ref);
+              if (!context.mounted) return;
+              if (routines.isEmpty) {
+                AppMessenger.show(
+                  context,
+                  ToastKind.info,
+                  l10n.knowledgeReviewRoutinesEmpty,
+                );
+                return;
+              }
+              await _markRoutinesDone(
+                context: context,
+                ref: ref,
+                routines: routines,
+              );
+            },
+          ),
+          AppActionSheetTile(
+            icon: FLucideIcons.calendarCheck,
+            title: l10n.knowledgeReviewMarkAllDecisionsReviewed,
+            subtitle: l10n.knowledgeReviewDecisionsTitle,
+            onPress: () async {
+              Navigator.of(sheetContext).pop();
+              final decisions = await _loadReviewDecisions(ref);
+              if (!context.mounted) return;
+              if (decisions.isEmpty) {
+                AppMessenger.show(
+                  context,
+                  ToastKind.info,
+                  l10n.knowledgeReviewDecisionsEmpty,
+                );
+                return;
+              }
+              await _markDecisionsReviewed(
+                context: context,
+                ref: ref,
+                decisions: decisions,
+              );
+            },
+          ),
+          AppActionSheetTile(
+            icon: FLucideIcons.badgeCheck,
+            title: l10n.knowledgeReviewVerifyAllAssumptions,
+            subtitle: l10n.knowledgeReviewAssumptionsTitle,
+            onPress: () async {
+              Navigator.of(sheetContext).pop();
+              final assumptions = await _loadReviewAssumptions(ref);
+              if (!context.mounted) return;
+              if (assumptions.isEmpty) {
+                AppMessenger.show(
+                  context,
+                  ToastKind.info,
+                  l10n.knowledgeReviewAssumptionsEmpty(kAssumptionStaleDays),
+                );
+                return;
+              }
+              await _verifyAssumptions(
+                context: context,
+                ref: ref,
+                assumptions: assumptions,
+              );
+            },
+          ),
+        ],
       ),
     );
   }
