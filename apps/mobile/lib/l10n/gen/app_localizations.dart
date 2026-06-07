@@ -9710,6 +9710,12 @@ abstract class AppLocalizations {
     Object reviewDate,
   );
 
+  /// No description provided for @knowledgeNoteDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get knowledgeNoteDetailTitle;
+
   /// No description provided for @knowledgeConceptDetailTitle.
   ///
   /// In en, this message translates to:
@@ -9733,6 +9739,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Assumption'**
   String get knowledgeAssumptionDetailTitle;
+
+  /// No description provided for @knowledgeRoutineDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Routine'**
+  String get knowledgeRoutineDetailTitle;
 
   /// No description provided for @knowledgeObjectDetailTitle.
   ///
@@ -9830,6 +9842,18 @@ abstract class AppLocalizations {
   /// **'Evidence'**
   String get knowledgeDetailEvidenceTitle;
 
+  /// No description provided for @knowledgeDetailBodyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Body'**
+  String get knowledgeDetailBodyTitle;
+
+  /// No description provided for @knowledgeDetailSourceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get knowledgeDetailSourceTitle;
+
   /// No description provided for @knowledgeDetailAliases.
   ///
   /// In en, this message translates to:
@@ -9902,6 +9926,18 @@ abstract class AppLocalizations {
   /// **'Updated'**
   String get knowledgeDetailUpdatedLabel;
 
+  /// No description provided for @knowledgeDetailProjectLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get knowledgeDetailProjectLabel;
+
+  /// No description provided for @knowledgeDetailTagsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get knowledgeDetailTagsLabel;
+
   /// No description provided for @knowledgeDetailAliasesLabel.
   ///
   /// In en, this message translates to:
@@ -9919,6 +9955,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ended'**
   String get knowledgeDetailEndedLabel;
+
+  /// No description provided for @knowledgeDetailNextDueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Next due'**
+  String get knowledgeDetailNextDueLabel;
+
+  /// No description provided for @knowledgeDetailLastDoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Last done'**
+  String get knowledgeDetailLastDoneLabel;
+
+  /// No description provided for @knowledgeDetailIntervalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Interval'**
+  String get knowledgeDetailIntervalLabel;
 
   /// No description provided for @knowledgeDetailTargetAssumptionTitle.
   ///

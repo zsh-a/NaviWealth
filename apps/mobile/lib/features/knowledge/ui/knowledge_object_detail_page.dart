@@ -1,8 +1,8 @@
 /// KnowledgeOS read-only detail page for the non-Decision typed objects
-/// (`docs/knowledgeos-domain.md` §3 — Concept / Experiment / Principle /
-/// Assumption).
+/// (`docs/knowledgeos-domain.md` §3 — Note / Concept / Experiment /
+/// Principle / Assumption / Routine).
 ///
-/// Decision has its own editable page; these four share one read view
+/// Decision has its own editable page; these objects share one read view
 /// keyed by `:kind` so every Library tile is tappable (the interaction
 /// asymmetry called out in the 2026-05-29 audit). Loading is by id via
 /// the repository `findX` accessors, so a referenced-but-archived row
@@ -25,10 +25,12 @@ import '_widgets.dart';
 
 /// The kinds this page can render. Mirrors the `:kind` path segment.
 enum KnowledgeObjectKind {
+  note,
   concept,
   experiment,
   principle,
-  assumption;
+  assumption,
+  routine;
 
   static KnowledgeObjectKind? parse(String? s) {
     for (final v in values) {
@@ -113,10 +115,12 @@ class _KnowledgeObjectDetailPageState
     String id,
   ) {
     return switch (kind) {
+      KnowledgeObjectKind.note => repo.findNote(id),
       KnowledgeObjectKind.concept => repo.findConcept(id),
       KnowledgeObjectKind.experiment => repo.findExperiment(id),
       KnowledgeObjectKind.principle => repo.findPrinciple(id),
       KnowledgeObjectKind.assumption => repo.findAssumption(id),
+      KnowledgeObjectKind.routine => repo.findRoutine(id),
     };
   }
 
@@ -184,6 +188,9 @@ class _KnowledgeObjectDetailPageState
   }
 
   String _title(BuildContext context) => switch (_kind) {
+    KnowledgeObjectKind.note => AppLocalizations.of(
+      context,
+    ).knowledgeNoteDetailTitle,
     KnowledgeObjectKind.concept => AppLocalizations.of(
       context,
     ).knowledgeConceptDetailTitle,
@@ -196,6 +203,9 @@ class _KnowledgeObjectDetailPageState
     KnowledgeObjectKind.assumption => AppLocalizations.of(
       context,
     ).knowledgeAssumptionDetailTitle,
+    KnowledgeObjectKind.routine => AppLocalizations.of(
+      context,
+    ).knowledgeRoutineDetailTitle,
     null => AppLocalizations.of(context).knowledgeObjectDetailTitle,
   };
 
@@ -216,6 +226,7 @@ class _KnowledgeObjectDetailPageState
       );
     }
     final children = switch (obj) {
+      final KnowledgeNote n => _noteSections(context, n),
       final KnowledgeConcept c => _conceptSections(
         context,
         c,
@@ -238,6 +249,7 @@ class _KnowledgeObjectDetailPageState
         referencingDecisions: _referencingDecisions,
         targetingExperiments: _targetingExperiments,
       ),
+      final KnowledgeRoutine r => _routineSections(context, r),
       _ => const <Widget>[],
     };
     return ListView(
@@ -277,6 +289,58 @@ Widget _heading(BuildContext context, String text, {String? badge}) {
       ],
     ],
   );
+}
+
+List<Widget> _noteSections(BuildContext context, KnowledgeNote n) {
+  final l10n = AppLocalizations.of(context);
+  final title = n.title.trim().isEmpty ? l10n.knowledgeUntitled : n.title;
+  return [
+    _heading(context, title),
+    const SizedBox(height: AppSpacing.s12),
+    _MetadataSection(
+      children: [
+        _MetaPill(
+          label: l10n.knowledgeDetailCreatedLabel,
+          value: knowledgeDate(context, n.createdAt, long: true),
+        ),
+        _MetaPill(
+          label: l10n.knowledgeDetailUpdatedLabel,
+          value: knowledgeDate(context, n.sync.updatedAt, long: true),
+        ),
+        if (n.projectTag != null && n.projectTag!.isNotEmpty)
+          _MetaPill(
+            label: l10n.knowledgeDetailProjectLabel,
+            value: n.projectTag!,
+          ),
+        if (n.tags.isNotEmpty)
+          _MetaPill(
+            label: l10n.knowledgeDetailTagsLabel,
+            value: n.tags.join(' · '),
+          ),
+      ],
+    ),
+    if (n.bodyMd.isNotEmpty) ...[
+      const SizedBox(height: AppSpacing.s12),
+      KnowledgeSection.group(
+        title: l10n.knowledgeDetailBodyTitle,
+        children: [AiMarkdown(text: n.bodyMd)],
+      ),
+    ],
+    if (n.sourceUrl != null && n.sourceUrl!.isNotEmpty) ...[
+      const SizedBox(height: AppSpacing.s12),
+      KnowledgeSection.group(
+        title: l10n.knowledgeDetailSourceTitle,
+        children: [
+          Text(
+            n.sourceUrl!,
+            style: context.theme.typography.sm.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
+        ],
+      ),
+    ],
+  ];
 }
 
 List<Widget> _conceptSections(
@@ -523,6 +587,49 @@ List<Widget> _assumptionSections(
         ],
       ),
     ],
+  ];
+}
+
+List<Widget> _routineSections(BuildContext context, KnowledgeRoutine r) {
+  final l10n = AppLocalizations.of(context);
+  final now = DateTime.now();
+  final days = r.daysUntilDue(now);
+  final dueLabel = days < 0
+      ? l10n.knowledgeRoutineOverdueDays(-days)
+      : days == 0
+      ? l10n.knowledgeRoutineDueToday
+      : l10n.knowledgeRoutineDueInDays(days);
+  return [
+    _heading(context, r.statement, badge: r.status.wire),
+    const SizedBox(height: AppSpacing.s12),
+    _MetadataSection(
+      trailing: KnowledgeStatusLabel(label: r.status.wire),
+      children: [
+        _MetaPill(
+          label: l10n.knowledgeDetailNextDueLabel,
+          value:
+              '${knowledgeDate(context, r.nextDueAt, long: true)} · $dueLabel',
+        ),
+        if (r.lastDoneAt != null)
+          _MetaPill(
+            label: l10n.knowledgeDetailLastDoneLabel,
+            value: knowledgeDate(context, r.lastDoneAt!, long: true),
+          ),
+        _MetaPill(
+          label: l10n.knowledgeDetailIntervalLabel,
+          value: l10n.knowledgeProposalIntervalDays(r.intervalDays),
+        ),
+        _MetaPill(label: l10n.knowledgeDetailScopeLabel, value: r.scope),
+        _MetaPill(
+          label: l10n.knowledgeDetailCreatedLabel,
+          value: knowledgeDate(context, r.createdAt, long: true),
+        ),
+        _MetaPill(
+          label: l10n.knowledgeDetailUpdatedLabel,
+          value: knowledgeDate(context, r.sync.updatedAt, long: true),
+        ),
+      ],
+    ),
   ];
 }
 

@@ -5439,6 +5439,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get knowledgeNoteDetailTitle => 'Note';
+
+  @override
   String get knowledgeConceptDetailTitle => '概念';
 
   @override
@@ -5449,6 +5452,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeAssumptionDetailTitle => '假设';
+
+  @override
+  String get knowledgeRoutineDetailTitle => 'Routine';
 
   @override
   String get knowledgeObjectDetailTitle => '详情';
@@ -5499,6 +5505,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeDetailEvidenceTitle => '证据';
 
   @override
+  String get knowledgeDetailBodyTitle => '正文';
+
+  @override
+  String get knowledgeDetailSourceTitle => '来源';
+
+  @override
   String knowledgeDetailAliases(Object aliases) {
     return '别名：$aliases';
   }
@@ -5547,6 +5559,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeDetailUpdatedLabel => '更新';
 
   @override
+  String get knowledgeDetailProjectLabel => '项目';
+
+  @override
+  String get knowledgeDetailTagsLabel => '标签';
+
+  @override
   String get knowledgeDetailAliasesLabel => '别名';
 
   @override
@@ -5554,6 +5572,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeDetailEndedLabel => '结束';
+
+  @override
+  String get knowledgeDetailNextDueLabel => '下次到期';
+
+  @override
+  String get knowledgeDetailLastDoneLabel => '上次完成';
+
+  @override
+  String get knowledgeDetailIntervalLabel => '周期';
 
   @override
   String get knowledgeDetailTargetAssumptionTitle => '目标 Assumption';

@@ -35,18 +35,18 @@ import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_widgets.dart';
 
-Future<void> showKnowledgeCaptureSheet(BuildContext context, WidgetRef ref) {
+Future<void> showKnowledgeCaptureSheet(BuildContext context, WidgetRef _) {
   return showAppFormSheet<void>(
     context: context,
-    builder: (sheetContext) => _KnowledgeCaptureSheet(ref: ref),
+    builder: (sheetContext) => const _KnowledgeCaptureSheet(),
   );
 }
 
-class _KnowledgeCaptureSheet extends StatefulWidget {
-  const _KnowledgeCaptureSheet({required this.ref});
-  final WidgetRef ref;
+class _KnowledgeCaptureSheet extends ConsumerStatefulWidget {
+  const _KnowledgeCaptureSheet();
   @override
-  State<_KnowledgeCaptureSheet> createState() => _KnowledgeCaptureSheetState();
+  ConsumerState<_KnowledgeCaptureSheet> createState() =>
+      _KnowledgeCaptureSheetState();
 }
 
 /// Sheet drives a small state machine. `composing` → user typing.
@@ -55,7 +55,8 @@ class _KnowledgeCaptureSheet extends StatefulWidget {
 /// upgrade, waiting for ✓ / ✗. `applying` → promote in flight.
 enum _CaptureStage { composing, saving, classifying, suggesting, applying }
 
-class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
+class _KnowledgeCaptureSheetState
+    extends ConsumerState<_KnowledgeCaptureSheet> {
   final _titleCtrl = TextEditingController();
   final _bodyCtrl = TextEditingController();
   _CaptureStage _stage = _CaptureStage.composing;
@@ -91,8 +92,8 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
     if (!_canSave) return;
     setState(() => _stage = _CaptureStage.saving);
     try {
-      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper = await widget.ref.read(mutationStamperProvider.future);
+      final repo = await ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
       final note = KnowledgeNote(
         id: kKnowledgeUuid.v4(),
@@ -125,8 +126,8 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
           _stage = _CaptureStage.classifying;
         });
       }
-      final classifier = widget.ref.read(captureClassifierProvider);
-      final logger = widget.ref.read(loggerProvider);
+      final classifier = ref.read(captureClassifierProvider);
+      final logger = ref.read(loggerProvider);
       logger.d(
         '[capture-sheet] classify start impl=${classifier.runtimeType} '
         'text_len=${text.length}',
@@ -168,8 +169,8 @@ class _KnowledgeCaptureSheetState extends State<_KnowledgeCaptureSheet> {
     if (note == null || suggestion == null) return;
     setState(() => _stage = _CaptureStage.applying);
     try {
-      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper = await widget.ref.read(mutationStamperProvider.future);
+      final repo = await ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await ref.read(mutationStamperProvider.future);
 
       // Resolved title / body that downstream writes use. When the LLM
       // produced a polish, that's the authoritative version going

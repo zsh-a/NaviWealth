@@ -29,21 +29,20 @@ import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_widgets.dart';
 
-Future<void> showNewDecisionSheet(BuildContext context, WidgetRef ref) {
+Future<void> showNewDecisionSheet(BuildContext context, WidgetRef _) {
   return showAppFormSheet<void>(
     context: context,
-    builder: (_) => _DecisionWriter(ref: ref),
+    builder: (_) => const _DecisionWriter(),
   );
 }
 
-class _DecisionWriter extends StatefulWidget {
-  const _DecisionWriter({required this.ref});
-  final WidgetRef ref;
+class _DecisionWriter extends ConsumerStatefulWidget {
+  const _DecisionWriter();
   @override
-  State<_DecisionWriter> createState() => _DecisionWriterState();
+  ConsumerState<_DecisionWriter> createState() => _DecisionWriterState();
 }
 
-class _DecisionWriterState extends State<_DecisionWriter> {
+class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
   final _questionCtrl = TextEditingController();
   final _rationaleCtrl = TextEditingController();
   final _expectedCtrl = TextEditingController();
@@ -94,8 +93,8 @@ class _DecisionWriterState extends State<_DecisionWriter> {
     if (!_canSave) return;
     setState(() => _saving = true);
     try {
-      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper = await widget.ref.read(mutationStamperProvider.future);
+      final repo = await ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
       final activeOptions = _options
           .where((o) => o.labelCtrl.text.trim().isNotEmpty)
@@ -113,7 +112,7 @@ class _DecisionWriterState extends State<_DecisionWriter> {
       // (§3 + §9 context_snapshot_json). Non-blocking — null on any
       // failure / no events, the column stays NULL and the detail page
       // skips the section.
-      final snapper = widget.ref.read(decisionContextSnapperProvider);
+      final snapper = ref.read(decisionContextSnapperProvider);
       final snapshot = await snapper.snapshot(
         ownerUserId: stamp.ownerUserId,
         now: stamp.now,
@@ -235,7 +234,6 @@ class _DecisionWriterState extends State<_DecisionWriter> {
             initiallyExpanded: false,
             children: [
               _PrincipleAssumptionPicker(
-                ref: widget.ref,
                 principleIds: _principleIds,
                 assumptionIds: _assumptionIds,
                 onPrincipleToggle: (id) => setState(() {
@@ -412,20 +410,18 @@ class _OptionEditorTile extends StatelessWidget {
 
 class _PrincipleAssumptionPicker extends ConsumerWidget {
   const _PrincipleAssumptionPicker({
-    required this.ref,
     required this.principleIds,
     required this.assumptionIds,
     required this.onPrincipleToggle,
     required this.onAssumptionToggle,
   });
-  final WidgetRef ref;
   final Set<String> principleIds;
   final Set<String> assumptionIds;
   final ValueChanged<String> onPrincipleToggle;
   final ValueChanged<String> onAssumptionToggle;
 
   @override
-  Widget build(BuildContext context, WidgetRef _) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {

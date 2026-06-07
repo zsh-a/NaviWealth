@@ -352,7 +352,6 @@ class _NewObjectButton extends ConsumerWidget {
                   key: const ValueKey<String>('decision-actions'),
                   padding: const EdgeInsets.only(bottom: AppSpacing.s8),
                   child: _DecisionQuickActions(
-                    ref: ref,
                     onSelected: () => onDecisionMenuChanged(false),
                   ),
                 )
@@ -395,14 +394,13 @@ class _NewObjectButton extends ConsumerWidget {
   }
 }
 
-class _DecisionQuickActions extends StatelessWidget {
-  const _DecisionQuickActions({required this.ref, required this.onSelected});
+class _DecisionQuickActions extends ConsumerWidget {
+  const _DecisionQuickActions({required this.onSelected});
 
-  final WidgetRef ref;
   final VoidCallback onSelected;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -413,8 +411,8 @@ class _DecisionQuickActions extends StatelessWidget {
           label: l10n.knowledgeNewDecision,
           hint: l10n.knowledgeNewDecisionHint,
           onPress: () {
-            onSelected();
             showNewDecisionSheet(context, ref);
+            onSelected();
           },
         ),
         const SizedBox(height: AppSpacing.s8),
@@ -423,8 +421,8 @@ class _DecisionQuickActions extends StatelessWidget {
           label: l10n.knowledgePrincipleWriterTitle,
           hint: l10n.knowledgeNewPrincipleHint,
           onPress: () {
-            onSelected();
             showNewPrincipleSheet(context, ref);
+            onSelected();
           },
         ),
         const SizedBox(height: AppSpacing.s8),
@@ -433,8 +431,8 @@ class _DecisionQuickActions extends StatelessWidget {
           label: l10n.knowledgeAssumptionWriterTitle,
           hint: l10n.knowledgeNewAssumptionHint,
           onPress: () {
-            onSelected();
             showNewAssumptionSheet(context, ref);
+            onSelected();
           },
         ),
       ],
@@ -877,7 +875,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
             children: [
               searchAssist,
               if (searchAssist.hasContent)
-                const SizedBox(height: AppSpacing.s12),
+                const SizedBox(height: AppSpacing.s8),
               if (statuses.length > 1) ...[
                 _FilterChipRow(
                   icon: FLucideIcons.listFilter,
@@ -951,7 +949,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               searchAssist,
-              const SizedBox(height: AppSpacing.s12),
+              const SizedBox(height: AppSpacing.s8),
               Expanded(child: list),
             ],
           );
@@ -961,7 +959,7 @@ class _SegmentListState<T> extends State<_SegmentList<T>> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             searchAssist,
-            if (searchAssist.hasContent) const SizedBox(height: AppSpacing.s12),
+            if (searchAssist.hasContent) const SizedBox(height: AppSpacing.s8),
             for (var i = 0; i < filterRows.length; i++) ...[
               if (i > 0) const SizedBox(height: AppSpacing.s8),
               filterRows[i],
@@ -1084,57 +1082,90 @@ class _SearchAssistGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final visibleValues = values.take(6).toList(growable: false);
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.s6),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: AppIconSizes.xs, color: colors.mutedForeground),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: AppIconSizes.xs, color: colors.mutedForeground),
+            const SizedBox(width: AppSpacing.s4),
+            Text(
+              label,
+              style: typography.xs.copyWith(color: colors.mutedForeground),
+            ),
+            if (onClear != null) ...[
               const SizedBox(width: AppSpacing.s4),
-              Text(
-                label,
-                style: typography.xs.copyWith(color: colors.mutedForeground),
-              ),
-              if (onClear != null) ...[
-                const SizedBox(width: AppSpacing.s4),
-                FButton.icon(
-                  variant: FButtonVariant.ghost,
-                  size: FButtonSizeVariant.sm,
-                  onPress: onClear,
-                  child: Icon(
-                    FLucideIcons.x,
-                    size: AppIconSizes.xs,
-                    color: colors.mutedForeground,
-                  ),
+              FButton.icon(
+                variant: FButtonVariant.ghost,
+                size: FButtonSizeVariant.sm,
+                onPress: onClear,
+                child: Icon(
+                  FLucideIcons.x,
+                  size: AppIconSizes.xs,
+                  color: colors.mutedForeground,
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         ),
         const SizedBox(width: AppSpacing.s8),
         Expanded(
-          child: Wrap(
-            spacing: AppSpacing.s6,
-            runSpacing: AppSpacing.s6,
-            children: [
-              for (final value in values.take(8))
-                FButton(
-                  variant: FButtonVariant.outline,
-                  size: FButtonSizeVariant.sm,
-                  onPress: () => onSelected(value),
-                  child: Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (var i = 0; i < visibleValues.length; i++) ...[
+                  if (i > 0) const SizedBox(width: AppSpacing.s6),
+                  _SearchAssistChip(
+                    value: visibleValues[i],
+                    onPress: () => onSelected(visibleValues[i]),
                   ),
-                ),
-            ],
+                ],
+              ],
+            ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SearchAssistChip extends StatelessWidget {
+  const _SearchAssistChip({required this.value, required this.onPress});
+
+  final String value;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return FTappable(
+      onPress: onPress,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.background,
+          border: Border.all(color: colors.border),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s8,
+            vertical: AppSpacing.s4,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 128),
+            child: Text(
+              value,
+              style: typography.xs.copyWith(fontWeight: FontWeight.w600),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1376,11 +1407,26 @@ Widget _buildNoteTile(
   final colors = context.theme.colors;
   final l10n = AppLocalizations.of(context);
   return KnowledgeSection.item(
+    onPress: () => context.pushNamed(
+      AppRouteNames.knowledgeObjectDetail,
+      pathParameters: {'kind': 'note', 'id': n.id},
+    ),
     children: [
       _LibraryTileHeader(
         title: n.title.isEmpty ? l10n.knowledgeUntitled : n.title,
         query: query,
-        trailing: deleteButton,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            deleteButton,
+            const SizedBox(width: AppSpacing.s4),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.xs,
+              color: colors.mutedForeground,
+            ),
+          ],
+        ),
       ),
       if (n.bodyMd.isNotEmpty)
         KnowledgeHighlightedText(
@@ -1485,6 +1531,10 @@ Widget _buildRoutineTile(
       : l10n.knowledgeRoutineDueInDays(days);
   final dueColor = days < 0 ? colors.destructive : colors.mutedForeground;
   return KnowledgeSection.item(
+    onPress: () => context.pushNamed(
+      AppRouteNames.knowledgeObjectDetail,
+      pathParameters: {'kind': 'routine', 'id': r.id},
+    ),
     children: [
       _LibraryTileHeader(
         title: r.statement,
@@ -1495,6 +1545,12 @@ Widget _buildRoutineTile(
             KnowledgeStatusLabel(label: r.status.wire),
             const SizedBox(width: AppSpacing.s4),
             deleteButton,
+            const SizedBox(width: AppSpacing.s4),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.xs,
+              color: colors.mutedForeground,
+            ),
           ],
         ),
       ),

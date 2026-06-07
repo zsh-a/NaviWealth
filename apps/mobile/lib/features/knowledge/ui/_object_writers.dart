@@ -18,40 +18,39 @@ import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_widgets.dart';
 
-Future<void> showNewPrincipleSheet(BuildContext context, WidgetRef ref) =>
+Future<void> showNewPrincipleSheet(BuildContext context, WidgetRef _) =>
     showAppFormSheet<void>(
       context: context,
-      builder: (_) => _PrincipleWriter(ref: ref),
+      builder: (_) => const _PrincipleWriter(),
     );
 
-Future<void> showNewAssumptionSheet(BuildContext context, WidgetRef ref) =>
+Future<void> showNewAssumptionSheet(BuildContext context, WidgetRef _) =>
     showAppFormSheet<void>(
       context: context,
-      builder: (_) => _AssumptionWriter(ref: ref),
+      builder: (_) => const _AssumptionWriter(),
     );
 
-Future<void> showNewConceptSheet(BuildContext context, WidgetRef ref) =>
+Future<void> showNewConceptSheet(BuildContext context, WidgetRef _) =>
     showAppFormSheet<void>(
       context: context,
-      builder: (_) => _ConceptWriter(ref: ref),
+      builder: (_) => const _ConceptWriter(),
     );
 
-Future<void> showNewExperimentSheet(BuildContext context, WidgetRef ref) =>
+Future<void> showNewExperimentSheet(BuildContext context, WidgetRef _) =>
     showAppFormSheet<void>(
       context: context,
-      builder: (_) => _ExperimentWriter(ref: ref),
+      builder: (_) => const _ExperimentWriter(),
     );
 
 // ── Principle ────────────────────────────────────────────────────────────
 
-class _PrincipleWriter extends StatefulWidget {
-  const _PrincipleWriter({required this.ref});
-  final WidgetRef ref;
+class _PrincipleWriter extends ConsumerStatefulWidget {
+  const _PrincipleWriter();
   @override
-  State<_PrincipleWriter> createState() => _PrincipleWriterState();
+  ConsumerState<_PrincipleWriter> createState() => _PrincipleWriterState();
 }
 
-class _PrincipleWriterState extends State<_PrincipleWriter> {
+class _PrincipleWriterState extends ConsumerState<_PrincipleWriter> {
   final _stmtCtrl = TextEditingController();
   final _rationaleCtrl = TextEditingController();
   final _scopeCtrl = TextEditingController(text: '*');
@@ -77,8 +76,8 @@ class _PrincipleWriterState extends State<_PrincipleWriter> {
     if (_saving || _stmtCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
     try {
-      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper = await widget.ref.read(mutationStamperProvider.future);
+      final repo = await ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
       await repo.upsertPrinciple(
         KnowledgePrinciple(
@@ -158,14 +157,13 @@ class _PrincipleWriterState extends State<_PrincipleWriter> {
 
 // ── Assumption ───────────────────────────────────────────────────────────
 
-class _AssumptionWriter extends StatefulWidget {
-  const _AssumptionWriter({required this.ref});
-  final WidgetRef ref;
+class _AssumptionWriter extends ConsumerStatefulWidget {
+  const _AssumptionWriter();
   @override
-  State<_AssumptionWriter> createState() => _AssumptionWriterState();
+  ConsumerState<_AssumptionWriter> createState() => _AssumptionWriterState();
 }
 
-class _AssumptionWriterState extends State<_AssumptionWriter> {
+class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
   final _stmtCtrl = TextEditingController();
   final _scopeCtrl = TextEditingController(text: '*');
   double _confidence = 0.7;
@@ -190,8 +188,8 @@ class _AssumptionWriterState extends State<_AssumptionWriter> {
     if (_saving || _stmtCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
     try {
-      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper = await widget.ref.read(mutationStamperProvider.future);
+      final repo = await ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
       await repo.upsertAssumption(
         KnowledgeAssumption(
@@ -296,14 +294,13 @@ class _AssumptionWriterState extends State<_AssumptionWriter> {
 
 // ── Concept ──────────────────────────────────────────────────────────────
 
-class _ConceptWriter extends StatefulWidget {
-  const _ConceptWriter({required this.ref});
-  final WidgetRef ref;
+class _ConceptWriter extends ConsumerStatefulWidget {
+  const _ConceptWriter();
   @override
-  State<_ConceptWriter> createState() => _ConceptWriterState();
+  ConsumerState<_ConceptWriter> createState() => _ConceptWriterState();
 }
 
-class _ConceptWriterState extends State<_ConceptWriter> {
+class _ConceptWriterState extends ConsumerState<_ConceptWriter> {
   final _nameCtrl = TextEditingController();
   final _aliasesCtrl = TextEditingController();
   final _summaryCtrl = TextEditingController();
@@ -329,8 +326,8 @@ class _ConceptWriterState extends State<_ConceptWriter> {
     if (_saving || _nameCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
     try {
-      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper = await widget.ref.read(mutationStamperProvider.future);
+      final repo = await ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
       final aliases = _aliasesCtrl.text
           .split(',')
@@ -415,14 +412,13 @@ class _ConceptWriterState extends State<_ConceptWriter> {
 
 // ── Experiment ───────────────────────────────────────────────────────────
 
-class _ExperimentWriter extends StatefulWidget {
-  const _ExperimentWriter({required this.ref});
-  final WidgetRef ref;
+class _ExperimentWriter extends ConsumerStatefulWidget {
+  const _ExperimentWriter();
   @override
-  State<_ExperimentWriter> createState() => _ExperimentWriterState();
+  ConsumerState<_ExperimentWriter> createState() => _ExperimentWriterState();
 }
 
-class _ExperimentWriterState extends State<_ExperimentWriter> {
+class _ExperimentWriterState extends ConsumerState<_ExperimentWriter> {
   final _hypoCtrl = TextEditingController();
   final _methodCtrl = TextEditingController();
   final _metricsCtrl = TextEditingController();
@@ -449,8 +445,8 @@ class _ExperimentWriterState extends State<_ExperimentWriter> {
     if (_saving || _hypoCtrl.text.trim().isEmpty) return;
     setState(() => _saving = true);
     try {
-      final repo = await widget.ref.read(knowledgeRepositoryProvider.future);
-      final stamper = await widget.ref.read(mutationStamperProvider.future);
+      final repo = await ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await ref.read(mutationStamperProvider.future);
       final stamp = await stamper.stamp();
       final metrics = _metricsCtrl.text
           .split(',')
@@ -533,7 +529,6 @@ class _ExperimentWriterState extends State<_ExperimentWriter> {
             initiallyExpanded: false,
             children: [
               _AssumptionTargetPicker(
-                ref: widget.ref,
                 selectedId: _targetAssumptionId,
                 onChange: (id) => setState(() => _targetAssumptionId = id),
               ),
@@ -547,16 +542,14 @@ class _ExperimentWriterState extends State<_ExperimentWriter> {
 
 class _AssumptionTargetPicker extends ConsumerWidget {
   const _AssumptionTargetPicker({
-    required this.ref,
     required this.selectedId,
     required this.onChange,
   });
-  final WidgetRef ref;
   final String? selectedId;
   final ValueChanged<String?> onChange;
 
   @override
-  Widget build(BuildContext context, WidgetRef _) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return FutureBuilder<String>(
       future: ref.watch(currentUserIdProvider)(),
       builder: (context, ownerSnap) {

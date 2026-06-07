@@ -5650,6 +5650,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get knowledgeNoteDetailTitle => 'Note';
+
+  @override
   String get knowledgeConceptDetailTitle => 'Concept';
 
   @override
@@ -5660,6 +5663,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeAssumptionDetailTitle => 'Assumption';
+
+  @override
+  String get knowledgeRoutineDetailTitle => 'Routine';
 
   @override
   String get knowledgeObjectDetailTitle => 'Details';
@@ -5708,6 +5714,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeDetailEvidenceTitle => 'Evidence';
+
+  @override
+  String get knowledgeDetailBodyTitle => 'Body';
+
+  @override
+  String get knowledgeDetailSourceTitle => 'Source';
 
   @override
   String knowledgeDetailAliases(Object aliases) {
@@ -5760,6 +5772,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeDetailUpdatedLabel => 'Updated';
 
   @override
+  String get knowledgeDetailProjectLabel => 'Project';
+
+  @override
+  String get knowledgeDetailTagsLabel => 'Tags';
+
+  @override
   String get knowledgeDetailAliasesLabel => 'Aliases';
 
   @override
@@ -5767,6 +5785,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeDetailEndedLabel => 'Ended';
+
+  @override
+  String get knowledgeDetailNextDueLabel => 'Next due';
+
+  @override
+  String get knowledgeDetailLastDoneLabel => 'Last done';
+
+  @override
+  String get knowledgeDetailIntervalLabel => 'Interval';
 
   @override
   String get knowledgeDetailTargetAssumptionTitle => 'Target assumption';
