@@ -8884,4 +8884,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get amountHidden => 'Amount hidden';
+
+  @override
+  String get activityExpenseListLink => 'Expenses';
+
+  @override
+  String get activityExpenseReportLink => 'Expense Report';
 }

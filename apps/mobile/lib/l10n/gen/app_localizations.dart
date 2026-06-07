@@ -15329,6 +15329,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Amount hidden'**
   String get amountHidden;
+
+  /// Activity page quick link: navigate to expense list
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get activityExpenseListLink;
+
+  /// Activity page quick link: navigate to expense report
+  ///
+  /// In en, this message translates to:
+  /// **'Expense Report'**
+  String get activityExpenseReportLink;
 }
 
 class _AppLocalizationsDelegate

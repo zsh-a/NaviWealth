@@ -291,10 +291,11 @@ class ExpenseGroupedList extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s8),
-                Text(
-                  l10n.expenseListTotal(formatter.currency(group.total)),
+                MoneyText(
+                  amount: group.total.toDouble(),
+                  compact: true,
                   style: context.theme.typography.sm.copyWith(
-                    fontFeatures: TypographyTokens.tabularFigures,
+                    color: context.theme.colors.mutedForeground,
                   ),
                 ),
               ],
@@ -369,11 +370,9 @@ class _ExpenseRow extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      suffix: Text(
-        formatter.currency(expense.amount, code: expense.currency),
-        style: context.theme.typography.md.copyWith(
-          fontFeatures: TypographyTokens.tabularFigures,
-        ),
+      suffix: MoneyText(
+        amount: expense.amount.toDouble(),
+        currencyCode: expense.currency,
       ),
       onPress: onTap,
     );

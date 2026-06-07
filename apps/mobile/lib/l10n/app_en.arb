@@ -4718,5 +4718,9 @@
   "knowledgeNotesHintTitle": "Notes are captured in Inbox",
   "knowledgeNotesHintBody": "The Notes segment is for browsing. Close this panel, switch to Inbox, and use the create action there.",
   "amountHidden": "Amount hidden",
-  "@amountHidden": { "description": "Screen reader label when monetary amount is hidden by privacy mode" }
+  "@amountHidden": { "description": "Screen reader label when monetary amount is hidden by privacy mode" },
+  "activityExpenseListLink": "Expenses",
+  "@activityExpenseListLink": { "description": "Activity page quick link: navigate to expense list" },
+  "activityExpenseReportLink": "Expense Report",
+  "@activityExpenseReportLink": { "description": "Activity page quick link: navigate to expense report" }
 }

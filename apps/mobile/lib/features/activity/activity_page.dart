@@ -91,6 +91,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _ActivityKindFilterRow(),
+                    _ExpenseQuickLinks(),
                     Expanded(child: ActivityFeed()),
                   ],
                 );
@@ -195,6 +196,31 @@ class _ActivityRightRail extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.s16,
                   AppSpacing.s12,
+                  AppSpacing.s16,
+                  0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _QuickLinkTile(
+                      icon: FLucideIcons.receipt,
+                      label: l10n.activityExpenseListLink,
+                      onTap: () => context.go(AppRoutes.activityExpenses),
+                    ),
+                    const SizedBox(height: AppSpacing.s8),
+                    _QuickLinkTile(
+                      icon: FLucideIcons.pieChart,
+                      label: l10n.activityExpenseReportLink,
+                      onTap: () => context.go(AppRoutes.expenseReport),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s16,
+                  0,
                   AppSpacing.s16,
                   0,
                 ),
@@ -335,4 +361,87 @@ class _FilterChip extends StatelessWidget {
 
 String _labelForKind(AppLocalizations l10n, ActivityKind kind) {
   return entryKindLabel(l10n, entryKindFromActivityKind(kind));
+}
+
+/// Two small quick-link tiles for "Expenses" and "Expense Report", giving
+/// users a discoverable entry to the dedicated expense surfaces from the
+/// Activity page.
+class _ExpenseQuickLinks extends StatelessWidget {
+  const _ExpenseQuickLinks();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        0,
+        AppSpacing.s16,
+        AppSpacing.s8,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _QuickLinkTile(
+              icon: FLucideIcons.receipt,
+              label: l10n.activityExpenseListLink,
+              onTap: () => context.go(AppRoutes.activityExpenses),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          Expanded(
+            child: _QuickLinkTile(
+              icon: FLucideIcons.pieChart,
+              label: l10n.activityExpenseReportLink,
+              onTap: () => context.go(AppRoutes.expenseReport),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickLinkTile extends StatelessWidget {
+  const _QuickLinkTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return SoftCard(
+      padding: EdgeInsets.zero,
+      child: FTile(
+        onPress: onTap,
+        prefix: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: colors.foreground.withValues(alpha: AppOpacity.whisper),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, size: AppIconSizes.h18, color: colors.mutedForeground),
+        ),
+        title: Text(
+          label,
+          style: context.theme.typography.sm.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        suffix: Icon(
+          FLucideIcons.chevronRight,
+          size: AppIconSizes.sm,
+          color: colors.mutedForeground.withValues(alpha: AppOpacity.prominent),
+        ),
+      ),
+    );
+  }
 }
