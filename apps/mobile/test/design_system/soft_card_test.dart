@@ -24,6 +24,12 @@ void main() {
     expect(_decoration(tester).boxShadow, isNull);
   });
 
+  testWidgets('flat cards avoid hard borders in dense lists', (tester) async {
+    await tester.pumpWidget(_wrap(const SoftCard(child: Text('flat'))));
+
+    expect(_decoration(tester).border, isNull);
+  });
+
   testWidgets('raised cards add a modern surface shadow', (tester) async {
     await tester.pumpWidget(
       _wrap(const SoftCard(level: SoftCardLevel.raised, child: Text('raised'))),
@@ -31,5 +37,15 @@ void main() {
 
     expect(_decoration(tester).boxShadow, isNotNull);
     expect(_decoration(tester).boxShadow, isNotEmpty);
+  });
+
+  testWidgets('raised cards keep only a light surface boundary', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(const SoftCard(level: SoftCardLevel.raised, child: Text('raised'))),
+    );
+
+    expect(_decoration(tester).border, isNotNull);
   });
 }

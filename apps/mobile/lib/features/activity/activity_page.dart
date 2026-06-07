@@ -379,22 +379,19 @@ class _ExpenseQuickLinks extends StatelessWidget {
         AppSpacing.s16,
         AppSpacing.s8,
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _QuickLinkTile(
-              icon: FLucideIcons.receipt,
-              label: l10n.activityExpenseListLink,
-              onTap: () => context.push(AppRoutes.activityExpenses),
-            ),
+      child: AppGroupedActionList(
+        actions: [
+          AppGroupedAction(
+            icon: FLucideIcons.receipt,
+            title: l10n.activityExpenseListLink,
+            subtitle: '',
+            onPress: () => context.push(AppRoutes.activityExpenses),
           ),
-          const SizedBox(width: AppSpacing.s8),
-          Expanded(
-            child: _QuickLinkTile(
-              icon: FLucideIcons.pieChart,
-              label: l10n.activityExpenseReportLink,
-              onTap: () => context.push(AppRoutes.expenseReport),
-            ),
+          AppGroupedAction(
+            icon: FLucideIcons.pieChart,
+            title: l10n.activityExpenseReportLink,
+            subtitle: '',
+            onPress: () => context.push(AppRoutes.expenseReport),
           ),
         ],
       ),

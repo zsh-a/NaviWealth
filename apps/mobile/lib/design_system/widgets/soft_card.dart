@@ -145,17 +145,21 @@ class _SoftCardState extends State<SoftCard> {
               : colors.foreground.withValues(alpha: hoverBoost))
         : baseTint;
 
-    // Spec: soft border (#E6F1F3), barely visible.
-    final borderColor = widget.borderless
+    final borderAlpha = switch (widget.level) {
+      SoftCardLevel.flat => 0.0,
+      SoftCardLevel.raised => AppOpacity.faint,
+      SoftCardLevel.hero => AppOpacity.subtle,
+    };
+    final borderColor = widget.borderless || borderAlpha == 0
         ? Colors.transparent
         : (isDark
-              ? colors.border.withValues(alpha: AppOpacity.faint)
-              : const Color(0xFFE3ECEE));
+              ? colors.border.withValues(alpha: borderAlpha)
+              : const Color(0xFFCAD7DA).withValues(alpha: borderAlpha));
 
     return BoxDecoration(
       color: tint,
       borderRadius: BorderRadius.circular(widget.borderRadius),
-      border: widget.borderless
+      border: widget.borderless || borderAlpha == 0
           ? null
           : Border.all(color: borderColor, width: 1),
       boxShadow: _shadows(

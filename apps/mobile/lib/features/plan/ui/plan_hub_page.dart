@@ -69,6 +69,8 @@ class _PlanHero extends ConsumerWidget {
       loading: () => const SoftCard(
         padding: EdgeInsets.all(AppSpacing.s20),
         borderRadius: AppRadius.xlg,
+        borderless: true,
+        tinted: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -109,6 +111,8 @@ class _PlanHero extends ConsumerWidget {
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s20),
       borderRadius: AppRadius.xlg,
+      borderless: true,
+      tinted: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -146,6 +150,8 @@ class _PlanHero extends ConsumerWidget {
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s20),
       borderRadius: AppRadius.xlg,
+      borderless: true,
+      tinted: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

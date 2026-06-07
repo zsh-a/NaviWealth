@@ -1,8 +1,7 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
-import 'soft_card.dart';
 
 class AppGroupedAction {
   const AppGroupedAction({
@@ -29,30 +28,37 @@ class AppGroupedActionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
-      borderless: true,
-      borderRadius: AppRadius.xlg,
-      level: SoftCardLevel.raised,
-      child: Column(
-        children: [
-          for (var i = 0; i < actions.length; i++) ...[
-            _ActionRow(action: actions[i]),
-            if (i != actions.length - 1)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(
-                  start: AppSpacing.s64,
-                ),
-                child: SizedBox(
-                  height: 1,
-                  child: ColoredBox(
-                    color: context.theme.colors.border.withValues(
-                      alpha: AppOpacity.muted,
+    final colors = context.theme.colors;
+    final isDark = colors.brightness == Brightness.dark;
+    final background = isDark
+        ? colors.card.withValues(alpha: AppOpacity.muted)
+        : const Color(0xFFF1F5F5);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppRadius.xlg),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10),
+        child: Column(
+          children: [
+            for (var i = 0; i < actions.length; i++) ...[
+              _ActionRow(action: actions[i]),
+              if (i != actions.length - 1)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(
+                    start: AppSpacing.s48,
+                  ),
+                  child: SizedBox(
+                    height: 1,
+                    child: ColoredBox(
+                      color: colors.border.withValues(alpha: AppOpacity.faint),
                     ),
                   ),
                 ),
-              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -66,38 +72,70 @@ class _ActionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FTile(
-      onPress: action.onPress,
-      prefix: Container(
-        width: AppSpacing.s40,
-        height: AppSpacing.s40,
-        decoration: BoxDecoration(
-          color: colors.primary.withValues(alpha: AppOpacity.subtle),
-          shape: BoxShape.circle,
+    return Semantics(
+      button: true,
+      label: action.title,
+      child: FTappable(
+        onPress: action.onPress,
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.s2,
+            vertical: action.subtitle.isEmpty ? AppSpacing.s14 : AppSpacing.s12,
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: AppSpacing.s32,
+                height: AppSpacing.s32,
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Icon(
+                    action.icon,
+                    size: AppIconSizes.md,
+                    color: colors.mutedForeground,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      action.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.theme.typography.sm.copyWith(
+                        color: colors.foreground,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (action.subtitle.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.s2),
+                      Text(
+                        action.subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.theme.typography.xs.copyWith(
+                          color: colors.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              Icon(
+                FLucideIcons.chevronRight,
+                size: AppIconSizes.sm,
+                color: colors.mutedForeground.withValues(
+                  alpha: AppOpacity.disabled,
+                ),
+              ),
+            ],
+          ),
         ),
-        alignment: Alignment.center,
-        child: Icon(action.icon, size: AppIconSizes.md, color: colors.primary),
-      ),
-      title: Text(
-        action.title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: context.theme.typography.sm.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      subtitle: Text(
-        action.subtitle,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: context.theme.typography.xs.copyWith(
-          color: colors.mutedForeground,
-        ),
-      ),
-      suffix: Icon(
-        FLucideIcons.chevronRight,
-        size: AppIconSizes.md,
-        color: colors.mutedForeground.withValues(alpha: AppOpacity.scrim),
       ),
     );
   }
