@@ -146,21 +146,20 @@ class _MobileLayout extends ConsumerWidget {
 
     final router = GoRouter.of(context);
     final routeListenable = router.routeInformationProvider;
-    return ValueListenableBuilder(
-      valueListenable: routeListenable,
-      builder: (context, _, _) {
+    // Merge both listenables into a single AnimatedBuilder to avoid
+    // double-nested ValueListenableBuilder — route changes no longer
+    // cause the inner VLB to rebuild unnecessarily.
+    return AnimatedBuilder(
+      animation: Listenable.merge([routeListenable, appSheetOverlayDepthListenable]),
+      builder: (context, _) {
         final path = routeListenable.value.uri.path;
         final onTabRoot = tabs.any((tab) => tab.routePath == path);
+        final sheetOpen = appSheetOverlayDepthListenable.value > 0;
+        final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+        final showNav = onTabRoot && !sheetOpen && !keyboardOpen;
+        final dockReserve = showNav ? _dockReserve(context) : 0.0;
 
-        return ValueListenableBuilder<int>(
-          valueListenable: appSheetOverlayDepthListenable,
-          builder: (context, sheetDepth, _) {
-            final sheetOpen = sheetDepth > 0;
-            final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
-            final showNav = onTabRoot && !sheetOpen && !keyboardOpen;
-            final dockReserve = showNav ? _dockReserve(context) : 0.0;
-
-            return FScaffold(
+        return FScaffold(
               childPad: false,
               // The shell must NOT resize for the keyboard: every routed page builds
               // its own keyboard-aware scaffold (DomainTabScaffold / ObjectDetailScaffold
@@ -226,8 +225,6 @@ class _MobileLayout extends ConsumerWidget {
                 ],
               ),
             );
-          },
-        );
       },
     );
   }

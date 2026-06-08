@@ -272,32 +272,34 @@ class _AllocationSankeyChart extends StatelessWidget {
               ).hitTest(details.localPosition, flows, liabilityAlloc);
               if (hit != null) onTap(hit);
             },
-            child: CustomPaint(
-              painter: _SankeyPainter(
-                flows: flows,
-                totalAssetsLabel: l10n.assetsAppBarTitle,
-                totalAssetsValueLabel: valueAxis.formatValue(
-                  snapshot.totalAssets.amount.toDouble(),
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: _SankeyPainter(
+                  flows: flows,
+                  totalAssetsLabel: l10n.assetsAppBarTitle,
+                  totalAssetsValueLabel: valueAxis.formatValue(
+                    snapshot.totalAssets.amount.toDouble(),
+                  ),
+                  netWorthLabel: l10n.homeNetWorthTitle,
+                  netWorthValue: snapshot.netWorth.amount
+                      .toDouble()
+                      .clamp(0.0, double.infinity)
+                      .toDouble(),
+                  netWorthValueLabel: valueAxis.formatValue(
+                    snapshot.netWorth.amount.toDouble(),
+                  ),
+                  liabilityLabel: l10n.dashboardCategoryLiability,
+                  liabilityValue: liabilityValue,
+                  liabilityValueLabel: valueAxis.formatValue(liabilityValue),
+                  liabilityAllocation: liabilityAlloc,
+                  neutralColor: colors.mutedForeground,
+                  profitColor: MarketColors.of(context).up,
+                  lossColor: MarketColors.of(context).down,
+                  labelColor: colors.foreground,
+                  valueColor: colors.mutedForeground,
                 ),
-                netWorthLabel: l10n.homeNetWorthTitle,
-                netWorthValue: snapshot.netWorth.amount
-                    .toDouble()
-                    .clamp(0.0, double.infinity)
-                    .toDouble(),
-                netWorthValueLabel: valueAxis.formatValue(
-                  snapshot.netWorth.amount.toDouble(),
-                ),
-                liabilityLabel: l10n.dashboardCategoryLiability,
-                liabilityValue: liabilityValue,
-                liabilityValueLabel: valueAxis.formatValue(liabilityValue),
-                liabilityAllocation: liabilityAlloc,
-                neutralColor: colors.mutedForeground,
-                profitColor: MarketColors.of(context).up,
-                lossColor: MarketColors.of(context).down,
-                labelColor: colors.foreground,
-                valueColor: colors.mutedForeground,
+                child: const SizedBox.expand(),
               ),
-              child: const SizedBox.expand(),
             ),
           );
         },

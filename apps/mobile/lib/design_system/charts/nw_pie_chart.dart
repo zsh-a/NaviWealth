@@ -62,6 +62,10 @@ class NwPieChart extends StatefulWidget {
 class _NwPieChartState extends State<NwPieChart> {
   int _highlightedIndex = -1;
 
+  // Cache NumberFormat — constructing it is expensive and unnecessary
+  // on every frame during touch drag.
+  static final NumberFormat _compactFormat = NumberFormat.compact();
+
   @override
   Widget build(BuildContext context) {
     if (widget.slices.isEmpty) {
@@ -216,7 +220,7 @@ class _NwPieChartState extends State<NwPieChart> {
     );
   }
 
-  String _formatCompact(double value) => NumberFormat.compact().format(value);
+  String _formatCompact(double value) => _compactFormat.format(value);
 
   PieTouchData _buildTouchData() {
     return PieTouchData(
