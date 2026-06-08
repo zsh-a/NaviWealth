@@ -55,3 +55,83 @@ impl GarminAuthState {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unauthenticated_cannot_make_requests() {
+        assert!(!GarminAuthState::Unauthenticated.can_make_requests());
+    }
+
+    #[test]
+    fn pending_mfa_cannot_make_requests() {
+        assert!(!GarminAuthState::PendingMfa {
+            session_ticket: "ticket".into()
+        }
+        .can_make_requests());
+    }
+
+    #[test]
+    fn authenticated_can_make_requests() {
+        assert!(GarminAuthState::Authenticated {
+            expires_at: Utc::now() + chrono::Duration::hours(1)
+        }
+        .can_make_requests());
+    }
+
+    #[test]
+    fn refreshing_cannot_make_requests() {
+        assert!(!GarminAuthState::Refreshing.can_make_requests());
+    }
+
+    #[test]
+    fn error_cannot_make_requests() {
+        assert!(!GarminAuthState::Error {
+            message: "fail".into()
+        }
+        .can_make_requests());
+    }
+
+    #[test]
+    fn authenticated_not_expired_no_refresh() {
+        let state = GarminAuthState::Authenticated {
+            expires_at: Utc::now() + chrono::Duration::hours(1),
+        };
+        assert!(!state.needs_refresh());
+    }
+
+    #[test]
+    fn authenticated_near_expiry_needs_refresh() {
+        let state = GarminAuthState::Authenticated {
+            expires_at: Utc::now() + chrono::Duration::minutes(2),
+        };
+        assert!(state.needs_refresh());
+    }
+
+    #[test]
+    fn non_authenticated_never_needs_refresh() {
+        assert!(!GarminAuthState::Unauthenticated.needs_refresh());
+        assert!(!GarminAuthState::PendingMfa {
+            session_ticket: "t".into()
+        }
+        .needs_refresh());
+        assert!(!GarminAuthState::Refreshing.needs_refresh());
+    }
+
+    #[test]
+    fn auth_result_serialization_roundtrip() {
+        let cases = vec![
+            AuthResult::Authenticated,
+            AuthResult::MfaRequired,
+            AuthResult::Failed("bad password".into()),
+        ];
+        for case in cases {
+            let json = serde_json::to_string(&case).unwrap();
+            let back: AuthResult = serde_json::from_str(&json).unwrap();
+            // Verify round-trip produces same Debug output.
+            assert_eq!(format!("{:?}", case), format!("{:?}", back));
+        }
+    }
+}

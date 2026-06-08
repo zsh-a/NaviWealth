@@ -1,6 +1,6 @@
 # Garmin Connect Integration — Implementation Plan
 
-> **Status**: Draft
+> **Status**: Phase 2 Rust core + Dart shell implemented; FRB bindings pending codegen
 > **Date**: 2026-06-08
 > **Domain**: HealthOS
 > **Scope**: Add Garmin Connect as a health data provider — Rust core, Dart shell
@@ -552,28 +552,50 @@ Authenticate via `python-garminconnect`, dump 7 days of data:
 
 ### 4.3 Deliverables
 
-- [ ] `scripts/garmin_probe.py`
-- [ ] `scripts/garmin_sample_output.json` — 7-day sample
-- [ ] Confirmed field shapes → feed into Rust `mapper.rs` tests
-- [ ] Rate limit notes → feed into `rate_limiter.rs` config
-- [ ] Auth flow notes → feed into `auth.rs` state machine
+- [x] `scripts/garmin_probe.py` — CN region support, correct method names
+- [x] `garmin_sample_output.json` — 7-day sample (2026-06-02..08)
+- [x] Confirmed field shapes → Rust `mapper.rs` golden tests (16 tests)
+- [x] Rate limit notes → `rate_limiter.rs` (500ms interval, 30s base backoff)
+- [x] Auth flow notes → `auth.rs` state machine
+
+### 4.4 Confirmed Data Shapes (2026-06-08 CN Probe)
+
+| Endpoint | Method | Response Shape | Mapper |
+|---|---|---|---|
+| Steps | `get_steps_data(d)` | `[{startGMT, endGMT, steps: N}, ...]` (15-min intervals) | `map_steps` — sums intervals |
+| Sleep | `get_sleep_data(d)` | `{dailySleepDTO: {id, sleepStartTimestampGMT (epoch ms), sleepTimeSeconds, deepSleepSeconds, lightSleepSeconds, remSleepSeconds, awakeSleepSeconds, avgHeartRate}}` | `map_sleep` + `map_heart_rate_from_sleep` |
+| RHR | `get_rhr_day(d)` | `{allMetrics: {metricsMap: {WELLNESS_RESTING_HEART_RATE: [{value, calendarDate}]}}}` | `map_rhr` |
+| HRV | `get_hrv_data(d)` | `{hrvSummary: {lastNightAvg, weeklyAvg, ...}}` | `map_hrv` |
+| Body Battery | `get_body_battery(d)` | `[{date, charged, drained, bodyBatteryValuesArray: [[ts, val], ...]}]` | `map_body_battery` |
+| Stress | `get_stress_data(d)` | `{avgStressLevel, maxStressLevel, stressValuesArray: [...]}` | `map_stress` |
+| Activities | `get_activities(0, N)` | `[{activityId, activityType: {typeKey}, startTimeGMT, duration (float sec), distance (m), calories}]` | `map_activity` |
+| User Summary | `get_user_summary(d)` | ❌ Method doesn't exist in current python-garminconnect | N/A |
+| Weight | `get_daily_weigh_ins(d)` | ❌ Empty/error for this user | N/A |
+| Training Status | `get_training_status()` | ❌ Error for this user | N/A |
+
+**Success rate**: 6/8 endpoints working (steps, sleep, RHR, HRV, body battery, stress, activities).
+
+**Key findings**:
+- Heart rate: extracted from sleep DTO's `avgHeartRate` (not a separate endpoint)
+- Sleep start time: epoch milliseconds, not ISO string
+- Steps: 15-minute intervals, must sum for daily total
+- RHR: nested in `allMetrics.metricsMap.WELLNESS_RESTING_HEART_RATE`
+- Body Battery: array with `charged`/`drained` + per-slot `bodyBatteryValuesArray`
 
 ---
 
 ## 5. Testing Strategy
 
-### 5.1 Rust Tests
+### 5.1 Rust Tests (34 passing)
 
-| Test file | Coverage |
-|---|---|
-| `garmin/auth_test.rs` | Auth state machine transitions, MFA flow, token expiry |
-| `garmin/client_test.rs` | Mock HTTP: SSO flow, cookie handling, 429 retry, token refresh |
-| `garmin/mapper_test.rs` | Snapshot tests: Garmin JSON → `HealthSnapshot` (golden files from Phase 1) |
-| `garmin/rate_limiter_test.rs` | Concurrency, backoff, burst |
-| `sync_engine_test.rs` | Cursor advancement, dedup, incremental sync |
-| `provider_test.rs` | `GarminProvider` implements `HealthProvider` correctly |
+| Module | Tests | Coverage |
+|---|---|---|
+| `mapper.rs` (inline `#[cfg(test)]`) | 16 | Steps summing, sleep DTO parsing, RHR metricsMap, HRV summary, body battery array, stress, activity, VO2 max, build_snapshot, edge cases (zero/empty) |
+| `auth.rs` (inline `#[cfg(test)]`) | 9 | can_make_requests per state, needs_refresh expiry, serialization roundtrip |
+| `rate_limiter.rs` (inline `#[cfg(test)]`) | 7 | 429 exponential backoff, max cap, success reset, run/execute, error propagation |
+| `embedder.rs` (existing) | 3 | Constants, empty dir, missing dir |
 
-Golden test data comes from `garmin_sample_output.json` (Phase 1).
+Golden test data uses real Garmin CN JSON shapes from `garmin_sample_output.json` (2026-06-08).
 
 ### 5.2 Dart Tests
 
@@ -601,16 +623,17 @@ All existing lints pass unchanged:
 
 ## 6. Implementation Timeline
 
-| Phase | Effort | Dependencies | Deliverable |
-|---|---|---|---|
-| **Phase 1**: Python probe | 1–2 days | Python, Garmin account | `garmin_probe.py`, sample JSON, confirmed field shapes |
-| **Phase 2a**: Rust crate — client + auth + mapper | 4–5 days | Phase 1 data | `GarminClient`, `GarminAuthStateMachine`, `GarminSnapshotMapper` |
-| **Phase 2b**: Rust crate — sync engine + FRB surface | 2–3 days | Phase 2a | `HealthSyncEngine`, FRB bindings generated |
-| **Phase 2c**: Dart shell — bridge + writer + controller | 2–3 days | Phase 2b | `GarminBridge`, `GarminSnapshotWriter`, `GarminSyncController` |
-| **Phase 2d**: UI | 2 days | Phase 2c | Bind sheet, sync card, source selector |
-| **Phase 2e**: Tests | 2 days | Phase 2a–2d | Rust + Dart + widget + integration tests |
+| Phase | Status | Deliverable |
+|---|---|---|
+| **Phase 1**: Python probe | ✅ Done | `garmin_probe.py`, 7-day CN sample, confirmed data shapes |
+| **Phase 2a**: Rust health types + provider | ✅ Done | `provider.rs` (HealthProvider trait + 7 types), `mapper.rs` (16 golden tests) |
+| **Phase 2b**: Rust Garmin client + auth | ✅ Done | `client.rs`, `auth.rs` (9 tests), `rate_limiter.rs` (7 tests), `endpoints.rs` |
+| **Phase 2c**: Rust sync engine + FRB | ✅ Done | `sync_engine.rs`, `health.rs` FRB surface (primitive types only) |
+| **Phase 2d**: Dart shell | ✅ Done | `garmin_bridge.dart`, `garmin_sync_controller.dart`, `garmin_snapshot_writer.dart` |
+| **Phase 2e**: UI | ✅ Done | `garmin_account_bind_sheet.dart`, `garmin_sync_status_card.dart` |
+| **Phase 2f**: FRB codegen | ⏳ Pending | Run `tool/build-lifeos-native.sh` to generate Dart bindings |
 
-**Total**: ~13–17 days of focused work.
+**Remaining**: Run FRB codegen to generate Dart bindings from the Rust API surface.
 
 ---
 

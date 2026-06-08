@@ -88,3 +88,62 @@ impl Default for GarminRateLimiter {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn first_429_returns_base_backoff() {
+        let rl = GarminRateLimiter::new();
+        let backoff = rl.on_429();
+        assert_eq!(backoff, BASE_BACKOFF);
+    }
+
+    #[test]
+    fn consecutive_429s_exponential_backoff() {
+        let rl = GarminRateLimiter::new();
+        let b1 = rl.on_429(); // 30s
+        let b2 = rl.on_429(); // 60s
+        let b3 = rl.on_429(); // 120s
+        assert_eq!(b1, Duration::from_secs(30));
+        assert_eq!(b2, Duration::from_secs(60));
+        assert_eq!(b3, Duration::from_secs(120));
+    }
+
+    #[test]
+    fn backoff_capped_at_max() {
+        let rl = GarminRateLimiter::new();
+        for _ in 0..10 {
+            rl.on_429();
+        }
+        let backoff = rl.on_429();
+        assert!(backoff <= MAX_BACKOFF);
+    }
+
+    #[test]
+    fn success_resets_429_counter() {
+        let rl = GarminRateLimiter::new();
+        rl.on_429();
+        rl.on_429();
+        rl.on_success();
+        let backoff = rl.on_429();
+        assert_eq!(backoff, BASE_BACKOFF); // back to base
+    }
+
+    #[tokio::test]
+    async fn run_executes_request() {
+        let rl = GarminRateLimiter::new();
+        let result = rl.run(|| async { Ok(42i32) }).await.unwrap();
+        assert_eq!(result, 42);
+    }
+
+    #[tokio::test]
+    async fn run_propagates_error() {
+        let rl = GarminRateLimiter::new();
+        let result: anyhow::Result<i32> = rl
+            .run(|| async { Err(anyhow::anyhow!("fail")) })
+            .await;
+        assert!(result.is_err());
+    }
+}
