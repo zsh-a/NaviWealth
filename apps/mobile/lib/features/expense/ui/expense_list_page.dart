@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
@@ -83,12 +82,6 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
     if (widget.embedded) return body;
     return AppPageScaffold(
       title: l10n.navExpenses,
-      actions: [
-        FHeaderAction(
-          icon: const Icon(FLucideIcons.lightbulb),
-          onPress: () => context.push(AppRoutes.expenseReport),
-        ),
-      ],
       childPad: false,
       child: body,
     );
