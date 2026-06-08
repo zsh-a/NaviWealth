@@ -62,19 +62,19 @@ class SettingsOverview extends ConsumerWidget {
       child: Column(
         children: [
           const _RiskAppetiteRow(),
-          _SectionDivider(),
+          const AppGradientDivider(),
           _TargetAllocationLink(
             onTap: () => showTargetAllocationEditorSheet(context: context),
           ),
-          _SectionDivider(),
+          const AppGradientDivider(),
           _MonthlyExpenseLink(
             onTap: () => context.goNamed(AppRouteNames.monthlyExpense),
           ),
-          _SectionDivider(),
+          const AppGradientDivider(),
           _RiskThresholdsLink(
             onTap: () => context.goNamed(AppRouteNames.riskThresholds),
           ),
-          _SectionDivider(),
+          const AppGradientDivider(),
           _StressTestLink(
             onTap: () => context.goNamed(AppRouteNames.stressTest),
           ),
@@ -91,21 +91,21 @@ class SettingsOverview extends ConsumerWidget {
             subtitle: l10n.settingsAiPrivacySubtitle,
             onTap: () => context.goNamed(AppRouteNames.aiPrivacy),
           ),
-          _SectionDivider(),
+          const AppGradientDivider(),
           InlineLinkRow(
             icon: FLucideIcons.key,
             label: l10n.settingsAiLlmTitle,
             subtitle: l10n.settingsAiLlmSubtitle,
             onTap: () => context.goNamed(AppRouteNames.aiLlm),
           ),
-          _SectionDivider(),
+          const AppGradientDivider(),
           InlineLinkRow(
             icon: FLucideIcons.eye,
             label: l10n.settingsAiTransparencyTitle,
             subtitle: l10n.settingsAiTransparencySubtitle,
             onTap: () => context.goNamed(AppRouteNames.aiTransparency),
           ),
-          _SectionDivider(),
+          const AppGradientDivider(),
           InlineLinkRow(
             icon: FLucideIcons.download,
             label: l10n.settingsAiModelsTitle,
@@ -128,7 +128,7 @@ class SettingsOverview extends ConsumerWidget {
               subtitle: l10n.settingsSyncSubtitle,
               onTap: () => context.goNamed(AppRouteNames.sync),
             ),
-            _SectionDivider(),
+            const AppGradientDivider(),
           ],
           InlineLinkRow(
             icon: FLucideIcons.cloudUpload,
@@ -136,7 +136,7 @@ class SettingsOverview extends ConsumerWidget {
             subtitle: l10n.settingsDataSubtitle,
             onTap: () => context.goNamed(AppRouteNames.backup),
           ),
-          _SectionDivider(),
+          const AppGradientDivider(),
           const _CrashReportingRow(),
         ],
       ),
@@ -172,7 +172,7 @@ class SettingsOverview extends ConsumerWidget {
             subtitle: l10n.settingsLogsSubtitle,
             onTap: () => context.goNamed(AppRouteNames.logs),
           ),
-          _SectionDivider(),
+          const AppGradientDivider(),
           InlineLinkRow(
             icon: FLucideIcons.activity,
             label: l10n.settingsPerfTitle,
@@ -351,13 +351,6 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-/// Gradient fade divider between adjacent rows in the same SoftCard
-/// section — uses the shared [AppGradientDivider] for consistency.
-class _SectionDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => const AppGradientDivider();
-}
-
 class _AccountSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -494,7 +487,7 @@ class _NumbersAndMoneySection extends ConsumerWidget {
           onChanged: (picked) =>
               ref.read(baseCurrencyProvider.notifier).set(picked),
         ),
-        _SectionDivider(),
+        const AppGradientDivider(),
         InlineLinkRow(
           icon: FLucideIcons.refreshCw,
           label: l10n.settingsFxRatesTitle,
@@ -530,7 +523,7 @@ class _AppearanceSection extends ConsumerWidget {
             ref.read(themeModeProvider.notifier).set(m);
           },
         ),
-        _SectionDivider(),
+        const AppGradientDivider(),
         InlineSettingRow<MarketColorMode>(
           icon: FLucideIcons.arrowUpDown,
           label: l10n.settingsMarketColorTitle,
@@ -550,7 +543,7 @@ class _AppearanceSection extends ConsumerWidget {
           ),
           child: _MarketColorPreview(),
         ),
-        _SectionDivider(),
+        const AppGradientDivider(),
         InlineSettingRow<String>(
           icon: FLucideIcons.languages,
           label: l10n.settingsLanguageTitle,

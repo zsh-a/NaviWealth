@@ -246,31 +246,10 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32),
-      child: Column(
-        children: [
-          Icon(
-            FLucideIcons.chartPie,
-            size: AppIconSizes.hero,
-            color: context.theme.colors.mutedForeground,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          Text(
-            l10n.analyticsEmptyTitle,
-            style: context.theme.typography.md,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          Text(
-            l10n.analyticsEmptyHint,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return AppEmptyState(
+      icon: FLucideIcons.chartPie,
+      title: l10n.analyticsEmptyTitle,
+      message: l10n.analyticsEmptyHint,
     );
   }
 }

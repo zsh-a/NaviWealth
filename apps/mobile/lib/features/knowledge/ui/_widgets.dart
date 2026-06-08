@@ -147,8 +147,6 @@ class KnowledgeFloatingActionSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final isDark =
-        MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.primary,
@@ -156,7 +154,7 @@ class KnowledgeFloatingActionSurface extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: colors.primary.withValues(
-              alpha: isDark ? AppOpacity.muted : 0.30,
+              alpha: AppOpacity.muted,
             ),
             blurRadius: 16,
             offset: const Offset(0, 6),
