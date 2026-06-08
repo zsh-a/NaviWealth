@@ -121,11 +121,13 @@ class _MobileLayout extends ConsumerWidget {
   final ValueChanged<int> onDestinationSelected;
   final Widget child;
 
-  double _dockReserve(double bottomPadding) =>
+  /// Total visual height reserved for the floating dock:
+  /// nav bar + top/bottom spacing + device safe-area inset.
+  double _dockTotalHeight(double safeAreaBottom) =>
       kFloatingGlassNavBarHeight +
       _kMobileDockTopPadding +
       _kMobileDockBottomPadding +
-      bottomPadding;
+      safeAreaBottom;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -146,7 +148,7 @@ class _MobileLayout extends ConsumerWidget {
 
     // Read MediaQuery OUTSIDE the ValueListenableBuilder so keyboard
     // changes don't trigger nav-bar rebuilds, and vice versa.
-    final bottomPadding = MediaQuery.paddingOf(context).bottom;
+    final safeAreaBottom = MediaQuery.paddingOf(context).bottom;
 
     final router = GoRouter.of(context);
     final routeListenable = router.routeInformationProvider;
@@ -164,60 +166,70 @@ class _MobileLayout extends ConsumerWidget {
           builder: (context, sheetDepth, _) {
             final sheetOpen = sheetDepth > 0;
             final showNav = onTabRoot && !sheetOpen;
-            final dockReserve = showNav ? _dockReserve(bottomPadding) : 0.0;
+
+            // The total height the floating dock occupies.  When the nav
+            // is hidden this is 0 so content uses the full viewport.
+            final dockHeight = showNav ? _dockTotalHeight(safeAreaBottom) : 0.0;
+
+            // Content always fills the viewport. Bottom padding is
+            // injected via MediaQuery so scrollable pages can scroll
+            // their last item above the floating nav bar.
+            final content = MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                padding: MediaQuery.of(context).padding.copyWith(
+                  bottom: dockHeight,
+                ),
+              ),
+              child: child,
+            );
 
             return FScaffold(
               childPad: false,
               resizeToAvoidBottomInset: false,
               child: Stack(
                 children: [
-                  AnimatedPositioned(
-                    duration: Motion.medium,
-                    curve: Motion.standard,
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: dockReserve,
-                    child: child,
-                  ),
+                  // Content — always full viewport, never shrinks.
+                  Positioned.fill(child: content),
+                  // Floating dock — layered above content.
                   Positioned(
                     left: 0,
                     right: 0,
                     bottom: 0,
                     child: sheetOpen
                         ? const SizedBox.shrink()
-                        : showNav
-                        ? Column(
+                        : Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const PersistentUndoBanner(),
-                              Padding(
-                                padding: EdgeInsets.fromLTRB(
-                                  _kMobileDockHorizontalPadding,
-                                  _kMobileDockTopPadding,
-                                  _kMobileDockHorizontalPadding,
-                                  _kMobileDockBottomPadding + bottomPadding,
-                                ),
-                                child: GestureDetector(
-                                  behavior: HitTestBehavior.deferToChild,
-                                  onLongPress: hasSwitcher
-                                      ? () => showDomainSwitcherSheet(
-                                          context,
-                                          specs,
-                                        )
-                                      : null,
-                                  child: FloatingGlassNavBar(
-                                    items: navTabs,
-                                    selectedIndex: selectedIndex,
-                                    onIndexChanged: onDestinationSelected,
-                                    onCenterAction: () => askAi(context, ref),
-                                    centerLabel: 'AI',
+                              if (showNav)
+                                Padding(
+                                  padding: EdgeInsets.fromLTRB(
+                                    _kMobileDockHorizontalPadding,
+                                    _kMobileDockTopPadding,
+                                    _kMobileDockHorizontalPadding,
+                                    _kMobileDockBottomPadding +
+                                        safeAreaBottom,
+                                  ),
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.deferToChild,
+                                    onLongPress: hasSwitcher
+                                        ? () => showDomainSwitcherSheet(
+                                            context,
+                                            specs,
+                                          )
+                                        : null,
+                                    child: FloatingGlassNavBar(
+                                      items: navTabs,
+                                      selectedIndex: selectedIndex,
+                                      onIndexChanged: onDestinationSelected,
+                                      onCenterAction: () =>
+                                          askAi(context, ref),
+                                      centerLabel: 'AI',
+                                    ),
                                   ),
                                 ),
-                              ),
                             ],
-                          )
-                        : const PersistentUndoBanner(),
+                          ),
                   ),
                 ],
               ),
