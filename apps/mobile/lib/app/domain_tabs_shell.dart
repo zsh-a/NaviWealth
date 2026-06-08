@@ -121,11 +121,11 @@ class _MobileLayout extends ConsumerWidget {
   final ValueChanged<int> onDestinationSelected;
   final Widget child;
 
-  double _dockReserve(BuildContext context) =>
+  double _dockReserve(double bottomPadding) =>
       kFloatingGlassNavBarHeight +
       _kMobileDockTopPadding +
       _kMobileDockBottomPadding +
-      MediaQuery.paddingOf(context).bottom;
+      bottomPadding;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -144,29 +144,30 @@ class _MobileLayout extends ConsumerWidget {
         ),
     ];
 
+    // Read MediaQuery OUTSIDE the ValueListenableBuilder so keyboard
+    // changes don't trigger nav-bar rebuilds, and vice versa.
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
+
     final router = GoRouter.of(context);
     final routeListenable = router.routeInformationProvider;
-    // Merge both listenables into a single AnimatedBuilder to avoid
-    // double-nested ValueListenableBuilder — route changes no longer
-    // cause the inner VLB to rebuild unnecessarily.
-    return AnimatedBuilder(
-      animation: Listenable.merge([routeListenable, appSheetOverlayDepthListenable]),
-      builder: (context, _) {
+
+    // Two ValueListenableBuilders: route and sheet depth.
+    // Each only rebuilds when its own value changes.
+    return ValueListenableBuilder(
+      valueListenable: routeListenable,
+      builder: (context, _, _) {
         final path = routeListenable.value.uri.path;
         final onTabRoot = tabs.any((tab) => tab.routePath == path);
-        final sheetOpen = appSheetOverlayDepthListenable.value > 0;
-        final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
-        final showNav = onTabRoot && !sheetOpen && !keyboardOpen;
-        final dockReserve = showNav ? _dockReserve(context) : 0.0;
 
-        return FScaffold(
+        return ValueListenableBuilder<int>(
+          valueListenable: appSheetOverlayDepthListenable,
+          builder: (context, sheetDepth, _) {
+            final sheetOpen = sheetDepth > 0;
+            final showNav = onTabRoot && !sheetOpen;
+            final dockReserve = showNav ? _dockReserve(bottomPadding) : 0.0;
+
+            return FScaffold(
               childPad: false,
-              // The shell must NOT resize for the keyboard: every routed page builds
-              // its own keyboard-aware scaffold (DomainTabScaffold / ObjectDetailScaffold
-              // resize themselves; form pages own avoidance via AppFormScaffoldBody).
-              // If the shell also resized, the inset would be counted twice, lifting
-              // form action bars a keyboard-height above the IME with a blank band
-              // between (see app_form_scaffold_body_keyboard_test.dart).
               resizeToAvoidBottomInset: false,
               child: Stack(
                 children: [
@@ -189,17 +190,13 @@ class _MobileLayout extends ConsumerWidget {
                         ? Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Persistent undo banner sits between content and
-                              // the bottom nav. Hidden when the stack is empty.
                               const PersistentUndoBanner(),
-                              // Floating glass nav bar with center AI button.
                               Padding(
                                 padding: EdgeInsets.fromLTRB(
                                   _kMobileDockHorizontalPadding,
                                   _kMobileDockTopPadding,
                                   _kMobileDockHorizontalPadding,
-                                  _kMobileDockBottomPadding +
-                                      MediaQuery.paddingOf(context).bottom,
+                                  _kMobileDockBottomPadding + bottomPadding,
                                 ),
                                 child: GestureDetector(
                                   behavior: HitTestBehavior.deferToChild,
@@ -225,6 +222,8 @@ class _MobileLayout extends ConsumerWidget {
                 ],
               ),
             );
+          },
+        );
       },
     );
   }
