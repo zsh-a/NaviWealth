@@ -31,6 +31,7 @@ import '../data/providers.dart' as health_data;
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 import 'body_measurement_entry_sheet.dart';
+import 'garmin_sync_status_card.dart';
 import 'health_today_providers.dart';
 
 class HealthTodayPage extends ConsumerWidget {
@@ -55,6 +56,8 @@ class HealthTodayPage extends ConsumerWidget {
         padding: const EdgeInsets.all(AppSpacing.s16),
         children: const [
           _HealthDataStatusNotice(),
+          SizedBox(height: AppSpacing.s12),
+          GarminSyncStatusCard(),
           SizedBox(height: AppSpacing.s12),
           _RecoveryHero(),
           SizedBox(height: AppSpacing.s12),

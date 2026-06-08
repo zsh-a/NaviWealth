@@ -8,6 +8,10 @@
 
 pub mod api;
 
+// Internal health implementation — outside `api/` so FRB codegen
+// doesn't scan it. The thin FRB surface is at `api/health.rs`.
+pub(crate) mod health;
+
 #[allow(clippy::all)]
 #[allow(dead_code)]
 #[allow(unused_imports)]

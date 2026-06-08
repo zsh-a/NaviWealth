@@ -2,3 +2,4 @@
 //! scans goes here; internal helpers stay in sibling modules.
 
 pub mod embedder;
+pub mod health;
