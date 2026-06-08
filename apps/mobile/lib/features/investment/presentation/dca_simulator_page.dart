@@ -602,15 +602,8 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s24),
-      child: Center(
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: context.theme.typography.sm,
-        ),
-      ),
+    return AppEmptyState.error(
+      title: message,
     );
   }
 }

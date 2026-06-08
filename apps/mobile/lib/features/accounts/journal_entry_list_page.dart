@@ -63,28 +63,9 @@ class _EmptyJournal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              FLucideIcons.history,
-              size: AppIconSizes.hero,
-              color: context.theme.colors.mutedForeground,
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            Text(
-              l10n.journalEmptyHint,
-              textAlign: TextAlign.center,
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return AppEmptyState(
+      icon: FLucideIcons.history,
+      title: l10n.journalEmptyHint,
     );
   }
 }

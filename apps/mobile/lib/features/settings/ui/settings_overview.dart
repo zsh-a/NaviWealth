@@ -352,31 +352,10 @@ class _SectionHeader extends StatelessWidget {
 }
 
 /// Gradient fade divider between adjacent rows in the same SoftCard
-/// section — opaque→transparent→opaque horizontally for an organic
-/// ribbon-grouped feel instead of a hard line.
+/// section — uses the shared [AppGradientDivider] for consistency.
 class _SectionDivider extends StatelessWidget {
   @override
-  Widget build(BuildContext context) {
-    final color = context.theme.colors.foreground.withValues(
-      alpha: AppOpacity.whisper,
-    );
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
-      child: ShaderMask(
-        shaderCallback: (rect) => LinearGradient(
-          colors: [
-            color.withValues(alpha: 0),
-            color,
-            color,
-            color.withValues(alpha: 0),
-          ],
-          stops: const [0.0, 0.12, 0.88, 1.0],
-        ).createShader(rect),
-        blendMode: BlendMode.srcIn,
-        child: Container(height: 1, color: color),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const AppGradientDivider();
 }
 
 class _AccountSection extends ConsumerWidget {

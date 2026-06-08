@@ -160,6 +160,16 @@ class AppBlur {
 class AppShadow {
   const AppShadow._();
 
+  /// Subtle chip / badge shadow — minimal depth.
+  static const List<BoxShadow> elevation1 = [
+    BoxShadow(color: Color(0x0A002A38), blurRadius: 4, offset: Offset(0, 1)),
+  ];
+
+  /// Standard elevation — FABs, scroll-to-bottom buttons.
+  static const List<BoxShadow> elevation2 = [
+    BoxShadow(color: Color(0x0A002A38), blurRadius: 8, offset: Offset(0, 2)),
+  ];
+
   /// Standard card shadow — subtle depth.
   static const List<BoxShadow> card = [
     BoxShadow(color: Color(0x0A002A38), blurRadius: 28, offset: Offset(0, 10)),
@@ -168,6 +178,21 @@ class AppShadow {
   /// Card hover / pressed state — slightly deeper.
   static const List<BoxShadow> cardHover = [
     BoxShadow(color: Color(0x14002A38), blurRadius: 36, offset: Offset(0, 14)),
+  ];
+
+  /// Left-edge panel shadow — desktop side panels.
+  static const List<BoxShadow> panel = [
+    BoxShadow(color: Color(0x1A002A38), blurRadius: 24, offset: Offset(-8, 0)),
+  ];
+
+  /// Desktop sheet elevation — floating overlays.
+  static const List<BoxShadow> desktopSheet = [
+    BoxShadow(color: Color(0x1A002A38), blurRadius: 24, offset: Offset(0, 12)),
+  ];
+
+  /// Update banner shadow — bottom-edge accent.
+  static const List<BoxShadow> banner = [
+    BoxShadow(color: Color(0x1A002A38), blurRadius: 12, offset: Offset(0, -2)),
   ];
 
   /// Floating glass nav bar — soft ambient glow.

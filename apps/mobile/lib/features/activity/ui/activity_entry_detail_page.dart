@@ -378,12 +378,7 @@ class _SubtleDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 1,
-      color: context.theme.colors.foreground.withValues(
-        alpha: AppOpacity.whisper,
-      ),
-    );
+    return const AppDivider(horizontalPadding: 0);
   }
 }
 

@@ -45,24 +45,13 @@ class _ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s32),
-      child: Column(
-        children: [
-          Icon(
-            FLucideIcons.circleAlert,
-            color: context.theme.colors.destructive,
-            size: AppIconSizes.xl,
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: AppSpacing.s8),
-          FButton(
-            variant: FButtonVariant.ghost,
-            onPress: onRetry,
-            child: Text(l10n.fireRetry),
-          ),
-        ],
+    return AppEmptyState.error(
+      icon: FLucideIcons.circleAlert,
+      title: message,
+      action: FButton(
+        variant: FButtonVariant.ghost,
+        onPress: onRetry,
+        child: Text(l10n.fireRetry),
       ),
     );
   }

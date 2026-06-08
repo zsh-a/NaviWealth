@@ -215,8 +215,8 @@ class _ShellIconButton extends StatelessWidget {
     return Semantics(
       label: tooltip,
       button: true,
-      child: Tooltip(
-        message: tooltip,
+      child: FTooltip(
+        tipBuilder: (_, _) => Text(tooltip),
         child: FTappable(
           onPress: onPress,
           child: SizedBox(
