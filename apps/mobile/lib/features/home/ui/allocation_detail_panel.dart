@@ -369,13 +369,15 @@ class _AllocationDonut extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          CustomPaint(
-            size: const Size.square(220),
-            painter: _DonutPainter(
-              groups: groups,
-              total: total,
-              trackColor: context.theme.colors.border.withValues(
-                alpha: AppOpacity.light,
+          RepaintBoundary(
+            child: CustomPaint(
+              size: const Size.square(220),
+              painter: _DonutPainter(
+                groups: groups,
+                total: total,
+                trackColor: context.theme.colors.border.withValues(
+                  alpha: AppOpacity.light,
+                ),
               ),
             ),
           ),

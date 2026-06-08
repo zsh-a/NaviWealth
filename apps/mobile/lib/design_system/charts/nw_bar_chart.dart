@@ -135,20 +135,22 @@ class NwBarChart extends StatelessWidget {
       container: true,
       child: AspectRatio(
         aspectRatio: aspectRatio,
-        child: BarChart(
-          BarChartData(
-            barGroups: groups,
-            minY: minY < 0 ? minY - yPad : 0,
-            maxY: maxY + yPad,
-            gridData: FlGridData(
-              show: yAxis.showGrid,
-              drawVerticalLine: false,
-              getDrawingHorizontalLine: (_) =>
-                  FlLine(color: palette.gridLine, strokeWidth: 1),
+        child: RepaintBoundary(
+          child: BarChart(
+            BarChartData(
+              barGroups: groups,
+              minY: minY < 0 ? minY - yPad : 0,
+              maxY: maxY + yPad,
+              gridData: FlGridData(
+                show: yAxis.showGrid,
+                drawVerticalLine: false,
+                getDrawingHorizontalLine: (_) =>
+                    FlLine(color: palette.gridLine, strokeWidth: 1),
+              ),
+              borderData: FlBorderData(show: false),
+              titlesData: _buildTitles(palette),
+              barTouchData: _buildTouchData(context, palette, colors),
             ),
-            borderData: FlBorderData(show: false),
-            titlesData: _buildTitles(palette),
-            barTouchData: _buildTouchData(context, palette, colors),
           ),
         ),
       ),

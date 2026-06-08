@@ -27,6 +27,61 @@ enum MoneySymbolStyle {
 /// Direction-tinted "delta" amounts should use [DeltaText] instead — this
 /// widget is brightness/scheme aware but does NOT colour by sign.
 class MoneyText extends StatelessWidget {
+  // Static cache for NumberFormat instances — constructing them is
+  // expensive and the same locale+currency+style combo is reused
+  // thousands of times (especially during AnimatedMoneyText tweens
+  // at 120fps). Key is a compact string encoding of the parameters.
+  static final Map<String, NumberFormat> _formatCache = {};
+
+  static NumberFormat _cachedFormat({
+    required String locale,
+    required String currencyCode,
+    required MoneySymbolStyle symbolStyle,
+    required bool compact,
+    required int? fractionDigits,
+    String? symbol,
+  }) {
+    final effectiveSymbol = symbol ?? AppFormatters.currencyGlyph(currencyCode);
+    final key =
+        '$locale|$currencyCode|${symbolStyle.index}|$compact|$fractionDigits|$effectiveSymbol';
+    return _formatCache.putIfAbsent(key, () {
+      switch (symbolStyle) {
+        case MoneySymbolStyle.symbol:
+          return compact
+              ? NumberFormat.compactCurrency(
+                  locale: locale,
+                  name: currencyCode,
+                  symbol: effectiveSymbol,
+                )
+              : NumberFormat.currency(
+                  locale: locale,
+                  name: currencyCode,
+                  symbol: effectiveSymbol,
+                  decimalDigits: fractionDigits,
+                );
+        case MoneySymbolStyle.isoCode:
+          return compact
+              ? NumberFormat.compactCurrency(
+                  locale: locale,
+                  name: currencyCode,
+                  symbol: '$currencyCode ',
+                )
+              : NumberFormat.currency(
+                  locale: locale,
+                  name: currencyCode,
+                  symbol: '$currencyCode ',
+                  decimalDigits: fractionDigits,
+                );
+        case MoneySymbolStyle.none:
+          return compact
+              ? NumberFormat.compact(locale: locale)
+              : NumberFormat.decimalPatternDigits(
+                  locale: locale,
+                  decimalDigits: fractionDigits ?? 2,
+                );
+      }
+    });
+  }
   const MoneyText({
     super.key,
     required this.amount,
@@ -122,49 +177,17 @@ class MoneyText extends StatelessWidget {
 
   String _format(BuildContext context) {
     if (amount == null) return _emptyForSymbol();
-    final loc = locale ?? Localizations.maybeLocaleOf(context)?.toString();
+    final loc = locale ?? Localizations.maybeLocaleOf(context)?.toString() ?? '';
     final value = amount!;
 
-    final NumberFormat formatter;
-    switch (symbolStyle) {
-      case MoneySymbolStyle.symbol:
-        // `simpleCurrency` would pick a locale default, but its symbol
-        // field is final. Use `currency` directly so we can substitute
-        // an explicit override or our fallback table for common fiat.
-        final glyph = symbol ?? _defaultGlyphFor(currencyCode);
-        formatter = compact
-            ? NumberFormat.compactCurrency(
-                locale: loc,
-                name: currencyCode,
-                symbol: glyph,
-              )
-            : NumberFormat.currency(
-                locale: loc,
-                name: currencyCode,
-                symbol: glyph,
-                decimalDigits: fractionDigits,
-              );
-      case MoneySymbolStyle.isoCode:
-        formatter = compact
-            ? NumberFormat.compactCurrency(
-                locale: loc,
-                name: currencyCode,
-                symbol: '$currencyCode ',
-              )
-            : NumberFormat.currency(
-                locale: loc,
-                name: currencyCode,
-                symbol: '$currencyCode ',
-                decimalDigits: fractionDigits,
-              );
-      case MoneySymbolStyle.none:
-        formatter = compact
-            ? NumberFormat.compact(locale: loc)
-            : NumberFormat.decimalPatternDigits(
-                locale: loc,
-                decimalDigits: fractionDigits ?? 2,
-              );
-    }
+    final formatter = _cachedFormat(
+      locale: loc,
+      currencyCode: currencyCode,
+      symbolStyle: symbolStyle,
+      compact: compact,
+      fractionDigits: fractionDigits,
+      symbol: symbol,
+    );
 
     final formatted = formatter.format(value.abs());
     if (value < 0) return '-$formatted';

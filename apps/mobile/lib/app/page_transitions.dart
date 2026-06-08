@@ -54,17 +54,18 @@ CustomTransitionPage<T> buildHeroAwareTransitionPage<T>({
       }
       // Tablet / desktop: a fixed 16dp shift + fade. Heroes carry the
       // visual continuity; the page underneath just needs to feel
-      // calmly settled in. We use `Transform.translate` rather than
-      // `SlideTransition` so the offset stays a true 16dp regardless
-      // of how wide the surface is.
+      // calmly settled in. Use SlideTransition with a fractional offset
+      // (16px / screen-width) so the render object handles the offset
+      // directly without creating new Transform widgets per frame.
+      final screenWidth = MediaQuery.sizeOf(context).width;
+      final fraction = screenWidth > 0 ? 16.0 / screenWidth : 0.0;
       return FadeTransition(
         opacity: curved,
-        child: AnimatedBuilder(
-          animation: curved,
-          builder: (context, child) => Transform.translate(
-            offset: Offset(16 * (1 - curved.value), 0),
-            child: child,
-          ),
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: Offset(fraction, 0),
+            end: Offset.zero,
+          ).animate(curved),
           child: child,
         ),
       );

@@ -107,13 +107,28 @@ class NwLineChart extends StatefulWidget {
 enum ChartInterpolation { linear, curved }
 
 class _NwLineChartState extends State<NwLineChart> {
-  ChartPoint? _touchStartPoint;
+  // Touch state is isolated in a ValueNotifier so that touch events
+  // (pan/drag at 120fps) only rebuild the lightweight touch overlay,
+  // NOT the entire chart (LineChart + axes + grid).
+  final _touchNotifier = ValueNotifier<_TouchState?>(null);
   int _lastSpotIndex = -1;
-  FlSpot? _touchedSpot;
+
   _PreparedLineData? _prepared;
   List<ChartSeries>? _preparedSource;
   bool? _preparedDownsample;
   int? _preparedDownsampleTarget;
+
+  // Cached chart data — avoids rebuilding LineChartData on every touch event.
+  _CachedChartData? _cachedChartData;
+  _PreparedLineData? _cachedChartDataSource;
+  ChartPalette? _cachedChartPalette;
+  bool? _cachedHideAmounts;
+
+  @override
+  void dispose() {
+    _touchNotifier.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,109 +154,144 @@ class _NwLineChartState extends State<NwLineChart> {
     final plotInsets = _plotInsets;
     final hideAmounts = AmountPrivacyScope.isHiddenOf(context);
 
-    final lineBars = <LineChartBarData>[];
-    for (var i = 0; i < processed.length; i++) {
-      final s = processed[i];
-      final color = resolveSeriesColor(
-        context,
-        intent: s.intent,
-        ordinal: i,
-        override: s.colorOverride,
-      );
-      lineBars.add(
-        _buildBarData(
+    // Cache chart data — only rebuild when data/palette/privacy changes.
+    // Touch events do NOT trigger a rebuild of this method, so the cached
+    // data stays identical across touch frames.
+    final cached = _cachedChartData;
+    if (cached == null ||
+        !identical(_cachedChartDataSource, prepared) ||
+        _cachedChartPalette != palette ||
+        _cachedHideAmounts != hideAmounts) {
+      final lineBars = <LineChartBarData>[];
+      for (var i = 0; i < processed.length; i++) {
+        final s = processed[i];
+        final color = resolveSeriesColor(
           context,
-          s,
-          prepared.spots[i],
-          color,
-          palette,
-          i,
-          processed.length,
+          intent: s.intent,
+          ordinal: i,
+          override: s.colorOverride,
+        );
+        lineBars.add(
+          _buildBarData(
+            context,
+            s,
+            prepared.spots[i],
+            color,
+            palette,
+            i,
+            processed.length,
+          ),
+        );
+      }
+
+      final showGrid =
+          !widget.minimal && (widget.yAxis.showGrid || widget.xAxis.showGrid);
+      final chartData = LineChartData(
+        minX: minX,
+        maxX: maxX,
+        minY: chartMinY,
+        maxY: chartMaxY,
+        gridData: FlGridData(
+          show: showGrid,
+          drawHorizontalLine: showGrid && widget.yAxis.showGrid,
+          drawVerticalLine: showGrid && widget.xAxis.showGrid,
+          getDrawingHorizontalLine: (_) =>
+              FlLine(color: palette.gridLine, strokeWidth: 1),
+          getDrawingVerticalLine: (_) =>
+              FlLine(color: palette.gridLine, strokeWidth: 1),
         ),
+        borderData: FlBorderData(show: false),
+        titlesData: widget.minimal
+            ? const FlTitlesData(show: false)
+            : _buildTitles(palette, minX, maxX, minY, maxY, hideAmounts),
+        lineBarsData: lineBars,
+        lineTouchData: widget.minimal
+            ? const LineTouchData(enabled: false)
+            : _buildTouchData(context, palette, processed),
       );
+      _cachedChartData = _CachedChartData(
+        chartData: chartData,
+        lineBars: lineBars,
+        processed: processed,
+      );
+      _cachedChartDataSource = prepared;
+      _cachedChartPalette = palette;
+      _cachedHideAmounts = hideAmounts;
     }
 
-    final showGrid =
-        !widget.minimal && (widget.yAxis.showGrid || widget.xAxis.showGrid);
+    final chartDataObj = _cachedChartData!;
+
+    // The main chart — wrapped in RepaintBoundary. Does NOT rebuild on
+    // touch because we only update _touchNotifier (not setState).
+    final chartWidget = RepaintBoundary(
+      child: LineChart(chartDataObj.chartData),
+    );
+
+    // Touch overlay — rebuilt via ValueListenableBuilder only when
+    // touch state changes. This is lightweight (crosshair + tooltip).
     final stack = Stack(
       children: [
-        RepaintBoundary(
-          child: LineChart(
-            LineChartData(
-              minX: minX,
-              maxX: maxX,
-              minY: chartMinY,
-              maxY: chartMaxY,
-              gridData: FlGridData(
-                show: showGrid,
-                drawHorizontalLine: showGrid && widget.yAxis.showGrid,
-                drawVerticalLine: showGrid && widget.xAxis.showGrid,
-                getDrawingHorizontalLine: (_) =>
-                    FlLine(color: palette.gridLine, strokeWidth: 1),
-                getDrawingVerticalLine: (_) =>
-                    FlLine(color: palette.gridLine, strokeWidth: 1),
-              ),
-              borderData: FlBorderData(show: false),
-              titlesData: widget.minimal
-                  ? const FlTitlesData(show: false)
-                  : _buildTitles(palette, minX, maxX, minY, maxY, hideAmounts),
-              lineBarsData: lineBars,
-              lineTouchData: widget.minimal
-                  ? const LineTouchData(enabled: false)
-                  : _buildTouchData(context, palette, processed),
-            ),
-          ),
-        ),
-        if (_touchedSpot != null) ...[
-          IgnorePointer(
-            child: RepaintBoundary(
-              child: CustomPaint(
-                size: Size.infinite,
-                painter: _CrosshairPainter(
-                  spot: _touchedSpot!,
-                  lineBars: lineBars,
-                  minX: minX,
-                  maxX: maxX,
-                  minY: chartMinY,
-                  maxY: chartMaxY,
-                  plotInsets: plotInsets,
-                  color: palette.axisLabel,
-                  dotStrokeColor: palette.dotStroke,
-                ),
-              ),
-            ),
-          ),
-          if (_touchedSpotIndex >= 0 &&
-              _touchedSpotIndex < processed.first.points.length)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: _ChartTooltip(
-                  spotIndex: _touchedSpotIndex,
-                  processed: processed,
-                  xAxis: widget.xAxis,
-                  yAxis: widget.yAxis,
-                  touchStartPoint: _touchStartPoint,
-                  hideAmounts: hideAmounts,
-                ),
-              ),
-            ),
-          if (widget.showTouchXAxisLabel &&
-              _touchedSpotIndex >= 0 &&
-              _touchedSpotIndex < processed.first.points.length)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: _TouchXAxisLabel(
-                  spot: _touchedSpot!,
-                  minX: minX,
-                  maxX: maxX,
-                  plotInsets: plotInsets,
-                  label: widget.xAxis.formatPrecise(
-                    processed.first.points[_touchedSpotIndex].x,
+        chartWidget,
+        ValueListenableBuilder<_TouchState?>(
+          valueListenable: _touchNotifier,
+          builder: (context, touch, _) {
+            if (touch == null) return const SizedBox.shrink();
+            final spot = touch.spot;
+            final spotIndex = touch.spotIndex;
+            return Stack(
+              children: [
+                IgnorePointer(
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      size: Size.infinite,
+                      painter: _CrosshairPainter(
+                        spot: spot,
+                        lineBars: chartDataObj.lineBars,
+                        minX: minX,
+                        maxX: maxX,
+                        minY: chartMinY,
+                        maxY: chartMaxY,
+                        plotInsets: plotInsets,
+                        color: palette.axisLabel,
+                        dotStrokeColor: palette.dotStroke,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-        ],
+                if (spotIndex >= 0 &&
+                    spotIndex < chartDataObj.processed.first.points.length)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: _ChartTooltip(
+                        spotIndex: spotIndex,
+                        processed: chartDataObj.processed,
+                        xAxis: widget.xAxis,
+                        yAxis: widget.yAxis,
+                        touchStartPoint: touch.touchStartPoint,
+                        hideAmounts: hideAmounts,
+                      ),
+                    ),
+                  ),
+                if (widget.showTouchXAxisLabel &&
+                    spotIndex >= 0 &&
+                    spotIndex < chartDataObj.processed.first.points.length)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: _TouchXAxisLabel(
+                        spot: spot,
+                        minX: minX,
+                        maxX: maxX,
+                        plotInsets: plotInsets,
+                        label: widget.xAxis.formatPrecise(
+                          chartDataObj.processed.first.points[spotIndex].x,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ],
     );
     final ratio = widget.aspectRatio;
@@ -490,24 +540,26 @@ class _NwLineChartState extends State<NwLineChart> {
           );
         }).toList();
       },
+      // Touch callback updates ValueNotifier instead of calling setState,
+      // so the main chart widget tree does NOT rebuild on touch events.
       touchCallback: (event, response) {
         if (event is FlLongPressStart || event is FlPanStartEvent) {
           final touched = _primaryTouchedSpot(response);
-          setState(() {
-            _touchedSpot = touched;
-            _touchStartPoint = null;
-            _lastSpotIndex = -1;
-          });
+          _lastSpotIndex = -1;
+          _touchNotifier.value = touched == null
+              ? null
+              : _TouchState(
+                  spot: touched,
+                  spotIndex: -1,
+                  touchStartPoint: null,
+                );
           _fireCrossingHaptic(response, processed);
           HapticFeedback.selectionClick();
           return;
         }
         if (event is FlLongPressMoveUpdate || event is FlPanUpdateEvent) {
           final touched = _primaryTouchedSpot(response);
-          setState(() {
-            _touchedSpot = touched;
-            if (touched == null) _lastSpotIndex = -1;
-          });
+          if (touched == null) _lastSpotIndex = -1;
           _fireCrossingHaptic(response, processed);
           return;
         }
@@ -519,11 +571,8 @@ class _NwLineChartState extends State<NwLineChart> {
             final idx = touched.first.spotIndex.clamp(0, s.points.length - 1);
             dd.onTap(s.points[idx]);
           }
-          setState(() {
-            _touchedSpot = null;
-            _touchStartPoint = null;
-            _lastSpotIndex = -1;
-          });
+          _lastSpotIndex = -1;
+          _touchNotifier.value = null;
           return;
         }
         if (event is FlTapUpEvent) {
@@ -546,11 +595,8 @@ class _NwLineChartState extends State<NwLineChart> {
               );
             }
           }
-          setState(() {
-            _touchedSpot = null;
-            _touchStartPoint = null;
-            _lastSpotIndex = -1;
-          });
+          _lastSpotIndex = -1;
+          _touchNotifier.value = null;
         }
       },
     );
@@ -576,13 +622,42 @@ class _NwLineChartState extends State<NwLineChart> {
       HapticFeedback.selectionClick();
     }
     _lastSpotIndex = spotIndex;
-    _touchedSpot = touched;
     final s = processed[touched.barIndex];
     final idx = spotIndex.clamp(0, s.points.length - 1);
-    _touchStartPoint ??= s.points[idx];
+    final prev = _touchNotifier.value;
+    _touchNotifier.value = _TouchState(
+      spot: touched,
+      spotIndex: spotIndex,
+      touchStartPoint: prev?.touchStartPoint ?? s.points[idx],
+    );
   }
+}
 
-  int get _touchedSpotIndex => _lastSpotIndex;
+/// Immutable touch state — passed to ValueListenableBuilder so the
+/// touch overlay rebuilds independently of the main chart.
+class _TouchState {
+  const _TouchState({
+    required this.spot,
+    required this.spotIndex,
+    required this.touchStartPoint,
+  });
+
+  final FlSpot spot;
+  final int spotIndex;
+  final ChartPoint? touchStartPoint;
+}
+
+/// Cached chart data — avoids rebuilding LineChartData on every touch event.
+class _CachedChartData {
+  const _CachedChartData({
+    required this.chartData,
+    required this.lineBars,
+    required this.processed,
+  });
+
+  final LineChartData chartData;
+  final List<LineChartBarData> lineBars;
+  final List<ChartSeries> processed;
 }
 
 class _PreparedLineData {

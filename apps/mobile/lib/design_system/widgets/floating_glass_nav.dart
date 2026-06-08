@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
@@ -57,7 +55,17 @@ class FloatingGlassNavBar extends StatelessWidget {
     final colors = theme.colors;
     final isDark = colors.brightness == Brightness.dark;
 
-    // Glass surface: translucent white/navy with backdrop blur.
+    // 120fps-safe frosted glass surface.
+    //
+    // BackdropFilter + ImageFilter.blur triggers a GPU framebuffer readback
+    // every frame — impossible to sustain at 120fps (8.3 ms/frame). Instead
+    // we use a highly-opaque translucent fill + a subtle top-edge gradient
+    // highlight that approximates the frosted-glass depth cue without any
+    // per-frame GPU readback. The entire bar is wrapped in a RepaintBoundary
+    // so scroll-induced repaints in the content behind never cascade here.
+    //
+    // Light: near-opaque white tint (matches the old 0.94 alpha).
+    // Dark:  deep navy tint (matches the old 0.88 alpha).
     final glassColor = isDark
         ? const Color(0xFF0F2A35).withValues(alpha: AppOpacity.overlay)
         : const Color(0xFFF7FAFA).withValues(alpha: AppOpacity.nearOpaque);
@@ -65,64 +73,86 @@ class FloatingGlassNavBar extends StatelessWidget {
         ? Colors.white.withValues(alpha: AppOpacity.faint)
         : const Color(0xFFE3ECEE).withValues(alpha: AppOpacity.strong);
 
-    return Container(
-      height: kFloatingGlassNavBarHeight,
-      decoration: BoxDecoration(
-        color: glassColor,
-        borderRadius: BorderRadius.circular(AppRadius.nav),
-        border: Border.all(color: borderColor, width: 1),
-        boxShadow: AppShadow.nav,
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.nav),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: AppBlur.nav.toDouble(),
-            sigmaY: AppBlur.nav.toDouble(),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s8,
-              vertical: AppSpacing.s6,
+    // Top-edge highlight gradient simulates light refracting through the
+    // frosted surface — the main visual cue that replaces the real blur.
+    final highlightColor = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.white.withValues(alpha: 0.55);
+    final highlightColorTransparent = highlightColor.withValues(alpha: 0);
+
+    return RepaintBoundary(
+      child: Container(
+        height: kFloatingGlassNavBarHeight,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.nav),
+          border: Border.all(color: borderColor, width: 1),
+          boxShadow: AppShadow.nav,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            // Base frosted fill.
+            Positioned.fill(
+              child: ColoredBox(color: glassColor),
             ),
-            child: Row(
-              children: [
-                // Left tabs.
-                for (var i = 0; i < _leftCount; i++)
-                  Expanded(
-                    child: _NavTabButton(
-                      tab: items[i],
-                      selected: i == selectedIndex,
-                      onTap: () => onIndexChanged(i),
-                      isDark: isDark,
-                    ),
+            // Top-edge highlight band — refracted light simulation.
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [highlightColor, highlightColorTransparent],
+                    stops: const [0.0, 0.35],
                   ),
-                // Center action button (optional).
-                if (onCenterAction != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s4,
-                    ),
-                    child: _CenterActionButton(
-                      icon: centerIcon,
-                      label: centerLabel,
-                      onTap: onCenterAction!,
-                      isDark: isDark,
-                    ),
-                  ),
-                // Right tabs.
-                for (var i = _leftCount; i < items.length; i++)
-                  Expanded(
-                    child: _NavTabButton(
-                      tab: items[i],
-                      selected: i == selectedIndex,
-                      onTap: () => onIndexChanged(i),
-                      isDark: isDark,
-                    ),
-                  ),
-              ],
+                ),
+              ),
             ),
-          ),
+            // Navigation content.
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s8,
+                vertical: AppSpacing.s6,
+              ),
+              child: Row(
+                children: [
+                  // Left tabs.
+                  for (var i = 0; i < _leftCount; i++)
+                    Expanded(
+                      child: _NavTabButton(
+                        tab: items[i],
+                        selected: i == selectedIndex,
+                        onTap: () => onIndexChanged(i),
+                        isDark: isDark,
+                      ),
+                    ),
+                  // Center action button (optional).
+                  if (onCenterAction != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.s4,
+                      ),
+                      child: _CenterActionButton(
+                        icon: centerIcon,
+                        label: centerLabel,
+                        onTap: onCenterAction!,
+                        isDark: isDark,
+                      ),
+                    ),
+                  // Right tabs.
+                  for (var i = _leftCount; i < items.length; i++)
+                    Expanded(
+                      child: _NavTabButton(
+                        tab: items[i],
+                        selected: i == selectedIndex,
+                        onTap: () => onIndexChanged(i),
+                        isDark: isDark,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
