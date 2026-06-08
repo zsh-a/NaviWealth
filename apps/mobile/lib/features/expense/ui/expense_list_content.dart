@@ -194,6 +194,8 @@ class _SegmentChip extends StatelessWidget {
             : null,
         child: Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: context.theme.typography.sm.copyWith(
             color: selected
                 ? context.theme.colors.primary
@@ -234,7 +236,7 @@ class _FilterChip<T> extends StatelessWidget {
               child: const Icon(FLucideIcons.x, size: AppIconSizes.xs),
             )
           : null,
-      child: Text(label),
+      child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
   }
 }
@@ -286,7 +288,7 @@ class ExpenseGroupedList extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Flexible(
+                Expanded(
                   child: Text(
                     group.label,
                     style: context.theme.typography.sm,
@@ -295,11 +297,14 @@ class ExpenseGroupedList extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s8),
-                MoneyText(
-                  amount: group.total.toDouble(),
-                  compact: true,
-                  style: context.theme.typography.sm.copyWith(
-                    color: context.theme.colors.mutedForeground,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 120),
+                  child: MoneyText(
+                    amount: group.total.toDouble(),
+                    compact: true,
+                    style: context.theme.typography.sm.copyWith(
+                      color: context.theme.colors.mutedForeground,
+                    ),
                   ),
                 ),
               ],

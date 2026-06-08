@@ -392,12 +392,16 @@ class _Metric extends StatelessWidget {
       children: [
         Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: context.theme.typography.xs.copyWith(
             color: context.theme.colors.mutedForeground,
           ),
         ),
         Text(
           value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: context.theme.typography.md.copyWith(
             fontFeatures: TypographyTokens.tabularFigures,
           ),
