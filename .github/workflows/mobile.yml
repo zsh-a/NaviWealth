@@ -112,7 +112,7 @@ jobs:
           ./tool/check-known-failing-tests.sh < /tmp/test_out.log
           echo "Test run completed (flutter exit=${test_exit}; baseline gate=PASS)"
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           files: apps/mobile/coverage/lcov.info
           flags: mobile
