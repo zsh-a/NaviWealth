@@ -258,15 +258,7 @@ class _JumpToBottomChip extends StatelessWidget {
             shape: BoxShape.circle,
             color: colors.background,
             border: Border.all(color: colors.border),
-            boxShadow: [
-              BoxShadow(
-                color: Theme.of(
-                  context,
-                ).shadowColor.withValues(alpha: AppOpacity.light),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            boxShadow: AppShadow.elevation2,
           ),
           alignment: Alignment.center,
           child: Icon(

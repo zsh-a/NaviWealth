@@ -77,7 +77,7 @@ class _ActiveEmbedderCard extends ConsumerWidget {
       child: diagnostics.when(
         loading: () => Row(
           children: [
-            const SizedBox.square(dimension: 16, child: FCircularProgress()),
+            const SizedBox.square(dimension: AppIconSizes.xs, child: FCircularProgress()),
             const SizedBox(width: AppSpacing.s8),
             Text(
               l10n.settingsAiModelsActiveRuntimeLoading,
@@ -320,7 +320,7 @@ class _RuntimeDiagnosticsCard extends StatelessWidget {
       child: resolution.when(
         loading: () => Row(
           children: [
-            const SizedBox.square(dimension: 16, child: FCircularProgress()),
+            const SizedBox.square(dimension: AppIconSizes.xs, child: FCircularProgress()),
             const SizedBox(width: AppSpacing.s8),
             Text(
               l10n.settingsAiModelsCheckingRuntime,

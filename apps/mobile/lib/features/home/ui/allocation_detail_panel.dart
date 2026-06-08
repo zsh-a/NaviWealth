@@ -294,17 +294,7 @@ class _DimensionButton extends StatelessWidget {
               ? context.theme.colors.background
               : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.full),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: Theme.of(
-                      context,
-                    ).shadowColor.withValues(alpha: AppOpacity.faint),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ]
-              : null,
+          boxShadow: selected ? AppShadow.elevation1 : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -348,9 +348,9 @@ class _LedgerBreakdownCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.s12),
-          const _SubtleDivider(),
+          const AppDivider(horizontalPadding: 0),
           for (var i = 0; i < postings.length; i++) ...[
-            if (i > 0) const _SubtleDivider(),
+            if (i > 0) const AppDivider(horizontalPadding: 0),
             _DetailPostingRow(
               posting: postings[i],
               accountsById: accountsById,
@@ -358,7 +358,7 @@ class _LedgerBreakdownCard extends StatelessWidget {
             ),
           ],
           if (totals.isNotEmpty) ...[
-            const _SubtleDivider(),
+            const AppDivider(horizontalPadding: 0),
             const SizedBox(height: AppSpacing.s12),
             for (final entry in totals.entries)
               _DetailUnitBalanceRow(
@@ -370,15 +370,6 @@ class _LedgerBreakdownCard extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _SubtleDivider extends StatelessWidget {
-  const _SubtleDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return const AppDivider(horizontalPadding: 0);
   }
 }
 
