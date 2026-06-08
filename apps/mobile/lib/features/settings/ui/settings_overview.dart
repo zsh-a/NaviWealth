@@ -201,21 +201,21 @@ class SettingsOverview extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             accountGroup,
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppSpacing.s20),
             numbersGroup,
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppSpacing.s20),
             appearanceGroup,
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppSpacing.s20),
             planningGroup,
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppSpacing.s20),
             aiGroup,
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppSpacing.s20),
             dataGroup,
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppSpacing.s20),
             domainsGroup,
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppSpacing.s20),
             aboutGroup,
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppSpacing.s20),
             advancedGroup,
           ],
         );
@@ -238,11 +238,11 @@ class SettingsOverview extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         accountGroup,
-                        const SizedBox(height: AppSpacing.s16),
+                        const SizedBox(height: AppSpacing.s20),
                         numbersGroup,
-                        const SizedBox(height: AppSpacing.s16),
+                        const SizedBox(height: AppSpacing.s20),
                         appearanceGroup,
-                        const SizedBox(height: AppSpacing.s16),
+                        const SizedBox(height: AppSpacing.s20),
                         planningGroup,
                       ],
                     )
@@ -252,13 +252,13 @@ class SettingsOverview extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         aiGroup,
-                        const SizedBox(height: AppSpacing.s16),
+                        const SizedBox(height: AppSpacing.s20),
                         dataGroup,
-                        const SizedBox(height: AppSpacing.s16),
+                        const SizedBox(height: AppSpacing.s20),
                         domainsGroup,
-                        const SizedBox(height: AppSpacing.s16),
+                        const SizedBox(height: AppSpacing.s20),
                         aboutGroup,
-                        const SizedBox(height: AppSpacing.s16),
+                        const SizedBox(height: AppSpacing.s20),
                         advancedGroup,
                       ],
                     )
@@ -309,7 +309,8 @@ class _Section extends StatelessWidget {
   }
 }
 
-/// iOS-style inset-grouped section header — small, all-caps, muted.
+/// iOS-style inset-grouped section header — small, all-caps, muted,
+/// with a subtle left accent bar for visual anchoring.
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title});
 
@@ -317,6 +318,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s12,
@@ -324,31 +326,54 @@ class _SectionHeader extends StatelessWidget {
         AppSpacing.s12,
         AppSpacing.s6,
       ),
-      child: Text(
-        title.toUpperCase(),
-        style: context.theme.typography.xs2.copyWith(
-          color: context.theme.colors.mutedForeground,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0,
-        ),
+      child: Row(
+        children: [
+          Container(
+            width: 2,
+            height: AppSpacing.s12,
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: AppOpacity.highlight),
+              borderRadius: BorderRadius.circular(AppRadius.full),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          Text(
+            title.toUpperCase(),
+            style: context.theme.typography.xs2.copyWith(
+              color: colors.mutedForeground,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// Single-pixel divider between adjacent rows in the same SoftCard
-/// section. Matches the divider used elsewhere (alpha 0.05) so the
-/// rows feel ribbon-grouped rather than card-stacked.
+/// Gradient fade divider between adjacent rows in the same SoftCard
+/// section — opaque→transparent→opaque horizontally for an organic
+/// ribbon-grouped feel instead of a hard line.
 class _SectionDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final color = context.theme.colors.foreground.withValues(
+      alpha: AppOpacity.whisper,
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
-      child: Container(
-        height: 1,
-        color: context.theme.colors.foreground.withValues(
-          alpha: AppOpacity.whisper,
-        ),
+      child: ShaderMask(
+        shaderCallback: (rect) => LinearGradient(
+          colors: [
+            color.withValues(alpha: 0),
+            color,
+            color,
+            color.withValues(alpha: 0),
+          ],
+          stops: const [0.0, 0.12, 0.88, 1.0],
+        ).createShader(rect),
+        blendMode: BlendMode.srcIn,
+        child: Container(height: 1, color: color),
       ),
     );
   }
@@ -780,7 +805,9 @@ class _SettingsChoicePill extends StatelessWidget {
     final colors = context.theme.colors;
     return FTappable(
       onPress: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: Motion.medium,
+        curve: Motion.standardDecelerate,
         constraints: const BoxConstraints(minHeight: 34),
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s12,
@@ -796,6 +823,15 @@ class _SettingsChoicePill extends StatelessWidget {
                 ? colors.primary.withValues(alpha: AppOpacity.prominent)
                 : colors.border.withValues(alpha: AppOpacity.muted),
           ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: colors.primary.withValues(alpha: AppOpacity.faint),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         alignment: Alignment.center,
         child: Text(

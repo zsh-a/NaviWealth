@@ -258,7 +258,7 @@ class _BodyState extends ConsumerState<_Body> {
                   label: p.statement,
                   status: p.status.wire,
                   icon: FLucideIcons.badgeCheck,
-                  iconColor: const Color(0xFF10B981),
+                  iconColor: KnowledgeTypeColors.principle,
                   onPress: () => context.pushNamed(
                     AppRouteNames.knowledgeObjectDetail,
                     pathParameters: {'kind': 'principle', 'id': p.id},
@@ -278,7 +278,7 @@ class _BodyState extends ConsumerState<_Body> {
                   status:
                       '${a.status.wire} · ${a.confidence.toStringAsFixed(2)}',
                   icon: FLucideIcons.lightbulb,
-                  iconColor: const Color(0xFFF59E0B),
+                  iconColor: KnowledgeTypeColors.assumption,
                   onPress: () => context.pushNamed(
                     AppRouteNames.knowledgeObjectDetail,
                     pathParameters: {'kind': 'assumption', 'id': a.id},

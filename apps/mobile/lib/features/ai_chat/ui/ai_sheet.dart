@@ -323,7 +323,7 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
                                 height: 4,
                                 decoration: BoxDecoration(
                                   color: colors.mutedForeground.withValues(
-                                    alpha: 0.4,
+                                    alpha: AppOpacity.disabled,
                                   ),
                                   borderRadius: BorderRadius.circular(
                                     AppRadius.xxs,

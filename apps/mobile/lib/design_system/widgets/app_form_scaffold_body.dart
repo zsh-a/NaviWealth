@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -58,13 +60,15 @@ class AppFormScaffoldBody extends StatelessWidget {
   }
 }
 
+/// Pinned action bar with frosted glass effect — matches the sheet and
+/// nav bar aesthetic for a unified glass-morphism language.
 class AppFormActionBar extends StatelessWidget {
   const AppFormActionBar({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.fromLTRB(
       AppSpacing.s16,
-      AppSpacing.s12,
+      AppSpacing.s16,
       AppSpacing.s16,
       AppSpacing.s12,
     ),
@@ -76,15 +80,27 @@ class AppFormActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final hairline = colors.foreground.withValues(
-      alpha: colors.brightness == Brightness.dark ? 0.12 : 0.10,
+    final isDark = colors.brightness == Brightness.dark;
+    final surface = colors.background.withValues(
+      alpha: isDark ? AppOpacity.nearOpaqueDark : AppOpacity.nearOpaque,
     );
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.background,
-        border: Border(top: BorderSide(color: hairline)),
+    final hairline = colors.foreground.withValues(
+      alpha: isDark ? AppOpacity.light : AppOpacity.subtle,
+    );
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(
+          sigmaX: AppBlur.sheet,
+          sigmaY: AppBlur.sheet,
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: surface,
+            border: Border(top: BorderSide(color: hairline)),
+          ),
+          child: SafeArea(top: false, minimum: padding, child: child),
+        ),
       ),
-      child: SafeArea(top: false, minimum: padding, child: child),
     );
   }
 }

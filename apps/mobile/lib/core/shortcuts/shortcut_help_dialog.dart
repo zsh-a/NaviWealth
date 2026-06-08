@@ -11,11 +11,10 @@ import 'shortcut_bindings.dart';
 Future<void> showShortcutHelpDialog(BuildContext context) {
   if (_isOpen) return Future<void>.value();
   _isOpen = true;
-  return showFSheet<void>(
-    side: FLayout.btt,
+  return showAppSheet<void>(
     context: context,
-    mainAxisMaxRatio: null,
-    builder: (BuildContext ctx) => const _ShortcutHelpSheet(),
+    title: AppLocalizations.of(context).shortcutsHelpTitle,
+    builder: (_) => const _ShortcutHelpSheet(),
   ).whenComplete(() => _isOpen = false);
 }
 
@@ -59,71 +58,32 @@ class _ShortcutHelpSheet extends StatelessWidget {
       _ManualShortcutEntry(label: l10n.shortcutListPrevious, keys: 'k'),
     ];
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.s24,
-          AppSpacing.s12,
-          AppSpacing.s24,
-          AppSpacing.s24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Drag handle indicator
-            Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: AppSpacing.s16),
-              decoration: BoxDecoration(
-                color: context.theme.colors.mutedForeground.withValues(
-                  alpha: 0.4,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final ShortcutBinding b in dedup.values)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(_descriptionFor(l10n, b.descriptionKey)),
                 ),
-                borderRadius: BorderRadius.circular(AppRadius.xxs),
-              ),
+                _ActivatorBadge(activator: b.activator),
+              ],
             ),
-            Text(l10n.shortcutsHelpTitle, style: context.theme.typography.lg),
-            const SizedBox(height: AppSpacing.s16),
-            Flexible(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final ShortcutBinding b in dedup.values)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.s6,
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _descriptionFor(l10n, b.descriptionKey),
-                              ),
-                            ),
-                            _ActivatorBadge(activator: b.activator),
-                          ],
-                        ),
-                      ),
-                    for (final _ManualShortcutEntry e in manualEntries)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.s6,
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(child: Text(e.label)),
-                            _KeyLabelBadge(label: e.keys),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+          ),
+        for (final _ManualShortcutEntry e in manualEntries)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+            child: Row(
+              children: [
+                Expanded(child: Text(e.label)),
+                _KeyLabelBadge(label: e.keys),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
 

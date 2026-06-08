@@ -109,7 +109,7 @@ class _AccountsSection extends StatelessWidget {
     final isDark = colors.brightness == Brightness.dark;
     final background = isDark
         ? colors.card.withValues(alpha: AppOpacity.muted)
-        : const Color(0xFFF1F5F5);
+        : ColorPalette.neutral75;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.s16),
       child: Column(

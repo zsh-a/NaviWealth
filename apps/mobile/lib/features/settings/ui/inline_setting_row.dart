@@ -95,11 +95,7 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
           ),
           child: Row(
             children: [
-              Icon(
-                widget.icon,
-                size: AppIconSizes.h18,
-                color: colors.mutedForeground,
-              ),
+              _IconChip(icon: widget.icon, colors: colors),
               const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Column(
@@ -287,7 +283,7 @@ class InlineSwitchRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: AppIconSizes.h18, color: colors.mutedForeground),
+          _IconChip(icon: icon, colors: colors),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
@@ -376,7 +372,7 @@ class InlineLinkRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: AppIconSizes.h18, color: colors.mutedForeground),
+            _IconChip(icon: icon, colors: colors),
             const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Column(
@@ -435,6 +431,30 @@ class InlineLinkRow extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Tinted icon chip — gives settings row icons the same premium feel
+/// as [AppActionSheetTile]. A 32x32 rounded container with a subtle
+/// primary-tinted background makes each row feel more polished.
+class _IconChip extends StatelessWidget {
+  const _IconChip({required this.icon, required this.colors});
+
+  final IconData icon;
+  final FColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: AppSpacing.s32,
+      height: AppSpacing.s32,
+      decoration: BoxDecoration(
+        color: colors.primary.withValues(alpha: AppOpacity.subtle),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      alignment: Alignment.center,
+      child: Icon(icon, size: AppIconSizes.sm, color: colors.primary),
     );
   }
 }

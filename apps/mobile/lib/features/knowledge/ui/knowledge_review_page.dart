@@ -167,7 +167,7 @@ class _ReviewCreateFab extends ConsumerWidget {
         prefix: const Icon(
           FLucideIcons.listChecks,
           size: AppIconSizes.sm,
-          color: Color(0xFFFFFFFF),
+          color: ColorPalette.neutral0,
         ),
         onPress: () => _openActionsSheet(context, ref),
         child: const SizedBox.shrink(),

@@ -159,10 +159,10 @@ class AppSheet extends StatelessWidget {
 
   /// Header padding — asymmetric: extra left (s20) gives the title breathing
   /// room; tighter right (s12) because action buttons / close icons sit there
-  /// and don't need the full column inset.
+  /// and don't need the full column inset. Top bumped to s8 for breathing room.
   static const EdgeInsets kHeaderPadding = EdgeInsets.fromLTRB(
     AppSpacing.s20,
-    AppSpacing.s4,
+    AppSpacing.s8,
     AppSpacing.s12,
     AppSpacing.s8,
   );
@@ -209,17 +209,17 @@ class AppSheet extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: context.theme.typography.lg.copyWith(
-                    fontWeight: FontWeight.w600,
+                  style: context.theme.typography.xl.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (hasSubtitle) ...[
-                  const SizedBox(height: AppSpacing.s2),
+                  const SizedBox(height: AppSpacing.s4),
                   Text(
                     subtitle!,
-                    style: context.theme.typography.xs.copyWith(
+                    style: context.theme.typography.sm.copyWith(
                       color: colors.mutedForeground,
                     ),
                   ),
@@ -266,12 +266,34 @@ class AppSheet extends StatelessWidget {
                 child: child,
               ),
             ),
+            // Gradient fade divider — organic ribbon-grouped feel.
             DecoratedBox(
               decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: hairline)),
+                border: Border(
+                  top: BorderSide(
+                    color: hairline,
+                    width: 1,
+                  ),
+                ),
               ),
-              child: Padding(padding: kFooterPadding, child: footer),
+              child: ShaderMask(
+                shaderCallback: (rect) => LinearGradient(
+                  colors: [
+                    hairline.withValues(alpha: 0),
+                    hairline,
+                    hairline,
+                    hairline.withValues(alpha: 0),
+                  ],
+                  stops: const [0.0, 0.15, 0.85, 1.0],
+                ).createShader(rect),
+                blendMode: BlendMode.srcIn,
+                child: Container(
+                  height: 1,
+                  color: hairline,
+                ),
+              ),
             ),
+            Padding(padding: kFooterPadding, child: footer),
           ],
         ),
       );
@@ -303,25 +325,21 @@ class AppSheet extends StatelessWidget {
     return AppSheetSurface(child: content);
   }
 
-  // Drag handle — small, muted, centered. One spec for the whole app.
+  // Drag handle — refined pill, centered. One spec for the whole app.
   // Excluded from semantics — purely decorative.
   static Widget _dragHandle(FColors colors) {
     return ExcludeSemantics(
       child: Center(
         child: Container(
-          width:
-              AppSpacing.s32 +
-              AppSpacing.s4, // 36 — wider than radius for pill shape
-          height: AppSpacing.s4,
+          width: AppSpacing.s40, // 40 — wider for a confident grab target
+          height: 3.5,
           margin: const EdgeInsets.only(
-            top:
-                AppSpacing.s8 +
-                AppSpacing.s2, // 10 — sits below the sheet's top corner
-            bottom: AppSpacing.s6,
+            top: AppSpacing.s10, // sits below the sheet's top corner
+            bottom: AppSpacing.s8,
           ),
           decoration: BoxDecoration(
-            color: colors.mutedForeground.withValues(alpha: AppOpacity.muted),
-            borderRadius: BorderRadius.circular(AppRadius.xxs),
+            color: colors.mutedForeground.withValues(alpha: AppOpacity.medium),
+            borderRadius: BorderRadius.circular(AppRadius.full),
           ),
         ),
       ),

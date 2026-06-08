@@ -422,7 +422,7 @@ List<Widget> _conceptSections(
                   ? AppLocalizations.of(context).knowledgeConceptDetailTitle
                   : concept.aliases.join(' · '),
               icon: FLucideIcons.folderTree,
-              iconColor: const Color(0xFF8B5CF6),
+              iconColor: KnowledgeTypeColors.concept,
               onPress: () => context.pushNamed(
                 AppRouteNames.knowledgeObjectDetail,
                 pathParameters: {'kind': 'concept', 'id': concept.id},
@@ -473,7 +473,7 @@ List<Widget> _experimentSections(
             meta:
                 '${targetAssumption.status.wire} · ${targetAssumption.confidence.toStringAsFixed(2)}',
             icon: FLucideIcons.lightbulb,
-            iconColor: const Color(0xFFF59E0B),
+            iconColor: KnowledgeTypeColors.assumption,
             onPress: () => context.pushNamed(
               AppRouteNames.knowledgeObjectDetail,
               pathParameters: {'kind': 'assumption', 'id': targetAssumption.id},
@@ -621,7 +621,7 @@ List<Widget> _assumptionSections(
               label: experiment.hypothesis,
               meta: experiment.status.wire,
               icon: FLucideIcons.flaskConical,
-              iconColor: const Color(0xFF06B6D4),
+              iconColor: KnowledgeTypeColors.experiment,
               onPress: () => context.pushNamed(
                 AppRouteNames.knowledgeObjectDetail,
                 pathParameters: {'kind': 'experiment', 'id': experiment.id},
