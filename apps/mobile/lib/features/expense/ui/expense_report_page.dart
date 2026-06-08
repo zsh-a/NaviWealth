@@ -1,9 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/expense_report_providers.dart';
@@ -18,12 +15,6 @@ class ExpenseReportPage extends ConsumerWidget {
     final reportAsync = ref.watch(expenseReportProvider);
     return AppPageScaffold(
       title: l10n.expenseReportAppBarTitle,
-      actions: [
-        FHeaderAction(
-          icon: const Icon(FLucideIcons.list),
-          onPress: () => context.go(AppRoutes.activityExpenses),
-        ),
-      ],
       childPad: false,
       child: reportAsync.whenOrLoading(
         error: (e, _) => Center(child: Text(l10n.expenseReportLoadError('$e'))),
