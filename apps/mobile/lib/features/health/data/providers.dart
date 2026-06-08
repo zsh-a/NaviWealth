@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/persistence/providers.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/outbox_provider.dart';
+import 'garmin/garmin_snapshot_writer.dart';
+import 'garmin/garmin_sync_controller.dart';
 import 'health_metric_repository.dart';
 import 'health_metric_write_service.dart';
 import 'health_platform_adapter.dart';
@@ -52,3 +54,21 @@ final healthMetricWriteServiceProvider =
       final stamper = await ref.watch(mutationStamperProvider.future);
       return HealthMetricWriteService(repository: repo, stamper: stamper);
     });
+
+// ---------------------------------------------------------------------------
+// Garmin providers
+// ---------------------------------------------------------------------------
+
+/// Garmin sync controller — manages auth state and sync operations.
+final garminSyncControllerProvider =
+    NotifierProvider<GarminSyncController, GarminSyncState>(
+  GarminSyncController.new,
+);
+
+/// Garmin snapshot writer — writes Rust snapshots into Drift.
+final garminSnapshotWriterProvider =
+    FutureProvider<GarminSnapshotWriter>((ref) async {
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final stamper = await ref.watch(mutationStamperProvider.future);
+  return GarminSnapshotWriter(repository: repo, stamper: stamper);
+});
