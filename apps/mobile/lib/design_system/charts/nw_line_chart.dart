@@ -470,11 +470,22 @@ class _NwLineChartState extends State<NwLineChart> {
           reservedSize: widget.showXAxis ? _kBottomTitleReservedSize : 0,
           interval: xInterval,
           getTitlesWidget: (value, meta) {
+            // Skip labels that would overlap on narrow charts.
+            if (!shouldRenderAxisLabel(
+              value: value,
+              meta: meta,
+              range: xRange,
+              maxLabels: widget.xAxis.maxLabels,
+            )) {
+              return const SizedBox.shrink();
+            }
             return Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
                 widget.xAxis.formatTimestamp(value),
                 style: labelStyle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             );
           },
@@ -486,9 +497,15 @@ class _NwLineChartState extends State<NwLineChart> {
           reservedSize: _kLeftTitleReservedSize,
           interval: yInterval,
           getTitlesWidget: (value, meta) {
-            // Single line, right-aligned — a wrapping currency/negative
-            // label used to break into a stray "-" + "¥0.50" stack and
-            // collide with anything below the chart.
+            // Skip labels that would overlap on short charts.
+            if (!shouldRenderAxisLabel(
+              value: value,
+              meta: meta,
+              range: yRange,
+              maxLabels: widget.yAxis.maxLabels,
+            )) {
+              return const SizedBox.shrink();
+            }
             return Padding(
               padding: const EdgeInsets.only(right: 4),
               child: Text(
@@ -499,7 +516,7 @@ class _NwLineChartState extends State<NwLineChart> {
                 maxLines: 1,
                 softWrap: false,
                 textAlign: TextAlign.right,
-                overflow: TextOverflow.visible,
+                overflow: TextOverflow.ellipsis,
               ),
             );
           },

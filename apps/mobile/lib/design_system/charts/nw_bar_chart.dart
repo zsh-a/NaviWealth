@@ -129,6 +129,9 @@ class NwBarChart extends StatelessWidget {
     }
 
     final yPad = (maxY - minY).abs() * 0.1 + 1;
+    final chartMinY = minY < 0 ? minY - yPad : 0.0;
+    final chartMaxY = maxY + yPad;
+    final yRange = (chartMaxY - chartMinY).abs();
 
     return Semantics(
       label: semanticLabel,
@@ -139,8 +142,8 @@ class NwBarChart extends StatelessWidget {
           child: BarChart(
             BarChartData(
               barGroups: groups,
-              minY: minY < 0 ? minY - yPad : 0,
-              maxY: maxY + yPad,
+              minY: chartMinY,
+              maxY: chartMaxY,
               gridData: FlGridData(
                 show: yAxis.showGrid,
                 drawVerticalLine: false,
@@ -148,7 +151,7 @@ class NwBarChart extends StatelessWidget {
                     FlLine(color: palette.gridLine, strokeWidth: 1),
               ),
               borderData: FlBorderData(show: false),
-              titlesData: _buildTitles(palette),
+              titlesData: _buildTitles(palette, yRange),
               barTouchData: _buildTouchData(context, palette, colors),
             ),
           ),
@@ -157,7 +160,7 @@ class NwBarChart extends StatelessWidget {
     );
   }
 
-  FlTitlesData _buildTitles(ChartPalette palette) {
+  FlTitlesData _buildTitles(ChartPalette palette, double yRange) {
     final labelStyle = TypographyTokens.numericCaption.copyWith(
       color: palette.axisLabel,
     );
@@ -178,7 +181,12 @@ class NwBarChart extends StatelessWidget {
             if (ci < 0 || ci >= source.data.length) return const SizedBox();
             return Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text(source.data[ci].label, style: labelStyle),
+              child: Text(
+                source.data[ci].label,
+                style: labelStyle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             );
           },
         ),
@@ -188,9 +196,24 @@ class NwBarChart extends StatelessWidget {
           showTitles: true,
           reservedSize: 44,
           getTitlesWidget: (value, meta) {
+            if (!shouldRenderAxisLabel(
+              value: value,
+              meta: meta,
+              range: yRange,
+              maxLabels: yAxis.maxLabels,
+            )) {
+              return const SizedBox.shrink();
+            }
             return Padding(
               padding: const EdgeInsets.only(right: 4),
-              child: Text(yAxis.formatValue(value), style: labelStyle),
+              child: Text(
+                yAxis.formatValue(value),
+                style: labelStyle,
+                maxLines: 1,
+                softWrap: false,
+                textAlign: TextAlign.right,
+                overflow: TextOverflow.ellipsis,
+              ),
             );
           },
         ),

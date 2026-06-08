@@ -1,7 +1,50 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/format/formatters.dart';
+
+/// Minimum horizontal space (logical pixels) between two axis labels.
+///
+/// Derived from the approximate width of a medium-length label
+/// (e.g. "Mar 2025" / "2025年3月" ≈ 55 px) plus a breathing gap.
+const double kMinAxisLabelSpacing = 56;
+
+/// Decide whether an axis label at [value] should be rendered, based on
+/// the actual chart width and the data range.
+///
+/// Call this inside `getTitlesWidget` of [SideTitles].  When the label
+/// would overlap its neighbour (i.e. the chart is too narrow for the
+/// requested [maxLabels]), the function returns `false` and the caller
+/// should return `const SizedBox.shrink()`.
+///
+/// [value] and [meta] come from the `getTitlesWidget` callback.
+/// [range] is the data-axis span (max − min).
+/// [maxLabels] is the caller's desired upper bound.
+bool shouldRenderAxisLabel({
+  required double value,
+  required TitleMeta meta,
+  required double range,
+  required int maxLabels,
+}) {
+  if (range <= 0 || maxLabels <= 0) return true;
+  final chartWidth = meta.parentAxisSize;
+  if (chartWidth <= 0) return true;
+
+  // How many labels the chart width can hold without overlap.
+  final maxByWidth = (chartWidth / kMinAxisLabelSpacing).floor();
+  // Use the tighter of the two constraints.
+  final effectiveMax = maxLabels < maxByWidth ? maxLabels : maxByWidth;
+  if (effectiveMax <= 0) return false;
+
+  final interval = range / effectiveMax;
+  if (interval <= 0) return true;
+
+  // Render the label only if its position is "close enough" to an
+  // interval grid.  The small epsilon absorbs floating-point drift.
+  final epsilon = interval * 0.01;
+  return (value - epsilon) % interval < epsilon * 2;
+}
 
 /// Date-axis label format presets. Picked to match the time-window buttons
 /// across analytics / FIRE pages (1M / 3M / YTD / 1Y / 3Y / ALL).
