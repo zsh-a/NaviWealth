@@ -6,6 +6,7 @@ import 'package:forui/forui.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import 'app_busy_button.dart';
+import 'app_gradient_divider.dart';
 import 'form_dirty_controller.dart';
 
 final ValueNotifier<int> appSheetOverlayDepthListenable = ValueNotifier<int>(0);
@@ -267,31 +268,10 @@ class AppSheet extends StatelessWidget {
               ),
             ),
             // Gradient fade divider — organic ribbon-grouped feel.
-            DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: hairline,
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: ShaderMask(
-                shaderCallback: (rect) => LinearGradient(
-                  colors: [
-                    hairline.withValues(alpha: 0),
-                    hairline,
-                    hairline,
-                    hairline.withValues(alpha: 0),
-                  ],
-                  stops: const [0.0, 0.15, 0.85, 1.0],
-                ).createShader(rect),
-                blendMode: BlendMode.srcIn,
-                child: Container(
-                  height: 1,
-                  color: hairline,
-                ),
-              ),
+            AppGradientDivider(
+              horizontalPadding: 0,
+              stops: const [0.0, 0.15, 0.85, 1.0],
+              color: hairline,
             ),
             Padding(padding: kFooterPadding, child: footer),
           ],
@@ -328,15 +308,29 @@ class AppSheet extends StatelessWidget {
   // Drag handle — refined pill, centered. One spec for the whole app.
   // Excluded from semantics — purely decorative.
   static Widget _dragHandle(FColors colors) {
+    return AppSheetDragHandle(colors: colors);
+  }
+}
+
+/// Canonical footer for [AppSheet] form/confirm sheets.
+///
+/// Layout is fixed so every sheet reads the same: a secondary outline
+/// action on the left, the primary (or destructive) action on the
+/// right, both expanded with a 12dp gutter. While [busy] the primary
+/// action shows a spinner and both buttons are disabled.
+class AppSheetDragHandle extends StatelessWidget {
+  const AppSheetDragHandle({super.key, required this.colors});
+
+  final FColors colors;
+
+  @override
+  Widget build(BuildContext context) {
     return ExcludeSemantics(
       child: Center(
         child: Container(
-          width: AppSpacing.s40, // 40 — wider for a confident grab target
+          width: AppSpacing.s40,
           height: 3.5,
-          margin: const EdgeInsets.only(
-            top: AppSpacing.s10, // sits below the sheet's top corner
-            bottom: AppSpacing.s8,
-          ),
+          margin: const EdgeInsets.only(top: AppSpacing.s10, bottom: AppSpacing.s8),
           decoration: BoxDecoration(
             color: colors.mutedForeground.withValues(alpha: AppOpacity.medium),
             borderRadius: BorderRadius.circular(AppRadius.full),
@@ -347,12 +341,6 @@ class AppSheet extends StatelessWidget {
   }
 }
 
-/// Canonical footer for [AppSheet] form/confirm sheets.
-///
-/// Layout is fixed so every sheet reads the same: a secondary outline
-/// action on the left, the primary (or destructive) action on the
-/// right, both expanded with a 12dp gutter. While [busy] the primary
-/// action shows a spinner and both buttons are disabled.
 class AppSheetFooter extends StatelessWidget {
   const AppSheetFooter({
     super.key,

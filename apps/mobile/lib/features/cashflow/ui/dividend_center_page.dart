@@ -538,36 +538,14 @@ class _EmptyDividendState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s24),
-      child: Column(
-        children: [
-          Icon(
-            FLucideIcons.banknote,
-            size: AppIconSizes.heroLg,
-            color: context.theme.colors.primary,
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          Text(
-            l10n.dividendCenterEmptyTitle,
-            style: context.theme.typography.lg,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Text(
-            l10n.dividendCenterEmptyBody,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          FButton(
-            key: const Key('dividend-center-record-cta'),
-            onPress: () => context.push(AppRoutes.wealthCorporateAction),
-            child: Text(l10n.dividendCenterRecordAction),
-          ),
-        ],
+    return AppEmptyState(
+      icon: FLucideIcons.banknote,
+      title: l10n.dividendCenterEmptyTitle,
+      message: l10n.dividendCenterEmptyBody,
+      action: FButton(
+        key: const Key('dividend-center-record-cta'),
+        onPress: () => context.push(AppRoutes.wealthCorporateAction),
+        child: Text(l10n.dividendCenterRecordAction),
       ),
     );
   }

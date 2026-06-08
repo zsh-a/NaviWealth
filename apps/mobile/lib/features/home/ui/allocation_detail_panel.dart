@@ -85,15 +85,7 @@ class _DesktopAllocationInspector extends StatelessWidget {
           decoration: BoxDecoration(
             color: colors.background,
             border: Border(left: BorderSide(color: colors.border)),
-            boxShadow: [
-              BoxShadow(
-                color: Theme.of(
-                  context,
-                ).shadowColor.withValues(alpha: AppOpacity.muted),
-                blurRadius: 24,
-                offset: const Offset(-8, 0),
-              ),
-            ],
+            boxShadow: AppShadow.panel,
           ),
           child: _AllocationDetailBody(snapshot: snapshot),
         ),
@@ -180,22 +172,7 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (widget.showHandle)
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.only(
-                top: AppSpacing.s10,
-                bottom: AppSpacing.s6,
-              ),
-              decoration: BoxDecoration(
-                color: context.theme.colors.mutedForeground.withValues(
-                  alpha: AppOpacity.muted,
-                ),
-                borderRadius: BorderRadius.circular(AppRadius.xxs),
-              ),
-            ),
-          ),
+          AppSheetDragHandle(colors: context.theme.colors),
         if (widget.showTitle)
           Padding(
             padding: const EdgeInsets.fromLTRB(

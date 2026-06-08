@@ -132,24 +132,24 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
       title: l10n.navAccounts,
       actions: [
         FHeaderAction(
-          icon: Tooltip(
-            message: l10n.accountsCreateAction,
+          icon: FTooltip(
+            tipBuilder: (_, _) => Text(l10n.accountsCreateAction),
             child: const Icon(FLucideIcons.creditCard),
           ),
           semanticsLabel: l10n.accountsCreateAction,
           onPress: () => context.go(AppRoutes.wealthAccountNew),
         ),
         FHeaderAction(
-          icon: Tooltip(
-            message: l10n.accountsJournalAction,
+          icon: FTooltip(
+            tipBuilder: (_, _) => Text(l10n.accountsJournalAction),
             child: const Icon(FLucideIcons.history),
           ),
           semanticsLabel: l10n.accountsJournalAction,
           onPress: () => context.go(AppRoutes.journalEntries),
         ),
         FHeaderAction(
-          icon: Tooltip(
-            message: l10n.accountsTransferAction,
+          icon: FTooltip(
+            tipBuilder: (_, _) => Text(l10n.accountsTransferAction),
             child: const Icon(FLucideIcons.arrowLeftRight),
           ),
           semanticsLabel: l10n.accountsTransferAction,

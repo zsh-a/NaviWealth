@@ -1,7 +1,7 @@
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 
 /// Single-line setting row in iOS-style inset-grouped lists.
@@ -85,7 +85,7 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
       ),
       child: FTappable(
         onPress: () {
-          HapticFeedback.selectionClick();
+          Haptics.selection();
           _popover.toggle();
         },
         child: Padding(
@@ -307,7 +307,7 @@ class InlineSwitchRow extends StatelessWidget {
           FSwitch(
             value: value,
             onChange: (v) {
-              HapticFeedback.selectionClick();
+              Haptics.selection();
               onChanged(v);
             },
           ),

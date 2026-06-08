@@ -33,6 +33,7 @@ export 'widgets/app_divider.dart';
 export 'widgets/app_empty_state.dart';
 export 'widgets/app_form_page_scaffold.dart';
 export 'widgets/app_form_scaffold_body.dart';
+export 'widgets/app_gradient_divider.dart';
 export 'widgets/app_grouped_action_list.dart';
 export 'widgets/app_metric_header.dart';
 export 'widgets/app_page_scaffold.dart';

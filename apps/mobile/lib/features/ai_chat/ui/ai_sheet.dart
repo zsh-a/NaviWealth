@@ -291,15 +291,7 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
                 color: colors.background,
                 borderRadius: BorderRadius.circular(AppRadius.xl),
                 border: Border.all(color: colors.border, width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(
-                      context,
-                    ).shadowColor.withValues(alpha: AppOpacity.muted),
-                    blurRadius: 24,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
+                boxShadow: AppShadow.desktopSheet,
               ),
               child: Stack(
                 children: [
@@ -317,20 +309,7 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
                           cursor: SystemMouseCursors.move,
                           child: SizedBox(
                             height: 24,
-                            child: Center(
-                              child: Container(
-                                width: 36,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: colors.mutedForeground.withValues(
-                                    alpha: AppOpacity.disabled,
-                                  ),
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.xxs,
-                                  ),
-                                ),
-                              ),
-                            ),
+                            child: AppSheetDragHandle(colors: colors),
                           ),
                         ),
                       ),

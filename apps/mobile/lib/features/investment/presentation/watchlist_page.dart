@@ -186,29 +186,11 @@ class _WatchlistEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(top: 96),
-      child: Column(
-        children: [
-          Icon(
-            FLucideIcons.bellRing,
-            size: AppIconSizes.xxl,
-            color: context.theme.colors.mutedForeground,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          Text(l10n.watchlistEmptyTitle, style: context.theme.typography.lg),
-          const SizedBox(height: AppSpacing.s6),
-          Text(
-            l10n.watchlistEmptyBody,
-            textAlign: TextAlign.center,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s20),
-          FButton(onPress: onAdd, child: Text(l10n.watchlistAddAction)),
-        ],
-      ),
+    return AppEmptyState(
+      icon: FLucideIcons.bellRing,
+      title: l10n.watchlistEmptyTitle,
+      message: l10n.watchlistEmptyBody,
+      action: FButton(onPress: onAdd, child: Text(l10n.watchlistAddAction)),
     );
   }
 }
