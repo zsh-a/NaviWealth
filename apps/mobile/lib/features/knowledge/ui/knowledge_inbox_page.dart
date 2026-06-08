@@ -72,7 +72,7 @@ class _InboxCreateFab extends ConsumerWidget {
         prefix: const Icon(
           FLucideIcons.plus,
           size: AppIconSizes.sm,
-          color: Color(0xFFFFFFFF),
+          color: ColorPalette.neutral0,
         ),
         onPress: () => _openCreateSheet(context, ref),
         child: const SizedBox.shrink(),

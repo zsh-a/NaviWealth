@@ -99,7 +99,7 @@ class _PerspectiveBody extends ConsumerWidget {
     final isDark = colors.brightness == Brightness.dark;
     final background = isDark
         ? colors.card.withValues(alpha: AppOpacity.muted)
-        : const Color(0xFFF1F5F5);
+        : ColorPalette.neutral75;
     final aggregation = buildWealthAggregation(
       snapshot: snapshot,
       perspective: perspective,

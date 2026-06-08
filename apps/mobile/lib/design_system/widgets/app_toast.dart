@@ -133,59 +133,83 @@ class _AppToastSurface extends StatelessWidget {
     );
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Color.alphaBlend(
-            palette.container.withValues(alpha: isDark ? 0.55 : 0.72),
-            colors.background,
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(
-            color: palette.accent.withValues(alpha: isDark ? 0.34 : 0.26),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).shadowColor.withValues(
-                alpha: isDark ? AppOpacity.muted : AppOpacity.faint,
-              ),
-              blurRadius: 24,
-              offset: const Offset(0, 10),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Color.alphaBlend(
+              palette.container.withValues(alpha: isDark ? 0.55 : 0.72),
+              colors.background,
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s14,
-            vertical: AppSpacing.s12,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: palette.accent.withValues(alpha: isDark ? 0.34 : 0.26),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).shadowColor.withValues(
+                  alpha: isDark ? AppOpacity.muted : AppOpacity.faint,
+                ),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(palette.icon, color: palette.accent, size: AppIconSizes.md),
-              const SizedBox(width: AppSpacing.s10),
-              Flexible(
-                child: Text(
-                  message,
-                  style: context.theme.typography.sm.copyWith(
-                    color: colors.foreground,
-                    fontWeight: FontWeight.w500,
+              // Accent bar — severity-colored left strip for instant scanning.
+              Container(
+                width: 3,
+                decoration: BoxDecoration(
+                  color: palette.accent.withValues(alpha: AppOpacity.strong),
+                  borderRadius: const BorderRadius.horizontal(
+                    left: Radius.circular(AppRadius.lg),
                   ),
                 ),
               ),
-              if (actionLabel != null && onAction != null) ...[
-                const SizedBox(width: AppSpacing.s8),
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  size: FButtonSizeVariant.sm,
-                  mainAxisSize: MainAxisSize.min,
-                  onPress: onAction,
-                  child: Text(
-                    actionLabel!,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s14,
+                    vertical: AppSpacing.s12,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        palette.icon,
+                        color: palette.accent,
+                        size: AppIconSizes.md,
+                      ),
+                      const SizedBox(width: AppSpacing.s10),
+                      Flexible(
+                        child: Text(
+                          message,
+                          style: context.theme.typography.sm.copyWith(
+                            color: colors.foreground,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      if (actionLabel != null && onAction != null) ...[
+                        const SizedBox(width: AppSpacing.s8),
+                        FButton(
+                          variant: FButtonVariant.ghost,
+                          size: FButtonSizeVariant.sm,
+                          mainAxisSize: MainAxisSize.min,
+                          onPress: onAction,
+                          child: Text(
+                            actionLabel!,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-              ],
+              ),
             ],
           ),
         ),

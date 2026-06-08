@@ -370,7 +370,7 @@ class _LibraryCreateFab extends ConsumerWidget {
         prefix: const Icon(
           FLucideIcons.plus,
           size: AppIconSizes.sm,
-          color: Color(0xFFFFFFFF),
+          color: ColorPalette.neutral0,
         ),
         onPress: () => _openCreateSheet(context, ref),
         child: const SizedBox.shrink(),
@@ -1653,7 +1653,7 @@ Widget _buildPrincipleTile(
     query: query,
     statusBadge: p.status.wire,
     typeIcon: FLucideIcons.badgeCheck,
-    typeColor: const Color(0xFF10B981),
+    typeColor: KnowledgeTypeColors.principle,
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'principle', 'id': p.id},
@@ -1685,7 +1685,7 @@ Widget _buildAssumptionTile(
     query: query,
     statusBadge: a.status.wire,
     typeIcon: FLucideIcons.lightbulb,
-    typeColor: const Color(0xFFF59E0B),
+    typeColor: KnowledgeTypeColors.assumption,
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'assumption', 'id': a.id},
@@ -1714,7 +1714,7 @@ Widget _buildConceptTile(
     title: c.name,
     query: query,
     typeIcon: FLucideIcons.folderTree,
-    typeColor: const Color(0xFF8B5CF6),
+    typeColor: KnowledgeTypeColors.concept,
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'concept', 'id': c.id},
@@ -1736,7 +1736,7 @@ Widget _buildExperimentTile(
     query: query,
     statusBadge: e.status.wire,
     typeIcon: FLucideIcons.flaskConical,
-    typeColor: const Color(0xFF06B6D4),
+    typeColor: KnowledgeTypeColors.experiment,
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'experiment', 'id': e.id},
@@ -1774,7 +1774,7 @@ Widget _buildRoutineTile(
     query: query,
     statusBadge: r.status.wire,
     typeIcon: FLucideIcons.calendarClock,
-    typeColor: const Color(0xFFF97316),
+    typeColor: KnowledgeTypeColors.routine,
     onPress: () => context.pushNamed(
       AppRouteNames.knowledgeObjectDetail,
       pathParameters: {'kind': 'routine', 'id': r.id},

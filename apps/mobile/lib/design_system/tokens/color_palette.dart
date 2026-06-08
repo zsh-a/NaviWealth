@@ -69,6 +69,7 @@ class ColorPalette {
   // ── Neutral grayscale ───────────────────────────────────────────────────
   static const Color neutral0 = Color(0xFFFFFFFF);
   static const Color neutral50 = Color(0xFFF7F8FA);
+  static const Color neutral75 = Color(0xFFF1F5F5); // cool-toned surface tint
   static const Color neutral100 = Color(0xFFEFF1F4);
   static const Color neutral200 = Color(0xFFE2E5EA);
   static const Color neutral300 = Color(0xFFCBD0D7);
@@ -109,6 +110,7 @@ class ColorPalette {
   // ── Ambers (warning) ────────────────────────────────────────────────────
   static const Color amber50 = Color(0xFFFEF6E5);
   static const Color amber100 = Color(0xFFFCE7B0);
+  static const Color amber400 = Color(0xFFF59E0B);
   static const Color amber500 = Color(0xFFD97706);
   static const Color amber700 = Color(0xFF8E4E03);
 
@@ -116,7 +118,14 @@ class ColorPalette {
   static const Color cyan50 = Color(0xFFE6F4FB);
   static const Color cyan100 = Color(0xFFC2E2F4);
   static const Color cyan500 = Color(0xFF0891B2);
+  static const Color cyan600 = Color(0xFF06B6D4);
   static const Color cyan700 = Color(0xFF075E73);
+
+  // ── Violet (knowledge concepts) ────────────────────────────────────────
+  static const Color violet500 = Color(0xFF8B5CF6);
+
+  // ── Orange (knowledge / expense accent) ────────────────────────────────
+  static const Color orange500 = Color(0xFFF97316);
 
   // ── Color-blind friendly accents (Wong / Okabe-Ito palette) ────────────
   // These read distinctly under deuteranopia and protanopia and are used as
@@ -132,6 +141,21 @@ class ColorPalette {
   static const Color cbOrangeDark = Color(0xFF8A5F00);
   static const Color cbOrangeContainerLight = Color(0xFFFCEED1);
   static const Color cbOrangeContainerDark = Color(0xFF402C00);
+}
+
+/// Knowledge-type accent colours.
+///
+/// Each knowledge object type maps to a distinct hue so detail pages,
+/// library lists, and decision pages read as a varied palette. Values
+/// match the Tailwind-derived scale used across the design system.
+class KnowledgeTypeColors {
+  const KnowledgeTypeColors._();
+
+  static const Color principle = ColorPalette.green500; // emerald
+  static const Color assumption = ColorPalette.amber400; // amber
+  static const Color concept = ColorPalette.violet500; // violet
+  static const Color experiment = ColorPalette.cyan600; // cyan
+  static const Color routine = ColorPalette.orange500; // orange
 }
 
 /// Expense-category accent colours.

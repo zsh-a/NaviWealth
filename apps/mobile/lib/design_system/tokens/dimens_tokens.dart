@@ -72,6 +72,9 @@ class AppOpacity {
   /// Medium -- visible but not dominant accents. (~0.14)
   static const double medium = 0.14;
 
+  /// Highlight -- accent bars, subtle emphasis. (~0.20)
+  static const double highlight = 0.20;
+
   /// Muted -- borders, muted backgrounds, secondary text. (~0.30)
   static const double muted = 0.30;
 
