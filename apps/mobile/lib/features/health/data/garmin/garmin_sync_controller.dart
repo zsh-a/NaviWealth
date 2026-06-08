@@ -47,12 +47,22 @@ class GarminSyncController extends Notifier<GarminSyncState> {
   @override
   GarminSyncState build() => const GarminInitial();
 
-  GarminBridge get _bridge => GarminBridge();
+  final GarminBridge _bridge = GarminBridge();
+  bool _initialized = false;
+
+  /// Ensure the Rust-side Garmin client is initialized.
+  /// Must be called before any other bridge method.
+  Future<void> _ensureInit() async {
+    if (_initialized) return;
+    await _bridge.init(isCn: true);
+    _initialized = true;
+  }
 
   /// Connect with email/password.
   Future<void> connect(String email, String password) async {
     state = GarminSyncing(startedAt: DateTime.now().toUtc());
     try {
+      await _ensureInit();
       final result = await _bridge.authenticate(email, password);
       switch (result.type) {
         case GarminAuthResultType.authenticated:
@@ -70,6 +80,7 @@ class GarminSyncController extends Notifier<GarminSyncState> {
   /// Submit MFA code.
   Future<void> submitMfa(String code) async {
     try {
+      await _ensureInit();
       final result = await _bridge.submitMfa(code);
       switch (result.type) {
         case GarminAuthResultType.authenticated:
@@ -91,6 +102,7 @@ class GarminSyncController extends Notifier<GarminSyncState> {
     final now = DateTime.now().toUtc();
     state = GarminSyncing(startedAt: now);
     try {
+      await _ensureInit();
       final from = now.subtract(window);
       final outcomes = await _bridge.syncRange(from, now);
 
@@ -114,7 +126,9 @@ class GarminSyncController extends Notifier<GarminSyncState> {
   /// Disconnect and clear credentials.
   Future<void> disconnect() async {
     try {
+      await _ensureInit();
       await _bridge.logout();
+      _initialized = false;
       state = const GarminInitial();
     } catch (e) {
       state = GarminError(e.toString());

@@ -1,8 +1,7 @@
 //! Garmin Connect API endpoint wrappers.
 //!
-//! Each function maps to one Garmin Connect API endpoint. All functions
-//! go through the rate limiter. Raw JSON is returned; mapping to
-//! normalized types happens in `mapper.rs`.
+//! All API calls use DI Bearer token auth with native mobile headers.
+//! Raw JSON is returned; mapping to normalized types happens in `mapper.rs`.
 
 use anyhow::{anyhow, Result};
 use chrono::NaiveDate;
@@ -11,213 +10,49 @@ use serde_json::Value;
 
 use super::rate_limiter::GarminRateLimiter;
 
-/// Base URL for Garmin Connect API (global).
-const GARMIN_CONNECT_BASE_GLOBAL: &str = "https://connect.garmin.com";
+/// Connect API base URL templates.
+const CONNECT_API_BASE_CN: &str = "https://connectapi.garmin.cn";
+const CONNECT_API_BASE_GLOBAL: &str = "https://connectapi.garmin.com";
 
-/// Base URL for Garmin Connect API (China).
-const GARMIN_CONNECT_BASE_CN: &str = "https://connect.garmin.cn";
+/// Native API headers (matching python-garminconnect mobile flow).
+const NATIVE_USER_AGENT: &str = "GCM-Android-5.23";
+const NATIVE_X_GARMIN_UA: &str =
+    "com.garmin.android.apps.connectmobile/5.23; ; Google/sdk_gphone64_arm64/google; Android/33; Dalvik/2.1.0";
 
-/// User-Agent mimicking the Garmin Connect mobile app.
-const USER_AGENT: &str = "com.garmin.android.apps.connectmobile";
-
-/// Get the base URL for the configured region.
-fn base_url(is_cn: bool) -> &'static str {
+fn api_base(is_cn: bool) -> &'static str {
     if is_cn {
-        GARMIN_CONNECT_BASE_CN
+        CONNECT_API_BASE_CN
     } else {
-        GARMIN_CONNECT_BASE_GLOBAL
+        CONNECT_API_BASE_GLOBAL
     }
 }
 
-/// Fetch daily summary for a single date.
-pub async fn fetch_daily_summary(
-    client: &Client,
-    rate_limiter: &GarminRateLimiter,
-    date: NaiveDate,
-    is_cn: bool,
-) -> Result<Value> {
-    let url = format!(
-        "{}/proxy/usersummary-service/usersummary/daily/{}/{}",
-        base_url(is_cn),
-        date.format("%Y-%m-%d"),
-        date.format("%Y-%m-%d"),
-    );
-    rate_limiter
-        .run(|| get_json(client, &url))
-        .await
-}
-
-/// Fetch steps data for a date range.
-pub async fn fetch_steps(
-    client: &Client,
-    rate_limiter: &GarminRateLimiter,
-    from: NaiveDate,
-    to: NaiveDate,
-    is_cn: bool,
-) -> Result<Value> {
-    let url = format!(
-        "{}/proxy/usersummary-service/stats/steps/daily/{}/{}",
-        base_url(is_cn),
-        from.format("%Y-%m-%d"),
-        to.format("%Y-%m-%d"),
-    );
-    rate_limiter
-        .run(|| get_json(client, &url))
-        .await
-}
-
-/// Fetch sleep data for a date.
-pub async fn fetch_sleep(
-    client: &Client,
-    rate_limiter: &GarminRateLimiter,
-    date: NaiveDate,
-    is_cn: bool,
-) -> Result<Value> {
-    let url = format!(
-        "{}/proxy/wellness-service/wellness/dailySleepData?date={}&nonSleepBufferMinutes=60",
-        base_url(is_cn),
-        date.format("%Y-%m-%d"),
-    );
-    rate_limiter
-        .run(|| get_json(client, &url))
-        .await
-}
-
-/// Fetch resting heart rate for a date range.
-pub async fn fetch_rhr(
-    client: &Client,
-    rate_limiter: &GarminRateLimiter,
-    from: NaiveDate,
-    to: NaiveDate,
-    is_cn: bool,
-) -> Result<Value> {
-    let url = format!(
-        "{}/proxy/wellness-service/wellness/dailyHeartRate?from={}&until={}",
-        base_url(is_cn),
-        from.format("%Y-%m-%d"),
-        to.format("%Y-%m-%d"),
-    );
-    rate_limiter
-        .run(|| get_json(client, &url))
-        .await
-}
-
-/// Fetch HRV data for a date.
-pub async fn fetch_hrv(
-    client: &Client,
-    rate_limiter: &GarminRateLimiter,
-    date: NaiveDate,
-    is_cn: bool,
-) -> Result<Value> {
-    let url = format!(
-        "{}/proxy/hrv-service/hrv/daily/{}",
-        base_url(is_cn),
-        date.format("%Y-%m-%d"),
-    );
-    rate_limiter
-        .run(|| get_json(client, &url))
-        .await
-}
-
-/// Fetch Body Battery data for a date range.
-pub async fn fetch_body_battery(
-    client: &Client,
-    rate_limiter: &GarminRateLimiter,
-    from: NaiveDate,
-    to: NaiveDate,
-    is_cn: bool,
-) -> Result<Value> {
-    let url = format!(
-        "{}/proxy/wellness-service/wellness/bodyBattery?from={}&until={}",
-        base_url(is_cn),
-        from.format("%Y-%m-%d"),
-        to.format("%Y-%m-%d"),
-    );
-    rate_limiter
-        .run(|| get_json(client, &url))
-        .await
-}
-
-/// Fetch stress data for a date range.
-pub async fn fetch_stress(
-    client: &Client,
-    rate_limiter: &GarminRateLimiter,
-    from: NaiveDate,
-    to: NaiveDate,
-    is_cn: bool,
-) -> Result<Value> {
-    let url = format!(
-        "{}/proxy/wellness-service/wellness/dailyStress?from={}&until={}",
-        base_url(is_cn),
-        from.format("%Y-%m-%d"),
-        to.format("%Y-%m-%d"),
-    );
-    rate_limiter
-        .run(|| get_json(client, &url))
-        .await
-}
-
-/// Fetch activities (paginated).
-pub async fn fetch_activities(
-    client: &Client,
-    rate_limiter: &GarminRateLimiter,
-    start: u32,
-    limit: u32,
-    is_cn: bool,
-) -> Result<Value> {
-    let url = format!(
-        "{}/proxy/activitylist-service/activities/search?start={}&limit={}",
-        base_url(is_cn), start, limit,
-    );
-    rate_limiter
-        .run(|| get_json(client, &url))
-        .await
-}
-
-/// Fetch training status (includes VO2 max).
-pub async fn fetch_training_status(
-    client: &Client,
-    rate_limiter: &GarminRateLimiter,
-    is_cn: bool,
-) -> Result<Value> {
-    let url = format!(
-        "{}/proxy/metrics-service/metrics/trainingStatus",
-        base_url(is_cn),
-    );
-    rate_limiter
-        .run(|| get_json(client, &url))
-        .await
-}
-
-/// Fetch weight data for a date.
-pub async fn fetch_weight(
-    client: &Client,
-    rate_limiter: &GarminRateLimiter,
-    date: NaiveDate,
-    is_cn: bool,
-) -> Result<Value> {
-    let url = format!(
-        "{}/proxy/weight-service/weight/dateRange?startDate={}&endDate={}",
-        base_url(is_cn),
-        date.format("%Y-%m-%d"),
-        date.format("%Y-%m-%d"),
-    );
-    rate_limiter
-        .run(|| get_json(client, &url))
-        .await
-}
-
-/// Internal: GET request returning parsed JSON.
-async fn get_json(client: &Client, url: &str) -> Result<Value> {
-    let response = client
+/// Build a GET request with native API headers + Bearer auth.
+fn api_get(client: &Client, url: &str, access_token: &str) -> reqwest::RequestBuilder {
+    client
         .get(url)
-        .header("User-Agent", USER_AGENT)
-        .send()
-        .await?;
+        .header("User-Agent", NATIVE_USER_AGENT)
+        .header("X-Garmin-User-Agent", NATIVE_X_GARMIN_UA)
+        .header("X-Garmin-Paired-App-Version", "10861")
+        .header("X-Garmin-Client-Platform", "Android")
+        .header("X-App-Ver", "10861")
+        .header("X-Lang", "en")
+        .header("X-GCExperience", "GC5")
+        .header("Accept-Language", "en-US,en;q=0.9")
+        .header("Authorization", format!("Bearer {}", access_token))
+        .header("Accept", "application/json")
+}
+
+/// Execute a GET request and parse JSON response.
+async fn get_json(client: &Client, url: &str, access_token: &str) -> Result<Value> {
+    let response = api_get(client, url, access_token).send().await?;
 
     let status = response.status();
     if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
         return Err(anyhow!("429 Too Many Requests"));
+    }
+    if status == reqwest::StatusCode::UNAUTHORIZED {
+        return Err(anyhow!("401 Unauthorized — token may be expired"));
     }
     if !status.is_success() {
         return Err(anyhow!("Garmin API error: {} {}", status, url));
@@ -225,4 +60,168 @@ async fn get_json(client: &Client, url: &str) -> Result<Value> {
 
     let body: Value = response.json().await?;
     Ok(body)
+}
+
+// ---------------------------------------------------------------------------
+// Endpoint functions
+// ---------------------------------------------------------------------------
+
+pub async fn fetch_daily_summary(
+    client: &Client,
+    rl: &GarminRateLimiter,
+    token: &str,
+    date: NaiveDate,
+    is_cn: bool,
+) -> Result<Value> {
+    let url = format!(
+        "{}/proxy/usersummary-service/usersummary/daily/{}/{}",
+        api_base(is_cn),
+        date.format("%Y-%m-%d"),
+        date.format("%Y-%m-%d"),
+    );
+    rl.run(|| get_json(client, &url, token)).await
+}
+
+pub async fn fetch_steps(
+    client: &Client,
+    rl: &GarminRateLimiter,
+    token: &str,
+    from: NaiveDate,
+    to: NaiveDate,
+    is_cn: bool,
+) -> Result<Value> {
+    let url = format!(
+        "{}/proxy/usersummary-service/stats/steps/daily/{}/{}",
+        api_base(is_cn),
+        from.format("%Y-%m-%d"),
+        to.format("%Y-%m-%d"),
+    );
+    rl.run(|| get_json(client, &url, token)).await
+}
+
+pub async fn fetch_sleep(
+    client: &Client,
+    rl: &GarminRateLimiter,
+    token: &str,
+    date: NaiveDate,
+    is_cn: bool,
+) -> Result<Value> {
+    let url = format!(
+        "{}/proxy/wellness-service/wellness/dailySleepData?date={}&nonSleepBufferMinutes=60",
+        api_base(is_cn),
+        date.format("%Y-%m-%d"),
+    );
+    rl.run(|| get_json(client, &url, token)).await
+}
+
+pub async fn fetch_rhr(
+    client: &Client,
+    rl: &GarminRateLimiter,
+    token: &str,
+    from: NaiveDate,
+    to: NaiveDate,
+    is_cn: bool,
+) -> Result<Value> {
+    let url = format!(
+        "{}/proxy/wellness-service/wellness/dailyHeartRate?from={}&until={}",
+        api_base(is_cn),
+        from.format("%Y-%m-%d"),
+        to.format("%Y-%m-%d"),
+    );
+    rl.run(|| get_json(client, &url, token)).await
+}
+
+pub async fn fetch_hrv(
+    client: &Client,
+    rl: &GarminRateLimiter,
+    token: &str,
+    date: NaiveDate,
+    is_cn: bool,
+) -> Result<Value> {
+    let url = format!(
+        "{}/proxy/hrv-service/hrv/daily/{}",
+        api_base(is_cn),
+        date.format("%Y-%m-%d"),
+    );
+    rl.run(|| get_json(client, &url, token)).await
+}
+
+pub async fn fetch_body_battery(
+    client: &Client,
+    rl: &GarminRateLimiter,
+    token: &str,
+    from: NaiveDate,
+    to: NaiveDate,
+    is_cn: bool,
+) -> Result<Value> {
+    let url = format!(
+        "{}/proxy/wellness-service/wellness/bodyBattery?from={}&until={}",
+        api_base(is_cn),
+        from.format("%Y-%m-%d"),
+        to.format("%Y-%m-%d"),
+    );
+    rl.run(|| get_json(client, &url, token)).await
+}
+
+pub async fn fetch_stress(
+    client: &Client,
+    rl: &GarminRateLimiter,
+    token: &str,
+    from: NaiveDate,
+    to: NaiveDate,
+    is_cn: bool,
+) -> Result<Value> {
+    let url = format!(
+        "{}/proxy/wellness-service/wellness/dailyStress?from={}&until={}",
+        api_base(is_cn),
+        from.format("%Y-%m-%d"),
+        to.format("%Y-%m-%d"),
+    );
+    rl.run(|| get_json(client, &url, token)).await
+}
+
+pub async fn fetch_activities(
+    client: &Client,
+    rl: &GarminRateLimiter,
+    token: &str,
+    start: u32,
+    limit: u32,
+    is_cn: bool,
+) -> Result<Value> {
+    let url = format!(
+        "{}/proxy/activitylist-service/activities/search?start={}&limit={}",
+        api_base(is_cn),
+        start,
+        limit,
+    );
+    rl.run(|| get_json(client, &url, token)).await
+}
+
+pub async fn fetch_training_status(
+    client: &Client,
+    rl: &GarminRateLimiter,
+    token: &str,
+    is_cn: bool,
+) -> Result<Value> {
+    let url = format!(
+        "{}/proxy/metrics-service/metrics/trainingStatus",
+        api_base(is_cn),
+    );
+    rl.run(|| get_json(client, &url, token)).await
+}
+
+pub async fn fetch_weight(
+    client: &Client,
+    rl: &GarminRateLimiter,
+    token: &str,
+    date: NaiveDate,
+    is_cn: bool,
+) -> Result<Value> {
+    let url = format!(
+        "{}/proxy/weight-service/weight/dateRange?startDate={}&endDate={}",
+        api_base(is_cn),
+        date.format("%Y-%m-%d"),
+        date.format("%Y-%m-%d"),
+    );
+    rl.run(|| get_json(client, &url, token)).await
 }
