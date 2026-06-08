@@ -54,7 +54,6 @@ pub fn map_sleep(json: &Value, date: NaiveDate) -> Option<SleepSession> {
         .and_then(|v| v.as_i64())
         .unwrap_or(0);
     let started_at = if start_ms > 0 {
-        // Convert ms to DateTime UTC
         let secs = start_ms / 1000;
         let nsecs = ((start_ms % 1000) * 1_000_000) as u32;
         chrono::DateTime::from_timestamp(secs, nsecs)
@@ -138,7 +137,7 @@ pub fn map_hrv(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
     })
 }
 
-/// Map heart rate from sleep or daily summary JSON.
+/// Map heart rate from sleep JSON.
 ///
 /// From sleep DTO: `avgHeartRate` field.
 pub fn map_heart_rate_from_sleep(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
@@ -175,7 +174,6 @@ pub fn map_body_battery(json: &Value, date: NaiveDate) -> Option<BodyBatteryDay>
         .unwrap_or(&vec![])
         .iter()
         .filter_map(|slot| {
-            // Each slot is [timestamp, value] or {"value": N}
             if let Some(arr) = slot.as_array() {
                 arr.get(1).and_then(|v| v.as_u64()).map(|n| n as u8)
             } else {
@@ -190,7 +188,7 @@ pub fn map_body_battery(json: &Value, date: NaiveDate) -> Option<BodyBatteryDay>
         *values.iter().min().unwrap_or(&0)
     };
     let max = if values.is_empty() {
-        charged // fallback
+        charged
     } else {
         *values.iter().max().unwrap_or(&charged)
     };
@@ -240,7 +238,6 @@ pub fn map_activity(json: &Value) -> Option<ActivityRecord> {
         .and_then(|v| v.as_str())
         .unwrap_or("")
         .to_string();
-    // Duration is in seconds (float).
     let duration_seconds = json
         .get("duration")
         .and_then(|v| v.as_f64())
@@ -273,7 +270,7 @@ pub fn map_weight(json: &Value, date: NaiveDate) -> Option<PointMetric> {
         .and_then(|v| v.as_array())
         .unwrap_or(&empty);
     let first = entries.first()?;
-    let kg = first.get("weight").and_then(|v| v.as_f64())? / 1000.0; // Garmin stores grams
+    let kg = first.get("weight").and_then(|v| v.as_f64())? / 1000.0;
     if kg == 0.0 {
         return None;
     }
@@ -327,13 +324,236 @@ pub fn build_snapshot(
         resting_hr,
         hrv,
         heart_rate,
-        active_energy: vec![],  // Garmin doesn't have a direct active energy endpoint
+        active_energy: vec![],
         vo2_max,
         weight,
-        body_fat: vec![],       // Not available from Garmin
-        floors_climbed: vec![], // Available but low priority
+        body_fat: vec![],
+        floors_climbed: vec![],
         respiratory_rate: vec![],
         body_battery,
         stress,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn date(s: &str) -> NaiveDate {
+        NaiveDate::parse_from_str(s, "%Y-%m-%d").unwrap()
+    }
+
+    // ---- Steps ----
+
+    #[test]
+    fn steps_sums_15min_intervals() {
+        let data = json!([
+            {"startGMT": "2026-06-07T16:00:00.0", "endGMT": "2026-06-07T16:15:00.0", "steps": 100},
+            {"startGMT": "2026-06-07T16:15:00.0", "endGMT": "2026-06-07T16:30:00.0", "steps": 250},
+            {"startGMT": "2026-06-07T16:30:00.0", "endGMT": "2026-06-07T16:45:00.0", "steps": 0},
+        ]);
+        let m = map_steps(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 350.0);
+        assert_eq!(m.unit, "steps");
+        assert_eq!(m.id, "garmin:steps:2026-06-07");
+    }
+
+    #[test]
+    fn steps_zero_returns_none() {
+        let data = json!([
+            {"steps": 0},
+            {"steps": 0},
+        ]);
+        assert!(map_steps(&data, date("2026-06-07")).is_none());
+    }
+
+    // ---- Sleep ----
+
+    #[test]
+    fn sleep_parses_dto_with_stages() {
+        let data = json!({
+            "dailySleepDTO": {
+                "id": 1780767017000i64,
+                "sleepStartTimestampGMT": 1780767017000i64,
+                "sleepTimeSeconds": 27035,
+                "deepSleepSeconds": 6840,
+                "lightSleepSeconds": 13680,
+                "remSleepSeconds": 6540,
+                "awakeSleepSeconds": 0,
+                "avgHeartRate": 45.0
+            }
+        });
+        let s = map_sleep(&data, date("2026-06-07")).unwrap();
+        assert_eq!(s.duration_seconds, 27035);
+        assert_eq!(s.id, "garmin:sleep:1780767017000");
+        assert!(s.started_at.contains("2026")); // epoch ms → ISO 8601
+        let hist = s.stage_histogram_json.unwrap();
+        assert!(hist.contains("\"deep\":6840"));
+        assert!(hist.contains("\"light\":13680"));
+        assert!(hist.contains("\"rem\":6540"));
+        assert!(hist.contains("\"awake\":0"));
+    }
+
+    #[test]
+    fn sleep_zero_duration_returns_none() {
+        let data = json!({"dailySleepDTO": {"sleepTimeSeconds": 0}});
+        assert!(map_sleep(&data, date("2026-06-07")).is_none());
+    }
+
+    #[test]
+    fn heart_rate_from_sleep() {
+        let data = json!({
+            "dailySleepDTO": {"avgHeartRate": 45.0}
+        });
+        let hr = map_heart_rate_from_sleep(&data, date("2026-06-07")).unwrap();
+        assert_eq!(hr.value, 45.0);
+        assert_eq!(hr.unit, "bpm");
+    }
+
+    // ---- RHR ----
+
+    #[test]
+    fn rhr_from_metrics_map() {
+        let data = json!({
+            "allMetrics": {
+                "metricsMap": {
+                    "WELLNESS_RESTING_HEART_RATE": [
+                        {"value": 40.0, "calendarDate": "2026-06-07"}
+                    ]
+                }
+            }
+        });
+        let m = map_rhr(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 40.0);
+        assert_eq!(m.id, "garmin:rhr:2026-06-07");
+    }
+
+    #[test]
+    fn rhr_missing_metrics_returns_none() {
+        let data = json!({"allMetrics": {"metricsMap": {}}});
+        assert!(map_rhr(&data, date("2026-06-07")).is_none());
+    }
+
+    // ---- HRV ----
+
+    #[test]
+    fn hrv_from_summary() {
+        let data = json!({
+            "hrvSummary": {
+                "lastNightAvg": 103,
+                "weeklyAvg": 85
+            }
+        });
+        let m = map_hrv(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 103.0);
+        assert_eq!(m.unit, "ms");
+    }
+
+    // ---- Body Battery ----
+
+    #[test]
+    fn body_battery_from_array() {
+        let data = json!([
+            {
+                "date": "2026-06-07",
+                "charged": 71,
+                "drained": 72,
+                "bodyBatteryValuesArray": [[0, 55], [1, 60], [2, 71]]
+            }
+        ]);
+        let bb = map_body_battery(&data, date("2026-06-07")).unwrap();
+        assert_eq!(bb.charged, 71);
+        assert_eq!(bb.drained, 72);
+        assert_eq!(bb.min, 55);
+        assert_eq!(bb.max, 71);
+    }
+
+    #[test]
+    fn body_battery_empty_array_returns_none() {
+        let data = json!([]);
+        assert!(map_body_battery(&data, date("2026-06-07")).is_none());
+    }
+
+    // ---- Stress ----
+
+    #[test]
+    fn stress_from_avg() {
+        let data = json!({
+            "avgStressLevel": 19,
+            "maxStressLevel": 86
+        });
+        let m = map_stress(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 19.0);
+        assert_eq!(m.unit, "level");
+    }
+
+    // ---- Activity ----
+
+    #[test]
+    fn activity_cycling() {
+        let data = json!({
+            "activityId": 12345678901i64,
+            "activityName": "海淀区 骑行",
+            "activityType": {"typeKey": "cycling"},
+            "startTimeGMT": "2026-06-08 14:21:29",
+            "duration": 1280.6619873046875,
+            "distance": 6397.68017578125,
+            "calories": 183.0
+        });
+        let a = map_activity(&data).unwrap();
+        assert_eq!(a.activity_type, "cycling");
+        assert_eq!(a.duration_seconds, 1280);
+        assert_eq!(a.total_energy_kcal, Some(183.0));
+        assert_eq!(a.total_distance_meters, Some(6397.68017578125));
+        assert_eq!(a.id, "garmin:activity:12345678901");
+    }
+
+    #[test]
+    fn activity_zero_duration_returns_none() {
+        let data = json!({"activityId": 1, "duration": 0.0});
+        assert!(map_activity(&data).is_none());
+    }
+
+    // ---- VO2 Max ----
+
+    #[test]
+    fn vo2_max_from_training_status() {
+        let data = json!({"mostRecentVO2Max": 48.2});
+        let m = map_vo2_max(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 48.2);
+        assert_eq!(m.unit, "ml/kg/min");
+    }
+
+    #[test]
+    fn vo2_max_zero_returns_none() {
+        let data = json!({"mostRecentVO2Max": 0.0});
+        assert!(map_vo2_max(&data, date("2026-06-07")).is_none());
+    }
+
+    // ---- Build snapshot ----
+
+    #[test]
+    fn build_snapshot_combines_all_fields() {
+        let snap = build_snapshot(
+            vec![DailyMetric {
+                id: "garmin:steps:2026-06-07".into(),
+                date: date("2026-06-07"),
+                value: 10000.0,
+                unit: "steps".into(),
+                source_device: Some("garmin".into()),
+            }],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+        );
+        assert_eq!(snap.steps.len(), 1);
+        assert_eq!(snap.sleep_sessions.len(), 0);
+        assert_eq!(snap.active_energy.len(), 0); // Garmin doesn't provide this
     }
 }
