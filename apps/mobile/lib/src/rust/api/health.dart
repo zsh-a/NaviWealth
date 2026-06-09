@@ -43,7 +43,7 @@ Future<void> garminLogout() =>
     RustLib.instance.api.crateApiHealthGarminLogout();
 
 /// Export the current session as JSON for Dart-side persistence.
+///
 /// Returns the StoredSession JSON if authenticated, or null.
-// TODO(frb): Re-run `flutter_rust_bridge_codegen generate` to regenerate.
 Future<String?> garminExportSession() =>
     RustLib.instance.api.crateApiHealthGarminExportSession();

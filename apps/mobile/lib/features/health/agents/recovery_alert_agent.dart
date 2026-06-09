@@ -37,7 +37,7 @@ class RecoveryAlertAgent implements Agent {
   String get name => 'Recovery Alert';
 
   @override
-  AgentSchedule get schedule => const AgentSchedule.daily(hourLocal: 8);
+  AgentSchedule get schedule => AgentSchedule.daily(hourLocal: 8);
 
   @override
   Future<AgentRunResult> run(AgentContext ctx) async {
