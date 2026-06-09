@@ -86,16 +86,6 @@ class GetBodyBatteryTrendTool implements DeviceTool {
         'date': m.capturedAt.toUtc().toIso8601String().substring(0, 10),
         'max_level': m.value.round(),
       };
-      // Extract charged/drained from payloadJson when available.
-      if (m.payloadJson != null && m.payloadJson!.isNotEmpty) {
-        try {
-          final payload =
-              Uri.decodeComponent(m.payloadJson!).replaceAll("'", '"');
-          final map = Uri.dataFromString(payload).path.isNotEmpty
-              ? null
-              : null; // skip complex parsing; use raw json
-        } catch (_) {}
-      }
       points.add(entry);
     }
 

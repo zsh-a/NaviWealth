@@ -56,30 +56,30 @@ class HealthTodayPage extends ConsumerWidget {
       ],
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
-        children: [
+        children: const [
           FadeSlideIn(
-            delay: const Duration(milliseconds: 0),
-            child: const _HealthDataStatusNotice(),
+            delay: Duration(milliseconds: 0),
+            child: _HealthDataStatusNotice(),
           ),
-          const SizedBox(height: AppSpacing.s12),
+          SizedBox(height: AppSpacing.s12),
           FadeSlideIn(
-            delay: const Duration(milliseconds: 40),
-            child: const GarminSyncStatusCard(),
+            delay: Duration(milliseconds: 40),
+            child: GarminSyncStatusCard(),
           ),
-          const SizedBox(height: AppSpacing.s12),
+          SizedBox(height: AppSpacing.s12),
           FadeSlideIn(
-            delay: const Duration(milliseconds: 80),
-            child: const _RecoveryHero(),
+            delay: Duration(milliseconds: 80),
+            child: _RecoveryHero(),
           ),
-          const SizedBox(height: AppSpacing.s12),
+          SizedBox(height: AppSpacing.s12),
           FadeSlideIn(
-            delay: const Duration(milliseconds: 120),
-            child: const _MetricGrid(),
+            delay: Duration(milliseconds: 120),
+            child: _MetricGrid(),
           ),
-          const SizedBox(height: AppSpacing.s12),
+          SizedBox(height: AppSpacing.s12),
           FadeSlideIn(
-            delay: const Duration(milliseconds: 160),
-            child: const _BriefingPanel(),
+            delay: Duration(milliseconds: 160),
+            child: _BriefingPanel(),
           ),
         ],
       ),
@@ -287,7 +287,7 @@ class _RecoverySparkline extends ConsumerWidget {
     final colors = context.theme.colors;
     return async.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (values) {
         if (values.length < 2) return const SizedBox.shrink();
         return SizedBox(
@@ -1071,24 +1071,24 @@ class _BriefingSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SkeletonCard(
-      padding: const EdgeInsets.all(AppSpacing.s16),
+    return const SkeletonCard(
+      padding: EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const SkeletonBox(width: 18, height: 18, radius: 9),
-              const SizedBox(width: AppSpacing.s8),
+              SkeletonBox(width: 18, height: 18, radius: 9),
+              SizedBox(width: AppSpacing.s8),
               SkeletonBox(width: 120, height: 14, radius: AppRadius.xs),
             ],
           ),
-          const SizedBox(height: AppSpacing.s12),
-          const SkeletonBox(width: double.infinity, height: 14),
-          const SizedBox(height: AppSpacing.s8),
-          const SkeletonBox(width: 200, height: 14),
-          const SizedBox(height: AppSpacing.s8),
-          const SkeletonBox(width: 80, height: 10),
+          SizedBox(height: AppSpacing.s12),
+          SkeletonBox(width: double.infinity, height: 14),
+          SizedBox(height: AppSpacing.s8),
+          SkeletonBox(width: 200, height: 14),
+          SizedBox(height: AppSpacing.s8),
+          SkeletonBox(width: 80, height: 10),
         ],
       ),
     );

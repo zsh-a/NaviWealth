@@ -260,24 +260,24 @@ class _LoadingCard extends StatelessWidget {
   const _LoadingCard();
   @override
   Widget build(BuildContext context) {
-    return SkeletonCard(
-      padding: const EdgeInsets.all(AppSpacing.s16),
+    return const SkeletonCard(
+      padding: EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const SkeletonBox(width: 18, height: 18, radius: 9),
-              const SizedBox(width: AppSpacing.s8),
-              const SkeletonBox(width: 80, height: 14),
-              const Spacer(),
-              const SkeletonBox(width: 32, height: 20),
+              SkeletonBox(width: 18, height: 18, radius: 9),
+              SizedBox(width: AppSpacing.s8),
+              SkeletonBox(width: 80, height: 14),
+              Spacer(),
+              SkeletonBox(width: 32, height: 20),
             ],
           ),
-          const SizedBox(height: AppSpacing.s12),
-          const SkeletonBox(width: double.infinity, height: 14),
-          const SizedBox(height: AppSpacing.s8),
-          const SkeletonBox(width: 160, height: 14),
+          SizedBox(height: AppSpacing.s12),
+          SkeletonBox(width: double.infinity, height: 14),
+          SizedBox(height: AppSpacing.s8),
+          SkeletonBox(width: 160, height: 14),
         ],
       ),
     );

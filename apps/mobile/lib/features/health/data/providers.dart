@@ -8,12 +8,24 @@ import '../../../core/persistence/providers.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/outbox_provider.dart';
 import 'garmin/garmin_snapshot_writer.dart';
-import 'garmin/garmin_sync_controller.dart';
 import 'health_metric_repository.dart';
 import 'health_metric_write_service.dart';
 import 'health_platform_adapter.dart';
 import 'health_platform_adapter_factory.dart';
 import 'health_sync_service.dart';
+
+// garminSyncControllerProvider is re-exported from garmin_sync_controller.dart.
+export 'garmin/garmin_sync_controller.dart'
+    show
+        GarminSyncController,
+        GarminSyncState,
+        GarminInitial,
+        GarminRestoring,
+        GarminPendingMfa,
+        GarminConnected,
+        GarminSyncing,
+        GarminError,
+        garminSyncControllerProvider;
 
 /// Async repository — awaits the database + cross-domain outbox so a
 /// shell-only build doesn't crash if Health is opt-in OFF.
@@ -58,19 +70,6 @@ final healthMetricWriteServiceProvider =
 // ---------------------------------------------------------------------------
 // Garmin providers
 // ---------------------------------------------------------------------------
-
-// garminSyncControllerProvider is re-exported from garmin_sync_controller.dart.
-export 'garmin/garmin_sync_controller.dart'
-    show
-        GarminSyncController,
-        GarminSyncState,
-        GarminInitial,
-        GarminRestoring,
-        GarminPendingMfa,
-        GarminConnected,
-        GarminSyncing,
-        GarminError,
-        garminSyncControllerProvider;
 
 /// Garmin snapshot writer — writes Rust snapshots into Drift.
 final garminSnapshotWriterProvider =

@@ -73,6 +73,7 @@ class GetRecoverySignalTool implements DeviceTool {
     required List<HealthMetric> sleep,
     required List<HealthMetric> rhr,
     List<HealthMetric> vo2Max = const <HealthMetric>[],
+    DateTime? now,
   }) {
     const scorer = RecoveryScorer();
     final result = scorer.score(
@@ -80,6 +81,7 @@ class GetRecoverySignalTool implements DeviceTool {
       sleep: sleep,
       rhr: rhr,
       vo2Max: vo2Max,
+      now: now,
     );
 
     if (!result.hasScore) {
