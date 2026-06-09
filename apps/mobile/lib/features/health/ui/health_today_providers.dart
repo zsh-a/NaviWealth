@@ -130,6 +130,38 @@ final latestActiveEnergyProvider = FutureProvider.autoDispose<HealthMetric?>((
   return rows.isEmpty ? null : rows.first;
 });
 
+/// Newest daily stress level row (Garmin-specific).
+final latestStressProvider = FutureProvider.autoDispose<HealthMetric?>((
+  ref,
+) async {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final userId = await ref.read(currentUserIdProvider)();
+  final rows = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.stressDaily,
+    limit: 1,
+  );
+  return rows.isEmpty ? null : rows.first;
+});
+
+/// Newest daily Body Battery row (Garmin-specific).
+final latestBodyBatteryProvider = FutureProvider.autoDispose<HealthMetric?>((
+  ref,
+) async {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final userId = await ref.read(currentUserIdProvider)();
+  final rows = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.bodyBatteryDaily,
+    limit: 1,
+  );
+  return rows.isEmpty ? null : rows.first;
+});
+
 /// Recovery signal output, computed off the same shaper the AI tool
 /// uses. Returned `null` when HealthOS is off so the UI can render an
 /// empty state instead of confusing zeros.

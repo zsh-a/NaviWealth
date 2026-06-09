@@ -37,6 +37,14 @@ impl GarminProvider {
         Ok(Self { client, is_cn })
     }
 
+    /// Create a provider from an existing client (clone).
+    /// Used by `garmin_init` so the provider shares auth state
+    /// with the client used for login/token operations.
+    pub fn from_client(client: GarminClient) -> Self {
+        let is_cn = client.is_cn();
+        Self { client, is_cn }
+    }
+
     /// Get a reference to the underlying client (for auth operations).
     pub fn client(&self) -> &GarminClient {
         &self.client
@@ -50,9 +58,12 @@ impl HealthProvider for GarminProvider {
     }
 
     fn is_authenticated(&self) -> bool {
-        // This is async internally but we check the cached state.
-        // The actual auth check happens at sync time.
-        true // TODO: check client.auth_state() synchronously
+        // Use try_lock to check auth state synchronously.
+        // Falls back to false if the lock is contended (conservative).
+        self.client
+            .auth_state_sync()
+            .map(|s| s.can_make_requests())
+            .unwrap_or(false)
     }
 
     async fn sync_daily_range(

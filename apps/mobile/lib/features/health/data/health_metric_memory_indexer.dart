@@ -54,6 +54,8 @@ const String kEventHeartRateRecorded = 'heart_rate_recorded';
 const String kEventTotalEnergyRecorded = 'total_energy_recorded';
 const String kEventFloorsClimbedRecorded = 'floors_climbed_recorded';
 const String kEventRespiratoryRateRecorded = 'respiratory_rate_recorded';
+const String kEventStressRecorded = 'stress_recorded';
+const String kEventBodyBatteryRecorded = 'body_battery_recorded';
 
 /// Sleep duration boundaries (hours) for an episodic memory. Outside
 /// this range a session is "notable" — either deficit or recovery.
@@ -191,6 +193,8 @@ class HealthMetricMemoryIndexer {
     HealthMetricKind.totalEnergyDaily => kEventTotalEnergyRecorded,
     HealthMetricKind.floorsClimbedDaily => kEventFloorsClimbedRecorded,
     HealthMetricKind.respiratoryRateDaily => kEventRespiratoryRateRecorded,
+    HealthMetricKind.stressDaily => kEventStressRecorded,
+    HealthMetricKind.bodyBatteryDaily => kEventBodyBatteryRecorded,
     HealthMetricKind.unknown => 'health_unknown',
   };
 
@@ -227,6 +231,10 @@ class HealthMetricMemoryIndexer {
         'Floors ${_round(metric.value)} · $whenIso',
       HealthMetricKind.respiratoryRateDaily =>
         'Respiration ${_round(metric.value)} ${metric.unit} · $whenIso',
+      HealthMetricKind.stressDaily =>
+        'Stress ${_round(metric.value)} · $whenIso',
+      HealthMetricKind.bodyBatteryDaily =>
+        'Body Battery ${metric.value.round()} · $whenIso',
       HealthMetricKind.unknown => 'Health row · $whenIso',
     };
   }
@@ -262,6 +270,10 @@ class HealthMetricMemoryIndexer {
         'Climbed ${_round(metric.value)} floors on $whenIso.',
       HealthMetricKind.respiratoryRateDaily =>
         'Respiratory rate ${_round(metric.value)} ${metric.unit} on $whenIso.',
+      HealthMetricKind.stressDaily =>
+        'Stress level ${_round(metric.value)} on $whenIso.',
+      HealthMetricKind.bodyBatteryDaily =>
+        'Body Battery max ${metric.value.round()} on $whenIso.',
       HealthMetricKind.unknown => 'Health metric on $whenIso.',
     };
   }
@@ -321,6 +333,10 @@ class HealthMetricMemoryIndexer {
       case HealthMetricKind.totalEnergyDaily:
       case HealthMetricKind.floorsClimbedDaily:
         return 0.45;
+      case HealthMetricKind.stressDaily:
+        return 0.55;
+      case HealthMetricKind.bodyBatteryDaily:
+        return 0.55;
       case HealthMetricKind.unknown:
         return 0.4;
     }
@@ -401,7 +417,9 @@ int _indexerLimitFor(HealthMetricKind kind) => switch (kind) {
   HealthMetricKind.rhrDaily ||
   HealthMetricKind.heartRateDaily ||
   HealthMetricKind.respiratoryRateDaily ||
-  HealthMetricKind.vo2Max => 90,
+  HealthMetricKind.vo2Max ||
+  HealthMetricKind.stressDaily ||
+  HealthMetricKind.bodyBatteryDaily => 90,
   HealthMetricKind.workoutSession => 150,
   _ => 120,
 };

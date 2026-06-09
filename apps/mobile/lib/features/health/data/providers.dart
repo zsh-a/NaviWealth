@@ -59,11 +59,18 @@ final healthMetricWriteServiceProvider =
 // Garmin providers
 // ---------------------------------------------------------------------------
 
-/// Garmin sync controller — manages auth state and sync operations.
-final garminSyncControllerProvider =
-    NotifierProvider<GarminSyncController, GarminSyncState>(
-  GarminSyncController.new,
-);
+// garminSyncControllerProvider is re-exported from garmin_sync_controller.dart.
+export 'garmin/garmin_sync_controller.dart'
+    show
+        GarminSyncController,
+        GarminSyncState,
+        GarminInitial,
+        GarminRestoring,
+        GarminPendingMfa,
+        GarminConnected,
+        GarminSyncing,
+        GarminError,
+        garminSyncControllerProvider;
 
 /// Garmin snapshot writer — writes Rust snapshots into Drift.
 final garminSnapshotWriterProvider =

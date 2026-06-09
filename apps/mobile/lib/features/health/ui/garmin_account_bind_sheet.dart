@@ -46,88 +46,66 @@ class _GarminAccountBindSheetState
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(health_data.garminSyncControllerProvider);
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
 
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header
-          Row(
-            children: [
-              Icon(FLucideIcons.watch, size: 24, color: colors.foreground),
-              const SizedBox(width: AppSpacing.s8),
-              Text(
-                'Connect Garmin',
-                style: typography.lg.copyWith(fontWeight: FontWeight.w600),
+    return AppSheet(
+      title: state is GarminPendingMfa ? 'MFA Verification' : 'Connect Garmin',
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // MFA or credentials form
+            if (state is GarminPendingMfa) ...[
+              FTextFormField(
+                control: FTextFieldControl.managed(controller: _mfaCtrl),
+                hint: '123456',
+                label: const Text('MFA Code'),
+              ),
+              const SizedBox(height: AppSpacing.s16),
+              FButton(
+                onPress: _submitMfa,
+                child: const Text('Verify'),
+              ),
+            ] else ...[
+              FTextFormField(
+                control: FTextFieldControl.managed(controller: _emailCtrl),
+                hint: 'you@example.com',
+                label: const Text('Email'),
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              FTextFormField(
+                control: FTextFieldControl.managed(controller: _passwordCtrl),
+                label: const Text('Password'),
+                obscureText: true,
+              ),
+              const SizedBox(height: AppSpacing.s16),
+              FButton(
+                onPress: _connect,
+                child: const Text('Connect'),
               ),
             ],
-          ),
-          const SizedBox(height: AppSpacing.s16),
 
-          // MFA or credentials form
-          if (state is GarminPendingMfa) ...[
-            Text(
-              'Enter the MFA code from your Garmin account',
-              style: typography.sm.copyWith(color: colors.mutedForeground),
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            FTextFormField(
-              control: FTextFieldControl.managed(controller: _mfaCtrl),
-              hint: '123456',
-              label: const Text('MFA Code'),
-            ),
-            const SizedBox(height: AppSpacing.s16),
-            FButton(
-              onPress: _submitMfa,
-              child: const Text('Verify'),
-            ),
-          ] else ...[
-            FTextFormField(
-              control: FTextFieldControl.managed(controller: _emailCtrl),
-              hint: 'you@example.com',
-              label: const Text('Email'),
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            FTextFormField(
-              control: FTextFieldControl.managed(controller: _passwordCtrl),
-              label: const Text('Password'),
-              obscureText: true,
-            ),
-            const SizedBox(height: AppSpacing.s16),
-            FButton(
-              onPress: _connect,
-              child: const Text('Connect'),
-            ),
-          ],
-
-          // Error message
-          if (state is GarminError) ...[
-            const SizedBox(height: AppSpacing.s12),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.s12),
-              decoration: BoxDecoration(
-                color: colors.destructive.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppRadius.xs),
-              ),
-              child: Text(
+            // Error message
+            if (state is GarminError) ...[
+              const SizedBox(height: AppSpacing.s12),
+              Text(
                 state.message,
-                style: typography.sm.copyWith(color: colors.destructive),
+                style: context.theme.typography.xs.copyWith(
+                  color: context.theme.colors.destructive,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
 
-          // Loading indicator
-          if (state is GarminSyncing) ...[
-            const SizedBox(height: AppSpacing.s16),
-            const Center(child: FProgress()),
+            // Loading indicator
+            if (state is GarminSyncing) ...[
+              const SizedBox(height: AppSpacing.s16),
+              const Center(child: FProgress()),
+            ],
           ],
-
-          const SizedBox(height: AppSpacing.s16),
-        ],
+        ),
       ),
     );
   }

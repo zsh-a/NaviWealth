@@ -190,6 +190,17 @@ class GarminBridge {
   /// Logout and clear stored credentials.
   Future<void> logout() => rust.garminLogout();
 
+  /// Export the current session JSON for persistent storage.
+  ///
+  /// Returns the session JSON string if authenticated, or `null`.
+  Future<String?> exportSession() async {
+    final dynamic result = await rust.garminExportSession();
+    if (result == null) return null;
+    // FRB may return a String or auto-decode.
+    if (result is String) return result.isEmpty ? null : result;
+    return result.toString();
+  }
+
   // ---------------------------------------------------------------------------
   // JSON parsing helpers
   // ---------------------------------------------------------------------------

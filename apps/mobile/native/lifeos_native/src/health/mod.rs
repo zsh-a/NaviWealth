@@ -25,7 +25,8 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use garmin::client::GarminClient;
-use garmin::token_store::{InMemoryTokenStore, TokenStore};
+use garmin::GarminProvider;
+use garmin::token_store::{InMemoryTokenStore, StoredSession, TokenStore};
 use sync_engine::HealthSyncEngine;
 
 // ---------------------------------------------------------------------------
@@ -36,8 +37,22 @@ use sync_engine::HealthSyncEngine;
 static GARMIN_CLIENT: once_cell::sync::Lazy<Mutex<Option<GarminClient>>> =
     once_cell::sync::Lazy::new(|| Mutex::new(None));
 
+/// Persisted session JSON — set by `save_session` callbacks, read by
+/// `garmin_export_session`. This bridges the Rust in-memory token store
+/// to Dart's `FlutterSecureStorage` without adding FRB callbacks.
+static LAST_SESSION_JSON: once_cell::sync::Lazy<Mutex<Option<String>>> =
+    once_cell::sync::Lazy::new(|| Mutex::new(None));
+
 static SYNC_ENGINE: once_cell::sync::Lazy<Mutex<HealthSyncEngine>> =
     once_cell::sync::Lazy::new(|| Mutex::new(HealthSyncEngine::new()));
+
+/// Called internally after a session is saved to the token store.
+/// Caches the JSON so `garmin_export_session` can return it to Dart.
+async fn cache_session_json(session: &StoredSession) {
+    if let Ok(json) = serde_json::to_string(session) {
+        *LAST_SESSION_JSON.lock().await = Some(json);
+    }
+}
 
 // ---------------------------------------------------------------------------
 // FRB public API — all params/returns are primitive or String types.
@@ -57,8 +72,22 @@ pub async fn garmin_init(stored_token_json: Option<String>, is_cn: bool) -> Resu
     }
 
     let client = GarminClient::new(token_store, is_cn).await?;
+
+    // If restored from stored token, cache the session for future export.
+    if let Ok(Some(session)) = client.export_session().await {
+        cache_session_json(&session).await;
+    }
+
     let state = client.auth_state().await;
     let state_json = serde_json::to_string(&state)?;
+
+    // Register a Garmin provider with the sync engine.
+    // The provider clones the client, sharing auth state and token store.
+    let provider = GarminProvider::from_client(client.clone());
+    {
+        let mut engine = SYNC_ENGINE.lock().await;
+        engine.add_provider(Arc::new(provider));
+    }
 
     let mut global = GARMIN_CLIENT.lock().await;
     *global = Some(client);
@@ -74,6 +103,14 @@ pub async fn garmin_authenticate(email: String, password: String) -> Result<Stri
         .ok_or_else(|| anyhow::anyhow!("Garmin client not initialized"))?;
 
     let result = client.authenticate(&email, &password).await?;
+
+    // Cache session for Dart-side persistence on successful auth.
+    if matches!(result, garmin::auth::AuthResult::Authenticated) {
+        if let Ok(Some(session)) = client.export_session().await {
+            cache_session_json(&session).await;
+        }
+    }
+
     let state = client.auth_state().await;
 
     let response = serde_json::json!({
@@ -92,6 +129,14 @@ pub async fn garmin_submit_mfa(code: String) -> Result<String> {
         .ok_or_else(|| anyhow::anyhow!("Garmin client not initialized"))?;
 
     let result = client.submit_mfa(&code).await?;
+
+    // Cache session for Dart-side persistence on successful MFA.
+    if matches!(result, garmin::auth::AuthResult::Authenticated) {
+        if let Ok(Some(session)) = client.export_session().await {
+            cache_session_json(&session).await;
+        }
+    }
+
     let state = client.auth_state().await;
 
     let response = serde_json::json!({
@@ -131,6 +176,16 @@ pub async fn garmin_sync_cursors() -> Result<String> {
     let engine = SYNC_ENGINE.lock().await;
     let cursors = engine.cursors().await;
     Ok(serde_json::to_string(&cursors)?)
+}
+
+/// Export the current session as JSON for Dart-side persistence.
+///
+/// Returns the cached `StoredSession` JSON if authenticated, or `None`.
+/// Dart stores this in `FlutterSecureStorage` and passes it back
+/// via `garmin_init(stored_token_json:)` on next app launch.
+pub async fn garmin_export_session() -> Result<Option<String>> {
+    let cached = LAST_SESSION_JSON.lock().await;
+    Ok(cached.clone())
 }
 
 /// Logout and clear stored credentials.

@@ -23,6 +23,10 @@ const BASE_BACKOFF: Duration = Duration::from_secs(30);
 const MAX_BACKOFF: Duration = Duration::from_secs(300);
 
 /// Rate limiter for Garmin API calls.
+///
+/// All state is behind `Arc`, so cloning shares the same semaphore
+/// and backoff counters — identical to `GarminClient` clone semantics.
+#[derive(Clone)]
 pub struct GarminRateLimiter {
     semaphore: Arc<Semaphore>,
     min_interval: Duration,

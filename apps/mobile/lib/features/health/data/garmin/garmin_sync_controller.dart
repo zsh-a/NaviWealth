@@ -1,12 +1,13 @@
 /// Riverpod controller for Garmin Connect sync state.
 ///
 /// Manages the full lifecycle: connect → auth → MFA → sync → disconnect.
-/// UI binds to [GarminSyncState] for reactive updates.
+/// Persists credentials via [GarminTokenStore] so sessions survive restarts.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'garmin_bridge.dart';
+import 'garmin_token_store.dart';
 
 /// Garmin sync states (sealed, not freezed — avoids build_runner dep).
 sealed class GarminSyncState {
@@ -16,6 +17,11 @@ sealed class GarminSyncState {
 /// Not connected.
 class GarminInitial extends GarminSyncState {
   const GarminInitial();
+}
+
+/// Restoring a persisted session.
+class GarminRestoring extends GarminSyncState {
+  const GarminRestoring();
 }
 
 /// MFA code required.
@@ -45,16 +51,43 @@ class GarminError extends GarminSyncState {
 /// Controller for Garmin sync operations.
 class GarminSyncController extends Notifier<GarminSyncState> {
   @override
-  GarminSyncState build() => const GarminInitial();
+  GarminSyncState build() {
+    // Kick off async restore; state transitions happen via _restoreSession.
+    Future.microtask(_restoreSession);
+    return const GarminInitial();
+  }
 
   final GarminBridge _bridge = GarminBridge();
+  final GarminTokenStore _tokenStore = GarminTokenStore();
   bool _initialized = false;
+
+  /// Try to restore a persisted Garmin session on startup.
+  Future<void> _restoreSession() async {
+    final stored = await _tokenStore.load();
+    if (stored == null) return;
+
+    state = const GarminRestoring();
+    try {
+      await _ensureInit(storedTokenJson: stored);
+      final authState = await _bridge.authState();
+      if (authState.canMakeRequests) {
+        state = const GarminConnected();
+      } else {
+        // Token expired or invalid — clear stale persistence.
+        await _tokenStore.clear();
+        state = const GarminInitial();
+      }
+    } catch (_) {
+      await _tokenStore.clear();
+      state = const GarminInitial();
+    }
+  }
 
   /// Ensure the Rust-side Garmin client is initialized.
   /// Must be called before any other bridge method.
-  Future<void> _ensureInit() async {
+  Future<void> _ensureInit({String? storedTokenJson}) async {
     if (_initialized) return;
-    await _bridge.init(isCn: true);
+    await _bridge.init(storedTokenJson: storedTokenJson, isCn: true);
     _initialized = true;
   }
 
@@ -66,6 +99,7 @@ class GarminSyncController extends Notifier<GarminSyncState> {
       final result = await _bridge.authenticate(email, password);
       switch (result.type) {
         case GarminAuthResultType.authenticated:
+          await _persistSession();
           state = const GarminConnected();
         case GarminAuthResultType.mfaRequired:
           state = const GarminPendingMfa();
@@ -84,6 +118,7 @@ class GarminSyncController extends Notifier<GarminSyncState> {
       final result = await _bridge.submitMfa(code);
       switch (result.type) {
         case GarminAuthResultType.authenticated:
+          await _persistSession();
           state = const GarminConnected();
         case GarminAuthResultType.mfaRequired:
           state = const GarminPendingMfa();
@@ -128,10 +163,21 @@ class GarminSyncController extends Notifier<GarminSyncState> {
     try {
       await _ensureInit();
       await _bridge.logout();
+      await _tokenStore.clear();
       _initialized = false;
       state = const GarminInitial();
     } catch (e) {
       state = GarminError(e.toString());
+    }
+  }
+
+  /// Export session from Rust and persist to secure storage.
+  Future<void> _persistSession() async {
+    try {
+      final json = await _bridge.exportSession();
+      if (json != null) await _tokenStore.save(json);
+    } catch (_) {
+      // Non-fatal — user can still use the session this launch.
     }
   }
 }

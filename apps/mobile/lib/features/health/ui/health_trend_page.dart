@@ -169,6 +169,16 @@ List<_TrendSpec> _trendSpecs(AppLocalizations l10n, _TrendGroup group) =>
           subtitle: l10n.healthTrendRespiratorySubtitle,
           kind: HealthMetricKind.respiratoryRateDaily,
         ),
+        _TrendSpec(
+          title: 'Body Battery',
+          subtitle: 'Daily max level (Garmin)',
+          kind: HealthMetricKind.bodyBatteryDaily,
+        ),
+        _TrendSpec(
+          title: 'Stress',
+          subtitle: 'Daily average level (Garmin)',
+          kind: HealthMetricKind.stressDaily,
+        ),
       ],
       _TrendGroup.activity => [
         _TrendSpec(
@@ -257,6 +267,8 @@ List<ChartPoint> _projectToPoints(
     case HealthMetricKind.totalEnergyDaily:
     case HealthMetricKind.floorsClimbedDaily:
     case HealthMetricKind.respiratoryRateDaily:
+    case HealthMetricKind.stressDaily:
+    case HealthMetricKind.bodyBatteryDaily:
       // One row per measurement → one point.
       final pts = <ChartPoint>[];
       for (final r in rows) {

@@ -43,3 +43,10 @@ pub async fn garmin_sync_cursors() -> Result<String> {
 pub async fn garmin_logout() -> Result<()> {
     crate::health::garmin_logout().await
 }
+
+/// Export the current session as JSON for Dart-side persistence.
+///
+/// Returns the StoredSession JSON if authenticated, or null.
+pub async fn garmin_export_session() -> Result<Option<String>> {
+    crate::health::garmin_export_session().await
+}

@@ -64,6 +64,11 @@ struct MfaState {
 }
 
 /// Garmin Connect API client.
+///
+/// All mutable state is behind `Arc<Mutex<>>` so the client is cheaply
+/// cloneable — the clone shares auth state, token store, and DI session
+/// with the original. This lets `GarminProvider` hold its own handle
+/// without duplicating HTTP connections or auth state.
 pub struct GarminClient {
     http: Client,
     auth_state: Arc<Mutex<GarminAuthState>>,
@@ -73,6 +78,21 @@ pub struct GarminClient {
     domain: String,
     di_session: Arc<Mutex<Option<DiSession>>>,
     mfa_state: Arc<Mutex<Option<MfaState>>>,
+}
+
+impl Clone for GarminClient {
+    fn clone(&self) -> Self {
+        Self {
+            http: self.http.clone(),
+            auth_state: Arc::clone(&self.auth_state),
+            token_store: Arc::clone(&self.token_store),
+            rate_limiter: self.rate_limiter.clone(),
+            is_cn: self.is_cn,
+            domain: self.domain.clone(),
+            di_session: Arc::clone(&self.di_session),
+            mfa_state: Arc::clone(&self.mfa_state),
+        }
+    }
 }
 
 impl GarminClient {
@@ -426,12 +446,23 @@ impl GarminClient {
         Ok(())
     }
 
+    /// Export the stored session for Dart-side persistence.
+    pub async fn export_session(&self) -> Result<Option<StoredSession>> {
+        self.token_store.load().await
+    }
+
     // -----------------------------------------------------------------------
     // API access
     // -----------------------------------------------------------------------
 
     pub async fn auth_state(&self) -> GarminAuthState {
         self.auth_state.lock().await.clone()
+    }
+
+    /// Synchronous auth state check (non-blocking).
+    /// Returns `None` if the lock is contended.
+    pub fn auth_state_sync(&self) -> Option<GarminAuthState> {
+        self.auth_state.try_lock().ok().map(|s| s.clone())
     }
 
     /// Get the DI access token (for API calls).

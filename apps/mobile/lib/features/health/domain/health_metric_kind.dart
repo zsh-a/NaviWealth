@@ -63,6 +63,17 @@ enum HealthMetricKind {
   /// Daily average respiratory rate.
   respiratoryRateDaily,
 
+  /// Daily average stress level (Garmin-specific).
+  /// capturedAt = local day start UTC, value = avg stress level (0–100),
+  /// unit = `'level'`. payloadJson may contain per-slot detail.
+  stressDaily,
+
+  /// Daily Body Battery summary (Garmin-specific).
+  /// capturedAt = local day start UTC, value = max level (0–100),
+  /// unit = `'level'`. payloadJson carries
+  /// `{min, max, charged, drained}`.
+  bodyBatteryDaily,
+
   /// Sentinel for wire kinds the client doesn't recognise. Callers
   /// should drop rows with this kind rather than crash.
   unknown,
@@ -86,6 +97,8 @@ extension HealthMetricKindX on HealthMetricKind {
     HealthMetricKind.totalEnergyDaily => 'total_energy_daily',
     HealthMetricKind.floorsClimbedDaily => 'floors_climbed_daily',
     HealthMetricKind.respiratoryRateDaily => 'respiratory_rate_daily',
+    HealthMetricKind.stressDaily => 'stress_daily',
+    HealthMetricKind.bodyBatteryDaily => 'body_battery_daily',
     HealthMetricKind.unknown => 'unknown',
   };
 
@@ -107,6 +120,8 @@ extension HealthMetricKindX on HealthMetricKind {
     HealthMetricKind.totalEnergyDaily => 'kcal',
     HealthMetricKind.floorsClimbedDaily => 'count',
     HealthMetricKind.respiratoryRateDaily => 'rpm',
+    HealthMetricKind.stressDaily => 'level',
+    HealthMetricKind.bodyBatteryDaily => 'level',
     HealthMetricKind.unknown => '',
   };
 

@@ -136,7 +136,7 @@ class GarminSnapshotWriter {
       }
     }
 
-    // Body battery — stored as payload_json on a synthetic daily row
+    // Body battery — daily summary with payload_json detail
     for (final item in _list(snapshot, 'body_battery')) {
       try {
         final metric = _bodyBatteryMetric(item);
@@ -147,10 +147,15 @@ class GarminSnapshotWriter {
       }
     }
 
-    // Stress
+    // Stress — daily average level
     for (final item in _list(snapshot, 'stress')) {
-      final result = await _upsertDaily(item, HealthMetricKind.stepsDaily);
-      result ? upserted++ : unchanged++;
+      try {
+        final metric = _stressMetric(item);
+        final changed = await _upsertIfChanged(metric);
+        changed ? upserted++ : unchanged++;
+      } catch (e) {
+        errors.add('stress: $e');
+      }
     }
 
     return GarminWriteResult(
@@ -221,7 +226,7 @@ class GarminSnapshotWriter {
     );
   }
 
-  /// Body Battery → synthetic daily metric with payload_json.
+  /// Body Battery → daily metric with payload_json detail.
   HealthMetric _bodyBatteryMetric(Map<String, dynamic> item) {
     final date = DateTime.parse(item['date'] as String);
     final min = item['min'] as int? ?? 0;
@@ -232,17 +237,38 @@ class GarminSnapshotWriter {
     return HealthMetric(
       id: item['id'] as String,
       capturedAt: date,
-      kind: HealthMetricKind.stepsDaily, // placeholder kind
+      kind: HealthMetricKind.bodyBatteryDaily,
       value: max.toDouble(),
-      unit: 'level',
+      unit: HealthMetricKind.bodyBatteryDaily.defaultUnit,
       payloadJson: jsonEncode({
-        'type': 'body_battery',
         'min': min,
         'max': max,
         'charged': charged,
         'drained': drained,
       }),
       sourceDevice: item['source_device'] as String? ?? 'garmin',
+      sync: _placeholderSync,
+    );
+  }
+
+  /// Stress → daily average metric.
+  HealthMetric _stressMetric(Map<String, dynamic> item) {
+    final id = item['id'] as String?;
+    final dateStr = item['date'] as String?;
+    final value = (item['value'] as num?)?.toDouble();
+    final source = item['source_device'] as String?;
+
+    if (id == null || dateStr == null || value == null) {
+      throw ArgumentError('Missing required stress fields');
+    }
+
+    return HealthMetric(
+      id: id,
+      capturedAt: DateTime.parse(dateStr),
+      kind: HealthMetricKind.stressDaily,
+      value: value,
+      unit: HealthMetricKind.stressDaily.defaultUnit,
+      sourceDevice: source,
       sync: _placeholderSync,
     );
   }

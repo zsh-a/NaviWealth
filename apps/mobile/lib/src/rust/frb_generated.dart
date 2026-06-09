@@ -111,6 +111,8 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiHealthGarminLogout();
 
+  Future<String?> crateApiHealthGarminExportSession();
+
   Future<String> crateApiHealthGarminSubmitMfa({required String code});
 
   Future<String> crateApiHealthGarminSyncCursors();
@@ -438,6 +440,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiHealthGarminLogoutConstMeta =>
       const TaskConstMeta(debugName: "garmin_logout", argNames: []);
+
+  @override
+  Future<String?> crateApiHealthGarminExportSession() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 14,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_String,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiHealthGarminExportSessionConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiHealthGarminExportSessionConstMeta =>
+      const TaskConstMeta(debugName: "garmin_export_session", argNames: []);
 
   @override
   Future<String> crateApiHealthGarminSubmitMfa({required String code}) {
