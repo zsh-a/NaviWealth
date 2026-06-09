@@ -57,9 +57,12 @@ jobs:
             echo "::error::Version '$ver' does not match X.Y.Z"
             exit 1
           fi
-          # Build number = commits reachable from tag (or HEAD if dispatched).
-          ref="$TAG"
-          if ! git rev-parse --verify "refs/tags/$TAG" >/dev/null 2>&1; then
+          # Build number = total commits reachable from the release tag.
+          # For tag pushes the tag already exists; for manual dispatch we
+          # look up v$ver (the computed release tag) so the build number is
+          # consistent regardless of trigger method.
+          ref="v$ver"
+          if ! git rev-parse --verify "refs/tags/$ref" >/dev/null 2>&1; then
             ref="HEAD"
           fi
           build="$(git rev-list --count "$ref")"
@@ -85,6 +88,21 @@ jobs:
         working-directory: apps/mobile
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Compute build number
+        id: build
+        env:
+          SEMVER: ${{ needs.meta.outputs.semver }}
+        run: |
+          set -euo pipefail
+          ref="v${SEMVER}"
+          if ! git rev-parse --verify "refs/tags/$ref" >/dev/null 2>&1; then
+            ref="HEAD"
+          fi
+          build="$(git rev-list --count "$ref")"
+          echo "number=$build" >> "$GITHUB_OUTPUT"
+          echo "Build number: $build (ref=$ref)"
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -107,7 +125,7 @@ jobs:
       - name: Stamp version into pubspec.yaml
         env:
           SEMVER: ${{ needs.meta.outputs.semver }}
-          BUILD: ${{ needs.meta.outputs.build_number }}
+          BUILD: ${{ steps.build.outputs.number }}
         run: |
           set -euo pipefail
           sed -i -E "s/^version: .*/version: ${SEMVER}+${BUILD}/" pubspec.yaml
@@ -148,7 +166,7 @@ jobs:
       - name: Normalize APK filename
         run: |
           mv build/app/outputs/flutter-apk/app-release.apk \
-            "build/app/outputs/flutter-apk/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.apk"
+            "build/app/outputs/flutter-apk/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ steps.build.outputs.number }}.apk"
       - name: Check Pages deploy credentials
         id: pages-deploy-gate
         env:
@@ -172,10 +190,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.meta.outputs.release_tag }}
-          name: v${{ needs.meta.outputs.semver }} (build ${{ needs.meta.outputs.build_number }})
+          name: v${{ needs.meta.outputs.semver }} (build ${{ steps.build.outputs.number }})
           generate_release_notes: true
           files: |
-            apps/mobile/build/app/outputs/flutter-apk/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.apk
+            apps/mobile/build/app/outputs/flutter-apk/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ steps.build.outputs.number }}.apk
 
   backend-build:
     name: backend build
