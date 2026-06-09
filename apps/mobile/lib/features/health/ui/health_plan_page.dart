@@ -94,7 +94,7 @@ class _RecoveryCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s4),
           Text(
-            _verdictSuggestion(verdict, l10n),
+            _verdictSuggestion(verdict, l10n, inputs: inputs),
             style: typography.sm,
             maxLines: 5,
             overflow: TextOverflow.ellipsis,
@@ -168,12 +168,54 @@ class _RecoveryCard extends StatelessWidget {
     _ => l10n.healthRecoveryInsufficient,
   };
 
-  static String _verdictSuggestion(String v, AppLocalizations l10n) => switch (v) {
-    'rested' => l10n.healthRecoveryRestedTip,
-    'balanced' => l10n.healthRecoveryBalancedTip,
-    'strained' => l10n.healthRecoveryStrainedTip,
-    _ => l10n.healthRecoveryInsufficientTip,
-  };
+  static String _verdictSuggestion(
+    String v,
+    AppLocalizations l10n, {
+    Map<String, Object?> inputs = const {},
+  }) {
+    // Build a data-aware context line when inputs are available.
+    final hrv = inputs['latest_hrv_ms'];
+    final sleep = inputs['avg_sleep_hours'];
+    final rhr = inputs['latest_rhr_bpm'];
+
+    final contextLine = _buildContextLine(
+      hrv: hrv,
+      sleep: sleep,
+      rhr: rhr,
+    );
+
+    final base = switch (v) {
+      'rested' => l10n.healthRecoveryRestedTip,
+      'balanced' => l10n.healthRecoveryBalancedTip,
+      'strained' => l10n.healthRecoveryStrainedTip,
+      _ => l10n.healthRecoveryInsufficientTip,
+    };
+
+    if (contextLine.isEmpty) return base;
+    return '$contextLine $base';
+  }
+
+  /// Build a one-line data context summary when metric values are available.
+  static String _buildContextLine({
+    Object? hrv,
+    Object? sleep,
+    Object? rhr,
+  }) {
+    final parts = <String>[];
+    if (hrv is num && hrv > 0) {
+      parts.add('HRV ${_round(hrv.toDouble())} ms');
+    }
+    if (sleep is num && sleep > 0) {
+      parts.add('sleep ${_round(sleep.toDouble())}h');
+    }
+    if (rhr is num && rhr > 0) {
+      parts.add('RHR ${_round(rhr.toDouble())} bpm');
+    }
+    if (parts.isEmpty) return '';
+    return '${parts.join(' · ')}.';
+  }
+
+  static double _round(double v) => (v * 100).round() / 100.0;
 
   static List<_PlanAction> _planActions(String v, AppLocalizations l10n) => switch (v) {
     'rested' => [

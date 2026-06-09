@@ -20,12 +20,19 @@ import '../data/providers.dart';
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 
-/// Window covered by every chart on this page. 30 days mirrors the
-/// `get_hrv_trend` tool default + the HealthSyncService initial pull
-/// window so the user sees a populated chart on first open.
+/// Default window covered by every chart on this page.
 const Duration kHealthTrendWindow = Duration(days: 30);
 
 enum _TrendGroup { recovery, activity, body }
+
+enum _TrendWindow {
+  d7(7),
+  d30(30),
+  d90(90);
+
+  const _TrendWindow(this.days);
+  final int days;
+}
 
 class HealthTrendPage extends ConsumerStatefulWidget {
   const HealthTrendPage({super.key});
@@ -36,24 +43,56 @@ class HealthTrendPage extends ConsumerStatefulWidget {
 
 class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
   _TrendGroup _group = _TrendGroup.recovery;
+  _TrendWindow _window = _TrendWindow.d30;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
     return ShellTabScaffold(
       title: l10n.healthTrendTitle,
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
         children: [
-          SegmentedRow<_TrendGroup>(
-            options: _TrendGroup.values,
-            value: _group,
-            labelOf: (group) => _trendGroupLabel(l10n, group),
-            onChanged: (value) => setState(() => _group = value),
+          Row(
+            children: [
+              Expanded(
+                child: SegmentedRow<_TrendGroup>(
+                  options: _TrendGroup.values,
+                  value: _group,
+                  labelOf: (group) => _trendGroupLabel(l10n, group),
+                  onChanged: (value) => setState(() => _group = value),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              // Compact window toggle
+              Container(
+                decoration: BoxDecoration(
+                  color: colors.muted,
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s4,
+                  vertical: AppSpacing.s2,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final w in _TrendWindow.values)
+                      _WindowChip(
+                        label: '${w.days}d',
+                        selected: w == _window,
+                        onTap: () => setState(() => _window = w),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.s12),
           for (final spec in _trendSpecs(l10n, _group)) ...[
-            _TrendCard(spec: spec),
+            _TrendCard(spec: spec, windowDays: _window.days),
             const SizedBox(height: AppSpacing.s12),
           ],
         ],
@@ -69,14 +108,64 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
       };
 }
 
+class _WindowChip extends StatelessWidget {
+  const _WindowChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s8,
+          vertical: AppSpacing.s4,
+        ),
+        decoration: selected
+            ? BoxDecoration(
+                color: colors.background,
+                borderRadius: BorderRadius.circular(AppRadius.xs),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.foreground.withValues(alpha: 0.05),
+                    blurRadius: 2,
+                  ),
+                ],
+              )
+            : null,
+        child: Text(
+          label,
+          style: typography.xs.copyWith(
+            color: selected
+                ? colors.foreground
+                : colors.mutedForeground,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TrendCard extends ConsumerWidget {
-  const _TrendCard({required this.spec});
+  const _TrendCard({required this.spec, required this.windowDays});
 
   final _TrendSpec spec;
+  final int windowDays;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(trendChartProvider(spec.kind));
+    final async = ref.watch(trendChartProvider((kind: spec.kind, windowDays: windowDays)));
     final typography = context.theme.typography;
     final colors = context.theme.colors;
     return SoftCard(
@@ -221,25 +310,25 @@ List<_TrendSpec> _trendSpecs(AppLocalizations l10n, _TrendGroup group) =>
       ],
     };
 
-/// Trend series for one kind, ordered by [HealthMetric.capturedAt]
+/// Trend series for one kind + window, ordered by [HealthMetric.capturedAt]
 /// ascending so the line chart reads left-to-right oldest → newest.
 final trendChartProvider = FutureProvider.autoDispose
-    .family<List<ChartPoint>, HealthMetricKind>((ref, kind) async {
+    .family<List<ChartPoint>, ({HealthMetricKind kind, int windowDays})>(
+        (ref, params) async {
       final optIns = ref.watch(core_auth.domainOptInsProvider).value;
       if (optIns == null || !optIns.contains(DomainScope.health)) {
         return const <ChartPoint>[];
       }
       final repo = await ref.watch(healthMetricRepositoryProvider.future);
       final userId = await ref.read(currentUserIdProvider)();
-      // Generous limit so a busy user (multiple workouts/day) doesn't get
-      // clipped. listByKind orders newest-first, the projection re-sorts.
       final rows = await repo.listByKind(
         ownerUserId: userId,
-        kind: kind,
-        limit: 200,
+        kind: params.kind,
+        limit: params.windowDays + 50,
       );
-      final cutoff = DateTime.now().toUtc().subtract(kHealthTrendWindow);
-      return _projectToPoints(rows, kind, cutoff: cutoff);
+      final cutoff =
+          DateTime.now().toUtc().subtract(Duration(days: params.windowDays));
+      return _projectToPoints(rows, params.kind, cutoff: cutoff);
     });
 
 /// Pure projection: rows → ChartPoints. Exposed for unit tests.

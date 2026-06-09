@@ -7931,59 +7931,56 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthTrendNotEnoughData => 'Not enough data yet.';
 
   @override
-  String get healthTrendHrvSubtitle => 'Heart-rate variability (last 30 days)';
+  String get healthTrendHrvSubtitle => 'Heart-rate variability ';
 
   @override
-  String get healthTrendSleepSubtitle => 'Nightly hours (last 30 days)';
+  String get healthTrendSleepSubtitle => 'Nightly hours ';
 
   @override
-  String get healthTrendHeartRateSubtitle =>
-      'Daily average heart rate (last 30 days)';
+  String get healthTrendHeartRateSubtitle => 'Daily average heart rate ';
 
   @override
   String get healthTrendRespiratoryTitle => 'Respiration';
 
   @override
   String get healthTrendRespiratorySubtitle =>
-      'Daily average respiratory rate (last 30 days)';
+      'Daily average respiratory rate ';
 
   @override
-  String get healthTrendWorkoutSubtitle => 'Daily minutes (last 30 days)';
+  String get healthTrendWorkoutSubtitle => 'Daily minutes ';
 
   @override
-  String get healthTrendStepsSubtitle => 'Daily steps (last 30 days)';
+  String get healthTrendStepsSubtitle => 'Daily steps ';
 
   @override
   String get healthTrendWalkingDistanceTitle => 'Walking distance';
 
   @override
-  String get healthTrendWalkingDistanceSubtitle =>
-      'Daily kilometers (last 30 days)';
+  String get healthTrendWalkingDistanceSubtitle => 'Daily kilometers ';
 
   @override
   String get healthTrendFlightsTitle => 'Flights climbed';
 
   @override
-  String get healthTrendFlightsSubtitle =>
-      'Daily flights climbed (last 30 days)';
+  String get healthTrendFlightsSubtitle => 'Daily flights climbed ';
 
   @override
   String get healthTrendWeightTitle => 'Weight';
 
   @override
-  String get healthTrendWeightSubtitle => 'Weight records (last 30 days)';
+  String get healthTrendWeightSubtitle => 'Weight records ';
 
   @override
   String get healthTrendBodyFatTitle => 'Body fat';
 
   @override
-  String get healthTrendBodyFatSubtitle => 'Body fat percentage (last 30 days)';
+  String get healthTrendBodyFatSubtitle => 'Body fat percentage ';
 
   @override
   String get healthTrendVo2MaxTitle => 'VO₂max';
 
   @override
-  String get healthTrendVo2MaxSubtitle => 'Max oxygen uptake (last 30 days)';
+  String get healthTrendVo2MaxSubtitle => 'Max oxygen uptake ';
 
   @override
   String get healthBodyBatteryMetricLabel => 'Body Battery';
@@ -8004,13 +8001,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthTrendBodyBatteryTitle => 'Body Battery';
 
   @override
-  String get healthTrendBodyBatterySubtitle => 'Daily max level (last 30 days)';
+  String get healthTrendBodyBatterySubtitle => 'Daily max level';
 
   @override
   String get healthTrendStressTitle => 'Stress';
 
   @override
-  String get healthTrendStressSubtitle => 'Daily average level (last 30 days)';
+  String get healthTrendStressSubtitle => 'Daily average level ';
 
   @override
   String get healthSyncPermissionDenied => 'Permission denied';

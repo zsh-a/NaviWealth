@@ -13699,19 +13699,19 @@ abstract class AppLocalizations {
   /// No description provided for @healthTrendHrvSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Heart-rate variability (last 30 days)'**
+  /// **'Heart-rate variability '**
   String get healthTrendHrvSubtitle;
 
   /// No description provided for @healthTrendSleepSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Nightly hours (last 30 days)'**
+  /// **'Nightly hours '**
   String get healthTrendSleepSubtitle;
 
   /// No description provided for @healthTrendHeartRateSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Daily average heart rate (last 30 days)'**
+  /// **'Daily average heart rate '**
   String get healthTrendHeartRateSubtitle;
 
   /// No description provided for @healthTrendRespiratoryTitle.
@@ -13723,19 +13723,19 @@ abstract class AppLocalizations {
   /// No description provided for @healthTrendRespiratorySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Daily average respiratory rate (last 30 days)'**
+  /// **'Daily average respiratory rate '**
   String get healthTrendRespiratorySubtitle;
 
   /// No description provided for @healthTrendWorkoutSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Daily minutes (last 30 days)'**
+  /// **'Daily minutes '**
   String get healthTrendWorkoutSubtitle;
 
   /// No description provided for @healthTrendStepsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Daily steps (last 30 days)'**
+  /// **'Daily steps '**
   String get healthTrendStepsSubtitle;
 
   /// No description provided for @healthTrendWalkingDistanceTitle.
@@ -13747,7 +13747,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthTrendWalkingDistanceSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Daily kilometers (last 30 days)'**
+  /// **'Daily kilometers '**
   String get healthTrendWalkingDistanceSubtitle;
 
   /// No description provided for @healthTrendFlightsTitle.
@@ -13759,7 +13759,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthTrendFlightsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Daily flights climbed (last 30 days)'**
+  /// **'Daily flights climbed '**
   String get healthTrendFlightsSubtitle;
 
   /// No description provided for @healthTrendWeightTitle.
@@ -13771,7 +13771,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthTrendWeightSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Weight records (last 30 days)'**
+  /// **'Weight records '**
   String get healthTrendWeightSubtitle;
 
   /// No description provided for @healthTrendBodyFatTitle.
@@ -13783,7 +13783,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthTrendBodyFatSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Body fat percentage (last 30 days)'**
+  /// **'Body fat percentage '**
   String get healthTrendBodyFatSubtitle;
 
   /// No description provided for @healthTrendVo2MaxTitle.
@@ -13795,7 +13795,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthTrendVo2MaxSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Max oxygen uptake (last 30 days)'**
+  /// **'Max oxygen uptake '**
   String get healthTrendVo2MaxSubtitle;
 
   /// No description provided for @healthBodyBatteryMetricLabel.
@@ -13837,7 +13837,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthTrendBodyBatterySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Daily max level (last 30 days)'**
+  /// **'Daily max level'**
   String get healthTrendBodyBatterySubtitle;
 
   /// No description provided for @healthTrendStressTitle.
@@ -13849,7 +13849,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthTrendStressSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Daily average level (last 30 days)'**
+  /// **'Daily average level '**
   String get healthTrendStressSubtitle;
 
   /// No description provided for @healthSyncPermissionDenied.

@@ -7620,55 +7620,55 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthTrendNotEnoughData => '数据还不够。';
 
   @override
-  String get healthTrendHrvSubtitle => '心率变异性（近 30 天）';
+  String get healthTrendHrvSubtitle => '心率变异性';
 
   @override
-  String get healthTrendSleepSubtitle => '每晚小时数（近 30 天）';
+  String get healthTrendSleepSubtitle => '每晚小时数';
 
   @override
-  String get healthTrendHeartRateSubtitle => '每日平均心率（近 30 天）';
+  String get healthTrendHeartRateSubtitle => '每日平均心率';
 
   @override
   String get healthTrendRespiratoryTitle => '呼吸';
 
   @override
-  String get healthTrendRespiratorySubtitle => '每日平均呼吸率（近 30 天）';
+  String get healthTrendRespiratorySubtitle => '每日平均呼吸率';
 
   @override
-  String get healthTrendWorkoutSubtitle => '每天分钟数（近 30 天）';
+  String get healthTrendWorkoutSubtitle => '每天分钟数';
 
   @override
-  String get healthTrendStepsSubtitle => '每天步数（近 30 天）';
+  String get healthTrendStepsSubtitle => '每天步数';
 
   @override
   String get healthTrendWalkingDistanceTitle => '步行距离';
 
   @override
-  String get healthTrendWalkingDistanceSubtitle => '每天公里数（近 30 天）';
+  String get healthTrendWalkingDistanceSubtitle => '每天公里数';
 
   @override
   String get healthTrendFlightsTitle => '楼层';
 
   @override
-  String get healthTrendFlightsSubtitle => '每天爬楼层数（近 30 天）';
+  String get healthTrendFlightsSubtitle => '每天爬楼层数';
 
   @override
   String get healthTrendWeightTitle => '体重';
 
   @override
-  String get healthTrendWeightSubtitle => '体重记录（近 30 天）';
+  String get healthTrendWeightSubtitle => '体重记录';
 
   @override
   String get healthTrendBodyFatTitle => '体脂';
 
   @override
-  String get healthTrendBodyFatSubtitle => '体脂比例（近 30 天）';
+  String get healthTrendBodyFatSubtitle => '体脂比例';
 
   @override
   String get healthTrendVo2MaxTitle => 'VO₂max';
 
   @override
-  String get healthTrendVo2MaxSubtitle => '最大摄氧量（近 30 天）';
+  String get healthTrendVo2MaxSubtitle => '最大摄氧量';
 
   @override
   String get healthBodyBatteryMetricLabel => '电量';
@@ -7689,13 +7689,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthTrendBodyBatteryTitle => '电量';
 
   @override
-  String get healthTrendBodyBatterySubtitle => '每日最高电量（近 30 天）';
+  String get healthTrendBodyBatterySubtitle => '每日最高电量';
 
   @override
   String get healthTrendStressTitle => '压力';
 
   @override
-  String get healthTrendStressSubtitle => '每日平均压力（近 30 天）';
+  String get healthTrendStressSubtitle => '每日平均压力';
 
   @override
   String get healthSyncPermissionDenied => '权限被拒绝';

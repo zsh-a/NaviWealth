@@ -233,12 +233,91 @@ class _RecoveryHero extends ConsumerWidget {
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
+              const SizedBox(height: AppSpacing.s12),
+              const _RecoverySparkline(),
             ],
           );
         },
       ),
     );
   }
+}
+
+/// 7-day HRV sparkline shown beneath the recovery card.
+class _RecoverySparkline extends ConsumerWidget {
+  const _RecoverySparkline();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(recoverySparklineProvider);
+    final colors = context.theme.colors;
+    return async.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (values) {
+        if (values.length < 2) return const SizedBox.shrink();
+        return SizedBox(
+          height: 32,
+          child: CustomPaint(
+            size: Size.infinite,
+            painter: _SparklinePainter(
+              values: values,
+              color: colors.primary.withValues(alpha: 0.6),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SparklinePainter extends CustomPainter {
+  _SparklinePainter({required this.values, required this.color});
+
+  final List<double> values;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.isEmpty) return;
+    final min = values.reduce((a, b) => a < b ? a : b);
+    final max = values.reduce((a, b) => a > b ? a : b);
+    final range = max - min;
+    if (range == 0) return;
+
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final path = Path();
+    for (var i = 0; i < values.length; i++) {
+      final x = (i / (values.length - 1)) * size.width;
+      final y = size.height - ((values[i] - min) / range) * size.height;
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    canvas.drawPath(path, paint);
+
+    // Draw a dot at the last point.
+    final lastX = size.width;
+    final lastY =
+        size.height - ((values.last - min) / range) * size.height;
+    canvas.drawCircle(
+      Offset(lastX, lastY),
+      2.5,
+      Paint()..color = color,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_SparklinePainter old) =>
+      old.values != values || old.color != color;
 }
 
 class _MetricGrid extends ConsumerWidget {

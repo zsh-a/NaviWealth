@@ -162,6 +162,30 @@ final latestBodyBatteryProvider = FutureProvider.autoDispose<HealthMetric?>((
   return rows.isEmpty ? null : rows.first;
 });
 
+/// Last 7 days of HRV values for the recovery sparkline.
+/// Returns a list of (dayIndex, value) pairs, oldest-first.
+final recoverySparklineProvider =
+    FutureProvider.autoDispose<List<double>>((ref) async {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) {
+    return const <double>[];
+  }
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final userId = await ref.read(currentUserIdProvider)();
+  final rows = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.hrvDaily,
+    limit: 10,
+  );
+  final now = DateTime.now().toUtc();
+  final cutoff = now.subtract(const Duration(days: 7));
+  final inWindow = rows
+      .where((m) => !m.capturedAt.isBefore(cutoff))
+      .toList()
+    ..sort((a, b) => a.capturedAt.compareTo(b.capturedAt));
+  return inWindow.map((m) => m.value).toList();
+});
+
 /// Recovery signal output, computed off the same shaper the AI tool
 /// uses. Returned `null` when HealthOS is off so the UI can render an
 /// empty state instead of confusing zeros.

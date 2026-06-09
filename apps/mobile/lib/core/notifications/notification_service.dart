@@ -94,6 +94,11 @@ class HealthNotifications {
   /// instead of stacking.
   static int idForBriefing(DateTime localDay) =>
       localDay.year * 10000 + localDay.month * 100 + localDay.day;
+
+  /// Recovery alert notification id — offset above briefing range
+  /// so the two never collide.
+  static int idForRecoveryAlert(DateTime localDay) =>
+      0x8000000 + localDay.year * 10000 + localDay.month * 100 + localDay.day;
 }
 
 /// Stable ID space used by KnowledgeOS notifications. Channel metadata

@@ -23,6 +23,7 @@ import '../../../core/background/providers.dart' as background_providers;
 import '../../../design_system/preferences/theme_preferences.dart';
 import '../data/providers.dart';
 import 'morning_briefing_agent.dart';
+import 'recovery_alert_agent.dart';
 
 /// D-2.5b side-effecting provider — watches the Health domain opt-in
 /// and (re-)registers or cancels the workmanager periodic task that
