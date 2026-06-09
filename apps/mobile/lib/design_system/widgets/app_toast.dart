@@ -155,62 +155,67 @@ class _AppToastSurface extends StatelessWidget {
               ),
             ],
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Accent bar — severity-colored left strip for instant scanning.
-              Container(
-                width: 3,
-                decoration: BoxDecoration(
-                  color: palette.accent.withValues(alpha: AppOpacity.strong),
-                  borderRadius: const BorderRadius.horizontal(
-                    left: Radius.circular(AppRadius.lg),
+          child: IntrinsicHeight(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Accent bar — severity-colored left strip for instant scanning.
+                Container(
+                  width: 3,
+                  decoration: BoxDecoration(
+                    color: palette.accent.withValues(alpha: AppOpacity.strong),
+                    borderRadius: const BorderRadius.horizontal(
+                      left: Radius.circular(AppRadius.lg),
+                    ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s14,
-                    vertical: AppSpacing.s12,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        palette.icon,
-                        color: palette.accent,
-                        size: AppIconSizes.md,
-                      ),
-                      const SizedBox(width: AppSpacing.s10),
-                      Flexible(
-                        child: Text(
-                          message,
-                          style: context.theme.typography.sm.copyWith(
-                            color: colors.foreground,
-                            fontWeight: FontWeight.w500,
-                          ),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s14,
+                      vertical: AppSpacing.s12,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          palette.icon,
+                          color: palette.accent,
+                          size: AppIconSizes.md,
                         ),
-                      ),
-                      if (actionLabel != null && onAction != null) ...[
-                        const SizedBox(width: AppSpacing.s8),
-                        FButton(
-                          variant: FButtonVariant.ghost,
-                          size: FButtonSizeVariant.sm,
-                          mainAxisSize: MainAxisSize.min,
-                          onPress: onAction,
+                        const SizedBox(width: AppSpacing.s10),
+                        Flexible(
                           child: Text(
-                            actionLabel!,
+                            message,
+                            maxLines: 3,
                             overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
+                            style: context.theme.typography.sm.copyWith(
+                              color: colors.foreground,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
+                        if (actionLabel != null && onAction != null) ...[
+                          const SizedBox(width: AppSpacing.s8),
+                          FButton(
+                            variant: FButtonVariant.ghost,
+                            size: FButtonSizeVariant.sm,
+                            mainAxisSize: MainAxisSize.min,
+                            onPress: onAction,
+                            child: Text(
+                              actionLabel!,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
