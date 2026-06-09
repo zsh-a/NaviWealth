@@ -8701,7 +8701,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthNotEnabled => 'HealthOS 未启用';
 
   @override
-  String healthPlanLoadFailed(Object message) => 'Plan 加载失败：$message';
+  String healthPlanLoadFailed(String message) {
+    return 'Plan 加载失败：$message';
+  }
 
   @override
   String get healthBriefingAuto => '自动';
@@ -8764,5 +8766,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthGarminCancel => '取消';
 
   @override
-  String healthGarminLastSync(Object count, Object time) => '上次同步 $time · $count 条数据';
+  String healthGarminLastSync(String time, String count) {
+    return '上次同步 $time · $count 条数据';
+  }
 }

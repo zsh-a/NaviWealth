@@ -9074,7 +9074,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthNotEnabled => 'HealthOS not enabled';
 
   @override
-  String healthPlanLoadFailed(Object message) => 'Plan load failed: $message';
+  String healthPlanLoadFailed(String message) {
+    return 'Plan load failed: $message';
+  }
 
   @override
   String get healthBriefingAuto => 'Auto';
@@ -9131,11 +9133,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthGarminDisconnectTitle => 'Disconnect Garmin?';
 
   @override
-  String get healthGarminDisconnectBody => 'Synced data will remain in the app.';
+  String get healthGarminDisconnectBody =>
+      'Synced data will remain in the app.';
 
   @override
   String get healthGarminCancel => 'Cancel';
 
   @override
-  String healthGarminLastSync(Object count, Object time) => 'Last sync $time · $count metrics';
+  String healthGarminLastSync(String time, String count) {
+    return 'Last sync $time · $count metrics';
+  }
 }

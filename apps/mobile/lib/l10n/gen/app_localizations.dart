@@ -15666,51 +15666,143 @@ abstract class AppLocalizations {
   /// **'Sell'**
   String get tradeVerbSell;
 
+  /// No description provided for @healthNotEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'HealthOS not enabled'**
   String get healthNotEnabled;
 
-  String healthPlanLoadFailed(Object message);
+  /// Error message when recovery plan fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'Plan load failed: {message}'**
+  String healthPlanLoadFailed(String message);
 
+  /// No description provided for @healthBriefingAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
   String get healthBriefingAuto;
 
+  /// No description provided for @healthGarminTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Garmin Connect'**
   String get healthGarminTitle;
 
+  /// No description provided for @healthGarminDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected'**
   String get healthGarminDisconnected;
 
+  /// No description provided for @healthGarminConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
   String get healthGarminConnected;
 
+  /// No description provided for @healthGarminSyncingBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing'**
   String get healthGarminSyncingBadge;
 
+  /// No description provided for @healthGarminErrorBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
   String get healthGarminErrorBadge;
 
+  /// No description provided for @healthGarminRestoringBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring'**
   String get healthGarminRestoringBadge;
 
+  /// No description provided for @healthGarminVerifyBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
   String get healthGarminVerifyBadge;
 
+  /// No description provided for @healthGarminMfaRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'MFA Required'**
   String get healthGarminMfaRequired;
 
+  /// No description provided for @healthGarminConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
   String get healthGarminConnect;
 
+  /// No description provided for @healthGarminDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
   String get healthGarminDisconnect;
 
+  /// No description provided for @healthGarminSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
   String get healthGarminSync;
 
+  /// No description provided for @healthGarminRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
   String get healthGarminRetry;
 
+  /// No description provided for @healthGarminEnterCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Code'**
   String get healthGarminEnterCode;
 
+  /// No description provided for @healthGarminRestoringSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring session…'**
   String get healthGarminRestoringSession;
 
+  /// No description provided for @healthGarminSyncingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing data…'**
   String get healthGarminSyncingData;
 
+  /// No description provided for @healthGarminSyncError.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Error'**
   String get healthGarminSyncError;
 
+  /// No description provided for @healthGarminDisconnectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect Garmin?'**
   String get healthGarminDisconnectTitle;
 
+  /// No description provided for @healthGarminDisconnectBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced data will remain in the app.'**
   String get healthGarminDisconnectBody;
 
+  /// No description provided for @healthGarminCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
   String get healthGarminCancel;
 
-  String healthGarminLastSync(Object count, Object time);
+  /// Garmin connected status line
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync {time} · {count} metrics'**
+  String healthGarminLastSync(String time, String count);
 }
 
 class _AppLocalizationsDelegate
