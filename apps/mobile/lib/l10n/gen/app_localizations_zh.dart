@@ -8696,4 +8696,73 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tradeVerbSell => '卖出';
+
+  @override
+  String get healthNotEnabled => 'HealthOS 未启用';
+
+  @override
+  String healthPlanLoadFailed(Object message) => 'Plan 加载失败：$message';
+
+  @override
+  String get healthBriefingAuto => '自动';
+
+  @override
+  String get healthGarminTitle => 'Garmin Connect';
+
+  @override
+  String get healthGarminDisconnected => '未连接';
+
+  @override
+  String get healthGarminConnected => '已连接';
+
+  @override
+  String get healthGarminSyncingBadge => '同步中';
+
+  @override
+  String get healthGarminErrorBadge => '错误';
+
+  @override
+  String get healthGarminRestoringBadge => '恢复中';
+
+  @override
+  String get healthGarminVerifyBadge => '验证';
+
+  @override
+  String get healthGarminMfaRequired => '需要 MFA 验证';
+
+  @override
+  String get healthGarminConnect => '连接';
+
+  @override
+  String get healthGarminDisconnect => '断开连接';
+
+  @override
+  String get healthGarminSync => '同步';
+
+  @override
+  String get healthGarminRetry => '重试';
+
+  @override
+  String get healthGarminEnterCode => '输入验证码';
+
+  @override
+  String get healthGarminRestoringSession => '正在恢复会话…';
+
+  @override
+  String get healthGarminSyncingData => '正在同步数据…';
+
+  @override
+  String get healthGarminSyncError => '同步错误';
+
+  @override
+  String get healthGarminDisconnectTitle => '断开 Garmin 连接？';
+
+  @override
+  String get healthGarminDisconnectBody => '已同步的数据将保留在应用中。';
+
+  @override
+  String get healthGarminCancel => '取消';
+
+  @override
+  String healthGarminLastSync(Object count, Object time) => '上次同步 $time · $count 条数据';
 }

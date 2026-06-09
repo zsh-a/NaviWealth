@@ -18,6 +18,7 @@ import '../../../app/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'health_today_providers.dart';
+import 'recovery_verdict.dart';
 
 class HealthPlanPage extends ConsumerWidget {
   const HealthPlanPage({super.key});
@@ -31,14 +32,19 @@ class HealthPlanPage extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
         children: [
-          async.when(
-            loading: () => const _LoadingCard(),
-            error: (e, _) => _ErrorCard(message: '$e'),
-            data: (out) =>
-                out == null ? const _OffCard() : _RecoveryCard(out: out),
+          FadeSlideIn(
+            child: async.when(
+              loading: () => const _LoadingCard(),
+              error: (e, _) => _ErrorCard(message: '$e'),
+              data: (out) =>
+                  out == null ? const _OffCard() : _RecoveryCard(out: out),
+            ),
           ),
           const SizedBox(height: AppSpacing.s12),
-          const _DisclaimerCard(),
+          const FadeSlideIn(
+            delay: Duration(milliseconds: 60),
+            child: _DisclaimerCard(),
+          ),
         ],
       ),
     );
@@ -65,8 +71,8 @@ class _RecoveryCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                _verdictIcon(verdict),
-                color: _verdictColor(verdict, colors),
+                RecoveryVerdict.icon(verdict),
+                color: RecoveryVerdict.color(verdict, colors),
               ),
               const SizedBox(width: AppSpacing.s8),
               Text(
@@ -78,16 +84,16 @@ class _RecoveryCard extends StatelessWidget {
                 Text(
                   '$score',
                   style: typography.xl.copyWith(
-                    color: _verdictColor(verdict, colors),
+                    color: RecoveryVerdict.color(verdict, colors),
                   ),
                 ),
             ],
           ),
           const SizedBox(height: AppSpacing.s8),
           Text(
-            _verdictHeadline(verdict, l10n),
+            RecoveryVerdict.label(verdict, l10n),
             style: typography.xl.copyWith(
-              color: _verdictColor(verdict, colors),
+              color: RecoveryVerdict.color(verdict, colors),
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -100,25 +106,16 @@ class _RecoveryCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: AppSpacing.s12),
-          Text(
-            l10n.healthPlanTodayActions,
-            style: context.captionStyle,
-          ),
+          Text(l10n.healthPlanTodayActions, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s8),
           for (final item in _planActions(verdict, l10n))
             _PlanActionRow(icon: item.icon, text: item.text),
           if (out['note'] is String) ...[
             const SizedBox(height: AppSpacing.s8),
-            Text(
-              out['note'] as String,
-              style: context.captionStyle,
-            ),
+            Text(out['note'] as String, style: context.captionStyle),
           ],
           const SizedBox(height: AppSpacing.s24),
-          Text(
-            l10n.healthInputMetricsTitle,
-            style: context.captionStyle,
-          ),
+          Text(l10n.healthInputMetricsTitle, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s8),
           _InputRow(
             label: l10n.healthConfidenceLabel,
@@ -147,27 +144,6 @@ class _RecoveryCard extends StatelessWidget {
     );
   }
 
-  static IconData _verdictIcon(String v) => switch (v) {
-    'rested' => FLucideIcons.zap,
-    'balanced' => FLucideIcons.scale,
-    'strained' => FLucideIcons.triangleAlert,
-    _ => FLucideIcons.circleHelp,
-  };
-
-  static Color _verdictColor(String v, FColors colors) => switch (v) {
-    'rested' => colors.primary,
-    'balanced' => colors.mutedForeground,
-    'strained' => colors.destructive,
-    _ => colors.mutedForeground,
-  };
-
-  static String _verdictHeadline(String v, AppLocalizations l10n) => switch (v) {
-    'rested' => l10n.healthRecoveryRested,
-    'balanced' => l10n.healthRecoveryBalanced,
-    'strained' => l10n.healthRecoveryStrained,
-    _ => l10n.healthRecoveryInsufficient,
-  };
-
   static String _verdictSuggestion(
     String v,
     AppLocalizations l10n, {
@@ -178,29 +154,16 @@ class _RecoveryCard extends StatelessWidget {
     final sleep = inputs['avg_sleep_hours'];
     final rhr = inputs['latest_rhr_bpm'];
 
-    final contextLine = _buildContextLine(
-      hrv: hrv,
-      sleep: sleep,
-      rhr: rhr,
-    );
+    final contextLine = _buildContextLine(hrv: hrv, sleep: sleep, rhr: rhr);
 
-    final base = switch (v) {
-      'rested' => l10n.healthRecoveryRestedTip,
-      'balanced' => l10n.healthRecoveryBalancedTip,
-      'strained' => l10n.healthRecoveryStrainedTip,
-      _ => l10n.healthRecoveryInsufficientTip,
-    };
+    final base = RecoveryVerdict.suggestion(v, l10n);
 
     if (contextLine.isEmpty) return base;
     return '$contextLine $base';
   }
 
   /// Build a one-line data context summary when metric values are available.
-  static String _buildContextLine({
-    Object? hrv,
-    Object? sleep,
-    Object? rhr,
-  }) {
+  static String _buildContextLine({Object? hrv, Object? sleep, Object? rhr}) {
     final parts = <String>[];
     if (hrv is num && hrv > 0) {
       parts.add('HRV ${_round(hrv.toDouble())} ms');
@@ -217,24 +180,25 @@ class _RecoveryCard extends StatelessWidget {
 
   static double _round(double v) => (v * 100).round() / 100.0;
 
-  static List<_PlanAction> _planActions(String v, AppLocalizations l10n) => switch (v) {
-    'rested' => [
-      _PlanAction(FLucideIcons.dumbbell, l10n.healthPlanHighIntensity),
-      _PlanAction(FLucideIcons.moon, l10n.healthPlanKeepSleep),
-    ],
-    'balanced' => [
-      _PlanAction(FLucideIcons.activity, l10n.healthPlanTrainAsPlanned),
-      _PlanAction(FLucideIcons.coffee, l10n.healthPlanReduceCaffeine),
-    ],
-    'strained' => [
-      _PlanAction(FLucideIcons.footprints, l10n.healthPlanLightActivity),
-      _PlanAction(FLucideIcons.calendarX, l10n.healthPlanAvoidPressure),
-    ],
-    _ => [
-      _PlanAction(FLucideIcons.refreshCw, l10n.healthPlanSyncFirst),
-      _PlanAction(FLucideIcons.calendarDays, l10n.healthPlanTrackMore),
-    ],
-  };
+  static List<_PlanAction> _planActions(String v, AppLocalizations l10n) =>
+      switch (v) {
+        'rested' => [
+          _PlanAction(FLucideIcons.dumbbell, l10n.healthPlanHighIntensity),
+          _PlanAction(FLucideIcons.moon, l10n.healthPlanKeepSleep),
+        ],
+        'balanced' => [
+          _PlanAction(FLucideIcons.activity, l10n.healthPlanTrainAsPlanned),
+          _PlanAction(FLucideIcons.coffee, l10n.healthPlanReduceCaffeine),
+        ],
+        'strained' => [
+          _PlanAction(FLucideIcons.footprints, l10n.healthPlanLightActivity),
+          _PlanAction(FLucideIcons.calendarX, l10n.healthPlanAvoidPressure),
+        ],
+        _ => [
+          _PlanAction(FLucideIcons.refreshCw, l10n.healthPlanSyncFirst),
+          _PlanAction(FLucideIcons.calendarDays, l10n.healthPlanTrackMore),
+        ],
+      };
 
   static String _format(Object? v, {required String unit}) {
     if (v == null) return '—';
@@ -284,12 +248,7 @@ class _InputRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              label,
-              style: context.captionStyle,
-            ),
-          ),
+          Expanded(child: Text(label, style: context.captionStyle)),
           Text(value, style: typography.sm),
         ],
       ),
@@ -301,9 +260,26 @@ class _LoadingCard extends StatelessWidget {
   const _LoadingCard();
   @override
   Widget build(BuildContext context) {
-    return const SoftCard(
-      padding: EdgeInsets.all(AppSpacing.s16),
-      child: SizedBox(height: 80, child: Center(child: FCircularProgress())),
+    return SkeletonCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const SkeletonBox(width: 18, height: 18, radius: 9),
+              const SizedBox(width: AppSpacing.s8),
+              const SkeletonBox(width: 80, height: 14),
+              const Spacer(),
+              const SkeletonBox(width: 32, height: 20),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          const SkeletonBox(width: double.infinity, height: 14),
+          const SizedBox(height: AppSpacing.s8),
+          const SkeletonBox(width: 160, height: 14),
+        ],
+      ),
     );
   }
 }
@@ -314,6 +290,7 @@ class _OffCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final l10n = AppLocalizations.of(context);
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
@@ -321,10 +298,7 @@ class _OffCard extends StatelessWidget {
           Icon(FLucideIcons.info, color: colors.mutedForeground),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
-            child: Text(
-              l10n.healthPlanEnableHint,
-              style: typography.sm,
-            ),
+            child: Text(l10n.healthPlanEnableHint, style: typography.sm),
           ),
         ],
       ),
@@ -339,6 +313,7 @@ class _ErrorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final l10n = AppLocalizations.of(context);
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
@@ -347,7 +322,7 @@ class _ErrorCard extends StatelessWidget {
           const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Text(
-              'Plan 加载失败：$message',
+              l10n.healthPlanLoadFailed(message),
               style: typography.sm,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,

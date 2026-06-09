@@ -34,6 +34,7 @@ import '../domain/health_metric_kind.dart';
 import 'body_measurement_entry_sheet.dart';
 import 'garmin_sync_status_card.dart';
 import 'health_today_providers.dart';
+import 'recovery_verdict.dart';
 
 class HealthTodayPage extends ConsumerWidget {
   const HealthTodayPage({super.key});
@@ -55,16 +56,31 @@ class HealthTodayPage extends ConsumerWidget {
       ],
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
-        children: const [
-          _HealthDataStatusNotice(),
-          SizedBox(height: AppSpacing.s12),
-          GarminSyncStatusCard(),
-          SizedBox(height: AppSpacing.s12),
-          _RecoveryHero(),
-          SizedBox(height: AppSpacing.s12),
-          _MetricGrid(),
-          SizedBox(height: AppSpacing.s12),
-          _BriefingPanel(),
+        children: [
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 0),
+            child: const _HealthDataStatusNotice(),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 40),
+            child: const GarminSyncStatusCard(),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 80),
+            child: const _RecoveryHero(),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 120),
+            child: const _MetricGrid(),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 160),
+            child: const _BriefingPanel(),
+          ),
         ],
       ),
     );
@@ -97,7 +113,9 @@ class _HealthDataStatusNoticeState
           setState(() {
             _lastResult = HealthSyncResult.skipped(
               startedAt: DateTime.now().toUtc(),
-              errorMessage: AppLocalizations.of(context).healthSyncPermissionDenied,
+              errorMessage: AppLocalizations.of(
+                context,
+              ).healthSyncPermissionDenied,
             );
           });
           return;
@@ -136,16 +154,13 @@ class _HealthDataStatusNoticeState
         : AppStatusKind.error;
     final l10n = AppLocalizations.of(context);
     final text = !enabled
-        ? 'HealthOS 未启用'
+        ? l10n.healthNotEnabled
         : _running
         ? l10n.healthSyncingData
         : result == null
         ? l10n.healthSyncReady
         : result.ok
-        ? l10n.healthSyncResult(
-            upserted: '${result.upserted}',
-            unchanged: '${result.unchanged}',
-          )
+        ? l10n.healthSyncResult('${result.unchanged}', '${result.upserted}')
         : result.errorMessage ?? l10n.healthSyncFailed;
     final action = !enabled
         ? null
@@ -159,7 +174,9 @@ class _HealthDataStatusNoticeState
                     child: FCircularProgress(),
                   )
                 : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-            child: Text(_running ? l10n.healthSyncingButton : l10n.healthSyncButton),
+            child: Text(
+              _running ? l10n.healthSyncingButton : l10n.healthSyncButton,
+            ),
           );
 
     return AppStatusBanner(
@@ -198,14 +215,14 @@ class _RecoveryHero extends ConsumerWidget {
           final score = out?['score'];
           final l10n = AppLocalizations.of(context);
           final scoreText = score == null ? '—' : '$score';
-          final color = _RecoveryTone.color(verdict, colors);
+          final color = RecoveryVerdict.color(verdict, colors);
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Icon(
-                    _RecoveryTone.icon(verdict),
+                    RecoveryVerdict.icon(verdict),
                     color: color,
                     size: AppIconSizes.md,
                   ),
@@ -218,17 +235,34 @@ class _RecoveryHero extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  Text(scoreText, style: typography.xl.copyWith(color: color)),
                 ],
               ),
               const SizedBox(height: AppSpacing.s8),
-              Text(
-                _RecoveryTone.label(verdict, l10n),
-                style: typography.xl.copyWith(color: color),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    RecoveryVerdict.label(verdict, l10n),
+                    style: typography.xl.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (score != null) ...[
+                    const SizedBox(width: AppSpacing.s8),
+                    Text(
+                      scoreText,
+                      style: typography.sm.copyWith(
+                        color: color.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: AppSpacing.s4),
               Text(
-                _RecoveryTone.suggestion(verdict, l10n),
+                RecoveryVerdict.suggestion(verdict, l10n),
                 style: context.bodyCaptionStyle,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
@@ -306,13 +340,8 @@ class _SparklinePainter extends CustomPainter {
 
     // Draw a dot at the last point.
     final lastX = size.width;
-    final lastY =
-        size.height - ((values.last - min) / range) * size.height;
-    canvas.drawCircle(
-      Offset(lastX, lastY),
-      2.5,
-      Paint()..color = color,
-    );
+    final lastY = size.height - ((values.last - min) / range) * size.height;
+    canvas.drawCircle(Offset(lastX, lastY), 2.5, Paint()..color = color);
   }
 
   @override
@@ -486,7 +515,9 @@ class _SleepStageBar extends StatelessWidget {
                 if (remPct > 0)
                   Expanded(
                     flex: (remPct * 100).round().clamp(1, 100),
-                    child: Container(color: colors.primary.withValues(alpha: 0.6)),
+                    child: Container(
+                      color: colors.primary.withValues(alpha: 0.6),
+                    ),
                   ),
                 Expanded(
                   flex: ((1 - deepPct - remPct) * 100).round().clamp(1, 100),
@@ -499,14 +530,26 @@ class _SleepStageBar extends StatelessWidget {
         const SizedBox(height: AppSpacing.s2),
         Row(
           children: [
-            _stageChip(typography, colors.primary, l10n.healthSleepDeepLabel,
-                deepSeconds),
+            _stageChip(
+              typography,
+              colors.primary,
+              l10n.healthSleepDeepLabel,
+              deepSeconds,
+            ),
             const SizedBox(width: AppSpacing.s6),
-            _stageChip(typography, colors.primary.withValues(alpha: 0.6),
-                l10n.healthSleepRemLabel, remSeconds),
+            _stageChip(
+              typography,
+              colors.primary.withValues(alpha: 0.6),
+              l10n.healthSleepRemLabel,
+              remSeconds,
+            ),
             const SizedBox(width: AppSpacing.s6),
-            _stageChip(typography, colors.mutedForeground,
-                l10n.healthSleepLightLabel, lightSeconds),
+            _stageChip(
+              typography,
+              colors.mutedForeground,
+              l10n.healthSleepLightLabel,
+              lightSeconds,
+            ),
           ],
         ),
       ],
@@ -593,7 +636,10 @@ class _WorkoutCard extends StatelessWidget {
         data: (m) {
           if (m == null) return const _ValueDash();
           final minutes = (m.value / 60).round();
-          return _ValueBig(value: '${minutes}min', sub: _ago(l10n, m.capturedAt));
+          return _ValueBig(
+            value: '${minutes}min',
+            sub: _ago(l10n, m.capturedAt),
+          );
         },
       ),
     );
@@ -790,62 +836,15 @@ class _ValueSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 56,
-          height: 20,
-          decoration: BoxDecoration(
-            color: colors.muted,
-            borderRadius: BorderRadius.circular(AppRadius.xs),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.s6),
-        Container(
-          width: 40,
-          height: 10,
-          decoration: BoxDecoration(
-            color: colors.muted,
-            borderRadius: BorderRadius.circular(AppRadius.xs),
-          ),
-        ),
+        SkeletonBox(width: 56, height: 20),
+        SizedBox(height: AppSpacing.s6),
+        SkeletonBox(width: 40, height: 10),
       ],
     );
   }
-}
-
-class _RecoveryTone {
-  const _RecoveryTone._();
-
-  static IconData icon(String v) => switch (v) {
-    'rested' => FLucideIcons.zap,
-    'balanced' => FLucideIcons.activity,
-    'strained' => FLucideIcons.triangleAlert,
-    _ => FLucideIcons.info,
-  };
-
-  static Color color(String v, FColors colors) => switch (v) {
-    'rested' => colors.primary,
-    'balanced' => colors.mutedForeground,
-    'strained' => colors.destructive,
-    _ => colors.mutedForeground,
-  };
-
-  static String label(String v, AppLocalizations l10n) => switch (v) {
-    'rested' => l10n.healthRecoveryRested,
-    'balanced' => l10n.healthRecoveryBalanced,
-    'strained' => l10n.healthRecoveryStrained,
-    _ => l10n.healthRecoveryInsufficient,
-  };
-
-  static String suggestion(String v, AppLocalizations l10n) => switch (v) {
-    'rested' => l10n.healthRecoveryRestedTip,
-    'balanced' => l10n.healthRecoveryBalancedTip,
-    'strained' => l10n.healthRecoveryStrainedTip,
-    _ => l10n.healthRecoveryInsufficientTip,
-  };
 }
 
 double _secondsToHours(double value, String unit) => switch (unit) {
@@ -862,17 +861,17 @@ String _utcDayKey(DateTime t) => AppFormatters.utcDayKey(t);
 String _formatSteps(double v) => Fmt.number(v.round());
 
 String _ago(AppLocalizations l10n, DateTime when) => AppFormatters.relativeTime(
-      when,
-      justNow: l10n.aiChatRelativeJustNow,
-      minutesAgo: l10n.aiChatRelativeMinutesAgo,
-      hoursAgo: l10n.aiChatRelativeHoursAgo,
-      daysAgo: l10n.aiChatRelativeDaysAgo,
-      dateFallback: (d) {
-        final mm = d.month.toString().padLeft(2, '0');
-        final dd = d.day.toString().padLeft(2, '0');
-        return '$mm-$dd';
-      },
-    );
+  when,
+  justNow: l10n.aiChatRelativeJustNow,
+  minutesAgo: l10n.aiChatRelativeMinutesAgo,
+  hoursAgo: l10n.aiChatRelativeHoursAgo,
+  daysAgo: l10n.aiChatRelativeDaysAgo,
+  dateFallback: (d) {
+    final mm = d.month.toString().padLeft(2, '0');
+    final dd = d.day.toString().padLeft(2, '0');
+    return '$mm-$dd';
+  },
+);
 
 class _BriefingPanel extends ConsumerStatefulWidget {
   const _BriefingPanel();
@@ -977,7 +976,7 @@ class _BriefingCard extends StatelessWidget {
               const Spacer(),
               if (source is String && source.isNotEmpty)
                 AppBadge(
-                  label: source == 'llm' ? 'LLM' : '自动',
+                  label: source == 'llm' ? 'LLM' : l10n.healthBriefingAuto,
                   size: AppBadgeSize.compact,
                 ),
               const SizedBox(width: AppSpacing.s8),
@@ -991,7 +990,11 @@ class _BriefingCard extends StatelessWidget {
                         child: FCircularProgress(),
                       )
                     : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-                child: Text(running ? l10n.healthBriefingGenerating : l10n.healthBriefingUpdate),
+                child: Text(
+                  running
+                      ? l10n.healthBriefingGenerating
+                      : l10n.healthBriefingUpdate,
+                ),
               ),
             ],
           ),
@@ -1003,10 +1006,7 @@ class _BriefingCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: AppSpacing.s8),
-          Text(
-            _ago(l10n, r.updatedAt),
-            style: context.captionStyle,
-          ),
+          Text(_ago(l10n, r.updatedAt), style: context.captionStyle),
         ],
       ),
     );
@@ -1021,6 +1021,7 @@ class _BriefingEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final typography = context.theme.typography;
     return SoftCard(
@@ -1038,10 +1039,7 @@ class _BriefingEmpty extends StatelessWidget {
                   style: typography.sm.copyWith(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: AppSpacing.s4),
-                Text(
-                  l10n.healthBriefingEmptyHint,
-                  style: context.captionStyle,
-                ),
+                Text(l10n.healthBriefingEmptyHint, style: context.captionStyle),
               ],
             ),
           ),
@@ -1056,7 +1054,11 @@ class _BriefingEmpty extends StatelessWidget {
                     child: FCircularProgress(),
                   )
                 : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-            child: Text(running ? l10n.healthBriefingGenerating : l10n.healthBriefingGenerate),
+            child: Text(
+              running
+                  ? l10n.healthBriefingGenerating
+                  : l10n.healthBriefingGenerate,
+            ),
           ),
         ],
       ),
@@ -1069,14 +1071,24 @@ class _BriefingSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SoftCard(
+    return SkeletonCard(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: AppSpacing.s20, child: FProgress()),
+          Row(
+            children: [
+              const SkeletonBox(width: 18, height: 18, radius: 9),
+              const SizedBox(width: AppSpacing.s8),
+              SkeletonBox(width: 120, height: 14, radius: AppRadius.xs),
+            ],
+          ),
           const SizedBox(height: AppSpacing.s12),
-          Text(AppLocalizations.of(context).healthLoadingLabel),
+          const SkeletonBox(width: double.infinity, height: 14),
+          const SizedBox(height: AppSpacing.s8),
+          const SkeletonBox(width: 200, height: 14),
+          const SizedBox(height: AppSpacing.s8),
+          const SkeletonBox(width: 80, height: 10),
         ],
       ),
     );
@@ -1100,7 +1112,7 @@ class _BriefingError extends StatelessWidget {
           const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Text(
-              AppLocalizations.of(context).healthBriefingLoadFailed(message: message),
+              AppLocalizations.of(context).healthBriefingLoadFailed(message),
               style: typography.xs,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,

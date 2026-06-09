@@ -15665,6 +15665,52 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sell'**
   String get tradeVerbSell;
+
+  String get healthNotEnabled;
+
+  String healthPlanLoadFailed(Object message);
+
+  String get healthBriefingAuto;
+
+  String get healthGarminTitle;
+
+  String get healthGarminDisconnected;
+
+  String get healthGarminConnected;
+
+  String get healthGarminSyncingBadge;
+
+  String get healthGarminErrorBadge;
+
+  String get healthGarminRestoringBadge;
+
+  String get healthGarminVerifyBadge;
+
+  String get healthGarminMfaRequired;
+
+  String get healthGarminConnect;
+
+  String get healthGarminDisconnect;
+
+  String get healthGarminSync;
+
+  String get healthGarminRetry;
+
+  String get healthGarminEnterCode;
+
+  String get healthGarminRestoringSession;
+
+  String get healthGarminSyncingData;
+
+  String get healthGarminSyncError;
+
+  String get healthGarminDisconnectTitle;
+
+  String get healthGarminDisconnectBody;
+
+  String get healthGarminCancel;
+
+  String healthGarminLastSync(Object count, Object time);
 }
 
 class _AppLocalizationsDelegate

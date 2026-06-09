@@ -8,7 +8,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/garmin/garmin_sync_controller.dart';
 import '../data/providers.dart' as health_data;
 import 'garmin_account_bind_sheet.dart';
@@ -26,8 +28,11 @@ class GarminSyncStatusCard extends ConsumerWidget {
         GarminInitial() => _Disconnected(ref: ref),
         GarminRestoring() => const _Restoring(),
         GarminPendingMfa() => const _MfaPending(),
-        GarminConnected(:final lastSyncAt, :final totalMetrics) =>
-          _Connected(ref: ref, lastSyncAt: lastSyncAt, totalMetrics: totalMetrics),
+        GarminConnected(:final lastSyncAt, :final totalMetrics) => _Connected(
+          ref: ref,
+          lastSyncAt: lastSyncAt,
+          totalMetrics: totalMetrics,
+        ),
         GarminSyncing() => const _Syncing(),
         GarminError(:final message) => _Error(ref: ref, message: message),
       },
@@ -68,15 +73,16 @@ class _Disconnected extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildHeader(
           context,
           icon: FLucideIcons.watch,
-          title: 'Garmin Connect',
-          badge: const AppBadge(
-            label: 'Disconnected',
+          title: l10n.healthGarminTitle,
+          badge: AppBadge(
+            label: l10n.healthGarminDisconnected,
             tone: AppBadgeTone.neutral,
             size: AppBadgeSize.compact,
           ),
@@ -86,7 +92,7 @@ class _Disconnected extends StatelessWidget {
           width: double.infinity,
           child: FButton(
             onPress: () => showGarminAccountBindSheet(context: context),
-            child: const Text('Connect'),
+            child: Text(l10n.healthGarminConnect),
           ),
         ),
       ],
@@ -101,15 +107,16 @@ class _Restoring extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildHeader(
           context,
           icon: FLucideIcons.watch,
-          title: 'Garmin Connect',
-          badge: const AppBadge(
-            label: 'Restoring',
+          title: l10n.healthGarminTitle,
+          badge: AppBadge(
+            label: l10n.healthGarminRestoringBadge,
             tone: AppBadgeTone.info,
             size: AppBadgeSize.compact,
           ),
@@ -117,14 +124,10 @@ class _Restoring extends StatelessWidget {
         const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
-            const SizedBox(
-              width: 14,
-              height: 14,
-              child: FProgress(),
-            ),
+            const SizedBox(width: 14, height: 14, child: FProgress()),
             const SizedBox(width: AppSpacing.s8),
             Text(
-              'Restoring session…',
+              l10n.healthGarminRestoringSession,
               style: typography.xs.copyWith(color: colors.mutedForeground),
             ),
           ],
@@ -139,15 +142,16 @@ class _MfaPending extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildHeader(
           context,
           icon: FLucideIcons.shield,
-          title: 'MFA Required',
-          badge: const AppBadge(
-            label: 'Verify',
+          title: l10n.healthGarminMfaRequired,
+          badge: AppBadge(
+            label: l10n.healthGarminVerifyBadge,
             tone: AppBadgeTone.warning,
             size: AppBadgeSize.compact,
           ),
@@ -157,7 +161,7 @@ class _MfaPending extends StatelessWidget {
           width: double.infinity,
           child: FButton(
             onPress: () => showGarminAccountBindSheet(context: context),
-            child: const Text('Enter Code'),
+            child: Text(l10n.healthGarminEnterCode),
           ),
         ),
       ],
@@ -179,6 +183,7 @@ class _Connected extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,9 +191,9 @@ class _Connected extends StatelessWidget {
         _buildHeader(
           context,
           icon: FLucideIcons.watch,
-          title: 'Garmin Connect',
-          badge: const AppBadge(
-            label: 'Connected',
+          title: l10n.healthGarminTitle,
+          badge: AppBadge(
+            label: l10n.healthGarminConnected,
             tone: AppBadgeTone.success,
             size: AppBadgeSize.compact,
           ),
@@ -196,7 +201,10 @@ class _Connected extends StatelessWidget {
         if (lastSyncAt != null) ...[
           const SizedBox(height: AppSpacing.s4),
           Text(
-            'Last sync ${_formatRelative(lastSyncAt!)} · $totalMetrics metrics',
+            l10n.healthGarminLastSync(
+              '$totalMetrics',
+              _formatRelative(l10n, lastSyncAt!),
+            ),
             style: typography.xs.copyWith(color: colors.mutedForeground),
           ),
         ],
@@ -208,14 +216,14 @@ class _Connected extends StatelessWidget {
                 onPress: () => ref
                     .read(health_data.garminSyncControllerProvider.notifier)
                     .syncNow(),
-                child: const Text('Sync'),
+                child: Text(l10n.healthGarminSync),
               ),
             ),
             const SizedBox(width: AppSpacing.s8),
             FButton(
               variant: FButtonVariant.outline,
               onPress: () => _showDisconnectDialog(context, ref),
-              child: const Text('Disconnect'),
+              child: Text(l10n.healthGarminDisconnect),
             ),
           ],
         ),
@@ -227,22 +235,21 @@ class _Connected extends StatelessWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showAdaptiveDialog<bool>(
       context: context,
       builder: (dialogCtx) => FDialog(
-        title: const Text('Disconnect Garmin?'),
-        body: const Text(
-          'Synced data will remain in the app.',
-        ),
+        title: Text(l10n.healthGarminDisconnectTitle),
+        body: Text(l10n.healthGarminDisconnectBody),
         actions: [
           FButton(
             variant: FButtonVariant.outline,
             onPress: () => Navigator.pop(dialogCtx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.healthGarminCancel),
           ),
           FButton(
             onPress: () => Navigator.pop(dialogCtx, true),
-            child: const Text('Disconnect'),
+            child: Text(l10n.healthGarminDisconnect),
           ),
         ],
       ),
@@ -262,15 +269,16 @@ class _Syncing extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildHeader(
           context,
           icon: FLucideIcons.watch,
-          title: 'Garmin Connect',
-          badge: const AppBadge(
-            label: 'Syncing',
+          title: l10n.healthGarminTitle,
+          badge: AppBadge(
+            label: l10n.healthGarminSyncingBadge,
             tone: AppBadgeTone.info,
             size: AppBadgeSize.compact,
           ),
@@ -278,14 +286,10 @@ class _Syncing extends StatelessWidget {
         const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
-            const SizedBox(
-              width: 14,
-              height: 14,
-              child: FProgress(),
-            ),
+            const SizedBox(width: 14, height: 14, child: FProgress()),
             const SizedBox(width: AppSpacing.s8),
             Text(
-              'Syncing data…',
+              l10n.healthGarminSyncingData,
               style: typography.xs.copyWith(color: colors.mutedForeground),
             ),
           ],
@@ -304,15 +308,16 @@ class _Error extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildHeader(
           context,
           icon: FLucideIcons.circleAlert,
-          title: 'Sync Error',
-          badge: const AppBadge(
-            label: 'Error',
+          title: l10n.healthGarminSyncError,
+          badge: AppBadge(
+            label: l10n.healthGarminErrorBadge,
             tone: AppBadgeTone.error,
             size: AppBadgeSize.compact,
           ),
@@ -330,7 +335,7 @@ class _Error extends StatelessWidget {
           onPress: () => ref
               .read(health_data.garminSyncControllerProvider.notifier)
               .syncNow(),
-          child: const Text('Retry'),
+          child: Text(l10n.healthGarminRetry),
         ),
       ],
     );
@@ -341,13 +346,17 @@ class _Error extends StatelessWidget {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/// Format a relative time label (e.g. "2h ago", "Yesterday").
-String _formatRelative(DateTime dt) {
-  final diff = DateTime.now().difference(dt.toLocal());
-  if (diff.inMinutes < 1) return 'just now';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-  if (diff.inHours < 24) return '${diff.inHours}h ago';
-  if (diff.inDays == 1) return 'Yesterday';
-  final local = dt.toLocal();
-  return '${local.month}/${local.day}';
-}
+/// Format a relative time label using the shared [AppFormatters.relativeTime].
+String _formatRelative(AppLocalizations l10n, DateTime dt) =>
+    AppFormatters.relativeTime(
+      dt,
+      justNow: l10n.aiChatRelativeJustNow,
+      minutesAgo: l10n.aiChatRelativeMinutesAgo,
+      hoursAgo: l10n.aiChatRelativeHoursAgo,
+      daysAgo: l10n.aiChatRelativeDaysAgo,
+      dateFallback: (d) {
+        final mm = d.month.toString().padLeft(2, '0');
+        final dd = d.day.toString().padLeft(2, '0');
+        return '$mm-$dd';
+      },
+    );

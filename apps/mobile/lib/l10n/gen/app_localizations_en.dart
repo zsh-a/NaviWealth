@@ -9069,4 +9069,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tradeVerbSell => 'Sell';
+
+  @override
+  String get healthNotEnabled => 'HealthOS not enabled';
+
+  @override
+  String healthPlanLoadFailed(Object message) => 'Plan load failed: $message';
+
+  @override
+  String get healthBriefingAuto => 'Auto';
+
+  @override
+  String get healthGarminTitle => 'Garmin Connect';
+
+  @override
+  String get healthGarminDisconnected => 'Disconnected';
+
+  @override
+  String get healthGarminConnected => 'Connected';
+
+  @override
+  String get healthGarminSyncingBadge => 'Syncing';
+
+  @override
+  String get healthGarminErrorBadge => 'Error';
+
+  @override
+  String get healthGarminRestoringBadge => 'Restoring';
+
+  @override
+  String get healthGarminVerifyBadge => 'Verify';
+
+  @override
+  String get healthGarminMfaRequired => 'MFA Required';
+
+  @override
+  String get healthGarminConnect => 'Connect';
+
+  @override
+  String get healthGarminDisconnect => 'Disconnect';
+
+  @override
+  String get healthGarminSync => 'Sync';
+
+  @override
+  String get healthGarminRetry => 'Retry';
+
+  @override
+  String get healthGarminEnterCode => 'Enter Code';
+
+  @override
+  String get healthGarminRestoringSession => 'Restoring session…';
+
+  @override
+  String get healthGarminSyncingData => 'Syncing data…';
+
+  @override
+  String get healthGarminSyncError => 'Sync Error';
+
+  @override
+  String get healthGarminDisconnectTitle => 'Disconnect Garmin?';
+
+  @override
+  String get healthGarminDisconnectBody => 'Synced data will remain in the app.';
+
+  @override
+  String get healthGarminCancel => 'Cancel';
+
+  @override
+  String healthGarminLastSync(Object count, Object time) => 'Last sync $time · $count metrics';
 }
