@@ -9143,4 +9143,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String healthGarminLastSync(String time, String count) {
     return 'Last sync $time · $count metrics';
   }
+
+  @override
+  String healthGarminSyncProgress(String current, String total, String count) {
+    return 'Day $current/$total · $count metrics';
+  }
+
+  @override
+  String get healthGarminCancelSync => 'Cancel Sync';
 }

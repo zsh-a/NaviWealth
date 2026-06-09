@@ -21,13 +21,19 @@ pub(crate) mod provider;
 pub(crate) mod sync_engine;
 
 use anyhow::Result;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::sync::Mutex;
+
+use crate::frb_generated::StreamSink;
 
 use garmin::client::GarminClient;
 use garmin::GarminProvider;
 use garmin::token_store::{InMemoryTokenStore, StoredSession, TokenStore};
 use sync_engine::HealthSyncEngine;
+
+/// Progress event for streaming sync (defined in `api/health.rs`).
+use crate::api::health::GarminSyncProgress;
 
 // ---------------------------------------------------------------------------
 // Global state (singleton per app lifecycle).
@@ -45,6 +51,9 @@ static LAST_SESSION_JSON: once_cell::sync::Lazy<Mutex<Option<String>>> =
 
 static SYNC_ENGINE: once_cell::sync::Lazy<Mutex<HealthSyncEngine>> =
     once_cell::sync::Lazy::new(|| Mutex::new(HealthSyncEngine::new()));
+
+/// Cancellation flag for in-progress sync.
+static SYNC_CANCEL: AtomicBool = AtomicBool::new(false);
 
 /// Called internally after a session is saved to the token store.
 /// Caches the JSON so `garmin_export_session` can return it to Dart.
@@ -169,6 +178,243 @@ pub async fn garmin_sync_range(from: String, to: String) -> Result<String> {
     let outcomes = engine.sync_range(from_date, to_date).await?;
 
     Ok(serde_json::to_string(&outcomes)?)
+}
+
+/// Sync health data with streaming progress events.
+///
+/// Async — runs on FRB's Tokio runtime. Emits [GarminSyncProgress] via
+/// [StreamSink] after each day completes. The stream closes when the
+/// sync finishes or is cancelled via [garmin_sync_cancel].
+pub async fn garmin_sync_range_stream(
+    sink: StreamSink<GarminSyncProgress>,
+    from: String,
+    to: String,
+) -> anyhow::Result<()> {
+    // Reset cancel flag at sync start.
+    SYNC_CANCEL.store(false, Ordering::Relaxed);
+
+    let from_date = chrono::NaiveDate::parse_from_str(&from, "%Y-%m-%d")?;
+    let to_date = chrono::NaiveDate::parse_from_str(&to, "%Y-%m-%d")?;
+    let total_days = (to_date - from_date).num_days() + 1;
+
+    let result = run_streaming_sync(&sink, from_date, to_date, total_days).await;
+
+    // Emit final events: snapshot data + "done".
+    match result {
+        Ok((metrics_count, errors, snapshot_json)) => {
+            // Emit snapshot data so Dart can persist it to Drift.
+            if !snapshot_json.is_empty() {
+                let _ = sink.add(GarminSyncProgress {
+                    phase: "snapshot".to_string(),
+                    current: 0,
+                    total: 0,
+                    metrics_count: metrics_count as i32,
+                    errors: vec![snapshot_json],
+                });
+            }
+            let _ = sink.add(GarminSyncProgress {
+                phase: "done".to_string(),
+                current: total_days as i32,
+                total: total_days as i32,
+                metrics_count: metrics_count as i32,
+                errors,
+            });
+        }
+        Err(e) => {
+            let _ = sink.add(GarminSyncProgress {
+                phase: "done".to_string(),
+                current: 0,
+                total: total_days as i32,
+                metrics_count: 0,
+                errors: vec![e.to_string()],
+            });
+        }
+    }
+    // `sink` is dropped here → stream closes on Dart side.
+    Ok(())
+}
+
+/// Cancel an in-progress sync.
+pub fn garmin_sync_cancel() {
+    SYNC_CANCEL.store(true, Ordering::Relaxed);
+}
+
+/// Core streaming sync logic.
+///
+/// Optimization: 5 endpoints support date ranges (steps, RHR, body battery,
+/// stress, weight) and are fetched once for the full window. Only sleep and
+/// HRV require per-day calls. Total API calls: 5 + (days × 2) + 1.
+async fn run_streaming_sync(
+    sink: &StreamSink<GarminSyncProgress>,
+    from: chrono::NaiveDate,
+    to: chrono::NaiveDate,
+    total_days: i64,
+) -> anyhow::Result<(usize, Vec<String>, String)> {
+    // Clone the client from the global to avoid holding the lock during sync.
+    let (http, rl, token, cn) = {
+        let global = GARMIN_CLIENT.lock().await;
+        let client = global
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Garmin client not initialized"))?;
+        let token = client.access_token().await?;
+        (
+            client.http().clone(),
+            client.rate_limiter().clone(),
+            token,
+            client.is_cn(),
+        )
+    };
+
+    let mut errors = Vec::new();
+
+    // -----------------------------------------------------------------------
+    // Phase 1: Batch-fetch range-capable endpoints (5 API calls total).
+    // -----------------------------------------------------------------------
+
+    let mut all_steps = if let Ok(json) =
+        garmin::endpoints::fetch_steps(&http, &rl, &token, from, to, cn).await
+    {
+        garmin::mapper::map_steps_range(&json)
+    } else {
+        vec![]
+    };
+
+    let mut all_rhr = if let Ok(json) =
+        garmin::endpoints::fetch_rhr(&http, &rl, &token, from, to, cn).await
+    {
+        garmin::mapper::map_rhr_range(&json)
+    } else {
+        vec![]
+    };
+
+    let mut all_bb = if let Ok(json) =
+        garmin::endpoints::fetch_body_battery(&http, &rl, &token, from, to, cn).await
+    {
+        garmin::mapper::map_body_battery_range(&json)
+    } else {
+        vec![]
+    };
+
+    let mut all_stress = if let Ok(json) =
+        garmin::endpoints::fetch_stress(&http, &rl, &token, from, to, cn).await
+    {
+        garmin::mapper::map_stress_range(&json)
+    } else {
+        vec![]
+    };
+
+    let mut all_weight = if let Ok(json) =
+        garmin::endpoints::fetch_weight(&http, &rl, &token, from, to, cn).await
+    {
+        garmin::mapper::map_weight_range(&json)
+    } else {
+        vec![]
+    };
+
+    // Emit progress after batch fetch.
+    let batch_metrics = all_steps.len()
+        + all_rhr.len()
+        + all_bb.len()
+        + all_stress.len()
+        + all_weight.len();
+
+    let _ = sink.add(GarminSyncProgress {
+        phase: "days".to_string(),
+        current: 0,
+        total: total_days as i32,
+        metrics_count: batch_metrics as i32,
+        errors: errors.clone(),
+    });
+
+    // -----------------------------------------------------------------------
+    // Phase 2: Per-day fetch for sleep + HRV only (2 API calls per day).
+    // -----------------------------------------------------------------------
+
+    let mut all_sleep = Vec::new();
+    let mut all_hrv = Vec::new();
+    let mut all_hr = Vec::new();
+
+    for i in 0..total_days {
+        if SYNC_CANCEL.load(Ordering::Relaxed) {
+            break;
+        }
+
+        let date = from + chrono::Duration::days(i);
+
+        if let Ok(json) = garmin::endpoints::fetch_sleep(&http, &rl, &token, date, cn).await {
+            if let Some(s) = garmin::mapper::map_sleep(&json, date) {
+                all_sleep.push(s);
+            }
+            if let Some(hr) = garmin::mapper::map_heart_rate_from_sleep(&json, date) {
+                all_hr.push(hr);
+            }
+        }
+
+        if let Ok(json) = garmin::endpoints::fetch_hrv(&http, &rl, &token, date, cn).await {
+            if let Some(m) = garmin::mapper::map_hrv(&json, date) {
+                all_hrv.push(m);
+            }
+        }
+
+        // Emit day progress.
+        let metrics_so_far = batch_metrics
+            + all_sleep.len()
+            + all_hrv.len()
+            + all_hr.len();
+
+        let _ = sink.add(GarminSyncProgress {
+            phase: "days".to_string(),
+            current: (i + 1) as i32,
+            total: total_days as i32,
+            metrics_count: metrics_so_far as i32,
+            errors: errors.clone(),
+        });
+    }
+
+    // -----------------------------------------------------------------------
+    // Phase 3: Training status / VO2 max (1 API call).
+    // -----------------------------------------------------------------------
+
+    let mut all_vo2 = Vec::new();
+    if !SYNC_CANCEL.load(Ordering::Relaxed) {
+        if let Ok(json) =
+            garmin::endpoints::fetch_training_status(&http, &rl, &token, cn).await
+        {
+            all_vo2 = garmin::mapper::map_vo2_max(&json, to).into_iter().collect();
+        }
+    }
+
+    // Update cursor.
+    {
+        let engine = SYNC_ENGINE.lock().await;
+        engine.set_cursor("Garmin Connect".to_string(), to).await;
+    }
+
+    let metrics_count = all_steps.len()
+        + all_sleep.len()
+        + all_rhr.len()
+        + all_hrv.len()
+        + all_hr.len()
+        + all_bb.len()
+        + all_stress.len()
+        + all_weight.len()
+        + all_vo2.len();
+
+    // Build and serialize the HealthSnapshot for Dart-side persistence.
+    let snapshot = garmin::mapper::build_snapshot(
+        all_steps,
+        all_sleep,
+        all_rhr,
+        all_hrv,
+        all_hr,
+        all_bb,
+        all_stress,
+        all_weight,
+        all_vo2,
+    );
+    let snapshot_json = serde_json::to_string(&snapshot).unwrap_or_default();
+
+    Ok((metrics_count, errors, snapshot_json))
 }
 
 /// Get sync cursors as JSON.

@@ -4812,5 +4812,8 @@
   "healthGarminDisconnectBody": "Synced data will remain in the app.",
   "healthGarminCancel": "Cancel",
   "healthGarminLastSync": "Last sync {time} · {count} metrics",
-  "@healthGarminLastSync": { "description": "Garmin connected status line", "placeholders": { "time": { "type": "String" }, "count": { "type": "String" } } }
+  "@healthGarminLastSync": { "description": "Garmin connected status line", "placeholders": { "time": { "type": "String" }, "count": { "type": "String" } } },
+  "healthGarminSyncProgress": "Day {current}/{total} · {count} metrics",
+  "@healthGarminSyncProgress": { "description": "Garmin sync progress indicator", "placeholders": { "current": { "type": "String" }, "total": { "type": "String" }, "count": { "type": "String" } } },
+  "healthGarminCancelSync": "Cancel Sync"
 }

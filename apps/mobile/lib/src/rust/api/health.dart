@@ -34,6 +34,24 @@ Future<String> garminAuthState() =>
 Future<String> garminSyncRange({required String from, required String to}) =>
     RustLib.instance.api.crateApiHealthGarminSyncRange(from: from, to: to);
 
+/// Sync health data for a date range with streaming progress events.
+///
+/// Emits [GarminSyncProgress] events via [StreamSink] as each day and
+/// the activities fetch complete. The stream closes when the sync is
+/// done or cancelled.
+Stream<GarminSyncProgress> garminSyncRangeStream({
+  required String from,
+  required String to,
+}) => RustLib.instance.api.crateApiHealthGarminSyncRangeStream(
+  from: from,
+  to: to,
+);
+
+/// Cancel an in-progress sync. The running sync will stop after the
+/// current day finishes.
+Future<void> garminSyncCancel() =>
+    RustLib.instance.api.crateApiHealthGarminSyncCancel();
+
 /// Get sync cursors as JSON.
 Future<String> garminSyncCursors() =>
     RustLib.instance.api.crateApiHealthGarminSyncCursors();
@@ -47,3 +65,48 @@ Future<void> garminLogout() =>
 /// Returns the StoredSession JSON if authenticated, or null.
 Future<String?> garminExportSession() =>
     RustLib.instance.api.crateApiHealthGarminExportSession();
+
+/// Progress event emitted during Garmin sync (only primitive fields for FRB).
+class GarminSyncProgress {
+  /// Phase: "days" | "activities" | "done"
+  final String phase;
+
+  /// Current index (day offset or activity offset).
+  final int current;
+
+  /// Total count (days or activities).
+  final int total;
+
+  /// Running total of metrics fetched so far.
+  final int metricsCount;
+
+  /// Accumulated error messages.
+  final List<String> errors;
+
+  const GarminSyncProgress({
+    required this.phase,
+    required this.current,
+    required this.total,
+    required this.metricsCount,
+    required this.errors,
+  });
+
+  @override
+  int get hashCode =>
+      phase.hashCode ^
+      current.hashCode ^
+      total.hashCode ^
+      metricsCount.hashCode ^
+      errors.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is GarminSyncProgress &&
+          runtimeType == other.runtimeType &&
+          phase == other.phase &&
+          current == other.current &&
+          total == other.total &&
+          metricsCount == other.metricsCount &&
+          errors == other.errors;
+}

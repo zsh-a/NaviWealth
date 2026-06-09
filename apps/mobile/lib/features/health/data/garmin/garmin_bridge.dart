@@ -178,6 +178,23 @@ class GarminBridge {
         .toList();
   }
 
+  /// Sync health data with streaming progress events.
+  ///
+  /// Returns a [Stream] of [rust.GarminSyncProgress] that emits after
+  /// each day completes. The stream closes on completion or cancellation.
+  Stream<rust.GarminSyncProgress> syncRangeWithProgress(
+    DateTime from,
+    DateTime to,
+  ) {
+    return rust.garminSyncRangeStream(
+      from: from.toIso8601String().substring(0, 10),
+      to: to.toIso8601String().substring(0, 10),
+    );
+  }
+
+  /// Cancel an in-progress sync.
+  Future<void> cancelSync() => rust.garminSyncCancel();
+
   /// Get sync cursors.
   Future<Map<String, DateTime>> syncCursors() async {
     final dynamic result = await rust.garminSyncCursors();

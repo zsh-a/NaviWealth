@@ -65,7 +65,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => 817920615;
+  int get rustContentHash => 1479206279;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -115,9 +115,16 @@ abstract class RustLibApi extends BaseApi {
 
   Future<String> crateApiHealthGarminSubmitMfa({required String code});
 
+  Future<void> crateApiHealthGarminSyncCancel();
+
   Future<String> crateApiHealthGarminSyncCursors();
 
   Future<String> crateApiHealthGarminSyncRange({
+    required String from,
+    required String to,
+  });
+
+  Stream<GarminSyncProgress> crateApiHealthGarminSyncRangeStream({
     required String from,
     required String to,
   });
@@ -497,7 +504,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "garmin_submit_mfa", argNames: ["code"]);
 
   @override
-  Future<String> crateApiHealthGarminSyncCursors() {
+  Future<void> crateApiHealthGarminSyncCancel() {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
@@ -506,6 +513,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             generalizedFrbRustBinding,
             serializer,
             funcId: 13,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiHealthGarminSyncCancelConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiHealthGarminSyncCancelConstMeta =>
+      const TaskConstMeta(debugName: "garmin_sync_cancel", argNames: []);
+
+  @override
+  Future<String> crateApiHealthGarminSyncCursors() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 14,
             port: port_,
           );
         },
@@ -537,7 +571,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 14,
+            funcId: 15,
             port: port_,
           );
         },
@@ -556,6 +590,46 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(
         debugName: "garmin_sync_range",
         argNames: ["from", "to"],
+      );
+
+  @override
+  Stream<GarminSyncProgress> crateApiHealthGarminSyncRangeStream({
+    required String from,
+    required String to,
+  }) {
+    final sink = RustStreamSink<GarminSyncProgress>();
+    unawaited(
+      handler.executeNormal(
+        NormalTask(
+          callFfi: (port_) {
+            final serializer = SseSerializer(generalizedFrbRustBinding);
+            sse_encode_StreamSink_garmin_sync_progress_Sse(sink, serializer);
+            sse_encode_String(from, serializer);
+            sse_encode_String(to, serializer);
+            pdeCallFfi(
+              generalizedFrbRustBinding,
+              serializer,
+              funcId: 16,
+              port: port_,
+            );
+          },
+          codec: SseCodec(
+            decodeSuccessData: sse_decode_unit,
+            decodeErrorData: sse_decode_AnyhowException,
+          ),
+          constMeta: kCrateApiHealthGarminSyncRangeStreamConstMeta,
+          argValues: [sink, from, to],
+          apiImpl: this,
+        ),
+      ),
+    );
+    return sink.stream;
+  }
+
+  TaskConstMeta get kCrateApiHealthGarminSyncRangeStreamConstMeta =>
+      const TaskConstMeta(
+        debugName: "garmin_sync_range_stream",
+        argNames: ["sink", "from", "to"],
       );
 
   RustArcIncrementStrongCountFnType
@@ -600,6 +674,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RustStreamSink<GarminSyncProgress>
+  dco_decode_StreamSink_garmin_sync_progress_Sse(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError();
+  }
+
+  @protected
   String dco_decode_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as String;
@@ -615,6 +696,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   double dco_decode_f_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as double;
+  }
+
+  @protected
+  GarminSyncProgress dco_decode_garmin_sync_progress(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return GarminSyncProgress(
+      phase: dco_decode_String(arr[0]),
+      current: dco_decode_i_32(arr[1]),
+      total: dco_decode_i_32(arr[2]),
+      metricsCount: dco_decode_i_32(arr[3]),
+      errors: dco_decode_list_String(arr[4]),
+    );
+  }
+
+  @protected
+  int dco_decode_i_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
+  List<String> dco_decode_list_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_String).toList();
   }
 
   @protected
@@ -703,6 +811,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RustStreamSink<GarminSyncProgress>
+  sse_decode_StreamSink_garmin_sync_progress_Sse(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    throw UnimplementedError('Unreachable ()');
+  }
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_list_prim_u_8_strict(deserializer);
@@ -719,6 +834,43 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   double sse_decode_f_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getFloat32();
+  }
+
+  @protected
+  GarminSyncProgress sse_decode_garmin_sync_progress(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_phase = sse_decode_String(deserializer);
+    var var_current = sse_decode_i_32(deserializer);
+    var var_total = sse_decode_i_32(deserializer);
+    var var_metricsCount = sse_decode_i_32(deserializer);
+    var var_errors = sse_decode_list_String(deserializer);
+    return GarminSyncProgress(
+      phase: var_phase,
+      current: var_current,
+      total: var_total,
+      metricsCount: var_metricsCount,
+      errors: var_errors,
+    );
+  }
+
+  @protected
+  int sse_decode_i_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getInt32();
+  }
+
+  @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <String>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_String(deserializer));
+    }
+    return ans_;
   }
 
   @protected
@@ -770,12 +922,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  int sse_decode_i_32(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getInt32();
-  }
-
-  @protected
   void sse_encode_AnyhowException(
     AnyhowException self,
     SseSerializer serializer,
@@ -824,6 +970,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_StreamSink_garmin_sync_progress_Sse(
+    RustStreamSink<GarminSyncProgress> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(
+      self.setupAndSerialize(
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_garmin_sync_progress,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+      ),
+      serializer,
+    );
+  }
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
@@ -839,6 +1002,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_f_32(double self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putFloat32(self);
+  }
+
+  @protected
+  void sse_encode_garmin_sync_progress(
+    GarminSyncProgress self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.phase, serializer);
+    sse_encode_i_32(self.current, serializer);
+    sse_encode_i_32(self.total, serializer);
+    sse_encode_i_32(self.metricsCount, serializer);
+    sse_encode_list_String(self.errors, serializer);
+  }
+
+  @protected
+  void sse_encode_i_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putInt32(self);
+  }
+
+  @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_String(item, serializer);
+    }
   }
 
   @protected
@@ -892,12 +1083,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_usize(BigInt self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putBigUint64(self);
-  }
-
-  @protected
-  void sse_encode_i_32(int self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putInt32(self);
   }
 }
 

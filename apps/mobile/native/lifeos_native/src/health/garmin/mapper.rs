@@ -6,6 +6,7 @@
 //! Field shapes are validated against real Garmin CN API responses
 //! (2026-06-08 probe output).
 
+use std::collections::HashMap;
 use chrono::NaiveDate;
 use serde_json::Value;
 
@@ -304,6 +305,210 @@ pub fn map_vo2_max(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
         unit: "ml/kg/min".to_string(),
         source_device: Some("garmin".to_string()),
     })
+}
+
+// ---------------------------------------------------------------------------
+// Range mappers — batch multiple days into one API call.
+// ---------------------------------------------------------------------------
+
+/// Map steps JSON for a date range → Vec<DailyMetric>.
+///
+/// The Garmin range API returns 15-minute intervals spanning all days.
+/// We group by calendar date (from `startGMT`) and sum each day.
+pub fn map_steps_range(json: &Value) -> Vec<DailyMetric> {
+    let intervals = match json.as_array() {
+        Some(a) => a,
+        None => return vec![],
+    };
+
+    let mut by_date: HashMap<String, f64> = HashMap::new();
+    for item in intervals {
+        let steps = item.get("steps").and_then(|v| v.as_f64()).unwrap_or(0.0);
+        if steps == 0.0 {
+            continue;
+        }
+        if let Some(start) = item.get("startGMT").and_then(|v| v.as_str()) {
+            let date_str = &start[..10.min(start.len())];
+            *by_date.entry(date_str.to_string()).or_insert(0.0) += steps;
+        }
+    }
+
+    by_date
+        .into_iter()
+        .filter(|(_, v)| *v > 0.0)
+        .filter_map(|(date_str, total)| {
+            let date = NaiveDate::parse_from_str(&date_str, "%Y-%m-%d").ok()?;
+            Some(DailyMetric {
+                id: format!("garmin:steps:{date}"),
+                date,
+                value: total,
+                unit: "steps".to_string(),
+                source_device: Some("garmin".to_string()),
+            })
+        })
+        .collect()
+}
+
+/// Map RHR JSON for a date range → Vec<DailyMetric>.
+///
+/// `WELLNESS_RESTING_HEART_RATE` array contains one entry per day
+/// with `calendarDate` and `value`.
+pub fn map_rhr_range(json: &Value) -> Vec<DailyMetric> {
+    let metrics_map = match json
+        .get("allMetrics")
+        .and_then(|m| m.get("metricsMap"))
+    {
+        Some(m) => m,
+        None => return vec![],
+    };
+    let rhr_array = match metrics_map
+        .get("WELLNESS_RESTING_HEART_RATE")
+        .and_then(|v| v.as_array())
+    {
+        Some(a) => a,
+        None => return vec![],
+    };
+
+    rhr_array
+        .iter()
+        .filter_map(|entry| {
+            let value = entry.get("value")?.as_f64()?;
+            if value == 0.0 {
+                return None;
+            }
+            let date_str = entry.get("calendarDate")?.as_str()?;
+            let date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d").ok()?;
+            Some(DailyMetric {
+                id: format!("garmin:rhr:{date}"),
+                date,
+                value,
+                unit: "bpm".to_string(),
+                source_device: Some("garmin".to_string()),
+            })
+        })
+        .collect()
+}
+
+/// Map Body Battery JSON for a date range → Vec<BodyBatteryDay>.
+///
+/// The range API returns an array with one entry per day.
+pub fn map_body_battery_range(json: &Value) -> Vec<BodyBatteryDay> {
+    let entries = match json.as_array() {
+        Some(a) => a,
+        None => return vec![],
+    };
+
+    entries
+        .iter()
+        .filter_map(|entry| {
+            let date_str = entry.get("date")?.as_str()?;
+            let date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d").ok()?;
+            let charged = entry.get("charged")?.as_u64()? as u8;
+            let drained = entry.get("drained")?.as_u64()? as u8;
+
+            let values: Vec<u8> = entry
+                .get("bodyBatteryValuesArray")
+                .and_then(|v| v.as_array())
+                .unwrap_or(&vec![])
+                .iter()
+                .filter_map(|slot| {
+                    if let Some(arr) = slot.as_array() {
+                        arr.get(1).and_then(|v| v.as_u64()).map(|n| n as u8)
+                    } else {
+                        slot.get("value").and_then(|v| v.as_u64()).map(|n| n as u8)
+                    }
+                })
+                .collect();
+
+            let min = if values.is_empty() {
+                0u8
+            } else {
+                *values.iter().min().unwrap_or(&0)
+            };
+            let max = if values.is_empty() {
+                charged
+            } else {
+                *values.iter().max().unwrap_or(&charged)
+            };
+
+            Some(BodyBatteryDay {
+                id: format!("garmin:body_battery:{date}"),
+                date,
+                min,
+                max,
+                charged,
+                drained,
+            })
+        })
+        .collect()
+}
+
+/// Map stress JSON for a date range → Vec<DailyMetric>.
+///
+/// The range API returns an array of per-day objects with
+/// `calendarDate` and `avgStressLevel`.
+pub fn map_stress_range(json: &Value) -> Vec<DailyMetric> {
+    let entries = match json.as_array() {
+        Some(a) => a,
+        None => return vec![],
+    };
+
+    entries
+        .iter()
+        .filter_map(|entry| {
+            let value = entry.get("avgStressLevel")?.as_f64()?;
+            if value == 0.0 {
+                return None;
+            }
+            let date_str = entry
+                .get("calendarDate")
+                .or_else(|| entry.get("date"))
+                .and_then(|v| v.as_str())?;
+            let date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d").ok()?;
+            Some(DailyMetric {
+                id: format!("garmin:stress:{date}"),
+                date,
+                value,
+                unit: "level".to_string(),
+                source_device: Some("garmin".to_string()),
+            })
+        })
+        .collect()
+}
+
+/// Map weight JSON for a date range → Vec<PointMetric>.
+///
+/// `dateWeightList` entries each have a `date` field and `weight` (grams).
+pub fn map_weight_range(json: &Value) -> Vec<PointMetric> {
+    let empty = vec![];
+    let entries = json
+        .get("dateWeightList")
+        .and_then(|v| v.as_array())
+        .unwrap_or(&empty);
+
+    entries
+        .iter()
+        .filter_map(|entry| {
+            let kg = entry.get("weight")?.as_f64()? / 1000.0;
+            if kg == 0.0 {
+                return None;
+            }
+            let date_str = entry.get("date")?.as_str()?;
+            let date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d").ok()?;
+            let id = entry
+                .get("samplePk")
+                .and_then(|v| v.as_i64())
+                .map(|pk| format!("garmin:weight:{pk}"))
+                .unwrap_or_else(|| format!("garmin:weight:{date}"));
+            Some(PointMetric {
+                id,
+                measured_at: date.to_string(),
+                value: kg,
+                unit: "kg".to_string(),
+                source_device: Some("garmin".to_string()),
+            })
+        })
+        .collect()
 }
 
 /// Build a full HealthSnapshot from individual endpoint results.

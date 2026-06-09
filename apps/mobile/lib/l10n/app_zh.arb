@@ -2738,5 +2738,7 @@
   "healthGarminDisconnectTitle": "断开 Garmin 连接？",
   "healthGarminDisconnectBody": "已同步的数据将保留在应用中。",
   "healthGarminCancel": "取消",
-  "healthGarminLastSync": "上次同步 {time} · {count} 条数据"
+  "healthGarminLastSync": "上次同步 {time} · {count} 条数据",
+  "healthGarminSyncProgress": "第 {current}/{total} 天 · {count} 条数据",
+  "healthGarminCancelSync": "取消同步"
 }

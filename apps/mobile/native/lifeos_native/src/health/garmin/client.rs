@@ -106,6 +106,7 @@ impl GarminClient {
         let http = Client::builder()
             .cookie_store(true)
             .redirect(reqwest::redirect::Policy::none())
+            .timeout(std::time::Duration::from_secs(30))
             .build()?;
 
         // Try to restore DI session from token store.

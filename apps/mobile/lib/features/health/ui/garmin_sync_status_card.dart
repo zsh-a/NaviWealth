@@ -3,7 +3,7 @@
 /// Compact card showing connection state and quick actions.
 library;
 
-import 'package:flutter/material.dart' show showAdaptiveDialog;
+import 'package:flutter/material.dart' show LinearProgressIndicator, AlwaysStoppedAnimation, showAdaptiveDialog;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -262,14 +262,21 @@ class _Connected extends StatelessWidget {
   }
 }
 
-class _Syncing extends StatelessWidget {
+class _Syncing extends ConsumerWidget {
   const _Syncing();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
+    final state =
+        ref.watch(health_data.garminSyncControllerProvider) as GarminSyncing;
+
+    final hasProgress = state.totalDays > 0;
+    final progress =
+        hasProgress ? state.currentDay / state.totalDays : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -284,15 +291,53 @@ class _Syncing extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.s8),
-        Row(
-          children: [
-            const SizedBox(width: 14, height: 14, child: FProgress()),
-            const SizedBox(width: AppSpacing.s8),
-            Text(
-              l10n.healthGarminSyncingData,
-              style: typography.xs.copyWith(color: colors.mutedForeground),
+        if (hasProgress) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 4,
+              backgroundColor: colors.muted.withValues(alpha: 0.2),
+              valueColor: AlwaysStoppedAnimation(colors.primary),
             ),
-          ],
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          Row(
+            children: [
+              Text(
+                l10n.healthGarminSyncProgress(
+                  state.currentDay.toString(),
+                  state.totalDays.toString(),
+                  state.metricsCount.toString(),
+                ),
+                style: typography.xs
+                    .copyWith(color: colors.mutedForeground),
+              ),
+            ],
+          ),
+        ] else ...[
+          Row(
+            children: [
+              const SizedBox(width: 14, height: 14, child: FProgress()),
+              const SizedBox(width: AppSpacing.s8),
+              Text(
+                l10n.healthGarminSyncingData,
+                style: typography.xs
+                    .copyWith(color: colors.mutedForeground),
+              ),
+            ],
+          ),
+        ],
+        const SizedBox(height: AppSpacing.s8),
+        SizedBox(
+          width: double.infinity,
+          child: FButton(
+            variant: FButtonVariant.outline,
+            onPress: () => ref
+                .read(health_data.garminSyncControllerProvider.notifier)
+                .cancelSync(),
+            child: Text(l10n.healthGarminCancelSync),
+          ),
         ),
       ],
     );

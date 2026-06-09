@@ -15803,6 +15803,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last sync {time} · {count} metrics'**
   String healthGarminLastSync(String time, String count);
+
+  /// Garmin sync progress indicator
+  ///
+  /// In en, this message translates to:
+  /// **'Day {current}/{total} · {count} metrics'**
+  String healthGarminSyncProgress(String current, String total, String count);
+
+  /// No description provided for @healthGarminCancelSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Sync'**
+  String get healthGarminCancelSync;
 }
 
 class _AppLocalizationsDelegate

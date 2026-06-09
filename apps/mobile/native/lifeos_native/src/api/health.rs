@@ -9,6 +9,22 @@
 
 use anyhow::Result;
 
+use crate::frb_generated::StreamSink;
+
+/// Progress event emitted during Garmin sync (only primitive fields for FRB).
+pub struct GarminSyncProgress {
+    /// Phase: "days" | "activities" | "done"
+    pub phase: String,
+    /// Current index (day offset or activity offset).
+    pub current: i32,
+    /// Total count (days or activities).
+    pub total: i32,
+    /// Running total of metrics fetched so far.
+    pub metrics_count: i32,
+    /// Accumulated error messages.
+    pub errors: Vec<String>,
+}
+
 /// Initialize the Garmin client. Returns auth state as JSON.
 pub async fn garmin_init(stored_token_json: Option<String>, is_cn: bool) -> Result<String> {
     crate::health::garmin_init(stored_token_json, is_cn).await
@@ -32,6 +48,25 @@ pub async fn garmin_auth_state() -> Result<String> {
 /// Sync health data for a date range. Returns SyncOutcome JSON.
 pub async fn garmin_sync_range(from: String, to: String) -> Result<String> {
     crate::health::garmin_sync_range(from, to).await
+}
+
+/// Sync health data for a date range with streaming progress events.
+///
+/// Emits [GarminSyncProgress] events via [StreamSink] as each day and
+/// the activities fetch complete. The stream closes when the sync is
+/// done or cancelled.
+pub async fn garmin_sync_range_stream(
+    sink: StreamSink<GarminSyncProgress>,
+    from: String,
+    to: String,
+) -> anyhow::Result<()> {
+    crate::health::garmin_sync_range_stream(sink, from, to).await
+}
+
+/// Cancel an in-progress sync. The running sync will stop after the
+/// current day finishes.
+pub fn garmin_sync_cancel() {
+    crate::health::garmin_sync_cancel();
 }
 
 /// Get sync cursors as JSON.

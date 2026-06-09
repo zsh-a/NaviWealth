@@ -2,6 +2,8 @@
 //!
 //! All API calls use DI Bearer token auth with native mobile headers.
 //! Raw JSON is returned; mapping to normalized types happens in `mapper.rs`.
+//!
+//! 429 responses trigger exponential backoff and automatic retry (max 3).
 
 use anyhow::{anyhow, Result};
 use chrono::NaiveDate;
@@ -9,6 +11,9 @@ use reqwest::Client;
 use serde_json::Value;
 
 use super::rate_limiter::GarminRateLimiter;
+
+/// Max retries on 429 before giving up.
+const MAX_429_RETRIES: u32 = 3;
 
 /// Connect API base URL templates.
 const CONNECT_API_BASE_CN: &str = "https://connectapi.garmin.cn";
@@ -62,6 +67,32 @@ async fn get_json(client: &Client, url: &str, access_token: &str) -> Result<Valu
     Ok(body)
 }
 
+/// Fetch JSON through the rate limiter with 429 exponential backoff retry.
+///
+/// Each attempt goes through `rl.run()` (concurrency + interval gating).
+/// On 429, calls `rl.backoff_sleep()` then retries.
+async fn fetch_json(
+    client: &Client,
+    rl: &GarminRateLimiter,
+    token: &str,
+    url: String,
+) -> Result<Value> {
+    for attempt in 0..=MAX_429_RETRIES {
+        let result = rl.run(|| get_json(client, &url, token)).await;
+        match result {
+            Ok(v) => {
+                rl.on_success();
+                return Ok(v);
+            }
+            Err(e) if e.to_string().contains("429") && attempt < MAX_429_RETRIES => {
+                rl.backoff_sleep().await;
+            }
+            Err(e) => return Err(e),
+        }
+    }
+    unreachable!()
+}
+
 // ---------------------------------------------------------------------------
 // Endpoint functions
 // ---------------------------------------------------------------------------
@@ -79,7 +110,7 @@ pub async fn fetch_daily_summary(
         date.format("%Y-%m-%d"),
         date.format("%Y-%m-%d"),
     );
-    rl.run(|| get_json(client, &url, token)).await
+    fetch_json(client, rl, token, url).await
 }
 
 pub async fn fetch_steps(
@@ -96,7 +127,7 @@ pub async fn fetch_steps(
         from.format("%Y-%m-%d"),
         to.format("%Y-%m-%d"),
     );
-    rl.run(|| get_json(client, &url, token)).await
+    fetch_json(client, rl, token, url).await
 }
 
 pub async fn fetch_sleep(
@@ -111,7 +142,7 @@ pub async fn fetch_sleep(
         api_base(is_cn),
         date.format("%Y-%m-%d"),
     );
-    rl.run(|| get_json(client, &url, token)).await
+    fetch_json(client, rl, token, url).await
 }
 
 pub async fn fetch_rhr(
@@ -128,7 +159,7 @@ pub async fn fetch_rhr(
         from.format("%Y-%m-%d"),
         to.format("%Y-%m-%d"),
     );
-    rl.run(|| get_json(client, &url, token)).await
+    fetch_json(client, rl, token, url).await
 }
 
 pub async fn fetch_hrv(
@@ -143,7 +174,7 @@ pub async fn fetch_hrv(
         api_base(is_cn),
         date.format("%Y-%m-%d"),
     );
-    rl.run(|| get_json(client, &url, token)).await
+    fetch_json(client, rl, token, url).await
 }
 
 pub async fn fetch_body_battery(
@@ -160,7 +191,7 @@ pub async fn fetch_body_battery(
         from.format("%Y-%m-%d"),
         to.format("%Y-%m-%d"),
     );
-    rl.run(|| get_json(client, &url, token)).await
+    fetch_json(client, rl, token, url).await
 }
 
 pub async fn fetch_stress(
@@ -177,7 +208,7 @@ pub async fn fetch_stress(
         from.format("%Y-%m-%d"),
         to.format("%Y-%m-%d"),
     );
-    rl.run(|| get_json(client, &url, token)).await
+    fetch_json(client, rl, token, url).await
 }
 
 pub async fn fetch_activities(
@@ -194,7 +225,7 @@ pub async fn fetch_activities(
         start,
         limit,
     );
-    rl.run(|| get_json(client, &url, token)).await
+    fetch_json(client, rl, token, url).await
 }
 
 pub async fn fetch_training_status(
@@ -207,21 +238,22 @@ pub async fn fetch_training_status(
         "{}/proxy/metrics-service/metrics/trainingStatus",
         api_base(is_cn),
     );
-    rl.run(|| get_json(client, &url, token)).await
+    fetch_json(client, rl, token, url).await
 }
 
 pub async fn fetch_weight(
     client: &Client,
     rl: &GarminRateLimiter,
     token: &str,
-    date: NaiveDate,
+    from: NaiveDate,
+    to: NaiveDate,
     is_cn: bool,
 ) -> Result<Value> {
     let url = format!(
         "{}/proxy/weight-service/weight/dateRange?startDate={}&endDate={}",
         api_base(is_cn),
-        date.format("%Y-%m-%d"),
-        date.format("%Y-%m-%d"),
+        from.format("%Y-%m-%d"),
+        to.format("%Y-%m-%d"),
     );
-    rl.run(|| get_json(client, &url, token)).await
+    fetch_json(client, rl, token, url).await
 }

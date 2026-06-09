@@ -8769,4 +8769,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String healthGarminLastSync(String time, String count) {
     return '上次同步 $time · $count 条数据';
   }
+
+  @override
+  String healthGarminSyncProgress(String current, String total, String count) {
+    return '第 $current/$total 天 · $count 条数据';
+  }
+
+  @override
+  String get healthGarminCancelSync => '取消同步';
 }

@@ -129,7 +129,7 @@ impl HealthProvider for GarminProvider {
                 }
             }
 
-            if let Ok(json) = endpoints::fetch_weight(http, rl, &token, date, cn).await {
+            if let Ok(json) = endpoints::fetch_weight(http, rl, &token, date, date, cn).await {
                 if let Some(metric) = m::map_weight(&json, date) {
                     weight.push(metric);
                 }
