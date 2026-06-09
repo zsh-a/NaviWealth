@@ -7986,6 +7986,156 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthTrendVo2MaxSubtitle => 'Max oxygen uptake (last 30 days)';
 
   @override
+  String get healthBodyBatteryMetricLabel => 'Body Battery';
+
+  @override
+  String get healthStressMetricLabel => 'Stress';
+
+  @override
+  String get healthSleepDeepLabel => 'Deep';
+
+  @override
+  String get healthSleepRemLabel => 'REM';
+
+  @override
+  String get healthSleepLightLabel => 'Light';
+
+  @override
+  String get healthTrendBodyBatteryTitle => 'Body Battery';
+
+  @override
+  String get healthTrendBodyBatterySubtitle => 'Daily max level (last 30 days)';
+
+  @override
+  String get healthTrendStressTitle => 'Stress';
+
+  @override
+  String get healthTrendStressSubtitle => 'Daily average level (last 30 days)';
+
+  @override
+  String get healthSyncPermissionDenied => 'Permission denied';
+
+  @override
+  String get healthSyncingData => 'Syncing health data…';
+
+  @override
+  String get healthSyncReady => 'Sync last 30 days of health data';
+
+  @override
+  String healthSyncResult(Object unchanged, Object upserted) {
+    return 'Synced $upserted new · $unchanged unchanged';
+  }
+
+  @override
+  String get healthSyncFailed => 'Sync failed';
+
+  @override
+  String get healthSyncButton => 'Sync';
+
+  @override
+  String get healthSyncingButton => 'Syncing';
+
+  @override
+  String get healthRecoveryTitle => 'Today\'s Recovery';
+
+  @override
+  String get healthRecoveryRested => 'Rested';
+
+  @override
+  String get healthRecoveryBalanced => 'Balanced';
+
+  @override
+  String get healthRecoveryStrained => 'Strained';
+
+  @override
+  String get healthRecoveryInsufficient => 'Insufficient data';
+
+  @override
+  String get healthRecoveryRestedTip =>
+      'Schedule high-intensity training or deep-focus work today.';
+
+  @override
+  String get healthRecoveryBalancedTip =>
+      'Maintain your usual pace — don\'t push to the limit.';
+
+  @override
+  String get healthRecoveryStrainedTip =>
+      'Light activity, extra sleep. Avoid stacking pressure.';
+
+  @override
+  String get healthRecoveryInsufficientTip =>
+      'Sync data and track for a few days for stable recovery advice.';
+
+  @override
+  String get healthBriefingTitle => 'Morning Briefing';
+
+  @override
+  String get healthBriefingEmpty => 'No briefing yet';
+
+  @override
+  String get healthBriefingEmptyHint =>
+      'Sync data to generate today\'s briefing.';
+
+  @override
+  String get healthBriefingGenerating => 'Generating';
+
+  @override
+  String get healthBriefingUpdate => 'Update';
+
+  @override
+  String get healthBriefingGenerate => 'Generate';
+
+  @override
+  String healthBriefingLoadFailed(Object message) {
+    return 'Briefing load failed: $message';
+  }
+
+  @override
+  String get healthNoData => 'No data yet';
+
+  @override
+  String get healthPlanTodayActions => 'Today\'s actions';
+
+  @override
+  String get healthPlanHighIntensity =>
+      'Schedule high-intensity training or deep-focus work.';
+
+  @override
+  String get healthPlanKeepSleep =>
+      'Keep normal sleep window; avoid overdrawing.';
+
+  @override
+  String get healthPlanTrainAsPlanned =>
+      'Train as planned, keep 10-20% headroom.';
+
+  @override
+  String get healthPlanReduceCaffeine =>
+      'Cut afternoon caffeine; protect evening recovery.';
+
+  @override
+  String get healthPlanLightActivity =>
+      'Switch to walking, stretching, or Zone 2.';
+
+  @override
+  String get healthPlanAvoidPressure =>
+      'Avoid back-to-back high-pressure meetings and evening training.';
+
+  @override
+  String get healthPlanSyncFirst => 'Sync Health Connect data first.';
+
+  @override
+  String get healthPlanTrackMore =>
+      'Track for a few more days before judging trends.';
+
+  @override
+  String get healthPlanEnableHint =>
+      'Enable HealthOS in Settings → Domains to see recovery advice.';
+
+  @override
+  String get healthPlanDisclaimer =>
+      'Not a medical diagnosis. HealthOS does not auto-adjust your schedule.';
+
+  @override
   String get healthRecordBodyMetricAction => 'Record body metric';
 
   @override

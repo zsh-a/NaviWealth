@@ -13798,6 +13798,270 @@ abstract class AppLocalizations {
   /// **'Max oxygen uptake (last 30 days)'**
   String get healthTrendVo2MaxSubtitle;
 
+  /// No description provided for @healthBodyBatteryMetricLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Body Battery'**
+  String get healthBodyBatteryMetricLabel;
+
+  /// No description provided for @healthStressMetricLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stress'**
+  String get healthStressMetricLabel;
+
+  /// No description provided for @healthSleepDeepLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Deep'**
+  String get healthSleepDeepLabel;
+
+  /// No description provided for @healthSleepRemLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'REM'**
+  String get healthSleepRemLabel;
+
+  /// No description provided for @healthSleepLightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get healthSleepLightLabel;
+
+  /// No description provided for @healthTrendBodyBatteryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Body Battery'**
+  String get healthTrendBodyBatteryTitle;
+
+  /// No description provided for @healthTrendBodyBatterySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily max level (last 30 days)'**
+  String get healthTrendBodyBatterySubtitle;
+
+  /// No description provided for @healthTrendStressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stress'**
+  String get healthTrendStressTitle;
+
+  /// No description provided for @healthTrendStressSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily average level (last 30 days)'**
+  String get healthTrendStressSubtitle;
+
+  /// No description provided for @healthSyncPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission denied'**
+  String get healthSyncPermissionDenied;
+
+  /// No description provided for @healthSyncingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing health data…'**
+  String get healthSyncingData;
+
+  /// No description provided for @healthSyncReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync last 30 days of health data'**
+  String get healthSyncReady;
+
+  /// No description provided for @healthSyncResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced {upserted} new · {unchanged} unchanged'**
+  String healthSyncResult(Object unchanged, Object upserted);
+
+  /// No description provided for @healthSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed'**
+  String get healthSyncFailed;
+
+  /// No description provided for @healthSyncButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
+  String get healthSyncButton;
+
+  /// No description provided for @healthSyncingButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing'**
+  String get healthSyncingButton;
+
+  /// No description provided for @healthRecoveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Recovery'**
+  String get healthRecoveryTitle;
+
+  /// No description provided for @healthRecoveryRested.
+  ///
+  /// In en, this message translates to:
+  /// **'Rested'**
+  String get healthRecoveryRested;
+
+  /// No description provided for @healthRecoveryBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced'**
+  String get healthRecoveryBalanced;
+
+  /// No description provided for @healthRecoveryStrained.
+  ///
+  /// In en, this message translates to:
+  /// **'Strained'**
+  String get healthRecoveryStrained;
+
+  /// No description provided for @healthRecoveryInsufficient.
+  ///
+  /// In en, this message translates to:
+  /// **'Insufficient data'**
+  String get healthRecoveryInsufficient;
+
+  /// No description provided for @healthRecoveryRestedTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule high-intensity training or deep-focus work today.'**
+  String get healthRecoveryRestedTip;
+
+  /// No description provided for @healthRecoveryBalancedTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintain your usual pace — don\'t push to the limit.'**
+  String get healthRecoveryBalancedTip;
+
+  /// No description provided for @healthRecoveryStrainedTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Light activity, extra sleep. Avoid stacking pressure.'**
+  String get healthRecoveryStrainedTip;
+
+  /// No description provided for @healthRecoveryInsufficientTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync data and track for a few days for stable recovery advice.'**
+  String get healthRecoveryInsufficientTip;
+
+  /// No description provided for @healthBriefingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning Briefing'**
+  String get healthBriefingTitle;
+
+  /// No description provided for @healthBriefingEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No briefing yet'**
+  String get healthBriefingEmpty;
+
+  /// No description provided for @healthBriefingEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync data to generate today\'s briefing.'**
+  String get healthBriefingEmptyHint;
+
+  /// No description provided for @healthBriefingGenerating.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating'**
+  String get healthBriefingGenerating;
+
+  /// No description provided for @healthBriefingUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get healthBriefingUpdate;
+
+  /// No description provided for @healthBriefingGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate'**
+  String get healthBriefingGenerate;
+
+  /// No description provided for @healthBriefingLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Briefing load failed: {message}'**
+  String healthBriefingLoadFailed(Object message);
+
+  /// No description provided for @healthNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No data yet'**
+  String get healthNoData;
+
+  /// No description provided for @healthPlanTodayActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s actions'**
+  String get healthPlanTodayActions;
+
+  /// No description provided for @healthPlanHighIntensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule high-intensity training or deep-focus work.'**
+  String get healthPlanHighIntensity;
+
+  /// No description provided for @healthPlanKeepSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep normal sleep window; avoid overdrawing.'**
+  String get healthPlanKeepSleep;
+
+  /// No description provided for @healthPlanTrainAsPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Train as planned, keep 10-20% headroom.'**
+  String get healthPlanTrainAsPlanned;
+
+  /// No description provided for @healthPlanReduceCaffeine.
+  ///
+  /// In en, this message translates to:
+  /// **'Cut afternoon caffeine; protect evening recovery.'**
+  String get healthPlanReduceCaffeine;
+
+  /// No description provided for @healthPlanLightActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to walking, stretching, or Zone 2.'**
+  String get healthPlanLightActivity;
+
+  /// No description provided for @healthPlanAvoidPressure.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid back-to-back high-pressure meetings and evening training.'**
+  String get healthPlanAvoidPressure;
+
+  /// No description provided for @healthPlanSyncFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Health Connect data first.'**
+  String get healthPlanSyncFirst;
+
+  /// No description provided for @healthPlanTrackMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Track for a few more days before judging trends.'**
+  String get healthPlanTrackMore;
+
+  /// No description provided for @healthPlanEnableHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable HealthOS in Settings → Domains to see recovery advice.'**
+  String get healthPlanEnableHint;
+
+  /// No description provided for @healthPlanDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a medical diagnosis. HealthOS does not auto-adjust your schedule.'**
+  String get healthPlanDisclaimer;
+
   /// Header action semantics for recording a body metric
   ///
   /// In en, this message translates to:

@@ -12,6 +12,7 @@
 /// so HealthOS reads as the same app as Finance / Knowledge.
 library;
 
+import 'dart:convert' show jsonDecode;
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -96,7 +97,7 @@ class _HealthDataStatusNoticeState
           setState(() {
             _lastResult = HealthSyncResult.skipped(
               startedAt: DateTime.now().toUtc(),
-              errorMessage: '权限被拒绝',
+              errorMessage: AppLocalizations.of(context).healthSyncPermissionDenied,
             );
           });
           return;
@@ -133,15 +134,19 @@ class _HealthDataStatusNoticeState
         : result.ok
         ? AppStatusKind.success
         : AppStatusKind.error;
+    final l10n = AppLocalizations.of(context);
     final text = !enabled
         ? 'HealthOS 未启用'
         : _running
-        ? '正在同步健康数据…'
+        ? l10n.healthSyncingData
         : result == null
-        ? '同步最近 30 天健康数据'
+        ? l10n.healthSyncReady
         : result.ok
-        ? '已同步 ${result.upserted} 新数据 · ${result.unchanged} 未变'
-        : result.errorMessage ?? '同步失败';
+        ? l10n.healthSyncResult(
+            upserted: '${result.upserted}',
+            unchanged: '${result.unchanged}',
+          )
+        : result.errorMessage ?? l10n.healthSyncFailed;
     final action = !enabled
         ? null
         : FButton(
@@ -154,7 +159,7 @@ class _HealthDataStatusNoticeState
                     child: FCircularProgress(),
                   )
                 : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-            child: Text(_running ? '同步中' : '同步'),
+            child: Text(_running ? l10n.healthSyncingButton : l10n.healthSyncButton),
           );
 
     return AppStatusBanner(
@@ -183,7 +188,7 @@ class _RecoveryHero extends ConsumerWidget {
           child: Center(child: FCircularProgress()),
         ),
         error: (e, _) => Text(
-          '恢复状态加载失败：$e',
+          '${AppLocalizations.of(context).healthSyncFailed}: $e',
           style: typography.xs.copyWith(color: colors.destructive),
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
@@ -191,6 +196,7 @@ class _RecoveryHero extends ConsumerWidget {
         data: (out) {
           final verdict = out?['verdict']?.toString() ?? 'insufficient_data';
           final score = out?['score'];
+          final l10n = AppLocalizations.of(context);
           final scoreText = score == null ? '—' : '$score';
           final color = _RecoveryTone.color(verdict, colors);
           return Column(
@@ -206,7 +212,7 @@ class _RecoveryHero extends ConsumerWidget {
                   const SizedBox(width: AppSpacing.s8),
                   Expanded(
                     child: Text(
-                      '今日恢复',
+                      l10n.healthRecoveryTitle,
                       style: typography.sm.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -217,12 +223,12 @@ class _RecoveryHero extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.s8),
               Text(
-                _RecoveryTone.label(verdict),
+                _RecoveryTone.label(verdict, l10n),
                 style: typography.xl.copyWith(color: color),
               ),
               const SizedBox(height: AppSpacing.s4),
               Text(
-                _RecoveryTone.suggestion(verdict),
+                _RecoveryTone.suggestion(verdict, l10n),
                 style: context.bodyCaptionStyle,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
@@ -246,8 +252,12 @@ class _MetricGrid extends ConsumerWidget {
     final workout = ref.watch(latestWorkoutProvider);
     final steps = ref.watch(latestStepsProvider);
     final energy = ref.watch(latestActiveEnergyProvider);
+    final bodyBattery = ref.watch(latestBodyBatteryProvider);
+    final stress = ref.watch(latestStressProvider);
     final cards = <Widget>[
       _SleepCard(async: sleep),
+      _BodyBatteryCard(async: bodyBattery),
+      _StressCard(async: stress),
       _HrvCard(async: hrv),
       _HeartRateCard(async: heartRate),
       _StepsCard(async: steps),
@@ -303,9 +313,137 @@ class _SleepCard extends StatelessWidget {
         data: (m) {
           if (m == null) return const _ValueDash();
           final hours = _secondsToHours(m.value, m.unit);
-          return _ValueBig(value: '${_round(hours)}h', sub: _ago(l10n, m.capturedAt));
+          final stages = _parseSleepStages(m.payloadJson);
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _ValueBig(
+                value: '${_round(hours)}h',
+                sub: _ago(l10n, m.capturedAt),
+              ),
+              if (stages != null) ...[
+                const SizedBox(height: AppSpacing.s4),
+                _SleepStageBar(
+                  deepSeconds: stages.deep,
+                  remSeconds: stages.rem,
+                  lightSeconds: stages.light,
+                  totalSeconds: m.value,
+                  l10n: l10n,
+                ),
+              ],
+            ],
+          );
         },
       ),
+    );
+  }
+}
+
+/// Parsed sleep stage durations from payloadJson.
+class _SleepStages {
+  const _SleepStages({
+    required this.deep,
+    required this.rem,
+    required this.light,
+  });
+  final double deep;
+  final double rem;
+  final double light;
+}
+
+_SleepStages? _parseSleepStages(String? payloadJson) {
+  if (payloadJson == null || payloadJson.isEmpty) return null;
+  try {
+    final json = jsonDecode(payloadJson) as Map<String, dynamic>;
+    final deep = (json['deepSleepSeconds'] as num?)?.toDouble() ?? 0;
+    final rem = (json['remSleepSeconds'] as num?)?.toDouble() ?? 0;
+    final light = (json['lightSleepSeconds'] as num?)?.toDouble() ?? 0;
+    if (deep == 0 && rem == 0 && light == 0) return null;
+    return _SleepStages(deep: deep, rem: rem, light: light);
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Compact horizontal bar showing deep/REM/light proportions.
+class _SleepStageBar extends StatelessWidget {
+  const _SleepStageBar({
+    required this.deepSeconds,
+    required this.remSeconds,
+    required this.lightSeconds,
+    required this.totalSeconds,
+    required this.l10n,
+  });
+
+  final double deepSeconds;
+  final double remSeconds;
+  final double lightSeconds;
+  final double totalSeconds;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    if (totalSeconds <= 0) return const SizedBox.shrink();
+
+    final deepPct = deepSeconds / totalSeconds;
+    final remPct = remSeconds / totalSeconds;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.xs),
+          child: SizedBox(
+            height: 4,
+            child: Row(
+              children: [
+                if (deepPct > 0)
+                  Expanded(
+                    flex: (deepPct * 100).round().clamp(1, 100),
+                    child: Container(color: colors.primary),
+                  ),
+                if (remPct > 0)
+                  Expanded(
+                    flex: (remPct * 100).round().clamp(1, 100),
+                    child: Container(color: colors.primary.withValues(alpha: 0.6)),
+                  ),
+                Expanded(
+                  flex: ((1 - deepPct - remPct) * 100).round().clamp(1, 100),
+                  child: Container(color: colors.muted),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s2),
+        Row(
+          children: [
+            _stageChip(typography, colors.primary, l10n.healthSleepDeepLabel,
+                deepSeconds),
+            const SizedBox(width: AppSpacing.s6),
+            _stageChip(typography, colors.primary.withValues(alpha: 0.6),
+                l10n.healthSleepRemLabel, remSeconds),
+            const SizedBox(width: AppSpacing.s6),
+            _stageChip(typography, colors.mutedForeground,
+                l10n.healthSleepLightLabel, lightSeconds),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _stageChip(
+    FTypography typography,
+    Color color,
+    String label,
+    double seconds,
+  ) {
+    final hours = seconds / 3600.0;
+    return Text(
+      '$label ${_round(hours)}h',
+      style: typography.xs.copyWith(color: color, fontSize: 10),
     );
   }
 }
@@ -439,6 +577,56 @@ class _ActiveEnergyCard extends StatelessWidget {
   }
 }
 
+class _BodyBatteryCard extends StatelessWidget {
+  const _BodyBatteryCard({required this.async});
+  final AsyncValue<HealthMetric?> async;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _MetricCard(
+      icon: FLucideIcons.battery,
+      label: l10n.healthBodyBatteryMetricLabel,
+      child: async.when(
+        loading: () => const _ValueSkeleton(),
+        error: (e, _) => const _ValueDash(),
+        data: (m) {
+          if (m == null) return const _ValueDash();
+          return _ValueBig(
+            value: '${m.value.round()}',
+            sub: _ago(l10n, m.capturedAt),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _StressCard extends StatelessWidget {
+  const _StressCard({required this.async});
+  final AsyncValue<HealthMetric?> async;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _MetricCard(
+      icon: FLucideIcons.brain,
+      label: l10n.healthStressMetricLabel,
+      child: async.when(
+        loading: () => const _ValueSkeleton(),
+        error: (e, _) => const _ValueDash(),
+        data: (m) {
+          if (m == null) return const _ValueDash();
+          return _ValueBig(
+            value: '${m.value.round()}',
+            sub: _ago(l10n, m.capturedAt),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _MetricCard extends StatelessWidget {
   const _MetricCard({
     required this.icon,
@@ -510,7 +698,7 @@ class _ValueDash extends StatelessWidget {
         Text('—', style: typography.xl.copyWith(color: colors.mutedForeground)),
         const SizedBox(height: AppSpacing.s2),
         Text(
-          '暂无数据',
+          AppLocalizations.of(context).healthNoData,
           style: context.captionStyle,
         ),
       ],
@@ -566,18 +754,18 @@ class _RecoveryTone {
     _ => colors.mutedForeground,
   };
 
-  static String label(String v) => switch (v) {
-    'rested' => '充分恢复',
-    'balanced' => '平衡',
-    'strained' => '过载',
-    _ => '数据不足',
+  static String label(String v, AppLocalizations l10n) => switch (v) {
+    'rested' => l10n.healthRecoveryRested,
+    'balanced' => l10n.healthRecoveryBalanced,
+    'strained' => l10n.healthRecoveryStrained,
+    _ => l10n.healthRecoveryInsufficient,
   };
 
-  static String suggestion(String v) => switch (v) {
-    'rested' => '今天可以安排高强度训练或高认知负荷工作。',
-    'balanced' => '维持平时节奏，训练和会议都不要推到极限。',
-    'strained' => '建议减负：轻量活动、补眠，避免连续高压安排。',
-    _ => '先同步并连续记录几天，恢复建议会更稳定。',
+  static String suggestion(String v, AppLocalizations l10n) => switch (v) {
+    'rested' => l10n.healthRecoveryRestedTip,
+    'balanced' => l10n.healthRecoveryBalancedTip,
+    'strained' => l10n.healthRecoveryStrainedTip,
+    _ => l10n.healthRecoveryInsufficientTip,
   };
 }
 
@@ -704,7 +892,7 @@ class _BriefingCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.s8),
               Text(
-                '早间简报',
+                AppLocalizations.of(context).healthBriefingTitle,
                 style: typography.sm.copyWith(fontWeight: FontWeight.w600),
               ),
               const Spacer(),
@@ -724,7 +912,7 @@ class _BriefingCard extends StatelessWidget {
                         child: FCircularProgress(),
                       )
                     : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-                child: Text(running ? '生成中' : '更新'),
+                child: Text(running ? l10n.healthBriefingGenerating : l10n.healthBriefingUpdate),
               ),
             ],
           ),
@@ -767,12 +955,12 @@ class _BriefingEmpty extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '暂无简报',
+                  l10n.healthBriefingEmpty,
                   style: typography.sm.copyWith(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: AppSpacing.s4),
                 Text(
-                  '同步数据后可生成今日简报。',
+                  l10n.healthBriefingEmptyHint,
                   style: context.captionStyle,
                 ),
               ],
@@ -789,7 +977,7 @@ class _BriefingEmpty extends StatelessWidget {
                     child: FCircularProgress(),
                   )
                 : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-            child: Text(running ? '生成中' : '生成'),
+            child: Text(running ? l10n.healthBriefingGenerating : l10n.healthBriefingGenerate),
           ),
         ],
       ),
@@ -833,7 +1021,7 @@ class _BriefingError extends StatelessWidget {
           const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Text(
-              '简报加载失败：$message',
+              AppLocalizations.of(context).healthBriefingLoadFailed(message: message),
               style: typography.xs,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,

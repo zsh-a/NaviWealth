@@ -7671,6 +7671,142 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthTrendVo2MaxSubtitle => '最大摄氧量（近 30 天）';
 
   @override
+  String get healthBodyBatteryMetricLabel => '电量';
+
+  @override
+  String get healthStressMetricLabel => '压力';
+
+  @override
+  String get healthSleepDeepLabel => '深睡';
+
+  @override
+  String get healthSleepRemLabel => 'REM';
+
+  @override
+  String get healthSleepLightLabel => '浅睡';
+
+  @override
+  String get healthTrendBodyBatteryTitle => '电量';
+
+  @override
+  String get healthTrendBodyBatterySubtitle => '每日最高电量（近 30 天）';
+
+  @override
+  String get healthTrendStressTitle => '压力';
+
+  @override
+  String get healthTrendStressSubtitle => '每日平均压力（近 30 天）';
+
+  @override
+  String get healthSyncPermissionDenied => '权限被拒绝';
+
+  @override
+  String get healthSyncingData => '正在同步健康数据…';
+
+  @override
+  String get healthSyncReady => '同步最近 30 天健康数据';
+
+  @override
+  String healthSyncResult(Object unchanged, Object upserted) {
+    return '已同步 $upserted 新数据 · $unchanged 未变';
+  }
+
+  @override
+  String get healthSyncFailed => '同步失败';
+
+  @override
+  String get healthSyncButton => '同步';
+
+  @override
+  String get healthSyncingButton => '同步中';
+
+  @override
+  String get healthRecoveryTitle => '今日恢复';
+
+  @override
+  String get healthRecoveryRested => '充分恢复';
+
+  @override
+  String get healthRecoveryBalanced => '平衡';
+
+  @override
+  String get healthRecoveryStrained => '过载';
+
+  @override
+  String get healthRecoveryInsufficient => '数据不足';
+
+  @override
+  String get healthRecoveryRestedTip => '今天可以安排高强度训练或高认知负荷工作。';
+
+  @override
+  String get healthRecoveryBalancedTip => '维持平时节奏，训练和会议都不要推到极限。';
+
+  @override
+  String get healthRecoveryStrainedTip => '建议减负：轻量活动、补眠，避免连续高压安排。';
+
+  @override
+  String get healthRecoveryInsufficientTip => '先同步并连续记录几天，恢复建议会更稳定。';
+
+  @override
+  String get healthBriefingTitle => '早间简报';
+
+  @override
+  String get healthBriefingEmpty => '暂无简报';
+
+  @override
+  String get healthBriefingEmptyHint => '同步数据后可生成今日简报。';
+
+  @override
+  String get healthBriefingGenerating => '生成中';
+
+  @override
+  String get healthBriefingUpdate => '更新';
+
+  @override
+  String get healthBriefingGenerate => '生成';
+
+  @override
+  String healthBriefingLoadFailed(Object message) {
+    return '简报加载失败：$message';
+  }
+
+  @override
+  String get healthNoData => '暂无数据';
+
+  @override
+  String get healthPlanTodayActions => '今日建议';
+
+  @override
+  String get healthPlanHighIntensity => '可安排高强度训练或关键深度工作。';
+
+  @override
+  String get healthPlanKeepSleep => '保持正常睡眠窗口，避免过度透支。';
+
+  @override
+  String get healthPlanTrainAsPlanned => '按原计划训练，保留 1-2 成余量。';
+
+  @override
+  String get healthPlanReduceCaffeine => '下午减少咖啡因，保持晚间恢复。';
+
+  @override
+  String get healthPlanLightActivity => '换成散步、拉伸或 Zone 2 轻量活动。';
+
+  @override
+  String get healthPlanAvoidPressure => '避免连续高压会议和晚间训练。';
+
+  @override
+  String get healthPlanSyncFirst => '先同步 Health Connect 数据。';
+
+  @override
+  String get healthPlanTrackMore => '连续记录几天后再判断趋势。';
+
+  @override
+  String get healthPlanEnableHint => '请在 设置 → Domains 中启用 HealthOS，才能查看恢复建议。';
+
+  @override
+  String get healthPlanDisclaimer => '不是医学诊断，仅供日常作息判断。HealthOS 不会自动调整你的日程。';
+
+  @override
   String get healthRecordBodyMetricAction => '记录身体指标';
 
   @override

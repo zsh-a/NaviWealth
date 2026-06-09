@@ -170,13 +170,13 @@ List<_TrendSpec> _trendSpecs(AppLocalizations l10n, _TrendGroup group) =>
           kind: HealthMetricKind.respiratoryRateDaily,
         ),
         _TrendSpec(
-          title: 'Body Battery',
-          subtitle: 'Daily max level (Garmin)',
+          title: l10n.healthTrendBodyBatteryTitle,
+          subtitle: l10n.healthTrendBodyBatterySubtitle,
           kind: HealthMetricKind.bodyBatteryDaily,
         ),
         _TrendSpec(
-          title: 'Stress',
-          subtitle: 'Daily average level (Garmin)',
+          title: l10n.healthTrendStressTitle,
+          subtitle: l10n.healthTrendStressSubtitle,
           kind: HealthMetricKind.stressDaily,
         ),
       ],

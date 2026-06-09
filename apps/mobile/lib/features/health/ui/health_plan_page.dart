@@ -85,7 +85,7 @@ class _RecoveryCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s8),
           Text(
-            _verdictHeadline(verdict),
+            _verdictHeadline(verdict, l10n),
             style: typography.xl.copyWith(
               color: _verdictColor(verdict, colors),
             ),
@@ -94,18 +94,18 @@ class _RecoveryCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s4),
           Text(
-            _verdictSuggestion(verdict),
+            _verdictSuggestion(verdict, l10n),
             style: typography.sm,
             maxLines: 5,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: AppSpacing.s12),
           Text(
-            '今日建议',
+            l10n.healthPlanTodayActions,
             style: context.captionStyle,
           ),
           const SizedBox(height: AppSpacing.s8),
-          for (final item in _planActions(verdict))
+          for (final item in _planActions(verdict, l10n))
             _PlanActionRow(icon: item.icon, text: item.text),
           if (out['note'] is String) ...[
             const SizedBox(height: AppSpacing.s8),
@@ -161,36 +161,36 @@ class _RecoveryCard extends StatelessWidget {
     _ => colors.mutedForeground,
   };
 
-  static String _verdictHeadline(String v) => switch (v) {
-    'rested' => '充分恢复',
-    'balanced' => '平衡',
-    'strained' => '过载',
-    _ => '数据不足',
+  static String _verdictHeadline(String v, AppLocalizations l10n) => switch (v) {
+    'rested' => l10n.healthRecoveryRested,
+    'balanced' => l10n.healthRecoveryBalanced,
+    'strained' => l10n.healthRecoveryStrained,
+    _ => l10n.healthRecoveryInsufficient,
   };
 
-  static String _verdictSuggestion(String v) => switch (v) {
-    'rested' => '身体信号支持更高负荷。',
-    'balanced' => '维持节奏，不要把强度推到极限。',
-    'strained' => '恢复信号偏弱，今天先保护睡眠和压力。',
-    _ => '基线不足。继续连续记录 1-2 周后再看这里。',
+  static String _verdictSuggestion(String v, AppLocalizations l10n) => switch (v) {
+    'rested' => l10n.healthRecoveryRestedTip,
+    'balanced' => l10n.healthRecoveryBalancedTip,
+    'strained' => l10n.healthRecoveryStrainedTip,
+    _ => l10n.healthRecoveryInsufficientTip,
   };
 
-  static List<_PlanAction> _planActions(String v) => switch (v) {
-    'rested' => const [
-      _PlanAction(FLucideIcons.dumbbell, '可安排高强度训练或关键深度工作。'),
-      _PlanAction(FLucideIcons.moon, '保持正常睡眠窗口，避免过度透支。'),
+  static List<_PlanAction> _planActions(String v, AppLocalizations l10n) => switch (v) {
+    'rested' => [
+      _PlanAction(FLucideIcons.dumbbell, l10n.healthPlanHighIntensity),
+      _PlanAction(FLucideIcons.moon, l10n.healthPlanKeepSleep),
     ],
-    'balanced' => const [
-      _PlanAction(FLucideIcons.activity, '按原计划训练，保留 1-2 成余量。'),
-      _PlanAction(FLucideIcons.coffee, '下午减少咖啡因，保持晚间恢复。'),
+    'balanced' => [
+      _PlanAction(FLucideIcons.activity, l10n.healthPlanTrainAsPlanned),
+      _PlanAction(FLucideIcons.coffee, l10n.healthPlanReduceCaffeine),
     ],
-    'strained' => const [
-      _PlanAction(FLucideIcons.footprints, '换成散步、拉伸或 Zone 2 轻量活动。'),
-      _PlanAction(FLucideIcons.calendarX, '避免连续高压会议和晚间训练。'),
+    'strained' => [
+      _PlanAction(FLucideIcons.footprints, l10n.healthPlanLightActivity),
+      _PlanAction(FLucideIcons.calendarX, l10n.healthPlanAvoidPressure),
     ],
-    _ => const [
-      _PlanAction(FLucideIcons.refreshCw, '先同步 Health Connect 数据。'),
-      _PlanAction(FLucideIcons.calendarDays, '连续记录几天后再判断趋势。'),
+    _ => [
+      _PlanAction(FLucideIcons.refreshCw, l10n.healthPlanSyncFirst),
+      _PlanAction(FLucideIcons.calendarDays, l10n.healthPlanTrackMore),
     ],
   };
 
@@ -280,7 +280,7 @@ class _OffCard extends StatelessWidget {
           const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Text(
-              '请在 设置 → Domains 中启用 HealthOS，才能查看恢复建议。',
+              l10n.healthPlanEnableHint,
               style: typography.sm,
             ),
           ),
@@ -324,7 +324,7 @@ class _DisclaimerCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
       child: Text(
-        '不是医学诊断,仅供日常作息判断。HealthOS 不会自动调整你的日程。',
+        AppLocalizations.of(context).healthPlanDisclaimer,
         style: context.captionStyle,
       ),
     );
