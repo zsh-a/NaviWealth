@@ -26,6 +26,7 @@ import '../features/finance_ai_tools.dart';
 import '../features/finance_domain_shell.dart';
 import '../features/health/agents/morning_briefing_agent.dart';
 import '../features/health/agents/recovery_alert_agent.dart';
+import '../features/health/agents/weekly_summary_agent.dart';
 import '../features/health/composition/health_command_palette.dart';
 import '../features/health/composition/health_domain_shell.dart';
 import '../features/health/composition/health_routes.dart';
@@ -109,6 +110,7 @@ const List<DomainPack> kAllDomainPacks = <DomainPack>[
 List<Agent> _healthAgents(Ref ref) => <Agent>[
   ref.watch(morningBriefingAgentProvider),
   ref.watch(recoveryAlertAgentProvider),
+  ref.watch(weeklySummaryAgentProvider),
 ];
 
 List<Agent> _knowledgeAgents(Ref ref) =>

@@ -77,6 +77,43 @@ class HealthMetricRepository {
     return row == null ? null : _fromRow(row);
   }
 
+  /// Batch read: fetch rows for multiple [kinds] in a single query.
+  /// Returns a map of kind → rows (newest-first, per-kind [limit]).
+  Future<Map<HealthMetricKind, List<HealthMetric>>> listByKinds({
+    required String ownerUserId,
+    required Set<HealthMetricKind> kinds,
+    int limit = 90,
+  }) async {
+    if (kinds.isEmpty) return const {};
+    final kindWires = kinds.map((k) => k.wire).toList();
+    final query = _db.select(_db.healthMetrics)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.kind.isIn(kindWires))
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([
+        (t) => OrderingTerm(
+          expression: t.capturedAt,
+          mode: OrderingMode.desc,
+        ),
+      ])
+      ..limit(limit * kinds.length);
+    final rows = await query.get();
+    final metrics = rows.map(_fromRow).toList();
+
+    // Group by kind, preserving newest-first order, cap per kind.
+    final result = <HealthMetricKind, List<HealthMetric>>{};
+    for (final kind in kinds) {
+      result[kind] = [];
+    }
+    for (final m in metrics) {
+      final list = result[m.kind];
+      if (list != null && list.length < limit) {
+        list.add(m);
+      }
+    }
+    return result;
+  }
+
   // ---------- Writes ----------
 
   /// Insert (or replace, keyed by [HealthMetric.id]) [metric] and

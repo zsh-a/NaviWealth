@@ -12,8 +12,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
-import '../ai_tools/get_recovery_signal_tool.dart';
 import '../data/providers.dart';
+import '../data/recovery_scorer.dart';
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 
@@ -195,31 +195,30 @@ final recoverySignalProvider =
       if (optIns == null || !optIns.contains(DomainScope.health)) return null;
       final repo = await ref.watch(healthMetricRepositoryProvider.future);
       final userId = await ref.read(currentUserIdProvider)();
-      final hrv = await repo.listByKind(
+      final data = await repo.listByKinds(
         ownerUserId: userId,
-        kind: HealthMetricKind.hrvDaily,
-        limit: 35,
-      );
-      final sleep = await repo.listByKind(
-        ownerUserId: userId,
-        kind: HealthMetricKind.sleepSession,
+        kinds: const {
+          HealthMetricKind.hrvDaily,
+          HealthMetricKind.sleepSession,
+          HealthMetricKind.rhrDaily,
+          HealthMetricKind.vo2Max,
+        },
         limit: 50,
       );
-      final rhr = await repo.listByKind(
-        ownerUserId: userId,
-        kind: HealthMetricKind.rhrDaily,
-        limit: 35,
-      );
-      final vo2 = await repo.listByKind(
-        ownerUserId: userId,
-        kind: HealthMetricKind.vo2Max,
-        limit: 35,
-      );
-      return GetRecoverySignalTool.shape(
+      final hrv = data[HealthMetricKind.hrvDaily] ?? const [];
+      final sleep = data[HealthMetricKind.sleepSession] ?? const [];
+      final rhr = data[HealthMetricKind.rhrDaily] ?? const [];
+      final vo2 = data[HealthMetricKind.vo2Max] ?? const [];
+      const scorer = RecoveryScorer();
+      final result = scorer.score(
         hrv: hrv,
         sleep: sleep,
         rhr: rhr,
         vo2Max: vo2,
-        now: DateTime.now().toUtc(),
       );
+      return <String, Object?>{
+        'score': result.score,
+        'verdict': result.verdict,
+        'inputs': result.inputs,
+      };
     });
