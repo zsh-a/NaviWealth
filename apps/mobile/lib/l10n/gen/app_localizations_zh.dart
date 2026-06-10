@@ -7677,6 +7677,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthStressMetricLabel => '压力';
 
   @override
+  String get healthRhrMetricLabel => '静息心率';
+
+  @override
+  String get healthTrainingLoadMetricLabel => '负荷';
+
+  @override
   String get healthSleepDeepLabel => '深睡';
 
   @override
@@ -7696,6 +7702,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthTrendStressSubtitle => '每日平均压力';
+
+  @override
+  String get healthTrendTrainingLoadTitle => '训练负荷';
+
+  @override
+  String get healthTrendTrainingLoadSubtitle => '每周训练负荷';
+
+  @override
+  String get healthTrendTrainingEffectTitle => '训练效果';
+
+  @override
+  String get healthTrendTrainingEffectSubtitle => '体能提升信号';
 
   @override
   String get healthSyncPermissionDenied => '权限被拒绝';

@@ -179,6 +179,13 @@ class GarminSnapshotWriter {
       result ? upserted++ : unchanged++;
     }
 
+    // Training effect
+    for (final item in _list(snapshot, 'training_effect')) {
+      final result =
+          await _upsertDaily(item, HealthMetricKind.trainingEffectDaily);
+      result ? upserted++ : unchanged++;
+    }
+
     return GarminWriteResult(
       upserted: upserted,
       unchanged: unchanged,

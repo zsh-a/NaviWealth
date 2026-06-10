@@ -150,6 +150,9 @@ impl HealthProvider for GarminProvider {
         let training_load = m::map_training_load(&vo2_json, to)
             .into_iter()
             .collect();
+        let training_effect = m::map_training_effect(&vo2_json, to)
+            .into_iter()
+            .collect();
 
         Ok(m::build_snapshot(
             steps,
@@ -163,6 +166,7 @@ impl HealthProvider for GarminProvider {
             vo2_max,
             floors,
             training_load,
+            training_effect,
         ))
     }
 

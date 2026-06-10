@@ -7989,6 +7989,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthStressMetricLabel => 'Stress';
 
   @override
+  String get healthRhrMetricLabel => 'RHR';
+
+  @override
+  String get healthTrainingLoadMetricLabel => 'Load';
+
+  @override
   String get healthSleepDeepLabel => 'Deep';
 
   @override
@@ -8008,6 +8014,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthTrendStressSubtitle => 'Daily average level ';
+
+  @override
+  String get healthTrendTrainingLoadTitle => 'Training load';
+
+  @override
+  String get healthTrendTrainingLoadSubtitle => 'Weekly training load';
+
+  @override
+  String get healthTrendTrainingEffectTitle => 'Training effect';
+
+  @override
+  String get healthTrendTrainingEffectSubtitle => 'Fitness improvement signal';
 
   @override
   String get healthSyncPermissionDenied => 'Permission denied';

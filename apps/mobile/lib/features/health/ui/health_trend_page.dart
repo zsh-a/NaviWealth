@@ -226,6 +226,16 @@ List<_TrendSpec> _trendSpecs(AppLocalizations l10n, _TrendGroup group) =>
           subtitle: l10n.healthTrendFlightsSubtitle,
           kind: HealthMetricKind.floorsClimbedDaily,
         ),
+        _TrendSpec(
+          title: l10n.healthTrendTrainingLoadTitle,
+          subtitle: l10n.healthTrendTrainingLoadSubtitle,
+          kind: HealthMetricKind.trainingLoadDaily,
+        ),
+        _TrendSpec(
+          title: l10n.healthTrendTrainingEffectTitle,
+          subtitle: l10n.healthTrendTrainingEffectSubtitle,
+          kind: HealthMetricKind.trainingEffectDaily,
+        ),
       ],
       _TrendGroup.body => [
         _TrendSpec(
@@ -301,6 +311,11 @@ List<_TrendSpec> _trendSpecsRaw(_TrendGroup group) => switch (group) {
       title: '',
       subtitle: '',
       kind: HealthMetricKind.trainingLoadDaily,
+    ),
+    const _TrendSpec(
+      title: '',
+      subtitle: '',
+      kind: HealthMetricKind.trainingEffectDaily,
     ),
   ],
   _TrendGroup.body => [
@@ -394,6 +409,7 @@ List<ChartPoint> _projectToPoints(
     case HealthMetricKind.stressDaily:
     case HealthMetricKind.bodyBatteryDaily:
     case HealthMetricKind.trainingLoadDaily:
+    case HealthMetricKind.trainingEffectDaily:
       // One row per measurement → one point.
       final pts = <ChartPoint>[];
       for (final r in rows) {

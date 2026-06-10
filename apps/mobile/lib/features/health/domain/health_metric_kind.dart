@@ -79,6 +79,12 @@ enum HealthMetricKind {
   /// unit = `'load'`.
   trainingLoadDaily,
 
+  /// Training effect label encoded as numeric score (Garmin-specific).
+  /// capturedAt = local day start UTC, value = 0–4 level,
+  /// unit = `'level'`. 4=Improving, 3=Productive, 2=Maintaining,
+  /// 1=Recovery, 0=Strained.
+  trainingEffectDaily,
+
   /// Sentinel for wire kinds the client doesn't recognise. Callers
   /// should drop rows with this kind rather than crash.
   unknown,
@@ -105,6 +111,7 @@ extension HealthMetricKindX on HealthMetricKind {
     HealthMetricKind.stressDaily => 'stress_daily',
     HealthMetricKind.bodyBatteryDaily => 'body_battery_daily',
     HealthMetricKind.trainingLoadDaily => 'training_load_daily',
+    HealthMetricKind.trainingEffectDaily => 'training_effect_daily',
     HealthMetricKind.unknown => 'unknown',
   };
 
@@ -129,6 +136,7 @@ extension HealthMetricKindX on HealthMetricKind {
     HealthMetricKind.stressDaily => 'level',
     HealthMetricKind.bodyBatteryDaily => 'level',
     HealthMetricKind.trainingLoadDaily => 'load',
+    HealthMetricKind.trainingEffectDaily => 'level',
     HealthMetricKind.unknown => '',
   };
 

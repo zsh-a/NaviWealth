@@ -56,6 +56,8 @@ pub struct HealthSnapshot {
     pub stress: Vec<DailyMetric>,
     /// Garmin-specific: weekly training load (from trainingStatus endpoint).
     pub training_load: Vec<DailyMetric>,
+    /// Garmin-specific: training effect label encoded as numeric score.
+    pub training_effect: Vec<DailyMetric>,
 }
 
 /// A value bucketed to a calendar day.

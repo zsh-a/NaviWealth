@@ -362,15 +362,19 @@ class _MetricGrid extends ConsumerWidget {
     final energy = ref.watch(latestActiveEnergyProvider);
     final bodyBattery = ref.watch(latestBodyBatteryProvider);
     final stress = ref.watch(latestStressProvider);
+    final rhr = ref.watch(latestRhrProvider);
+    final trainingLoad = ref.watch(latestTrainingLoadProvider);
     final cards = <Widget>[
       _SleepCard(async: sleep),
       _BodyBatteryCard(async: bodyBattery),
       _StressCard(async: stress),
       _HrvCard(async: hrv),
       _HeartRateCard(async: heartRate),
+      _RhrCard(async: rhr),
       _StepsCard(async: steps),
       _WorkoutCard(async: workout),
       _ActiveEnergyCard(async: energy),
+      _TrainingLoadCard(async: trainingLoad),
     ];
 
     return LayoutBuilder(
@@ -463,9 +467,13 @@ _SleepStages? _parseSleepStages(String? payloadJson) {
   if (payloadJson == null || payloadJson.isEmpty) return null;
   try {
     final json = jsonDecode(payloadJson) as Map<String, dynamic>;
-    final deep = (json['deepSleepSeconds'] as num?)?.toDouble() ?? 0;
-    final rem = (json['remSleepSeconds'] as num?)?.toDouble() ?? 0;
-    final light = (json['lightSleepSeconds'] as num?)?.toDouble() ?? 0;
+    // Support both short keys (Garmin + HealthKit) and legacy long keys.
+    final deep =
+        ((json['deep'] ?? json['deepSleepSeconds']) as num?)?.toDouble() ?? 0;
+    final rem =
+        ((json['rem'] ?? json['remSleepSeconds']) as num?)?.toDouble() ?? 0;
+    final light =
+        ((json['light'] ?? json['lightSleepSeconds']) as num?)?.toDouble() ?? 0;
     if (deep == 0 && rem == 0 && light == 0) return null;
     return _SleepStages(deep: deep, rem: rem, light: light);
   } catch (_) {
@@ -636,9 +644,21 @@ class _WorkoutCard extends StatelessWidget {
         data: (m) {
           if (m == null) return const _ValueDash();
           final minutes = (m.value / 60).round();
+          final payload = _parseJsonMap(m.payloadJson);
+          final distMeters = (payload['totalDistanceMeters'] as num?)
+              ?.toDouble();
+          final cal = (payload['totalEnergyKcal'] as num?)?.toDouble();
+          final parts = <String>[];
+          if (distMeters != null && distMeters > 0) {
+            parts.add('${_round(distMeters / 1000)}km');
+          }
+          if (cal != null && cal > 0) {
+            parts.add('${cal.round()}kcal');
+          }
+          final detail = parts.isEmpty ? '' : '${parts.join(' · ')} · ';
           return _ValueBig(
-            value: '${minutes}min',
-            sub: _ago(l10n, m.capturedAt),
+            value: '${minutes}m',
+            sub: '$detail${_ago(l10n, m.capturedAt)}',
           );
         },
       ),
@@ -717,9 +737,14 @@ class _BodyBatteryCard extends StatelessWidget {
         error: (e, _) => const _ValueDash(),
         data: (m) {
           if (m == null) return const _ValueDash();
+          final payload = _parseJsonMap(m.payloadJson);
+          final charged = (payload['charged'] as num?)?.toInt() ?? 0;
+          final drained = (payload['drained'] as num?)?.toInt() ?? 0;
+          final net = charged - drained;
+          final netStr = net >= 0 ? '+$net' : '$net';
           return _ValueBig(
             value: '${m.value.round()}',
-            sub: _ago(l10n, m.capturedAt),
+            sub: '$netStr · ${_ago(l10n, m.capturedAt)}',
           );
         },
       ),
@@ -744,6 +769,56 @@ class _StressCard extends StatelessWidget {
           if (m == null) return const _ValueDash();
           return _ValueBig(
             value: '${m.value.round()}',
+            sub: _ago(l10n, m.capturedAt),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _RhrCard extends StatelessWidget {
+  const _RhrCard({required this.async});
+  final AsyncValue<HealthMetric?> async;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _MetricCard(
+      icon: FLucideIcons.heart,
+      label: l10n.healthRhrMetricLabel,
+      child: async.when(
+        loading: () => const _ValueSkeleton(),
+        error: (e, _) => const _ValueDash(),
+        data: (m) {
+          if (m == null) return const _ValueDash();
+          return _ValueBig(
+            value: '${m.value.round()}',
+            sub: _ago(l10n, m.capturedAt),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TrainingLoadCard extends StatelessWidget {
+  const _TrainingLoadCard({required this.async});
+  final AsyncValue<HealthMetric?> async;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _MetricCard(
+      icon: FLucideIcons.flame,
+      label: l10n.healthTrainingLoadMetricLabel,
+      child: async.when(
+        loading: () => const _ValueSkeleton(),
+        error: (e, _) => const _ValueDash(),
+        data: (m) {
+          if (m == null) return const _ValueDash();
+          return _ValueBig(
+            value: '${_round(m.value)}',
             sub: _ago(l10n, m.capturedAt),
           );
         },
@@ -855,6 +930,15 @@ double _secondsToHours(double value, String unit) => switch (unit) {
 };
 
 double _round(double v) => (v * 100).round() / 100.0;
+
+Map<String, dynamic> _parseJsonMap(String? json) {
+  if (json == null || json.isEmpty) return const {};
+  try {
+    return jsonDecode(json) as Map<String, dynamic>;
+  } catch (_) {
+    return const {};
+  }
+}
 
 String _utcDayKey(DateTime t) => AppFormatters.utcDayKey(t);
 

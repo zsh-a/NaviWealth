@@ -13810,6 +13810,18 @@ abstract class AppLocalizations {
   /// **'Stress'**
   String get healthStressMetricLabel;
 
+  /// No description provided for @healthRhrMetricLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'RHR'**
+  String get healthRhrMetricLabel;
+
+  /// No description provided for @healthTrainingLoadMetricLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Load'**
+  String get healthTrainingLoadMetricLabel;
+
   /// No description provided for @healthSleepDeepLabel.
   ///
   /// In en, this message translates to:
@@ -13851,6 +13863,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Daily average level '**
   String get healthTrendStressSubtitle;
+
+  /// No description provided for @healthTrendTrainingLoadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Training load'**
+  String get healthTrendTrainingLoadTitle;
+
+  /// No description provided for @healthTrendTrainingLoadSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly training load'**
+  String get healthTrendTrainingLoadSubtitle;
+
+  /// No description provided for @healthTrendTrainingEffectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Training effect'**
+  String get healthTrendTrainingEffectTitle;
+
+  /// No description provided for @healthTrendTrainingEffectSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fitness improvement signal'**
+  String get healthTrendTrainingEffectSubtitle;
 
   /// No description provided for @healthSyncPermissionDenied.
   ///

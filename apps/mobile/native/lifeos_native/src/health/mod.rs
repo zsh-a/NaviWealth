@@ -397,12 +397,16 @@ async fn run_streaming_sync(
 
     let mut all_vo2 = Vec::new();
     let mut all_training_load = Vec::new();
+    let mut all_training_effect = Vec::new();
     if !SYNC_CANCEL.load(Ordering::Relaxed) {
         if let Ok(json) =
             garmin::endpoints::fetch_training_status(&http, &rl, &token, cn).await
         {
             all_vo2 = garmin::mapper::map_vo2_max(&json, to).into_iter().collect();
             all_training_load = garmin::mapper::map_training_load(&json, to)
+                .into_iter()
+                .collect();
+            all_training_effect = garmin::mapper::map_training_effect(&json, to)
                 .into_iter()
                 .collect();
         }
@@ -424,7 +428,8 @@ async fn run_streaming_sync(
         + all_weight.len()
         + all_vo2.len()
         + all_floors.len()
-        + all_training_load.len();
+        + all_training_load.len()
+        + all_training_effect.len();
 
     // Build and serialize the HealthSnapshot for Dart-side persistence.
     let snapshot = garmin::mapper::build_snapshot(
@@ -439,6 +444,7 @@ async fn run_streaming_sync(
         all_vo2,
         all_floors,
         all_training_load,
+        all_training_effect,
     );
     let snapshot_json = serde_json::to_string(&snapshot).unwrap_or_default();
 

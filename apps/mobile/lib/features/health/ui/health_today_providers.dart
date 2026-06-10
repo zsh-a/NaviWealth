@@ -162,6 +162,38 @@ final latestBodyBatteryProvider = FutureProvider.autoDispose<HealthMetric?>((
   return rows.isEmpty ? null : rows.first;
 });
 
+/// Newest resting heart rate row.
+final latestRhrProvider = FutureProvider.autoDispose<HealthMetric?>((
+  ref,
+) async {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final userId = await ref.read(currentUserIdProvider)();
+  final rows = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.rhrDaily,
+    limit: 1,
+  );
+  return rows.isEmpty ? null : rows.first;
+});
+
+/// Newest training load row (Garmin-specific).
+final latestTrainingLoadProvider = FutureProvider.autoDispose<HealthMetric?>((
+  ref,
+) async {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final userId = await ref.read(currentUserIdProvider)();
+  final rows = await repo.listByKind(
+    ownerUserId: userId,
+    kind: HealthMetricKind.trainingLoadDaily,
+    limit: 1,
+  );
+  return rows.isEmpty ? null : rows.first;
+});
+
 /// Last 7 days of HRV values for the recovery sparkline.
 /// Returns a list of (dayIndex, value) pairs, oldest-first.
 final recoverySparklineProvider =

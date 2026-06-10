@@ -325,6 +325,34 @@ pub fn map_training_load(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
     })
 }
 
+/// Map training effect from training status JSON.
+///
+/// Garmin returns `trainingEffectLabel` (e.g. "Improving", "Maintaining",
+/// "Recovery", "Strained") as a string. We encode it as a numeric score:
+///   Improving = 4, Productive = 3, Maintaining = 2, Recovery = 1,
+///   Strained/Overreaching = 0, Unknown = -1.
+pub fn map_training_effect(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
+    let label = json
+        .get("trainingEffectLabel")
+        .or_else(|| json.get("trainingStatus"))
+        .and_then(|v| v.as_str())?;
+    let score = match label.to_lowercase().as_str() {
+        "improving" => 4.0,
+        "productive" => 3.0,
+        "maintaining" => 2.0,
+        "recovery" | "resting" => 1.0,
+        "strained" | "overreaching" | "detraining" => 0.0,
+        _ => return None,
+    };
+    Some(DailyMetric {
+        id: format!("garmin:training_effect:{date}"),
+        date,
+        value: score,
+        unit: "level".to_string(),
+        source_device: Some("garmin".to_string()),
+    })
+}
+
 // ---------------------------------------------------------------------------
 // Range mappers — batch multiple days into one API call.
 // ---------------------------------------------------------------------------
@@ -559,6 +587,7 @@ pub fn build_snapshot(
     vo2_max: Vec<DailyMetric>,
     floors_climbed: Vec<DailyMetric>,
     training_load: Vec<DailyMetric>,
+    training_effect: Vec<DailyMetric>,
 ) -> HealthSnapshot {
     HealthSnapshot {
         steps,
@@ -575,6 +604,7 @@ pub fn build_snapshot(
         body_battery,
         stress,
         training_load,
+        training_effect,
     }
 }
 
@@ -829,6 +859,42 @@ mod tests {
         assert!(map_training_load(&data, date("2026-06-07")).is_none());
     }
 
+    // ---- Training effect ----
+
+    #[test]
+    fn training_effect_improving() {
+        let data = json!({"trainingEffectLabel": "Improving"});
+        let m = map_training_effect(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 4.0);
+        assert_eq!(m.unit, "level");
+    }
+
+    #[test]
+    fn training_effect_maintaining() {
+        let data = json!({"trainingEffectLabel": "Maintaining"});
+        let m = map_training_effect(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 2.0);
+    }
+
+    #[test]
+    fn training_effect_strained() {
+        let data = json!({"trainingEffectLabel": "Strained"});
+        let m = map_training_effect(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 0.0);
+    }
+
+    #[test]
+    fn training_effect_unknown_label_returns_none() {
+        let data = json!({"trainingEffectLabel": "SomeNewLabel"});
+        assert!(map_training_effect(&data, date("2026-06-07")).is_none());
+    }
+
+    #[test]
+    fn training_effect_missing_field_returns_none() {
+        let data = json!({"mostRecentVO2Max": 48.0});
+        assert!(map_training_effect(&data, date("2026-06-07")).is_none());
+    }
+
     #[test]
     fn build_snapshot_combines_all_fields() {
         let snap = build_snapshot(
@@ -849,11 +915,13 @@ mod tests {
             vec![],
             vec![],
             vec![],
+            vec![],
         );
         assert_eq!(snap.steps.len(), 1);
         assert_eq!(snap.sleep_sessions.len(), 0);
         assert_eq!(snap.active_energy.len(), 0); // Garmin doesn't provide this
         assert_eq!(snap.floors_climbed.len(), 0);
         assert_eq!(snap.training_load.len(), 0);
+        assert_eq!(snap.training_effect.len(), 0);
     }
 }
