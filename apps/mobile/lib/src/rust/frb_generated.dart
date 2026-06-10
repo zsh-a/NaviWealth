@@ -702,14 +702,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   GarminSyncProgress dco_decode_garmin_sync_progress(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 5)
-      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return GarminSyncProgress(
       phase: dco_decode_String(arr[0]),
       current: dco_decode_i_32(arr[1]),
       total: dco_decode_i_32(arr[2]),
       metricsCount: dco_decode_i_32(arr[3]),
       errors: dco_decode_list_String(arr[4]),
+      snapshotJson: dco_decode_opt_String(arr[5]),
     );
   }
 
@@ -846,12 +847,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_total = sse_decode_i_32(deserializer);
     var var_metricsCount = sse_decode_i_32(deserializer);
     var var_errors = sse_decode_list_String(deserializer);
+    var var_snapshotJson = sse_decode_opt_String(deserializer);
     return GarminSyncProgress(
       phase: var_phase,
       current: var_current,
       total: var_total,
       metricsCount: var_metricsCount,
       errors: var_errors,
+      snapshotJson: var_snapshotJson,
     );
   }
 
@@ -1015,6 +1018,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.total, serializer);
     sse_encode_i_32(self.metricsCount, serializer);
     sse_encode_list_String(self.errors, serializer);
+    sse_encode_opt_String(self.snapshotJson, serializer);
   }
 
   @protected

@@ -28,8 +28,8 @@ use tokio::sync::Mutex;
 use crate::frb_generated::StreamSink;
 
 use garmin::client::GarminClient;
-use garmin::GarminProvider;
 use garmin::token_store::{InMemoryTokenStore, StoredSession, TokenStore};
+use garmin::GarminProvider;
 use sync_engine::HealthSyncEngine;
 
 /// Progress event for streaming sync (defined in `api/health.rs`).
@@ -279,23 +279,21 @@ async fn run_streaming_sync(
     // Phase 1: Batch-fetch range-capable endpoints (5 API calls total).
     // -----------------------------------------------------------------------
 
-    let mut all_steps = if let Ok(json) =
-        garmin::endpoints::fetch_steps(&http, &rl, &token, from, to, cn).await
-    {
-        garmin::mapper::map_steps_range(&json)
-    } else {
-        vec![]
-    };
+    let all_steps =
+        if let Ok(json) = garmin::endpoints::fetch_steps(&http, &rl, &token, from, to, cn).await {
+            garmin::mapper::map_steps_range(&json)
+        } else {
+            vec![]
+        };
 
-    let mut all_rhr = if let Ok(json) =
-        garmin::endpoints::fetch_rhr(&http, &rl, &token, from, to, cn).await
-    {
-        garmin::mapper::map_rhr_range(&json)
-    } else {
-        vec![]
-    };
+    let mut all_rhr =
+        if let Ok(json) = garmin::endpoints::fetch_rhr(&http, &rl, &token, from, to, cn).await {
+            garmin::mapper::map_rhr_range(&json)
+        } else {
+            vec![]
+        };
 
-    let mut all_bb = if let Ok(json) =
+    let all_bb = if let Ok(json) =
         garmin::endpoints::fetch_body_battery(&http, &rl, &token, from, to, cn).await
     {
         garmin::mapper::map_body_battery_range(&json)
@@ -303,28 +301,23 @@ async fn run_streaming_sync(
         vec![]
     };
 
-    let mut all_stress = if let Ok(json) =
-        garmin::endpoints::fetch_stress(&http, &rl, &token, from, to, cn).await
-    {
-        garmin::mapper::map_stress_range(&json)
-    } else {
-        vec![]
-    };
+    let mut all_stress =
+        if let Ok(json) = garmin::endpoints::fetch_stress(&http, &rl, &token, from, to, cn).await {
+            garmin::mapper::map_stress_range(&json)
+        } else {
+            vec![]
+        };
 
-    let mut all_weight = if let Ok(json) =
-        garmin::endpoints::fetch_weight(&http, &rl, &token, from, to, cn).await
-    {
-        garmin::mapper::map_weight_range(&json)
-    } else {
-        vec![]
-    };
+    let all_weight =
+        if let Ok(json) = garmin::endpoints::fetch_weight(&http, &rl, &token, from, to, cn).await {
+            garmin::mapper::map_weight_range(&json)
+        } else {
+            vec![]
+        };
 
     // Emit progress after batch fetch.
-    let batch_metrics = all_steps.len()
-        + all_rhr.len()
-        + all_bb.len()
-        + all_stress.len()
-        + all_weight.len();
+    let batch_metrics =
+        all_steps.len() + all_rhr.len() + all_bb.len() + all_stress.len() + all_weight.len();
 
     let _ = sink.add(GarminSyncProgress {
         phase: "days".to_string(),
@@ -342,7 +335,11 @@ async fn run_streaming_sync(
     let mut all_sleep = Vec::new();
     let mut all_hrv = Vec::new();
     let mut all_hr = Vec::new();
+    let mut all_active_energy = Vec::new();
+    let mut all_distance = Vec::new();
+    let mut all_total_energy = Vec::new();
     let mut all_floors = Vec::new();
+    let mut all_respiration = Vec::new();
     let mut all_spo2 = Vec::new();
 
     for i in 0..total_days {
@@ -363,13 +360,15 @@ async fn run_streaming_sync(
         }
 
         // All-day HR (preferred over sleep-based HR).
-        if let Ok(json) =
-            garmin::endpoints::fetch_heart_rate(&http, &rl, &token, date, cn).await
-        {
+        if let Ok(json) = garmin::endpoints::fetch_heart_rate(&http, &rl, &token, date, cn).await {
             if let Some(hr) = garmin::mapper::map_heart_rate_all_day(&json, date) {
                 // Replace sleep-based HR if all-day HR is available.
                 all_hr.retain(|m| m.date != date);
                 all_hr.push(hr);
+            }
+            if let Some(m) = garmin::mapper::map_rhr(&json, date) {
+                all_rhr.retain(|metric| metric.date != date);
+                all_rhr.push(m);
             }
         }
 
@@ -379,11 +378,34 @@ async fn run_streaming_sync(
             }
         }
 
-        if let Ok(json) =
-            garmin::endpoints::fetch_daily_summary(&http, &rl, &token, date, cn).await
+        if let Ok(json) = garmin::endpoints::fetch_daily_summary(&http, &rl, &token, date, cn).await
         {
             if let Some(f) = garmin::mapper::map_floors_climbed(&json, date) {
                 all_floors.push(f);
+            }
+            let (distance_metric, active_metric, total_metric) =
+                garmin::mapper::map_daily_summary_metrics(&json, date);
+            if let Some(metric) = distance_metric {
+                all_distance.push(metric);
+            }
+            if let Some(metric) = active_metric {
+                all_active_energy.push(metric);
+            }
+            if let Some(metric) = total_metric {
+                all_total_energy.push(metric);
+            }
+        }
+
+        if let Ok(json) = garmin::endpoints::fetch_stress_day(&http, &rl, &token, date, cn).await {
+            if let Some(s) = garmin::mapper::map_stress(&json, date) {
+                all_stress.retain(|metric| metric.date != date);
+                all_stress.push(s);
+            }
+        }
+
+        if let Ok(json) = garmin::endpoints::fetch_respiration(&http, &rl, &token, date, cn).await {
+            if let Some(r) = garmin::mapper::map_respiratory_rate(&json, date) {
+                all_respiration.push(r);
             }
         }
 
@@ -398,7 +420,11 @@ async fn run_streaming_sync(
             + all_sleep.len()
             + all_hrv.len()
             + all_hr.len()
+            + all_active_energy.len()
+            + all_distance.len()
+            + all_total_energy.len()
             + all_floors.len()
+            + all_respiration.len()
             + all_spo2.len();
 
         let _ = sink.add(GarminSyncProgress {
@@ -412,15 +438,86 @@ async fn run_streaming_sync(
     }
 
     // -----------------------------------------------------------------------
-    // Phase 3: Training status / VO2 max (1 API call).
+    // Phase 3: Activity / workout sessions.
+    // -----------------------------------------------------------------------
+
+    let mut all_activities = Vec::new();
+    if !SYNC_CANCEL.load(Ordering::Relaxed) {
+        let mut start: u32 = 0;
+        let page_size: u32 = 50;
+        let from_str = from.format("%Y-%m-%d").to_string();
+
+        loop {
+            match garmin::endpoints::fetch_activities(&http, &rl, &token, start, page_size, cn)
+                .await
+            {
+                Ok(json) => {
+                    let page = json.as_array();
+                    let page_len = page.map(|a| a.len()).unwrap_or(0);
+                    if page_len == 0 {
+                        break;
+                    }
+
+                    let mut reached_boundary = false;
+                    if let Some(arr) = page {
+                        for item in arr {
+                            if let Some(activity) = garmin::mapper::map_activity(item) {
+                                let act_date =
+                                    &activity.started_at[..10.min(activity.started_at.len())];
+                                if act_date < from_str.as_str() {
+                                    reached_boundary = true;
+                                    break;
+                                }
+                                all_activities.push(activity);
+                            }
+                        }
+                    }
+
+                    let metrics_so_far = batch_metrics
+                        + all_sleep.len()
+                        + all_hrv.len()
+                        + all_hr.len()
+                        + all_active_energy.len()
+                        + all_distance.len()
+                        + all_total_energy.len()
+                        + all_floors.len()
+                        + all_respiration.len()
+                        + all_spo2.len()
+                        + all_activities.len();
+                    let _ = sink.add(GarminSyncProgress {
+                        phase: "activities".to_string(),
+                        current: all_activities.len() as i32,
+                        total: 0,
+                        metrics_count: metrics_so_far as i32,
+                        errors: errors.clone(),
+                        snapshot_json: None,
+                    });
+
+                    if reached_boundary || page_len < page_size as usize {
+                        break;
+                    }
+                    start += page_size;
+                    if start >= 500 {
+                        break;
+                    }
+                }
+                Err(e) => {
+                    errors.push(format!("activities fetch failed: {e}"));
+                    break;
+                }
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Phase 4: Training status / VO2 max (1 API call).
     // -----------------------------------------------------------------------
 
     let mut all_vo2 = Vec::new();
     let mut all_training_load = Vec::new();
     let mut all_training_effect = Vec::new();
     if !SYNC_CANCEL.load(Ordering::Relaxed) {
-        if let Ok(json) =
-            garmin::endpoints::fetch_training_status(&http, &rl, &token, cn).await
+        if let Ok(json) = garmin::endpoints::fetch_training_status(&http, &rl, &token, to, cn).await
         {
             all_vo2 = garmin::mapper::map_vo2_max(&json, to).into_iter().collect();
             all_training_load = garmin::mapper::map_training_load(&json, to)
@@ -440,14 +537,19 @@ async fn run_streaming_sync(
 
     let metrics_count = all_steps.len()
         + all_sleep.len()
+        + all_activities.len()
         + all_rhr.len()
         + all_hrv.len()
         + all_hr.len()
         + all_bb.len()
         + all_stress.len()
         + all_weight.len()
+        + all_active_energy.len()
+        + all_distance.len()
+        + all_total_energy.len()
         + all_vo2.len()
         + all_floors.len()
+        + all_respiration.len()
         + all_training_load.len()
         + all_training_effect.len()
         + all_spo2.len();
@@ -456,14 +558,19 @@ async fn run_streaming_sync(
     let snapshot = garmin::mapper::build_snapshot(
         all_steps,
         all_sleep,
+        all_activities,
         all_rhr,
         all_hrv,
         all_hr,
         all_bb,
         all_stress,
         all_weight,
+        all_active_energy,
+        all_distance,
+        all_total_energy,
         all_vo2,
         all_floors,
+        all_respiration,
         all_training_load,
         all_training_effect,
         all_spo2,

@@ -212,8 +212,9 @@ final latestSpo2Provider = FutureProvider.autoDispose<HealthMetric?>((
 
 /// Last 7 days of HRV values for the recovery sparkline.
 /// Returns a list of (dayIndex, value) pairs, oldest-first.
-final recoverySparklineProvider =
-    FutureProvider.autoDispose<List<double>>((ref) async {
+final recoverySparklineProvider = FutureProvider.autoDispose<List<double>>((
+  ref,
+) async {
   final optIns = ref.watch(core_auth.domainOptInsProvider).value;
   if (optIns == null || !optIns.contains(DomainScope.health)) {
     return const <double>[];
@@ -227,9 +228,7 @@ final recoverySparklineProvider =
   );
   final now = DateTime.now().toUtc();
   final cutoff = now.subtract(const Duration(days: 7));
-  final inWindow = rows
-      .where((m) => !m.capturedAt.isBefore(cutoff))
-      .toList()
+  final inWindow = rows.where((m) => !m.capturedAt.isBefore(cutoff)).toList()
     ..sort((a, b) => a.capturedAt.compareTo(b.capturedAt));
   return inWindow.map((m) => m.value).toList();
 });
@@ -364,79 +363,82 @@ class WeeklySummary {
 }
 
 /// Aggregated 7-day summary for the "This Week" panel.
-final weeklySummaryProvider =
-    FutureProvider.autoDispose<WeeklySummary?>((ref) async {
-      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-      final repo = await ref.watch(healthMetricRepositoryProvider.future);
-      final userId = await ref.read(currentUserIdProvider)();
-      final now = DateTime.now().toUtc();
-      final cutoff = now.subtract(const Duration(days: 7));
+final weeklySummaryProvider = FutureProvider.autoDispose<WeeklySummary?>((
+  ref,
+) async {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final userId = await ref.read(currentUserIdProvider)();
+  final now = DateTime.now().toUtc();
+  final cutoff = now.subtract(const Duration(days: 7));
 
-      final data = await repo.listByKinds(
-        ownerUserId: userId,
-        kinds: const {
-          HealthMetricKind.stepsDaily,
-          HealthMetricKind.sleepSession,
-          HealthMetricKind.workoutSession,
-          HealthMetricKind.hrvDaily,
-          HealthMetricKind.rhrDaily,
-        },
-        limit: 100,
-      );
+  final data = await repo.listByKinds(
+    ownerUserId: userId,
+    kinds: const {
+      HealthMetricKind.stepsDaily,
+      HealthMetricKind.sleepSession,
+      HealthMetricKind.workoutSession,
+      HealthMetricKind.hrvDaily,
+      HealthMetricKind.rhrDaily,
+    },
+    limit: 100,
+  );
+  List<HealthMetric> metricsFor(HealthMetricKind kind) =>
+      data[kind] ?? const <HealthMetric>[];
 
-      double totalSteps = 0;
-      double totalSleepHours = 0;
-      int sleepCount = 0;
-      int totalWorkoutSecs = 0;
-      int workoutCount = 0;
-      double hrvSum = 0;
-      int hrvCount = 0;
-      double rhrSum = 0;
-      int rhrCount = 0;
+  double totalSteps = 0;
+  double totalSleepHours = 0;
+  int sleepCount = 0;
+  int totalWorkoutSecs = 0;
+  int workoutCount = 0;
+  double hrvSum = 0;
+  int hrvCount = 0;
+  double rhrSum = 0;
+  int rhrCount = 0;
 
-      for (final m in data[HealthMetricKind.stepsDaily] ?? const []) {
-        if (m.capturedAt.isAfter(cutoff)) totalSteps += m.value;
-      }
-      for (final m in data[HealthMetricKind.sleepSession] ?? const []) {
-        if (!m.capturedAt.isAfter(cutoff)) continue;
-        totalSleepHours += switch (m.unit) {
-          's' => m.value / 3600.0,
-          'min' => m.value / 60.0,
-          'h' => m.value,
-          _ => m.value / 3600.0,
-        };
-        sleepCount++;
-      }
-      for (final m in data[HealthMetricKind.workoutSession] ?? const []) {
-        if (!m.capturedAt.isAfter(cutoff)) continue;
-        totalWorkoutSecs += m.value.round();
-        workoutCount++;
-      }
-      for (final m in data[HealthMetricKind.hrvDaily] ?? const []) {
-        if (!m.capturedAt.isAfter(cutoff)) continue;
-        hrvSum += m.value;
-        hrvCount++;
-      }
-      for (final m in data[HealthMetricKind.rhrDaily] ?? const []) {
-        if (!m.capturedAt.isAfter(cutoff)) continue;
-        rhrSum += m.value;
-        rhrCount++;
-      }
+  for (final m in metricsFor(HealthMetricKind.stepsDaily)) {
+    if (m.capturedAt.isAfter(cutoff)) totalSteps += m.value;
+  }
+  for (final m in metricsFor(HealthMetricKind.sleepSession)) {
+    if (!m.capturedAt.isAfter(cutoff)) continue;
+    totalSleepHours += switch (m.unit) {
+      's' => m.value / 3600.0,
+      'min' => m.value / 60.0,
+      'h' => m.value,
+      _ => m.value / 3600.0,
+    };
+    sleepCount++;
+  }
+  for (final m in metricsFor(HealthMetricKind.workoutSession)) {
+    if (!m.capturedAt.isAfter(cutoff)) continue;
+    totalWorkoutSecs += m.value.round();
+    workoutCount++;
+  }
+  for (final m in metricsFor(HealthMetricKind.hrvDaily)) {
+    if (!m.capturedAt.isAfter(cutoff)) continue;
+    hrvSum += m.value;
+    hrvCount++;
+  }
+  for (final m in metricsFor(HealthMetricKind.rhrDaily)) {
+    if (!m.capturedAt.isAfter(cutoff)) continue;
+    rhrSum += m.value;
+    rhrCount++;
+  }
 
-      if (totalSteps == 0 &&
-          sleepCount == 0 &&
-          workoutCount == 0 &&
-          hrvCount == 0) {
-        return null;
-      }
+  if (totalSteps == 0 &&
+      sleepCount == 0 &&
+      workoutCount == 0 &&
+      hrvCount == 0) {
+    return null;
+  }
 
-      return WeeklySummary(
-        totalSteps: totalSteps,
-        avgSleepHours: sleepCount > 0 ? totalSleepHours / sleepCount : 0,
-        totalWorkoutMinutes: (totalWorkoutSecs / 60).round(),
-        avgHrv: hrvCount > 0 ? hrvSum / hrvCount : 0,
-        avgRhr: rhrCount > 0 ? rhrSum / rhrCount : 0,
-        workoutCount: workoutCount,
-      );
-    });
+  return WeeklySummary(
+    totalSteps: totalSteps,
+    avgSleepHours: sleepCount > 0 ? totalSleepHours / sleepCount : 0,
+    totalWorkoutMinutes: (totalWorkoutSecs / 60).round(),
+    avgHrv: hrvCount > 0 ? hrvSum / hrvCount : 0,
+    avgRhr: rhrCount > 0 ? rhrSum / rhrCount : 0,
+    workoutCount: workoutCount,
+  );
+});

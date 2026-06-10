@@ -43,8 +43,8 @@ class GarminSnapshotWriter {
   GarminSnapshotWriter({
     required HealthMetricRepository repository,
     required MutationStamper stamper,
-  })  : _repo = repository,
-        _stamper = stamper;
+  }) : _repo = repository,
+       _stamper = stamper;
 
   final HealthMetricRepository _repo;
   final MutationStamper _stamper;
@@ -83,6 +83,20 @@ class GarminSnapshotWriter {
       }
     }
 
+    // Activity/workout sessions
+    for (final item in [
+      ..._list(snapshot, 'activities'),
+      ..._list(snapshot, 'workouts'),
+    ]) {
+      try {
+        final metric = _activityMetric(item);
+        final changed = await _upsertIfChanged(metric);
+        changed ? upserted++ : unchanged++;
+      } catch (e) {
+        errors.add('activity: $e');
+      }
+    }
+
     // Resting HR
     for (final item in _list(snapshot, 'resting_hr')) {
       final result = await _upsertDaily(item, HealthMetricKind.rhrDaily);
@@ -103,8 +117,28 @@ class GarminSnapshotWriter {
 
     // Active energy
     for (final item in _list(snapshot, 'active_energy')) {
-      final result =
-          await _upsertDaily(item, HealthMetricKind.activeEnergyDaily);
+      final result = await _upsertDaily(
+        item,
+        HealthMetricKind.activeEnergyDaily,
+      );
+      result ? upserted++ : unchanged++;
+    }
+
+    // Walking / running distance
+    for (final item in _list(snapshot, 'distance_walking_running')) {
+      final result = await _upsertDaily(
+        item,
+        HealthMetricKind.distanceWalkingRunningDaily,
+      );
+      result ? upserted++ : unchanged++;
+    }
+
+    // Total energy
+    for (final item in _list(snapshot, 'total_energy')) {
+      final result = await _upsertDaily(
+        item,
+        HealthMetricKind.totalEnergyDaily,
+      );
       result ? upserted++ : unchanged++;
     }
 
@@ -160,29 +194,37 @@ class GarminSnapshotWriter {
 
     // Floors climbed
     for (final item in _list(snapshot, 'floors_climbed')) {
-      final result =
-          await _upsertDaily(item, HealthMetricKind.floorsClimbedDaily);
+      final result = await _upsertDaily(
+        item,
+        HealthMetricKind.floorsClimbedDaily,
+      );
       result ? upserted++ : unchanged++;
     }
 
     // Respiratory rate
     for (final item in _list(snapshot, 'respiratory_rate')) {
-      final result =
-          await _upsertDaily(item, HealthMetricKind.respiratoryRateDaily);
+      final result = await _upsertDaily(
+        item,
+        HealthMetricKind.respiratoryRateDaily,
+      );
       result ? upserted++ : unchanged++;
     }
 
     // Training load
     for (final item in _list(snapshot, 'training_load')) {
-      final result =
-          await _upsertDaily(item, HealthMetricKind.trainingLoadDaily);
+      final result = await _upsertDaily(
+        item,
+        HealthMetricKind.trainingLoadDaily,
+      );
       result ? upserted++ : unchanged++;
     }
 
     // Training effect
     for (final item in _list(snapshot, 'training_effect')) {
-      final result =
-          await _upsertDaily(item, HealthMetricKind.trainingEffectDaily);
+      final result = await _upsertDaily(
+        item,
+        HealthMetricKind.trainingEffectDaily,
+      );
       result ? upserted++ : unchanged++;
     }
 
@@ -244,6 +286,26 @@ class GarminSnapshotWriter {
       unit: HealthMetricKind.sleepSession.defaultUnit,
       payloadJson: item['stage_histogram_json'] as String?,
       sourceDevice: item['source_device'] as String?,
+      sync: _placeholderSync,
+    );
+  }
+
+  HealthMetric _activityMetric(Map<String, dynamic> item) {
+    final payload = <String, Object?>{
+      if (item['activity_type'] != null) 'activity_type': item['activity_type'],
+      if (item['total_energy_kcal'] != null)
+        'totalEnergyKcal': item['total_energy_kcal'],
+      if (item['total_distance_meters'] != null)
+        'totalDistanceMeters': item['total_distance_meters'],
+    };
+    return HealthMetric(
+      id: item['id'] as String,
+      capturedAt: DateTime.parse(item['started_at'] as String),
+      kind: HealthMetricKind.workoutSession,
+      value: (item['duration_seconds'] as num).toDouble(),
+      unit: HealthMetricKind.workoutSession.defaultUnit,
+      payloadJson: payload.isEmpty ? null : jsonEncode(payload),
+      sourceDevice: item['source_device'] as String? ?? 'garmin',
       sync: _placeholderSync,
     );
   }

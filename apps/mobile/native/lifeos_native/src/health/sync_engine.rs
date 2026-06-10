@@ -50,16 +50,11 @@ impl HealthSyncEngine {
 
     /// Register a provider.
     pub fn add_provider(&mut self, provider: Arc<dyn HealthProvider>) {
-        self.providers
-            .insert(provider.name().to_string(), provider);
+        self.providers.insert(provider.name().to_string(), provider);
     }
 
     /// Sync all providers for the given range.
-    pub async fn sync_range(
-        &self,
-        from: NaiveDate,
-        to: NaiveDate,
-    ) -> Result<Vec<SyncOutcome>> {
+    pub async fn sync_range(&self, from: NaiveDate, to: NaiveDate) -> Result<Vec<SyncOutcome>> {
         let mut outcomes = Vec::new();
         for (name, _provider) in &self.providers {
             match self.sync_provider(name, from, to).await {
@@ -130,13 +125,18 @@ impl HealthSyncEngine {
             + snapshot.hrv.len()
             + snapshot.heart_rate.len()
             + snapshot.active_energy.len()
+            + snapshot.distance_walking_running.len()
+            + snapshot.total_energy.len()
             + snapshot.vo2_max.len()
             + snapshot.weight.len()
             + snapshot.body_fat.len()
             + snapshot.floors_climbed.len()
             + snapshot.respiratory_rate.len()
             + snapshot.body_battery.len()
-            + snapshot.stress.len();
+            + snapshot.stress.len()
+            + snapshot.training_load.len()
+            + snapshot.training_effect.len()
+            + snapshot.spo2.len();
 
         // Sync activities.
         let activities = match provider.sync_activities(effective_from, to).await {

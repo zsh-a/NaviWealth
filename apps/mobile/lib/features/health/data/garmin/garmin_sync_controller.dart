@@ -10,8 +10,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:naviwealth/src/rust/api/health.dart' show GarminSyncProgress;
 
-import '../providers.dart' show garminSnapshotWriterProvider;
+import '../providers.dart'
+    show garminSnapshotWriterProvider, healthMetricRepositoryProvider;
 import 'garmin_bridge.dart';
+import 'garmin_snapshot_writer.dart';
 import 'garmin_token_store.dart';
 
 /// Garmin sync states (sealed, not freezed — avoids build_runner dep).
@@ -154,9 +156,7 @@ class GarminSyncController extends Notifier<GarminSyncState> {
   }
 
   /// Sync recent data with streaming progress updates.
-  Future<void> syncNow({
-    Duration window = const Duration(days: 30),
-  }) async {
+  Future<void> syncNow({Duration window = const Duration(days: 30)}) async {
     final now = DateTime.now().toUtc();
     state = GarminSyncing(startedAt: now);
 
@@ -168,45 +168,55 @@ class GarminSyncController extends Notifier<GarminSyncState> {
       final from = now.subtract(window);
 
       final completer = Completer<void>();
-      _syncSub = _bridge.syncRangeWithProgress(from, now).listen(
-        (progress) {
-          state = GarminSyncing(
-            startedAt: now,
-            phase: progress.phase,
-            currentDay: progress.current,
-            totalDays: progress.total,
-            metricsCount: progress.metricsCount,
-            errors: progress.errors,
-            // The "snapshot" event carries the HealthSnapshot JSON
-            // in the dedicated snapshotJson field.
-            snapshotJson: progress.snapshotJson ??
-                (state is GarminSyncing
-                    ? (state as GarminSyncing).snapshotJson
-                    : null),
-          );
-        },
-        onDone: () async {
-          final s = state;
-          if (s is GarminSyncing) {
-            if (s.errors.isNotEmpty) {
-              state = GarminError(s.errors.first);
-            } else {
-              // Persist the HealthSnapshot to Drift.
-              await _persistSnapshot(s.snapshotJson);
-              state = GarminConnected(
-                lastSyncAt: now,
-                totalMetrics: s.metricsCount,
+      _syncSub = _bridge
+          .syncRangeWithProgress(from, now)
+          .listen(
+            (progress) {
+              state = GarminSyncing(
+                startedAt: now,
+                phase: progress.phase,
+                currentDay: progress.current,
+                totalDays: progress.total,
+                metricsCount: progress.metricsCount,
+                errors: progress.errors,
+                // The "snapshot" event carries the HealthSnapshot JSON
+                // in the dedicated snapshotJson field.
+                snapshotJson:
+                    progress.snapshotJson ??
+                    (state is GarminSyncing
+                        ? (state as GarminSyncing).snapshotJson
+                        : null),
               );
-            }
-          }
-          if (!completer.isCompleted) completer.complete();
-        },
-        onError: (Object e) {
-          state = GarminError(e.toString());
-          if (!completer.isCompleted) completer.complete();
-        },
-        cancelOnError: true,
-      );
+            },
+            onDone: () async {
+              final s = state;
+              if (s is GarminSyncing) {
+                // Persist whatever snapshot Rust produced before surfacing
+                // partial endpoint errors. A failed optional endpoint should not
+                // discard successfully fetched sleep/HR/steps/workouts.
+                final writeResult = await _persistSnapshot(s.snapshotJson);
+                ref.invalidate(healthMetricRepositoryProvider);
+                final errors = <String>[
+                  ...s.errors,
+                  if (writeResult != null) ...writeResult.errors,
+                ];
+                if (errors.isNotEmpty) {
+                  state = GarminError(errors.first);
+                } else {
+                  state = GarminConnected(
+                    lastSyncAt: now,
+                    totalMetrics: writeResult?.total ?? s.metricsCount,
+                  );
+                }
+              }
+              if (!completer.isCompleted) completer.complete();
+            },
+            onError: (Object e) {
+              state = GarminError(e.toString());
+              if (!completer.isCompleted) completer.complete();
+            },
+            cancelOnError: true,
+          );
 
       await completer.future;
     } catch (e) {
@@ -215,14 +225,17 @@ class GarminSyncController extends Notifier<GarminSyncState> {
   }
 
   /// Persist a HealthSnapshot JSON to the local Drift database.
-  Future<void> _persistSnapshot(String? snapshotJson) async {
-    if (snapshotJson == null || snapshotJson.isEmpty) return;
+  Future<GarminWriteResult?> _persistSnapshot(String? snapshotJson) async {
+    if (snapshotJson == null || snapshotJson.isEmpty) return null;
     try {
       final writer = await ref.read(garminSnapshotWriterProvider.future);
-      await writer.writeSnapshotJson(snapshotJson);
-    } catch (_) {
-      // Non-fatal — sync data was fetched but not persisted.
-      // The next sync will re-fetch via cursors.
+      return writer.writeSnapshotJson(snapshotJson);
+    } catch (e) {
+      return GarminWriteResult(
+        upserted: 0,
+        unchanged: 0,
+        errors: ['persist snapshot failed: $e'],
+      );
     }
   }
 
@@ -261,5 +274,5 @@ class GarminSyncController extends Notifier<GarminSyncState> {
 /// Provider for the Garmin sync controller.
 final garminSyncControllerProvider =
     NotifierProvider<GarminSyncController, GarminSyncState>(
-  GarminSyncController.new,
-);
+      GarminSyncController.new,
+    );

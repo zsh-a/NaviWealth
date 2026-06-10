@@ -13,9 +13,7 @@ pub mod token_store;
 use anyhow::Result;
 use chrono::NaiveDate;
 
-use super::provider::{
-    ActivityRecord, HealthProvider, HealthSnapshot,
-};
+use super::provider::{ActivityRecord, DailyMetric, HealthProvider, HealthSnapshot};
 use client::GarminClient;
 use mapper as m;
 
@@ -66,11 +64,7 @@ impl HealthProvider for GarminProvider {
             .unwrap_or(false)
     }
 
-    async fn sync_daily_range(
-        &self,
-        from: NaiveDate,
-        to: NaiveDate,
-    ) -> Result<HealthSnapshot> {
+    async fn sync_daily_range(&self, from: NaiveDate, to: NaiveDate) -> Result<HealthSnapshot> {
         let http = self.client.http();
         let rl = self.client.rate_limiter();
         let token = self.client.access_token().await?;
@@ -79,13 +73,17 @@ impl HealthProvider for GarminProvider {
 
         let mut steps = Vec::new();
         let mut sleep_sessions = Vec::new();
-        let mut rhr = Vec::new();
+        let mut rhr: Vec<DailyMetric> = Vec::new();
         let mut hrv = Vec::new();
         let mut heart_rate = Vec::new();
         let mut body_battery = Vec::new();
-        let mut stress = Vec::new();
+        let mut stress: Vec<DailyMetric> = Vec::new();
         let mut weight = Vec::new();
+        let mut active_energy = Vec::new();
+        let mut distance = Vec::new();
+        let mut total_energy = Vec::new();
         let mut floors = Vec::new();
+        let mut respiration = Vec::new();
         let mut spo2 = Vec::new();
 
         for i in 0..days {
@@ -113,6 +111,10 @@ impl HealthProvider for GarminProvider {
                     heart_rate.retain(|m| m.date != date);
                     heart_rate.push(hr);
                 }
+                if let Some(metric) = m::map_rhr(&json, date) {
+                    rhr.retain(|m| m.date != date);
+                    rhr.push(metric);
+                }
             }
 
             if let Ok(json) = endpoints::fetch_rhr(http, rl, &token, date, date, cn).await {
@@ -134,8 +136,9 @@ impl HealthProvider for GarminProvider {
                 }
             }
 
-            if let Ok(json) = endpoints::fetch_stress(http, rl, &token, date, date, cn).await {
+            if let Ok(json) = endpoints::fetch_stress_day(http, rl, &token, date, cn).await {
                 if let Some(metric) = m::map_stress(&json, date) {
+                    stress.retain(|m| m.date != date);
                     stress.push(metric);
                 }
             }
@@ -150,6 +153,23 @@ impl HealthProvider for GarminProvider {
                 if let Some(f) = m::map_floors_climbed(&json, date) {
                     floors.push(f);
                 }
+                let (distance_metric, active_metric, total_metric) =
+                    m::map_daily_summary_metrics(&json, date);
+                if let Some(metric) = distance_metric {
+                    distance.push(metric);
+                }
+                if let Some(metric) = active_metric {
+                    active_energy.push(metric);
+                }
+                if let Some(metric) = total_metric {
+                    total_energy.push(metric);
+                }
+            }
+
+            if let Ok(json) = endpoints::fetch_respiration(http, rl, &token, date, cn).await {
+                if let Some(r) = m::map_respiratory_rate(&json, date) {
+                    respiration.push(r);
+                }
             }
 
             if let Ok(json) = endpoints::fetch_spo2(http, rl, &token, date, cn).await {
@@ -159,28 +179,29 @@ impl HealthProvider for GarminProvider {
             }
         }
 
-        let vo2_json = endpoints::fetch_training_status(http, rl, &token, cn)
+        let vo2_json = endpoints::fetch_training_status(http, rl, &token, to, cn)
             .await
             .unwrap_or_default();
         let vo2_max = m::map_vo2_max(&vo2_json, to).into_iter().collect();
-        let training_load = m::map_training_load(&vo2_json, to)
-            .into_iter()
-            .collect();
-        let training_effect = m::map_training_effect(&vo2_json, to)
-            .into_iter()
-            .collect();
+        let training_load = m::map_training_load(&vo2_json, to).into_iter().collect();
+        let training_effect = m::map_training_effect(&vo2_json, to).into_iter().collect();
 
         Ok(m::build_snapshot(
             steps,
             sleep_sessions,
+            vec![],
             rhr,
             hrv,
             heart_rate,
             body_battery,
             stress,
             weight,
+            active_energy,
+            distance,
+            total_energy,
             vo2_max,
             floors,
+            respiration,
             training_load,
             training_effect,
             spo2,

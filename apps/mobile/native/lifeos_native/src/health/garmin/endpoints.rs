@@ -200,7 +200,22 @@ pub async fn fetch_spo2(
     is_cn: bool,
 ) -> Result<Value> {
     let url = format!(
-        "{}/proxy/wellness-service/wellness/dailySpO2?date={}",
+        "{}/proxy/wellness-service/wellness/daily/spo2/{}",
+        api_base(is_cn),
+        date.format("%Y-%m-%d"),
+    );
+    fetch_json(client, rl, token, url).await
+}
+
+pub async fn fetch_respiration(
+    client: &Client,
+    rl: &GarminRateLimiter,
+    token: &str,
+    date: NaiveDate,
+    is_cn: bool,
+) -> Result<Value> {
+    let url = format!(
+        "{}/proxy/wellness-service/wellness/daily/respiration/{}",
         api_base(is_cn),
         date.format("%Y-%m-%d"),
     );
@@ -216,7 +231,7 @@ pub async fn fetch_body_battery(
     is_cn: bool,
 ) -> Result<Value> {
     let url = format!(
-        "{}/proxy/wellness-service/wellness/bodyBattery?from={}&until={}",
+        "{}/proxy/wellness-service/wellness/bodyBattery?startDate={}&endDate={}",
         api_base(is_cn),
         from.format("%Y-%m-%d"),
         to.format("%Y-%m-%d"),
@@ -241,6 +256,21 @@ pub async fn fetch_stress(
     fetch_json(client, rl, token, url).await
 }
 
+pub async fn fetch_stress_day(
+    client: &Client,
+    rl: &GarminRateLimiter,
+    token: &str,
+    date: NaiveDate,
+    is_cn: bool,
+) -> Result<Value> {
+    let url = format!(
+        "{}/proxy/wellness-service/wellness/dailyStress/{}",
+        api_base(is_cn),
+        date.format("%Y-%m-%d"),
+    );
+    fetch_json(client, rl, token, url).await
+}
+
 pub async fn fetch_activities(
     client: &Client,
     rl: &GarminRateLimiter,
@@ -250,7 +280,7 @@ pub async fn fetch_activities(
     is_cn: bool,
 ) -> Result<Value> {
     let url = format!(
-        "{}/proxy/activitylist-service/activities/search?start={}&limit={}",
+        "{}/proxy/activitylist-service/activities/search/activities?start={}&limit={}",
         api_base(is_cn),
         start,
         limit,
@@ -262,11 +292,13 @@ pub async fn fetch_training_status(
     client: &Client,
     rl: &GarminRateLimiter,
     token: &str,
+    date: NaiveDate,
     is_cn: bool,
 ) -> Result<Value> {
     let url = format!(
-        "{}/proxy/metrics-service/metrics/trainingStatus",
+        "{}/proxy/metrics-service/metrics/trainingstatus/aggregated/{}",
         api_base(is_cn),
+        date.format("%Y-%m-%d"),
     );
     fetch_json(client, rl, token, url).await
 }

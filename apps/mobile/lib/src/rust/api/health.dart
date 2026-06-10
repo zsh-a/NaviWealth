@@ -84,6 +84,7 @@ class GarminSyncProgress {
   final List<String> errors;
 
   /// HealthSnapshot JSON — only set on the "snapshot" phase event.
+  /// Null/empty on all other phases.
   final String? snapshotJson;
 
   const GarminSyncProgress({

@@ -40,10 +40,13 @@ pub trait HealthProvider: Send + Sync {
 pub struct HealthSnapshot {
     pub steps: Vec<DailyMetric>,
     pub sleep_sessions: Vec<SleepSession>,
+    pub activities: Vec<ActivityRecord>,
     pub resting_hr: Vec<DailyMetric>,
     pub hrv: Vec<DailyMetric>,
     pub heart_rate: Vec<DailyMetric>,
     pub active_energy: Vec<DailyMetric>,
+    pub distance_walking_running: Vec<DailyMetric>,
+    pub total_energy: Vec<DailyMetric>,
     pub vo2_max: Vec<DailyMetric>,
     pub weight: Vec<PointMetric>,
     pub body_fat: Vec<PointMetric>,

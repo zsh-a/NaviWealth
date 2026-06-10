@@ -6,9 +6,9 @@
 //! Field shapes are validated against real Garmin CN API responses
 //! (2026-06-08 probe output).
 
-use std::collections::HashMap;
 use chrono::NaiveDate;
 use serde_json::Value;
+use std::collections::HashMap;
 
 use crate::health::provider::{
     ActivityRecord, BodyBatteryDay, DailyMetric, HealthSnapshot, PointMetric, SleepSession,
@@ -31,7 +31,7 @@ pub fn map_steps(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
         id: format!("garmin:steps:{date}"),
         date,
         value: total,
-        unit: "steps".to_string(),
+        unit: "count".to_string(),
         source_device: Some("garmin".to_string()),
     })
 }
@@ -71,10 +71,22 @@ pub fn map_sleep(json: &Value, date: NaiveDate) -> Option<SleepSession> {
         .unwrap_or_else(|| format!("garmin:sleep:{date}"));
 
     // Build stage histogram from known fields.
-    let deep = dto.get("deepSleepSeconds").and_then(|v| v.as_u64()).unwrap_or(0);
-    let light = dto.get("lightSleepSeconds").and_then(|v| v.as_u64()).unwrap_or(0);
-    let rem = dto.get("remSleepSeconds").and_then(|v| v.as_u64()).unwrap_or(0);
-    let awake = dto.get("awakeSleepSeconds").and_then(|v| v.as_u64()).unwrap_or(0);
+    let deep = dto
+        .get("deepSleepSeconds")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0);
+    let light = dto
+        .get("lightSleepSeconds")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0);
+    let rem = dto
+        .get("remSleepSeconds")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0);
+    let awake = dto
+        .get("awakeSleepSeconds")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0);
     let stage_histogram = if deep + light + rem + awake > 0 {
         Some(format!(
             r#"{{"deep":{},"light":{},"rem":{},"awake":{}}}"#,
@@ -97,15 +109,16 @@ pub fn map_sleep(json: &Value, date: NaiveDate) -> Option<SleepSession> {
 ///
 /// Garmin returns `{ "allMetrics": { "metricsMap": { "WELLNESS_RESTING_HEART_RATE": [...] } } }`.
 pub fn map_rhr(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
-    let metrics_map = json
-        .get("allMetrics")
-        .and_then(|m| m.get("metricsMap"))?;
-    let rhr_array = metrics_map.get("WELLNESS_RESTING_HEART_RATE")?;
-    let value = rhr_array
-        .as_array()?
-        .first()?
-        .get("value")?
-        .as_f64()?;
+    let value = json
+        .get("restingHeartRate")
+        .or_else(|| json.get("restingHr"))
+        .or_else(|| json.get("restingHR"))
+        .and_then(|v| v.as_f64())
+        .or_else(|| {
+            let metrics_map = json.get("allMetrics").and_then(|m| m.get("metricsMap"))?;
+            let rhr_array = metrics_map.get("WELLNESS_RESTING_HEART_RATE")?;
+            rhr_array.as_array()?.first()?.get("value")?.as_f64()
+        })?;
     if value == 0.0 {
         return None;
     }
@@ -247,6 +260,8 @@ pub fn map_body_battery(json: &Value, date: NaiveDate) -> Option<BodyBatteryDay>
 pub fn map_stress(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
     let value = json
         .get("avgStressLevel")
+        .or_else(|| json.get("averageStressLevel"))
+        .or_else(|| json.get("stressAvg"))
         .and_then(|v| v.as_f64())?;
     if value == 0.0 {
         return None;
@@ -271,15 +286,15 @@ pub fn map_activity(json: &Value) -> Option<ActivityRecord> {
         .and_then(|v| v.as_str())
         .unwrap_or("unknown")
         .to_lowercase();
-    let started_at = json
+    let raw_started_at = json
         .get("startTimeGMT")
         .and_then(|v| v.as_str())
         .unwrap_or("")
         .to_string();
-    let duration_seconds = json
-        .get("duration")
-        .and_then(|v| v.as_f64())
-        .unwrap_or(0.0) as u32;
+    let started_at = chrono::NaiveDateTime::parse_from_str(&raw_started_at, "%Y-%m-%d %H:%M:%S")
+        .map(|dt| dt.and_utc().to_rfc3339())
+        .unwrap_or(raw_started_at);
+    let duration_seconds = json.get("duration").and_then(|v| v.as_f64()).unwrap_or(0.0) as u32;
     let calories = json.get("calories").and_then(|v| v.as_f64());
     let distance = json.get("distance").and_then(|v| v.as_f64());
 
@@ -332,7 +347,11 @@ pub fn map_weight(json: &Value, date: NaiveDate) -> Option<PointMetric> {
 /// or `{ "avgSpO2": 97, ... }`. We extract the average.
 pub fn map_spo2(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
     // Try the direct average field first.
-    if let Some(avg) = json.get("avgSpO2").and_then(|v| v.as_f64()) {
+    if let Some(avg) = json
+        .get("avgSpO2")
+        .or_else(|| json.get("averageSpO2"))
+        .and_then(|v| v.as_f64())
+    {
         if avg > 0.0 {
             return Some(DailyMetric {
                 id: format!("garmin:spo2:{date}"),
@@ -365,6 +384,86 @@ pub fn map_spo2(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
         unit: "%".to_string(),
         source_device: Some("garmin".to_string()),
     })
+}
+
+/// Map respiratory rate from daily respiration JSON.
+///
+/// Garmin commonly returns sleep and waking averages. Prefer a whole-day
+/// average when present, otherwise use sleep average, then waking average.
+pub fn map_respiratory_rate(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
+    let value = json
+        .get("avgRespirationValue")
+        .or_else(|| json.get("averageRespirationValue"))
+        .or_else(|| json.get("avgSleepRespirationValue"))
+        .or_else(|| json.get("avgWakingRespirationValue"))
+        .and_then(|v| v.as_f64())?;
+    if value == 0.0 {
+        return None;
+    }
+    Some(DailyMetric {
+        id: format!("garmin:respiration:{date}"),
+        date,
+        value,
+        unit: "rpm".to_string(),
+        source_device: Some("garmin".to_string()),
+    })
+}
+
+/// Map daily summary JSON into distance / energy metrics.
+///
+/// This endpoint is the best Garmin source for activity-wide totals that
+/// aren't part of the dedicated range endpoints.
+pub fn map_daily_summary_metrics(
+    json: &Value,
+    date: NaiveDate,
+) -> (
+    Option<DailyMetric>,
+    Option<DailyMetric>,
+    Option<DailyMetric>,
+) {
+    let distance = json
+        .get("totalDistanceMeters")
+        .or_else(|| json.get("wellnessDistanceMeters"))
+        .or_else(|| json.get("distance"))
+        .and_then(|v| v.as_f64())
+        .filter(|v| *v > 0.0)
+        .map(|value| DailyMetric {
+            id: format!("garmin:distance:{date}"),
+            date,
+            value,
+            unit: "m".to_string(),
+            source_device: Some("garmin".to_string()),
+        });
+
+    let active = json
+        .get("activeKilocalories")
+        .or_else(|| json.get("activeCalories"))
+        .or_else(|| json.get("activeEnergy"))
+        .and_then(|v| v.as_f64())
+        .filter(|v| *v > 0.0)
+        .map(|value| DailyMetric {
+            id: format!("garmin:active_energy:{date}"),
+            date,
+            value,
+            unit: "kcal".to_string(),
+            source_device: Some("garmin".to_string()),
+        });
+
+    let total = json
+        .get("totalKilocalories")
+        .or_else(|| json.get("totalCalories"))
+        .or_else(|| json.get("totalEnergy"))
+        .and_then(|v| v.as_f64())
+        .filter(|v| *v > 0.0)
+        .map(|value| DailyMetric {
+            id: format!("garmin:total_energy:{date}"),
+            date,
+            value,
+            unit: "kcal".to_string(),
+            source_device: Some("garmin".to_string()),
+        });
+
+    (distance, active, total)
 }
 
 /// Map VO2 max from training status JSON.
@@ -464,11 +563,23 @@ pub fn map_steps_range(json: &Value) -> Vec<DailyMetric> {
 
     let mut by_date: HashMap<String, f64> = HashMap::new();
     for item in intervals {
-        let steps = item.get("steps").and_then(|v| v.as_f64()).unwrap_or(0.0);
+        let steps = item
+            .get("steps")
+            .or_else(|| item.get("totalSteps"))
+            .or_else(|| item.get("stepCount"))
+            .or_else(|| item.get("stepsCount"))
+            .or_else(|| item.get("dailySteps"))
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0);
         if steps == 0.0 {
             continue;
         }
-        if let Some(start) = item.get("startGMT").and_then(|v| v.as_str()) {
+        if let Some(start) = item
+            .get("startGMT")
+            .or_else(|| item.get("calendarDate"))
+            .or_else(|| item.get("date"))
+            .and_then(|v| v.as_str())
+        {
             let date_str = &start[..10.min(start.len())];
             *by_date.entry(date_str.to_string()).or_insert(0.0) += steps;
         }
@@ -483,7 +594,7 @@ pub fn map_steps_range(json: &Value) -> Vec<DailyMetric> {
                 id: format!("garmin:steps:{date}"),
                 date,
                 value: total,
-                unit: "steps".to_string(),
+                unit: "count".to_string(),
                 source_device: Some("garmin".to_string()),
             })
         })
@@ -495,10 +606,36 @@ pub fn map_steps_range(json: &Value) -> Vec<DailyMetric> {
 /// `WELLNESS_RESTING_HEART_RATE` array contains one entry per day
 /// with `calendarDate` and `value`.
 pub fn map_rhr_range(json: &Value) -> Vec<DailyMetric> {
-    let metrics_map = match json
-        .get("allMetrics")
-        .and_then(|m| m.get("metricsMap"))
-    {
+    if let Some(entries) = json.as_array() {
+        return entries
+            .iter()
+            .filter_map(|entry| {
+                let value = entry
+                    .get("restingHeartRate")
+                    .or_else(|| entry.get("restingHr"))
+                    .or_else(|| entry.get("restingHR"))
+                    .or_else(|| entry.get("value"))
+                    .and_then(|v| v.as_f64())?;
+                if value == 0.0 {
+                    return None;
+                }
+                let date_str = entry
+                    .get("calendarDate")
+                    .or_else(|| entry.get("date"))
+                    .and_then(|v| v.as_str())?;
+                let date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d").ok()?;
+                Some(DailyMetric {
+                    id: format!("garmin:rhr:{date}"),
+                    date,
+                    value,
+                    unit: "bpm".to_string(),
+                    source_device: Some("garmin".to_string()),
+                })
+            })
+            .collect();
+    }
+
+    let metrics_map = match json.get("allMetrics").and_then(|m| m.get("metricsMap")) {
         Some(m) => m,
         None => return vec![],
     };
@@ -542,13 +679,25 @@ pub fn map_body_battery_range(json: &Value) -> Vec<BodyBatteryDay> {
     entries
         .iter()
         .filter_map(|entry| {
-            let date_str = entry.get("date")?.as_str()?;
+            let date_str = entry
+                .get("date")
+                .or_else(|| entry.get("calendarDate"))
+                .and_then(|v| v.as_str())?;
             let date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d").ok()?;
-            let charged = entry.get("charged")?.as_u64()? as u8;
-            let drained = entry.get("drained")?.as_u64()? as u8;
+            let charged = entry
+                .get("charged")
+                .or_else(|| entry.get("chargedValue"))
+                .and_then(|v| v.as_u64())
+                .unwrap_or(0) as u8;
+            let drained = entry
+                .get("drained")
+                .or_else(|| entry.get("drainedValue"))
+                .and_then(|v| v.as_u64())
+                .unwrap_or(0) as u8;
 
             let values: Vec<u8> = entry
                 .get("bodyBatteryValuesArray")
+                .or_else(|| entry.get("bodyBatteryValues"))
                 .and_then(|v| v.as_array())
                 .unwrap_or(&vec![])
                 .iter()
@@ -566,11 +715,18 @@ pub fn map_body_battery_range(json: &Value) -> Vec<BodyBatteryDay> {
             } else {
                 *values.iter().min().unwrap_or(&0)
             };
-            let max = if values.is_empty() {
-                charged
-            } else {
-                *values.iter().max().unwrap_or(&charged)
-            };
+            let max = entry
+                .get("max")
+                .or_else(|| entry.get("maxBodyBattery"))
+                .and_then(|v| v.as_u64())
+                .map(|v| v as u8)
+                .unwrap_or_else(|| {
+                    if values.is_empty() {
+                        charged
+                    } else {
+                        *values.iter().max().unwrap_or(&charged)
+                    }
+                });
 
             Some(BodyBatteryDay {
                 id: format!("garmin:body_battery:{date}"),
@@ -597,7 +753,11 @@ pub fn map_stress_range(json: &Value) -> Vec<DailyMetric> {
     entries
         .iter()
         .filter_map(|entry| {
-            let value = entry.get("avgStressLevel")?.as_f64()?;
+            let value = entry
+                .get("avgStressLevel")
+                .or_else(|| entry.get("averageStressLevel"))
+                .or_else(|| entry.get("stressAvg"))
+                .and_then(|v| v.as_f64())?;
             if value == 0.0 {
                 return None;
             }
@@ -656,14 +816,19 @@ pub fn map_weight_range(json: &Value) -> Vec<PointMetric> {
 pub fn build_snapshot(
     steps: Vec<DailyMetric>,
     sleep_sessions: Vec<SleepSession>,
+    activities: Vec<ActivityRecord>,
     resting_hr: Vec<DailyMetric>,
     hrv: Vec<DailyMetric>,
     heart_rate: Vec<DailyMetric>,
     body_battery: Vec<BodyBatteryDay>,
     stress: Vec<DailyMetric>,
     weight: Vec<PointMetric>,
+    active_energy: Vec<DailyMetric>,
+    distance_walking_running: Vec<DailyMetric>,
+    total_energy: Vec<DailyMetric>,
     vo2_max: Vec<DailyMetric>,
     floors_climbed: Vec<DailyMetric>,
+    respiratory_rate: Vec<DailyMetric>,
     training_load: Vec<DailyMetric>,
     training_effect: Vec<DailyMetric>,
     spo2: Vec<DailyMetric>,
@@ -671,15 +836,18 @@ pub fn build_snapshot(
     HealthSnapshot {
         steps,
         sleep_sessions,
+        activities,
         resting_hr,
         hrv,
         heart_rate,
-        active_energy: vec![],
+        active_energy,
+        distance_walking_running,
+        total_energy,
         vo2_max,
         weight,
         body_fat: vec![],
         floors_climbed,
-        respiratory_rate: vec![],
+        respiratory_rate,
         body_battery,
         stress,
         training_load,
@@ -708,7 +876,7 @@ mod tests {
         ]);
         let m = map_steps(&data, date("2026-06-07")).unwrap();
         assert_eq!(m.value, 350.0);
-        assert_eq!(m.unit, "steps");
+        assert_eq!(m.unit, "count");
         assert_eq!(m.id, "garmin:steps:2026-06-07");
     }
 
@@ -818,6 +986,34 @@ mod tests {
     }
 
     #[test]
+    fn rhr_from_daily_heart_rate_payload() {
+        let data = json!({
+            "calendarDate": "2026-06-07",
+            "restingHeartRate": 42
+        });
+        let m = map_rhr(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 42.0);
+        assert_eq!(m.unit, "bpm");
+    }
+
+    #[test]
+    fn rhr_range_from_daily_entries() {
+        let data = json!([
+            {
+                "calendarDate": "2026-06-07",
+                "restingHeartRate": 42
+            },
+            {
+                "calendarDate": "2026-06-08",
+                "restingHeartRate": 0
+            }
+        ]);
+        let metrics = map_rhr_range(&data);
+        assert_eq!(metrics.len(), 1);
+        assert_eq!(metrics[0].id, "garmin:rhr:2026-06-07");
+    }
+
+    #[test]
     fn rhr_missing_metrics_returns_none() {
         let data = json!({"allMetrics": {"metricsMap": {}}});
         assert!(map_rhr(&data, date("2026-06-07")).is_none());
@@ -876,6 +1072,16 @@ mod tests {
         assert_eq!(m.unit, "level");
     }
 
+    #[test]
+    fn stress_from_average_alias() {
+        let data = json!({
+            "averageStressLevel": 21,
+            "maxStressLevel": 86
+        });
+        let m = map_stress(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 21.0);
+    }
+
     // ---- Activity ----
 
     #[test]
@@ -891,6 +1097,7 @@ mod tests {
         });
         let a = map_activity(&data).unwrap();
         assert_eq!(a.activity_type, "cycling");
+        assert_eq!(a.started_at, "2026-06-08T14:21:29+00:00");
         assert_eq!(a.duration_seconds, 1280);
         assert_eq!(a.total_energy_kcal, Some(183.0));
         assert_eq!(a.total_distance_meters, Some(6397.68017578125));
@@ -1022,6 +1229,35 @@ mod tests {
     }
 
     #[test]
+    fn spo2_from_average_spo2_field() {
+        let data = json!({"averageSpO2": 96.5});
+        let m = map_spo2(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 96.5);
+    }
+
+    #[test]
+    fn respiratory_rate_from_sleep_average() {
+        let data = json!({"avgSleepRespirationValue": 14.5});
+        let m = map_respiratory_rate(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 14.5);
+        assert_eq!(m.unit, "rpm");
+        assert_eq!(m.id, "garmin:respiration:2026-06-07");
+    }
+
+    #[test]
+    fn daily_summary_maps_distance_and_energy() {
+        let data = json!({
+            "totalDistanceMeters": 8632.0,
+            "activeKilocalories": 520.0,
+            "totalKilocalories": 2400.0
+        });
+        let (distance, active, total) = map_daily_summary_metrics(&data, date("2026-06-07"));
+        assert_eq!(distance.unwrap().value, 8632.0);
+        assert_eq!(active.unwrap().value, 520.0);
+        assert_eq!(total.unwrap().value, 2400.0);
+    }
+
+    #[test]
     fn spo2_from_measurements() {
         let data = json!({
             "spO2Measurements": [
@@ -1056,6 +1292,11 @@ mod tests {
                 unit: "steps".into(),
                 source_device: Some("garmin".into()),
             }],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
             vec![],
             vec![],
             vec![],
