@@ -190,6 +190,16 @@ List<_TrendSpec> _trendSpecs(AppLocalizations l10n, _TrendGroup group) =>
           kind: HealthMetricKind.heartRateDaily,
         ),
         _TrendSpec(
+          title: l10n.healthTrendRhrTitle,
+          subtitle: l10n.healthTrendRhrSubtitle,
+          kind: HealthMetricKind.rhrDaily,
+        ),
+        _TrendSpec(
+          title: l10n.healthTrendSpo2Title,
+          subtitle: l10n.healthTrendSpo2Subtitle,
+          kind: HealthMetricKind.spo2Daily,
+        ),
+        _TrendSpec(
           title: l10n.healthTrendRespiratoryTitle,
           subtitle: l10n.healthTrendRespiratorySubtitle,
           kind: HealthMetricKind.respiratoryRateDaily,
@@ -236,6 +246,11 @@ List<_TrendSpec> _trendSpecs(AppLocalizations l10n, _TrendGroup group) =>
           subtitle: l10n.healthTrendTrainingEffectSubtitle,
           kind: HealthMetricKind.trainingEffectDaily,
         ),
+        _TrendSpec(
+          title: l10n.healthTrendTotalEnergyTitle,
+          subtitle: l10n.healthTrendTotalEnergySubtitle,
+          kind: HealthMetricKind.totalEnergyDaily,
+        ),
       ],
       _TrendGroup.body => [
         _TrendSpec(
@@ -269,6 +284,16 @@ List<_TrendSpec> _trendSpecsRaw(_TrendGroup group) => switch (group) {
       title: '',
       subtitle: '',
       kind: HealthMetricKind.heartRateDaily,
+    ),
+    const _TrendSpec(
+      title: '',
+      subtitle: '',
+      kind: HealthMetricKind.rhrDaily,
+    ),
+    const _TrendSpec(
+      title: '',
+      subtitle: '',
+      kind: HealthMetricKind.spo2Daily,
     ),
     const _TrendSpec(
       title: '',
@@ -316,6 +341,11 @@ List<_TrendSpec> _trendSpecsRaw(_TrendGroup group) => switch (group) {
       title: '',
       subtitle: '',
       kind: HealthMetricKind.trainingEffectDaily,
+    ),
+    const _TrendSpec(
+      title: '',
+      subtitle: '',
+      kind: HealthMetricKind.totalEnergyDaily,
     ),
   ],
   _TrendGroup.body => [
@@ -410,6 +440,7 @@ List<ChartPoint> _projectToPoints(
     case HealthMetricKind.bodyBatteryDaily:
     case HealthMetricKind.trainingLoadDaily:
     case HealthMetricKind.trainingEffectDaily:
+    case HealthMetricKind.spo2Daily:
       // One row per measurement → one point.
       final pts = <ChartPoint>[];
       for (final r in rows) {

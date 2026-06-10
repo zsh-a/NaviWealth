@@ -13726,6 +13726,18 @@ abstract class AppLocalizations {
   /// **'Daily average respiratory rate '**
   String get healthTrendRespiratorySubtitle;
 
+  /// No description provided for @healthTrendRhrTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Resting HR'**
+  String get healthTrendRhrTitle;
+
+  /// No description provided for @healthTrendRhrSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily resting heart rate '**
+  String get healthTrendRhrSubtitle;
+
   /// No description provided for @healthTrendWorkoutSubtitle.
   ///
   /// In en, this message translates to:
@@ -13840,6 +13852,12 @@ abstract class AppLocalizations {
   /// **'Light'**
   String get healthSleepLightLabel;
 
+  /// No description provided for @healthSleepAwakeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Awake'**
+  String get healthSleepAwakeLabel;
+
   /// No description provided for @healthTrendBodyBatteryTitle.
   ///
   /// In en, this message translates to:
@@ -13887,6 +13905,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Fitness improvement signal'**
   String get healthTrendTrainingEffectSubtitle;
+
+  /// No description provided for @healthWeeklySummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get healthWeeklySummaryTitle;
+
+  /// No description provided for @healthSpo2MetricLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SpO₂'**
+  String get healthSpo2MetricLabel;
+
+  /// No description provided for @healthTrendSpo2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood oxygen'**
+  String get healthTrendSpo2Title;
+
+  /// No description provided for @healthTrendSpo2Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily average SpO₂'**
+  String get healthTrendSpo2Subtitle;
+
+  /// No description provided for @healthTrendTotalEnergyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Total energy'**
+  String get healthTrendTotalEnergyTitle;
+
+  /// No description provided for @healthTrendTotalEnergySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily total calories burned'**
+  String get healthTrendTotalEnergySubtitle;
 
   /// No description provided for @healthSyncPermissionDenied.
   ///

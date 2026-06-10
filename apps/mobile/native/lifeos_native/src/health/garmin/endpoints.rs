@@ -162,6 +162,21 @@ pub async fn fetch_rhr(
     fetch_json(client, rl, token, url).await
 }
 
+pub async fn fetch_heart_rate(
+    client: &Client,
+    rl: &GarminRateLimiter,
+    token: &str,
+    date: NaiveDate,
+    is_cn: bool,
+) -> Result<Value> {
+    let url = format!(
+        "{}/proxy/wellness-service/wellness/heartRate?date={}",
+        api_base(is_cn),
+        date.format("%Y-%m-%d"),
+    );
+    fetch_json(client, rl, token, url).await
+}
+
 pub async fn fetch_hrv(
     client: &Client,
     rl: &GarminRateLimiter,
@@ -171,6 +186,21 @@ pub async fn fetch_hrv(
 ) -> Result<Value> {
     let url = format!(
         "{}/proxy/hrv-service/hrv/daily/{}",
+        api_base(is_cn),
+        date.format("%Y-%m-%d"),
+    );
+    fetch_json(client, rl, token, url).await
+}
+
+pub async fn fetch_spo2(
+    client: &Client,
+    rl: &GarminRateLimiter,
+    token: &str,
+    date: NaiveDate,
+    is_cn: bool,
+) -> Result<Value> {
+    let url = format!(
+        "{}/proxy/wellness-service/wellness/dailySpO2?date={}",
         api_base(is_cn),
         date.format("%Y-%m-%d"),
     );

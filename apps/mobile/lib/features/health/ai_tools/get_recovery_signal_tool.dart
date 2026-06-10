@@ -21,9 +21,9 @@ class GetRecoverySignalTool implements DeviceTool {
   @override
   String get description =>
       '返回综合恢复信号 (0–100 分) + 等级 (rested / balanced / strained / '
-      'insufficient_data) + 原始输入 (最近 HRV / 最近平均睡眠时长 / 最近 RHR / 最近 VO₂max)。'
-      '算法:取过去 7 天 (recent) 和过去 7-28 天 (baseline) 的 HRV / sleep / RHR / VO₂max 均值,'
-      '每项按 recent vs baseline 偏离度评分 (HRV ↑ 加分, RHR ↑ 扣分, VO₂max ↑ 加分, 睡眠 ≥ 7h 加分),'
+      'insufficient_data) + 原始输入 (最近 HRV / 睡眠 / RHR / VO₂max / Body Battery / 压力)。'
+      '算法:取过去 7 天 (recent) 和过去 7-28 天 (baseline) 的均值,'
+      '每项按 recent vs baseline 偏离度评分 (HRV/BB/VO₂max ↑ 加分, RHR/压力 ↑ 扣分, 睡眠 ≥ 7h 加分),'
       '可用项算术平均后裁剪到 0–100。'
       '基线 < 5 天数据时返回 insufficient_data,模型应回避"推 / 减"建议。'
       '适合场景:"今天该不该重训"/"我恢复怎么样"/"我状态可以做高强度吗"。'
@@ -63,8 +63,25 @@ class GetRecoverySignalTool implements DeviceTool {
       kind: HealthMetricKind.vo2Max,
       limit: 35,
     );
+    final bb = await repo.listByKind(
+      ownerUserId: ownerUserId,
+      kind: HealthMetricKind.bodyBatteryDaily,
+      limit: 35,
+    );
+    final stressData = await repo.listByKind(
+      ownerUserId: ownerUserId,
+      kind: HealthMetricKind.stressDaily,
+      limit: 35,
+    );
 
-    return shape(hrv: hrv, sleep: sleep, rhr: rhr, vo2Max: vo2);
+    return shape(
+      hrv: hrv,
+      sleep: sleep,
+      rhr: rhr,
+      vo2Max: vo2,
+      bodyBattery: bb,
+      stress: stressData,
+    );
   }
 
   /// Pure shaper — delegates to [RecoveryScorer].
@@ -73,6 +90,8 @@ class GetRecoverySignalTool implements DeviceTool {
     required List<HealthMetric> sleep,
     required List<HealthMetric> rhr,
     List<HealthMetric> vo2Max = const <HealthMetric>[],
+    List<HealthMetric> bodyBattery = const <HealthMetric>[],
+    List<HealthMetric> stress = const <HealthMetric>[],
     DateTime? now,
   }) {
     const scorer = RecoveryScorer();
@@ -81,6 +100,8 @@ class GetRecoverySignalTool implements DeviceTool {
       sleep: sleep,
       rhr: rhr,
       vo2Max: vo2Max,
+      bodyBattery: bodyBattery,
+      stress: stress,
       now: now,
     );
 

@@ -85,6 +85,11 @@ enum HealthMetricKind {
   /// 1=Recovery, 0=Strained.
   trainingEffectDaily,
 
+  /// Daily average SpO2 (blood oxygen saturation).
+  /// capturedAt = local day start UTC, value = percentage (0–100),
+  /// unit = `'%'`.
+  spo2Daily,
+
   /// Sentinel for wire kinds the client doesn't recognise. Callers
   /// should drop rows with this kind rather than crash.
   unknown,
@@ -112,6 +117,7 @@ extension HealthMetricKindX on HealthMetricKind {
     HealthMetricKind.bodyBatteryDaily => 'body_battery_daily',
     HealthMetricKind.trainingLoadDaily => 'training_load_daily',
     HealthMetricKind.trainingEffectDaily => 'training_effect_daily',
+    HealthMetricKind.spo2Daily => 'spo2_daily',
     HealthMetricKind.unknown => 'unknown',
   };
 
@@ -137,6 +143,7 @@ extension HealthMetricKindX on HealthMetricKind {
     HealthMetricKind.bodyBatteryDaily => 'level',
     HealthMetricKind.trainingLoadDaily => 'load',
     HealthMetricKind.trainingEffectDaily => 'level',
+    HealthMetricKind.spo2Daily => '%',
     HealthMetricKind.unknown => '',
   };
 

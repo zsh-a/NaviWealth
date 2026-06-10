@@ -86,6 +86,7 @@ impl HealthProvider for GarminProvider {
         let mut stress = Vec::new();
         let mut weight = Vec::new();
         let mut floors = Vec::new();
+        let mut spo2 = Vec::new();
 
         for i in 0..days {
             let date = from + chrono::Duration::days(i);
@@ -100,7 +101,16 @@ impl HealthProvider for GarminProvider {
                 if let Some(session) = m::map_sleep(&json, date) {
                     sleep_sessions.push(session);
                 }
+                // Fallback: extract HR from sleep if all-day HR fails.
                 if let Some(hr) = m::map_heart_rate_from_sleep(&json, date) {
+                    heart_rate.push(hr);
+                }
+            }
+
+            // All-day HR (preferred over sleep-based HR).
+            if let Ok(json) = endpoints::fetch_heart_rate(http, rl, &token, date, cn).await {
+                if let Some(hr) = m::map_heart_rate_all_day(&json, date) {
+                    heart_rate.retain(|m| m.date != date);
                     heart_rate.push(hr);
                 }
             }
@@ -141,6 +151,12 @@ impl HealthProvider for GarminProvider {
                     floors.push(f);
                 }
             }
+
+            if let Ok(json) = endpoints::fetch_spo2(http, rl, &token, date, cn).await {
+                if let Some(s) = m::map_spo2(&json, date) {
+                    spo2.push(s);
+                }
+            }
         }
 
         let vo2_json = endpoints::fetch_training_status(http, rl, &token, cn)
@@ -167,12 +183,13 @@ impl HealthProvider for GarminProvider {
             floors,
             training_load,
             training_effect,
+            spo2,
         ))
     }
 
     async fn sync_activities(
         &self,
-        _from: NaiveDate,
+        from: NaiveDate,
         _to: NaiveDate,
     ) -> Result<Vec<ActivityRecord>> {
         let http = self.client.http();
@@ -180,12 +197,47 @@ impl HealthProvider for GarminProvider {
         let token = self.client.access_token().await?;
         let cn = self.is_cn;
 
-        let json = endpoints::fetch_activities(http, rl, &token, 0, 50, cn).await?;
-        let activities = json
-            .as_array()
-            .map(|arr| arr.iter().filter_map(|item| m::map_activity(item)).collect())
-            .unwrap_or_default();
+        // Paginate through activities until we get an empty page or
+        // activities older than the `from` date.
+        let mut all_activities = Vec::new();
+        let mut start: u32 = 0;
+        let page_size: u32 = 50;
+        let from_str = from.format("%Y-%m-%d").to_string();
 
-        Ok(activities)
+        loop {
+            let json = endpoints::fetch_activities(http, rl, &token, start, page_size, cn).await?;
+            let page = json.as_array();
+            let page_len = page.map(|a| a.len()).unwrap_or(0);
+            if page_len == 0 {
+                break;
+            }
+
+            let mut reached_boundary = false;
+            if let Some(arr) = page {
+                for item in arr {
+                    if let Some(activity) = m::map_activity(item) {
+                        // Activities are sorted newest-first. If we've gone
+                        // past the `from` date, stop paginating.
+                        let act_date = &activity.started_at[..10.min(activity.started_at.len())];
+                        if act_date < from_str.as_str() {
+                            reached_boundary = true;
+                            break;
+                        }
+                        all_activities.push(activity);
+                    }
+                }
+            }
+
+            if reached_boundary || page_len < page_size as usize {
+                break;
+            }
+            start += page_size;
+            // Safety cap: don't fetch more than 500 activities.
+            if start >= 500 {
+                break;
+            }
+        }
+
+        Ok(all_activities)
     }
 }

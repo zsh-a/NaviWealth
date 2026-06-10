@@ -7947,6 +7947,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Daily average respiratory rate ';
 
   @override
+  String get healthTrendRhrTitle => 'Resting HR';
+
+  @override
+  String get healthTrendRhrSubtitle => 'Daily resting heart rate ';
+
+  @override
   String get healthTrendWorkoutSubtitle => 'Daily minutes ';
 
   @override
@@ -8004,6 +8010,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthSleepLightLabel => 'Light';
 
   @override
+  String get healthSleepAwakeLabel => 'Awake';
+
+  @override
   String get healthTrendBodyBatteryTitle => 'Body Battery';
 
   @override
@@ -8026,6 +8035,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthTrendTrainingEffectSubtitle => 'Fitness improvement signal';
+
+  @override
+  String get healthWeeklySummaryTitle => 'This week';
+
+  @override
+  String get healthSpo2MetricLabel => 'SpO₂';
+
+  @override
+  String get healthTrendSpo2Title => 'Blood oxygen';
+
+  @override
+  String get healthTrendSpo2Subtitle => 'Daily average SpO₂';
+
+  @override
+  String get healthTrendTotalEnergyTitle => 'Total energy';
+
+  @override
+  String get healthTrendTotalEnergySubtitle => 'Daily total calories burned';
 
   @override
   String get healthSyncPermissionDenied => 'Permission denied';

@@ -79,6 +79,11 @@ class HealthTodayPage extends ConsumerWidget {
           SizedBox(height: AppSpacing.s12),
           FadeSlideIn(
             delay: Duration(milliseconds: 160),
+            child: _WeeklySummaryPanel(),
+          ),
+          SizedBox(height: AppSpacing.s12),
+          FadeSlideIn(
+            delay: Duration(milliseconds: 200),
             child: _BriefingPanel(),
           ),
         ],
@@ -364,17 +369,30 @@ class _MetricGrid extends ConsumerWidget {
     final stress = ref.watch(latestStressProvider);
     final rhr = ref.watch(latestRhrProvider);
     final trainingLoad = ref.watch(latestTrainingLoadProvider);
+    final spo2 = ref.watch(latestSpo2Provider);
+
+    // Trends (7-day delta).
+    final sleepTrend = ref.watch(metricTrendProvider(HealthMetricKind.sleepSession));
+    final bbTrend = ref.watch(metricTrendProvider(HealthMetricKind.bodyBatteryDaily));
+    final stressTrend = ref.watch(metricTrendProvider(HealthMetricKind.stressDaily));
+    final hrvTrend = ref.watch(metricTrendProvider(HealthMetricKind.hrvDaily));
+    final hrTrend = ref.watch(metricTrendProvider(HealthMetricKind.heartRateDaily));
+    final rhrTrend = ref.watch(metricTrendProvider(HealthMetricKind.rhrDaily));
+    final stepsTrend = ref.watch(metricTrendProvider(HealthMetricKind.stepsDaily));
+    final energyTrend = ref.watch(metricTrendProvider(HealthMetricKind.activeEnergyDaily));
+
     final cards = <Widget>[
-      _SleepCard(async: sleep),
-      _BodyBatteryCard(async: bodyBattery),
-      _StressCard(async: stress),
-      _HrvCard(async: hrv),
-      _HeartRateCard(async: heartRate),
-      _RhrCard(async: rhr),
-      _StepsCard(async: steps),
+      _SleepCard(async: sleep, trend: sleepTrend.value),
+      _BodyBatteryCard(async: bodyBattery, trend: bbTrend.value),
+      _StressCard(async: stress, trend: stressTrend.value),
+      _HrvCard(async: hrv, trend: hrvTrend.value),
+      _HeartRateCard(async: heartRate, trend: hrTrend.value),
+      _RhrCard(async: rhr, trend: rhrTrend.value),
+      _StepsCard(async: steps, trend: stepsTrend.value),
       _WorkoutCard(async: workout),
-      _ActiveEnergyCard(async: energy),
+      _ActiveEnergyCard(async: energy, trend: energyTrend.value),
       _TrainingLoadCard(async: trainingLoad),
+      _Spo2Card(async: spo2),
     ];
 
     return LayoutBuilder(
@@ -410,8 +428,9 @@ class _MetricGrid extends ConsumerWidget {
 }
 
 class _SleepCard extends StatelessWidget {
-  const _SleepCard({required this.async});
+  const _SleepCard({required this.async, this.trend});
   final AsyncValue<HealthMetric?> async;
+  final MetricTrend? trend;
 
   @override
   Widget build(BuildContext context) {
@@ -432,6 +451,7 @@ class _SleepCard extends StatelessWidget {
               _ValueBig(
                 value: '${_round(hours)}h',
                 sub: _ago(l10n, m.capturedAt),
+                trend: trend,
               ),
               if (stages != null) ...[
                 const SizedBox(height: AppSpacing.s4),
@@ -439,6 +459,7 @@ class _SleepCard extends StatelessWidget {
                   deepSeconds: stages.deep,
                   remSeconds: stages.rem,
                   lightSeconds: stages.light,
+                  awakeSeconds: stages.awake,
                   totalSeconds: m.value,
                   l10n: l10n,
                 ),
@@ -457,10 +478,12 @@ class _SleepStages {
     required this.deep,
     required this.rem,
     required this.light,
+    this.awake = 0,
   });
   final double deep;
   final double rem;
   final double light;
+  final double awake;
 }
 
 _SleepStages? _parseSleepStages(String? payloadJson) {
@@ -474,19 +497,22 @@ _SleepStages? _parseSleepStages(String? payloadJson) {
         ((json['rem'] ?? json['remSleepSeconds']) as num?)?.toDouble() ?? 0;
     final light =
         ((json['light'] ?? json['lightSleepSeconds']) as num?)?.toDouble() ?? 0;
+    final awake =
+        ((json['awake'] ?? json['awakeSleepSeconds']) as num?)?.toDouble() ?? 0;
     if (deep == 0 && rem == 0 && light == 0) return null;
-    return _SleepStages(deep: deep, rem: rem, light: light);
+    return _SleepStages(deep: deep, rem: rem, light: light, awake: awake);
   } catch (_) {
     return null;
   }
 }
 
-/// Compact horizontal bar showing deep/REM/light proportions.
+/// Compact horizontal bar showing deep/REM/light/awake proportions.
 class _SleepStageBar extends StatelessWidget {
   const _SleepStageBar({
     required this.deepSeconds,
     required this.remSeconds,
     required this.lightSeconds,
+    required this.awakeSeconds,
     required this.totalSeconds,
     required this.l10n,
   });
@@ -494,6 +520,7 @@ class _SleepStageBar extends StatelessWidget {
   final double deepSeconds;
   final double remSeconds;
   final double lightSeconds;
+  final double awakeSeconds;
   final double totalSeconds;
   final AppLocalizations l10n;
 
@@ -505,6 +532,7 @@ class _SleepStageBar extends StatelessWidget {
 
     final deepPct = deepSeconds / totalSeconds;
     final remPct = remSeconds / totalSeconds;
+    final awakePct = awakeSeconds / totalSeconds;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -527,8 +555,18 @@ class _SleepStageBar extends StatelessWidget {
                       color: colors.primary.withValues(alpha: 0.6),
                     ),
                   ),
+                if (awakePct > 0)
+                  Expanded(
+                    flex: (awakePct * 100).round().clamp(1, 100),
+                    child: Container(
+                      color: colors.destructive.withValues(alpha: 0.3),
+                    ),
+                  ),
                 Expanded(
-                  flex: ((1 - deepPct - remPct) * 100).round().clamp(1, 100),
+                  flex:
+                      ((1 - deepPct - remPct - awakePct) * 100)
+                          .round()
+                          .clamp(1, 100),
                   child: Container(color: colors.muted),
                 ),
               ],
@@ -558,6 +596,15 @@ class _SleepStageBar extends StatelessWidget {
               l10n.healthSleepLightLabel,
               lightSeconds,
             ),
+            if (awakeSeconds > 0) ...[
+              const SizedBox(width: AppSpacing.s6),
+              _stageChip(
+                typography,
+                colors.destructive.withValues(alpha: 0.6),
+                l10n.healthSleepAwakeLabel,
+                awakeSeconds,
+              ),
+            ],
           ],
         ),
       ],
@@ -579,8 +626,9 @@ class _SleepStageBar extends StatelessWidget {
 }
 
 class _HrvCard extends StatelessWidget {
-  const _HrvCard({required this.async});
+  const _HrvCard({required this.async, this.trend});
   final AsyncValue<HealthMetric?> async;
+  final MetricTrend? trend;
 
   @override
   Widget build(BuildContext context) {
@@ -596,6 +644,7 @@ class _HrvCard extends StatelessWidget {
           return _ValueBig(
             value: '${_round(m.value)} ${m.unit}',
             sub: _ago(l10n, m.capturedAt),
+            trend: trend,
           );
         },
       ),
@@ -604,8 +653,9 @@ class _HrvCard extends StatelessWidget {
 }
 
 class _HeartRateCard extends StatelessWidget {
-  const _HeartRateCard({required this.async});
+  const _HeartRateCard({required this.async, this.trend});
   final AsyncValue<HealthMetric?> async;
+  final MetricTrend? trend;
 
   @override
   Widget build(BuildContext context) {
@@ -621,6 +671,7 @@ class _HeartRateCard extends StatelessWidget {
           return _ValueBig(
             value: '${_round(m.value)} ${m.unit}',
             sub: _ago(l10n, m.capturedAt),
+            trend: trend,
           );
         },
       ),
@@ -667,8 +718,9 @@ class _WorkoutCard extends StatelessWidget {
 }
 
 class _StepsCard extends ConsumerWidget {
-  const _StepsCard({required this.async});
+  const _StepsCard({required this.async, this.trend});
   final AsyncValue<HealthMetric?> async;
+  final MetricTrend? trend;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -690,7 +742,7 @@ class _StepsCard extends ConsumerWidget {
           final sub = wm != null && _utcDayKey(wm.capturedAt) == stepsDay
               ? '${(wm.value / 1000.0).toStringAsFixed(1)} km · ${_ago(l10n, m.capturedAt)}'
               : _ago(l10n, m.capturedAt);
-          return _ValueBig(value: _formatSteps(m.value), sub: sub);
+          return _ValueBig(value: _formatSteps(m.value), sub: sub, trend: trend);
         },
       ),
     );
@@ -698,8 +750,9 @@ class _StepsCard extends ConsumerWidget {
 }
 
 class _ActiveEnergyCard extends StatelessWidget {
-  const _ActiveEnergyCard({required this.async});
+  const _ActiveEnergyCard({required this.async, this.trend});
   final AsyncValue<HealthMetric?> async;
+  final MetricTrend? trend;
 
   @override
   Widget build(BuildContext context) {
@@ -715,6 +768,7 @@ class _ActiveEnergyCard extends StatelessWidget {
           return _ValueBig(
             value: '${m.value.round()} kcal',
             sub: _ago(l10n, m.capturedAt),
+            trend: trend,
           );
         },
       ),
@@ -723,8 +777,9 @@ class _ActiveEnergyCard extends StatelessWidget {
 }
 
 class _BodyBatteryCard extends StatelessWidget {
-  const _BodyBatteryCard({required this.async});
+  const _BodyBatteryCard({required this.async, this.trend});
   final AsyncValue<HealthMetric?> async;
+  final MetricTrend? trend;
 
   @override
   Widget build(BuildContext context) {
@@ -745,6 +800,7 @@ class _BodyBatteryCard extends StatelessWidget {
           return _ValueBig(
             value: '${m.value.round()}',
             sub: '$netStr · ${_ago(l10n, m.capturedAt)}',
+            trend: trend,
           );
         },
       ),
@@ -753,8 +809,9 @@ class _BodyBatteryCard extends StatelessWidget {
 }
 
 class _StressCard extends StatelessWidget {
-  const _StressCard({required this.async});
+  const _StressCard({required this.async, this.trend});
   final AsyncValue<HealthMetric?> async;
+  final MetricTrend? trend;
 
   @override
   Widget build(BuildContext context) {
@@ -778,8 +835,9 @@ class _StressCard extends StatelessWidget {
 }
 
 class _RhrCard extends StatelessWidget {
-  const _RhrCard({required this.async});
+  const _RhrCard({required this.async, this.trend});
   final AsyncValue<HealthMetric?> async;
+  final MetricTrend? trend;
 
   @override
   Widget build(BuildContext context) {
@@ -795,6 +853,7 @@ class _RhrCard extends StatelessWidget {
           return _ValueBig(
             value: '${m.value.round()}',
             sub: _ago(l10n, m.capturedAt),
+            trend: trend,
           );
         },
       ),
@@ -819,6 +878,31 @@ class _TrainingLoadCard extends StatelessWidget {
           if (m == null) return const _ValueDash();
           return _ValueBig(
             value: '${_round(m.value)}',
+            sub: _ago(l10n, m.capturedAt),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _Spo2Card extends StatelessWidget {
+  const _Spo2Card({required this.async});
+  final AsyncValue<HealthMetric?> async;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _MetricCard(
+      icon: FLucideIcons.wind,
+      label: l10n.healthSpo2MetricLabel,
+      child: async.when(
+        loading: () => const _ValueSkeleton(),
+        error: (e, _) => const _ValueDash(),
+        data: (m) {
+          if (m == null) return const _ValueDash();
+          return _ValueBig(
+            value: '${_round(m.value)}%',
             sub: _ago(l10n, m.capturedAt),
           );
         },
@@ -867,9 +951,10 @@ class _MetricCard extends StatelessWidget {
 }
 
 class _ValueBig extends StatelessWidget {
-  const _ValueBig({required this.value, required this.sub});
+  const _ValueBig({required this.value, required this.sub, this.trend});
   final String value;
   final String sub;
+  final MetricTrend? trend;
 
   @override
   Widget build(BuildContext context) {
@@ -877,10 +962,39 @@ class _ValueBig extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(value, style: typography.xl),
+        Row(
+          children: [
+            Text(value, style: typography.xl),
+            if (trend != null) ...[
+              const SizedBox(width: AppSpacing.s4),
+              _TrendBadge(trend: trend!),
+            ],
+          ],
+        ),
         const SizedBox(height: AppSpacing.s2),
         Text(sub, style: context.captionStyle),
       ],
+    );
+  }
+}
+
+class _TrendBadge extends StatelessWidget {
+  const _TrendBadge({required this.trend});
+  final MetricTrend trend;
+
+  @override
+  Widget build(BuildContext context) {
+    final dir = trend.direction;
+    if (dir == TrendDirection.flat) return const SizedBox.shrink();
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    final isUp = dir == TrendDirection.up;
+    final color = isUp ? colors.primary : colors.destructive;
+    final arrow = isUp ? '↑' : '↓';
+    final pct = trend.deltaPct.abs().round();
+    return Text(
+      '$arrow$pct%',
+      style: typography.xs.copyWith(color: color, fontWeight: FontWeight.w600),
     );
   }
 }
@@ -956,6 +1070,100 @@ String _ago(AppLocalizations l10n, DateTime when) => AppFormatters.relativeTime(
     return '$mm-$dd';
   },
 );
+
+class _WeeklySummaryPanel extends ConsumerWidget {
+  const _WeeklySummaryPanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(weeklySummaryProvider);
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return async.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (summary) {
+        if (summary == null) return const SizedBox.shrink();
+        return SoftCard(
+          padding: const EdgeInsets.all(AppSpacing.s16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    FLucideIcons.calendarDays,
+                    size: AppIconSizes.sm,
+                    color: colors.mutedForeground,
+                  ),
+                  const SizedBox(width: AppSpacing.s4),
+                  Text(
+                    l10n.healthWeeklySummaryTitle,
+                    style: typography.sm.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              Wrap(
+                spacing: AppSpacing.s16,
+                runSpacing: AppSpacing.s8,
+                children: [
+                  _summaryChip(
+                    context,
+                    Fmt.number(summary.totalSteps.round()),
+                    l10n.healthStepsMetricLabel,
+                  ),
+                  if (summary.avgSleepHours > 0)
+                    _summaryChip(
+                      context,
+                      '${_round(summary.avgSleepHours)}h',
+                      l10n.healthSleepMetricLabel,
+                    ),
+                  if (summary.workoutCount > 0)
+                    _summaryChip(
+                      context,
+                      '${summary.totalWorkoutMinutes}m · ${summary.workoutCount}×',
+                      l10n.healthWorkoutMetricLabel,
+                    ),
+                  if (summary.avgHrv > 0)
+                    _summaryChip(
+                      context,
+                      '${summary.avgHrv.round()}ms',
+                      l10n.healthHrvMetricLabel,
+                    ),
+                  if (summary.avgRhr > 0)
+                    _summaryChip(
+                      context,
+                      '${summary.avgRhr.round()}bpm',
+                      l10n.healthRhrMetricLabel,
+                    ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _summaryChip(BuildContext context, String value, String label) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(value, style: typography.sm.copyWith(fontWeight: FontWeight.w600)),
+        Text(
+          label,
+          style: typography.xs.copyWith(color: colors.mutedForeground),
+        ),
+      ],
+    );
+  }
+}
 
 class _BriefingPanel extends ConsumerStatefulWidget {
   const _BriefingPanel();

@@ -1,9 +1,9 @@
 /// Recovery scoring service — shared between AI tools, Today page, and Plan.
 ///
-/// Computes a composite recovery score (0–100) from HRV, sleep, RHR, and
-/// VO2max against a rolling baseline. The scoring math lives here so the
-/// AI tool, `recoverySignalProvider`, and Plan page all produce identical
-/// results.
+/// Computes a composite recovery score (0–100) from HRV, sleep, RHR,
+/// VO2max, Body Battery, and Stress against a rolling baseline. The
+/// scoring math lives here so the AI tool, `recoverySignalProvider`,
+/// and Plan page all produce identical results.
 ///
 /// This is a pure service — no Riverpod, no DB access. Callers fetch
 /// the raw `HealthMetric` lists and pass them in.
@@ -44,6 +44,8 @@ class RecoveryScorer {
     required List<HealthMetric> sleep,
     required List<HealthMetric> rhr,
     List<HealthMetric> vo2Max = const <HealthMetric>[],
+    List<HealthMetric> bodyBattery = const <HealthMetric>[],
+    List<HealthMetric> stress = const <HealthMetric>[],
     DateTime? now,
   }) {
     final t = now ?? DateTime.now().toUtc();
@@ -68,22 +70,36 @@ class RecoveryScorer {
     final vo2Baseline = _avgInWindow(vo2Max, baselineFrom, baselineTo);
     final vo2BaselineN = _countInWindow(vo2Max, baselineFrom, baselineTo);
 
+    final bbRecent = _avgInWindow(bodyBattery, recentFrom, t);
+    final bbBaseline = _avgInWindow(bodyBattery, baselineFrom, baselineTo);
+    final bbBaselineN = _countInWindow(bodyBattery, baselineFrom, baselineTo);
+
+    final stressRecent = _avgInWindow(stress, recentFrom, t);
+    final stressBaseline = _avgInWindow(stress, baselineFrom, baselineTo);
+    final stressBaselineN = _countInWindow(stress, baselineFrom, baselineTo);
+
     final inputs = <String, Object?>{
       'latest_hrv_ms': hrvRecent == null ? null : _round(hrvRecent),
       'avg_sleep_hours':
           sleepHoursRecent == null ? null : _round(sleepHoursRecent),
       'latest_rhr_bpm': rhrRecent == null ? null : _round(rhrRecent),
       'latest_vo2_max': vo2Recent == null ? null : _round(vo2Recent),
+      'latest_body_battery': bbRecent == null ? null : _round(bbRecent),
+      'latest_stress': stressRecent == null ? null : _round(stressRecent),
     };
 
     final haveBaseline = hrvBaselineN >= 5 ||
         sleepBaselineN >= 5 ||
         rhrBaselineN >= 5 ||
-        vo2BaselineN >= 5;
+        vo2BaselineN >= 5 ||
+        bbBaselineN >= 5 ||
+        stressBaselineN >= 5;
     final haveRecent = hrvRecent != null ||
         sleepHoursRecent != null ||
         rhrRecent != null ||
-        vo2Recent != null;
+        vo2Recent != null ||
+        bbRecent != null ||
+        stressRecent != null;
 
     if (!haveBaseline || !haveRecent) {
       return RecoveryResult(
@@ -110,6 +126,16 @@ class RecoveryScorer {
     if (vo2Recent != null && vo2Baseline != null && vo2Baseline > 0) {
       final ratio = (vo2Recent - vo2Baseline) / vo2Baseline;
       subScores.add(_clamp(50 + ratio * 125, 0, 100));
+    }
+    // Body Battery: higher is better (like HRV).
+    if (bbRecent != null && bbBaseline != null && bbBaseline > 0) {
+      final ratio = (bbRecent - bbBaseline) / bbBaseline;
+      subScores.add(_clamp(50 + ratio * 125, 0, 100));
+    }
+    // Stress: lower is better (like RHR — inverted).
+    if (stressRecent != null && stressBaseline != null && stressBaseline > 0) {
+      final ratio = (stressRecent - stressBaseline) / stressBaseline;
+      subScores.add(_clamp(50 - ratio * 125, 0, 100));
     }
 
     if (subScores.isEmpty) {

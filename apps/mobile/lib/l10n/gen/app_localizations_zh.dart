@@ -7635,6 +7635,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthTrendRespiratorySubtitle => '每日平均呼吸率';
 
   @override
+  String get healthTrendRhrTitle => '静息心率';
+
+  @override
+  String get healthTrendRhrSubtitle => '每日静息心率';
+
+  @override
   String get healthTrendWorkoutSubtitle => '每天分钟数';
 
   @override
@@ -7692,6 +7698,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthSleepLightLabel => '浅睡';
 
   @override
+  String get healthSleepAwakeLabel => '清醒';
+
+  @override
   String get healthTrendBodyBatteryTitle => '电量';
 
   @override
@@ -7714,6 +7723,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthTrendTrainingEffectSubtitle => '体能提升信号';
+
+  @override
+  String get healthWeeklySummaryTitle => '本周';
+
+  @override
+  String get healthSpo2MetricLabel => '血氧';
+
+  @override
+  String get healthTrendSpo2Title => '血氧';
+
+  @override
+  String get healthTrendSpo2Subtitle => '每日平均血氧饱和度';
+
+  @override
+  String get healthTrendTotalEnergyTitle => '总能量';
+
+  @override
+  String get healthTrendTotalEnergySubtitle => '每日总消耗卡路里';
 
   @override
   String get healthSyncPermissionDenied => '权限被拒绝';

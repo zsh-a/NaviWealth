@@ -186,6 +186,12 @@ class GarminSnapshotWriter {
       result ? upserted++ : unchanged++;
     }
 
+    // SpO2
+    for (final item in _list(snapshot, 'spo2')) {
+      final result = await _upsertDaily(item, HealthMetricKind.spo2Daily);
+      result ? upserted++ : unchanged++;
+    }
+
     return GarminWriteResult(
       upserted: upserted,
       unchanged: unchanged,

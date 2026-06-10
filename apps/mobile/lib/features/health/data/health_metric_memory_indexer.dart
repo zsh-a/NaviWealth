@@ -58,6 +58,7 @@ const String kEventStressRecorded = 'stress_recorded';
 const String kEventBodyBatteryRecorded = 'body_battery_recorded';
 const String kEventTrainingLoadRecorded = 'training_load_recorded';
 const String kEventTrainingEffectRecorded = 'training_effect_recorded';
+const String kEventSpo2Recorded = 'spo2_recorded';
 
 /// Sleep duration boundaries (hours) for an episodic memory. Outside
 /// this range a session is "notable" — either deficit or recovery.
@@ -199,6 +200,7 @@ class HealthMetricMemoryIndexer {
     HealthMetricKind.bodyBatteryDaily => kEventBodyBatteryRecorded,
     HealthMetricKind.trainingLoadDaily => kEventTrainingLoadRecorded,
     HealthMetricKind.trainingEffectDaily => kEventTrainingEffectRecorded,
+    HealthMetricKind.spo2Daily => kEventSpo2Recorded,
     HealthMetricKind.unknown => 'health_unknown',
   };
 
@@ -243,6 +245,8 @@ class HealthMetricMemoryIndexer {
         'Training load ${_round(metric.value)} · $whenIso',
       HealthMetricKind.trainingEffectDaily =>
         'Training effect ${_round(metric.value)} · $whenIso',
+      HealthMetricKind.spo2Daily =>
+        'SpO2 ${_round(metric.value)}% · $whenIso',
       HealthMetricKind.unknown => 'Health row · $whenIso',
     };
   }
@@ -286,6 +290,8 @@ class HealthMetricMemoryIndexer {
         'Training load ${_round(metric.value)} on $whenIso.',
       HealthMetricKind.trainingEffectDaily =>
         'Training effect ${_round(metric.value)} on $whenIso.',
+      HealthMetricKind.spo2Daily =>
+        'SpO2 ${_round(metric.value)}% on $whenIso.',
       HealthMetricKind.unknown => 'Health metric on $whenIso.',
     };
   }
@@ -351,6 +357,7 @@ class HealthMetricMemoryIndexer {
         return 0.55;
       case HealthMetricKind.trainingLoadDaily:
       case HealthMetricKind.trainingEffectDaily:
+      case HealthMetricKind.spo2Daily:
         return 0.55;
       case HealthMetricKind.unknown:
         return 0.4;

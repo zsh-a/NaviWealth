@@ -58,6 +58,8 @@ pub struct HealthSnapshot {
     pub training_load: Vec<DailyMetric>,
     /// Garmin-specific: training effect label encoded as numeric score.
     pub training_effect: Vec<DailyMetric>,
+    /// SpO2 (blood oxygen saturation) daily average.
+    pub spo2: Vec<DailyMetric>,
 }
 
 /// A value bucketed to a calendar day.

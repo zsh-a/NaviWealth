@@ -158,6 +158,43 @@ pub fn map_heart_rate_from_sleep(json: &Value, date: NaiveDate) -> Option<DailyM
     })
 }
 
+/// Map all-day heart rate from the heartRate endpoint.
+///
+/// Garmin returns `{ "heartRateValues": [[ts_ms, bpm], ...] }`.
+/// We compute the daily average, skipping zero/null readings.
+pub fn map_heart_rate_all_day(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
+    let entries = json.get("heartRateValues")?.as_array()?;
+    let mut sum = 0.0;
+    let mut count = 0;
+    for entry in entries {
+        if let Some(arr) = entry.as_array() {
+            // Array format: [timestamp_ms, heart_rate_bpm]
+            if let Some(hr) = arr.get(1).and_then(|v| v.as_f64()) {
+                if hr > 0.0 {
+                    sum += hr;
+                    count += 1;
+                }
+            }
+        } else if let Some(hr) = entry.get("value").and_then(|v| v.as_f64()) {
+            // Object format: { "value": bpm }
+            if hr > 0.0 {
+                sum += hr;
+                count += 1;
+            }
+        }
+    }
+    if count == 0 {
+        return None;
+    }
+    Some(DailyMetric {
+        id: format!("garmin:hr:{date}"),
+        date,
+        value: sum / count as f64,
+        unit: "bpm".to_string(),
+        source_device: Some("garmin".to_string()),
+    })
+}
+
 /// Map Body Battery JSON to BodyBatteryDay.
 ///
 /// Garmin returns an array. Each entry has `date`, `charged`, `drained`,
@@ -285,6 +322,47 @@ pub fn map_weight(json: &Value, date: NaiveDate) -> Option<PointMetric> {
         measured_at: date.to_string(),
         value: kg,
         unit: "kg".to_string(),
+        source_device: Some("garmin".to_string()),
+    })
+}
+
+/// Map SpO2 (blood oxygen) from daily SpO2 JSON.
+///
+/// Garmin returns `{ "spO2Measurements": [{ "value": 97, ... }, ...] }`
+/// or `{ "avgSpO2": 97, ... }`. We extract the average.
+pub fn map_spo2(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
+    // Try the direct average field first.
+    if let Some(avg) = json.get("avgSpO2").and_then(|v| v.as_f64()) {
+        if avg > 0.0 {
+            return Some(DailyMetric {
+                id: format!("garmin:spo2:{date}"),
+                date,
+                value: avg,
+                unit: "%".to_string(),
+                source_device: Some("garmin".to_string()),
+            });
+        }
+    }
+    // Fall back to computing from measurements array.
+    let entries = json.get("spO2Measurements")?.as_array()?;
+    let mut sum = 0.0;
+    let mut count = 0;
+    for entry in entries {
+        if let Some(v) = entry.get("value").and_then(|v| v.as_f64()) {
+            if v > 0.0 {
+                sum += v;
+                count += 1;
+            }
+        }
+    }
+    if count == 0 {
+        return None;
+    }
+    Some(DailyMetric {
+        id: format!("garmin:spo2:{date}"),
+        date,
+        value: sum / count as f64,
+        unit: "%".to_string(),
         source_device: Some("garmin".to_string()),
     })
 }
@@ -588,6 +666,7 @@ pub fn build_snapshot(
     floors_climbed: Vec<DailyMetric>,
     training_load: Vec<DailyMetric>,
     training_effect: Vec<DailyMetric>,
+    spo2: Vec<DailyMetric>,
 ) -> HealthSnapshot {
     HealthSnapshot {
         steps,
@@ -605,6 +684,7 @@ pub fn build_snapshot(
         stress,
         training_load,
         training_effect,
+        spo2,
     }
 }
 
@@ -682,6 +762,41 @@ mod tests {
         let hr = map_heart_rate_from_sleep(&data, date("2026-06-07")).unwrap();
         assert_eq!(hr.value, 45.0);
         assert_eq!(hr.unit, "bpm");
+    }
+
+    // ---- All-day HR ----
+
+    #[test]
+    fn heart_rate_all_day_from_array() {
+        let data = json!({
+            "heartRateValues": [
+                [1717700000000i64, 72.0],
+                [1717700900000i64, 75.0],
+                [1717701800000i64, 0.0],  // zero should be skipped
+                [1717702700000i64, 68.0]
+            ]
+        });
+        let hr = map_heart_rate_all_day(&data, date("2026-06-07")).unwrap();
+        assert_eq!(hr.value, (72.0 + 75.0 + 68.0) / 3.0);
+        assert_eq!(hr.unit, "bpm");
+        assert_eq!(hr.id, "garmin:hr:2026-06-07");
+    }
+
+    #[test]
+    fn heart_rate_all_day_empty_returns_none() {
+        let data = json!({"heartRateValues": []});
+        assert!(map_heart_rate_all_day(&data, date("2026-06-07")).is_none());
+    }
+
+    #[test]
+    fn heart_rate_all_day_all_zeros_returns_none() {
+        let data = json!({
+            "heartRateValues": [
+                [1717700000000i64, 0.0],
+                [1717700900000i64, 0.0]
+            ]
+        });
+        assert!(map_heart_rate_all_day(&data, date("2026-06-07")).is_none());
     }
 
     // ---- RHR ----
@@ -895,6 +1010,42 @@ mod tests {
         assert!(map_training_effect(&data, date("2026-06-07")).is_none());
     }
 
+    // ---- SpO2 ----
+
+    #[test]
+    fn spo2_from_avg_field() {
+        let data = json!({"avgSpO2": 97.5});
+        let m = map_spo2(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 97.5);
+        assert_eq!(m.unit, "%");
+        assert_eq!(m.id, "garmin:spo2:2026-06-07");
+    }
+
+    #[test]
+    fn spo2_from_measurements() {
+        let data = json!({
+            "spO2Measurements": [
+                {"value": 97.0},
+                {"value": 98.0},
+                {"value": 96.0}
+            ]
+        });
+        let m = map_spo2(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, (97.0 + 98.0 + 96.0) / 3.0);
+    }
+
+    #[test]
+    fn spo2_empty_returns_none() {
+        let data = json!({"spO2Measurements": []});
+        assert!(map_spo2(&data, date("2026-06-07")).is_none());
+    }
+
+    #[test]
+    fn spo2_zero_avg_returns_none() {
+        let data = json!({"avgSpO2": 0.0});
+        assert!(map_spo2(&data, date("2026-06-07")).is_none());
+    }
+
     #[test]
     fn build_snapshot_combines_all_fields() {
         let snap = build_snapshot(
@@ -916,6 +1067,7 @@ mod tests {
             vec![],
             vec![],
             vec![],
+            vec![],
         );
         assert_eq!(snap.steps.len(), 1);
         assert_eq!(snap.sleep_sessions.len(), 0);
@@ -923,5 +1075,6 @@ mod tests {
         assert_eq!(snap.floors_climbed.len(), 0);
         assert_eq!(snap.training_load.len(), 0);
         assert_eq!(snap.training_effect.len(), 0);
+        assert_eq!(snap.spo2.len(), 0);
     }
 }

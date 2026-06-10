@@ -343,6 +343,7 @@ async fn run_streaming_sync(
     let mut all_hrv = Vec::new();
     let mut all_hr = Vec::new();
     let mut all_floors = Vec::new();
+    let mut all_spo2 = Vec::new();
 
     for i in 0..total_days {
         if SYNC_CANCEL.load(Ordering::Relaxed) {
@@ -355,7 +356,19 @@ async fn run_streaming_sync(
             if let Some(s) = garmin::mapper::map_sleep(&json, date) {
                 all_sleep.push(s);
             }
+            // Fallback: extract HR from sleep if all-day HR fails.
             if let Some(hr) = garmin::mapper::map_heart_rate_from_sleep(&json, date) {
+                all_hr.push(hr);
+            }
+        }
+
+        // All-day HR (preferred over sleep-based HR).
+        if let Ok(json) =
+            garmin::endpoints::fetch_heart_rate(&http, &rl, &token, date, cn).await
+        {
+            if let Some(hr) = garmin::mapper::map_heart_rate_all_day(&json, date) {
+                // Replace sleep-based HR if all-day HR is available.
+                all_hr.retain(|m| m.date != date);
                 all_hr.push(hr);
             }
         }
@@ -374,12 +387,19 @@ async fn run_streaming_sync(
             }
         }
 
+        if let Ok(json) = garmin::endpoints::fetch_spo2(&http, &rl, &token, date, cn).await {
+            if let Some(s) = garmin::mapper::map_spo2(&json, date) {
+                all_spo2.push(s);
+            }
+        }
+
         // Emit day progress.
         let metrics_so_far = batch_metrics
             + all_sleep.len()
             + all_hrv.len()
             + all_hr.len()
-            + all_floors.len();
+            + all_floors.len()
+            + all_spo2.len();
 
         let _ = sink.add(GarminSyncProgress {
             phase: "days".to_string(),
@@ -429,7 +449,8 @@ async fn run_streaming_sync(
         + all_vo2.len()
         + all_floors.len()
         + all_training_load.len()
-        + all_training_effect.len();
+        + all_training_effect.len()
+        + all_spo2.len();
 
     // Build and serialize the HealthSnapshot for Dart-side persistence.
     let snapshot = garmin::mapper::build_snapshot(
@@ -445,6 +466,7 @@ async fn run_streaming_sync(
         all_floors,
         all_training_load,
         all_training_effect,
+        all_spo2,
     );
     let snapshot_json = serde_json::to_string(&snapshot).unwrap_or_default();
 
