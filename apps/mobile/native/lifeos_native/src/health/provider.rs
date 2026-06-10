@@ -54,6 +54,8 @@ pub struct HealthSnapshot {
     pub body_battery: Vec<BodyBatteryDay>,
     /// Garmin-specific: daily stress average.
     pub stress: Vec<DailyMetric>,
+    /// Garmin-specific: weekly training load (from trainingStatus endpoint).
+    pub training_load: Vec<DailyMetric>,
 }
 
 /// A value bucketed to a calendar day.

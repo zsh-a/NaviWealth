@@ -743,12 +743,14 @@ impl SseDecode for crate::api::health::GarminSyncProgress {
         let mut var_total = <i32>::sse_decode(deserializer);
         let mut var_metricsCount = <i32>::sse_decode(deserializer);
         let mut var_errors = <Vec<String>>::sse_decode(deserializer);
+        let mut var_snapshotJson = <Option<String>>::sse_decode(deserializer);
         return crate::api::health::GarminSyncProgress {
             phase: var_phase,
             current: var_current,
             total: var_total,
             metrics_count: var_metricsCount,
             errors: var_errors,
+            snapshot_json: var_snapshotJson,
         };
     }
 }
@@ -911,6 +913,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::health::GarminSyncProgress {
             self.total.into_into_dart().into_dart(),
             self.metrics_count.into_into_dart().into_dart(),
             self.errors.into_into_dart().into_dart(),
+            self.snapshot_json.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -993,6 +996,7 @@ impl SseEncode for crate::api::health::GarminSyncProgress {
         <i32>::sse_encode(self.total, serializer);
         <i32>::sse_encode(self.metrics_count, serializer);
         <Vec<String>>::sse_encode(self.errors, serializer);
+        <Option<String>>::sse_encode(self.snapshot_json, serializer);
     }
 }
 

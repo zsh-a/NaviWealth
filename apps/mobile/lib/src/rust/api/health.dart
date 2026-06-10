@@ -68,7 +68,7 @@ Future<String?> garminExportSession() =>
 
 /// Progress event emitted during Garmin sync (only primitive fields for FRB).
 class GarminSyncProgress {
-  /// Phase: "days" | "activities" | "done"
+  /// Phase: "days" | "activities" | "snapshot" | "done"
   final String phase;
 
   /// Current index (day offset or activity offset).
@@ -83,12 +83,16 @@ class GarminSyncProgress {
   /// Accumulated error messages.
   final List<String> errors;
 
+  /// HealthSnapshot JSON — only set on the "snapshot" phase event.
+  final String? snapshotJson;
+
   const GarminSyncProgress({
     required this.phase,
     required this.current,
     required this.total,
     required this.metricsCount,
     required this.errors,
+    this.snapshotJson,
   });
 
   @override
@@ -97,7 +101,8 @@ class GarminSyncProgress {
       current.hashCode ^
       total.hashCode ^
       metricsCount.hashCode ^
-      errors.hashCode;
+      errors.hashCode ^
+      snapshotJson.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -108,5 +113,6 @@ class GarminSyncProgress {
           current == other.current &&
           total == other.total &&
           metricsCount == other.metricsCount &&
-          errors == other.errors;
+          errors == other.errors &&
+          snapshotJson == other.snapshotJson;
 }

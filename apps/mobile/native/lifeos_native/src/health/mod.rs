@@ -203,13 +203,19 @@ pub async fn garmin_sync_range_stream(
     match result {
         Ok((metrics_count, errors, snapshot_json)) => {
             // Emit snapshot data so Dart can persist it to Drift.
-            if !snapshot_json.is_empty() {
+            let snapshot = if snapshot_json.is_empty() {
+                None
+            } else {
+                Some(snapshot_json)
+            };
+            if snapshot.is_some() {
                 let _ = sink.add(GarminSyncProgress {
                     phase: "snapshot".to_string(),
                     current: 0,
                     total: 0,
                     metrics_count: metrics_count as i32,
-                    errors: vec![snapshot_json],
+                    errors: vec![],
+                    snapshot_json: snapshot,
                 });
             }
             let _ = sink.add(GarminSyncProgress {
@@ -218,6 +224,7 @@ pub async fn garmin_sync_range_stream(
                 total: total_days as i32,
                 metrics_count: metrics_count as i32,
                 errors,
+                snapshot_json: None,
             });
         }
         Err(e) => {
@@ -227,6 +234,7 @@ pub async fn garmin_sync_range_stream(
                 total: total_days as i32,
                 metrics_count: 0,
                 errors: vec![e.to_string()],
+                snapshot_json: None,
             });
         }
     }
@@ -324,15 +332,17 @@ async fn run_streaming_sync(
         total: total_days as i32,
         metrics_count: batch_metrics as i32,
         errors: errors.clone(),
+        snapshot_json: None,
     });
 
     // -----------------------------------------------------------------------
-    // Phase 2: Per-day fetch for sleep + HRV only (2 API calls per day).
+    // Phase 2: Per-day fetch for sleep + HRV + daily summary (3 calls/day).
     // -----------------------------------------------------------------------
 
     let mut all_sleep = Vec::new();
     let mut all_hrv = Vec::new();
     let mut all_hr = Vec::new();
+    let mut all_floors = Vec::new();
 
     for i in 0..total_days {
         if SYNC_CANCEL.load(Ordering::Relaxed) {
@@ -356,11 +366,20 @@ async fn run_streaming_sync(
             }
         }
 
+        if let Ok(json) =
+            garmin::endpoints::fetch_daily_summary(&http, &rl, &token, date, cn).await
+        {
+            if let Some(f) = garmin::mapper::map_floors_climbed(&json, date) {
+                all_floors.push(f);
+            }
+        }
+
         // Emit day progress.
         let metrics_so_far = batch_metrics
             + all_sleep.len()
             + all_hrv.len()
-            + all_hr.len();
+            + all_hr.len()
+            + all_floors.len();
 
         let _ = sink.add(GarminSyncProgress {
             phase: "days".to_string(),
@@ -368,6 +387,7 @@ async fn run_streaming_sync(
             total: total_days as i32,
             metrics_count: metrics_so_far as i32,
             errors: errors.clone(),
+            snapshot_json: None,
         });
     }
 
@@ -376,11 +396,15 @@ async fn run_streaming_sync(
     // -----------------------------------------------------------------------
 
     let mut all_vo2 = Vec::new();
+    let mut all_training_load = Vec::new();
     if !SYNC_CANCEL.load(Ordering::Relaxed) {
         if let Ok(json) =
             garmin::endpoints::fetch_training_status(&http, &rl, &token, cn).await
         {
             all_vo2 = garmin::mapper::map_vo2_max(&json, to).into_iter().collect();
+            all_training_load = garmin::mapper::map_training_load(&json, to)
+                .into_iter()
+                .collect();
         }
     }
 
@@ -398,7 +422,9 @@ async fn run_streaming_sync(
         + all_bb.len()
         + all_stress.len()
         + all_weight.len()
-        + all_vo2.len();
+        + all_vo2.len()
+        + all_floors.len()
+        + all_training_load.len();
 
     // Build and serialize the HealthSnapshot for Dart-side persistence.
     let snapshot = garmin::mapper::build_snapshot(
@@ -411,6 +437,8 @@ async fn run_streaming_sync(
         all_stress,
         all_weight,
         all_vo2,
+        all_floors,
+        all_training_load,
     );
     let snapshot_json = serde_json::to_string(&snapshot).unwrap_or_default();
 

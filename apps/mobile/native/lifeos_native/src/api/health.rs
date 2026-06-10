@@ -13,7 +13,7 @@ use crate::frb_generated::StreamSink;
 
 /// Progress event emitted during Garmin sync (only primitive fields for FRB).
 pub struct GarminSyncProgress {
-    /// Phase: "days" | "activities" | "done"
+    /// Phase: "days" | "activities" | "snapshot" | "done"
     pub phase: String,
     /// Current index (day offset or activity offset).
     pub current: i32,
@@ -23,6 +23,9 @@ pub struct GarminSyncProgress {
     pub metrics_count: i32,
     /// Accumulated error messages.
     pub errors: Vec<String>,
+    /// HealthSnapshot JSON — only set on the "snapshot" phase event.
+    /// Null/empty on all other phases.
+    pub snapshot_json: Option<String>,
 }
 
 /// Initialize the Garmin client. Returns auth state as JSON.

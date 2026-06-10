@@ -307,9 +307,44 @@ pub fn map_vo2_max(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
     })
 }
 
+/// Map training load from training status JSON.
+///
+/// Garmin returns `weeklyTrainingLoad` (float) and feedback labels
+/// (`loadShortFeedback`, `loadMediumFeedback`, `loadLongFeedback`).
+pub fn map_training_load(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
+    let value = json.get("weeklyTrainingLoad").and_then(|v| v.as_f64())?;
+    if value == 0.0 {
+        return None;
+    }
+    Some(DailyMetric {
+        id: format!("garmin:training_load:{date}"),
+        date,
+        value,
+        unit: "load".to_string(),
+        source_device: Some("garmin".to_string()),
+    })
+}
+
 // ---------------------------------------------------------------------------
 // Range mappers — batch multiple days into one API call.
 // ---------------------------------------------------------------------------
+
+/// Map floors climbed from daily summary JSON.
+///
+/// Garmin returns `{ "floorsAscended": 5, ... }` in the daily summary.
+pub fn map_floors_climbed(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
+    let value = json.get("floorsAscended").and_then(|v| v.as_f64())?;
+    if value == 0.0 {
+        return None;
+    }
+    Some(DailyMetric {
+        id: format!("garmin:floors:{date}"),
+        date,
+        value,
+        unit: "count".to_string(),
+        source_device: Some("garmin".to_string()),
+    })
+}
 
 /// Map steps JSON for a date range → Vec<DailyMetric>.
 ///
@@ -522,6 +557,8 @@ pub fn build_snapshot(
     stress: Vec<DailyMetric>,
     weight: Vec<PointMetric>,
     vo2_max: Vec<DailyMetric>,
+    floors_climbed: Vec<DailyMetric>,
+    training_load: Vec<DailyMetric>,
 ) -> HealthSnapshot {
     HealthSnapshot {
         steps,
@@ -533,10 +570,11 @@ pub fn build_snapshot(
         vo2_max,
         weight,
         body_fat: vec![],
-        floors_climbed: vec![],
+        floors_climbed,
         respiratory_rate: vec![],
         body_battery,
         stress,
+        training_load,
     }
 }
 
@@ -738,6 +776,59 @@ mod tests {
 
     // ---- Build snapshot ----
 
+    // ---- Floors climbed ----
+
+    #[test]
+    fn floors_climbed_from_daily_summary() {
+        let data = json!({
+            "floorsAscended": 5,
+            "floorsDescended": 3
+        });
+        let m = map_floors_climbed(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 5.0);
+        assert_eq!(m.unit, "count");
+        assert_eq!(m.id, "garmin:floors:2026-06-07");
+    }
+
+    #[test]
+    fn floors_climbed_zero_returns_none() {
+        let data = json!({"floorsAscended": 0});
+        assert!(map_floors_climbed(&data, date("2026-06-07")).is_none());
+    }
+
+    #[test]
+    fn floors_climbed_missing_field_returns_none() {
+        let data = json!({"someOtherField": 10});
+        assert!(map_floors_climbed(&data, date("2026-06-07")).is_none());
+    }
+
+    // ---- Training load ----
+
+    #[test]
+    fn training_load_from_status() {
+        let data = json!({
+            "weeklyTrainingLoad": 420.5,
+            "loadShortFeedback": "OPTIMAL",
+            "loadMediumFeedback": "OPTIMAL"
+        });
+        let m = map_training_load(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 420.5);
+        assert_eq!(m.unit, "load");
+        assert_eq!(m.id, "garmin:training_load:2026-06-07");
+    }
+
+    #[test]
+    fn training_load_zero_returns_none() {
+        let data = json!({"weeklyTrainingLoad": 0.0});
+        assert!(map_training_load(&data, date("2026-06-07")).is_none());
+    }
+
+    #[test]
+    fn training_load_missing_field_returns_none() {
+        let data = json!({"mostRecentVO2Max": 48.0});
+        assert!(map_training_load(&data, date("2026-06-07")).is_none());
+    }
+
     #[test]
     fn build_snapshot_combines_all_fields() {
         let snap = build_snapshot(
@@ -756,9 +847,13 @@ mod tests {
             vec![],
             vec![],
             vec![],
+            vec![],
+            vec![],
         );
         assert_eq!(snap.steps.len(), 1);
         assert_eq!(snap.sleep_sessions.len(), 0);
         assert_eq!(snap.active_energy.len(), 0); // Garmin doesn't provide this
+        assert_eq!(snap.floors_climbed.len(), 0);
+        assert_eq!(snap.training_load.len(), 0);
     }
 }

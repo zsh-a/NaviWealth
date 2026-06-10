@@ -85,6 +85,7 @@ impl HealthProvider for GarminProvider {
         let mut body_battery = Vec::new();
         let mut stress = Vec::new();
         let mut weight = Vec::new();
+        let mut floors = Vec::new();
 
         for i in 0..days {
             let date = from + chrono::Duration::days(i);
@@ -134,12 +135,21 @@ impl HealthProvider for GarminProvider {
                     weight.push(metric);
                 }
             }
+
+            if let Ok(json) = endpoints::fetch_daily_summary(http, rl, &token, date, cn).await {
+                if let Some(f) = m::map_floors_climbed(&json, date) {
+                    floors.push(f);
+                }
+            }
         }
 
         let vo2_json = endpoints::fetch_training_status(http, rl, &token, cn)
             .await
             .unwrap_or_default();
         let vo2_max = m::map_vo2_max(&vo2_json, to).into_iter().collect();
+        let training_load = m::map_training_load(&vo2_json, to)
+            .into_iter()
+            .collect();
 
         Ok(m::build_snapshot(
             steps,
@@ -151,6 +161,8 @@ impl HealthProvider for GarminProvider {
             stress,
             weight,
             vo2_max,
+            floors,
+            training_load,
         ))
     }
 

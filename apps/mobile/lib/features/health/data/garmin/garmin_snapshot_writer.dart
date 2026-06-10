@@ -158,6 +158,27 @@ class GarminSnapshotWriter {
       }
     }
 
+    // Floors climbed
+    for (final item in _list(snapshot, 'floors_climbed')) {
+      final result =
+          await _upsertDaily(item, HealthMetricKind.floorsClimbedDaily);
+      result ? upserted++ : unchanged++;
+    }
+
+    // Respiratory rate
+    for (final item in _list(snapshot, 'respiratory_rate')) {
+      final result =
+          await _upsertDaily(item, HealthMetricKind.respiratoryRateDaily);
+      result ? upserted++ : unchanged++;
+    }
+
+    // Training load
+    for (final item in _list(snapshot, 'training_load')) {
+      final result =
+          await _upsertDaily(item, HealthMetricKind.trainingLoadDaily);
+      result ? upserted++ : unchanged++;
+    }
+
     return GarminWriteResult(
       upserted: upserted,
       unchanged: unchanged,

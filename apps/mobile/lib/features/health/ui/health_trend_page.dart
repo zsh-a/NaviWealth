@@ -297,6 +297,11 @@ List<_TrendSpec> _trendSpecsRaw(_TrendGroup group) => switch (group) {
       subtitle: '',
       kind: HealthMetricKind.floorsClimbedDaily,
     ),
+    const _TrendSpec(
+      title: '',
+      subtitle: '',
+      kind: HealthMetricKind.trainingLoadDaily,
+    ),
   ],
   _TrendGroup.body => [
     const _TrendSpec(title: '', subtitle: '', kind: HealthMetricKind.weight),
@@ -388,6 +393,7 @@ List<ChartPoint> _projectToPoints(
     case HealthMetricKind.respiratoryRateDaily:
     case HealthMetricKind.stressDaily:
     case HealthMetricKind.bodyBatteryDaily:
+    case HealthMetricKind.trainingLoadDaily:
       // One row per measurement → one point.
       final pts = <ChartPoint>[];
       for (final r in rows) {

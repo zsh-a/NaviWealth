@@ -178,10 +178,9 @@ class GarminSyncController extends Notifier<GarminSyncState> {
             metricsCount: progress.metricsCount,
             errors: progress.errors,
             // The "snapshot" event carries the HealthSnapshot JSON
-            // in errors[0] — store it for persistence in onDone.
-            snapshotJson: progress.phase == 'snapshot' && progress.errors.isNotEmpty
-                ? progress.errors.first
-                : (state is GarminSyncing
+            // in the dedicated snapshotJson field.
+            snapshotJson: progress.snapshotJson ??
+                (state is GarminSyncing
                     ? (state as GarminSyncing).snapshotJson
                     : null),
           );
