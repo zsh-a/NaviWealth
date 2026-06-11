@@ -183,28 +183,27 @@ Future<void> _showRowActions(
           icon: FLucideIcons.pencil,
           title: l10n.recurringActionEdit,
           subtitle: l10n.recurringActionEditHint,
-          onPress: () {
-            Navigator.of(sheetContext).pop();
-            showRecurringTransactionForm(context, ref, existing: rule);
-          },
+          onPress: () => closeSheetThen(sheetContext, () {
+            if (context.mounted) {
+              return showRecurringTransactionForm(context, ref, existing: rule);
+            }
+          }),
         ),
         AppActionSheetTile(
           icon: FLucideIcons.circlePause,
           title: l10n.recurringActionDisable,
           subtitle: l10n.recurringActionDisableHint,
-          onPress: () {
-            Navigator.of(sheetContext).pop();
-            _disableRule(context, ref, rule);
-          },
+          onPress: () => closeSheetThen(sheetContext, () {
+            if (context.mounted) return _disableRule(context, ref, rule);
+          }),
         ),
         AppActionSheetTile(
           icon: FLucideIcons.trash2,
           title: l10n.commonDelete,
           subtitle: l10n.recurringActionDeleteHint,
-          onPress: () {
-            Navigator.of(sheetContext).pop();
-            _deleteRule(context, ref, rule);
-          },
+          onPress: () => closeSheetThen(sheetContext, () {
+            if (context.mounted) return _deleteRule(context, ref, rule);
+          }),
         ),
       ],
     ),

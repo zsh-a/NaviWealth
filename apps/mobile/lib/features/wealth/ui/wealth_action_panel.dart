@@ -248,13 +248,14 @@ class _WealthActionTile extends StatelessWidget {
   }
 }
 
-void _closeAndPush(
+Future<void> _closeAndPush(
   BuildContext sheetContext,
   BuildContext routeContext,
   String path,
 ) {
-  Navigator.of(sheetContext).pop();
-  routeContext.push(path);
+  return closeSheetThen(sheetContext, () {
+    if (routeContext.mounted) routeContext.push(path);
+  });
 }
 
 Future<void> _closeAndOpenPhysical(
@@ -262,12 +263,17 @@ Future<void> _closeAndOpenPhysical(
   BuildContext routeContext,
   AssetType type,
 ) async {
-  Navigator.of(sheetContext).pop();
-  final created = await PhysicalAssetCreateSheet.show(routeContext, type: type);
-  if (created != null && routeContext.mounted) {
-    routeContext.goNamed(
-      AppRouteNames.wealthPhysicalDetail,
-      pathParameters: {'id': created.id},
+  await closeSheetThen(sheetContext, () async {
+    if (!routeContext.mounted) return;
+    final created = await PhysicalAssetCreateSheet.show(
+      routeContext,
+      type: type,
     );
-  }
+    if (created != null && routeContext.mounted) {
+      routeContext.goNamed(
+        AppRouteNames.wealthPhysicalDetail,
+        pathParameters: {'id': created.id},
+      );
+    }
+  });
 }

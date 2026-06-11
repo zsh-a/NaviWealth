@@ -42,28 +42,27 @@ Future<void> showDividendEventActions(
           icon: FLucideIcons.receipt,
           title: l10n.dividendEventViewInActivity,
           subtitle: l10n.dividendEventViewInActivityHint,
-          onPress: () {
-            Navigator.of(sheetContext).pop();
-            _viewInActivity(context, ref, event);
-          },
+          onPress: () => closeSheetThen(sheetContext, () {
+            if (context.mounted) return _viewInActivity(context, ref, event);
+          }),
         ),
         AppActionSheetTile(
           icon: FLucideIcons.pencil,
           title: l10n.dividendEventEdit,
           subtitle: l10n.dividendEventEditHint,
-          onPress: () {
-            Navigator.of(sheetContext).pop();
-            context.push(AppRoutes.wealthCorporateAction);
-          },
+          onPress: () => closeSheetThen(sheetContext, () {
+            if (context.mounted) context.push(AppRoutes.wealthCorporateAction);
+          }),
         ),
         AppActionSheetTile(
           icon: FLucideIcons.trash2,
           title: l10n.commonDelete,
           subtitle: l10n.dividendEventDeleteHint,
-          onPress: () {
-            Navigator.of(sheetContext).pop();
-            _deleteDividendEntry(context, ref, event);
-          },
+          onPress: () => closeSheetThen(sheetContext, () {
+            if (context.mounted) {
+              return _deleteDividendEntry(context, ref, event);
+            }
+          }),
         ),
       ],
     ),

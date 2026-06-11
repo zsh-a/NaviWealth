@@ -28,7 +28,7 @@ Widget _wrap(Widget child, {required double keyboardInset}) {
 }
 
 void main() {
-  testWidgets('nested AppSheetSurface only installs one backdrop filter', (
+  testWidgets('AppSheetSurface defaults to no blur and dedupes frosted blur', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -43,6 +43,21 @@ void main() {
     );
 
     expect(find.byKey(const Key('content')), findsOneWidget);
+    expect(find.byType(BackdropFilter), findsNothing);
+
+    await tester.pumpWidget(
+      _wrap(
+        keyboardInset: 0,
+        const AppSheetSurface(
+          frosted: true,
+          child: AppSheetSurface(
+            frosted: true,
+            child: SizedBox(key: Key('content'), height: 120),
+          ),
+        ),
+      ),
+    );
+
     expect(find.byType(BackdropFilter), findsOneWidget);
   });
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -18,6 +19,18 @@ void _beginAppSheetOverlay() {
 void _endAppSheetOverlay() {
   final current = appSheetOverlayDepthListenable.value;
   appSheetOverlayDepthListenable.value = current <= 0 ? 0 : current - 1;
+}
+
+/// Close the current app sheet, then run the next surface/navigation action
+/// after the reverse sheet animation has had a chance to settle.
+Future<void> closeSheetThen(
+  BuildContext sheetContext,
+  FutureOr<void> Function() next, {
+  Duration delay = Motion.medium,
+}) async {
+  Navigator.of(sheetContext).pop();
+  await Future<void>.delayed(delay);
+  await next();
 }
 
 /// Unified bottom-sheet shell — every modal sheet in the app should
@@ -330,7 +343,10 @@ class AppSheetDragHandle extends StatelessWidget {
         child: Container(
           width: AppSpacing.s40,
           height: 3.5,
-          margin: const EdgeInsets.only(top: AppSpacing.s10, bottom: AppSpacing.s8),
+          margin: const EdgeInsets.only(
+            top: AppSpacing.s10,
+            bottom: AppSpacing.s8,
+          ),
           decoration: BoxDecoration(
             color: colors.mutedForeground.withValues(alpha: AppOpacity.medium),
             borderRadius: BorderRadius.circular(AppRadius.full),
@@ -456,6 +472,7 @@ class AppSheetSurface extends StatelessWidget {
     this.border,
     this.safeTop = false,
     this.safeBottom = true,
+    this.frosted = false,
   });
 
   final Widget child;
@@ -463,6 +480,11 @@ class AppSheetSurface extends StatelessWidget {
   final Border? border;
   final bool safeTop;
   final bool safeBottom;
+
+  /// Enables the expensive live backdrop blur. The default sheet surface is
+  /// intentionally opaque enough to read as elevated without forcing the GPU
+  /// to blur a complex page behind every sheet animation.
+  final bool frosted;
 
   @override
   Widget build(BuildContext context) {
@@ -477,23 +499,26 @@ class AppSheetSurface extends StatelessWidget {
       alpha: isDark ? AppOpacity.light : AppOpacity.subtle,
     );
 
+    final decorated = DecoratedBox(
+      decoration: BoxDecoration(
+        color: surface,
+        border: border ?? Border(top: BorderSide(color: hairline, width: 1)),
+      ),
+      child: SafeArea(top: safeTop, bottom: safeBottom, child: child),
+    );
+
     return _AppSheetSurfaceScope(
       child: ClipRRect(
         borderRadius: borderRadius,
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(
-            sigmaX: AppBlur.sheet,
-            sigmaY: AppBlur.sheet,
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: surface,
-              border:
-                  border ?? Border(top: BorderSide(color: hairline, width: 1)),
-            ),
-            child: SafeArea(top: safeTop, bottom: safeBottom, child: child),
-          ),
-        ),
+        child: frosted
+            ? BackdropFilter(
+                filter: ui.ImageFilter.blur(
+                  sigmaX: AppBlur.sheet,
+                  sigmaY: AppBlur.sheet,
+                ),
+                child: decorated,
+              )
+            : decorated,
       ),
     );
   }

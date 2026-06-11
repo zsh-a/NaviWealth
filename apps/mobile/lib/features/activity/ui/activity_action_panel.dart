@@ -57,11 +57,12 @@ Future<void> showActivityActionPanel(BuildContext context) {
   );
 }
 
-void _closeAndPush(
+Future<void> _closeAndPush(
   BuildContext sheetContext,
   BuildContext routeContext,
   String path,
 ) {
-  Navigator.of(sheetContext).pop();
-  routeContext.push(path);
+  return closeSheetThen(sheetContext, () {
+    if (routeContext.mounted) routeContext.push(path);
+  });
 }

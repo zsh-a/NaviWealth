@@ -22,10 +22,10 @@ Future<void> showOpportunityDetailSheet(
       footer: AppSheetFooter(
         submitLabel: l10n.incomePlannerDetailLogTrade,
         cancelLabel: l10n.commonCancel,
-        onSubmit: () async {
-          Navigator.of(sheetCtx).pop();
+        onSubmit: () => closeSheetThen(sheetCtx, () async {
+          if (!context.mounted) return;
           await showTradeJournalSheet(context, prefilled: opportunity);
-        },
+        }),
       ),
       child: _DetailBody(opportunity: opportunity),
     ),
