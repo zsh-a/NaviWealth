@@ -196,32 +196,21 @@ class _AskAiDockButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FTooltip(
-      tipBuilder: (_, _) =>
-          Text(AppLocalizations.of(context).commandPaletteOpenAi),
-      child: FTappable(
-        onPress: onPress,
-        child: Container(
-          width: AppSpacing.s40,
-          height: AppSpacing.s40,
-          margin: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s8,
-            vertical: AppSpacing.s4,
-          ),
-          decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: AppOpacity.faint),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(
-              color: colors.primary.withValues(alpha: AppOpacity.muted),
-              width: 1,
-            ),
-          ),
-          alignment: Alignment.center,
-          child: Icon(
-            FLucideIcons.sparkles,
-            color: colors.primary,
-            size: AppIconSizes.md,
-          ),
+    return AppIconButton(
+      icon: FLucideIcons.sparkles,
+      tooltip: AppLocalizations.of(context).commandPaletteOpenAi,
+      onPress: onPress,
+      iconColor: colors.primary,
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s4,
+      ),
+      decoration: BoxDecoration(
+        color: colors.primary.withValues(alpha: AppOpacity.faint),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(
+          color: colors.primary.withValues(alpha: AppOpacity.muted),
+          width: 1,
         ),
       ),
     );

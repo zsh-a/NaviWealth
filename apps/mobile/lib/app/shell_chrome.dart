@@ -211,21 +211,10 @@ class _ShellIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Semantics(
-      label: tooltip,
-      button: true,
-      child: FTooltip(
-        tipBuilder: (_, _) => Text(tooltip),
-        child: FTappable(
-          onPress: onPress,
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(icon, size: AppIconSizes.md, color: colors.foreground),
-          ),
-        ),
-      ),
+    return AppIconButton(
+      icon: icon,
+      tooltip: tooltip,
+      onPress: onPress,
     );
   }
 }

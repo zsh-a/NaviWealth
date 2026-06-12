@@ -355,23 +355,13 @@ class _OverlayIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return FTooltip(
-      tipBuilder: (_, _) => Text(tooltip),
-      child: FTappable(
-        onPress: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s6,
-            vertical: AppSpacing.s4,
-          ),
-          child: Icon(
-            icon,
-            size: AppIconSizes.xs,
-            color: colors.mutedForeground,
-          ),
-        ),
-      ),
+    return AppIconButton(
+      icon: icon,
+      tooltip: tooltip,
+      onPress: onTap,
+      size: 28,
+      iconSize: AppIconSizes.xs,
+      iconColor: context.theme.colors.mutedForeground,
     );
   }
 }

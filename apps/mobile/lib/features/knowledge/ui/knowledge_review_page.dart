@@ -524,14 +524,17 @@ class _ReviewBulkActionButtonState extends State<_ReviewBulkActionButton> {
 
   @override
   Widget build(BuildContext context) {
-    return FButton(
+    return AppBusyButton(
+      label: widget.label,
+      onPress: _run,
+      busy: _busy,
       variant: FButtonVariant.outline,
       size: FButtonSizeVariant.sm,
-      prefix: _reviewActionPrefix(busy: _busy, icon: widget.icon),
-      onPress: _busy ? null : _run,
-      child: Text(
-        _reviewActionLabel(context, busy: _busy, label: widget.label),
+      prefix: Icon(widget.icon, size: AppIconSizes.xs),
+      busyPrefix: const FCircularProgress(
+        size: FCircularProgressSizeVariant.xs,
       ),
+      busyLabel: AppLocalizations.of(context).commonSaving,
     );
   }
 }
@@ -602,18 +605,17 @@ class _ReviewSelectionToolbarState extends State<_ReviewSelectionToolbar> {
           ),
           if (hasSelection) ...[
             const SizedBox(width: AppSpacing.s4),
-            FButton(
+            AppBusyButton(
+              label: widget.actionLabel,
+              onPress: _run,
+              busy: _busy,
               variant: FButtonVariant.primary,
               size: FButtonSizeVariant.sm,
-              prefix: _reviewActionPrefix(busy: _busy, icon: widget.icon),
-              onPress: !_busy ? _run : null,
-              child: Text(
-                _reviewActionLabel(
-                  context,
-                  busy: _busy,
-                  label: widget.actionLabel,
-                ),
+              prefix: Icon(widget.icon, size: AppIconSizes.xs),
+              busyPrefix: const FCircularProgress(
+                size: FCircularProgressSizeVariant.xs,
               ),
+              busyLabel: AppLocalizations.of(context).commonSaving,
             ),
           ],
         ],
@@ -648,22 +650,6 @@ class _SelectableReviewRow extends StatelessWidget {
   }
 }
 
-Widget? _reviewActionPrefix({required bool busy, IconData? icon}) {
-  if (busy) {
-    return const FCircularProgress(size: FCircularProgressSizeVariant.xs);
-  }
-  if (icon == null) return null;
-  return Icon(icon, size: AppIconSizes.xs);
-}
-
-String _reviewActionLabel(
-  BuildContext context, {
-  required bool busy,
-  required String label,
-}) {
-  return busy ? AppLocalizations.of(context).commonSaving : label;
-}
-
 /// Compact icon-only action button for review rows. Shows a spinner
 /// while busy, the action icon otherwise. Much smaller footprint than
 /// the full text button it replaces.
@@ -683,27 +669,19 @@ class _ReviewIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return FTooltip(
-      tipBuilder: (_, _) => Text(tooltip),
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: colors.primary.withValues(alpha: AppOpacity.subtle),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(
-            color: colors.primary.withValues(alpha: AppOpacity.light),
-          ),
-        ),
-        child: FTappable(
-          onPress: busy ? null : () => onPress(),
-          child: Center(
-            child: busy
-                ? const FCircularProgress(
-                    size: FCircularProgressSizeVariant.xs,
-                  )
-                : Icon(icon, size: AppIconSizes.xs, color: colors.primary),
-          ),
+    return AppIconButton(
+      icon: icon,
+      tooltip: tooltip,
+      onPress: () => onPress(),
+      busy: busy,
+      size: 32,
+      iconSize: AppIconSizes.xs,
+      iconColor: colors.primary,
+      decoration: BoxDecoration(
+        color: colors.primary.withValues(alpha: AppOpacity.subtle),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(
+          color: colors.primary.withValues(alpha: AppOpacity.light),
         ),
       ),
     );

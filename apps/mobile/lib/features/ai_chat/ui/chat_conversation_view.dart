@@ -248,9 +248,8 @@ class _JumpToBottomChip extends StatelessWidget {
     final colors = context.theme.colors;
     return FTooltip(
       tipBuilder: (_, _) => Text(l10n.aiChatJumpToLatestTooltip),
-      child: GestureDetector(
-        onTap: onPressed,
-        behavior: HitTestBehavior.opaque,
+      child: FTappable(
+        onPress: onPressed,
         child: Container(
           width: 36,
           height: 36,
