@@ -58,35 +58,28 @@ class GetActivitySummaryTool implements DeviceTool {
     final repo = await ctx.ref.read(healthMetricRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
 
-    final stepRows = await repo.listByKind(
-      ownerUserId: ownerUserId,
-      kind: HealthMetricKind.stepsDaily,
-      limit: daysBack + 5,
-    );
-    final energyRows = await repo.listByKind(
-      ownerUserId: ownerUserId,
-      kind: HealthMetricKind.activeEnergyDaily,
-      limit: daysBack + 5,
-    );
-    final walkRows = await repo.listByKind(
-      ownerUserId: ownerUserId,
-      kind: HealthMetricKind.distanceWalkingRunningDaily,
-      limit: daysBack + 5,
-    );
     // A heavy user might log 3–5 workouts/day; pull a generous buffer
-    // so we don't crop the window short. listByKind orders newest
-    // first, the shaper filters by window.
-    final workoutRows = await repo.listByKind(
+    // so we don't crop the window short. listByKinds orders newest
+    // first per kind, and the shaper filters by window.
+    final data = await repo.listByKinds(
       ownerUserId: ownerUserId,
-      kind: HealthMetricKind.workoutSession,
+      kinds: const <HealthMetricKind>{
+        HealthMetricKind.stepsDaily,
+        HealthMetricKind.activeEnergyDaily,
+        HealthMetricKind.distanceWalkingRunningDaily,
+        HealthMetricKind.workoutSession,
+      },
       limit: daysBack * 5 + 10,
     );
     final now = DateTime.now().toUtc();
     return shape(
-      steps: stepRows,
-      energy: energyRows,
-      workouts: workoutRows,
-      walkingDistance: walkRows,
+      steps: data[HealthMetricKind.stepsDaily] ?? const <HealthMetric>[],
+      energy:
+          data[HealthMetricKind.activeEnergyDaily] ?? const <HealthMetric>[],
+      workouts: data[HealthMetricKind.workoutSession] ?? const <HealthMetric>[],
+      walkingDistance:
+          data[HealthMetricKind.distanceWalkingRunningDaily] ??
+          const <HealthMetric>[],
       daysBack: daysBack,
       now: now,
     );
@@ -106,8 +99,7 @@ class GetActivitySummaryTool implements DeviceTool {
     // Bucket by ISO date (YYYY-MM-DD). Within a day, latest reading wins
     // (later sync overrides an earlier partial number).
     String dayKey(DateTime d) => d.toUtc().toIso8601String().substring(0, 10);
-    bool inWindow(DateTime d) =>
-        !d.isBefore(fromInstant) && !d.isAfter(now);
+    bool inWindow(DateTime d) => !d.isBefore(fromInstant) && !d.isAfter(now);
 
     final stepsByDay = <String, double>{};
     final stepsCapturedAt = <String, DateTime>{};
@@ -185,8 +177,7 @@ class GetActivitySummaryTool implements DeviceTool {
       ...kcalByDay.keys,
       ...walkMetersByDay.keys,
       ...workoutCountByDay.keys,
-    }.toList()
-      ..sort();
+    }.toList()..sort();
     final days = <Map<String, Object?>>[];
     var stepTotal = 0.0;
     var stepDayCount = 0;
@@ -216,12 +207,14 @@ class GetActivitySummaryTool implements DeviceTool {
       days.add(<String, Object?>{
         'date': d,
         'steps': steps?.round(),
-        'walking_distance_km':
-            walkMeters == null ? null : _round(walkMeters / 1000.0),
+        'walking_distance_km': walkMeters == null
+            ? null
+            : _round(walkMeters / 1000.0),
         'active_kcal': kcal == null ? null : _round(kcal),
         'workout_count': workoutCount,
-        'workout_minutes':
-            workoutSeconds == null ? null : _round(workoutSeconds / 60.0),
+        'workout_minutes': workoutSeconds == null
+            ? null
+            : _round(workoutSeconds / 60.0),
         'workout_distance_km': workoutDistance == null
             ? null
             : _round(workoutDistance / 1000.0),
@@ -237,20 +230,23 @@ class GetActivitySummaryTool implements DeviceTool {
         'average_steps': stepDayCount == 0
             ? null
             : (stepTotal / stepDayCount).round(),
-        'total_walking_distance_km':
-            walkDayCount == 0 ? null : _round(walkMetersTotal / 1000.0),
+        'total_walking_distance_km': walkDayCount == 0
+            ? null
+            : _round(walkMetersTotal / 1000.0),
         'average_walking_distance_km': walkDayCount == 0
             ? null
             : _round((walkMetersTotal / walkDayCount) / 1000.0),
         'walking_day_count': walkDayCount,
         'total_active_kcal': _round(kcalTotal),
-        'average_active_kcal':
-            kcalDayCount == 0 ? null : _round(kcalTotal / kcalDayCount),
+        'average_active_kcal': kcalDayCount == 0
+            ? null
+            : _round(kcalTotal / kcalDayCount),
         'step_day_count': stepDayCount,
         'kcal_day_count': kcalDayCount,
         'workout_count': workoutTotalCount,
-        'workout_total_minutes':
-            workoutTotalCount == 0 ? 0 : _round(workoutTotalSeconds / 60.0),
+        'workout_total_minutes': workoutTotalCount == 0
+            ? 0
+            : _round(workoutTotalSeconds / 60.0),
         'workout_total_distance_km': workoutTotalDistance == 0
             ? 0
             : _round(workoutTotalDistance / 1000.0),

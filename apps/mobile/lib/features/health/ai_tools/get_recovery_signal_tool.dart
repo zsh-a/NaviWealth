@@ -43,44 +43,27 @@ class GetRecoverySignalTool implements DeviceTool {
     final repo = await ctx.ref.read(healthMetricRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
 
-    final hrv = await repo.listByKind(
+    final data = await repo.listByKinds(
       ownerUserId: ownerUserId,
-      kind: HealthMetricKind.hrvDaily,
-      limit: 35,
-    );
-    final sleep = await repo.listByKind(
-      ownerUserId: ownerUserId,
-      kind: HealthMetricKind.sleepSession,
+      kinds: const <HealthMetricKind>{
+        HealthMetricKind.hrvDaily,
+        HealthMetricKind.sleepSession,
+        HealthMetricKind.rhrDaily,
+        HealthMetricKind.vo2Max,
+        HealthMetricKind.bodyBatteryDaily,
+        HealthMetricKind.stressDaily,
+      },
       limit: 50,
-    );
-    final rhr = await repo.listByKind(
-      ownerUserId: ownerUserId,
-      kind: HealthMetricKind.rhrDaily,
-      limit: 35,
-    );
-    final vo2 = await repo.listByKind(
-      ownerUserId: ownerUserId,
-      kind: HealthMetricKind.vo2Max,
-      limit: 35,
-    );
-    final bb = await repo.listByKind(
-      ownerUserId: ownerUserId,
-      kind: HealthMetricKind.bodyBatteryDaily,
-      limit: 35,
-    );
-    final stressData = await repo.listByKind(
-      ownerUserId: ownerUserId,
-      kind: HealthMetricKind.stressDaily,
-      limit: 35,
     );
 
     return shape(
-      hrv: hrv,
-      sleep: sleep,
-      rhr: rhr,
-      vo2Max: vo2,
-      bodyBattery: bb,
-      stress: stressData,
+      hrv: data[HealthMetricKind.hrvDaily] ?? const <HealthMetric>[],
+      sleep: data[HealthMetricKind.sleepSession] ?? const <HealthMetric>[],
+      rhr: data[HealthMetricKind.rhrDaily] ?? const <HealthMetric>[],
+      vo2Max: data[HealthMetricKind.vo2Max] ?? const <HealthMetric>[],
+      bodyBattery:
+          data[HealthMetricKind.bodyBatteryDaily] ?? const <HealthMetric>[],
+      stress: data[HealthMetricKind.stressDaily] ?? const <HealthMetric>[],
     );
   }
 

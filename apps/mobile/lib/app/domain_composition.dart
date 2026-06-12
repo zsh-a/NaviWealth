@@ -17,9 +17,11 @@ import '../core/ai/composition/device_tools_provider.dart';
 import '../core/ai/composition/proposal_applier.dart';
 import '../core/ai/composition/proposal_kind_registry.dart';
 import '../core/ai/composition/system_prompt_blocks.dart';
+import '../core/ai/composition/tool_descriptor_lookup.dart';
+import '../core/ai/contracts/tool_descriptor.dart';
 import '../core/ai/runtime/device/tools/device_tool.dart';
 import '../core/ai/runtime/device/tools/device_tool_registry.dart'
-    show kShellDeviceToolsCore;
+    show kShellDeviceToolsCore, kShellToolDescriptors;
 import '../core/command_palette/command_palette_entry.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/shell/domain_shell.dart';
@@ -34,6 +36,12 @@ List<Override> lifeOsDomainCompositionOverrides({
     deviceToolsProvider.overrideWith(
       (ref) => domainDeviceTools(ref.watch(activeDomainPacksProvider)),
     ),
+    toolDescriptorLookupProvider.overrideWith((ref) {
+      final descriptors = domainToolDescriptors(
+        ref.watch(activeDomainPacksProvider),
+      );
+      return (name) => descriptors[name];
+    }),
     proposalKindRegistryProvider.overrideWith(
       (ref) => domainProposalKinds(ref.watch(activeDomainPacksProvider)),
     ),
@@ -66,6 +74,13 @@ List<DeviceTool> domainDeviceTools(List<DomainPack> packs) {
     ...kShellDeviceToolsCore,
     for (final p in packs) ...p.deviceTools,
   ];
+}
+
+Map<String, ToolDescriptor> domainToolDescriptors(List<DomainPack> packs) {
+  return <String, ToolDescriptor>{
+    ...kShellToolDescriptors,
+    for (final p in packs) ...p.toolDescriptors,
+  };
 }
 
 List<ProposalKindMeta> domainProposalKinds(List<DomainPack> packs) {

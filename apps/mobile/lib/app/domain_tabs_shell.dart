@@ -7,10 +7,8 @@ import '../core/ai/write/persistent_undo_banner.dart';
 import '../core/shell/domain_shell.dart';
 import '../design_system/design_system.dart';
 import '../features/ai_chat/ui/ask_ai.dart';
-import '../l10n/gen/app_localizations.dart';
 import 'desktop_sidebar.dart';
 import 'domain_switcher.dart';
-import 'route_paths.dart';
 
 const double _kMobileDockHorizontalPadding = AppSpacing.s28;
 const double _kMobileDockTopPadding = AppSpacing.s4;
@@ -176,9 +174,9 @@ class _MobileLayout extends ConsumerWidget {
             // their last item above the floating nav bar.
             final content = MediaQuery(
               data: MediaQuery.of(context).copyWith(
-                padding: MediaQuery.of(context).padding.copyWith(
-                  bottom: dockHeight,
-                ),
+                padding: MediaQuery.of(
+                  context,
+                ).padding.copyWith(bottom: dockHeight),
               ),
               child: child,
             );
@@ -207,8 +205,7 @@ class _MobileLayout extends ConsumerWidget {
                                     _kMobileDockHorizontalPadding,
                                     _kMobileDockTopPadding,
                                     _kMobileDockHorizontalPadding,
-                                    _kMobileDockBottomPadding +
-                                        safeAreaBottom,
+                                    _kMobileDockBottomPadding + safeAreaBottom,
                                   ),
                                   child: GestureDetector(
                                     behavior: HitTestBehavior.deferToChild,
@@ -222,8 +219,7 @@ class _MobileLayout extends ConsumerWidget {
                                       items: navTabs,
                                       selectedIndex: selectedIndex,
                                       onIndexChanged: onDestinationSelected,
-                                      onCenterAction: () =>
-                                          askAi(context, ref),
+                                      onCenterAction: () => askAi(context, ref),
                                       centerLabel: 'AI',
                                     ),
                                   ),
@@ -256,7 +252,6 @@ class _TabletLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     return FScaffold(
       childPad: false,
       // See _MobileLayout: the routed page owns keyboard avoidance; the shell
@@ -264,69 +259,18 @@ class _TabletLayout extends StatelessWidget {
       resizeToAvoidBottomInset: false,
       sidebar: SizedBox(
         width: 80,
-        child: Column(
+        child: FSidebar(
           children: [
-            Expanded(
-              child: FSidebar(
-                children: [
-                  for (var i = 0; i < tabs.length; i++)
-                    _TabletRailItem(
-                      tab: tabs[i],
-                      selected: i == selectedIndex,
-                      onTap: () => onDestinationSelected(i),
-                    ),
-                ],
+            for (var i = 0; i < tabs.length; i++)
+              _TabletRailItem(
+                tab: tabs[i],
+                selected: i == selectedIndex,
+                onTap: () => onDestinationSelected(i),
               ),
-            ),
-            SafeArea(
-              top: false,
-              child: _TabletRailSettings(label: l10n.navSettings),
-            ),
           ],
         ),
       ),
       child: child,
-    );
-  }
-}
-
-class _TabletRailSettings extends StatelessWidget {
-  const _TabletRailSettings({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return FTappable(
-      onPress: () => GoRouter.of(context).push(AppRoutes.settings),
-      child: Container(
-        margin: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s8,
-          vertical: AppSpacing.s4,
-        ),
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s10),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              FLucideIcons.settings,
-              color: colors.mutedForeground,
-              size: AppIconSizes.mlg,
-            ),
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              label,
-              style: context.theme.typography.xs.copyWith(
-                fontWeight: FontWeight.w500,
-                color: colors.foreground,
-              ),
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

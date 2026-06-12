@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/tool_descriptor_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 
 void main() {
@@ -160,13 +161,13 @@ void main() {
 
     test('mobile descriptor catalog carries active device tools', () {
       // 3 shell (query_memory, build_context, ask_user) + 35 FinanceOS +
-      // 5 HealthOS + 16 KnowledgeOS = 59. `ask_user` is the structured
+      // 7 HealthOS + 16 KnowledgeOS = 61. `ask_user` is the structured
       // decision-point tool (Claude-Code-style interactive choices). Each
       // LifeOS domain co-locates its descriptors with its tool barrel
       // (`kShellToolDescriptors`, `kFinanceToolDescriptors`,
       // `kHealthToolDescriptors`, `kKnowledgeToolDescriptors`); the union
       // here is derived in `tool_descriptor_catalog.dart`.
-      expect(allToolDescriptors, hasLength(59));
+      expect(allToolDescriptors, hasLength(61));
       expect(
         lookupToolDescriptor('propose_options_profile_update')?.sideEffect,
         SideEffect.deviceLocalWrite,

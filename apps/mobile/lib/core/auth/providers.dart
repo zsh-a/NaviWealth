@@ -8,6 +8,7 @@ import '../logging/providers.dart';
 import 'auth_api_client.dart';
 import 'auth_interceptor.dart';
 import 'auth_session.dart';
+import 'auth_state.dart';
 import 'device_identity_store.dart';
 import 'dio_auth_api_client.dart';
 import 'domain_opt_in_store.dart';
@@ -96,6 +97,15 @@ final authSessionProvider = Provider<AuthSession?>((ref) {
   return ref.watch(authSessionReaderProvider)();
 });
 
+/// Reactive auth-state seam for cross-domain infrastructure.
+///
+/// The concrete controller lives in `features/auth/`; `core/` consumers must
+/// depend on this provider instead of importing the feature controller.
+final authStateProvider = Provider<AuthState?>((ref) {
+  final session = ref.watch(authSessionProvider);
+  return session == null ? null : AuthLoggedIn(session);
+});
+
 /// Override-target for the refresh hook. Overridden in `bootstrap.dart`
 /// with `AuthController.refreshIfPossible`. Defaults to "can't recover".
 final authOnUnauthorizedProvider = Provider<AuthOnUnauthorized>(
@@ -122,9 +132,10 @@ final domainOptInStoreProvider = FutureProvider<DomainOptInStore>((ref) async {
 /// On first run / fresh install resolves to [DomainOptIns.financeOnly] —
 /// HealthOS stays OFF until D-2 ships and the user manually enables it
 /// (`lifeos-shell.md` §5).
-final domainOptInsProvider = AsyncNotifierProvider<_DomainOptInsNotifier, DomainOptIns>(
-  _DomainOptInsNotifier.new,
-);
+final domainOptInsProvider =
+    AsyncNotifierProvider<_DomainOptInsNotifier, DomainOptIns>(
+      _DomainOptInsNotifier.new,
+    );
 
 class _DomainOptInsNotifier extends AsyncNotifier<DomainOptIns> {
   @override

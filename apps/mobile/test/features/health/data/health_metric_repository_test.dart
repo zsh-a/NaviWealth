@@ -129,6 +129,67 @@ void main() {
     expect(steps.single.id, 'steps-1');
   });
 
+  test(
+    'listByKinds groups requested kinds newest-first with per-kind limit',
+    () async {
+      final base = DateTime.utc(2026, 5, 20);
+      for (var i = 0; i < 4; i++) {
+        await repo.upsert(
+          _metric(
+            id: 'hrv-$i',
+            kind: HealthMetricKind.hrvDaily,
+            value: 40.0 + i,
+            unit: 'ms',
+            capturedAt: base.add(Duration(days: i)),
+            counter: i,
+          ),
+        );
+        await repo.upsert(
+          _metric(
+            id: 'steps-$i',
+            kind: HealthMetricKind.stepsDaily,
+            value: 8000.0 + i,
+            unit: 'count',
+            capturedAt: base.add(Duration(days: i)),
+            counter: 10 + i,
+          ),
+        );
+      }
+      await repo.upsert(
+        _metric(
+          id: 'sleep-ignored',
+          kind: HealthMetricKind.sleepSession,
+          value: 28800,
+          capturedAt: base.add(const Duration(days: 4)),
+          counter: 20,
+        ),
+      );
+
+      final grouped = await repo.listByKinds(
+        ownerUserId: _userA,
+        kinds: const <HealthMetricKind>{
+          HealthMetricKind.hrvDaily,
+          HealthMetricKind.stepsDaily,
+        },
+        limit: 2,
+      );
+
+      expect(
+        grouped.keys,
+        containsAll([HealthMetricKind.hrvDaily, HealthMetricKind.stepsDaily]),
+      );
+      expect(grouped[HealthMetricKind.hrvDaily]!.map((m) => m.id), [
+        'hrv-3',
+        'hrv-2',
+      ]);
+      expect(grouped[HealthMetricKind.stepsDaily]!.map((m) => m.id), [
+        'steps-3',
+        'steps-2',
+      ]);
+      expect(grouped.containsKey(HealthMetricKind.sleepSession), isFalse);
+    },
+  );
+
   test('listByKind partitions by owner', () async {
     await repo.upsert(_metric(
       id: 'a-1',

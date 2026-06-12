@@ -23,7 +23,6 @@ import '../../../core/background/providers.dart' as background_providers;
 import '../../../design_system/preferences/theme_preferences.dart';
 import '../data/providers.dart';
 import 'morning_briefing_agent.dart';
-import 'recovery_alert_agent.dart';
 
 /// D-2.5b side-effecting provider — watches the Health domain opt-in
 /// and (re-)registers or cancels the workmanager periodic task that
@@ -54,16 +53,17 @@ final morningBriefingCronProvider = Provider<void>((ref) {
 /// the workmanager callback stamped [kMorningBriefingDueAtKey] while
 /// the app was backgrounded. Returns the [AgentRunResult] (or `null`
 /// when no pending flag was set). Bootstrap reads it on cold start.
-final pendingBriefingRunProvider =
-    FutureProvider.autoDispose<AgentRunResult?>((ref) async {
-      final optIns = ref.read(core_auth.domainOptInsProvider).value;
-      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-      final SharedPreferences prefs = ref.read(sharedPreferencesProvider);
-      final due = prefs.getInt(kMorningBriefingDueAtKey);
-      if (due == null) return null;
-      await prefs.remove(kMorningBriefingDueAtKey);
-      return runMorningBriefingNow(ref);
-    });
+final pendingBriefingRunProvider = FutureProvider.autoDispose<AgentRunResult?>((
+  ref,
+) async {
+  final optIns = ref.read(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final SharedPreferences prefs = ref.read(sharedPreferencesProvider);
+  final due = prefs.getInt(kMorningBriefingDueAtKey);
+  if (due == null) return null;
+  await prefs.remove(kMorningBriefingDueAtKey);
+  return runMorningBriefingNow(ref);
+});
 
 /// D-2.5b — manual one-shot trigger backing the Settings "Run morning
 /// briefing now" button. Separate provider so the UI button doesn't
@@ -123,22 +123,25 @@ Future<AgentRunResult> runMorningBriefingNow(Ref ref) async {
 /// Re-fires whenever [manualMorningBriefingRunProvider] or
 /// [pendingBriefingRunProvider] complete so the card refreshes after a
 /// run without a manual invalidate.
-final latestMorningBriefingProvider =
-    FutureProvider.autoDispose<MemoryRecord?>((ref) async {
-      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-      // Re-run when a manual/pending briefing run completes so the
-      // card picks up the new memory id without an extra refresh.
-      ref.watch(manualMorningBriefingRunProvider);
-      ref.watch(pendingBriefingRunProvider);
-      final runtime = await ref.watch(memory_providers.memoryRuntimeProvider.future);
-      final ownerUserId = await ref.read(currentUserIdProvider)();
-      final hits = await runtime.recall(
-        ownerUserId: ownerUserId,
-        source: kMorningBriefingMemorySource,
-        kinds: const <MemoryKind>{MemoryKind.episodic},
-        topK: 1,
-      );
-      if (hits.isEmpty) return null;
-      return hits.first.record;
-    });
+final latestMorningBriefingProvider = FutureProvider.autoDispose<MemoryRecord?>(
+  (ref) async {
+    final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+    if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+    // Re-run when a manual/pending briefing run completes so the
+    // card picks up the new memory id without an extra refresh.
+    ref.watch(manualMorningBriefingRunProvider);
+    ref.watch(pendingBriefingRunProvider);
+    final runtime = await ref.watch(
+      memory_providers.memoryRuntimeProvider.future,
+    );
+    final ownerUserId = await ref.read(currentUserIdProvider)();
+    final hits = await runtime.recall(
+      ownerUserId: ownerUserId,
+      source: kMorningBriefingMemorySource,
+      kinds: const <MemoryKind>{MemoryKind.episodic},
+      topK: 1,
+    );
+    if (hits.isEmpty) return null;
+    return hits.first.record;
+  },
+);

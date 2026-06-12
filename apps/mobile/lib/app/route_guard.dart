@@ -3,6 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/auth/domain_scope.dart';
+import '../core/auth/providers.dart';
+import '../core/lifeos/domain_pack.dart';
+import 'route_paths.dart';
+
 /// Decision returned by a [RouteGuard]. `null` means "let the requested route
 /// proceed"; a non-null path means "redirect there instead".
 typedef RedirectPath = String?;
@@ -34,8 +39,11 @@ final routeRedirectVersionProvider = StateProvider<int>((_) => 0);
 /// go_router to re-run [routerRedirect].
 final routeRefreshListenableProvider = Provider<Listenable>((ref) {
   final notifier = ValueNotifier<int>(ref.read(routeRedirectVersionProvider));
-  ref.listen<int>(routeRedirectVersionProvider, (_, next) {
-    notifier.value = next;
+  ref.listen<int>(routeRedirectVersionProvider, (_, _) {
+    notifier.value++;
+  });
+  ref.listen<AsyncValue<DomainOptIns>>(domainOptInsProvider, (_, _) {
+    notifier.value++;
   });
   ref.onDispose(notifier.dispose);
   return notifier;
@@ -56,3 +64,30 @@ String? routerRedirect(
   }
   return null;
 }
+
+/// Blocks deep links into optional domains until the user opts in.
+///
+/// Routes are mounted unconditionally so deep links remain structurally valid,
+/// but business surfaces for inactive domains should not be reachable.
+class DomainOptInRouteGuard implements RouteGuard {
+  DomainOptInRouteGuard(this._ref);
+
+  final Ref _ref;
+
+  @override
+  RedirectPath redirect(GoRouterState state) {
+    final optIns = _ref.read(domainOptInsProvider).value;
+    if (optIns == null) return null;
+
+    final owner = domainForRoute(
+      _ref.read(domainPackRegistryProvider),
+      state.uri.path,
+    );
+    if (owner == null || optIns.contains(owner)) return null;
+    return AppRoutes.settingsDomains;
+  }
+}
+
+final domainOptInRouteGuardProvider = Provider<DomainOptInRouteGuard>(
+  DomainOptInRouteGuard.new,
+);

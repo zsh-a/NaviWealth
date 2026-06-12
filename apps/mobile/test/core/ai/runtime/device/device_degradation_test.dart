@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/domain_packs.dart';
+import 'package:naviwealth/app/tool_descriptor_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/runtime/ai_runtime.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
@@ -200,6 +201,7 @@ void main() {
         'get_activity_summary',
         'get_anomaly_flags',
         'get_asset_allocation',
+        'get_body_battery_trend',
         'get_cashflow_buckets',
         'get_fire_buckets',
         'get_fire_plan',
@@ -219,6 +221,7 @@ void main() {
         'get_recovery_signal',
         'get_recurring_patterns',
         'get_refund_links',
+        'get_stress_trend',
         'get_subscription_changes',
         'get_transfer_links',
         'get_wheel_lifecycle',

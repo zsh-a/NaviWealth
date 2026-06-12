@@ -16,7 +16,9 @@ import '../../../core/ai/composition/ai_context_summary.dart';
 import '../../../core/ai/composition/chat_rail_provider.dart';
 import '../../../core/ai/composition/chat_trace_prep.dart';
 import '../../../core/ai/composition/portfolio_snapshot.dart';
+import '../../../core/command_palette/query_plan_executor_provider.dart';
 import '../../home/composition/finance_chat_rail_provider.dart';
+import '../ai_tools/drift_query_plan_executor.dart';
 import 'finance_ai_context_summary_provider.dart';
 import 'finance_chat_trace_preparer.dart';
 import 'finance_portfolio_snapshot.dart';
@@ -45,6 +47,9 @@ List<Override> financeCompositionOverrides() => [
   // D-1.6b: portfolio snapshot attached to each chat turn for grounding.
   portfolioSnapshotReaderProvider.overrideWith(
     (ref) => ref.watch(financePortfolioSnapshotReaderProvider),
+  ),
+  queryPlanExecutorProvider.overrideWith(
+    (ref) => DriftQueryPlanExecutor(ref: ref),
   ),
   // NOTE: `proposalApplierProvider` and `proposalKindRegistryProvider` are
   // composed from active `DomainPack` entries in `app/domain_composition.dart`.

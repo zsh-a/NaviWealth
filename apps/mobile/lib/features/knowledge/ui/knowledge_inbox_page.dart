@@ -12,7 +12,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../app/shell_chrome.dart';
-import '../../../core/sync/mutation_context.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/ui/ask_ai.dart';
@@ -80,10 +79,7 @@ class _InboxCreateFab extends ConsumerWidget {
     );
   }
 
-  Future<void> _openCreateSheet(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> _openCreateSheet(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final options = [
       KnowledgeCreateOption(
@@ -207,52 +203,37 @@ class _NotesList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final repoAsync = ref.watch(knowledgeRepositoryProvider);
+    final notesAsync = ref.watch(knowledgeInboxNotesProvider);
     final l10n = AppLocalizations.of(context);
-    return FutureBuilder<String>(
-      future: ref.watch(currentUserIdProvider)(),
-      builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) return const KnowledgeLoadingState();
-        final owner = ownerSnap.data!;
-        return repoAsync.when(
-          loading: () => const KnowledgeLoadingState(),
-          error: (e, _) => KnowledgeErrorState(
-            title: AppLocalizations.of(context).knowledgeInboxLoadFailedTitle,
-            message: '$e',
-            onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
+    return notesAsync.when(
+      loading: () => const KnowledgeLoadingState(),
+      error: (e, _) => KnowledgeErrorState(
+        title: AppLocalizations.of(context).knowledgeInboxLoadFailedTitle,
+        message: '$e',
+        onRetry: () => ref.invalidate(knowledgeInboxNotesProvider),
+      ),
+      data: (notes) {
+        if (notes.isEmpty) {
+          return KnowledgeEmptyState(
+            icon: FLucideIcons.inbox,
+            title: l10n.knowledgeInboxEmptyTitle,
+            message: l10n.knowledgeInboxEmptyBody,
+          );
+        }
+        return KnowledgePullToRefresh(
+          onRefresh: () => _refreshKnowledgeRepository(ref),
+          child: ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s16,
+              AppSpacing.s8,
+              AppSpacing.s16,
+              AppSpacing.s64,
+            ),
+            itemCount: notes.length,
+            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
+            itemBuilder: (context, i) => _NoteCard(note: notes[i]),
           ),
-          data: (repo) {
-            return StreamBuilder<List<KnowledgeNote>>(
-              stream: repo.watchNotes(ownerUserId: owner, limit: 50),
-              builder: (context, snapshot) {
-                final notes = snapshot.data ?? const <KnowledgeNote>[];
-                if (notes.isEmpty) {
-                  return KnowledgeEmptyState(
-                    icon: FLucideIcons.inbox,
-                    title: l10n.knowledgeInboxEmptyTitle,
-                    message: l10n.knowledgeInboxEmptyBody,
-                  );
-                }
-                return KnowledgePullToRefresh(
-                  onRefresh: () => _refreshKnowledgeRepository(ref),
-                  child: ListView.separated(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.s16,
-                      AppSpacing.s8,
-                      AppSpacing
-                          .s16, // Bottom padding leaves room for the floating FAB.
-                      AppSpacing.s64,
-                    ),
-                    itemCount: notes.length,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(height: AppSpacing.s8),
-                    itemBuilder: (context, i) => _NoteCard(note: notes[i]),
-                  ),
-                );
-              },
-            );
-          },
         );
       },
     );
@@ -261,6 +242,7 @@ class _NotesList extends ConsumerWidget {
 
 Future<void> _refreshKnowledgeRepository(WidgetRef ref) async {
   ref.invalidate(knowledgeRepositoryProvider);
+  ref.invalidate(knowledgeInboxNotesProvider);
   await ref.read(knowledgeRepositoryProvider.future);
 }
 
@@ -278,10 +260,7 @@ class _NoteCard extends StatelessWidget {
       title: note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
       children: [
         if (note.bodyMd.isNotEmpty)
-          Text(
-            knowledgeExcerpt(note.bodyMd),
-            style: context.bodyCaptionStyle,
-          ),
+          Text(knowledgeExcerpt(note.bodyMd), style: context.bodyCaptionStyle),
         const SizedBox(height: AppSpacing.s6),
         Row(
           children: [
@@ -299,8 +278,7 @@ class _NoteCard extends StatelessWidget {
               const SizedBox(width: AppSpacing.s8),
               KnowledgeStatusLabel(label: candidateKind),
             ],
-            if (note.projectTag != null &&
-                note.projectTag!.isNotEmpty) ...[
+            if (note.projectTag != null && note.projectTag!.isNotEmpty) ...[
               const SizedBox(width: AppSpacing.s8),
               Icon(
                 FLucideIcons.folder,
@@ -311,9 +289,7 @@ class _NoteCard extends StatelessWidget {
               Flexible(
                 child: Text(
                   note.projectTag!,
-                  style: typography.xs.copyWith(
-                    color: colors.mutedForeground,
-                  ),
+                  style: typography.xs.copyWith(color: colors.mutedForeground),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

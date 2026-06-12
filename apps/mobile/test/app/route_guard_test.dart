@@ -8,10 +8,32 @@
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/route_guard.dart';
 import 'package:naviwealth/app/route_paths.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/auth/providers.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
+
+import '../core/persistence/test_database.dart';
+
+const _financePack = DomainPack(
+  scope: DomainScope.finance,
+  tabPaths: <String>[AppRoutes.home, AppRoutes.activity, AppRoutes.wealth],
+);
+
+const _healthPack = DomainPack(
+  scope: DomainScope.health,
+  tabPaths: <String>[AppRoutes.healthToday],
+);
+
+const _knowledgePack = DomainPack(
+  scope: DomainScope.knowledge,
+  tabPaths: <String>[AppRoutes.knowledgeInbox],
+);
 
 class _StubGuard implements RouteGuard {
   _StubGuard(this._target);
@@ -69,6 +91,19 @@ final _testRouterProvider = Provider.family<GoRouter, String>((ref, initial) {
   );
 });
 
+ProviderContainer _container({List<Override> overrides = const <Override>[]}) {
+  final db = makeTestDatabase();
+  addTearDown(db.close);
+  final container = ProviderContainer(
+    overrides: [
+      appDatabaseProvider.overrideWith((_) async => db),
+      ...overrides,
+    ],
+  );
+  addTearDown(container.dispose);
+  return container;
+}
+
 Future<GoRouter> _pumpRouter(
   WidgetTester tester,
   ProviderContainer container, {
@@ -90,10 +125,27 @@ Future<GoRouter> _pumpRouter(
 
 String _path(GoRouter router) => router.routeInformationProvider.value.uri.path;
 
+GoRouterState _stateFor(String path) {
+  final probeRouter = GoRouter(
+    initialLocation: '/',
+    routes: <RouteBase>[
+      GoRoute(path: '/', builder: (_, _) => const _Marker('home')),
+    ],
+  );
+
+  return GoRouterState(
+    probeRouter.configuration,
+    uri: Uri.parse(path),
+    matchedLocation: path,
+    fullPath: path,
+    pathParameters: const {},
+    pageKey: ValueKey<String>(path),
+  );
+}
+
 void main() {
   testWidgets('no guards → original path renders', (tester) async {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = _container();
 
     final router = await _pumpRouter(
       tester,
@@ -108,12 +160,11 @@ void main() {
     tester,
   ) async {
     final guard = _StubGuard('/login');
-    final container = ProviderContainer(
+    final container = _container(
       overrides: [
         routeGuardsProvider.overrideWithValue([guard]),
       ],
     );
-    addTearDown(container.dispose);
 
     final router = await _pumpRouter(
       tester,
@@ -142,12 +193,11 @@ void main() {
       thirdCalls += 1;
       return '/never';
     });
-    final container = ProviderContainer(
+    final container = _container(
       overrides: [
         routeGuardsProvider.overrideWithValue([first, second, third]),
       ],
     );
-    addTearDown(container.dispose);
 
     // We need a real GoRouterState; the cheapest way to get one is to spin up
     // a throwaway router and grab `configuration` for the constructor.
@@ -182,12 +232,11 @@ void main() {
     tester,
   ) async {
     final guard = _StubGuard('/login');
-    final container = ProviderContainer(
+    final container = _container(
       overrides: [
         routeGuardsProvider.overrideWithValue([guard]),
       ],
     );
-    addTearDown(container.dispose);
 
     final router = await _pumpRouter(
       tester,
@@ -202,12 +251,11 @@ void main() {
   testWidgets('bumping the version provider re-runs guards', (tester) async {
     String? target;
     final guard = _StubGuardFn(() => target);
-    final container = ProviderContainer(
+    final container = _container(
       overrides: [
         routeGuardsProvider.overrideWithValue([guard]),
       ],
     );
-    addTearDown(container.dispose);
 
     final router = await _pumpRouter(
       tester,
@@ -223,5 +271,65 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(_path(router), '/login');
+  });
+
+  test(
+    'domain opt-in guard blocks inactive optional domain deep links',
+    () async {
+      final container = _container(
+        overrides: [
+          domainPackRegistryProvider.overrideWithValue([
+            _financePack,
+            _healthPack,
+            _knowledgePack,
+          ]),
+        ],
+      );
+
+      await container.read(domainOptInsProvider.future);
+
+      expect(
+        container
+            .read(domainOptInRouteGuardProvider)
+            .redirect(_stateFor(AppRoutes.healthToday)),
+        AppRoutes.settingsDomains,
+      );
+      expect(
+        container
+            .read(domainOptInRouteGuardProvider)
+            .redirect(_stateFor(AppRoutes.knowledgeInbox)),
+        AppRoutes.settingsDomains,
+      );
+    },
+  );
+
+  test('domain opt-in guard lets active and finance routes through', () async {
+    final container = _container(
+      overrides: [
+        domainPackRegistryProvider.overrideWithValue([
+          _financePack,
+          _healthPack,
+          _knowledgePack,
+        ]),
+      ],
+    );
+
+    await container.read(domainOptInsProvider.future);
+    await container
+        .read(domainOptInsProvider.notifier)
+        .setEnabled(DomainScope.health, true);
+
+    expect(
+      container
+          .read(domainOptInRouteGuardProvider)
+          .redirect(_stateFor(AppRoutes.healthToday)),
+      isNull,
+    );
+    expect(
+      container
+          .read(domainOptInRouteGuardProvider)
+          .redirect(_stateFor(AppRoutes.wealth)),
+      isNull,
+    );
   });
 }

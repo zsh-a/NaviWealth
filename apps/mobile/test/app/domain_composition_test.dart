@@ -8,6 +8,10 @@ import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_kind_registry.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
+import 'package:naviwealth/core/ai/composition/tool_descriptor_lookup.dart';
+import 'package:naviwealth/core/ai/contracts/intent.dart';
+import 'package:naviwealth/core/ai/contracts/privacy_budget.dart';
+import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
@@ -21,9 +25,30 @@ import '../core/persistence/test_database.dart';
 
 const _tool = _FakeTool('domain_tool');
 
+const _financeDescriptor = ToolDescriptor(
+  name: 'finance_descriptor',
+  access: Access.read,
+  risk: RiskLevel.info,
+  requiresConfirmation: Confirmation.none,
+  allowedContextTier: BudgetTier.small,
+  domain: 'finance',
+);
+
+const _healthDescriptor = ToolDescriptor(
+  name: 'health_descriptor',
+  access: Access.read,
+  risk: RiskLevel.info,
+  requiresConfirmation: Confirmation.none,
+  allowedContextTier: BudgetTier.small,
+  domain: 'health',
+);
+
 const _financePack = DomainPack(
   scope: DomainScope.finance,
   deviceTools: [_tool],
+  toolDescriptors: <String, ToolDescriptor>{
+    'finance_descriptor': _financeDescriptor,
+  },
   proposalKinds: [
     ProposalKindMeta(
       kind: 'fake_finance',
@@ -39,6 +64,9 @@ const _financePack = DomainPack(
 
 const _healthPack = DomainPack(
   scope: DomainScope.health,
+  toolDescriptors: <String, ToolDescriptor>{
+    'health_descriptor': _healthDescriptor,
+  },
   proposalKinds: [
     ProposalKindMeta(
       kind: 'fake_health',
@@ -155,6 +183,24 @@ void main() {
       ], l10n).map((entry) => entry.id),
       ['finance', 'health'],
     );
+  });
+
+  test('tool descriptor lookup follows active domain opt-ins', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final c = _container(db: db);
+    addTearDown(c.dispose);
+
+    await c.read(auth.domainOptInsProvider.future);
+    var lookup = c.read(toolDescriptorLookupProvider);
+    expect(lookup('finance_descriptor'), _financeDescriptor);
+    expect(lookup('health_descriptor'), isNull);
+
+    await c
+        .read(auth.domainOptInsProvider.notifier)
+        .setEnabled(DomainScope.health, true);
+    lookup = c.read(toolDescriptorLookupProvider);
+    expect(lookup('health_descriptor'), _healthDescriptor);
   });
 }
 

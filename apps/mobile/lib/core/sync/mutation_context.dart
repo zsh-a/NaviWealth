@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// State types from core; provider still lives in features/.
 import 'package:naviwealth/core/auth/auth_state.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/providers.dart';
@@ -8,8 +7,6 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/local_hlc_stamper.dart';
 import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
-import 'package:naviwealth/features/auth/data/auth_controller.dart'
-    show authControllerProvider;
 
 export 'package:naviwealth/core/auth/current_user.dart'
     show currentUserIdProvider, kLocalOnlyUserId;
@@ -78,7 +75,7 @@ class MutationStamper {
 // them without importing `features/finance/`.
 
 final mutationStamperProvider = FutureProvider<MutationStamper>((ref) async {
-  final auth = ref.watch(authControllerProvider).value;
+  final auth = ref.watch(authStateProvider);
 
   if (auth is AuthLocalOnly) {
     // Local-only mode: build a stamper that doesn't depend on the sync

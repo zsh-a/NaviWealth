@@ -18,6 +18,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../composition/tool_descriptor_lookup.dart';
 import '../../../contracts/intent.dart' show RiskLevel;
 import '../../../contracts/privacy_budget.dart' show BudgetTier;
 import '../../../contracts/tool_descriptor.dart';
@@ -50,33 +51,33 @@ const List<DeviceTool> kShellDeviceToolsCore = <DeviceTool>[
 /// [allToolDescriptors] alongside each LifeOS domain's contribution.
 const Map<String, ToolDescriptor> kShellToolDescriptors =
     <String, ToolDescriptor>{
-  'query_memory': ToolDescriptor(
-    name: 'query_memory',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainShell,
-  ),
-  'build_context': ToolDescriptor(
-    name: 'build_context',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainShell,
-  ),
-  // Interaction tool: no data side effect, but it pauses the agent loop
-  // and hands a structured decision to the user (see `ask_user_tool.dart`).
-  'ask_user': ToolDescriptor(
-    name: 'ask_user',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainShell,
-  ),
-};
+      'query_memory': ToolDescriptor(
+        name: 'query_memory',
+        access: Access.read,
+        risk: RiskLevel.info,
+        requiresConfirmation: Confirmation.none,
+        allowedContextTier: BudgetTier.small,
+        domain: kDomainShell,
+      ),
+      'build_context': ToolDescriptor(
+        name: 'build_context',
+        access: Access.read,
+        risk: RiskLevel.info,
+        requiresConfirmation: Confirmation.none,
+        allowedContextTier: BudgetTier.standard,
+        domain: kDomainShell,
+      ),
+      // Interaction tool: no data side effect, but it pauses the agent loop
+      // and hands a structured decision to the user (see `ask_user_tool.dart`).
+      'ask_user': ToolDescriptor(
+        name: 'ask_user',
+        access: Access.read,
+        risk: RiskLevel.info,
+        requiresConfirmation: Confirmation.none,
+        allowedContextTier: BudgetTier.small,
+        domain: kDomainShell,
+      ),
+    };
 
 class DeviceToolRegistry {
   DeviceToolRegistry(Iterable<DeviceTool> tools)
@@ -129,7 +130,8 @@ class DriftDeviceToolDispatcher implements DeviceToolDispatcher {
       return _policyDenied(name, 'unknown_tool', '未注册的端侧工具：$name');
     }
     // §4.5 — external side effects are never auto-dispatched.
-    if (lookupToolDescriptor(name)?.sideEffect == SideEffect.externalCall) {
+    final descriptor = _ref.read(toolDescriptorLookupProvider)(name);
+    if (descriptor?.sideEffect == SideEffect.externalCall) {
       return _policyDenied(name, 'runtime_not_allowed', '该工具有外部副作用，端侧不自动执行。');
     }
 

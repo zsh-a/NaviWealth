@@ -84,10 +84,12 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       // bump `routeRedirectVersionProvider` which makes go_router re-run
       // the full redirect chain. Skipped when `bypassAuth` is on so dev
       // builds can browse the app without a session.
-      if (!effectiveConfig.bypassAuth)
-        routeGuardsProvider.overrideWith(
-          (ref) => <RouteGuard>[ref.watch(authRouteGuardProvider)],
-        ),
+      routeGuardsProvider.overrideWith(
+        (ref) => <RouteGuard>[
+          if (!effectiveConfig.bypassAuth) ref.watch(authRouteGuardProvider),
+          ref.watch(domainOptInRouteGuardProvider),
+        ],
+      ),
       // Feed the access token to the SyncEngine so /sync/push and
       // /sync/pull go out authed once a session is active. The fetcher
       // closes over Riverpod's container, so token rotation is picked up
@@ -110,6 +112,9 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         final state = ref.watch(authControllerProvider).value;
         return state is AuthLoggedIn ? state.session : null;
       }),
+      core_auth.authStateProvider.overrideWith(
+        (ref) => ref.watch(authControllerProvider).value,
+      ),
       core_auth.authOnUnauthorizedProvider.overrideWith(
         (ref) =>
             () => ref.read(authControllerProvider.notifier).refreshIfPossible(),

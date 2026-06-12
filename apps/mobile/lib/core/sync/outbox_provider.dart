@@ -13,16 +13,14 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/auth/data/auth_controller.dart'
-    show authControllerProvider;
-// State types from core; provider still lives in features/.
 import '../auth/auth_state.dart';
+import '../auth/providers.dart';
 import '../persistence/providers.dart';
 import 'drift_sync_storage.dart';
 import 'op_outbox.dart';
 
 final outboxStoreProvider = FutureProvider<OutboxStore>((ref) async {
-  final auth = ref.watch(authControllerProvider).value;
+  final auth = ref.watch(authStateProvider);
   if (auth is AuthLocalOnly) {
     return const NoopOutboxStore();
   }

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/domain_packs.dart';
+import 'package:naviwealth/app/tool_descriptor_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/intent/intent_policy.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';

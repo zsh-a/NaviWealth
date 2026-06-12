@@ -16,6 +16,7 @@ import '../../l10n/gen/app_localizations.dart';
 import '../ai/agents/agent.dart';
 import '../ai/composition/composite_proposal_applier.dart';
 import '../ai/composition/proposal_kind_registry.dart';
+import '../ai/contracts/tool_descriptor.dart';
 import '../ai/runtime/device/tools/device_tool.dart';
 import '../auth/domain_scope.dart';
 import '../auth/providers.dart';
@@ -56,6 +57,7 @@ class DomainPack {
   const DomainPack({
     required this.scope,
     this.deviceTools = const <DeviceTool>[],
+    this.toolDescriptors = const <String, ToolDescriptor>{},
     this.proposalKinds = const <ProposalKindMeta>[],
     this.proposalApplierRouteBuilder,
     this.systemPromptBlock = '',
@@ -73,6 +75,9 @@ class DomainPack {
 
   /// Device AI tools advertised when this domain is active.
   final List<DeviceTool> deviceTools;
+
+  /// Metadata for [deviceTools], advertised when this domain is active.
+  final Map<String, ToolDescriptor> toolDescriptors;
 
   /// Chat proposal-card kinds advertised when this domain is active.
   final List<ProposalKindMeta> proposalKinds;

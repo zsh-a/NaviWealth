@@ -72,10 +72,7 @@ class HealthTodayPage extends ConsumerWidget {
             child: _RecoveryHero(),
           ),
           SizedBox(height: AppSpacing.s12),
-          FadeSlideIn(
-            delay: Duration(milliseconds: 120),
-            child: _MetricGrid(),
-          ),
+          FadeSlideIn(delay: Duration(milliseconds: 120), child: _MetricGrid()),
           SizedBox(height: AppSpacing.s12),
           FadeSlideIn(
             delay: Duration(milliseconds: 160),
@@ -128,15 +125,7 @@ class _HealthDataStatusNoticeState
       }
       final result = await service.syncRange();
       setState(() => _lastResult = result);
-      ref
-        ..invalidate(latestSleepSessionProvider)
-        ..invalidate(latestHrvProvider)
-        ..invalidate(latestHeartRateProvider)
-        ..invalidate(latestWorkoutProvider)
-        ..invalidate(latestStepsProvider)
-        ..invalidate(latestWalkingDistanceProvider)
-        ..invalidate(latestActiveEnergyProvider)
-        ..invalidate(recoverySignalProvider);
+      ref.invalidate(healthTodaySnapshotProvider);
     } finally {
       if (mounted) setState(() => _running = false);
     }
@@ -372,14 +361,26 @@ class _MetricGrid extends ConsumerWidget {
     final spo2 = ref.watch(latestSpo2Provider);
 
     // Trends (7-day delta).
-    final sleepTrend = ref.watch(metricTrendProvider(HealthMetricKind.sleepSession));
-    final bbTrend = ref.watch(metricTrendProvider(HealthMetricKind.bodyBatteryDaily));
-    final stressTrend = ref.watch(metricTrendProvider(HealthMetricKind.stressDaily));
+    final sleepTrend = ref.watch(
+      metricTrendProvider(HealthMetricKind.sleepSession),
+    );
+    final bbTrend = ref.watch(
+      metricTrendProvider(HealthMetricKind.bodyBatteryDaily),
+    );
+    final stressTrend = ref.watch(
+      metricTrendProvider(HealthMetricKind.stressDaily),
+    );
     final hrvTrend = ref.watch(metricTrendProvider(HealthMetricKind.hrvDaily));
-    final hrTrend = ref.watch(metricTrendProvider(HealthMetricKind.heartRateDaily));
+    final hrTrend = ref.watch(
+      metricTrendProvider(HealthMetricKind.heartRateDaily),
+    );
     final rhrTrend = ref.watch(metricTrendProvider(HealthMetricKind.rhrDaily));
-    final stepsTrend = ref.watch(metricTrendProvider(HealthMetricKind.stepsDaily));
-    final energyTrend = ref.watch(metricTrendProvider(HealthMetricKind.activeEnergyDaily));
+    final stepsTrend = ref.watch(
+      metricTrendProvider(HealthMetricKind.stepsDaily),
+    );
+    final energyTrend = ref.watch(
+      metricTrendProvider(HealthMetricKind.activeEnergyDaily),
+    );
 
     final cards = <Widget>[
       _SleepCard(async: sleep, trend: sleepTrend.value),
@@ -563,10 +564,10 @@ class _SleepStageBar extends StatelessWidget {
                     ),
                   ),
                 Expanded(
-                  flex:
-                      ((1 - deepPct - remPct - awakePct) * 100)
-                          .round()
-                          .clamp(1, 100),
+                  flex: ((1 - deepPct - remPct - awakePct) * 100).round().clamp(
+                    1,
+                    100,
+                  ),
                   child: Container(color: colors.muted),
                 ),
               ],
@@ -742,7 +743,11 @@ class _StepsCard extends ConsumerWidget {
           final sub = wm != null && _utcDayKey(wm.capturedAt) == stepsDay
               ? '${(wm.value / 1000.0).toStringAsFixed(1)} km · ${_ago(l10n, m.capturedAt)}'
               : _ago(l10n, m.capturedAt);
-          return _ValueBig(value: _formatSteps(m.value), sub: sub, trend: trend);
+          return _ValueBig(
+            value: _formatSteps(m.value),
+            sub: sub,
+            trend: trend,
+          );
         },
       ),
     );
@@ -1100,9 +1105,7 @@ class _WeeklySummaryPanel extends ConsumerWidget {
                   const SizedBox(width: AppSpacing.s4),
                   Text(
                     l10n.healthWeeklySummaryTitle,
-                    style: typography.sm.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: typography.sm.copyWith(fontWeight: FontWeight.w600),
                   ),
                 ],
               ),

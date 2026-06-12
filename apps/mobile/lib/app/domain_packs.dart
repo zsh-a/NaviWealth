@@ -46,6 +46,7 @@ import 'route_paths.dart';
 const DomainPack kFinancePack = DomainPack(
   scope: DomainScope.finance,
   deviceTools: kFinanceDeviceTools,
+  toolDescriptors: kFinanceToolDescriptors,
   proposalKinds: kFinanceProposalKinds,
   proposalApplierRouteBuilder: _financeProposalApplierRoute,
   systemPromptBlock: kFinanceSystemPromptBlock,
@@ -69,6 +70,7 @@ const DomainPack kFinancePack = DomainPack(
 const DomainPack kHealthPack = DomainPack(
   scope: DomainScope.health,
   deviceTools: kHealthDeviceTools,
+  toolDescriptors: kHealthToolDescriptors,
   systemPromptBlock: kHealthSystemPromptBlock,
   shellSpecBuilder: healthDomainShell,
   shellRouteBuilder: healthShellRoute,
@@ -84,6 +86,7 @@ const DomainPack kHealthPack = DomainPack(
 const DomainPack kKnowledgePack = DomainPack(
   scope: DomainScope.knowledge,
   deviceTools: kKnowledgeDeviceTools,
+  toolDescriptors: kKnowledgeToolDescriptors,
   proposalKinds: kKnowledgeProposalKinds,
   proposalApplierRouteBuilder: _knowledgeProposalApplierRoute,
   systemPromptBlock: kKnowledgeSystemPromptBlock,

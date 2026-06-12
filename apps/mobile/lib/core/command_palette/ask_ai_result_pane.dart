@@ -46,7 +46,7 @@ class AskAiResultPane extends StatefulWidget {
   final String query;
 
   /// Adapter that runs a [FinanceQueryPlan]. The command palette wires
-  /// this from `driftQueryPlanExecutorProvider`; tests inject an
+  /// this from `queryPlanExecutorProvider`; tests inject an
   /// in-memory executor.
   final QueryPlanExecutor executor;
 

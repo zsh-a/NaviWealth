@@ -10,9 +10,6 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/auth/data/auth_controller.dart'
-    show authControllerProvider;
-// State types from core; provider still lives in features/.
 import 'auth_state.dart';
 import 'providers.dart';
 
@@ -23,7 +20,7 @@ const String kLocalOnlyUserId = 'local-user';
 /// Returns the active user's id. Override in tests to inject a fixed
 /// value.
 final currentUserIdProvider = Provider<Future<String> Function()>((ref) {
-  final auth = ref.watch(authControllerProvider).value;
+  final auth = ref.watch(authStateProvider);
   return () async {
     if (auth is AuthLoggedIn) return auth.session.userId;
     if (auth is AuthLocalOnly) return kLocalOnlyUserId;
@@ -44,7 +41,7 @@ final currentUserIdProvider = Provider<Future<String> Function()>((ref) {
 /// login wall. Surfaces that previously gated on [authSessionProvider]
 /// (which is null in local-only mode) should watch this instead.
 final activeUserIdProvider = Provider<String?>((ref) {
-  final auth = ref.watch(authControllerProvider).value;
+  final auth = ref.watch(authStateProvider);
   if (auth is AuthLoggedIn) return auth.session.userId;
   if (auth is AuthLocalOnly) return kLocalOnlyUserId;
   // Fall back to the session reader so surfaces that only wire up the

@@ -9,10 +9,12 @@ import '../../../core/ai/llm_credentials/providers.dart'
     show llmCredentialsProvider;
 import '../../../core/ai/local/memory/providers.dart'
     show memoryRuntimeProvider;
+import '../../../core/auth/current_user.dart';
 import '../../../core/logging/providers.dart' show loggerProvider;
 import '../../../core/persistence/providers.dart';
 import '../../../core/sync/outbox_provider.dart';
 import '../../ai_chat/data/providers.dart' show deviceLlmClientProvider;
+import '../domain/knowledge_models.dart';
 import 'capture_classifier.dart';
 import 'contradiction_judge.dart';
 import 'inbox_triage_classifier.dart';
@@ -35,6 +37,17 @@ final knowledgeRepositoryProvider = FutureProvider<KnowledgeRepository>((
   final outbox = await ref.watch(outboxStoreProvider.future);
   return KnowledgeRepository(db: db, outbox: outbox);
 });
+
+final knowledgeOwnerUserIdProvider = FutureProvider.autoDispose<String>((ref) {
+  return ref.watch(currentUserIdProvider)();
+});
+
+final knowledgeInboxNotesProvider =
+    StreamProvider.autoDispose<List<KnowledgeNote>>((ref) async* {
+      final ownerUserId = await ref.watch(knowledgeOwnerUserIdProvider.future);
+      final repository = await ref.watch(knowledgeRepositoryProvider.future);
+      yield* repository.watchNotes(ownerUserId: ownerUserId, limit: 50);
+    });
 
 final knowledgeSearchServiceProvider = FutureProvider<KnowledgeSearchService>((
   ref,

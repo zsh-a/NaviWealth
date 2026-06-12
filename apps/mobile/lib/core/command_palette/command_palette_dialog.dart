@@ -6,9 +6,9 @@ import 'package:forui/forui.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
-import '../ai/local/skills/drift_query_plan_executor.dart';
 import 'ask_ai_result_pane.dart';
 import 'command_palette_entry.dart';
+import 'query_plan_executor_provider.dart';
 
 /// Show the global command palette. Idempotent — a second call while the
 /// palette is already on screen is a no-op so the Cmd+K binding stays safe to
@@ -193,7 +193,7 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
     final double maxWidth = mediaSize.width < 560 ? mediaSize.width - 48 : 520;
     final double maxHeight = mediaSize.height * 0.6;
 
-    final executor = ref.watch(driftQueryPlanExecutorProvider);
+    final executor = ref.watch(queryPlanExecutorProvider);
 
     final Widget card = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),

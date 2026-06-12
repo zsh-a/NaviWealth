@@ -4,19 +4,13 @@
 /// a Rust registry. Phase D: each LifeOS domain co-locates its
 /// descriptors with its tool barrel — see `kShellToolDescriptors`,
 /// `kFinanceToolDescriptors`, `kHealthToolDescriptors`,
-/// `kKnowledgeToolDescriptors`. The derived union [allToolDescriptors]
-/// and [lookupToolDescriptor] live in `tool_descriptor_catalog.dart`
-/// (kept separate to avoid a cycle: contracts ← features).
+/// `kKnowledgeToolDescriptors`. The full production union lives in
+/// `app/tool_descriptor_catalog.dart` so this contract package remains
+/// domain-neutral.
 library;
 
 import 'intent.dart' show RiskLevel, RiskLevelWire, kDefaultDomain;
 import 'privacy_budget.dart' show BudgetTier, BudgetTierWire;
-
-// Re-export the derived catalog so existing callers can keep their
-// `import 'tool_descriptor.dart'` and still see `allToolDescriptors` /
-// `lookupToolDescriptor`. The actual union is built in the catalog
-// file to avoid a contracts ← features import cycle.
-export 'tool_descriptor_catalog.dart';
 
 enum Access { read, propose, externalWrite }
 

@@ -17,217 +17,129 @@ import '../data/recovery_scorer.dart';
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 
+const Set<HealthMetricKind> _kHealthTodayMetricKinds = <HealthMetricKind>{
+  HealthMetricKind.sleepSession,
+  HealthMetricKind.hrvDaily,
+  HealthMetricKind.heartRateDaily,
+  HealthMetricKind.workoutSession,
+  HealthMetricKind.stepsDaily,
+  HealthMetricKind.distanceWalkingRunningDaily,
+  HealthMetricKind.activeEnergyDaily,
+  HealthMetricKind.stressDaily,
+  HealthMetricKind.bodyBatteryDaily,
+  HealthMetricKind.rhrDaily,
+  HealthMetricKind.trainingLoadDaily,
+  HealthMetricKind.spo2Daily,
+  HealthMetricKind.vo2Max,
+};
+
+class _HealthTodaySnapshot {
+  const _HealthTodaySnapshot({required this.now, required this.byKind});
+
+  final DateTime now;
+  final Map<HealthMetricKind, List<HealthMetric>> byKind;
+
+  List<HealthMetric> rows(HealthMetricKind kind) =>
+      byKind[kind] ?? const <HealthMetric>[];
+
+  HealthMetric? latest(HealthMetricKind kind) {
+    final values = rows(kind);
+    if (values.isEmpty) return null;
+    final sorted = List<HealthMetric>.of(values)
+      ..sort((a, b) => b.capturedAt.compareTo(a.capturedAt));
+    return sorted.first;
+  }
+}
+
+final healthTodaySnapshotProvider =
+    FutureProvider.autoDispose<_HealthTodaySnapshot?>((ref) async {
+      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+      final repo = await ref.watch(healthMetricRepositoryProvider.future);
+      final userId = await ref.read(currentUserIdProvider)();
+      final data = await repo.listByKinds(
+        ownerUserId: userId,
+        kinds: _kHealthTodayMetricKinds,
+        limit: 100,
+      );
+      return _HealthTodaySnapshot(now: DateTime.now().toUtc(), byKind: data);
+    });
+
+Future<HealthMetric?> _latest(Ref ref, HealthMetricKind kind) async {
+  final snapshot = await ref.watch(healthTodaySnapshotProvider.future);
+  return snapshot?.latest(kind);
+}
+
 /// Newest sleep session row, or `null` when HealthOS is off / no data.
-final latestSleepSessionProvider = FutureProvider.autoDispose<HealthMetric?>((
-  ref,
-) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  final rows = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.sleepSession,
-    limit: 1,
-  );
-  return rows.isEmpty ? null : rows.first;
-});
+final latestSleepSessionProvider = FutureProvider.autoDispose<HealthMetric?>(
+  (ref) => _latest(ref, HealthMetricKind.sleepSession),
+);
 
 /// Newest HRV daily row.
-final latestHrvProvider = FutureProvider.autoDispose<HealthMetric?>((
-  ref,
-) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  final rows = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.hrvDaily,
-    limit: 1,
-  );
-  return rows.isEmpty ? null : rows.first;
-});
+final latestHrvProvider = FutureProvider.autoDispose<HealthMetric?>(
+  (ref) => _latest(ref, HealthMetricKind.hrvDaily),
+);
 
 /// Newest daily average heart-rate row. Garmin Health Connect sharing
 /// reliably exposes heart rate even when HRV/RHR are absent.
-final latestHeartRateProvider = FutureProvider.autoDispose<HealthMetric?>((
-  ref,
-) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  final rows = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.heartRateDaily,
-    limit: 1,
-  );
-  return rows.isEmpty ? null : rows.first;
-});
+final latestHeartRateProvider = FutureProvider.autoDispose<HealthMetric?>(
+  (ref) => _latest(ref, HealthMetricKind.heartRateDaily),
+);
 
 /// Newest workout session row.
-final latestWorkoutProvider = FutureProvider.autoDispose<HealthMetric?>((
-  ref,
-) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  final rows = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.workoutSession,
-    limit: 1,
-  );
-  return rows.isEmpty ? null : rows.first;
-});
+final latestWorkoutProvider = FutureProvider.autoDispose<HealthMetric?>(
+  (ref) => _latest(ref, HealthMetricKind.workoutSession),
+);
 
 /// Newest daily step count row.
-final latestStepsProvider = FutureProvider.autoDispose<HealthMetric?>((
-  ref,
-) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  final rows = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.stepsDaily,
-    limit: 1,
-  );
-  return rows.isEmpty ? null : rows.first;
-});
+final latestStepsProvider = FutureProvider.autoDispose<HealthMetric?>(
+  (ref) => _latest(ref, HealthMetricKind.stepsDaily),
+);
 
 /// Newest daily walking + running distance row (meters).
 final latestWalkingDistanceProvider = FutureProvider.autoDispose<HealthMetric?>(
-  (ref) async {
-    final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-    if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-    final repo = await ref.watch(healthMetricRepositoryProvider.future);
-    final userId = await ref.read(currentUserIdProvider)();
-    final rows = await repo.listByKind(
-      ownerUserId: userId,
-      kind: HealthMetricKind.distanceWalkingRunningDaily,
-      limit: 1,
-    );
-    return rows.isEmpty ? null : rows.first;
-  },
+  (ref) => _latest(ref, HealthMetricKind.distanceWalkingRunningDaily),
 );
 
 /// Newest daily active-energy row (kcal burned through activity).
-final latestActiveEnergyProvider = FutureProvider.autoDispose<HealthMetric?>((
-  ref,
-) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  final rows = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.activeEnergyDaily,
-    limit: 1,
-  );
-  return rows.isEmpty ? null : rows.first;
-});
+final latestActiveEnergyProvider = FutureProvider.autoDispose<HealthMetric?>(
+  (ref) => _latest(ref, HealthMetricKind.activeEnergyDaily),
+);
 
 /// Newest daily stress level row (Garmin-specific).
-final latestStressProvider = FutureProvider.autoDispose<HealthMetric?>((
-  ref,
-) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  final rows = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.stressDaily,
-    limit: 1,
-  );
-  return rows.isEmpty ? null : rows.first;
-});
+final latestStressProvider = FutureProvider.autoDispose<HealthMetric?>(
+  (ref) => _latest(ref, HealthMetricKind.stressDaily),
+);
 
 /// Newest daily Body Battery row (Garmin-specific).
-final latestBodyBatteryProvider = FutureProvider.autoDispose<HealthMetric?>((
-  ref,
-) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  final rows = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.bodyBatteryDaily,
-    limit: 1,
-  );
-  return rows.isEmpty ? null : rows.first;
-});
+final latestBodyBatteryProvider = FutureProvider.autoDispose<HealthMetric?>(
+  (ref) => _latest(ref, HealthMetricKind.bodyBatteryDaily),
+);
 
 /// Newest resting heart rate row.
-final latestRhrProvider = FutureProvider.autoDispose<HealthMetric?>((
-  ref,
-) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  final rows = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.rhrDaily,
-    limit: 1,
-  );
-  return rows.isEmpty ? null : rows.first;
-});
+final latestRhrProvider = FutureProvider.autoDispose<HealthMetric?>(
+  (ref) => _latest(ref, HealthMetricKind.rhrDaily),
+);
 
 /// Newest training load row (Garmin-specific).
-final latestTrainingLoadProvider = FutureProvider.autoDispose<HealthMetric?>((
-  ref,
-) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  final rows = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.trainingLoadDaily,
-    limit: 1,
-  );
-  return rows.isEmpty ? null : rows.first;
-});
+final latestTrainingLoadProvider = FutureProvider.autoDispose<HealthMetric?>(
+  (ref) => _latest(ref, HealthMetricKind.trainingLoadDaily),
+);
 
 /// Newest SpO2 (blood oxygen) row.
-final latestSpo2Provider = FutureProvider.autoDispose<HealthMetric?>((
-  ref,
-) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  final rows = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.spo2Daily,
-    limit: 1,
-  );
-  return rows.isEmpty ? null : rows.first;
-});
+final latestSpo2Provider = FutureProvider.autoDispose<HealthMetric?>(
+  (ref) => _latest(ref, HealthMetricKind.spo2Daily),
+);
 
 /// Last 7 days of HRV values for the recovery sparkline.
 /// Returns a list of (dayIndex, value) pairs, oldest-first.
 final recoverySparklineProvider = FutureProvider.autoDispose<List<double>>((
   ref,
 ) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) {
-    return const <double>[];
-  }
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  final rows = await repo.listByKind(
-    ownerUserId: userId,
-    kind: HealthMetricKind.hrvDaily,
-    limit: 10,
-  );
-  final now = DateTime.now().toUtc();
-  final cutoff = now.subtract(const Duration(days: 7));
+  final snapshot = await ref.watch(healthTodaySnapshotProvider.future);
+  if (snapshot == null) return const <double>[];
+  final cutoff = snapshot.now.subtract(const Duration(days: 7));
+  final rows = snapshot.rows(HealthMetricKind.hrvDaily);
   final inWindow = rows.where((m) => !m.capturedAt.isBefore(cutoff)).toList()
     ..sort((a, b) => a.capturedAt.compareTo(b.capturedAt));
   return inWindow.map((m) => m.value).toList();
@@ -238,36 +150,16 @@ final recoverySparklineProvider = FutureProvider.autoDispose<List<double>>((
 /// empty state instead of confusing zeros.
 final recoverySignalProvider =
     FutureProvider.autoDispose<Map<String, Object?>?>((ref) async {
-      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-      final repo = await ref.watch(healthMetricRepositoryProvider.future);
-      final userId = await ref.read(currentUserIdProvider)();
-      final data = await repo.listByKinds(
-        ownerUserId: userId,
-        kinds: const {
-          HealthMetricKind.hrvDaily,
-          HealthMetricKind.sleepSession,
-          HealthMetricKind.rhrDaily,
-          HealthMetricKind.vo2Max,
-          HealthMetricKind.bodyBatteryDaily,
-          HealthMetricKind.stressDaily,
-        },
-        limit: 50,
-      );
-      final hrv = data[HealthMetricKind.hrvDaily] ?? const [];
-      final sleep = data[HealthMetricKind.sleepSession] ?? const [];
-      final rhr = data[HealthMetricKind.rhrDaily] ?? const [];
-      final vo2 = data[HealthMetricKind.vo2Max] ?? const [];
-      final bb = data[HealthMetricKind.bodyBatteryDaily] ?? const [];
-      final stressData = data[HealthMetricKind.stressDaily] ?? const [];
+      final snapshot = await ref.watch(healthTodaySnapshotProvider.future);
+      if (snapshot == null) return null;
       const scorer = RecoveryScorer();
       final result = scorer.score(
-        hrv: hrv,
-        sleep: sleep,
-        rhr: rhr,
-        vo2Max: vo2,
-        bodyBattery: bb,
-        stress: stressData,
+        hrv: snapshot.rows(HealthMetricKind.hrvDaily),
+        sleep: snapshot.rows(HealthMetricKind.sleepSession),
+        rhr: snapshot.rows(HealthMetricKind.rhrDaily),
+        vo2Max: snapshot.rows(HealthMetricKind.vo2Max),
+        bodyBattery: snapshot.rows(HealthMetricKind.bodyBatteryDaily),
+        stress: snapshot.rows(HealthMetricKind.stressDaily),
       );
       return <String, Object?>{
         'score': result.score,
@@ -284,20 +176,13 @@ final recoverySignalProvider =
 /// comparison.
 final metricTrendProvider = FutureProvider.autoDispose
     .family<MetricTrend?, HealthMetricKind>((ref, kind) async {
-      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-      final repo = await ref.watch(healthMetricRepositoryProvider.future);
-      final userId = await ref.read(currentUserIdProvider)();
-      final rows = await repo.listByKind(
-        ownerUserId: userId,
-        kind: kind,
-        limit: 30,
-      );
+      final snapshot = await ref.watch(healthTodaySnapshotProvider.future);
+      if (snapshot == null) return null;
+      final rows = snapshot.rows(kind);
       if (rows.length < 3) return null;
 
-      final now = DateTime.now().toUtc();
-      final recentCutoff = now.subtract(const Duration(days: 3));
-      final priorCutoff = now.subtract(const Duration(days: 7));
+      final recentCutoff = snapshot.now.subtract(const Duration(days: 3));
+      final priorCutoff = snapshot.now.subtract(const Duration(days: 7));
 
       double convert(HealthMetric m) {
         if (kind == HealthMetricKind.sleepSession) {
@@ -366,26 +251,10 @@ class WeeklySummary {
 final weeklySummaryProvider = FutureProvider.autoDispose<WeeklySummary?>((
   ref,
 ) async {
-  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final userId = await ref.read(currentUserIdProvider)();
-  final now = DateTime.now().toUtc();
-  final cutoff = now.subtract(const Duration(days: 7));
-
-  final data = await repo.listByKinds(
-    ownerUserId: userId,
-    kinds: const {
-      HealthMetricKind.stepsDaily,
-      HealthMetricKind.sleepSession,
-      HealthMetricKind.workoutSession,
-      HealthMetricKind.hrvDaily,
-      HealthMetricKind.rhrDaily,
-    },
-    limit: 100,
-  );
-  List<HealthMetric> metricsFor(HealthMetricKind kind) =>
-      data[kind] ?? const <HealthMetric>[];
+  final snapshot = await ref.watch(healthTodaySnapshotProvider.future);
+  if (snapshot == null) return null;
+  final cutoff = snapshot.now.subtract(const Duration(days: 7));
+  List<HealthMetric> metricsFor(HealthMetricKind kind) => snapshot.rows(kind);
 
   double totalSteps = 0;
   double totalSleepHours = 0;
