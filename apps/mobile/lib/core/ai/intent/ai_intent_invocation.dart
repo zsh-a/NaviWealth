@@ -35,7 +35,7 @@ class AiIntentInvocation {
   /// attribution and for analytics.
   final String source;
 
-  /// Registered intent name (see `intent_policy.dart`). Off-registry
+  /// Registered intent name from the active intent catalog. Off-catalog
   /// invocations fall back to [suggestedPrompt] but emit a dev assert.
   final String intent;
 

@@ -23,8 +23,8 @@ import 'inline_setting_row.dart';
 /// (HealthOS sync / briefing) have a focused home instead of crowding the
 /// global preferences list. The overview now links here with a single
 /// row. FinanceOS is the always-on seed domain; HealthOS / KnowledgeOS are
-/// per-user opt-ins (D-1.5) — enabling one activates its AI tools + Memory
-/// indexing + IA shell entry.
+/// per-user opt-ins. Enabling one activates its AI tools, memory indexing,
+/// and IA shell entry.
 class DomainsSettingsPage extends ConsumerWidget {
   const DomainsSettingsPage({super.key});
 
@@ -132,8 +132,6 @@ class DomainsSettingsPage extends ConsumerWidget {
     );
   }
 }
-
-
 
 /// D-2.2 — manual "Sync from HealthKit / Health Connect" trigger.
 ///

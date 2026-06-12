@@ -3,19 +3,16 @@
 ///
 /// Keeps each tool file focused on schema + payload shaping instead of
 /// re-deriving the proposal-envelope shape, the `bad_request` / `not_found`
-/// result bodies, and the note-preview truncation in every file. These
-/// were copy-pasted across ~6 `propose_*` tools and the inbox trio before
-/// being collapsed here.
+/// result bodies, and the note-preview truncation in every file. Envelope
+/// and error helpers delegate to `core/ai/composition/proposal_envelope.dart`
+/// so FinanceOS and KnowledgeOS share the same outer wire contract.
 library;
 
-import '../data/providers.dart' show kKnowledgeUuid;
+import '../../../core/ai/composition/proposal_envelope.dart'
+    as proposal_envelope;
 import '../domain/knowledge_text.dart';
 
-/// Default `note` carried on every KnowledgeOS proposal envelope: the UI
-/// must surface `summary_zh` and only commit on explicit user confirmation
-/// (northstar 行为契约 / ai-architecture.md).
-const String kProposalConfirmNote =
-    '前端必须显示 summary_zh 给用户确认；只有用户明确点确认后才走 Repository。';
+const String kProposalConfirmNote = proposal_envelope.kProposalConfirmNote;
 
 /// Cross-domain `propose_*` envelope shape (matches the finance proposal
 /// contract). Pass [note] to name the concrete repository call a tool
@@ -25,32 +22,37 @@ Map<String, Object?> proposalEnvelope({
   required String summaryZh,
   required Map<String, Object?> payload,
   String note = kProposalConfirmNote,
+}) => proposal_envelope.readyPlan(
+  kind: kind,
+  summaryZh: summaryZh,
+  payload: payload,
+  note: note,
+);
+
+/// KnowledgeOS-specific terminal envelope for captures that should remain
+/// plain notes. It deliberately does not parse into a confirmable
+/// [ProposalPlan].
+Map<String, Object?> noUpgradeEnvelope({
+  required String summaryZh,
+  required Map<String, Object?> payload,
+  required String note,
 }) => <String, Object?>{
-  'proposal_id': kKnowledgeUuid.v4(),
-  'kind': kind,
-  'status': 'ready',
+  'proposal_id': proposal_envelope.proposalNewId(),
+  'kind': 'capture_no_upgrade',
+  'status': 'no_upgrade',
   'summary_zh': summaryZh,
   'payload': payload,
-  'warnings': const <String>[],
-  'missing': const <String>[],
-  'candidates': null,
   'note': note,
 };
 
 /// Standard `bad_request` tool result. Returned (not thrown) so the agent
 /// loop relays the message back to the model.
-Map<String, Object?> badRequest(String message) => <String, Object?>{
-  'error': message,
-  'code': 'bad_request',
-};
+Map<String, Object?> badRequest(String message) =>
+    proposal_envelope.proposalBadRequest(message);
 
 /// Standard `not_found` tool result carrying the offending [missing] ids.
 Map<String, Object?> notFound(String message, List<String> missing) =>
-    <String, Object?>{
-      'error': message,
-      'code': 'not_found',
-      'missing': missing,
-    };
+    proposal_envelope.proposalNotFound(message, missing);
 
 /// Short label for a note in a proposal summary: prefer the title, else a
 /// truncated body, else a placeholder. Shared by the inbox `propose_*`

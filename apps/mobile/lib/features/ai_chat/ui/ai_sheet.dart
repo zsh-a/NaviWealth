@@ -476,7 +476,8 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
       // Real session backed by ChatHistoryStore so "expand to chat" can
       // take over without rebuilding state. Title encodes the intent
       // for sidebar legibility.
-      final desc = lookupIntent(invocation.intent);
+      final intentCatalog = ref.read(intentCatalogProvider);
+      final desc = intentCatalog.lookup(invocation.intent);
       final title = desc != null
           ? '${localizedIntentLabel(l10n, desc)} · ${widget.objectLabel ?? invocation.object?.type ?? "AI"}'
           : (widget.objectLabel ?? 'AI');
@@ -491,6 +492,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
         objectLabel: widget.objectLabel,
         defaultTimeframe: l10n.aiIntentDefaultTimeframe,
         copyResolver: copyResolver,
+        catalog: intentCatalog,
         fallbackObjectLabel: l10n.aiIntentCurrentObject,
         fallbackPromptTemplate: l10n.aiIntentFallbackPrompt('{{object_label}}'),
       );
@@ -783,14 +785,14 @@ class _ConversationComposer extends ConsumerWidget {
   }
 }
 
-class _InvocationHeader extends StatelessWidget {
+class _InvocationHeader extends ConsumerWidget {
   const _InvocationHeader({required this.invocation, this.objectLabel});
   final AiIntentInvocation invocation;
   final String? objectLabel;
 
   @override
-  Widget build(BuildContext context) {
-    final desc = lookupIntent(invocation.intent);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final desc = ref.watch(intentCatalogProvider).lookup(invocation.intent);
     final l10n = AppLocalizations.of(context);
     // Single inline header row: sparkle + intent label + middot +
     // object label, so context stays visible while the body scrolls.

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/core/ai/local/skills/query_plan_executor.dart';
 import 'package:naviwealth/core/ai/local/skills/transaction_input.dart';
-import 'package:naviwealth/core/command_palette/ask_ai_result_pane.dart';
+import 'package:naviwealth/features/finance/ai_tools/query_plan/query_plan.dart';
+import 'package:naviwealth/features/finance/command_palette/finance_ask_ai_result_pane.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 DateTime _frozenNow = DateTime.utc(2026, 5, 15);
@@ -33,7 +33,7 @@ Future<void> _settle(WidgetTester tester) async {
 }
 
 void main() {
-  group('AskAiResultPane', () {
+  group('FinanceAskAiResultPane', () {
     testWidgets('renders structured result for a parseable NL query', (
       tester,
     ) async {
@@ -45,7 +45,7 @@ void main() {
       );
       await tester.pumpWidget(
         _wrap(
-          AskAiResultPane(
+          FinanceAskAiResultPane(
             query: '上月咖啡花了多少',
             executor: executor,
             now: _frozenNow,
@@ -68,7 +68,7 @@ void main() {
       final executor = InMemoryQueryPlanExecutor(transactions: const []);
       await tester.pumpWidget(
         _wrap(
-          AskAiResultPane(
+          FinanceAskAiResultPane(
             query: '转账 ¥5000 给招行',
             executor: executor,
             now: _frozenNow,
@@ -90,7 +90,7 @@ void main() {
       final executor = InMemoryQueryPlanExecutor(transactions: const []);
       await tester.pumpWidget(
         _wrap(
-          AskAiResultPane(
+          FinanceAskAiResultPane(
             query: 'tell me a joke about the federal reserve',
             executor: executor,
             now: _frozenNow,
@@ -109,7 +109,7 @@ void main() {
       String? captured;
       await tester.pumpWidget(
         _wrap(
-          AskAiResultPane(
+          FinanceAskAiResultPane(
             query: '  unrelated mystery  ',
             executor: executor,
             now: _frozenNow,
@@ -140,8 +140,9 @@ void main() {
         ],
       );
 
-      Widget build(String q) =>
-          _wrap(AskAiResultPane(query: q, executor: executor, now: _frozenNow));
+      Widget build(String q) => _wrap(
+        FinanceAskAiResultPane(query: q, executor: executor, now: _frozenNow),
+      );
 
       // Use a query with an explicit spending verb — `parseNlQuery`
       // requires both a spending intent and a category/range hint

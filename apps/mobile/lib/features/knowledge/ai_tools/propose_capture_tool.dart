@@ -66,17 +66,14 @@ class ProposeCaptureTool implements DeviceTool {
     final classification = await classifier.classify(text: text);
 
     if (classification.kind == CaptureKind.note && !classification.hasPolish) {
-      return <String, Object?>{
-        'proposal_id': kKnowledgeUuid.v4(),
-        'kind': 'capture_no_upgrade',
-        'status': 'no_upgrade',
-        'summary_zh': '保留为 Note —— ${classification.reasonZh}',
-        'payload': <String, Object?>{
+      return noUpgradeEnvelope(
+        summaryZh: '保留为 Note —— ${classification.reasonZh}',
+        payload: <String, Object?>{
           'detected_kind': CaptureKind.note.wire,
           'confidence': classification.confidence,
         },
-        'note': '没有强信号升级为其它类型;前端无需追问,Note 已是合理表达。',
-      };
+        note: '没有强信号升级为其它类型;前端无需追问,Note 已是合理表达。',
+      );
     }
 
     final payload = <String, Object?>{

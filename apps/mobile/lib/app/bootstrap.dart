@@ -28,7 +28,6 @@ import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
 import '../features/auth/data/auth_controller.dart';
 import '../features/auth/data/auth_route_guard.dart';
 import '../features/cashflow/data/recurring_transaction_providers.dart';
-import '../features/finance/composition/finance_bootstrap.dart';
 import '../features/finance/data/market/sync/price_sync_providers.dart';
 import '../features/health/agents/briefing_synthesizer.dart';
 import '../features/health/agents/morning_briefing_agent.dart';
@@ -119,14 +118,10 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         (ref) =>
             () => ref.read(authControllerProvider.notifier).refreshIfPossible(),
       ),
-      // FinanceOS shell-seam bundle (`docs/lifeos-shell.md` §4): one
-      // line replaces what used to be 6 inline overrides. Each
-      // domain's `<domain>_bootstrap.dart` returns its own bundle;
-      // bootstrap spreads them in turn.
-      ...financeCompositionOverrides(),
       // LifeOS domain inventory + active-domain aggregators
       // (`docs/lifeos-shell.md` §4): tools, prompt blocks, agents, shell
-      // specs, and the registry all derive from the DomainPack list.
+      // specs, domain provider seams, and the registry all derive from
+      // the DomainPack list.
       ...lifeOsDomainCompositionOverrides(),
       // Wire the Morning Briefing with the LLM synthesizer
       // (falling back to programmatic when no device LLM is configured)

@@ -91,20 +91,25 @@ ChatRepository
   + `DoneEvent(stopReason:"error", rounds:0)`，UI 引导用户去设置加 API key。
   provider 自身报错按其 `ErrorEvent`/`DoneEvent` 原样透传。降级仍写 `AiTrace`。
 
-## 3. 工具与契约（`lib/core/ai/contracts/` + `runtime/device/tools/`）
+## 3. 工具与契约（`lib/core/ai/contracts/` + domain `ai_tools/`）
 
-### 3.1 工具目录（`kDeviceTools`，34 个）
+### 3.1 工具目录（DomainPack 聚合）
 
-`device_tool_registry.dart` 的 `kDeviceTools` 是 dispatch allow-list；
-`contracts/tool_descriptor.dart` 为**这一组**携带元数据。两者一一对应，由
-`./tool/check-tool-descriptors.sh`（跑 Dart 契约测试）CI 守护。
+端侧工具目录由 active `DomainPack`s 聚合：Shell core tools 来自
+`core/ai/runtime/device/tools/device_tool_registry.dart`，Finance / Health /
+Knowledge 工具分别由各自 `features/<domain>_ai_tools.dart` 和 domain-local
+`ai_tools/` 暴露。完整生产诊断合集在
+`apps/mobile/lib/app/production_ai_catalog.dart`：
+`productionDeviceTools` 是 dispatch allow-list，
+`productionToolDescriptors` 是对应元数据。`./tool/check-tool-descriptors.sh`
+（跑 Dart 契约测试）CI 守护两者一一对应。
 
-| 类 | 数量 | 工具 |
-|----|------|------|
-| Read（基础） | 17 | `list_payment_accounts` · `get_holdings` · `get_asset_allocation` · `get_cashflow_buckets` · `get_anomaly_flags` · `get_recurring_patterns` · `get_refund_links` · `get_transfer_links` · `get_investment_performance` · `get_net_worth_summary` · `get_subscription_changes` · `read_account_window` · `read_asset_window` · `read_category_window` · `get_industry_breakdown` · `get_geo_breakdown` · `get_market_cap_breakdown` |
-| Propose（基础） | 5 | `propose_expense` · `propose_account_create` · `propose_asset_valuation` · `propose_liability_payment` · `propose_trade` |
-| FIRE OS Phase 5 | 8 | `get_fire_state` · `get_fire_plan` · `get_fire_buckets` · `get_fire_stress_tests` · `get_fire_review` · `simulate_fire_plan` · `propose_fire_plan_update` · `propose_fire_bucket_rule` |
-| Options Income | 4 | `get_options_income_opportunities` · `get_options_strategy_profile` · `propose_options_profile_update` · `propose_options_journal_entry` |
+| 域 | 工具来源 |
+|----|----------|
+| Shell | Memory Layer tools: `query_memory` · `build_context` · `ask_user` |
+| FinanceOS | `features/finance_ai_tools.dart`，含基础财务、FIRE、Options Income、scoped read / propose 工具 |
+| HealthOS | `features/health_ai_tools.dart` |
+| KnowledgeOS | `features/knowledge_ai_tools.dart` |
 
 数据源全部是**本机 Drift / 既有端侧 provider**（net worth / currency service /
 `holdingsSnapshotProvider` / `DriftQueryPlanExecutor` / 端侧 detector）。Scoped Detail
@@ -306,14 +311,12 @@ runtime/
     device_agent_loop.dart       端侧 agent loop
     device_session.dart          per-turn session
     device_system_prompt.dart    端侧 system prompt + 硬限额
-    device_tool_dispatcher.dart  只广告 kDeviceTools
+    device_tool_dispatcher.dart  只广告 active DomainPack 聚合出的工具
     device_vision_parse.dart     端侧 Vision 抽取
     llm_stream_event.dart        provider-neutral 事件
     anthropic/                   AnthropicClient + SSE decoder + wire
     openai/                      OpenAiClient + SSE decoder
-    tools/                       device_tool_registry(kDeviceTools=34) +
-                                 34 工具（17 基础 read + 5 基础 propose +
-                                 8 FIRE + 4 Options）+ propose/ + scoped/
+    tools/                       Shell core tools + DeviceToolRegistry
 llm_credentials/                 LlmCredentials/LlmProfile + SecureKeyStore +
                                  连通性探测 + providers   (§2.2)
 trace/                           AiTraceStore / DriftAiTraceStore / builder /
@@ -355,7 +358,7 @@ Chat → providers.dart _prepareChatTrace(ref, requestId)
   → ContextCompressor.compress() 编 ContextPack（端侧派生信号 + 偏好）
   → RuntimeRoutingAiChatApiClient → DeviceLlmRuntime
      - Anthropic/OpenAiClient 直连用户 provider（用户 key）
-     - DriftDeviceToolDispatcher 仅广告 kDeviceTools
+     - DriftDeviceToolDispatcher 仅广告 active DomainPack 聚合出的工具
      - 每个 tool_call 直接读本机 Drift / 端侧 provider，数据不经我方服务器
   → Dart stream events 回流，端侧渲染
   → AiTraceBuilder 记录 turn / llm / tool spans

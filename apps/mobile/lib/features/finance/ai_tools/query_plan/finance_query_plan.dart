@@ -13,7 +13,7 @@
 /// error — that is the point.
 library;
 
-import '../../contracts/contracts.dart' show DateRange;
+import 'package:naviwealth/core/ai/contracts/contracts.dart' show DateRange;
 
 sealed class FinanceQueryPlan {
   const FinanceQueryPlan();

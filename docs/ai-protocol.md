@@ -59,11 +59,11 @@ The UI should guide the user to configure a provider profile in Settings.
 
 ## Tool Catalog
 
-The active tool catalog is mobile-local. `kDeviceTools` in
-`apps/mobile/lib/core/ai/runtime/device/tools/device_tool_registry.dart` is the
-dispatch allow-list, and
-`apps/mobile/lib/core/ai/contracts/tool_descriptor.dart` carries metadata for
-exactly that advertised set.
+The active tool catalog is mobile-local. Runtime dispatch is assembled from
+active `DomainPack`s via `lifeOsDomainCompositionOverrides`; the full production
+diagnostic catalog lives in `apps/mobile/lib/app/production_ai_catalog.dart`.
+Each domain co-locates tool registrations and `ToolDescriptor` metadata with
+its own tool barrel.
 
 Run from the repository root:
 

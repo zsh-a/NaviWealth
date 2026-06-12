@@ -16,7 +16,9 @@ import '../core/ai/agents/agent.dart';
 import '../core/ai/composition/composite_proposal_applier.dart';
 import '../core/auth/domain_scope.dart';
 import '../core/lifeos/domain_pack.dart';
+import '../features/finance/composition/finance_bootstrap.dart';
 import '../features/finance/composition/finance_command_palette.dart';
+import '../features/finance/composition/finance_intents.dart';
 import '../features/finance/composition/finance_proposal_applier.dart'
     as finance_proposals;
 import '../features/finance/composition/finance_proposal_kinds.dart'
@@ -43,10 +45,11 @@ import '../features/knowledge/composition/knowledge_routes.dart';
 import '../features/knowledge_ai_tools.dart';
 import 'route_paths.dart';
 
-const DomainPack kFinancePack = DomainPack(
+final DomainPack kFinancePack = DomainPack(
   scope: DomainScope.finance,
   deviceTools: kFinanceDeviceTools,
   toolDescriptors: kFinanceToolDescriptors,
+  intentDescriptors: kFinanceIntentDescriptors,
   proposalKinds: kFinanceProposalKinds,
   proposalApplierRouteBuilder: _financeProposalApplierRoute,
   systemPromptBlock: kFinanceSystemPromptBlock,
@@ -65,9 +68,10 @@ const DomainPack kFinancePack = DomainPack(
   // `aiContextProvider` aware that those routes belong to Finance.
   additionalPathPrefixes: [AppRoutes.cashflow],
   commandPaletteEntriesBuilder: financeCommandPaletteEntries,
+  providerOverridesBuilder: financeCompositionOverrides,
 );
 
-const DomainPack kHealthPack = DomainPack(
+final DomainPack kHealthPack = DomainPack(
   scope: DomainScope.health,
   deviceTools: kHealthDeviceTools,
   toolDescriptors: kHealthToolDescriptors,
@@ -83,7 +87,7 @@ const DomainPack kHealthPack = DomainPack(
   commandPaletteEntriesBuilder: healthCommandPaletteEntries,
 );
 
-const DomainPack kKnowledgePack = DomainPack(
+final DomainPack kKnowledgePack = DomainPack(
   scope: DomainScope.knowledge,
   deviceTools: kKnowledgeDeviceTools,
   toolDescriptors: kKnowledgeToolDescriptors,
@@ -104,7 +108,7 @@ const DomainPack kKnowledgePack = DomainPack(
 /// Production inventory. `bootstrap.dart` overrides
 /// [domainPackRegistryProvider] with this list. Tests can override
 /// with a subset for reduced-matrix scenarios.
-const List<DomainPack> kAllDomainPacks = <DomainPack>[
+final List<DomainPack> kAllDomainPacks = <DomainPack>[
   kFinancePack,
   kHealthPack,
   kKnowledgePack,

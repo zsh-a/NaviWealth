@@ -48,7 +48,7 @@ const List<DeviceTool> kShellDeviceToolsCore = <DeviceTool>[
 
 /// Shell-only tool descriptors. Co-located with [kShellDeviceToolsCore]
 /// so adding a shell tool is a single-file change. Merged into
-/// [allToolDescriptors] alongside each LifeOS domain's contribution.
+/// `domainToolDescriptors` alongside each LifeOS domain's contribution.
 const Map<String, ToolDescriptor> kShellToolDescriptors =
     <String, ToolDescriptor>{
       'query_memory': ToolDescriptor(

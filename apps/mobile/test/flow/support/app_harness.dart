@@ -18,9 +18,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/app.dart';
-import 'package:naviwealth/app/domain_packs.dart';
+import 'package:naviwealth/app/domain_composition.dart';
+import 'package:naviwealth/core/ai/contracts/privacy_mode_provider.dart';
 import 'package:naviwealth/core/ai/write/providers.dart';
-import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
@@ -29,6 +29,12 @@ import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/analytics/data/benchmark/benchmark_history_source.dart';
+import 'package:naviwealth/features/analytics/data/benchmark/benchmark_providers.dart';
+import 'package:naviwealth/features/analytics/data/providers.dart'
+    as analytics_data;
+import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_comparison.dart';
+import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/cashflow/data/cash_flow_providers.dart';
 import 'package:naviwealth/features/cashflow/data/recurring_transaction_providers.dart';
@@ -38,6 +44,7 @@ import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/home/data/dashboard_providers.dart';
+import 'package:naviwealth/features/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
@@ -45,6 +52,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/persistence/test_database.dart';
 import '../../features/finance/data/repositories/_stub_stamper.dart';
+
+class _OfflineBenchmarkSource implements BenchmarkHistorySource {
+  @override
+  Future<List<TimeSeriesPoint>> seriesFor({
+    required BenchmarkIndex index,
+    required DateTime from,
+    required DateTime to,
+  }) async => const [];
+}
 
 /// Deterministic seed data for a flow. Defaults to an empty portfolio
 /// (the "first run" state); pass non-empty lists to drive Tasks that
@@ -104,20 +120,25 @@ Future<void> bootApp(
 
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
+  await markAiPrivacyOnboardingSeen(prefs);
+  final testDb = liveData == null ? makeTestDatabase() : null;
+  if (testDb != null) {
+    addTearDown(testDb.close);
+  }
 
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        appDatabaseProvider.overrideWith((_) async => liveData?.db ?? testDb!),
         if (liveData != null) ...[
-          appDatabaseProvider.overrideWith((_) async => liveData.db),
           outboxStoreProvider.overrideWith((_) async => liveData.outbox),
           mutationStamperProvider.overrideWith((_) async => liveData.stamper),
         ],
-        // The DomainPack registry contributes the per-domain shell routes
-        // (D-1.8 / D-2.3b). bootstrap.dart populates it in production; the
-        // default is empty, so without this the `/` route 404s.
-        domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
+        // Match production bootstrap so the DomainPack inventory, shell
+        // routes, active-domain aggregators, and domain-owned provider
+        // seams stay in sync.
+        ...lifeOsDomainCompositionOverrides(),
         // Data layer → deterministic streams. Seeded from [FlowSeed] so a
         // Task can assert on rendered balances without touching Drift.
         manualAssetsStreamProvider.overrideWith(
@@ -132,6 +153,12 @@ Future<void> bootApp(
         liabilitiesStreamProvider.overrideWith(
           (ref) => Stream<List<Liability>>.value(seed.liabilities),
         ),
+        analytics_data.equityAssetsStreamProvider.overrideWith(
+          (ref) => Stream<List<Asset>>.value(const []),
+        ),
+        benchmarkHistorySourceProvider.overrideWith(
+          (_) async => _OfflineBenchmarkSource(),
+        ),
         if (liveData == null)
           accountsStreamProvider.overrideWith(
             (ref) => Stream<List<Account>>.value(seed.accounts),
@@ -141,6 +168,15 @@ Future<void> bootApp(
         ),
         holdingsSnapshotProvider.overrideWith(
           (ref) async => const <String, HoldingSnapshot>{},
+        ),
+        dashboardManualAssetValuationsProvider.overrideWith(
+          (ref) => const AsyncValue.data(<ManualAssetValuation>[]),
+        ),
+        dashboardSnapshotProvider.overrideWith(
+          (ref) async => DashboardSnapshot.empty(
+            asOf: DateTime.utc(2026, 1, 1),
+            baseCurrency: 'CNY',
+          ),
         ),
         dashboardPriceRowsProvider.overrideWith(
           (ref) => Stream.value(const []),
@@ -161,6 +197,18 @@ Future<void> bootApp(
     ),
   );
   await settle(tester);
+  addTearDown(() async {
+    await closeApp(tester);
+  });
+}
+
+/// Unmounts the app before a flow test body returns so Drift/Riverpod
+/// dispose timers are flushed before flutter_test verifies invariants.
+Future<void> closeApp(WidgetTester tester) async {
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pump(Duration.zero);
+  await tester.pump(Duration.zero);
+  await tester.pump(const Duration(milliseconds: 1));
 }
 
 /// Pumps a bounded number of frames. Flow surfaces subscribe to streams

@@ -1,7 +1,7 @@
 // Wave 44 — static contract checks on the AI regression corpus.
 //
 // These tests don't make any LLM calls. They guarantee the corpus,
-// intent registry, and renderer dispatch stay consistent: every
+// production intent catalog, and renderer dispatch stay consistent: every
 // expected tool in the corpus has a real renderer (or is on the
 // allowlisted JSON-only set), and every intent is registered.
 //
@@ -13,10 +13,8 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/domain_packs.dart';
-import 'package:naviwealth/core/ai/intent/intent.dart';
+import 'package:naviwealth/app/production_ai_catalog.dart';
 import 'package:naviwealth/core/ai/regression/regression_corpus.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
 
 /// Tool names that have an inline domain renderer in
 /// `tool_invocation_renderers.dart`. Extracted at test-time so adding
@@ -39,11 +37,6 @@ Set<String> _renderersOnDisk() {
   return out;
 }
 
-DeviceToolRegistry _productionDeviceToolRegistry() => DeviceToolRegistry([
-  ...kShellDeviceToolsCore,
-  for (final pack in kAllDomainPacks) ...pack.deviceTools,
-]);
-
 void main() {
   group('Wave 44 — regression corpus contract', () {
     test('corpus is non-empty (degenerate coverage check)', () {
@@ -64,10 +57,10 @@ void main() {
       }
     });
 
-    test('every prompt.intent is registered in intent_policy', () {
+    test('every prompt.intent is registered in the production catalog', () {
       for (final p in regressionCorpus) {
         expect(
-          lookupIntent(p.intent),
+          productionIntentCatalog.lookup(p.intent),
           isNotNull,
           reason: 'prompt ${p.id} uses unregistered intent "${p.intent}"',
         );
@@ -123,14 +116,14 @@ void main() {
         'get_net_worth_summary',
         'get_investment_performance',
       };
-      // intent_policy lists read-model names (e.g. 'subscription_changes')
+      // Intent descriptors list read-model names (e.g. 'subscription_changes')
       // while the corpus stores tool names ('get_subscription_changes').
       // Normalise: strip the `get_` prefix when present.
       String stripGet(String name) =>
           name.startsWith('get_') ? name.substring(4) : name;
 
       for (final p in regressionCorpus) {
-        final desc = lookupIntent(p.intent)!;
+        final desc = productionIntentCatalog.lookup(p.intent)!;
         final preferredNormalised = desc.preferredReadModels
             .map(stripGet)
             .toSet();
@@ -142,17 +135,17 @@ void main() {
             isTrue,
             reason:
                 'prompt ${p.id} expects tool "$tool" (read-model '
-                '"${stripGet(tool)}") but intent_policy '
+                '"${stripGet(tool)}") but production intent '
                 '"${p.intent}".preferredReadModels (normalised) '
                 '= $preferredNormalised does not include it. '
-                'Either widen the intent registry or drop the expectation.',
+                'Either widen the intent catalog or drop the expectation.',
           );
         }
       }
     });
 
     test('every expected tool is advertised by the device registry', () {
-      final advertised = _productionDeviceToolRegistry().names.toSet();
+      final advertised = productionDeviceToolRegistry.names.toSet();
       for (final p in regressionCorpus) {
         for (final tool in p.expectedTools) {
           expect(
@@ -166,7 +159,7 @@ void main() {
 
     test('every registered intent has at least one corpus prompt', () {
       final coveredIntents = {for (final p in regressionCorpus) p.intent};
-      for (final desc in intentDescriptors) {
+      for (final desc in productionIntentCatalog.descriptors) {
         expect(
           coveredIntents.contains(desc.name),
           isTrue,

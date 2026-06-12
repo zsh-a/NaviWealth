@@ -5,7 +5,7 @@
 /// touches sizing / color / typography; it just supplies the
 /// invocation.
 ///
-/// §5.8 hard constraint: label text comes from `intent_policy.dart`,
+/// §5.8 hard constraint: label text comes from the active intent catalog,
 /// not free-form. No "Ask AI" / glow / generic chat icon. Domain is
 /// auto-derived from the current route via [askAi]; capsules never
 /// hard-code which OS they live in.
@@ -39,7 +39,7 @@ class AiObjectCapsule extends ConsumerWidget {
 
   @override
   Widget build(BuildContext buildContext, WidgetRef ref) {
-    final descriptor = lookupIntent(intent);
+    final descriptor = ref.watch(intentCatalogProvider).lookup(intent);
     final l10n = AppLocalizations.of(buildContext);
     final label =
         fallbackLabel ??

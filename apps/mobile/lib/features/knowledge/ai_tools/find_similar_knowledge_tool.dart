@@ -19,6 +19,7 @@ import 'package:naviwealth/core/auth/current_user.dart';
 import '../data/knowledge_object_memory_indexers.dart';
 import '../data/knowledge_search_service.dart';
 import '../data/providers.dart';
+import '_tool_support.dart';
 
 class FindSimilarKnowledgeTool implements DeviceTool {
   const FindSimilarKnowledgeTool();
@@ -80,7 +81,7 @@ class FindSimilarKnowledgeTool implements DeviceTool {
   ) async {
     final text = ((input['text'] as String?) ?? '').trim();
     if (text.isEmpty) {
-      return <String, Object?>{'error': 'text 必填且非空。', 'code': 'bad_request'};
+      return badRequest('text 必填且非空。');
     }
     final excludeId = (input['exclude_id'] as String?)?.trim();
     final threshold = (input['threshold'] is num)

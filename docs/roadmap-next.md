@@ -39,7 +39,7 @@
 
 1. **作用域**:FinanceOS 域路线(本文档)+ Phase D 状态指针(§10,详见 `lifeos-shell.md`)。HealthOS 域 SSOT 在 `healthos-domain.md`,**不重复**。TimeOS / KnowledgeOS / LivingOS 未触发,本文档不规划。
 2. **IA 锁定**:Today / Activity / Wealth / Plan + 全局 Settings + Search 已锁定。任何新功能必须归位到现有 tab,**不**新增 tab、不重命名 tab、不引入"Analytics"标签。见 memory `ia_contract.md`。
-3. **架构边界**: 新增代码遵守北极星 §2。新 device tool 必须放 `features/<域>/ai_tools/`(尚未启用迁移,但**新增**不要再往 `core/ai/runtime/device/tools/` 里堆 Finance tool)。
+3. **架构边界**: 新增代码遵守北极星 §2。新 device tool 必须放 `features/<域>/ai_tools/`，通过对应 `DomainPack` 注册；不要再往 `core/ai/runtime/device/tools/` 里堆业务域 tool。
 4. **抽象克制**: 单域 generalization 不做。任何"为以后可能的第二个域而提前抽象"的 PR 视为违反 §1.2,拒绝。
 5. **运行模式**: 本地优先(local-first),用户自带 LLM key,Web 无 AI。**不**回退到云 AI relay,**不**做 Flutter+Rust local engine 全面 pivot。
 
@@ -116,7 +116,7 @@
 
 - ✅ **State machine 落地** (2026-05-24): `wheel_lifecycle.dart`,9 个 stage(between / cashWaiting / shortPut / putExpired / putAssigned / sharesHeld / shortCall / callExpired / callCalled)+ `buildWheelLifecycle` pure function 从 trade journal 派生。10 个测试覆盖完整状态转换。
 - ✅ **`/plan/wheel` page 落地** (2026-05-24): `features/options_income/presentation/wheel_lifecycle_page.dart` 接 `wheelLifecyclesProvider`(纯派生自 trade journal stream);Plan hub 加 Wheel tile + 路由 + l10n。每个 cycle 显示 symbol / 阶段标签 / 累计收益。3 个 widget 测试(空状态 / 多个 cycle 渲染 / 开仓优先排序)。
-- ✅ **AI tool `get_wheel_lifecycle`** (2026-05-24): `core/ai/runtime/device/tools/get_wheel_lifecycle_tool.dart`,读 `wheelLifecyclesProvider`,可选 symbol filter,输出 cycle 数组 + evidence anchors(每个 journal entry 一个)。注册到 `kDeviceTools` + `allToolDescriptors`(catalog 35 → 含 P4)。8 个工具单元测试(descriptor / 未加载引导 / 全量 / symbol filter / 大小写不敏感 / 无匹配 / open vs closed 序列化 / evidence)。
+- ✅ **AI tool `get_wheel_lifecycle`** (2026-05-24): `features/options_income/ai_tools/get_wheel_lifecycle_tool.dart`,读 `wheelLifecyclesProvider`,可选 symbol filter,输出 cycle 数组 + evidence anchors(每个 journal entry 一个)。通过 FinanceOS tool barrel / `DomainPack` 注册到生产 device tool catalog。8 个工具单元测试(descriptor / 未加载引导 / 全量 / symbol filter / 大小写不敏感 / 无匹配 / open vs closed 序列化 / evidence)。
 - 详: [options-income P4](./options-income.md)
 
 ### 3.4 AI Copilot M1: user profile + evidence
@@ -164,7 +164,7 @@
 | M-3 | Income Planner P5 | 🚧 **被决策门阻塞**(§8:Tradier OAuth backend proxy 单独 Worker 与否未定);Tradier OAuth + 真 greeks。**Backend proxy 必须 schema-agnostic**,走 `sync_rows`,不在 Worker 里写业务逻辑。决策出来前不动 |
 | M-4 | Investment advanced M2/M3 | DCA simulator ✅ **已落地** (`features/investment/domain/dca/dca_simulator.dart` + `presentation/dca_simulator_page.dart`,挂在 `/plan/dca`,带 golden + engine 测试)。Event timeline ✅ **MVP 已闭合**(§3.5,12hr cache + EquityAssetDetailPage 嵌入)。**Tax export 🚧 被决策门阻塞**(§8:IRS / 中国个税 / 通用 CSV 优先级未定);domain 层 `features/investment/domain/tax/` 已有 `tax_policy` / `jurisdiction_tax_policy` / `tax_jurisdiction` 骨架,export pipeline 等格式决策后单独 PR |
 | M-5 | Performance traces | ✅ **harness 已落地** (2026-05-24):`core/perf/frame_timing_collector.dart` 接 `SchedulerBinding.addTimingsCallback` 维护 600 帧 ring buffer + p50/p95/jank 统计;`perf_trace_recorder.dart` 暴露 `begin/end/measure` 名义窗口,基于 vsync 时间戳过滤而非 wall clock,保证多窗口不互相串扰;`providers.dart` 在 `frameTimingCollectorProvider` 首读时 attach,bootstrap eager init。10 个单测(ring 容量 / 空状态 / jank 计数 / p50+p95 插值 / 窗口过滤 / begin-end / 嵌套报错 / measure 抛异常仍释放)。后续如需 UI 看板可单建 dev surface,不阻塞 M-5 关闭 |
-| M-6 | Command palette + 快捷键 | ✅ **已落地**:`core/command_palette/` 全套(`command_palette_dialog.dart` + `default_commands.dart` + `ask_ai_result_pane.dart`)挂在全局 Cmd/Ctrl+K;`core/shortcuts/` 完整(global/scope/master-detail 三层 + 帮助对话框 + 键位平台适配)。测试:command palette 2 个文件 85 cases,shortcuts 3 个文件 65 cases。Desktop shell 接 `GlobalShortcutsScope` 已 wire |
+| M-6 | Command palette + 快捷键 | ✅ **已落地**:`core/command_palette/` 保留 domain-neutral palette shell，Finance 的 AI 结果面板和查询计划执行器已下沉到 `features/finance/command_palette/`;`core/shortcuts/` 完整(global/scope/master-detail 三层 + 帮助对话框 + 键位平台适配)。Desktop shell 接 `GlobalShortcutsScope` 已 wire |
 
 ---
 

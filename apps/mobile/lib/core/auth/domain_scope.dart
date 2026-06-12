@@ -1,15 +1,13 @@
-/// LifeOS per-user domain opt-in (`docs/lifeos-shell.md` §5, D-1.5).
+/// LifeOS per-user domain opt-in (`docs/lifeos-shell.md` §5).
 ///
-/// FinanceOS is the seed domain — always on. Future domains
-/// (HealthOS in D-2, then TimeOS / KnowledgeOS / LivingOS once their
-/// triggers fire) ship behind an explicit per-user opt-in so the
-/// product can introduce a new domain without breaking single-user
-/// installs that don't want it.
+/// FinanceOS is the seed domain and always on. Additional domains ship
+/// behind an explicit per-user opt-in so a user can enable LifeOS areas
+/// incrementally without changing the Finance-only default.
 ///
-/// The toggle is a *client* preference today (Phase D-1.5) and a
-/// *JWT claim* on the next-issued token: backend sync routes use the
-/// claim to filter row-family pulls per domain (see `apps/backend/
-/// src/sync/store.rs` and the row-family prefix from D-1.4).
+/// The toggle is stored as a client preference and mirrored into the
+/// next-issued JWT `domains` claim. Backend sync routes use that claim
+/// to filter row-family pulls per domain (see `apps/backend/src/sync/
+/// store.rs` and the row-family prefix contract).
 library;
 
 /// Active LifeOS domains. New domains are added here only after their
@@ -46,10 +44,10 @@ class DomainOptIns {
         ...active,
       });
 
-  /// The shape D-1.5 ships with: every install starts FinanceOS-only.
-  static final DomainOptIns financeOnly = DomainOptIns(
-    const <DomainScope>{DomainScope.finance},
-  );
+  /// Every install starts FinanceOS-only.
+  static final DomainOptIns financeOnly = DomainOptIns(const <DomainScope>{
+    DomainScope.finance,
+  });
 
   factory DomainOptIns.fromWire(Iterable<String> wireValues) {
     final set = <DomainScope>{DomainScope.finance};

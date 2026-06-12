@@ -71,7 +71,7 @@ NaviWealth 已具备 FIRE OS 的底层条件：
 | 现金流聚合 | `features/cashflow/` |
 | 投资持仓 | `features/investment/data/providers.dart` |
 | 本地 AI runtime | `core/ai/runtime/device/` |
-| AI 工具注册 | `device_tool_registry.dart` |
+| AI 工具注册 | `features/finance_ai_tools.dart` + Finance `DomainPack` |
 | 同步 | Sync Protocol v1.0，HLC + OpLog + 行级 LWW |
 
 结论：
@@ -279,9 +279,9 @@ propose_fire_bucket_rule
 落点：
 
 ```text
-apps/mobile/lib/core/ai/runtime/device/tools/
+apps/mobile/lib/features/fire/ai_tools/
+apps/mobile/lib/features/finance_ai_tools.dart
 apps/mobile/lib/core/ai/contracts/tool_descriptor.dart
-apps/mobile/lib/core/ai/runtime/device/tools/device_tool_registry.dart
 ```
 
 所有 `propose_*` 必须返回 `ProposalEnvelope`，由现有确认通道处理。
@@ -520,7 +520,7 @@ fire_bucket_rules (
 |----|------|----------|
 | FIRE-OS-6.1 | 决策：复用 `goals` 还是新增 `fire_plans` | design note |
 | FIRE-OS-6.2 | Sync Protocol v1.1 草案 | `docs/sync-protocol.md` |
-| FIRE-OS-6.3 | Flutter Drift 表和 migration | `data/db/` |
+| FIRE-OS-6.3 | Flutter Drift 表和 migration | `core/persistence/` |
 | FIRE-OS-6.4 | Backend D1 migration + materialise | `apps/backend/migrations/`, `apps/backend/src/sync/` |
 | FIRE-OS-6.5 | 双设备 LWW 测试 | mobile + backend tests |
 
@@ -671,7 +671,7 @@ withdrawalRate, runwayMonths, stress }`，净资产只是它的输入。建议�
 ```
 UI    /accounts/fire hub：状态/桶/规划/风险/报表（FCard/AppSpacing/AppRadius，复用现有图表）
 State features/fire/data：fireStateSnapshotProvider 等（设备端 read-model，不上 D1）
-AI    kDeviceTools 中的 FIRE 工具 + ToolDescriptor 策略门 + system prompt 注入
+AI    Finance DomainPack 中的 FIRE 工具 + ToolDescriptor 策略门 + system prompt 注入
 Engine features/fire/domain/{models,engine,policies,reports}（纯 Dart，无 IO）
 Data  Drift +5 表（SyncableTable，OpLog 同步）+ 复用 dashboard/expense/cashflow/RebalanceEngine
 ```
@@ -704,7 +704,7 @@ projection(=现 FireDashboardView 兼容), suggestedActions[] }`。确定性建�
 
 ### AI 集成（沿用 device-only agent，零新协议）
 
-新增 FIRE 工具注册进 `kDeviceTools` + 配对 `ToolDescriptor`
+新增 FIRE 工具注册进 FinanceOS 工具 barrel / `DomainPack` + 配对 `ToolDescriptor`
 （`./tool/check-tool-descriptors.sh` CI 校验）：
 
 | 工具 | Access | SideEffect | Confirm |

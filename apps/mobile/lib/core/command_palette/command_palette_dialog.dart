@@ -6,18 +6,17 @@ import 'package:forui/forui.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
-import 'ask_ai_result_pane.dart';
 import 'command_palette_entry.dart';
-import 'query_plan_executor_provider.dart';
+import 'local_query_result_pane_provider.dart';
 
 /// Show the global command palette. Idempotent — a second call while the
 /// palette is already on screen is a no-op so the Cmd+K binding stays safe to
 /// hammer.
 ///
-/// [onAskAi] is called with the user's query when they select the "Continue
-/// in AI history" affordance below the inline result pane. When the query
-/// parses to a local plan, the pane renders the structured answer in place
-/// and the callback is never invoked.
+/// [onAskAi] is called with the user's query when a domain-provided local
+/// result pane offers a "continue in AI history" affordance. Core owns the
+/// palette chrome; domains can contribute the inline result pane through
+/// [localQueryResultPaneBuilderProvider].
 Future<void> showCommandPalette(
   BuildContext context, {
   required List<CommandPaletteEntry> commands,
@@ -193,7 +192,9 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
     final double maxWidth = mediaSize.width < 560 ? mediaSize.width - 48 : 520;
     final double maxHeight = mediaSize.height * 0.6;
 
-    final executor = ref.watch(queryPlanExecutorProvider);
+    final localQueryResultPaneBuilder = ref.watch(
+      localQueryResultPaneBuilderProvider,
+    );
 
     final Widget card = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
@@ -233,10 +234,9 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
                 ),
               ),
               const FDivider(),
-              if (_query.isNotEmpty)
-                AskAiResultPane(
+              if (_query.isNotEmpty && localQueryResultPaneBuilder != null)
+                localQueryResultPaneBuilder(
                   query: _query,
-                  executor: executor,
                   now: DateTime.now(),
                   onContinueInChat: widget.onAskAi == null
                       ? null

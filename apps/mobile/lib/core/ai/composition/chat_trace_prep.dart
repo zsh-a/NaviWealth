@@ -7,10 +7,9 @@
 /// `null`, in which case the repository skips the trace seam — chat
 /// itself never blocks on this layer.
 ///
-/// FinanceOS supplies `financeChatTracePrepProvider`; HealthOS D-2 will
-/// supply its own. Multi-domain builds will compose them once the
-/// chat surface needs cross-domain context (today every active build
-/// is single-domain).
+/// FinanceOS currently supplies `financeChatTracePrepProvider`. Other
+/// domains can add their own trace prep through the app composition root
+/// when their chat context needs to join this per-turn seed.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';

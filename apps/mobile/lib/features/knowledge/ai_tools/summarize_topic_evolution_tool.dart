@@ -11,6 +11,7 @@ import 'package:naviwealth/core/auth/current_user.dart';
 
 import '../data/providers.dart';
 import '../domain/knowledge_text.dart';
+import '_tool_support.dart';
 
 class SummarizeTopicEvolutionTool implements DeviceTool {
   const SummarizeTopicEvolutionTool();
@@ -54,10 +55,7 @@ class SummarizeTopicEvolutionTool implements DeviceTool {
         .trim()
         .toLowerCase();
     if (topic.isEmpty) {
-      return <String, Object?>{
-        'error': 'concept_or_topic 必填',
-        'code': 'bad_request',
-      };
+      return badRequest('concept_or_topic 必填');
     }
     DateTime? from;
     DateTime? to;

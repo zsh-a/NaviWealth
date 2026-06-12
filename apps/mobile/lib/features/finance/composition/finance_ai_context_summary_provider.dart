@@ -7,9 +7,9 @@
 /// l10n strings reflect the current locale without re-fetching data.
 ///
 /// Registered as an override of [aiContextSummaryProvider] in
-/// `bootstrap.dart`. HealthOS (D-2) ships an analogous provider; the
-/// shell renderer iterates the union without knowing which domain
-/// produced which fact.
+/// `bootstrap.dart`. The shell renderer treats these facts as
+/// domain-namespaced context, so it does not need to know which Finance
+/// provider produced which line.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,12 +38,8 @@ final financeAiContextSummaryProvider = Provider<AiContextSummaryBuilder>((
       facts.add(
         AiContextFact(
           id: 'fin:networth_pct',
-          icon: pct >= 0
-              ? FLucideIcons.trendingUp
-              : FLucideIcons.trendingDown,
-          tone: pct >= 0
-              ? AiContextTone.positive
-              : AiContextTone.attention,
+          icon: pct >= 0 ? FLucideIcons.trendingUp : FLucideIcons.trendingDown,
+          tone: pct >= 0 ? AiContextTone.positive : AiContextTone.attention,
           text: l10n.aiContextSummaryNetWorthLine('$sign$abs%'),
           suggestion: l10n.aiChatEmptyDynamicNetWorth,
         ),

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:forui/forui.dart';
 import 'package:naviwealth/app/app.dart';
-import 'package:naviwealth/app/domain_packs.dart';
-import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/app/domain_composition.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart';
 import 'package:naviwealth/domain/values/money.dart';
@@ -21,6 +20,8 @@ import 'package:naviwealth/features/investment/domain/models/holding_snapshot.da
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/persistence/test_database.dart';
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -35,16 +36,17 @@ void main() {
     addTearDown(tester.view.reset);
 
     final prefs = await SharedPreferences.getInstance();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
-          // Routing now mounts per-domain shell routes contributed by the
-          // DomainPack registry (D-1.8 / D-2.3b). bootstrap.dart populates
-          // it with kAllDomainPacks in production; the registry defaults to
-          // empty, so without this override the home route `/` has no match
-          // and the app boots to the "Page not found" error page.
-          domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
+          appDatabaseProvider.overrideWith((_) async => db),
+          // Production bootstrap uses this bundle so the DomainPack
+          // inventory, shell routes, active-domain aggregators, and
+          // domain-owned provider seams all stay in sync.
+          ...lifeOsDomainCompositionOverrides(),
           // The dashboard subscribes to live DB streams. With no real
           // database in the test environment, short-circuit the streams
           // so the home page resolves to its empty state.
@@ -95,7 +97,7 @@ void main() {
     // "Overview" under the IA contract). Test environment falls back to
     // the first supported locale (en).
     expect(find.text('Today'), findsWidgets);
-    expect(find.byType(FBottomNavigationBar), findsOneWidget);
+    expect(find.byType(FloatingGlassNavBar), findsOneWidget);
   });
 }
 

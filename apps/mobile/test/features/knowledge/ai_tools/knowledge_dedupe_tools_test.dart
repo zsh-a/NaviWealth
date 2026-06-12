@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/tool_descriptor_catalog.dart';
+import 'package:naviwealth/app/production_ai_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
@@ -132,7 +132,7 @@ void main() {
     test('descriptor mirror match', () {
       expect(tool.name, 'find_similar_knowledge');
       expect(tool.inputSchema['required'], <String>['text']);
-      final d = lookupToolDescriptor('find_similar_knowledge');
+      final d = productionToolDescriptors['find_similar_knowledge'];
       expect(d, isNotNull);
       expect(d!.access, Access.read);
       expect(d.sideEffect, SideEffect.none);
@@ -232,7 +232,7 @@ void main() {
         'duplicate_ids',
         'reason',
       ]);
-      final d = lookupToolDescriptor('propose_merge');
+      final d = productionToolDescriptors['propose_merge'];
       expect(d, isNotNull);
       expect(d!.access, Access.propose);
       expect(d.requiresConfirmation, Confirmation.oneTap);

@@ -7,6 +7,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 
 import 'app_harness.dart';
 
@@ -16,7 +17,7 @@ class AppShell {
 
   final WidgetTester tester;
 
-  Finder get bottomNav => find.byType(FBottomNavigationBar);
+  Finder get bottomNav => find.byType(FloatingGlassNavBar);
 
   /// Asserts the shell mounted its bottom navigation bar.
   void expectMounted() {

@@ -9,8 +9,8 @@
 /// device can resolve offline.
 ///
 /// What the pane never does:
-///   * Send anything to a cloud model (that path lives in
-///     `/settings/ai-history`).
+///   * Send anything to a model; unmatched queries can continue into
+///     the normal device chat surface instead.
 ///   * Execute irreversible side effects — transfer / order / delete
 ///     phrases short-circuit to a guidance card (§5.10.6).
 library;
@@ -20,20 +20,21 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
-import '../../design_system/design_system.dart';
-import '../../l10n/gen/app_localizations.dart';
-import '../ai/local/skills/finance_query_plan.dart';
-import '../ai/local/skills/nl_to_query_plan.dart';
-import '../ai/local/skills/query_plan_executor.dart';
+import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/ai_tools/query_plan/finance_query_plan.dart';
+import 'package:naviwealth/features/finance/ai_tools/query_plan/nl_to_query_plan.dart';
+import 'package:naviwealth/features/finance/ai_tools/query_plan/query_plan_executor.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-/// State the [AskAiResultPane] cycles through as the user's query changes.
+/// State the [FinanceAskAiResultPane] cycles through as the user's query
+/// changes.
 enum _PaneStatus { idle, loading, irreversible, noMatch, result, error }
 
 /// In-place answer pane embedded between the search field and the
 /// command list. Self-contained: pass it a [query] and a
 /// [QueryPlanExecutor]; the pane handles parsing, running, and rendering.
-class AskAiResultPane extends StatefulWidget {
-  const AskAiResultPane({
+class FinanceAskAiResultPane extends StatefulWidget {
+  const FinanceAskAiResultPane({
     super.key,
     required this.query,
     required this.executor,
@@ -45,8 +46,8 @@ class AskAiResultPane extends StatefulWidget {
   /// simply not mount the pane when the search field is empty.
   final String query;
 
-  /// Adapter that runs a [FinanceQueryPlan]. The command palette wires
-  /// this from `queryPlanExecutorProvider`; tests inject an
+  /// Adapter that runs a [FinanceQueryPlan]. Finance composition wires
+  /// this from `financeQueryPlanExecutorProvider`; tests inject an
   /// in-memory executor.
   final QueryPlanExecutor executor;
 
@@ -60,10 +61,10 @@ class AskAiResultPane extends StatefulWidget {
   final void Function(String query)? onContinueInChat;
 
   @override
-  State<AskAiResultPane> createState() => _AskAiResultPaneState();
+  State<FinanceAskAiResultPane> createState() => _FinanceAskAiResultPaneState();
 }
 
-class _AskAiResultPaneState extends State<AskAiResultPane> {
+class _FinanceAskAiResultPaneState extends State<FinanceAskAiResultPane> {
   _PaneStatus _status = _PaneStatus.idle;
   QueryResult? _result;
   String? _errorMessage;
@@ -76,7 +77,7 @@ class _AskAiResultPaneState extends State<AskAiResultPane> {
   }
 
   @override
-  void didUpdateWidget(AskAiResultPane old) {
+  void didUpdateWidget(FinanceAskAiResultPane old) {
     super.didUpdateWidget(old);
     if (widget.query != old.query) {
       unawaited(_runForQuery(widget.query));

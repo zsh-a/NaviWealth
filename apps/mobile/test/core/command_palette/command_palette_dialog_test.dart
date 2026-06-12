@@ -3,25 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/route_paths.dart';
-import 'package:naviwealth/core/ai/local/skills/query_plan_executor.dart';
 import 'package:naviwealth/core/command_palette/command_palette.dart';
 import 'package:naviwealth/core/command_palette/command_palette_dialog.dart'
     show resetCommandPaletteForTest;
-import 'package:naviwealth/core/command_palette/query_plan_executor_provider.dart';
-import 'package:naviwealth/features/finance/composition/finance_command_palette.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(Widget child) {
   return ProviderScope(
-    overrides: [
-      // The palette dialog watches the live Drift executor; tests don't
-      // have a real database so plug in the in-memory variant with no
-      // fixtures — enough to keep AskAiResultPane's pipeline alive
-      // without crashing.
-      queryPlanExecutorProvider.overrideWithValue(
-        InMemoryQueryPlanExecutor(transactions: const []),
-      ),
-    ],
     child: MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -357,7 +345,14 @@ void main() {
               final l10n = AppLocalizations.of(ctx);
               entries = defaultCommandPaletteEntries(
                 l10n,
-                domainEntries: financeCommandPaletteEntries(l10n),
+                domainEntries: <CommandPaletteEntry>[
+                  CommandPaletteEntry(
+                    id: 'domain.fake',
+                    label: 'Fake domain command',
+                    icon: Icons.bolt,
+                    run: (_) {},
+                  ),
+                ],
               );
               return const SizedBox.shrink();
             },
@@ -370,22 +365,8 @@ void main() {
         ids,
         containsAll(<String>[
           'nav.home',
-          'nav.activity',
-          'nav.wealth',
-          'nav.plan',
-          'nav.expenses',
-          'nav.cashflow',
-          'nav.cashflow.recurring',
-          'nav.income',
-          'nav.projection',
-          'nav.fire',
-          'nav.rebalance',
+          'domain.fake',
           'nav.settings',
-          'action.newTrade',
-          'action.newDividend',
-          'action.corporateAction',
-          'action.newExpense',
-          'action.rebalance.targetAllocation',
           'action.aiHistory',
           'action.shortcutHelp',
         ]),

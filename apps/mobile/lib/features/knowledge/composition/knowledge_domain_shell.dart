@@ -2,8 +2,8 @@
 /// (`docs/lifeos-shell.md` §3 + `docs/knowledgeos-domain.md` §5).
 ///
 /// Mirrors `features/health/composition/health_domain_shell.dart`.
-/// 3 tabs: Inbox / Library / Review. Strings are literals for the
-/// MVP — l10n keys land when the dogfood loop confirms wording.
+/// 3 tabs: Inbox / Library / Review. Labels come from l10n so domain
+/// chrome stays consistent with FinanceOS and HealthOS.
 library;
 
 import 'package:forui/forui.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/tool_descriptor_catalog.dart';
+import 'package:naviwealth/app/production_ai_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/intent.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
@@ -81,7 +81,7 @@ void main() {
       const tool = RecordBodyMeasurementTool();
       expect(tool.name, 'record_body_measurement');
       expect(tool.inputSchema['required'], <String>['kind', 'value']);
-      final d = lookupToolDescriptor('record_body_measurement');
+      final d = productionToolDescriptors['record_body_measurement'];
       expect(d, isNotNull);
       expect(d!.access, Access.propose);
       expect(d.risk, RiskLevel.commit);

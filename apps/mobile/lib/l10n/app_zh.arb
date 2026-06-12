@@ -1268,6 +1268,8 @@
   "aiChatProposalKindAssetValuation": "估值更新",
   "aiChatProposalKindFirePlanUpdate": "FIRE 计划更新",
   "aiChatProposalKindFireBucketRule": "FIRE 桶规则",
+  "aiChatProposalKindOptionsProfileUpdate": "Income Planner 偏好",
+  "aiChatProposalKindOptionsJournalEntry": "期权流水",
   "aiChatProposalKindUnknown": "未知",
 
   "aiChatProposalPendingHeader": "待确认 · {kind}",
@@ -1317,6 +1319,8 @@
   "aiChatRowFee": "手续费",
   "aiChatRowDate": "日期",
   "aiChatRowNote": "备注",
+  "aiChatRowUnderlying": "标的",
+  "aiChatRowOptionContract": "合约",
   "aiChatRowAmount": "金额",
   "aiChatRowCategory": "类目",
   "aiChatRowLiability": "负债",

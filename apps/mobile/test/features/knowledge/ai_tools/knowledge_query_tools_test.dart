@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/tool_descriptor_catalog.dart';
+import 'package:naviwealth/app/production_ai_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
@@ -180,7 +180,7 @@ void main() {
     test('descriptor mirror match', () {
       expect(tool.name, 'search_knowledge');
       expect(tool.inputSchema['required'], <String>['query']);
-      final d = lookupToolDescriptor('search_knowledge');
+      final d = productionToolDescriptors['search_knowledge'];
       expect(d, isNotNull);
       expect(d!.access, Access.read);
       expect(d.sideEffect, SideEffect.none);
@@ -370,7 +370,7 @@ void main() {
 
     test('descriptor mirror match', () {
       expect(tool.name, 'review_knowledge_health');
-      final d = lookupToolDescriptor('review_knowledge_health');
+      final d = productionToolDescriptors['review_knowledge_health'];
       expect(d, isNotNull);
       expect(d!.access, Access.read);
       expect(d.sideEffect, SideEffect.none);

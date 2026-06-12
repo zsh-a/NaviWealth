@@ -2,11 +2,11 @@
 /// empty-state suggestion tiles (`docs/lifeos-shell.md` §4, D-1.6b).
 ///
 /// The chip renders a rolling pulse of facts about whatever life
-/// signals the active domain considers worth surfacing — net-worth
-/// direction / expense anomalies / deposit maturities for Finance;
-/// sleep streak / HRV trend etc. for HealthOS once D-2 lands. Each
-/// fact carries its own localised one-liner so the renderer is
-/// fully domain-neutral.
+/// signals the active domain considers worth surfacing. Finance currently
+/// contributes net-worth direction, expense anomalies, and deposit
+/// maturities; other domains can contribute analogous facts through the
+/// app composition root. Each fact carries its own localised one-liner so
+/// the renderer is fully domain-neutral.
 ///
 /// **Why a builder closure rather than a typed payload Provider**:
 /// fact text is `AppLocalizations`-formatted (e.g. "Net worth +2.3%
@@ -74,14 +74,14 @@ enum AiContextTone { positive, neutral, attention }
 
 /// Builds the summary at render time so domain producers can capture
 /// raw upstream data without committing to a locale.
-typedef AiContextSummaryBuilder = AiContextSummary Function(
-  AppLocalizations l10n,
-);
+typedef AiContextSummaryBuilder =
+    AiContextSummary Function(AppLocalizations l10n);
 
 /// Active builder for the current build. Default returns
 /// [AiContextSummary.empty] for every locale, so a domain-less build
 /// renders nothing (the header chip and empty-state tiles collapse).
 /// Bootstrap overrides this with the active domain's composer.
 final aiContextSummaryProvider = Provider<AiContextSummaryBuilder>(
-  (ref) => (_) => AiContextSummary.empty,
+  (ref) =>
+      (_) => AiContextSummary.empty,
 );

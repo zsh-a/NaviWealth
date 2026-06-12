@@ -13,39 +13,37 @@ import 'support/page_objects.dart';
 
 void main() {
   group('Task: View net worth', () {
-    testWidgets(
-      'first run — user lands on Today with the home shell',
-      (tester) async {
-        await bootApp(tester);
+    testWidgets('first run — user lands on Today with the home shell', (
+      tester,
+    ) async {
+      await bootApp(tester);
 
-        final shell = AppShell(tester);
-        final home = HomePage(tester);
+      final shell = AppShell(tester);
+      final home = HomePage(tester);
 
-        home.expectLanded();
-        shell.expectMounted();
-      },
-      tags: 'flow',
-    );
+      home.expectLanded();
+      shell.expectMounted();
+      await closeApp(tester);
+    }, tags: 'flow');
 
-    testWidgets(
-      'user can move between primary destinations and return Today',
-      (tester) async {
-        await bootApp(tester);
+    testWidgets('user can move between primary destinations and return Today', (
+      tester,
+    ) async {
+      await bootApp(tester);
 
-        final shell = AppShell(tester)..expectMounted();
-        final home = HomePage(tester);
+      final shell = AppShell(tester)..expectMounted();
+      final home = HomePage(tester);
 
-        // The Task spans more than one screen: leave Today for another
-        // primary destination, then come back. Page Objects keep this
-        // readable and refactor-proof.
-        const second = 'Wealth';
-        if (shell.hasTab(second)) {
-          await shell.openTab(second);
-          await shell.openTab('Today');
-        }
-        home.expectLanded();
-      },
-      tags: 'flow',
-    );
+      // The Task spans more than one screen: leave Today for another
+      // primary destination, then come back. Page Objects keep this
+      // readable and refactor-proof.
+      const second = 'Wealth';
+      if (shell.hasTab(second)) {
+        await shell.openTab(second);
+        await shell.openTab('Today');
+      }
+      home.expectLanded();
+      await closeApp(tester);
+    }, tags: 'flow');
   });
 }

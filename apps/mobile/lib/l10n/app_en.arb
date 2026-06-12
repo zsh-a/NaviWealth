@@ -2258,6 +2258,8 @@
   "aiChatProposalKindAssetValuation": "Valuation update",
   "aiChatProposalKindFirePlanUpdate": "FIRE plan update",
   "aiChatProposalKindFireBucketRule": "FIRE bucket rule",
+  "aiChatProposalKindOptionsProfileUpdate": "Income Planner preferences",
+  "aiChatProposalKindOptionsJournalEntry": "Options journal entry",
   "aiChatProposalKindUnknown": "Unknown",
 
   "aiChatProposalPendingHeader": "Awaiting confirmation · {kind}",
@@ -2363,6 +2365,8 @@
   "aiChatRowFee": "Fee",
   "aiChatRowDate": "Date",
   "aiChatRowNote": "Note",
+  "aiChatRowUnderlying": "Underlying",
+  "aiChatRowOptionContract": "Option contract",
   "aiChatRowAmount": "Amount",
   "aiChatRowCategory": "Category",
   "aiChatRowLiability": "Liability",

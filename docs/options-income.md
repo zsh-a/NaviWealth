@@ -74,7 +74,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 |---|---|---|
 | AI 完全设备端，无 `/ai/chat` 中继 | [`ai-architecture.md`](./ai-architecture.md) §4.6 | 评分 + tool 实现全部 Dart。Backend 不解析期权语义。 |
 | Backend 只做 sync_rows 存储 | [`sync-v2.md`](./sync-v2.md) | 派生数据（opportunity cache）**不上同步**；用户状态（profile / approved / journal）走行级同步。 |
-| Read Model 三层 | `lib/core/ai/contracts/tool_descriptor.dart` | profile = `snapshot`，opportunity = `analytical`，single chain = `scopedDetail`。 |
+| Device tool descriptor catalog | `features/options_income/ai_tools/` + `features/finance_ai_tools.dart` | profile / opportunity / wheel lifecycle descriptors live with the owning domain tool registrations and are exposed through `DomainPack.toolDescriptors`。 |
 | Money 类型 | CLAUDE.md「Money」 | 所有期权金额走 `Money` + `Decimal`。 |
 | Web 无 AI | CLAUDE.md「AI」 | Income Planner 通过 `kIsWeb` 短路；`web_smoke` 反向断言不出现期权文案。 |
 | Modal 系统 | memory: modal_system | 详情面板用 `showAppFormSheet` + `AppSheetFooter`；CI 由 `tool/check-modal-helpers.sh` 守护。 |
@@ -285,7 +285,7 @@ options_journal.close
 
 ### 6.2 Drift 表落点
 
-加到 `apps/mobile/lib/data/db/tables.dart`（同步表）：
+加到 `apps/mobile/lib/core/persistence/tables.dart`（同步表）：
 
 ```dart
 class OptionsStrategyProfileTable extends Table {
@@ -346,7 +346,7 @@ class OptionsTradeJournalTable extends Table {
 }
 ```
 
-加到本地非同步表区域（新建 `apps/mobile/lib/data/db/local_only_tables.dart`，与 `event_log_tables.dart` 并列）：
+加到本地非同步表区域（`apps/mobile/lib/core/persistence/local_only_tables.dart`）：
 
 ```dart
 class OptionsOpportunityCacheTable extends Table {
@@ -449,55 +449,24 @@ final_score =
 
 ### 8.2 Tool 注册
 
-加到 `lib/core/ai/contracts/tool_descriptor.dart` 的 `allToolDescriptors`：
-
-```dart
-ToolDescriptor(
-  name: 'get_options_income_opportunities',
-  access: Access.read,
-  risk: RiskLevel.suggest,
-  requiresConfirmation: Confirmation.none,
-  allowedContextTier: BudgetTier.standard,
-  readModelLayer: ReadModelLayer.analytical,
-),
-ToolDescriptor(
-  name: 'get_options_strategy_profile',
-  access: Access.read,
-  risk: RiskLevel.info,
-  requiresConfirmation: Confirmation.none,
-  allowedContextTier: BudgetTier.small,
-  readModelLayer: ReadModelLayer.snapshot,
-),
-ToolDescriptor(
-  name: 'propose_options_profile_update',
-  access: Access.propose,
-  risk: RiskLevel.propose,
-  requiresConfirmation: Confirmation.oneTap,
-  allowedContextTier: BudgetTier.standard,
-  sideEffect: SideEffect.deviceLocalWrite,
-),
-ToolDescriptor(
-  name: 'propose_options_journal_entry',
-  access: Access.propose,
-  risk: RiskLevel.propose,
-  requiresConfirmation: Confirmation.oneTap,
-  allowedContextTier: BudgetTier.standard,
-  sideEffect: SideEffect.deviceLocalWrite,
-),
-```
+Income Planner tools are FinanceOS-owned device tools. Their implementations
+live under `features/options_income/ai_tools/`; their registrations and
+`ToolDescriptor` metadata are exported through `features/finance_ai_tools.dart`
+and merged into the production catalog by `kFinancePack`.
 
 **故意不加**：`propose_options_trade`（下单是 `SideEffect.externalCall`，不在本设计范围）。
 
 ### 8.3 Tool 实现
 
-文件落点 `lib/core/ai/runtime/device/tools/`：
+文件落点：
 
 ```
-get_options_income_opportunities_tool.dart
-get_options_strategy_profile_tool.dart
-propose/
-  propose_options_profile_update_tool.dart
-  propose_options_journal_entry_tool.dart
+lib/features/options_income/ai_tools/
+├── get_options_income_opportunities_tool.dart
+├── get_options_strategy_profile_tool.dart
+├── get_wheel_lifecycle_tool.dart
+├── propose_options_profile_update_tool.dart
+└── propose_options_journal_entry_tool.dart
 ```
 
 `get_options_income_opportunities` 的合约：
@@ -699,19 +668,19 @@ apps/mobile/lib/data/market/providers/options/
 ├── options_chain_provider.dart         # P1 abstract chain provider
 └── yfinance_options_provider.dart      # P1 — yfinance options chain adapter
 
-apps/mobile/lib/core/ai/runtime/device/tools/
+apps/mobile/lib/features/options_income/ai_tools/
 ├── get_options_income_opportunities_tool.dart  # P1 — cache-read tool
 ├── get_options_strategy_profile_tool.dart      # P1 — profile read tool
+├── get_wheel_lifecycle_tool.dart               # P4 — wheel lifecycle read tool
 ├── propose_options_profile_update_tool.dart    # P1 — proposal
 └── propose_options_journal_entry_tool.dart     # P3 — proposal
 
-apps/mobile/lib/data/db/tables.dart                # +OptionsTradeJournal
-apps/mobile/lib/data/db/local_only_tables.dart     # opportunity cache DDL
-apps/mobile/lib/data/db/app_database.dart          # schemaVersion 13 (v11→v12→v13)
+apps/mobile/lib/core/persistence/tables.dart       # +OptionsTradeJournal
+apps/mobile/lib/core/persistence/local_only_tables.dart # opportunity cache DDL
+apps/mobile/lib/core/persistence/app_database.dart # schemaVersion updates
 apps/mobile/lib/core/sync/row_applier.dart         # sync_rows table allow-list
 apps/mobile/lib/core/sync/providers.dart           # row-state sync providers
-apps/mobile/lib/core/ai/contracts/tool_descriptor.dart  # +4 Income Planner descriptors
-apps/mobile/lib/core/ai/runtime/device/tools/device_tool_registry.dart  # +4 tools
+apps/mobile/lib/features/finance_ai_tools.dart     # Income Planner tool registrations + descriptors
 apps/backend/migrations/0002_sync_schema.sql       # backend sync_rows store
 apps/backend/src/sync/store.rs                     # schema-agnostic row store
 ```

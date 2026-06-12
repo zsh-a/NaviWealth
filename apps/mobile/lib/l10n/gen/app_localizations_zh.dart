@@ -4068,6 +4068,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatProposalKindFireBucketRule => 'FIRE 桶规则';
 
   @override
+  String get aiChatProposalKindOptionsProfileUpdate => 'Income Planner 偏好';
+
+  @override
+  String get aiChatProposalKindOptionsJournalEntry => '期权流水';
+
+  @override
   String get aiChatProposalKindUnknown => '未知';
 
   @override
@@ -4243,6 +4249,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiChatRowNote => '备注';
+
+  @override
+  String get aiChatRowUnderlying => '标的';
+
+  @override
+  String get aiChatRowOptionContract => '合约';
 
   @override
   String get aiChatRowAmount => '金额';

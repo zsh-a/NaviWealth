@@ -6,11 +6,26 @@ import 'package:naviwealth/core/ai/contracts/intent.dart'
 import 'package:naviwealth/core/ai/intent/intent.dart';
 import 'package:naviwealth/l10n/gen/app_localizations_zh.dart';
 
+const _catalog = IntentCatalog(<IntentDescriptor>[
+  IntentDescriptor(
+    name: 'explain_change',
+    allowedObjectTypes: <String>{'expense'},
+    preferredCapabilities: <AiCapability>{AiCapability.chat},
+    preferredReadModels: <String>['expense_summary'],
+  ),
+  IntentDescriptor(
+    name: 'explain_chart',
+    allowedObjectTypes: <String>{'chart'},
+    preferredCapabilities: <AiCapability>{AiCapability.chat},
+    preferredReadModels: <String>['net_worth_summary'],
+  ),
+]);
+
 void main() {
   test('every registered intent resolves localized copy', () {
     final l10n = AppLocalizationsZh();
     final resolver = localizedIntentCopyResolver(l10n);
-    for (final d in intentDescriptors) {
+    for (final d in _catalog.descriptors) {
       expect(d.name, isNotEmpty);
       expect(resolver(d).label, isNotEmpty);
       expect(resolver(d).promptTemplate, isNotEmpty);
@@ -18,27 +33,27 @@ void main() {
   });
 
   test('intent names are unique', () {
-    final names = intentDescriptors.map((d) => d.name).toSet();
+    final names = _catalog.descriptors.map((d) => d.name).toSet();
     expect(
       names.length,
-      intentDescriptors.length,
+      _catalog.descriptors.length,
       reason: 'duplicate intent name detected',
     );
   });
 
   test('lookupIntent returns the matching descriptor', () {
-    final hit = lookupIntent('explain_change');
+    final hit = lookupIntent('explain_change', catalog: _catalog);
     expect(hit, isNotNull);
     expect(hit!.allowedObjectTypes, contains('expense'));
   });
 
   test('lookupIntent returns null for unknown name', () {
-    expect(lookupIntent('does_not_exist'), isNull);
+    expect(lookupIntent('does_not_exist', catalog: _catalog), isNull);
   });
 
   test('requiresExplicitConfirmation defaults to false', () {
     // §5.10.6 — registered read-only intents must never trip the guard.
-    for (final d in intentDescriptors) {
+    for (final d in _catalog.descriptors) {
       expect(
         d.requiresExplicitConfirmation,
         isFalse,
@@ -72,6 +87,7 @@ void main() {
       inv,
       objectLabel: 'Netflix 订阅',
       copyResolver: localizedIntentCopyResolver(l10n),
+      catalog: _catalog,
     );
     expect(prompt, contains('Netflix 订阅'));
     expect(prompt, contains('本月'));
@@ -89,6 +105,7 @@ void main() {
       inv,
       defaultTimeframe: l10n.aiIntentDefaultTimeframe,
       copyResolver: localizedIntentCopyResolver(l10n),
+      catalog: _catalog,
     );
     expect(prompt, contains('最近 30 天'));
   });
@@ -106,11 +123,18 @@ void main() {
       objectLabel: '净值趋势',
       defaultTimeframe: l10n.aiIntentDefaultTimeframe,
       copyResolver: localizedIntentCopyResolver(l10n),
+      catalog: _catalog,
       fallbackObjectLabel: l10n.aiIntentCurrentObject,
       fallbackPromptTemplate: l10n.aiIntentFallbackPrompt('{{object_label}}'),
     );
 
-    expect(localizedIntentLabel(l10n, lookupIntent('explain_chart')), '问这张图');
+    expect(
+      localizedIntentLabel(
+        l10n,
+        lookupIntent('explain_chart', catalog: _catalog),
+      ),
+      '问这张图',
+    );
     expect(prompt, contains('净值趋势'));
     expect(prompt, contains('最近 30 天'));
   });
@@ -140,7 +164,7 @@ void main() {
   });
 
   test('every registered intent allows its own home domain', () {
-    for (final d in intentDescriptors) {
+    for (final d in _catalog.descriptors) {
       expect(
         intentAllowsDomain(d, d.domain),
         isTrue,

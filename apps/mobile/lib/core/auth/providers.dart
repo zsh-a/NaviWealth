@@ -113,8 +113,8 @@ final authOnUnauthorizedProvider = Provider<AuthOnUnauthorized>(
       () async => false,
 );
 
-/// D-1.5: per-user opt-in store backing the Settings → Domains toggle and
-/// the next-issued JWT `domains` claim. Backed by `sync_meta`.
+/// Per-user opt-in store backing the Settings → Domains toggle and the
+/// next-issued JWT `domains` claim. Backed by `sync_meta`.
 ///
 /// `FutureProvider` (not `Provider`) so the store waits for
 /// `appDatabaseProvider` to resolve — `requireValue` would throw during
@@ -127,10 +127,10 @@ final domainOptInStoreProvider = FutureProvider<DomainOptInStore>((ref) async {
   return DomainOptInStore(db);
 });
 
-/// D-1.5: reactive snapshot of the user's active LifeOS domains.
+/// Reactive snapshot of the user's active LifeOS domains.
 ///
 /// On first run / fresh install resolves to [DomainOptIns.financeOnly] —
-/// HealthOS stays OFF until D-2 ships and the user manually enables it
+/// optional domains stay off until the user manually enables them
 /// (`lifeos-shell.md` §5).
 final domainOptInsProvider =
     AsyncNotifierProvider<_DomainOptInsNotifier, DomainOptIns>(

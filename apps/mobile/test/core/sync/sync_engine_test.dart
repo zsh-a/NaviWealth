@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/persistence/domain_enums.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/clock.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
@@ -16,7 +17,6 @@ import 'package:naviwealth/core/sync/row_applier.dart';
 import 'package:naviwealth/core/sync/sync_api_client.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
 import '../../core/persistence/test_database.dart';
 import '_fake_api.dart';

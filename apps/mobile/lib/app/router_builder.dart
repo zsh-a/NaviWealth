@@ -44,11 +44,10 @@ import 'route_paths.dart';
 /// isolation), so adding a new domain with deferred routes is a single
 /// `deferredPreloader` field on its [DomainPack].
 @visibleForTesting
-Future<void> preloadDeferredRoutesForTest({
-  List<DomainPack> packs = kAllDomainPacks,
-}) async {
+Future<void> preloadDeferredRoutesForTest({List<DomainPack>? packs}) async {
+  final resolvedPacks = packs ?? kAllDomainPacks;
   await Future.wait<void>(<Future<void>>[
-    for (final p in packs)
+    for (final p in resolvedPacks)
       if (p.deferredPreloader != null) p.deferredPreloader!(),
     settings_lib.loadLibrary(),
     devices_lib.loadLibrary(),

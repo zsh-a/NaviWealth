@@ -1,10 +1,8 @@
-/// Shared proposal scaffolding for the device `propose_*` tools.
-/// Verbatim Dart port of the envelope + reference
-/// resolution + category matching in `apps/backend/src/ai/proposals.rs`
-/// so a device-generated plan is **byte-identical** to the cloud one —
-/// the existing `ProposalEnvelope`/`proposal_applier` confirm flow
-/// consumes it unchanged (§4.5; §10 drift rule: a backend proposals.rs
-/// change mirrors here same PR).
+/// Shared proposal scaffolding for the FinanceOS device `propose_*` tools.
+/// Cross-domain envelope helpers are re-exported from
+/// `core/ai/composition/proposal_envelope.dart`; this file keeps the
+/// Finance-specific reference resolution + category matching ported from
+/// `apps/backend/src/ai/proposals.rs`.
 ///
 /// Reference resolution reads device **typed** [Account]/asset lists
 /// instead of D1 payload rows; the match semantics (`name_matches`,
@@ -15,9 +13,9 @@ import 'package:naviwealth/domain/values/expense_category_taxonomy.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
-import 'package:uuid/uuid.dart';
 
-const _kUuid = Uuid();
+export 'package:naviwealth/core/ai/composition/proposal_envelope.dart'
+    show needsClarification, proposalBadRequest, proposalNewId, readyPlan;
 
 /// Closed expense taxonomy exposed to the `propose_expense` tool.
 final List<(String, String)> kExpenseCategories = [
@@ -42,10 +40,10 @@ const List<String> kProposalAccountTypes = [
 /// **Deliberately distinct** from the feature-side
 /// `kManualValuationAssetTypes` (`data/domain/enums.dart`), which is a
 /// stricter set excluding realEstate/vehicle. The device
-/// `propose_asset_valuation` must gate exactly like the **backend**
-/// `MANUAL_VALUATION_ASSET_TYPES` (which *does* allow realEstate /
-/// vehicle) so the device plan and the cloud plan are identical (§10);
-/// renamed to avoid the collision and the wrong-set trap.
+/// `propose_asset_valuation` must gate exactly like the original
+/// backend `MANUAL_VALUATION_ASSET_TYPES` (which *does* allow
+/// realEstate / vehicle); renamed to avoid the collision and the
+/// wrong-set trap.
 const List<String> kProposalManualValuationTypes = [
   'cash',
   'realEstate',
@@ -54,53 +52,6 @@ const List<String> kProposalManualValuationTypes = [
   'bankDepositDemand',
   'wealthProduct',
 ];
-
-/// Pre-allocated entity id (mirrors `Uuid::new_v4()` in
-/// `propose_account_create`, so follow-up proposals can reference the
-/// not-yet-created account).
-String proposalNewId() => _kUuid.v4();
-
-/// Port of `proposals::ready_plan`.
-Map<String, Object?> readyPlan({
-  required String kind,
-  required String summaryZh,
-  required Map<String, Object?> payload,
-  List<String> warnings = const [],
-  List<String> missing = const [],
-}) => <String, Object?>{
-  'proposal_id': _kUuid.v4(),
-  'kind': kind,
-  'status': 'ready',
-  'summary_zh': summaryZh,
-  'payload': payload,
-  'warnings': warnings,
-  'missing': missing,
-  'candidates': null,
-  'note': '前端必须显示 summary_zh 给用户确认；只有用户明确点确认后才走 Repository。',
-};
-
-/// Port of `proposals::needs_clarification`.
-Map<String, Object?> needsClarification({
-  required String kind,
-  required String field,
-  required String reason,
-  required List<Map<String, Object?>> candidates,
-}) => <String, Object?>{
-  'proposal_id': _kUuid.v4(),
-  'kind': kind,
-  'status': 'needs_clarification',
-  'ambiguous_field': field,
-  'reason': reason,
-  'candidates': candidates,
-  'note': '请向用户提一个具体问题来澄清此字段；不要替用户做选择。',
-};
-
-/// Standard BadRequest tool error (mirrors how the backend
-/// `AppError::BadRequest` surfaces to the model via the dispatcher).
-Map<String, Object?> proposalBadRequest(String message) => <String, Object?>{
-  'error': message,
-  'code': 'bad_request',
-};
 
 /// Case-insensitive contains-or-equals — verbatim `name_matches`.
 bool nameMatches(String haystack, String needle) {

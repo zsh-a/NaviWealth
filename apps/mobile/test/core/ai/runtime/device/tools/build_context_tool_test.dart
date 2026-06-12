@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/tool_descriptor_catalog.dart';
+import 'package:naviwealth/app/production_ai_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
@@ -91,7 +91,7 @@ void main() {
 
     test('descriptor mirror match', () {
       expect(tool.name, 'build_context');
-      final descriptor = lookupToolDescriptor('build_context');
+      final descriptor = productionToolDescriptors['build_context'];
       expect(descriptor, isNotNull);
       expect(descriptor!.access, Access.read);
       expect(descriptor.sideEffect, SideEffect.none);

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/core/ai/local/skills/skills.dart';
+import 'package:naviwealth/features/finance/ai_tools/query_plan/query_plan.dart';
 
 void main() {
   // Frozen "now" for deterministic relative-time tests. 2026-05-10

@@ -16,6 +16,7 @@ import 'package:naviwealth/core/auth/current_user.dart';
 import '../data/knowledge_object_memory_indexers.dart';
 import '../data/knowledge_search_service.dart';
 import '../data/providers.dart';
+import '_tool_support.dart';
 
 class SearchKnowledgeTool implements DeviceTool {
   const SearchKnowledgeTool();
@@ -63,7 +64,7 @@ class SearchKnowledgeTool implements DeviceTool {
   ) async {
     final query = ((input['query'] as String?) ?? '').trim();
     if (query.isEmpty) {
-      return <String, Object?>{'error': 'query 必填且非空。', 'code': 'bad_request'};
+      return badRequest('query 必填且非空。');
     }
     final topK = (input['top_k'] is num)
         ? (input['top_k'] as num).toInt().clamp(1, 20)

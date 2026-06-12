@@ -55,8 +55,7 @@ ProviderContainer _container(List<TradeJournalEntry> entries) =>
       ],
     );
 
-/// Runs [body] inside a probe so it gets a real Riverpod [Ref]. Mirrors
-/// the helper in `device_tools_test.dart`.
+/// Runs [body] inside a probe so it gets a real Riverpod [Ref].
 Future<T> _withRef<T>(ProviderContainer c, Future<T> Function(Ref ref) body) {
   final probe = FutureProvider<T>((ref) => body(ref));
   c.listen(probe, (_, _) {});

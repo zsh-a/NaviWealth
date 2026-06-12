@@ -10,6 +10,7 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../l10n/gen/app_localizations.dart';
@@ -17,6 +18,7 @@ import '../ai/agents/agent.dart';
 import '../ai/composition/composite_proposal_applier.dart';
 import '../ai/composition/proposal_kind_registry.dart';
 import '../ai/contracts/tool_descriptor.dart';
+import '../ai/intent/intent_policy.dart';
 import '../ai/runtime/device/tools/device_tool.dart';
 import '../auth/domain_scope.dart';
 import '../auth/providers.dart';
@@ -49,15 +51,20 @@ typedef DomainCommandPaletteBuilder =
 typedef DomainProposalApplierRouteBuilder =
     Future<ProposalApplierRoute> Function(Ref ref);
 
+/// Build-level provider overrides a domain contributes to composition
+/// seams that are not yet represented by a narrower [DomainPack] field.
+typedef DomainProviderOverridesBuilder = List<Override> Function();
+
 /// Static description of one LifeOS domain's shell contributions. Held
-/// as a `const` value next to the domain's tool barrel, so the inventory
-/// list in `lib/app/domain_packs.dart` is the single grep-able answer to
-/// "what domains does this build have?".
+/// next to the domain's tool barrel, so the inventory list in
+/// `lib/app/domain_packs.dart` is the single grep-able answer to "what
+/// domains does this build have?".
 class DomainPack {
   const DomainPack({
     required this.scope,
     this.deviceTools = const <DeviceTool>[],
     this.toolDescriptors = const <String, ToolDescriptor>{},
+    this.intentDescriptors = const <IntentDescriptor>[],
     this.proposalKinds = const <ProposalKindMeta>[],
     this.proposalApplierRouteBuilder,
     this.systemPromptBlock = '',
@@ -68,6 +75,7 @@ class DomainPack {
     this.additionalPathPrefixes = const <String>[],
     this.agentBuilder,
     this.commandPaletteEntriesBuilder,
+    this.providerOverridesBuilder,
   });
 
   /// Opt-in scope this pack registers under.
@@ -78,6 +86,9 @@ class DomainPack {
 
   /// Metadata for [deviceTools], advertised when this domain is active.
   final Map<String, ToolDescriptor> toolDescriptors;
+
+  /// AI object/capsule intents advertised when this domain is active.
+  final List<IntentDescriptor> intentDescriptors;
 
   /// Chat proposal-card kinds advertised when this domain is active.
   final List<ProposalKindMeta> proposalKinds;
@@ -106,8 +117,8 @@ class DomainPack {
   /// Top-level tab paths the domain claims. Used by
   /// `domainForRoute` to map an active path back to its [scope] and
   /// by `primaryTabPathsProvider` to drive the system back handler
-  /// + Cmd-1..4 tab switcher. Kept as a `const` `List<String>` (the
-  /// l10n-bound [shellSpecBuilder] still owns labels + icons).
+  /// + Cmd-1..4 tab switcher. The l10n-bound [shellSpecBuilder] still
+  /// owns labels + icons.
   final List<String> tabPaths;
 
   /// Extra route prefixes the domain owns that are **not** top-level
@@ -129,6 +140,12 @@ class DomainPack {
   /// locale's [AppLocalizations] and their entries are concatenated into
   /// the shell palette in domain order.
   final DomainCommandPaletteBuilder? commandPaletteEntriesBuilder;
+
+  /// Build-level provider overrides for domain-owned seams that do not
+  /// belong in `bootstrap.dart`. These are registered for every pack in
+  /// the build inventory; opt-in-gated work should still check opt-ins
+  /// inside the contributing provider.
+  final DomainProviderOverridesBuilder? providerOverridesBuilder;
 }
 
 /// Inventory of all known [DomainPack]s. Default empty; `bootstrap.dart`

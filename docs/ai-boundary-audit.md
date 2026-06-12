@@ -69,8 +69,8 @@ ChatRepository.sendMessage()
   → DeviceLlmRuntime → DeviceAgentLoop
       → AnthropicClient | OpenAiClient（用户 key 直发 provider；每轮 LLM round
         都是真实网络调用，只有 tool dispatch 是本地）
-      → DriftDeviceToolDispatcher（当前 **34 个** kDeviceTools：22 基础 + 8 FIRE +
-        4 Options。架构文档里的 "22 个" 是旧的数字，需要同步更新）
+      → DriftDeviceToolDispatcher（通过 active `DomainPack` 聚合工具；完整生产
+        诊断目录见 `productionDeviceTools` / `productionToolDescriptors`）
   → 端侧产生 LlmStreamEvent，UI 渲染，AiTraceBuilder 写 Drift `ai_traces`
 
 替代分支（同样是"生产路径"）：

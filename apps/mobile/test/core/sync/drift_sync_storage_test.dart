@@ -1,9 +1,9 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/persistence/domain_enums.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
 
 import '../../core/persistence/test_database.dart';
 

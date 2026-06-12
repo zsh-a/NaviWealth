@@ -1,11 +1,10 @@
 /// Code-level metadata for an AI tool.
 ///
 /// The cloud AI backend was removed, so this catalog no longer mirrors
-/// a Rust registry. Phase D: each LifeOS domain co-locates its
-/// descriptors with its tool barrel — see `kShellToolDescriptors`,
-/// `kFinanceToolDescriptors`, `kHealthToolDescriptors`,
-/// `kKnowledgeToolDescriptors`. The full production union lives in
-/// `app/tool_descriptor_catalog.dart` so this contract package remains
+/// a Rust registry. Each LifeOS domain co-locates tool registrations
+/// with its tool barrel and derives descriptor maps from that single
+/// source of truth. The full production union lives in
+/// `app/production_ai_catalog.dart` so this contract package remains
 /// domain-neutral.
 library;
 

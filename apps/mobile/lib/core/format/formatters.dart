@@ -202,6 +202,11 @@ class AppFormatters {
     return DateFormat.yMMM(_localeName).format(value);
   }
 
+  /// Month + day without year: zh `4月28日`, en `Apr 28`.
+  String monthDay(DateTime value) {
+    return DateFormat.MMMd(_localeName).format(value);
+  }
+
   // ---------- Relative time ----------
 
   /// Human-readable relative time string ("3 minutes ago", "昨天", etc.).
@@ -302,4 +307,3 @@ Decimal? parseDecimal(String? input) {
 /// Returns `null` for empty or unparseable input.
 Decimal? parseDecimalController(TextEditingController controller) =>
     parseDecimal(controller.text);
-

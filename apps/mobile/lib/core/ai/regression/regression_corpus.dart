@@ -1,11 +1,11 @@
 /// Frozen regression corpus.
 ///
-/// Per registered intent (see `intent_policy.dart`), one or more
+/// Per production intent catalog entry, one or more
 /// representative prompts plus the **tool names** we expect the
 /// upstream LLM to dispatch. The corpus is asserted at two layers:
 ///
 ///   1. **Static contract check** (this commit, `test/.../regression_corpus_test.dart`):
-///        - every `intent` is registered in `intent_policy.dart`
+///        - every `intent` is registered in the production intent catalog
 ///        - every `expectedTools` name resolves to a known tool
 ///          (either has a `renderToolOutput` renderer, or is on the
 ///          documented JSON-fallback allowlist)
@@ -40,7 +40,7 @@ class RegressionPrompt {
   /// individual flaky prompts in the future.
   final String id;
 
-  /// Must match an `IntentDescriptor.name` in `intent_policy.dart`.
+  /// Must match an `IntentDescriptor.name` in the production intent catalog.
   final String intent;
 
   /// The literal prompt sent to the runtime (after intent template

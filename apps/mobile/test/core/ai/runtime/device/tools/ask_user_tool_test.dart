@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/tool_descriptor_catalog.dart';
+import 'package:naviwealth/app/production_ai_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
@@ -32,7 +32,7 @@ void main() {
     test('descriptor mirror match (shell, read, no side effect)', () {
       expect(tool.name, 'ask_user');
       expect(tool.inputSchema['required'], <String>['title', 'options']);
-      final d = lookupToolDescriptor('ask_user');
+      final d = productionToolDescriptors['ask_user'];
       expect(d, isNotNull);
       expect(d!.access, Access.read);
       expect(d.sideEffect, SideEffect.none);

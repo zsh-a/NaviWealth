@@ -1,10 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/tool_descriptor_catalog.dart';
+import 'package:naviwealth/app/production_ai_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/intent.dart';
 import 'package:naviwealth/core/ai/contracts/privacy_budget.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
-import 'package:naviwealth/core/ai/intent/ai_intent_invocation.dart';
-import 'package:naviwealth/core/ai/intent/intent_policy.dart';
+import 'package:naviwealth/core/ai/intent/intent.dart';
 
 void main() {
   group('D-1.3 domain field', () {
@@ -81,7 +80,7 @@ void main() {
 
     test('built-in catalog tags each tool with the right LifeOS domain', () {
       ToolDescriptor lookup(String name) =>
-          allToolDescriptors.firstWhere((t) => t.name == name);
+          productionToolDescriptors.values.firstWhere((t) => t.name == name);
       expect(lookup('query_memory').domain, kDomainShell);
       expect(lookup('build_context').domain, kDomainShell);
       expect(lookup('get_holdings').domain, kDomainFinance);
@@ -97,7 +96,7 @@ void main() {
         kDomainHealth,
         kDomainKnowledge,
       };
-      for (final t in allToolDescriptors) {
+      for (final t in productionToolDescriptors.values) {
         expect(
           validDomains.contains(t.domain),
           isTrue,

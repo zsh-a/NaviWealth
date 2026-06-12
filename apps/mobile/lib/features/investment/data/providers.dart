@@ -79,11 +79,13 @@ final _ledgerRevisionProvider = StreamProvider.autoDispose<int>((ref) async* {
   // in a burst triggers the expensive holdings recomputation cascade.
   Timer? timer;
   final controller = StreamController<int>();
+  late final StreamSubscription<List<TypedResult>> subscription;
   ref.onDispose(() {
     timer?.cancel();
+    unawaited(subscription.cancel());
     controller.close();
   });
-  query.watch().listen(
+  subscription = query.watch().listen(
     (_) {
       timer?.cancel();
       timer = Timer(

@@ -58,9 +58,9 @@ String knowledgeDateFromIso(
 
 String knowledgeMonthDayFromIso(BuildContext context, String value) {
   final parsed = DateTime.tryParse(value);
-  final locale = Localizations.localeOf(context);
+  final formatter = AppFormatters(locale: Localizations.localeOf(context));
   if (parsed != null) {
-    return _knowledgeMonthDay(locale, parsed.toLocal());
+    return formatter.monthDay(parsed.toLocal());
   }
 
   final match = RegExp(r'^\d{4}-(\d{2})-(\d{2})').firstMatch(value);
@@ -68,14 +68,7 @@ String knowledgeMonthDayFromIso(BuildContext context, String value) {
   final month = int.tryParse(match.group(1) ?? '');
   final day = int.tryParse(match.group(2) ?? '');
   if (month == null || day == null) return value;
-  return _knowledgeMonthDay(locale, DateTime(2000, month, day));
-}
-
-String _knowledgeMonthDay(Locale locale, DateTime date) {
-  if (locale.languageCode == 'zh') {
-    return '${date.month}月${date.day}日';
-  }
-  return '${date.month}/${date.day}';
+  return formatter.monthDay(DateTime(2000, month, day));
 }
 
 enum KnowledgeStateDensity { page, section }
@@ -153,9 +146,7 @@ class KnowledgeFloatingActionSurface extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
-            color: colors.primary.withValues(
-              alpha: AppOpacity.muted,
-            ),
+            color: colors.primary.withValues(alpha: AppOpacity.muted),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -201,8 +192,7 @@ class _KnowledgePullToRefreshState extends State<KnowledgePullToRefresh> {
       final delta = notification.scrollDelta ?? 0;
       if (delta < 0) {
         setState(() {
-          _dragExtent =
-              (_dragExtent - delta).clamp(0, _kRefreshTriggerExtent);
+          _dragExtent = (_dragExtent - delta).clamp(0, _kRefreshTriggerExtent);
         });
       }
     }
@@ -211,8 +201,10 @@ class _KnowledgePullToRefreshState extends State<KnowledgePullToRefresh> {
         notification.dragDetails != null &&
         notification.overscroll < 0) {
       setState(() {
-        _dragExtent = (_dragExtent - notification.overscroll)
-            .clamp(0, _kRefreshTriggerExtent);
+        _dragExtent = (_dragExtent - notification.overscroll).clamp(
+          0,
+          _kRefreshTriggerExtent,
+        );
       });
     }
 
@@ -246,8 +238,7 @@ class _KnowledgePullToRefreshState extends State<KnowledgePullToRefresh> {
   @override
   Widget build(BuildContext context) {
     final visible = _refreshing || _dragExtent > 0;
-    final progress =
-        (_dragExtent / _kRefreshTriggerExtent).clamp(0.0, 1.0);
+    final progress = (_dragExtent / _kRefreshTriggerExtent).clamp(0.0, 1.0);
     return Stack(
       children: [
         NotificationListener<ScrollNotification>(

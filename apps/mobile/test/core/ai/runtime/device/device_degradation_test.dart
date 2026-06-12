@@ -1,11 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/domain_packs.dart';
-import 'package:naviwealth/app/tool_descriptor_catalog.dart';
+import 'package:naviwealth/app/production_ai_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/runtime/ai_runtime.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
 import 'package:naviwealth/features/ai_chat/data/runtime_routing_api_client.dart';
@@ -67,14 +64,6 @@ Future<List<AiChatEvent>> _run(RuntimeRoutingAiChatApiClient c) => c
       messages: const [WireMessage(role: 'user', content: 'hi')],
     )
     .toList();
-
-List<DeviceTool> _productionDeviceTools() => <DeviceTool>[
-  ...kShellDeviceToolsCore,
-  for (final pack in kAllDomainPacks) ...pack.deviceTools,
-];
-
-DeviceToolRegistry _productionDeviceToolRegistry() =>
-    DeviceToolRegistry(_productionDeviceTools());
 
 void main() {
   group('formatAiTraceBadge — device-direct text (W-D6)', () {
@@ -157,8 +146,8 @@ void main() {
 
   group('device tool static contract (W-D6)', () {
     test('every production device tool resolves in the descriptor mirror', () {
-      for (final tool in _productionDeviceTools()) {
-        final d = lookupToolDescriptor(tool.name);
+      for (final tool in productionDeviceTools) {
+        final d = productionToolDescriptors[tool.name];
         expect(
           d,
           isNotNull,
@@ -178,8 +167,8 @@ void main() {
     });
 
     test('every descriptor is advertised by the device registry', () {
-      final advertised = _productionDeviceToolRegistry().names.toSet();
-      for (final descriptor in allToolDescriptors) {
+      final advertised = productionDeviceToolRegistry.names.toSet();
+      for (final descriptor in productionToolDescriptors.values) {
         expect(
           advertised,
           contains(descriptor.name),
@@ -191,9 +180,7 @@ void main() {
     });
 
     test('registry advertises exactly the canonical set, sorted', () {
-      final names = _productionDeviceToolRegistry().schemas().map(
-        (s) => s.name,
-      );
+      final names = productionDeviceToolRegistry.schemas().map((s) => s.name);
       expect(names, [
         'ask_user',
         'build_context',

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/tool_descriptor_catalog.dart';
+import 'package:naviwealth/app/production_ai_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
@@ -93,7 +93,7 @@ void main() {
     test('descriptor mirror match (registry + catalog)', () {
       expect(tool.name, 'query_memory');
       expect(tool.inputSchema['required'], <String>['query']);
-      final descriptor = lookupToolDescriptor('query_memory');
+      final descriptor = productionToolDescriptors['query_memory'];
       expect(descriptor, isNotNull);
       expect(descriptor!.access, Access.read);
       expect(descriptor.sideEffect, SideEffect.none);

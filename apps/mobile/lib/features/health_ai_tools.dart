@@ -6,9 +6,9 @@
 library;
 
 import '../core/ai/contracts/intent.dart' show RiskLevel, kDomainHealth;
-import '../core/ai/contracts/privacy_budget.dart' show BudgetTier;
 import '../core/ai/contracts/tool_descriptor.dart';
 import '../core/ai/runtime/device/tools/device_tool.dart';
+import '../core/ai/runtime/device/tools/registered_device_tool.dart';
 import 'health/ai_tools/get_activity_summary_tool.dart';
 import 'health/ai_tools/get_body_battery_trend_tool.dart';
 import 'health/ai_tools/get_hrv_trend_tool.dart';
@@ -17,83 +17,33 @@ import 'health/ai_tools/get_recovery_signal_tool.dart';
 import 'health/ai_tools/get_stress_trend_tool.dart';
 import 'health/ai_tools/record_body_measurement_tool.dart';
 
-/// All HealthOS device tools (mostly read-only; low-frequency body
-/// measurements have an explicit one-tap write path).
-const List<DeviceTool> kHealthDeviceTools = <DeviceTool>[
-  GetRecentSleepSummaryTool(),
-  GetHrvTrendTool(),
-  GetStressTrendTool(),
-  GetBodyBatteryTrendTool(),
-  GetActivitySummaryTool(),
-  GetRecoverySignalTool(),
-  RecordBodyMeasurementTool(),
-];
+/// HealthOS device tools and policy metadata. Adding a Health tool means
+/// adding one registration here; the runtime tool list and descriptor map
+/// are derived below.
+const DeviceToolRegistrationBuilder _healthTool = DeviceToolRegistrationBuilder(
+  kDomainHealth,
+);
 
-/// HealthOS device-tool descriptors. Co-located with [kHealthDeviceTools]
-/// — adding a Health tool means one new file under
-/// `features/health/ai_tools/`, one new line in [kHealthDeviceTools],
-/// and one new entry here. Merged into [allToolDescriptors] by the
-/// cross-domain catalog.
-const Map<String, ToolDescriptor> kHealthToolDescriptors =
-    <String, ToolDescriptor>{
-      'get_recent_sleep_summary': ToolDescriptor(
-        name: 'get_recent_sleep_summary',
-        access: Access.read,
-        risk: RiskLevel.info,
-        requiresConfirmation: Confirmation.none,
-        allowedContextTier: BudgetTier.small,
-        domain: kDomainHealth,
-      ),
-      'get_hrv_trend': ToolDescriptor(
-        name: 'get_hrv_trend',
-        access: Access.read,
-        risk: RiskLevel.info,
-        requiresConfirmation: Confirmation.none,
-        allowedContextTier: BudgetTier.small,
-        domain: kDomainHealth,
-      ),
-      'get_stress_trend': ToolDescriptor(
-        name: 'get_stress_trend',
-        access: Access.read,
-        risk: RiskLevel.info,
-        requiresConfirmation: Confirmation.none,
-        allowedContextTier: BudgetTier.small,
-        domain: kDomainHealth,
-      ),
-      'get_body_battery_trend': ToolDescriptor(
-        name: 'get_body_battery_trend',
-        access: Access.read,
-        risk: RiskLevel.info,
-        requiresConfirmation: Confirmation.none,
-        allowedContextTier: BudgetTier.small,
-        domain: kDomainHealth,
-      ),
-      'get_activity_summary': ToolDescriptor(
-        name: 'get_activity_summary',
-        access: Access.read,
-        risk: RiskLevel.info,
-        requiresConfirmation: Confirmation.none,
-        allowedContextTier: BudgetTier.small,
-        domain: kDomainHealth,
-      ),
-      'get_recovery_signal': ToolDescriptor(
-        name: 'get_recovery_signal',
-        access: Access.read,
-        risk: RiskLevel.suggest,
-        requiresConfirmation: Confirmation.none,
-        allowedContextTier: BudgetTier.small,
-        domain: kDomainHealth,
-      ),
-      'record_body_measurement': ToolDescriptor(
-        name: 'record_body_measurement',
-        access: Access.propose,
+final List<RegisteredDeviceTool> kHealthToolRegistrations =
+    <RegisteredDeviceTool>[
+      _healthTool.read(const GetRecentSleepSummaryTool()),
+      _healthTool.read(const GetHrvTrendTool()),
+      _healthTool.read(const GetStressTrendTool()),
+      _healthTool.read(const GetBodyBatteryTrendTool()),
+      _healthTool.read(const GetActivitySummaryTool()),
+      _healthTool.read(const GetRecoverySignalTool(), risk: RiskLevel.suggest),
+      _healthTool.propose(
+        const RecordBodyMeasurementTool(),
         risk: RiskLevel.commit,
-        requiresConfirmation: Confirmation.oneTap,
-        allowedContextTier: BudgetTier.small,
-        sideEffect: SideEffect.deviceLocalWrite,
-        domain: kDomainHealth,
       ),
-    };
+    ];
+
+final List<DeviceTool> kHealthDeviceTools = registeredDeviceTools(
+  kHealthToolRegistrations,
+);
+
+final Map<String, ToolDescriptor> kHealthToolDescriptors =
+    registeredToolDescriptors(kHealthToolRegistrations);
 
 /// HealthOS system-prompt block. Appended onto [kDeviceSystemPromptBase]
 /// by `systemPromptBlocksProvider` only when the user has opted into

@@ -11,10 +11,9 @@ import '../../../l10n/gen/app_localizations.dart';
 /// Horizontal rail of "next action" cards rendered between the AI
 /// context summary and the chat conversation.
 ///
-/// Phase D-1.6 — the rail reads the cross-domain
-/// [chatRailContentProvider] rather than reaching into
-/// `features/home/`. Each domain (Finance today, HealthOS in D-2)
-/// overrides the provider in `bootstrap.dart`.
+/// Reads cross-domain [chatRailContentProvider] output rather than reaching
+/// into a specific domain's home surface. Domain packs contribute content
+/// through the app composition bundle.
 class AiActionCardsRail extends ConsumerWidget {
   const AiActionCardsRail({super.key});
 
@@ -30,7 +29,12 @@ class AiActionCardsRail extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.s20, 0, AppSpacing.s16, AppSpacing.s8),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s20,
+              0,
+              AppSpacing.s16,
+              AppSpacing.s8,
+            ),
             child: Text(
               l10n.aiActionCardsTitle,
               style: context.theme.typography.xs.copyWith(

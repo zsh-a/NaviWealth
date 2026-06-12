@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/core/ai/composition/composite_proposal_applier.dart';
@@ -12,6 +13,7 @@ import 'package:naviwealth/core/ai/composition/tool_descriptor_lookup.dart';
 import 'package:naviwealth/core/ai/contracts/intent.dart';
 import 'package:naviwealth/core/ai/contracts/privacy_budget.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
+import 'package:naviwealth/core/ai/intent/intent.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
@@ -24,6 +26,8 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../core/persistence/test_database.dart';
 
 const _tool = _FakeTool('domain_tool');
+
+final _domainSeamProvider = Provider<int>((ref) => 0);
 
 const _financeDescriptor = ToolDescriptor(
   name: 'finance_descriptor',
@@ -43,12 +47,26 @@ const _healthDescriptor = ToolDescriptor(
   domain: 'health',
 );
 
+const _financeIntent = IntentDescriptor(
+  name: 'fake_finance_intent',
+  allowedObjectTypes: <String>{'finance_object'},
+  preferredCapabilities: <AiCapability>{AiCapability.chat},
+);
+
+const _healthIntent = IntentDescriptor(
+  name: 'fake_health_intent',
+  allowedObjectTypes: <String>{'health_object'},
+  preferredCapabilities: <AiCapability>{AiCapability.chat},
+  domain: kDomainHealth,
+);
+
 const _financePack = DomainPack(
   scope: DomainScope.finance,
   deviceTools: [_tool],
   toolDescriptors: <String, ToolDescriptor>{
     'finance_descriptor': _financeDescriptor,
   },
+  intentDescriptors: [_financeIntent],
   proposalKinds: [
     ProposalKindMeta(
       kind: 'fake_finance',
@@ -67,6 +85,7 @@ const _healthPack = DomainPack(
   toolDescriptors: <String, ToolDescriptor>{
     'health_descriptor': _healthDescriptor,
   },
+  intentDescriptors: [_healthIntent],
   proposalKinds: [
     ProposalKindMeta(
       kind: 'fake_health',
@@ -113,6 +132,10 @@ List<CommandPaletteEntry> _healthEntries(AppLocalizations l10n) => [
     icon: Icons.monitor_heart,
     run: (_) {},
   ),
+];
+
+List<Override> _providerOverrides() => [
+  _domainSeamProvider.overrideWith((ref) => 42),
 ];
 
 ProviderContainer _container({
@@ -201,6 +224,39 @@ void main() {
         .setEnabled(DomainScope.health, true);
     lookup = c.read(toolDescriptorLookupProvider);
     expect(lookup('health_descriptor'), _healthDescriptor);
+  });
+
+  test('intent catalog follows active domain opt-ins', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final c = _container(db: db);
+    addTearDown(c.dispose);
+
+    await c.read(auth.domainOptInsProvider.future);
+    var catalog = c.read(intentCatalogProvider);
+    expect(catalog.lookup('fake_finance_intent'), _financeIntent);
+    expect(catalog.lookup('fake_health_intent'), isNull);
+
+    await c
+        .read(auth.domainOptInsProvider.notifier)
+        .setEnabled(DomainScope.health, true);
+    catalog = c.read(intentCatalogProvider);
+    expect(catalog.lookup('fake_health_intent'), _healthIntent);
+  });
+
+  test('composition bundle includes domain provider overrides', () {
+    const pack = DomainPack(
+      scope: DomainScope.finance,
+      providerOverridesBuilder: _providerOverrides,
+    );
+    final c = ProviderContainer(
+      overrides: [
+        ...lifeOsDomainCompositionOverrides(packs: [pack]),
+      ],
+    );
+    addTearDown(c.dispose);
+
+    expect(c.read(_domainSeamProvider), 42);
   });
 }
 

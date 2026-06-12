@@ -1,14 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/domain_packs.dart';
-import 'package:naviwealth/app/tool_descriptor_catalog.dart';
+import 'package:naviwealth/app/production_ai_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
-import 'package:naviwealth/core/ai/intent/intent_policy.dart';
-import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
-
-DeviceToolRegistry _productionDeviceToolRegistry() => DeviceToolRegistry([
-  ...kShellDeviceToolsCore,
-  for (final pack in kAllDomainPacks) ...pack.deviceTools,
-]);
 
 /// Static-contract test: every FIRE OS Phase-5 tool name must resolve in
 /// both the registry (dispatchable) and the descriptor table
@@ -27,7 +19,7 @@ void main() {
       'propose_fire_bucket_rule',
     ];
 
-    final registry = _productionDeviceToolRegistry();
+    final registry = productionDeviceToolRegistry;
 
     test('all 8 tools registered in the device registry', () {
       for (final name in expectedTools) {
@@ -41,7 +33,7 @@ void main() {
 
     test('all 8 tools have descriptors with consistent shape', () {
       for (final name in expectedTools) {
-        final desc = lookupToolDescriptor(name);
+        final desc = productionToolDescriptors[name];
         expect(desc, isNotNull, reason: 'descriptor missing for $name');
         if (name.startsWith('propose_')) {
           expect(desc!.access, Access.propose);
@@ -58,7 +50,7 @@ void main() {
     test('every device tool has a matching descriptor (no drift)', () {
       for (final name in registry.names) {
         expect(
-          lookupToolDescriptor(name),
+          productionToolDescriptors[name],
           isNotNull,
           reason: 'registered tool $name has no descriptor',
         );
@@ -76,18 +68,20 @@ void main() {
     ];
 
     test('all 5 intents are registered in the policy', () {
+      final catalog = productionIntentCatalog;
       for (final intent in expectedIntents) {
         expect(
-          lookupIntent(intent),
+          catalog.lookup(intent),
           isNotNull,
-          reason: 'intent $intent missing from intentDescriptors',
+          reason: 'intent $intent missing from the production intent catalog',
         );
       }
     });
 
     test('intents target FIRE OS object types only', () {
+      final catalog = productionIntentCatalog;
       for (final intent in expectedIntents) {
-        final descriptor = lookupIntent(intent)!;
+        final descriptor = catalog.lookup(intent)!;
         expect(
           descriptor.allowedObjectTypes.every((t) => t.startsWith('fire_')),
           isTrue,

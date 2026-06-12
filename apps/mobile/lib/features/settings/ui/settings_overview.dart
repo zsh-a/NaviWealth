@@ -141,7 +141,7 @@ class SettingsOverview extends ConsumerWidget {
         ],
       ),
     );
-    // D-1.5: per-user LifeOS domain opt-in lives on its own focused page
+    // Per-user LifeOS domain opt-in lives on its own focused page
     // (`/settings/domains`) so the overview doesn't grow/shrink as domains
     // toggle and per-domain ops (HealthOS sync / briefing) aren't crammed
     // into the global preferences list. The overview just links in.

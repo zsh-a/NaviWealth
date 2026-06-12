@@ -1,9 +1,9 @@
-/// Intent registry (governance for intent strings).
+/// Intent contracts (governance for intent strings).
 ///
-/// Without a registry the codebase ends up with 50 intent strings, half
-/// of them dead. Mirror the `tool_policy.rs` pattern: descriptors are a
-/// static const list, validated at startup, with code review enforcing
-/// "new capsule → new intent → new entry here".
+/// Without a catalog the codebase ends up with 50 intent strings, half
+/// of them dead. Mirror the tool descriptor pattern: core defines the
+/// descriptor contract and each domain contributes its concrete intent
+/// list through DomainPack composition.
 ///
 /// Each descriptor declares which object types the intent applies to
 /// and which prompt template to render. Capsules + invocation surfaces
@@ -13,6 +13,7 @@
 library;
 
 import '../../../l10n/gen/app_localizations.dart';
+import '../contracts/intent.dart' show kDomainFinance;
 import 'ai_intent_invocation.dart';
 
 class IntentCopy {
@@ -106,7 +107,7 @@ class IntentDescriptor {
     required this.preferredCapabilities,
     this.preferredReadModels = const <String>[],
     this.requiresExplicitConfirmation = false,
-    this.domain = 'finance',
+    this.domain = kDomainFinance,
     this.allowedDomains = const <String>{},
   });
 
@@ -114,7 +115,8 @@ class IntentDescriptor {
   final String name;
 
   /// Home LifeOS domain this intent belongs to (trace attribution +
-  /// the default surface). Phase D-1.3 default `finance`.
+  /// the default surface). Defaults to Finance for legacy descriptors
+  /// that predate explicit domain registration.
   final String domain;
 
   /// Extra domains this intent is *also* valid in, beyond [domain]. Set
@@ -160,179 +162,27 @@ class IntentDescriptor {
 bool intentAllowsDomain(IntentDescriptor desc, String domain) =>
     desc.domains.contains(domain);
 
-const intentDescriptors = <IntentDescriptor>[
-  IntentDescriptor(
-    name: 'explain_change',
-    allowedObjectTypes: <String>{
-      'expense',
-      'recurring_pattern',
-      'asset',
-      'liability',
-      'account',
-    },
-    preferredCapabilities: <AiCapability>{
-      AiCapability.chat,
-      AiCapability.visualization,
-    },
-    preferredReadModels: <String>[
-      'subscription_changes',
-      'recurring_patterns',
-      'cashflow_buckets',
-    ],
-  ),
-  IntentDescriptor(
-    name: 'summarize_account',
-    allowedObjectTypes: <String>{'account'},
-    preferredCapabilities: <AiCapability>{
-      AiCapability.chat,
-      AiCapability.visualization,
-    },
-    preferredReadModels: <String>[
-      'holdings_snapshot',
-      'cashflow_buckets',
-      'investment_performance',
-    ],
-  ),
-  IntentDescriptor(
-    name: 'stress_test_plan',
-    allowedObjectTypes: <String>{'fire_plan'},
-    preferredCapabilities: <AiCapability>{
-      AiCapability.chat,
-      AiCapability.proposal,
-    },
-    preferredReadModels: <String>[
-      'net_worth_snapshot',
-      'holdings_snapshot',
-      'investment_performance',
-    ],
-  ),
-  IntentDescriptor(
-    name: 'compare_period',
-    allowedObjectTypes: <String>{
-      'expense',
-      'account',
-      'asset',
-      'recurring_pattern',
-    },
-    preferredCapabilities: <AiCapability>{
-      AiCapability.chat,
-      AiCapability.visualization,
-    },
-    preferredReadModels: <String>['cashflow_buckets'],
-  ),
-  IntentDescriptor(
-    name: 'explain_insight',
-    allowedObjectTypes: <String>{'insight'},
-    preferredCapabilities: <AiCapability>{
-      AiCapability.chat,
-      AiCapability.proposal,
-    },
-    preferredReadModels: <String>[
-      'anomaly_flags',
-      'subscription_changes',
-      'refund_links',
-    ],
-  ),
-  IntentDescriptor(
-    name: 'explain_chart',
-    // Charts are abstract — they don't carry a stable AiObjectRef of
-    // their own. Allowed types stays empty so any chart-bearing
-    // surface can pass an `AiObjectRef(type: 'chart', id: '<chart>')`
-    // without tripping the registry's type-mismatch assertion.
-    allowedObjectTypes: <String>{'chart'},
-    preferredCapabilities: <AiCapability>{
-      AiCapability.chat,
-      AiCapability.visualization,
-    },
-    preferredReadModels: <String>[
-      'net_worth_snapshot',
-      'cashflow_buckets',
-      'holdings_snapshot',
-    ],
-  ),
-  IntentDescriptor(
-    name: 'transactions.explainSelection',
-    allowedObjectTypes: <String>{'transactions'},
-    preferredCapabilities: <AiCapability>{
-      AiCapability.chat,
-      AiCapability.visualization,
-    },
-    preferredReadModels: <String>[
-      'cashflow_buckets',
-      'subscription_changes',
-      'refund_links',
-    ],
-  ),
-  // FIRE OS Phase 5 intents — explain / suggest / simulate / propose.
-  IntentDescriptor(
-    name: 'explain_fire_state',
-    allowedObjectTypes: <String>{'fire_state', 'fire_plan'},
-    preferredCapabilities: <AiCapability>{
-      AiCapability.chat,
-      AiCapability.visualization,
-    },
-    preferredReadModels: <String>[
-      'fire_state',
-      'net_worth_snapshot',
-      'cashflow_buckets',
-    ],
-  ),
-  IntentDescriptor(
-    name: 'review_cash_bucket',
-    allowedObjectTypes: <String>{'fire_state', 'fire_plan'},
-    preferredCapabilities: <AiCapability>{
-      AiCapability.chat,
-      AiCapability.proposal,
-    },
-    preferredReadModels: <String>['fire_state', 'fire_buckets'],
-  ),
-  IntentDescriptor(
-    name: 'simulate_fire_change',
-    allowedObjectTypes: <String>{'fire_plan', 'fire_state'},
-    preferredCapabilities: <AiCapability>{
-      AiCapability.chat,
-      AiCapability.visualization,
-    },
-    // `simulate_fire_plan` does not start with `get_` so the corpus
-    // normaliser does not strip it; list it verbatim.
-    preferredReadModels: <String>[
-      'fire_state',
-      'fire_plan',
-      'simulate_fire_plan',
-    ],
-  ),
-  IntentDescriptor(
-    name: 'explain_stress_test',
-    allowedObjectTypes: <String>{'fire_state', 'fire_plan'},
-    preferredCapabilities: <AiCapability>{
-      AiCapability.chat,
-      AiCapability.visualization,
-    },
-    preferredReadModels: <String>['fire_state', 'fire_stress_tests'],
-  ),
-  IntentDescriptor(
-    name: 'suggest_fire_actions',
-    allowedObjectTypes: <String>{'fire_state', 'fire_plan'},
-    preferredCapabilities: <AiCapability>{
-      AiCapability.chat,
-      AiCapability.proposal,
-    },
-    preferredReadModels: <String>[
-      'fire_state',
-      'fire_buckets',
-      'fire_stress_tests',
-    ],
-  ),
-];
+class IntentCatalog {
+  const IntentCatalog(this.descriptors);
+
+  static const empty = IntentCatalog(<IntentDescriptor>[]);
+
+  final List<IntentDescriptor> descriptors;
+
+  IntentDescriptor? lookup(String name) {
+    for (final d in descriptors) {
+      if (d.name == name) return d;
+    }
+    return null;
+  }
+}
 
 /// Lookup by intent name. Returns `null` for off-registry strings —
 /// callers should `assert(false)` in dev and use `suggestedPrompt`.
-IntentDescriptor? lookupIntent(String name) {
-  for (final d in intentDescriptors) {
-    if (d.name == name) return d;
-  }
-  return null;
-}
+IntentDescriptor? lookupIntent(
+  String name, {
+  IntentCatalog catalog = IntentCatalog.empty,
+}) => catalog.lookup(name);
 
 /// Render the prompt for an invocation. Returns the registered template
 /// with placeholders filled (best-effort) when the intent is on
@@ -344,15 +194,16 @@ String renderPromptFor(
   String? defaultTimeframe,
   String? defaultCurrency,
   IntentCopyResolver? copyResolver,
+  IntentCatalog catalog = IntentCatalog.empty,
   String? fallbackObjectLabel,
   String? fallbackPromptTemplate,
 }) {
-  final desc = lookupIntent(invocation.intent);
+  final desc = lookupIntent(invocation.intent, catalog: catalog);
   if (desc == null) {
     assert(
       false,
       'AiIntentInvocation uses unregistered intent "${invocation.intent}". '
-      'Add to intent_policy.intentDescriptors or use suggestedPrompt.',
+      'Add it to the owning DomainPack intent catalog or use suggestedPrompt.',
     );
     final label = objectLabel ?? fallbackObjectLabel ?? 'current object';
     return invocation.suggestedPrompt ??

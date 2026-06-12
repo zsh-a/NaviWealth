@@ -19,6 +19,7 @@ import '../core/ai/composition/proposal_kind_registry.dart';
 import '../core/ai/composition/system_prompt_blocks.dart';
 import '../core/ai/composition/tool_descriptor_lookup.dart';
 import '../core/ai/contracts/tool_descriptor.dart';
+import '../core/ai/intent/intent.dart';
 import '../core/ai/runtime/device/tools/device_tool.dart';
 import '../core/ai/runtime/device/tools/device_tool_registry.dart'
     show kShellDeviceToolsCore, kShellToolDescriptors;
@@ -28,11 +29,10 @@ import '../core/shell/domain_shell.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'domain_packs.dart';
 
-List<Override> lifeOsDomainCompositionOverrides({
-  List<DomainPack> packs = kAllDomainPacks,
-}) {
+List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
+  final resolvedPacks = packs ?? kAllDomainPacks;
   return [
-    domainPackRegistryProvider.overrideWith((ref) => packs),
+    domainPackRegistryProvider.overrideWith((ref) => resolvedPacks),
     deviceToolsProvider.overrideWith(
       (ref) => domainDeviceTools(ref.watch(activeDomainPacksProvider)),
     ),
@@ -44,6 +44,9 @@ List<Override> lifeOsDomainCompositionOverrides({
     }),
     proposalKindRegistryProvider.overrideWith(
       (ref) => domainProposalKinds(ref.watch(activeDomainPacksProvider)),
+    ),
+    intentCatalogProvider.overrideWith(
+      (ref) => domainIntentCatalog(ref.watch(activeDomainPacksProvider)),
     ),
     proposalApplierProvider.overrideWith((ref) async {
       final routes = await domainProposalApplierRoutes(
@@ -66,6 +69,7 @@ List<Override> lifeOsDomainCompositionOverrides({
       final l10n = lookupAppLocalizations(const Locale('en'));
       return domainShellSpecs(ref.watch(activeDomainPacksProvider), l10n);
     }),
+    ...domainProviderOverrides(resolvedPacks),
   ];
 }
 
@@ -85,6 +89,10 @@ Map<String, ToolDescriptor> domainToolDescriptors(List<DomainPack> packs) {
 
 List<ProposalKindMeta> domainProposalKinds(List<DomainPack> packs) {
   return [for (final p in packs) ...p.proposalKinds];
+}
+
+IntentCatalog domainIntentCatalog(List<DomainPack> packs) {
+  return IntentCatalog([for (final p in packs) ...p.intentDescriptors]);
 }
 
 Future<List<ProposalApplierRoute>> domainProposalApplierRoutes(
@@ -131,5 +139,12 @@ List<CommandPaletteEntry> domainCommandPaletteEntries(
     for (final p in packs)
       if (p.commandPaletteEntriesBuilder != null)
         ...p.commandPaletteEntriesBuilder!(l10n),
+  ];
+}
+
+List<Override> domainProviderOverrides(List<DomainPack> packs) {
+  return [
+    for (final p in packs)
+      if (p.providerOverridesBuilder != null) ...p.providerOverridesBuilder!(),
   ];
 }

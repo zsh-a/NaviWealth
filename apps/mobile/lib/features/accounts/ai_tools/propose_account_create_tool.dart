@@ -5,9 +5,9 @@
 /// verbatim port of `proposals::propose_account_create`. Pure — no
 /// reference resolution, no provider read — validates `type` against
 /// the closed [kProposalAccountTypes] list and pre-allocates an id so
-/// follow-up proposals can reference it. Returns the same
-/// `ready_plan` / `needs_clarification` JSON the cloud tool returns;
-/// the device never auto-writes (§4.5).
+/// follow-up proposals can reference it. Returns the shared
+/// `ready_plan` / `needs_clarification` JSON consumed by the confirm
+/// flow; the device never auto-writes (§4.5).
 library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';

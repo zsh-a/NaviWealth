@@ -2,9 +2,9 @@
 ///
 /// Pattern-matching only: detects common Chinese + English query
 /// shapes and returns a typed plan. Never emits raw SQL. Returns
-/// `null` when the query doesn't match any pattern — the caller can
-/// then escalate (Phase 5: device LLM; Phase 2-A: forward to cloud
-/// chat with a 'no local match' hint).
+/// `null` when the query doesn't match any pattern; the caller can then
+/// fall back to the normal on-device chat path with a "no local match"
+/// hint. There is no cloud relay fallback.
 ///
 /// Coverage is intentionally narrow:
 ///   * Time windows: 上月/本月/今年/去年, 近 N 天 / last N days,
@@ -17,9 +17,11 @@
 ///     (generic filter).
 library;
 
-import '../../contracts/contracts.dart' show DateRange;
+import 'package:naviwealth/core/ai/contracts/contracts.dart' show DateRange;
+import 'package:naviwealth/core/ai/local/skills/txn_classifier.dart'
+    show categoryHintsForText;
+
 import 'finance_query_plan.dart';
-import 'txn_classifier.dart' show categoryHintsForText;
 
 /// Returns a typed plan, or `null` if the query is too open-ended for
 /// the local rules to handle. [now] anchors relative time references;

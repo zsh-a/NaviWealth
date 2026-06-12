@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/tool_descriptor_catalog.dart';
+import 'package:naviwealth/app/production_ai_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 
 void main() {
@@ -163,24 +163,22 @@ void main() {
       // 3 shell (query_memory, build_context, ask_user) + 35 FinanceOS +
       // 7 HealthOS + 16 KnowledgeOS = 61. `ask_user` is the structured
       // decision-point tool (Claude-Code-style interactive choices). Each
-      // LifeOS domain co-locates its descriptors with its tool barrel
-      // (`kShellToolDescriptors`, `kFinanceToolDescriptors`,
-      // `kHealthToolDescriptors`, `kKnowledgeToolDescriptors`); the union
-      // here is derived in `tool_descriptor_catalog.dart`.
-      expect(allToolDescriptors, hasLength(61));
+      // LifeOS domain co-locates its descriptors with its tool barrel; the
+      // union here is derived from the production DomainPack registrations.
+      expect(productionToolDescriptors.values, hasLength(61));
       expect(
-        lookupToolDescriptor('propose_options_profile_update')?.sideEffect,
+        productionToolDescriptors['propose_options_profile_update']?.sideEffect,
         SideEffect.deviceLocalWrite,
       );
       expect(
-        lookupToolDescriptor('list_payment_accounts')?.allowedContextTier,
+        productionToolDescriptors['list_payment_accounts']?.allowedContextTier,
         BudgetTier.standard,
       );
       expect(
-        lookupToolDescriptor('propose_expense')?.sideEffect,
+        productionToolDescriptors['propose_expense']?.sideEffect,
         SideEffect.deviceLocalWrite,
       );
-      expect(lookupToolDescriptor('get_journal_entries'), isNull);
+      expect(productionToolDescriptors['get_journal_entries'], isNull);
     });
 
     // Regression — 2026-05-24 boundary audit removed `allowed_runtimes`,
@@ -232,7 +230,7 @@ void main() {
       // §4.5 invariant: confirmation-gated proposals are local writes.
       // A propose_* with sideEffect=none would bypass the confirm flow
       // typing; a propose_* with externalCall would be unreachable.
-      final proposals = allToolDescriptors.where(
+      final proposals = productionToolDescriptors.values.where(
         (d) => d.name.startsWith('propose_'),
       );
       expect(proposals, isNotEmpty);
@@ -259,7 +257,7 @@ void main() {
       // §4.5: externalCall side effects are never LLM-triggered. Such
       // a descriptor would be rejected by the dispatcher anyway, so
       // shipping one is a configuration bug, not a feature.
-      for (final d in allToolDescriptors) {
+      for (final d in productionToolDescriptors.values) {
         expect(
           d.sideEffect,
           isNot(SideEffect.externalCall),

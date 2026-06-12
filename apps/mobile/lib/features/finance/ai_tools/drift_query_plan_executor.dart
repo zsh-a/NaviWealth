@@ -22,13 +22,13 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/ai/local/skills/finance_query_plan.dart';
-import '../../../core/ai/local/skills/query_plan_executor.dart';
 import '../../home/data/dashboard_providers.dart';
 import '../../home/domain/dashboard_trend_builder.dart';
 import '../data/domain/expense.dart';
 import '../data/repositories/journal_entry_providers.dart';
 import 'expense_to_transaction_input.dart';
+import 'query_plan/finance_query_plan.dart';
+import 'query_plan/query_plan_executor.dart';
 
 class DriftQueryPlanExecutor implements QueryPlanExecutor {
   DriftQueryPlanExecutor({required this.ref});

@@ -6,8 +6,8 @@
 /// lives in `app/` so it is allowed to reach into each feature's
 /// indexer provider and wire it up at bootstrap.
 ///
-/// Add a new domain caller (e.g. HealthOS sleep summaries, D-2.4) by
-/// adding one `ref.watch(...)` line below. No changes elsewhere.
+/// Add a new domain indexer by adding one `ref.watch(...)` line below.
+/// No changes elsewhere.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,9 +23,8 @@ import '../features/options_income/data/trade_journal_memory_indexer.dart';
 ///
 /// Domain-level opt-in (`domainOptInsProvider`) is enforced **inside**
 /// each indexer provider, so the bootstrap unconditionally watches
-/// every domain. HealthOS D-2.4b: the indexer's own provider returns
-/// early without subscribing when Health is OFF, so reading it here
-/// for an install with Health OFF is cheap.
+/// every domain. A disabled domain's indexer returns early without
+/// subscribing, so reading it here is cheap.
 final memoryLayerBootstrapProvider = Provider<void>((ref) {
   ref.watch(tradeJournalMemoryIndexerProvider);
   ref.watch(healthMetricMemoryIndexerProvider);

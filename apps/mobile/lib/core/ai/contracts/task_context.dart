@@ -125,8 +125,7 @@ class RecentSignal {
 class DateRange {
   const DateRange({required this.fromInclusive, required this.toExclusive});
 
-  /// ISO 8601 date or datetime; consumed by the device skill layer
-  /// (`finance_query_plan` / `query_plan_executor`).
+  /// ISO 8601 date or datetime; consumed by domain-local query planners.
   final String fromInclusive;
   final String toExclusive;
 

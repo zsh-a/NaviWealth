@@ -4241,6 +4241,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatProposalKindFireBucketRule => 'FIRE bucket rule';
 
   @override
+  String get aiChatProposalKindOptionsProfileUpdate =>
+      'Income Planner preferences';
+
+  @override
+  String get aiChatProposalKindOptionsJournalEntry => 'Options journal entry';
+
+  @override
   String get aiChatProposalKindUnknown => 'Unknown';
 
   @override
@@ -4418,6 +4425,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiChatRowNote => 'Note';
+
+  @override
+  String get aiChatRowUnderlying => 'Underlying';
+
+  @override
+  String get aiChatRowOptionContract => 'Option contract';
 
   @override
   String get aiChatRowAmount => 'Amount';

@@ -11,8 +11,8 @@
 /// (`journalEntriesWithPostingsStreamProvider`) — the ledger *is* the
 /// truth, so there is **no D1 read model and no `freshness` field**
 /// (§4.6.1, same stance as `get_holdings`). Everything else (`from` /
-/// `to` / `currency` / `series` rows / `note`) is byte-identical to the
-/// cloud tool so the model reads one shape on both runtimes.
+/// `to` / `currency` / `series` rows / `note`) matches the original
+/// backend tool shape so the model reads one stable contract.
 ///
 /// This is the monthly net-flow view currently available to the device
 /// runtime. The broader day/week net-worth computer was a cloud-only

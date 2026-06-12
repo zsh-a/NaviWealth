@@ -5,7 +5,6 @@
 // proves the user can discover the account creation path from Wealth, save
 // an account, and see it return to the live account list.
 
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/app_harness.dart';
@@ -44,10 +43,7 @@ void main() {
         await form.save();
 
         accounts.expectAccountVisible('Flow Checking');
-        shell.expectMounted();
-
-        await tester.pumpWidget(const SizedBox.shrink());
-        await tester.pump(Duration.zero);
+        await closeApp(tester);
       },
       tags: 'flow',
     );

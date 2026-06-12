@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/composition/proposal_kind_registry.dart';
 import 'package:naviwealth/core/ai/write/interaction_mode.dart';
 import 'package:naviwealth/features/finance/composition/finance_proposal_kinds.dart';
-import 'package:naviwealth/features/knowledge/composition/knowledge_proposal_kinds.dart';
 
 void main() {
   test('Finance proposal registry matches Finance applier kinds', () {
@@ -23,10 +22,5 @@ void main() {
       kFinanceProposalKinds.metaFor('options_journal_entry')!.interactionMode,
       InteractionMode.confirmDiff,
     );
-  });
-
-  test('Knowledge proposal registry matches Knowledge applier kinds', () {
-    final registered = kKnowledgeProposalKinds.map((m) => m.kind).toSet();
-    expect(registered, kKnowledgeProposalAppliedKinds);
   });
 }

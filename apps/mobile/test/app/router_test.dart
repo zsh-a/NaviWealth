@@ -20,11 +20,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/desktop_sidebar.dart';
-import 'package:naviwealth/app/domain_packs.dart';
+import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/route_error_page.dart';
 import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/app/router.dart';
-import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/analytics/analytics_page.dart';
@@ -55,6 +55,8 @@ import 'package:naviwealth/features/settings/settings_page.dart';
 import 'package:naviwealth/features/wealth/ui/wealth_hub_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../core/persistence/test_database.dart';
 
 class _OfflineBenchmarkSource implements BenchmarkHistorySource {
   @override
@@ -97,12 +99,16 @@ Future<ProviderContainer> _pumpAt(
 
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
+  final db = makeTestDatabase();
+  addTearDown(db.close);
   final container = ProviderContainer(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
-      // Register the production domain inventory so the router has the
-      // full per-domain shell route tree to mount.
-      domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
+      appDatabaseProvider.overrideWith((_) async => db),
+      // Match production bootstrap: the DomainPack inventory, router
+      // shells, active-domain aggregators, and domain-owned provider
+      // seams all come from the same composition bundle.
+      ...lifeOsDomainCompositionOverrides(),
       appRouterProvider.overrideWith(
         (ref) => buildAppRouter(ref, initialLocation: initialLocation),
       ),
@@ -222,7 +228,7 @@ void main() {
     testWidgets('/ renders Home', (tester) async {
       await _pumpAt(tester);
       expect(find.byType(HomePage), findsOneWidget);
-      expect(find.byType(FBottomNavigationBar), findsOneWidget);
+      expect(find.byType(FloatingGlassNavBar), findsOneWidget);
     });
 
     for (final legacy in <String>[
@@ -253,6 +259,7 @@ void main() {
     testWidgets('/accounts/analytics renders Analytics', (tester) async {
       await _pumpAt(tester, initialLocation: AppRoutes.planProjection);
       expect(find.byType(AnalyticsPage), findsOneWidget);
+      await _drainTimers(tester);
     });
 
     testWidgets('/cashflow?period=year renders CashFlow', (tester) async {
@@ -285,6 +292,7 @@ void main() {
         initialLocation: '${AppRoutes.planProjection}?range=1y',
       );
       expect(find.byType(AnalyticsPage), findsOneWidget);
+      await _drainTimers(tester);
     });
   });
 
@@ -334,38 +342,25 @@ void main() {
       expect(_currentPath(container), AppRoutes.settings);
       expect(find.byType(SettingsPage), findsOneWidget);
       // Settings is outside the shell so the bottom nav is gone.
-      expect(find.byType(FBottomNavigationBar), findsNothing);
+      expect(find.byType(FloatingGlassNavBar), findsNothing);
       await _drainTimers(tester);
     });
 
-    testWidgets('tapping nav item by position navigates correctly', (
-      tester,
-    ) async {
+    testWidgets('tapping nav items navigates correctly', (tester) async {
       final container = await _pumpAt(tester);
       expect(_currentPath(container), AppRoutes.home);
 
-      // Find the bottom bar and calculate nav item positions.
-      // Layout: Today / Activity / Wealth / Plan. Search moved to the
-      // header chrome, so the bottom nav is pure 4-tab navigation.
-      final barFinder = find.byType(FBottomNavigationBar);
-      final barBox = tester.renderObject<RenderBox>(barFinder);
-      final barSize = barBox.size;
-      final barOrigin = barBox.localToGlobal(Offset.zero);
-
-      final barCenterY = barOrigin.dy + barSize.height / 2;
-      final barWidth = barSize.width;
-      final tabW = barWidth / 4;
-
-      // Item 2 = Wealth.
-      final wealthX = barOrigin.dx + tabW * 2.5;
-      await tester.tapAt(Offset(wealthX, barCenterY));
+      final barFinder = find.byType(FloatingGlassNavBar);
+      await tester.tap(
+        find.descendant(of: barFinder, matching: find.text('Wealth')).first,
+      );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(_currentPath(container), AppRoutes.wealth);
 
-      // Item 3 = Plan.
-      final planX = barOrigin.dx + tabW * 3.5;
-      await tester.tapAt(Offset(planX, barCenterY));
+      await tester.tap(
+        find.descendant(of: barFinder, matching: find.text('Plan')).first,
+      );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(_currentPath(container), AppRoutes.plan);
@@ -379,18 +374,18 @@ void main() {
         tester,
         initialLocation: AppRoutes.wealth,
       );
-      final bar = tester.widget<FBottomNavigationBar>(
-        find.byType(FBottomNavigationBar),
+      final bar = tester.widget<FloatingGlassNavBar>(
+        find.byType(FloatingGlassNavBar),
       );
-      expect(bar.index, 2);
+      expect(bar.selectedIndex, 2);
 
       container.read(appRouterProvider).go(AppRoutes.activity);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      final updated = tester.widget<FBottomNavigationBar>(
-        find.byType(FBottomNavigationBar),
+      final updated = tester.widget<FloatingGlassNavBar>(
+        find.byType(FloatingGlassNavBar),
       );
-      expect(updated.index, 1);
+      expect(updated.selectedIndex, 1);
       await _drainTimers(tester);
     });
   });
@@ -404,7 +399,7 @@ void main() {
       tester,
     ) async {
       await _pumpAt(tester, viewportSize: _mobileSize);
-      expect(find.byType(FBottomNavigationBar), findsOneWidget);
+      expect(find.byType(FloatingGlassNavBar), findsOneWidget);
       expect(find.byType(FSidebar), findsNothing);
       expect(find.byType(DesktopSidebar), findsNothing);
     });
@@ -447,7 +442,8 @@ void main() {
       expect(
         find.byIcon(FLucideIcons.search),
         findsNothing,
-        reason: 'desktop uses Cmd-K + the left dock; the inline header '
+        reason:
+            'desktop uses Cmd-K + the left dock; the inline header '
             'chrome is touch-only',
       );
     });
@@ -455,7 +451,7 @@ void main() {
     testWidgets('tablet width uses GlassSideBar', (tester) async {
       await _pumpAt(tester, viewportSize: _tabletSize);
       expect(find.byType(FSidebar), findsOneWidget);
-      expect(find.byType(FBottomNavigationBar), findsNothing);
+      expect(find.byType(FloatingGlassNavBar), findsNothing);
       expect(find.byType(DesktopSidebar), findsNothing);
     });
 
@@ -470,7 +466,7 @@ void main() {
     ) async {
       await _pumpAt(tester, viewportSize: _desktopSize);
       expect(find.byType(DesktopSidebar), findsOneWidget);
-      expect(find.byType(FBottomNavigationBar), findsNothing);
+      expect(find.byType(FloatingGlassNavBar), findsNothing);
     });
 
     testWidgets('GlassSideBar selectedIndex follows the current URL', (

@@ -3,9 +3,10 @@
 ///
 /// The chat surface accepts confirmed `propose_*` plans and dispatches
 /// them to a domain-owned [ProposalApplier] for the actual repository
-/// write + optional undo. Each domain (Finance today, HealthOS later)
-/// provides its own concrete applier; `app/domain_composition.dart` derives
-/// [proposalApplierProvider] from active `DomainPack` routes.
+/// write + optional undo. `app/domain_composition.dart` derives
+/// [proposalApplierProvider] from active `DomainPack` routes, so Finance,
+/// Knowledge, and future domains can register concrete appliers without
+/// the chat surface importing them.
 ///
 /// The shell-only default returns a no-op applier that throws
 /// [ProposalApplyException] on every [ProposalApplier.apply] — this

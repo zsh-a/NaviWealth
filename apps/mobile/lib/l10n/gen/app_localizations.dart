@@ -7323,6 +7323,18 @@ abstract class AppLocalizations {
   /// **'FIRE bucket rule'**
   String get aiChatProposalKindFireBucketRule;
 
+  /// No description provided for @aiChatProposalKindOptionsProfileUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Income Planner preferences'**
+  String get aiChatProposalKindOptionsProfileUpdate;
+
+  /// No description provided for @aiChatProposalKindOptionsJournalEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Options journal entry'**
+  String get aiChatProposalKindOptionsJournalEntry;
+
   /// No description provided for @aiChatProposalKindUnknown.
   ///
   /// In en, this message translates to:
@@ -7592,6 +7604,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Note'**
   String get aiChatRowNote;
+
+  /// No description provided for @aiChatRowUnderlying.
+  ///
+  /// In en, this message translates to:
+  /// **'Underlying'**
+  String get aiChatRowUnderlying;
+
+  /// No description provided for @aiChatRowOptionContract.
+  ///
+  /// In en, this message translates to:
+  /// **'Option contract'**
+  String get aiChatRowOptionContract;
 
   /// No description provided for @aiChatRowAmount.
   ///

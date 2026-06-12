@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/domain_packs.dart';
-import 'package:naviwealth/core/command_palette/command_palette_entry.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 /// Guards the D-1.8 follow-up: every active LifeOS domain contributes
@@ -25,10 +25,7 @@ void main() {
   });
 
   test('aggregated entries across all domains have unique ids', () {
-    final all = <CommandPaletteEntry>[
-      for (final pack in kAllDomainPacks)
-        ...?pack.commandPaletteEntriesBuilder?.call(l10n),
-    ];
+    final all = domainCommandPaletteEntries(kAllDomainPacks, l10n);
     final ids = all.map((e) => e.id).toList();
     expect(ids.toSet().length, ids.length, reason: 'duplicate entry id: $ids');
   });

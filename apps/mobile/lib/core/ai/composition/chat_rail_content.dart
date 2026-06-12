@@ -1,10 +1,9 @@
 /// `core/ai/composition/` — cross-domain shell for AI chat composition.
 ///
-/// Phase D-1.6: every domain that wants to surface action / insight
-/// cards inside the AI chat rail registers a [ChatRailContent] list via
-/// a Riverpod provider override (see `chat_rail_provider.dart`). The
-/// chat UI in `features/ai_chat/` reads only from that provider so it
-/// stays unaware of which domains exist.
+/// Domains that want to surface action / insight cards inside the AI
+/// chat rail register [ChatRailContent] through the composition bundle.
+/// The chat UI in `features/ai_chat/` reads only from the domain-neutral
+/// provider so it stays unaware of which domains exist.
 ///
 /// The data model is intentionally minimal — title + detail + icon +
 /// route + tint. Domains keep their own richer model (e.g. Finance's

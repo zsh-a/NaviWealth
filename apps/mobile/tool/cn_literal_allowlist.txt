@@ -41,7 +41,7 @@ lib/features/ai_chat/ui/propose_card.dart
 # requires separating locale display text from semantic matching corpora.
 lib/core/ai/local/skills/context_compressor.dart
 lib/core/ai/local/skills/merchant_key.dart
-lib/core/ai/local/skills/nl_to_query_plan.dart
+lib/features/finance/ai_tools/query_plan/nl_to_query_plan.dart
 lib/core/ai/local/skills/transaction_descriptor_match.dart
 lib/core/ai/regression/regression_corpus.dart
 lib/core/ai/write/ai_source_mark.dart
@@ -75,7 +75,6 @@ lib/features/expense/ai_tools/get_recurring_patterns_tool.dart
 lib/features/expense/ai_tools/get_subscription_changes_tool.dart
 lib/features/expense/ai_tools/propose_expense_tool.dart
 lib/features/expense/ai_tools/read_category_window_tool.dart
-lib/features/finance/ai_tools/_shared/propose/proposal_plan.dart
 lib/features/home/ai_tools/get_net_worth_summary_tool.dart
 lib/features/investment/ai_tools/breakdown_tools.dart
 lib/features/investment/ai_tools/get_asset_allocation_tool.dart
@@ -105,9 +104,11 @@ lib/features/options_income/ai_tools/propose_options_profile_update_tool.dart
 # device-tool entries above: LLM-facing schemas + CN descriptions tuned
 # for the agent prompt. Track as the same FIR-99 follow-up.
 lib/features/health/ai_tools/get_activity_summary_tool.dart
+lib/features/health/ai_tools/get_body_battery_trend_tool.dart
 lib/features/health/ai_tools/get_hrv_trend_tool.dart
 lib/features/health/ai_tools/get_recent_sleep_summary_tool.dart
 lib/features/health/ai_tools/get_recovery_signal_tool.dart
+lib/features/health/ai_tools/get_stress_trend_tool.dart
 lib/features/health/ai_tools/record_body_measurement_tool.dart
 
 # ─── seed data (intentional) ─────────────────────────────────────────
@@ -128,13 +129,12 @@ lib/features/finance/data/repositories/account_repository.dart
 # entries by typing in their language. Re-localising would defeat the
 # point — the alias has to match the user's typed input regardless of
 # their app locale.
-lib/core/command_palette/default_commands.dart
-# ask_ai_result_pane.dart (S2) holds the irreversible-intent keyword
+# finance_ask_ai_result_pane.dart (S2) holds the irreversible-intent keyword
 # guard ("转账"/"下单"/"删除账户" …) that pattern-matches the user's
 # raw NL query before the command bar acts (§5.10.6). Same category as
 # the search aliases above: matching corpora, not display copy — the
 # token must equal what a CN user types regardless of app locale.
-lib/core/command_palette/ask_ai_result_pane.dart
+lib/features/finance/command_palette/finance_ask_ai_result_pane.dart
 
 # ─── Remaining feature/data follow-up ────────────────────────────────
 # (ai_insight_feed.dart cleared in S5a.1 — fully routes through
@@ -215,17 +215,6 @@ lib/features/ai_chat/ui/decision_card.dart
 # typing in their language. Re-localising would defeat the point.
 lib/features/finance/composition/finance_command_palette.dart
 lib/features/health/composition/health_command_palette.dart
-lib/features/knowledge/composition/knowledge_command_palette.dart
-
-# ─── HealthOS shell pages (D-2, landed 2026-05-27 .. 05-29) ──────────
-# HealthOS domain shell + Today/Plan/Trend pages shipped with CN
-# literals (status chips, section titles, empty-state copy). User-facing
-# — should move to ARB in a focused HealthOS l10n pass.
-lib/features/health/composition/health_domain_shell.dart
-lib/features/health/ui/body_measurement_entry_sheet.dart
-lib/features/health/ui/health_plan_page.dart
-lib/features/health/ui/health_today_page.dart
-lib/features/health/ui/health_trend_page.dart
 
 # ─── KnowledgeOS (landed 2026-05-28 .. 05-29) ───────────────────────
 # KnowledgeOS shipped the Inbox / Library / detail pages, capture sheet,
@@ -237,22 +226,18 @@ lib/features/health/ui/health_trend_page.dart
 #      schemas / prompts / persisted proposal labels, same path as the
 #      per-feature ai_tools/ block above (enum codes + structured args
 #      rendered through AppLocalizations at display time).
-lib/features/knowledge/agents/assumption_agent.dart
 lib/features/knowledge/agents/contradiction_agent.dart
 lib/features/knowledge/agents/inbox_triage_agent.dart
-lib/features/knowledge/agents/review_agent.dart
-lib/features/knowledge/agents/routine_due_agent.dart
 lib/features/knowledge/ai_tools/_inbox_triage_support.dart
-lib/features/knowledge/ai_tools/_tool_support.dart
 lib/features/knowledge/ai_tools/find_similar_knowledge_tool.dart
 lib/features/knowledge/ai_tools/list_due_reviews_tool.dart
 lib/features/knowledge/ai_tools/list_due_routines_tool.dart
 lib/features/knowledge/ai_tools/list_open_assumptions_tool.dart
 lib/features/knowledge/ai_tools/propose_capture_tool.dart
 lib/features/knowledge/ai_tools/propose_concept_link_tool.dart
-lib/features/knowledge/ai_tools/propose_inbox_classification_tool.dart
-lib/features/knowledge/ai_tools/propose_inbox_tags_tool.dart
-lib/features/knowledge/ai_tools/propose_link_to_decision_tool.dart
+lib/features/knowledge/ai_tools/queue_inbox_classification_tool.dart
+lib/features/knowledge/ai_tools/queue_inbox_tags_tool.dart
+lib/features/knowledge/ai_tools/queue_link_to_decision_tool.dart
 lib/features/knowledge/ai_tools/propose_merge_tool.dart
 lib/features/knowledge/ai_tools/propose_routine_tool.dart
 lib/features/knowledge/ai_tools/recall_decision_tool.dart
@@ -260,23 +245,12 @@ lib/features/knowledge/ai_tools/review_knowledge_health_tool.dart
 lib/features/knowledge/ai_tools/search_knowledge_tool.dart
 lib/features/knowledge/ai_tools/search_notes_tool.dart
 lib/features/knowledge/ai_tools/summarize_topic_evolution_tool.dart
-lib/features/knowledge/composition/knowledge_domain_shell.dart
 lib/features/knowledge/composition/knowledge_proposal_applier.dart
-lib/features/knowledge/composition/knowledge_proposal_kinds.dart
 lib/features/knowledge/data/capture_classifier.dart
 lib/features/knowledge/data/contradiction_judge.dart
 lib/features/knowledge/data/inbox_triage_classifier.dart
+lib/features/knowledge/data/knowledge_search_service.dart
 lib/features/knowledge/data/llm_capture_classifier.dart
 lib/features/knowledge/data/llm_contradiction_judge.dart
 lib/features/knowledge/data/llm_inbox_triage_classifier.dart
 lib/features/knowledge/data/providers.dart
-lib/features/knowledge/ui/_decision_lifecycle_sheet.dart
-lib/features/knowledge/ui/_decision_writer.dart
-lib/features/knowledge/ui/_object_writers.dart
-lib/features/knowledge/ui/_routine_writer.dart
-lib/features/knowledge/ui/knowledge_capture_sheet.dart
-lib/features/knowledge/ui/knowledge_decision_detail_page.dart
-lib/features/knowledge/ui/knowledge_inbox_page.dart
-lib/features/knowledge/ui/knowledge_library_page.dart
-lib/features/knowledge/ui/knowledge_object_detail_page.dart
-lib/features/knowledge/ui/knowledge_review_page.dart

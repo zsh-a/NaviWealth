@@ -111,8 +111,10 @@ String _firePlanUpdateLabel(AppLocalizations l) =>
     l.aiChatProposalKindFirePlanUpdate;
 String _fireBucketRuleLabel(AppLocalizations l) =>
     l.aiChatProposalKindFireBucketRule;
-String _optionsProfileUpdateLabel(AppLocalizations l) => 'Income Planner 偏好';
-String _optionsJournalEntryLabel(AppLocalizations l) => '期权流水';
+String _optionsProfileUpdateLabel(AppLocalizations l) =>
+    l.aiChatProposalKindOptionsProfileUpdate;
+String _optionsJournalEntryLabel(AppLocalizations l) =>
+    l.aiChatProposalKindOptionsJournalEntry;
 
 // ─── Editable fields ───
 
@@ -388,15 +390,22 @@ List<ProposalKindRow> _optionsJournalEntryRows(
 ) {
   String? r(String k) => _read(plan, overrides, k);
   return [
-    if (r('strategy') != null) ProposalKindRow('策略', r('strategy')!),
-    if (r('underlying') != null) ProposalKindRow('标的', r('underlying')!),
-    if (r('option_symbol') != null) ProposalKindRow('合约', r('option_symbol')!),
+    if (r('strategy') != null)
+      ProposalKindRow(
+        l10n.incomePlannerProfileAllowedStrategies,
+        r('strategy')!,
+      ),
+    if (r('underlying') != null)
+      ProposalKindRow(l10n.aiChatRowUnderlying, r('underlying')!),
+    if (r('option_symbol') != null)
+      ProposalKindRow(l10n.aiChatRowOptionContract, r('option_symbol')!),
     if (r('entry_credit') != null)
       ProposalKindRow(
-        '权利金',
+        l10n.aiChatFieldOptionPremium,
         '${r('entry_credit')} ${r('currency') ?? ''}'.trim(),
       ),
-    if (r('status') != null) ProposalKindRow('状态', r('status')!),
+    if (r('status') != null)
+      ProposalKindRow(l10n.liabilityScheduleColStatus, r('status')!),
     if (r('opened_at_iso') != null)
       ProposalKindRow(l10n.aiChatRowDate, r('opened_at_iso')!),
     if (r('notes') != null) ProposalKindRow(l10n.aiChatRowNote, r('notes')!),

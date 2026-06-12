@@ -1,15 +1,15 @@
 /// FinanceOS device-tool aggregator (`docs/lifeos-shell.md` §7.1, D-1.2).
 ///
 /// Each Finance feature owns its `ai_tools/` subdir; this barrel
-/// collects them so `bootstrap.dart` can register the full list with
-/// the cross-domain `deviceToolsProvider`. HealthOS D-2 will land an
-/// analogous `health_ai_tools.dart` alongside.
+/// collects them so `domain_packs.dart` can register the full list with
+/// the cross-domain `deviceToolsProvider`.
 library;
 
 import '../core/ai/contracts/intent.dart' show RiskLevel, kDomainFinance;
 import '../core/ai/contracts/privacy_budget.dart' show BudgetTier;
 import '../core/ai/contracts/tool_descriptor.dart';
 import '../core/ai/runtime/device/tools/device_tool.dart';
+import '../core/ai/runtime/device/tools/registered_device_tool.dart';
 import 'accounts/ai_tools/list_payment_accounts_tool.dart';
 import 'accounts/ai_tools/propose_account_create_tool.dart';
 import 'accounts/ai_tools/read_account_window_tool.dart';
@@ -44,357 +44,111 @@ import 'options_income/ai_tools/get_wheel_lifecycle_tool.dart';
 import 'options_income/ai_tools/propose_options_journal_entry_tool.dart';
 import 'options_income/ai_tools/propose_options_profile_update_tool.dart';
 
-/// All FinanceOS device tools.
-const List<DeviceTool> kFinanceDeviceTools = <DeviceTool>[
+/// FinanceOS device tools and policy metadata. Adding a Finance tool means
+/// adding one registration here; the runtime tool list and descriptor map
+/// are derived below.
+const DeviceToolRegistrationBuilder _financeTool =
+    DeviceToolRegistrationBuilder(kDomainFinance);
+
+final List<RegisteredDeviceTool>
+kFinanceToolRegistrations = <RegisteredDeviceTool>[
   // Accounts
-  ListPaymentAccountsTool(),
-  ProposeAccountCreateTool(),
-  ReadAccountWindowTool(),
+  _financeTool.read(const ListPaymentAccountsTool(), tier: BudgetTier.standard),
+  _financeTool.propose(
+    const ProposeAccountCreateTool(),
+    tier: BudgetTier.standard,
+  ),
+  _financeTool.read(const ReadAccountWindowTool(), tier: BudgetTier.standard),
   // Cashflow
-  GetCashflowBucketsTool(),
-  GetRefundLinksTool(),
-  GetTransferLinksTool(),
+  _financeTool.read(const GetCashflowBucketsTool()),
+  _financeTool.read(const GetRefundLinksTool()),
+  _financeTool.read(const GetTransferLinksTool()),
   // Expense
-  GetAnomalyFlagsTool(),
-  GetRecurringPatternsTool(),
-  GetSubscriptionChangesTool(),
-  ProposeExpenseTool(),
-  ReadCategoryWindowTool(),
+  _financeTool.read(const GetAnomalyFlagsTool(), risk: RiskLevel.suggest),
+  _financeTool.read(const GetRecurringPatternsTool()),
+  _financeTool.read(
+    const GetSubscriptionChangesTool(),
+    risk: RiskLevel.suggest,
+  ),
+  _financeTool.propose(const ProposeExpenseTool()),
+  _financeTool.read(const ReadCategoryWindowTool(), tier: BudgetTier.standard),
   // FIRE OS Phase 5 tools.
-  GetFireStateTool(),
-  GetFirePlanTool(),
-  GetFireBucketsTool(),
-  GetFireStressTestsTool(),
-  GetFireReviewTool(),
-  SimulateFirePlanTool(),
-  ProposeFirePlanUpdateTool(),
-  ProposeFireBucketRuleTool(),
+  _financeTool.read(const GetFireStateTool(), tier: BudgetTier.standard),
+  _financeTool.read(const GetFirePlanTool()),
+  _financeTool.read(const GetFireBucketsTool(), tier: BudgetTier.standard),
+  _financeTool.read(
+    const GetFireStressTestsTool(),
+    risk: RiskLevel.suggest,
+    tier: BudgetTier.standard,
+  ),
+  _financeTool.read(
+    const GetFireReviewTool(),
+    risk: RiskLevel.suggest,
+    tier: BudgetTier.standard,
+  ),
+  _financeTool.read(
+    const SimulateFirePlanTool(),
+    risk: RiskLevel.suggest,
+    tier: BudgetTier.standard,
+  ),
+  _financeTool.propose(
+    const ProposeFirePlanUpdateTool(),
+    tier: BudgetTier.standard,
+  ),
+  _financeTool.propose(
+    const ProposeFireBucketRuleTool(),
+    tier: BudgetTier.standard,
+  ),
   // Home / net worth
-  GetNetWorthSummaryTool(),
+  _financeTool.read(const GetNetWorthSummaryTool()),
   // Investment
-  GetHoldingsTool(),
-  GetAssetAllocationTool(),
-  GetInvestmentPerformanceTool(),
-  GetIndustryBreakdownTool(),
-  GetGeoBreakdownTool(),
-  GetMarketCapBreakdownTool(),
-  ProposeAssetValuationTool(),
-  ProposeTradeTool(),
-  ReadAssetWindowTool(),
+  _financeTool.read(const GetHoldingsTool()),
+  _financeTool.read(const GetAssetAllocationTool()),
+  _financeTool.read(const GetInvestmentPerformanceTool()),
+  _financeTool.read(
+    const GetIndustryBreakdownTool(),
+    tier: BudgetTier.standard,
+  ),
+  _financeTool.read(const GetGeoBreakdownTool(), tier: BudgetTier.standard),
+  _financeTool.read(
+    const GetMarketCapBreakdownTool(),
+    tier: BudgetTier.standard,
+  ),
+  _financeTool.propose(
+    const ProposeAssetValuationTool(),
+    tier: BudgetTier.standard,
+  ),
+  _financeTool.propose(const ProposeTradeTool(), tier: BudgetTier.standard),
+  _financeTool.read(const ReadAssetWindowTool(), tier: BudgetTier.standard),
   // Liabilities
-  ProposeLiabilityPaymentTool(),
+  _financeTool.propose(
+    const ProposeLiabilityPaymentTool(),
+    tier: BudgetTier.standard,
+  ),
   // Options Income (`docs/options-income.md` §8 + Wheel lifecycle).
-  GetOptionsIncomeOpportunitiesTool(),
-  GetOptionsStrategyProfileTool(),
-  ProposeOptionsProfileUpdateTool(),
-  ProposeOptionsJournalEntryTool(),
-  GetWheelLifecycleTool(),
+  _financeTool.read(
+    const GetOptionsIncomeOpportunitiesTool(),
+    risk: RiskLevel.suggest,
+    tier: BudgetTier.standard,
+  ),
+  _financeTool.read(const GetOptionsStrategyProfileTool()),
+  _financeTool.propose(
+    const ProposeOptionsProfileUpdateTool(),
+    tier: BudgetTier.standard,
+  ),
+  _financeTool.propose(
+    const ProposeOptionsJournalEntryTool(),
+    tier: BudgetTier.standard,
+  ),
+  _financeTool.read(const GetWheelLifecycleTool(), tier: BudgetTier.standard),
 ];
 
-/// FinanceOS device-tool descriptors. Co-located with the tool list
-/// above — adding a Finance tool means one new file under
-/// `features/<feature>/ai_tools/`, one new line in
-/// [kFinanceDeviceTools], and one new entry here. Merged into
-/// [allToolDescriptors] by the cross-domain catalog.
-const kFinanceToolDescriptors = <String, ToolDescriptor>{
-  // Accounts
-  'list_payment_accounts': ToolDescriptor(
-    name: 'list_payment_accounts',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainFinance,
-  ),
-  'propose_account_create': ToolDescriptor(
-    name: 'propose_account_create',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainFinance,
-  ),
-  'read_account_window': ToolDescriptor(
-    name: 'read_account_window',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainFinance,
-  ),
-  // Cashflow
-  'get_cashflow_buckets': ToolDescriptor(
-    name: 'get_cashflow_buckets',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainFinance,
-  ),
-  'get_refund_links': ToolDescriptor(
-    name: 'get_refund_links',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainFinance,
-  ),
-  'get_transfer_links': ToolDescriptor(
-    name: 'get_transfer_links',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainFinance,
-  ),
-  // Expense
-  'get_anomaly_flags': ToolDescriptor(
-    name: 'get_anomaly_flags',
-    access: Access.read,
-    risk: RiskLevel.suggest,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainFinance,
-  ),
-  'get_recurring_patterns': ToolDescriptor(
-    name: 'get_recurring_patterns',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainFinance,
-  ),
-  'get_subscription_changes': ToolDescriptor(
-    name: 'get_subscription_changes',
-    access: Access.read,
-    risk: RiskLevel.suggest,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainFinance,
-  ),
-  'propose_expense': ToolDescriptor(
-    name: 'propose_expense',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.small,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainFinance,
-  ),
-  'read_category_window': ToolDescriptor(
-    name: 'read_category_window',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainFinance,
-  ),
-  // FIRE OS Phase 5 — `docs/roadmap-fire-os.md` §5.
-  'get_fire_state': ToolDescriptor(
-    name: 'get_fire_state',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainFinance,
-  ),
-  'get_fire_plan': ToolDescriptor(
-    name: 'get_fire_plan',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainFinance,
-  ),
-  'get_fire_buckets': ToolDescriptor(
-    name: 'get_fire_buckets',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainFinance,
-  ),
-  'get_fire_stress_tests': ToolDescriptor(
-    name: 'get_fire_stress_tests',
-    access: Access.read,
-    risk: RiskLevel.suggest,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainFinance,
-  ),
-  'get_fire_review': ToolDescriptor(
-    name: 'get_fire_review',
-    access: Access.read,
-    risk: RiskLevel.suggest,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainFinance,
-  ),
-  'simulate_fire_plan': ToolDescriptor(
-    name: 'simulate_fire_plan',
-    access: Access.read,
-    risk: RiskLevel.suggest,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainFinance,
-  ),
-  'propose_fire_plan_update': ToolDescriptor(
-    name: 'propose_fire_plan_update',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainFinance,
-  ),
-  'propose_fire_bucket_rule': ToolDescriptor(
-    name: 'propose_fire_bucket_rule',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainFinance,
-  ),
-  // Home / net worth
-  'get_net_worth_summary': ToolDescriptor(
-    name: 'get_net_worth_summary',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainFinance,
-  ),
-  // Investment
-  'get_holdings': ToolDescriptor(
-    name: 'get_holdings',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainFinance,
-  ),
-  'get_asset_allocation': ToolDescriptor(
-    name: 'get_asset_allocation',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainFinance,
-  ),
-  'get_investment_performance': ToolDescriptor(
-    name: 'get_investment_performance',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainFinance,
-  ),
-  'get_industry_breakdown': ToolDescriptor(
-    name: 'get_industry_breakdown',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainFinance,
-  ),
-  'get_geo_breakdown': ToolDescriptor(
-    name: 'get_geo_breakdown',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainFinance,
-  ),
-  'get_market_cap_breakdown': ToolDescriptor(
-    name: 'get_market_cap_breakdown',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainFinance,
-  ),
-  'propose_asset_valuation': ToolDescriptor(
-    name: 'propose_asset_valuation',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainFinance,
-  ),
-  'propose_trade': ToolDescriptor(
-    name: 'propose_trade',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainFinance,
-  ),
-  'read_asset_window': ToolDescriptor(
-    name: 'read_asset_window',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainFinance,
-  ),
-  // Liabilities
-  'propose_liability_payment': ToolDescriptor(
-    name: 'propose_liability_payment',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainFinance,
-  ),
-  // Options Income — `docs/options-income.md` §8.2 + Wheel lifecycle.
-  'get_options_income_opportunities': ToolDescriptor(
-    name: 'get_options_income_opportunities',
-    access: Access.read,
-    risk: RiskLevel.suggest,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainFinance,
-  ),
-  'get_options_strategy_profile': ToolDescriptor(
-    name: 'get_options_strategy_profile',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.small,
-    domain: kDomainFinance,
-  ),
-  'propose_options_profile_update': ToolDescriptor(
-    name: 'propose_options_profile_update',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainFinance,
-  ),
-  'propose_options_journal_entry': ToolDescriptor(
-    name: 'propose_options_journal_entry',
-    access: Access.propose,
-    risk: RiskLevel.propose,
-    requiresConfirmation: Confirmation.oneTap,
-    allowedContextTier: BudgetTier.standard,
-    sideEffect: SideEffect.deviceLocalWrite,
-    domain: kDomainFinance,
-  ),
-  'get_wheel_lifecycle': ToolDescriptor(
-    name: 'get_wheel_lifecycle',
-    access: Access.read,
-    risk: RiskLevel.info,
-    requiresConfirmation: Confirmation.none,
-    allowedContextTier: BudgetTier.standard,
-    domain: kDomainFinance,
-  ),
-};
+final List<DeviceTool> kFinanceDeviceTools = registeredDeviceTools(
+  kFinanceToolRegistrations,
+);
+
+final Map<String, ToolDescriptor> kFinanceToolDescriptors =
+    registeredToolDescriptors(kFinanceToolRegistrations);
 
 /// FinanceOS system-prompt block. Appended onto [kDeviceSystemPromptBase]
 /// by `systemPromptBlocksProvider` when FinanceOS is active (always on

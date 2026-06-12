@@ -17,23 +17,22 @@ void main() {
     // FinanceOS bottom-nav destinations (lib/features/finance_domain_shell.dart).
     const primaryTabs = ['Today', 'Activity', 'Wealth', 'Plan'];
 
-    testWidgets(
-      'every primary tab resolves and keeps the shell mounted',
-      (tester) async {
-        await bootApp(tester);
-        final shell = AppShell(tester)..expectMounted();
+    testWidgets('every primary tab resolves and keeps the shell mounted', (
+      tester,
+    ) async {
+      await bootApp(tester);
+      final shell = AppShell(tester)..expectMounted();
 
-        for (final tab in primaryTabs) {
-          if (!shell.hasTab(tab)) continue; // tolerate IA changes
-          await shell.openTab(tab);
-          shell.expectMounted(); // not the 404 / error page
-        }
+      for (final tab in primaryTabs) {
+        if (!shell.hasTab(tab)) continue; // tolerate IA changes
+        await shell.openTab(tab);
+        shell.expectMounted(); // not the 404 / error page
+      }
 
-        // End back on the landing surface.
-        await shell.openTab('Today');
-        HomePage(tester).expectLanded();
-      },
-      tags: 'flow',
-    );
+      // End back on the landing surface.
+      await shell.openTab('Today');
+      HomePage(tester).expectLanded();
+      await closeApp(tester);
+    }, tags: 'flow');
   });
 }
