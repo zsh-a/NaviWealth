@@ -38,7 +38,7 @@ getrandom = { version = "0.2", features = ["js"] }
 # by `worker` itself but we use it directly to spawn the background relay.
 futures-channel = "0.3"
 futures-util = { version = "0.3", default-features = false, features = ["std", "sink"] }
-wasm-bindgen = "0.2.123"
+wasm-bindgen = "0.2.125"
 wasm-bindgen-futures = "0.4"
 # WASM-friendly timers backed by `setTimeout`. We use it to drive the SSE
 # keepalive heartbeat and the per-tool / overall conversation timeouts that
