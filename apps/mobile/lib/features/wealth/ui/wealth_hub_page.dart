@@ -22,8 +22,9 @@ import 'wealth_perspective_section.dart';
 /// Wealth hub — landing page for the Wealth tab (IA contract §1).
 ///
 /// Renders a Net Worth Hero + section grid that links to each owned-object
-/// surface: Accounts, Holdings (portfolio), Watchlist, Liabilities, Income
-/// Projection. Phase C replaced the bare ListView that lived under
+/// surface that is currently backed by a real workflow: Accounts, Holdings
+/// (portfolio), Watchlist, and Liabilities. Phase C replaced the bare ListView
+/// that lived under
 /// `accounts_master.dart` with this hub.
 ///
 /// Boundary rule: Wealth holds *current state of owned things*. Decision
@@ -254,12 +255,6 @@ class _WealthSectionGrid extends StatelessWidget {
         title: l10n.wealthLiabilitiesSectionTitle,
         subtitle: l10n.wealthLiabilitiesSectionSubtitle,
         path: AppRoutes.wealthLiabilities,
-      ),
-      _WealthSectionSpec(
-        icon: FLucideIcons.banknote,
-        title: l10n.wealthIncomeProjectionTitle,
-        subtitle: l10n.wealthIncomeProjectionSubtitle,
-        path: AppRoutes.wealthIncomeProjection,
       ),
     ];
     return AppGroupedActionList(

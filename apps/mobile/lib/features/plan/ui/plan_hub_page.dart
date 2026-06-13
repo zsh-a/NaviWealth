@@ -15,8 +15,10 @@ import '../../fire/domain/fire_projection.dart';
 ///
 /// IA contract §1: Plan is "decisions + future state". The hub renders a
 /// FIRE-progress hero (years-to-FIRE pulled from [fireDashboardViewProvider])
-/// and a section grid that links into each sub-decision surface — FIRE,
-/// Rebalance, Income strategy, DCA, Scenario analytics, Scenarios, Goals.
+/// and a section grid that links into shipped sub-decision surfaces — FIRE,
+/// Rebalance, Income strategy, DCA, Budget, Wheel, and projection analytics.
+/// Placeholder routes stay registered for deep-link compatibility but are not
+/// surfaced in the hub until they have real workflows.
 ///
 /// Phase A landed the routing scaffold; Phase B (this implementation) puts a
 /// real hero on the hub so it isn't a link list.
@@ -253,18 +255,6 @@ class _PlanSectionGrid extends StatelessWidget {
         title: l10n.planProjectionSectionTitle,
         subtitle: l10n.planProjectionSectionSubtitle,
         path: AppRoutes.planProjection,
-      ),
-      _PlanSectionSpec(
-        icon: FLucideIcons.arrowLeftRight,
-        title: l10n.planScenariosSectionTitle,
-        subtitle: l10n.planScenariosSectionSubtitle,
-        path: AppRoutes.planScenarios,
-      ),
-      _PlanSectionSpec(
-        icon: FLucideIcons.flag,
-        title: l10n.planGoalsSectionTitle,
-        subtitle: l10n.planGoalsSectionSubtitle,
-        path: AppRoutes.planGoals,
       ),
     ];
     return AppGroupedActionList(
