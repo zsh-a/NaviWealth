@@ -21,6 +21,7 @@
 ///   - GFM tables with `:---`/`:---:`/`---:` alignment
 ///   - `[label](url)` links (styled, non-clickable — url_launcher isn't
 ///     a dependency; SelectableText lets the user copy)
+///   - ``` ```flow ``` ``` fenced flow diagrams (vertical card-based flowchart)
 ///
 /// Trailing inline span (e.g. the streaming caret) is appended to the
 /// last text-bearing block so the cursor reads as part of the
@@ -37,6 +38,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import 'ai_motion.dart';
 import 'ai_tone.dart';
 import 'ai_typography.dart';
+import 'flow_block.dart';
 
 /// Render `text` as markdown.
 ///
@@ -137,6 +139,7 @@ class _AiMarkdownState extends State<AiMarkdown> {
   double _gapAfter(_MdBlock a, _MdBlock b) {
     if (a is _MdList && b is _MdList) return AppSpacing.s4;
     if (a is _MdCode || b is _MdCode) return AppSpacing.s8;
+    if (a is _MdFlowBlock || b is _MdFlowBlock) return AppSpacing.s8;
     if (a is _MdQuote || b is _MdQuote) return AppSpacing.s8;
     if (a is _MdTable || b is _MdTable) return AppSpacing.s8;
     if (a is _MdHeading || b is _MdHeading) return AppSpacing.s8;
@@ -666,6 +669,37 @@ class _MdTable extends _MdBlock {
   }
 }
 
+/// Flow diagram block — rendered by [FlowDiagramWidget] when a fenced
+/// block uses the `flow` language tag. Falls back to [_MdCode] if the
+/// DSL content cannot be parsed.
+class _MdFlowBlock extends _MdBlock {
+  const _MdFlowBlock(this.diagram);
+  final FlowDiagram diagram;
+
+  @override
+  Widget build(
+    BuildContext context, {
+    required TextStyle base,
+    required InlineSpan? trailing,
+    required bool selectable,
+  }) {
+    final widget = Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+      child: FlowDiagramWidget(diagram: diagram),
+    );
+    if (trailing == null) return widget;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        widget,
+        const SizedBox(height: AppSpacing.s4),
+        Text.rich(TextSpan(children: [trailing])),
+      ],
+    );
+  }
+}
+
 class _CopyButton extends StatefulWidget {
   const _CopyButton({
     required this.text,
@@ -774,9 +808,22 @@ class _MdParser {
           buf.write(cand);
           j++;
         }
-        blocks.add(
-          _MdCode(code: buf.toString(), language: lang, closed: closed),
-        );
+        // Route `flow` blocks to the flow diagram parser. If parsing
+        // fails (empty / invalid DSL), fall back to a plain code block.
+        if (lang == 'flow') {
+          final diagram = FlowParser.parse(buf.toString());
+          if (diagram != null) {
+            blocks.add(_MdFlowBlock(diagram));
+          } else {
+            blocks.add(
+              _MdCode(code: buf.toString(), language: lang, closed: closed),
+            );
+          }
+        } else {
+          blocks.add(
+            _MdCode(code: buf.toString(), language: lang, closed: closed),
+          );
+        }
         i = j;
         continue;
       }

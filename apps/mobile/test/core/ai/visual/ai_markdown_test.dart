@@ -645,4 +645,71 @@ void main() {
       expect(lastSpans, isNotEmpty);
     });
   });
+
+  group('AiMarkdown — flow blocks', () {
+    testWidgets('renders a flow block as FlowDiagramWidget', (tester) async {
+      await _pump(
+        tester,
+        const AiMarkdown(text: '```flow\nstep: A\nstep: B\n```'),
+      );
+      expect(find.byType(FlowDiagramWidget), findsOneWidget);
+    });
+
+    testWidgets('renders flow block nodes as text', (tester) async {
+      await _pump(
+        tester,
+        const AiMarkdown(text: '```flow\nstep: First\nstep: Second\n```'),
+      );
+      final txt = _allText(tester);
+      expect(txt, contains('First'));
+      expect(txt, contains('Second'));
+    });
+
+    testWidgets('renders decision branches in flow block', (tester) async {
+      await _pump(
+        tester,
+        const AiMarkdown(
+          text: '```flow\nstep: Start\ndecision: OK?\n  yes: Go\n  no: Stop\n```',
+        ),
+      );
+      final txt = _allText(tester);
+      expect(txt, contains('Start'));
+      expect(txt, contains('OK?'));
+      expect(txt, contains('Go'));
+      expect(txt, contains('Stop'));
+    });
+
+    testWidgets('invalid flow falls back to code block', (tester) async {
+      // Empty flow block should fall back to _MdCode.
+      await _pump(
+        tester,
+        const AiMarkdown(text: '```flow\n\n```'),
+      );
+      expect(find.byType(FlowDiagramWidget), findsNothing);
+    });
+
+    testWidgets('regular code blocks are unaffected', (tester) async {
+      await _pump(
+        tester,
+        const AiMarkdown(text: '```dart\nprint("hi");\n```'),
+      );
+      expect(find.byType(FlowDiagramWidget), findsNothing);
+      expect(_allText(tester), contains('print'));
+    });
+
+    testWidgets('flow block coexists with other markdown blocks', (tester) async {
+      await _pump(
+        tester,
+        const AiMarkdown(
+          text: '# Title\n\nSome text\n\n```flow\nstep: A\nstep: B\n```',
+        ),
+      );
+      expect(find.byType(FlowDiagramWidget), findsOneWidget);
+      final txt = _allText(tester);
+      expect(txt, contains('Title'));
+      expect(txt, contains('Some text'));
+      expect(txt, contains('A'));
+      expect(txt, contains('B'));
+    });
+  });
 }

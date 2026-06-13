@@ -14,3 +14,4 @@ export 'ai_pill.dart';
 export 'ai_sparkle.dart';
 export 'ai_tone.dart';
 export 'ai_typography.dart';
+export 'flow_block.dart';
