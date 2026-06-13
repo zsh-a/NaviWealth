@@ -129,30 +129,76 @@ class KnowledgeFloatingActionMotion extends StatelessWidget {
 
 /// Visual shell for primary floating KnowledgeOS actions.
 ///
-/// Borderless, primary-tinted surface with a soft shadow. No
-/// platform-specific FAB dependency — the child [FButton] owns
-/// the press interaction.
-class KnowledgeFloatingActionSurface extends StatelessWidget {
-  const KnowledgeFloatingActionSurface({super.key, required this.child});
+/// Self-contained FAB surface: owns the tap interaction, hover tint,
+/// and press scale. The [icon] is rendered centred on a primary-colored
+/// pill with a soft shadow. No platform-specific FAB dependency.
+class KnowledgeFloatingActionSurface extends StatefulWidget {
+  const KnowledgeFloatingActionSurface({
+    super.key,
+    required this.icon,
+    required this.onPress,
+  });
 
-  final Widget child;
+  final IconData icon;
+  final VoidCallback onPress;
+
+  @override
+  State<KnowledgeFloatingActionSurface> createState() =>
+      _KnowledgeFloatingActionSurfaceState();
+}
+
+class _KnowledgeFloatingActionSurfaceState
+    extends State<KnowledgeFloatingActionSurface> {
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.primary,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          BoxShadow(
-            color: colors.primary.withValues(alpha: AppOpacity.muted),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+    // Darken slightly on press for tactile feedback.
+    final bgColor = _pressed
+        ? Color.alphaBlend(
+            colors.primaryForeground.withValues(alpha: AppOpacity.subtle),
+            colors.primary,
+          )
+        : colors.primary;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) {
+          setState(() => _pressed = false);
+          widget.onPress();
+        },
+        onTapCancel: () => setState(() => _pressed = false),
+        child: AnimatedScale(
+          scale: _pressed ? 0.92 : 1,
+          duration: Motion.fast,
+          curve: Motion.standardDecelerate,
+          child: AnimatedContainer(
+            duration: Motion.fast,
+            curve: Motion.standardDecelerate,
+            width: AppSpacing.s48,
+            height: AppSpacing.s48,
+            decoration: BoxDecoration(
+              color: bgColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: colors.primary.withValues(alpha: AppOpacity.muted),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              widget.icon,
+              size: AppIconSizes.lg,
+              color: colors.primaryForeground,
+            ),
           ),
-        ],
+        ),
       ),
-      child: child,
     );
   }
 }

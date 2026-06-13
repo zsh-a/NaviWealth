@@ -160,16 +160,8 @@ class _ReviewCreateFab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return KnowledgeFloatingActionSurface(
-      child: FButton(
-        variant: FButtonVariant.ghost,
-        prefix: const Icon(
-          FLucideIcons.listChecks,
-          size: AppIconSizes.sm,
-          color: ColorPalette.neutral0,
-        ),
-        onPress: () => _openActionsSheet(context, ref),
-        child: const SizedBox.shrink(),
-      ),
+      icon: FLucideIcons.listChecks,
+      onPress: () => _openActionsSheet(context, ref),
     );
   }
 

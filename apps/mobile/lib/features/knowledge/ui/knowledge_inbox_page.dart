@@ -66,16 +66,8 @@ class _InboxCreateFab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return KnowledgeFloatingActionSurface(
-      child: FButton(
-        variant: FButtonVariant.ghost,
-        prefix: const Icon(
-          FLucideIcons.plus,
-          size: AppIconSizes.sm,
-          color: ColorPalette.neutral0,
-        ),
-        onPress: () => _openCreateSheet(context, ref),
-        child: const SizedBox.shrink(),
-      ),
+      icon: FLucideIcons.plus,
+      onPress: () => _openCreateSheet(context, ref),
     );
   }
 
