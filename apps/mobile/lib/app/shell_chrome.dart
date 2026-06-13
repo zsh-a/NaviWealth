@@ -37,6 +37,35 @@ const double _desktopChromeBreakpoint = Breakpoints.desktop;
 bool _showInlineChrome(BuildContext context) =>
     MediaQuery.sizeOf(context).width < _desktopChromeBreakpoint;
 
+/// Page padding for top-level domain tabs.
+///
+/// On mobile, the domain tab shell publishes the floating bottom dock height
+/// through `MediaQuery.padding.bottom`. Scroll views with explicit padding do
+/// not consume that automatically, so tab pages should use this helper for
+/// their root scroll/body padding.
+EdgeInsets shellTabContentPadding(
+  BuildContext context, {
+  double left = AppSpacing.s16,
+  double top = AppSpacing.s16,
+  double right = AppSpacing.s16,
+  double bottom = AppSpacing.s16,
+}) {
+  return EdgeInsets.fromLTRB(
+    left,
+    top,
+    right,
+    bottom + MediaQuery.paddingOf(context).bottom,
+  );
+}
+
+/// Bottom offset for floating controls inside a top-level domain tab.
+double shellTabFloatingActionBottom(
+  BuildContext context, {
+  double margin = AppSpacing.s16,
+}) {
+  return margin + MediaQuery.paddingOf(context).bottom;
+}
+
 /// Top-level tab / hub scaffold *with* the cross-domain shell chrome.
 ///
 /// Wraps [DomainTabScaffold] and injects the domain switcher chip
@@ -211,10 +240,6 @@ class _ShellIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppIconButton(
-      icon: icon,
-      tooltip: tooltip,
-      onPress: onPress,
-    );
+    return AppIconButton(icon: icon, tooltip: tooltip, onPress: onPress);
   }
 }

@@ -30,7 +30,7 @@ class HealthPlanPage extends ConsumerWidget {
     return ShellTabScaffold(
       title: l10n.healthPlanTitle,
       child: ListView(
-        padding: const EdgeInsets.all(AppSpacing.s16),
+        padding: shellTabContentPadding(context),
         children: [
           FadeSlideIn(
             child: async.when(

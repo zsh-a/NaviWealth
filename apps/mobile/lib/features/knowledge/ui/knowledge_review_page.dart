@@ -111,11 +111,9 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
                 onRefresh: () => _refreshReview(ref),
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.s16,
-                    AppSpacing.s16,
-                    AppSpacing.s16,
-                    AppSpacing.s64 + AppSpacing.s16,
+                  padding: shellTabContentPadding(
+                    context,
+                    bottom: AppSpacing.s64 + AppSpacing.s16,
                   ),
                   children: const <Widget>[
                     KnowledgeAiSuggestionsCard(),
@@ -132,7 +130,7 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
           ),
           Positioned(
             right: AppSpacing.s16,
-            bottom: AppSpacing.s16,
+            bottom: shellTabFloatingActionBottom(context),
             child: KnowledgeFloatingActionMotion(
               hidden: fabHidden,
               child: const _ReviewCreateFab(),
@@ -175,10 +173,7 @@ class _ReviewCreateFab extends ConsumerWidget {
     );
   }
 
-  Future<void> _openActionsSheet(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> _openActionsSheet(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     await showAppSheet<void>(
       context: context,
@@ -327,8 +322,7 @@ class _ReviewSelectableList<T> extends StatefulWidget {
       _ReviewSelectableListState<T>();
 }
 
-class _ReviewSelectableListState<T>
-    extends State<_ReviewSelectableList<T>> {
+class _ReviewSelectableListState<T> extends State<_ReviewSelectableList<T>> {
   final Set<String> _selectedIds = <String>{};
 
   @override
@@ -1129,8 +1123,8 @@ class _DueReviewsCard extends ConsumerWidget {
                         items: visible,
                         idOf: (d) => d.id,
                         itemBuilder: (d) => _DueDecisionRow(decision: d),
-                        actionLabel: l10n
-                            .knowledgeReviewMarkSelectedDecisionsReviewed,
+                        actionLabel:
+                            l10n.knowledgeReviewMarkSelectedDecisionsReviewed,
                         icon: FLucideIcons.calendarCheck,
                         onBulkAction: (selected) => _markDecisionsReviewed(
                           context: context,

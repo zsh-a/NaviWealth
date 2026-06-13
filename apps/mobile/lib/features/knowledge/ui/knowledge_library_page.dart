@@ -273,12 +273,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage>
             child: NotificationListener<ScrollUpdateNotification>(
               onNotification: onScrollUpdate,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.s16,
-                  AppSpacing.s8,
-                  AppSpacing.s16,
-                  AppSpacing.s16,
-                ),
+                padding: shellTabContentPadding(context, top: AppSpacing.s8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -344,7 +339,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage>
           ),
           Positioned(
             right: AppSpacing.s16,
-            bottom: AppSpacing.s16,
+            bottom: shellTabFloatingActionBottom(context),
             child: KnowledgeFloatingActionMotion(
               hidden: fabHidden,
               child: _LibraryCreateFab(activeSegment: _segment),
@@ -378,10 +373,7 @@ class _LibraryCreateFab extends ConsumerWidget {
     );
   }
 
-  Future<void> _openCreateSheet(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> _openCreateSheet(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final activeLabel = _segmentLabel(l10n, activeSegment);
     final options = [
@@ -1098,10 +1090,7 @@ class _SearchAssistGroup extends StatelessWidget {
           children: [
             Icon(icon, size: AppIconSizes.xs, color: colors.mutedForeground),
             const SizedBox(width: AppSpacing.s4),
-            Text(
-              label,
-              style: context.captionStyle,
-            ),
+            Text(label, style: context.captionStyle),
             if (onClear != null) ...[
               const SizedBox(width: AppSpacing.s4),
               FButton.icon(
@@ -1420,7 +1409,6 @@ class _LibraryTabBar extends StatelessWidget {
   }
 }
 
-
 Future<void> _refreshKnowledgeRepository(WidgetRef ref) async {
   ref.invalidate(knowledgeRepositoryProvider);
   await ref.read(knowledgeRepositoryProvider.future);
@@ -1523,8 +1511,9 @@ Widget _buildLibraryTile(
                   height: 28,
                   margin: const EdgeInsets.only(right: AppSpacing.s8),
                   decoration: BoxDecoration(
-                    color: (typeColor ?? colors.primary)
-                        .withValues(alpha: AppOpacity.subtle),
+                    color: (typeColor ?? colors.primary).withValues(
+                      alpha: AppOpacity.subtle,
+                    ),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Icon(
@@ -1544,7 +1533,9 @@ Widget _buildLibraryTile(
               Icon(
                 FLucideIcons.chevronRight,
                 size: AppIconSizes.xs,
-                color: colors.mutedForeground.withValues(alpha: AppOpacity.muted),
+                color: colors.mutedForeground.withValues(
+                  alpha: AppOpacity.muted,
+                ),
               ),
             ],
           ),
@@ -1634,10 +1625,7 @@ Widget _buildPrincipleTile(
 }) {
   final l10n = AppLocalizations.of(context);
   final subtitle = <Widget>[
-    Text(
-      l10n.knowledgeDetailScope(p.scope),
-      style: context.bodyCaptionStyle,
-    ),
+    Text(l10n.knowledgeDetailScope(p.scope), style: context.bodyCaptionStyle),
     if (p.rationaleMd.isNotEmpty) ...[
       const SizedBox(height: AppSpacing.s4),
       KnowledgeHighlightedText(

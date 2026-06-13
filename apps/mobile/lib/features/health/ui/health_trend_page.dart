@@ -54,7 +54,7 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
     return ShellTabScaffold(
       title: l10n.healthTrendTitle,
       child: ListView(
-        padding: const EdgeInsets.all(AppSpacing.s16),
+        padding: shellTabContentPadding(context),
         children: [
           SegmentedRow<_TrendGroup>(
             options: _TrendGroup.values,
@@ -285,16 +285,8 @@ List<_TrendSpec> _trendSpecsRaw(_TrendGroup group) => switch (group) {
       subtitle: '',
       kind: HealthMetricKind.heartRateDaily,
     ),
-    const _TrendSpec(
-      title: '',
-      subtitle: '',
-      kind: HealthMetricKind.rhrDaily,
-    ),
-    const _TrendSpec(
-      title: '',
-      subtitle: '',
-      kind: HealthMetricKind.spo2Daily,
-    ),
+    const _TrendSpec(title: '', subtitle: '', kind: HealthMetricKind.rhrDaily),
+    const _TrendSpec(title: '', subtitle: '', kind: HealthMetricKind.spo2Daily),
     const _TrendSpec(
       title: '',
       subtitle: '',

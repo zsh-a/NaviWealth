@@ -55,7 +55,7 @@ class HealthTodayPage extends ConsumerWidget {
         ),
       ],
       child: ListView(
-        padding: const EdgeInsets.all(AppSpacing.s16),
+        padding: shellTabContentPadding(context),
         children: const [
           FadeSlideIn(
             delay: Duration(milliseconds: 0),

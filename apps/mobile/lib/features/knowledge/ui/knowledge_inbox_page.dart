@@ -47,7 +47,7 @@ class _KnowledgeInboxPageState extends ConsumerState<KnowledgeInboxPage>
           ),
           Positioned(
             right: AppSpacing.s16,
-            bottom: AppSpacing.s16,
+            bottom: shellTabFloatingActionBottom(context),
             child: KnowledgeFloatingActionMotion(
               hidden: fabHidden,
               child: const _InboxCreateFab(),
@@ -224,11 +224,10 @@ class _NotesList extends ConsumerWidget {
           onRefresh: () => _refreshKnowledgeRepository(ref),
           child: ListView.separated(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s16,
-              AppSpacing.s8,
-              AppSpacing.s16,
-              AppSpacing.s64,
+            padding: shellTabContentPadding(
+              context,
+              top: AppSpacing.s8,
+              bottom: AppSpacing.s64,
             ),
             itemCount: notes.length,
             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s8),
