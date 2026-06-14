@@ -141,25 +141,11 @@ class _RangeChips extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final selected = ref.watch(dashboardSelectedRangeProvider);
-    final colors = context.theme.colors;
-    return SizedBox(
-      height: 30,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          for (final preset in DashboardRangePreset.values)
-            Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.s4),
-              child: _RangeChip(
-                label: _rangeLabel(l10n, preset),
-                selected: preset == selected,
-                onTap: () => _select(context, ref, preset),
-                colors: colors,
-                typography: context.theme.typography,
-              ),
-            ),
-        ],
-      ),
+    return SegmentedRow<DashboardRangePreset>(
+      options: DashboardRangePreset.values,
+      value: selected,
+      labelOf: (preset) => _rangeLabel(l10n, preset),
+      onChanged: (preset) => _select(context, ref, preset),
     );
   }
 
@@ -214,55 +200,6 @@ class _RangeChips extends ConsumerWidget {
       case DashboardRangePreset.custom:
         return l10n.dashboardRangeCustom;
     }
-  }
-}
-
-/// Apple Stocks / TradingView-mobile style timeframe chip — pill, no
-/// border, low-contrast hover state, accent fill only when selected.
-/// Lighter than [FButton] outlined variant so the chart breathes.
-class _RangeChip extends StatelessWidget {
-  const _RangeChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-    required this.colors,
-    required this.typography,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  final FColors colors;
-  final FTypography typography;
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = selected
-        ? colors.primary.withValues(alpha: AppOpacity.medium)
-        : Colors.transparent;
-    final fg = selected ? colors.primary : colors.mutedForeground;
-    return FTappable(
-      onPress: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s10,
-          vertical: AppSpacing.s4,
-        ),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(AppRadius.xs),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: typography.xs.copyWith(
-            color: fg,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
-        ),
-      ),
-    );
   }
 }
 

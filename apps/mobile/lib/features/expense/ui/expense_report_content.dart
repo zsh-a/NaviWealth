@@ -65,21 +65,11 @@ class _RangeChips extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final selected = ref.watch(expenseReportRangePresetProvider);
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final preset in ExpenseReportRangePreset.values) ...[
-            _RangeChip(
-              label: _label(preset, l10n),
-              selected: preset == selected,
-              onTap: () => _select(context, ref, preset),
-            ),
-            if (preset != ExpenseReportRangePreset.values.last)
-              const SizedBox(width: AppSpacing.s8),
-          ],
-        ],
-      ),
+    return SegmentedRow<ExpenseReportRangePreset>(
+      options: ExpenseReportRangePreset.values,
+      value: selected,
+      labelOf: (preset) => _label(preset, l10n),
+      onChanged: (preset) => _select(context, ref, preset),
     );
   }
 
@@ -246,53 +236,6 @@ class _ExpenseReportRangeSheetState extends State<_ExpenseReportRangeSheet> {
 
 DateTime _utcDay(DateTime date) =>
     DateTime.utc(date.year, date.month, date.day);
-
-class _RangeChip extends StatelessWidget {
-  const _RangeChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final fg = selected ? colors.primaryForeground : colors.foreground;
-    final bg = selected ? colors.primary : colors.background;
-    final border = selected
-        ? colors.primary
-        : colors.foreground.withValues(alpha: AppOpacity.whisper);
-    return FTappable(
-      onPress: onTap,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 36),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s14,
-          vertical: AppSpacing.s6,
-        ),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          border: Border.all(color: border),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.theme.typography.xs.copyWith(
-            color: fg,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({required this.report});

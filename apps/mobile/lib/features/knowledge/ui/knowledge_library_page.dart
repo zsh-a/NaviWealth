@@ -1237,9 +1237,6 @@ class _FilterChipRow extends StatelessWidget {
   }
 }
 
-/// Lightweight pill chip for filter rows. Compact padding, muted
-/// border, no heavy button chrome — scannable without dominating
-/// the viewport.
 class _FilterPill extends StatelessWidget {
   const _FilterPill({
     required this.label,
@@ -1253,39 +1250,9 @@ class _FilterPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return Padding(
       padding: const EdgeInsets.only(left: AppSpacing.s4),
-      child: FTappable(
-        onPress: onTap,
-        child: AnimatedContainer(
-          duration: motionDuration(context, Motion.fast),
-          curve: Motion.standardDecelerate,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s8,
-            vertical: AppSpacing.s4,
-          ),
-          decoration: BoxDecoration(
-            color: active
-                ? colors.primary.withValues(alpha: AppOpacity.subtle)
-                : null,
-            borderRadius: BorderRadius.circular(AppRadius.full),
-            border: Border.all(
-              color: active
-                  ? colors.primary.withValues(alpha: AppOpacity.light)
-                  : colors.border,
-            ),
-          ),
-          child: Text(
-            label,
-            style: typography.xs.copyWith(
-              color: active ? colors.primary : colors.mutedForeground,
-              fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-            ),
-          ),
-        ),
-      ),
+      child: AppFilterChip(label: label, active: active, onPress: onTap),
     );
   }
 }

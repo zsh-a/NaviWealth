@@ -139,71 +139,16 @@ class _GroupingChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final g in ExpenseGrouping.values)
-              _SegmentChip(
-                label: g == ExpenseGrouping.month
-                    ? l10n.expenseListGroupMonth
-                    : l10n.expenseListGroupWeek,
-                selected: g == selected,
-                onTap: () {
-                  Haptics.selection();
-                  onChanged(g);
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SegmentChip extends StatelessWidget {
-  const _SegmentChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s12,
-          vertical: AppSpacing.s6,
-        ),
-        decoration: selected
-            ? BoxDecoration(
-                color: context.theme.colors.primary.withValues(
-                  alpha: AppOpacity.medium,
-                ),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              )
-            : null,
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.theme.typography.sm.copyWith(
-            color: selected
-                ? context.theme.colors.primary
-                : context.theme.colors.mutedForeground,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-          ),
-        ),
-      ),
+    return SegmentedRow<ExpenseGrouping>(
+      options: ExpenseGrouping.values,
+      value: selected,
+      labelOf: (g) => g == ExpenseGrouping.month
+          ? l10n.expenseListGroupMonth
+          : l10n.expenseListGroupWeek,
+      onChanged: (g) {
+        Haptics.selection();
+        onChanged(g);
+      },
     );
   }
 }
@@ -223,20 +168,11 @@ class _FilterChip<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FButton(
-      variant: active ? FButtonVariant.secondary : FButtonVariant.outline,
+    return AppFilterChip(
+      label: label,
+      active: active,
       onPress: onPick,
-      prefix: active
-          ? const Icon(FLucideIcons.check, size: AppIconSizes.xs)
-          : null,
-      suffix: active
-          ? FButton.icon(
-              variant: FButtonVariant.ghost,
-              onPress: onClear,
-              child: const Icon(FLucideIcons.x, size: AppIconSizes.xs),
-            )
-          : null,
-      child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+      onClear: active ? onClear : null,
     );
   }
 }

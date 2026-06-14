@@ -332,29 +332,10 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final fg = spec.active ? colors.primaryForeground : colors.foreground;
-    final bg = spec.active ? colors.primary : colors.muted;
-    return FTappable(
+    return AppFilterChip(
+      label: spec.label,
+      active: spec.active,
       onPress: spec.onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s14,
-          vertical: AppSpacing.s6,
-        ),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(AppRadius.full),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          spec.label,
-          style: context.theme.typography.xs.copyWith(
-            color: fg,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
     );
   }
 }

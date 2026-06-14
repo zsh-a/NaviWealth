@@ -205,18 +205,18 @@ class _DateRangeRow extends StatelessWidget {
       runSpacing: AppSpacing.s8,
       children: [
         for (final (range, label) in entries)
-          _PillChip(
+          AppFilterChip(
             label: label,
-            selected: active == range,
-            onTap: () => onPick(range),
+            active: active == range,
+            onPress: () => onPick(range),
           ),
         // Custom date pickers feel out-of-place inside a quick-filter
         // sheet on mobile, so we surface a "Pick range…" pill that
         // routes to the platform date range picker.
-        _PillChip(
+        AppFilterChip(
           label: l10n.activityFeedFilterRangeCustom,
-          selected: active == _DateRange.custom,
-          onTap: () => _pickCustom(context, onPick),
+          active: active == _DateRange.custom,
+          onPress: () => _pickCustom(context, onPick),
         ),
       ],
     );
@@ -288,51 +288,6 @@ class _SheetSectionLabel extends StatelessWidget {
           color: context.theme.colors.mutedForeground,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.6,
-        ),
-      ),
-    );
-  }
-}
-
-class _PillChip extends StatelessWidget {
-  const _PillChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final fg = selected ? colors.primaryForeground : colors.foreground;
-    final bg = selected
-        ? colors.primary
-        : colors.foreground.withValues(alpha: AppOpacity.whisper);
-    return FTappable(
-      onPress: onTap,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 36),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s14,
-          vertical: AppSpacing.s6,
-        ),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(AppRadius.full),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.theme.typography.xs.copyWith(
-            color: fg,
-            fontWeight: FontWeight.w600,
-          ),
         ),
       ),
     );

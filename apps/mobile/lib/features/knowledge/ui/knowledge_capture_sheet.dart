@@ -479,10 +479,9 @@ class _ClassifyingBody extends StatelessWidget {
           const SizedBox(height: AppSpacing.s12),
           Align(
             alignment: Alignment.center,
-            child: FButton(
-              variant: FButtonVariant.outline,
+            child: AppQuietButton(
+              label: l10n.knowledgeCaptureSkipClassification,
               onPress: onSkip,
-              child: Text(l10n.knowledgeCaptureSkipClassification),
             ),
           ),
         ],
