@@ -143,10 +143,12 @@ class KnowledgeFloatingActionSurface extends StatefulWidget {
     super.key,
     required this.icon,
     required this.onPress,
+    this.tooltip,
   });
 
   final IconData icon;
   final VoidCallback onPress;
+  final String? tooltip;
 
   @override
   State<KnowledgeFloatingActionSurface> createState() =>
@@ -167,45 +169,54 @@ class _KnowledgeFloatingActionSurfaceState
             colors.primary,
           )
         : colors.primary;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapUp: (_) {
-          setState(() => _pressed = false);
-          widget.onPress();
-        },
-        onTapCancel: () => setState(() => _pressed = false),
-        child: AnimatedScale(
-          scale: _pressed ? 0.92 : 1,
-          duration: motionDuration(context, Motion.fast),
-          curve: Motion.standardDecelerate,
-          child: AnimatedContainer(
+    Widget button = Semantics(
+      button: true,
+      label: widget.tooltip,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapUp: (_) {
+            setState(() => _pressed = false);
+            widget.onPress();
+          },
+          onTapCancel: () => setState(() => _pressed = false),
+          child: AnimatedScale(
+            scale: _pressed ? 0.92 : 1,
             duration: motionDuration(context, Motion.fast),
             curve: Motion.standardDecelerate,
-            width: AppSpacing.s48,
-            height: AppSpacing.s48,
-            decoration: BoxDecoration(
-              color: bgColor,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: colors.primary.withValues(alpha: AppOpacity.muted),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              widget.icon,
-              size: AppIconSizes.lg,
-              color: colors.primaryForeground,
+            child: AnimatedContainer(
+              duration: motionDuration(context, Motion.fast),
+              curve: Motion.standardDecelerate,
+              width: AppSpacing.s48,
+              height: AppSpacing.s48,
+              decoration: BoxDecoration(
+                color: bgColor,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.primary.withValues(alpha: AppOpacity.muted),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                widget.icon,
+                size: AppIconSizes.lg,
+                color: colors.primaryForeground,
+              ),
             ),
           ),
         ),
       ),
     );
+    final tooltip = widget.tooltip;
+    if (tooltip != null && tooltip.isNotEmpty) {
+      button = FTooltip(tipBuilder: (_, _) => Text(tooltip), child: button);
+    }
+    return button;
   }
 }
 
@@ -858,6 +869,79 @@ class KnowledgeStatusLabel extends StatelessWidget {
   }
 }
 
+/// Shared detail-page hero for KnowledgeOS objects.
+///
+/// Keeps object identity consistent across Decision and non-Decision
+/// detail pages: type label, type icon, title, status, and last update
+/// timestamp are always in the same place.
+class KnowledgeObjectHero extends StatelessWidget {
+  const KnowledgeObjectHero({
+    super.key,
+    required this.icon,
+    required this.color,
+    required this.typeLabel,
+    required this.title,
+    required this.updatedAt,
+    this.status,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String typeLabel;
+  final String title;
+  final DateTime updatedAt;
+  final String? status;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return KnowledgeSection.group(
+      title: typeLabel,
+      trailing: status == null ? null : KnowledgeStatusLabel(label: status!),
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppIconTile(
+              icon: icon,
+              color: color,
+              size: 40,
+              iconSize: AppIconSizes.h18,
+              backgroundOpacity: AppOpacity.medium,
+              foregroundOpacity: 1,
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: typography.lg.copyWith(fontWeight: FontWeight.w700),
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: AppSpacing.s4),
+                  Text(
+                    l10n.knowledgeDetailUpdatedAt(
+                      knowledgeDate(context, updatedAt, long: true),
+                    ),
+                    style: typography.xs.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 /// Section shell for KnowledgeOS writer sheets.
 ///
 /// Keeps dense forms scannable without turning every field into its own card.
@@ -1082,6 +1166,7 @@ Future<void> showKnowledgeCreateSheet(
   final selected = await showAppSheet<String>(
     context: context,
     title: l10n.knowledgeCreateEntry,
+    subtitle: l10n.knowledgeNewChooserSubtitle,
     builder: (sheetContext) {
       final width = MediaQuery.sizeOf(sheetContext).width;
       final cols = width >= 360 ? 2 : 1;

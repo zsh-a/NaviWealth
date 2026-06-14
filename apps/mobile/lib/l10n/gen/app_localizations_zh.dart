@@ -5217,14 +5217,39 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String knowledgeAiSuggestionsSubtitle(Object count) {
+    return '$count 条待处理建议，来自收件箱 Note 的端侧 triage。';
+  }
+
+  @override
   String get knowledgeAiSuggestionsEmpty =>
       '当前无待处理的 AI 建议。新写的 Note 会在 15 分钟内被 triage。';
+
+  @override
+  String knowledgeAiSuggestionCount(Object count) {
+    return '$count 条';
+  }
+
+  @override
+  String get knowledgeAiSuggestionKindClassification => '分类';
+
+  @override
+  String get knowledgeAiSuggestionKindTags => '标签';
+
+  @override
+  String get knowledgeAiSuggestionKindLinkToDecision => '关联决策';
 
   @override
   String get knowledgeAiSuggestionDetails => '详情';
 
   @override
   String get knowledgeAiSuggestionHideDetails => '收起详情';
+
+  @override
+  String get knowledgeAiSuggestionAccept => '接受建议';
+
+  @override
+  String get knowledgeAiSuggestionDismiss => '忽略建议';
 
   @override
   String get knowledgeAiSuggestionPayloadTitle => '建议字段';
@@ -5549,6 +5574,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeDetailUpdatedLabel => '更新';
+
+  @override
+  String knowledgeDetailUpdatedAt(Object date) {
+    return '更新于 $date';
+  }
 
   @override
   String get knowledgeDetailProjectLabel => '项目';
@@ -8006,7 +8036,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeCaptureSuggestionSubtitle => '应用前先确认 AI 抽取的类型和字段。';
 
   @override
-  String get knowledgeCaptureSave => '保存';
+  String get knowledgeCaptureSave => '保存并分析';
 
   @override
   String get knowledgeCaptureSaving => '保存中…';
@@ -8136,6 +8166,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeLibraryTitle => '资料库 · KnowledgeOS';
 
   @override
+  String get knowledgeLibraryEmptyAllTitle => '资料库还没有内容';
+
+  @override
+  String get knowledgeLibraryEmptyAllBody =>
+      '先从收件箱记录 Note，或用右下角 + 创建 Decision、Assumption、Routine 等知识对象。';
+
+  @override
   String get knowledgeLibraryEmptyDecisionsTitle => '还没有 Decision';
 
   @override
@@ -8209,6 +8246,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeLibrarySearchHint => '搜索当前分段';
 
   @override
+  String knowledgeLibrarySearchSegmentHint(Object segment) {
+    return '搜索 $segment';
+  }
+
+  @override
   String get knowledgeLibraryFilterAll => '全部';
 
   @override
@@ -8279,6 +8321,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeReviewMarkSelectedDecisionsReviewed => '标记所选复盘';
+
+  @override
+  String get knowledgeReviewBatchActions => '批量处理';
+
+  @override
+  String knowledgeReviewTotalCount(Object count) {
+    return '共 $count 项';
+  }
+
+  @override
+  String knowledgeReviewVisibleCount(Object total, Object visible) {
+    return '显示前 $visible 项，共 $total 项';
+  }
 
   @override
   String knowledgeReviewDecisionNextReview(Object date) {
@@ -8380,6 +8435,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get knowledgeSegmentAll => '全部';
+
+  @override
   String get knowledgeSegmentDecisions => 'Decisions';
 
   @override
@@ -8425,8 +8483,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeNewChooserTitle => '新建…';
 
   @override
-  String get knowledgeNewChooserSubtitle =>
-      'Decision / Principle / Assumption 共用同一套录入流程';
+  String get knowledgeNewChooserSubtitle => '选择要创建的结构化知识对象。快速 Note 走收件箱捕获。';
 
   @override
   String get knowledgeNewDecisionHint => '主路径：question / options / rationale';

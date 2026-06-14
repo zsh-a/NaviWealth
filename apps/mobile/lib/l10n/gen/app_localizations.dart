@@ -9385,11 +9385,41 @@ abstract class AppLocalizations {
   /// **'AI suggestions ({count})'**
   String knowledgeAiSuggestionsTitleWithCount(int count);
 
+  /// No description provided for @knowledgeAiSuggestionsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pending suggestions from on-device triage of Inbox notes.'**
+  String knowledgeAiSuggestionsSubtitle(Object count);
+
   /// No description provided for @knowledgeAiSuggestionsEmpty.
   ///
   /// In en, this message translates to:
   /// **'No pending AI suggestions. New notes are triaged within 15 minutes.'**
   String get knowledgeAiSuggestionsEmpty;
+
+  /// No description provided for @knowledgeAiSuggestionCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items'**
+  String knowledgeAiSuggestionCount(Object count);
+
+  /// No description provided for @knowledgeAiSuggestionKindClassification.
+  ///
+  /// In en, this message translates to:
+  /// **'Classification'**
+  String get knowledgeAiSuggestionKindClassification;
+
+  /// No description provided for @knowledgeAiSuggestionKindTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get knowledgeAiSuggestionKindTags;
+
+  /// No description provided for @knowledgeAiSuggestionKindLinkToDecision.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision link'**
+  String get knowledgeAiSuggestionKindLinkToDecision;
 
   /// No description provided for @knowledgeAiSuggestionDetails.
   ///
@@ -9402,6 +9432,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hide details'**
   String get knowledgeAiSuggestionHideDetails;
+
+  /// No description provided for @knowledgeAiSuggestionAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept suggestion'**
+  String get knowledgeAiSuggestionAccept;
+
+  /// No description provided for @knowledgeAiSuggestionDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss suggestion'**
+  String get knowledgeAiSuggestionDismiss;
 
   /// No description provided for @knowledgeAiSuggestionPayloadTitle.
   ///
@@ -9919,6 +9961,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Updated'**
   String get knowledgeDetailUpdatedLabel;
+
+  /// No description provided for @knowledgeDetailUpdatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {date}'**
+  String knowledgeDetailUpdatedAt(Object date);
 
   /// No description provided for @knowledgeDetailProjectLabel.
   ///
@@ -14443,7 +14491,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeCaptureSave.
   ///
   /// In en, this message translates to:
-  /// **'Save'**
+  /// **'Save and analyze'**
   String get knowledgeCaptureSave;
 
   /// No description provided for @knowledgeCaptureSaving.
@@ -14662,6 +14710,18 @@ abstract class AppLocalizations {
   /// **'Library · KnowledgeOS'**
   String get knowledgeLibraryTitle;
 
+  /// No description provided for @knowledgeLibraryEmptyAllTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No knowledge yet'**
+  String get knowledgeLibraryEmptyAllTitle;
+
+  /// No description provided for @knowledgeLibraryEmptyAllBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture a Note from Inbox, or use the create action to add a Decision, Assumption, Routine, or another knowledge object.'**
+  String get knowledgeLibraryEmptyAllBody;
+
   /// No description provided for @knowledgeLibraryEmptyDecisionsTitle.
   ///
   /// In en, this message translates to:
@@ -14779,6 +14839,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search this segment'**
   String get knowledgeLibrarySearchHint;
+
+  /// No description provided for @knowledgeLibrarySearchSegmentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search {segment}'**
+  String knowledgeLibrarySearchSegmentHint(Object segment);
 
   /// No description provided for @knowledgeLibraryFilterAll.
   ///
@@ -14911,6 +14977,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mark selected reviewed'**
   String get knowledgeReviewMarkSelectedDecisionsReviewed;
+
+  /// No description provided for @knowledgeReviewBatchActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch actions'**
+  String get knowledgeReviewBatchActions;
+
+  /// No description provided for @knowledgeReviewTotalCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} total'**
+  String knowledgeReviewTotalCount(Object count);
+
+  /// No description provided for @knowledgeReviewVisibleCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing first {visible} of {total}'**
+  String knowledgeReviewVisibleCount(Object total, Object visible);
 
   /// No description provided for @knowledgeReviewDecisionNextReview.
   ///
@@ -15054,6 +15138,12 @@ abstract class AppLocalizations {
   /// **'{count} selected'**
   String knowledgeReviewSelectedCount(int count);
 
+  /// No description provided for @knowledgeSegmentAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get knowledgeSegmentAll;
+
   /// No description provided for @knowledgeSegmentDecisions.
   ///
   /// In en, this message translates to:
@@ -15147,7 +15237,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeNewChooserSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Decision, Principle, and Assumption share the same capture flow'**
+  /// **'Choose a structured knowledge object. Quick Notes are captured from Inbox.'**
   String get knowledgeNewChooserSubtitle;
 
   /// No description provided for @knowledgeNewDecisionHint.

@@ -105,11 +105,21 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
                   ],
                 );
               }
+              final pendingCount = _pendingCount(list);
               return KnowledgeSection.group(
-                title: l10n.knowledgeAiSuggestionsTitleWithCount(
-                  _pendingCount(list),
+                title: l10n.knowledgeAiSuggestionsTitle,
+                trailing: AppBadge(
+                  label: '$pendingCount',
+                  icon: FLucideIcons.sparkles,
+                  size: AppBadgeSize.compact,
+                  tone: AppBadgeTone.info,
                 ),
                 children: [
+                  Text(
+                    l10n.knowledgeAiSuggestionsSubtitle(pendingCount),
+                    style: context.captionStyle,
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
                   for (final rec in list)
                     Padding(
                       padding: const EdgeInsets.only(top: AppSpacing.s8),
@@ -195,11 +205,23 @@ class _NoteSuggestionGroupState extends ConsumerState<_NoteSuggestionGroup> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
-            style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
+                  style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              AppBadge(
+                label: l10n.knowledgeAiSuggestionCount(pending.length),
+                size: AppBadgeSize.compact,
+                tone: AppBadgeTone.neutral,
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.s4),
           for (final p in pending)
@@ -315,6 +337,12 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            AppBadge(
+              label: _proposalKindLabel(l10n, widget.proposal.kind),
+              size: AppBadgeSize.compact,
+              tone: AppBadgeTone.accent,
+            ),
+            const SizedBox(width: AppSpacing.s8),
             Expanded(
               child: Text(
                 widget.proposal.summaryZh,
@@ -357,23 +385,29 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
               ),
             ),
             const SizedBox(width: AppSpacing.s2),
-            FButton.icon(
-              variant: FButtonVariant.ghost,
-              onPress: _busy ? null : _accept,
-              child: Icon(
-                FLucideIcons.check,
-                size: AppIconSizes.xs,
-                color: colors.primary,
+            FTooltip(
+              tipBuilder: (_, _) => Text(l10n.knowledgeAiSuggestionAccept),
+              child: FButton.icon(
+                variant: FButtonVariant.ghost,
+                onPress: _busy ? null : _accept,
+                child: Icon(
+                  FLucideIcons.check,
+                  size: AppIconSizes.xs,
+                  color: colors.primary,
+                ),
               ),
             ),
             const SizedBox(width: AppSpacing.s2),
-            FButton.icon(
-              variant: FButtonVariant.ghost,
-              onPress: _busy ? null : _dismiss,
-              child: Icon(
-                FLucideIcons.x,
-                size: AppIconSizes.xs,
-                color: colors.mutedForeground,
+            FTooltip(
+              tipBuilder: (_, _) => Text(l10n.knowledgeAiSuggestionDismiss),
+              child: FButton.icon(
+                variant: FButtonVariant.ghost,
+                onPress: _busy ? null : _dismiss,
+                child: Icon(
+                  FLucideIcons.x,
+                  size: AppIconSizes.xs,
+                  color: colors.mutedForeground,
+                ),
               ),
             ),
           ],
@@ -395,6 +429,16 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
       ],
     );
   }
+}
+
+String _proposalKindLabel(AppLocalizations l10n, InboxProposalKind kind) {
+  return switch (kind) {
+    InboxProposalKind.classification =>
+      l10n.knowledgeAiSuggestionKindClassification,
+    InboxProposalKind.tags => l10n.knowledgeAiSuggestionKindTags,
+    InboxProposalKind.linkToDecision =>
+      l10n.knowledgeAiSuggestionKindLinkToDecision,
+  };
 }
 
 class _ProposalDetailsPanel extends StatelessWidget {

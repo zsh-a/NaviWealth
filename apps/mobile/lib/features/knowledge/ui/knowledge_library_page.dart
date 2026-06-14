@@ -30,6 +30,7 @@ import '_widgets.dart';
 import 'knowledge_capture_sheet.dart';
 
 enum _LibrarySegment {
+  all,
   decisions,
   principles,
   assumptions,
@@ -40,6 +41,7 @@ enum _LibrarySegment {
 }
 
 IconData _segmentIcon(_LibrarySegment segment) => switch (segment) {
+  _LibrarySegment.all => FLucideIcons.library,
   _LibrarySegment.decisions => FLucideIcons.gitBranch,
   _LibrarySegment.principles => FLucideIcons.badgeCheck,
   _LibrarySegment.assumptions => FLucideIcons.lightbulb,
@@ -71,6 +73,7 @@ List<String> _normalizedSearchHistory(Iterable<String> raw) {
 
 String _segmentLabel(AppLocalizations l10n, _LibrarySegment segment) {
   return switch (segment) {
+    _LibrarySegment.all => l10n.knowledgeSegmentAll,
     _LibrarySegment.decisions => l10n.knowledgeSegmentDecisions,
     _LibrarySegment.principles => l10n.knowledgeSegmentPrinciples,
     _LibrarySegment.assumptions => l10n.knowledgeSegmentAssumptions,
@@ -147,6 +150,249 @@ double _searchRelevanceScore({
   return score;
 }
 
+class _LibraryEntry {
+  const _LibraryEntry({
+    required this.kind,
+    required this.segment,
+    required this.id,
+    required this.title,
+    required this.date,
+    required this.searchText,
+    required this.suggestions,
+    required this.facets,
+    required this.value,
+    this.status,
+  });
+
+  final KnowledgeEntryKind kind;
+  final _LibrarySegment segment;
+  final String id;
+  final String title;
+  final DateTime date;
+  final String searchText;
+  final List<String> suggestions;
+  final List<String> facets;
+  final Object value;
+  final String? status;
+}
+
+Stream<List<_LibraryEntry>> _watchAllKnowledge(
+  KnowledgeRepository repo, {
+  required String ownerUserId,
+}) {
+  late StreamController<List<_LibraryEntry>> controller;
+  final latest = List<List<_LibraryEntry>?>.filled(7, null);
+  final subscriptions = <StreamSubscription<Object?>>[];
+
+  void emitIfReady() {
+    if (latest.any((items) => items == null)) return;
+    final entries = [for (final items in latest) ...items!]
+      ..sort((a, b) => b.date.compareTo(a.date));
+    controller.add(entries);
+  }
+
+  void listen<T>(
+    int index,
+    Stream<List<T>> stream,
+    List<_LibraryEntry> Function(List<T> items) map,
+  ) {
+    subscriptions.add(
+      stream.listen((items) {
+        latest[index] = map(items);
+        emitIfReady();
+      }, onError: controller.addError),
+    );
+  }
+
+  controller = StreamController<List<_LibraryEntry>>(
+    onListen: () {
+      listen<KnowledgeDecision>(
+        0,
+        repo.watchDecisions(ownerUserId: ownerUserId),
+        (items) => [
+          for (final d in items)
+            _LibraryEntry(
+              kind: KnowledgeEntryKind.decision,
+              segment: _LibrarySegment.decisions,
+              id: d.id,
+              title: d.question,
+              date: d.decidedAt,
+              status: d.status.wire,
+              searchText: [
+                d.question,
+                d.selectedLabel,
+                d.rationaleMd,
+                d.expectedOutcome,
+              ].whereType<String>().join('\n'),
+              suggestions: [
+                d.question,
+                d.status.wire,
+                d.selectedLabel,
+              ].where((value) => value.isNotEmpty).toList(growable: false),
+              facets: [d.status.wire],
+              value: d,
+            ),
+        ],
+      );
+      listen<KnowledgePrinciple>(
+        1,
+        repo.watchPrinciples(ownerUserId: ownerUserId),
+        (items) => [
+          for (final p in items)
+            _LibraryEntry(
+              kind: KnowledgeEntryKind.principle,
+              segment: _LibrarySegment.principles,
+              id: p.id,
+              title: p.statement,
+              date: p.declaredAt,
+              status: p.status.wire,
+              searchText: [
+                p.statement,
+                p.rationaleMd,
+                p.scope,
+                p.status.wire,
+              ].join('\n'),
+              suggestions: [p.statement, p.status.wire, p.scope],
+              facets: [p.status.wire, p.scope],
+              value: p,
+            ),
+        ],
+      );
+      listen<KnowledgeAssumption>(
+        2,
+        repo.watchAssumptions(ownerUserId: ownerUserId),
+        (items) => [
+          for (final a in items)
+            _LibraryEntry(
+              kind: KnowledgeEntryKind.assumption,
+              segment: _LibrarySegment.assumptions,
+              id: a.id,
+              title: a.statement,
+              date: a.declaredAt,
+              status: a.status.wire,
+              searchText: [
+                a.statement,
+                a.scope,
+                a.status.wire,
+                a.confidence.toStringAsFixed(2),
+              ].join('\n'),
+              suggestions: [
+                a.statement,
+                a.status.wire,
+                a.scope,
+                a.confidence.toStringAsFixed(2),
+              ],
+              facets: [a.status.wire, a.scope],
+              value: a,
+            ),
+        ],
+      );
+      listen<KnowledgeNote>(
+        3,
+        repo.watchNotes(ownerUserId: ownerUserId),
+        (items) => [
+          for (final n in items)
+            _LibraryEntry(
+              kind: KnowledgeEntryKind.note,
+              segment: _LibrarySegment.notes,
+              id: n.id,
+              title: n.title,
+              date: n.createdAt,
+              searchText: [
+                n.title,
+                n.bodyMd,
+                n.projectTag,
+                ...n.tags,
+              ].whereType<String>().join('\n'),
+              suggestions: [
+                n.title,
+                n.projectTag,
+                ...n.tags,
+              ].whereType<String>().toList(growable: false),
+              facets: [
+                n.projectTag,
+                ...n.tags,
+              ].whereType<String>().toList(growable: false),
+              value: n,
+            ),
+        ],
+      );
+      listen<KnowledgeConcept>(
+        4,
+        repo.watchConcepts(ownerUserId: ownerUserId),
+        (items) => [
+          for (final c in items)
+            _LibraryEntry(
+              kind: KnowledgeEntryKind.concept,
+              segment: _LibrarySegment.concepts,
+              id: c.id,
+              title: c.name,
+              date: c.createdAt,
+              searchText: [
+                c.name,
+                c.summaryMd,
+                ...c.aliases,
+              ].whereType<String>().join('\n'),
+              suggestions: [c.name, ...c.aliases],
+              facets: [...c.aliases],
+              value: c,
+            ),
+        ],
+      );
+      listen<KnowledgeExperiment>(
+        5,
+        repo.watchExperiments(ownerUserId: ownerUserId),
+        (items) => [
+          for (final e in items)
+            _LibraryEntry(
+              kind: KnowledgeEntryKind.experiment,
+              segment: _LibrarySegment.experiments,
+              id: e.id,
+              title: e.hypothesis,
+              date: e.startedAt,
+              status: e.status.wire,
+              searchText: [
+                e.hypothesis,
+                e.methodMd,
+                e.resultMd,
+                ...e.metrics,
+              ].whereType<String>().join('\n'),
+              suggestions: [e.hypothesis, e.status.wire, ...e.metrics],
+              facets: [e.status.wire, ...e.metrics],
+              value: e,
+            ),
+        ],
+      );
+      listen<KnowledgeRoutine>(
+        6,
+        repo.watchRoutines(ownerUserId: ownerUserId),
+        (items) => [
+          for (final r in items)
+            _LibraryEntry(
+              kind: KnowledgeEntryKind.routine,
+              segment: _LibrarySegment.routines,
+              id: r.id,
+              title: r.statement,
+              date: r.nextDueAt,
+              status: r.status.wire,
+              searchText: [r.statement, r.scope, r.status.wire].join('\n'),
+              suggestions: [r.statement, r.status.wire, r.scope],
+              facets: [r.status.wire, r.scope],
+              value: r,
+            ),
+        ],
+      );
+    },
+    onCancel: () async {
+      for (final sub in subscriptions) {
+        await sub.cancel();
+      }
+    },
+  );
+
+  return controller.stream;
+}
+
 bool matchesKnowledgeLibraryDateFilter(
   DateTime date,
   KnowledgeLibraryDateFilter filter,
@@ -177,7 +423,7 @@ class KnowledgeLibraryPage extends ConsumerStatefulWidget {
 
 class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage>
     with KnowledgeFabScrollHideMixin {
-  _LibrarySegment _segment = _LibrarySegment.decisions;
+  _LibrarySegment _segment = _LibrarySegment.all;
   final _searchCtrl = TextEditingController();
   final _searchFocus = FocusNode();
   final List<String> _searchHistory = <String>[];
@@ -306,7 +552,9 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage>
                                   size: AppIconSizes.h18,
                                 ),
                               ),
-                              hint: l10n.knowledgeLibrarySearchHint,
+                              hint: l10n.knowledgeLibrarySearchSegmentHint(
+                                _segmentLabel(l10n, _segment),
+                              ),
                             ),
                           ),
                         ),
@@ -361,13 +609,16 @@ class _LibraryCreateFab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return KnowledgeFloatingActionSurface(
       icon: FLucideIcons.plus,
+      tooltip: AppLocalizations.of(context).knowledgeNewChooserTitle,
       onPress: () => _openCreateSheet(context, ref),
     );
   }
 
   Future<void> _openCreateSheet(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
-    final activeLabel = _segmentLabel(l10n, activeSegment);
+    final activeLabel = activeSegment == _LibrarySegment.all
+        ? null
+        : _segmentLabel(l10n, activeSegment);
     final options = [
       KnowledgeCreateOption(
         icon: FLucideIcons.gitBranch,
@@ -450,6 +701,42 @@ class _LibraryList extends ConsumerWidget {
             onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
           ),
           data: (repo) => switch (segment) {
+            _LibrarySegment.all => _SegmentList<_LibraryEntry>(
+              stream: _watchAllKnowledge(repo, ownerUserId: owner),
+              query: query,
+              searchableText: (entry) => entry.searchText,
+              searchSuggestions: (context, entry) => [
+                _segmentLabel(l10n, entry.segment),
+                entry.status,
+                ...entry.suggestions,
+              ].whereType<String>().toList(growable: false),
+              filterFacets: (context, entry) => [...entry.facets],
+              dateOf: (entry) => entry.date,
+              statusOf: (entry) => _segmentLabel(l10n, entry.segment),
+              emptyIcon: FLucideIcons.library,
+              emptyTitle: l10n.knowledgeLibraryEmptyAllTitle,
+              emptyMessage: l10n.knowledgeLibraryEmptyAllBody,
+              searchHistory: searchHistory,
+              onSearchSelected: onSearchSelected,
+              onSearchHistoryClear: onSearchHistoryClear,
+              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
+              onRefresh: onRefresh,
+              tileBuilder: (context, entry, query) => _buildAllTile(
+                context,
+                entry,
+                query: query,
+                onDelete: () => _deleteEntry(
+                  context: context,
+                  ref: ref,
+                  repo: repo,
+                  kind: entry.kind,
+                  id: entry.id,
+                  title: entry.title.isEmpty
+                      ? AppLocalizations.of(context).knowledgeUntitled
+                      : entry.title,
+                ),
+              ),
+            ),
             _LibrarySegment.decisions => _SegmentList<KnowledgeDecision>(
               stream: repo.watchDecisions(ownerUserId: owner),
               query: query,
@@ -1294,12 +1581,9 @@ class _DateFilterChipRow extends StatelessWidget {
   }
 }
 
-/// Horizontally scrollable tab bar for the 7 Library segments.
-///
-/// Replaces [SegmentedRow] which crammed all 7 labels into a single
-/// non-scrollable row — unreadable on small screens. Each tab is a
-/// compact pill: icon-only when unselected to save space, expanding
-/// to icon + label for the active segment.
+/// Horizontally scrollable tab bar for the 7 Library segments. Every
+/// segment keeps its label visible; icon-only tabs made the object
+/// families hard to recognize unless the user already knew the order.
 class _LibraryTabBar extends StatelessWidget {
   const _LibraryTabBar({required this.selected, required this.onChanged});
 
@@ -1325,8 +1609,8 @@ class _LibraryTabBar extends StatelessWidget {
             child: AnimatedContainer(
               duration: motionDuration(context, Motion.fast),
               curve: Motion.standardDecelerate,
-              padding: EdgeInsets.symmetric(
-                horizontal: active ? AppSpacing.s12 : AppSpacing.s8,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s10,
                 vertical: AppSpacing.s6,
               ),
               decoration: BoxDecoration(
@@ -1348,16 +1632,16 @@ class _LibraryTabBar extends StatelessWidget {
                     size: AppIconSizes.xs,
                     color: active ? colors.primary : colors.mutedForeground,
                   ),
-                  if (active) ...[
-                    const SizedBox(width: AppSpacing.s4),
-                    Text(
-                      _segmentLabel(l10n, segment),
-                      style: typography.xs.copyWith(
-                        color: colors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  const SizedBox(width: AppSpacing.s4),
+                  Text(
+                    _segmentLabel(l10n, segment),
+                    style: typography.xs.copyWith(
+                      color: active ? colors.primary : colors.mutedForeground,
+                      fontWeight: active ? FontWeight.w600 : FontWeight.w500,
                     ),
-                  ],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),
@@ -1432,6 +1716,7 @@ Widget _buildLibraryTile(
   required String query,
   required VoidCallback onPress,
   required VoidCallback onDelete,
+  String? itemKey,
   IconData? typeIcon,
   Color? typeColor,
   String? statusBadge,
@@ -1439,7 +1724,7 @@ Widget _buildLibraryTile(
 }) {
   final colors = context.theme.colors;
   return Dismissible(
-    key: ValueKey<String>('lib-tile-$title'),
+    key: ValueKey<String>('lib-tile-${itemKey ?? title}'),
     direction: DismissDirection.endToStart,
     confirmDismiss: (_) async {
       onDelete();
@@ -1505,11 +1790,72 @@ Widget _buildLibraryTile(
   );
 }
 
+Widget _buildAllTile(
+  BuildContext context,
+  _LibraryEntry entry, {
+  required String query,
+  required VoidCallback onDelete,
+}) {
+  final itemKey = '${entry.kind.name}:${entry.id}';
+  return switch (entry.kind) {
+    KnowledgeEntryKind.decision => _buildDecisionTile(
+      context,
+      entry.value as KnowledgeDecision,
+      query: query,
+      onDelete: onDelete,
+      itemKey: itemKey,
+    ),
+    KnowledgeEntryKind.principle => _buildPrincipleTile(
+      context,
+      entry.value as KnowledgePrinciple,
+      query: query,
+      onDelete: onDelete,
+      itemKey: itemKey,
+    ),
+    KnowledgeEntryKind.assumption => _buildAssumptionTile(
+      context,
+      entry.value as KnowledgeAssumption,
+      query: query,
+      onDelete: onDelete,
+      itemKey: itemKey,
+    ),
+    KnowledgeEntryKind.note => _buildNoteTile(
+      context,
+      entry.value as KnowledgeNote,
+      query: query,
+      onDelete: onDelete,
+      itemKey: itemKey,
+    ),
+    KnowledgeEntryKind.concept => _buildConceptTile(
+      context,
+      entry.value as KnowledgeConcept,
+      query: query,
+      onDelete: onDelete,
+      itemKey: itemKey,
+    ),
+    KnowledgeEntryKind.experiment => _buildExperimentTile(
+      context,
+      entry.value as KnowledgeExperiment,
+      query: query,
+      onDelete: onDelete,
+      itemKey: itemKey,
+    ),
+    KnowledgeEntryKind.routine => _buildRoutineTile(
+      context,
+      entry.value as KnowledgeRoutine,
+      query: query,
+      onDelete: onDelete,
+      itemKey: itemKey,
+    ),
+  };
+}
+
 Widget _buildDecisionTile(
   BuildContext context,
   KnowledgeDecision d, {
   required String query,
   required VoidCallback onDelete,
+  String? itemKey,
 }) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
@@ -1533,6 +1879,7 @@ Widget _buildDecisionTile(
     context,
     title: d.question,
     query: query,
+    itemKey: itemKey,
     statusBadge: d.status.wire,
     typeIcon: FLucideIcons.gitBranch,
     typeColor: colors.primary,
@@ -1550,6 +1897,7 @@ Widget _buildNoteTile(
   KnowledgeNote n, {
   required String query,
   required VoidCallback onDelete,
+  String? itemKey,
 }) {
   final colors = context.theme.colors;
   final l10n = AppLocalizations.of(context);
@@ -1565,6 +1913,7 @@ Widget _buildNoteTile(
     context,
     title: n.title.isEmpty ? l10n.knowledgeUntitled : n.title,
     query: query,
+    itemKey: itemKey,
     typeIcon: FLucideIcons.fileText,
     typeColor: colors.mutedForeground,
     onPress: () => context.pushNamed(
@@ -1581,6 +1930,7 @@ Widget _buildPrincipleTile(
   KnowledgePrinciple p, {
   required String query,
   required VoidCallback onDelete,
+  String? itemKey,
 }) {
   final l10n = AppLocalizations.of(context);
   final subtitle = <Widget>[
@@ -1598,6 +1948,7 @@ Widget _buildPrincipleTile(
     context,
     title: p.statement,
     query: query,
+    itemKey: itemKey,
     statusBadge: p.status.wire,
     typeIcon: FLucideIcons.badgeCheck,
     typeColor: KnowledgeTypeColors.principle,
@@ -1615,6 +1966,7 @@ Widget _buildAssumptionTile(
   KnowledgeAssumption a, {
   required String query,
   required VoidCallback onDelete,
+  String? itemKey,
 }) {
   final l10n = AppLocalizations.of(context);
   final subtitle = <Widget>[
@@ -1630,6 +1982,7 @@ Widget _buildAssumptionTile(
     context,
     title: a.statement,
     query: query,
+    itemKey: itemKey,
     statusBadge: a.status.wire,
     typeIcon: FLucideIcons.lightbulb,
     typeColor: KnowledgeTypeColors.assumption,
@@ -1647,6 +2000,7 @@ Widget _buildConceptTile(
   KnowledgeConcept c, {
   required String query,
   required VoidCallback onDelete,
+  String? itemKey,
 }) {
   final subtitle = <Widget>[
     if (c.summaryMd.isNotEmpty)
@@ -1660,6 +2014,7 @@ Widget _buildConceptTile(
     context,
     title: c.name,
     query: query,
+    itemKey: itemKey,
     typeIcon: FLucideIcons.folderTree,
     typeColor: KnowledgeTypeColors.concept,
     onPress: () => context.pushNamed(
@@ -1676,11 +2031,13 @@ Widget _buildExperimentTile(
   KnowledgeExperiment e, {
   required String query,
   required VoidCallback onDelete,
+  String? itemKey,
 }) {
   return _buildLibraryTile(
     context,
     title: e.hypothesis,
     query: query,
+    itemKey: itemKey,
     statusBadge: e.status.wire,
     typeIcon: FLucideIcons.flaskConical,
     typeColor: KnowledgeTypeColors.experiment,
@@ -1697,6 +2054,7 @@ Widget _buildRoutineTile(
   KnowledgeRoutine r, {
   required String query,
   required VoidCallback onDelete,
+  String? itemKey,
 }) {
   final typography = context.theme.typography;
   final colors = context.theme.colors;
@@ -1719,6 +2077,7 @@ Widget _buildRoutineTile(
     context,
     title: r.statement,
     query: query,
+    itemKey: itemKey,
     statusBadge: r.status.wire,
     typeIcon: FLucideIcons.calendarClock,
     typeColor: KnowledgeTypeColors.routine,

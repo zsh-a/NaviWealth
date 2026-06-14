@@ -312,25 +312,72 @@ class _ObjectRelatedData {
 
 // ── Per-type section builders ──────────────────────────────────────────────
 
-Widget _heading(BuildContext context, String text, {String? badge}) {
-  final typography = context.theme.typography;
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Expanded(child: Text(text, style: typography.lg)),
-      if (badge != null) ...[
-        const SizedBox(width: AppSpacing.s8),
-        KnowledgeStatusLabel(label: badge),
-      ],
-    ],
-  );
+class _ObjectHero extends StatelessWidget {
+  const _ObjectHero({
+    required this.kind,
+    required this.title,
+    required this.updatedAt,
+    this.status,
+  });
+
+  final KnowledgeObjectKind kind;
+  final String title;
+  final DateTime updatedAt;
+  final String? status;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return KnowledgeObjectHero(
+      icon: _kindIcon(kind),
+      color: _kindColor(context, kind),
+      typeLabel: _kindLabel(l10n, kind),
+      title: title,
+      updatedAt: updatedAt,
+      status: status,
+    );
+  }
+}
+
+IconData _kindIcon(KnowledgeObjectKind kind) => switch (kind) {
+  KnowledgeObjectKind.note => FLucideIcons.fileText,
+  KnowledgeObjectKind.concept => FLucideIcons.folderTree,
+  KnowledgeObjectKind.experiment => FLucideIcons.flaskConical,
+  KnowledgeObjectKind.principle => FLucideIcons.badgeCheck,
+  KnowledgeObjectKind.assumption => FLucideIcons.lightbulb,
+  KnowledgeObjectKind.routine => FLucideIcons.calendarClock,
+};
+
+Color _kindColor(BuildContext context, KnowledgeObjectKind kind) =>
+    switch (kind) {
+      KnowledgeObjectKind.note => context.theme.colors.mutedForeground,
+      KnowledgeObjectKind.concept => KnowledgeTypeColors.concept,
+      KnowledgeObjectKind.experiment => KnowledgeTypeColors.experiment,
+      KnowledgeObjectKind.principle => KnowledgeTypeColors.principle,
+      KnowledgeObjectKind.assumption => KnowledgeTypeColors.assumption,
+      KnowledgeObjectKind.routine => KnowledgeTypeColors.routine,
+    };
+
+String _kindLabel(AppLocalizations l10n, KnowledgeObjectKind kind) {
+  return switch (kind) {
+    KnowledgeObjectKind.note => l10n.knowledgeNoteDetailTitle,
+    KnowledgeObjectKind.concept => l10n.knowledgeConceptDetailTitle,
+    KnowledgeObjectKind.experiment => l10n.knowledgeExperimentDetailTitle,
+    KnowledgeObjectKind.principle => l10n.knowledgePrincipleDetailTitle,
+    KnowledgeObjectKind.assumption => l10n.knowledgeAssumptionDetailTitle,
+    KnowledgeObjectKind.routine => l10n.knowledgeRoutineDetailTitle,
+  };
 }
 
 List<Widget> _noteSections(BuildContext context, KnowledgeNote n) {
   final l10n = AppLocalizations.of(context);
   final title = n.title.trim().isEmpty ? l10n.knowledgeUntitled : n.title;
   return [
-    _heading(context, title),
+    _ObjectHero(
+      kind: KnowledgeObjectKind.note,
+      title: title,
+      updatedAt: n.sync.updatedAt,
+    ),
     const SizedBox(height: AppSpacing.s12),
     _MetadataSection(
       children: [
@@ -384,7 +431,11 @@ List<Widget> _conceptSections(
   required List<KnowledgeConcept> relatedConcepts,
 }) {
   return [
-    _heading(context, c.name),
+    _ObjectHero(
+      kind: KnowledgeObjectKind.concept,
+      title: c.name,
+      updatedAt: c.sync.updatedAt,
+    ),
     const SizedBox(height: AppSpacing.s12),
     _MetadataSection(
       children: [
@@ -441,10 +492,14 @@ List<Widget> _experimentSections(
 }) {
   final typography = context.theme.typography;
   return [
-    _heading(context, e.hypothesis, badge: e.status.wire),
+    _ObjectHero(
+      kind: KnowledgeObjectKind.experiment,
+      title: e.hypothesis,
+      status: e.status.wire,
+      updatedAt: e.sync.updatedAt,
+    ),
     const SizedBox(height: AppSpacing.s12),
     _MetadataSection(
-      trailing: KnowledgeStatusLabel(label: e.status.wire),
       children: [
         _MetaPill(
           label: AppLocalizations.of(context).knowledgeDetailStartedLabel,
@@ -519,10 +574,14 @@ List<Widget> _principleSections(
   required List<KnowledgeDecision> referencingDecisions,
 }) {
   return [
-    _heading(context, p.statement, badge: p.status.wire),
+    _ObjectHero(
+      kind: KnowledgeObjectKind.principle,
+      title: p.statement,
+      status: p.status.wire,
+      updatedAt: p.sync.updatedAt,
+    ),
     const SizedBox(height: AppSpacing.s12),
     _MetadataSection(
-      trailing: KnowledgeStatusLabel(label: p.status.wire),
       children: [
         _MetaPill(
           label: AppLocalizations.of(context).knowledgeDetailScopeLabel,
@@ -560,10 +619,14 @@ List<Widget> _assumptionSections(
   required List<KnowledgeExperiment> targetingExperiments,
 }) {
   return [
-    _heading(context, a.statement, badge: a.status.wire),
+    _ObjectHero(
+      kind: KnowledgeObjectKind.assumption,
+      title: a.statement,
+      status: a.status.wire,
+      updatedAt: a.sync.updatedAt,
+    ),
     const SizedBox(height: AppSpacing.s12),
     _MetadataSection(
-      trailing: KnowledgeStatusLabel(label: a.status.wire),
       children: [
         _MetaPill(
           label: AppLocalizations.of(context).knowledgeDetailConfidenceLabel,
@@ -600,9 +663,15 @@ List<Widget> _assumptionSections(
               label: note.title.isEmpty
                   ? AppLocalizations.of(context).knowledgeUntitled
                   : note.title,
-              meta: knowledgeExcerpt(note.bodyMd),
+              meta: note.bodyMd.trim().isEmpty
+                  ? knowledgeDate(context, note.createdAt, long: true)
+                  : knowledgeExcerpt(note.bodyMd),
               icon: FLucideIcons.fileText,
               iconColor: context.theme.colors.mutedForeground,
+              onPress: () => context.pushNamed(
+                AppRouteNames.knowledgeObjectDetail,
+                pathParameters: {'kind': 'note', 'id': note.id},
+              ),
             ),
         ],
       ),
@@ -643,10 +712,14 @@ List<Widget> _routineSections(BuildContext context, KnowledgeRoutine r) {
       ? l10n.knowledgeRoutineDueToday
       : l10n.knowledgeRoutineDueInDays(days);
   return [
-    _heading(context, r.statement, badge: r.status.wire),
+    _ObjectHero(
+      kind: KnowledgeObjectKind.routine,
+      title: r.statement,
+      status: r.status.wire,
+      updatedAt: r.sync.updatedAt,
+    ),
     const SizedBox(height: AppSpacing.s12),
     _MetadataSection(
-      trailing: KnowledgeStatusLabel(label: r.status.wire),
       children: [
         _MetaPill(
           label: l10n.knowledgeDetailNextDueLabel,
@@ -679,10 +752,9 @@ List<Widget> _routineSections(BuildContext context, KnowledgeRoutine r) {
 const int _kMetadataCollapseThreshold = 4;
 
 class _MetadataSection extends StatefulWidget {
-  const _MetadataSection({required this.children, this.trailing});
+  const _MetadataSection({required this.children});
 
   final List<Widget> children;
-  final Widget? trailing;
 
   @override
   State<_MetadataSection> createState() => _MetadataSectionState();
@@ -701,7 +773,6 @@ class _MetadataSectionState extends State<_MetadataSection> {
         : widget.children;
     return KnowledgeSection.group(
       title: l10n.knowledgeDetailMetadataTitle,
-      trailing: widget.trailing,
       children: [
         Wrap(
           spacing: AppSpacing.s6,

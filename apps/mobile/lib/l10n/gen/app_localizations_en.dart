@@ -5424,14 +5424,39 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String knowledgeAiSuggestionsSubtitle(Object count) {
+    return '$count pending suggestions from on-device triage of Inbox notes.';
+  }
+
+  @override
   String get knowledgeAiSuggestionsEmpty =>
       'No pending AI suggestions. New notes are triaged within 15 minutes.';
+
+  @override
+  String knowledgeAiSuggestionCount(Object count) {
+    return '$count items';
+  }
+
+  @override
+  String get knowledgeAiSuggestionKindClassification => 'Classification';
+
+  @override
+  String get knowledgeAiSuggestionKindTags => 'Tags';
+
+  @override
+  String get knowledgeAiSuggestionKindLinkToDecision => 'Decision link';
 
   @override
   String get knowledgeAiSuggestionDetails => 'Details';
 
   @override
   String get knowledgeAiSuggestionHideDetails => 'Hide details';
+
+  @override
+  String get knowledgeAiSuggestionAccept => 'Accept suggestion';
+
+  @override
+  String get knowledgeAiSuggestionDismiss => 'Dismiss suggestion';
 
   @override
   String get knowledgeAiSuggestionPayloadTitle => 'Suggested fields';
@@ -5766,6 +5791,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeDetailUpdatedLabel => 'Updated';
+
+  @override
+  String knowledgeDetailUpdatedAt(Object date) {
+    return 'Updated $date';
+  }
 
   @override
   String get knowledgeDetailProjectLabel => 'Project';
@@ -8339,7 +8369,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Review the extracted type and fields before applying.';
 
   @override
-  String get knowledgeCaptureSave => 'Save';
+  String get knowledgeCaptureSave => 'Save and analyze';
 
   @override
   String get knowledgeCaptureSaving => 'Saving...';
@@ -8477,6 +8507,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeLibraryTitle => 'Library · KnowledgeOS';
 
   @override
+  String get knowledgeLibraryEmptyAllTitle => 'No knowledge yet';
+
+  @override
+  String get knowledgeLibraryEmptyAllBody =>
+      'Capture a Note from Inbox, or use the create action to add a Decision, Assumption, Routine, or another knowledge object.';
+
+  @override
   String get knowledgeLibraryEmptyDecisionsTitle => 'No Decisions yet';
 
   @override
@@ -8549,6 +8586,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeLibrarySearchHint => 'Search this segment';
+
+  @override
+  String knowledgeLibrarySearchSegmentHint(Object segment) {
+    return 'Search $segment';
+  }
 
   @override
   String get knowledgeLibraryFilterAll => 'All';
@@ -8625,6 +8667,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get knowledgeReviewMarkSelectedDecisionsReviewed =>
       'Mark selected reviewed';
+
+  @override
+  String get knowledgeReviewBatchActions => 'Batch actions';
+
+  @override
+  String knowledgeReviewTotalCount(Object count) {
+    return '$count total';
+  }
+
+  @override
+  String knowledgeReviewVisibleCount(Object total, Object visible) {
+    return 'Showing first $visible of $total';
+  }
 
   @override
   String knowledgeReviewDecisionNextReview(Object date) {
@@ -8726,6 +8781,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get knowledgeSegmentAll => 'All';
+
+  @override
   String get knowledgeSegmentDecisions => 'Decisions';
 
   @override
@@ -8772,7 +8830,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeNewChooserSubtitle =>
-      'Decision, Principle, and Assumption share the same capture flow';
+      'Choose a structured knowledge object. Quick Notes are captured from Inbox.';
 
   @override
   String get knowledgeNewDecisionHint =>

@@ -159,20 +159,13 @@ class _BodyState extends ConsumerState<_Body> {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Text(
-                d.question,
-                style: typography.lg,
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            KnowledgeStatusLabel(label: d.status.wire),
-          ],
+        KnowledgeObjectHero(
+          icon: FLucideIcons.gitBranch,
+          color: colors.primary,
+          typeLabel: l10n.knowledgeDecisionDetailTitle,
+          title: d.question,
+          status: d.status.wire,
+          updatedAt: d.sync.updatedAt,
         ),
         const SizedBox(height: AppSpacing.s12),
         KnowledgeSection.group(
@@ -383,15 +376,12 @@ class _RelatedKnowledgeLink extends StatelessWidget {
                 height: 24,
                 margin: const EdgeInsets.only(right: AppSpacing.s8, top: 2),
                 decoration: BoxDecoration(
-                  color: (iconColor ?? colors.primary)
-                      .withValues(alpha: AppOpacity.subtle),
+                  color: (iconColor ?? colors.primary).withValues(
+                    alpha: AppOpacity.subtle,
+                  ),
                   borderRadius: BorderRadius.circular(AppRadius.xs),
                 ),
-                child: Icon(
-                  icon,
-                  size: 13,
-                  color: iconColor ?? colors.primary,
-                ),
+                child: Icon(icon, size: 13, color: iconColor ?? colors.primary),
               ),
             ],
             Expanded(
@@ -419,8 +409,7 @@ class _RelatedKnowledgeLink extends StatelessWidget {
             Icon(
               FLucideIcons.chevronRight,
               size: AppIconSizes.xs,
-              color: colors.mutedForeground
-                  .withValues(alpha: AppOpacity.muted),
+              color: colors.mutedForeground.withValues(alpha: AppOpacity.muted),
             ),
           ],
         ),
@@ -467,10 +456,7 @@ class _ContextSnapshotSection extends StatelessWidget {
           style: context.bodyCaptionStyle,
         ),
       if (finance.isNotEmpty) ...[
-        Text(
-          l10n.knowledgeDetailContextSnapshotFinance,
-          style: typography.xs,
-        ),
+        Text(l10n.knowledgeDetailContextSnapshotFinance, style: typography.xs),
         for (final raw in finance.whereType<Map<Object?, Object?>>())
           _SnapshotRow(map: raw.cast<String, Object?>()),
         const SizedBox(height: AppSpacing.s4),

@@ -1,25 +1,22 @@
 /// KnowledgeOS Inbox tab (`docs/knowledgeos-domain.md` §5).
 ///
-/// Renders captured Notes. The FAB opens a type picker sheet
-/// ([showKnowledgeCreateSheet]) — Note is highlighted as the default
-/// Inbox action, but the user can create any knowledge type directly.
-/// Post-save AI classification still offers inline upgrades within the
-/// Note capture sheet.
+/// Renders captured Notes. The Inbox action is intentionally narrow:
+/// capture a Note quickly, then let AI classification suggest promotion
+/// into Routine / Decision / other knowledge objects.
 library;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../app/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/ui/ask_ai.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
-import '_decision_writer.dart';
-import '_object_writers.dart';
-import '_routine_writer.dart';
 import '_widgets.dart';
 import 'knowledge_capture_sheet.dart';
 
@@ -50,7 +47,7 @@ class _KnowledgeInboxPageState extends ConsumerState<KnowledgeInboxPage>
             bottom: shellTabFloatingActionBottom(context),
             child: KnowledgeFloatingActionMotion(
               hidden: fabHidden,
-              child: const _InboxCreateFab(),
+              child: const _InboxCaptureFab(),
             ),
           ),
         ],
@@ -59,61 +56,16 @@ class _KnowledgeInboxPageState extends ConsumerState<KnowledgeInboxPage>
   }
 }
 
-/// Icon-only FAB that opens the knowledge type picker sheet.
-class _InboxCreateFab extends ConsumerWidget {
-  const _InboxCreateFab();
+/// Icon-only FAB for the Inbox's primary action: quick Note capture.
+class _InboxCaptureFab extends ConsumerWidget {
+  const _InboxCaptureFab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return KnowledgeFloatingActionSurface(
       icon: FLucideIcons.plus,
-      onPress: () => _openCreateSheet(context, ref),
-    );
-  }
-
-  Future<void> _openCreateSheet(BuildContext context, WidgetRef ref) async {
-    final l10n = AppLocalizations.of(context);
-    final options = [
-      KnowledgeCreateOption(
-        icon: FLucideIcons.gitBranch,
-        label: l10n.knowledgeNewDecision,
-        onSelected: () => showNewDecisionSheet(context, ref),
-      ),
-      KnowledgeCreateOption(
-        icon: FLucideIcons.badgeCheck,
-        label: l10n.knowledgeNewPrinciple,
-        onSelected: () => showNewPrincipleSheet(context, ref),
-      ),
-      KnowledgeCreateOption(
-        icon: FLucideIcons.lightbulb,
-        label: l10n.knowledgeNewAssumption,
-        onSelected: () => showNewAssumptionSheet(context, ref),
-      ),
-      KnowledgeCreateOption(
-        icon: FLucideIcons.fileText,
-        label: l10n.knowledgeNewNote,
-        onSelected: () => showKnowledgeCaptureSheet(context, ref),
-      ),
-      KnowledgeCreateOption(
-        icon: FLucideIcons.folderTree,
-        label: l10n.knowledgeNewConcept,
-        onSelected: () => showNewConceptSheet(context, ref),
-      ),
-      KnowledgeCreateOption(
-        icon: FLucideIcons.flaskConical,
-        label: l10n.knowledgeNewExperiment,
-        onSelected: () => showNewExperimentSheet(context, ref),
-      ),
-      KnowledgeCreateOption(
-        icon: FLucideIcons.calendarClock,
-        label: l10n.knowledgeNewRoutine,
-        onSelected: () => showNewRoutineSheet(context, ref),
-      ),
-    ];
-    await showKnowledgeCreateSheet(
-      context,
-      options: options,
-      activeLabel: l10n.knowledgeNewNote,
+      tooltip: AppLocalizations.of(context).knowledgeNewNote,
+      onPress: () => showKnowledgeCaptureSheet(context, ref),
     );
   }
 }
@@ -248,6 +200,10 @@ class _NoteCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final candidateKind = _extractCandidateKind(note.tags);
     return KnowledgeSection.item(
+      onPress: () => context.pushNamed(
+        AppRouteNames.knowledgeObjectDetail,
+        pathParameters: {'kind': 'note', 'id': note.id},
+      ),
       title: note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
       children: [
         if (note.bodyMd.isNotEmpty)

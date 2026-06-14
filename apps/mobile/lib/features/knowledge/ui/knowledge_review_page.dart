@@ -133,7 +133,7 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage>
             bottom: shellTabFloatingActionBottom(context),
             child: KnowledgeFloatingActionMotion(
               hidden: fabHidden,
-              child: const _ReviewCreateFab(),
+              child: const _ReviewActionsFab(),
             ),
           ),
         ],
@@ -154,13 +154,14 @@ Future<void> _refreshReview(WidgetRef ref) async {
 }
 
 /// Icon-only FAB that opens the review batch-actions sheet.
-class _ReviewCreateFab extends ConsumerWidget {
-  const _ReviewCreateFab();
+class _ReviewActionsFab extends ConsumerWidget {
+  const _ReviewActionsFab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return KnowledgeFloatingActionSurface(
       icon: FLucideIcons.listChecks,
+      tooltip: AppLocalizations.of(context).knowledgeReviewBatchActions,
       onPress: () => _openActionsSheet(context, ref),
     );
   }
@@ -449,7 +450,12 @@ class _DueRoutinesCard extends ConsumerWidget {
                         title: l10n.knowledgeReviewRoutinesEmpty,
                         density: KnowledgeStateDensity.section,
                       )
-                    else
+                    else ...[
+                      _ReviewCountHint(
+                        visibleCount: visible.length,
+                        totalCount: due.length,
+                      ),
+                      const SizedBox(height: AppSpacing.s8),
                       _ReviewSelectableList<KnowledgeRoutine>(
                         items: visible,
                         idOf: (r) => r.id,
@@ -468,6 +474,7 @@ class _DueRoutinesCard extends ConsumerWidget {
                           visibleIds: ids,
                         ),
                       ),
+                    ],
                   ],
                 );
               },
@@ -475,6 +482,36 @@ class _DueRoutinesCard extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _ReviewCountHint extends StatelessWidget {
+  const _ReviewCountHint({
+    required this.visibleCount,
+    required this.totalCount,
+  });
+
+  final int visibleCount;
+  final int totalCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final label = visibleCount >= totalCount
+        ? l10n.knowledgeReviewTotalCount(totalCount)
+        : l10n.knowledgeReviewVisibleCount(visibleCount, totalCount);
+    return Row(
+      children: [
+        AppBadge(
+          label: '$totalCount',
+          icon: FLucideIcons.listChecks,
+          size: AppBadgeSize.compact,
+          tone: AppBadgeTone.info,
+        ),
+        const SizedBox(width: AppSpacing.s8),
+        Expanded(child: Text(label, style: context.captionStyle)),
+      ],
     );
   }
 }
@@ -1110,7 +1147,12 @@ class _DueReviewsCard extends ConsumerWidget {
                         title: l10n.knowledgeReviewDecisionsEmpty,
                         density: KnowledgeStateDensity.section,
                       )
-                    else
+                    else ...[
+                      _ReviewCountHint(
+                        visibleCount: visible.length,
+                        totalCount: list.length,
+                      ),
+                      const SizedBox(height: AppSpacing.s8),
                       _ReviewSelectableList<KnowledgeDecision>(
                         items: visible,
                         idOf: (d) => d.id,
@@ -1130,6 +1172,7 @@ class _DueReviewsCard extends ConsumerWidget {
                           visibleIds: ids,
                         ),
                       ),
+                    ],
                   ],
                 );
               },
@@ -1397,7 +1440,12 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                         ),
                         density: KnowledgeStateDensity.section,
                       )
-                    else
+                    else ...[
+                      _ReviewCountHint(
+                        visibleCount: visible.length,
+                        totalCount: stale.length,
+                      ),
+                      const SizedBox(height: AppSpacing.s8),
                       _ReviewSelectableList<KnowledgeAssumption>(
                         items: visible,
                         idOf: (a) => a.id,
@@ -1418,6 +1466,7 @@ class _StaleAssumptionsCard extends ConsumerWidget {
                           visibleIds: ids,
                         ),
                       ),
+                    ],
                   ],
                 );
               },
