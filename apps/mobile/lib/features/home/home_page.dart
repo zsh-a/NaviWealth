@@ -527,11 +527,10 @@ class _ErrorBody extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return AppEmptyState.error(
       title: l10n.dashboardSnapshotError('$error'),
-      action: FButton(
-        variant: FButtonVariant.outline,
+      action: AppQuietButton(
+        label: l10n.commonRetry,
         onPress: () => ref.invalidate(dashboardSnapshotProvider),
         prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.sm),
-        child: Text(l10n.commonRetry),
       ),
     );
   }

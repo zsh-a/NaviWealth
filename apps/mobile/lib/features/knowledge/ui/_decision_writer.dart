@@ -201,15 +201,14 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
                 ),
               Align(
                 alignment: Alignment.centerLeft,
-                child: FButton(
-                  variant: FButtonVariant.outline,
+                child: AppQuietButton(
+                  label: l10n.knowledgeDecisionAddOption,
                   prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.xs),
                   onPress: () => setState(() {
                     final draft = _OptionDraft();
                     draft.labelCtrl.addListener(_onAnyChange);
                     _options.add(draft);
                   }),
-                  child: Text(l10n.knowledgeDecisionAddOption),
                 ),
               ),
             ],

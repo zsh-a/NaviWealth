@@ -470,39 +470,27 @@ class _ProposalDetailsPanel extends StatelessWidget {
                   style: context.captionStyle,
                 ),
               ),
-              FTooltip(
-                tipBuilder: (_, _) =>
-                    Text(l10n.knowledgeAiSuggestionFeedbackGood),
-                child: FButton.icon(
-                  variant: proposal.feedback == InboxProposalFeedback.positive
-                      ? FButtonVariant.primary
-                      : FButtonVariant.outline,
-                  size: FButtonSizeVariant.sm,
-                  onPress: busy
-                      ? null
-                      : () => onFeedback(InboxProposalFeedback.positive),
-                  child: const Icon(
-                    FLucideIcons.thumbsUp,
-                    size: AppIconSizes.xs,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s6),
-              FTooltip(
-                tipBuilder: (_, _) =>
-                    Text(l10n.knowledgeAiSuggestionFeedbackBad),
-                child: FButton.icon(
-                  variant: proposal.feedback == InboxProposalFeedback.negative
-                      ? FButtonVariant.primary
-                      : FButtonVariant.outline,
-                  size: FButtonSizeVariant.sm,
-                  onPress: busy
-                      ? null
-                      : () => onFeedback(InboxProposalFeedback.negative),
-                  child: const Icon(
-                    FLucideIcons.thumbsDown,
-                    size: AppIconSizes.xs,
-                  ),
+              SizedBox(
+                width: 220,
+                child: SegmentedRow<InboxProposalFeedback?>(
+                  options: const <InboxProposalFeedback?>[
+                    InboxProposalFeedback.positive,
+                    InboxProposalFeedback.negative,
+                  ],
+                  value: proposal.feedback,
+                  labelOf: (feedback) =>
+                      feedback == InboxProposalFeedback.positive
+                      ? l10n.knowledgeAiSuggestionFeedbackGood
+                      : l10n.knowledgeAiSuggestionFeedbackBad,
+                  iconOf: (feedback) =>
+                      feedback == InboxProposalFeedback.positive
+                      ? FLucideIcons.thumbsUp
+                      : FLucideIcons.thumbsDown,
+                  onChanged: busy
+                      ? (_) {}
+                      : (feedback) {
+                          if (feedback != null) onFeedback(feedback);
+                        },
                 ),
               ),
             ],

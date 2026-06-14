@@ -37,11 +37,10 @@ Future<void> showEditRoutineSheet(
   BuildContext context,
   WidgetRef _,
   KnowledgeRoutine routine,
-) =>
-    showAppFormSheet<void>(
-      context: context,
-      builder: (_) => _RoutineWriter(initial: routine),
-    );
+) => showAppFormSheet<void>(
+  context: context,
+  builder: (_) => _RoutineWriter(initial: routine),
+);
 
 class _RoutineWriter extends ConsumerStatefulWidget {
   const _RoutineWriter({this.initial});
@@ -157,19 +156,11 @@ class _RoutineWriterState extends ConsumerState<_RoutineWriter> {
           KnowledgeWriterSection(
             title: l10n.knowledgeWriterCadenceSectionTitle,
             children: [
-              Wrap(
-                spacing: AppSpacing.s8,
-                runSpacing: AppSpacing.s8,
-                children: [
-                  for (final preset in _kIntervalPresets)
-                    FButton(
-                      variant: _intervalDays == preset
-                          ? FButtonVariant.primary
-                          : FButtonVariant.outline,
-                      onPress: () => setState(() => _intervalDays = preset),
-                      child: Text(_intervalPresetLabel(l10n, preset)),
-                    ),
-                ],
+              SegmentedRow<int>(
+                options: _kIntervalPresets,
+                value: _intervalDays,
+                labelOf: (preset) => _intervalPresetLabel(l10n, preset),
+                onChanged: (preset) => setState(() => _intervalDays = preset),
               ),
               FTextField(
                 control: FTextFieldControl.managed(controller: _scopeCtrl),

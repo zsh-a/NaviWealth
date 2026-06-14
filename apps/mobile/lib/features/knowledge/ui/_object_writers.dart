@@ -28,11 +28,10 @@ Future<void> showEditPrincipleSheet(
   BuildContext context,
   WidgetRef _,
   KnowledgePrinciple principle,
-) =>
-    showAppFormSheet<void>(
-      context: context,
-      builder: (_) => _PrincipleWriter(initial: principle),
-    );
+) => showAppFormSheet<void>(
+  context: context,
+  builder: (_) => _PrincipleWriter(initial: principle),
+);
 
 Future<void> showNewAssumptionSheet(BuildContext context, WidgetRef _) =>
     showAppFormSheet<void>(
@@ -44,11 +43,10 @@ Future<void> showEditAssumptionSheet(
   BuildContext context,
   WidgetRef _,
   KnowledgeAssumption assumption,
-) =>
-    showAppFormSheet<void>(
-      context: context,
-      builder: (_) => _AssumptionWriter(initial: assumption),
-    );
+) => showAppFormSheet<void>(
+  context: context,
+  builder: (_) => _AssumptionWriter(initial: assumption),
+);
 
 Future<void> showNewConceptSheet(BuildContext context, WidgetRef _) =>
     showAppFormSheet<void>(
@@ -60,11 +58,10 @@ Future<void> showEditConceptSheet(
   BuildContext context,
   WidgetRef _,
   KnowledgeConcept concept,
-) =>
-    showAppFormSheet<void>(
-      context: context,
-      builder: (_) => _ConceptWriter(initial: concept),
-    );
+) => showAppFormSheet<void>(
+  context: context,
+  builder: (_) => _ConceptWriter(initial: concept),
+);
 
 Future<void> showNewExperimentSheet(BuildContext context, WidgetRef _) =>
     showAppFormSheet<void>(
@@ -76,21 +73,19 @@ Future<void> showEditExperimentSheet(
   BuildContext context,
   WidgetRef _,
   KnowledgeExperiment experiment,
-) =>
-    showAppFormSheet<void>(
-      context: context,
-      builder: (_) => _ExperimentWriter(initial: experiment),
-    );
+) => showAppFormSheet<void>(
+  context: context,
+  builder: (_) => _ExperimentWriter(initial: experiment),
+);
 
 Future<void> showEditNoteSheet(
   BuildContext context,
   WidgetRef _,
   KnowledgeNote note,
-) =>
-    showAppFormSheet<void>(
-      context: context,
-      builder: (_) => _NoteWriter(initial: note),
-    );
+) => showAppFormSheet<void>(
+  context: context,
+  builder: (_) => _NoteWriter(initial: note),
+);
 
 // ── Principle ────────────────────────────────────────────────────────────
 
@@ -330,19 +325,11 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
                 semanticValueFormatterCallback: (next) =>
                     next.toStringAsFixed(2),
               ),
-              Wrap(
-                spacing: AppSpacing.s8,
-                runSpacing: AppSpacing.s8,
-                children: [
-                  for (final v in const <double>[0.3, 0.5, 0.7, 0.85, 0.95])
-                    FButton(
-                      variant: (_confidence - v).abs() < 0.005
-                          ? FButtonVariant.primary
-                          : FButtonVariant.outline,
-                      onPress: () => setState(() => _confidence = v),
-                      child: Text(v.toStringAsFixed(2)),
-                    ),
-                ],
+              SegmentedRow<double>(
+                options: const <double>[0.3, 0.5, 0.7, 0.85, 0.95],
+                value: _confidencePresetValue(_confidence),
+                labelOf: (v) => v.toStringAsFixed(2),
+                onChanged: (v) => setState(() => _confidence = v),
               ),
               FTextField(
                 control: FTextFieldControl.managed(controller: _scopeCtrl),
@@ -357,6 +344,13 @@ class _AssumptionWriterState extends ConsumerState<_AssumptionWriter> {
   }
 }
 
+double _confidencePresetValue(double confidence) {
+  for (final value in const <double>[0.3, 0.5, 0.7, 0.85, 0.95]) {
+    if ((confidence - value).abs() < 0.005) return value;
+  }
+  return double.nan;
+}
+
 // ── Concept ──────────────────────────────────────────────────────────────
 
 class _ConceptWriter extends ConsumerStatefulWidget {
@@ -367,7 +361,9 @@ class _ConceptWriter extends ConsumerStatefulWidget {
 }
 
 class _ConceptWriterState extends ConsumerState<_ConceptWriter> {
-  late final _nameCtrl = TextEditingController(text: widget.initial?.name ?? '');
+  late final _nameCtrl = TextEditingController(
+    text: widget.initial?.name ?? '',
+  );
   late final _aliasesCtrl = TextEditingController(
     text: widget.initial?.aliases.join(', ') ?? '',
   );
@@ -835,8 +831,7 @@ class _NoteWriterState extends ConsumerState<_NoteWriter> {
                 hint: l10n.knowledgeNoteTagsHint,
               ),
               FTextField(
-                control:
-                    FTextFieldControl.managed(controller: _projectTagCtrl),
+                control: FTextFieldControl.managed(controller: _projectTagCtrl),
                 label: Text(l10n.knowledgeDetailProjectLabel),
                 hint: l10n.knowledgeNoteProjectHint,
               ),

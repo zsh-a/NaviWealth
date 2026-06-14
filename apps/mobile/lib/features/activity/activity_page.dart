@@ -239,11 +239,11 @@ class _ActivityRightRail extends ConsumerWidget {
                   AppSpacing.s16,
                   AppSpacing.s16,
                 ),
-                child: FButton(
-                  variant: FButtonVariant.outline,
+                child: AppQuietButton(
+                  label: l10n.activityFeedFilterTitle,
                   onPress: onFilter,
+                  expanded: true,
                   prefix: const Icon(FLucideIcons.filter),
-                  child: Text(l10n.activityFeedFilterTitle),
                 ),
               ),
             ],
