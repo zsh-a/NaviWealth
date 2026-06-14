@@ -64,26 +64,39 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
       child: ListView(
         padding: shellTabContentPadding(context),
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: SegmentedRow<TrendGroup>(
-                  options: TrendGroup.values,
-                  value: group,
-                  labelOf: (g) => _trendGroupLabel(l10n, g),
-                  onChanged: (value) =>
-                      ref.read(selectedTrendGroupProvider.notifier).state =
-                          value,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              SegmentedRow<_TrendWindow>(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final groupPicker = SegmentedRow<TrendGroup>(
+                options: TrendGroup.values,
+                value: group,
+                labelOf: (g) => _trendGroupLabel(l10n, g),
+                onChanged: (value) =>
+                    ref.read(selectedTrendGroupProvider.notifier).state = value,
+              );
+              final windowPicker = SegmentedRow<_TrendWindow>(
                 options: _TrendWindow.values,
                 value: _window,
                 labelOf: (w) => '${w.days}d',
                 onChanged: (value) => setState(() => _window = value),
-              ),
-            ],
+              );
+              if (constraints.maxWidth < 560) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    groupPicker,
+                    const SizedBox(height: AppSpacing.s8),
+                    windowPicker,
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: groupPicker),
+                  const SizedBox(width: AppSpacing.s12),
+                  SizedBox(width: 260, child: windowPicker),
+                ],
+              );
+            },
           ),
           const SizedBox(height: AppSpacing.s16),
           for (final (i, spec) in _trendSpecs(l10n, group).indexed) ...[
@@ -160,7 +173,9 @@ class _TrendCard extends StatelessWidget {
                 loading: () => const SizedBox.shrink(),
                 error: (_, _) => const SizedBox.shrink(),
                 data: (pts) {
-                  if (pts == null || pts.isEmpty) return const SizedBox.shrink();
+                  if (pts == null || pts.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
                   final last = pts.last.y;
                   return Text(
                     _formatLatest(last, spec.kind),
@@ -173,6 +188,15 @@ class _TrendCard extends StatelessWidget {
               ),
             ],
           ),
+          if (spec.subtitle.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s6),
+            Text(
+              spec.subtitle,
+              style: typography.xs.copyWith(color: colors.mutedForeground),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
           const SizedBox(height: AppSpacing.s12),
           // Chart.
           SizedBox(
@@ -227,8 +251,7 @@ class _TrendCard extends StatelessWidget {
       HealthMetricKind.workoutSession => '${value.round()}m',
       HealthMetricKind.stepsDaily => _formatSteps(value),
       HealthMetricKind.weight ||
-      HealthMetricKind.bodyFat =>
-        '${(value * 10).round() / 10}',
+      HealthMetricKind.bodyFat => '${(value * 10).round() / 10}',
       _ => value.round().toString(),
     };
   }

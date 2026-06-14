@@ -8149,6 +8149,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthNoData => 'No data yet';
 
   @override
+  String get healthShowAllMetrics => 'Show all metrics';
+
+  @override
+  String get healthShowKeyMetrics => 'Show key metrics';
+
+  @override
   String get healthPlanTodayActions => 'Today\'s actions';
 
   @override

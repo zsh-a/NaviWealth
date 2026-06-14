@@ -36,6 +36,7 @@ import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 import 'body_measurement_entry_sheet.dart';
 import 'garmin_sync_status_card.dart';
+import 'health_metric_colors.dart';
 import 'health_today_providers.dart';
 import 'health_trend_page.dart' show TrendGroup, selectedTrendGroupProvider;
 import 'recovery_verdict.dart';
@@ -52,41 +53,29 @@ class HealthTodayPage extends ConsumerWidget {
         FHeaderAction(
           icon: const Icon(FLucideIcons.scale),
           semanticsLabel: l10n.healthRecordBodyMetricAction,
-          onPress: () => showBodyMeasurementEntrySheet(
-            context: context,
-            initialKind: HealthMetricKind.weight,
-          ),
+          onPress: () async {
+            final saved = await showBodyMeasurementEntrySheet(
+              context: context,
+              initialKind: HealthMetricKind.weight,
+            );
+            if (saved == true) ref.invalidate(healthTodaySnapshotProvider);
+          },
         ),
       ],
       child: ListView(
         padding: shellTabContentPadding(context),
         children: const [
-          FadeSlideIn(
-            delay: Duration(milliseconds: 0),
-            child: _HealthDataStatusNotice(),
-          ),
+          FadeSlideIn(child: _HealthDataStatusNotice()),
           SizedBox(height: AppSpacing.s16),
-          FadeSlideIn(
-            delay: Duration(milliseconds: 40),
-            child: GarminSyncStatusCard(),
-          ),
+          FadeSlideIn(child: GarminSyncStatusCard()),
           SizedBox(height: AppSpacing.s16),
-          FadeSlideIn(
-            delay: Duration(milliseconds: 80),
-            child: _RecoveryHero(),
-          ),
+          FadeSlideIn(child: _RecoveryHero()),
           SizedBox(height: AppSpacing.s16),
-          FadeSlideIn(delay: Duration(milliseconds: 120), child: _MetricGrid()),
+          FadeSlideIn(child: _MetricGrid()),
           SizedBox(height: AppSpacing.s16),
-          FadeSlideIn(
-            delay: Duration(milliseconds: 160),
-            child: _WeeklySummaryPanel(),
-          ),
+          FadeSlideIn(child: _WeeklySummaryPanel()),
           SizedBox(height: AppSpacing.s16),
-          FadeSlideIn(
-            delay: Duration(milliseconds: 200),
-            child: _BriefingPanel(),
-          ),
+          FadeSlideIn(child: _BriefingPanel()),
         ],
       ),
     );
@@ -333,7 +322,7 @@ class _SparklinePainter extends CustomPainter {
     final min = values.reduce((a, b) => a < b ? a : b);
     final max = values.reduce((a, b) => a > b ? a : b);
     final range = max - min;
-    if (range == 0) return;
+    const inset = 3.0;
 
     final paint = Paint()
       ..color = color
@@ -342,10 +331,22 @@ class _SparklinePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
+    if (range == 0) {
+      final y = size.height / 2;
+      canvas.drawLine(Offset(inset, y), Offset(size.width - inset, y), paint);
+      canvas.drawCircle(
+        Offset(size.width - inset, y),
+        2.5,
+        Paint()..color = color,
+      );
+      return;
+    }
+
     final path = Path();
     for (var i = 0; i < values.length; i++) {
-      final x = (i / (values.length - 1)) * size.width;
-      final y = size.height - ((values[i] - min) / range) * size.height;
+      final x = inset + (i / (values.length - 1)) * (size.width - inset * 2);
+      final y =
+          inset + (1 - (values[i] - min) / range) * (size.height - inset * 2);
       if (i == 0) {
         path.moveTo(x, y);
       } else {
@@ -355,8 +356,9 @@ class _SparklinePainter extends CustomPainter {
     canvas.drawPath(path, paint);
 
     // Draw a dot at the last point.
-    final lastX = size.width;
-    final lastY = size.height - ((values.last - min) / range) * size.height;
+    final lastX = size.width - inset;
+    final lastY =
+        inset + (1 - (values.last - min) / range) * (size.height - inset * 2);
     canvas.drawCircle(Offset(lastX, lastY), 2.5, Paint()..color = color);
   }
 
@@ -365,11 +367,18 @@ class _SparklinePainter extends CustomPainter {
       old.values != values || old.color != color;
 }
 
-class _MetricGrid extends ConsumerWidget {
+class _MetricGrid extends ConsumerStatefulWidget {
   const _MetricGrid();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_MetricGrid> createState() => _MetricGridState();
+}
+
+class _MetricGridState extends ConsumerState<_MetricGrid> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
     final sleep = ref.watch(latestSleepSessionProvider);
     final hrv = ref.watch(latestHrvProvider);
     final heartRate = ref.watch(latestHeartRateProvider);
@@ -417,6 +426,8 @@ class _MetricGrid extends ConsumerWidget {
       _TrainingLoadCard(async: trainingLoad),
       _Spo2Card(async: spo2),
     ];
+    final visibleCards = _expanded ? cards : cards.take(6).toList();
+    final l10n = AppLocalizations.of(context);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -425,15 +436,15 @@ class _MetricGrid extends ConsumerWidget {
             : 2;
         const gap = AppSpacing.s8;
         final rows = <Widget>[];
-        for (var i = 0; i < cards.length; i += columns) {
-          final end = math.min(i + columns, cards.length);
+        for (var i = 0; i < visibleCards.length; i += columns) {
+          final end = math.min(i + columns, visibleCards.length);
           rows.add(
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 for (var j = i; j < end; j++) ...[
                   if (j > i) const SizedBox(width: gap),
-                  Expanded(child: cards[j]),
+                  Expanded(child: visibleCards[j]),
                 ],
                 for (var j = end; j < i + columns; j++) ...[
                   const SizedBox(width: gap),
@@ -442,8 +453,27 @@ class _MetricGrid extends ConsumerWidget {
               ],
             ),
           );
-          if (end < cards.length) rows.add(const SizedBox(height: gap));
+          if (end < visibleCards.length) rows.add(const SizedBox(height: gap));
         }
+        rows.add(const SizedBox(height: AppSpacing.s8));
+        rows.add(
+          SizedBox(
+            width: double.infinity,
+            child: FButton(
+              variant: FButtonVariant.outline,
+              onPress: () => setState(() => _expanded = !_expanded),
+              prefix: Icon(
+                _expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+                size: AppIconSizes.sm,
+              ),
+              child: Text(
+                _expanded
+                    ? l10n.healthShowKeyMetrics
+                    : l10n.healthShowAllMetrics,
+              ),
+            ),
+          ),
+        );
         return Column(children: rows);
       },
     );
@@ -462,6 +492,7 @@ class _SleepCard extends StatelessWidget {
       icon: FLucideIcons.moon,
       label: l10n.healthSleepMetricLabel,
       trendGroup: TrendGroup.recovery,
+      accent: HealthMetricColors.sleep,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -661,6 +692,7 @@ class _HrvCard extends StatelessWidget {
       icon: FLucideIcons.heartPulse,
       label: l10n.healthHrvMetricLabel,
       trendGroup: TrendGroup.recovery,
+      accent: HealthMetricColors.hrv,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -691,6 +723,7 @@ class _HeartRateCard extends StatelessWidget {
       icon: FLucideIcons.heartPulse,
       label: l10n.healthHeartRateMetricLabel,
       trendGroup: TrendGroup.recovery,
+      accent: HealthMetricColors.heartRate,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -720,6 +753,7 @@ class _WorkoutCard extends StatelessWidget {
       icon: FLucideIcons.dumbbell,
       label: l10n.healthWorkoutMetricLabel,
       trendGroup: TrendGroup.activity,
+      accent: HealthMetricColors.workout,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -763,6 +797,7 @@ class _StepsCard extends ConsumerWidget {
       icon: FLucideIcons.footprints,
       trendGroup: TrendGroup.activity,
       label: l10n.healthStepsMetricLabel,
+      accent: HealthMetricColors.steps,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -800,6 +835,7 @@ class _ActiveEnergyCard extends StatelessWidget {
       icon: FLucideIcons.flame,
       label: l10n.healthEnergyMetricLabel,
       trendGroup: TrendGroup.activity,
+      accent: HealthMetricColors.totalEnergy,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -830,6 +866,7 @@ class _BodyBatteryCard extends StatelessWidget {
       icon: FLucideIcons.battery,
       label: l10n.healthBodyBatteryMetricLabel,
       trendGroup: TrendGroup.recovery,
+      accent: HealthMetricColors.bodyBattery,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -864,6 +901,7 @@ class _StressCard extends StatelessWidget {
       icon: FLucideIcons.brain,
       trendGroup: TrendGroup.recovery,
       label: l10n.healthStressMetricLabel,
+      accent: HealthMetricColors.stress,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -892,6 +930,7 @@ class _RhrCard extends StatelessWidget {
       icon: FLucideIcons.heart,
       trendGroup: TrendGroup.recovery,
       label: l10n.healthRhrMetricLabel,
+      accent: HealthMetricColors.rhr,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -920,6 +959,7 @@ class _TrainingLoadCard extends StatelessWidget {
       icon: FLucideIcons.flame,
       label: l10n.healthTrainingLoadMetricLabel,
       trendGroup: TrendGroup.activity,
+      accent: HealthMetricColors.trainingLoad,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -947,6 +987,7 @@ class _Spo2Card extends StatelessWidget {
       icon: FLucideIcons.wind,
       trendGroup: TrendGroup.recovery,
       label: l10n.healthSpo2MetricLabel,
+      accent: HealthMetricColors.spo2,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -969,11 +1010,13 @@ class _MetricCard extends ConsumerWidget {
     required this.icon,
     required this.label,
     required this.child,
+    required this.accent,
     this.trendGroup,
   });
   final IconData icon;
   final String label;
   final Widget child;
+  final Color accent;
   final TrendGroup? trendGroup;
 
   @override
@@ -985,8 +1028,7 @@ class _MetricCard extends ConsumerWidget {
       onPress: trendGroup == null
           ? null
           : () {
-              ref.read(selectedTrendGroupProvider.notifier).state =
-                  trendGroup!;
+              ref.read(selectedTrendGroupProvider.notifier).state = trendGroup!;
               context.go(AppRoutes.healthTrend);
             },
       child: ConstrainedBox(
@@ -994,12 +1036,65 @@ class _MetricCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AppMetricHeader(icon: icon, title: label),
+            _MetricCardHeader(
+              icon: icon,
+              title: label,
+              color: accent,
+              showChevron: trendGroup != null,
+            ),
             const SizedBox(height: AppSpacing.s12),
             child,
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MetricCardHeader extends StatelessWidget {
+  const _MetricCardHeader({
+    required this.icon,
+    required this.title,
+    required this.color,
+    required this.showChevron,
+  });
+
+  final IconData icon;
+  final String title;
+  final Color color;
+  final bool showChevron;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: AppIconSizes.md,
+          color: color.withValues(alpha: AppOpacity.prominent),
+        ),
+        const SizedBox(width: AppSpacing.s8),
+        Expanded(
+          child: Text(
+            title,
+            style: context.theme.typography.sm.copyWith(
+              color: colors.mutedForeground,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        if (showChevron)
+          Icon(
+            FLucideIcons.chevronRight,
+            size: AppIconSizes.h18,
+            color: colors.mutedForeground.withValues(
+              alpha: AppOpacity.disabled,
+            ),
+          ),
+      ],
     );
   }
 }

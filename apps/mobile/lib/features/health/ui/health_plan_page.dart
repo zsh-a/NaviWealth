@@ -75,8 +75,7 @@ class _RecoveryHeroCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final verdict = out['verdict']?.toString() ?? 'insufficient_data';
     final score = out['score'];
-    final inputs =
-        (out['inputs'] as Map?)?.cast<String, Object?>() ?? const {};
+    final inputs = (out['inputs'] as Map?)?.cast<String, Object?>() ?? const {};
     final color = RecoveryVerdict.color(verdict, colors);
     return SoftCard(
       level: SoftCardLevel.hero,
@@ -156,19 +155,33 @@ class _RecoveryHeroCard extends StatelessWidget {
     final hrv = inputs['latest_hrv_ms'];
     final sleep = inputs['avg_sleep_hours'];
     final rhr = inputs['latest_rhr_bpm'];
-    final contextLine = _buildContextLine(hrv: hrv, sleep: sleep, rhr: rhr);
+    final contextLine = _buildContextLine(
+      l10n,
+      hrv: hrv,
+      sleep: sleep,
+      rhr: rhr,
+    );
     final base = RecoveryVerdict.suggestion(v, l10n);
     if (contextLine.isEmpty) return base;
     return '$contextLine $base';
   }
 
-  static String _buildContextLine({Object? hrv, Object? sleep, Object? rhr}) {
+  static String _buildContextLine(
+    AppLocalizations l10n, {
+    Object? hrv,
+    Object? sleep,
+    Object? rhr,
+  }) {
     final parts = <String>[];
-    if (hrv is num && hrv > 0) parts.add('HRV ${_round(hrv.toDouble())} ms');
-    if (sleep is num && sleep > 0) {
-      parts.add('sleep ${_round(sleep.toDouble())}h');
+    if (hrv is num && hrv > 0) {
+      parts.add('${l10n.healthHrvMetricLabel} ${_round(hrv.toDouble())} ms');
     }
-    if (rhr is num && rhr > 0) parts.add('RHR ${_round(rhr.toDouble())} bpm');
+    if (sleep is num && sleep > 0) {
+      parts.add('${l10n.healthSleepMetricLabel} ${_round(sleep.toDouble())} h');
+    }
+    if (rhr is num && rhr > 0) {
+      parts.add('${l10n.healthRhrMetricLabel} ${_round(rhr.toDouble())} bpm');
+    }
     if (parts.isEmpty) return '';
     return '${parts.join(' · ')}.';
   }
@@ -293,8 +306,7 @@ class _InputMetricsCard extends StatelessWidget {
     final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
     final score = out['score'];
-    final inputs =
-        (out['inputs'] as Map?)?.cast<String, Object?>() ?? const {};
+    final inputs = (out['inputs'] as Map?)?.cast<String, Object?>() ?? const {};
     final metrics = <_MetricItem>[
       _MetricItem(
         icon: FLucideIcons.gauge,
@@ -357,10 +369,7 @@ class _InputMetricsCard extends StatelessWidget {
           Wrap(
             spacing: AppSpacing.s8,
             runSpacing: AppSpacing.s8,
-            children: [
-              for (final m in metrics)
-                _MetricChip(metric: m),
-            ],
+            children: [for (final m in metrics) _MetricChip(metric: m)],
           ),
         ],
       ),
@@ -540,7 +549,9 @@ class _DisclaimerCard extends StatelessWidget {
           Icon(
             FLucideIcons.info,
             size: AppIconSizes.sm,
-            color: colors.mutedForeground.withValues(alpha: AppOpacity.disabled),
+            color: colors.mutedForeground.withValues(
+              alpha: AppOpacity.disabled,
+            ),
           ),
           const SizedBox(width: AppSpacing.s8),
           Expanded(

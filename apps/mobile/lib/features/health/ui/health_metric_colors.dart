@@ -13,33 +13,38 @@ import 'dart:ui';
 
 /// Accent color per health metric identity.
 ///
-/// Grouped by the visual role each color plays (recovery / activity / body)
-/// but the map is flat so callers can look up by a string key.
+/// Health surfaces are intentionally restrained: the three domain groups get
+/// distinct accents, while individual metrics inherit from their group. Trend
+/// charts still keep semantic identity without turning the page into a rainbow.
 abstract final class HealthMetricColors {
+  static const Color recovery = Color(0xFF0F766E); // teal
+  static const Color activity = Color(0xFF2563EB); // blue
+  static const Color body = Color(0xFF7C3AED); // violet
+
   // ── Recovery ──────────────────────────────────────────────────────
-  static const Color hrv = Color(0xFF6366F1); // indigo
-  static const Color sleep = Color(0xFF8B5CF6); // violet
-  static const Color heartRate = Color(0xFFEF4444); // red
-  static const Color rhr = Color(0xFFF97316); // orange
-  static const Color spo2 = Color(0xFF06B6D4); // cyan
-  static const Color respiratoryRate = Color(0xFF14B8A6); // teal
-  static const Color bodyBattery = Color(0xFF22C55E); // green
-  static const Color stress = Color(0xFFF59E0B); // amber
+  static const Color hrv = recovery;
+  static const Color sleep = recovery;
+  static const Color heartRate = recovery;
+  static const Color rhr = recovery;
+  static const Color spo2 = recovery;
+  static const Color respiratoryRate = recovery;
+  static const Color bodyBattery = recovery;
+  static const Color stress = recovery;
 
   // ── Activity ──────────────────────────────────────────────────────
-  static const Color workout = Color(0xFFEF4444); // red
-  static const Color steps = Color(0xFF22C55E); // green
-  static const Color walkingDistance = Color(0xFF3B82F6); // blue
-  static const Color floors = Color(0xFFF97316); // orange
-  static const Color trainingLoad = Color(0xFFEF4444); // red
-  static const Color trainingEffect = Color(0xFFF59E0B); // amber
-  static const Color totalEnergy = Color(0xFFF97316); // orange
+  static const Color workout = activity;
+  static const Color steps = activity;
+  static const Color walkingDistance = activity;
+  static const Color floors = activity;
+  static const Color trainingLoad = activity;
+  static const Color trainingEffect = activity;
+  static const Color totalEnergy = activity;
 
   // ── Body ──────────────────────────────────────────────────────────
-  static const Color weight = Color(0xFF3B82F6); // blue
-  static const Color bodyFat = Color(0xFF8B5CF6); // violet
-  static const Color vo2Max = Color(0xFF22C55E); // green
+  static const Color weight = body;
+  static const Color bodyFat = body;
+  static const Color vo2Max = body;
 
   // ── Plan metrics ──────────────────────────────────────────────────
-  static const Color confidence = Color(0xFF3B82F6); // blue
+  static const Color confidence = activity;
 }

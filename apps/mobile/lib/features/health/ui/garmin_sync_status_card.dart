@@ -25,7 +25,10 @@ class GarminSyncStatusCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(health_data.garminSyncControllerProvider);
 
-    return FCard(
+    return SoftCard(
+      level: SoftCardLevel.raised,
+      borderless: true,
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: switch (state) {
         GarminInitial() => _Disconnected(ref: ref),
         GarminRestoring() => const _Restoring(),

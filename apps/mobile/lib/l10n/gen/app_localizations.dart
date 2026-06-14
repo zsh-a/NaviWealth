@@ -14110,6 +14110,18 @@ abstract class AppLocalizations {
   /// **'No data yet'**
   String get healthNoData;
 
+  /// No description provided for @healthShowAllMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all metrics'**
+  String get healthShowAllMetrics;
+
+  /// No description provided for @healthShowKeyMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Show key metrics'**
+  String get healthShowKeyMetrics;
+
   /// No description provided for @healthPlanTodayActions.
   ///
   /// In en, this message translates to:

@@ -7831,6 +7831,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthNoData => '暂无数据';
 
   @override
+  String get healthShowAllMetrics => '显示全部指标';
+
+  @override
+  String get healthShowKeyMetrics => '只看关键指标';
+
+  @override
   String get healthPlanTodayActions => '今日建议';
 
   @override

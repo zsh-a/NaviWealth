@@ -4487,6 +4487,8 @@
   "healthBriefingGenerate": "Generate",
   "healthBriefingLoadFailed": "Briefing load failed: {message}",
   "healthNoData": "No data yet",
+  "healthShowAllMetrics": "Show all metrics",
+  "healthShowKeyMetrics": "Show key metrics",
   "healthPlanTodayActions": "Today's actions",
   "healthPlanHighIntensity": "Schedule high-intensity training or deep-focus work.",
   "healthPlanKeepSleep": "Keep normal sleep window; avoid overdrawing.",

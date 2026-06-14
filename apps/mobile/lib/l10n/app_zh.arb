@@ -2444,6 +2444,8 @@
   "healthBriefingGenerate": "生成",
   "healthBriefingLoadFailed": "简报加载失败：{message}",
   "healthNoData": "暂无数据",
+  "healthShowAllMetrics": "显示全部指标",
+  "healthShowKeyMetrics": "只看关键指标",
   "healthPlanTodayActions": "今日建议",
   "healthPlanHighIntensity": "可安排高强度训练或关键深度工作。",
   "healthPlanKeepSleep": "保持正常睡眠窗口，避免过度透支。",

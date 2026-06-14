@@ -11,6 +11,9 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../shared/forms/forms.dart';
 import '../data/providers.dart';
 import '../domain/health_metric_kind.dart';
+import 'health_today_providers.dart';
+import 'health_trend_page.dart'
+    show trendChartProvider, trendGroupChartProvider;
 
 Future<bool?> showBodyMeasurementEntrySheet({
   required BuildContext context,
@@ -185,6 +188,10 @@ class _BodyMeasurementEntrySheetState
         source: 'manual',
         note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
       );
+      ref
+        ..invalidate(healthTodaySnapshotProvider)
+        ..invalidate(trendChartProvider)
+        ..invalidate(trendGroupChartProvider);
       widget.dirty.markPristine();
       if (!mounted) return;
       Haptics.success();
