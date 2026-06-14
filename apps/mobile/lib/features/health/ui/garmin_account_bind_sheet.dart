@@ -90,7 +90,7 @@ class _GarminAccountBindSheetState
             if (state is GarminError) ...[
               const SizedBox(height: AppSpacing.s12),
               Text(
-                state.message,
+                state.issue.message,
                 style: context.theme.typography.xs.copyWith(
                   color: context.theme.colors.destructive,
                 ),
