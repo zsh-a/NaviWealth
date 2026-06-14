@@ -189,12 +189,14 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
       InsightItem(
         icon: FLucideIcons.calendar,
         kind: InsightKind.monthlySummary,
-        tone: summary.deltaMinor >= 0 ? InsightTone.success : InsightTone.danger,
+        tone: summary.deltaMinor >= 0
+            ? InsightTone.success
+            : InsightTone.danger,
         summaryYear: summary.year,
         summaryMonth: summary.month,
         summaryDeltaMinor: summary.deltaMinor,
         summaryCurrency: summary.currency,
-        route: AppRoutes.planProjection,
+        route: AppRoutes.cashflow,
       ),
     );
   }

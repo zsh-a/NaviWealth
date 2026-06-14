@@ -118,7 +118,7 @@ class _SchemeSelector extends ConsumerWidget {
                       variant: (current == preset)
                           ? FButtonVariant.primary
                           : FButtonVariant.outline,
-                      onPress: () => _selectPreset(ref, preset),
+                      onPress: () => _selectPreset(context, ref, preset),
                       child: Text(_schemeLabel(l10n, preset)),
                     ),
                 FButton(
@@ -158,9 +158,23 @@ class _SchemeSelector extends ConsumerWidget {
   }
 
   Future<void> _selectPreset(
+    BuildContext context,
     WidgetRef ref,
     AllocationSchemePreset preset,
   ) async {
+    if (current == preset) return;
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: Text(l10n.settingsRiskAppetiteConfirmTitle),
+      body: Text(
+        l10n.settingsRiskAppetiteConfirmBody(_schemeLabel(l10n, preset)),
+      ),
+      cancelLabel: l10n.commonCancel,
+      confirmLabel: l10n.settingsRiskAppetiteConfirmAction,
+      icon: FLucideIcons.slidersHorizontal,
+    );
+    if (confirmed != true || !context.mounted) return;
     // Risk appetite is the single source of truth; the scheme provider
     // simply reflects it. We write the appetite, then refresh the
     // target weights to the preset's defaults so the user sees the new

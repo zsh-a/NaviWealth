@@ -21,7 +21,6 @@ import '../../accounts/journal_entry_list_page.dart';
 import '../../accounts/transfer_form_page.dart';
 import '../../activity/activity_page.dart';
 import '../../activity/ui/activity_entry_detail_page.dart';
-import '../../analytics/analytics_page.dart' deferred as analytics_lib;
 import '../../assets/asset_detail_page.dart';
 import '../../assets/cash_form_page.dart';
 import '../../assets/deposit_form_page.dart';
@@ -351,25 +350,6 @@ StatefulShellRoute financeShellRoute() {
                 ),
               ),
               GoRoute(
-                path: 'projection',
-                name: AppRouteNames.planProjection,
-                builder: (context, state) => DeferredRoute(
-                  load: analytics_lib.loadLibrary,
-                  builder: (_) => analytics_lib.AnalyticsPage(),
-                ),
-              ),
-              GoRoute(
-                path: 'scenarios',
-                name: AppRouteNames.planScenarios,
-                builder: (context, state) =>
-                    const PlanScenariosPlaceholderPage(),
-              ),
-              GoRoute(
-                path: 'goals',
-                name: AppRouteNames.planGoals,
-                builder: (context, state) => const PlanGoalsPlaceholderPage(),
-              ),
-              GoRoute(
                 path: 'budget',
                 name: AppRouteNames.planBudget,
                 builder: (context, state) => const PlanBudgetPage(),
@@ -394,7 +374,6 @@ StatefulShellRoute financeShellRoute() {
 /// keeping it here would block that forwarding call).
 Future<void> preloadFinanceDeferredRoutesForTest() async {
   await Future.wait<void>(<Future<void>>[
-    analytics_lib.loadLibrary(),
     fire_lib.loadLibrary(),
     income_planner_lib.loadLibrary(),
     liabilities_lib.loadLibrary(),

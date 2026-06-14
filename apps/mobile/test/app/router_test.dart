@@ -27,7 +27,6 @@ import 'package:naviwealth/app/router.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/domain/values/money.dart';
-import 'package:naviwealth/features/analytics/analytics_page.dart';
 import 'package:naviwealth/features/analytics/data/benchmark/benchmark_history_source.dart';
 import 'package:naviwealth/features/analytics/data/benchmark/benchmark_providers.dart';
 import 'package:naviwealth/features/analytics/data/providers.dart'
@@ -51,6 +50,7 @@ import 'package:naviwealth/features/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
+import 'package:naviwealth/features/rebalance/ui/rebalance_page.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
 import 'package:naviwealth/features/wealth/ui/wealth_hub_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -239,6 +239,9 @@ void main() {
       '/rebalance',
       '/me',
       '/more',
+      '/plan/projection',
+      '/plan/scenarios',
+      '/plan/goals',
     ]) {
       testWidgets('$legacy renders the route error page', (tester) async {
         final container = await _pumpAt(tester, initialLocation: legacy);
@@ -256,9 +259,9 @@ void main() {
       expect(_currentPath(container), AppRoutes.wealth);
     });
 
-    testWidgets('/accounts/analytics renders Analytics', (tester) async {
-      await _pumpAt(tester, initialLocation: AppRoutes.planProjection);
-      expect(find.byType(AnalyticsPage), findsOneWidget);
+    testWidgets('/plan/rebalance renders Rebalance', (tester) async {
+      await _pumpAt(tester, initialLocation: AppRoutes.planRebalance);
+      expect(find.byType(RebalancePage), findsOneWidget);
       await _drainTimers(tester);
     });
 
@@ -289,9 +292,9 @@ void main() {
       // Query params on a redirect path should survive the redirect.
       await _pumpAt(
         tester,
-        initialLocation: '${AppRoutes.planProjection}?range=1y',
+        initialLocation: '${AppRoutes.planRebalance}?range=1y',
       );
-      expect(find.byType(AnalyticsPage), findsOneWidget);
+      expect(find.byType(RebalancePage), findsOneWidget);
       await _drainTimers(tester);
     });
   });
@@ -546,10 +549,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(WealthHubPage), findsOneWidget);
 
-      router.go(AppRoutes.planProjection);
+      router.go(AppRoutes.planRebalance);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.byType(AnalyticsPage), findsOneWidget);
+      expect(find.byType(RebalancePage), findsOneWidget);
 
       // Simulate browser "back": platform replays the previous URL.
       router.go(AppRoutes.wealth);
@@ -559,11 +562,11 @@ void main() {
       expect(_currentPath(container), AppRoutes.wealth);
 
       // Simulate browser "forward".
-      router.go(AppRoutes.planProjection);
+      router.go(AppRoutes.planRebalance);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.byType(AnalyticsPage), findsOneWidget);
-      expect(_currentPath(container), AppRoutes.planProjection);
+      expect(find.byType(RebalancePage), findsOneWidget);
+      expect(_currentPath(container), AppRoutes.planRebalance);
       await _drainTimers(tester);
     });
   });

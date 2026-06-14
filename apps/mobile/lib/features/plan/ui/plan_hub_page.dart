@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -11,17 +12,11 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../fire/data/fire_providers.dart';
 import '../../fire/domain/fire_projection.dart';
 
-/// Plan hub — landing page for the Plan tab.
+/// Plan hub — landing page for FinanceOS planning.
 ///
-/// IA contract §1: Plan is "decisions + future state". The hub renders a
-/// FIRE-progress hero (years-to-FIRE pulled from [fireDashboardViewProvider])
-/// and a section grid that links into shipped sub-decision surfaces — FIRE,
-/// Rebalance, Income strategy, DCA, Budget, Wheel, and projection analytics.
-/// Placeholder routes stay registered for deep-link compatibility but are not
-/// surfaced in the hub until they have real workflows.
-///
-/// Phase A landed the routing scaffold; Phase B (this implementation) puts a
-/// real hero on the hub so it isn't a link list.
+/// The hub stays focused on decisions that change the future state: FIRE,
+/// allocation/rebalance, and strategy tools. Read-only analytics and
+/// half-wired placeholders deliberately stay out of this surface.
 class PlanHubPage extends ConsumerWidget {
   const PlanHubPage({super.key});
 
@@ -45,9 +40,9 @@ class PlanHubPage extends ConsumerWidget {
               kTabBarOffset + MediaQuery.paddingOf(context).bottom,
             ),
             children: const [
-              _PlanHero(),
+              _FireSummaryCard(),
               SizedBox(height: AppSpacing.s16),
-              _PlanSectionGrid(),
+              _PlanActions(),
             ],
           );
         },
@@ -56,11 +51,8 @@ class PlanHubPage extends ConsumerWidget {
   }
 }
 
-/// FIRE-progress hero. Reads [fireDashboardViewProvider] and renders a
-/// large "X years to FIRE" headline + progress chip + see-plan CTA. When
-/// no FIRE goal is set, falls back to a single setup CTA.
-class _PlanHero extends ConsumerWidget {
-  const _PlanHero();
+class _FireSummaryCard extends ConsumerWidget {
+  const _FireSummaryCard();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -98,7 +90,7 @@ class _PlanHero extends ConsumerWidget {
         );
         final scenario =
             liveScenario ?? neutralScenario ?? view.scenarios.firstOrNull;
-        return _hero(
+        return _card(
           context: context,
           l10n: l10n,
           progress: progress,
@@ -111,8 +103,8 @@ class _PlanHero extends ConsumerWidget {
   Widget _emptyHero(BuildContext context, AppLocalizations l10n) {
     final colors = context.theme.colors;
     return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s20),
-      borderRadius: AppRadius.xlg,
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      borderRadius: AppRadius.lg,
       borderless: true,
       tinted: false,
       child: Column(
@@ -138,7 +130,7 @@ class _PlanHero extends ConsumerWidget {
     );
   }
 
-  Widget _hero({
+  Widget _card({
     required BuildContext context,
     required AppLocalizations l10n,
     required double progress,
@@ -150,8 +142,8 @@ class _PlanHero extends ConsumerWidget {
         : (monthsToTarget / 12).toStringAsFixed(monthsToTarget < 24 ? 1 : 0);
     final progressPct = (progress * 100).clamp(0, 100).toStringAsFixed(0);
     return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s20),
-      borderRadius: AppRadius.xlg,
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      borderRadius: AppRadius.lg,
       borderless: true,
       tinted: false,
       child: Column(
@@ -194,11 +186,6 @@ class _PlanHero extends ConsumerWidget {
                 child: Text(l10n.planHeroSeePlan),
               ),
               const SizedBox(width: AppSpacing.s8),
-              FButton(
-                variant: FButtonVariant.outline,
-                onPress: () => context.push(AppRoutes.planRebalance),
-                child: Text(l10n.planHeroNextRebalance),
-              ),
             ],
           ),
         ],
@@ -207,72 +194,99 @@ class _PlanHero extends ConsumerWidget {
   }
 }
 
-class _PlanSectionGrid extends StatelessWidget {
-  const _PlanSectionGrid();
+class _PlanActions extends StatelessWidget {
+  const _PlanActions();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final sections = <_PlanSectionSpec>[
-      _PlanSectionSpec(
-        icon: FLucideIcons.flame,
-        title: l10n.planFireSectionTitle,
-        subtitle: l10n.planFireSectionSubtitle,
-        path: AppRoutes.planFire,
-      ),
-      _PlanSectionSpec(
-        icon: FLucideIcons.scale,
-        title: l10n.planRebalanceSectionTitle,
-        subtitle: l10n.planRebalanceSectionSubtitle,
-        path: AppRoutes.planRebalance,
-      ),
-      _PlanSectionSpec(
-        icon: FLucideIcons.candlestickChart,
-        title: l10n.planIncomeSectionTitle,
-        subtitle: l10n.planIncomeSectionSubtitle,
-        path: AppRoutes.planIncome,
-      ),
-      _PlanSectionSpec(
-        icon: FLucideIcons.calendarClock,
-        title: l10n.planDcaSectionTitle,
-        subtitle: l10n.planDcaSectionSubtitle,
-        path: AppRoutes.planDca,
-      ),
-      _PlanSectionSpec(
-        icon: FLucideIcons.piggyBank,
-        title: l10n.planBudgetSectionTitle,
-        subtitle: l10n.planBudgetSectionSubtitle,
-        path: AppRoutes.planBudget,
-      ),
-      _PlanSectionSpec(
-        icon: FLucideIcons.refreshCw,
-        title: l10n.planWheelSectionTitle,
-        subtitle: l10n.planWheelSectionSubtitle,
-        path: AppRoutes.planWheel,
-      ),
-      _PlanSectionSpec(
-        icon: FLucideIcons.chartLine,
-        title: l10n.planProjectionSectionTitle,
-        subtitle: l10n.planProjectionSectionSubtitle,
-        path: AppRoutes.planProjection,
-      ),
-    ];
-    return AppGroupedActionList(
-      actions: [
-        for (final spec in sections)
-          AppGroupedAction(
-            icon: spec.icon,
-            title: spec.title,
-            subtitle: spec.subtitle,
-            onPress: () => context.push(spec.path),
-          ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _PlanActionSection(
+          title: l10n.planCoreSectionTitle,
+          subtitle: l10n.planCoreSectionSubtitle,
+          actions: [
+            _PlanActionSpec(
+              icon: FLucideIcons.flame,
+              title: l10n.planFireSectionTitle,
+              subtitle: l10n.planFireSectionSubtitle,
+              path: AppRoutes.planFire,
+            ),
+            _PlanActionSpec(
+              icon: FLucideIcons.scale,
+              title: l10n.planRebalanceSectionTitle,
+              subtitle: l10n.planRebalanceSectionSubtitle,
+              path: AppRoutes.planRebalance,
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        _PlanActionSection(
+          title: l10n.planStrategyToolsSectionTitle,
+          subtitle: l10n.planStrategyToolsSectionSubtitle,
+          actions: [
+            if (!kIsWeb)
+              _PlanActionSpec(
+                icon: FLucideIcons.candlestickChart,
+                title: l10n.planIncomeSectionTitle,
+                subtitle: l10n.planIncomeSectionSubtitle,
+                path: AppRoutes.planIncome,
+              ),
+            _PlanActionSpec(
+              icon: FLucideIcons.calendarClock,
+              title: l10n.planDcaSectionTitle,
+              subtitle: l10n.planDcaSectionSubtitle,
+              path: AppRoutes.planDca,
+            ),
+            _PlanActionSpec(
+              icon: FLucideIcons.refreshCw,
+              title: l10n.planWheelSectionTitle,
+              subtitle: l10n.planWheelSectionSubtitle,
+              path: AppRoutes.planWheel,
+            ),
+          ],
+        ),
       ],
     );
   }
 }
 
-class _PlanSectionSpec {
-  const _PlanSectionSpec({
+class _PlanActionSection extends StatelessWidget {
+  const _PlanActionSection({
+    required this.title,
+    required this.subtitle,
+    required this.actions,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<_PlanActionSpec> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionHeader(title: title, subtitle: subtitle),
+        AppGroupedActionList(
+          actions: [
+            for (final spec in actions)
+              AppGroupedAction(
+                icon: spec.icon,
+                title: spec.title,
+                subtitle: spec.subtitle,
+                onPress: () => context.push(spec.path),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _PlanActionSpec {
+  const _PlanActionSpec({
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -283,46 +297,4 @@ class _PlanSectionSpec {
   final String title;
   final String subtitle;
   final String path;
-}
-
-/// Placeholder page for /plan/scenarios.
-/// Phase B+ ships the real scenario builder; until then this surfaces a
-/// "coming soon" empty state so the route resolves cleanly.
-class PlanScenariosPlaceholderPage extends StatelessWidget {
-  const PlanScenariosPlaceholderPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return AppPageScaffold(
-      title: l10n.planScenariosSectionTitle,
-      childPad: false,
-      child: Center(
-        child: AppEmptyState(
-          icon: FLucideIcons.arrowLeftRight,
-          title: l10n.planScenariosComingSoon,
-        ),
-      ),
-    );
-  }
-}
-
-/// Placeholder page for /plan/goals — see [PlanScenariosPlaceholderPage].
-class PlanGoalsPlaceholderPage extends StatelessWidget {
-  const PlanGoalsPlaceholderPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return AppPageScaffold(
-      title: l10n.planGoalsSectionTitle,
-      childPad: false,
-      child: Center(
-        child: AppEmptyState(
-          icon: FLucideIcons.flag,
-          title: l10n.planGoalsComingSoon,
-        ),
-      ),
-    );
-  }
 }

@@ -57,6 +57,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planHubSubtitle => 'Decisions, models, and goals.';
 
   @override
+  String get planCoreSectionTitle => 'Planning';
+
+  @override
+  String get planCoreSectionSubtitle =>
+      'Long-term targets and allocation decisions';
+
+  @override
+  String get planStrategyToolsSectionTitle => 'Strategy tools';
+
+  @override
+  String get planStrategyToolsSectionSubtitle =>
+      'Simulate and review investment actions';
+
+  @override
   String get planFireSectionTitle => 'FIRE';
 
   @override
@@ -79,30 +93,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planDcaSectionSubtitle => 'Recurring buy plan';
-
-  @override
-  String get planProjectionSectionTitle => 'Scenario analytics';
-
-  @override
-  String get planProjectionSectionSubtitle => 'Allocation & FIRE projection';
-
-  @override
-  String get planScenariosSectionTitle => 'Scenarios';
-
-  @override
-  String get planScenariosSectionSubtitle => 'Compare what-ifs';
-
-  @override
-  String get planScenariosComingSoon => 'Scenario builder is not yet wired up.';
-
-  @override
-  String get planGoalsSectionTitle => 'Goals';
-
-  @override
-  String get planGoalsSectionSubtitle => 'Saving targets & milestones';
-
-  @override
-  String get planGoalsComingSoon => 'Goal tracker is not yet wired up.';
 
   @override
   String get planBudgetSectionTitle => 'Budget';

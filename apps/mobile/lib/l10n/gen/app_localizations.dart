@@ -146,7 +146,7 @@ abstract class AppLocalizations {
   /// **'Wealth'**
   String get navWealth;
 
-  /// Bottom nav: plan tab (decisions + future state — FIRE / rebalance / income / scenarios)
+  /// Bottom nav: plan tab (decisions + future state — FIRE, rebalance, and strategy tools)
   ///
   /// In en, this message translates to:
   /// **'Plan'**
@@ -193,6 +193,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Decisions, models, and goals.'**
   String get planHubSubtitle;
+
+  /// Plan hub grouped section title for core long-term planning workflows
+  ///
+  /// In en, this message translates to:
+  /// **'Planning'**
+  String get planCoreSectionTitle;
+
+  /// Plan hub grouped section subtitle for core planning workflows
+  ///
+  /// In en, this message translates to:
+  /// **'Long-term targets and allocation decisions'**
+  String get planCoreSectionSubtitle;
+
+  /// Plan hub grouped section title for investment strategy tools
+  ///
+  /// In en, this message translates to:
+  /// **'Strategy tools'**
+  String get planStrategyToolsSectionTitle;
+
+  /// Plan hub grouped section subtitle for investment strategy tools
+  ///
+  /// In en, this message translates to:
+  /// **'Simulate and review investment actions'**
+  String get planStrategyToolsSectionSubtitle;
 
   /// Plan hub: FIRE section card title
   ///
@@ -241,54 +265,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recurring buy plan'**
   String get planDcaSectionSubtitle;
-
-  /// Plan hub: scenario analytics / FIRE projection section title
-  ///
-  /// In en, this message translates to:
-  /// **'Scenario analytics'**
-  String get planProjectionSectionTitle;
-
-  /// Plan hub: scenario analytics subtitle
-  ///
-  /// In en, this message translates to:
-  /// **'Allocation & FIRE projection'**
-  String get planProjectionSectionSubtitle;
-
-  /// Plan hub: scenarios section title (Phase B+)
-  ///
-  /// In en, this message translates to:
-  /// **'Scenarios'**
-  String get planScenariosSectionTitle;
-
-  /// Plan hub: scenarios section subtitle
-  ///
-  /// In en, this message translates to:
-  /// **'Compare what-ifs'**
-  String get planScenariosSectionSubtitle;
-
-  /// Empty-state body for the scenarios sub-page until the builder ships
-  ///
-  /// In en, this message translates to:
-  /// **'Scenario builder is not yet wired up.'**
-  String get planScenariosComingSoon;
-
-  /// Plan hub: goals section title (Phase B+)
-  ///
-  /// In en, this message translates to:
-  /// **'Goals'**
-  String get planGoalsSectionTitle;
-
-  /// Plan hub: goals section subtitle
-  ///
-  /// In en, this message translates to:
-  /// **'Saving targets & milestones'**
-  String get planGoalsSectionSubtitle;
-
-  /// Empty-state body for the goals sub-page until the tracker ships
-  ///
-  /// In en, this message translates to:
-  /// **'Goal tracker is not yet wired up.'**
-  String get planGoalsComingSoon;
 
   /// Plan hub: monthly category budget section title (roadmap-next.md §3.2)
   ///

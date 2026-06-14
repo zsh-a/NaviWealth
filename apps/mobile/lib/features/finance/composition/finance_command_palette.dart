@@ -89,19 +89,6 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
       run: (BuildContext ctx) => ctx.go(AppRoutes.cashflowDividends),
     ),
     CommandPaletteEntry(
-      id: 'nav.projection',
-      label: l10n.planAnalyticsTitle,
-      icon: FLucideIcons.chartPie,
-      keywords: const <String>[
-        AppRoutes.planProjection,
-        '/accounts/analytics',
-        'analytics',
-        'projection',
-        '分析',
-      ],
-      run: (BuildContext ctx) => ctx.go(AppRoutes.planProjection),
-    ),
-    CommandPaletteEntry(
       id: 'nav.fire',
       label: l10n.planFireTitle,
       icon: FLucideIcons.flag,

@@ -57,6 +57,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planHubSubtitle => '决策、模型与目标。';
 
   @override
+  String get planCoreSectionTitle => '规划决策';
+
+  @override
+  String get planCoreSectionSubtitle => '长期目标与资产配置决策';
+
+  @override
+  String get planStrategyToolsSectionTitle => '策略工具';
+
+  @override
+  String get planStrategyToolsSectionSubtitle => '模拟并复盘投资动作';
+
+  @override
   String get planFireSectionTitle => 'FIRE';
 
   @override
@@ -79,30 +91,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get planDcaSectionSubtitle => '定投计划';
-
-  @override
-  String get planProjectionSectionTitle => '情景分析';
-
-  @override
-  String get planProjectionSectionSubtitle => '资产配置与 FIRE 预测';
-
-  @override
-  String get planScenariosSectionTitle => '情景';
-
-  @override
-  String get planScenariosSectionSubtitle => '对比 what-if';
-
-  @override
-  String get planScenariosComingSoon => '情景构建器尚未上线。';
-
-  @override
-  String get planGoalsSectionTitle => '目标';
-
-  @override
-  String get planGoalsSectionSubtitle => '储蓄目标与里程碑';
-
-  @override
-  String get planGoalsComingSoon => '目标追踪尚未上线。';
 
   @override
   String get planBudgetSectionTitle => '预算';

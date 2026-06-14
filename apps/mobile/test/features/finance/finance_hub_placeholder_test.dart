@@ -13,7 +13,7 @@ import 'package:naviwealth/features/wealth/ui/wealth_hub_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
-  testWidgets('Plan hub hides placeholder-only entries', (tester) async {
+  testWidgets('Plan hub shows actionable planning groups', (tester) async {
     await _setDesktopSurface(tester);
     await tester.pumpWidget(
       _wrap(
@@ -28,7 +28,12 @@ void main() {
     await tester.pump();
 
     expect(find.text('FIRE'), findsOneWidget);
-    expect(find.text('Budget'), findsOneWidget);
+    expect(find.text('Planning'), findsOneWidget);
+    expect(find.text('Strategy tools'), findsOneWidget);
+    expect(find.text('Rebalance'), findsOneWidget);
+    expect(find.text('DCA simulator'), findsOneWidget);
+    expect(find.text('Budget'), findsNothing);
+    expect(find.text('Scenario analytics'), findsNothing);
     expect(find.text('Scenarios'), findsNothing);
     expect(find.text('Goals'), findsNothing);
   });
