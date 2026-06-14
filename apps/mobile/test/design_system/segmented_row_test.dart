@@ -19,21 +19,25 @@ Widget _wrap(Widget child, {double width = 400}) {
 }
 
 void main() {
-  testWidgets('renders one labelled button per option', (tester) async {
+  testWidgets('renders one labelled segment per option', (tester) async {
+    String? changedTo;
     await tester.pumpWidget(
       _wrap(
         SegmentedRow<String>(
           options: const ['a', 'b', 'c'],
           value: 'a',
           labelOf: (s) => s.toUpperCase(),
-          onChanged: (_) {},
+          onChanged: (value) => changedTo = value,
         ),
       ),
     );
     expect(find.text('A'), findsOneWidget);
     expect(find.text('B'), findsOneWidget);
     expect(find.text('C'), findsOneWidget);
-    expect(find.byType(FButton), findsNWidgets(3));
+
+    await tester.tap(find.text('B'));
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(changedTo, 'b');
   });
 
   testWidgets('long labels in the equal-split layout do not overflow', (
