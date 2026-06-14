@@ -92,7 +92,12 @@ class _ChatComposerState extends State<ChatComposer> {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s8, AppSpacing.s12, AppSpacing.s12),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s12,
+          AppSpacing.s8,
+          AppSpacing.s12,
+          AppSpacing.s12,
+        ),
         child: SafeArea(
           top: false,
           child: Row(
@@ -186,7 +191,7 @@ class _TrailingButton extends StatelessWidget {
         // isStreaming flips — toggling `canSend` keeps the same key, so
         // a keystroke doesn't trigger a transition.
         return AnimatedSwitcher(
-          duration: Motion.fast,
+          duration: motionDuration(context, Motion.fast),
           transitionBuilder: (child, anim) =>
               FadeTransition(opacity: anim, child: child),
           child: current(canSend),

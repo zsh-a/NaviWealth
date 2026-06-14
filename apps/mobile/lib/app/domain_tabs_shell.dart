@@ -44,12 +44,18 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: Motion.medium);
+    _controller = AnimationController(vsync: this);
     _fade = CurvedAnimation(
       parent: _controller,
       curve: Motion.emphasizedDecelerate,
     );
     _controller.value = 1.0;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _controller.duration = motionDuration(context, Motion.medium);
   }
 
   @override
@@ -62,7 +68,11 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell>
   void didUpdateWidget(DomainTabsShell old) {
     super.didUpdateWidget(old);
     if (widget.shell.currentIndex != old.shell.currentIndex) {
-      _controller.forward(from: 0);
+      if (MediaQuery.disableAnimationsOf(context)) {
+        _controller.value = 1;
+      } else {
+        _controller.forward(from: 0);
+      }
     }
   }
 

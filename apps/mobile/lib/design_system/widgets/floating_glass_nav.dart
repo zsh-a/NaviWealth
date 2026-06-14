@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
+import '../tokens/motion_utils.dart';
 
 const double kFloatingGlassNavBarHeight = AppSpacing.s64;
 
@@ -92,9 +93,7 @@ class FloatingGlassNavBar extends StatelessWidget {
         child: Stack(
           children: [
             // Base frosted fill.
-            Positioned.fill(
-              child: ColoredBox(color: glassColor),
-            ),
+            Positioned.fill(child: ColoredBox(color: glassColor)),
             // Top-edge highlight band — refracted light simulation.
             Positioned.fill(
               child: DecoratedBox(
@@ -209,7 +208,7 @@ class _NavTabButton extends StatelessWidget {
       child: FTappable(
         onPress: onTap,
         child: AnimatedContainer(
-          duration: Motion.fast,
+          duration: motionDuration(context, Motion.fast),
           curve: Motion.standardDecelerate,
           height: 52,
           padding: const EdgeInsets.symmetric(
@@ -232,7 +231,7 @@ class _NavTabButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               AnimatedContainer(
-                duration: Motion.fast,
+                duration: motionDuration(context, Motion.fast),
                 curve: Motion.standardDecelerate,
                 width: 26,
                 height: 26,
@@ -324,6 +323,7 @@ class _CenterActionButtonState extends State<_CenterActionButton>
 
   @override
   Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final buttonColor = widget.isDark
         ? ColorPalette.cyanBrand500
         : ColorPalette.cyanBrand600;
@@ -335,48 +335,79 @@ class _CenterActionButtonState extends State<_CenterActionButton>
       button: true,
       label: widget.label ?? 'AI',
       child: GestureDetector(
-        onTapDown: (_) => _controller.forward(),
+        onTapDown: reduceMotion ? null : (_) => _controller.forward(),
         onTapUp: (_) {
-          _controller.reverse();
+          if (!reduceMotion) _controller.reverse();
           widget.onTap();
         },
-        onTapCancel: () => _controller.reverse(),
-        child: ScaleTransition(
-          scale: _scale,
-          child: Container(
-            width: AppSpacing.s56,
-            height: 52,
-            decoration: BoxDecoration(
-              color: buttonColor,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              boxShadow: [
-                BoxShadow(
-                  color: buttonColor.withValues(alpha: 0.3),
-                  blurRadius: 14,
-                  offset: const Offset(0, 5),
+        onTapCancel: reduceMotion ? null : () => _controller.reverse(),
+        child: reduceMotion
+            ? _CenterActionButtonSurface(
+                icon: widget.icon,
+                label: widget.label,
+                buttonColor: buttonColor,
+                iconColor: iconColor,
+              )
+            : ScaleTransition(
+                scale: _scale,
+                child: _CenterActionButtonSurface(
+                  icon: widget.icon,
+                  label: widget.label,
+                  buttonColor: buttonColor,
+                  iconColor: iconColor,
                 ),
-              ],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(widget.icon, color: iconColor, size: AppIconSizes.lg),
-                if (widget.label != null) ...[
-                  const SizedBox(height: 1),
-                  Text(
-                    widget.label!,
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: iconColor,
-                      height: 1.0,
-                    ),
-                  ),
-                ],
-              ],
-            ),
+              ),
+      ),
+    );
+  }
+}
+
+class _CenterActionButtonSurface extends StatelessWidget {
+  const _CenterActionButtonSurface({
+    required this.icon,
+    required this.label,
+    required this.buttonColor,
+    required this.iconColor,
+  });
+
+  final IconData icon;
+  final String? label;
+  final Color buttonColor;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: AppSpacing.s56,
+      height: 52,
+      decoration: BoxDecoration(
+        color: buttonColor,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        boxShadow: [
+          BoxShadow(
+            color: buttonColor.withValues(alpha: 0.3),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
           ),
-        ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: iconColor, size: AppIconSizes.lg),
+          if (label != null) ...[
+            const SizedBox(height: 1),
+            Text(
+              label!,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: iconColor,
+                height: 1.0,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

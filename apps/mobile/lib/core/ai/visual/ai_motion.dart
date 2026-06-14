@@ -11,7 +11,7 @@
 /// container reveal (sheet, banner).
 library;
 
-import 'package:flutter/animation.dart';
+import 'package:flutter/widgets.dart';
 
 class AiMotion {
   AiMotion._();
@@ -30,4 +30,8 @@ class AiMotion {
   /// Linear-style ease-out. Quicker start, longer tail than Material
   /// easeOut. Use everywhere on AI surfaces.
   static const Curve standard = Cubic(0.32, 0.72, 0, 1);
+
+  static Duration duration(BuildContext context, Duration value) {
+    return MediaQuery.disableAnimationsOf(context) ? Duration.zero : value;
+  }
 }

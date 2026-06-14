@@ -113,11 +113,17 @@ class KnowledgeFloatingActionMotion extends StatelessWidget {
     return IgnorePointer(
       ignoring: hidden,
       child: AnimatedSlide(
-        duration: _kKnowledgeFloatingActionMotionDuration,
+        duration: motionDuration(
+          context,
+          _kKnowledgeFloatingActionMotionDuration,
+        ),
         curve: Motion.standardDecelerate,
         offset: hidden ? const Offset(0, 1.25) : Offset.zero,
         child: AnimatedOpacity(
-          duration: _kKnowledgeFloatingActionMotionDuration,
+          duration: motionDuration(
+            context,
+            _kKnowledgeFloatingActionMotionDuration,
+          ),
           curve: Motion.standardDecelerate,
           opacity: hidden ? 0 : 1,
           child: child,
@@ -172,10 +178,10 @@ class _KnowledgeFloatingActionSurfaceState
         onTapCancel: () => setState(() => _pressed = false),
         child: AnimatedScale(
           scale: _pressed ? 0.92 : 1,
-          duration: Motion.fast,
+          duration: motionDuration(context, Motion.fast),
           curve: Motion.standardDecelerate,
           child: AnimatedContainer(
-            duration: Motion.fast,
+            duration: motionDuration(context, Motion.fast),
             curve: Motion.standardDecelerate,
             width: AppSpacing.s48,
             height: AppSpacing.s48,
@@ -297,7 +303,7 @@ class _KnowledgePullToRefreshState extends State<KnowledgePullToRefresh> {
           right: 0,
           child: IgnorePointer(
             child: AnimatedOpacity(
-              duration: Motion.fast,
+              duration: motionDuration(context, Motion.fast),
               opacity: visible ? 1 : 0,
               child: Center(
                 child: Padding(
@@ -950,7 +956,7 @@ class _KnowledgeWriterSectionState extends State<KnowledgeWriterSection> {
           else
             header,
           AnimatedSwitcher(
-            duration: Motion.fast,
+            duration: motionDuration(context, Motion.fast),
             child: _expanded
                 ? Column(
                     key: const ValueKey<String>('expanded'),
@@ -997,7 +1003,7 @@ class KnowledgeCreateTile extends StatelessWidget {
     return FTappable(
       onPress: onPress,
       child: AnimatedContainer(
-        duration: Motion.fast,
+        duration: motionDuration(context, Motion.fast),
         curve: Motion.standardDecelerate,
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s12,

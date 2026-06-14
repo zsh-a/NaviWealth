@@ -695,8 +695,7 @@ class _MetadataSectionState extends State<_MetadataSection> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final needsCollapse =
-        widget.children.length > _kMetadataCollapseThreshold;
+    final needsCollapse = widget.children.length > _kMetadataCollapseThreshold;
     final visibleChildren = needsCollapse && !_expanded
         ? widget.children.take(_kMetadataCollapseThreshold).toList()
         : widget.children;
@@ -717,7 +716,7 @@ class _MetadataSectionState extends State<_MetadataSection> {
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.s4),
                 child: AnimatedRotation(
-                  duration: Motion.fast,
+                  duration: motionDuration(context, Motion.fast),
                   turns: _expanded ? 0.5 : 0,
                   child: Icon(
                     FLucideIcons.chevronDown,
@@ -834,15 +833,12 @@ class _RelatedObjectLink extends StatelessWidget {
               height: 24,
               margin: const EdgeInsets.only(right: AppSpacing.s8, top: 2),
               decoration: BoxDecoration(
-                color: (iconColor ?? colors.primary)
-                    .withValues(alpha: AppOpacity.subtle),
+                color: (iconColor ?? colors.primary).withValues(
+                  alpha: AppOpacity.subtle,
+                ),
                 borderRadius: BorderRadius.circular(AppRadius.xs),
               ),
-              child: Icon(
-                icon,
-                size: 13,
-                color: iconColor ?? colors.primary,
-              ),
+              child: Icon(icon, size: 13, color: iconColor ?? colors.primary),
             ),
           ],
           Expanded(
@@ -875,8 +871,7 @@ class _RelatedObjectLink extends StatelessWidget {
             Icon(
               FLucideIcons.chevronRight,
               size: AppIconSizes.xs,
-              color: colors.mutedForeground
-                  .withValues(alpha: AppOpacity.muted),
+              color: colors.mutedForeground.withValues(alpha: AppOpacity.muted),
             ),
           ],
         ],

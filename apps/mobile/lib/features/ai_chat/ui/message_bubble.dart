@@ -102,7 +102,7 @@ class MessageBubble extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       key: ValueKey(message.id),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: Motion.medium,
+      duration: motionDuration(context, Motion.medium),
       curve: Motion.standardDecelerate,
       builder: (context, value, child) {
         return Opacity(
@@ -647,10 +647,21 @@ class _TypingDots extends StatefulWidget {
 
 class _TypingDotsState extends State<_TypingDots>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl = AnimationController(
-    vsync: this,
-    duration: Motion.typingCycle,
-  )..repeat();
+  late final AnimationController _ctrl = AnimationController(vsync: this);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _ctrl
+        ..stop()
+        ..value = 1;
+      return;
+    }
+    _ctrl
+      ..duration = Motion.typingCycle
+      ..repeat();
+  }
 
   @override
   void dispose() {
@@ -705,10 +716,21 @@ class _StreamingCaret extends StatefulWidget {
 
 class _StreamingCaretState extends State<_StreamingCaret>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl = AnimationController(
-    vsync: this,
-    duration: Motion.caretBlink,
-  )..repeat(reverse: true);
+  late final AnimationController _ctrl = AnimationController(vsync: this);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _ctrl
+        ..stop()
+        ..value = 1;
+      return;
+    }
+    _ctrl
+      ..duration = Motion.caretBlink
+      ..repeat(reverse: true);
+  }
 
   @override
   void dispose() {

@@ -37,7 +37,7 @@ class PersistentUndoBanner extends ConsumerWidget {
       }
     }
     return AnimatedSwitcher(
-      duration: AiMotion.medium,
+      duration: AiMotion.duration(context, AiMotion.medium),
       switchInCurve: AiMotion.standard,
       switchOutCurve: AiMotion.standard,
       transitionBuilder: (child, anim) =>

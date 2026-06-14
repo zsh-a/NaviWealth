@@ -82,7 +82,7 @@ Future<void> showAiSheet(
     barrierLabel: 'ai-chat-sheet',
     barrierDismissible: true,
     barrierColor: SemanticColors.of(context).scrim,
-    transitionDuration: Motion.medium,
+    transitionDuration: AiMotion.duration(context, Motion.medium),
     pageBuilder: (ctx, animation, secondaryAnimation) =>
         _DesktopSheetOverlay(prefill: prefill),
   );
@@ -121,7 +121,7 @@ class _SheetFrame extends StatelessWidget {
     return SizedBox(
       height: height,
       child: AnimatedPadding(
-        duration: Motion.fast,
+        duration: AiMotion.duration(context, Motion.fast),
         curve: AiMotion.standard,
         padding: EdgeInsets.only(bottom: keyboard),
         child: child,
@@ -844,16 +844,20 @@ class _BodySkeleton extends StatefulWidget {
 
 class _BodySkeletonState extends State<_BodySkeleton>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl = AnimationController(
-    vsync: this,
-    duration: Motion.shimmerCycle,
-  );
+  late final AnimationController _ctrl = AnimationController(vsync: this);
+  bool _configured = false;
 
   @override
-  void initState() {
-    super.initState();
-    if (widget.animated) {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_configured) return;
+    _configured = true;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    _ctrl.duration = AiMotion.duration(context, Motion.shimmerCycle);
+    if (widget.animated && !reduceMotion) {
       _ctrl.repeat(reverse: true);
+    } else {
+      _ctrl.value = 1;
     }
   }
 

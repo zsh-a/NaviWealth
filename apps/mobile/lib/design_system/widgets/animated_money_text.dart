@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/motion_tokens.dart';
+import '../tokens/motion_utils.dart';
 import 'money_text.dart';
 
 /// CountUp-style wrapper around [MoneyText] that smoothly animates between
@@ -124,7 +125,7 @@ class _AnimatedMoneyTextState extends State<AnimatedMoneyText> {
         '${widget.currencyCode}|${widget.compact}|${widget.symbolStyle.index}',
       ),
       tween: Tween<double>(begin: from, end: to),
-      duration: duration,
+      duration: motionDuration(context, duration),
       curve: widget.curve,
       builder: (context, value, _) => _staticMoneyText(value),
     );

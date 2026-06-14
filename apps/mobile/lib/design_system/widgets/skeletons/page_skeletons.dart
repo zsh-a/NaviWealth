@@ -19,6 +19,7 @@ import 'package:forui/forui.dart';
 import '../../tokens/breakpoints.dart';
 import '../../tokens/dimens_tokens.dart';
 import '../../tokens/motion_tokens.dart';
+import '../../tokens/motion_utils.dart';
 import '../responsive_two_column.dart';
 import '../skeleton.dart';
 
@@ -78,7 +79,7 @@ class _PageSkeletonShellState<T> extends State<PageSkeletonShell<T>> {
   Widget build(BuildContext context) {
     final showSkeleton = widget.isLoading || !_minElapsed;
     return AnimatedSwitcher(
-      duration: Motion.fast,
+      duration: motionDuration(context, Motion.fast),
       child: showSkeleton
           ? KeyedSubtree(
               key: const ValueKey('page-skeleton'),

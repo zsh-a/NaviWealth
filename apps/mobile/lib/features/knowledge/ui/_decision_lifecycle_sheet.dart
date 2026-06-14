@@ -185,7 +185,7 @@ class _DecisionLifecycleSheetState
                     return FTappable(
                       onPress: () => setState(() => _status = s),
                       child: AnimatedContainer(
-                        duration: Motion.fast,
+                        duration: motionDuration(context, Motion.fast),
                         curve: Motion.standardDecelerate,
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.s8,
@@ -193,14 +193,16 @@ class _DecisionLifecycleSheetState
                         ),
                         decoration: BoxDecoration(
                           color: active
-                              ? colors.primary
-                                  .withValues(alpha: AppOpacity.subtle)
+                              ? colors.primary.withValues(
+                                  alpha: AppOpacity.subtle,
+                                )
                               : null,
                           borderRadius: BorderRadius.circular(AppRadius.full),
                           border: Border.all(
                             color: active
-                                ? colors.primary
-                                    .withValues(alpha: AppOpacity.light)
+                                ? colors.primary.withValues(
+                                    alpha: AppOpacity.light,
+                                  )
                                 : colors.border,
                           ),
                         ),
@@ -210,8 +212,9 @@ class _DecisionLifecycleSheetState
                             color: active
                                 ? colors.primary
                                 : colors.mutedForeground,
-                            fontWeight:
-                                active ? FontWeight.w600 : FontWeight.w400,
+                            fontWeight: active
+                                ? FontWeight.w600
+                                : FontWeight.w400,
                           ),
                         ),
                       ),

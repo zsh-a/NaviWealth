@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
+import '../tokens/motion_utils.dart';
 
 enum SoftCardLevel { flat, raised, hero }
 
@@ -110,7 +111,7 @@ class _SoftCardState extends State<SoftCard> {
   }) {
     final decoration = _decoration(context, hovered: hovered, pressed: pressed);
     return AnimatedContainer(
-      duration: Motion.fast,
+      duration: motionDuration(context, Motion.fast),
       curve: Motion.standardDecelerate,
       decoration: decoration,
       padding: widget.padding,

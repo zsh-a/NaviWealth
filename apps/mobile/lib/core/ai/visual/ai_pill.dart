@@ -42,7 +42,9 @@ class AiPill extends StatelessWidget {
       AiPillState.error => AiTone.error(context),
     };
     final Color bg = switch (state) {
-      AiPillState.neutral => AiTone.surfaceTint(context).withValues(alpha: AppOpacity.prominent),
+      AiPillState.neutral => AiTone.surfaceTint(
+        context,
+      ).withValues(alpha: AppOpacity.prominent),
       AiPillState.selected => tone.withValues(alpha: AppOpacity.medium),
       AiPillState.error => tone.withValues(alpha: AppOpacity.light),
     };
@@ -58,9 +60,12 @@ class AiPill extends StatelessWidget {
     };
 
     final pill = AnimatedContainer(
-      duration: AiMotion.short,
+      duration: AiMotion.duration(context, AiMotion.short),
       curve: AiMotion.standard,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s10,
+        vertical: AppSpacing.s4,
+      ),
       decoration: ShapeDecoration(
         color: bg,
         shape: StadiumBorder(side: side),
@@ -68,7 +73,10 @@ class AiPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (leading != null) ...[leading!, const SizedBox(width: AppSpacing.s6)],
+          if (leading != null) ...[
+            leading!,
+            const SizedBox(width: AppSpacing.s6),
+          ],
           Text(label, style: AiType.label(context).copyWith(color: fg)),
         ],
       ),

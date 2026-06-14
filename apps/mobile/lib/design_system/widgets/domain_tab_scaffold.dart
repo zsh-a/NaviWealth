@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
+import '../tokens/motion_utils.dart';
 
 /// Unified scaffold for a domain's **top-level tab / hub page** (Today,
 /// Trend, Inbox, Library, …).
@@ -113,7 +114,7 @@ class _DomainTabScaffoldState extends State<DomainTabScaffold> {
         ? const <Widget>[]
         : <Widget>[widget.leading!];
     final header = AnimatedSize(
-      duration: Motion.medium,
+      duration: motionDuration(context, Motion.medium),
       curve: Motion.standard,
       alignment: Alignment.topCenter,
       child: _headerVisible

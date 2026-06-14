@@ -92,11 +92,11 @@ class _AiHoverOverlayState extends State<AiHoverOverlay> {
                 ignoring: !visible,
                 child: AnimatedSlide(
                   offset: visible ? Offset.zero : const Offset(0, -0.2),
-                  duration: AiMotion.short,
+                  duration: AiMotion.duration(context, AiMotion.short),
                   curve: AiMotion.standard,
                   child: AnimatedOpacity(
                     opacity: visible ? 1 : 0,
-                    duration: AiMotion.short,
+                    duration: AiMotion.duration(context, AiMotion.short),
                     curve: AiMotion.standard,
                     child: widget.capsule,
                   ),

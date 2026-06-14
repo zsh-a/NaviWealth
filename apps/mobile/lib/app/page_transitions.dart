@@ -32,8 +32,8 @@ CustomTransitionPage<T> buildHeroAwareTransitionPage<T>({
   return CustomTransitionPage<T>(
     key: state.pageKey,
     child: child,
-    transitionDuration: Motion.slow,
-    reverseTransitionDuration: Motion.medium,
+    transitionDuration: motionDuration(context, Motion.slow),
+    reverseTransitionDuration: motionDuration(context, Motion.medium),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       final width = MediaQuery.sizeOf(context).width;
       final isMobile = Breakpoints.isMobile(width);

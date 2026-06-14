@@ -1260,7 +1260,7 @@ class _FilterPill extends StatelessWidget {
       child: FTappable(
         onPress: onTap,
         child: AnimatedContainer(
-          duration: Motion.fast,
+          duration: motionDuration(context, Motion.fast),
           curve: Motion.standardDecelerate,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.s8,
@@ -1356,7 +1356,7 @@ class _LibraryTabBar extends StatelessWidget {
           return FTappable(
             onPress: () => onChanged(segment),
             child: AnimatedContainer(
-              duration: Motion.fast,
+              duration: motionDuration(context, Motion.fast),
               curve: Motion.standardDecelerate,
               padding: EdgeInsets.symmetric(
                 horizontal: active ? AppSpacing.s12 : AppSpacing.s8,

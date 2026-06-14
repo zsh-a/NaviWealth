@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../tokens/motion_tokens.dart';
+import '../tokens/motion_utils.dart';
 
 /// A reusable entrance animation: opacity 0 → 1 combined with a small
 /// translate offset, driven by an [AnimationController].
@@ -53,12 +56,13 @@ class FadeSlideIn extends StatefulWidget {
 class _FadeSlideInState extends State<FadeSlideIn>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  Timer? _delayTimer;
   bool _started = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: widget.duration);
+    _controller = AnimationController(vsync: this);
   }
 
   @override
@@ -67,6 +71,8 @@ class _FadeSlideInState extends State<FadeSlideIn>
     if (_started) return;
     _started = true;
 
+    final effectiveDuration = motionDuration(context, widget.duration);
+    _controller.duration = effectiveDuration;
     if (MediaQuery.disableAnimationsOf(context)) {
       _controller.value = 1;
       return;
@@ -75,7 +81,7 @@ class _FadeSlideInState extends State<FadeSlideIn>
     if (widget.delay == Duration.zero) {
       _controller.forward();
     } else {
-      Future.delayed(widget.delay, () {
+      _delayTimer = Timer(widget.delay, () {
         if (mounted) _controller.forward();
       });
     }
@@ -83,6 +89,7 @@ class _FadeSlideInState extends State<FadeSlideIn>
 
   @override
   void dispose() {
+    _delayTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }

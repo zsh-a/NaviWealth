@@ -99,9 +99,8 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
             },
           ),
           const SizedBox(height: AppSpacing.s16),
-          for (final (i, spec) in _trendSpecs(l10n, group).indexed) ...[
+          for (final spec in _trendSpecs(l10n, group)) ...[
             FadeSlideIn(
-              delay: Duration(milliseconds: i * 40),
               child: _TrendCard(
                 spec: spec,
                 points: groupData.whenData((m) => m[spec.kind]),

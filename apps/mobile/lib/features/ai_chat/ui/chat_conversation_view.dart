@@ -114,7 +114,7 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scroll.hasClients) return;
       final target = _scroll.position.maxScrollExtent;
-      if (animated) {
+      if (animated && !MediaQuery.disableAnimationsOf(context)) {
         _scroll.animateTo(
           target,
           duration: Motion.fast,
@@ -224,7 +224,7 @@ class _JumpToBottomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      duration: Motion.fast,
+      duration: motionDuration(context, Motion.fast),
       transitionBuilder: (child, anim) =>
           FadeTransition(opacity: anim, child: child),
       child: !visible

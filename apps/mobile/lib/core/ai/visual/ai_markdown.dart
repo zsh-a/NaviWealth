@@ -122,7 +122,7 @@ class _AiMarkdownState extends State<AiMarkdown> {
     // AnimatedSize keyed off the parsed AST shape, the height change
     // glides on the AI motion curve.
     return AnimatedSize(
-      duration: AiMotion.short,
+      duration: AiMotion.duration(context, AiMotion.short),
       curve: AiMotion.standard,
       alignment: Alignment.topLeft,
       child: Column(
@@ -334,7 +334,10 @@ class _MdList extends _MdBlock {
     // hue. Checked state fills with the active tone + check glyph.
     if (item.checkbox != null) {
       final box = Padding(
-        padding: const EdgeInsets.only(right: AppSpacing.s8, top: AppSpacing.s2),
+        padding: const EdgeInsets.only(
+          right: AppSpacing.s8,
+          top: AppSpacing.s2,
+        ),
         child: _TaskCheckbox(checked: item.checkbox!),
       );
       // Ordered task items (`1. [x] step`) keep their number so the
@@ -470,7 +473,12 @@ class _MdCode extends _MdBlock {
         children: [
           if (lang.isNotEmpty || closed)
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.s12, AppSpacing.s6, AppSpacing.s4, AppSpacing.s2, ),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s12,
+                AppSpacing.s6,
+                AppSpacing.s4,
+                AppSpacing.s2,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -498,7 +506,9 @@ class _MdCode extends _MdBlock {
           // GitHub/IDE behaviour).
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.fromLTRB(AppSpacing.s12, (lang.isNotEmpty || closed) ? AppSpacing.s2 : AppSpacing.s8,
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.s12,
+              (lang.isNotEmpty || closed) ? AppSpacing.s2 : AppSpacing.s8,
               AppSpacing.s12,
               AppSpacing.s8,
             ),
@@ -560,7 +570,9 @@ class _MdTable extends _MdBlock {
       fontWeight: FontWeight.w600,
       color: AiTone.onSurface(context),
     );
-    final headerBg = AiTone.surfaceTint(context).withValues(alpha: AppOpacity.disabled);
+    final headerBg = AiTone.surfaceTint(
+      context,
+    ).withValues(alpha: AppOpacity.disabled);
 
     // Pad short rows / clip long rows so every row has exactly `cols`
     // cells — `Table` throws if rows differ in length.
@@ -1105,7 +1117,9 @@ class _InlineParser {
             final linkStyle = base.copyWith(
               color: AiTone.active(context),
               decoration: TextDecoration.underline,
-              decorationColor: AiTone.active(context).withValues(alpha: AppOpacity.disabled),
+              decorationColor: AiTone.active(
+                context,
+              ).withValues(alpha: AppOpacity.disabled),
             );
             // The label is rendered inside a tappable WidgetSpan so we
             // don't need to wire a TapGestureRecognizer (which would
@@ -1243,7 +1257,9 @@ Future<void> _confirmAndOpen(BuildContext context, String url) async {
             vertical: AppSpacing.s6,
           ),
           decoration: BoxDecoration(
-            color: AiTone.surfaceTint(context).withValues(alpha: AppOpacity.scrim),
+            color: AiTone.surfaceTint(
+              context,
+            ).withValues(alpha: AppOpacity.scrim),
             borderRadius: BorderRadius.circular(AppRadius.xs),
             border: Border.all(color: AiTone.outline(context)),
           ),
@@ -1272,7 +1288,11 @@ Future<void> _confirmAndOpen(BuildContext context, String url) async {
   if (uri == null) return;
   final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!launched && context.mounted) {
-    AppMessenger.show(context, ToastKind.error, AppLocalizations.of(context).aiChatLinkOpenFailed);
+    AppMessenger.show(
+      context,
+      ToastKind.error,
+      AppLocalizations.of(context).aiChatLinkOpenFailed,
+    );
   }
 }
 
@@ -1435,7 +1455,9 @@ InlineSpan _codeSpan(String text, TextStyle base, BuildContext context) {
         vertical: 1,
       ),
       decoration: BoxDecoration(
-        color: AiTone.surfaceTint(context).withValues(alpha: AppOpacity.prominent),
+        color: AiTone.surfaceTint(
+          context,
+        ).withValues(alpha: AppOpacity.prominent),
         borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Text(

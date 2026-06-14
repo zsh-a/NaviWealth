@@ -379,7 +379,7 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
           ],
         ),
         AnimatedSwitcher(
-          duration: Motion.fast,
+          duration: motionDuration(context, Motion.fast),
           child: _expanded
               ? Padding(
                   key: const ValueKey<String>('details'),
@@ -438,7 +438,8 @@ class _ProposalDetailsPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
-                    width: 104, // Payload key column — keeps label/value ratio stable.
+                    width:
+                        104, // Payload key column — keeps label/value ratio stable.
                     child: Text(
                       entry.key,
                       style: typography.xs.copyWith(

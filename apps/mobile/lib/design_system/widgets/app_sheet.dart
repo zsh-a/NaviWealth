@@ -6,6 +6,7 @@ import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
+import '../tokens/motion_utils.dart';
 import 'app_busy_button.dart';
 import 'app_gradient_divider.dart';
 import 'form_dirty_controller.dart';
@@ -306,7 +307,7 @@ class AppSheet extends StatelessWidget {
         _header(context),
         Flexible(
           child: AnimatedSize(
-            duration: Motion.fast,
+            duration: motionDuration(context, Motion.fast),
             curve: Motion.standardDecelerate,
             alignment: Alignment.topCenter,
             child: body,

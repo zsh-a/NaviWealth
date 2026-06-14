@@ -49,7 +49,7 @@ class MasterDetailLayout extends ConsumerWidget {
         ),
         Expanded(
           child: AnimatedSwitcher(
-            duration: Motion.fast,
+            duration: motionDuration(context, Motion.fast),
             switchInCurve: Motion.standardDecelerate,
             switchOutCurve: Motion.standardAccelerate,
             transitionBuilder: (child, animation) =>
@@ -112,7 +112,7 @@ class _SplitterState extends State<_Splitter> {
           width: AppSpacing.s16,
           child: Center(
             child: AnimatedContainer(
-              duration: Motion.fast,
+              duration: motionDuration(context, Motion.fast),
               width: highlight ? 2 : 1,
               color: highlight ? context.theme.colors.primary : widget.color,
             ),

@@ -35,7 +35,7 @@ class DesktopSidebar extends ConsumerWidget {
     final collapsed = ref.watch(sidebarCollapsedProvider);
     final colors = context.theme.colors;
     return AnimatedContainer(
-      duration: Motion.fast,
+      duration: motionDuration(context, Motion.fast),
       curve: Motion.standardDecelerate,
       width: collapsed ? kSidebarCollapsedWidth : kSidebarExpandedWidth,
       decoration: BoxDecoration(
@@ -50,7 +50,10 @@ class DesktopSidebar extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s12),
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s8,
+                  vertical: AppSpacing.s4,
+                ),
                 itemCount: destinations.length,
                 itemBuilder: (_, i) => _SidebarItem(
                   destination: destinations[i],
@@ -250,7 +253,10 @@ class _CollapseToggle extends StatelessWidget {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s8,
+      ),
       child: FTooltip(
         tipBuilder: (_, _) => Text(
           collapsed

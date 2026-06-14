@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
+import '../tokens/motion_utils.dart';
 
 /// Full-screen form body with a scrollable field area and a pinned action bar.
 ///
@@ -36,7 +37,7 @@ class AppFormScaffoldBody extends StatelessWidget {
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return AnimatedPadding(
-      duration: Motion.ambient,
+      duration: motionDuration(context, Motion.ambient),
       curve: Motion.standardDecelerate,
       padding: EdgeInsets.only(bottom: keyboardInset),
       child: Column(

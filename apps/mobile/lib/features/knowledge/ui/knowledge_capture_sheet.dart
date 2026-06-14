@@ -348,7 +348,7 @@ class _KnowledgeCaptureSheetState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AnimatedSwitcher(
-            duration: Motion.medium,
+            duration: motionDuration(context, Motion.medium),
             switchInCurve: Motion.standardDecelerate,
             switchOutCurve: Motion.standardAccelerate,
             transitionBuilder: _capturePreviewTransition,
@@ -368,7 +368,7 @@ class _KnowledgeCaptureSheetState
           ),
           if (showSavedPreview) const SizedBox(height: AppSpacing.s12),
           AnimatedSwitcher(
-            duration: Motion.medium,
+            duration: motionDuration(context, Motion.medium),
             switchInCurve: Motion.standardDecelerate,
             switchOutCurve: Motion.standardAccelerate,
             transitionBuilder: _captureStageTransition,
@@ -462,9 +462,7 @@ class _ClassifyingBody extends StatelessWidget {
           ...List.generate(3, (i) {
             final widths = <double>[double.infinity, 200, 140];
             return Padding(
-              padding: EdgeInsets.only(
-                bottom: i < 2 ? AppSpacing.s8 : 0,
-              ),
+              padding: EdgeInsets.only(bottom: i < 2 ? AppSpacing.s8 : 0),
               child: SkeletonBox(
                 height: 14,
                 width: widths[i],
@@ -574,7 +572,7 @@ class _CaptureSharedTextLine extends StatelessWidget {
     final colors = context.theme.colors;
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(end: promoted ? 1 : 0),
-      duration: Motion.medium,
+      duration: motionDuration(context, Motion.medium),
       curve: Motion.standardDecelerate,
       builder: (context, progress, child) {
         final scale = 0.985 + 0.015 * progress;
@@ -590,7 +588,7 @@ class _CaptureSharedTextLine extends StatelessWidget {
             scale: scale,
             alignment: Alignment.centerLeft,
             child: AnimatedDefaultTextStyle(
-              duration: Motion.fast,
+              duration: motionDuration(context, Motion.fast),
               curve: Motion.standardDecelerate,
               style: style.copyWith(color: color),
               child: child!,
@@ -756,10 +754,7 @@ class _DiffRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          label,
-          style: context.captionStyle,
-        ),
+        Text(label, style: context.captionStyle),
         const SizedBox(height: AppSpacing.s4),
         // Original — muted, stricken
         Container(
@@ -842,10 +837,7 @@ class _UpgradePanel extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              detail,
-              style: context.bodyCaptionStyle,
-            ),
+            Text(detail, style: context.bodyCaptionStyle),
             const SizedBox(height: AppSpacing.s4),
             Text(
               l10n.knowledgeCaptureSuggestionReasonConfidence(
