@@ -355,7 +355,15 @@ class _InputMetricsCard extends StatelessWidget {
           Wrap(
             spacing: AppSpacing.s8,
             runSpacing: AppSpacing.s8,
-            children: [for (final m in metrics) _MetricChip(metric: m)],
+            children: [
+              for (final m in metrics)
+                AppInfoChip(
+                  icon: m.icon,
+                  value: m.value,
+                  label: m.label,
+                  color: m.color,
+                ),
+            ],
           ),
         ],
       ),
@@ -379,54 +387,6 @@ class _MetricItem {
   final String label;
   final String value;
   final Color color;
-}
-
-class _MetricChip extends StatelessWidget {
-  const _MetricChip({required this.metric});
-  final _MetricItem metric;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s10,
-        vertical: AppSpacing.s8,
-      ),
-      decoration: BoxDecoration(
-        color: metric.color.withValues(alpha: AppOpacity.light),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(metric.icon, size: AppIconSizes.xs, color: metric.color),
-          const SizedBox(width: AppSpacing.s4),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                metric.value,
-                style: typography.xs.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: colors.foreground,
-                ),
-              ),
-              Text(
-                metric.label,
-                style: typography.xs.copyWith(
-                  fontSize: 10,
-                  color: colors.mutedForeground,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _PlanAction {

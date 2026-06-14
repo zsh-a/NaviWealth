@@ -9170,6 +9170,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthGarminMfaRequired => 'MFA Required';
 
   @override
+  String get healthGarminConnectSheetTitle => 'Connect Garmin';
+
+  @override
+  String get healthGarminMfaCodeLabel => 'MFA code';
+
+  @override
+  String get healthGarminEmailLabel => 'Email';
+
+  @override
+  String get healthGarminEmailHint => 'you@example.com';
+
+  @override
+  String get healthGarminPasswordLabel => 'Password';
+
+  @override
+  String get healthGarminRegionLabel => 'Region';
+
+  @override
+  String get healthGarminRegionChina => 'China';
+
+  @override
+  String get healthGarminRegionGlobal => 'Global';
+
+  @override
   String get healthGarminConnect => 'Connect';
 
   @override

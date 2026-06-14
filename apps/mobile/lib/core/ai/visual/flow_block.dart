@@ -110,8 +110,8 @@ class FlowParser {
           FlowDecisionNode(
             id: pendingDecisionId!,
             label: pendingDecisionLabel!,
-            yesBranch: FlowBranch(label: '是', nodes: pendingYesNodes ?? []),
-            noBranch: FlowBranch(label: '否', nodes: pendingNoNodes ?? []),
+            yesBranch: FlowBranch(label: 'Yes', nodes: pendingYesNodes ?? []),
+            noBranch: FlowBranch(label: 'No', nodes: pendingNoNodes ?? []),
           ),
         );
         pendingDecisionId = null;

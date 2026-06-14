@@ -205,19 +205,13 @@ class _RecoveryHero extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: AppOpacity.medium),
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      RecoveryVerdict.icon(verdict),
-                      size: AppIconSizes.md,
-                      color: color,
-                    ),
+                  AppIconTile(
+                    icon: RecoveryVerdict.icon(verdict),
+                    color: color,
+                    size: 40,
+                    iconSize: AppIconSizes.md,
+                    backgroundOpacity: AppOpacity.medium,
+                    foregroundOpacity: 1,
                   ),
                   const SizedBox(width: AppSpacing.s12),
                   Expanded(
@@ -255,7 +249,7 @@ class _RecoveryHero extends ConsumerWidget {
                     Text(
                       scoreText,
                       style: typography.sm.copyWith(
-                        color: color.withValues(alpha: 0.7),
+                        color: color.withValues(alpha: AppOpacity.strong),
                       ),
                     ),
                   ],
@@ -297,7 +291,7 @@ class _RecoverySparkline extends ConsumerWidget {
             size: Size.infinite,
             painter: _SparklinePainter(
               values: values,
-              color: colors.primary.withValues(alpha: 0.6),
+              color: colors.primary.withValues(alpha: AppOpacity.prominent),
             ),
           ),
         );
@@ -599,14 +593,18 @@ class _SleepStageBar extends StatelessWidget {
                   Expanded(
                     flex: (remPct * 100).round().clamp(1, 100),
                     child: Container(
-                      color: colors.primary.withValues(alpha: 0.6),
+                      color: colors.primary.withValues(
+                        alpha: AppOpacity.prominent,
+                      ),
                     ),
                   ),
                 if (awakePct > 0)
                   Expanded(
                     flex: (awakePct * 100).round().clamp(1, 100),
                     child: Container(
-                      color: colors.destructive.withValues(alpha: 0.3),
+                      color: colors.destructive.withValues(
+                        alpha: AppOpacity.muted,
+                      ),
                     ),
                   ),
                 Expanded(
@@ -633,7 +631,7 @@ class _SleepStageBar extends StatelessWidget {
             ),
             _stageChip(
               typography,
-              colors.primary.withValues(alpha: 0.6),
+              colors.primary.withValues(alpha: AppOpacity.prominent),
               l10n.healthSleepRemLabel,
               remSeconds,
             ),
@@ -646,7 +644,7 @@ class _SleepStageBar extends StatelessWidget {
             if (awakeSeconds > 0)
               _stageChip(
                 typography,
-                colors.destructive.withValues(alpha: 0.6),
+                colors.destructive.withValues(alpha: AppOpacity.prominent),
                 l10n.healthSleepAwakeLabel,
                 awakeSeconds,
               ),
@@ -1163,30 +1161,8 @@ class _SourceChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return Flexible(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colors.muted.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(AppRadius.xs),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s4,
-            vertical: 1,
-          ),
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: typography.xs.copyWith(
-              color: colors.mutedForeground,
-              fontSize: 10,
-            ),
-          ),
-        ),
-      ),
+      child: AppBadge(label: label, size: AppBadgeSize.compact),
     );
   }
 }
@@ -1460,19 +1436,13 @@ class _BriefingCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: AppOpacity.medium),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  FLucideIcons.sun,
-                  size: AppIconSizes.md,
-                  color: colors.primary,
-                ),
+              AppIconTile(
+                icon: FLucideIcons.sun,
+                color: colors.primary,
+                size: 40,
+                iconSize: AppIconSizes.md,
+                backgroundOpacity: AppOpacity.medium,
+                foregroundOpacity: 1,
               ),
               const SizedBox(width: AppSpacing.s12),
               Expanded(
@@ -1546,7 +1516,14 @@ class _BriefingEmpty extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
         children: [
-          Icon(FLucideIcons.sunset, color: colors.mutedForeground),
+          AppIconTile(
+            icon: FLucideIcons.sunset,
+            color: colors.mutedForeground,
+            size: 36,
+            iconSize: AppIconSizes.h18,
+            backgroundOpacity: AppOpacity.whisper,
+            foregroundOpacity: AppOpacity.strong,
+          ),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(

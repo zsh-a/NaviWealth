@@ -8796,6 +8796,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthGarminMfaRequired => '需要 MFA 验证';
 
   @override
+  String get healthGarminConnectSheetTitle => '连接 Garmin';
+
+  @override
+  String get healthGarminMfaCodeLabel => 'MFA 验证码';
+
+  @override
+  String get healthGarminEmailLabel => '邮箱';
+
+  @override
+  String get healthGarminEmailHint => 'you@example.com';
+
+  @override
+  String get healthGarminPasswordLabel => '密码';
+
+  @override
+  String get healthGarminRegionLabel => '地区';
+
+  @override
+  String get healthGarminRegionChina => '中国';
+
+  @override
+  String get healthGarminRegionGlobal => '全球';
+
+  @override
   String get healthGarminConnect => '连接';
 
   @override

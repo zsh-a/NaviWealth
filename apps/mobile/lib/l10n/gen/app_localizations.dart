@@ -15858,6 +15858,54 @@ abstract class AppLocalizations {
   /// **'MFA Required'**
   String get healthGarminMfaRequired;
 
+  /// No description provided for @healthGarminConnectSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Garmin'**
+  String get healthGarminConnectSheetTitle;
+
+  /// No description provided for @healthGarminMfaCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'MFA code'**
+  String get healthGarminMfaCodeLabel;
+
+  /// No description provided for @healthGarminEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get healthGarminEmailLabel;
+
+  /// No description provided for @healthGarminEmailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'you@example.com'**
+  String get healthGarminEmailHint;
+
+  /// No description provided for @healthGarminPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get healthGarminPasswordLabel;
+
+  /// No description provided for @healthGarminRegionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Region'**
+  String get healthGarminRegionLabel;
+
+  /// No description provided for @healthGarminRegionChina.
+  ///
+  /// In en, this message translates to:
+  /// **'China'**
+  String get healthGarminRegionChina;
+
+  /// No description provided for @healthGarminRegionGlobal.
+  ///
+  /// In en, this message translates to:
+  /// **'Global'**
+  String get healthGarminRegionGlobal;
+
   /// No description provided for @healthGarminConnect.
   ///
   /// In en, this message translates to:

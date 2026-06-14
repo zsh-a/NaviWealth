@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../data/garmin/garmin_sync_controller.dart';
 import '../data/providers.dart' as health_data;
 
@@ -45,9 +46,13 @@ class _GarminAccountBindSheetState
   Widget build(BuildContext context) {
     final state = ref.watch(health_data.garminSyncControllerProvider);
     final region = ref.watch(health_data.garminRegionProvider);
+    final l10n = AppLocalizations.of(context);
+    final busy = state is GarminSyncing;
 
     return AppSheet(
-      title: state is GarminPendingMfa ? 'MFA Verification' : 'Connect Garmin',
+      title: state is GarminPendingMfa
+          ? l10n.healthGarminMfaRequired
+          : l10n.healthGarminConnectSheetTitle,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
@@ -59,10 +64,14 @@ class _GarminAccountBindSheetState
               FTextFormField(
                 control: FTextFieldControl.managed(controller: _mfaCtrl),
                 hint: '123456',
-                label: const Text('MFA Code'),
+                label: Text(l10n.healthGarminMfaCodeLabel),
               ),
               const SizedBox(height: AppSpacing.s16),
-              FButton(onPress: _submitMfa, child: const Text('Verify')),
+              AppBusyButton(
+                label: l10n.healthGarminVerifyBadge,
+                onPress: _submitMfa,
+                busy: busy,
+              ),
             ] else ...[
               _GarminRegionPicker(
                 selected: region,
@@ -73,29 +82,31 @@ class _GarminAccountBindSheetState
               const SizedBox(height: AppSpacing.s12),
               FTextFormField(
                 control: FTextFieldControl.managed(controller: _emailCtrl),
-                hint: 'you@example.com',
-                label: const Text('Email'),
+                hint: l10n.healthGarminEmailHint,
+                label: Text(l10n.healthGarminEmailLabel),
               ),
               const SizedBox(height: AppSpacing.s12),
               FTextFormField(
                 control: FTextFieldControl.managed(controller: _passwordCtrl),
-                label: const Text('Password'),
+                label: Text(l10n.healthGarminPasswordLabel),
                 obscureText: true,
               ),
               const SizedBox(height: AppSpacing.s16),
-              FButton(onPress: _connect, child: const Text('Connect')),
+              AppBusyButton(
+                label: l10n.healthGarminConnect,
+                onPress: _connect,
+                busy: busy,
+              ),
             ],
 
             // Error message
             if (state is GarminError) ...[
               const SizedBox(height: AppSpacing.s12),
-              Text(
-                state.issue.message,
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.destructive,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+              AppStatusBanner(
+                kind: AppStatusKind.error,
+                message: state.issue.message,
+                icon: FLucideIcons.circleAlert,
+                compact: true,
               ),
             ],
 
@@ -136,32 +147,25 @@ class _GarminRegionPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Region',
-          style: typography.xs.copyWith(color: colors.mutedForeground),
+          l10n.healthGarminRegionLabel,
+          style: context.theme.typography.xs.copyWith(
+            color: context.theme.colors.mutedForeground,
+          ),
         ),
         const SizedBox(height: AppSpacing.s6),
-        Row(
-          children: [
-            for (final region in health_data.GarminRegion.values) ...[
-              if (region != health_data.GarminRegion.values.first)
-                const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: FButton(
-                  variant: selected == region
-                      ? FButtonVariant.primary
-                      : FButtonVariant.outline,
-                  onPress: () => onChanged(region),
-                  child: Text(region.label),
-                ),
-              ),
-            ],
-          ],
+        SegmentedRow<health_data.GarminRegion>(
+          options: health_data.GarminRegion.values,
+          value: selected,
+          labelOf: (region) => switch (region) {
+            health_data.GarminRegion.china => l10n.healthGarminRegionChina,
+            health_data.GarminRegion.global => l10n.healthGarminRegionGlobal,
+          },
+          onChanged: onChanged,
         ),
         const SizedBox(height: AppSpacing.s4),
         Text(selected.description, style: context.captionStyle),

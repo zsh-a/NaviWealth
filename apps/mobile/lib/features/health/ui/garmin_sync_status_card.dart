@@ -59,7 +59,14 @@ Widget _buildHeader(
   final typography = context.theme.typography;
   return Row(
     children: [
-      Icon(icon, size: 18, color: colors.foreground),
+      AppIconTile(
+        icon: icon,
+        color: colors.foreground,
+        size: 28,
+        iconSize: AppIconSizes.xs,
+        backgroundOpacity: AppOpacity.whisper,
+        foregroundOpacity: AppOpacity.strong,
+      ),
       const SizedBox(width: AppSpacing.s8),
       Expanded(
         child: Text(
@@ -321,7 +328,9 @@ class _Syncing extends ConsumerWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 4,
-              backgroundColor: colors.muted.withValues(alpha: 0.2),
+              backgroundColor: colors.muted.withValues(
+                alpha: AppOpacity.highlight,
+              ),
               valueColor: AlwaysStoppedAnimation(colors.primary),
             ),
           ),
