@@ -1059,20 +1059,7 @@ class _MetricCardHeader extends StatelessWidget {
     final colors = context.theme.colors;
     return Row(
       children: [
-        Container(
-          width: 30,
-          height: 30,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: AppOpacity.subtle),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          alignment: Alignment.center,
-          child: Icon(
-            icon,
-            size: AppIconSizes.sm,
-            color: color.withValues(alpha: AppOpacity.prominent),
-          ),
-        ),
+        AppIconTile(icon: icon, color: color),
         const SizedBox(width: AppSpacing.s8),
         Expanded(
           child: Text(
@@ -1640,24 +1627,10 @@ class _BriefingError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
-    return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Row(
-        children: [
-          Icon(FLucideIcons.circleAlert, color: colors.destructive),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Text(
-              AppLocalizations.of(context).healthBriefingLoadFailed(message),
-              style: typography.xs,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
+    return AppStatusBanner(
+      kind: AppStatusKind.error,
+      message: AppLocalizations.of(context).healthBriefingLoadFailed(message),
+      icon: FLucideIcons.circleAlert,
     );
   }
 }

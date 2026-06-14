@@ -139,22 +139,11 @@ class _TrendCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: icon disc + title + latest value.
           Row(
             children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: AppOpacity.medium),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  spec.icon ?? FLucideIcons.activity,
-                  size: AppIconSizes.h18,
-                  color: accent,
-                ),
+              AppIconTile(
+                icon: spec.icon ?? FLucideIcons.activity,
+                color: accent,
               ),
               const SizedBox(width: AppSpacing.s8),
               Expanded(
@@ -176,12 +165,26 @@ class _TrendCard extends StatelessWidget {
                     return const SizedBox.shrink();
                   }
                   final last = pts.last.y;
-                  return Text(
-                    _formatLatest(last, spec.kind),
-                    style: typography.md.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: accent,
-                    ),
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: accent.withValues(alpha: AppOpacity.strong),
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.s6),
+                      Text(
+                        _formatLatest(last, spec.kind),
+                        style: typography.md.copyWith(
+                          color: colors.foreground,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),

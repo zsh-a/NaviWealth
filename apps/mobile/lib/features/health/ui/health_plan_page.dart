@@ -82,19 +82,13 @@ class _RecoveryHeroCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: AppOpacity.medium),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  RecoveryVerdict.icon(verdict),
-                  size: AppIconSizes.md,
-                  color: color,
-                ),
+              AppIconTile(
+                icon: RecoveryVerdict.icon(verdict),
+                color: color,
+                size: 40,
+                iconSize: AppIconSizes.md,
+                backgroundOpacity: AppOpacity.medium,
+                foregroundOpacity: 1,
               ),
               const SizedBox(width: AppSpacing.s12),
               Expanded(
@@ -227,19 +221,14 @@ class _ActionPlanCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: AppOpacity.light),
-                    borderRadius: BorderRadius.circular(AppRadius.xs),
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    action.icon,
-                    size: AppIconSizes.sm,
-                    color: colors.primary,
-                  ),
+                AppIconTile(
+                  icon: action.icon,
+                  color: colors.primary,
+                  size: 28,
+                  iconSize: AppIconSizes.sm,
+                  radius: AppRadius.xs,
+                  backgroundOpacity: AppOpacity.light,
+                  foregroundOpacity: 1,
                 ),
                 const SizedBox(width: AppSpacing.s10),
                 Expanded(
@@ -486,20 +475,11 @@ class _OffCard extends StatelessWidget {
   const _OffCard();
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Row(
-        children: [
-          Icon(FLucideIcons.info, color: colors.mutedForeground),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Text(l10n.healthPlanEnableHint, style: typography.sm),
-          ),
-        ],
-      ),
+    return AppStatusBanner(
+      kind: AppStatusKind.info,
+      message: l10n.healthPlanEnableHint,
+      icon: FLucideIcons.info,
     );
   }
 }
@@ -509,25 +489,11 @@ class _ErrorCard extends StatelessWidget {
   final String message;
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
-    return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Row(
-        children: [
-          Icon(FLucideIcons.circleAlert, color: colors.destructive),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Text(
-              l10n.healthPlanLoadFailed(message),
-              style: typography.sm,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
+    return AppStatusBanner(
+      kind: AppStatusKind.error,
+      message: l10n.healthPlanLoadFailed(message),
+      icon: FLucideIcons.circleAlert,
     );
   }
 }
@@ -536,29 +502,11 @@ class _DisclaimerCard extends StatelessWidget {
   const _DisclaimerCard();
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return SoftCard(
-      borderless: true,
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            FLucideIcons.info,
-            size: AppIconSizes.sm,
-            color: colors.mutedForeground.withValues(
-              alpha: AppOpacity.disabled,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          Expanded(
-            child: Text(
-              AppLocalizations.of(context).healthPlanDisclaimer,
-              style: context.captionStyle,
-            ),
-          ),
-        ],
-      ),
+    return AppStatusBanner(
+      kind: AppStatusKind.neutral,
+      message: AppLocalizations.of(context).healthPlanDisclaimer,
+      icon: FLucideIcons.info,
+      compact: true,
     );
   }
 }
