@@ -21,6 +21,8 @@ import '../features/settings/ui/ai_privacy_page.dart';
 import '../features/settings/ui/ai_transparency_page.dart';
 import '../features/settings/ui/domains_settings_page.dart';
 import '../features/settings/ui/fire_stress_settings_page.dart';
+import '../features/settings/ui/health_domain_settings_page.dart';
+import '../features/settings/ui/knowledge_domain_settings_page.dart';
 import '../features/settings/ui/monthly_expense_settings_page.dart';
 import '../features/settings/ui/perf_diagnostics_page.dart';
 import '../features/settings/ui/risk_thresholds_page.dart';
@@ -176,6 +178,18 @@ GoRoute _settingsRoute() {
         path: 'domains',
         name: AppRouteNames.domains,
         builder: (context, state) => _backSafe(const DomainsSettingsPage()),
+      ),
+      GoRoute(
+        path: 'domains/health',
+        name: AppRouteNames.domainsHealth,
+        builder: (context, state) =>
+            _backSafe(const HealthDomainSettingsPage()),
+      ),
+      GoRoute(
+        path: 'domains/knowledge',
+        name: AppRouteNames.domainsKnowledge,
+        builder: (context, state) =>
+            _backSafe(const KnowledgeDomainSettingsPage()),
       ),
       GoRoute(
         path: 'ai-history',

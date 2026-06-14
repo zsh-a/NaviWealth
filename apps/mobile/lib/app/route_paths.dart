@@ -133,6 +133,8 @@ abstract final class AppRoutes {
   static const settingsMonthlyExpense = '/settings/monthly-expense';
   // LifeOS domain console — per-user opt-in toggles + per-domain ops.
   static const settingsDomains = '/settings/domains';
+  static const settingsDomainsHealth = '/settings/domains/health';
+  static const settingsDomainsKnowledge = '/settings/domains/knowledge';
   // Target allocation editor is reachable via the rebalance Custom
   // chip; settings overview links to it through a deep link for
   // discoverability.
@@ -186,6 +188,8 @@ abstract final class AppRouteNames {
   static const stressTest = 'stress-test';
   static const monthlyExpense = 'monthly-expense';
   static const domains = 'domains';
+  static const domainsHealth = 'domains-health';
+  static const domainsKnowledge = 'domains-knowledge';
 
   // ── Wealth ──────────────────────────────────────────────────────────────
   static const wealth = 'wealth';

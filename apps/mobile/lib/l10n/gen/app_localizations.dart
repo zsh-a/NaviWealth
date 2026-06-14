@@ -9045,34 +9045,16 @@ abstract class AppLocalizations {
   /// **'Raster p95'**
   String get settingsPerfRasterP95;
 
-  /// No description provided for @settingsDomainsIntro.
-  ///
-  /// In en, this message translates to:
-  /// **'Each domain is enabled independently. Turning one on activates its AI tools, Memory indexing, and navigation entry.'**
-  String get settingsDomainsIntro;
-
-  /// No description provided for @settingsDomainsFinanceSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Always enabled (seed domain)'**
-  String get settingsDomainsFinanceSubtitle;
-
-  /// No description provided for @settingsDomainsEnabledBadge.
-  ///
-  /// In en, this message translates to:
-  /// **'Enabled'**
-  String get settingsDomainsEnabledBadge;
-
   /// No description provided for @settingsDomainsHealthEnabledSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Preview — AI tools and Memory indexing are enabled'**
+  /// **'AI tools and Memory indexing are enabled'**
   String get settingsDomainsHealthEnabledSubtitle;
 
   /// No description provided for @settingsDomainsHealthDisabledSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Preview — turn on AI tools and Memory indexing'**
+  /// **'Turn on AI tools and Memory indexing'**
   String get settingsDomainsHealthDisabledSubtitle;
 
   /// No description provided for @settingsDomainsHealthTodaySubtitle.
@@ -9084,13 +9066,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsDomainsKnowledgeEnabledSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Preview — Inbox, Library, Review, AI tools, and Memory indexing are enabled'**
+  /// **'Inbox, Library, Review, AI tools, and Memory indexing are enabled'**
   String get settingsDomainsKnowledgeEnabledSubtitle;
 
   /// No description provided for @settingsDomainsKnowledgeDisabledSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Preview — personal decisions and cognitive memory'**
+  /// **'Personal decisions and cognitive memory'**
   String get settingsDomainsKnowledgeDisabledSubtitle;
 
   /// No description provided for @settingsDomainsKnowledgeInboxSubtitle.
@@ -9138,66 +9120,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sync health data'**
   String get settingsDomainsHealthSyncTitle;
-
-  /// No description provided for @settingsDomainsBriefingRunning.
-  ///
-  /// In en, this message translates to:
-  /// **'Generating morning briefing…'**
-  String get settingsDomainsBriefingRunning;
-
-  /// No description provided for @settingsDomainsBriefingFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Briefing failed: {error}'**
-  String settingsDomainsBriefingFailed(String error);
-
-  /// No description provided for @settingsDomainsBriefingIdle.
-  ///
-  /// In en, this message translates to:
-  /// **'Runs automatically each day; tap to generate and send now'**
-  String get settingsDomainsBriefingIdle;
-
-  /// No description provided for @settingsDomainsBriefingCompleted.
-  ///
-  /// In en, this message translates to:
-  /// **'Last run: {summary}'**
-  String settingsDomainsBriefingCompleted(String summary);
-
-  /// No description provided for @settingsDomainsBriefingSkipped.
-  ///
-  /// In en, this message translates to:
-  /// **'Last skipped: {summary}'**
-  String settingsDomainsBriefingSkipped(String summary);
-
-  /// No description provided for @settingsDomainsBriefingRunFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Last failed: {error}'**
-  String settingsDomainsBriefingRunFailed(String error);
-
-  /// No description provided for @settingsDomainsBriefingFallbackDone.
-  ///
-  /// In en, this message translates to:
-  /// **'Done'**
-  String get settingsDomainsBriefingFallbackDone;
-
-  /// No description provided for @settingsDomainsBriefingFallbackNoSignals.
-  ///
-  /// In en, this message translates to:
-  /// **'No signals'**
-  String get settingsDomainsBriefingFallbackNoSignals;
-
-  /// No description provided for @settingsDomainsBriefingFallbackUnknown.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown error'**
-  String get settingsDomainsBriefingFallbackUnknown;
-
-  /// No description provided for @settingsDomainsBriefingRunTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Generate morning briefing now'**
-  String get settingsDomainsBriefingRunTitle;
 
   /// No description provided for @settingsDomainsBriefingTimeHelp.
   ///

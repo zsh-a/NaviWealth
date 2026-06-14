@@ -5217,22 +5217,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPerfRasterP95 => 'Raster p95';
 
   @override
-  String get settingsDomainsIntro =>
-      'Each domain is enabled independently. Turning one on activates its AI tools, Memory indexing, and navigation entry.';
-
-  @override
-  String get settingsDomainsFinanceSubtitle => 'Always enabled (seed domain)';
-
-  @override
-  String get settingsDomainsEnabledBadge => 'Enabled';
-
-  @override
   String get settingsDomainsHealthEnabledSubtitle =>
-      'Preview — AI tools and Memory indexing are enabled';
+      'AI tools and Memory indexing are enabled';
 
   @override
   String get settingsDomainsHealthDisabledSubtitle =>
-      'Preview — turn on AI tools and Memory indexing';
+      'Turn on AI tools and Memory indexing';
 
   @override
   String get settingsDomainsHealthTodaySubtitle =>
@@ -5240,11 +5230,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDomainsKnowledgeEnabledSubtitle =>
-      'Preview — Inbox, Library, Review, AI tools, and Memory indexing are enabled';
+      'Inbox, Library, Review, AI tools, and Memory indexing are enabled';
 
   @override
   String get settingsDomainsKnowledgeDisabledSubtitle =>
-      'Preview — personal decisions and cognitive memory';
+      'Personal decisions and cognitive memory';
 
   @override
   String get settingsDomainsKnowledgeInboxSubtitle =>
@@ -5275,45 +5265,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDomainsHealthSyncTitle => 'Sync health data';
-
-  @override
-  String get settingsDomainsBriefingRunning => 'Generating morning briefing…';
-
-  @override
-  String settingsDomainsBriefingFailed(String error) {
-    return 'Briefing failed: $error';
-  }
-
-  @override
-  String get settingsDomainsBriefingIdle =>
-      'Runs automatically each day; tap to generate and send now';
-
-  @override
-  String settingsDomainsBriefingCompleted(String summary) {
-    return 'Last run: $summary';
-  }
-
-  @override
-  String settingsDomainsBriefingSkipped(String summary) {
-    return 'Last skipped: $summary';
-  }
-
-  @override
-  String settingsDomainsBriefingRunFailed(String error) {
-    return 'Last failed: $error';
-  }
-
-  @override
-  String get settingsDomainsBriefingFallbackDone => 'Done';
-
-  @override
-  String get settingsDomainsBriefingFallbackNoSignals => 'No signals';
-
-  @override
-  String get settingsDomainsBriefingFallbackUnknown => 'Unknown error';
-
-  @override
-  String get settingsDomainsBriefingRunTitle => 'Generate morning briefing now';
 
   @override
   String get settingsDomainsBriefingTimeHelp => 'Morning briefing time';

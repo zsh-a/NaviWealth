@@ -4,6 +4,8 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
+import '../../../core/auth/domain_scope.dart';
+import '../../../core/auth/providers.dart' as auth_providers;
 import '../../../core/config/app_version.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../core/logging/crash_reporting_preference.dart';
@@ -141,18 +143,11 @@ class SettingsOverview extends ConsumerWidget {
         ],
       ),
     );
-    // Per-user LifeOS domain opt-in lives on its own focused page
-    // (`/settings/domains`) so the overview doesn't grow/shrink as domains
-    // toggle and per-domain ops (HealthOS sync / briefing) aren't crammed
-    // into the global preferences list. The overview just links in.
+    // Per-user LifeOS domain opt-in. Each domain gets its own row with
+    // a toggle and (when enabled) a chevron to the detail settings page.
     final domainsGroup = _Section(
       title: l10n.settingsDomainsSection,
-      child: InlineLinkRow(
-        icon: FLucideIcons.layoutGrid,
-        label: l10n.settingsDomainsTitle,
-        subtitle: l10n.settingsDomainsSubtitle,
-        onTap: () => context.goNamed(AppRouteNames.domains),
-      ),
+      child: const _DomainSettingsGroup(),
     );
     final aboutGroup = _Section(
       title: l10n.settingsAboutSection,
@@ -943,3 +938,134 @@ class _MonthlyExpenseLink extends ConsumerWidget {
 
 /// Non-tappable status row shown in place of the Devices link for
 /// local-only users. Mirrors [InlineLinkRow]'s layout sans chevron.
+
+/// Domain opt-in toggles with chevron navigation to detail settings.
+///
+/// HealthOS and KnowledgeOS each get their own row. The switch toggles
+/// the domain; the chevron (when enabled) navigates to the domain's
+/// detail page. FinanceOS is always-on and accessed via the main tab bar.
+class _DomainSettingsGroup extends ConsumerWidget {
+  const _DomainSettingsGroup();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final optIns = ref.watch(auth_providers.domainOptInsProvider).value;
+    final healthOn = optIns?.contains(DomainScope.health) ?? false;
+    final knowledgeOn = optIns?.contains(DomainScope.knowledge) ?? false;
+    final l10n = AppLocalizations.of(context);
+
+    return Column(
+      children: [
+        _DomainSwitchRow(
+          icon: FLucideIcons.heartPulse,
+          label: 'HealthOS',
+          subtitle: healthOn
+              ? l10n.settingsDomainsHealthEnabledSubtitle
+              : l10n.settingsDomainsHealthDisabledSubtitle,
+          value: healthOn,
+          enabled: healthOn,
+          onChanged: (v) => ref
+              .read(auth_providers.domainOptInsProvider.notifier)
+              .setEnabled(DomainScope.health, v),
+          onTap: () => context.goNamed(AppRouteNames.domainsHealth),
+        ),
+        const AppDivider(),
+        _DomainSwitchRow(
+          icon: FLucideIcons.brain,
+          label: 'KnowledgeOS',
+          subtitle: knowledgeOn
+              ? l10n.settingsDomainsKnowledgeEnabledSubtitle
+              : l10n.settingsDomainsKnowledgeDisabledSubtitle,
+          value: knowledgeOn,
+          enabled: knowledgeOn,
+          onChanged: (v) => ref
+              .read(auth_providers.domainOptInsProvider.notifier)
+              .setEnabled(DomainScope.knowledge, v),
+          onTap: () => context.goNamed(AppRouteNames.domainsKnowledge),
+        ),
+      ],
+    );
+  }
+}
+
+/// Switch row that becomes tappable when [enabled] is true, showing a
+/// chevron to navigate to the domain's detail page.
+class _DomainSwitchRow extends StatelessWidget {
+  const _DomainSwitchRow({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.value,
+    required this.enabled,
+    required this.onChanged,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final bool value;
+  final bool enabled;
+  final ValueChanged<bool> onChanged;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: enabled ? onTap : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s14,
+          vertical: AppSpacing.s10,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: AppIconSizes.h18, color: colors.mutedForeground),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(label, style: context.theme.typography.sm),
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.s2),
+                    child: Text(
+                      subtitle,
+                      style: context.theme.typography.xs.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (enabled)
+              Padding(
+                padding: const EdgeInsets.only(left: AppSpacing.s8),
+                child: Icon(
+                  FLucideIcons.chevronRight,
+                  size: AppIconSizes.h18,
+                  color: colors.mutedForeground.withValues(
+                    alpha: AppOpacity.disabled,
+                  ),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.only(left: AppSpacing.s8),
+              child: FSwitch(
+                value: value,
+                onChange: (v) {
+                  Haptics.selection();
+                  onChanged(v);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

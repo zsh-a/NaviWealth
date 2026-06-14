@@ -5022,31 +5022,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsPerfRasterP95 => '栅格 p95';
 
   @override
-  String get settingsDomainsIntro => '每个域独立开关。打开后该域的 AI 工具、Memory 索引与导航入口会启用。';
+  String get settingsDomainsHealthEnabledSubtitle => 'AI 工具与 Memory 索引已启用';
 
   @override
-  String get settingsDomainsFinanceSubtitle => '永远启用（seed 域）';
-
-  @override
-  String get settingsDomainsEnabledBadge => '已启用';
-
-  @override
-  String get settingsDomainsHealthEnabledSubtitle =>
-      '预览中 — AI 工具与 Memory 索引已启用';
-
-  @override
-  String get settingsDomainsHealthDisabledSubtitle =>
-      '预览版 — 打开后启用 AI 工具与 Memory 索引';
+  String get settingsDomainsHealthDisabledSubtitle => '打开后启用 AI 工具与 Memory 索引';
 
   @override
   String get settingsDomainsHealthTodaySubtitle => '查看今日恢复、指标与早间简报';
 
   @override
   String get settingsDomainsKnowledgeEnabledSubtitle =>
-      '预览中 — Inbox、Library、Review、AI 工具与 Memory 索引已启用';
+      'Inbox、Library、Review、AI 工具与 Memory 索引已启用';
 
   @override
-  String get settingsDomainsKnowledgeDisabledSubtitle => '预览版 — 个人决策与认知演化记忆库';
+  String get settingsDomainsKnowledgeDisabledSubtitle => '个人决策与认知演化记忆库';
 
   @override
   String get settingsDomainsKnowledgeInboxSubtitle => '捕获笔记、写决策、查看资料库与复盘';
@@ -5075,44 +5064,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsDomainsHealthSyncTitle => '同步健康数据';
-
-  @override
-  String get settingsDomainsBriefingRunning => '正在生成早间简报…';
-
-  @override
-  String settingsDomainsBriefingFailed(String error) {
-    return '简报生成失败：$error';
-  }
-
-  @override
-  String get settingsDomainsBriefingIdle => '后台每日自动运行；点按可立即生成并发送通知';
-
-  @override
-  String settingsDomainsBriefingCompleted(String summary) {
-    return '上次运行：$summary';
-  }
-
-  @override
-  String settingsDomainsBriefingSkipped(String summary) {
-    return '上次跳过：$summary';
-  }
-
-  @override
-  String settingsDomainsBriefingRunFailed(String error) {
-    return '上次失败：$error';
-  }
-
-  @override
-  String get settingsDomainsBriefingFallbackDone => '已完成';
-
-  @override
-  String get settingsDomainsBriefingFallbackNoSignals => '暂无信号';
-
-  @override
-  String get settingsDomainsBriefingFallbackUnknown => '未知错误';
-
-  @override
-  String get settingsDomainsBriefingRunTitle => '立即生成早间简报';
 
   @override
   String get settingsDomainsBriefingTimeHelp => 'Morning Briefing 时间';

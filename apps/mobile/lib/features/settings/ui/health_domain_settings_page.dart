@@ -1,11 +1,16 @@
+/// HealthOS domain detail settings.
+///
+/// Shows HealthOS-specific operational controls: Today link, platform sync,
+/// and morning briefing time. Reached from the Settings overview's
+/// HealthOS row.
+library;
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
-import '../../../core/auth/domain_scope.dart';
-import '../../../core/auth/providers.dart' as auth_providers;
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../health/data/health_sync_service.dart';
@@ -13,22 +18,15 @@ import '../../health/data/morning_briefing_preferences.dart';
 import '../../health/data/providers.dart' as health_data;
 import 'inline_setting_row.dart';
 
-/// `/settings/domains` — LifeOS domain management.
-///
-/// Each opt-in domain (HealthOS, KnowledgeOS) gets its own card.
-/// FinanceOS is always-on and accessed via the main tab bar.
-class DomainsSettingsPage extends ConsumerWidget {
-  const DomainsSettingsPage({super.key});
+class HealthDomainSettingsPage extends ConsumerWidget {
+  const HealthDomainSettingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final optIns = ref.watch(auth_providers.domainOptInsProvider).value;
-    final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
-    final knowledgeEnabled = optIns?.contains(DomainScope.knowledge) ?? false;
     final l10n = AppLocalizations.of(context);
 
     return AppPageScaffold(
-      title: l10n.settingsDomainsTitle,
+      title: 'HealthOS',
       childPad: false,
       child: ListView(
         padding: EdgeInsets.fromLTRB(
@@ -38,64 +36,20 @@ class DomainsSettingsPage extends ConsumerWidget {
           AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
-          // ── HealthOS ──
           SoftCard(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
             child: Column(
               children: [
-                InlineSwitchRow(
-                  icon: FLucideIcons.heartPulse,
-                  label: 'HealthOS',
-                  subtitle: healthEnabled
-                      ? l10n.settingsDomainsHealthEnabledSubtitle
-                      : l10n.settingsDomainsHealthDisabledSubtitle,
-                  value: healthEnabled,
-                  onChanged: (v) => ref
-                      .read(auth_providers.domainOptInsProvider.notifier)
-                      .setEnabled(DomainScope.health, v),
+                InlineLinkRow(
+                  icon: FLucideIcons.eye,
+                  label: 'HealthOS · Today',
+                  subtitle: l10n.settingsDomainsHealthTodaySubtitle,
+                  onTap: () => context.goNamed(AppRouteNames.healthToday),
                 ),
-                if (healthEnabled) ...[
-                  const AppDivider(),
-                  InlineLinkRow(
-                    icon: FLucideIcons.eye,
-                    label: 'HealthOS · Today',
-                    subtitle: l10n.settingsDomainsHealthTodaySubtitle,
-                    onTap: () => context.goNamed(AppRouteNames.healthToday),
-                  ),
-                  const AppDivider(),
-                  const _HealthPlatformSyncRow(),
-                  const AppDivider(),
-                  const _MorningBriefingHourRow(),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          // ── KnowledgeOS ──
-          SoftCard(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-            child: Column(
-              children: [
-                InlineSwitchRow(
-                  icon: FLucideIcons.brain,
-                  label: 'KnowledgeOS',
-                  subtitle: knowledgeEnabled
-                      ? l10n.settingsDomainsKnowledgeEnabledSubtitle
-                      : l10n.settingsDomainsKnowledgeDisabledSubtitle,
-                  value: knowledgeEnabled,
-                  onChanged: (v) => ref
-                      .read(auth_providers.domainOptInsProvider.notifier)
-                      .setEnabled(DomainScope.knowledge, v),
-                ),
-                if (knowledgeEnabled) ...[
-                  const AppDivider(),
-                  InlineLinkRow(
-                    icon: FLucideIcons.inbox,
-                    label: 'KnowledgeOS · Inbox',
-                    subtitle: l10n.settingsDomainsKnowledgeInboxSubtitle,
-                    onTap: () => context.goNamed(AppRouteNames.knowledgeInbox),
-                  ),
-                ],
+                const AppDivider(),
+                const _HealthPlatformSyncRow(),
+                const AppDivider(),
+                const _BriefingHourRow(),
               ],
             ),
           ),
@@ -105,10 +59,8 @@ class DomainsSettingsPage extends ConsumerWidget {
   }
 }
 
-/// Manual "Sync from HealthKit / Health Connect" trigger.
-///
-/// Tapping requests permissions on first use, then pulls the last 30 days
-/// into `health_metrics`.
+// ── Platform sync ────────────────────────────────────────────────────────────
+
 class _HealthPlatformSyncRow extends ConsumerStatefulWidget {
   const _HealthPlatformSyncRow();
 
@@ -130,8 +82,6 @@ class _HealthPlatformSyncRowState
       final service = await ref.read(
         health_data.healthSyncServiceProvider.future,
       );
-      // Permissions are a precondition — request them if missing so the
-      // user doesn't have to remember to do a separate "Connect" step.
       if (!await service.hasPermissions()) {
         final granted = await service.requestPermissions();
         if (!granted) {
@@ -175,10 +125,10 @@ class _HealthPlatformSyncRowState
   }
 }
 
-/// User-configurable preferred local hour for the daily briefing.
-/// Defaults to 07:00.
-class _MorningBriefingHourRow extends ConsumerWidget {
-  const _MorningBriefingHourRow();
+// ── Briefing hour ────────────────────────────────────────────────────────────
+
+class _BriefingHourRow extends ConsumerWidget {
+  const _BriefingHourRow();
 
   Future<void> _pick(BuildContext context, WidgetRef ref, int current) async {
     final l10n = AppLocalizations.of(context);
@@ -191,7 +141,7 @@ class _MorningBriefingHourRow extends ConsumerWidget {
         onPress: () => Navigator.of(context).maybePop(),
         child: Text(l10n.commonCancel),
       ),
-      builder: (_) => _MorningBriefingHourSheet(selectedHour: current),
+      builder: (_) => _BriefingHourSheet(selectedHour: current),
     );
     if (picked == null) return;
     await ref.read(morningBriefingHourProvider.notifier).set(picked);
@@ -212,29 +162,54 @@ class _MorningBriefingHourRow extends ConsumerWidget {
   }
 }
 
-class _MorningBriefingHourSheet extends StatelessWidget {
-  const _MorningBriefingHourSheet({required this.selectedHour});
+/// Compact horizontal-scrollable hour picker.
+class _BriefingHourSheet extends StatelessWidget {
+  const _BriefingHourSheet({required this.selectedHour});
 
   final int selectedHour;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.s8,
-      runSpacing: AppSpacing.s8,
-      children: [
-        for (var hour = 0; hour < 24; hour++)
-          SizedBox(
-            width: 72,
-            child: FButton(
-              variant: hour == selectedHour
-                  ? FButtonVariant.primary
-                  : FButtonVariant.outline,
-              onPress: () => Navigator.of(context).pop(hour),
-              child: Text('${hour.toString().padLeft(2, '0')}:00'),
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+        itemCount: 24,
+        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s6),
+        itemBuilder: (_, index) {
+          final selected = index == selectedHour;
+          return GestureDetector(
+            onTap: () => Navigator.of(context).pop(index),
+            child: AnimatedContainer(
+              duration: Motion.medium,
+              curve: Motion.standardDecelerate,
+              width: 48,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selected
+                    ? colors.primary.withValues(alpha: AppOpacity.subtle)
+                    : colors.muted,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(
+                  color: selected
+                      ? colors.primary.withValues(alpha: AppOpacity.prominent)
+                      : colors.border.withValues(alpha: AppOpacity.muted),
+                ),
+              ),
+              child: Text(
+                '${index.toString().padLeft(2, '0')}:00',
+                style: typography.xs.copyWith(
+                  color: selected ? colors.primary : colors.foreground,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
             ),
-          ),
-      ],
+          );
+        },
+      ),
     );
   }
 }

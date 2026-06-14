@@ -2792,14 +2792,11 @@
   "settingsPerfTotalP95": "Total p95",
   "settingsPerfBuildP95": "Build p95",
   "settingsPerfRasterP95": "Raster p95",
-  "settingsDomainsIntro": "Each domain is enabled independently. Turning one on activates its AI tools, Memory indexing, and navigation entry.",
-  "settingsDomainsFinanceSubtitle": "Always enabled (seed domain)",
-  "settingsDomainsEnabledBadge": "Enabled",
-  "settingsDomainsHealthEnabledSubtitle": "Preview — AI tools and Memory indexing are enabled",
-  "settingsDomainsHealthDisabledSubtitle": "Preview — turn on AI tools and Memory indexing",
+  "settingsDomainsHealthEnabledSubtitle": "AI tools and Memory indexing are enabled",
+  "settingsDomainsHealthDisabledSubtitle": "Turn on AI tools and Memory indexing",
   "settingsDomainsHealthTodaySubtitle": "View recovery, metrics, and the morning briefing",
-  "settingsDomainsKnowledgeEnabledSubtitle": "Preview — Inbox, Library, Review, AI tools, and Memory indexing are enabled",
-  "settingsDomainsKnowledgeDisabledSubtitle": "Preview — personal decisions and cognitive memory",
+  "settingsDomainsKnowledgeEnabledSubtitle": "Inbox, Library, Review, AI tools, and Memory indexing are enabled",
+  "settingsDomainsKnowledgeDisabledSubtitle": "Personal decisions and cognitive memory",
   "settingsDomainsKnowledgeInboxSubtitle": "Capture notes, write decisions, and review the library",
   "settingsDomainsHealthPermissionDenied": "Permission denied — try again in system Health settings",
   "settingsDomainsHealthSyncRunning": "Syncing…",
@@ -2814,28 +2811,6 @@
     }
   },
   "settingsDomainsHealthSyncTitle": "Sync health data",
-  "settingsDomainsBriefingRunning": "Generating morning briefing…",
-  "settingsDomainsBriefingFailed": "Briefing failed: {error}",
-  "@settingsDomainsBriefingFailed": {
-    "placeholders": { "error": { "type": "String" } }
-  },
-  "settingsDomainsBriefingIdle": "Runs automatically each day; tap to generate and send now",
-  "settingsDomainsBriefingCompleted": "Last run: {summary}",
-  "@settingsDomainsBriefingCompleted": {
-    "placeholders": { "summary": { "type": "String" } }
-  },
-  "settingsDomainsBriefingSkipped": "Last skipped: {summary}",
-  "@settingsDomainsBriefingSkipped": {
-    "placeholders": { "summary": { "type": "String" } }
-  },
-  "settingsDomainsBriefingRunFailed": "Last failed: {error}",
-  "@settingsDomainsBriefingRunFailed": {
-    "placeholders": { "error": { "type": "String" } }
-  },
-  "settingsDomainsBriefingFallbackDone": "Done",
-  "settingsDomainsBriefingFallbackNoSignals": "No signals",
-  "settingsDomainsBriefingFallbackUnknown": "Unknown error",
-  "settingsDomainsBriefingRunTitle": "Generate morning briefing now",
   "settingsDomainsBriefingTimeHelp": "Morning briefing time",
   "settingsDomainsBriefingTimeTitle": "Briefing time",
   "settingsDomainsBriefingTimeSubtitle": "Runs around {hour}:00 each day (background scheduling may drift)",

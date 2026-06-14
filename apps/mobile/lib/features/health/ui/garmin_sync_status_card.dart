@@ -28,7 +28,7 @@ class GarminSyncStatusCard extends ConsumerWidget {
     return SoftCard(
       level: SoftCardLevel.raised,
       borderless: true,
-      padding: const EdgeInsets.all(AppSpacing.s16),
+      padding: const EdgeInsets.all(AppSpacing.s12),
       child: switch (state) {
         GarminInitial() => _Disconnected(ref: ref),
         GarminRestoring() => const _Restoring(),
@@ -62,7 +62,7 @@ Widget _buildHeader(
       AppIconTile(
         icon: icon,
         color: colors.foreground,
-        size: 28,
+        size: 22,
         iconSize: AppIconSizes.xs,
         backgroundOpacity: AppOpacity.whisper,
         foregroundOpacity: AppOpacity.strong,
@@ -92,34 +92,25 @@ class _Disconnected extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final region = ref.watch(health_data.garminRegionProvider);
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        _buildHeader(
-          context,
-          icon: FLucideIcons.watch,
-          title: l10n.healthGarminTitle,
-          badge: AppBadge(
-            label: l10n.healthGarminDisconnected,
-            tone: AppBadgeTone.neutral,
-            size: AppBadgeSize.compact,
+        Expanded(
+          child: _buildHeader(
+            context,
+            icon: FLucideIcons.watch,
+            title: l10n.healthGarminTitle,
+            badge: AppBadge(
+              label: l10n.healthGarminDisconnected,
+              tone: AppBadgeTone.neutral,
+              size: AppBadgeSize.compact,
+            ),
           ),
         ),
-        const SizedBox(height: AppSpacing.s4),
-        Text(
-          region.description,
-          style: typography.xs.copyWith(color: colors.mutedForeground),
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        SizedBox(
-          width: double.infinity,
-          child: FButton(
-            onPress: () => showGarminAccountBindSheet(context: context),
-            child: Text(l10n.healthGarminConnect),
-          ),
+        const SizedBox(width: AppSpacing.s8),
+        FButton(
+          variant: FButtonVariant.outline,
+          onPress: () => showGarminAccountBindSheet(context: context),
+          child: Text(l10n.healthGarminConnect),
         ),
       ],
     );
@@ -131,33 +122,23 @@ class _Restoring extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        _buildHeader(
-          context,
-          icon: FLucideIcons.watch,
-          title: l10n.healthGarminTitle,
-          badge: AppBadge(
-            label: l10n.healthGarminRestoringBadge,
-            tone: AppBadgeTone.info,
-            size: AppBadgeSize.compact,
+        Expanded(
+          child: _buildHeader(
+            context,
+            icon: FLucideIcons.watch,
+            title: l10n.healthGarminTitle,
+            badge: AppBadge(
+              label: l10n.healthGarminRestoringBadge,
+              tone: AppBadgeTone.info,
+              size: AppBadgeSize.compact,
+            ),
           ),
         ),
-        const SizedBox(height: AppSpacing.s8),
-        Row(
-          children: [
-            const SizedBox(width: 14, height: 14, child: FProgress()),
-            const SizedBox(width: AppSpacing.s8),
-            Text(
-              l10n.healthGarminRestoringSession,
-              style: typography.xs.copyWith(color: colors.mutedForeground),
-            ),
-          ],
-        ),
+        const SizedBox(width: AppSpacing.s8),
+        const SizedBox(width: 14, height: 14, child: FProgress()),
       ],
     );
   }
@@ -169,26 +150,25 @@ class _MfaPending extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        _buildHeader(
-          context,
-          icon: FLucideIcons.shield,
-          title: l10n.healthGarminMfaRequired,
-          badge: AppBadge(
-            label: l10n.healthGarminVerifyBadge,
-            tone: AppBadgeTone.warning,
-            size: AppBadgeSize.compact,
+        Expanded(
+          child: _buildHeader(
+            context,
+            icon: FLucideIcons.shield,
+            title: l10n.healthGarminMfaRequired,
+            badge: AppBadge(
+              label: l10n.healthGarminVerifyBadge,
+              tone: AppBadgeTone.warning,
+              size: AppBadgeSize.compact,
+            ),
           ),
         ),
-        const SizedBox(height: AppSpacing.s12),
-        SizedBox(
-          width: double.infinity,
-          child: FButton(
-            onPress: () => showGarminAccountBindSheet(context: context),
-            child: Text(l10n.healthGarminEnterCode),
-          ),
+        const SizedBox(width: AppSpacing.s8),
+        FButton(
+          variant: FButtonVariant.outline,
+          onPress: () => showGarminAccountBindSheet(context: context),
+          child: Text(l10n.healthGarminEnterCode),
         ),
       ],
     );
@@ -210,41 +190,40 @@ class _Connected extends StatelessWidget {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
-    final region = ref.watch(health_data.garminRegionProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildHeader(
-          context,
-          icon: FLucideIcons.watch,
-          title: l10n.healthGarminTitle,
-          badge: AppBadge(
-            label: l10n.healthGarminConnected,
-            tone: AppBadgeTone.success,
-            size: AppBadgeSize.compact,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.s4),
-        Text(
-          region.description,
-          style: typography.xs.copyWith(color: colors.mutedForeground),
-        ),
-        if (lastSyncAt != null) ...[
-          const SizedBox(height: AppSpacing.s4),
-          Text(
-            l10n.healthGarminLastSync(
-              '$totalMetrics',
-              _formatRelative(l10n, lastSyncAt!),
+        Row(
+          children: [
+            Expanded(
+              child: _buildHeader(
+                context,
+                icon: FLucideIcons.watch,
+                title: l10n.healthGarminTitle,
+                badge: AppBadge(
+                  label: l10n.healthGarminConnected,
+                  tone: AppBadgeTone.success,
+                  size: AppBadgeSize.compact,
+                ),
+              ),
             ),
-            style: typography.xs.copyWith(color: colors.mutedForeground),
-          ),
-        ],
-        const SizedBox(height: AppSpacing.s12),
+            if (lastSyncAt != null)
+              Text(
+                l10n.healthGarminLastSync(
+                  '$totalMetrics',
+                  _formatRelative(l10n, lastSyncAt!),
+                ),
+                style: typography.xs.copyWith(color: colors.mutedForeground),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s8),
         Row(
           children: [
             Expanded(
               child: FButton(
+                variant: FButtonVariant.outline,
                 onPress: () => ref
                     .read(health_data.garminSyncControllerProvider.notifier)
                     .syncNow(),
@@ -311,43 +290,52 @@ class _Syncing extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildHeader(
-          context,
-          icon: FLucideIcons.watch,
-          title: l10n.healthGarminTitle,
-          badge: AppBadge(
-            label: l10n.healthGarminSyncingBadge,
-            tone: AppBadgeTone.info,
-            size: AppBadgeSize.compact,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _buildHeader(
+                context,
+                icon: FLucideIcons.watch,
+                title: l10n.healthGarminTitle,
+                badge: AppBadge(
+                  label: l10n.healthGarminSyncingBadge,
+                  tone: AppBadgeTone.info,
+                  size: AppBadgeSize.compact,
+                ),
+              ),
+            ),
+            AppQuietButton(
+              label: l10n.healthGarminCancelSync,
+              onPress: () => ref
+                  .read(health_data.garminSyncControllerProvider.notifier)
+                  .cancelSync(),
+            ),
+          ],
         ),
-        const SizedBox(height: AppSpacing.s8),
         if (hasProgress) ...[
+          const SizedBox(height: AppSpacing.s6),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
-              minHeight: 4,
+              minHeight: 3,
               backgroundColor: colors.muted.withValues(
                 alpha: AppOpacity.highlight,
               ),
               valueColor: AlwaysStoppedAnimation(colors.primary),
             ),
           ),
-          const SizedBox(height: AppSpacing.s4),
-          Row(
-            children: [
-              Text(
-                l10n.healthGarminSyncProgress(
-                  state.currentDay.toString(),
-                  state.totalDays.toString(),
-                  state.metricsCount.toString(),
-                ),
-                style: typography.xs.copyWith(color: colors.mutedForeground),
-              ),
-            ],
+          const SizedBox(height: AppSpacing.s2),
+          Text(
+            l10n.healthGarminSyncProgress(
+              state.currentDay.toString(),
+              state.totalDays.toString(),
+              state.metricsCount.toString(),
+            ),
+            style: typography.xs.copyWith(color: colors.mutedForeground),
           ),
         ] else ...[
+          const SizedBox(height: AppSpacing.s4),
           Row(
             children: [
               const SizedBox(width: 14, height: 14, child: FProgress()),
@@ -359,17 +347,6 @@ class _Syncing extends ConsumerWidget {
             ],
           ),
         ],
-        const SizedBox(height: AppSpacing.s8),
-        SizedBox(
-          width: double.infinity,
-          child: AppQuietButton(
-            label: l10n.healthGarminCancelSync,
-            onPress: () => ref
-                .read(health_data.garminSyncControllerProvider.notifier)
-                .cancelSync(),
-            expanded: true,
-          ),
-        ),
       ],
     );
   }
@@ -385,27 +362,33 @@ class _Error extends StatelessWidget {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        _buildHeader(
-          context,
-          icon: FLucideIcons.circleAlert,
-          title: l10n.healthGarminSyncError,
-          badge: AppBadge(
-            label: l10n.healthGarminErrorBadge,
-            tone: AppBadgeTone.error,
-            size: AppBadgeSize.compact,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(
+                context,
+                icon: FLucideIcons.circleAlert,
+                title: l10n.healthGarminSyncError,
+                badge: AppBadge(
+                  label: l10n.healthGarminErrorBadge,
+                  tone: AppBadgeTone.error,
+                  size: AppBadgeSize.compact,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s2),
+              Text(
+                _issueMessage(l10n, issue),
+                style: typography.xs.copyWith(color: colors.mutedForeground),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: AppSpacing.s4),
-        Text(
-          _issueMessage(l10n, issue),
-          style: typography.xs.copyWith(color: colors.mutedForeground),
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: AppSpacing.s8),
+        const SizedBox(width: AppSpacing.s8),
         AppQuietButton(
           label: issue.requiresReconnect
               ? l10n.healthGarminConnect

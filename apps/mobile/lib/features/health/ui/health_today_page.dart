@@ -28,13 +28,14 @@ import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as health_agent_providers;
+import '../data/garmin/garmin_sync_controller.dart';
 import '../data/health_metric_source.dart';
 import '../data/health_sync_service.dart';
 import '../data/providers.dart' as health_data;
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 import 'body_measurement_entry_sheet.dart';
-import 'garmin_sync_status_card.dart';
+import 'garmin_account_bind_sheet.dart';
 import 'health_metric_colors.dart';
 import 'health_today_providers.dart';
 import 'health_trend_page.dart' show TrendGroup, selectedTrendGroupProvider;
@@ -64,9 +65,7 @@ class HealthTodayPage extends ConsumerWidget {
       child: ListView(
         padding: shellTabContentPadding(context),
         children: const [
-          FadeSlideIn(child: _HealthDataStatusNotice()),
-          SizedBox(height: AppSpacing.s16),
-          FadeSlideIn(child: GarminSyncStatusCard()),
+          FadeSlideIn(child: _DataSourceStatusBar()),
           SizedBox(height: AppSpacing.s16),
           FadeSlideIn(child: _RecoveryHero()),
           SizedBox(height: AppSpacing.s16),
@@ -81,22 +80,25 @@ class HealthTodayPage extends ConsumerWidget {
   }
 }
 
-class _HealthDataStatusNotice extends ConsumerStatefulWidget {
-  const _HealthDataStatusNotice();
+/// Combined HealthKit + Garmin data source status bar.
+///
+/// Single compact row showing both sync sources side by side,
+/// replacing the previous two separate full-width elements.
+class _DataSourceStatusBar extends ConsumerStatefulWidget {
+  const _DataSourceStatusBar();
 
   @override
-  ConsumerState<_HealthDataStatusNotice> createState() =>
-      _HealthDataStatusNoticeState();
+  ConsumerState<_DataSourceStatusBar> createState() =>
+      _DataSourceStatusBarState();
 }
 
-class _HealthDataStatusNoticeState
-    extends ConsumerState<_HealthDataStatusNotice> {
-  bool _running = false;
+class _DataSourceStatusBarState extends ConsumerState<_DataSourceStatusBar> {
+  bool _syncing = false;
   HealthSyncResult? _lastResult;
 
-  Future<void> _sync() async {
-    if (_running) return;
-    setState(() => _running = true);
+  Future<void> _syncHealthKit() async {
+    if (_syncing) return;
+    setState(() => _syncing = true);
     try {
       final service = await ref.read(
         health_data.healthSyncServiceProvider.future,
@@ -119,57 +121,236 @@ class _HealthDataStatusNoticeState
       setState(() => _lastResult = result);
       ref.invalidate(healthTodaySnapshotProvider);
     } finally {
-      if (mounted) setState(() => _running = false);
+      if (mounted) setState(() => _syncing = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
     final optIns = ref.watch(core_auth.domainOptInsProvider).value;
     final enabled = optIns?.contains(DomainScope.health) ?? false;
-    final result = _lastResult;
+    final garminState = ref.watch(health_data.garminSyncControllerProvider);
 
-    final kind = !enabled
-        ? AppStatusKind.warning
-        : _running
-        ? AppStatusKind.info
-        : result == null
-        ? AppStatusKind.info
-        : result.ok
-        ? AppStatusKind.success
-        : AppStatusKind.error;
-    final l10n = AppLocalizations.of(context);
-    final text = !enabled
-        ? l10n.healthNotEnabled
-        : _running
-        ? l10n.healthSyncingData
-        : result == null
-        ? l10n.healthSyncReady
-        : result.ok
-        ? l10n.healthSyncResult('${result.unchanged}', '${result.upserted}')
-        : result.errorMessage ?? l10n.healthSyncFailed;
-    final action = !enabled
-        ? null
-        : AppQuietButton(
-            label: _running ? l10n.healthSyncingButton : l10n.healthSyncButton,
-            onPress: _running ? null : _sync,
-            prefix: _running
-                ? const SizedBox(
-                    width: AppIconSizes.xs,
-                    height: AppIconSizes.xs,
-                    child: FCircularProgress(),
-                  )
-                : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-          );
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.muted,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s10,
+          vertical: AppSpacing.s8,
+        ),
+        child: Row(
+          children: [
+            // ── HealthKit ──
+            Icon(
+              enabled ? FLucideIcons.activity : FLucideIcons.circleOff,
+              size: AppIconSizes.h18,
+              color: _healthKitColor(enabled),
+            ),
+            const SizedBox(width: AppSpacing.s4),
+            Flexible(
+              child: Text(
+                _healthKitText(l10n, enabled),
+                style: typography.xs.copyWith(color: colors.mutedForeground),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (enabled) ...[
+              const SizedBox(width: AppSpacing.s2),
+              GestureDetector(
+                onTap: _syncing ? null : _syncHealthKit,
+                child: _syncing
+                    ? const SizedBox(
+                        width: AppIconSizes.xs,
+                        height: AppIconSizes.xs,
+                        child: FCircularProgress(),
+                      )
+                    : Icon(
+                        FLucideIcons.refreshCw,
+                        size: AppIconSizes.xs,
+                        color: colors.mutedForeground,
+                      ),
+              ),
+            ],
 
-    return AppStatusBanner(
-      kind: kind,
-      message: text,
-      icon: enabled ? FLucideIcons.activity : FLucideIcons.circleOff,
-      action: action,
-      compact: true,
+            // ── Divider ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
+              child: Container(
+                width: 1,
+                height: 14,
+                color: colors.border,
+              ),
+            ),
+
+            // ── Garmin ──
+            ..._buildGarmin(context, l10n, garminState),
+          ],
+        ),
+      ),
     );
   }
+
+  Color _healthKitColor(bool enabled) {
+    final colors = context.theme.colors;
+    if (!enabled) return colors.mutedForeground;
+    final result = _lastResult;
+    if (_syncing) return colors.primary;
+    if (result == null) return colors.mutedForeground;
+    return result.ok ? colors.primary : colors.destructive;
+  }
+
+  String _healthKitText(AppLocalizations l10n, bool enabled) {
+    if (!enabled) return l10n.healthNotEnabled;
+    if (_syncing) return l10n.healthSyncingData;
+    final result = _lastResult;
+    if (result == null) return l10n.healthSyncReady;
+    if (result.ok) {
+      return l10n.healthSyncResult(
+        '${result.unchanged}',
+        '${result.upserted}',
+      );
+    }
+    return result.errorMessage ?? l10n.healthSyncFailed;
+  }
+
+  List<Widget> _buildGarmin(
+    BuildContext context,
+    AppLocalizations l10n,
+    GarminSyncState state,
+  ) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return switch (state) {
+      GarminInitial() => [
+        Icon(FLucideIcons.watch, size: AppIconSizes.h18, color: colors.mutedForeground),
+        const SizedBox(width: AppSpacing.s4),
+        Text(
+          l10n.healthGarminDisconnected,
+          style: typography.xs.copyWith(color: colors.mutedForeground),
+        ),
+        const SizedBox(width: AppSpacing.s6),
+        GestureDetector(
+          onTap: () => showGarminAccountBindSheet(context: context),
+          child: Text(
+            l10n.healthGarminConnect,
+            style: typography.xs.copyWith(
+              color: colors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+      GarminRestoring() => [
+        Icon(FLucideIcons.watch, size: AppIconSizes.h18, color: colors.primary),
+        const SizedBox(width: AppSpacing.s4),
+        Text(
+          l10n.healthGarminRestoringBadge,
+          style: typography.xs.copyWith(color: colors.mutedForeground),
+        ),
+        const SizedBox(width: AppSpacing.s6),
+        const SizedBox(width: 12, height: 12, child: FProgress()),
+      ],
+      GarminPendingMfa() => [
+        Icon(FLucideIcons.shield, size: AppIconSizes.h18, color: colors.destructive),
+        const SizedBox(width: AppSpacing.s4),
+        GestureDetector(
+          onTap: () => showGarminAccountBindSheet(context: context),
+          child: Text(
+            l10n.healthGarminVerifyBadge,
+            style: typography.xs.copyWith(
+              color: colors.destructive,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+      GarminConnected(:final lastSyncAt, :final totalMetrics) => [
+        Icon(FLucideIcons.watch, size: AppIconSizes.h18, color: colors.primary),
+        const SizedBox(width: AppSpacing.s4),
+        Flexible(
+          child: Text(
+            lastSyncAt != null
+                ? '$totalMetrics · ${_garminAgo(l10n, lastSyncAt)}'
+                : '$totalMetrics',
+            style: typography.xs.copyWith(color: colors.mutedForeground),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s4),
+        GestureDetector(
+          onTap: () => ref
+              .read(health_data.garminSyncControllerProvider.notifier)
+              .syncNow(),
+          child: Icon(
+            FLucideIcons.refreshCw,
+            size: AppIconSizes.xs,
+            color: colors.mutedForeground,
+          ),
+        ),
+      ],
+      GarminSyncing() => [
+        Icon(FLucideIcons.watch, size: AppIconSizes.h18, color: colors.primary),
+        const SizedBox(width: AppSpacing.s4),
+        Text(
+          l10n.healthGarminSyncingBadge,
+          style: typography.xs.copyWith(color: colors.primary),
+        ),
+        const SizedBox(width: AppSpacing.s4),
+        GestureDetector(
+          onTap: () => ref
+              .read(health_data.garminSyncControllerProvider.notifier)
+              .cancelSync(),
+          child: Icon(FLucideIcons.x, size: AppIconSizes.xs, color: colors.mutedForeground),
+        ),
+      ],
+      GarminError(:final issue) => [
+        Icon(FLucideIcons.circleAlert, size: AppIconSizes.h18, color: colors.destructive),
+        const SizedBox(width: AppSpacing.s4),
+        GestureDetector(
+          onTap: () {
+            if (issue.requiresReconnect) {
+              showGarminAccountBindSheet(context: context);
+            } else {
+              ref
+                  .read(health_data.garminSyncControllerProvider.notifier)
+                  .syncNow();
+            }
+          },
+          child: Text(
+            issue.requiresReconnect
+                ? l10n.healthGarminConnect
+                : l10n.healthGarminRetry,
+            style: typography.xs.copyWith(
+              color: colors.destructive,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    };
+  }
+
+  String _garminAgo(AppLocalizations l10n, DateTime dt) =>
+      AppFormatters.relativeTime(
+        dt,
+        justNow: l10n.aiChatRelativeJustNow,
+        minutesAgo: l10n.aiChatRelativeMinutesAgo,
+        hoursAgo: l10n.aiChatRelativeHoursAgo,
+        daysAgo: l10n.aiChatRelativeDaysAgo,
+        dateFallback: (d) {
+          final mm = d.month.toString().padLeft(2, '0');
+          final dd = d.day.toString().padLeft(2, '0');
+          return '$mm-$dd';
+        },
+      );
 }
 
 class _RecoveryHero extends ConsumerWidget {
