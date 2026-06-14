@@ -4442,6 +4442,8 @@
   "healthTrendSpo2Subtitle": "Daily average SpO₂",
   "healthTrendTotalEnergyTitle": "Total energy",
   "healthTrendTotalEnergySubtitle": "Daily total calories burned",
+  "healthKitTitle": "HealthKit / Health Connect",
+  "healthSyncAction": "Sync",
   "healthSyncPermissionDenied": "Permission denied",
   "healthSyncingData": "Syncing health data…",
   "healthSyncReady": "Sync last 30 days of health data",

@@ -7708,6 +7708,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthTrendTotalEnergySubtitle => '每日总消耗卡路里';
 
   @override
+  String get healthKitTitle => 'HealthKit / Health Connect';
+
+  @override
+  String get healthSyncAction => '同步';
+
+  @override
   String get healthSyncPermissionDenied => '权限被拒绝';
 
   @override

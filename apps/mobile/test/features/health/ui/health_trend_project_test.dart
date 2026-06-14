@@ -27,11 +27,7 @@ HealthMetric _row({
     ownerUserId: 'u',
     updatedAt: at,
     updatedByDevice: 'dev',
-    hlc: Hlc(
-      wallMillis: at.millisecondsSinceEpoch,
-      counter: 0,
-      nodeId: 'dev',
-    ),
+    hlc: Hlc(wallMillis: at.millisecondsSinceEpoch, counter: 0, nodeId: 'dev'),
     deletedAt: null,
   ),
 );
@@ -39,6 +35,29 @@ HealthMetric _row({
 void main() {
   final now = DateTime.utc(2026, 5, 27, 12);
   final cutoff = now.subtract(const Duration(days: 30));
+
+  group('healthTrendPath', () {
+    test('encodes exact metric target', () {
+      expect(
+        healthTrendPath(metricKind: HealthMetricKind.hrvDaily),
+        '/health/trend?metric=hrv_daily',
+      );
+      expect(
+        healthTrendPath(metricKind: HealthMetricKind.activeEnergyDaily),
+        '/health/trend?group=activity&metric=active_energy_daily',
+      );
+    });
+
+    test('keeps exact metric target when changing window', () {
+      expect(
+        healthTrendPath(
+          metricKind: HealthMetricKind.stepsDaily,
+          windowDays: 90,
+        ),
+        '/health/trend?group=activity&metric=steps_daily&window=90',
+      );
+    });
+  });
 
   group('healthTrendProject', () {
     test('hrv rows → ascending points, values pass through', () {
@@ -82,33 +101,30 @@ void main() {
       expect(pts.single.y, 7.0);
     });
 
-    test(
-      'workout rows aggregate per UTC day, value = minutes',
-      () {
-        final day = DateTime.utc(2026, 5, 25);
-        final pts = healthTrendProject(
-          rows: [
-            // Two sessions same day = 30min + 20min = 50min
-            _row(
-              id: 'w1',
-              kind: HealthMetricKind.workoutSession,
-              at: day.add(const Duration(hours: 7)),
-              value: 30 * 60,
-            ),
-            _row(
-              id: 'w2',
-              kind: HealthMetricKind.workoutSession,
-              at: day.add(const Duration(hours: 18)),
-              value: 20 * 60,
-            ),
-          ],
-          kind: HealthMetricKind.workoutSession,
-          cutoff: cutoff,
-        );
-        expect(pts, hasLength(1));
-        expect(pts.single.y, closeTo(50.0, 1e-6));
-      },
-    );
+    test('workout rows aggregate per UTC day, value = minutes', () {
+      final day = DateTime.utc(2026, 5, 25);
+      final pts = healthTrendProject(
+        rows: [
+          // Two sessions same day = 30min + 20min = 50min
+          _row(
+            id: 'w1',
+            kind: HealthMetricKind.workoutSession,
+            at: day.add(const Duration(hours: 7)),
+            value: 30 * 60,
+          ),
+          _row(
+            id: 'w2',
+            kind: HealthMetricKind.workoutSession,
+            at: day.add(const Duration(hours: 18)),
+            value: 20 * 60,
+          ),
+        ],
+        kind: HealthMetricKind.workoutSession,
+        cutoff: cutoff,
+      );
+      expect(pts, hasLength(1));
+      expect(pts.single.y, closeTo(50.0, 1e-6));
+    });
 
     test('rows before cutoff are dropped', () {
       final pts = healthTrendProject(

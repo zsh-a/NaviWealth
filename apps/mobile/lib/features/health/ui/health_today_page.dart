@@ -19,7 +19,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/route_paths.dart';
 import '../../../app/shell_chrome.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/auth/domain_scope.dart';
@@ -28,17 +27,16 @@ import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as health_agent_providers;
-import '../data/garmin/garmin_sync_controller.dart';
 import '../data/health_metric_source.dart';
 import '../data/health_sync_service.dart';
 import '../data/providers.dart' as health_data;
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 import 'body_measurement_entry_sheet.dart';
-import 'garmin_account_bind_sheet.dart';
+import 'garmin_sync_status_card.dart';
 import 'health_metric_colors.dart';
 import 'health_today_providers.dart';
-import 'health_trend_page.dart' show TrendGroup, selectedTrendGroupProvider;
+import 'health_trend_page.dart' show healthTrendPath;
 import 'recovery_verdict.dart';
 
 class HealthTodayPage extends ConsumerWidget {
@@ -65,7 +63,7 @@ class HealthTodayPage extends ConsumerWidget {
       child: ListView(
         padding: shellTabContentPadding(context),
         children: const [
-          FadeSlideIn(child: _DataSourceStatusBar()),
+          FadeSlideIn(child: _DataSourcePanel()),
           SizedBox(height: AppSpacing.s16),
           FadeSlideIn(child: _RecoveryHero()),
           SizedBox(height: AppSpacing.s16),
@@ -80,19 +78,44 @@ class HealthTodayPage extends ConsumerWidget {
   }
 }
 
-/// Combined HealthKit + Garmin data source status bar.
-///
-/// Single compact row showing both sync sources side by side,
-/// replacing the previous two separate full-width elements.
-class _DataSourceStatusBar extends ConsumerStatefulWidget {
-  const _DataSourceStatusBar();
+class _DataSourcePanel extends StatelessWidget {
+  const _DataSourcePanel();
 
   @override
-  ConsumerState<_DataSourceStatusBar> createState() =>
-      _DataSourceStatusBarState();
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 720) {
+          return const Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _HealthKitSyncCard(),
+              SizedBox(height: AppSpacing.s8),
+              GarminSyncStatusCard(),
+            ],
+          );
+        }
+        return const Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _HealthKitSyncCard()),
+            SizedBox(width: AppSpacing.s8),
+            Expanded(child: GarminSyncStatusCard()),
+          ],
+        );
+      },
+    );
+  }
 }
 
-class _DataSourceStatusBarState extends ConsumerState<_DataSourceStatusBar> {
+class _HealthKitSyncCard extends ConsumerStatefulWidget {
+  const _HealthKitSyncCard();
+
+  @override
+  ConsumerState<_HealthKitSyncCard> createState() => _HealthKitSyncCardState();
+}
+
+class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
   bool _syncing = false;
   HealthSyncResult? _lastResult;
 
@@ -132,67 +155,63 @@ class _DataSourceStatusBarState extends ConsumerState<_DataSourceStatusBar> {
     final typography = context.theme.typography;
     final optIns = ref.watch(core_auth.domainOptInsProvider).value;
     final enabled = optIns?.contains(DomainScope.health) ?? false;
-    final garminState = ref.watch(health_data.garminSyncControllerProvider);
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s10,
-          vertical: AppSpacing.s8,
-        ),
-        child: Row(
-          children: [
-            // ── HealthKit ──
-            Icon(
-              enabled ? FLucideIcons.activity : FLucideIcons.circleOff,
-              size: AppIconSizes.h18,
-              color: _healthKitColor(enabled),
+    return SoftCard(
+      level: SoftCardLevel.raised,
+      borderless: true,
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Row(
+        children: [
+          AppIconTile(
+            icon: enabled ? FLucideIcons.activity : FLucideIcons.circleOff,
+            color: _healthKitColor(enabled),
+            size: 32,
+            iconSize: AppIconSizes.h18,
+            backgroundOpacity: AppOpacity.whisper,
+            foregroundOpacity: AppOpacity.strong,
+          ),
+          const SizedBox(width: AppSpacing.s10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.healthKitTitle,
+                  style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  _healthKitText(l10n, enabled),
+                  style: typography.xs.copyWith(color: colors.mutedForeground),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.s4),
-            Flexible(
-              child: Text(
-                _healthKitText(l10n, enabled),
-                style: typography.xs.copyWith(color: colors.mutedForeground),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          if (_syncing)
+            const SizedBox(
+              width: AppIconSizes.sm,
+              height: AppIconSizes.sm,
+              child: FCircularProgress(),
+            )
+          else
+            FButton(
+              variant: FButtonVariant.outline,
+              onPress: enabled ? _syncHealthKit : null,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
+                  const SizedBox(width: AppSpacing.s6),
+                  Text(l10n.healthSyncAction),
+                ],
               ),
             ),
-            if (enabled) ...[
-              const SizedBox(width: AppSpacing.s2),
-              GestureDetector(
-                onTap: _syncing ? null : _syncHealthKit,
-                child: _syncing
-                    ? const SizedBox(
-                        width: AppIconSizes.xs,
-                        height: AppIconSizes.xs,
-                        child: FCircularProgress(),
-                      )
-                    : Icon(
-                        FLucideIcons.refreshCw,
-                        size: AppIconSizes.xs,
-                        color: colors.mutedForeground,
-                      ),
-              ),
-            ],
-
-            // ── Divider ──
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
-              child: Container(
-                width: 1,
-                height: 14,
-                color: colors.border,
-              ),
-            ),
-
-            // ── Garmin ──
-            ..._buildGarmin(context, l10n, garminState),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -212,145 +231,10 @@ class _DataSourceStatusBarState extends ConsumerState<_DataSourceStatusBar> {
     final result = _lastResult;
     if (result == null) return l10n.healthSyncReady;
     if (result.ok) {
-      return l10n.healthSyncResult(
-        '${result.unchanged}',
-        '${result.upserted}',
-      );
+      return l10n.healthSyncResult('${result.unchanged}', '${result.upserted}');
     }
     return result.errorMessage ?? l10n.healthSyncFailed;
   }
-
-  List<Widget> _buildGarmin(
-    BuildContext context,
-    AppLocalizations l10n,
-    GarminSyncState state,
-  ) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
-    return switch (state) {
-      GarminInitial() => [
-        Icon(FLucideIcons.watch, size: AppIconSizes.h18, color: colors.mutedForeground),
-        const SizedBox(width: AppSpacing.s4),
-        Text(
-          l10n.healthGarminDisconnected,
-          style: typography.xs.copyWith(color: colors.mutedForeground),
-        ),
-        const SizedBox(width: AppSpacing.s6),
-        GestureDetector(
-          onTap: () => showGarminAccountBindSheet(context: context),
-          child: Text(
-            l10n.healthGarminConnect,
-            style: typography.xs.copyWith(
-              color: colors.primary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
-      GarminRestoring() => [
-        Icon(FLucideIcons.watch, size: AppIconSizes.h18, color: colors.primary),
-        const SizedBox(width: AppSpacing.s4),
-        Text(
-          l10n.healthGarminRestoringBadge,
-          style: typography.xs.copyWith(color: colors.mutedForeground),
-        ),
-        const SizedBox(width: AppSpacing.s6),
-        const SizedBox(width: 12, height: 12, child: FProgress()),
-      ],
-      GarminPendingMfa() => [
-        Icon(FLucideIcons.shield, size: AppIconSizes.h18, color: colors.destructive),
-        const SizedBox(width: AppSpacing.s4),
-        GestureDetector(
-          onTap: () => showGarminAccountBindSheet(context: context),
-          child: Text(
-            l10n.healthGarminVerifyBadge,
-            style: typography.xs.copyWith(
-              color: colors.destructive,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
-      GarminConnected(:final lastSyncAt, :final totalMetrics) => [
-        Icon(FLucideIcons.watch, size: AppIconSizes.h18, color: colors.primary),
-        const SizedBox(width: AppSpacing.s4),
-        Flexible(
-          child: Text(
-            lastSyncAt != null
-                ? '$totalMetrics · ${_garminAgo(l10n, lastSyncAt)}'
-                : '$totalMetrics',
-            style: typography.xs.copyWith(color: colors.mutedForeground),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.s4),
-        GestureDetector(
-          onTap: () => ref
-              .read(health_data.garminSyncControllerProvider.notifier)
-              .syncNow(),
-          child: Icon(
-            FLucideIcons.refreshCw,
-            size: AppIconSizes.xs,
-            color: colors.mutedForeground,
-          ),
-        ),
-      ],
-      GarminSyncing() => [
-        Icon(FLucideIcons.watch, size: AppIconSizes.h18, color: colors.primary),
-        const SizedBox(width: AppSpacing.s4),
-        Text(
-          l10n.healthGarminSyncingBadge,
-          style: typography.xs.copyWith(color: colors.primary),
-        ),
-        const SizedBox(width: AppSpacing.s4),
-        GestureDetector(
-          onTap: () => ref
-              .read(health_data.garminSyncControllerProvider.notifier)
-              .cancelSync(),
-          child: Icon(FLucideIcons.x, size: AppIconSizes.xs, color: colors.mutedForeground),
-        ),
-      ],
-      GarminError(:final issue) => [
-        Icon(FLucideIcons.circleAlert, size: AppIconSizes.h18, color: colors.destructive),
-        const SizedBox(width: AppSpacing.s4),
-        GestureDetector(
-          onTap: () {
-            if (issue.requiresReconnect) {
-              showGarminAccountBindSheet(context: context);
-            } else {
-              ref
-                  .read(health_data.garminSyncControllerProvider.notifier)
-                  .syncNow();
-            }
-          },
-          child: Text(
-            issue.requiresReconnect
-                ? l10n.healthGarminConnect
-                : l10n.healthGarminRetry,
-            style: typography.xs.copyWith(
-              color: colors.destructive,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
-    };
-  }
-
-  String _garminAgo(AppLocalizations l10n, DateTime dt) =>
-      AppFormatters.relativeTime(
-        dt,
-        justNow: l10n.aiChatRelativeJustNow,
-        minutesAgo: l10n.aiChatRelativeMinutesAgo,
-        hoursAgo: l10n.aiChatRelativeHoursAgo,
-        daysAgo: l10n.aiChatRelativeDaysAgo,
-        dateFallback: (d) {
-          final mm = d.month.toString().padLeft(2, '0');
-          final dd = d.day.toString().padLeft(2, '0');
-          return '$mm-$dd';
-        },
-      );
 }
 
 class _RecoveryHero extends ConsumerWidget {
@@ -597,7 +481,7 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
       _TrainingLoadCard(async: trainingLoad),
       _Spo2Card(async: spo2),
     ];
-    final visibleCards = _expanded ? cards : cards.take(6).toList();
+    final visibleCards = _expanded ? cards : cards.take(4).toList();
     final l10n = AppLocalizations.of(context);
 
     return LayoutBuilder(
@@ -656,7 +540,7 @@ class _SleepCard extends StatelessWidget {
     return _MetricCard(
       icon: FLucideIcons.moon,
       label: l10n.healthSleepMetricLabel,
-      trendGroup: TrendGroup.recovery,
+      trendKind: HealthMetricKind.sleepSession,
       accent: HealthMetricColors.sleep,
       child: async.when(
         loading: () => const _ValueSkeleton(),
@@ -860,7 +744,7 @@ class _HrvCard extends StatelessWidget {
     return _MetricCard(
       icon: FLucideIcons.heartPulse,
       label: l10n.healthHrvMetricLabel,
-      trendGroup: TrendGroup.recovery,
+      trendKind: HealthMetricKind.hrvDaily,
       accent: HealthMetricColors.hrv,
       child: async.when(
         loading: () => const _ValueSkeleton(),
@@ -891,7 +775,7 @@ class _HeartRateCard extends StatelessWidget {
     return _MetricCard(
       icon: FLucideIcons.heartPulse,
       label: l10n.healthHeartRateMetricLabel,
-      trendGroup: TrendGroup.recovery,
+      trendKind: HealthMetricKind.heartRateDaily,
       accent: HealthMetricColors.heartRate,
       child: async.when(
         loading: () => const _ValueSkeleton(),
@@ -921,7 +805,7 @@ class _WorkoutCard extends StatelessWidget {
     return _MetricCard(
       icon: FLucideIcons.dumbbell,
       label: l10n.healthWorkoutMetricLabel,
-      trendGroup: TrendGroup.activity,
+      trendKind: HealthMetricKind.workoutSession,
       accent: HealthMetricColors.workout,
       child: async.when(
         loading: () => const _ValueSkeleton(),
@@ -964,7 +848,7 @@ class _StepsCard extends ConsumerWidget {
     final walking = ref.watch(latestWalkingDistanceProvider);
     return _MetricCard(
       icon: FLucideIcons.footprints,
-      trendGroup: TrendGroup.activity,
+      trendKind: HealthMetricKind.stepsDaily,
       label: l10n.healthStepsMetricLabel,
       accent: HealthMetricColors.steps,
       child: async.when(
@@ -1003,7 +887,7 @@ class _ActiveEnergyCard extends StatelessWidget {
     return _MetricCard(
       icon: FLucideIcons.flame,
       label: l10n.healthEnergyMetricLabel,
-      trendGroup: TrendGroup.activity,
+      trendKind: HealthMetricKind.activeEnergyDaily,
       accent: HealthMetricColors.totalEnergy,
       child: async.when(
         loading: () => const _ValueSkeleton(),
@@ -1034,7 +918,7 @@ class _BodyBatteryCard extends StatelessWidget {
     return _MetricCard(
       icon: FLucideIcons.battery,
       label: l10n.healthBodyBatteryMetricLabel,
-      trendGroup: TrendGroup.recovery,
+      trendKind: HealthMetricKind.bodyBatteryDaily,
       accent: HealthMetricColors.bodyBattery,
       child: async.when(
         loading: () => const _ValueSkeleton(),
@@ -1068,7 +952,7 @@ class _StressCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return _MetricCard(
       icon: FLucideIcons.brain,
-      trendGroup: TrendGroup.recovery,
+      trendKind: HealthMetricKind.stressDaily,
       label: l10n.healthStressMetricLabel,
       accent: HealthMetricColors.stress,
       child: async.when(
@@ -1097,7 +981,7 @@ class _RhrCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return _MetricCard(
       icon: FLucideIcons.heart,
-      trendGroup: TrendGroup.recovery,
+      trendKind: HealthMetricKind.rhrDaily,
       label: l10n.healthRhrMetricLabel,
       accent: HealthMetricColors.rhr,
       child: async.when(
@@ -1127,7 +1011,7 @@ class _TrainingLoadCard extends StatelessWidget {
     return _MetricCard(
       icon: FLucideIcons.flame,
       label: l10n.healthTrainingLoadMetricLabel,
-      trendGroup: TrendGroup.activity,
+      trendKind: HealthMetricKind.trainingLoadDaily,
       accent: HealthMetricColors.trainingLoad,
       child: async.when(
         loading: () => const _ValueSkeleton(),
@@ -1154,7 +1038,7 @@ class _Spo2Card extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return _MetricCard(
       icon: FLucideIcons.wind,
-      trendGroup: TrendGroup.recovery,
+      trendKind: HealthMetricKind.spo2Daily,
       label: l10n.healthSpo2MetricLabel,
       accent: HealthMetricColors.spo2,
       child: async.when(
@@ -1180,13 +1064,13 @@ class _MetricCard extends ConsumerWidget {
     required this.label,
     required this.child,
     required this.accent,
-    this.trendGroup,
+    this.trendKind,
   });
   final IconData icon;
   final String label;
   final Widget child;
   final Color accent;
-  final TrendGroup? trendGroup;
+  final HealthMetricKind? trendKind;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1194,12 +1078,9 @@ class _MetricCard extends ConsumerWidget {
       level: SoftCardLevel.raised,
       borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s16),
-      onPress: trendGroup == null
+      onPress: trendKind == null
           ? null
-          : () {
-              ref.read(selectedTrendGroupProvider.notifier).state = trendGroup!;
-              context.go(AppRoutes.healthTrend);
-            },
+          : () => context.go(healthTrendPath(metricKind: trendKind)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 140),
         child: Column(
@@ -1209,7 +1090,7 @@ class _MetricCard extends ConsumerWidget {
               icon: icon,
               title: label,
               color: accent,
-              showChevron: trendGroup != null,
+              showChevron: trendKind != null,
             ),
             const SizedBox(height: AppSpacing.s12),
             child,

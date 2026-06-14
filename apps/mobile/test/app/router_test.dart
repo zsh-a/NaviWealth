@@ -45,6 +45,7 @@ import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/health/ui/health_trend_page.dart';
 import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/holding_service.dart';
@@ -291,6 +292,36 @@ void main() {
       );
       expect(find.byType(RouteErrorPage), findsNothing);
       expect(find.byType(ActivityEntryDetailRoute), findsOneWidget);
+      await _drainTimers(tester);
+    });
+
+    testWidgets('/health/trend restores group and window from query', (
+      tester,
+    ) async {
+      final container = await _pumpAt(
+        tester,
+        initialLocation: '${AppRoutes.healthTrend}?group=body&window=90',
+      );
+      expect(find.byType(RouteErrorPage), findsNothing);
+      expect(find.byType(HealthTrendPage), findsOneWidget);
+      expect(
+        container
+            .read(appRouterProvider)
+            .routeInformationProvider
+            .value
+            .uri
+            .queryParameters,
+        containsPair('group', 'body'),
+      );
+      expect(
+        container
+            .read(appRouterProvider)
+            .routeInformationProvider
+            .value
+            .uri
+            .queryParameters,
+        containsPair('window', '90'),
+      );
       await _drainTimers(tester);
     });
 

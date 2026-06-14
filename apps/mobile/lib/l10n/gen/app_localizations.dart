@@ -13882,6 +13882,18 @@ abstract class AppLocalizations {
   /// **'Daily total calories burned'**
   String get healthTrendTotalEnergySubtitle;
 
+  /// No description provided for @healthKitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'HealthKit / Health Connect'**
+  String get healthKitTitle;
+
+  /// No description provided for @healthSyncAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
+  String get healthSyncAction;
+
   /// No description provided for @healthSyncPermissionDenied.
   ///
   /// In en, this message translates to:

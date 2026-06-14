@@ -8021,6 +8021,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthTrendTotalEnergySubtitle => 'Daily total calories burned';
 
   @override
+  String get healthKitTitle => 'HealthKit / Health Connect';
+
+  @override
+  String get healthSyncAction => 'Sync';
+
+  @override
   String get healthSyncPermissionDenied => 'Permission denied';
 
   @override

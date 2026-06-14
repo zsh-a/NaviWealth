@@ -41,7 +41,8 @@ StatefulShellRoute healthShellRoute() {
           GoRoute(
             path: AppRoutes.healthTrend,
             name: AppRouteNames.healthTrend,
-            builder: (context, state) => const HealthTrendPage(),
+            builder: (context, state) =>
+                HealthTrendPage.fromQuery(state.uri.queryParameters),
           ),
         ],
       ),

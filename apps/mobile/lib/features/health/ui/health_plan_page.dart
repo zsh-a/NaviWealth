@@ -19,7 +19,6 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'health_metric_colors.dart';
 import 'health_today_providers.dart';
-import 'recovery_verdict.dart';
 
 class HealthPlanPage extends ConsumerWidget {
   const HealthPlanPage({super.key});
@@ -42,8 +41,6 @@ class HealthPlanPage extends ConsumerWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _RecoveryHeroCard(out: out),
-                    const SizedBox(height: AppSpacing.s16),
                     _ActionPlanCard(out: out),
                     const SizedBox(height: AppSpacing.s16),
                     _InputMetricsCard(out: out),
@@ -58,126 +55,6 @@ class HealthPlanPage extends ConsumerWidget {
       ),
     );
   }
-}
-
-/// Hero card showing recovery verdict, score, and suggestion.
-class _RecoveryHeroCard extends StatelessWidget {
-  const _RecoveryHeroCard({required this.out});
-  final Map<String, Object?> out;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
-    final l10n = AppLocalizations.of(context);
-    final verdict = out['verdict']?.toString() ?? 'insufficient_data';
-    final score = out['score'];
-    final inputs = (out['inputs'] as Map?)?.cast<String, Object?>() ?? const {};
-    final color = RecoveryVerdict.color(verdict, colors);
-    return SoftCard(
-      level: SoftCardLevel.hero,
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              AppIconTile(
-                icon: RecoveryVerdict.icon(verdict),
-                color: color,
-                size: 40,
-                iconSize: AppIconSizes.md,
-                backgroundOpacity: AppOpacity.medium,
-                foregroundOpacity: 1,
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.healthTrendGroupRecovery,
-                      style: typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
-                    Text(
-                      RecoveryVerdict.label(verdict, l10n),
-                      style: typography.lg.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              if (score != null)
-                Text(
-                  '$score',
-                  style: typography.xl.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          Text(
-            _verdictSuggestion(verdict, l10n, inputs: inputs),
-            style: typography.sm.copyWith(
-              color: colors.mutedForeground,
-              height: 1.5,
-            ),
-            maxLines: 4,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  static String _verdictSuggestion(
-    String v,
-    AppLocalizations l10n, {
-    Map<String, Object?> inputs = const {},
-  }) {
-    final hrv = inputs['latest_hrv_ms'];
-    final sleep = inputs['avg_sleep_hours'];
-    final rhr = inputs['latest_rhr_bpm'];
-    final contextLine = _buildContextLine(
-      l10n,
-      hrv: hrv,
-      sleep: sleep,
-      rhr: rhr,
-    );
-    final base = RecoveryVerdict.suggestion(v, l10n);
-    if (contextLine.isEmpty) return base;
-    return '$contextLine $base';
-  }
-
-  static String _buildContextLine(
-    AppLocalizations l10n, {
-    Object? hrv,
-    Object? sleep,
-    Object? rhr,
-  }) {
-    final parts = <String>[];
-    if (hrv is num && hrv > 0) {
-      parts.add('${l10n.healthHrvMetricLabel} ${_round(hrv.toDouble())} ms');
-    }
-    if (sleep is num && sleep > 0) {
-      parts.add('${l10n.healthSleepMetricLabel} ${_round(sleep.toDouble())} h');
-    }
-    if (rhr is num && rhr > 0) {
-      parts.add('${l10n.healthRhrMetricLabel} ${_round(rhr.toDouble())} bpm');
-    }
-    if (parts.isEmpty) return '';
-    return '${parts.join(' · ')}.';
-  }
-
-  static double _round(double v) => (v * 100).round() / 100.0;
 }
 
 /// Action plan card with icon disc rows.

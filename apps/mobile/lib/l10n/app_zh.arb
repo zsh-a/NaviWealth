@@ -2406,6 +2406,8 @@
   "healthTrendSpo2Subtitle": "每日平均血氧饱和度",
   "healthTrendTotalEnergyTitle": "总能量",
   "healthTrendTotalEnergySubtitle": "每日总消耗卡路里",
+  "healthKitTitle": "HealthKit / Health Connect",
+  "healthSyncAction": "同步",
   "healthSyncPermissionDenied": "权限被拒绝",
   "healthSyncingData": "正在同步健康数据…",
   "healthSyncReady": "同步最近 30 天健康数据",

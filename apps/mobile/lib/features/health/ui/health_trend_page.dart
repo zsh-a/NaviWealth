@@ -8,9 +8,10 @@ library;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../app/shell_chrome.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
@@ -36,28 +37,80 @@ enum _TrendWindow {
   final int days;
 }
 
-/// Selected trend group, shared between Today and Trend pages so metric
-/// cards can navigate to the Trend page with the correct group pre-selected.
-final selectedTrendGroupProvider = StateProvider<TrendGroup>(
-  (_) => TrendGroup.recovery,
-);
-
 class HealthTrendPage extends ConsumerStatefulWidget {
-  const HealthTrendPage({super.key});
+  const HealthTrendPage({
+    super.key,
+    this.initialGroup = TrendGroup.recovery,
+    this.initialWindowDays = 30,
+    this.initialMetricKind,
+  });
+
+  factory HealthTrendPage.fromQuery(Map<String, String> query) {
+    final metricKind = _parseMetricKind(query['metric']);
+    return HealthTrendPage(
+      initialGroup: metricKind == null
+          ? _parseTrendGroup(query['group'])
+          : _trendGroupForMetric(metricKind),
+      initialWindowDays: _parseTrendWindow(query['window']).days,
+      initialMetricKind: metricKind,
+    );
+  }
+
+  final TrendGroup initialGroup;
+  final int initialWindowDays;
+  final HealthMetricKind? initialMetricKind;
 
   @override
   ConsumerState<HealthTrendPage> createState() => _HealthTrendPageState();
 }
 
 class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
-  _TrendWindow _window = _TrendWindow.d30;
+  late TrendGroup _group;
+  late _TrendWindow _window;
+  HealthMetricKind? _metricKind;
+
+  @override
+  void initState() {
+    super.initState();
+    _group = widget.initialGroup;
+    _window = _trendWindowForDays(widget.initialWindowDays);
+    _metricKind = widget.initialMetricKind;
+  }
+
+  @override
+  void didUpdateWidget(covariant HealthTrendPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialGroup != widget.initialGroup ||
+        oldWidget.initialWindowDays != widget.initialWindowDays ||
+        oldWidget.initialMetricKind != widget.initialMetricKind) {
+      _group = widget.initialGroup;
+      _window = _trendWindowForDays(widget.initialWindowDays);
+      _metricKind = widget.initialMetricKind;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final group = ref.watch(selectedTrendGroupProvider);
     final groupData = ref.watch(
-      trendGroupChartProvider((group: group, windowDays: _window.days)),
+      trendGroupChartProvider((group: _group, windowDays: _window.days)),
+    );
+    final specs = _prioritizeMetric(
+      _trendSpecs(l10n, _group),
+      metricKind: _metricKind,
+    );
+    final visibleSpecs = groupData.maybeWhen(
+      data: (pointsByKind) {
+        final withData = specs
+            .where(
+              (spec) =>
+                  spec.kind == _metricKind ||
+                  (pointsByKind[spec.kind]?.length ?? 0) >= 2,
+            )
+            .toList();
+        return withData.isEmpty ? specs : withData;
+      },
+      orElse: () => specs,
     );
     return ShellTabScaffold(
       title: l10n.healthTrendTitle,
@@ -68,16 +121,15 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
             builder: (context, constraints) {
               final groupPicker = SegmentedRow<TrendGroup>(
                 options: TrendGroup.values,
-                value: group,
+                value: _group,
                 labelOf: (g) => _trendGroupLabel(l10n, g),
-                onChanged: (value) =>
-                    ref.read(selectedTrendGroupProvider.notifier).state = value,
+                onChanged: (value) => _go(context, group: value),
               );
               final windowPicker = SegmentedRow<_TrendWindow>(
                 options: _TrendWindow.values,
                 value: _window,
                 labelOf: (w) => '${w.days}d',
-                onChanged: (value) => setState(() => _window = value),
+                onChanged: (value) => _go(context, window: value),
               );
               if (constraints.maxWidth < 560) {
                 return Column(
@@ -99,7 +151,7 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
             },
           ),
           const SizedBox(height: AppSpacing.s16),
-          for (final spec in _trendSpecs(l10n, group)) ...[
+          for (final spec in visibleSpecs) ...[
             FadeSlideIn(
               child: _TrendCard(
                 spec: spec,
@@ -113,12 +165,94 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
     );
   }
 
+  void _go(BuildContext context, {TrendGroup? group, _TrendWindow? window}) {
+    context.go(
+      healthTrendPath(
+        group: group ?? _group,
+        metricKind: group == null ? _metricKind : null,
+        windowDays: (window ?? _window).days,
+      ),
+    );
+  }
+
   static String _trendGroupLabel(AppLocalizations l10n, TrendGroup group) =>
       switch (group) {
         TrendGroup.recovery => l10n.healthTrendGroupRecovery,
         TrendGroup.activity => l10n.healthTrendGroupActivity,
         TrendGroup.body => l10n.healthTrendGroupBody,
       };
+}
+
+String healthTrendPath({
+  TrendGroup? group,
+  HealthMetricKind? metricKind,
+  int windowDays = 30,
+}) {
+  final resolvedGroup =
+      group ??
+      switch (metricKind) {
+        null => TrendGroup.recovery,
+        final kind => _trendGroupForMetric(kind),
+      };
+  final query = <String, String>{};
+  if (resolvedGroup != TrendGroup.recovery) query['group'] = resolvedGroup.name;
+  if (metricKind != null) query['metric'] = metricKind.wire;
+  if (windowDays != 30) query['window'] = windowDays.toString();
+  return Uri(
+    path: AppRoutes.healthTrend,
+    queryParameters: query.isEmpty ? null : query,
+  ).toString();
+}
+
+HealthMetricKind? _parseMetricKind(String? raw) {
+  if (raw == null || raw.isEmpty) return null;
+  final kind = HealthMetricKindX.parse(raw);
+  if (kind == HealthMetricKind.unknown) return null;
+  return kind;
+}
+
+TrendGroup _trendGroupForMetric(HealthMetricKind kind) => switch (kind) {
+  HealthMetricKind.workoutSession ||
+  HealthMetricKind.stepsDaily ||
+  HealthMetricKind.distanceWalkingRunningDaily ||
+  HealthMetricKind.activeEnergyDaily ||
+  HealthMetricKind.floorsClimbedDaily ||
+  HealthMetricKind.trainingLoadDaily ||
+  HealthMetricKind.trainingEffectDaily ||
+  HealthMetricKind.totalEnergyDaily => TrendGroup.activity,
+  HealthMetricKind.weight ||
+  HealthMetricKind.bodyFat ||
+  HealthMetricKind.vo2Max => TrendGroup.body,
+  _ => TrendGroup.recovery,
+};
+
+List<_TrendSpec> _prioritizeMetric(
+  List<_TrendSpec> specs, {
+  required HealthMetricKind? metricKind,
+}) {
+  if (metricKind == null) return specs;
+  final index = specs.indexWhere((spec) => spec.kind == metricKind);
+  if (index <= 0) return specs;
+  return [specs[index], ...specs.take(index), ...specs.skip(index + 1)];
+}
+
+TrendGroup _parseTrendGroup(String? raw) {
+  for (final group in TrendGroup.values) {
+    if (group.name == raw) return group;
+  }
+  return TrendGroup.recovery;
+}
+
+_TrendWindow _parseTrendWindow(String? raw) {
+  final days = int.tryParse(raw ?? '');
+  return _trendWindowForDays(days);
+}
+
+_TrendWindow _trendWindowForDays(int? days) {
+  for (final window in _TrendWindow.values) {
+    if (window.days == days) return window;
+  }
+  return _TrendWindow.d30;
 }
 
 class _TrendCard extends StatelessWidget {
@@ -356,6 +490,13 @@ List<_TrendSpec> _trendSpecs(AppLocalizations l10n, TrendGroup group) =>
           color: HealthMetricColors.steps,
         ),
         _TrendSpec(
+          title: l10n.healthEnergyMetricLabel,
+          subtitle: l10n.healthTrendTotalEnergySubtitle,
+          kind: HealthMetricKind.activeEnergyDaily,
+          icon: FLucideIcons.flame,
+          color: HealthMetricColors.totalEnergy,
+        ),
+        _TrendSpec(
           title: l10n.healthTrendWalkingDistanceTitle,
           subtitle: l10n.healthTrendWalkingDistanceSubtitle,
           kind: HealthMetricKind.distanceWalkingRunningDaily,
@@ -458,6 +599,11 @@ List<_TrendSpec> _trendSpecsRaw(TrendGroup group) => switch (group) {
       title: '',
       subtitle: '',
       kind: HealthMetricKind.stepsDaily,
+    ),
+    const _TrendSpec(
+      title: '',
+      subtitle: '',
+      kind: HealthMetricKind.activeEnergyDaily,
     ),
     const _TrendSpec(
       title: '',
