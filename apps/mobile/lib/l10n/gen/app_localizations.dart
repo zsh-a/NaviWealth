@@ -464,24 +464,6 @@ abstract class AppLocalizations {
   /// **'Loans, mortgages, credit'**
   String get wealthLiabilitiesSectionSubtitle;
 
-  /// Wealth hub / sub-page: income projection (yield derived from holdings)
-  ///
-  /// In en, this message translates to:
-  /// **'Income projection'**
-  String get wealthIncomeProjectionTitle;
-
-  /// Wealth hub: income projection section subtitle
-  ///
-  /// In en, this message translates to:
-  /// **'Projected yield from your holdings'**
-  String get wealthIncomeProjectionSubtitle;
-
-  /// Empty-state body for /wealth/income-projection until the engine ships
-  ///
-  /// In en, this message translates to:
-  /// **'Income projection from holdings is not yet wired up.'**
-  String get wealthIncomeProjectionComingSoon;
-
   /// Wealth tab: title for the multi-perspective allocation section
   ///
   /// In en, this message translates to:

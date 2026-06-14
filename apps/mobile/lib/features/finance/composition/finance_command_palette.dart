@@ -55,15 +55,7 @@ List<CommandPaletteEntry> financeCommandPaletteEntries(AppLocalizations l10n) {
       id: 'nav.plan',
       label: l10n.navPlan,
       icon: FLucideIcons.lightbulb,
-      keywords: const <String>[
-        AppRoutes.plan,
-        'plan',
-        'fire',
-        'goals',
-        'scenarios',
-        '规划',
-        '计划',
-      ],
+      keywords: const <String>[AppRoutes.plan, 'plan', 'fire', '规划', '计划'],
       run: (BuildContext ctx) => ctx.go(AppRoutes.plan),
     ),
     CommandPaletteEntry(

@@ -3,18 +3,12 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:naviwealth/features/finance/data/domain/account.dart';
-import 'package:naviwealth/features/finance/data/domain/enums.dart';
-import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 
 import '../../../app/route_paths.dart';
 import '../../../app/shell_chrome.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../accounts/data/account_balances_provider.dart';
-import '../../accounts/domain/account_balances.dart';
-import '../../accounts/ui/account_grouped_sections.dart';
 import '../../home/data/dashboard_providers.dart';
 import 'wealth_action_panel.dart';
 import 'wealth_perspective_section.dart';
@@ -35,8 +29,6 @@ class WealthHubPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final accountsAsync = ref.watch(accountsStreamProvider);
-    final balancesAsync = ref.watch(accountBalancesByIdProvider);
     final snapshotAsync = ref.watch(dashboardSnapshotProvider);
 
     return ShellTabScaffold(
@@ -49,7 +41,7 @@ class WealthHubPage extends ConsumerWidget {
           onPress: () => showWealthActionPanel(context),
         ),
       ],
-      child: accountsAsync.when(
+      child: snapshotAsync.when(
         loading: () => const PageSkeletonShell<Object>(
           isLoading: true,
           skeleton: WealthHubSkeleton(),
@@ -61,57 +53,35 @@ class WealthHubPage extends ConsumerWidget {
             action: FButton(
               variant: FButtonVariant.ghost,
               onPress: () {
-                ref
-                  ..invalidate(accountsStreamProvider)
-                  ..invalidate(accountBalancesByIdProvider)
-                  ..invalidate(dashboardSnapshotProvider);
+                ref.invalidate(dashboardSnapshotProvider);
               },
               child: Text(l10n.commonRetry),
             ),
           ),
         ),
-        data: (accounts) {
-          final containers = accounts
-              .where((a) => !a.archived)
-              .where(_isUserContainer)
-              .toList();
-          final balances = balancesAsync.value ?? const {};
-          final snapshot = snapshotAsync.value;
-          return PageSkeletonShell<Object>(
-            isLoading: false,
-            skeleton: const WealthHubSkeleton(),
-            child: _WealthHubBody(
-              accounts: containers,
-              balances: balances,
-              baseCurrency: snapshot?.baseCurrency ?? 'USD',
-              netWorth: snapshot?.netWorth.amount ?? Decimal.zero,
-              totalAssets: snapshot?.totalAssets.amount ?? Decimal.zero,
-              totalLiabilities:
-                  snapshot?.totalLiabilities.amount ?? Decimal.zero,
-            ),
-          );
-        },
+        data: (snapshot) => PageSkeletonShell<Object>(
+          isLoading: false,
+          skeleton: const WealthHubSkeleton(),
+          child: _WealthHubBody(
+            baseCurrency: snapshot.baseCurrency,
+            netWorth: snapshot.netWorth.amount,
+            totalAssets: snapshot.totalAssets.amount,
+            totalLiabilities: snapshot.totalLiabilities.amount,
+          ),
+        ),
       ),
     );
   }
 }
 
-bool _isUserContainer(Account a) {
-  return a.category == AccountSide.asset || a.category == AccountSide.liability;
-}
-
 class _WealthHubBody extends StatelessWidget {
   const _WealthHubBody({
-    required this.accounts,
-    required this.balances,
     required this.baseCurrency,
     required this.netWorth,
     required this.totalAssets,
     required this.totalLiabilities,
   });
 
-  final List<Account> accounts;
-  final Map<String, AccountBalances> balances;
   final String baseCurrency;
   final Decimal netWorth;
   final Decimal totalAssets;
@@ -139,14 +109,6 @@ class _WealthHubBody extends StatelessWidget {
         const _WealthSectionGrid(),
         const SizedBox(height: AppSpacing.s16),
         const WealthPerspectiveSection(),
-        const SizedBox(height: AppSpacing.s16),
-        AccountsGroupedSections(
-          accounts: accounts,
-          balances: balances,
-          allowExpansion: true,
-          onAccountPressed: (context, account) =>
-              context.push(AppRoutes.wealthAccount(account.id)),
-        ),
       ],
     );
   }
@@ -283,27 +245,4 @@ class _WealthSectionSpec {
   final String title;
   final String subtitle;
   final String path;
-}
-
-/// Placeholder page for /wealth/income-projection. The full yield-by-holding
-/// engine is a Phase C+ work item; for now this surfaces a "coming soon"
-/// empty state so the route resolves and the section card has somewhere
-/// to land.
-class WealthIncomeProjectionPlaceholderPage extends StatelessWidget {
-  const WealthIncomeProjectionPlaceholderPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return AppPageScaffold(
-      title: l10n.wealthIncomeProjectionTitle,
-      childPad: false,
-      child: Center(
-        child: AppEmptyState(
-          icon: FLucideIcons.banknote,
-          title: l10n.wealthIncomeProjectionComingSoon,
-        ),
-      ),
-    );
-  }
 }

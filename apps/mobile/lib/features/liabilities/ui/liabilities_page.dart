@@ -17,11 +17,7 @@ import 'liability_l10n.dart';
 /// List of all of the user's liabilities. Tapping a row drills into the
 /// detail / amortization screen. The FAB opens the create form.
 class LiabilitiesPage extends ConsumerWidget {
-  const LiabilitiesPage({super.key, this.embedded = false});
-
-  /// When true, renders without Scaffold/AppBar/FAB — for embedding
-  /// inside [PortfolioPage].
-  final bool embedded;
+  const LiabilitiesPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -56,8 +52,6 @@ class LiabilitiesPage extends ConsumerWidget {
         );
       },
     );
-
-    if (embedded) return body;
 
     return AppPageScaffold(
       title: l10n.liabilitiesAppBarTitle,

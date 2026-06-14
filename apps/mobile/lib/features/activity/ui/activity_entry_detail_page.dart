@@ -15,6 +15,8 @@ import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../finance/data/repositories/journal_entry_providers.dart';
+import '../../finance/data/repositories/providers.dart';
 import '../../shared/account_l10n.dart';
 import '../../shared/entry_kind_labels.dart';
 
@@ -97,6 +99,74 @@ class ActivityEntryDetailPage extends ConsumerWidget {
 
 class ActivityEntryDetailArgs {
   const ActivityEntryDetailArgs({
+    required this.entry,
+    required this.accountsById,
+  });
+
+  final JournalEntryWithPostings entry;
+  final Map<String, Account> accountsById;
+}
+
+class ActivityEntryDetailRoute extends ConsumerWidget {
+  const ActivityEntryDetailRoute({super.key, required this.entryId});
+
+  final String entryId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final detailAsync = ref.watch(_activityEntryDetailProvider(entryId));
+    return detailAsync.when(
+      loading: () => AppPageScaffold(
+        title: l10n.activityEntryDetailTitle,
+        child: const Center(child: FCircularProgress()),
+      ),
+      error: (error, _) => AppPageScaffold(
+        title: l10n.activityEntryDetailTitle,
+        child: AppEmptyState.error(
+          title: l10n.commonLoadFailed,
+          message: '$error',
+          action: FButton(
+            variant: FButtonVariant.ghost,
+            onPress: () =>
+                ref.invalidate(_activityEntryDetailProvider(entryId)),
+            child: Text(l10n.commonRetry),
+          ),
+        ),
+      ),
+      data: (detail) {
+        if (detail == null) {
+          return AppPageScaffold(
+            title: l10n.activityEntryDetailTitle,
+            child: AppEmptyState.error(
+              title: l10n.routeNotFoundTitle,
+              message: l10n.routeNotFoundMessage('/activity/entry/$entryId'),
+            ),
+          );
+        }
+        return ActivityEntryDetailPage(
+          entry: detail.entry,
+          accountsById: detail.accountsById,
+        );
+      },
+    );
+  }
+}
+
+final _activityEntryDetailProvider = FutureProvider.autoDispose
+    .family<_ActivityEntryDetailData?, String>((ref, entryId) async {
+      final repo = await ref.watch(journalEntryRepositoryProvider.future);
+      final accounts = await ref.watch(allAccountsStreamProvider.future);
+      final entry = await repo.getById(entryId);
+      if (entry == null) return null;
+      return _ActivityEntryDetailData(
+        entry: entry,
+        accountsById: {for (final account in accounts) account.id: account},
+      );
+    });
+
+class _ActivityEntryDetailData {
+  const _ActivityEntryDetailData({
     required this.entry,
     required this.accountsById,
   });

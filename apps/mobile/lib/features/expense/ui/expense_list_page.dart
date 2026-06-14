@@ -16,11 +16,7 @@ import 'expense_list_content.dart';
 import 'expense_list_models.dart';
 
 class ExpenseListPage extends ConsumerStatefulWidget {
-  const ExpenseListPage({super.key, this.embedded = false});
-
-  /// When true, skips the Scaffold/AppBar so the page can be embedded
-  /// inside another Scaffold (e.g., the Activity tab).
-  final bool embedded;
+  const ExpenseListPage({super.key});
 
   @override
   ConsumerState<ExpenseListPage> createState() => _ExpenseListPageState();
@@ -76,10 +72,10 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
             ),
           ],
         );
-      },      error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
+      },
+      error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
     );
 
-    if (widget.embedded) return body;
     return AppPageScaffold(
       title: l10n.navExpenses,
       childPad: false,

@@ -47,6 +47,8 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final isDesktop =
+        MediaQuery.sizeOf(context).width >= Breakpoints.contentTwoColumn;
     ref.listen<ActivityFeedQuery>(activityFeedQueryProvider, (_, next) {
       if (!mounted) return;
       _replaceActivityUrl(query: next);
@@ -63,19 +65,19 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
           icon: const Icon(FLucideIcons.inbox),
           onPress: () => context.push(AppRoutes.activityIngest),
         ),
-        FHeaderAction(
-          icon: const Icon(FLucideIcons.filter),
-          onPress: () => ActivityFeedFilterSheet.show(context),
-        ),
-        FHeaderAction(
-          icon: const Icon(FLucideIcons.plus),
-          onPress: () => showActivityActionPanel(context),
-        ),
+        if (!isDesktop) ...[
+          FHeaderAction(
+            icon: const Icon(FLucideIcons.filter),
+            onPress: () => ActivityFeedFilterSheet.show(context),
+          ),
+          FHeaderAction(
+            icon: const Icon(FLucideIcons.plus),
+            onPress: () => showActivityActionPanel(context),
+          ),
+        ],
       ],
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isDesktop =
-              constraints.maxWidth >= Breakpoints.contentTwoColumn;
           return isDesktop
               ? AdaptiveContentFrame(
                   maxWidth: AdaptiveMaxWidth.dashboard,

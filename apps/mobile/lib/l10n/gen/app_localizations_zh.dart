@@ -198,15 +198,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wealthLiabilitiesSectionSubtitle => '贷款、按揭、信用';
 
   @override
-  String get wealthIncomeProjectionTitle => '收益展望';
-
-  @override
-  String get wealthIncomeProjectionSubtitle => '持仓推导的预期收益';
-
-  @override
-  String get wealthIncomeProjectionComingSoon => '由持仓推导的收益展望尚未上线。';
-
-  @override
   String get wealthPerspectiveSectionTitle => '资产分布';
 
   @override

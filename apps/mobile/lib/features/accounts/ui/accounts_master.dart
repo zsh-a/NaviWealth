@@ -20,12 +20,10 @@ class AccountsMaster extends ConsumerWidget {
     super.key,
     required this.selectedId,
     required this.inMasterDetail,
-    this.embedded = false,
   });
 
   final String? selectedId;
   final bool inMasterDetail;
-  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -72,7 +70,7 @@ class AccountsMaster extends ConsumerWidget {
       onSelectPrevious: allIds == null || allIds.isEmpty
           ? null
           : () => _selectAdjacent(context, allIds, delta: -1),
-      child: embedded ? body : _StandaloneAccountsScaffold(child: body),
+      child: _StandaloneAccountsScaffold(child: body),
     );
   }
 

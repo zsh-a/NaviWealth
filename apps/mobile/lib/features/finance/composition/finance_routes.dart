@@ -147,7 +147,11 @@ StatefulShellRoute financeShellRoute() {
                       accountsById: extra.accountsById,
                     );
                   }
-                  return RouteErrorPage(state: state);
+                  final entryId = state.pathParameters['entryId'];
+                  if (entryId == null || entryId.isEmpty) {
+                    return RouteErrorPage(state: state);
+                  }
+                  return ActivityEntryDetailRoute(entryId: entryId);
                 },
               ),
               GoRoute(
@@ -247,12 +251,6 @@ StatefulShellRoute financeShellRoute() {
                   load: watchlist_lib.loadLibrary,
                   builder: (_) => watchlist_lib.WatchlistPage(),
                 ),
-              ),
-              GoRoute(
-                path: 'income-projection',
-                name: AppRouteNames.wealthIncomeProjection,
-                builder: (context, state) =>
-                    const WealthIncomeProjectionPlaceholderPage(),
               ),
               GoRoute(
                 path: 'assets/:assetId',

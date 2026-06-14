@@ -27,6 +27,7 @@ import 'package:naviwealth/app/router.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/activity/ui/activity_entry_detail_page.dart';
 import 'package:naviwealth/features/analytics/data/benchmark/benchmark_history_source.dart';
 import 'package:naviwealth/features/analytics/data/benchmark/benchmark_providers.dart';
 import 'package:naviwealth/features/analytics/data/providers.dart'
@@ -279,6 +280,18 @@ void main() {
     ) async {
       await _pumpAt(tester, initialLocation: AppRoutes.cashflowDividends);
       expect(find.byType(DividendCenterPage), findsOneWidget);
+    });
+
+    testWidgets('/activity/entry/:id resolves without route extra', (
+      tester,
+    ) async {
+      await _pumpAt(
+        tester,
+        initialLocation: AppRoutes.activityEntry('missing-entry'),
+      );
+      expect(find.byType(RouteErrorPage), findsNothing);
+      expect(find.byType(ActivityEntryDetailRoute), findsOneWidget);
+      await _drainTimers(tester);
     });
 
     testWidgets('/settings renders Settings', (tester) async {

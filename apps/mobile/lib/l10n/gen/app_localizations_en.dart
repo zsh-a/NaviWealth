@@ -203,17 +203,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wealthLiabilitiesSectionSubtitle => 'Loans, mortgages, credit';
 
   @override
-  String get wealthIncomeProjectionTitle => 'Income projection';
-
-  @override
-  String get wealthIncomeProjectionSubtitle =>
-      'Projected yield from your holdings';
-
-  @override
-  String get wealthIncomeProjectionComingSoon =>
-      'Income projection from holdings is not yet wired up.';
-
-  @override
   String get wealthPerspectiveSectionTitle => 'Allocation';
 
   @override

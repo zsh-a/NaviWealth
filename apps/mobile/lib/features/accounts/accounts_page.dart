@@ -19,11 +19,7 @@ import 'ui/accounts_master.dart';
 /// the list lives on the left, and the account edit form for
 /// the `?selected=<id>` row lives on the right.
 class AccountsPage extends ConsumerWidget {
-  const AccountsPage({super.key, this.embedded = false});
-
-  /// When true, skips the Scaffold so the page can be embedded
-  /// inside another Scaffold (e.g., the Activity tab).
-  final bool embedded;
+  const AccountsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -47,11 +43,7 @@ class AccountsPage extends ConsumerWidget {
             ),
           );
         }
-        return AccountsMaster(
-          selectedId: null,
-          inMasterDetail: false,
-          embedded: embedded,
-        );
+        return const AccountsMaster(selectedId: null, inMasterDetail: false);
       },
     );
   }

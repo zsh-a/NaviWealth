@@ -91,10 +91,6 @@ abstract final class AppRoutes {
   static const wealthLiabilityNew = '/wealth/liabilities/new';
   static const wealthPortfolio = '/wealth/portfolio';
   static const wealthWatchlist = '/wealth/watchlist';
-  // §4 of IA contract: Wealth/Dividends is renamed to "Income Projection"
-  // (a property of holdings) to disambiguate from Activity/Dividends-Received
-  // (the event stream). Path uses the contract name.
-  static const wealthIncomeProjection = '/wealth/income-projection';
 
   // ── Plan sub-flows (decisions + future state) ──────────────────────────
   static const planFire = '/plan/fire';
@@ -202,7 +198,6 @@ abstract final class AppRouteNames {
   static const wealthLiabilityDetail = 'wealth-liability-detail';
   static const wealthPortfolio = 'wealth-portfolio';
   static const wealthWatchlist = 'wealth-watchlist';
-  static const wealthIncomeProjection = 'wealth-income-projection';
 
   // ── HealthOS (Phase D-2.3 placeholder, real pages in D-2.2) ────────────
   static const healthToday = 'health-today';
