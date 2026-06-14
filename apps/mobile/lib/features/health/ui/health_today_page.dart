@@ -18,7 +18,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../app/shell_chrome.dart';
 import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/auth/domain_scope.dart';
@@ -35,6 +37,7 @@ import '../domain/health_metric_kind.dart';
 import 'body_measurement_entry_sheet.dart';
 import 'garmin_sync_status_card.dart';
 import 'health_today_providers.dart';
+import 'health_trend_page.dart' show TrendGroup, selectedTrendGroupProvider;
 import 'recovery_verdict.dart';
 
 class HealthTodayPage extends ConsumerWidget {
@@ -62,24 +65,24 @@ class HealthTodayPage extends ConsumerWidget {
             delay: Duration(milliseconds: 0),
             child: _HealthDataStatusNotice(),
           ),
-          SizedBox(height: AppSpacing.s12),
+          SizedBox(height: AppSpacing.s16),
           FadeSlideIn(
             delay: Duration(milliseconds: 40),
             child: GarminSyncStatusCard(),
           ),
-          SizedBox(height: AppSpacing.s12),
+          SizedBox(height: AppSpacing.s16),
           FadeSlideIn(
             delay: Duration(milliseconds: 80),
             child: _RecoveryHero(),
           ),
-          SizedBox(height: AppSpacing.s12),
+          SizedBox(height: AppSpacing.s16),
           FadeSlideIn(delay: Duration(milliseconds: 120), child: _MetricGrid()),
-          SizedBox(height: AppSpacing.s12),
+          SizedBox(height: AppSpacing.s16),
           FadeSlideIn(
             delay: Duration(milliseconds: 160),
             child: _WeeklySummaryPanel(),
           ),
-          SizedBox(height: AppSpacing.s12),
+          SizedBox(height: AppSpacing.s16),
           FadeSlideIn(
             delay: Duration(milliseconds: 200),
             child: _BriefingPanel(),
@@ -193,6 +196,7 @@ class _RecoveryHero extends ConsumerWidget {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
     return SoftCard(
+      level: SoftCardLevel.hero,
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: async.when(
         loading: () => const SizedBox(
@@ -200,9 +204,9 @@ class _RecoveryHero extends ConsumerWidget {
           child: Center(child: FCircularProgress()),
         ),
         error: (e, _) => Text(
-          '${AppLocalizations.of(context).healthSyncFailed}: $e',
+          AppLocalizations.of(context).healthSyncFailed,
           style: typography.xs.copyWith(color: colors.destructive),
-          maxLines: 3,
+          maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
         data: (out) {
@@ -216,32 +220,49 @@ class _RecoveryHero extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Icon(
-                    RecoveryVerdict.icon(verdict),
-                    color: color,
-                    size: AppIconSizes.md,
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: AppOpacity.medium),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      RecoveryVerdict.icon(verdict),
+                      size: AppIconSizes.md,
+                      color: color,
+                    ),
                   ),
-                  const SizedBox(width: AppSpacing.s8),
+                  const SizedBox(width: AppSpacing.s12),
                   Expanded(
                     child: Text(
                       l10n.healthRecoveryTitle,
                       style: typography.sm.copyWith(
+                        color: colors.mutedForeground,
                         fontWeight: FontWeight.w600,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.s8),
+              const SizedBox(height: AppSpacing.s12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text(
-                    RecoveryVerdict.label(verdict, l10n),
-                    style: typography.xl.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w700,
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: Text(
+                      RecoveryVerdict.label(verdict, l10n),
+                      style: typography.xl.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   if (score != null) ...[
@@ -440,6 +461,7 @@ class _SleepCard extends StatelessWidget {
     return _MetricCard(
       icon: FLucideIcons.moon,
       label: l10n.healthSleepMetricLabel,
+      trendGroup: TrendGroup.recovery,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -451,7 +473,8 @@ class _SleepCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _ValueBig(
-                value: '${_round(hours)}h',
+                value: '${_round(hours)}',
+                unit: 'h',
                 sub: _ago(l10n, m.capturedAt),
                 trend: trend,
                 metric: m,
@@ -577,7 +600,9 @@ class _SleepStageBar extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.s2),
-        Row(
+        Wrap(
+          spacing: AppSpacing.s6,
+          runSpacing: AppSpacing.s2,
           children: [
             _stageChip(
               typography,
@@ -585,29 +610,25 @@ class _SleepStageBar extends StatelessWidget {
               l10n.healthSleepDeepLabel,
               deepSeconds,
             ),
-            const SizedBox(width: AppSpacing.s6),
             _stageChip(
               typography,
               colors.primary.withValues(alpha: 0.6),
               l10n.healthSleepRemLabel,
               remSeconds,
             ),
-            const SizedBox(width: AppSpacing.s6),
             _stageChip(
               typography,
               colors.mutedForeground,
               l10n.healthSleepLightLabel,
               lightSeconds,
             ),
-            if (awakeSeconds > 0) ...[
-              const SizedBox(width: AppSpacing.s6),
+            if (awakeSeconds > 0)
               _stageChip(
                 typography,
                 colors.destructive.withValues(alpha: 0.6),
                 l10n.healthSleepAwakeLabel,
                 awakeSeconds,
               ),
-            ],
           ],
         ),
       ],
@@ -639,13 +660,15 @@ class _HrvCard extends StatelessWidget {
     return _MetricCard(
       icon: FLucideIcons.heartPulse,
       label: l10n.healthHrvMetricLabel,
+      trendGroup: TrendGroup.recovery,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
         data: (m) {
           if (m == null) return const _ValueDash();
           return _ValueBig(
-            value: '${_round(m.value)} ${m.unit}',
+            value: '${_round(m.value)}',
+            unit: m.unit,
             sub: _ago(l10n, m.capturedAt),
             trend: trend,
             metric: m,
@@ -667,13 +690,15 @@ class _HeartRateCard extends StatelessWidget {
     return _MetricCard(
       icon: FLucideIcons.heartPulse,
       label: l10n.healthHeartRateMetricLabel,
+      trendGroup: TrendGroup.recovery,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
         data: (m) {
           if (m == null) return const _ValueDash();
           return _ValueBig(
-            value: '${_round(m.value)} ${m.unit}',
+            value: '${_round(m.value)}',
+            unit: m.unit,
             sub: _ago(l10n, m.capturedAt),
             trend: trend,
             metric: m,
@@ -694,6 +719,7 @@ class _WorkoutCard extends StatelessWidget {
     return _MetricCard(
       icon: FLucideIcons.dumbbell,
       label: l10n.healthWorkoutMetricLabel,
+      trendGroup: TrendGroup.activity,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -713,7 +739,8 @@ class _WorkoutCard extends StatelessWidget {
           }
           final detail = parts.isEmpty ? '' : '${parts.join(' · ')} · ';
           return _ValueBig(
-            value: '${minutes}m',
+            value: '$minutes',
+            unit: 'm',
             sub: '$detail${_ago(l10n, m.capturedAt)}',
             metric: m,
           );
@@ -734,6 +761,7 @@ class _StepsCard extends ConsumerWidget {
     final walking = ref.watch(latestWalkingDistanceProvider);
     return _MetricCard(
       icon: FLucideIcons.footprints,
+      trendGroup: TrendGroup.activity,
       label: l10n.healthStepsMetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
@@ -771,13 +799,15 @@ class _ActiveEnergyCard extends StatelessWidget {
     return _MetricCard(
       icon: FLucideIcons.flame,
       label: l10n.healthEnergyMetricLabel,
+      trendGroup: TrendGroup.activity,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
         data: (m) {
           if (m == null) return const _ValueDash();
           return _ValueBig(
-            value: '${m.value.round()} kcal',
+            value: '${m.value.round()}',
+            unit: 'kcal',
             sub: _ago(l10n, m.capturedAt),
             trend: trend,
             metric: m,
@@ -799,6 +829,7 @@ class _BodyBatteryCard extends StatelessWidget {
     return _MetricCard(
       icon: FLucideIcons.battery,
       label: l10n.healthBodyBatteryMetricLabel,
+      trendGroup: TrendGroup.recovery,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -831,6 +862,7 @@ class _StressCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return _MetricCard(
       icon: FLucideIcons.brain,
+      trendGroup: TrendGroup.recovery,
       label: l10n.healthStressMetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
@@ -858,6 +890,7 @@ class _RhrCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return _MetricCard(
       icon: FLucideIcons.heart,
+      trendGroup: TrendGroup.recovery,
       label: l10n.healthRhrMetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
@@ -886,6 +919,7 @@ class _TrainingLoadCard extends StatelessWidget {
     return _MetricCard(
       icon: FLucideIcons.flame,
       label: l10n.healthTrainingLoadMetricLabel,
+      trendGroup: TrendGroup.activity,
       child: async.when(
         loading: () => const _ValueSkeleton(),
         error: (e, _) => const _ValueDash(),
@@ -911,6 +945,7 @@ class _Spo2Card extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return _MetricCard(
       icon: FLucideIcons.wind,
+      trendGroup: TrendGroup.recovery,
       label: l10n.healthSpo2MetricLabel,
       child: async.when(
         loading: () => const _ValueSkeleton(),
@@ -918,7 +953,8 @@ class _Spo2Card extends StatelessWidget {
         data: (m) {
           if (m == null) return const _ValueDash();
           return _ValueBig(
-            value: '${_round(m.value)}%',
+            value: '${_round(m.value)}',
+            unit: '%',
             sub: _ago(l10n, m.capturedAt),
             metric: m,
           );
@@ -928,40 +964,41 @@ class _Spo2Card extends StatelessWidget {
   }
 }
 
-class _MetricCard extends StatelessWidget {
+class _MetricCard extends ConsumerWidget {
   const _MetricCard({
     required this.icon,
     required this.label,
     required this.child,
+    this.trendGroup,
   });
   final IconData icon;
   final String label;
   final Widget child;
+  final TrendGroup? trendGroup;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
+  Widget build(BuildContext context, WidgetRef ref) {
     return SoftCard(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: AppIconSizes.sm, color: colors.mutedForeground),
-              const SizedBox(width: AppSpacing.s4),
-              Expanded(
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.captionStyle,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          child,
-        ],
+      level: SoftCardLevel.raised,
+      borderless: true,
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      onPress: trendGroup == null
+          ? null
+          : () {
+              ref.read(selectedTrendGroupProvider.notifier).state =
+                  trendGroup!;
+              context.go(AppRoutes.healthTrend);
+            },
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 140),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppMetricHeader(icon: icon, title: label),
+            const SizedBox(height: AppSpacing.s12),
+            child,
+          ],
+        ),
       ),
     );
   }
@@ -971,25 +1008,32 @@ class _ValueBig extends StatelessWidget {
   const _ValueBig({
     required this.value,
     required this.sub,
+    this.unit,
     this.trend,
     this.metric,
   });
   final String value;
   final String sub;
+  final String? unit;
   final MetricTrend? trend;
   final HealthMetric? metric;
 
   @override
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
+    final colors = context.theme.colors;
     final source = metric == null ? null : sourceForHealthMetric(metric!);
     final sourceLabel = source == null || source == HealthMetricSource.unknown
         ? null
         : source.label;
+    final hasMeta = trend != null || sourceLabel != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Line 1: value + unit inline (unit smaller).
         Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
           children: [
             Flexible(
               fit: FlexFit.loose,
@@ -997,19 +1041,33 @@ class _ValueBig extends StatelessWidget {
                 value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: typography.xl,
+                style: typography.lg.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
-            if (trend != null) ...[
-              const SizedBox(width: AppSpacing.s4),
-              _TrendBadge(trend: trend!),
-            ],
-            if (sourceLabel != null) ...[
-              const SizedBox(width: AppSpacing.s6),
-              _SourceChip(label: sourceLabel),
+            if (unit != null && unit!.isNotEmpty) ...[
+              const SizedBox(width: AppSpacing.s2),
+              Text(
+                unit!,
+                style: typography.xs.copyWith(
+                  color: colors.mutedForeground,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ],
         ),
+        // Line 2: trend + source chip (if any).
+        if (hasMeta) ...[
+          const SizedBox(height: AppSpacing.s2),
+          Row(
+            children: [
+              if (trend != null) _TrendBadge(trend: trend!),
+              if (trend != null && sourceLabel != null)
+                const SizedBox(width: AppSpacing.s6),
+              if (sourceLabel != null) _SourceChip(label: sourceLabel),
+            ],
+          ),
+        ],
         const SizedBox(height: AppSpacing.s2),
         Text(sub, style: context.captionStyle),
       ],
@@ -1083,7 +1141,7 @@ class _ValueDash extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('—', style: typography.xl.copyWith(color: colors.mutedForeground)),
+        Text('—', style: typography.lg.copyWith(color: colors.mutedForeground)),
         const SizedBox(height: AppSpacing.s2),
         Text(
           AppLocalizations.of(context).healthNoData,
@@ -1153,30 +1211,22 @@ class _WeeklySummaryPanel extends ConsumerWidget {
     final async = ref.watch(weeklySummaryProvider);
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return async.when(
       loading: () => const SizedBox.shrink(),
       error: (_, _) => const SizedBox.shrink(),
       data: (summary) {
         if (summary == null) return const SizedBox.shrink();
         return SoftCard(
+          level: SoftCardLevel.raised,
+          borderless: true,
           padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    FLucideIcons.calendarDays,
-                    size: AppIconSizes.sm,
-                    color: colors.mutedForeground,
-                  ),
-                  const SizedBox(width: AppSpacing.s4),
-                  Text(
-                    l10n.healthWeeklySummaryTitle,
-                    style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                ],
+              DashboardCardHeader(
+                icon: FLucideIcons.calendarDays,
+                title: l10n.healthWeeklySummaryTitle,
+                color: colors.mutedForeground,
               ),
               const SizedBox(height: AppSpacing.s12),
               Wrap(
@@ -1321,48 +1371,74 @@ class _BriefingCard extends StatelessWidget {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
     return SoftCard(
+      level: SoftCardLevel.raised,
+      borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                FLucideIcons.sun,
-                size: AppIconSizes.md,
-                color: colors.primary,
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: AppOpacity.medium),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  FLucideIcons.sun,
+                  size: AppIconSizes.md,
+                  color: colors.primary,
+                ),
               ),
-              const SizedBox(width: AppSpacing.s8),
-              Text(
-                AppLocalizations.of(context).healthBriefingTitle,
-                style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: Text(
+                  l10n.healthBriefingTitle,
+                  style: typography.sm.copyWith(
+                    color: colors.mutedForeground,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const Spacer(),
-              if (source is String && source.isNotEmpty)
+              if (source is String && source.isNotEmpty) ...[
                 AppBadge(
                   label: source == 'llm' ? 'LLM' : l10n.healthBriefingAuto,
                   size: AppBadgeSize.compact,
                 ),
-              const SizedBox(width: AppSpacing.s8),
-              FButton(
-                variant: FButtonVariant.outline,
-                onPress: running ? null : onRun,
-                prefix: running
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: FCircularProgress(),
-                      )
-                    : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-                child: Text(
-                  running
-                      ? l10n.healthBriefingGenerating
-                      : l10n.healthBriefingUpdate,
+                const SizedBox(width: AppSpacing.s8),
+              ],
+              Flexible(
+                fit: FlexFit.loose,
+                child: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: running ? null : onRun,
+                  prefix: running
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: FCircularProgress(),
+                        )
+                      : const Icon(
+                          FLucideIcons.refreshCw,
+                          size: AppIconSizes.xs,
+                        ),
+                  child: Text(
+                    running
+                        ? l10n.healthBriefingGenerating
+                        : l10n.healthBriefingUpdate,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s8),
+          const SizedBox(height: AppSpacing.s12),
           Text(
             r.summary,
             style: typography.md,
@@ -1389,6 +1465,8 @@ class _BriefingEmpty extends StatelessWidget {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
     return SoftCard(
+      level: SoftCardLevel.raised,
+      borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
         children: [
@@ -1401,27 +1479,39 @@ class _BriefingEmpty extends StatelessWidget {
                 Text(
                   l10n.healthBriefingEmpty,
                   style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: AppSpacing.s4),
-                Text(l10n.healthBriefingEmptyHint, style: context.captionStyle),
+                Text(
+                  l10n.healthBriefingEmptyHint,
+                  style: context.captionStyle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),
           const SizedBox(width: AppSpacing.s8),
-          FButton(
-            variant: FButtonVariant.outline,
-            onPress: running ? null : onRun,
-            prefix: running
-                ? const SizedBox(
-                    width: AppIconSizes.xs,
-                    height: AppIconSizes.xs,
-                    child: FCircularProgress(),
-                  )
-                : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-            child: Text(
-              running
-                  ? l10n.healthBriefingGenerating
-                  : l10n.healthBriefingGenerate,
+          Flexible(
+            fit: FlexFit.loose,
+            child: FButton(
+              variant: FButtonVariant.outline,
+              onPress: running ? null : onRun,
+              prefix: running
+                  ? const SizedBox(
+                      width: AppIconSizes.xs,
+                      height: AppIconSizes.xs,
+                      child: FCircularProgress(),
+                    )
+                  : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
+              child: Text(
+                running
+                    ? l10n.healthBriefingGenerating
+                    : l10n.healthBriefingGenerate,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
         ],
@@ -1442,7 +1532,7 @@ class _BriefingSkeleton extends StatelessWidget {
         children: [
           Row(
             children: [
-              SkeletonBox(width: 18, height: 18, radius: 9),
+              SkeletonBox(width: 32, height: 32, radius: AppRadius.sm),
               SizedBox(width: AppSpacing.s8),
               SkeletonBox(width: 120, height: 14, radius: AppRadius.xs),
             ],

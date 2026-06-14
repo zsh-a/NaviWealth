@@ -8,6 +8,7 @@ library;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
 
 import '../../../app/shell_chrome.dart';
@@ -19,11 +20,12 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
+import 'health_metric_colors.dart';
 
 /// Default window covered by every chart on this page.
 const Duration kHealthTrendWindow = Duration(days: 30);
 
-enum _TrendGroup { recovery, activity, body }
+enum TrendGroup { recovery, activity, body }
 
 enum _TrendWindow {
   d7(7),
@@ -34,6 +36,12 @@ enum _TrendWindow {
   final int days;
 }
 
+/// Selected trend group, shared between Today and Trend pages so metric
+/// cards can navigate to the Trend page with the correct group pre-selected.
+final selectedTrendGroupProvider = StateProvider<TrendGroup>(
+  (_) => TrendGroup.recovery,
+);
+
 class HealthTrendPage extends ConsumerStatefulWidget {
   const HealthTrendPage({super.key});
 
@@ -42,35 +50,43 @@ class HealthTrendPage extends ConsumerStatefulWidget {
 }
 
 class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
-  _TrendGroup _group = _TrendGroup.recovery;
   _TrendWindow _window = _TrendWindow.d30;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final group = ref.watch(selectedTrendGroupProvider);
     final groupData = ref.watch(
-      trendGroupChartProvider((group: _group, windowDays: _window.days)),
+      trendGroupChartProvider((group: group, windowDays: _window.days)),
     );
     return ShellTabScaffold(
       title: l10n.healthTrendTitle,
       child: ListView(
         padding: shellTabContentPadding(context),
         children: [
-          SegmentedRow<_TrendGroup>(
-            options: _TrendGroup.values,
-            value: _group,
-            labelOf: (group) => _trendGroupLabel(l10n, group),
-            onChanged: (value) => setState(() => _group = value),
+          Row(
+            children: [
+              Expanded(
+                child: SegmentedRow<TrendGroup>(
+                  options: TrendGroup.values,
+                  value: group,
+                  labelOf: (g) => _trendGroupLabel(l10n, g),
+                  onChanged: (value) =>
+                      ref.read(selectedTrendGroupProvider.notifier).state =
+                          value,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              SegmentedRow<_TrendWindow>(
+                options: _TrendWindow.values,
+                value: _window,
+                labelOf: (w) => '${w.days}d',
+                onChanged: (value) => setState(() => _window = value),
+              ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.s8),
-          SegmentedRow<_TrendWindow>(
-            options: _TrendWindow.values,
-            value: _window,
-            labelOf: (w) => '${w.days}d',
-            onChanged: (value) => setState(() => _window = value),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          for (final (i, spec) in _trendSpecs(l10n, _group).indexed) ...[
+          const SizedBox(height: AppSpacing.s16),
+          for (final (i, spec) in _trendSpecs(l10n, group).indexed) ...[
             FadeSlideIn(
               delay: Duration(milliseconds: i * 40),
               child: _TrendCard(
@@ -78,18 +94,18 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
                 points: groupData.whenData((m) => m[spec.kind]),
               ),
             ),
-            const SizedBox(height: AppSpacing.s12),
+            const SizedBox(height: AppSpacing.s16),
           ],
         ],
       ),
     );
   }
 
-  static String _trendGroupLabel(AppLocalizations l10n, _TrendGroup group) =>
+  static String _trendGroupLabel(AppLocalizations l10n, TrendGroup group) =>
       switch (group) {
-        _TrendGroup.recovery => l10n.healthTrendGroupRecovery,
-        _TrendGroup.activity => l10n.healthTrendGroupActivity,
-        _TrendGroup.body => l10n.healthTrendGroupBody,
+        TrendGroup.recovery => l10n.healthTrendGroupRecovery,
+        TrendGroup.activity => l10n.healthTrendGroupActivity,
+        TrendGroup.body => l10n.healthTrendGroupBody,
       };
 }
 
@@ -103,34 +119,71 @@ class _TrendCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
     final colors = context.theme.colors;
+    final accent = spec.color ?? colors.primary;
     return SoftCard(
+      level: SoftCardLevel.raised,
+      borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            spec.title,
-            style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: AppSpacing.s2),
-          Text(
-            spec.subtitle,
-            style: context.captionStyle,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+          // Header: icon disc + title + latest value.
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: AppOpacity.medium),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  spec.icon ?? FLucideIcons.activity,
+                  size: AppIconSizes.h18,
+                  color: accent,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              Expanded(
+                child: Text(
+                  spec.title,
+                  style: typography.sm.copyWith(
+                    color: colors.mutedForeground,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              points.when(
+                loading: () => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
+                data: (pts) {
+                  if (pts == null || pts.isEmpty) return const SizedBox.shrink();
+                  final last = pts.last.y;
+                  return Text(
+                    _formatLatest(last, spec.kind),
+                    style: typography.md.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: accent,
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.s12),
+          // Chart.
           SizedBox(
-            height: 160,
+            height: AppChartHeights.standard,
             child: points.when(
               loading: () => const Center(child: FCircularProgress()),
               error: (e, _) => Center(
                 child: Text(
-                  AppLocalizations.of(context).healthTrendLoadFailed('$e'),
+                  AppLocalizations.of(context).healthTrendLoadFailed(''),
                   style: typography.xs.copyWith(color: colors.destructive),
-                  maxLines: 3,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -146,8 +199,15 @@ class _TrendCard extends StatelessWidget {
                   );
                 }
                 return NwLineChart(
+                  filled: true,
+                  heroDots: true,
                   series: <ChartSeries>[
-                    ChartSeries(name: spec.title, points: pts),
+                    ChartSeries(
+                      name: spec.title,
+                      points: pts,
+                      colorOverride: accent,
+                      strokeWidth: 2,
+                    ),
                   ],
                 );
               },
@@ -157,6 +217,26 @@ class _TrendCard extends StatelessWidget {
       ),
     );
   }
+
+  /// Format the latest chart value for display in the header.
+  static String _formatLatest(double value, HealthMetricKind kind) {
+    return switch (kind) {
+      HealthMetricKind.sleepSession => '${(value * 10).round() / 10}h',
+      HealthMetricKind.distanceWalkingRunningDaily =>
+        '${(value * 10).round() / 10}km',
+      HealthMetricKind.workoutSession => '${value.round()}m',
+      HealthMetricKind.stepsDaily => _formatSteps(value),
+      HealthMetricKind.weight ||
+      HealthMetricKind.bodyFat =>
+        '${(value * 10).round() / 10}',
+      _ => value.round().toString(),
+    };
+  }
+
+  static String _formatSteps(double v) {
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}k';
+    return v.round().toString();
+  }
 }
 
 class _TrendSpec {
@@ -164,116 +244,156 @@ class _TrendSpec {
     required this.title,
     required this.subtitle,
     required this.kind,
+    this.icon,
+    this.color,
   });
 
   final String title;
   final String subtitle;
   final HealthMetricKind kind;
+  final IconData? icon;
+  final Color? color;
 }
 
-List<_TrendSpec> _trendSpecs(AppLocalizations l10n, _TrendGroup group) =>
+List<_TrendSpec> _trendSpecs(AppLocalizations l10n, TrendGroup group) =>
     switch (group) {
-      _TrendGroup.recovery => [
+      TrendGroup.recovery => [
         _TrendSpec(
           title: l10n.healthHrvMetricLabel,
           subtitle: l10n.healthTrendHrvSubtitle,
           kind: HealthMetricKind.hrvDaily,
+          icon: FLucideIcons.heartPulse,
+          color: HealthMetricColors.hrv,
         ),
         _TrendSpec(
           title: l10n.healthSleepMetricLabel,
           subtitle: l10n.healthTrendSleepSubtitle,
           kind: HealthMetricKind.sleepSession,
+          icon: FLucideIcons.moon,
+          color: HealthMetricColors.sleep,
         ),
         _TrendSpec(
           title: l10n.healthHeartRateMetricLabel,
           subtitle: l10n.healthTrendHeartRateSubtitle,
           kind: HealthMetricKind.heartRateDaily,
+          icon: FLucideIcons.heart,
+          color: HealthMetricColors.heartRate,
         ),
         _TrendSpec(
           title: l10n.healthTrendRhrTitle,
           subtitle: l10n.healthTrendRhrSubtitle,
           kind: HealthMetricKind.rhrDaily,
+          icon: FLucideIcons.heart,
+          color: HealthMetricColors.rhr,
         ),
         _TrendSpec(
           title: l10n.healthTrendSpo2Title,
           subtitle: l10n.healthTrendSpo2Subtitle,
           kind: HealthMetricKind.spo2Daily,
+          icon: FLucideIcons.wind,
+          color: HealthMetricColors.spo2,
         ),
         _TrendSpec(
           title: l10n.healthTrendRespiratoryTitle,
           subtitle: l10n.healthTrendRespiratorySubtitle,
           kind: HealthMetricKind.respiratoryRateDaily,
+          icon: FLucideIcons.wind,
+          color: HealthMetricColors.respiratoryRate,
         ),
         _TrendSpec(
           title: l10n.healthTrendBodyBatteryTitle,
           subtitle: l10n.healthTrendBodyBatterySubtitle,
           kind: HealthMetricKind.bodyBatteryDaily,
+          icon: FLucideIcons.battery,
+          color: HealthMetricColors.bodyBattery,
         ),
         _TrendSpec(
           title: l10n.healthTrendStressTitle,
           subtitle: l10n.healthTrendStressSubtitle,
           kind: HealthMetricKind.stressDaily,
+          icon: FLucideIcons.brain,
+          color: HealthMetricColors.stress,
         ),
       ],
-      _TrendGroup.activity => [
+      TrendGroup.activity => [
         _TrendSpec(
           title: l10n.healthWorkoutMetricLabel,
           subtitle: l10n.healthTrendWorkoutSubtitle,
           kind: HealthMetricKind.workoutSession,
+          icon: FLucideIcons.dumbbell,
+          color: HealthMetricColors.workout,
         ),
         _TrendSpec(
           title: l10n.healthStepsMetricLabel,
           subtitle: l10n.healthTrendStepsSubtitle,
           kind: HealthMetricKind.stepsDaily,
+          icon: FLucideIcons.footprints,
+          color: HealthMetricColors.steps,
         ),
         _TrendSpec(
           title: l10n.healthTrendWalkingDistanceTitle,
           subtitle: l10n.healthTrendWalkingDistanceSubtitle,
           kind: HealthMetricKind.distanceWalkingRunningDaily,
+          icon: FLucideIcons.mapPin,
+          color: HealthMetricColors.walkingDistance,
         ),
         _TrendSpec(
           title: l10n.healthTrendFlightsTitle,
           subtitle: l10n.healthTrendFlightsSubtitle,
           kind: HealthMetricKind.floorsClimbedDaily,
+          icon: FLucideIcons.trendingUp,
+          color: HealthMetricColors.floors,
         ),
         _TrendSpec(
           title: l10n.healthTrendTrainingLoadTitle,
           subtitle: l10n.healthTrendTrainingLoadSubtitle,
           kind: HealthMetricKind.trainingLoadDaily,
+          icon: FLucideIcons.flame,
+          color: HealthMetricColors.trainingLoad,
         ),
         _TrendSpec(
           title: l10n.healthTrendTrainingEffectTitle,
           subtitle: l10n.healthTrendTrainingEffectSubtitle,
           kind: HealthMetricKind.trainingEffectDaily,
+          icon: FLucideIcons.zap,
+          color: HealthMetricColors.trainingEffect,
         ),
         _TrendSpec(
           title: l10n.healthTrendTotalEnergyTitle,
           subtitle: l10n.healthTrendTotalEnergySubtitle,
           kind: HealthMetricKind.totalEnergyDaily,
+          icon: FLucideIcons.flame,
+          color: HealthMetricColors.totalEnergy,
         ),
       ],
-      _TrendGroup.body => [
+      TrendGroup.body => [
         _TrendSpec(
           title: l10n.healthTrendWeightTitle,
           subtitle: l10n.healthTrendWeightSubtitle,
           kind: HealthMetricKind.weight,
+          icon: FLucideIcons.scale,
+          color: HealthMetricColors.weight,
         ),
         _TrendSpec(
           title: l10n.healthTrendBodyFatTitle,
           subtitle: l10n.healthTrendBodyFatSubtitle,
           kind: HealthMetricKind.bodyFat,
+          icon: FLucideIcons.percent,
+          color: HealthMetricColors.bodyFat,
         ),
         _TrendSpec(
           title: l10n.healthTrendVo2MaxTitle,
           subtitle: l10n.healthTrendVo2MaxSubtitle,
           kind: HealthMetricKind.vo2Max,
+          icon: FLucideIcons.activity,
+          color: HealthMetricColors.vo2Max,
         ),
       ],
     };
 
 /// Kinds for a group, used by the batch provider (no l10n needed).
-List<_TrendSpec> _trendSpecsRaw(_TrendGroup group) => switch (group) {
-  _TrendGroup.recovery => [
+List<_TrendSpec> _trendSpecsRaw(TrendGroup group) => switch (group) {
+  TrendGroup.recovery => [
     const _TrendSpec(title: '', subtitle: '', kind: HealthMetricKind.hrvDaily),
     const _TrendSpec(
       title: '',
@@ -303,7 +423,7 @@ List<_TrendSpec> _trendSpecsRaw(_TrendGroup group) => switch (group) {
       kind: HealthMetricKind.stressDaily,
     ),
   ],
-  _TrendGroup.activity => [
+  TrendGroup.activity => [
     const _TrendSpec(
       title: '',
       subtitle: '',
@@ -340,7 +460,7 @@ List<_TrendSpec> _trendSpecsRaw(_TrendGroup group) => switch (group) {
       kind: HealthMetricKind.totalEnergyDaily,
     ),
   ],
-  _TrendGroup.body => [
+  TrendGroup.body => [
     const _TrendSpec(title: '', subtitle: '', kind: HealthMetricKind.weight),
     const _TrendSpec(title: '', subtitle: '', kind: HealthMetricKind.bodyFat),
     const _TrendSpec(title: '', subtitle: '', kind: HealthMetricKind.vo2Max),
@@ -371,13 +491,13 @@ final trendChartProvider = FutureProvider.autoDispose
       return _projectToPoints(rows, params.kind, cutoff: cutoff);
     });
 
-/// Batch provider: fetches all metrics for a [_TrendGroup] in one query.
+/// Batch provider: fetches all metrics for a [TrendGroup] in one query.
 /// Returns a map of kind → chart points, so the trend page fires a single
 /// DB read per group switch instead of one query per card.
 final trendGroupChartProvider = FutureProvider.autoDispose
     .family<
       Map<HealthMetricKind, List<ChartPoint>>,
-      ({_TrendGroup group, int windowDays})
+      ({TrendGroup group, int windowDays})
     >((ref, params) async {
       final optIns = ref.watch(core_auth.domainOptInsProvider).value;
       if (optIns == null || !optIns.contains(DomainScope.health)) {
