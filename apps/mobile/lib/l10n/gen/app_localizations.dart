@@ -8799,10 +8799,22 @@ abstract class AppLocalizations {
   /// **'FinanceOS / HealthOS / KnowledgeOS toggles and settings'**
   String get settingsDomainsSubtitle;
 
-  /// Settings section header for advanced diagnostics and developer-facing tools
+  /// Subtitle for the always-on FinanceOS card in domain settings
   ///
   /// In en, this message translates to:
-  /// **'Advanced'**
+  /// **'Always-on finance domain: currency, FX rates, risk posture, allocation, and FIRE planning assumptions'**
+  String get settingsDomainsFinanceSubtitle;
+
+  /// Badge for the always-on FinanceOS domain
+  ///
+  /// In en, this message translates to:
+  /// **'Always on'**
+  String get settingsDomainsFinanceAlwaysOnBadge;
+
+  /// Settings section header for diagnostics, version, logs, and performance tools
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics'**
   String get settingsAdvancedSection;
 
   /// Settings tile and page title for local AI model management

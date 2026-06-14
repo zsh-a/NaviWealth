@@ -5085,7 +5085,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'FinanceOS / HealthOS / KnowledgeOS toggles and settings';
 
   @override
-  String get settingsAdvancedSection => 'Advanced';
+  String get settingsDomainsFinanceSubtitle =>
+      'Always-on finance domain: currency, FX rates, risk posture, allocation, and FIRE planning assumptions';
+
+  @override
+  String get settingsDomainsFinanceAlwaysOnBadge => 'Always on';
+
+  @override
+  String get settingsAdvancedSection => 'Diagnostics';
 
   @override
   String get settingsAiModelsTitle => 'AI Models';

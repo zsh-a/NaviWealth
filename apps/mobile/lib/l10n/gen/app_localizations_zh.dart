@@ -4897,7 +4897,14 @@ class AppLocalizationsZh extends AppLocalizations {
       'FinanceOS / HealthOS / KnowledgeOS 开关与设置';
 
   @override
-  String get settingsAdvancedSection => '高级';
+  String get settingsDomainsFinanceSubtitle =>
+      '常驻财务域：货币、汇率、风险偏好、资产配置与 FIRE 规划假设';
+
+  @override
+  String get settingsDomainsFinanceAlwaysOnBadge => '常开';
+
+  @override
+  String get settingsAdvancedSection => '诊断';
 
   @override
   String get settingsAiModelsTitle => 'AI 模型';

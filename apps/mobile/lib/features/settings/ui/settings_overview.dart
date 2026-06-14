@@ -4,24 +4,12 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/route_paths.dart';
-import '../../../core/auth/domain_scope.dart';
-import '../../../core/auth/providers.dart' as auth_providers;
 import '../../../core/config/app_version.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../core/logging/crash_reporting_preference.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../analytics/data/risk_threshold_preferences.dart';
 import '../../auth/data/auth_controller.dart';
-import '../../expense/data/expense_report_providers.dart';
-import '../../fire/data/fire_plan_preferences.dart';
-import '../../fire/domain/fire_plan.dart';
-import '../../rebalance/data/rebalance_providers.dart';
-import '../../rebalance/domain/allocation_schemes.dart';
-import '../../rebalance/ui/target_allocation_editor_sheet.dart';
-import '../../shared/forms/currency_picker.dart';
-import '../data/base_currency_preference.dart';
-import '../data/risk_appetite_preferences.dart';
 import 'inline_setting_row.dart';
 
 /// Settings landing page — iOS-style inset-grouped sections.
@@ -29,13 +17,11 @@ import 'inline_setting_row.dart';
 /// Section order maps to user mental model (most-personal → least):
 ///
 ///   1. Account            cloud / device identity
-///   2. Numbers & Money    base currency, FX rates — formatting + financial semantics
-///   3. Appearance         theme / market color / language
-///   4. Planning           Plan-tab parameters (risk appetite, allocation, expense, thresholds, stress)
-///   5. AI                 privacy → LLM provider → transparency
-///   6. Data               sync + backup
-///   7. About              version / commit
-///   8. Developer          debug-only escape hatches
+///   2. Appearance         theme / market color / language
+///   3. AI                 privacy → LLM provider → transparency
+///   4. Data               sync + backup
+///   5. LifeOS Domains     FinanceOS / HealthOS / KnowledgeOS
+///   6. Diagnostics        version / logs / performance
 ///
 /// The previous `_AccountHeader` decorative tile is gone — the page
 /// title comes from `appSubPageHeader` in `settings_page.dart`, so the
@@ -51,37 +37,9 @@ class SettingsOverview extends ConsumerWidget {
       title: l10n.settingsAccountSection,
       child: _AccountSection(),
     );
-    final numbersGroup = _Section(
-      title: l10n.settingsNumbersAndMoneySection,
-      child: _NumbersAndMoneySection(),
-    );
     const appearanceGroup = _Section(
       titleKey: _SectionTitleKey.appearance,
       child: _AppearanceSection(),
-    );
-    final planningGroup = _Section(
-      title: l10n.settingsPlanningSection,
-      child: Column(
-        children: [
-          const _RiskAppetiteRow(),
-          const AppGradientDivider(),
-          _TargetAllocationLink(
-            onTap: () => showTargetAllocationEditorSheet(context: context),
-          ),
-          const AppGradientDivider(),
-          _MonthlyExpenseLink(
-            onTap: () => context.goNamed(AppRouteNames.monthlyExpense),
-          ),
-          const AppGradientDivider(),
-          _RiskThresholdsLink(
-            onTap: () => context.goNamed(AppRouteNames.riskThresholds),
-          ),
-          const AppGradientDivider(),
-          _StressTestLink(
-            onTap: () => context.goNamed(AppRouteNames.stressTest),
-          ),
-        ],
-      ),
     );
     final aiGroup = _Section(
       title: l10n.settingsAiSection,
@@ -143,15 +101,16 @@ class SettingsOverview extends ConsumerWidget {
         ],
       ),
     );
-    // Per-user LifeOS domain opt-in. Each domain gets its own row with
-    // a toggle and (when enabled) a chevron to the detail settings page.
+    // Domain-specific settings live one level down so the overview stays
+    // focused on global preference categories.
     final domainsGroup = _Section(
       title: l10n.settingsDomainsSection,
-      child: const _DomainSettingsGroup(),
-    );
-    final aboutGroup = _Section(
-      title: l10n.settingsAboutSection,
-      child: const _AboutTile(),
+      child: InlineLinkRow(
+        icon: FLucideIcons.blocks,
+        label: l10n.settingsDomainsTitle,
+        subtitle: l10n.settingsDomainsSubtitle,
+        onTap: () => context.goNamed(AppRouteNames.domains),
+      ),
     );
     // Logs viewer is exposed in release as well — the talker history is
     // already kept in memory in every build, and dogfood users need a
@@ -174,6 +133,8 @@ class SettingsOverview extends ConsumerWidget {
             subtitle: l10n.settingsPerfSubtitle,
             onTap: () => context.goNamed(AppRouteNames.performance),
           ),
+          const AppGradientDivider(),
+          const _AboutTile(),
         ],
       ),
     );
@@ -197,19 +158,13 @@ class SettingsOverview extends ConsumerWidget {
           children: [
             accountGroup,
             const SizedBox(height: AppSpacing.s20),
-            numbersGroup,
-            const SizedBox(height: AppSpacing.s20),
             appearanceGroup,
-            const SizedBox(height: AppSpacing.s20),
-            planningGroup,
             const SizedBox(height: AppSpacing.s20),
             aiGroup,
             const SizedBox(height: AppSpacing.s20),
             dataGroup,
             const SizedBox(height: AppSpacing.s20),
             domainsGroup,
-            const SizedBox(height: AppSpacing.s20),
-            aboutGroup,
             const SizedBox(height: AppSpacing.s20),
             advancedGroup,
           ],
@@ -234,11 +189,7 @@ class SettingsOverview extends ConsumerWidget {
                       children: [
                         accountGroup,
                         const SizedBox(height: AppSpacing.s20),
-                        numbersGroup,
-                        const SizedBox(height: AppSpacing.s20),
                         appearanceGroup,
-                        const SizedBox(height: AppSpacing.s20),
-                        planningGroup,
                       ],
                     )
                   : allGroupsSingleColumn,
@@ -251,8 +202,6 @@ class SettingsOverview extends ConsumerWidget {
                         dataGroup,
                         const SizedBox(height: AppSpacing.s20),
                         domainsGroup,
-                        const SizedBox(height: AppSpacing.s20),
-                        aboutGroup,
                         const SizedBox(height: AppSpacing.s20),
                         advancedGroup,
                       ],
@@ -463,37 +412,6 @@ class _SwitchToLocalSheetBodyState
   }
 }
 
-class _NumbersAndMoneySection extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final baseCurrency = ref.watch(baseCurrencyProvider);
-
-    return Column(
-      children: [
-        InlineSettingRow<String>(
-          icon: FLucideIcons.arrowLeftRight,
-          label: l10n.settingsBaseCurrencyTitle,
-          value: baseCurrency,
-          options: {
-            for (final code in kCommonCurrencies)
-              currencyDisplayLabel(l10n, code): code,
-          },
-          onChanged: (picked) =>
-              ref.read(baseCurrencyProvider.notifier).set(picked),
-        ),
-        const AppGradientDivider(),
-        InlineLinkRow(
-          icon: FLucideIcons.refreshCw,
-          label: l10n.settingsFxRatesTitle,
-          subtitle: l10n.settingsFxRatesSubtitle,
-          onTap: () => context.goNamed(AppRouteNames.fxRates),
-        ),
-      ],
-    );
-  }
-}
-
 class _AppearanceSection extends ConsumerWidget {
   const _AppearanceSection();
 
@@ -651,7 +569,6 @@ class _MarketColorPreview extends StatelessWidget {
   }
 }
 
-/// Risk appetite chip row — the single user-facing dial that drives
 /// Opt-in toggle for anonymous crash + breadcrumb telemetry
 /// (`roadmap-next.md` §3.6). Defaults to OFF — flipping this only takes
 /// effect on the *next* error captured, not retroactively, and even when
@@ -671,401 +588,6 @@ class _CrashReportingRow extends ConsumerWidget {
       value: enabled,
       onChanged: (next) =>
           ref.read(crashReportingEnabledProvider.notifier).setEnabled(next),
-    );
-  }
-}
-
-/// rebalance preset, AI tone and (by default) concentration alert
-/// sensitivity. Sits at the top of the Planning card so it reads as
-/// the section's "main idea".
-class _RiskAppetiteRow extends ConsumerWidget {
-  const _RiskAppetiteRow();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
-    final appetite = ref.watch(riskAppetiteProvider);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s14,
-        AppSpacing.s10,
-        AppSpacing.s14,
-        AppSpacing.s10,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                FLucideIcons.slidersHorizontal,
-                size: AppIconSizes.h18,
-                color: colors.mutedForeground,
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Text(
-                l10n.settingsRiskAppetiteLabel,
-                style: context.theme.typography.sm,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Wrap(
-            spacing: AppSpacing.s6,
-            runSpacing: AppSpacing.s6,
-            children: [
-              for (final option in _appetiteOptionsForChips(l10n))
-                _SettingsChoicePill(
-                  label: option.label,
-                  selected: appetite == option.value,
-                  onTap: () => _onPick(ref, option.value),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _onPick(WidgetRef ref, RiskAppetite next) async {
-    final current = ref.read(riskAppetiteProvider);
-    if (current == next) return;
-    // Capture the thresholds *before* writing the appetite, so a
-    // hand-customised state ("not at any preset") is preserved.
-    final priorThresholds = ref.read(concentrationThresholdsProvider);
-    await ref.read(riskAppetiteProvider.notifier).set(next);
-    // Picking a non-custom preset resets target weights to that
-    // preset's defaults. Custom is reached via the target editor
-    // sheet itself (which writes appetite = custom internally).
-    if (next != RiskAppetite.custom) {
-      await ref
-          .read(targetAllocationProvider.notifier)
-          .update(allocationScheme(schemePresetFor(next)));
-    }
-    // Honour the "auto-tuned by your risk appetite" promise on the
-    // thresholds link row: when the user hasn't drifted off the
-    // appetite-aligned presets, snap the thresholds to match the new
-    // appetite. Hand-customised thresholds (not at any preset) stay
-    // put — those users explicitly opted out of the auto-tune.
-    if (isAtAnyAppetitePreset(priorThresholds)) {
-      await ref
-          .read(concentrationThresholdsProvider.notifier)
-          .applyAll(concentrationThresholdsForAppetite(next));
-    }
-  }
-}
-
-class _SettingsChoicePill extends StatelessWidget {
-  const _SettingsChoicePill({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return FTappable(
-      onPress: onTap,
-      child: AnimatedContainer(
-        duration: Motion.medium,
-        curve: Motion.standardDecelerate,
-        constraints: const BoxConstraints(minHeight: 34),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s12,
-          vertical: AppSpacing.s6,
-        ),
-        decoration: BoxDecoration(
-          color: selected
-              ? colors.primary.withValues(alpha: AppOpacity.subtle)
-              : colors.muted.withValues(alpha: AppOpacity.faint),
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          border: Border.all(
-            color: selected
-                ? colors.primary.withValues(alpha: AppOpacity.prominent)
-                : colors.border.withValues(alpha: AppOpacity.muted),
-          ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: colors.primary.withValues(alpha: AppOpacity.faint),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.theme.typography.xs.copyWith(
-            color: selected ? colors.primary : colors.foreground,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AppetiteOption {
-  const _AppetiteOption(this.value, this.label);
-  final RiskAppetite value;
-  final String label;
-}
-
-List<_AppetiteOption> _appetiteOptionsForChips(AppLocalizations l10n) {
-  return [
-    _AppetiteOption(
-      RiskAppetite.conservative,
-      l10n.settingsRiskAppetiteConservative,
-    ),
-    _AppetiteOption(RiskAppetite.moderate, l10n.settingsRiskAppetiteModerate),
-    _AppetiteOption(
-      RiskAppetite.aggressive,
-      l10n.settingsRiskAppetiteAggressive,
-    ),
-    _AppetiteOption(RiskAppetite.custom, l10n.settingsRiskAppetiteCustom),
-  ];
-}
-
-class _TargetAllocationLink extends ConsumerWidget {
-  const _TargetAllocationLink({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final appetite = ref.watch(riskAppetiteProvider);
-    // Subtitle now carries the *preset name* (not the wordy "auto-tuned by
-    // your aggressive appetite" sentence) — the AUTO badge on the right
-    // already conveys the auto-tune state.
-    final subtitle = switch (appetite) {
-      RiskAppetite.conservative => l10n.settingsRiskAppetiteConservative,
-      RiskAppetite.moderate => l10n.settingsRiskAppetiteModerate,
-      RiskAppetite.aggressive => l10n.settingsRiskAppetiteAggressive,
-      RiskAppetite.custom => l10n.settingsRiskAppetiteCustom,
-    };
-    return InlineLinkRow(
-      icon: FLucideIcons.chartPie,
-      label: l10n.settingsTargetAllocationLabel,
-      subtitle: subtitle,
-      trailingBadge: appetite == RiskAppetite.custom
-          ? l10n.settingsBadgeCustom
-          : l10n.settingsBadgeAuto,
-      onTap: onTap,
-    );
-  }
-}
-
-class _RiskThresholdsLink extends ConsumerWidget {
-  const _RiskThresholdsLink({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final thresholds = ref.watch(concentrationThresholdsProvider);
-    // "Custom" iff the user has drifted off every appetite-aligned
-    // preset. Just being non-default no longer counts: aggressive
-    // users sitting on the aggressive preset are still "auto-tuned".
-    final isCustom = !isAtAnyAppetitePreset(thresholds);
-    return InlineLinkRow(
-      icon: FLucideIcons.bellRing,
-      label: l10n.settingsRiskThresholdsLabel,
-      trailingBadge: isCustom
-          ? l10n.settingsBadgeCustom
-          : l10n.settingsBadgeAuto,
-      onTap: onTap,
-    );
-  }
-}
-
-class _StressTestLink extends ConsumerWidget {
-  const _StressTestLink({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final risk = ref.watch(firePlanExtrasProvider).riskSettings;
-    final isCustom = risk != const FireRiskSettings();
-    return InlineLinkRow(
-      icon: FLucideIcons.flaskConical,
-      label: l10n.settingsStressTestLabel,
-      trailingBadge: isCustom
-          ? l10n.settingsBadgeCustom
-          : l10n.settingsBadgeAuto,
-      onTap: onTap,
-    );
-  }
-}
-
-class _MonthlyExpenseLink extends ConsumerWidget {
-  const _MonthlyExpenseLink({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final prefs = ref.watch(monthlyExpensePreferencesProvider);
-    final isOverride = prefs.override != null;
-    final subtitle = isOverride
-        ? l10n.settingsMonthlyExpenseSubtitleOverride
-        : l10n.settingsMonthlyExpenseSubtitleAuto(prefs.windowMonths);
-    return InlineLinkRow(
-      icon: FLucideIcons.calendarDays,
-      label: l10n.settingsMonthlyExpenseLabel,
-      subtitle: subtitle,
-      trailingBadge: isOverride
-          ? l10n.settingsBadgeCustom
-          : l10n.settingsBadgeAuto,
-      onTap: onTap,
-    );
-  }
-}
-
-/// Non-tappable status row shown in place of the Devices link for
-/// local-only users. Mirrors [InlineLinkRow]'s layout sans chevron.
-
-/// Domain opt-in toggles with chevron navigation to detail settings.
-///
-/// HealthOS and KnowledgeOS each get their own row. The switch toggles
-/// the domain; the chevron (when enabled) navigates to the domain's
-/// detail page. FinanceOS is always-on and accessed via the main tab bar.
-class _DomainSettingsGroup extends ConsumerWidget {
-  const _DomainSettingsGroup();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final optIns = ref.watch(auth_providers.domainOptInsProvider).value;
-    final healthOn = optIns?.contains(DomainScope.health) ?? false;
-    final knowledgeOn = optIns?.contains(DomainScope.knowledge) ?? false;
-    final l10n = AppLocalizations.of(context);
-
-    return Column(
-      children: [
-        _DomainSwitchRow(
-          icon: FLucideIcons.heartPulse,
-          label: 'HealthOS',
-          subtitle: healthOn
-              ? l10n.settingsDomainsHealthEnabledSubtitle
-              : l10n.settingsDomainsHealthDisabledSubtitle,
-          value: healthOn,
-          enabled: healthOn,
-          onChanged: (v) => ref
-              .read(auth_providers.domainOptInsProvider.notifier)
-              .setEnabled(DomainScope.health, v),
-          onTap: () => context.goNamed(AppRouteNames.domainsHealth),
-        ),
-        const AppDivider(),
-        _DomainSwitchRow(
-          icon: FLucideIcons.brain,
-          label: 'KnowledgeOS',
-          subtitle: knowledgeOn
-              ? l10n.settingsDomainsKnowledgeEnabledSubtitle
-              : l10n.settingsDomainsKnowledgeDisabledSubtitle,
-          value: knowledgeOn,
-          enabled: knowledgeOn,
-          onChanged: (v) => ref
-              .read(auth_providers.domainOptInsProvider.notifier)
-              .setEnabled(DomainScope.knowledge, v),
-          onTap: () => context.goNamed(AppRouteNames.domainsKnowledge),
-        ),
-      ],
-    );
-  }
-}
-
-/// Switch row that becomes tappable when [enabled] is true, showing a
-/// chevron to navigate to the domain's detail page.
-class _DomainSwitchRow extends StatelessWidget {
-  const _DomainSwitchRow({
-    required this.icon,
-    required this.label,
-    required this.subtitle,
-    required this.value,
-    required this.enabled,
-    required this.onChanged,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final String subtitle;
-  final bool value;
-  final bool enabled;
-  final ValueChanged<bool> onChanged;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: enabled ? onTap : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s14,
-          vertical: AppSpacing.s10,
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: AppIconSizes.h18, color: colors.mutedForeground),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(label, style: context.theme.typography.sm),
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.s2),
-                    child: Text(
-                      subtitle,
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (enabled)
-              Padding(
-                padding: const EdgeInsets.only(left: AppSpacing.s8),
-                child: Icon(
-                  FLucideIcons.chevronRight,
-                  size: AppIconSizes.h18,
-                  color: colors.mutedForeground.withValues(
-                    alpha: AppOpacity.disabled,
-                  ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.only(left: AppSpacing.s8),
-              child: FSwitch(
-                value: value,
-                onChange: (v) {
-                  Haptics.selection();
-                  onChanged(v);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

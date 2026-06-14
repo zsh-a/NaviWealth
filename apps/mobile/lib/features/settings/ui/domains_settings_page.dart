@@ -11,12 +11,13 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../health/data/health_sync_service.dart';
 import '../../health/data/morning_briefing_preferences.dart';
 import '../../health/data/providers.dart' as health_data;
+import 'finance_domain_settings_section.dart';
 import 'inline_setting_row.dart';
 
 /// `/settings/domains` — LifeOS domain management.
 ///
-/// Each opt-in domain (HealthOS, KnowledgeOS) gets its own card.
-/// FinanceOS is always-on and accessed via the main tab bar.
+/// FinanceOS is always on; optional domains expose enablement and
+/// domain-specific controls here.
 class DomainsSettingsPage extends ConsumerWidget {
   const DomainsSettingsPage({super.key});
 
@@ -38,6 +39,8 @@ class DomainsSettingsPage extends ConsumerWidget {
           AppSpacing.s24 + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
+          const FinanceDomainSettingsSection(),
+          const SizedBox(height: AppSpacing.s16),
           // ── HealthOS ──
           SoftCard(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
