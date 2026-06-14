@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/ai/intent/intent.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../ai_chat/ui/ai_hover_overlay.dart';
 import '../../ai_chat/ui/ai_object_capsule.dart';
 import '../data/dashboard_insights_provider.dart';
 import '../data/dismissed_insights_store.dart';
@@ -104,90 +103,102 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
       InsightTone.info => sem.info,
       null => colors.primary,
     };
-    return AiHoverOverlay(
-      capsule: _InsightOverlayActions(
-        expanded: _expanded,
-        onExpand: () => setState(() => _expanded = !_expanded),
-        onDismiss: _dismiss,
-        askCapsule: AiObjectCapsule(
-          source: 'home_insight_card',
-          intent: 'explain_insight',
-          object: AiObjectRef(type: 'insight', id: _insightStableId(item)),
-          objectLabel: insightHeadline(l10n, item),
-          fallbackLabel: l10n.dashboardInsightActionAsk,
-        ),
-        l10n: l10n,
-      ),
-      child: SoftCard(
-        onPress: !tappable ? null : (item.onTap ?? () => context.push(route!)),
-        borderless: true,
-        level: SoftCardLevel.raised,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s14,
-          vertical: AppSpacing.s12,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                SizedBox(
-                  width: AppSpacing.s32,
-                  height: AppSpacing.s32,
-                  child: Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Icon(
-                      item.icon,
-                      size: AppIconSizes.md,
-                      color: iconTint.withValues(alpha: AppOpacity.prominent),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        insightHeadline(l10n, item),
-                        style: context.theme.typography.sm.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: AppSpacing.s2),
-                      Text(
-                        insightDetail(l10n, item),
-                        style: context.theme.typography.xs.copyWith(
-                          color: colors.mutedForeground,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                if (tappable) ...[
-                  const SizedBox(width: AppSpacing.s8),
-                  Icon(
-                    FLucideIcons.chevronRight,
-                    size: AppIconSizes.h18,
-                    color: colors.mutedForeground.withValues(
-                      alpha: AppOpacity.prominent,
-                    ),
-                  ),
-                ],
-              ],
+    final summary = Row(
+      children: [
+        SizedBox(
+          width: AppSpacing.s32,
+          height: AppSpacing.s32,
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Icon(
+              item.icon,
+              size: AppIconSizes.md,
+              color: iconTint.withValues(alpha: AppOpacity.prominent),
             ),
-            if (_expanded) ...[
-              const SizedBox(height: AppSpacing.s8),
-              _ExpandedDetail(item: item),
-            ],
-          ],
+          ),
         ),
+        const SizedBox(width: AppSpacing.s12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                insightHeadline(l10n, item),
+                style: context.theme.typography.sm.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppSpacing.s2),
+              Text(
+                insightDetail(l10n, item),
+                style: context.theme.typography.xs.copyWith(
+                  color: colors.mutedForeground,
+                ),
+                maxLines: _expanded ? null : 2,
+                overflow: _expanded
+                    ? TextOverflow.visible
+                    : TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+        if (tappable) ...[
+          const SizedBox(width: AppSpacing.s8),
+          Icon(
+            FLucideIcons.chevronRight,
+            size: AppIconSizes.h18,
+            color: colors.mutedForeground.withValues(
+              alpha: AppOpacity.prominent,
+            ),
+          ),
+        ],
+      ],
+    );
+
+    return SoftCard(
+      borderless: true,
+      level: SoftCardLevel.raised,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s14,
+        vertical: AppSpacing.s12,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (tappable)
+            FTappable(
+              onPress: item.onTap ?? () => context.push(route!),
+              child: summary,
+            )
+          else
+            summary,
+          const SizedBox(height: AppSpacing.s10),
+          _InsightInlineActions(
+            expanded: _expanded,
+            onExpand: () => setState(() => _expanded = !_expanded),
+            onDismiss: _dismiss,
+            askCapsule: AiObjectCapsule(
+              source: 'home_insight_card',
+              intent: 'explain_insight',
+              object: AiObjectRef(type: 'insight', id: _insightStableId(item)),
+              objectLabel: insightHeadline(l10n, item),
+              fallbackLabel: l10n.dashboardInsightActionAsk,
+            ),
+            l10n: l10n,
+          ),
+          if (_expanded) ...[
+            const SizedBox(height: AppSpacing.s8),
+            Container(
+              width: double.infinity,
+              height: 1,
+              color: colors.foreground.withValues(alpha: AppOpacity.faint),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -203,83 +214,10 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
   }
 }
 
-class _ExpandedDetail extends StatelessWidget {
-  const _ExpandedDetail({required this.item});
-  final InsightItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s12,
-        vertical: AppSpacing.s10,
-      ),
-      decoration: BoxDecoration(
-        color: colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Text(
-        _expandedDetailFor(item),
-        style: context.theme.typography.xs.copyWith(color: colors.foreground),
-      ),
-    );
-  }
-
-  static String _expandedDetailFor(InsightItem item) {
-    // Kind-specific extra context. Kept ASCII-light and English to
-    // avoid an ARB explosion for what is effectively a debug-style
-    // breadcrumb; the user-facing summary is on the headline + detail
-    // rows above.
-    switch (item.kind) {
-      case InsightKind.duplicateCharge:
-        return 'Pairs detected within ±2 days, after refund + recurring '
-            'exclusion. Tap the row to open the matching transactions.';
-      case InsightKind.monthlySummary:
-        return 'Computed from the dashboard trend: difference between '
-            'the latest reading inside the prior month and the latest '
-            'reading before it.';
-      case InsightKind.fireProgress:
-      case InsightKind.fireReached:
-        return 'From the FIRE planner baseline scenario.';
-      case InsightKind.portfolioDrift:
-        return 'Allocation drift exceeds the configured threshold.';
-      case InsightKind.maturity:
-        return 'Deposit matures within the alert window.';
-      case InsightKind.anomaly:
-        return 'Projected month-end spend vs. the last 3 months.';
-      case InsightKind.ingestQueue:
-        return 'Parsed transactions awaiting confirmation. Tap to '
-            'review, confirm, or skip duplicates before they post.';
-      case InsightKind.cashFlowDeficit:
-        return 'Current-month inflow minus outflow is below zero, computed '
-            'from the shared cashflow summary used by the Home cards.';
-      case InsightKind.fireOsHighWithdrawalRate:
-        return 'Trailing 12-month annual spend / investable assets is '
-            "above the plan's safe-withdrawal rate. Open the FIRE OS "
-            'hero card for the breakdown.';
-      case InsightKind.fireOsLowCashBucket:
-        return 'Liquid cash divided by monthly expense is below the '
-            "plan's target cash-bucket months. Top-up suggested on the "
-            'FIRE OS hero card.';
-      case InsightKind.fireOsUnmappedHoldings:
-        return 'These holdings are real estate, vehicles, or other '
-            'assets the allocator left out by default. Map them on the '
-            'FIRE OS buckets card if they should fund the plan.';
-      case InsightKind.fireOsBucketDeviation:
-        return 'A non-cash bucket has drifted past 10% off its target. '
-            'Open the FIRE OS buckets card for the breakdown — or '
-            'rebalance / propose a rule change.';
-    }
-  }
-}
-
-/// Floating action cluster that the hover overlay reveals in the
-/// card's top-right corner. Groups expand / ask-AI / dismiss into one
-/// tinted chip so the underlying card stays text-only at rest.
-class _InsightOverlayActions extends StatelessWidget {
-  const _InsightOverlayActions({
+/// Inline action cluster. Keeping the actions in normal layout makes them
+/// discoverable on touch screens and avoids a second hidden interaction model.
+class _InsightInlineActions extends StatelessWidget {
+  const _InsightInlineActions({
     required this.expanded,
     required this.onExpand,
     required this.onDismiss,
@@ -295,49 +233,25 @@ class _InsightOverlayActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final isDark = colors.brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s4,
-        vertical: AppSpacing.s2,
-      ),
-      decoration: BoxDecoration(
-        color: colors.background.withValues(alpha: AppOpacity.overlay),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(
-          color: colors.foreground.withValues(
-            alpha: isDark ? AppOpacity.subtle : AppOpacity.faint,
-          ),
+    return Wrap(
+      spacing: AppSpacing.s6,
+      runSpacing: AppSpacing.s6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _OverlayIconButton(
+          icon: expanded
+              ? FLucideIcons.foldVertical
+              : FLucideIcons.unfoldVertical,
+          tooltip: l10n.dashboardInsightActionExpand,
+          onTap: onExpand,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).shadowColor.withValues(
-              alpha: isDark ? AppOpacity.muted : AppOpacity.faint,
-            ),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _OverlayIconButton(
-            icon: expanded
-                ? FLucideIcons.foldVertical
-                : FLucideIcons.unfoldVertical,
-            tooltip: l10n.dashboardInsightActionExpand,
-            onTap: onExpand,
-          ),
-          askCapsule,
-          _OverlayIconButton(
-            icon: FLucideIcons.x,
-            tooltip: l10n.dashboardInsightActionDismiss,
-            onTap: onDismiss,
-          ),
-        ],
-      ),
+        askCapsule,
+        _OverlayIconButton(
+          icon: FLucideIcons.x,
+          tooltip: l10n.dashboardInsightActionDismiss,
+          onTap: onDismiss,
+        ),
+      ],
     );
   }
 }

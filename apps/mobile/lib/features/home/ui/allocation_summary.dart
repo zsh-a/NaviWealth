@@ -25,6 +25,7 @@ class AllocationSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
     final assetAllocations =
         snapshot.allocations.where((a) => !a.isLiability).toList()..sort(
           (a, b) => b.totalInBase.amount.compareTo(a.totalInBase.amount),
@@ -39,12 +40,45 @@ class AllocationSummary extends StatelessWidget {
 
     final palette = ChartPalette.of(context);
     final segments = <_AllocationSegment>[];
+    final topAllocations = assetAllocations.take(3).toList(growable: false);
+    for (var i = 0; i < topAllocations.length; i++) {
+      final allocation = topAllocations[i];
+      final amount = allocation.totalInBase.amount;
+      final ratio = (amount / total).toDouble();
+      segments.add(
+        _AllocationSegment(
+          label: AssetCategoryVisuals.label(l10n, allocation.category),
+          amount: amount,
+          ratio: ratio,
+          color: palette.accentAt(i),
+        ),
+      );
+    }
+    final otherAllocations = assetAllocations.skip(3).toList(growable: false);
+    if (otherAllocations.isNotEmpty) {
+      final amount = otherAllocations.fold<Decimal>(
+        Decimal.zero,
+        (acc, allocation) => acc + allocation.totalInBase.amount,
+      );
+      final ratio = (amount / total).toDouble();
+      segments.add(
+        _AllocationSegment(
+          label: l10n.cashFlowKindOther,
+          amount: amount,
+          ratio: ratio,
+          color: colors.mutedForeground.withValues(alpha: AppOpacity.muted),
+        ),
+      );
+    }
+
+    final barSegments = <_AllocationSegment>[];
     for (var i = 0; i < assetAllocations.length; i++) {
       final allocation = assetAllocations[i];
       final ratio = (allocation.totalInBase.amount / total).toDouble();
-      segments.add(
+      barSegments.add(
         _AllocationSegment(
-          allocation: allocation,
+          label: AssetCategoryVisuals.label(l10n, allocation.category),
+          amount: allocation.totalInBase.amount,
           ratio: ratio,
           color: palette.accentAt(i),
         ),
@@ -80,14 +114,14 @@ class AllocationSummary extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _StackedBar(segments: segments),
+              _StackedBar(segments: barSegments),
               const SizedBox(height: AppSpacing.s14),
-              for (final s in segments.take(3)) ...[
+              for (var i = 0; i < segments.length; i++) ...[
                 _SegmentLegendRow(
-                  segment: s,
+                  segment: segments[i],
                   baseCurrency: snapshot.baseCurrency,
                 ),
-                if (s != segments.take(3).last)
+                if (i < segments.length - 1)
                   const SizedBox(height: AppSpacing.s8),
               ],
               const SizedBox(height: AppSpacing.s4),
@@ -123,12 +157,14 @@ class AllocationSummary extends StatelessWidget {
 
 class _AllocationSegment {
   const _AllocationSegment({
-    required this.allocation,
+    required this.label,
+    required this.amount,
     required this.ratio,
     required this.color,
   });
 
-  final CategoryAllocation allocation;
+  final String label;
+  final Decimal amount;
   final double ratio;
   final Color color;
 }
@@ -166,7 +202,6 @@ class _SegmentLegendRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final pct = (segment.ratio * 100).clamp(0, 100).toStringAsFixed(1);
     return Row(
       children: [
@@ -181,19 +216,34 @@ class _SegmentLegendRow extends StatelessWidget {
         const SizedBox(width: AppSpacing.s10),
         Expanded(
           child: Text(
-            AssetCategoryVisuals.label(l10n, segment.allocation.category),
+            segment.label,
             style: context.theme.typography.sm,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ),
         const SizedBox(width: AppSpacing.s8),
-        Text(
-          '$pct%',
-          style: context.theme.typography.sm.copyWith(
-            color: context.theme.colors.mutedForeground,
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            MoneyText(
+              amount: segment.amount.toDouble(),
+              currencyCode: baseCurrency,
+              compact: true,
+              style: context.theme.typography.sm.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s2),
+            Text(
+              '$pct%',
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
         ),
       ],
     );

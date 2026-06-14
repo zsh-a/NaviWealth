@@ -101,24 +101,30 @@ class HomeGreetingHeader extends ConsumerWidget {
                 spacing: AppSpacing.s8,
                 runSpacing: AppSpacing.s2,
                 children: [
-                  for (var i = 0; i < statusFragments.length; i++) ...[
-                    Text(
-                      statusFragments[i].text,
-                      style: context.theme.typography.sm.copyWith(
-                        color: statusFragments[i].color,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    if (i < statusFragments.length - 1)
-                      Text(
-                        '·',
-                        style: context.theme.typography.sm.copyWith(
-                          color: colors.mutedForeground.withValues(
-                            alpha: AppOpacity.scrim,
+                  for (var i = 0; i < statusFragments.length; i++)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (i > 0) ...[
+                          Text(
+                            '·',
+                            style: context.theme.typography.sm.copyWith(
+                              color: colors.mutedForeground.withValues(
+                                alpha: AppOpacity.scrim,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.s8),
+                        ],
+                        Text(
+                          statusFragments[i].text,
+                          style: context.theme.typography.sm.copyWith(
+                            color: statusFragments[i].color,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                      ),
-                  ],
+                      ],
+                    ),
                 ],
               ),
             ),

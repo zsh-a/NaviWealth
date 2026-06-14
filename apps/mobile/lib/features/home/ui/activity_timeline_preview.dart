@@ -15,13 +15,14 @@ import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../activity/data/activity_feed_provider.dart';
+import '../../activity/ui/activity_entry_detail_page.dart';
+import '../../shared/account_l10n.dart';
 
 /// Last `kHomeActivityPreviewCount` journal entries, rendered iOS Wallet
 /// style: rounded icon + double-line label + right-aligned amount.
 ///
-/// Tapping any row pushes the user into the full activity timeline; the
-/// preview is read-only — full filtering / detail flows happen on the
-/// dedicated /activity surface.
+/// Tapping the header action opens the full activity timeline; tapping a row
+/// opens that entry's detail surface.
 const int kHomeActivityPreviewCount = 5;
 
 class ActivityTimelinePreview extends ConsumerWidget {
@@ -29,84 +30,189 @@ class ActivityTimelinePreview extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
     final formatter = context.formatters(ref);
     final feedAsync = ref.watch(activityFeedProvider);
     return feedAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (e, _) => const SizedBox.shrink(),
+      loading: () =>
+          const _ActivityPreviewSection(child: _ActivityPreviewSkeleton()),
+      error: (e, _) => _ActivityPreviewSection(
+        child: _ActivityPreviewError(
+          onRetry: () => ref.invalidate(activityFeedProvider),
+        ),
+      ),
       data: (page) {
         if (page.entries.isEmpty) return const SizedBox.shrink();
         final entries = page.entries.take(kHomeActivityPreviewCount).toList();
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(
-                left: AppSpacing.s4,
-                top: AppSpacing.s4,
-                bottom: AppSpacing.s8,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.dashboardActivityPreviewTitle,
-                      style: context.theme.typography.sm.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: context.theme.colors.mutedForeground,
-                      ),
-                    ),
+        return _ActivityPreviewSection(
+          child: SoftCard(
+            borderless: true,
+            tinted: false,
+            child: Column(
+              children: [
+                for (var i = 0; i < entries.length; i++) ...[
+                  _PreviewRow(
+                    entry: entries[i],
+                    accountsById: page.accountsById,
+                    formatter: formatter,
                   ),
-                  FTappable(
-                    onPress: () => context.go(AppRoutes.activity),
-                    child: Padding(
+                  if (i < entries.length - 1)
+                    Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.s4,
-                        vertical: AppSpacing.s2,
+                        horizontal: AppSpacing.s12,
                       ),
-                      child: Text(
-                        l10n.dashboardActivityPreviewViewAll,
-                        style: context.theme.typography.xs.copyWith(
-                          color: context.theme.colors.primary,
-                          fontWeight: FontWeight.w600,
+                      child: Container(
+                        height: 1,
+                        color: context.theme.colors.foreground.withValues(
+                          alpha: AppOpacity.faint,
                         ),
                       ),
                     ),
-                  ),
                 ],
-              ),
+              ],
             ),
-            SoftCard(
-              borderless: true,
-              tinted: false,
-              child: Column(
-                children: [
-                  for (var i = 0; i < entries.length; i++) ...[
-                    _PreviewRow(
-                      entry: entries[i],
-                      accountsById: page.accountsById,
-                      formatter: formatter,
-                    ),
-                    if (i < entries.length - 1)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.s12,
-                        ),
-                        child: Container(
-                          height: 1,
-                          color: context.theme.colors.foreground.withValues(
-                            alpha: AppOpacity.faint,
-                          ),
-                        ),
-                      ),
-                  ],
-                ],
-              ),
-            ),
-          ],
+          ),
         );
       },
+    );
+  }
+}
+
+class _ActivityPreviewSection extends StatelessWidget {
+  const _ActivityPreviewSection({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(
+            left: AppSpacing.s4,
+            top: AppSpacing.s4,
+            bottom: AppSpacing.s8,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.dashboardActivityPreviewTitle,
+                  style: context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                ),
+              ),
+              FTappable(
+                onPress: () => context.go(AppRoutes.activity),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s4,
+                    vertical: AppSpacing.s2,
+                  ),
+                  child: Text(
+                    l10n.dashboardActivityPreviewViewAll,
+                    style: context.theme.typography.xs.copyWith(
+                      color: context.theme.colors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        child,
+      ],
+    );
+  }
+}
+
+class _ActivityPreviewSkeleton extends StatelessWidget {
+  const _ActivityPreviewSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SoftCard(
+      borderless: true,
+      tinted: false,
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.s14,
+        vertical: AppSpacing.s12,
+      ),
+      child: Column(
+        children: [
+          _SkeletonRow(),
+          SizedBox(height: AppSpacing.s12),
+          _SkeletonRow(),
+          SizedBox(height: AppSpacing.s12),
+          _SkeletonRow(),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkeletonRow extends StatelessWidget {
+  const _SkeletonRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        SkeletonBox(width: AppSpacing.s32, height: AppSpacing.s32, radius: 8),
+        SizedBox(width: AppSpacing.s12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 132, height: 14, radius: 5),
+              SizedBox(height: AppSpacing.s6),
+              SkeletonBox(width: 88, height: 12, radius: 5),
+            ],
+          ),
+        ),
+        SizedBox(width: AppSpacing.s12),
+        SkeletonBox(width: 64, height: 16, radius: 5),
+      ],
+    );
+  }
+}
+
+class _ActivityPreviewError extends StatelessWidget {
+  const _ActivityPreviewError({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SoftCard(
+      borderless: true,
+      tinted: false,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s14,
+        vertical: AppSpacing.s12,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              l10n.commonLoadFailed,
+              style: context.theme.typography.sm.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+            ),
+          ),
+          FButton(
+            variant: FButtonVariant.ghost,
+            onPress: onRetry,
+            child: Text(l10n.commonRetry),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -125,17 +231,19 @@ class _PreviewRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final l10n = AppLocalizations.of(context);
     final classification = classifyEntryKind(
       postings: entry.postings,
       resolveCategory: (id) => accountsById[id]?.category,
     );
     final headline = _headlinePosting(entry.postings, accountsById);
-    final timeStr = _formatTime(entry.entry.date);
+    final subtitle = _previewSubtitle(l10n, entry, accountsById);
+    final timeStr = _formatTimestamp(entry.entry.date, formatter);
     final iconData = _iconForKind(classification.kind);
     final iconColor = _colorForKind(classification.kind, colors);
 
     return FTappable(
-      onPress: () => context.go(AppRoutes.activity),
+      onPress: () => _openDetail(context),
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s14,
@@ -169,12 +277,11 @@ class _PreviewRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (entry.entry.payee != null &&
-                      entry.entry.payee!.isNotEmpty)
+                  if (subtitle != null)
                     Padding(
                       padding: const EdgeInsets.only(top: AppSpacing.s2),
                       child: Text(
-                        entry.entry.payee!,
+                        subtitle,
                         style: context.theme.typography.xs.copyWith(
                           color: colors.mutedForeground,
                         ),
@@ -209,6 +316,31 @@ class _PreviewRow extends StatelessWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _openDetail(BuildContext context) {
+    final args = ActivityEntryDetailArgs(
+      entry: entry,
+      accountsById: accountsById,
+    );
+    final router = GoRouter.maybeOf(context);
+    if (router != null) {
+      context.pushNamed(
+        AppRouteNames.activityEntryDetail,
+        pathParameters: {'entryId': entry.entry.id},
+        extra: args,
+      );
+      return;
+    }
+
+    Navigator.of(context).push<void>(
+      PageRouteBuilder<void>(
+        pageBuilder: (_, _, _) => ActivityEntryDetailPage(
+          entry: args.entry,
+          accountsById: args.accountsById,
         ),
       ),
     );
@@ -251,10 +383,32 @@ Color _colorForKind(EntryKind kind, FColors colors) {
   }
 }
 
-String _formatTime(DateTime date) {
-  final h = date.hour.toString().padLeft(2, '0');
-  final m = date.minute.toString().padLeft(2, '0');
-  return '$h:$m';
+String _formatTimestamp(DateTime date, AppFormatters formatter) {
+  final local = date.toLocal();
+  final now = DateTime.now();
+  if (_sameLocalDay(local, now)) return formatter.time(local);
+  return formatter.monthDay(local);
+}
+
+bool _sameLocalDay(DateTime a, DateTime b) {
+  return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+String? _previewSubtitle(
+  AppLocalizations l10n,
+  JournalEntryWithPostings entry,
+  Map<String, Account> accounts,
+) {
+  final payee = entry.entry.payee;
+  if (payee != null && payee.isNotEmpty) return payee;
+  for (final p in entry.postings) {
+    if (p.unit.contains(':')) {
+      return p.unit.substring(p.unit.indexOf(':') + 1);
+    }
+    final account = accounts[p.accountId];
+    if (account != null) return localizedAccountName(l10n, account);
+  }
+  return null;
 }
 
 Posting? _headlinePosting(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/activity/data/activity_feed_provider.dart';
 import 'package:naviwealth/features/activity/data/activity_feed_query.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
@@ -90,6 +93,13 @@ GoRouter _router({Widget child = const ActivityTimelinePreview()}) {
         path: AppRoutes.activity,
         builder: (_, _) => const Scaffold(body: Text('activity-route')),
       ),
+      GoRoute(
+        name: AppRouteNames.activityEntryDetail,
+        path: '/activity/entry/:entryId',
+        builder: (_, state) => Scaffold(
+          body: Text('entry-detail-${state.pathParameters['entryId']}'),
+        ),
+      ),
     ],
   );
 }
@@ -99,20 +109,26 @@ Widget _wrap({
   required List<Account> accounts,
   GoRouter? router,
 }) {
-  return ProviderScope(
-    overrides: [
-      activityFeedProvider.overrideWith(
-        (ref) => Stream.value(
-          ActivityFeedPage(
-            entries: entries,
-            totalCount: entries.length,
-            hasMore: false,
-            isFiltered: false,
-            accountsById: {for (final a in accounts) a.id: a},
-          ),
-        ),
+  return _wrapStream(
+    stream: Stream.value(
+      ActivityFeedPage(
+        entries: entries,
+        totalCount: entries.length,
+        hasMore: false,
+        isFiltered: false,
+        accountsById: {for (final a in accounts) a.id: a},
       ),
-    ],
+    ),
+    router: router,
+  );
+}
+
+Widget _wrapStream({
+  required Stream<ActivityFeedPage> stream,
+  GoRouter? router,
+}) {
+  return ProviderScope(
+    overrides: [activityFeedProvider.overrideWith((ref) => stream)],
     child: MaterialApp.router(
       routerConfig: router ?? _router(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -125,11 +141,36 @@ Widget _wrap({
 }
 
 void main() {
+  testWidgets('keeps a stable section while the feed is loading', (
+    tester,
+  ) async {
+    final controller = StreamController<ActivityFeedPage>();
+    addTearDown(controller.close);
+
+    await tester.pumpWidget(_wrapStream(stream: controller.stream));
+
+    expect(find.text('Recent activity'), findsOneWidget);
+    expect(find.byType(SkeletonBox), findsWidgets);
+  });
+
+  testWidgets('shows a retry affordance when the feed fails', (tester) async {
+    await tester.pumpWidget(
+      _wrapStream(stream: Stream.error(Exception('boom'))),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text("Couldn't load this view. Please try again."),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
   testWidgets('renders nothing when the feed is empty', (tester) async {
     await tester.pumpWidget(_wrap(entries: const [], accounts: const []));
     await tester.pumpAndSettle();
 
-    expect(find.text('Recent Activity'), findsNothing);
+    expect(find.text('Recent activity'), findsNothing);
   });
 
   testWidgets('renders header + rows for the most recent entries', (
@@ -183,6 +224,54 @@ void main() {
     expect(find.text('Coffee 2'), findsOneWidget);
     // "View all" link routes into the full activity page.
     expect(find.textContaining('View all'), findsOneWidget);
+  });
+
+  testWidgets('tapping a preview row opens the entry detail route', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final accounts = [
+      _account(
+        id: 'assets:wallet',
+        name: 'Wallet',
+        category: AccountSide.asset,
+      ),
+      _account(
+        id: 'expenses:food',
+        name: 'Food',
+        category: AccountSide.expense,
+      ),
+    ];
+    final entry = _entry(
+      id: 'je-detail',
+      date: DateTime.now(),
+      narration: 'Lunch',
+      postings: [
+        _posting(
+          id: 'p-food',
+          journalEntryId: 'je-detail',
+          accountId: 'expenses:food',
+          units: '48',
+        ),
+        _posting(
+          id: 'p-wallet',
+          journalEntryId: 'je-detail',
+          accountId: 'assets:wallet',
+          units: '-48',
+          position: 1,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(_wrap(entries: [entry], accounts: accounts));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Lunch'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('entry-detail-je-detail'), findsOneWidget);
   });
 
   testWidgets('caps the preview at kHomeActivityPreviewCount entries', (
