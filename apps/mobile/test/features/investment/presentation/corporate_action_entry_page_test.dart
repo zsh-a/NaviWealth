@@ -102,8 +102,8 @@ void main() {
       // Preview card visible; gross = 100 * 0.5 = 50, net = 45.
       // Net = 45 also appears as the "Cash flow" row → 2 occurrences.
       expect(find.byKey(const Key('corp-action-preview-card')), findsOneWidget);
-      expect(find.text('50 USD'), findsOneWidget);
-      expect(find.text('45 USD'), findsNWidgets(2));
+      expect(find.text(r'$50.00'), findsOneWidget);
+      expect(find.text(r'$45.00'), findsNWidgets(2));
 
       await _tapSubmit(tester);
 
@@ -171,7 +171,7 @@ void main() {
       await _tapPreview(tester);
 
       // -(50 * 15 + 5) = -755
-      expect(find.text('-755 USD'), findsOneWidget);
+      expect(find.text(r'-$755.00'), findsOneWidget);
       expect(find.textContaining('50'), findsWidgets);
 
       await _tapSubmit(tester);

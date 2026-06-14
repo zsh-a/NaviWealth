@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
@@ -87,7 +88,7 @@ void main() {
       ),
     );
 
-    expect(find.text('BANK'), findsOneWidget);
+    expect(find.text('Bank'), findsOneWidget);
     expect(find.text('Everyday Checking'), findsOneWidget);
     expect(find.text('Navi Bank'), findsOneWidget);
     expect(find.text(r'$1,234.5'), findsOneWidget);
@@ -127,14 +128,14 @@ void main() {
       ),
     );
 
-    expect(find.text('10 AAPL'), findsNothing);
+    expect(find.text('10.00'), findsNothing);
 
-    await tester.tap(find.text('Brokerage'));
+    await tester.tap(find.byIcon(FLucideIcons.chevronDown));
     await tester.pumpAndSettle();
 
     expect(opened, isFalse);
     expect(find.text('AAPL'), findsOneWidget);
-    expect(find.text('10 AAPL'), findsOneWidget);
+    expect(find.text('10.00'), findsOneWidget);
   });
 
   testWidgets('localizes seeded system account row names', (tester) async {

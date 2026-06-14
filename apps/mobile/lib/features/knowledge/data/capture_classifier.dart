@@ -152,7 +152,7 @@ class HeuristicCaptureClassifier implements CaptureClassifier {
         .split(RegExp(r'[\n。]'))
         .firstWhere((s) => s.trim().isNotEmpty, orElse: () => text);
     final trimmed = line.trim();
-    return knowledgeExcerpt(trimmed, max: kKnowledgeHeadlineExcerptMaxChars);
+    return knowledgeExcerpt(trimmed, max: 60);
   }
 
   static String? _scopeGuess(String lower) {

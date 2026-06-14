@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/features/knowledge/ui/_widgets.dart';
 
 Future<T> _withLocale<T>(
@@ -26,6 +27,8 @@ Future<T> _withLocale<T>(
 }
 
 void main() {
+  setUpAll(AppFormatters.ensureInitialized);
+
   testWidgets('knowledgeMonthDayFromIso formats month/day by locale', (
     tester,
   ) async {
@@ -41,7 +44,7 @@ void main() {
       const Locale('en'),
       (context) => knowledgeMonthDayFromIso(context, '2026-06-07T09:30:00Z'),
     );
-    expect(en, '6/7');
+    expect(en, 'Jun 7');
   });
 
   testWidgets(

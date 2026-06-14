@@ -17,12 +17,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/app.dart';
-import 'package:naviwealth/app/domain_packs.dart';
+import 'package:naviwealth/app/domain_composition.dart';
+import 'package:naviwealth/app/route_guard.dart';
 import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/app/router.dart';
-import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../core/persistence/test_database.dart';
 
 Future<GoRouter> _boot(WidgetTester tester, String initial) async {
   tester.view.physicalSize = const Size(400, 800);
@@ -30,10 +35,23 @@ Future<GoRouter> _boot(WidgetTester tester, String initial) async {
   addTearDown(tester.view.reset);
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
+  final db = makeTestDatabase();
+  addTearDown(db.close);
+  await DomainOptInStore(db).write(
+    DomainOptIns(const <DomainScope>{
+      DomainScope.finance,
+      DomainScope.health,
+      DomainScope.knowledge,
+    }),
+  );
   final container = ProviderContainer(
     overrides: [
+      appDatabaseProvider.overrideWith((_) async => db),
       sharedPreferencesProvider.overrideWithValue(prefs),
-      domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
+      ...lifeOsDomainCompositionOverrides(),
+      routeGuardsProvider.overrideWith(
+        (ref) => <RouteGuard>[ref.watch(domainOptInRouteGuardProvider)],
+      ),
       appRouterProvider.overrideWith(
         (ref) => buildAppRouter(ref, initialLocation: initial),
       ),

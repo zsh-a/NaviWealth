@@ -58,8 +58,14 @@ Widget _buildHeader(
     children: [
       Icon(icon, size: 18, color: colors.foreground),
       const SizedBox(width: AppSpacing.s8),
-      Text(title, style: typography.sm.copyWith(fontWeight: FontWeight.w600)),
-      const Spacer(),
+      Expanded(
+        child: Text(
+          title,
+          style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
       badge,
     ],
   );

@@ -30,15 +30,18 @@ import 'package:naviwealth/core/ai/runtime/device/llm_stream_event.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/knowledge/agents/contradiction_agent.dart';
 import 'package:naviwealth/features/knowledge/data/contradiction_judge.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/llm_contradiction_judge.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const _owner = 'u1';
 final _now = DateTime.utc(2026, 5, 30, 12);
+late SharedPreferences _prefs;
 
 SyncMeta _meta() => SyncMeta(
   ownerUserId: _owner,
@@ -259,6 +262,11 @@ MemoryHit _hit(
 );
 
 void main() {
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues(const <String, Object>{});
+    _prefs = await SharedPreferences.getInstance();
+  });
+
   ProviderContainer makeContainer({
     required _FakeRepo repo,
     required _FakeRuntime runtime,
@@ -266,6 +274,7 @@ void main() {
   }) {
     final c = ProviderContainer(
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(_prefs),
         currentUserIdProvider.overrideWithValue(() async => _owner),
         knowledgeRepositoryProvider.overrideWith((ref) async => repo),
         memoryRuntimeProvider.overrideWith((ref) async => runtime),
@@ -294,92 +303,77 @@ void main() {
     return c.read(probe.future);
   }
 
-  test(
-    'check-1: active decision citing a falsified/retired assumption flags '
-    '(no LLM involved)',
-    () async {
-      // a-stale is NOT in the open set -> invalidated. The judge throws to
-      // prove check-1 never consults it.
-      final repo = _FakeRepo(
-        decisions: [
-          _decision(
-            'd1',
-            question: 'Hold NASDAQ?',
-            assumptionIds: ['a-stale'],
-          ),
-        ],
-        openAssumptions: [_assumption('a-open', 'Other still-open')],
-      );
-      final runtime = _FakeRuntime(const {});
-      final container = makeContainer(repo: repo, runtime: runtime);
+  test('check-1: active decision citing a falsified/retired assumption flags '
+      '(no LLM involved)', () async {
+    // a-stale is NOT in the open set -> invalidated. The judge throws to
+    // prove check-1 never consults it.
+    final repo = _FakeRepo(
+      decisions: [
+        _decision('d1', question: 'Hold NASDAQ?', assumptionIds: ['a-stale']),
+      ],
+      openAssumptions: [_assumption('a-open', 'Other still-open')],
+    );
+    final runtime = _FakeRuntime(const {});
+    final container = makeContainer(repo: repo, runtime: runtime);
 
-      final agent = ContradictionAgent(judgeOverride: _ThrowingJudge());
-      final result = await runAgent(container, agent);
+    final agent = ContradictionAgent(judgeOverride: _ThrowingJudge());
+    final result = await runAgent(container, agent);
 
-      expect(result.status, AgentRunStatus.completed);
-      expect(result.payload['issue_count'], 1);
-      final issues = runtime.remembered!.payload['issues']! as List<Object?>;
-      final issue = issues.single! as Map<String, Object?>;
-      expect(issue['kind'], 'assumption_invalidated');
-      expect(issue['reference_id'], 'a-stale');
-    },
-  );
+    expect(result.status, AgentRunStatus.completed);
+    expect(result.payload['issue_count'], 1);
+    final issues = runtime.remembered!.payload['issues']! as List<Object?>;
+    final issue = issues.single! as Map<String, Object?>;
+    expect(issue['kind'], 'assumption_invalidated');
+    expect(issue['reference_id'], 'a-stale');
+  });
 
-  test(
-    'check-2: LLM judge confirms a real contradiction -> flag with the '
-    'LLM reason',
-    () async {
-      final repo = _FakeRepo(principles: [_principle('p1', '长期持有,不做波段')]);
-      final runtime = _FakeRuntime({
-        'know:decisions': [
-          _hit('d9', '是否频繁波段交易', '决定本月开始高频波段交易博取价差'),
-        ],
-      });
-      final judge = _FixedJudge(
-        const ContradictionVerdict(
-          isContradiction: true,
-          confidence: 0.92,
-          reasonZh: '该决定主张频繁波段,与长期持有原则方向相反。',
-        ),
-      );
-      final container = makeContainer(repo: repo, runtime: runtime);
+  test('check-2: LLM judge confirms a real contradiction -> flag with the '
+      'LLM reason', () async {
+    final repo = _FakeRepo(principles: [_principle('p1', '长期持有,不做波段')]);
+    final runtime = _FakeRuntime({
+      'know:decisions': [_hit('d9', '是否频繁波段交易', '决定本月开始高频波段交易博取价差')],
+    });
+    final judge = _FixedJudge(
+      const ContradictionVerdict(
+        isContradiction: true,
+        confidence: 0.92,
+        reasonZh: '该决定主张频繁波段,与长期持有原则方向相反。',
+      ),
+    );
+    final container = makeContainer(repo: repo, runtime: runtime);
 
-      final agent = ContradictionAgent(judgeOverride: judge);
-      final result = await runAgent(container, agent);
+    final agent = ContradictionAgent(judgeOverride: judge);
+    final result = await runAgent(container, agent);
 
-      expect(judge.calls, 1);
-      expect(result.payload['issue_count'], 1);
-      final issue =
-          (runtime.remembered!.payload['issues']! as List<Object?>).single!
-              as Map<String, Object?>;
-      expect(issue['kind'], 'principle_mismatch');
-      expect(issue['reference_id'], 'p1');
-      expect(issue['detail'], '该决定主张频繁波段,与长期持有原则方向相反。');
-    },
-  );
+    expect(judge.calls, 1);
+    expect(result.payload['issue_count'], 1);
+    final issue =
+        (runtime.remembered!.payload['issues']! as List<Object?>).single!
+            as Map<String, Object?>;
+    expect(issue['kind'], 'principle_mismatch');
+    expect(issue['reference_id'], 'p1');
+    expect(issue['detail'], '该决定主张频繁波段,与长期持有原则方向相反。');
+  });
 
-  test(
-    'check-2: judge REJECTS a mere mention -> NO flag (false-positive '
-    'suppression)',
-    () async {
-      final repo = _FakeRepo(principles: [_principle('p1', '长期持有,不做波段')]);
-      final runtime = _FakeRuntime({
-        'know:decisions': [
-          // Mentions the principle verbatim but does not contradict it.
-          _hit('d9', '复盘长期持有策略', '记录了长期持有不做波段的执行情况,一切正常'),
-        ],
-      });
-      final judge = _FixedJudge(const ContradictionVerdict.none());
-      final container = makeContainer(repo: repo, runtime: runtime);
+  test('check-2: judge REJECTS a mere mention -> NO flag (false-positive '
+      'suppression)', () async {
+    final repo = _FakeRepo(principles: [_principle('p1', '长期持有,不做波段')]);
+    final runtime = _FakeRuntime({
+      'know:decisions': [
+        // Mentions the principle verbatim but does not contradict it.
+        _hit('d9', '复盘长期持有策略', '记录了长期持有不做波段的执行情况,一切正常'),
+      ],
+    });
+    final judge = _FixedJudge(const ContradictionVerdict.none());
+    final container = makeContainer(repo: repo, runtime: runtime);
 
-      final agent = ContradictionAgent(judgeOverride: judge);
-      final result = await runAgent(container, agent);
+    final agent = ContradictionAgent(judgeOverride: judge);
+    final result = await runAgent(container, agent);
 
-      expect(judge.calls, 1);
-      expect(result.status, AgentRunStatus.skipped);
-      expect(runtime.remembered, isNull);
-    },
-  );
+    expect(judge.calls, 1);
+    expect(result.status, AgentRunStatus.skipped);
+    expect(runtime.remembered, isNull);
+  });
 
   test('check-2: low confidence (<0.6) -> no flag', () async {
     final repo = _FakeRepo(principles: [_principle('p1', '长期持有,不做波段')]);
@@ -435,19 +429,22 @@ void main() {
 
     expect(judge.calls, 0);
     expect(result.status, AgentRunStatus.skipped);
-    expect(result.summary, contains('no contradictions'));
+    expect(result.summary, contains('No contradictions'));
   });
 
   group('fallback / parity', () {
-    test('HeuristicContradictionJudge: marker token -> contradiction', () async {
-      const judge = HeuristicContradictionJudge();
-      final v = await judge.judge(
-        principleStatement: '长期持有',
-        memoryText: '这个决定违反了长期持有原则',
-      );
-      expect(v.isContradiction, isTrue);
-      expect(v.confidence, greaterThanOrEqualTo(0.6));
-    });
+    test(
+      'HeuristicContradictionJudge: marker token -> contradiction',
+      () async {
+        const judge = HeuristicContradictionJudge();
+        final v = await judge.judge(
+          principleStatement: '长期持有',
+          memoryText: '这个决定违反了长期持有原则',
+        );
+        expect(v.isContradiction, isTrue);
+        expect(v.confidence, greaterThanOrEqualTo(0.6));
+      },
+    );
 
     test('HeuristicContradictionJudge: no marker -> none', () async {
       const judge = HeuristicContradictionJudge();

@@ -16,7 +16,11 @@ import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/app/router.dart';
+import 'package:naviwealth/app/shell_chrome.dart';
+import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance_domain_shell.dart';
@@ -25,6 +29,8 @@ import 'package:naviwealth/features/health/ui/health_today_page.dart';
 import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../core/persistence/test_database.dart';
 
 const Size _mobileSize = Size(400, 800);
 const Size _desktopSize = Size(1440, 900);
@@ -41,8 +47,14 @@ Future<ProviderContainer> _pumpAt(
 
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
+  final db = makeTestDatabase();
+  addTearDown(db.close);
+  await DomainOptInStore(
+    db,
+  ).write(DomainOptIns(<DomainScope>{for (final d in domains) d.scope}));
   final container = ProviderContainer(
     overrides: [
+      appDatabaseProvider.overrideWith((_) async => db),
       sharedPreferencesProvider.overrideWithValue(prefs),
       // Register the production pack inventory so the router has routes
       // to mount under the dock shell. Tests still control dock UI by
@@ -67,6 +79,7 @@ Future<ProviderContainer> _pumpAt(
   );
   await tester.pump(const Duration(milliseconds: 100));
   await tester.pump(const Duration(milliseconds: 100));
+  await tester.pump(const Duration(milliseconds: 350));
   return container;
 }
 
@@ -107,14 +120,14 @@ void main() {
       final l10n = lookupAppLocalizations(const Locale('en'));
       await _pumpAt(
         tester,
+        initialLocation: AppRoutes.activity,
         domains: <DomainShellSpec>[
           financeDomainShell(l10n),
           healthDomainShell(l10n),
         ],
       );
-      expect(find.text('FinanceOS'), findsOneWidget);
+      expect(find.byType(DomainSwitcherChip), findsOneWidget);
       expect(find.text('HealthOS'), findsNothing);
-      expect(find.byType(HomePage), findsOneWidget);
     });
 
     testWidgets('desktop renders left dock icons + Finance tabs', (
@@ -152,7 +165,7 @@ void main() {
         expect(find.byType(HealthTodayPage), findsOneWidget);
         expect(find.text(l10n.healthTodayTitle), findsOneWidget);
         expect(find.text('FinanceOS'), findsNothing);
-        expect(find.text('HealthOS'), findsOneWidget);
+        expect(find.byType(DomainSwitcherChip), findsOneWidget);
       },
     );
 
@@ -162,18 +175,19 @@ void main() {
       final l10n = lookupAppLocalizations(const Locale('en'));
       final container = await _pumpAt(
         tester,
+        initialLocation: AppRoutes.activity,
         domains: <DomainShellSpec>[
           financeDomainShell(l10n),
           healthDomainShell(l10n),
         ],
       );
-      await tester.tap(find.text('FinanceOS'));
+      await tester.tap(find.byType(DomainSwitcherChip));
       // Drive the sheet animation manually; pumpAndSettle never
       // settles because the home dashboard owns a periodic ticker.
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       // Sheet exposes both domain labels.
-      expect(find.text('FinanceOS'), findsNWidgets(2));
+      expect(find.text('FinanceOS'), findsOneWidget);
       expect(find.text('HealthOS'), findsOneWidget);
 
       // Tapping HealthOS in the sheet navigates to /health.
