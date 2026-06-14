@@ -245,10 +245,10 @@ class _Connected extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.s8),
-            FButton(
-              variant: FButtonVariant.outline,
+            AppQuietButton(
+              label: l10n.healthGarminDisconnect,
               onPress: () => _showDisconnectDialog(context, ref),
-              child: Text(l10n.healthGarminDisconnect),
+              tone: AppQuietButtonTone.danger,
             ),
           ],
         ),
@@ -353,12 +353,12 @@ class _Syncing extends ConsumerWidget {
         const SizedBox(height: AppSpacing.s8),
         SizedBox(
           width: double.infinity,
-          child: FButton(
-            variant: FButtonVariant.outline,
+          child: AppQuietButton(
+            label: l10n.healthGarminCancelSync,
             onPress: () => ref
                 .read(health_data.garminSyncControllerProvider.notifier)
                 .cancelSync(),
-            child: Text(l10n.healthGarminCancelSync),
+            expanded: true,
           ),
         ),
       ],
@@ -397,8 +397,10 @@ class _Error extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: AppSpacing.s8),
-        FButton(
-          variant: FButtonVariant.outline,
+        AppQuietButton(
+          label: issue.requiresReconnect
+              ? l10n.healthGarminConnect
+              : l10n.healthGarminRetry,
           onPress: () {
             if (issue.requiresReconnect) {
               showGarminAccountBindSheet(context: context);
@@ -408,11 +410,6 @@ class _Error extends StatelessWidget {
                 .read(health_data.garminSyncControllerProvider.notifier)
                 .syncNow();
           },
-          child: Text(
-            issue.requiresReconnect
-                ? l10n.healthGarminConnect
-                : l10n.healthGarminRetry,
-          ),
         ),
       ],
     );

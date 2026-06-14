@@ -13,7 +13,6 @@
 library;
 
 import 'dart:convert' show jsonDecode;
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -151,8 +150,8 @@ class _HealthDataStatusNoticeState
         : result.errorMessage ?? l10n.healthSyncFailed;
     final action = !enabled
         ? null
-        : FButton(
-            variant: FButtonVariant.outline,
+        : AppQuietButton(
+            label: _running ? l10n.healthSyncingButton : l10n.healthSyncButton,
             onPress: _running ? null : _sync,
             prefix: _running
                 ? const SizedBox(
@@ -161,9 +160,6 @@ class _HealthDataStatusNoticeState
                     child: FCircularProgress(),
                   )
                 : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-            child: Text(
-              _running ? l10n.healthSyncingButton : l10n.healthSyncButton,
-            ),
           );
 
     return AppStatusBanner(
@@ -431,50 +427,44 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= Breakpoints.contentThreeColumn
+        final maxWidth = constraints.maxWidth;
+        final columns = maxWidth >= Breakpoints.contentThreeColumn
             ? 3
+            : maxWidth < 360
+            ? 1
             : 2;
         const gap = AppSpacing.s8;
-        final rows = <Widget>[];
-        for (var i = 0; i < visibleCards.length; i += columns) {
-          final end = math.min(i + columns, visibleCards.length);
-          rows.add(
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        final computedCardWidth = maxWidth.isFinite
+            ? (maxWidth - gap * (columns - 1)) / columns
+            : 220.0;
+        final cardWidth = computedCardWidth < 0 ? 0.0 : computedCardWidth;
+        return Column(
+          children: [
+            Wrap(
+              spacing: gap,
+              runSpacing: gap,
               children: [
-                for (var j = i; j < end; j++) ...[
-                  if (j > i) const SizedBox(width: gap),
-                  Expanded(child: visibleCards[j]),
-                ],
-                for (var j = end; j < i + columns; j++) ...[
-                  const SizedBox(width: gap),
-                  const Spacer(),
-                ],
+                for (final card in visibleCards)
+                  SizedBox(width: cardWidth, child: card),
               ],
             ),
-          );
-          if (end < visibleCards.length) rows.add(const SizedBox(height: gap));
-        }
-        rows.add(const SizedBox(height: AppSpacing.s8));
-        rows.add(
-          SizedBox(
-            width: double.infinity,
-            child: FButton(
-              variant: FButtonVariant.outline,
-              onPress: () => setState(() => _expanded = !_expanded),
-              prefix: Icon(
-                _expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
-                size: AppIconSizes.sm,
-              ),
-              child: Text(
-                _expanded
+            const SizedBox(height: AppSpacing.s8),
+            SizedBox(
+              width: double.infinity,
+              child: AppQuietButton(
+                label: _expanded
                     ? l10n.healthShowKeyMetrics
                     : l10n.healthShowAllMetrics,
+                onPress: () => setState(() => _expanded = !_expanded),
+                expanded: true,
+                prefix: Icon(
+                  _expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+                  size: AppIconSizes.sm,
+                ),
               ),
             ),
-          ),
+          ],
         );
-        return Column(children: rows);
       },
     );
   }
@@ -1069,10 +1059,19 @@ class _MetricCardHeader extends StatelessWidget {
     final colors = context.theme.colors;
     return Row(
       children: [
-        Icon(
-          icon,
-          size: AppIconSizes.md,
-          color: color.withValues(alpha: AppOpacity.prominent),
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: AppOpacity.subtle),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          alignment: Alignment.center,
+          child: Icon(
+            icon,
+            size: AppIconSizes.sm,
+            color: color.withValues(alpha: AppOpacity.prominent),
+          ),
         ),
         const SizedBox(width: AppSpacing.s8),
         Expanded(
@@ -1509,8 +1508,10 @@ class _BriefingCard extends StatelessWidget {
               ],
               Flexible(
                 fit: FlexFit.loose,
-                child: FButton(
-                  variant: FButtonVariant.outline,
+                child: AppQuietButton(
+                  label: running
+                      ? l10n.healthBriefingGenerating
+                      : l10n.healthBriefingUpdate,
                   onPress: running ? null : onRun,
                   prefix: running
                       ? const SizedBox(
@@ -1522,13 +1523,6 @@ class _BriefingCard extends StatelessWidget {
                           FLucideIcons.refreshCw,
                           size: AppIconSizes.xs,
                         ),
-                  child: Text(
-                    running
-                        ? l10n.healthBriefingGenerating
-                        : l10n.healthBriefingUpdate,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                 ),
               ),
             ],
@@ -1590,8 +1584,10 @@ class _BriefingEmpty extends StatelessWidget {
           const SizedBox(width: AppSpacing.s8),
           Flexible(
             fit: FlexFit.loose,
-            child: FButton(
-              variant: FButtonVariant.outline,
+            child: AppQuietButton(
+              label: running
+                  ? l10n.healthBriefingGenerating
+                  : l10n.healthBriefingGenerate,
               onPress: running ? null : onRun,
               prefix: running
                   ? const SizedBox(
@@ -1600,13 +1596,6 @@ class _BriefingEmpty extends StatelessWidget {
                       child: FCircularProgress(),
                     )
                   : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-              child: Text(
-                running
-                    ? l10n.healthBriefingGenerating
-                    : l10n.healthBriefingGenerate,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
             ),
           ),
         ],
