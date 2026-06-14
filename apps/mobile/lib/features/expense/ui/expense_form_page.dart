@@ -503,8 +503,7 @@ class _NoAccountsHint extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s10),
                 FButton(
                   variant: FButtonVariant.outline,
-                  onPress: () =>
-                      GoRouter.of(context).go(AppRoutes.wealthAccountNew),
+                  onPress: () => context.push(AppRoutes.wealthAccountNew),
                   child: Text(l10n.expenseFormNoAccountsCta),
                 ),
               ],

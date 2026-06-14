@@ -6117,6 +6117,24 @@ abstract class AppLocalizations {
   /// **'Custom target weights'**
   String get settingsRiskAppetiteCustomBadge;
 
+  /// Title for the confirmation dialog shown before applying a risk-appetite preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply risk posture?'**
+  String get settingsRiskAppetiteConfirmTitle;
+
+  /// Body for the confirmation dialog shown before applying a risk-appetite preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to {appetite}? This also retunes target allocation and concentration alerts while they are on automatic presets.'**
+  String settingsRiskAppetiteConfirmBody(String appetite);
+
+  /// Confirm action for applying a risk-appetite preset.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get settingsRiskAppetiteConfirmAction;
+
   /// Inline link row in Settings — opens the per-category target weight editor.
   ///
   /// In en, this message translates to:
@@ -8810,6 +8828,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Always on'**
   String get settingsDomainsFinanceAlwaysOnBadge;
+
+  /// Toast shown after disabling an optional LifeOS domain from domain settings.
+  ///
+  /// In en, this message translates to:
+  /// **'{domain} disabled. You can re-enable it here at any time.'**
+  String settingsDomainsDisabledToast(String domain);
 
   /// Settings section header for diagnostics, version, logs, and performance tools
   ///

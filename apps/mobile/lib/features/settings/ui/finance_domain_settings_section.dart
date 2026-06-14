@@ -188,7 +188,7 @@ class _RiskAppetiteRow extends ConsumerWidget {
                 _SettingsChoicePill(
                   label: option.label,
                   selected: appetite == option.value,
-                  onTap: () => _onPick(ref, option.value),
+                  onTap: () => _onPick(context, ref, option.value),
                 ),
             ],
           ),
@@ -197,9 +197,27 @@ class _RiskAppetiteRow extends ConsumerWidget {
     );
   }
 
-  Future<void> _onPick(WidgetRef ref, RiskAppetite next) async {
+  Future<void> _onPick(
+    BuildContext context,
+    WidgetRef ref,
+    RiskAppetite next,
+  ) async {
     final current = ref.read(riskAppetiteProvider);
     if (current == next) return;
+    if (next != RiskAppetite.custom) {
+      final l10n = AppLocalizations.of(context);
+      final confirmed = await showConfirmDialog(
+        context: context,
+        title: Text(l10n.settingsRiskAppetiteConfirmTitle),
+        body: Text(
+          l10n.settingsRiskAppetiteConfirmBody(_appetiteLabel(l10n, next)),
+        ),
+        cancelLabel: l10n.commonCancel,
+        confirmLabel: l10n.settingsRiskAppetiteConfirmAction,
+        icon: FLucideIcons.slidersHorizontal,
+      );
+      if (confirmed != true || !context.mounted) return;
+    }
     final priorThresholds = ref.read(concentrationThresholdsProvider);
     await ref.read(riskAppetiteProvider.notifier).set(next);
     if (next != RiskAppetite.custom) {
@@ -213,6 +231,15 @@ class _RiskAppetiteRow extends ConsumerWidget {
           .applyAll(concentrationThresholdsForAppetite(next));
     }
   }
+}
+
+String _appetiteLabel(AppLocalizations l10n, RiskAppetite appetite) {
+  return switch (appetite) {
+    RiskAppetite.conservative => l10n.settingsRiskAppetiteConservative,
+    RiskAppetite.moderate => l10n.settingsRiskAppetiteModerate,
+    RiskAppetite.aggressive => l10n.settingsRiskAppetiteAggressive,
+    RiskAppetite.custom => l10n.settingsRiskAppetiteCustom,
+  };
 }
 
 class _SettingsChoicePill extends StatelessWidget {

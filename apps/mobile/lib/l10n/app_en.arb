@@ -1942,6 +1942,15 @@
   "settingsRiskAppetiteCustom": "Custom",
   "settingsRiskAppetiteCustomBadge": "Custom target weights",
   "@settingsRiskAppetiteCustomBadge": { "description": "Subtitle shown under the appetite chip row when the user is on the Custom track (they've hand-edited target weights)." },
+  "settingsRiskAppetiteConfirmTitle": "Apply risk posture?",
+  "@settingsRiskAppetiteConfirmTitle": { "description": "Title for the confirmation dialog shown before applying a risk-appetite preset." },
+  "settingsRiskAppetiteConfirmBody": "Switch to {appetite}? This also retunes target allocation and concentration alerts while they are on automatic presets.",
+  "@settingsRiskAppetiteConfirmBody": {
+    "description": "Body for the confirmation dialog shown before applying a risk-appetite preset.",
+    "placeholders": { "appetite": { "type": "String", "example": "Balanced" } }
+  },
+  "settingsRiskAppetiteConfirmAction": "Apply",
+  "@settingsRiskAppetiteConfirmAction": { "description": "Confirm action for applying a risk-appetite preset." },
   "settingsTargetAllocationLabel": "Target allocation",
   "@settingsTargetAllocationLabel": { "description": "Inline link row in Settings — opens the per-category target weight editor." },
   "settingsTargetAllocationSubtitlePreset": "{preset} preset",
@@ -2718,6 +2727,11 @@
   "@settingsDomainsFinanceSubtitle": { "description": "Subtitle for the always-on FinanceOS card in domain settings" },
   "settingsDomainsFinanceAlwaysOnBadge": "Always on",
   "@settingsDomainsFinanceAlwaysOnBadge": { "description": "Badge for the always-on FinanceOS domain" },
+  "settingsDomainsDisabledToast": "{domain} disabled. You can re-enable it here at any time.",
+  "@settingsDomainsDisabledToast": {
+    "description": "Toast shown after disabling an optional LifeOS domain from domain settings.",
+    "placeholders": { "domain": { "type": "String", "example": "HealthOS" } }
+  },
   "settingsAdvancedSection": "Diagnostics",
   "@settingsAdvancedSection": { "description": "Settings section header for diagnostics, version, logs, and performance tools" },
   "settingsAiModelsTitle": "AI Models",

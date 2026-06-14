@@ -26,6 +26,7 @@ import '../core/ai/runtime/device/tools/device_tool_registry.dart'
 import '../core/command_palette/command_palette_entry.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/shell/domain_shell.dart';
+import '../design_system/preferences/theme_preferences.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'domain_packs.dart';
 
@@ -62,15 +63,23 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
       (ref) => domainAgents(ref, ref.watch(activeDomainPacksProvider)),
     ),
     activeDomainShellsProvider.overrideWith((ref) {
-      // The spec depends on AppLocalizations for labels, which is resolved
-      // per-render inside the shell. Bootstrap builds with the default
-      // locale here; the widget tree reapplies the active locale via
-      // Riverpod invalidation.
-      final l10n = lookupAppLocalizations(const Locale('en'));
+      final l10n = lookupAppLocalizations(
+        _resolvedShellLocale(ref.watch(localeProvider)),
+      );
       return domainShellSpecs(ref.watch(activeDomainPacksProvider), l10n);
     }),
     ...domainProviderOverrides(resolvedPacks),
   ];
+}
+
+Locale _resolvedShellLocale(Locale? preferred) {
+  final locale = preferred ?? WidgetsBinding.instance.platformDispatcher.locale;
+  for (final supported in AppLocalizations.supportedLocales) {
+    if (supported.languageCode == locale.languageCode) {
+      return supported;
+    }
+  }
+  return const Locale('en');
 }
 
 List<DeviceTool> domainDeviceTools(List<DomainPack> packs) {

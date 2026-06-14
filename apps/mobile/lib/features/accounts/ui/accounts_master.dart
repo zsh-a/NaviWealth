@@ -48,7 +48,8 @@ class AccountsMaster extends ConsumerWidget {
                 selectedId: selectedId,
                 inMasterDetail: inMasterDetail,
               );
-      },      error: (_, _) => Center(
+      },
+      error: (_, _) => Center(
         child: AppEmptyState.error(
           title: l10n.commonLoadFailed,
           action: FButton(
@@ -137,7 +138,7 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
             child: const Icon(FLucideIcons.creditCard),
           ),
           semanticsLabel: l10n.accountsCreateAction,
-          onPress: () => context.go(AppRoutes.wealthAccountNew),
+          onPress: () => context.push(AppRoutes.wealthAccountNew),
         ),
         FHeaderAction(
           icon: FTooltip(
@@ -145,7 +146,7 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
             child: const Icon(FLucideIcons.history),
           ),
           semanticsLabel: l10n.accountsJournalAction,
-          onPress: () => context.go(AppRoutes.journalEntries),
+          onPress: () => context.push(AppRoutes.journalEntries),
         ),
         FHeaderAction(
           icon: FTooltip(
@@ -153,7 +154,7 @@ class _StandaloneAccountsScaffold extends StatelessWidget {
             child: const Icon(FLucideIcons.arrowLeftRight),
           ),
           semanticsLabel: l10n.accountsTransferAction,
-          onPress: () => context.go(AppRoutes.transfer),
+          onPress: () => context.push(AppRoutes.transfer),
         ),
       ],
       childPad: false,
@@ -173,7 +174,7 @@ class _EmptyAccounts extends StatelessWidget {
       title: l10n.accountsEmptyHint,
       action: FButton(
         variant: FButtonVariant.primary,
-        onPress: () => context.go(AppRoutes.wealthAccountNew),
+        onPress: () => context.push(AppRoutes.wealthAccountNew),
         prefix: const Icon(FLucideIcons.creditCard),
         child: Text(l10n.accountFormCreateTitle),
       ),
@@ -226,7 +227,7 @@ class _AccountsByType extends StatelessWidget {
         selected: account.id,
       );
     } else {
-      context.go(AppRoutes.wealthAccount(account.id));
+      context.push(AppRoutes.wealthAccount(account.id));
     }
   }
 }

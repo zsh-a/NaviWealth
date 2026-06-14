@@ -53,9 +53,8 @@ class DomainsSettingsPage extends ConsumerWidget {
                       ? l10n.settingsDomainsHealthEnabledSubtitle
                       : l10n.settingsDomainsHealthDisabledSubtitle,
                   value: healthEnabled,
-                  onChanged: (v) => ref
-                      .read(auth_providers.domainOptInsProvider.notifier)
-                      .setEnabled(DomainScope.health, v),
+                  onChanged: (v) =>
+                      _setDomainEnabled(context, ref, DomainScope.health, v),
                 ),
                 if (healthEnabled) ...[
                   const AppDivider(),
@@ -86,9 +85,8 @@ class DomainsSettingsPage extends ConsumerWidget {
                       ? l10n.settingsDomainsKnowledgeEnabledSubtitle
                       : l10n.settingsDomainsKnowledgeDisabledSubtitle,
                   value: knowledgeEnabled,
-                  onChanged: (v) => ref
-                      .read(auth_providers.domainOptInsProvider.notifier)
-                      .setEnabled(DomainScope.knowledge, v),
+                  onChanged: (v) =>
+                      _setDomainEnabled(context, ref, DomainScope.knowledge, v),
                 ),
                 if (knowledgeEnabled) ...[
                   const AppDivider(),
@@ -105,6 +103,33 @@ class DomainsSettingsPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _setDomainEnabled(
+    BuildContext context,
+    WidgetRef ref,
+    DomainScope scope,
+    bool enabled,
+  ) async {
+    await ref
+        .read(auth_providers.domainOptInsProvider.notifier)
+        .setEnabled(scope, enabled);
+    if (!context.mounted || enabled) return;
+    final l10n = AppLocalizations.of(context);
+    context.go(AppRoutes.settingsDomains);
+    AppMessenger.show(
+      context,
+      ToastKind.info,
+      l10n.settingsDomainsDisabledToast(_domainLabel(scope)),
+    );
+  }
+
+  String _domainLabel(DomainScope scope) {
+    return switch (scope) {
+      DomainScope.finance => 'FinanceOS',
+      DomainScope.health => 'HealthOS',
+      DomainScope.knowledge => 'KnowledgeOS',
+    };
   }
 }
 

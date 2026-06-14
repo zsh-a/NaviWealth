@@ -3385,6 +3385,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsRiskAppetiteCustomBadge => '已自定义目标配置';
 
   @override
+  String get settingsRiskAppetiteConfirmTitle => '应用风险偏好？';
+
+  @override
+  String settingsRiskAppetiteConfirmBody(String appetite) {
+    return '切换为「$appetite」？这会在资产配置和集中度警报仍为自动预设时同步调整它们。';
+  }
+
+  @override
+  String get settingsRiskAppetiteConfirmAction => '应用';
+
+  @override
   String get settingsTargetAllocationLabel => '目标资产配置';
 
   @override
@@ -4902,6 +4913,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsDomainsFinanceAlwaysOnBadge => '常开';
+
+  @override
+  String settingsDomainsDisabledToast(String domain) {
+    return '$domain 已关闭。你可以随时在这里重新启用。';
+  }
 
   @override
   String get settingsAdvancedSection => '诊断';

@@ -296,7 +296,6 @@ class PlanScenariosPlaceholderPage extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return AppPageScaffold(
       title: l10n.planScenariosSectionTitle,
-      showBack: false,
       childPad: false,
       child: Center(
         child: AppEmptyState(
@@ -317,7 +316,6 @@ class PlanGoalsPlaceholderPage extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return AppPageScaffold(
       title: l10n.planGoalsSectionTitle,
-      showBack: false,
       childPad: false,
       child: Center(
         child: AppEmptyState(

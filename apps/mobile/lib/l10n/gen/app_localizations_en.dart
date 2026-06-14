@@ -3533,6 +3533,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsRiskAppetiteCustomBadge => 'Custom target weights';
 
   @override
+  String get settingsRiskAppetiteConfirmTitle => 'Apply risk posture?';
+
+  @override
+  String settingsRiskAppetiteConfirmBody(String appetite) {
+    return 'Switch to $appetite? This also retunes target allocation and concentration alerts while they are on automatic presets.';
+  }
+
+  @override
+  String get settingsRiskAppetiteConfirmAction => 'Apply';
+
+  @override
   String get settingsTargetAllocationLabel => 'Target allocation';
 
   @override
@@ -5090,6 +5101,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDomainsFinanceAlwaysOnBadge => 'Always on';
+
+  @override
+  String settingsDomainsDisabledToast(String domain) {
+    return '$domain disabled. You can re-enable it here at any time.';
+  }
 
   @override
   String get settingsAdvancedSection => 'Diagnostics';

@@ -297,7 +297,6 @@ class WealthIncomeProjectionPlaceholderPage extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return AppPageScaffold(
       title: l10n.wealthIncomeProjectionTitle,
-      showBack: false,
       childPad: false,
       child: Center(
         child: AppEmptyState(
