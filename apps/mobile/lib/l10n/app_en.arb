@@ -4834,5 +4834,11 @@
   "@healthGarminLastSync": { "description": "Garmin connected status line", "placeholders": { "time": { "type": "String" }, "count": { "type": "String" } } },
   "healthGarminSyncProgress": "Day {current}/{total} · {count} metrics",
   "@healthGarminSyncProgress": { "description": "Garmin sync progress indicator", "placeholders": { "current": { "type": "String" }, "total": { "type": "String" }, "count": { "type": "String" } } },
-  "healthGarminCancelSync": "Cancel Sync"
+  "healthGarminCancelSync": "Cancel Sync",
+  "healthGarminErrorAuthExpired": "Garmin session expired. Please reconnect your account.",
+  "healthGarminErrorRateLimited": "Garmin is limiting requests temporarily. Try again later.",
+  "healthGarminErrorEndpointUnavailable": "Some Garmin data endpoints are unavailable for this account or region.",
+  "healthGarminErrorPersistFailed": "Garmin data was fetched but could not be saved locally. Try syncing again.",
+  "healthGarminErrorUnsupportedSnapshot": "Garmin returned data in a shape HealthOS does not support yet.",
+  "healthGarminErrorGeneric": "Garmin sync failed. Try again."
 }

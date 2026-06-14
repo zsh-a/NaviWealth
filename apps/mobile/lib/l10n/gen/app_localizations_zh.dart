@@ -8834,4 +8834,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthGarminCancelSync => '取消同步';
+
+  @override
+  String get healthGarminErrorAuthExpired => 'Garmin 会话已过期，请重新连接账号。';
+
+  @override
+  String get healthGarminErrorRateLimited => 'Garmin 暂时限制了请求，请稍后再试。';
+
+  @override
+  String get healthGarminErrorEndpointUnavailable =>
+      '当前账号或地区暂不支持部分 Garmin 数据接口。';
+
+  @override
+  String get healthGarminErrorPersistFailed => 'Garmin 数据已获取，但未能保存到本地，请重新同步。';
+
+  @override
+  String get healthGarminErrorUnsupportedSnapshot =>
+      'Garmin 返回了 HealthOS 暂未支持的数据结构。';
+
+  @override
+  String get healthGarminErrorGeneric => 'Garmin 同步失败，请重试。';
 }

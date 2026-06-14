@@ -15929,6 +15929,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel Sync'**
   String get healthGarminCancelSync;
+
+  /// No description provided for @healthGarminErrorAuthExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Garmin session expired. Please reconnect your account.'**
+  String get healthGarminErrorAuthExpired;
+
+  /// No description provided for @healthGarminErrorRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Garmin is limiting requests temporarily. Try again later.'**
+  String get healthGarminErrorRateLimited;
+
+  /// No description provided for @healthGarminErrorEndpointUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Some Garmin data endpoints are unavailable for this account or region.'**
+  String get healthGarminErrorEndpointUnavailable;
+
+  /// No description provided for @healthGarminErrorPersistFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Garmin data was fetched but could not be saved locally. Try syncing again.'**
+  String get healthGarminErrorPersistFailed;
+
+  /// No description provided for @healthGarminErrorUnsupportedSnapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Garmin returned data in a shape HealthOS does not support yet.'**
+  String get healthGarminErrorUnsupportedSnapshot;
+
+  /// No description provided for @healthGarminErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Garmin sync failed. Try again.'**
+  String get healthGarminErrorGeneric;
 }
 
 class _AppLocalizationsDelegate

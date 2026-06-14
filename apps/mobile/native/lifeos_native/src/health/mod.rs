@@ -234,7 +234,15 @@ pub async fn garmin_sync_range_stream(
                 current: 0,
                 total: total_days as i32,
                 metrics_count: 0,
-                errors: vec![e.to_string()],
+                errors: vec![garmin_sync_issue(
+                    "sync_failed",
+                    "error",
+                    None,
+                    "Garmin sync failed",
+                    Some(e.to_string()),
+                    true,
+                    "retry",
+                )],
                 snapshot_json: None,
             });
         }
@@ -756,9 +764,6 @@ async fn run_streaming_sync(
                     // recovery metrics we did fetch.
                     eprintln!("[HealthOS][Garmin] activities failed: {e}");
                     record_endpoint_error(&mut errors, "activities", &e);
-                    if !is_optional_activity_error(&e) {
-                        errors.push(format!("activities fetch failed: {e}"));
-                    }
                     break;
                 }
             }
@@ -874,26 +879,104 @@ async fn run_streaming_sync(
     Ok((metrics_count, errors, snapshot_json))
 }
 
-fn is_optional_activity_error(error: &anyhow::Error) -> bool {
-    let msg = error.to_string().to_lowercase();
-    msg.contains("404 not found") || msg.contains("garmin api error: 404")
-}
-
 fn record_endpoint_error(errors: &mut Vec<String>, endpoint: &str, error: &anyhow::Error) {
-    if !is_auth_error(error) {
-        return;
-    }
-    let msg = format!(
-        "Garmin auth failed while fetching {endpoint}: token expired or unauthorized; reconnect Garmin"
+    let endpoint_key = endpoint
+        .split_whitespace()
+        .next()
+        .filter(|value| !value.is_empty())
+        .unwrap_or(endpoint);
+    let detail = error.to_string();
+    let (code, severity, message, retryable, action) = if is_auth_error(error) {
+        (
+            "auth_expired",
+            "error",
+            "Garmin session expired",
+            false,
+            "reconnect",
+        )
+    } else if is_not_found_error(error) {
+        (
+            "endpoint_unavailable",
+            "warning",
+            "Garmin endpoint is unavailable for this account or region",
+            true,
+            "none",
+        )
+    } else if detail.to_lowercase().contains("429") {
+        (
+            "rate_limited",
+            "warning",
+            "Garmin temporarily limited requests",
+            true,
+            "retry_later",
+        )
+    } else {
+        (
+            "endpoint_failed",
+            "warning",
+            "Garmin endpoint request failed",
+            true,
+            "retry",
+        )
+    };
+    push_sync_issue(
+        errors,
+        garmin_sync_issue(
+            code,
+            severity,
+            Some(endpoint_key),
+            message,
+            Some(detail),
+            retryable,
+            action,
+        ),
+        code,
+        endpoint_key,
     );
-    if !errors.iter().any(|existing| existing == &msg) {
-        errors.push(msg);
-    }
 }
 
 fn is_auth_error(error: &anyhow::Error) -> bool {
     let msg = error.to_string().to_lowercase();
     msg.contains("401 unauthorized") || msg.contains("token may be expired")
+}
+
+fn is_not_found_error(error: &anyhow::Error) -> bool {
+    let msg = error.to_string().to_lowercase();
+    msg.contains("404 not found") || msg.contains("garmin api error: 404")
+}
+
+fn garmin_sync_issue(
+    code: &str,
+    severity: &str,
+    endpoint: Option<&str>,
+    message: &str,
+    detail: Option<String>,
+    retryable: bool,
+    action: &str,
+) -> String {
+    serde_json::json!({
+        "source": "healthos.garmin",
+        "code": code,
+        "severity": severity,
+        "endpoint": endpoint,
+        "message": message,
+        "detail": detail,
+        "retryable": retryable,
+        "action": action,
+    })
+    .to_string()
+}
+
+fn push_sync_issue(errors: &mut Vec<String>, issue: String, code: &str, endpoint: &str) {
+    let code_marker = format!(r#""code":"{code}""#);
+    let endpoint_marker = format!(r#""endpoint":"{endpoint}""#);
+    if errors
+        .iter()
+        .any(|existing| existing.contains(&code_marker) && existing.contains(&endpoint_marker))
+    {
+        return;
+    }
+    errors.push(issue);
 }
 
 /// Get sync cursors as JSON.

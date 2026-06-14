@@ -9209,4 +9209,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthGarminCancelSync => 'Cancel Sync';
+
+  @override
+  String get healthGarminErrorAuthExpired =>
+      'Garmin session expired. Please reconnect your account.';
+
+  @override
+  String get healthGarminErrorRateLimited =>
+      'Garmin is limiting requests temporarily. Try again later.';
+
+  @override
+  String get healthGarminErrorEndpointUnavailable =>
+      'Some Garmin data endpoints are unavailable for this account or region.';
+
+  @override
+  String get healthGarminErrorPersistFailed =>
+      'Garmin data was fetched but could not be saved locally. Try syncing again.';
+
+  @override
+  String get healthGarminErrorUnsupportedSnapshot =>
+      'Garmin returned data in a shape HealthOS does not support yet.';
+
+  @override
+  String get healthGarminErrorGeneric => 'Garmin sync failed. Try again.';
 }

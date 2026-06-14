@@ -13,6 +13,7 @@ import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/garmin/garmin_sync_controller.dart';
+import '../data/garmin/garmin_sync_issue.dart';
 import '../data/providers.dart' as health_data;
 import 'garmin_account_bind_sheet.dart';
 
@@ -35,7 +36,7 @@ class GarminSyncStatusCard extends ConsumerWidget {
           totalMetrics: totalMetrics,
         ),
         GarminSyncing() => const _Syncing(),
-        GarminError(:final message) => _Error(ref: ref, message: message),
+        GarminError(:final issue) => _Error(ref: ref, issue: issue),
       },
     );
   }
@@ -357,9 +358,9 @@ class _Syncing extends ConsumerWidget {
 }
 
 class _Error extends StatelessWidget {
-  const _Error({required this.ref, required this.message});
+  const _Error({required this.ref, required this.issue});
   final WidgetRef ref;
-  final String message;
+  final GarminSyncIssue issue;
 
   @override
   Widget build(BuildContext context) {
@@ -381,18 +382,28 @@ class _Error extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.s4),
         Text(
-          message,
+          _issueMessage(l10n, issue),
           style: typography.xs.copyWith(color: colors.mutedForeground),
-          maxLines: 2,
+          maxLines: 3,
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: AppSpacing.s8),
         FButton(
           variant: FButtonVariant.outline,
-          onPress: () => ref
-              .read(health_data.garminSyncControllerProvider.notifier)
-              .syncNow(),
-          child: Text(l10n.healthGarminRetry),
+          onPress: () {
+            if (issue.requiresReconnect) {
+              showGarminAccountBindSheet(context: context);
+              return;
+            }
+            ref
+                .read(health_data.garminSyncControllerProvider.notifier)
+                .syncNow();
+          },
+          child: Text(
+            issue.requiresReconnect
+                ? l10n.healthGarminConnect
+                : l10n.healthGarminRetry,
+          ),
         ),
       ],
     );
@@ -417,3 +428,22 @@ String _formatRelative(AppLocalizations l10n, DateTime dt) =>
         return '$mm-$dd';
       },
     );
+
+String _issueMessage(AppLocalizations l10n, GarminSyncIssue issue) {
+  switch (issue.code) {
+    case 'auth_expired':
+      return l10n.healthGarminErrorAuthExpired;
+    case 'rate_limited':
+      return l10n.healthGarminErrorRateLimited;
+    case 'endpoint_unavailable':
+      return l10n.healthGarminErrorEndpointUnavailable;
+    case 'snapshot_missing':
+    case 'snapshot_not_persisted':
+    case 'persist_failed':
+      return l10n.healthGarminErrorPersistFailed;
+    case 'snapshot_unsupported':
+      return l10n.healthGarminErrorUnsupportedSnapshot;
+    default:
+      return l10n.healthGarminErrorGeneric;
+  }
+}

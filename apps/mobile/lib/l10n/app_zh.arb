@@ -2759,5 +2759,11 @@
   "healthGarminCancel": "取消",
   "healthGarminLastSync": "上次同步 {time} · {count} 条数据",
   "healthGarminSyncProgress": "第 {current}/{total} 天 · {count} 条数据",
-  "healthGarminCancelSync": "取消同步"
+  "healthGarminCancelSync": "取消同步",
+  "healthGarminErrorAuthExpired": "Garmin 会话已过期，请重新连接账号。",
+  "healthGarminErrorRateLimited": "Garmin 暂时限制了请求，请稍后再试。",
+  "healthGarminErrorEndpointUnavailable": "当前账号或地区暂不支持部分 Garmin 数据接口。",
+  "healthGarminErrorPersistFailed": "Garmin 数据已获取，但未能保存到本地，请重新同步。",
+  "healthGarminErrorUnsupportedSnapshot": "Garmin 返回了 HealthOS 暂未支持的数据结构。",
+  "healthGarminErrorGeneric": "Garmin 同步失败，请重试。"
 }
