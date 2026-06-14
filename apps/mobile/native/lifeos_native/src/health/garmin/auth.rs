@@ -17,15 +17,11 @@ pub enum GarminAuthState {
         session_ticket: String,
     },
     /// Authenticated and token is valid.
-    Authenticated {
-        expires_at: DateTime<Utc>,
-    },
+    Authenticated { expires_at: DateTime<Utc> },
     /// Token expired, refresh in progress.
     Refreshing,
     /// Terminal error (wrong credentials, account locked, etc.).
-    Error {
-        message: String,
-    },
+    Error { message: String },
 }
 
 /// Result of an authentication attempt.

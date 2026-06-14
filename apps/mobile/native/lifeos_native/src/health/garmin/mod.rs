@@ -13,7 +13,9 @@ pub mod token_store;
 use anyhow::Result;
 use chrono::NaiveDate;
 
-use super::provider::{ActivityRecord, DailyMetric, HealthProvider, HealthSnapshot};
+use super::provider::{
+    ActivityRecord, BodyBatteryDay, DailyMetric, HealthProvider, HealthSnapshot,
+};
 use client::GarminClient;
 use mapper as m;
 
@@ -70,32 +72,43 @@ impl HealthProvider for GarminProvider {
         let token = self.client.access_token().await?;
         let cn = self.is_cn;
         let days = (to - from).num_days() + 1;
+        let display_name = endpoints::fetch_social_profile(http, rl, &token, cn)
+            .await?
+            .get("displayName")
+            .and_then(|v| v.as_str())
+            .filter(|v| !v.is_empty())
+            .map(|v| v.to_string())
+            .ok_or_else(|| anyhow::anyhow!("Garmin profile missing displayName"))?;
 
-        let mut steps = Vec::new();
+        let mut steps: Vec<DailyMetric> = Vec::new();
         let mut sleep_sessions = Vec::new();
         let mut rhr: Vec<DailyMetric> = Vec::new();
-        let mut hrv = Vec::new();
-        let mut heart_rate = Vec::new();
-        let mut body_battery = Vec::new();
+        let mut hrv: Vec<DailyMetric> = Vec::new();
+        let mut heart_rate: Vec<DailyMetric> = Vec::new();
+        let mut body_battery: Vec<BodyBatteryDay> = Vec::new();
         let mut stress: Vec<DailyMetric> = Vec::new();
         let mut weight = Vec::new();
-        let mut active_energy = Vec::new();
-        let mut distance = Vec::new();
-        let mut total_energy = Vec::new();
-        let mut floors = Vec::new();
-        let mut respiration = Vec::new();
-        let mut spo2 = Vec::new();
+        let mut active_energy: Vec<DailyMetric> = Vec::new();
+        let mut distance: Vec<DailyMetric> = Vec::new();
+        let mut total_energy: Vec<DailyMetric> = Vec::new();
+        let mut floors: Vec<DailyMetric> = Vec::new();
+        let mut respiration: Vec<DailyMetric> = Vec::new();
+        let mut spo2: Vec<DailyMetric> = Vec::new();
 
         for i in 0..days {
             let date = from + chrono::Duration::days(i);
 
-            if let Ok(json) = endpoints::fetch_steps(http, rl, &token, date, date, cn).await {
+            if let Ok(json) =
+                endpoints::fetch_steps_day(http, rl, &token, date, &display_name, cn).await
+            {
                 if let Some(metric) = m::map_steps(&json, date) {
                     steps.push(metric);
                 }
             }
 
-            if let Ok(json) = endpoints::fetch_sleep(http, rl, &token, date, cn).await {
+            if let Ok(json) =
+                endpoints::fetch_sleep(http, rl, &token, date, &display_name, cn).await
+            {
                 if let Some(session) = m::map_sleep(&json, date) {
                     sleep_sessions.push(session);
                 }
@@ -106,7 +119,9 @@ impl HealthProvider for GarminProvider {
             }
 
             // All-day HR (preferred over sleep-based HR).
-            if let Ok(json) = endpoints::fetch_heart_rate(http, rl, &token, date, cn).await {
+            if let Ok(json) =
+                endpoints::fetch_heart_rate(http, rl, &token, date, &display_name, cn).await
+            {
                 if let Some(hr) = m::map_heart_rate_all_day(&json, date) {
                     heart_rate.retain(|m| m.date != date);
                     heart_rate.push(hr);
@@ -117,7 +132,9 @@ impl HealthProvider for GarminProvider {
                 }
             }
 
-            if let Ok(json) = endpoints::fetch_rhr(http, rl, &token, date, date, cn).await {
+            if let Ok(json) =
+                endpoints::fetch_rhr_day(http, rl, &token, date, &display_name, cn).await
+            {
                 if let Some(metric) = m::map_rhr(&json, date) {
                     rhr.push(metric);
                 }
@@ -149,7 +166,33 @@ impl HealthProvider for GarminProvider {
                 }
             }
 
-            if let Ok(json) = endpoints::fetch_daily_summary(http, rl, &token, date, cn).await {
+            if let Ok(json) =
+                endpoints::fetch_daily_summary(http, rl, &token, date, &display_name, cn).await
+            {
+                if let Some(metric) = m::map_steps_from_daily_summary(&json, date) {
+                    steps.retain(|m| m.date != date);
+                    steps.push(metric);
+                }
+                if let Some(metric) = m::map_rhr(&json, date) {
+                    rhr.retain(|m| m.date != date);
+                    rhr.push(metric);
+                }
+                if let Some(metric) = m::map_stress(&json, date) {
+                    stress.retain(|m| m.date != date);
+                    stress.push(metric);
+                }
+                if let Some(metric) = m::map_respiratory_rate(&json, date) {
+                    respiration.retain(|m| m.date != date);
+                    respiration.push(metric);
+                }
+                if let Some(metric) = m::map_spo2(&json, date) {
+                    spo2.retain(|m| m.date != date);
+                    spo2.push(metric);
+                }
+                if let Some(metric) = m::map_body_battery_from_daily_summary(&json, date) {
+                    body_battery.retain(|m| m.date != date);
+                    body_battery.push(metric);
+                }
                 if let Some(f) = m::map_floors_climbed(&json, date) {
                     floors.push(f);
                 }

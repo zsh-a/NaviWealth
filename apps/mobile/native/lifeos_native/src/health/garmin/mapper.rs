@@ -138,7 +138,9 @@ pub fn map_hrv(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
     let value = json
         .get("hrvSummary")
         .and_then(|s| s.get("lastNightAvg"))
-        .and_then(|v| v.as_f64())?;
+        .and_then(|v| v.as_f64())
+        .or_else(|| average_value_array(json.get("hrvReadings")?, "hrvValue"))
+        .or_else(|| average_value_array(json.get("hrvData")?, "value"))?;
     if value == 0.0 {
         return None;
     }
@@ -147,6 +149,48 @@ pub fn map_hrv(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
         date,
         value,
         unit: "ms".to_string(),
+        source_device: Some("garmin".to_string()),
+    })
+}
+
+/// Map overnight HRV from sleep JSON.
+///
+/// CN endpoints may expose HRV only inside daily sleep data while the
+/// dedicated HRV endpoint returns 404.
+pub fn map_hrv_from_sleep(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
+    let value = json
+        .get("avgOvernightHrv")
+        .and_then(|v| v.as_f64())
+        .or_else(|| average_value_array(json.get("hrvData")?, "value"))?;
+    if value == 0.0 {
+        return None;
+    }
+    Some(DailyMetric {
+        id: format!("garmin:hrv:{date}"),
+        date,
+        value,
+        unit: "ms".to_string(),
+        source_device: Some("garmin".to_string()),
+    })
+}
+
+/// Map resting heart rate from sleep JSON.
+pub fn map_rhr_from_sleep(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
+    let value = json
+        .get("restingHeartRate")
+        .or_else(|| {
+            json.get("dailySleepDTO")
+                .and_then(|dto| dto.get("restingHeartRate"))
+        })
+        .and_then(|v| v.as_f64())?;
+    if value == 0.0 {
+        return None;
+    }
+    Some(DailyMetric {
+        id: format!("garmin:rhr:{date}"),
+        date,
+        value,
+        unit: "bpm".to_string(),
         source_device: Some("garmin".to_string()),
     })
 }
@@ -224,13 +268,7 @@ pub fn map_body_battery(json: &Value, date: NaiveDate) -> Option<BodyBatteryDay>
         .and_then(|v| v.as_array())
         .unwrap_or(&vec![])
         .iter()
-        .filter_map(|slot| {
-            if let Some(arr) = slot.as_array() {
-                arr.get(1).and_then(|v| v.as_u64()).map(|n| n as u8)
-            } else {
-                slot.get("value").and_then(|v| v.as_u64()).map(|n| n as u8)
-            }
-        })
+        .filter_map(battery_level_from_slot)
         .collect();
 
     let min = if values.is_empty() {
@@ -254,6 +292,67 @@ pub fn map_body_battery(json: &Value, date: NaiveDate) -> Option<BodyBatteryDay>
     })
 }
 
+/// Map overnight Body Battery from sleep JSON.
+///
+/// This is a fallback for CN accounts where the dedicated bodyBattery endpoint
+/// is unavailable. It summarizes the sleep-window Body Battery series.
+pub fn map_body_battery_from_sleep(json: &Value, date: NaiveDate) -> Option<BodyBatteryDay> {
+    let values = battery_values(json.get("sleepBodyBattery")?)?;
+    let min = *values.iter().min().unwrap_or(&0);
+    let max = *values.iter().max().unwrap_or(&0);
+    if max == 0 {
+        return None;
+    }
+    let charged = json
+        .get("bodyBatteryChange")
+        .and_then(|v| v.as_u64())
+        .map(|v| v as u8)
+        .unwrap_or_else(|| max.saturating_sub(min));
+    Some(BodyBatteryDay {
+        id: format!("garmin:body_battery:{date}"),
+        date,
+        min,
+        max,
+        charged,
+        drained: 0,
+    })
+}
+
+/// Map daily summary Body Battery fields from get_user_summary.
+pub fn map_body_battery_from_daily_summary(
+    json: &Value,
+    date: NaiveDate,
+) -> Option<BodyBatteryDay> {
+    let charged = json
+        .get("bodyBatteryChargedValue")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0) as u8;
+    let drained = json
+        .get("bodyBatteryDrainedValue")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0) as u8;
+    let max = json
+        .get("bodyBatteryHighestValue")
+        .or_else(|| json.get("bodyBatteryMostRecentValue"))
+        .and_then(|v| v.as_u64())
+        .unwrap_or(charged as u64) as u8;
+    let min = json
+        .get("bodyBatteryLowestValue")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0) as u8;
+    if charged == 0 && drained == 0 && max == 0 {
+        return None;
+    }
+    Some(BodyBatteryDay {
+        id: format!("garmin:body_battery:{date}"),
+        date,
+        min,
+        max,
+        charged,
+        drained,
+    })
+}
+
 /// Map stress JSON to DailyMetric.
 ///
 /// Garmin returns `{ "avgStressLevel": 19, "maxStressLevel": 86, ... }`.
@@ -262,6 +361,69 @@ pub fn map_stress(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
         .get("avgStressLevel")
         .or_else(|| json.get("averageStressLevel"))
         .or_else(|| json.get("stressAvg"))
+        .and_then(|v| v.as_f64())?;
+    if value == 0.0 {
+        return None;
+    }
+    Some(DailyMetric {
+        id: format!("garmin:stress:{date}"),
+        date,
+        value,
+        unit: "level".to_string(),
+        source_device: Some("garmin".to_string()),
+    })
+}
+
+fn battery_values(raw: &Value) -> Option<Vec<u8>> {
+    let values: Vec<u8> = raw
+        .as_array()?
+        .iter()
+        .filter_map(battery_level_from_slot)
+        .collect();
+    if values.is_empty() {
+        None
+    } else {
+        Some(values)
+    }
+}
+
+fn battery_level_from_slot(slot: &Value) -> Option<u8> {
+    if let Some(arr) = slot.as_array() {
+        let index = if arr.get(1).and_then(|v| v.as_str()).is_some() {
+            2
+        } else {
+            1
+        };
+        return arr.get(index).and_then(|v| v.as_u64()).map(|n| n as u8);
+    }
+    slot.get("value").and_then(|v| v.as_u64()).map(|n| n as u8)
+}
+
+fn average_value_array(raw: &Value, key: &str) -> Option<f64> {
+    let mut sum = 0.0;
+    let mut count = 0;
+    for item in raw.as_array()? {
+        let value = item.get(key).and_then(|v| v.as_f64())?;
+        if value > 0.0 {
+            sum += value;
+            count += 1;
+        }
+    }
+    if count == 0 {
+        None
+    } else {
+        Some(sum / count as f64)
+    }
+}
+
+/// Map sleep stress from sleep JSON as the best available stress fallback.
+///
+/// This is an overnight stress average, not the full-day stress value exposed
+/// by the dailyStress endpoint when that endpoint is available.
+pub fn map_stress_from_sleep(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
+    let value = json
+        .get("dailySleepDTO")
+        .and_then(|dto| dto.get("avgSleepStress"))
         .and_then(|v| v.as_f64())?;
     if value == 0.0 {
         return None;
@@ -350,6 +512,8 @@ pub fn map_spo2(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
     if let Some(avg) = json
         .get("avgSpO2")
         .or_else(|| json.get("averageSpO2"))
+        .or_else(|| json.get("averageSpo2"))
+        .or_else(|| json.get("latestSpo2"))
         .and_then(|v| v.as_f64())
     {
         if avg > 0.0 {
@@ -386,6 +550,28 @@ pub fn map_spo2(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
     })
 }
 
+/// Map average SpO2 from sleep JSON.
+pub fn map_spo2_from_sleep(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
+    let value = json
+        .get("dailySleepDTO")
+        .and_then(|dto| dto.get("averageSpO2Value"))
+        .or_else(|| {
+            json.get("wellnessSpO2SleepSummaryDTO")
+                .and_then(|summary| summary.get("averageSPO2"))
+        })
+        .and_then(|v| v.as_f64())?;
+    if value == 0.0 {
+        return None;
+    }
+    Some(DailyMetric {
+        id: format!("garmin:spo2:{date}"),
+        date,
+        value,
+        unit: "%".to_string(),
+        source_device: Some("garmin".to_string()),
+    })
+}
+
 /// Map respiratory rate from daily respiration JSON.
 ///
 /// Garmin commonly returns sleep and waking averages. Prefer a whole-day
@@ -396,6 +582,25 @@ pub fn map_respiratory_rate(json: &Value, date: NaiveDate) -> Option<DailyMetric
         .or_else(|| json.get("averageRespirationValue"))
         .or_else(|| json.get("avgSleepRespirationValue"))
         .or_else(|| json.get("avgWakingRespirationValue"))
+        .and_then(|v| v.as_f64())?;
+    if value == 0.0 {
+        return None;
+    }
+    Some(DailyMetric {
+        id: format!("garmin:respiration:{date}"),
+        date,
+        value,
+        unit: "rpm".to_string(),
+        source_device: Some("garmin".to_string()),
+    })
+}
+
+/// Map average respiration from sleep JSON.
+pub fn map_respiratory_rate_from_sleep(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
+    let value = json
+        .get("dailySleepDTO")
+        .and_then(|dto| dto.get("averageRespirationValue"))
+        .or_else(|| json.get("avgSleepRespirationValue"))
         .and_then(|v| v.as_f64())?;
     if value == 0.0 {
         return None;
@@ -464,6 +669,24 @@ pub fn map_daily_summary_metrics(
         });
 
     (distance, active, total)
+}
+
+/// Map steps from get_user_summary daily fields.
+pub fn map_steps_from_daily_summary(json: &Value, date: NaiveDate) -> Option<DailyMetric> {
+    let value = json
+        .get("totalSteps")
+        .or_else(|| json.get("steps"))
+        .and_then(|v| v.as_f64())?;
+    if value == 0.0 {
+        return None;
+    }
+    Some(DailyMetric {
+        id: format!("garmin:steps:{date}"),
+        date,
+        value,
+        unit: "count".to_string(),
+        source_device: Some("garmin".to_string()),
+    })
 }
 
 /// Map VO2 max from training status JSON.
@@ -701,13 +924,7 @@ pub fn map_body_battery_range(json: &Value) -> Vec<BodyBatteryDay> {
                 .and_then(|v| v.as_array())
                 .unwrap_or(&vec![])
                 .iter()
-                .filter_map(|slot| {
-                    if let Some(arr) = slot.as_array() {
-                        arr.get(1).and_then(|v| v.as_u64()).map(|n| n as u8)
-                    } else {
-                        slot.get("value").and_then(|v| v.as_u64()).map(|n| n as u8)
-                    }
-                })
+                .filter_map(battery_level_from_slot)
                 .collect();
 
             let min = if values.is_empty() {
@@ -1019,6 +1236,14 @@ mod tests {
         assert!(map_rhr(&data, date("2026-06-07")).is_none());
     }
 
+    #[test]
+    fn rhr_from_sleep_root_field() {
+        let data = json!({"restingHeartRate": 43});
+        let m = map_rhr_from_sleep(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 43.0);
+        assert_eq!(m.id, "garmin:rhr:2026-06-07");
+    }
+
     // ---- HRV ----
 
     #[test]
@@ -1032,6 +1257,26 @@ mod tests {
         let m = map_hrv(&data, date("2026-06-07")).unwrap();
         assert_eq!(m.value, 103.0);
         assert_eq!(m.unit, "ms");
+    }
+
+    #[test]
+    fn hrv_from_sleep_avg_overnight() {
+        let data = json!({"avgOvernightHrv": 79.0});
+        let m = map_hrv_from_sleep(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 79.0);
+        assert_eq!(m.id, "garmin:hrv:2026-06-07");
+    }
+
+    #[test]
+    fn hrv_from_probe_readings_when_summary_missing() {
+        let data = json!({
+            "hrvReadings": [
+                {"hrvValue": 100.0},
+                {"hrvValue": 120.0}
+            ]
+        });
+        let m = map_hrv(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 110.0);
     }
 
     // ---- Body Battery ----
@@ -1054,9 +1299,57 @@ mod tests {
     }
 
     #[test]
+    fn body_battery_from_probe_status_array() {
+        let data = json!([
+            {
+                "date": "2026-06-07",
+                "charged": 71,
+                "drained": 72,
+                "bodyBatteryValuesArray": [
+                    [1780761600000i64, "MEASURED", 28, 3.0],
+                    [1780761780000i64, "MEASURED", 98, 3.0]
+                ]
+            }
+        ]);
+        let bb = map_body_battery(&data, date("2026-06-07")).unwrap();
+        assert_eq!(bb.min, 28);
+        assert_eq!(bb.max, 98);
+        assert_eq!(bb.charged, 71);
+        assert_eq!(bb.drained, 72);
+    }
+
+    #[test]
+    fn body_battery_from_daily_summary_probe_fields() {
+        let data = json!({
+            "bodyBatteryChargedValue": 71,
+            "bodyBatteryDrainedValue": 72,
+            "bodyBatteryHighestValue": 98,
+            "bodyBatteryLowestValue": 27
+        });
+        let bb = map_body_battery_from_daily_summary(&data, date("2026-06-07")).unwrap();
+        assert_eq!(bb.min, 27);
+        assert_eq!(bb.max, 98);
+        assert_eq!(bb.charged, 71);
+        assert_eq!(bb.drained, 72);
+    }
+
+    #[test]
     fn body_battery_empty_array_returns_none() {
         let data = json!([]);
         assert!(map_body_battery(&data, date("2026-06-07")).is_none());
+    }
+
+    #[test]
+    fn body_battery_from_sleep_series() {
+        let data = json!({
+            "bodyBatteryChange": 61,
+            "sleepBodyBattery": [[0, 22], [1, 83], [2, 70]]
+        });
+        let bb = map_body_battery_from_sleep(&data, date("2026-06-07")).unwrap();
+        assert_eq!(bb.min, 22);
+        assert_eq!(bb.max, 83);
+        assert_eq!(bb.charged, 61);
+        assert_eq!(bb.drained, 0);
     }
 
     // ---- Stress ----
@@ -1080,6 +1373,14 @@ mod tests {
         });
         let m = map_stress(&data, date("2026-06-07")).unwrap();
         assert_eq!(m.value, 21.0);
+    }
+
+    #[test]
+    fn stress_from_sleep_average() {
+        let data = json!({"dailySleepDTO": {"avgSleepStress": 16.0}});
+        let m = map_stress_from_sleep(&data, date("2026-06-07")).unwrap();
+        assert_eq!(m.value, 16.0);
+        assert_eq!(m.id, "garmin:stress:2026-06-07");
     }
 
     // ---- Activity ----
@@ -1236,12 +1537,47 @@ mod tests {
     }
 
     #[test]
+    fn daily_summary_probe_fields_map_core_metrics() {
+        let data = json!({
+            "totalSteps": 8543,
+            "restingHeartRate": 40,
+            "averageStressLevel": 19,
+            "averageSpo2": 95.0,
+            "avgWakingRespirationValue": 13.0
+        });
+        let steps = map_steps_from_daily_summary(&data, date("2026-06-07")).unwrap();
+        let rhr = map_rhr(&data, date("2026-06-07")).unwrap();
+        let stress = map_stress(&data, date("2026-06-07")).unwrap();
+        let spo2 = map_spo2(&data, date("2026-06-07")).unwrap();
+        let respiration = map_respiratory_rate(&data, date("2026-06-07")).unwrap();
+        assert_eq!(steps.value, 8543.0);
+        assert_eq!(rhr.value, 40.0);
+        assert_eq!(stress.value, 19.0);
+        assert_eq!(spo2.value, 95.0);
+        assert_eq!(respiration.value, 13.0);
+    }
+
+    #[test]
     fn respiratory_rate_from_sleep_average() {
         let data = json!({"avgSleepRespirationValue": 14.5});
         let m = map_respiratory_rate(&data, date("2026-06-07")).unwrap();
         assert_eq!(m.value, 14.5);
         assert_eq!(m.unit, "rpm");
         assert_eq!(m.id, "garmin:respiration:2026-06-07");
+    }
+
+    #[test]
+    fn spo2_and_respiration_from_sleep_dto() {
+        let data = json!({
+            "dailySleepDTO": {
+                "averageSpO2Value": 97.0,
+                "averageRespirationValue": 12.0
+            }
+        });
+        let spo2 = map_spo2_from_sleep(&data, date("2026-06-07")).unwrap();
+        let respiration = map_respiratory_rate_from_sleep(&data, date("2026-06-07")).unwrap();
+        assert_eq!(spo2.value, 97.0);
+        assert_eq!(respiration.value, 12.0);
     }
 
     #[test]

@@ -3,7 +3,8 @@
 /// Compact card showing connection state and quick actions.
 library;
 
-import 'package:flutter/material.dart' show LinearProgressIndicator, AlwaysStoppedAnimation, showAdaptiveDialog;
+import 'package:flutter/material.dart'
+    show LinearProgressIndicator, AlwaysStoppedAnimation, showAdaptiveDialog;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -74,6 +75,9 @@ class _Disconnected extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final region = ref.watch(health_data.garminRegionProvider);
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -86,6 +90,11 @@ class _Disconnected extends StatelessWidget {
             tone: AppBadgeTone.neutral,
             size: AppBadgeSize.compact,
           ),
+        ),
+        const SizedBox(height: AppSpacing.s4),
+        Text(
+          region.description,
+          style: typography.xs.copyWith(color: colors.mutedForeground),
         ),
         const SizedBox(height: AppSpacing.s12),
         SizedBox(
@@ -184,6 +193,7 @@ class _Connected extends StatelessWidget {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
+    final region = ref.watch(health_data.garminRegionProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,6 +207,11 @@ class _Connected extends StatelessWidget {
             tone: AppBadgeTone.success,
             size: AppBadgeSize.compact,
           ),
+        ),
+        const SizedBox(height: AppSpacing.s4),
+        Text(
+          region.description,
+          style: typography.xs.copyWith(color: colors.mutedForeground),
         ),
         if (lastSyncAt != null) ...[
           const SizedBox(height: AppSpacing.s4),
@@ -274,8 +289,7 @@ class _Syncing extends ConsumerWidget {
         ref.watch(health_data.garminSyncControllerProvider) as GarminSyncing;
 
     final hasProgress = state.totalDays > 0;
-    final progress =
-        hasProgress ? state.currentDay / state.totalDays : null;
+    final progress = hasProgress ? state.currentDay / state.totalDays : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,8 +324,7 @@ class _Syncing extends ConsumerWidget {
                   state.totalDays.toString(),
                   state.metricsCount.toString(),
                 ),
-                style: typography.xs
-                    .copyWith(color: colors.mutedForeground),
+                style: typography.xs.copyWith(color: colors.mutedForeground),
               ),
             ],
           ),
@@ -322,8 +335,7 @@ class _Syncing extends ConsumerWidget {
               const SizedBox(width: AppSpacing.s8),
               Text(
                 l10n.healthGarminSyncingData,
-                style: typography.xs
-                    .copyWith(color: colors.mutedForeground),
+                style: typography.xs.copyWith(color: colors.mutedForeground),
               ),
             ],
           ),

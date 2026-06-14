@@ -11,6 +11,9 @@ use std::collections::HashMap;
 pub struct StoredSession {
     pub access_token: String,
     pub refresh_token: Option<String>,
+    /// DI OAuth client ID used to obtain the refresh token.
+    #[serde(default)]
+    pub client_id: Option<String>,
     /// ISO 8601 UTC.
     pub expires_at: String,
     /// Cookie jar (Garmin SSO uses cookie auth).

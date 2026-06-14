@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
+import '../data/health_metric_selector.dart';
 import '../data/providers.dart';
 import '../data/recovery_scorer.dart';
 import '../domain/health_metric.dart';
@@ -62,7 +63,10 @@ final healthTodaySnapshotProvider =
         kinds: _kHealthTodayMetricKinds,
         limit: 100,
       );
-      return _HealthTodaySnapshot(now: DateTime.now().toUtc(), byKind: data);
+      return _HealthTodaySnapshot(
+        now: DateTime.now().toUtc(),
+        byKind: selectCanonicalHealthMetrics(data),
+      );
     });
 
 Future<HealthMetric?> _latest(Ref ref, HealthMetricKind kind) async {

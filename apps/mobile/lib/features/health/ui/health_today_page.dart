@@ -27,6 +27,7 @@ import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as health_agent_providers;
+import '../data/health_metric_source.dart';
 import '../data/health_sync_service.dart';
 import '../data/providers.dart' as health_data;
 import '../domain/health_metric.dart';
@@ -453,6 +454,7 @@ class _SleepCard extends StatelessWidget {
                 value: '${_round(hours)}h',
                 sub: _ago(l10n, m.capturedAt),
                 trend: trend,
+                metric: m,
               ),
               if (stages != null) ...[
                 const SizedBox(height: AppSpacing.s4),
@@ -646,6 +648,7 @@ class _HrvCard extends StatelessWidget {
             value: '${_round(m.value)} ${m.unit}',
             sub: _ago(l10n, m.capturedAt),
             trend: trend,
+            metric: m,
           );
         },
       ),
@@ -673,6 +676,7 @@ class _HeartRateCard extends StatelessWidget {
             value: '${_round(m.value)} ${m.unit}',
             sub: _ago(l10n, m.capturedAt),
             trend: trend,
+            metric: m,
           );
         },
       ),
@@ -711,6 +715,7 @@ class _WorkoutCard extends StatelessWidget {
           return _ValueBig(
             value: '${minutes}m',
             sub: '$detail${_ago(l10n, m.capturedAt)}',
+            metric: m,
           );
         },
       ),
@@ -747,6 +752,7 @@ class _StepsCard extends ConsumerWidget {
             value: _formatSteps(m.value),
             sub: sub,
             trend: trend,
+            metric: m,
           );
         },
       ),
@@ -774,6 +780,7 @@ class _ActiveEnergyCard extends StatelessWidget {
             value: '${m.value.round()} kcal',
             sub: _ago(l10n, m.capturedAt),
             trend: trend,
+            metric: m,
           );
         },
       ),
@@ -806,6 +813,7 @@ class _BodyBatteryCard extends StatelessWidget {
             value: '${m.value.round()}',
             sub: '$netStr · ${_ago(l10n, m.capturedAt)}',
             trend: trend,
+            metric: m,
           );
         },
       ),
@@ -832,6 +840,7 @@ class _StressCard extends StatelessWidget {
           return _ValueBig(
             value: '${m.value.round()}',
             sub: _ago(l10n, m.capturedAt),
+            metric: m,
           );
         },
       ),
@@ -859,6 +868,7 @@ class _RhrCard extends StatelessWidget {
             value: '${m.value.round()}',
             sub: _ago(l10n, m.capturedAt),
             trend: trend,
+            metric: m,
           );
         },
       ),
@@ -884,6 +894,7 @@ class _TrainingLoadCard extends StatelessWidget {
           return _ValueBig(
             value: '${_round(m.value)}',
             sub: _ago(l10n, m.capturedAt),
+            metric: m,
           );
         },
       ),
@@ -909,6 +920,7 @@ class _Spo2Card extends StatelessWidget {
           return _ValueBig(
             value: '${_round(m.value)}%',
             sub: _ago(l10n, m.capturedAt),
+            metric: m,
           );
         },
       ),
@@ -956,29 +968,86 @@ class _MetricCard extends StatelessWidget {
 }
 
 class _ValueBig extends StatelessWidget {
-  const _ValueBig({required this.value, required this.sub, this.trend});
+  const _ValueBig({
+    required this.value,
+    required this.sub,
+    this.trend,
+    this.metric,
+  });
   final String value;
   final String sub;
   final MetricTrend? trend;
+  final HealthMetric? metric;
 
   @override
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
+    final source = metric == null ? null : sourceForHealthMetric(metric!);
+    final sourceLabel = source == null || source == HealthMetricSource.unknown
+        ? null
+        : source.label;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text(value, style: typography.xl),
+            Flexible(
+              fit: FlexFit.loose,
+              child: Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: typography.xl,
+              ),
+            ),
             if (trend != null) ...[
               const SizedBox(width: AppSpacing.s4),
               _TrendBadge(trend: trend!),
+            ],
+            if (sourceLabel != null) ...[
+              const SizedBox(width: AppSpacing.s6),
+              _SourceChip(label: sourceLabel),
             ],
           ],
         ),
         const SizedBox(height: AppSpacing.s2),
         Text(sub, style: context.captionStyle),
       ],
+    );
+  }
+}
+
+class _SourceChip extends StatelessWidget {
+  const _SourceChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return Flexible(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.muted.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(AppRadius.xs),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s4,
+            vertical: 1,
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: typography.xs.copyWith(
+              color: colors.mutedForeground,
+              fontSize: 10,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

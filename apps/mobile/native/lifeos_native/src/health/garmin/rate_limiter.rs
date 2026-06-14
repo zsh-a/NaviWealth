@@ -145,9 +145,7 @@ mod tests {
     #[tokio::test]
     async fn run_propagates_error() {
         let rl = GarminRateLimiter::new();
-        let result: anyhow::Result<i32> = rl
-            .run(|| async { Err(anyhow::anyhow!("fail")) })
-            .await;
+        let result: anyhow::Result<i32> = rl.run(|| async { Err(anyhow::anyhow!("fail")) }).await;
         assert!(result.is_err());
     }
 }

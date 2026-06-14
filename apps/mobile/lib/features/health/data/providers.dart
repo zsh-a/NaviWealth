@@ -14,6 +14,8 @@ import 'health_platform_adapter.dart';
 import 'health_platform_adapter_factory.dart';
 import 'health_sync_service.dart';
 
+export 'garmin/garmin_region_preference.dart'
+    show GarminRegion, GarminRegionX, garminRegionProvider;
 // garminSyncControllerProvider is re-exported from garmin_sync_controller.dart.
 export 'garmin/garmin_sync_controller.dart'
     show
@@ -72,8 +74,9 @@ final healthMetricWriteServiceProvider =
 // ---------------------------------------------------------------------------
 
 /// Garmin snapshot writer — writes Rust snapshots into Drift.
-final garminSnapshotWriterProvider =
-    FutureProvider<GarminSnapshotWriter>((ref) async {
+final garminSnapshotWriterProvider = FutureProvider<GarminSnapshotWriter>((
+  ref,
+) async {
   final repo = await ref.watch(healthMetricRepositoryProvider.future);
   final stamper = await ref.watch(mutationStamperProvider.future);
   return GarminSnapshotWriter(repository: repo, stamper: stamper);

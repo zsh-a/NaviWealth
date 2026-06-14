@@ -142,7 +142,9 @@ impl HealthSyncEngine {
         let activities = match provider.sync_activities(effective_from, to).await {
             Ok(a) => a,
             Err(e) => {
-                errors.push(format!("activity sync failed: {e}"));
+                if !is_optional_activity_error(&e) {
+                    errors.push(format!("activity sync failed: {e}"));
+                }
                 vec![]
             }
         };
@@ -174,6 +176,11 @@ impl HealthSyncEngine {
     pub async fn set_cursor(&self, provider: String, date: NaiveDate) {
         self.cursors.lock().await.insert(provider, date);
     }
+}
+
+fn is_optional_activity_error(error: &anyhow::Error) -> bool {
+    let msg = error.to_string().to_lowercase();
+    msg.contains("404 not found") || msg.contains("garmin api error: 404")
 }
 
 impl Default for HealthSyncEngine {

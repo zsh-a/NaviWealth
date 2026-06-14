@@ -8,11 +8,13 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/src/rust/api/health.dart' show GarminSyncProgress;
 
 import '../providers.dart'
     show garminSnapshotWriterProvider, healthMetricRepositoryProvider;
 import 'garmin_bridge.dart';
+import 'garmin_region_preference.dart';
 import 'garmin_snapshot_writer.dart';
 import 'garmin_token_store.dart';
 
@@ -84,6 +86,7 @@ class GarminSyncController extends Notifier<GarminSyncState> {
   final GarminBridge _bridge = GarminBridge();
   final GarminTokenStore _tokenStore = GarminTokenStore();
   bool _initialized = false;
+  GarminRegion? _initializedRegion;
   StreamSubscription<GarminSyncProgress>? _syncSub;
 
   /// Try to restore a persisted Garmin session on startup.
@@ -111,9 +114,11 @@ class GarminSyncController extends Notifier<GarminSyncState> {
   /// Ensure the Rust-side Garmin client is initialized.
   /// Must be called before any other bridge method.
   Future<void> _ensureInit({String? storedTokenJson}) async {
-    if (_initialized) return;
-    await _bridge.init(storedTokenJson: storedTokenJson, isCn: true);
+    final region = ref.read(garminRegionProvider);
+    if (_initialized && _initializedRegion == region) return;
+    await _bridge.init(storedTokenJson: storedTokenJson, isCn: region.isCn);
     _initialized = true;
+    _initializedRegion = region;
   }
 
   /// Connect with email/password.
@@ -159,6 +164,8 @@ class GarminSyncController extends Notifier<GarminSyncState> {
   Future<void> syncNow({Duration window = const Duration(days: 30)}) async {
     final now = DateTime.now().toUtc();
     state = GarminSyncing(startedAt: now);
+    final logger = AppLogger.instance;
+    final region = ref.read(garminRegionProvider);
 
     // Cancel any previous sync stream.
     await _syncSub?.cancel();
@@ -166,12 +173,27 @@ class GarminSyncController extends Notifier<GarminSyncState> {
     try {
       await _ensureInit();
       final from = now.subtract(window);
+      logger.i(
+        'HealthOS Garmin sync start: region=${region.label} '
+        'from=${from.toIso8601String()} to=${now.toIso8601String()} '
+        'windowDays=${window.inDays}',
+      );
 
       final completer = Completer<void>();
       _syncSub = _bridge
           .syncRangeWithProgress(from, now)
           .listen(
             (progress) {
+              logger.i(
+                'HealthOS Garmin progress: phase=${progress.phase} '
+                'current=${progress.current}/${progress.total} '
+                'metrics=${progress.metricsCount} '
+                'errors=${progress.errors.length} '
+                'snapshotBytes=${progress.snapshotJson?.length ?? 0}',
+              );
+              if (progress.errors.isNotEmpty) {
+                logger.w('HealthOS Garmin progress errors: ${progress.errors}');
+              }
               state = GarminSyncing(
                 startedAt: now,
                 phase: progress.phase,
@@ -191,18 +213,47 @@ class GarminSyncController extends Notifier<GarminSyncState> {
             onDone: () async {
               final s = state;
               if (s is GarminSyncing) {
+                logger.i(
+                  'HealthOS Garmin stream done: phase=${s.phase} '
+                  'metrics=${s.metricsCount} errors=${s.errors.length} '
+                  'snapshotBytes=${s.snapshotJson?.length ?? 0}',
+                );
                 // Persist whatever snapshot Rust produced before surfacing
                 // partial endpoint errors. A failed optional endpoint should not
                 // discard successfully fetched sleep/HR/steps/workouts.
                 final writeResult = await _persistSnapshot(s.snapshotJson);
+                logger.i(
+                  'HealthOS Garmin persist result: '
+                  'total=${writeResult?.total ?? 0} '
+                  'upserted=${writeResult?.upserted ?? 0} '
+                  'unchanged=${writeResult?.unchanged ?? 0} '
+                  'errors=${writeResult?.errors ?? const <String>[]}',
+                );
                 ref.invalidate(healthMetricRepositoryProvider);
-                final errors = <String>[
+                final errors = _fatalSyncErrors(<String>[
                   ...s.errors,
+                  ..._snapshotPersistErrors(
+                    metricsCount: s.metricsCount,
+                    hasSnapshotJson:
+                        s.snapshotJson != null && s.snapshotJson!.isNotEmpty,
+                    writeResult: writeResult,
+                  ),
                   if (writeResult != null) ...writeResult.errors,
-                ];
+                ]);
                 if (errors.isNotEmpty) {
+                  if (_hasGarminAuthExpiredError(errors)) {
+                    await _clearStaleSession();
+                    logger.w(
+                      'HealthOS Garmin stale session cleared after auth error',
+                    );
+                  }
+                  logger.w('HealthOS Garmin sync failed: ${errors.first}');
                   state = GarminError(errors.first);
                 } else {
+                  logger.i(
+                    'HealthOS Garmin sync success: '
+                    'totalMetrics=${writeResult?.total ?? s.metricsCount}',
+                  );
                   state = GarminConnected(
                     lastSyncAt: now,
                     totalMetrics: writeResult?.total ?? s.metricsCount,
@@ -212,6 +263,7 @@ class GarminSyncController extends Notifier<GarminSyncState> {
               if (!completer.isCompleted) completer.complete();
             },
             onError: (Object e) {
+              logger.e('HealthOS Garmin stream error', error: e);
               state = GarminError(e.toString());
               if (!completer.isCompleted) completer.complete();
             },
@@ -220,23 +272,80 @@ class GarminSyncController extends Notifier<GarminSyncState> {
 
       await completer.future;
     } catch (e) {
+      logger.e('HealthOS Garmin sync exception', error: e);
       state = GarminError(e.toString());
     }
   }
 
   /// Persist a HealthSnapshot JSON to the local Drift database.
   Future<GarminWriteResult?> _persistSnapshot(String? snapshotJson) async {
-    if (snapshotJson == null || snapshotJson.isEmpty) return null;
+    final logger = AppLogger.instance;
+    if (snapshotJson == null || snapshotJson.isEmpty) {
+      logger.w('HealthOS Garmin persist skipped: empty snapshotJson');
+      return null;
+    }
     try {
+      logger.i('HealthOS Garmin persist start: bytes=${snapshotJson.length}');
       final writer = await ref.read(garminSnapshotWriterProvider.future);
       return writer.writeSnapshotJson(snapshotJson);
     } catch (e) {
+      logger.e('HealthOS Garmin persist exception', error: e);
       return GarminWriteResult(
         upserted: 0,
         unchanged: 0,
         errors: ['persist snapshot failed: $e'],
       );
     }
+  }
+
+  List<String> _snapshotPersistErrors({
+    required int metricsCount,
+    required bool hasSnapshotJson,
+    required GarminWriteResult? writeResult,
+  }) {
+    if (metricsCount <= 0) return const <String>[];
+    if (!hasSnapshotJson) {
+      return const <String>['Garmin sync produced metrics but no snapshot'];
+    }
+    if (writeResult == null) {
+      return const <String>['Garmin snapshot was not persisted'];
+    }
+    if (writeResult.total == 0) {
+      return const <String>[
+        'Garmin snapshot did not contain supported HealthSnapshot rows',
+      ];
+    }
+    return const <String>[];
+  }
+
+  List<String> _fatalSyncErrors(List<String> errors) {
+    return errors
+        .where((e) => !_isOptionalGarminEndpointError(e))
+        .toList(growable: false);
+  }
+
+  bool _isOptionalGarminEndpointError(String error) {
+    final lower = error.toLowerCase();
+    return lower.startsWith('activities fetch failed:') &&
+        (lower.contains('404 not found') ||
+            lower.contains('garmin api error: 404'));
+  }
+
+  bool _hasGarminAuthExpiredError(List<String> errors) {
+    return errors.any((error) {
+      final lower = error.toLowerCase();
+      return lower.contains('di token refresh failed') ||
+          lower.contains('401 unauthorized') ||
+          lower.contains('token expired') ||
+          lower.contains('token may be expired') ||
+          lower.contains('garmin auth failed');
+    });
+  }
+
+  Future<void> _clearStaleSession() async {
+    await _tokenStore.clear();
+    _initialized = false;
+    _initializedRegion = null;
   }
 
   /// Cancel an in-progress sync.
@@ -252,8 +361,7 @@ class GarminSyncController extends Notifier<GarminSyncState> {
     try {
       await _ensureInit();
       await _bridge.logout();
-      await _tokenStore.clear();
-      _initialized = false;
+      await _clearStaleSession();
       state = const GarminInitial();
     } catch (e) {
       state = GarminError(e.toString());

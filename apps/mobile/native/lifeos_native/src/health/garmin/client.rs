@@ -63,6 +63,11 @@ struct MfaState {
     login_params: String,
 }
 
+enum _RefreshOutcome {
+    Success,
+    Rejected(reqwest::StatusCode),
+}
+
 /// Garmin Connect API client.
 ///
 /// All mutable state is behind `Arc<Mutex<>>` so the client is cheaply
@@ -98,11 +103,7 @@ impl Clone for GarminClient {
 impl GarminClient {
     /// Create a new client. Attempts to load stored credentials.
     pub async fn new(token_store: Arc<dyn TokenStore>, is_cn: bool) -> Result<Self> {
-        let domain = if is_cn {
-            "garmin.cn"
-        } else {
-            "garmin.com"
-        };
+        let domain = if is_cn { "garmin.cn" } else { "garmin.com" };
         let http = Client::builder()
             .cookie_store(true)
             .redirect(reqwest::redirect::Policy::none())
@@ -115,7 +116,9 @@ impl GarminClient {
             let di = DiSession {
                 access_token: session.access_token.clone(),
                 refresh_token: session.refresh_token.unwrap_or_default(),
-                client_id: "GARMIN_CONNECT_MOBILE_ANDROID_DI".to_string(),
+                client_id: session
+                    .client_id
+                    .unwrap_or_else(|| "GARMIN_CONNECT_MOBILE_ANDROID_DI".to_string()),
                 expires_at: session.expires_at.clone(),
             };
             (
@@ -231,12 +234,12 @@ impl GarminClient {
                 };
                 Ok(AuthResult::MfaRequired)
             }
-            "INVALID_USERNAME_PASSWORD" => {
-                Ok(AuthResult::Failed("Invalid username or password".to_string()))
-            }
-            "CAPTCHA_REQUIRED" => {
-                Ok(AuthResult::Failed("CAPTCHA required — try again later".to_string()))
-            }
+            "INVALID_USERNAME_PASSWORD" => Ok(AuthResult::Failed(
+                "Invalid username or password".to_string(),
+            )),
+            "CAPTCHA_REQUIRED" => Ok(AuthResult::Failed(
+                "CAPTCHA required — try again later".to_string(),
+            )),
             _ => Ok(AuthResult::Failed(format!(
                 "Unexpected login response ({}): {}",
                 status,
@@ -317,8 +320,7 @@ impl GarminClient {
         let token_url = format!("{}{}", self.diauth_base(), DI_TOKEN_PATH);
 
         for client_id in DI_CLIENT_IDS {
-            let basic =
-                base64::engine::general_purpose::STANDARD.encode(format!("{}:", client_id));
+            let basic = base64::engine::general_purpose::STANDARD.encode(format!("{}:", client_id));
 
             let form = [
                 ("client_id", *client_id),
@@ -379,14 +381,55 @@ impl GarminClient {
     pub async fn refresh_token(&self) -> Result<()> {
         let session = self.di_session.lock().await.clone();
         let session = session.ok_or_else(|| anyhow!("No DI session to refresh"))?;
+        if session.refresh_token.is_empty() {
+            return Err(anyhow!("DI token refresh failed: missing refresh_token"));
+        }
 
+        let mut client_ids = vec![session.client_id.as_str()];
+        for candidate in DI_CLIENT_IDS {
+            if !client_ids.iter().any(|existing| existing == candidate) {
+                client_ids.push(candidate);
+            }
+        }
+
+        let mut last_status = None;
+        for client_id in client_ids {
+            match self
+                .refresh_token_with_client_id(&session, client_id)
+                .await?
+            {
+                _RefreshOutcome::Success => return Ok(()),
+                _RefreshOutcome::Rejected(status) => {
+                    eprintln!(
+                        "[HealthOS][Garmin] DI refresh rejected client_id={} status={}",
+                        client_id, status
+                    );
+                    last_status = Some(status);
+                }
+            }
+        }
+
+        let message = last_status
+            .map(|status| format!("DI token refresh failed: {status}"))
+            .unwrap_or_else(|| "DI token refresh failed".to_string());
+        let mut state = self.auth_state.lock().await;
+        *state = GarminAuthState::Error {
+            message: message.clone(),
+        };
+        Err(anyhow!(message))
+    }
+
+    async fn refresh_token_with_client_id(
+        &self,
+        session: &DiSession,
+        client_id: &str,
+    ) -> Result<_RefreshOutcome> {
         let token_url = format!("{}{}", self.diauth_base(), DI_TOKEN_PATH);
-        let basic =
-            base64::engine::general_purpose::STANDARD.encode(format!("{}:", session.client_id));
+        let basic = base64::engine::general_purpose::STANDARD.encode(format!("{}:", client_id));
 
         let form = [
             ("grant_type", "refresh_token"),
-            ("client_id", session.client_id.as_str()),
+            ("client_id", client_id),
             ("refresh_token", session.refresh_token.as_str()),
         ];
 
@@ -400,33 +443,44 @@ impl GarminClient {
             .send()
             .await?;
 
-        if response.status().is_success() {
-            let body: serde_json::Value = response.json().await?;
-            let access_token = body
-                .get("access_token")
-                .and_then(|t| t.as_str())
-                .ok_or_else(|| anyhow!("DI refresh missing access_token"))?;
-            let refresh_token = body
-                .get("refresh_token")
-                .and_then(|t| t.as_str())
-                .unwrap_or(&session.refresh_token);
-
-            let expires_at = decode_jwt_expiry(access_token).unwrap_or_else(|| {
-                (chrono::Utc::now() + chrono::Duration::hours(1)).to_rfc3339()
-            });
-
-            let mut sess = self.di_session.lock().await;
-            *sess = Some(DiSession {
-                access_token: access_token.to_string(),
-                refresh_token: refresh_token.to_string(),
-                client_id: session.client_id.clone(),
-                expires_at,
-            });
-            self.save_session().await?;
-            Ok(())
-        } else {
-            Err(anyhow!("DI token refresh failed: {}", response.status()))
+        if !response.status().is_success() {
+            return Ok(_RefreshOutcome::Rejected(response.status()));
         }
+
+        let body: serde_json::Value = response.json().await?;
+        let access_token = body
+            .get("access_token")
+            .and_then(|t| t.as_str())
+            .ok_or_else(|| anyhow!("DI refresh missing access_token"))?;
+        let refresh_token = body
+            .get("refresh_token")
+            .and_then(|t| t.as_str())
+            .unwrap_or(&session.refresh_token);
+
+        let expires_at = decode_jwt_expiry(access_token)
+            .unwrap_or_else(|| (chrono::Utc::now() + chrono::Duration::hours(1)).to_rfc3339());
+
+        let mut sess = self.di_session.lock().await;
+        *sess = Some(DiSession {
+            access_token: access_token.to_string(),
+            refresh_token: refresh_token.to_string(),
+            client_id: client_id.to_string(),
+            expires_at,
+        });
+        self.save_session().await?;
+        let mut state = self.auth_state.lock().await;
+        *state = GarminAuthState::Authenticated {
+            expires_at: chrono::DateTime::parse_from_rfc3339(
+                sess.as_ref().map(|s| s.expires_at.as_str()).unwrap_or(""),
+            )
+            .map(|dt| dt.with_timezone(&chrono::Utc))
+            .unwrap_or_else(|_| chrono::Utc::now() + chrono::Duration::hours(1)),
+        };
+        eprintln!(
+            "[HealthOS][Garmin] DI refresh succeeded client_id={}",
+            client_id
+        );
+        Ok(_RefreshOutcome::Success)
     }
 
     // -----------------------------------------------------------------------
@@ -439,6 +493,7 @@ impl GarminClient {
             let stored = StoredSession {
                 access_token: di.access_token.clone(),
                 refresh_token: Some(di.refresh_token.clone()),
+                client_id: Some(di.client_id.clone()),
                 expires_at: di.expires_at.clone(),
                 cookies: std::collections::HashMap::new(),
             };
@@ -475,6 +530,28 @@ impl GarminClient {
             .ok_or_else(|| anyhow!("Not authenticated"))
     }
 
+    /// Get an access token, refreshing first when the stored token is already
+    /// expired or close to expiry.
+    pub async fn fresh_access_token(&self) -> Result<String> {
+        let should_refresh = {
+            let session = self.di_session.lock().await;
+            let session = session
+                .as_ref()
+                .ok_or_else(|| anyhow!("Not authenticated"))?;
+            let expires_at = chrono::DateTime::parse_from_rfc3339(&session.expires_at)
+                .map(|dt| dt.with_timezone(&chrono::Utc))
+                .unwrap_or_else(|_| chrono::Utc::now() - chrono::Duration::minutes(1));
+            expires_at <= chrono::Utc::now() + chrono::Duration::minutes(5)
+        };
+
+        if should_refresh {
+            eprintln!("[HealthOS][Garmin] access token expired/near expiry; refreshing");
+            self.refresh_token().await?;
+        }
+
+        self.access_token().await
+    }
+
     pub fn http(&self) -> &Client {
         &self.http
     }
@@ -500,7 +577,9 @@ fn decode_jwt_expiry(token: &str) -> Option<String> {
         return None;
     }
     let payload = parts[1];
-    let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(payload).ok()?;
+    let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(payload)
+        .ok()?;
     let json: serde_json::Value = serde_json::from_slice(&decoded).ok()?;
     let exp = json.get("exp")?.as_i64()?;
     chrono::DateTime::from_timestamp(exp, 0).map(|dt| dt.to_rfc3339())

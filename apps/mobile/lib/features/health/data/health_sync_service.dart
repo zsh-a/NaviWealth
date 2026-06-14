@@ -22,6 +22,7 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
+import 'health_metric_ingestor.dart';
 import 'health_metric_repository.dart';
 import 'health_platform_adapter.dart';
 
@@ -69,15 +70,16 @@ class HealthSyncService {
     required MutationStamper stamper,
     DateTime Function()? clock,
   }) : _adapter = adapter,
-       _repo = repository,
-       _stamper = stamper,
+       _ingestor = HealthMetricIngestor(
+         repository: repository,
+         stamper: stamper,
+       ),
        _clock = clock ?? _defaultClock;
 
   static DateTime _defaultClock() => DateTime.now().toUtc();
 
   final HealthPlatformAdapter _adapter;
-  final HealthMetricRepository _repo;
-  final MutationStamper _stamper;
+  final HealthMetricIngestor _ingestor;
   final DateTime Function() _clock;
 
   /// Pass-through to the adapter — Settings UI calls this when the
@@ -126,118 +128,62 @@ class HealthSyncService {
       );
     }
 
-    var upserted = 0;
-    var unchanged = 0;
-
-    for (final s in snapshot.sleepSessions) {
-      final metric = _sleepMetric(s);
-      final result = await _upsertIfChanged(metric);
-      result == _WriteOutcome.upserted ? upserted++ : unchanged++;
-    }
-    for (final d in snapshot.hrv) {
-      final m = _dailyMetric(d, HealthMetricKind.hrvDaily);
-      final r = await _upsertIfChanged(m);
-      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
-    }
-    for (final d in snapshot.rhr) {
-      final m = _dailyMetric(d, HealthMetricKind.rhrDaily);
-      final r = await _upsertIfChanged(m);
-      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
-    }
-    for (final d in snapshot.steps) {
-      final m = _dailyMetric(d, HealthMetricKind.stepsDaily);
-      final r = await _upsertIfChanged(m);
-      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
-    }
-    for (final d in snapshot.activeEnergy) {
-      final m = _dailyMetric(d, HealthMetricKind.activeEnergyDaily);
-      final r = await _upsertIfChanged(m);
-      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
-    }
-    for (final p in snapshot.weight) {
-      final m = _pointMetric(p, HealthMetricKind.weight);
-      final r = await _upsertIfChanged(m);
-      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
-    }
-    for (final p in snapshot.bodyFat) {
-      final m = _pointMetric(p, HealthMetricKind.bodyFat);
-      final r = await _upsertIfChanged(m);
-      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
-    }
-    for (final w in snapshot.workouts) {
-      final m = _workoutMetric(w);
-      final r = await _upsertIfChanged(m);
-      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
-    }
-    for (final d in snapshot.vo2Max) {
-      final m = _dailyMetric(d, HealthMetricKind.vo2Max);
-      final r = await _upsertIfChanged(m);
-      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
-    }
-    for (final d in snapshot.distanceWalkingRunning) {
-      final m = _dailyMetric(d, HealthMetricKind.distanceWalkingRunningDaily);
-      final r = await _upsertIfChanged(m);
-      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
-    }
-    for (final d in snapshot.heartRate) {
-      final m = _dailyMetric(d, HealthMetricKind.heartRateDaily);
-      final r = await _upsertIfChanged(m);
-      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
-    }
-    for (final d in snapshot.totalEnergy) {
-      final m = _dailyMetric(d, HealthMetricKind.totalEnergyDaily);
-      final r = await _upsertIfChanged(m);
-      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
-    }
-    for (final d in snapshot.floorsClimbed) {
-      final m = _dailyMetric(d, HealthMetricKind.floorsClimbedDaily);
-      final r = await _upsertIfChanged(m);
-      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
-    }
-    for (final d in snapshot.respiratoryRate) {
-      final m = _dailyMetric(d, HealthMetricKind.respiratoryRateDaily);
-      final r = await _upsertIfChanged(m);
-      r == _WriteOutcome.upserted ? upserted++ : unchanged++;
-    }
+    final ingest = await _ingestor.ingest(_metricsFromSnapshot(snapshot));
 
     return HealthSyncResult(
       startedAt: startedAt,
       completedAt: _clock(),
       totalFetched: snapshot.totalCount,
-      upserted: upserted,
-      unchanged: unchanged,
+      upserted: ingest.upserted,
+      unchanged: ingest.unchanged,
     );
   }
 
-  /// Drop the row in if a `findById`-equivalent row doesn't exist or
-  /// the data side of the row differs. Saves the outbox from N
-  /// duplicate enqueues on every re-sync — the stamper bumps the HLC
-  /// only when we actually write.
-  Future<_WriteOutcome> _upsertIfChanged(HealthMetric unstamped) async {
-    final existing = await _repo.findById(unstamped.id);
-    if (existing != null && _payloadEquivalent(existing, unstamped)) {
-      return _WriteOutcome.unchanged;
+  Iterable<HealthMetric> _metricsFromSnapshot(
+    HealthPlatformSnapshot snapshot,
+  ) sync* {
+    for (final s in snapshot.sleepSessions) {
+      yield _sleepMetric(s);
     }
-    final stamp = await _stamper.stamp();
-    final stamped = unstamped.copyWith(
-      sync: SyncMeta(
-        ownerUserId: stamp.ownerUserId,
-        updatedAt: stamp.now,
-        updatedByDevice: stamp.deviceId,
-        hlc: stamp.hlc,
-      ),
-    );
-    await _repo.upsert(stamped);
-    return _WriteOutcome.upserted;
-  }
-
-  bool _payloadEquivalent(HealthMetric a, HealthMetric b) {
-    return a.kind == b.kind &&
-        a.capturedAt.isAtSameMomentAs(b.capturedAt) &&
-        a.value == b.value &&
-        a.unit == b.unit &&
-        a.payloadJson == b.payloadJson &&
-        a.sourceDevice == b.sourceDevice;
+    for (final d in snapshot.hrv) {
+      yield _dailyMetric(d, HealthMetricKind.hrvDaily);
+    }
+    for (final d in snapshot.rhr) {
+      yield _dailyMetric(d, HealthMetricKind.rhrDaily);
+    }
+    for (final d in snapshot.steps) {
+      yield _dailyMetric(d, HealthMetricKind.stepsDaily);
+    }
+    for (final d in snapshot.activeEnergy) {
+      yield _dailyMetric(d, HealthMetricKind.activeEnergyDaily);
+    }
+    for (final p in snapshot.weight) {
+      yield _pointMetric(p, HealthMetricKind.weight);
+    }
+    for (final p in snapshot.bodyFat) {
+      yield _pointMetric(p, HealthMetricKind.bodyFat);
+    }
+    for (final w in snapshot.workouts) {
+      yield _workoutMetric(w);
+    }
+    for (final d in snapshot.vo2Max) {
+      yield _dailyMetric(d, HealthMetricKind.vo2Max);
+    }
+    for (final d in snapshot.distanceWalkingRunning) {
+      yield _dailyMetric(d, HealthMetricKind.distanceWalkingRunningDaily);
+    }
+    for (final d in snapshot.heartRate) {
+      yield _dailyMetric(d, HealthMetricKind.heartRateDaily);
+    }
+    for (final d in snapshot.totalEnergy) {
+      yield _dailyMetric(d, HealthMetricKind.totalEnergyDaily);
+    }
+    for (final d in snapshot.floorsClimbed) {
+      yield _dailyMetric(d, HealthMetricKind.floorsClimbedDaily);
+    }
+    for (final d in snapshot.respiratoryRate) {
+      yield _dailyMetric(d, HealthMetricKind.respiratoryRateDaily);
+    }
   }
 
   HealthMetric _sleepMetric(RawSleepSession s) => HealthMetric(
@@ -296,10 +242,7 @@ class HealthSyncService {
     );
   }
 
-  /// Sync meta is replaced via [HealthMetric.copyWith] in
-  /// [_upsertIfChanged] right before the write — we only call
-  /// [MutationStamper.stamp] when we actually persist, so unchanged
-  /// rows neither bump the HLC nor allocate an outbox op.
+  /// Sync meta is replaced by [HealthMetricIngestor] right before writes.
   static final SyncMeta _placeholderSync = SyncMeta(
     ownerUserId: '',
     updatedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
@@ -307,5 +250,3 @@ class HealthSyncService {
     hlc: Hlc.zero('placeholder'),
   );
 }
-
-enum _WriteOutcome { upserted, unchanged }
