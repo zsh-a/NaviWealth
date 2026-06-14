@@ -221,7 +221,7 @@ jobs:
       - name: Install worker-build
         run: cargo install -q worker-build
       - name: Build worker artifact
-        run: worker-build --release
+        run: bash tool/build-worker.sh
 
   backend-deploy:
     name: backend deploy

@@ -4,7 +4,7 @@ compatibility_date = "2026-04-15"
 workers_dev = true
 
 [build]
-command = "cargo install -q worker-build && worker-build --release"
+command = "cargo install -q worker-build && bash tool/build-worker.sh"
 
 [vars]
 ENVIRONMENT = "dev"
