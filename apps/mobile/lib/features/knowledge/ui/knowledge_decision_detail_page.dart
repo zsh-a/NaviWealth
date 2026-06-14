@@ -60,7 +60,11 @@ class _BodyState extends ConsumerState<_Body> {
     });
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
-      final d = await repo.findDecision(widget.decisionId);
+      final ownerUserId = await ref.read(knowledgeOwnerUserIdProvider.future);
+      final d = await repo.findDecision(
+        ownerUserId: ownerUserId,
+        id: widget.decisionId,
+      );
       if (d == null) {
         if (mounted) setState(() => _loading = false);
         return;
@@ -72,7 +76,10 @@ class _BodyState extends ConsumerState<_Body> {
       final visited = <String>{d.id};
       while (cursor.supersededByDecisionId != null &&
           !visited.contains(cursor.supersededByDecisionId)) {
-        final next = await repo.findDecision(cursor.supersededByDecisionId!);
+        final next = await repo.findDecision(
+          ownerUserId: ownerUserId,
+          id: cursor.supersededByDecisionId!,
+        );
         if (next == null) break;
         visited.add(next.id);
         chain.add(next);
@@ -86,11 +93,11 @@ class _BodyState extends ConsumerState<_Body> {
       final principles = <KnowledgePrinciple>[];
       final assumptions = <KnowledgeAssumption>[];
       for (final id in d.principleIds) {
-        final p = await repo.findPrinciple(id);
+        final p = await repo.findPrinciple(ownerUserId: ownerUserId, id: id);
         if (p != null) principles.add(p);
       }
       for (final id in d.assumptionIds) {
-        final a = await repo.findAssumption(id);
+        final a = await repo.findAssumption(ownerUserId: ownerUserId, id: id);
         if (a != null) assumptions.add(a);
       }
 
@@ -159,7 +166,7 @@ class _BodyState extends ConsumerState<_Body> {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
-        KnowledgeObjectHero(
+        KnowledgeObjectHeader(
           icon: FLucideIcons.gitBranch,
           color: colors.primary,
           typeLabel: l10n.knowledgeDecisionDetailTitle,

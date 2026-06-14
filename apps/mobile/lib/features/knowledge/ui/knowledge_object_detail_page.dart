@@ -88,7 +88,8 @@ class _KnowledgeObjectDetailPageState
     }
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
-      final obj = await _fetch(repo, kind, widget.id);
+      final ownerUserId = await ref.read(knowledgeOwnerUserIdProvider.future);
+      final obj = await _fetch(repo, ownerUserId, kind, widget.id);
       final related = await _fetchRelated(repo, obj);
       if (mounted) {
         setState(() {
@@ -113,16 +114,35 @@ class _KnowledgeObjectDetailPageState
 
   Future<Object?> _fetch(
     KnowledgeRepository repo,
+    String ownerUserId,
     KnowledgeObjectKind kind,
     String id,
   ) {
     return switch (kind) {
-      KnowledgeObjectKind.note => repo.findNote(id),
-      KnowledgeObjectKind.concept => repo.findConcept(id),
-      KnowledgeObjectKind.experiment => repo.findExperiment(id),
-      KnowledgeObjectKind.principle => repo.findPrinciple(id),
-      KnowledgeObjectKind.assumption => repo.findAssumption(id),
-      KnowledgeObjectKind.routine => repo.findRoutine(id),
+      KnowledgeObjectKind.note => repo.findNote(
+        ownerUserId: ownerUserId,
+        id: id,
+      ),
+      KnowledgeObjectKind.concept => repo.findConcept(
+        ownerUserId: ownerUserId,
+        id: id,
+      ),
+      KnowledgeObjectKind.experiment => repo.findExperiment(
+        ownerUserId: ownerUserId,
+        id: id,
+      ),
+      KnowledgeObjectKind.principle => repo.findPrinciple(
+        ownerUserId: ownerUserId,
+        id: id,
+      ),
+      KnowledgeObjectKind.assumption => repo.findAssumption(
+        ownerUserId: ownerUserId,
+        id: id,
+      ),
+      KnowledgeObjectKind.routine => repo.findRoutine(
+        ownerUserId: ownerUserId,
+        id: id,
+      ),
     };
   }
 
@@ -135,7 +155,10 @@ class _KnowledgeObjectDetailPageState
       case final KnowledgeConcept c:
         final related = <KnowledgeConcept>[];
         for (final id in c.relatedConceptIds) {
-          final concept = await repo.findConcept(id);
+          final concept = await repo.findConcept(
+            ownerUserId: c.sync.ownerUserId,
+            id: id,
+          );
           if (concept != null) related.add(concept);
         }
         return _ObjectRelatedData(relatedConcepts: related);
@@ -145,7 +168,10 @@ class _KnowledgeObjectDetailPageState
           return const _ObjectRelatedData();
         }
         return _ObjectRelatedData(
-          targetAssumption: await repo.findAssumption(targetId),
+          targetAssumption: await repo.findAssumption(
+            ownerUserId: e.sync.ownerUserId,
+            id: targetId,
+          ),
         );
       case final KnowledgePrinciple p:
         final decisions = await repo.listDecisions(
@@ -160,7 +186,10 @@ class _KnowledgeObjectDetailPageState
       case final KnowledgeAssumption a:
         final notes = <KnowledgeNote>[];
         for (final id in a.evidenceIds) {
-          final note = await repo.findNote(id);
+          final note = await repo.findNote(
+            ownerUserId: a.sync.ownerUserId,
+            id: id,
+          );
           if (note != null) notes.add(note);
         }
         final decisions = await repo.listDecisions(
@@ -312,8 +341,8 @@ class _ObjectRelatedData {
 
 // ── Per-type section builders ──────────────────────────────────────────────
 
-class _ObjectHero extends StatelessWidget {
-  const _ObjectHero({
+class _ObjectHeader extends StatelessWidget {
+  const _ObjectHeader({
     required this.kind,
     required this.title,
     required this.updatedAt,
@@ -328,7 +357,7 @@ class _ObjectHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return KnowledgeObjectHero(
+    return KnowledgeObjectHeader(
       icon: _kindIcon(kind),
       color: _kindColor(context, kind),
       typeLabel: _kindLabel(l10n, kind),
@@ -373,7 +402,7 @@ List<Widget> _noteSections(BuildContext context, KnowledgeNote n) {
   final l10n = AppLocalizations.of(context);
   final title = n.title.trim().isEmpty ? l10n.knowledgeUntitled : n.title;
   return [
-    _ObjectHero(
+    _ObjectHeader(
       kind: KnowledgeObjectKind.note,
       title: title,
       updatedAt: n.sync.updatedAt,
@@ -431,7 +460,7 @@ List<Widget> _conceptSections(
   required List<KnowledgeConcept> relatedConcepts,
 }) {
   return [
-    _ObjectHero(
+    _ObjectHeader(
       kind: KnowledgeObjectKind.concept,
       title: c.name,
       updatedAt: c.sync.updatedAt,
@@ -492,7 +521,7 @@ List<Widget> _experimentSections(
 }) {
   final typography = context.theme.typography;
   return [
-    _ObjectHero(
+    _ObjectHeader(
       kind: KnowledgeObjectKind.experiment,
       title: e.hypothesis,
       status: e.status.wire,
@@ -574,7 +603,7 @@ List<Widget> _principleSections(
   required List<KnowledgeDecision> referencingDecisions,
 }) {
   return [
-    _ObjectHero(
+    _ObjectHeader(
       kind: KnowledgeObjectKind.principle,
       title: p.statement,
       status: p.status.wire,
@@ -619,7 +648,7 @@ List<Widget> _assumptionSections(
   required List<KnowledgeExperiment> targetingExperiments,
 }) {
   return [
-    _ObjectHero(
+    _ObjectHeader(
       kind: KnowledgeObjectKind.assumption,
       title: a.statement,
       status: a.status.wire,
@@ -712,7 +741,7 @@ List<Widget> _routineSections(BuildContext context, KnowledgeRoutine r) {
       ? l10n.knowledgeRoutineDueToday
       : l10n.knowledgeRoutineDueInDays(days);
   return [
-    _ObjectHero(
+    _ObjectHeader(
       kind: KnowledgeObjectKind.routine,
       title: r.statement,
       status: r.status.wire,

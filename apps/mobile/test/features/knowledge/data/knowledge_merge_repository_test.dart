@@ -26,11 +26,11 @@ void main() {
   tearDown(() async => db.close());
 
   SyncMeta meta(DateTime at) => SyncMeta(
-        ownerUserId: owner,
-        updatedAt: at,
-        updatedByDevice: 'dev-test',
-        hlc: Hlc.zero('dev-test'),
-      );
+    ownerUserId: owner,
+    updatedAt: at,
+    updatedByDevice: 'dev-test',
+    hlc: Hlc.zero('dev-test'),
+  );
 
   // Distinct timestamp per stamp so each touched row gets its own meta,
   // mirroring how `mutationStamperProvider.stamp()` is wired in the UI.
@@ -46,13 +46,13 @@ void main() {
     String body = '',
     List<String> tags = const <String>[],
   }) => KnowledgeNote(
-        id: id,
-        title: title,
-        bodyMd: body,
-        tags: tags,
-        createdAt: created,
-        sync: meta(created),
-      );
+    id: id,
+    title: title,
+    bodyMd: body,
+    tags: tags,
+    createdAt: created,
+    sync: meta(created),
+  );
 
   KnowledgeConcept concept({
     required String id,
@@ -61,14 +61,14 @@ void main() {
     String summary = '',
     List<String> related = const <String>[],
   }) => KnowledgeConcept(
-        id: id,
-        name: name,
-        aliases: aliases,
-        summaryMd: summary,
-        relatedConceptIds: related,
-        createdAt: created,
-        sync: meta(created),
-      );
+    id: id,
+    name: name,
+    aliases: aliases,
+    summaryMd: summary,
+    relatedConceptIds: related,
+    createdAt: created,
+    sync: meta(created),
+  );
 
   group('mergeNotes', () {
     test('unions tags, tombstones duplicate, stamps mergedIntoId', () async {
@@ -80,8 +80,8 @@ void main() {
       );
       outbox.clearQueued();
 
-      final primary = (await repo.findNote('keep'))!;
-      final dup = (await repo.findNote('dup'))!;
+      final primary = (await repo.findNote(ownerUserId: owner, id: 'keep'))!;
+      final dup = (await repo.findNote(ownerUserId: owner, id: 'dup'))!;
       final survivor = await repo.mergeNotes(
         primary: primary,
         duplicates: [dup],
@@ -94,7 +94,7 @@ void main() {
       expect(survivor.tags.toSet(), {'finance', 'hk', 'reminder'});
 
       // Duplicate is soft-deleted and points at the survivor.
-      final dupAfter = await repo.findNote('dup');
+      final dupAfter = await repo.findNote(ownerUserId: owner, id: 'dup');
       expect(dupAfter!.sync.deletedAt, isNotNull);
       expect(dupAfter.mergedIntoId, 'keep');
 
@@ -103,10 +103,7 @@ void main() {
       expect(live.map((n) => n.id), <String>['keep']);
 
       // Both touched rows enqueued for sync.
-      expect(
-        outbox.queued.map((e) => e.rowId).toSet(),
-        {'keep', 'dup'},
-      );
+      expect(outbox.queued.map((e) => e.rowId).toSet(), {'keep', 'dup'});
     });
 
     test('merged_title / merged_body override the survivor fields', () async {
@@ -114,8 +111,8 @@ void main() {
       await repo.upsertNote(note(id: 'b', title: 'dup', body: 'dup body'));
 
       final survivor = await repo.mergeNotes(
-        primary: (await repo.findNote('a'))!,
-        duplicates: [(await repo.findNote('b'))!],
+        primary: (await repo.findNote(ownerUserId: owner, id: 'a'))!,
+        duplicates: [(await repo.findNote(ownerUserId: owner, id: 'b'))!],
         stamp: stamp,
         mergedTitle: '合并后的标题',
         mergedBody: '合并后的正文',
@@ -123,15 +120,15 @@ void main() {
 
       expect(survivor.title, '合并后的标题');
       expect(survivor.bodyMd, '合并后的正文');
-      final reloaded = await repo.findNote('a');
+      final reloaded = await repo.findNote(ownerUserId: owner, id: 'a');
       expect(reloaded!.title, '合并后的标题');
     });
 
     test('a duplicate_id equal to primary is ignored', () async {
       await repo.upsertNote(note(id: 'a', title: 'x', tags: const ['t']));
-      final p = (await repo.findNote('a'))!;
+      final p = (await repo.findNote(ownerUserId: owner, id: 'a'))!;
       await repo.mergeNotes(primary: p, duplicates: [p], stamp: stamp);
-      final after = await repo.findNote('a');
+      final after = await repo.findNote(ownerUserId: owner, id: 'a');
       expect(after!.sync.deletedAt, isNull, reason: 'primary must survive');
     });
   });
@@ -139,15 +136,25 @@ void main() {
   group('mergeConcepts', () {
     test('folds duplicate name into aliases + unions related', () async {
       await repo.upsertConcept(
-        concept(id: 'keep', name: 'FIRE', aliases: const ['fi'], related: const ['x']),
+        concept(
+          id: 'keep',
+          name: 'FIRE',
+          aliases: const ['fi'],
+          related: const ['x'],
+        ),
       );
       await repo.upsertConcept(
-        concept(id: 'dup', name: '财务自由', aliases: const ['retire'], related: const ['y']),
+        concept(
+          id: 'dup',
+          name: '财务自由',
+          aliases: const ['retire'],
+          related: const ['y'],
+        ),
       );
 
       final survivor = await repo.mergeConcepts(
-        primary: (await repo.findConcept('keep'))!,
-        duplicates: [(await repo.findConcept('dup'))!],
+        primary: (await repo.findConcept(ownerUserId: owner, id: 'keep'))!,
+        duplicates: [(await repo.findConcept(ownerUserId: owner, id: 'dup'))!],
         stamp: stamp,
       );
 
@@ -156,7 +163,7 @@ void main() {
       expect(survivor.aliases.toSet(), {'fi', 'retire', '财务自由'});
       expect(survivor.relatedConceptIds.toSet(), {'x', 'y'});
 
-      final dupAfter = await repo.findConcept('dup');
+      final dupAfter = await repo.findConcept(ownerUserId: owner, id: 'dup');
       expect(dupAfter!.sync.deletedAt, isNotNull);
       expect(dupAfter.mergedIntoId, 'keep');
     });
@@ -170,14 +177,15 @@ void main() {
       );
 
       await repo.mergeConcepts(
-        primary: (await repo.findConcept('keep'))!,
-        duplicates: [(await repo.findConcept('dup'))!],
+        primary: (await repo.findConcept(ownerUserId: owner, id: 'keep'))!,
+        duplicates: [(await repo.findConcept(ownerUserId: owner, id: 'dup'))!],
         stamp: stamp,
       );
 
-      final other = await repo.findConcept('other');
-      expect(other!.relatedConceptIds, <String>['keep'],
-          reason: 'inbound link should follow the merge');
+      final other = await repo.findConcept(ownerUserId: owner, id: 'other');
+      expect(other!.relatedConceptIds, <String>[
+        'keep',
+      ], reason: 'inbound link should follow the merge');
     });
   });
 }

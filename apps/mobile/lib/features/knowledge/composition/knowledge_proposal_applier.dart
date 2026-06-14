@@ -46,9 +46,14 @@ export 'knowledge_proposal_kinds.dart' show kKnowledgeProposalAppliedKinds;
 const String kKnowledgeTablePrefix = 'knowledge_';
 
 class KnowledgeProposalApplier implements ProposalApplier {
-  KnowledgeProposalApplier({required this.repo, required this.stamp});
+  KnowledgeProposalApplier({
+    required this.repo,
+    required this.ownerUserId,
+    required this.stamp,
+  });
 
   final KnowledgeRepository repo;
+  final String ownerUserId;
 
   /// Mints one fresh [SyncMeta] per touched row (own HLC). Production
   /// wiring delegates to [MutationStamper.stamp]; tests inject a fake.
@@ -97,7 +102,9 @@ class KnowledgeProposalApplier implements ProposalApplier {
     }
 
     final noteId = plan.get('note_id');
-    final existing = noteId == null ? null : await repo.findNote(noteId);
+    final existing = noteId == null
+        ? null
+        : await repo.findNote(ownerUserId: ownerUserId, id: noteId);
     if (noteId != null && existing == null) {
       throw ProposalApplyException('note $noteId 不存在');
     }
@@ -173,14 +180,27 @@ class KnowledgeProposalApplier implements ProposalApplier {
 
     switch (entityType) {
       case 'note':
-        final primary = await repo.findNote(primaryId);
+        final primary = await repo.findNote(
+          ownerUserId: ownerUserId,
+          id: primaryId,
+        );
         if (primary == null) {
           throw ProposalApplyException('note $primaryId 不存在');
         }
         final dups = <KnowledgeNote>[];
+        final missing = <String>[];
         for (final id in duplicateIds) {
-          final d = await repo.findNote(id);
-          if (d != null) dups.add(d);
+          final d = await repo.findNote(ownerUserId: ownerUserId, id: id);
+          if (d == null) {
+            missing.add(id);
+          } else {
+            dups.add(d);
+          }
+        }
+        if (missing.isNotEmpty) {
+          throw ProposalApplyException(
+            '以下 note 不存在或不属于当前用户: ${missing.join(", ")}',
+          );
         }
         if (dups.isEmpty) {
           throw ProposalApplyException('没有可合并的重复 note');
@@ -199,14 +219,27 @@ class KnowledgeProposalApplier implements ProposalApplier {
           shortLabel: '已合并 ${dups.length} 条到「${survivor.title}」',
         );
       case 'concept':
-        final primary = await repo.findConcept(primaryId);
+        final primary = await repo.findConcept(
+          ownerUserId: ownerUserId,
+          id: primaryId,
+        );
         if (primary == null) {
           throw ProposalApplyException('concept $primaryId 不存在');
         }
         final dups = <KnowledgeConcept>[];
+        final missing = <String>[];
         for (final id in duplicateIds) {
-          final d = await repo.findConcept(id);
-          if (d != null) dups.add(d);
+          final d = await repo.findConcept(ownerUserId: ownerUserId, id: id);
+          if (d == null) {
+            missing.add(id);
+          } else {
+            dups.add(d);
+          }
+        }
+        if (missing.isNotEmpty) {
+          throw ProposalApplyException(
+            '以下 concept 不存在或不属于当前用户: ${missing.join(", ")}',
+          );
         }
         if (dups.isEmpty) {
           throw ProposalApplyException('没有可合并的重复 concept');
@@ -225,11 +258,18 @@ class KnowledgeProposalApplier implements ProposalApplier {
           shortLabel: '已合并 ${dups.length} 条到「${survivor.name}」',
         );
       case 'principle':
-        final primary = await repo.findPrinciple(primaryId);
+        final primary = await repo.findPrinciple(
+          ownerUserId: ownerUserId,
+          id: primaryId,
+        );
         if (primary == null) {
           throw ProposalApplyException('principle $primaryId 不存在');
         }
-        final dups = await _hydrate(duplicateIds, repo.findPrinciple);
+        final dups = await _hydrate(
+          duplicateIds,
+          (id) => repo.findPrinciple(ownerUserId: ownerUserId, id: id),
+          entityType: 'principle',
+        );
         if (dups.isEmpty) {
           throw ProposalApplyException('没有可合并的重复 principle');
         }
@@ -245,11 +285,18 @@ class KnowledgeProposalApplier implements ProposalApplier {
           shortLabel: '已合并 ${dups.length} 条到「${survivor.statement}」',
         );
       case 'assumption':
-        final primary = await repo.findAssumption(primaryId);
+        final primary = await repo.findAssumption(
+          ownerUserId: ownerUserId,
+          id: primaryId,
+        );
         if (primary == null) {
           throw ProposalApplyException('assumption $primaryId 不存在');
         }
-        final dups = await _hydrate(duplicateIds, repo.findAssumption);
+        final dups = await _hydrate(
+          duplicateIds,
+          (id) => repo.findAssumption(ownerUserId: ownerUserId, id: id),
+          entityType: 'assumption',
+        );
         if (dups.isEmpty) {
           throw ProposalApplyException('没有可合并的重复 assumption');
         }
@@ -265,11 +312,18 @@ class KnowledgeProposalApplier implements ProposalApplier {
           shortLabel: '已合并 ${dups.length} 条到「${survivor.statement}」',
         );
       case 'decision':
-        final primary = await repo.findDecision(primaryId);
+        final primary = await repo.findDecision(
+          ownerUserId: ownerUserId,
+          id: primaryId,
+        );
         if (primary == null) {
           throw ProposalApplyException('decision $primaryId 不存在');
         }
-        final dups = await _hydrate(duplicateIds, repo.findDecision);
+        final dups = await _hydrate(
+          duplicateIds,
+          (id) => repo.findDecision(ownerUserId: ownerUserId, id: id),
+          entityType: 'decision',
+        );
         if (dups.isEmpty) {
           throw ProposalApplyException('没有可合并的重复 decision');
         }
@@ -285,11 +339,18 @@ class KnowledgeProposalApplier implements ProposalApplier {
           shortLabel: '已合并 ${dups.length} 条到「${survivor.question}」',
         );
       case 'experiment':
-        final primary = await repo.findExperiment(primaryId);
+        final primary = await repo.findExperiment(
+          ownerUserId: ownerUserId,
+          id: primaryId,
+        );
         if (primary == null) {
           throw ProposalApplyException('experiment $primaryId 不存在');
         }
-        final dups = await _hydrate(duplicateIds, repo.findExperiment);
+        final dups = await _hydrate(
+          duplicateIds,
+          (id) => repo.findExperiment(ownerUserId: ownerUserId, id: id),
+          entityType: 'experiment',
+        );
         if (dups.isEmpty) {
           throw ProposalApplyException('没有可合并的重复 experiment');
         }
@@ -312,15 +373,27 @@ class KnowledgeProposalApplier implements ProposalApplier {
     }
   }
 
-  /// Hydrate ids into rows, dropping any that no longer resolve.
+  /// Hydrate ids into rows. Apply is all-or-nothing: missing ids usually
+  /// mean the proposal is stale or points outside the active owner.
   Future<List<T>> _hydrate<T>(
     List<String> ids,
-    Future<T?> Function(String) find,
-  ) async {
+    Future<T?> Function(String) find, {
+    required String entityType,
+  }) async {
     final out = <T>[];
+    final missing = <String>[];
     for (final id in ids) {
       final row = await find(id);
-      if (row != null) out.add(row);
+      if (row == null) {
+        missing.add(id);
+      } else {
+        out.add(row);
+      }
+    }
+    if (missing.isNotEmpty) {
+      throw ProposalApplyException(
+        '以下 $entityType 不存在或不属于当前用户: ${missing.join(", ")}',
+      );
     }
     return out;
   }
@@ -331,8 +404,8 @@ class KnowledgeProposalApplier implements ProposalApplier {
     if (fromId == null || toId == null || fromId == toId) {
       throw ProposalApplyException('concept_link 缺少 from/to 或两者相同');
     }
-    final a = await repo.findConcept(fromId);
-    final b = await repo.findConcept(toId);
+    final a = await repo.findConcept(ownerUserId: ownerUserId, id: fromId);
+    final b = await repo.findConcept(ownerUserId: ownerUserId, id: toId);
     if (a == null || b == null) {
       throw ProposalApplyException('concept_link 引用的概念不存在');
     }
@@ -444,9 +517,11 @@ String _short(String value, {int max = kKnowledgeInlineExcerptMaxChars}) {
 final knowledgeProposalApplierProvider =
     FutureProvider<KnowledgeProposalApplier>((ref) async {
       final repo = await ref.watch(knowledgeRepositoryProvider.future);
+      final ownerUserId = await ref.watch(currentUserIdProvider)();
       final stamper = await ref.watch(mutationStamperProvider.future);
       return KnowledgeProposalApplier(
         repo: repo,
+        ownerUserId: ownerUserId,
         stamp: () async {
           final s = await stamper.stamp();
           return SyncMeta(

@@ -32,8 +32,8 @@ Future<({KnowledgeNote? note, Map<String, Object?>? error})> loadOwnedNote(
   }
   final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
   final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-  final note = await repo.findNote(noteId);
-  if (note == null || note.sync.ownerUserId != ownerUserId) {
+  final note = await repo.findNote(ownerUserId: ownerUserId, id: noteId);
+  if (note == null) {
     return (note: null, error: badRequest('note_id $noteId 不存在或不属于当前用户。'));
   }
   return (note: note, error: null);

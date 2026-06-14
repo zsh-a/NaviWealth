@@ -44,4 +44,38 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Discard changes?'), findsNothing);
   });
+
+  testWidgets('confirm dialog wraps content instead of filling viewport', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        Builder(
+          builder: (context) => FButton(
+            onPress: () {
+              showConfirmDialog(
+                context: context,
+                title: const Text('Delete item?'),
+                body: const Text('This cannot be undone.'),
+                cancelLabel: 'Cancel',
+                confirmLabel: 'Delete',
+                destructive: true,
+              );
+            },
+            child: const Text('Open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    final dialogSize = tester.getSize(
+      find.byKey(const ValueKey<String>('glass-dialog-surface')),
+    );
+    expect(dialogSize.height, lessThan(320));
+    expect(dialogSize.height, greaterThan(120));
+    expect(dialogSize.width, lessThanOrEqualTo(460));
+  });
 }

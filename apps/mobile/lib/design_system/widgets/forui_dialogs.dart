@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
@@ -22,27 +23,29 @@ Future<bool?> showConfirmDialog({
   return showFDialog<bool>(
     context: context,
     barrierDismissible: false,
-    builder: (ctx, style, animation) => _GlassDialog(
-      accentColor: destructive
-          ? SemanticColors.of(ctx).danger
-          : FTheme.of(ctx).colors.primary,
-      icon: icon,
-      title: title,
-      body: body,
-      actions: [
-        FButton(
-          variant: FButtonVariant.outline,
-          onPress: () => Navigator.of(ctx).pop(false),
-          child: Text(cancelLabel),
-        ),
-        FButton(
-          variant: destructive
-              ? FButtonVariant.destructive
-              : FButtonVariant.primary,
-          onPress: () => Navigator.of(ctx).pop(true),
-          child: Text(confirmLabel),
-        ),
-      ],
+    builder: (ctx, style, animation) => _DialogFrame(
+      child: _GlassDialog(
+        accentColor: destructive
+            ? SemanticColors.of(ctx).danger
+            : FTheme.of(ctx).colors.primary,
+        icon: icon,
+        title: title,
+        body: body,
+        actions: [
+          FButton(
+            variant: FButtonVariant.outline,
+            onPress: () => Navigator.of(ctx).pop(false),
+            child: Text(cancelLabel),
+          ),
+          FButton(
+            variant: destructive
+                ? FButtonVariant.destructive
+                : FButtonVariant.primary,
+            onPress: () => Navigator.of(ctx).pop(true),
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -59,20 +62,43 @@ Future<bool?> showInfoDialog(
 }) {
   return showFDialog<bool>(
     context: context,
-    builder: (ctx, style, animation) => _GlassDialog(
-      accentColor: FTheme.of(ctx).colors.primary,
-      icon: icon,
-      title: title,
-      body: body,
-      actions: [
-        FButton(
-          variant: FButtonVariant.primary,
-          onPress: () => Navigator.of(ctx).pop(true),
-          child: Text(okLabel),
-        ),
-      ],
+    builder: (ctx, style, animation) => _DialogFrame(
+      child: _GlassDialog(
+        accentColor: FTheme.of(ctx).colors.primary,
+        icon: icon,
+        title: title,
+        body: body,
+        actions: [
+          FButton(
+            variant: FButtonVariant.primary,
+            onPress: () => Navigator.of(ctx).pop(true),
+            child: Text(okLabel),
+          ),
+        ],
+      ),
     ),
   );
+}
+
+class _DialogFrame extends StatelessWidget {
+  const _DialogFrame({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = math.min(
+          460.0,
+          math.max(0.0, constraints.maxWidth - AppSpacing.s32),
+        );
+        return Center(
+          child: SizedBox(width: width, child: child),
+        );
+      },
+    );
+  }
 }
 
 /// Frosted glass dialog surface — matches the sheet aesthetic for a
@@ -104,6 +130,7 @@ class _GlassDialog extends StatelessWidget {
     );
 
     return ClipRRect(
+      key: const ValueKey<String>('glass-dialog-surface'),
       borderRadius: BorderRadius.circular(AppRadius.xl),
       child: BackdropFilter(
         filter: ui.ImageFilter.blur(

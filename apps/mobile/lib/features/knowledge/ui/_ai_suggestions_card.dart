@@ -5,16 +5,15 @@
 /// [InboxTriageAgent] grouped by note. Each envelope gets ✓ / ✗
 /// buttons:
 ///
-/// - ✓ → applies the payload via `KnowledgeRepository.upsertNote`
-///   (tag merge / `kind:*` / `decision:<id>` soft links), then marks
+/// - ✓ → applies the payload via [KnowledgeInboxProposalApplier], then marks
 ///   the envelope `accepted` in the side-table.
 /// - ✗ → marks the envelope `dismissed`; the agent's merge logic in
 ///   `_inbox_triage_support.persistEnvelope` then refuses to
 ///   re-propose the same kind for the same note.
 ///
 /// The side-table is local-only / never-sync (§7), so all of this
-/// stays on-device. No ProposalApplier yet — the apply paths here are
-/// tiny and inlining is honest about the MVP shape.
+/// stays on-device. No cross-domain ProposalApplier: inbox proposals are a
+/// Knowledge-local review workflow, not chat proposal cards.
 library;
 
 import 'package:flutter/widgets.dart';
@@ -22,10 +21,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
 
-import '../../../core/sync/mutation_context.dart';
-import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../composition/knowledge_inbox_proposal_applier.dart';
 import '../data/inbox_triage_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
@@ -45,7 +43,7 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
     final tick = ref.watch(aiSuggestionsRefreshProvider);
     final l10n = AppLocalizations.of(context);
     return FutureBuilder<String>(
-      future: ref.watch(currentUserIdProvider)(),
+      future: ref.watch(knowledgeOwnerUserIdProvider.future),
       builder: (context, ownerSnap) {
         if (!ownerSnap.hasData) {
           return KnowledgeSection.group(
@@ -159,7 +157,10 @@ class _NoteSuggestionGroupState extends ConsumerState<_NoteSuggestionGroup> {
 
   Future<void> _loadNote() async {
     final repo = await ref.read(knowledgeRepositoryProvider.future);
-    final note = await repo.findNote(widget.record.noteId);
+    final note = await repo.findNote(
+      ownerUserId: widget.record.ownerUserId,
+      id: widget.record.noteId,
+    );
     if (mounted) {
       setState(() {
         _note = note;
@@ -252,7 +253,10 @@ class _ProposalRowState extends ConsumerState<_ProposalRow> {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      await _applyAccept(ref, widget.note, widget.proposal);
+      final applier = await ref.read(
+        knowledgeInboxProposalApplierProvider.future,
+      );
+      await applier.accept(note: widget.note, proposal: widget.proposal);
       final triage = await ref.read(inboxTriageRepositoryProvider.future);
       await triage.resolve(
         noteId: widget.note.id,
@@ -560,64 +564,4 @@ String _formatPayloadValue(Object? value) {
 
 extension on InboxProposalStatus {
   bool get isPending => this == InboxProposalStatus.pending;
-}
-
-/// Accept dispatch — per-kind: builds an updated [KnowledgeNote] and
-/// upserts it. Each kind reduces to "merge into note.tags / project_tag"
-/// so we don't need a new schema column or a ProposalApplier yet.
-Future<void> _applyAccept(
-  WidgetRef ref,
-  KnowledgeNote note,
-  InboxProposal proposal,
-) async {
-  final repo = await ref.read(knowledgeRepositoryProvider.future);
-  final stamper = await ref.read(mutationStamperProvider.future);
-  final stamp = await stamper.stamp();
-
-  final tagSet = note.tags.toSet();
-  String? projectTag = note.projectTag;
-
-  switch (proposal.kind) {
-    case InboxProposalKind.classification:
-      final kind = proposal.payload['kind'] as String?;
-      if (kind == null || kind.isEmpty) return;
-      tagSet.add('kind:$kind');
-    case InboxProposalKind.tags:
-      final raw = proposal.payload['tags'];
-      if (raw is List) {
-        for (final t in raw.whereType<String>()) {
-          final lower = t.trim().toLowerCase();
-          if (lower.isNotEmpty) tagSet.add(lower);
-        }
-      }
-      final pt = proposal.payload['project_tag'];
-      if (pt is String && pt.trim().isNotEmpty) {
-        projectTag = pt.trim();
-      }
-    case InboxProposalKind.linkToDecision:
-      final raw = proposal.payload['related_decision_ids'];
-      if (raw is List) {
-        for (final id in raw.whereType<String>()) {
-          final trimmed = id.trim();
-          if (trimmed.isNotEmpty) tagSet.add('decision:$trimmed');
-        }
-      }
-  }
-
-  final updated = KnowledgeNote(
-    id: note.id,
-    title: note.title,
-    bodyMd: note.bodyMd,
-    sourceUrl: note.sourceUrl,
-    tags: tagSet.toList(growable: false),
-    projectTag: projectTag,
-    createdAt: note.createdAt,
-    sync: SyncMeta(
-      ownerUserId: stamp.ownerUserId,
-      updatedAt: stamp.now,
-      updatedByDevice: stamp.deviceId,
-      hlc: stamp.hlc,
-    ),
-  );
-  await repo.upsertNote(updated);
 }

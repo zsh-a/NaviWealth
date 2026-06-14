@@ -72,19 +72,20 @@ class DecisionContextSnapper {
         if (cmp != 0) return cmp;
         return b.timestamp.compareTo(a.timestamp);
       });
-    return filtered.take(kDecisionSnapshotPerDomainCap).map(_packOne).toList(
-          growable: false,
-        );
+    return filtered
+        .take(kDecisionSnapshotPerDomainCap)
+        .map(_packOne)
+        .toList(growable: false);
   }
 
   static Map<String, Object?> _packOne(EventRecord e) => <String, Object?>{
-        'type': e.type,
-        'source': e.source,
-        'timestamp': e.timestamp.toUtc().toIso8601String(),
-        'title': ?e.title,
-        'summary': e.summary,
-        'importance': e.importance,
-      };
+    'type': e.type,
+    'source': e.source,
+    'timestamp': e.timestamp.toUtc().toIso8601String(),
+    'title': ?e.title,
+    'summary': e.summary,
+    'importance': e.importance,
+  };
 }
 
 final decisionContextSnapperProvider = Provider<DecisionContextSnapper>(

@@ -15,9 +15,7 @@ import 'inbox_triage_agent.dart';
 import 'review_agent.dart';
 import 'routine_due_agent.dart';
 
-final reviewAgentProvider = Provider<ReviewAgent>(
-  (ref) => const ReviewAgent(),
-);
+final reviewAgentProvider = Provider<ReviewAgent>((ref) => const ReviewAgent());
 
 final assumptionAgentProvider = Provider<AssumptionAgent>(
   (ref) => const AssumptionAgent(),

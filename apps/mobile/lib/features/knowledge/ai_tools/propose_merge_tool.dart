@@ -14,6 +14,7 @@
 library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
 
 import '../data/providers.dart';
 import '_tool_support.dart';
@@ -50,10 +51,7 @@ class ProposeMergeTool implements DeviceTool {
           'experiment',
         ],
       },
-      'primary_id': {
-        'type': 'string',
-        'description': '保留的条目 id。',
-      },
+      'primary_id': {'type': 'string', 'description': '保留的条目 id。'},
       'duplicate_ids': {
         'type': 'array',
         'items': <String, Object?>{'type': 'string'},
@@ -64,12 +62,14 @@ class ProposeMergeTool implements DeviceTool {
       'merged_body': {'type': 'string', 'description': 'note: 覆盖保留条目正文。'},
       'merged_name': {'type': 'string', 'description': 'concept: 覆盖名称。'},
       'merged_summary': {'type': 'string', 'description': 'concept: 覆盖摘要。'},
-      'reason': {
-        'type': 'string',
-        'description': '一句中文说明为什么判定它们重复。会显示给用户。',
-      },
+      'reason': {'type': 'string', 'description': '一句中文说明为什么判定它们重复。会显示给用户。'},
     },
-    'required': <String>['entity_type', 'primary_id', 'duplicate_ids', 'reason'],
+    'required': <String>[
+      'entity_type',
+      'primary_id',
+      'duplicate_ids',
+      'reason',
+    ],
   };
 
   @override
@@ -108,6 +108,7 @@ class ProposeMergeTool implements DeviceTool {
     }
 
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
+    final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
 
     // Resolve a row to its display label + the tokens a merge unions onto the
     // survivor (tags / aliases / evidence / metrics — empty for types with
@@ -115,25 +116,25 @@ class ProposeMergeTool implements DeviceTool {
     Future<({String? label, Set<String> tokens})> resolve(String id) async {
       switch (entityType) {
         case 'note':
-          final r = await repo.findNote(id);
+          final r = await repo.findNote(ownerUserId: ownerUserId, id: id);
           return (label: r?.title, tokens: <String>{...?r?.tags});
         case 'concept':
-          final r = await repo.findConcept(id);
+          final r = await repo.findConcept(ownerUserId: ownerUserId, id: id);
           return (
             label: r?.name,
             tokens: <String>{...?r?.aliases, if (r != null) r.name},
           );
         case 'principle':
-          final r = await repo.findPrinciple(id);
+          final r = await repo.findPrinciple(ownerUserId: ownerUserId, id: id);
           return (label: r?.statement, tokens: const <String>{});
         case 'assumption':
-          final r = await repo.findAssumption(id);
+          final r = await repo.findAssumption(ownerUserId: ownerUserId, id: id);
           return (label: r?.statement, tokens: <String>{...?r?.evidenceIds});
         case 'decision':
-          final r = await repo.findDecision(id);
+          final r = await repo.findDecision(ownerUserId: ownerUserId, id: id);
           return (label: r?.question, tokens: const <String>{});
         case 'experiment':
-          final r = await repo.findExperiment(id);
+          final r = await repo.findExperiment(ownerUserId: ownerUserId, id: id);
           return (label: r?.hypothesis, tokens: <String>{...?r?.metrics});
         default:
           return (label: null, tokens: const <String>{});
@@ -167,7 +168,8 @@ class ProposeMergeTool implements DeviceTool {
     }
 
     final kept = primary.label ?? primaryId;
-    final summary = '建议合并 ${duplicateIds.length} 条${nouns[entityType]}'
+    final summary =
+        '建议合并 ${duplicateIds.length} 条${nouns[entityType]}'
         '到「$kept」— $reason';
 
     return proposalEnvelope(

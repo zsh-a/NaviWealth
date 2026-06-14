@@ -131,10 +131,15 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
     return rows.map(_noteFromRow).toList();
   }
 
-  Future<KnowledgeNote?> findNote(String id) async {
-    final row = await (_db.select(
-      _db.knowledgeNotes,
-    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  Future<KnowledgeNote?> findNote({
+    required String ownerUserId,
+    required String id,
+  }) async {
+    final row =
+        await (_db.select(_db.knowledgeNotes)..where(
+              (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
+            ))
+            .getSingleOrNull();
     return row == null ? null : _noteFromRow(row);
   }
 
@@ -204,10 +209,15 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
     return rows.map(_principleFromRow).toList();
   }
 
-  Future<KnowledgePrinciple?> findPrinciple(String id) async {
-    final row = await (_db.select(
-      _db.knowledgePrinciples,
-    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  Future<KnowledgePrinciple?> findPrinciple({
+    required String ownerUserId,
+    required String id,
+  }) async {
+    final row =
+        await (_db.select(_db.knowledgePrinciples)..where(
+              (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
+            ))
+            .getSingleOrNull();
     return row == null ? null : _principleFromRow(row);
   }
 
@@ -265,10 +275,15 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
     return rows.map(_assumptionFromRow).toList();
   }
 
-  Future<KnowledgeAssumption?> findAssumption(String id) async {
-    final row = await (_db.select(
-      _db.knowledgeAssumptions,
-    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  Future<KnowledgeAssumption?> findAssumption({
+    required String ownerUserId,
+    required String id,
+  }) async {
+    final row =
+        await (_db.select(_db.knowledgeAssumptions)..where(
+              (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
+            ))
+            .getSingleOrNull();
     return row == null ? null : _assumptionFromRow(row);
   }
 
@@ -380,10 +395,15 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
     return rows.map(_decisionFromRow).toList();
   }
 
-  Future<KnowledgeDecision?> findDecision(String id) async {
-    final row = await (_db.select(
-      _db.knowledgeDecisions,
-    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  Future<KnowledgeDecision?> findDecision({
+    required String ownerUserId,
+    required String id,
+  }) async {
+    final row =
+        await (_db.select(_db.knowledgeDecisions)..where(
+              (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
+            ))
+            .getSingleOrNull();
     return row == null ? null : _decisionFromRow(row);
   }
 
@@ -430,10 +450,15 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
     return q.watch().map((rows) => rows.map(_conceptFromRow).toList());
   }
 
-  Future<KnowledgeConcept?> findConcept(String id) async {
-    final row = await (_db.select(
-      _db.knowledgeConcepts,
-    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  Future<KnowledgeConcept?> findConcept({
+    required String ownerUserId,
+    required String id,
+  }) async {
+    final row =
+        await (_db.select(_db.knowledgeConcepts)..where(
+              (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
+            ))
+            .getSingleOrNull();
     return row == null ? null : _conceptFromRow(row);
   }
 
@@ -491,10 +516,15 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
     return rows.map(_experimentFromRow).toList();
   }
 
-  Future<KnowledgeExperiment?> findExperiment(String id) async {
-    final row = await (_db.select(
-      _db.knowledgeExperiments,
-    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  Future<KnowledgeExperiment?> findExperiment({
+    required String ownerUserId,
+    required String id,
+  }) async {
+    final row =
+        await (_db.select(_db.knowledgeExperiments)..where(
+              (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
+            ))
+            .getSingleOrNull();
     return row == null ? null : _experimentFromRow(row);
   }
 
@@ -577,10 +607,15 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
     return rows.map(_routineFromRow).toList();
   }
 
-  Future<KnowledgeRoutine?> findRoutine(String id) async {
-    final row = await (_db.select(
-      _db.knowledgeRoutines,
-    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  Future<KnowledgeRoutine?> findRoutine({
+    required String ownerUserId,
+    required String id,
+  }) async {
+    final row =
+        await (_db.select(_db.knowledgeRoutines)..where(
+              (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
+            ))
+            .getSingleOrNull();
     return row == null ? null : _routineFromRow(row);
   }
 

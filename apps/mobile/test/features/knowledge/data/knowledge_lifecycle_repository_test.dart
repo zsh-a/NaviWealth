@@ -52,11 +52,36 @@ void main() {
         // listActivePrinciples drops it; the generic accessors must not.
         expect(await repo.listActivePrinciples(ownerUserId: owner), isEmpty);
         expect(await repo.listPrinciples(ownerUserId: owner), hasLength(1));
-        final found = await repo.findPrinciple('p-retired');
+        final found = await repo.findPrinciple(
+          ownerUserId: owner,
+          id: 'p-retired',
+        );
         expect(found, isNotNull);
         expect(found!.status, PrincipleStatus.retired);
       },
     );
+
+    test('find accessors are scoped by owner user id', () async {
+      await repo.upsertNote(
+        KnowledgeNote(
+          id: 'shared-id',
+          title: 'owner note',
+          bodyMd: '',
+          tags: const [],
+          createdAt: at,
+          sync: meta(at),
+        ),
+      );
+
+      expect(
+        await repo.findNote(ownerUserId: 'other-user', id: 'shared-id'),
+        isNull,
+      );
+      expect(
+        await repo.findNote(ownerUserId: owner, id: 'shared-id'),
+        isNotNull,
+      );
+    });
 
     test('findAssumption resolves a falsified assumption', () async {
       await repo.upsertAssumption(
@@ -74,7 +99,10 @@ void main() {
 
       expect(await repo.listOpenAssumptions(ownerUserId: owner), isEmpty);
       expect(await repo.listAssumptions(ownerUserId: owner), hasLength(1));
-      final found = await repo.findAssumption('a-falsified');
+      final found = await repo.findAssumption(
+        ownerUserId: owner,
+        id: 'a-falsified',
+      );
       expect(found, isNotNull);
       expect(found!.status, AssumptionStatus.falsified);
     });
@@ -93,7 +121,7 @@ void main() {
       );
 
       expect(await repo.listExperiments(ownerUserId: owner), hasLength(1));
-      final found = await repo.findExperiment('e-1');
+      final found = await repo.findExperiment(ownerUserId: owner, id: 'e-1');
       expect(found, isNotNull);
       expect(found!.status, ExperimentStatus.running);
     });
@@ -121,7 +149,7 @@ void main() {
       );
 
       expect(await repo.listNotes(ownerUserId: owner), isEmpty);
-      final tombstone = await repo.findNote('n-delete');
+      final tombstone = await repo.findNote(ownerUserId: owner, id: 'n-delete');
       expect(tombstone, isNotNull);
       expect(tombstone!.sync.deletedAt, isNotNull);
       expect(outbox.queued, hasLength(1));
@@ -207,7 +235,7 @@ void main() {
           ),
         );
 
-        final after = await repo.findDecision('d-old');
+        final after = await repo.findDecision(ownerUserId: owner, id: 'd-old');
         expect(after, isNotNull);
         expect(after!.status, DecisionStatus.superseded);
         expect(after.actualOutcomeMd, '换成了动态对冲');

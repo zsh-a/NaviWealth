@@ -60,7 +60,7 @@ void main() {
 
     await repo.upsertRoutine(r);
 
-    final found = await repo.findRoutine('r-1');
+    final found = await repo.findRoutine(ownerUserId: owner, id: 'r-1');
     expect(found, isNotNull);
     expect(found!.statement, '港卡做一次活跃交易');
     expect(found.intervalDays, 180);
@@ -138,7 +138,7 @@ void main() {
       );
       await repo.upsertRoutine(bumped);
 
-      final after = await repo.findRoutine('hk-card');
+      final after = await repo.findRoutine(ownerUserId: owner, id: 'hk-card');
       // Drift's dateTime column round-trips through unix-millis, so a
       // UTC value comes back as the local-timezone representation of
       // the same instant. Compare in UTC so the assertion is timezone-

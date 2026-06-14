@@ -34,12 +34,7 @@ class ListOpenAssumptionsTool implements DeviceTool {
         'maximum': 1,
         'description': '只返回 confidence ≤ 该值的开放假设。',
       },
-      'limit': {
-        'type': 'integer',
-        'minimum': 1,
-        'maximum': 200,
-        'default': 50,
-      },
+      'limit': {'type': 'integer', 'minimum': 1, 'maximum': 200, 'default': 50},
     },
   };
 
@@ -75,17 +70,21 @@ class ListOpenAssumptionsTool implements DeviceTool {
     }
 
     final now = DateTime.now().toUtc();
-    final out = assumptions.take(limit).map((a) {
-      return <String, Object?>{
-        'id': a.id,
-        'statement': a.statement,
-        'confidence': a.confidence,
-        'scope': a.scope,
-        'source_decision_ids': referencingByAssumptionId[a.id] ?? const <String>[],
-        'last_verified_at': a.lastVerifiedAt?.toUtc().toIso8601String(),
-        'days_since_verify': a.daysSinceVerify(now),
-      };
-    }).toList(growable: false);
+    final out = assumptions
+        .take(limit)
+        .map((a) {
+          return <String, Object?>{
+            'id': a.id,
+            'statement': a.statement,
+            'confidence': a.confidence,
+            'scope': a.scope,
+            'source_decision_ids':
+                referencingByAssumptionId[a.id] ?? const <String>[],
+            'last_verified_at': a.lastVerifiedAt?.toUtc().toIso8601String(),
+            'days_since_verify': a.daysSinceVerify(now),
+          };
+        })
+        .toList(growable: false);
 
     return <String, Object?>{'assumptions': out};
   }

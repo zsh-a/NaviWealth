@@ -85,8 +85,7 @@ class ProposeRoutineTool implements DeviceTool {
     final nextDue = DateTime.tryParse(nextDueRaw) ?? defaultNextDue;
 
     final humanInterval = _humanInterval(intervalDays);
-    final summary =
-        '建议新建 Routine:"$statement" 每 $humanInterval 一次 — $reason';
+    final summary = '建议新建 Routine:"$statement" 每 $humanInterval 一次 — $reason';
 
     return proposalEnvelope(
       kind: 'knowledge_routine',
@@ -98,8 +97,7 @@ class ProposeRoutineTool implements DeviceTool {
         'next_due_at': nextDue.toUtc().toIso8601String(),
         'reason': reason,
       },
-      note:
-          '前端必须显示 summary_zh 给用户确认；只有用户明确点确认后才走 Repository.upsertRoutine。',
+      note: '前端必须显示 summary_zh 给用户确认；只有用户明确点确认后才走 Repository.upsertRoutine。',
     );
   }
 

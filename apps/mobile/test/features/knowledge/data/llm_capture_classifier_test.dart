@@ -38,8 +38,7 @@ class FakeDeviceLlmClient implements DeviceLlmClient {
   Stream<LlmStreamEvent> streamMessages(
     AnthropicRequest request, {
     CancelToken? cancelToken,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 
   @override
   Future<AnthropicCompletion> complete(
@@ -60,10 +59,10 @@ class _ReturnsText extends FakeBehavior {
   final String text;
   @override
   Future<AnthropicCompletion> run() async => AnthropicCompletion(
-        content: <Object?>[
-          <String, Object?>{'type': 'text', 'text': text},
-        ],
-      );
+    content: <Object?>[
+      <String, Object?>{'type': 'text', 'text': text},
+    ],
+  );
 }
 
 class _Throws extends FakeBehavior {
@@ -117,9 +116,7 @@ void main() {
 }'''),
       );
       final c = LlmCaptureClassifier(client: fake);
-      final r = await c.classify(
-        text: '我应该升级到 QQQ + BOXX 动态对冲，还是保持现状?',
-      );
+      final r = await c.classify(text: '我应该升级到 QQQ + BOXX 动态对冲，还是保持现状?');
       expect(r.kind, CaptureKind.decision);
       expect(r.statement, '升级到 QQQ + BOXX 动态对冲 vs 保持现状');
       expect(r.intervalDays, isNull);
@@ -314,7 +311,9 @@ Sure, here's the classification:
 
     test('empty text never invokes the client', () async {
       final fake = FakeDeviceLlmClient(
-        behavior: _ReturnsText('{"kind":"routine","confidence":1,"reason_zh":"x"}'),
+        behavior: _ReturnsText(
+          '{"kind":"routine","confidence":1,"reason_zh":"x"}',
+        ),
       );
       final c = LlmCaptureClassifier(client: fake);
       final r = await c.classify(text: '   ');

@@ -35,12 +35,10 @@ class ProposeConceptLinkTool implements DeviceTool {
       'to_concept_id': {'type': 'string'},
       'relation': {
         'type': 'string',
-        'description': '自然语言关系标签,例如 "is_a" / "related" / "contradicts" / "supports"。',
+        'description':
+            '自然语言关系标签,例如 "is_a" / "related" / "contradicts" / "supports"。',
       },
-      'reason': {
-        'type': 'string',
-        'description': '一句中文说明为什么建联。会显示给用户。',
-      },
+      'reason': {'type': 'string', 'description': '一句中文说明为什么建联。会显示给用户。'},
     },
     'required': <String>[
       'from_concept_id',
@@ -71,12 +69,12 @@ class ProposeConceptLinkTool implements DeviceTool {
 
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final from = await repo.findConcept(fromId);
-    final to = await repo.findConcept(toId);
-    if (from == null || from.sync.ownerUserId != ownerUserId) {
+    final from = await repo.findConcept(ownerUserId: ownerUserId, id: fromId);
+    final to = await repo.findConcept(ownerUserId: ownerUserId, id: toId);
+    if (from == null) {
       return badRequest('from_concept_id $fromId 不存在');
     }
-    if (to == null || to.sync.ownerUserId != ownerUserId) {
+    if (to == null) {
       return badRequest('to_concept_id $toId 不存在');
     }
 

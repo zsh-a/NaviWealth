@@ -11,9 +11,9 @@ import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
-import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/knowledge/ai_tools/find_similar_knowledge_tool.dart';
 import 'package:naviwealth/features/knowledge/ai_tools/propose_merge_tool.dart';
@@ -217,6 +217,7 @@ void main() {
       final c = ProviderContainer(
         overrides: [
           knowledgeRepositoryProvider.overrideWith((ref) async => repo),
+          currentUserIdProvider.overrideWithValue(() async => _kOwner),
         ],
       );
       addTearDown(c.dispose);

@@ -6,15 +6,17 @@ void main() {
   const c = HeuristicCaptureClassifier();
 
   group('HeuristicCaptureClassifier — routine detection', () {
-    test('港卡需要定期活跃 (no explicit interval) — routine with default 180d',
-        () async {
-      final r = await c.classify(text: '港卡需要定期做一次活跃交易，否则会休眠。');
-      expect(r.kind, CaptureKind.routine);
-      expect(r.intervalDays, 180);
-      expect(r.scope, 'finance/cards');
-      expect(r.confidence, greaterThan(0.5));
-      expect(r.statement, isNotNull);
-    });
+    test(
+      '港卡需要定期活跃 (no explicit interval) — routine with default 180d',
+      () async {
+        final r = await c.classify(text: '港卡需要定期做一次活跃交易，否则会休眠。');
+        expect(r.kind, CaptureKind.routine);
+        expect(r.intervalDays, 180);
+        expect(r.scope, 'finance/cards');
+        expect(r.confidence, greaterThan(0.5));
+        expect(r.statement, isNotNull);
+      },
+    );
 
     test('"每 6 个月做一次" — explicit interval parsed', () async {
       final r = await c.classify(text: '港卡每 6 个月做一次活跃交易');
@@ -96,19 +98,18 @@ void main() {
       expect(r.confidence, 0.0);
     });
 
-    test('decision-style language alone does not fire (heuristic未上线)',
-        () async {
-      // Heuristic only ships the routine path. A decision-shaped
-      // capture stays a Note here; the LLM classifier covers it. This
-      // test pins the heuristic's intentional scope.
-      final r = await c.classify(
-        text: '我应该升级到 QQQ + BOXX 动态对冲，还是保持现状?',
-      );
-      expect(r.kind, CaptureKind.note);
-    });
+    test(
+      'decision-style language alone does not fire (heuristic未上线)',
+      () async {
+        // Heuristic only ships the routine path. A decision-shaped
+        // capture stays a Note here; the LLM classifier covers it. This
+        // test pins the heuristic's intentional scope.
+        final r = await c.classify(text: '我应该升级到 QQQ + BOXX 动态对冲，还是保持现状?');
+        expect(r.kind, CaptureKind.note);
+      },
+    );
 
-    test('numeric pattern without 每/recurring marker stays a Note',
-        () async {
+    test('numeric pattern without 每/recurring marker stays a Note', () async {
       final r = await c.classify(text: '过去 6 个月持仓涨了 12%');
       expect(r.kind, CaptureKind.note);
     });

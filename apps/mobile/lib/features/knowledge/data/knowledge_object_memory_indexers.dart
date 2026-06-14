@@ -114,11 +114,22 @@ void subscribeKnowledgeIndexer<T>(
     final userId = await ref.read(currentUserIdProvider)();
     final runtime = await ref.read(memoryRuntimeProvider.future);
     var running = false;
+    List<T>? pendingRows;
     final sub = streamOf(repo, userId).listen((rows) async {
-      if (running) return;
+      if (running) {
+        pendingRows = rows;
+        return;
+      }
       running = true;
       try {
-        await reindex(runtime, rows, ownerUserId: userId);
+        var currentRows = rows;
+        while (true) {
+          await reindex(runtime, currentRows, ownerUserId: userId);
+          final nextRows = pendingRows;
+          pendingRows = null;
+          if (nextRows == null) break;
+          currentRows = nextRows;
+        }
       } finally {
         running = false;
       }

@@ -36,7 +36,11 @@ void main() {
     stampCounter = 0;
     db = makeTestDatabase();
     repo = KnowledgeRepository(db: db, outbox: InMemoryOutboxStore());
-    applier = KnowledgeProposalApplier(repo: repo, stamp: stamp);
+    applier = KnowledgeProposalApplier(
+      repo: repo,
+      ownerUserId: _owner,
+      stamp: stamp,
+    );
   });
 
   tearDown(() async => db.close());
@@ -82,11 +86,14 @@ void main() {
 
         expect(state.status, ProposalApplyStatus.applied);
         expect(state.appliedTable, 'knowledge_routines');
-        final routine = await repo.findRoutine(state.appliedEntityId!);
+        final routine = await repo.findRoutine(
+          ownerUserId: _owner,
+          id: state.appliedEntityId!,
+        );
         expect(routine, isNotNull);
         expect(routine!.statement, '港卡保持活跃');
 
-        final tempNote = await repo.findNote('n1');
+        final tempNote = await repo.findNote(ownerUserId: _owner, id: 'n1');
         expect(tempNote!.sync.deletedAt, isNotNull);
       },
     );
@@ -108,7 +115,7 @@ void main() {
       expect(state.status, ProposalApplyStatus.applied);
       expect(state.appliedTable, 'knowledge_notes');
 
-      final updated = await repo.findNote('n1');
+      final updated = await repo.findNote(ownerUserId: _owner, id: 'n1');
       expect(updated!.tags.toSet(), {
         'ops',
         'kind:concept_candidate',
@@ -138,9 +145,46 @@ void main() {
       final live = await repo.listNotes(ownerUserId: _owner);
       expect(live.map((n) => n.id), <String>['keep']);
       expect(live.single.tags.toSet(), {'hk', 'reminder'});
-      final dup = await repo.findNote('dup');
+      final dup = await repo.findNote(ownerUserId: _owner, id: 'dup');
       expect(dup!.mergedIntoId, 'keep');
     });
+
+    test(
+      'knowledge_merge rejects duplicate rows owned by another user',
+      () async {
+        await repo.upsertNote(note('keep', '港卡续期', const ['hk']));
+        await repo.upsertNote(
+          KnowledgeNote(
+            id: 'dup',
+            title: 'other user note',
+            bodyMd: '',
+            tags: const ['other'],
+            createdAt: created,
+            sync: SyncMeta(
+              ownerUserId: 'other-user',
+              updatedAt: created,
+              updatedByDevice: 'dev',
+              hlc: Hlc.zero('dev'),
+            ),
+          ),
+        );
+
+        await expectLater(
+          applier.apply(
+            plan('knowledge_merge', {
+              'entity_type': 'note',
+              'primary_id': 'keep',
+              'duplicate_ids': ['dup'],
+            }),
+          ),
+          throwsA(isA<ProposalApplyException>()),
+        );
+
+        final other = await repo.findNote(ownerUserId: 'other-user', id: 'dup');
+        expect(other!.sync.deletedAt, isNull);
+        expect(await repo.listNotes(ownerUserId: _owner), hasLength(1));
+      },
+    );
 
     test('knowledge_routine creates a routine row', () async {
       final state = await applier.apply(
@@ -153,7 +197,10 @@ void main() {
       expect(state.status, ProposalApplyStatus.applied);
       expect(state.appliedTable, 'knowledge_routines');
 
-      final r = await repo.findRoutine(state.appliedEntityId!);
+      final r = await repo.findRoutine(
+        ownerUserId: _owner,
+        id: state.appliedEntityId!,
+      );
       expect(r, isNotNull);
       expect(r!.statement, '港卡活跃');
       expect(r.intervalDays, 180);
@@ -189,8 +236,8 @@ void main() {
         expect(state.status, ProposalApplyStatus.applied);
         expect(state.appliedTable, 'knowledge_concepts');
 
-        final c1 = await repo.findConcept('c1');
-        final c2 = await repo.findConcept('c2');
+        final c1 = await repo.findConcept(ownerUserId: _owner, id: 'c1');
+        final c2 = await repo.findConcept(ownerUserId: _owner, id: 'c2');
         expect(c1!.relatedConceptIds, contains('c2'));
         expect(c2!.relatedConceptIds, contains('c1'));
       },

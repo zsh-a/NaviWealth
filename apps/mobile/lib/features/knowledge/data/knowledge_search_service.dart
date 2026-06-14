@@ -52,7 +52,11 @@ class KnowledgeSearchService {
       for (final hit in hits) {
         final id = hit.record.sourceId;
         if (id == null) continue;
-        final doc = await _documentForId(entry.key, id);
+        final doc = await _documentForId(
+          ownerUserId: ownerUserId,
+          kind: entry.key,
+          id: id,
+        );
         if (doc == null) continue;
         final lexical = KnowledgeLexicalMatch.calculate(q, doc);
         final score = _combinedSearchScore(
@@ -261,7 +265,11 @@ class KnowledgeSearchService {
         }
         final cosine = hit.semanticSim ?? 0.0;
         if (cosine < effectiveThreshold) continue;
-        final doc = await _documentForId(entry.key, id);
+        final doc = await _documentForId(
+          ownerUserId: ownerUserId,
+          kind: entry.key,
+          id: id,
+        );
         if (doc == null) continue;
         final overlap = _jaccard(queryTokens, _tokenize(doc.searchText));
         out.add(
@@ -282,14 +290,15 @@ class KnowledgeSearchService {
     return out.take(effectiveTopK).toList(growable: false);
   }
 
-  Future<KnowledgeSearchDocument?> _documentForId(
-    String kind,
-    String id,
-  ) async {
+  Future<KnowledgeSearchDocument?> _documentForId({
+    required String ownerUserId,
+    required String kind,
+    required String id,
+  }) async {
     return switch (kind) {
       'note' =>
         _repository
-            .findNote(id)
+            .findNote(ownerUserId: ownerUserId, id: id)
             .then(
               (v) => v == null || v.sync.deletedAt != null
                   ? null
@@ -297,7 +306,7 @@ class KnowledgeSearchService {
             ),
       'principle' =>
         _repository
-            .findPrinciple(id)
+            .findPrinciple(ownerUserId: ownerUserId, id: id)
             .then(
               (v) => v == null || v.sync.deletedAt != null
                   ? null
@@ -305,7 +314,7 @@ class KnowledgeSearchService {
             ),
       'assumption' =>
         _repository
-            .findAssumption(id)
+            .findAssumption(ownerUserId: ownerUserId, id: id)
             .then(
               (v) => v == null || v.sync.deletedAt != null
                   ? null
@@ -313,7 +322,7 @@ class KnowledgeSearchService {
             ),
       'concept' =>
         _repository
-            .findConcept(id)
+            .findConcept(ownerUserId: ownerUserId, id: id)
             .then(
               (v) => v == null || v.sync.deletedAt != null
                   ? null
@@ -321,7 +330,7 @@ class KnowledgeSearchService {
             ),
       'experiment' =>
         _repository
-            .findExperiment(id)
+            .findExperiment(ownerUserId: ownerUserId, id: id)
             .then(
               (v) => v == null || v.sync.deletedAt != null
                   ? null
@@ -329,7 +338,7 @@ class KnowledgeSearchService {
             ),
       'decision' =>
         _repository
-            .findDecision(id)
+            .findDecision(ownerUserId: ownerUserId, id: id)
             .then(
               (v) => v == null || v.sync.deletedAt != null
                   ? null
@@ -337,7 +346,7 @@ class KnowledgeSearchService {
             ),
       'routine' =>
         _repository
-            .findRoutine(id)
+            .findRoutine(ownerUserId: ownerUserId, id: id)
             .then(
               (v) => v == null || v.sync.deletedAt != null
                   ? null

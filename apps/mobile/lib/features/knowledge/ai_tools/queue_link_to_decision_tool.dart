@@ -75,8 +75,8 @@ class QueueLinkToDecisionTool implements DeviceTool {
     final valid = <String>[];
     final invalid = <String>[];
     for (final id in ids) {
-      final d = await repo.findDecision(id);
-      if (d != null && d.sync.ownerUserId == ownerUserId) {
+      final d = await repo.findDecision(ownerUserId: ownerUserId, id: id);
+      if (d != null) {
         valid.add(id);
       } else {
         invalid.add(id);

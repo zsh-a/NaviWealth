@@ -874,8 +874,8 @@ class KnowledgeStatusLabel extends StatelessWidget {
 /// Keeps object identity consistent across Decision and non-Decision
 /// detail pages: type label, type icon, title, status, and last update
 /// timestamp are always in the same place.
-class KnowledgeObjectHero extends StatelessWidget {
-  const KnowledgeObjectHero({
+class KnowledgeObjectHeader extends StatelessWidget {
+  const KnowledgeObjectHeader({
     super.key,
     required this.icon,
     required this.color,

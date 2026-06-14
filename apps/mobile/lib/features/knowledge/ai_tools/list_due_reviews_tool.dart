@@ -27,16 +27,8 @@ class ListDueReviewsTool implements DeviceTool {
   Map<String, Object?> get inputSchema => <String, Object?>{
     'type': 'object',
     'properties': {
-      'as_of': {
-        'type': 'string',
-        'description': 'ISO8601 截止时间;默认 now。',
-      },
-      'limit': {
-        'type': 'integer',
-        'minimum': 1,
-        'maximum': 200,
-        'default': 50,
-      },
+      'as_of': {'type': 'string', 'description': 'ISO8601 截止时间;默认 now。'},
+      'limit': {'type': 'integer', 'minimum': 1, 'maximum': 200, 'default': 50},
     },
   };
 
@@ -47,7 +39,8 @@ class ListDueReviewsTool implements DeviceTool {
   ) async {
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final asOf = DateTime.tryParse((input['as_of'] as String?) ?? '') ??
+    final asOf =
+        DateTime.tryParse((input['as_of'] as String?) ?? '') ??
         DateTime.now().toUtc();
     final limit = (input['limit'] is num)
         ? (input['limit'] as num).toInt().clamp(1, 200)
