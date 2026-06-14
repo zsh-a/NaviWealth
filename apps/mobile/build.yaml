@@ -1,0 +1,7 @@
+targets:
+  $default:
+    builders:
+      sqlite3:
+        options:
+          # Use system SQLite on macOS instead of downloading from GitHub
+          source: system
