@@ -13588,6 +13588,24 @@ abstract class AppLocalizations {
   /// **'Workout'**
   String get healthWorkoutMetricLabel;
 
+  /// No description provided for @healthWorkoutDurationHoursMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {minutes}m'**
+  String healthWorkoutDurationHoursMinutes(Object hours, Object minutes);
+
+  /// No description provided for @healthWorkoutDurationMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String healthWorkoutDurationMinutes(Object minutes);
+
+  /// No description provided for @healthWeeklyWorkoutValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} · {count} workouts'**
+  String healthWeeklyWorkoutValue(Object count, Object duration);
+
   /// No description provided for @healthStepsMetricLabel.
   ///
   /// In en, this message translates to:
@@ -13849,8 +13867,20 @@ abstract class AppLocalizations {
   /// No description provided for @healthWeeklySummaryTitle.
   ///
   /// In en, this message translates to:
-  /// **'This week'**
+  /// **'Weekly status'**
   String get healthWeeklySummaryTitle;
+
+  /// No description provided for @healthWeeklySummarySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Key health signals from the last 7 days'**
+  String get healthWeeklySummarySubtitle;
+
+  /// No description provided for @healthWeeklySummaryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync a few days of data to summarize steps, sleep, training, and recovery here.'**
+  String get healthWeeklySummaryEmpty;
 
   /// No description provided for @healthSpo2MetricLabel.
   ///
@@ -14025,6 +14055,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Generate'**
   String get healthBriefingGenerate;
+
+  /// No description provided for @healthBriefingUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {time}'**
+  String healthBriefingUpdated(Object time);
 
   /// No description provided for @healthBriefingLoadFailed.
   ///

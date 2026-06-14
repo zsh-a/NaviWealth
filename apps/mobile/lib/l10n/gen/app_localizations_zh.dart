@@ -7559,6 +7559,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthWorkoutMetricLabel => '运动';
 
   @override
+  String healthWorkoutDurationHoursMinutes(Object hours, Object minutes) {
+    return '$hours 小时 $minutes 分钟';
+  }
+
+  @override
+  String healthWorkoutDurationMinutes(Object minutes) {
+    return '$minutes 分钟';
+  }
+
+  @override
+  String healthWeeklyWorkoutValue(Object count, Object duration) {
+    return '$duration · $count 次';
+  }
+
+  @override
   String get healthStepsMetricLabel => '步数';
 
   @override
@@ -7690,7 +7705,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthTrendTrainingEffectSubtitle => '体能提升信号';
 
   @override
-  String get healthWeeklySummaryTitle => '本周';
+  String get healthWeeklySummaryTitle => '本周状态';
+
+  @override
+  String get healthWeeklySummarySubtitle => '最近 7 天关键健康信号';
+
+  @override
+  String get healthWeeklySummaryEmpty => '同步几天数据后，这里会汇总步数、睡眠、训练和恢复指标。';
 
   @override
   String get healthSpo2MetricLabel => '血氧';
@@ -7780,6 +7801,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthBriefingGenerate => '生成';
+
+  @override
+  String healthBriefingUpdated(Object time) {
+    return '更新于 $time';
+  }
 
   @override
   String healthBriefingLoadFailed(Object message) {

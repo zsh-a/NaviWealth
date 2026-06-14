@@ -1322,6 +1322,101 @@ String _ago(AppLocalizations l10n, DateTime when) => AppFormatters.relativeTime(
   },
 );
 
+class _HealthPanelHeader extends StatelessWidget {
+  const _HealthPanelHeader({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    this.trailing,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return Row(
+      children: [
+        AppIconTile(
+          icon: icon,
+          color: color,
+          size: 36,
+          iconSize: AppIconSizes.h18,
+          backgroundOpacity: AppOpacity.medium,
+          foregroundOpacity: 1,
+        ),
+        const SizedBox(width: AppSpacing.s10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: typography.sm.copyWith(fontWeight: FontWeight.w700),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppSpacing.s2),
+              Text(
+                subtitle,
+                style: typography.xs.copyWith(color: colors.mutedForeground),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+        if (trailing != null) ...[
+          const SizedBox(width: AppSpacing.s8),
+          trailing!,
+        ],
+      ],
+    );
+  }
+}
+
+class _InlineEmptyState extends StatelessWidget {
+  const _InlineEmptyState({required this.icon, required this.message});
+
+  final IconData icon;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final typography = context.theme.typography;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.muted.withValues(alpha: AppOpacity.subtle),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s12),
+        child: Row(
+          children: [
+            Icon(icon, size: AppIconSizes.h18, color: colors.mutedForeground),
+            const SizedBox(width: AppSpacing.s8),
+            Expanded(
+              child: Text(
+                message,
+                style: typography.xs.copyWith(color: colors.mutedForeground),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _WeeklySummaryPanel extends ConsumerWidget {
   const _WeeklySummaryPanel();
 
@@ -1331,10 +1426,51 @@ class _WeeklySummaryPanel extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return async.when(
-      loading: () => const SizedBox.shrink(),
+      loading: () => const _WeeklySummarySkeleton(),
       error: (_, _) => const SizedBox.shrink(),
       data: (summary) {
-        if (summary == null) return const SizedBox.shrink();
+        final stats = summary == null
+            ? const <_WeeklyStat>[]
+            : [
+                _WeeklyStat(
+                  icon: FLucideIcons.footprints,
+                  value: Fmt.number(summary.totalSteps.round()),
+                  label: l10n.healthStepsMetricLabel,
+                  color: HealthMetricColors.steps,
+                ),
+                if (summary.avgSleepHours > 0)
+                  _WeeklyStat(
+                    icon: FLucideIcons.moon,
+                    value: '${_round(summary.avgSleepHours)}h',
+                    label: l10n.healthSleepMetricLabel,
+                    color: HealthMetricColors.sleep,
+                  ),
+                if (summary.workoutCount > 0)
+                  _WeeklyStat(
+                    icon: FLucideIcons.dumbbell,
+                    value: _formatWeeklyWorkoutValue(
+                      l10n,
+                      summary.totalWorkoutMinutes,
+                      summary.workoutCount,
+                    ),
+                    label: l10n.healthWorkoutMetricLabel,
+                    color: HealthMetricColors.workout,
+                  ),
+                if (summary.avgHrv > 0)
+                  _WeeklyStat(
+                    icon: FLucideIcons.heartPulse,
+                    value: '${summary.avgHrv.round()}ms',
+                    label: l10n.healthHrvMetricLabel,
+                    color: HealthMetricColors.hrv,
+                  ),
+                if (summary.avgRhr > 0)
+                  _WeeklyStat(
+                    icon: FLucideIcons.heart,
+                    value: '${summary.avgRhr.round()}bpm',
+                    label: l10n.healthRhrMetricLabel,
+                    color: HealthMetricColors.rhr,
+                  ),
+              ];
         return SoftCard(
           level: SoftCardLevel.raised,
           borderless: true,
@@ -1342,68 +1478,101 @@ class _WeeklySummaryPanel extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DashboardCardHeader(
+              _HealthPanelHeader(
                 icon: FLucideIcons.calendarDays,
                 title: l10n.healthWeeklySummaryTitle,
+                subtitle: l10n.healthWeeklySummarySubtitle,
                 color: colors.mutedForeground,
+                trailing: const AppBadge(
+                  label: '7d',
+                  size: AppBadgeSize.compact,
+                ),
               ),
               const SizedBox(height: AppSpacing.s12),
-              Wrap(
-                spacing: AppSpacing.s16,
-                runSpacing: AppSpacing.s8,
-                children: [
-                  _summaryChip(
-                    context,
-                    Fmt.number(summary.totalSteps.round()),
-                    l10n.healthStepsMetricLabel,
-                  ),
-                  if (summary.avgSleepHours > 0)
-                    _summaryChip(
-                      context,
-                      '${_round(summary.avgSleepHours)}h',
-                      l10n.healthSleepMetricLabel,
-                    ),
-                  if (summary.workoutCount > 0)
-                    _summaryChip(
-                      context,
-                      '${summary.totalWorkoutMinutes}m · ${summary.workoutCount}×',
-                      l10n.healthWorkoutMetricLabel,
-                    ),
-                  if (summary.avgHrv > 0)
-                    _summaryChip(
-                      context,
-                      '${summary.avgHrv.round()}ms',
-                      l10n.healthHrvMetricLabel,
-                    ),
-                  if (summary.avgRhr > 0)
-                    _summaryChip(
-                      context,
-                      '${summary.avgRhr.round()}bpm',
-                      l10n.healthRhrMetricLabel,
-                    ),
-                ],
-              ),
+              if (stats.isEmpty)
+                _InlineEmptyState(
+                  icon: FLucideIcons.activity,
+                  message: l10n.healthWeeklySummaryEmpty,
+                )
+              else
+                Wrap(
+                  spacing: AppSpacing.s8,
+                  runSpacing: AppSpacing.s8,
+                  children: [
+                    for (final stat in stats)
+                      AppInfoChip(
+                        icon: stat.icon,
+                        value: stat.value,
+                        label: stat.label,
+                        color: stat.color,
+                      ),
+                  ],
+                ),
             ],
           ),
         );
       },
     );
   }
+}
 
-  Widget _summaryChip(BuildContext context, String value, String label) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(value, style: typography.sm.copyWith(fontWeight: FontWeight.w600)),
-        Text(
-          label,
-          style: typography.xs.copyWith(color: colors.mutedForeground),
-        ),
-      ],
+String _formatWeeklyWorkoutValue(
+  AppLocalizations l10n,
+  int minutes,
+  int count,
+) {
+  final duration = minutes >= 60
+      ? l10n.healthWorkoutDurationHoursMinutes(minutes ~/ 60, minutes % 60)
+      : l10n.healthWorkoutDurationMinutes(minutes);
+  return l10n.healthWeeklyWorkoutValue(count, duration);
+}
+
+class _WeeklySummarySkeleton extends StatelessWidget {
+  const _WeeklySummarySkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonCard(
+      padding: EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              SkeletonBox(width: 32, height: 32, radius: AppRadius.sm),
+              SizedBox(width: AppSpacing.s8),
+              Expanded(child: SkeletonBox(width: 140, height: 14)),
+              SkeletonBox(width: 32, height: 18, radius: AppRadius.full),
+            ],
+          ),
+          SizedBox(height: AppSpacing.s12),
+          Wrap(
+            spacing: AppSpacing.s8,
+            runSpacing: AppSpacing.s8,
+            children: [
+              SkeletonBox(width: 104, height: 42, radius: AppRadius.sm),
+              SkeletonBox(width: 104, height: 42, radius: AppRadius.sm),
+              SkeletonBox(width: 104, height: 42, radius: AppRadius.sm),
+            ],
+          ),
+        ],
+      ),
     );
   }
+}
+
+class _WeeklyStat {
+  const _WeeklyStat({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
 }
 
 class _BriefingPanel extends ConsumerStatefulWidget {
@@ -1489,6 +1658,7 @@ class _BriefingCard extends StatelessWidget {
         : null;
     final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final sourceLabel = source == 'llm' ? 'LLM' : l10n.healthBriefingAuto;
     return SoftCard(
       level: SoftCardLevel.raised,
       borderless: true,
@@ -1496,65 +1666,49 @@ class _BriefingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              AppIconTile(
-                icon: FLucideIcons.sun,
-                color: colors.primary,
-                size: 40,
-                iconSize: AppIconSizes.md,
-                backgroundOpacity: AppOpacity.medium,
-                foregroundOpacity: 1,
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: Text(
-                  l10n.healthBriefingTitle,
-                  style: typography.sm.copyWith(
-                    color: colors.mutedForeground,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (source is String && source.isNotEmpty) ...[
-                AppBadge(
-                  label: source == 'llm' ? 'LLM' : l10n.healthBriefingAuto,
-                  size: AppBadgeSize.compact,
-                ),
-                const SizedBox(width: AppSpacing.s8),
-              ],
-              Flexible(
-                fit: FlexFit.loose,
-                child: AppQuietButton(
-                  label: running
-                      ? l10n.healthBriefingGenerating
-                      : l10n.healthBriefingUpdate,
-                  onPress: running ? null : onRun,
-                  prefix: running
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: FCircularProgress(),
-                        )
-                      : const Icon(
-                          FLucideIcons.refreshCw,
-                          size: AppIconSizes.xs,
-                        ),
-                ),
-              ),
-            ],
+          _HealthPanelHeader(
+            icon: FLucideIcons.sun,
+            title: l10n.healthBriefingTitle,
+            subtitle: l10n.healthBriefingUpdated(_ago(l10n, r.updatedAt)),
+            color: colors.primary,
+            trailing: source is String && source.isNotEmpty
+                ? AppBadge(
+                    label: sourceLabel,
+                    size: AppBadgeSize.compact,
+                    tone: source == 'llm'
+                        ? AppBadgeTone.accent
+                        : AppBadgeTone.neutral,
+                  )
+                : null,
           ),
           const SizedBox(height: AppSpacing.s12),
-          Text(
-            r.summary,
-            style: typography.md,
-            maxLines: 8,
-            overflow: TextOverflow.ellipsis,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.muted.withValues(alpha: AppOpacity.subtle),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.s12),
+              child: Text(
+                r.summary,
+                style: typography.sm.copyWith(height: 1.45),
+                maxLines: 8,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ),
-          const SizedBox(height: AppSpacing.s8),
-          Text(_ago(l10n, r.updatedAt), style: context.captionStyle),
+          const SizedBox(height: AppSpacing.s12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: AppQuietButton(
+              label: running
+                  ? l10n.healthBriefingGenerating
+                  : l10n.healthBriefingUpdate,
+              onPress: running ? null : onRun,
+              prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
+              busy: running,
+            ),
+          ),
         ],
       ),
     );
@@ -1571,57 +1725,34 @@ class _BriefingEmpty extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return SoftCard(
       level: SoftCardLevel.raised,
       borderless: true,
       padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppIconTile(
+          _HealthPanelHeader(
             icon: FLucideIcons.sunset,
+            title: l10n.healthBriefingTitle,
+            subtitle: l10n.healthBriefingEmpty,
             color: colors.mutedForeground,
-            size: 36,
-            iconSize: AppIconSizes.h18,
-            backgroundOpacity: AppOpacity.whisper,
-            foregroundOpacity: AppOpacity.strong,
           ),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.healthBriefingEmpty,
-                  style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: AppSpacing.s4),
-                Text(
-                  l10n.healthBriefingEmptyHint,
-                  style: context.captionStyle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+          const SizedBox(height: AppSpacing.s12),
+          _InlineEmptyState(
+            icon: FLucideIcons.sparkles,
+            message: l10n.healthBriefingEmptyHint,
           ),
-          const SizedBox(width: AppSpacing.s8),
-          Flexible(
-            fit: FlexFit.loose,
+          const SizedBox(height: AppSpacing.s12),
+          Align(
+            alignment: Alignment.centerLeft,
             child: AppQuietButton(
               label: running
                   ? l10n.healthBriefingGenerating
                   : l10n.healthBriefingGenerate,
               onPress: running ? null : onRun,
-              prefix: running
-                  ? const SizedBox(
-                      width: AppIconSizes.xs,
-                      height: AppIconSizes.xs,
-                      child: FCircularProgress(),
-                    )
-                  : const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
+              prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
+              busy: running,
             ),
           ),
         ],

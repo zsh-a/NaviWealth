@@ -7871,6 +7871,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthWorkoutMetricLabel => 'Workout';
 
   @override
+  String healthWorkoutDurationHoursMinutes(Object hours, Object minutes) {
+    return '${hours}h ${minutes}m';
+  }
+
+  @override
+  String healthWorkoutDurationMinutes(Object minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String healthWeeklyWorkoutValue(Object count, Object duration) {
+    return '$duration · $count workouts';
+  }
+
+  @override
   String get healthStepsMetricLabel => 'Steps';
 
   @override
@@ -8003,7 +8018,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthTrendTrainingEffectSubtitle => 'Fitness improvement signal';
 
   @override
-  String get healthWeeklySummaryTitle => 'This week';
+  String get healthWeeklySummaryTitle => 'Weekly status';
+
+  @override
+  String get healthWeeklySummarySubtitle =>
+      'Key health signals from the last 7 days';
+
+  @override
+  String get healthWeeklySummaryEmpty =>
+      'Sync a few days of data to summarize steps, sleep, training, and recovery here.';
 
   @override
   String get healthSpo2MetricLabel => 'SpO₂';
@@ -8098,6 +8121,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthBriefingGenerate => 'Generate';
+
+  @override
+  String healthBriefingUpdated(Object time) {
+    return 'Updated $time';
+  }
 
   @override
   String healthBriefingLoadFailed(Object message) {
