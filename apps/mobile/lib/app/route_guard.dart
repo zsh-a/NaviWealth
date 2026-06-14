@@ -84,7 +84,7 @@ class DomainOptInRouteGuard implements RouteGuard {
       state.uri.path,
     );
     if (owner == null || optIns.contains(owner)) return null;
-    return AppRoutes.settings;
+    return AppRoutes.settingsDomains;
   }
 }
 

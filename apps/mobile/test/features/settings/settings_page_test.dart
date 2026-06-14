@@ -1,20 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/settings/data/base_currency_preference.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
+import 'package:naviwealth/features/settings/ui/domains_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Future<Widget> _wrap(SharedPreferences prefs) async {
+GoRouter _router({String initialLocation = AppRoutes.settingsDomains}) {
+  return GoRouter(
+    initialLocation: initialLocation,
+    routes: [
+      GoRoute(
+        path: AppRoutes.settings,
+        builder: (_, _) => const SettingsPage(),
+        routes: [
+          GoRoute(
+            path: 'domains',
+            name: AppRouteNames.domains,
+            builder: (_, _) => const DomainsSettingsPage(),
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+Future<Widget> _wrap(
+  SharedPreferences prefs, {
+  String initialLocation = AppRoutes.settingsDomains,
+}) async {
   return ProviderScope(
     overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-    child: MaterialApp(
+    child: MaterialApp.router(
       theme: AppTheme.light(),
+      routerConfig: _router(initialLocation: initialLocation),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const SettingsPage(),
     ),
   );
 }
@@ -45,14 +70,15 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-            child: MaterialApp(
+            child: MaterialApp.router(
               theme: AppTheme.light(),
+              routerConfig: _router(),
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
-              home: Consumer(
+              builder: (context, child) => Consumer(
                 builder: (context, ref, _) {
                   container = ProviderScope.containerOf(context, listen: false);
-                  return const SettingsPage();
+                  return child!;
                 },
               ),
             ),

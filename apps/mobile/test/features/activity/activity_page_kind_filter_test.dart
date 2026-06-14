@@ -68,7 +68,7 @@ void main() {
     tester,
   ) async {
     // Below 1024 dp -> mobile branch with inline chip row.
-    await tester.binding.setSurfaceSize(const Size(500, 900));
+    await tester.binding.setSurfaceSize(const Size(760, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final container = _container();

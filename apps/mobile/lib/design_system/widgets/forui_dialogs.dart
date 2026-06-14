@@ -35,14 +35,14 @@ Future<bool?> showConfirmDialog({
           FButton(
             variant: FButtonVariant.outline,
             onPress: () => Navigator.of(ctx).pop(false),
-            child: Text(cancelLabel),
+            child: _DialogButtonLabel(cancelLabel),
           ),
           FButton(
             variant: destructive
                 ? FButtonVariant.destructive
                 : FButtonVariant.primary,
             onPress: () => Navigator.of(ctx).pop(true),
-            child: Text(confirmLabel),
+            child: _DialogButtonLabel(confirmLabel),
           ),
         ],
       ),
@@ -72,12 +72,23 @@ Future<bool?> showInfoDialog(
           FButton(
             variant: FButtonVariant.primary,
             onPress: () => Navigator.of(ctx).pop(true),
-            child: Text(okLabel),
+            child: _DialogButtonLabel(okLabel),
           ),
         ],
       ),
     ),
   );
+}
+
+class _DialogButtonLabel extends StatelessWidget {
+  const _DialogButtonLabel(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return FittedBox(fit: BoxFit.scaleDown, child: Text(label, maxLines: 1));
+  }
 }
 
 class _DialogFrame extends StatelessWidget {
@@ -199,19 +210,34 @@ class _GlassDialog extends StatelessWidget {
                   AppSpacing.s20,
                   AppSpacing.s20,
                 ),
-                child: Row(
-                  children: [
-                    for (int i = 0; i < actions.length; i++) ...[
-                      if (i > 0) const SizedBox(width: AppSpacing.s8),
-                      Expanded(child: actions[i]),
-                    ],
-                  ],
-                ),
+                child: _DialogActions(actions: actions),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _DialogActions extends StatelessWidget {
+  const _DialogActions({required this.actions});
+
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    if (actions.length == 1) {
+      return SizedBox(width: double.infinity, child: actions.single);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < actions.length; i++) ...[
+          if (i > 0) const SizedBox(height: AppSpacing.s8),
+          actions[i],
+        ],
+      ],
     );
   }
 }
