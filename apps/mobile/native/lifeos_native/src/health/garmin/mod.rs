@@ -19,6 +19,9 @@ use super::provider::{
 use client::GarminClient;
 use mapper as m;
 
+const ACTIVITY_PAGE_SIZE: u32 = 50;
+const MAX_ACTIVITY_PAGES: u32 = 1;
+
 /// Garmin Connect health provider.
 pub struct GarminProvider {
     client: GarminClient,
@@ -95,76 +98,12 @@ impl HealthProvider for GarminProvider {
         let mut respiration: Vec<DailyMetric> = Vec::new();
         let mut spo2: Vec<DailyMetric> = Vec::new();
 
+        if let Ok(json) = endpoints::fetch_weight(http, rl, &token, from, to, cn).await {
+            weight = m::map_weight_range(&json);
+        }
+
         for i in 0..days {
             let date = from + chrono::Duration::days(i);
-
-            if let Ok(json) =
-                endpoints::fetch_steps_day(http, rl, &token, date, &display_name, cn).await
-            {
-                if let Some(metric) = m::map_steps(&json, date) {
-                    steps.push(metric);
-                }
-            }
-
-            if let Ok(json) =
-                endpoints::fetch_sleep(http, rl, &token, date, &display_name, cn).await
-            {
-                if let Some(session) = m::map_sleep(&json, date) {
-                    sleep_sessions.push(session);
-                }
-                // Fallback: extract HR from sleep if all-day HR fails.
-                if let Some(hr) = m::map_heart_rate_from_sleep(&json, date) {
-                    heart_rate.push(hr);
-                }
-            }
-
-            // All-day HR (preferred over sleep-based HR).
-            if let Ok(json) =
-                endpoints::fetch_heart_rate(http, rl, &token, date, &display_name, cn).await
-            {
-                if let Some(hr) = m::map_heart_rate_all_day(&json, date) {
-                    heart_rate.retain(|m| m.date != date);
-                    heart_rate.push(hr);
-                }
-                if let Some(metric) = m::map_rhr(&json, date) {
-                    rhr.retain(|m| m.date != date);
-                    rhr.push(metric);
-                }
-            }
-
-            if let Ok(json) =
-                endpoints::fetch_rhr_day(http, rl, &token, date, &display_name, cn).await
-            {
-                if let Some(metric) = m::map_rhr(&json, date) {
-                    rhr.push(metric);
-                }
-            }
-
-            if let Ok(json) = endpoints::fetch_hrv(http, rl, &token, date, cn).await {
-                if let Some(metric) = m::map_hrv(&json, date) {
-                    hrv.push(metric);
-                }
-            }
-
-            if let Ok(json) = endpoints::fetch_body_battery(http, rl, &token, date, date, cn).await
-            {
-                if let Some(bb) = m::map_body_battery(&json, date) {
-                    body_battery.push(bb);
-                }
-            }
-
-            if let Ok(json) = endpoints::fetch_stress_day(http, rl, &token, date, cn).await {
-                if let Some(metric) = m::map_stress(&json, date) {
-                    stress.retain(|m| m.date != date);
-                    stress.push(metric);
-                }
-            }
-
-            if let Ok(json) = endpoints::fetch_weight(http, rl, &token, date, date, cn).await {
-                if let Some(metric) = m::map_weight(&json, date) {
-                    weight.push(metric);
-                }
-            }
 
             if let Ok(json) =
                 endpoints::fetch_daily_summary(http, rl, &token, date, &display_name, cn).await
@@ -194,30 +133,63 @@ impl HealthProvider for GarminProvider {
                     body_battery.push(metric);
                 }
                 if let Some(f) = m::map_floors_climbed(&json, date) {
+                    floors.retain(|m| m.date != date);
                     floors.push(f);
                 }
                 let (distance_metric, active_metric, total_metric) =
                     m::map_daily_summary_metrics(&json, date);
                 if let Some(metric) = distance_metric {
+                    distance.retain(|m| m.date != date);
                     distance.push(metric);
                 }
                 if let Some(metric) = active_metric {
+                    active_energy.retain(|m| m.date != date);
                     active_energy.push(metric);
                 }
                 if let Some(metric) = total_metric {
+                    total_energy.retain(|m| m.date != date);
                     total_energy.push(metric);
                 }
             }
 
-            if let Ok(json) = endpoints::fetch_respiration(http, rl, &token, date, cn).await {
-                if let Some(r) = m::map_respiratory_rate(&json, date) {
-                    respiration.push(r);
+            if let Ok(json) =
+                endpoints::fetch_sleep(http, rl, &token, date, &display_name, cn).await
+            {
+                if let Some(session) = m::map_sleep(&json, date) {
+                    sleep_sessions.push(session);
                 }
-            }
-
-            if let Ok(json) = endpoints::fetch_spo2(http, rl, &token, date, cn).await {
-                if let Some(s) = m::map_spo2(&json, date) {
-                    spo2.push(s);
+                if let Some(hr) = m::map_heart_rate_from_sleep(&json, date) {
+                    heart_rate.retain(|m| m.date != date);
+                    heart_rate.push(hr);
+                }
+                if let Some(metric) = m::map_hrv_from_sleep(&json, date) {
+                    hrv.retain(|m| m.date != date);
+                    hrv.push(metric);
+                }
+                if !rhr.iter().any(|m| m.date == date) {
+                    if let Some(metric) = m::map_rhr_from_sleep(&json, date) {
+                        rhr.push(metric);
+                    }
+                }
+                if !stress.iter().any(|m| m.date == date) {
+                    if let Some(metric) = m::map_stress_from_sleep(&json, date) {
+                        stress.push(metric);
+                    }
+                }
+                if !body_battery.iter().any(|m| m.date == date) {
+                    if let Some(metric) = m::map_body_battery_from_sleep(&json, date) {
+                        body_battery.push(metric);
+                    }
+                }
+                if !respiration.iter().any(|m| m.date == date) {
+                    if let Some(metric) = m::map_respiratory_rate_from_sleep(&json, date) {
+                        respiration.push(metric);
+                    }
+                }
+                if !spo2.iter().any(|m| m.date == date) {
+                    if let Some(metric) = m::map_spo2_from_sleep(&json, date) {
+                        spo2.push(metric);
+                    }
                 }
             }
         }
@@ -265,11 +237,13 @@ impl HealthProvider for GarminProvider {
         // activities older than the `from` date.
         let mut all_activities = Vec::new();
         let mut start: u32 = 0;
-        let page_size: u32 = 50;
         let from_str = from.format("%Y-%m-%d").to_string();
+        let mut pages_fetched: u32 = 0;
 
         loop {
-            let json = endpoints::fetch_activities(http, rl, &token, start, page_size, cn).await?;
+            let json = endpoints::fetch_activities(http, rl, &token, start, ACTIVITY_PAGE_SIZE, cn)
+                .await?;
+            pages_fetched += 1;
             let page = json.as_array();
             let page_len = page.map(|a| a.len()).unwrap_or(0);
             if page_len == 0 {
@@ -292,14 +266,13 @@ impl HealthProvider for GarminProvider {
                 }
             }
 
-            if reached_boundary || page_len < page_size as usize {
+            if reached_boundary || page_len < ACTIVITY_PAGE_SIZE as usize {
                 break;
             }
-            start += page_size;
-            // Safety cap: don't fetch more than 500 activities.
-            if start >= 500 {
+            if pages_fetched >= MAX_ACTIVITY_PAGES {
                 break;
             }
+            start += ACTIVITY_PAGE_SIZE;
         }
 
         Ok(all_activities)

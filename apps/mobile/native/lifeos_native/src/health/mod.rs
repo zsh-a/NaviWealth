@@ -32,6 +32,9 @@ use garmin::token_store::{InMemoryTokenStore, StoredSession, TokenStore};
 use garmin::GarminProvider;
 use sync_engine::HealthSyncEngine;
 
+const GARMIN_ACTIVITY_PAGE_SIZE: u32 = 50;
+const GARMIN_MAX_ACTIVITY_PAGES: u32 = 1;
+
 /// Progress event for streaming sync (defined in `api/health.rs`).
 use crate::api::health::GarminSyncProgress;
 use provider::{BodyBatteryDay, DailyMetric};
@@ -313,42 +316,13 @@ async fn run_streaming_sync(
     };
 
     // -----------------------------------------------------------------------
-    // Phase 1: Batch-fetch range-capable endpoints.
+    // Phase 1: Low-call-count range endpoints.
     // -----------------------------------------------------------------------
 
     let mut all_steps: Vec<DailyMetric> = Vec::new();
     let mut all_rhr: Vec<DailyMetric> = Vec::new();
-
-    let mut all_bb: Vec<BodyBatteryDay> =
-        match garmin::endpoints::fetch_body_battery(&http, &rl, &token, from, to, cn).await {
-            Ok(json) => {
-                let mapped = garmin::mapper::map_body_battery_range(&json);
-                eprintln!(
-                    "[HealthOS][Garmin] body_battery range mapped={}",
-                    mapped.len()
-                );
-                mapped
-            }
-            Err(e) => {
-                eprintln!("[HealthOS][Garmin] body_battery range failed: {e}");
-                record_endpoint_error(&mut errors, "body_battery range", &e);
-                vec![]
-            }
-        };
-
-    let mut all_stress: Vec<DailyMetric> =
-        match garmin::endpoints::fetch_stress(&http, &rl, &token, from, to, cn).await {
-            Ok(json) => {
-                let mapped = garmin::mapper::map_stress_range(&json);
-                eprintln!("[HealthOS][Garmin] stress range mapped={}", mapped.len());
-                mapped
-            }
-            Err(e) => {
-                eprintln!("[HealthOS][Garmin] stress range failed: {e}");
-                record_endpoint_error(&mut errors, "stress range", &e);
-                vec![]
-            }
-        };
+    let mut all_bb: Vec<BodyBatteryDay> = Vec::new();
+    let mut all_stress: Vec<DailyMetric> = Vec::new();
 
     let all_weight = match garmin::endpoints::fetch_weight(&http, &rl, &token, from, to, cn).await {
         Ok(json) => {
@@ -363,20 +337,30 @@ async fn run_streaming_sync(
         }
     };
 
-    // Emit progress after batch fetch.
-    let batch_metrics = all_bb.len() + all_stress.len() + all_weight.len();
+    eprintln!(
+        "[HealthOS][Garmin] api plan calls≈{} profile=1 weight=1 daily_summary={} sleep={} activities_max={} training=1",
+        1 + 1 + (total_days * 2) + GARMIN_MAX_ACTIVITY_PAGES as i64 + 1,
+        total_days,
+        total_days,
+        GARMIN_MAX_ACTIVITY_PAGES
+    );
 
     let _ = sink.add(GarminSyncProgress {
         phase: "days".to_string(),
         current: 0,
         total: total_days as i32,
-        metrics_count: batch_metrics as i32,
+        metrics_count: all_weight.len() as i32,
         errors: errors.clone(),
         snapshot_json: None,
     });
 
     // -----------------------------------------------------------------------
-    // Phase 2: Per-day fetches matching scripts/garmin_probe.py.
+    // Phase 2: Per-day high-density fetches.
+    //
+    // `daily_summary` covers steps, RHR, stress, Body Battery, SpO2,
+    // respiration, floors, distance, and energy. `sleep` covers sleep,
+    // sleep HR, HRV, and overnight fallbacks. Avoid per-metric endpoints by
+    // default; they are much more likely to trigger Garmin rate limits.
     // -----------------------------------------------------------------------
 
     let mut all_sleep = Vec::new();
@@ -395,146 +379,6 @@ async fn run_streaming_sync(
         }
 
         let date = from + chrono::Duration::days(i);
-
-        match garmin::endpoints::fetch_steps_day(&http, &rl, &token, date, &display_name, cn).await
-        {
-            Ok(json) => {
-                let before = all_steps.len();
-                if let Some(steps) = garmin::mapper::map_steps(&json, date) {
-                    all_steps.retain(|metric| metric.date != date);
-                    all_steps.push(steps);
-                }
-                eprintln!(
-                    "[HealthOS][Garmin] day {} steps ok mapped_delta={} total={}",
-                    date,
-                    all_steps.len() - before,
-                    all_steps.len()
-                );
-            }
-            Err(e) => {
-                eprintln!("[HealthOS][Garmin] day {} steps failed: {e}", date);
-                record_endpoint_error(&mut errors, &format!("steps {date}"), &e);
-            }
-        }
-
-        match garmin::endpoints::fetch_sleep(&http, &rl, &token, date, &display_name, cn).await {
-            Ok(json) => {
-                if let Some(s) = garmin::mapper::map_sleep(&json, date) {
-                    all_sleep.push(s);
-                }
-                // Fallback: extract HR from sleep if all-day HR fails.
-                if let Some(hr) = garmin::mapper::map_heart_rate_from_sleep(&json, date) {
-                    all_hr.push(hr);
-                }
-                if let Some(hrv) = garmin::mapper::map_hrv_from_sleep(&json, date) {
-                    all_hrv.push(hrv);
-                }
-                if let Some(rhr) = garmin::mapper::map_rhr_from_sleep(&json, date) {
-                    all_rhr.retain(|metric| metric.date != date);
-                    all_rhr.push(rhr);
-                }
-                if let Some(stress) = garmin::mapper::map_stress_from_sleep(&json, date) {
-                    all_stress.push(stress);
-                }
-                if !all_bb.iter().any(|metric| metric.date == date) {
-                    if let Some(body_battery) =
-                        garmin::mapper::map_body_battery_from_sleep(&json, date)
-                    {
-                        all_bb.push(body_battery);
-                    }
-                }
-                if let Some(respiration) =
-                    garmin::mapper::map_respiratory_rate_from_sleep(&json, date)
-                {
-                    all_respiration.push(respiration);
-                }
-                if let Some(spo2) = garmin::mapper::map_spo2_from_sleep(&json, date) {
-                    all_spo2.push(spo2);
-                }
-                eprintln!(
-                    "[HealthOS][Garmin] day {} sleep ok totals sleep={} hr={} hrv={} rhr={} body_battery={} stress={} respiration={} spo2={}",
-                    date,
-                    all_sleep.len(),
-                    all_hr.len(),
-                    all_hrv.len(),
-                    all_rhr.len(),
-                    all_bb.len(),
-                    all_stress.len(),
-                    all_respiration.len(),
-                    all_spo2.len()
-                );
-            }
-            Err(e) => {
-                eprintln!("[HealthOS][Garmin] day {} sleep failed: {e}", date);
-                record_endpoint_error(&mut errors, &format!("sleep {date}"), &e);
-            }
-        }
-
-        // All-day HR (preferred over sleep-based HR).
-        match garmin::endpoints::fetch_heart_rate(&http, &rl, &token, date, &display_name, cn).await
-        {
-            Ok(json) => {
-                if let Some(hr) = garmin::mapper::map_heart_rate_all_day(&json, date) {
-                    // Replace sleep-based HR if all-day HR is available.
-                    all_hr.retain(|m| m.date != date);
-                    all_hr.push(hr);
-                }
-                if let Some(m) = garmin::mapper::map_rhr(&json, date) {
-                    all_rhr.retain(|metric| metric.date != date);
-                    all_rhr.push(m);
-                }
-                eprintln!(
-                    "[HealthOS][Garmin] day {} heart_rate ok totals hr={} rhr={}",
-                    date,
-                    all_hr.len(),
-                    all_rhr.len()
-                );
-            }
-            Err(e) => {
-                eprintln!("[HealthOS][Garmin] day {} heart_rate failed: {e}", date);
-                record_endpoint_error(&mut errors, &format!("heart_rate {date}"), &e);
-            }
-        }
-
-        match garmin::endpoints::fetch_rhr_day(&http, &rl, &token, date, &display_name, cn).await {
-            Ok(json) => {
-                let before = all_rhr.len();
-                if let Some(m) = garmin::mapper::map_rhr(&json, date) {
-                    all_rhr.retain(|metric| metric.date != date);
-                    all_rhr.push(m);
-                }
-                eprintln!(
-                    "[HealthOS][Garmin] day {} rhr ok mapped_delta={} total={}",
-                    date,
-                    all_rhr.len() - before,
-                    all_rhr.len()
-                );
-            }
-            Err(e) => {
-                eprintln!("[HealthOS][Garmin] day {} rhr failed: {e}", date);
-                record_endpoint_error(&mut errors, &format!("rhr {date}"), &e);
-            }
-        }
-
-        match garmin::endpoints::fetch_hrv(&http, &rl, &token, date, cn).await {
-            Ok(json) => {
-                let before = all_hrv.len();
-                if let Some(m) = garmin::mapper::map_hrv(&json, date) {
-                    all_hrv.retain(|metric| metric.date != date);
-                    all_hrv.push(m);
-                }
-                eprintln!(
-                    "[HealthOS][Garmin] day {} hrv ok mapped_delta={} total={}",
-                    date,
-                    all_hrv.len() - before,
-                    all_hrv.len()
-                );
-            }
-            Err(e) => {
-                eprintln!("[HealthOS][Garmin] day {} hrv failed: {e}", date);
-                record_endpoint_error(&mut errors, &format!("hrv {date}"), &e);
-            }
-        }
 
         match garmin::endpoints::fetch_daily_summary(&http, &rl, &token, date, &display_name, cn)
             .await
@@ -567,17 +411,21 @@ async fn run_streaming_sync(
                     all_bb.push(body_battery);
                 }
                 if let Some(f) = garmin::mapper::map_floors_climbed(&json, date) {
+                    all_floors.retain(|metric| metric.date != date);
                     all_floors.push(f);
                 }
                 let (distance_metric, active_metric, total_metric) =
                     garmin::mapper::map_daily_summary_metrics(&json, date);
                 if let Some(metric) = distance_metric {
+                    all_distance.retain(|m| m.date != date);
                     all_distance.push(metric);
                 }
                 if let Some(metric) = active_metric {
+                    all_active_energy.retain(|m| m.date != date);
                     all_active_energy.push(metric);
                 }
                 if let Some(metric) = total_metric {
+                    all_total_energy.retain(|m| m.date != date);
                     all_total_energy.push(metric);
                 }
                 eprintln!(
@@ -601,63 +449,64 @@ async fn run_streaming_sync(
             }
         }
 
-        match garmin::endpoints::fetch_stress_day(&http, &rl, &token, date, cn).await {
+        match garmin::endpoints::fetch_sleep(&http, &rl, &token, date, &display_name, cn).await {
             Ok(json) => {
-                let before = all_stress.len();
-                if let Some(s) = garmin::mapper::map_stress(&json, date) {
-                    all_stress.retain(|metric| metric.date != date);
-                    all_stress.push(s);
+                if let Some(s) = garmin::mapper::map_sleep(&json, date) {
+                    all_sleep.push(s);
+                }
+                // Fallback: extract HR from sleep if all-day HR fails.
+                if let Some(hr) = garmin::mapper::map_heart_rate_from_sleep(&json, date) {
+                    all_hr.push(hr);
+                }
+                if let Some(hrv) = garmin::mapper::map_hrv_from_sleep(&json, date) {
+                    all_hrv.retain(|metric| metric.date != date);
+                    all_hrv.push(hrv);
+                }
+                if !all_rhr.iter().any(|metric| metric.date == date) {
+                    if let Some(rhr) = garmin::mapper::map_rhr_from_sleep(&json, date) {
+                        all_rhr.push(rhr);
+                    }
+                }
+                if !all_stress.iter().any(|metric| metric.date == date) {
+                    if let Some(stress) = garmin::mapper::map_stress_from_sleep(&json, date) {
+                        all_stress.push(stress);
+                    }
+                }
+                if !all_bb.iter().any(|metric| metric.date == date) {
+                    if let Some(body_battery) =
+                        garmin::mapper::map_body_battery_from_sleep(&json, date)
+                    {
+                        all_bb.push(body_battery);
+                    }
+                }
+                if !all_respiration.iter().any(|metric| metric.date == date) {
+                    if let Some(respiration) =
+                        garmin::mapper::map_respiratory_rate_from_sleep(&json, date)
+                    {
+                        all_respiration.push(respiration);
+                    }
+                }
+                if !all_spo2.iter().any(|metric| metric.date == date) {
+                    if let Some(spo2) = garmin::mapper::map_spo2_from_sleep(&json, date) {
+                        all_spo2.push(spo2);
+                    }
                 }
                 eprintln!(
-                    "[HealthOS][Garmin] day {} stress ok total={} changed={}",
+                    "[HealthOS][Garmin] day {} sleep ok totals sleep={} hr={} hrv={} rhr={} body_battery={} stress={} respiration={} spo2={}",
                     date,
+                    all_sleep.len(),
+                    all_hr.len(),
+                    all_hrv.len(),
+                    all_rhr.len(),
+                    all_bb.len(),
                     all_stress.len(),
-                    all_stress.len() != before
-                );
-            }
-            Err(e) => {
-                eprintln!("[HealthOS][Garmin] day {} stress failed: {e}", date);
-                record_endpoint_error(&mut errors, &format!("stress {date}"), &e);
-            }
-        }
-
-        match garmin::endpoints::fetch_respiration(&http, &rl, &token, date, cn).await {
-            Ok(json) => {
-                let before = all_respiration.len();
-                if let Some(r) = garmin::mapper::map_respiratory_rate(&json, date) {
-                    all_respiration.retain(|metric| metric.date != date);
-                    all_respiration.push(r);
-                }
-                eprintln!(
-                    "[HealthOS][Garmin] day {} respiration ok mapped_delta={} total={}",
-                    date,
-                    all_respiration.len() - before,
-                    all_respiration.len()
-                );
-            }
-            Err(e) => {
-                eprintln!("[HealthOS][Garmin] day {} respiration failed: {e}", date);
-                record_endpoint_error(&mut errors, &format!("respiration {date}"), &e);
-            }
-        }
-
-        match garmin::endpoints::fetch_spo2(&http, &rl, &token, date, cn).await {
-            Ok(json) => {
-                let before = all_spo2.len();
-                if let Some(s) = garmin::mapper::map_spo2(&json, date) {
-                    all_spo2.retain(|metric| metric.date != date);
-                    all_spo2.push(s);
-                }
-                eprintln!(
-                    "[HealthOS][Garmin] day {} spo2 ok mapped_delta={} total={}",
-                    date,
-                    all_spo2.len() - before,
+                    all_respiration.len(),
                     all_spo2.len()
                 );
             }
             Err(e) => {
-                eprintln!("[HealthOS][Garmin] day {} spo2 failed: {e}", date);
-                record_endpoint_error(&mut errors, &format!("spo2 {date}"), &e);
+                eprintln!("[HealthOS][Garmin] day {} sleep failed: {e}", date);
+                record_endpoint_error(&mut errors, &format!("sleep {date}"), &e);
             }
         }
 
@@ -694,14 +543,22 @@ async fn run_streaming_sync(
     let mut all_activities = Vec::new();
     if !SYNC_CANCEL.load(Ordering::Relaxed) {
         let mut start: u32 = 0;
-        let page_size: u32 = 50;
         let from_str = from.format("%Y-%m-%d").to_string();
+        let mut pages_fetched: u32 = 0;
 
         loop {
-            match garmin::endpoints::fetch_activities(&http, &rl, &token, start, page_size, cn)
-                .await
+            match garmin::endpoints::fetch_activities(
+                &http,
+                &rl,
+                &token,
+                start,
+                GARMIN_ACTIVITY_PAGE_SIZE,
+                cn,
+            )
+            .await
             {
                 Ok(json) => {
+                    pages_fetched += 1;
                     let page = json.as_array();
                     let page_len = page.map(|a| a.len()).unwrap_or(0);
                     if page_len == 0 {
@@ -747,13 +604,18 @@ async fn run_streaming_sync(
                         snapshot_json: None,
                     });
 
-                    if reached_boundary || page_len < page_size as usize {
+                    if reached_boundary || page_len < GARMIN_ACTIVITY_PAGE_SIZE as usize {
                         break;
                     }
-                    start += page_size;
-                    if start >= 500 {
+                    if pages_fetched >= GARMIN_MAX_ACTIVITY_PAGES {
+                        eprintln!(
+                            "[HealthOS][Garmin] activities pagination capped pages={} activities={}",
+                            pages_fetched,
+                            all_activities.len()
+                        );
                         break;
                     }
+                    start += GARMIN_ACTIVITY_PAGE_SIZE;
                 }
                 Err(e) => {
                     // Activity history is an optional enrichment. Garmin CN can
