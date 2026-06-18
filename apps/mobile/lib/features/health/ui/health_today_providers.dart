@@ -46,27 +46,115 @@ class _HealthTodaySnapshot {
   HealthMetric? latest(HealthMetricKind kind) {
     final values = rows(kind);
     if (values.isEmpty) return null;
-    final sorted = List<HealthMetric>.of(values)
-      ..sort((a, b) => b.capturedAt.compareTo(a.capturedAt));
-    return sorted.first;
+    // Repository + canonical selector both preserve newest-first order.
+    return values.first;
   }
 }
 
-final healthTodaySnapshotProvider =
-    FutureProvider.autoDispose<_HealthTodaySnapshot?>((ref) async {
-      final optIns = ref.watch(core_auth.domainOptInsProvider).value;
-      if (optIns == null || !optIns.contains(DomainScope.health)) return null;
-      final repo = await ref.watch(healthMetricRepositoryProvider.future);
-      final userId = await ref.read(currentUserIdProvider)();
-      final data = await repo.listByKinds(
-        ownerUserId: userId,
-        kinds: _kHealthTodayMetricKinds,
-        limit: 100,
-      );
-      return _HealthTodaySnapshot(
-        now: DateTime.now().toUtc(),
-        byKind: selectCanonicalHealthMetrics(data),
-      );
+final healthTodaySnapshotProvider = FutureProvider<_HealthTodaySnapshot?>((
+  ref,
+) async {
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final repo = await ref.watch(healthMetricRepositoryProvider.future);
+  final userId = await ref.read(currentUserIdProvider)();
+  final data = await repo.listByKinds(
+    ownerUserId: userId,
+    kinds: _kHealthTodayMetricKinds,
+    limit: 100,
+  );
+  return _HealthTodaySnapshot(
+    now: DateTime.now().toUtc(),
+    byKind: selectCanonicalHealthMetrics(data),
+  );
+});
+
+class HealthTodayMetricGridModel {
+  const HealthTodayMetricGridModel({
+    this.sleep,
+    this.hrv,
+    this.heartRate,
+    this.workout,
+    this.steps,
+    this.energy,
+    this.bodyBattery,
+    this.stress,
+    this.rhr,
+    this.trainingLoad,
+    this.spo2,
+    this.sleepTrend,
+    this.bodyBatteryTrend,
+    this.stressTrend,
+    this.hrvTrend,
+    this.heartRateTrend,
+    this.rhrTrend,
+    this.stepsTrend,
+    this.energyTrend,
+  });
+
+  factory HealthTodayMetricGridModel.empty() =>
+      const HealthTodayMetricGridModel();
+
+  factory HealthTodayMetricGridModel._fromSnapshot(_HealthTodaySnapshot s) {
+    return HealthTodayMetricGridModel(
+      sleep: s.latest(HealthMetricKind.sleepSession),
+      hrv: s.latest(HealthMetricKind.hrvDaily),
+      heartRate: s.latest(HealthMetricKind.heartRateDaily),
+      workout: s.latest(HealthMetricKind.workoutSession),
+      steps: s.latest(HealthMetricKind.stepsDaily),
+      energy: s.latest(HealthMetricKind.activeEnergyDaily),
+      bodyBattery: s.latest(HealthMetricKind.bodyBatteryDaily),
+      stress: s.latest(HealthMetricKind.stressDaily),
+      rhr: s.latest(HealthMetricKind.rhrDaily),
+      trainingLoad: s.latest(HealthMetricKind.trainingLoadDaily),
+      spo2: s.latest(HealthMetricKind.spo2Daily),
+      sleepTrend: _metricTrendFromSnapshot(s, HealthMetricKind.sleepSession),
+      bodyBatteryTrend: _metricTrendFromSnapshot(
+        s,
+        HealthMetricKind.bodyBatteryDaily,
+      ),
+      stressTrend: _metricTrendFromSnapshot(s, HealthMetricKind.stressDaily),
+      hrvTrend: _metricTrendFromSnapshot(s, HealthMetricKind.hrvDaily),
+      heartRateTrend: _metricTrendFromSnapshot(
+        s,
+        HealthMetricKind.heartRateDaily,
+      ),
+      rhrTrend: _metricTrendFromSnapshot(s, HealthMetricKind.rhrDaily),
+      stepsTrend: _metricTrendFromSnapshot(s, HealthMetricKind.stepsDaily),
+      energyTrend: _metricTrendFromSnapshot(
+        s,
+        HealthMetricKind.activeEnergyDaily,
+      ),
+    );
+  }
+
+  final HealthMetric? sleep;
+  final HealthMetric? hrv;
+  final HealthMetric? heartRate;
+  final HealthMetric? workout;
+  final HealthMetric? steps;
+  final HealthMetric? energy;
+  final HealthMetric? bodyBattery;
+  final HealthMetric? stress;
+  final HealthMetric? rhr;
+  final HealthMetric? trainingLoad;
+  final HealthMetric? spo2;
+
+  final MetricTrend? sleepTrend;
+  final MetricTrend? bodyBatteryTrend;
+  final MetricTrend? stressTrend;
+  final MetricTrend? hrvTrend;
+  final MetricTrend? heartRateTrend;
+  final MetricTrend? rhrTrend;
+  final MetricTrend? stepsTrend;
+  final MetricTrend? energyTrend;
+}
+
+final healthTodayMetricGridProvider =
+    FutureProvider.autoDispose<HealthTodayMetricGridModel>((ref) async {
+      final snapshot = await ref.watch(healthTodaySnapshotProvider.future);
+      if (snapshot == null) return HealthTodayMetricGridModel.empty();
+      return HealthTodayMetricGridModel._fromSnapshot(snapshot);
     });
 
 Future<HealthMetric?> _latest(Ref ref, HealthMetricKind kind) async {
@@ -182,41 +270,48 @@ final metricTrendProvider = FutureProvider.autoDispose
     .family<MetricTrend?, HealthMetricKind>((ref, kind) async {
       final snapshot = await ref.watch(healthTodaySnapshotProvider.future);
       if (snapshot == null) return null;
-      final rows = snapshot.rows(kind);
-      if (rows.length < 3) return null;
-
-      final recentCutoff = snapshot.now.subtract(const Duration(days: 3));
-      final priorCutoff = snapshot.now.subtract(const Duration(days: 7));
-
-      double convert(HealthMetric m) {
-        if (kind == HealthMetricKind.sleepSession) {
-          return m.value / 3600; // seconds → hours
-        }
-        if (kind == HealthMetricKind.distanceWalkingRunningDaily) {
-          return m.value / 1000; // meters → km
-        }
-        return m.value;
-      }
-
-      final recent = <double>[];
-      final prior = <double>[];
-      for (final m in rows) {
-        if (m.capturedAt.isAfter(recentCutoff)) {
-          recent.add(convert(m));
-        } else if (m.capturedAt.isAfter(priorCutoff)) {
-          prior.add(convert(m));
-        }
-      }
-
-      if (recent.isEmpty || prior.isEmpty) return null;
-
-      final recentAvg = recent.reduce((a, b) => a + b) / recent.length;
-      final priorAvg = prior.reduce((a, b) => a + b) / prior.length;
-      if (priorAvg == 0) return null;
-
-      final deltaPct = ((recentAvg - priorAvg) / priorAvg * 100);
-      return MetricTrend(deltaPct: deltaPct);
+      return _metricTrendFromSnapshot(snapshot, kind);
     });
+
+MetricTrend? _metricTrendFromSnapshot(
+  _HealthTodaySnapshot snapshot,
+  HealthMetricKind kind,
+) {
+  final rows = snapshot.rows(kind);
+  if (rows.length < 3) return null;
+
+  final recentCutoff = snapshot.now.subtract(const Duration(days: 3));
+  final priorCutoff = snapshot.now.subtract(const Duration(days: 7));
+
+  double convert(HealthMetric m) {
+    if (kind == HealthMetricKind.sleepSession) {
+      return m.value / 3600; // seconds → hours
+    }
+    if (kind == HealthMetricKind.distanceWalkingRunningDaily) {
+      return m.value / 1000; // meters → km
+    }
+    return m.value;
+  }
+
+  final recent = <double>[];
+  final prior = <double>[];
+  for (final m in rows) {
+    if (m.capturedAt.isAfter(recentCutoff)) {
+      recent.add(convert(m));
+    } else if (m.capturedAt.isAfter(priorCutoff)) {
+      prior.add(convert(m));
+    }
+  }
+
+  if (recent.isEmpty || prior.isEmpty) return null;
+
+  final recentAvg = recent.reduce((a, b) => a + b) / recent.length;
+  final priorAvg = prior.reduce((a, b) => a + b) / prior.length;
+  if (priorAvg == 0) return null;
+
+  final deltaPct = ((recentAvg - priorAvg) / priorAvg * 100);
+  return MetricTrend(deltaPct: deltaPct);
+}
 
 /// Trend data for a metric.
 class MetricTrend {

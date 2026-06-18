@@ -434,52 +434,60 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
 
   @override
   Widget build(BuildContext context) {
-    final sleep = ref.watch(latestSleepSessionProvider);
-    final hrv = ref.watch(latestHrvProvider);
-    final heartRate = ref.watch(latestHeartRateProvider);
-    final workout = ref.watch(latestWorkoutProvider);
-    final steps = ref.watch(latestStepsProvider);
-    final energy = ref.watch(latestActiveEnergyProvider);
-    final bodyBattery = ref.watch(latestBodyBatteryProvider);
-    final stress = ref.watch(latestStressProvider);
-    final rhr = ref.watch(latestRhrProvider);
-    final trainingLoad = ref.watch(latestTrainingLoadProvider);
-    final spo2 = ref.watch(latestSpo2Provider);
+    final metrics = ref.watch(healthTodayMetricGridProvider);
 
-    // Trends (7-day delta).
-    final sleepTrend = ref.watch(
-      metricTrendProvider(HealthMetricKind.sleepSession),
-    );
-    final bbTrend = ref.watch(
-      metricTrendProvider(HealthMetricKind.bodyBatteryDaily),
-    );
-    final stressTrend = ref.watch(
-      metricTrendProvider(HealthMetricKind.stressDaily),
-    );
-    final hrvTrend = ref.watch(metricTrendProvider(HealthMetricKind.hrvDaily));
-    final hrTrend = ref.watch(
-      metricTrendProvider(HealthMetricKind.heartRateDaily),
-    );
-    final rhrTrend = ref.watch(metricTrendProvider(HealthMetricKind.rhrDaily));
-    final stepsTrend = ref.watch(
-      metricTrendProvider(HealthMetricKind.stepsDaily),
-    );
-    final energyTrend = ref.watch(
-      metricTrendProvider(HealthMetricKind.activeEnergyDaily),
-    );
+    AsyncValue<HealthMetric?> metric(
+      HealthMetric? Function(HealthTodayMetricGridModel model) select,
+    ) {
+      if (metrics.hasValue) {
+        return AsyncValue.data(select(metrics.requireValue));
+      }
+      if (metrics.hasError) {
+        return AsyncValue.error(
+          metrics.error!,
+          metrics.stackTrace ?? StackTrace.current,
+        );
+      }
+      return const AsyncValue.loading();
+    }
+
+    MetricTrend? trend(
+      MetricTrend? Function(HealthTodayMetricGridModel model) select,
+    ) {
+      final model = metrics.value;
+      return model == null ? null : select(model);
+    }
 
     final cards = <Widget>[
-      _SleepCard(async: sleep, trend: sleepTrend.value),
-      _BodyBatteryCard(async: bodyBattery, trend: bbTrend.value),
-      _StressCard(async: stress, trend: stressTrend.value),
-      _HrvCard(async: hrv, trend: hrvTrend.value),
-      _HeartRateCard(async: heartRate, trend: hrTrend.value),
-      _RhrCard(async: rhr, trend: rhrTrend.value),
-      _StepsCard(async: steps, trend: stepsTrend.value),
-      _WorkoutCard(async: workout),
-      _ActiveEnergyCard(async: energy, trend: energyTrend.value),
-      _TrainingLoadCard(async: trainingLoad),
-      _Spo2Card(async: spo2),
+      _SleepCard(
+        async: metric((m) => m.sleep),
+        trend: trend((m) => m.sleepTrend),
+      ),
+      _BodyBatteryCard(
+        async: metric((m) => m.bodyBattery),
+        trend: trend((m) => m.bodyBatteryTrend),
+      ),
+      _StressCard(
+        async: metric((m) => m.stress),
+        trend: trend((m) => m.stressTrend),
+      ),
+      _HrvCard(async: metric((m) => m.hrv), trend: trend((m) => m.hrvTrend)),
+      _HeartRateCard(
+        async: metric((m) => m.heartRate),
+        trend: trend((m) => m.heartRateTrend),
+      ),
+      _RhrCard(async: metric((m) => m.rhr), trend: trend((m) => m.rhrTrend)),
+      _StepsCard(
+        async: metric((m) => m.steps),
+        trend: trend((m) => m.stepsTrend),
+      ),
+      _WorkoutCard(async: metric((m) => m.workout)),
+      _ActiveEnergyCard(
+        async: metric((m) => m.energy),
+        trend: trend((m) => m.energyTrend),
+      ),
+      _TrainingLoadCard(async: metric((m) => m.trainingLoad)),
+      _Spo2Card(async: metric((m) => m.spo2)),
     ];
     final visibleCards = _expanded ? cards : cards.take(4).toList();
     final l10n = AppLocalizations.of(context);

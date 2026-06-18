@@ -6,6 +6,7 @@ library;
 
 import 'dart:async';
 
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:naviwealth/core/auth/current_user.dart';
@@ -93,8 +94,13 @@ class GarminError extends GarminSyncState {
 class GarminSyncController extends Notifier<GarminSyncState> {
   @override
   GarminSyncState build() {
-    // Kick off async restore; state transitions happen via _restoreSession.
-    Future.microtask(_restoreSession);
+    // Kick off async restore after the route's first build burst. Restoring
+    // may touch secure storage and the Rust bridge; doing it in a microtask
+    // competes with the Health Today first frame during domain switches.
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!ref.mounted) return;
+      unawaited(_restoreSession());
+    });
     return const GarminInitial();
   }
 
