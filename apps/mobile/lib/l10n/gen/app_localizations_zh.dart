@@ -7416,6 +7416,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incomePlannerJournalAmountHint => '0.00';
 
   @override
+  String get incomePlannerJournalBrokerageAccountLabel => '证券账户';
+
+  @override
+  String get incomePlannerJournalCashAccountLabel => '现金账户';
+
+  @override
+  String get incomePlannerJournalStrikeLabel => '行权价';
+
+  @override
+  String get incomePlannerJournalContractSizeLabel => '合约乘数';
+
+  @override
   String get incomePlannerJournalNotesLabel => '备注';
 
   @override

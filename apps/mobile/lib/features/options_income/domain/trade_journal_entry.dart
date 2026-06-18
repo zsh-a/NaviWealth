@@ -22,6 +22,11 @@ class TradeJournalEntry {
     required this.currency,
     required this.status,
     required this.notes,
+    this.brokerageAccountId,
+    this.cashAccountId,
+    this.underlyingMarket,
+    this.strikePrice,
+    this.contractSize,
     required this.sync,
   });
 
@@ -47,6 +52,11 @@ class TradeJournalEntry {
   final String currency;
   final TradeJournalStatus status;
   final String? notes;
+  final String? brokerageAccountId;
+  final String? cashAccountId;
+  final String? underlyingMarket;
+  final Decimal? strikePrice;
+  final int? contractSize;
   final SyncMeta sync;
 
   TradeJournalEntry copyWith({
@@ -61,6 +71,11 @@ class TradeJournalEntry {
     String? currency,
     TradeJournalStatus? status,
     String? notes,
+    String? brokerageAccountId,
+    String? cashAccountId,
+    String? underlyingMarket,
+    Decimal? strikePrice,
+    int? contractSize,
     SyncMeta? sync,
   }) {
     return TradeJournalEntry(
@@ -76,6 +91,11 @@ class TradeJournalEntry {
       currency: currency ?? this.currency,
       status: status ?? this.status,
       notes: notes ?? this.notes,
+      brokerageAccountId: brokerageAccountId ?? this.brokerageAccountId,
+      cashAccountId: cashAccountId ?? this.cashAccountId,
+      underlyingMarket: underlyingMarket ?? this.underlyingMarket,
+      strikePrice: strikePrice ?? this.strikePrice,
+      contractSize: contractSize ?? this.contractSize,
       sync: sync ?? this.sync,
     );
   }

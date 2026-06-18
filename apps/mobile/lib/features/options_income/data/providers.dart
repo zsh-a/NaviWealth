@@ -4,6 +4,10 @@ import 'package:naviwealth/core/sync/outbox_provider.dart';
 
 import '../../../core/persistence/providers.dart';
 import '../../../features/finance/data/market/market_data_providers.dart';
+import '../../../features/finance/data/repositories/journal_entry_providers.dart';
+import '../../../features/finance/data/repositories/providers.dart';
+import '../../../features/investment/data/providers.dart';
+import '../application/options_journal_ledger_service.dart';
 import '../application/scan_orchestrator.dart';
 import '../domain/approved_underlying.dart';
 import '../domain/options_opportunity.dart';
@@ -112,6 +116,29 @@ final tradeJournalRepositoryProvider = FutureProvider<TradeJournalRepository>((
   final stamper = await ref.watch(mutationStamperProvider.future);
   return TradeJournalRepository(db: db, outbox: outbox, stamper: stamper);
 });
+
+final optionsJournalLedgerServiceProvider =
+    FutureProvider<OptionsJournalLedgerService>((ref) async {
+      final journalEntryRepo = await ref.watch(
+        journalEntryRepositoryProvider.future,
+      );
+      final manualAssetRepo = await ref.watch(
+        manualAssetRepositoryProvider.future,
+      );
+      final securitiesAssetRepo = await ref.watch(
+        securitiesAssetRepositoryProvider.future,
+      );
+      final priceRepo = await ref.watch(priceRepositoryProvider.future);
+      final stamper = await ref.watch(mutationStamperProvider.future);
+      return OptionsJournalLedgerService(
+        journalEntryRepo: journalEntryRepo,
+        manualAssetRepo: manualAssetRepo,
+        securitiesAssetRepo: securitiesAssetRepo,
+        priceRepo: priceRepo,
+        holdingService: () => ref.read(holdingServiceProvider.future),
+        currentUserId: stamper.currentUserId,
+      );
+    });
 
 final tradeJournalEntriesProvider =
     StreamProvider.autoDispose<List<TradeJournalEntry>>((ref) async* {

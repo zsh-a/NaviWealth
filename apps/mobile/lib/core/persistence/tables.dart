@@ -280,6 +280,12 @@ class OptionsTradeJournal extends Table with SyncableTable {
   TextColumn get currency => text().withLength(min: 3, max: 8)();
   TextColumn get status => text()(); // open | closed | assigned | expired
   TextColumn get notes => text().nullable()();
+  TextColumn get brokerageAccountId => text().nullable()();
+  TextColumn get cashAccountId => text().nullable()();
+  TextColumn get underlyingMarket => text().nullable()();
+  TextColumn get strikePrice =>
+      text().map(const DecimalConverter()).nullable()();
+  IntColumn get contractSize => integer().nullable()();
 
   @override
   String? get tableName => 'options_trade_journal';

@@ -13326,6 +13326,30 @@ abstract class AppLocalizations {
   /// **'0.00'**
   String get incomePlannerJournalAmountHint;
 
+  /// Journal sheet account picker label for the securities account
+  ///
+  /// In en, this message translates to:
+  /// **'Brokerage account'**
+  String get incomePlannerJournalBrokerageAccountLabel;
+
+  /// Journal sheet account picker label for the cash account
+  ///
+  /// In en, this message translates to:
+  /// **'Cash account'**
+  String get incomePlannerJournalCashAccountLabel;
+
+  /// Journal sheet field label for option strike price
+  ///
+  /// In en, this message translates to:
+  /// **'Strike price'**
+  String get incomePlannerJournalStrikeLabel;
+
+  /// Journal sheet field label for option contract size, usually 100 shares
+  ///
+  /// In en, this message translates to:
+  /// **'Contract size'**
+  String get incomePlannerJournalContractSizeLabel;
+
   /// Journal sheet free-text notes label
   ///
   /// In en, this message translates to:

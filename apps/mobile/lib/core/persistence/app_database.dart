@@ -71,7 +71,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 23;
+  int get schemaVersion => 24;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -331,6 +331,29 @@ class AppDatabase extends _$AppDatabase {
         );
         await customStatement(
           'ALTER TABLE knowledge_experiments ADD COLUMN merged_into_id TEXT',
+        );
+      }
+      // v23 -> v24: Income Planner journal rows can optionally carry the
+      // minimal accounting context needed to mirror option events into the
+      // forward ledger. Old rows keep these fields NULL and remain
+      // review-only.
+      if (from < 24) {
+        await customStatement(
+          'ALTER TABLE options_trade_journal '
+          'ADD COLUMN brokerage_account_id TEXT',
+        );
+        await customStatement(
+          'ALTER TABLE options_trade_journal ADD COLUMN cash_account_id TEXT',
+        );
+        await customStatement(
+          'ALTER TABLE options_trade_journal '
+          'ADD COLUMN underlying_market TEXT',
+        );
+        await customStatement(
+          'ALTER TABLE options_trade_journal ADD COLUMN strike_price TEXT',
+        );
+        await customStatement(
+          'ALTER TABLE options_trade_journal ADD COLUMN contract_size INTEGER',
         );
       }
     },

@@ -42,6 +42,7 @@ import '../../investment/domain/trade_entry/trade_draft.dart'
 import '../../investment/domain/trade_entry/trade_entry_service.dart';
 import '../../liabilities/data/liability_repository.dart';
 import '../../liabilities/data/providers.dart';
+import '../../options_income/application/options_journal_ledger_service.dart';
 import '../../options_income/data/options_strategy_profile_repository.dart';
 import '../../options_income/data/providers.dart';
 import '../../options_income/data/trade_journal_repository.dart';
@@ -71,6 +72,7 @@ class FinanceProposalApplier implements ProposalApplier {
     required this.optionsProfileRepo,
     required this.tradeJournalRepo,
     required this.currentUserId,
+    this.optionsLedgerService,
     this.aiTouchedStore,
     this.firePlanWriter,
     this.fireBucketRuleWriter,
@@ -84,6 +86,7 @@ class FinanceProposalApplier implements ProposalApplier {
   final LiabilityRepository liabilityRepo;
   final OptionsStrategyProfileRepository optionsProfileRepo;
   final TradeJournalRepository tradeJournalRepo;
+  final OptionsJournalLedgerService? optionsLedgerService;
 
   /// When present, every successful [apply] records an AI-
   /// touch entry keyed by `(entityType, entityId)`. Optional so
@@ -129,7 +132,10 @@ class FinanceProposalApplier implements ProposalApplier {
         await manualAssetRepo.softDelete(id, reason: 'undo');
       case 'options_trade_journal':
         final entry = await tradeJournalRepo.get(id);
-        if (entry != null) await tradeJournalRepo.remove(entry);
+        if (entry != null) {
+          await optionsLedgerService?.removeMirrors(entry.id);
+          await tradeJournalRepo.remove(entry);
+        }
       default:
         throw ProposalApplyException('unknown undo table: $table');
     }
@@ -591,7 +597,13 @@ class FinanceProposalApplier implements ProposalApplier {
       currency: (plan.get('currency') ?? 'USD').toUpperCase(),
       status: parseTradeJournalStatus(plan.get('status') ?? 'open'),
       notes: plan.get('notes'),
+      brokerageAccountId: plan.get('brokerage_account_id'),
+      cashAccountId: plan.get('cash_account_id'),
+      underlyingMarket: plan.get('underlying_market'),
+      strikePrice: _optionalDecimal(plan, 'strike_price'),
+      contractSize: _optionalInt(plan.payload['contract_size']),
     );
+    await optionsLedgerService?.mirror(entry);
     return ProposalApplyState(
       status: ProposalApplyStatus.applied,
       appliedEntityId: entry.id,
@@ -802,6 +814,9 @@ final financeProposalApplierProvider = FutureProvider<ProposalApplier>((
   final tradeJournalRepo = await ref.watch(
     tradeJournalRepositoryProvider.future,
   );
+  final optionsLedgerService = await ref.watch(
+    optionsJournalLedgerServiceProvider.future,
+  );
   final currentUserId = ref.watch(currentUserIdProvider);
   final touched = ref.watch(aiTouchedStoreProvider);
   return FinanceProposalApplier(
@@ -813,6 +828,7 @@ final financeProposalApplierProvider = FutureProvider<ProposalApplier>((
     liabilityRepo: liabilityRepo,
     optionsProfileRepo: optionsProfileRepo,
     tradeJournalRepo: tradeJournalRepo,
+    optionsLedgerService: optionsLedgerService,
     currentUserId: currentUserId,
     aiTouchedStore: touched,
     firePlanWriter: (after) =>

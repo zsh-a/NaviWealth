@@ -7896,6 +7896,61 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _brokerageAccountIdMeta =
+      const VerificationMeta('brokerageAccountId');
+  @override
+  late final GeneratedColumn<String> brokerageAccountId =
+      GeneratedColumn<String>(
+        'brokerage_account_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _cashAccountIdMeta = const VerificationMeta(
+    'cashAccountId',
+  );
+  @override
+  late final GeneratedColumn<String> cashAccountId = GeneratedColumn<String>(
+    'cash_account_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _underlyingMarketMeta = const VerificationMeta(
+    'underlyingMarket',
+  );
+  @override
+  late final GeneratedColumn<String> underlyingMarket = GeneratedColumn<String>(
+    'underlying_market',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> strikePrice =
+      GeneratedColumn<String>(
+        'strike_price',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $OptionsTradeJournalTable.$converterstrikePricen,
+      );
+  static const VerificationMeta _contractSizeMeta = const VerificationMeta(
+    'contractSize',
+  );
+  @override
+  late final GeneratedColumn<int> contractSize = GeneratedColumn<int>(
+    'contract_size',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -7915,6 +7970,11 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
     currency,
     status,
     notes,
+    brokerageAccountId,
+    cashAccountId,
+    underlyingMarket,
+    strikePrice,
+    contractSize,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -8032,6 +8092,42 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
         notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
       );
     }
+    if (data.containsKey('brokerage_account_id')) {
+      context.handle(
+        _brokerageAccountIdMeta,
+        brokerageAccountId.isAcceptableOrUnknown(
+          data['brokerage_account_id']!,
+          _brokerageAccountIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cash_account_id')) {
+      context.handle(
+        _cashAccountIdMeta,
+        cashAccountId.isAcceptableOrUnknown(
+          data['cash_account_id']!,
+          _cashAccountIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('underlying_market')) {
+      context.handle(
+        _underlyingMarketMeta,
+        underlyingMarket.isAcceptableOrUnknown(
+          data['underlying_market']!,
+          _underlyingMarketMeta,
+        ),
+      );
+    }
+    if (data.containsKey('contract_size')) {
+      context.handle(
+        _contractSizeMeta,
+        contractSize.isAcceptableOrUnknown(
+          data['contract_size']!,
+          _contractSizeMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -8117,6 +8213,28 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
       ),
+      brokerageAccountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}brokerage_account_id'],
+      ),
+      cashAccountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cash_account_id'],
+      ),
+      underlyingMarket: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}underlying_market'],
+      ),
+      strikePrice: $OptionsTradeJournalTable.$converterstrikePricen.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}strike_price'],
+        ),
+      ),
+      contractSize: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}contract_size'],
+      ),
     );
   }
 
@@ -8136,6 +8254,10 @@ class $OptionsTradeJournalTable extends OptionsTradeJournal
       const DecimalConverter();
   static TypeConverter<Decimal?, String?> $converterrealizedPnln =
       NullAwareTypeConverter.wrap($converterrealizedPnl);
+  static TypeConverter<Decimal, String> $converterstrikePrice =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterstrikePricen =
+      NullAwareTypeConverter.wrap($converterstrikePrice);
 }
 
 class OptionsTradeJournalRow extends DataClass
@@ -8173,6 +8295,11 @@ class OptionsTradeJournalRow extends DataClass
   final String currency;
   final String status;
   final String? notes;
+  final String? brokerageAccountId;
+  final String? cashAccountId;
+  final String? underlyingMarket;
+  final Decimal? strikePrice;
+  final int? contractSize;
   const OptionsTradeJournalRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -8191,6 +8318,11 @@ class OptionsTradeJournalRow extends DataClass
     required this.currency,
     required this.status,
     this.notes,
+    this.brokerageAccountId,
+    this.cashAccountId,
+    this.underlyingMarket,
+    this.strikePrice,
+    this.contractSize,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -8234,6 +8366,23 @@ class OptionsTradeJournalRow extends DataClass
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
+    if (!nullToAbsent || brokerageAccountId != null) {
+      map['brokerage_account_id'] = Variable<String>(brokerageAccountId);
+    }
+    if (!nullToAbsent || cashAccountId != null) {
+      map['cash_account_id'] = Variable<String>(cashAccountId);
+    }
+    if (!nullToAbsent || underlyingMarket != null) {
+      map['underlying_market'] = Variable<String>(underlyingMarket);
+    }
+    if (!nullToAbsent || strikePrice != null) {
+      map['strike_price'] = Variable<String>(
+        $OptionsTradeJournalTable.$converterstrikePricen.toSql(strikePrice),
+      );
+    }
+    if (!nullToAbsent || contractSize != null) {
+      map['contract_size'] = Variable<int>(contractSize);
+    }
     return map;
   }
 
@@ -8266,6 +8415,21 @@ class OptionsTradeJournalRow extends DataClass
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
+      brokerageAccountId: brokerageAccountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(brokerageAccountId),
+      cashAccountId: cashAccountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cashAccountId),
+      underlyingMarket: underlyingMarket == null && nullToAbsent
+          ? const Value.absent()
+          : Value(underlyingMarket),
+      strikePrice: strikePrice == null && nullToAbsent
+          ? const Value.absent()
+          : Value(strikePrice),
+      contractSize: contractSize == null && nullToAbsent
+          ? const Value.absent()
+          : Value(contractSize),
     );
   }
 
@@ -8292,6 +8456,13 @@ class OptionsTradeJournalRow extends DataClass
       currency: serializer.fromJson<String>(json['currency']),
       status: serializer.fromJson<String>(json['status']),
       notes: serializer.fromJson<String?>(json['notes']),
+      brokerageAccountId: serializer.fromJson<String?>(
+        json['brokerageAccountId'],
+      ),
+      cashAccountId: serializer.fromJson<String?>(json['cashAccountId']),
+      underlyingMarket: serializer.fromJson<String?>(json['underlyingMarket']),
+      strikePrice: serializer.fromJson<Decimal?>(json['strikePrice']),
+      contractSize: serializer.fromJson<int?>(json['contractSize']),
     );
   }
   @override
@@ -8315,6 +8486,11 @@ class OptionsTradeJournalRow extends DataClass
       'currency': serializer.toJson<String>(currency),
       'status': serializer.toJson<String>(status),
       'notes': serializer.toJson<String?>(notes),
+      'brokerageAccountId': serializer.toJson<String?>(brokerageAccountId),
+      'cashAccountId': serializer.toJson<String?>(cashAccountId),
+      'underlyingMarket': serializer.toJson<String?>(underlyingMarket),
+      'strikePrice': serializer.toJson<Decimal?>(strikePrice),
+      'contractSize': serializer.toJson<int?>(contractSize),
     };
   }
 
@@ -8336,6 +8512,11 @@ class OptionsTradeJournalRow extends DataClass
     String? currency,
     String? status,
     Value<String?> notes = const Value.absent(),
+    Value<String?> brokerageAccountId = const Value.absent(),
+    Value<String?> cashAccountId = const Value.absent(),
+    Value<String?> underlyingMarket = const Value.absent(),
+    Value<Decimal?> strikePrice = const Value.absent(),
+    Value<int?> contractSize = const Value.absent(),
   }) => OptionsTradeJournalRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -8354,6 +8535,17 @@ class OptionsTradeJournalRow extends DataClass
     currency: currency ?? this.currency,
     status: status ?? this.status,
     notes: notes.present ? notes.value : this.notes,
+    brokerageAccountId: brokerageAccountId.present
+        ? brokerageAccountId.value
+        : this.brokerageAccountId,
+    cashAccountId: cashAccountId.present
+        ? cashAccountId.value
+        : this.cashAccountId,
+    underlyingMarket: underlyingMarket.present
+        ? underlyingMarket.value
+        : this.underlyingMarket,
+    strikePrice: strikePrice.present ? strikePrice.value : this.strikePrice,
+    contractSize: contractSize.present ? contractSize.value : this.contractSize,
   );
   OptionsTradeJournalRow copyWithCompanion(OptionsTradeJournalCompanion data) {
     return OptionsTradeJournalRow(
@@ -8384,6 +8576,21 @@ class OptionsTradeJournalRow extends DataClass
       currency: data.currency.present ? data.currency.value : this.currency,
       status: data.status.present ? data.status.value : this.status,
       notes: data.notes.present ? data.notes.value : this.notes,
+      brokerageAccountId: data.brokerageAccountId.present
+          ? data.brokerageAccountId.value
+          : this.brokerageAccountId,
+      cashAccountId: data.cashAccountId.present
+          ? data.cashAccountId.value
+          : this.cashAccountId,
+      underlyingMarket: data.underlyingMarket.present
+          ? data.underlyingMarket.value
+          : this.underlyingMarket,
+      strikePrice: data.strikePrice.present
+          ? data.strikePrice.value
+          : this.strikePrice,
+      contractSize: data.contractSize.present
+          ? data.contractSize.value
+          : this.contractSize,
     );
   }
 
@@ -8406,13 +8613,18 @@ class OptionsTradeJournalRow extends DataClass
           ..write('realizedPnl: $realizedPnl, ')
           ..write('currency: $currency, ')
           ..write('status: $status, ')
-          ..write('notes: $notes')
+          ..write('notes: $notes, ')
+          ..write('brokerageAccountId: $brokerageAccountId, ')
+          ..write('cashAccountId: $cashAccountId, ')
+          ..write('underlyingMarket: $underlyingMarket, ')
+          ..write('strikePrice: $strikePrice, ')
+          ..write('contractSize: $contractSize')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     ownerUserId,
     updatedAt,
     updatedByDevice,
@@ -8430,7 +8642,12 @@ class OptionsTradeJournalRow extends DataClass
     currency,
     status,
     notes,
-  );
+    brokerageAccountId,
+    cashAccountId,
+    underlyingMarket,
+    strikePrice,
+    contractSize,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -8451,7 +8668,12 @@ class OptionsTradeJournalRow extends DataClass
           other.realizedPnl == this.realizedPnl &&
           other.currency == this.currency &&
           other.status == this.status &&
-          other.notes == this.notes);
+          other.notes == this.notes &&
+          other.brokerageAccountId == this.brokerageAccountId &&
+          other.cashAccountId == this.cashAccountId &&
+          other.underlyingMarket == this.underlyingMarket &&
+          other.strikePrice == this.strikePrice &&
+          other.contractSize == this.contractSize);
 }
 
 class OptionsTradeJournalCompanion
@@ -8473,6 +8695,11 @@ class OptionsTradeJournalCompanion
   final Value<String> currency;
   final Value<String> status;
   final Value<String?> notes;
+  final Value<String?> brokerageAccountId;
+  final Value<String?> cashAccountId;
+  final Value<String?> underlyingMarket;
+  final Value<Decimal?> strikePrice;
+  final Value<int?> contractSize;
   final Value<int> rowid;
   const OptionsTradeJournalCompanion({
     this.ownerUserId = const Value.absent(),
@@ -8492,6 +8719,11 @@ class OptionsTradeJournalCompanion
     this.currency = const Value.absent(),
     this.status = const Value.absent(),
     this.notes = const Value.absent(),
+    this.brokerageAccountId = const Value.absent(),
+    this.cashAccountId = const Value.absent(),
+    this.underlyingMarket = const Value.absent(),
+    this.strikePrice = const Value.absent(),
+    this.contractSize = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   OptionsTradeJournalCompanion.insert({
@@ -8512,6 +8744,11 @@ class OptionsTradeJournalCompanion
     required String currency,
     required String status,
     this.notes = const Value.absent(),
+    this.brokerageAccountId = const Value.absent(),
+    this.cashAccountId = const Value.absent(),
+    this.underlyingMarket = const Value.absent(),
+    this.strikePrice = const Value.absent(),
+    this.contractSize = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -8543,6 +8780,11 @@ class OptionsTradeJournalCompanion
     Expression<String>? currency,
     Expression<String>? status,
     Expression<String>? notes,
+    Expression<String>? brokerageAccountId,
+    Expression<String>? cashAccountId,
+    Expression<String>? underlyingMarket,
+    Expression<String>? strikePrice,
+    Expression<int>? contractSize,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -8563,6 +8805,12 @@ class OptionsTradeJournalCompanion
       if (currency != null) 'currency': currency,
       if (status != null) 'status': status,
       if (notes != null) 'notes': notes,
+      if (brokerageAccountId != null)
+        'brokerage_account_id': brokerageAccountId,
+      if (cashAccountId != null) 'cash_account_id': cashAccountId,
+      if (underlyingMarket != null) 'underlying_market': underlyingMarket,
+      if (strikePrice != null) 'strike_price': strikePrice,
+      if (contractSize != null) 'contract_size': contractSize,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -8585,6 +8833,11 @@ class OptionsTradeJournalCompanion
     Value<String>? currency,
     Value<String>? status,
     Value<String?>? notes,
+    Value<String?>? brokerageAccountId,
+    Value<String?>? cashAccountId,
+    Value<String?>? underlyingMarket,
+    Value<Decimal?>? strikePrice,
+    Value<int?>? contractSize,
     Value<int>? rowid,
   }) {
     return OptionsTradeJournalCompanion(
@@ -8605,6 +8858,11 @@ class OptionsTradeJournalCompanion
       currency: currency ?? this.currency,
       status: status ?? this.status,
       notes: notes ?? this.notes,
+      brokerageAccountId: brokerageAccountId ?? this.brokerageAccountId,
+      cashAccountId: cashAccountId ?? this.cashAccountId,
+      underlyingMarket: underlyingMarket ?? this.underlyingMarket,
+      strikePrice: strikePrice ?? this.strikePrice,
+      contractSize: contractSize ?? this.contractSize,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -8675,6 +8933,25 @@ class OptionsTradeJournalCompanion
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
+    if (brokerageAccountId.present) {
+      map['brokerage_account_id'] = Variable<String>(brokerageAccountId.value);
+    }
+    if (cashAccountId.present) {
+      map['cash_account_id'] = Variable<String>(cashAccountId.value);
+    }
+    if (underlyingMarket.present) {
+      map['underlying_market'] = Variable<String>(underlyingMarket.value);
+    }
+    if (strikePrice.present) {
+      map['strike_price'] = Variable<String>(
+        $OptionsTradeJournalTable.$converterstrikePricen.toSql(
+          strikePrice.value,
+        ),
+      );
+    }
+    if (contractSize.present) {
+      map['contract_size'] = Variable<int>(contractSize.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -8701,6 +8978,11 @@ class OptionsTradeJournalCompanion
           ..write('currency: $currency, ')
           ..write('status: $status, ')
           ..write('notes: $notes, ')
+          ..write('brokerageAccountId: $brokerageAccountId, ')
+          ..write('cashAccountId: $cashAccountId, ')
+          ..write('underlyingMarket: $underlyingMarket, ')
+          ..write('strikePrice: $strikePrice, ')
+          ..write('contractSize: $contractSize, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -30580,6 +30862,11 @@ typedef $$OptionsTradeJournalTableCreateCompanionBuilder =
       required String currency,
       required String status,
       Value<String?> notes,
+      Value<String?> brokerageAccountId,
+      Value<String?> cashAccountId,
+      Value<String?> underlyingMarket,
+      Value<Decimal?> strikePrice,
+      Value<int?> contractSize,
       Value<int> rowid,
     });
 typedef $$OptionsTradeJournalTableUpdateCompanionBuilder =
@@ -30601,6 +30888,11 @@ typedef $$OptionsTradeJournalTableUpdateCompanionBuilder =
       Value<String> currency,
       Value<String> status,
       Value<String?> notes,
+      Value<String?> brokerageAccountId,
+      Value<String?> cashAccountId,
+      Value<String?> underlyingMarket,
+      Value<Decimal?> strikePrice,
+      Value<int?> contractSize,
       Value<int> rowid,
     });
 
@@ -30701,6 +30993,32 @@ class $$OptionsTradeJournalTableFilterComposer
     column: $table.notes,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get brokerageAccountId => $composableBuilder(
+    column: $table.brokerageAccountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cashAccountId => $composableBuilder(
+    column: $table.cashAccountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get underlyingMarket => $composableBuilder(
+    column: $table.underlyingMarket,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get strikePrice =>
+      $composableBuilder(
+        column: $table.strikePrice,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<int> get contractSize => $composableBuilder(
+    column: $table.contractSize,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$OptionsTradeJournalTableOrderingComposer
@@ -30796,6 +31114,31 @@ class $$OptionsTradeJournalTableOrderingComposer
     column: $table.notes,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get brokerageAccountId => $composableBuilder(
+    column: $table.brokerageAccountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cashAccountId => $composableBuilder(
+    column: $table.cashAccountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get underlyingMarket => $composableBuilder(
+    column: $table.underlyingMarket,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get strikePrice => $composableBuilder(
+    column: $table.strikePrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get contractSize => $composableBuilder(
+    column: $table.contractSize,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$OptionsTradeJournalTableAnnotationComposer
@@ -30869,6 +31212,32 @@ class $$OptionsTradeJournalTableAnnotationComposer
 
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get brokerageAccountId => $composableBuilder(
+    column: $table.brokerageAccountId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get cashAccountId => $composableBuilder(
+    column: $table.cashAccountId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get underlyingMarket => $composableBuilder(
+    column: $table.underlyingMarket,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get strikePrice =>
+      $composableBuilder(
+        column: $table.strikePrice,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<int> get contractSize => $composableBuilder(
+    column: $table.contractSize,
+    builder: (column) => column,
+  );
 }
 
 class $$OptionsTradeJournalTableTableManager
@@ -30931,6 +31300,11 @@ class $$OptionsTradeJournalTableTableManager
                 Value<String> currency = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<String?> brokerageAccountId = const Value.absent(),
+                Value<String?> cashAccountId = const Value.absent(),
+                Value<String?> underlyingMarket = const Value.absent(),
+                Value<Decimal?> strikePrice = const Value.absent(),
+                Value<int?> contractSize = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => OptionsTradeJournalCompanion(
                 ownerUserId: ownerUserId,
@@ -30950,6 +31324,11 @@ class $$OptionsTradeJournalTableTableManager
                 currency: currency,
                 status: status,
                 notes: notes,
+                brokerageAccountId: brokerageAccountId,
+                cashAccountId: cashAccountId,
+                underlyingMarket: underlyingMarket,
+                strikePrice: strikePrice,
+                contractSize: contractSize,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -30971,6 +31350,11 @@ class $$OptionsTradeJournalTableTableManager
                 required String currency,
                 required String status,
                 Value<String?> notes = const Value.absent(),
+                Value<String?> brokerageAccountId = const Value.absent(),
+                Value<String?> cashAccountId = const Value.absent(),
+                Value<String?> underlyingMarket = const Value.absent(),
+                Value<Decimal?> strikePrice = const Value.absent(),
+                Value<int?> contractSize = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => OptionsTradeJournalCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -30990,6 +31374,11 @@ class $$OptionsTradeJournalTableTableManager
                 currency: currency,
                 status: status,
                 notes: notes,
+                brokerageAccountId: brokerageAccountId,
+                cashAccountId: cashAccountId,
+                underlyingMarket: underlyingMarket,
+                strikePrice: strikePrice,
+                contractSize: contractSize,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

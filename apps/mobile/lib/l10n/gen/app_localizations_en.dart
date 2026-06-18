@@ -7725,6 +7725,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incomePlannerJournalAmountHint => '0.00';
 
   @override
+  String get incomePlannerJournalBrokerageAccountLabel => 'Brokerage account';
+
+  @override
+  String get incomePlannerJournalCashAccountLabel => 'Cash account';
+
+  @override
+  String get incomePlannerJournalStrikeLabel => 'Strike price';
+
+  @override
+  String get incomePlannerJournalContractSizeLabel => 'Contract size';
+
+  @override
   String get incomePlannerJournalNotesLabel => 'Notes';
 
   @override

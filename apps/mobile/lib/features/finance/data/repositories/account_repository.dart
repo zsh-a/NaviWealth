@@ -702,6 +702,14 @@ const List<_SystemAccountSeed> _kSystemAccountTreeSeeds = [
     color: '#10B981',
   ),
   _SystemAccountSeed(
+    path: 'income:options',
+    parentPath: 'income',
+    name: 'Options Income',
+    category: AccountSide.income,
+    icon: 'show_chart',
+    color: '#10B981',
+  ),
+  _SystemAccountSeed(
     path: 'income:other',
     parentPath: 'income',
     name: 'Other Income',
