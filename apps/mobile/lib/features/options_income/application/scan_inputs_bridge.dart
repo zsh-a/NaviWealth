@@ -3,6 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import '../../../domain/values/money.dart';
+import '../../accounts/data/account_balances_provider.dart';
+import '../../accounts/domain/account_balances.dart';
+import '../../finance/data/domain/asset.dart';
+import '../../finance/data/domain/enums.dart';
+import '../../finance/data/domain/manual_asset_metadata.dart';
+import '../../finance/data/repositories/providers.dart';
 import '../../investment/data/providers.dart';
 
 /// Bridge that derives the side inputs ScanController needs from the
@@ -11,12 +17,6 @@ import '../../investment/data/providers.dart';
 /// Two outputs:
 ///   * `holdingsBySymbol` — share counts keyed by uppercase ticker
 ///   * `availableCash` — cash bucket usable as the per-trade cap denominator
-///
-/// `availableCash` is a coarse default in P1 (high sentinel); refining it
-/// to read the actual cash account total is tracked separately. The
-/// scorer treats this as a per-trade cap, so a generous default does not
-/// silently approve dangerous positions — the user's
-/// `maxCapitalPerTradePct` still applies.
 class ScanSideInputs {
   const ScanSideInputs({
     required this.holdingsBySymbol,
@@ -32,7 +32,6 @@ final scanSideInputsProvider = FutureProvider.autoDispose<ScanSideInputs>((
 ) async {
   // Defaults to USD because yfinance options are US-only at MVP.
   const baseCurrency = 'USD';
-  final defaultCash = Money(Decimal.parse('1000000'), baseCurrency);
   // currentUserId is used implicitly downstream — touching the provider
   // keeps the bridge invalidating when the user switches.
   await ref.watch(currentUserIdProvider)();
@@ -43,7 +42,16 @@ final scanSideInputsProvider = FutureProvider.autoDispose<ScanSideInputs>((
   } catch (_) {
     holdings = const {};
   }
-  return ScanSideInputs(holdingsBySymbol: holdings, availableCash: defaultCash);
+  final manualAssets = await ref.watch(manualAssetsStreamProvider.future);
+  final balances = await ref.watch(accountBalancesByIdProvider.future);
+  return ScanSideInputs(
+    holdingsBySymbol: holdings,
+    availableCash: optionsAvailableCashFromBalances(
+      manualAssets: manualAssets,
+      balancesByAccountId: balances,
+      currency: baseCurrency,
+    ),
+  );
 });
 
 Map<String, int> _extractShares(Map<String, Object?>? snapshot) {
@@ -61,4 +69,28 @@ Map<String, int> _extractShares(Map<String, Object?>? snapshot) {
     out[symbol] = qty.floor().toBigInt().toInt();
   });
   return out;
+}
+
+Money optionsAvailableCashFromBalances({
+  required Iterable<Asset> manualAssets,
+  required Map<String, AccountBalances> balancesByAccountId,
+  String currency = 'USD',
+}) {
+  final upper = currency.trim().toUpperCase();
+  var total = Decimal.zero;
+  final seenAccountIds = <String>{};
+
+  for (final asset in manualAssets) {
+    if (asset.type != AssetType.cash) continue;
+    if (asset.currency.toUpperCase() != upper) continue;
+    final metadata = ManualAssetMetadata.decode(asset.metadataJson);
+    if (metadata is! CashMetadata) continue;
+    if (!seenAccountIds.add(metadata.accountId)) continue;
+    final leg = balancesByAccountId[metadata.accountId]?.legFor(upper);
+    if (leg == null) continue;
+    total += leg.units;
+  }
+
+  if (total < Decimal.zero) total = Decimal.zero;
+  return Money(total, upper);
 }

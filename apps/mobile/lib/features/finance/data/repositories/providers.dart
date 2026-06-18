@@ -6,8 +6,9 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart' as dom;
-import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/domain/services/currency_converter.dart';
 import 'package:naviwealth/features/cashflow/domain/budget_signal.dart';
+import 'package:naviwealth/features/cashflow/domain/budget_spend_mapper.dart';
 import 'package:naviwealth/features/cashflow/domain/budget_summary.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
@@ -155,28 +156,57 @@ final budgetsForMonthProvider = StreamProvider.autoDispose
 
 /// Pure derivation of the budget posture for a given month. FIRE engine
 /// / dashboard insights subscribe to this rather than to budgets +
-/// postings directly, so a future "budget overspend nudges
-/// safetyLevel" wire-up is one provider read.
+/// postings directly, so "budget overspend nudges safetyLevel" remains
+/// one provider read.
 /// (`docs/roadmap-next.md` §3.2 — Budget × FIRE松耦合.)
-///
-/// Today the spend map is empty placeholder — the FX-converted spend
-/// integration ships in a follow-up. The signal therefore reduces to
-/// "budgets exist but no spend tracked yet" → [BudgetSignal.noData],
-/// which is the correct quiet state until the spend join lands.
 final monthlyBudgetSignalProvider = Provider.autoDispose
     .family<AsyncValue<BudgetSignal>, String>((ref, periodMonth) {
       final budgetsAsync = ref.watch(budgetsForMonthProvider(periodMonth));
-      return budgetsAsync.whenData((rows) {
-        final res = buildMonthlyBudgetSummary(
-          periodMonth: periodMonth,
-          budgets: rows,
-          spendByCategoryId: const <String, Money>{},
-          targetCurrency: rows.isEmpty
-              ? 'CNY'
-              : rows.first.currency.toUpperCase(),
+      final expensesAsync = ref.watch(journalExpensesStreamProvider);
+      final ratesAsync = ref.watch(fxRatesStreamProvider);
+
+      if (budgetsAsync.hasError) {
+        return AsyncValue.error(
+          budgetsAsync.error!,
+          budgetsAsync.stackTrace ?? StackTrace.current,
         );
-        return budgetSignalFor(res.summary);
-      });
+      }
+      if (expensesAsync.hasError) {
+        return AsyncValue.error(
+          expensesAsync.error!,
+          expensesAsync.stackTrace ?? StackTrace.current,
+        );
+      }
+      if (ratesAsync.hasError) {
+        return AsyncValue.error(
+          ratesAsync.error!,
+          ratesAsync.stackTrace ?? StackTrace.current,
+        );
+      }
+      if (!budgetsAsync.hasValue || !expensesAsync.hasValue) {
+        return const AsyncValue.loading();
+      }
+
+      final rows = budgetsAsync.requireValue;
+      final targetCurrency = rows.isEmpty
+          ? 'CNY'
+          : rows.first.currency.toUpperCase();
+      final converter = FxRateCurrencyConverter(
+        InMemoryFxRateLookup(ratesAsync.value ?? const <dom.FxRate>[]),
+      );
+      final spendByCategoryId = buildBudgetSpendByCategoryId(
+        periodMonth: periodMonth,
+        expenses: expensesAsync.requireValue,
+        targetCurrency: targetCurrency,
+        converter: converter,
+      );
+      final res = buildMonthlyBudgetSummary(
+        periodMonth: periodMonth,
+        budgets: rows,
+        spendByCategoryId: spendByCategoryId,
+        targetCurrency: targetCurrency,
+      );
+      return AsyncValue.data(budgetSignalFor(res.summary));
     });
 
 /// Live stream of every recorded FX rate. The dashboard converter and the
