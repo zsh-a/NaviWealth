@@ -63,8 +63,8 @@ case "$TARGET" in
     # mobile-c.framework archive contains it; this is best-effort and
     # may need adjustment when iOS shipping is real (cf. lifeos-shell §6.6).
     echo "ERROR: iOS dylib fetch not implemented; iOS shipping requires the" >&2
-    echo "       onnxruntime-c CocoaPod or a custom xcframework. Punted to" >&2
-    echo "       D-2.x when HealthOS lands." >&2
+    echo "       onnxruntime-c CocoaPod or a custom xcframework. Keep the" >&2
+    echo "       stub embedder on iOS until that packaging work lands." >&2
     exit 2
     ;;
   aarch64-linux-android)

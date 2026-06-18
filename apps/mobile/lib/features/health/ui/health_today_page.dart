@@ -1,10 +1,9 @@
 /// HealthOS Today surface (`docs/healthos-domain.md` §8, D-2.5b
 /// follow-up).
 ///
-/// Renders the most recent Morning Briefing as the headline card with
-/// a `Run now` affordance underneath. The Briefing is the only signal
-/// HealthOS surfaces in-app today; Trend and Plan tabs keep the
-/// placeholder until later milestones flesh them out.
+/// Renders HealthKit/Garmin sync status, recovery, key metrics, weekly
+/// summary, and the latest Morning Briefing. Trend and Plan now have MVP
+/// surfaces; Today stays the dense operational entry point.
 ///
 /// Chrome matches the rest of LifeOS (`docs/lifeos-shell.md` §3): the
 /// ForUI `FScaffold` + `FHeader.nested` shell, `SoftCard` surfaces and

@@ -40,10 +40,7 @@ class HealthMetricRepository {
       ..where((t) => t.kind.equals(kind.wire))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([
-        (t) => OrderingTerm(
-          expression: t.capturedAt,
-          mode: OrderingMode.desc,
-        ),
+        (t) => OrderingTerm(expression: t.capturedAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
     return query.watch().map((rows) => rows.map(_fromRow).toList());
@@ -60,10 +57,7 @@ class HealthMetricRepository {
       ..where((t) => t.kind.equals(kind.wire))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([
-        (t) => OrderingTerm(
-          expression: t.capturedAt,
-          mode: OrderingMode.desc,
-        ),
+        (t) => OrderingTerm(expression: t.capturedAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
     final rows = await query.get();
@@ -75,6 +69,17 @@ class HealthMetricRepository {
       _db.healthMetrics,
     )..where((t) => t.id.equals(id))).getSingleOrNull();
     return row == null ? null : _fromRow(row);
+  }
+
+  Future<Map<String, HealthMetric>> findByIds(Iterable<String> ids) async {
+    final uniqueIds = ids.toSet();
+    if (uniqueIds.isEmpty) return const <String, HealthMetric>{};
+    final rows = await (_db.select(
+      _db.healthMetrics,
+    )..where((t) => t.id.isIn(uniqueIds))).get();
+    return <String, HealthMetric>{
+      for (final row in rows) row.id: _fromRow(row),
+    };
   }
 
   /// Batch read: fetch rows for multiple [kinds] in a single query.
@@ -91,10 +96,7 @@ class HealthMetricRepository {
       ..where((t) => t.kind.isIn(kindWires))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([
-        (t) => OrderingTerm(
-          expression: t.capturedAt,
-          mode: OrderingMode.desc,
-        ),
+        (t) => OrderingTerm(expression: t.capturedAt, mode: OrderingMode.desc),
       ])
       ..limit(limit * kinds.length);
     final rows = await query.get();
@@ -120,6 +122,27 @@ class HealthMetricRepository {
   /// enqueue it in the sync outbox. The caller has already stamped
   /// [HealthMetric.sync] with a fresh HLC + owner + device id.
   Future<void> upsert(HealthMetric metric) async {
+    await upsertAll([metric]);
+  }
+
+  /// Insert (or replace) every metric and enqueue one sync dirty pointer
+  /// for each written row. The list order is preserved so callers that
+  /// intentionally submit multiple corrections for the same id retain
+  /// last-write-wins behavior.
+  Future<void> upsertAll(Iterable<HealthMetric> metrics) async {
+    final batch = metrics.toList(growable: false);
+    if (batch.isEmpty) return;
+    await _db.transaction(() async {
+      for (final metric in batch) {
+        await _db
+            .into(_db.healthMetrics)
+            .insert(_companionFor(metric), mode: InsertMode.insertOrReplace);
+        await _outbox.enqueue(table: _tableName, rowId: metric.id);
+      }
+    });
+  }
+
+  HealthMetricsCompanion _companionFor(HealthMetric metric) {
     final companion = HealthMetricsCompanion.insert(
       id: metric.id,
       capturedAt: metric.capturedAt,
@@ -134,12 +157,7 @@ class HealthMetricRepository {
       hlc: metric.sync.hlc,
       deletedAt: Value(metric.sync.deletedAt),
     );
-    await _db.transaction(() async {
-      await _db
-          .into(_db.healthMetrics)
-          .insert(companion, mode: InsertMode.insertOrReplace);
-      await _outbox.enqueue(table: _tableName, rowId: metric.id);
-    });
+    return companion;
   }
 
   // ---------- Helpers ----------

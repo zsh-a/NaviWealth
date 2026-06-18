@@ -426,9 +426,8 @@ class ChatRepository {
       await _store.touchSession(sessionId, DateTime.now().toUtc());
       // Append the trace last so a failure here can never sneak past
       // and skip session.touch — chat history takes priority over
-      // transparency. The optional onTraceFinalized callback is the
-      // bridge that feeds stale-read-model names into the next chat
-      // request's FreshnessHint (lib/.../providers.dart).
+      // transparency. The optional onTraceFinalized callback is retained
+      // as a post-trace hook for diagnostics and tests.
       if (traceBuilder != null && _traceStore != null) {
         try {
           final trace = traceBuilder.finalize(

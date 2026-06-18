@@ -10,6 +10,11 @@
 > `apps/backend/src/ai/*` 引用与「后端 AI 工具/SSE/proposals」计划均已被取代，
 > 以 [`docs/ai-architecture.md`](./ai-architecture.md) 为准。
 > FIRE OS 演进计划见 [`docs/roadmap-fire-os.md`](./roadmap-fire-os.md)。
+>
+> ⚠️ **历史档案**：本文保留 2026-05-10 的判断用于追溯，不再作为当前
+> 任务排期或代码事实来源。当前计划入口是
+> [`roadmap-next.md`](./roadmap-next.md)，跨域架构以
+> [`lifeos-shell.md`](./lifeos-shell.md) 和各 domain SSOT 为准。
 
 ---
 

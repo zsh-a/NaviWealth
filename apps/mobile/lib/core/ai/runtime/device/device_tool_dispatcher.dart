@@ -1,10 +1,10 @@
 /// Device tool dispatch contract.
 ///
-/// Port of the backend `ToolDispatcher` trait. The real
-/// implementation reads Drift; until then [UnavailableToolDispatcher]
-/// returns a standard error tool_result so a model that calls a tool
-/// degrades to "I can't read that yet" rather than crashing the turn —
-/// the same shape `risk_policy` denials use on the backend.
+/// Production chat uses the Drift-backed dispatcher in
+/// `device/tools/device_tool_registry.dart`. [UnavailableToolDispatcher]
+/// remains the default safety net for tests and shell-only construction:
+/// it returns a standard error tool_result instead of crashing a turn if
+/// a model somehow calls a tool that was not wired into the runtime.
 library;
 
 import 'device_session.dart';

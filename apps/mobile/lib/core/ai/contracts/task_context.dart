@@ -1,9 +1,8 @@
 /// Per-request, dynamically-generated portion of [ContextPack].
 ///
-/// Re-built every router invocation; never cached. This is where the
-/// device places intent-specific signals, scoped aggregates, and (in
-/// later phases) RAG hits. Always small enough to fit alongside
-/// [BaseContext] under the active [PrivacyBudget].
+/// Re-built for each device chat turn; never cached. This is where the
+/// device places route, intent, and recent-signal hints. Always small
+/// enough to fit alongside [BaseContext] under the active [PrivacyBudget].
 library;
 
 import 'intent.dart';
@@ -97,8 +96,8 @@ class RecentSignal {
   final String summaryZh;
 
   /// Opaque pointer back to a Drift row (e.g. anomaly id, maturity id).
-  /// The cloud may reference this inside a DisclosureRequest; on its
-  /// own it is not a usable entity id.
+  /// On its own it is not a usable entity id; callers need domain-specific
+  /// routing metadata to turn it into a deep link or evidence anchor.
   final String? detailRef;
 
   Map<String, Object?> toJson() => <String, Object?>{

@@ -71,30 +71,37 @@ class HealthMetricIngestor {
   }
 
   Future<HealthIngestResult> ingest(Iterable<HealthMetric> rows) async {
-    var total = 0;
-    var upserted = 0;
-    var unchanged = 0;
-
-    for (final row in rows) {
-      total++;
-      final result = await _upsertIfChanged(row);
-      result == _WriteOutcome.upserted ? upserted++ : unchanged++;
+    final batch = rows.toList(growable: false);
+    if (batch.isEmpty) {
+      return const HealthIngestResult(total: 0, upserted: 0, unchanged: 0);
     }
 
+    final existingById = await _repo.findByIds(batch.map((r) => r.id));
+    final writes = <HealthMetric>[];
+    var unchanged = 0;
+
+    for (final row in batch) {
+      final existing = existingById[row.id];
+      if (existing != null && _payloadEquivalent(existing, row)) {
+        unchanged++;
+        continue;
+      }
+      final stamped = await _stamp(row);
+      writes.add(stamped);
+      existingById[row.id] = stamped;
+    }
+
+    await _repo.upsertAll(writes);
     return HealthIngestResult(
-      total: total,
-      upserted: upserted,
+      total: batch.length,
+      upserted: writes.length,
       unchanged: unchanged,
     );
   }
 
-  Future<_WriteOutcome> _upsertIfChanged(HealthMetric unstamped) async {
-    final existing = await _repo.findById(unstamped.id);
-    if (existing != null && _payloadEquivalent(existing, unstamped)) {
-      return _WriteOutcome.unchanged;
-    }
+  Future<HealthMetric> _stamp(HealthMetric unstamped) async {
     final stamp = await _stamper.stamp();
-    final stamped = unstamped.copyWith(
+    return unstamped.copyWith(
       sync: SyncMeta(
         ownerUserId: stamp.ownerUserId,
         updatedAt: stamp.now,
@@ -102,8 +109,6 @@ class HealthMetricIngestor {
         hlc: stamp.hlc,
       ),
     );
-    await _repo.upsert(stamped);
-    return _WriteOutcome.upserted;
   }
 
   bool _payloadEquivalent(HealthMetric a, HealthMetric b) {
@@ -122,5 +127,3 @@ final SyncMeta _placeholderSync = SyncMeta(
   updatedByDevice: '',
   hlc: Hlc.zero('placeholder'),
 );
-
-enum _WriteOutcome { upserted, unchanged }
