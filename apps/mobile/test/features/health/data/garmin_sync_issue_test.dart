@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/features/health/data/garmin/garmin_bridge.dart';
+import 'package:naviwealth/features/health/data/garmin/garmin_sync_controller.dart';
 import 'package:naviwealth/features/health/data/garmin/garmin_sync_issue.dart';
 
 void main() {
@@ -22,5 +24,24 @@ void main() {
     expect(issue.code, 'endpoint_unavailable');
     expect(issue.endpoint, 'activities');
     expect(issue.isFatal, isFalse);
+  });
+
+  test('maps restored expired auth failure to reconnect error', () {
+    final issue = garminRestoreAuthIssue(
+      GarminAuthState.fromJson({
+        'Error': {'message': 'DI token expired'},
+      }),
+    );
+
+    expect(issue.code, 'auth_expired');
+    expect(issue.requiresReconnect, isTrue);
+    expect(issue.detail, contains('DI token expired'));
+  });
+
+  test('maps unauthenticated restored auth state to reconnect error', () {
+    final issue = garminRestoreAuthIssue(GarminAuthState.unauthenticated);
+
+    expect(issue.code, 'auth_expired');
+    expect(issue.requiresReconnect, isTrue);
   });
 }

@@ -83,10 +83,7 @@ class GarminAuthState {
 enum GarminAuthResultType { authenticated, mfaRequired, failed }
 
 class GarminAuthResult {
-  const GarminAuthResult({
-    required this.type,
-    this.errorMessage,
-  });
+  const GarminAuthResult({required this.type, this.errorMessage});
 
   final GarminAuthResultType type;
   final String? errorMessage;
@@ -121,7 +118,8 @@ class GarminSyncOutcome {
       to: DateTime.parse(json['to'] as String),
       metricsCount: json['metrics_count'] as int? ?? 0,
       activitiesCount: json['activities_count'] as int? ?? 0,
-      errors: (json['errors'] as List<dynamic>?)
+      errors:
+          (json['errors'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
@@ -136,7 +134,10 @@ class GarminSyncOutcome {
 /// `package:naviwealth/src/rust/api/health.dart`.
 class GarminBridge {
   /// Initialize the Garmin client.
-  Future<GarminAuthState> init({String? storedTokenJson, bool isCn = true}) async {
+  Future<GarminAuthState> init({
+    String? storedTokenJson,
+    bool isCn = true,
+  }) async {
     // FRB returns String but SSE codec may auto-decode JSON.
     final dynamic result = await rust.garminInit(
       storedTokenJson: storedTokenJson,
@@ -199,9 +200,7 @@ class GarminBridge {
   Future<Map<String, DateTime>> syncCursors() async {
     final dynamic result = await rust.garminSyncCursors();
     final map = _decodeJsonMap(result);
-    return map.map(
-      (k, v) => MapEntry(k, DateTime.parse(v as String)),
-    );
+    return map.map((k, v) => MapEntry(k, DateTime.parse(v as String)));
   }
 
   /// Logout and clear stored credentials.
@@ -229,7 +228,7 @@ class GarminBridge {
   /// The `state` value may be a Map or a JSON-encoded String.
   GarminAuthState _parseAuthState(dynamic raw) {
     // Rust serde serializes unit enum variants as plain strings:
-    //   "Unauthenticated", "Refreshing"
+    //   "Unauthenticated", "Refreshing" (legacy compatibility only)
     // Variants with data serialize as objects:
     //   {"PendingMfa": {"session_ticket": "..."}}
     //   {"Authenticated": {"expires_at": "..."}}
@@ -325,7 +324,9 @@ class GarminBridge {
     if (resultTypeName != null) {
       switch (resultTypeName) {
         case 'Authenticated':
-          return const GarminAuthResult(type: GarminAuthResultType.authenticated);
+          return const GarminAuthResult(
+            type: GarminAuthResultType.authenticated,
+          );
         case 'MfaRequired':
           return const GarminAuthResult(type: GarminAuthResultType.mfaRequired);
         case 'Failed':
@@ -386,7 +387,9 @@ class GarminBridge {
         'Input: ${value.substring(0, value.length.clamp(0, 200))}',
       );
     }
-    throw ArgumentError('Expected String or Map, got ${value.runtimeType}: $value');
+    throw ArgumentError(
+      'Expected String or Map, got ${value.runtimeType}: $value',
+    );
   }
 
   /// Decode a JSON value into a List.

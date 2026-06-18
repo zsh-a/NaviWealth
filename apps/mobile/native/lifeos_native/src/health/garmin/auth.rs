@@ -1,7 +1,8 @@
 //! Garmin Connect authentication state machine.
 //!
 //! Models the SSO flow: Unauthenticated → PendingMfa → Authenticated
-//! → Refreshing → Authenticated (or Error at any step).
+//! (or Error at any step). Expired DI tokens are not refreshed; callers must
+//! reconnect.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -18,7 +19,7 @@ pub enum GarminAuthState {
     },
     /// Authenticated and token is valid.
     Authenticated { expires_at: DateTime<Utc> },
-    /// Token expired, refresh in progress.
+    /// Legacy wire variant. The client no longer emits this state.
     Refreshing,
     /// Terminal error (wrong credentials, account locked, etc.).
     Error { message: String },
@@ -41,11 +42,11 @@ impl GarminAuthState {
         matches!(self, GarminAuthState::Authenticated { .. })
     }
 
-    /// Whether the token needs refreshing.
+    /// Legacy FRB compatibility method. Refresh is no longer supported; this
+    /// only reports whether the token is already expired.
     pub fn needs_refresh(&self) -> bool {
         if let GarminAuthState::Authenticated { expires_at } = self {
-            // Refresh 5 minutes before expiry.
-            *expires_at - chrono::Duration::minutes(5) < Utc::now()
+            *expires_at <= Utc::now()
         } else {
             false
         }
@@ -78,7 +79,7 @@ mod tests {
     }
 
     #[test]
-    fn refreshing_cannot_make_requests() {
+    fn legacy_refreshing_cannot_make_requests() {
         assert!(!GarminAuthState::Refreshing.can_make_requests());
     }
 
@@ -99,9 +100,17 @@ mod tests {
     }
 
     #[test]
-    fn authenticated_near_expiry_needs_refresh() {
+    fn authenticated_near_expiry_does_not_need_refresh() {
         let state = GarminAuthState::Authenticated {
             expires_at: Utc::now() + chrono::Duration::minutes(2),
+        };
+        assert!(!state.needs_refresh());
+    }
+
+    #[test]
+    fn authenticated_expired_needs_reconnect() {
+        let state = GarminAuthState::Authenticated {
+            expires_at: Utc::now() - chrono::Duration::minutes(1),
         };
         assert!(state.needs_refresh());
     }

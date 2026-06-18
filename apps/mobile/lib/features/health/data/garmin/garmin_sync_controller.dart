@@ -90,6 +90,17 @@ class GarminError extends GarminSyncState {
   final GarminSyncIssue issue;
 }
 
+GarminSyncIssue garminRestoreAuthIssue(GarminAuthState authState) {
+  final detail = switch (authState.type) {
+    GarminAuthStateType.error => authState.errorMessage ?? 'Garmin auth failed',
+    GarminAuthStateType.unauthenticated => 'Garmin token expired',
+    GarminAuthStateType.refreshing => 'Garmin token expired',
+    GarminAuthStateType.pendingMfa => 'Garmin auth failed: pending MFA',
+    GarminAuthStateType.authenticated => 'Garmin auth failed',
+  };
+  return GarminSyncIssue.fromLegacyMessage(detail);
+}
+
 /// Controller for Garmin sync operations.
 class GarminSyncController extends Notifier<GarminSyncState> {
   @override
@@ -122,13 +133,13 @@ class GarminSyncController extends Notifier<GarminSyncState> {
       if (authState.canMakeRequests) {
         state = const GarminConnected();
       } else {
-        // Token expired or invalid — clear stale persistence.
-        await _tokenStore.clear();
-        state = const GarminInitial();
+        final issue = garminRestoreAuthIssue(authState);
+        await _clearStaleSession();
+        state = GarminError(issue);
       }
-    } catch (_) {
-      await _tokenStore.clear();
-      state = const GarminInitial();
+    } catch (e) {
+      await _clearStaleSession();
+      state = GarminError(GarminSyncIssue.fromLegacyMessage(e.toString()));
     }
   }
 
@@ -245,7 +256,11 @@ class GarminSyncController extends Notifier<GarminSyncState> {
       state = GarminConnected(lastSyncAt: now, totalMetrics: totalPersisted);
     } catch (e) {
       logger.e('HealthOS Garmin sync exception', error: e);
-      state = GarminError(GarminSyncIssue.fromLegacyMessage(e.toString()));
+      final issue = GarminSyncIssue.fromLegacyMessage(e.toString());
+      if (issue.requiresReconnect) {
+        await _clearStaleSession();
+      }
+      state = GarminError(issue);
     }
   }
 

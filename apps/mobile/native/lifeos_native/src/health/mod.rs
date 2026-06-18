@@ -799,7 +799,9 @@ fn record_endpoint_error(errors: &mut Vec<String>, endpoint: &str, error: &anyho
 
 fn is_auth_error(error: &anyhow::Error) -> bool {
     let msg = error.to_string().to_lowercase();
-    msg.contains("401 unauthorized") || msg.contains("token may be expired")
+    msg.contains("401 unauthorized")
+        || msg.contains("token may be expired")
+        || msg.contains("token expired")
 }
 
 fn is_not_found_error(error: &anyhow::Error) -> bool {
