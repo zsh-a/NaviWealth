@@ -43,6 +43,15 @@ class FakePendingRows implements PendingRows {
     _rows['$table $rowId'] = row;
   }
 
+  /// Queue a dirty pointer whose row has already disappeared locally.
+  void putStale({
+    required String opId,
+    required String table,
+    required String rowId,
+  }) {
+    _pointers.add(PendingPointer(opId: opId, table: table, rowId: rowId));
+  }
+
   @override
   Future<int> depth() async => _pointers.length;
 
@@ -201,6 +210,17 @@ void main() {
       expect(api.pushedBatches.single.single.table, 'know:knowledge_notes');
     });
 
+    test('stale dirty pointers clear without pushing an empty row', () async {
+      pending.putStale(opId: 'op-stale', table: 'accounts', rowId: 'A1');
+
+      final result = await engine.run();
+
+      expect(result.success, isTrue);
+      expect(result.pushed, 0);
+      expect(api.pushedBatches.single, isEmpty);
+      expect(await pending.depth(), 0);
+    });
+
     test('health metrics use the health row family', () async {
       pending.put(
         opId: 'op-1',
@@ -349,6 +369,38 @@ void main() {
       expect(result.success, isTrue);
       expect(applier.applied.length, 250);
       expect(api.syncCalls.length, greaterThanOrEqualTo(3));
+    });
+
+    test('partial pull progress is reported when a later page fails', () async {
+      final firstRemote = RowChange(
+        table: 'accounts',
+        id: 'R1',
+        payload: _rowState(
+          id: 'R1',
+          hlc: _hlc(9, node: _otherDev),
+        ),
+        version: _hlc(9, node: _otherDev),
+        deleted: false,
+        deviceId: _otherDev,
+        seq: 1,
+      );
+      api.programmedResponses
+        ..add(SyncResponse(seq: 1, changes: [firstRemote], more: true))
+        ..add(SyncException(SyncErrorKind.network));
+
+      final result = await engine.run();
+
+      expect(result.success, isFalse);
+      expect(result.pulled, 1);
+      expect(result.conflicts.remoteRows, 1);
+      expect(result.conflicts.appliedRows, 1);
+      expect(applier.applied.single.id, 'R1');
+      expect(await cursors.readSeq(), 1);
+      expect(api.syncCalls, hasLength(2));
+      expect(api.syncCalls[1].since, 1);
+      expect(engine.state, EngineState.backoff);
+      expect(bus.current.status, SyncStatus.offline);
+      expect(bus.current.conflicts.remoteRows, 1);
     });
   });
 

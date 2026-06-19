@@ -275,8 +275,10 @@ path once the production connection implements database encryption.
   streaming → idle, busy-turn suppression, error unwind, and cancellation.
   `IngestController` now has import-graph coverage for device CSV
   persistence, pending-draft dedup, privacy-gated Vision refusal, Vision
-  parse persistence + trace metadata, and DB-boot rejection. Next expansion is
-  applying the same traversal style to sync graphs.
+  parse persistence + trace metadata, and DB-boot rejection. `SyncEngine` now
+  has sync-graph coverage for stale dirty-pointer cleanup and partial pull
+  progress when a later page fails into backoff. Next expansion is applying
+  the same traversal style to provider-level sync diagnostics.
 - AI exploratory + semantic (vision) validation, nightly, non-blocking.
 
 ## 8. Conventions
