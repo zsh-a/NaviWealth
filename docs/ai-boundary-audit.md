@@ -209,13 +209,20 @@ staleness 分支不命中。
 
 ### 3.1 `core/ai/local/embedding/`
 
+> 2026-06-19 status note: this section describes the pre-cleanup shape.
+> `semantic_memory.dart` no longer exists; memory is now split across
+> `core/ai/local/memory/*`, and embedding storage lives under
+> `core/ai/local/embedding/*` (for example `sqlite_vector_store.dart`).
+> The stale cloud-planner / cloud-read-model comments called out below have
+> been removed from the current code.
+
 唯一一个真正"为未来留位"的子系统：
 
 | 文件 | 当前状态 | 应该的状态 |
 |---|---|---|
 | `embedder.dart` (`StubEmbedder`) | 哈希假向量，全仓 prod 无 caller，只测试用 | **保留**。docstring 引用"Phase 4 / Phase 5"语义已经混乱（Phase 5=LLM 已发），改写 |
-| `vector_store.dart` (`InMemoryVectorStore`) | 线性扫描，内存内 | **保留**。docstring 提到 "sqlite-vec or HNSW 可以替换"——OK，但要明确说"等 Memory Layer contract 锁定再选" |
-| `semantic_memory.dart` (`SemanticMemory`) | **codegraph: 零 caller** | **保留**，docstring 必改——L6 还在说 "the cloud planner can receive (at most top-K)"，云端 planner 不存在了 |
+| `sqlite_vector_store.dart` / `memory/*` | 当前真实 Memory Layer 起点 | **保留**。已经按 device-only 语义收敛注释 |
+| `semantic_memory.dart` (`SemanticMemory`) | 历史路径，当前不存在 | 无需处理；旧 "cloud planner can receive (at most top-K)" 注释已随文件删除 |
 
 **这是 LifeOS Memory Layer 的天然起点**——零 prod 依赖，可以独立设计 contract
 （`MemoryEntry / Chunk / EmbeddingModel / SearchQuery / SearchHit`），实现再后定。
@@ -302,8 +309,10 @@ device tool 直接读本地 Drift，本地写入对端侧立即可见，根本�
    - `providers.dart` 里旧的 freshness/opt-in/no-key 文案 + `chatSyncGateProvider`
      的 "AI backend reads user's data from D1"
    - `local/embedding/semantic_memory.dart` 的 "cloud planner can receive (at most top-K)"
+     （历史路径；当前文件已不存在）
    - `task_context.dart` 顶部 §4.x 引用（确认每个编号是否仍指向有效 §）
    1–2 小时工作量，零行为变化，能立刻让 A/B/C 的 reviewer 看到正确语义。
+   **2026-06-19：当前代码的 A0 注释收敛已复核完成。**
 1. **批 A（纯 dead code 删除，零行为变化）**
    `CloudAnthropicRuntime`、`RulesDeviceRuntime`、`RuntimeId.{cloudAnthropic,rulesDevice}`、
    `RuntimeRegistry.pickFor`、`runtimeRegistryProvider`、配套测试。
