@@ -3,6 +3,7 @@
 /// cohesive and easy to evolve.
 library;
 
+export 'ai_privacy_mode.dart';
 export 'ai_span.dart';
 export 'ai_trace.dart';
 export 'base_context.dart';

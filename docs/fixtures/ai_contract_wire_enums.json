@@ -1,0 +1,112 @@
+{
+  "Access": [
+    "read",
+    "propose",
+    "external_write"
+  ],
+  "AiPrivacyMode": [
+    "amounts_allowed",
+    "amounts_bucketed",
+    "amounts_local"
+  ],
+  "AiSpanKind": [
+    "turn",
+    "llm",
+    "tool"
+  ],
+  "AiSpanStatus": [
+    "ok",
+    "error",
+    "cancelled"
+  ],
+  "Backend": [
+    "device",
+    "cloud",
+    "hybrid"
+  ],
+  "BudgetTier": [
+    "small",
+    "standard",
+    "large"
+  ],
+  "Capability": [
+    "classify",
+    "search",
+    "summarize",
+    "plan",
+    "analyze",
+    "write"
+  ],
+  "CashflowTrend": [
+    "improving",
+    "stable",
+    "worsening",
+    "unknown"
+  ],
+  "Confirmation": [
+    "none",
+    "one_tap",
+    "typed"
+  ],
+  "DisclosurePurpose": [
+    "drill_down_expense",
+    "drill_down_investment",
+    "refund_matching",
+    "anomaly_explain",
+    "recurring_detect",
+    "other"
+  ],
+  "MemoryKind": [
+    "event",
+    "semantic",
+    "episodic",
+    "procedural"
+  ],
+  "RiskAppetite": [
+    "conservative",
+    "moderate",
+    "aggressive"
+  ],
+  "RiskLevel": [
+    "info",
+    "suggest",
+    "propose",
+    "commit"
+  ],
+  "RiskPreference": [
+    "conservative",
+    "moderate",
+    "aggressive"
+  ],
+  "SideEffect": [
+    "none",
+    "device_local_write",
+    "external_call"
+  ],
+  "SideEffectScope": [
+    "local",
+    "cross_cutting",
+    "external"
+  ],
+  "SignalKind": [
+    "spending_spike",
+    "subscription_price_up",
+    "refund_unmatched",
+    "deposit_maturing",
+    "fire_milestone",
+    "cashflow_anomaly",
+    "other"
+  ],
+  "SignalSeverity": [
+    "info",
+    "warn",
+    "critical"
+  ],
+  "TerminalReason": [
+    "done",
+    "stream_error",
+    "user_cancel",
+    "policy_denied",
+    "closed_early"
+  ]
+}

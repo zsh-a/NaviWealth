@@ -19,25 +19,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../design_system/preferences/theme_preferences.dart';
+import 'ai_privacy_mode.dart';
 import 'privacy_budget.dart';
 
-/// Three user-visible privacy postures the §5.10.5 spec calls out.
-enum AiPrivacyMode { amountsAllowed, amountsBucketed, amountsLocal }
-
-extension AiPrivacyModeWire on AiPrivacyMode {
-  String get wire => switch (this) {
-    AiPrivacyMode.amountsAllowed => 'amounts_allowed',
-    AiPrivacyMode.amountsBucketed => 'amounts_bucketed',
-    AiPrivacyMode.amountsLocal => 'amounts_local',
-  };
-
-  static AiPrivacyMode parse(String s) => switch (s) {
-    'amounts_allowed' => AiPrivacyMode.amountsAllowed,
-    'amounts_bucketed' => AiPrivacyMode.amountsBucketed,
-    'amounts_local' => AiPrivacyMode.amountsLocal,
-    _ => AiPrivacyMode.amountsAllowed,
-  };
-}
+export 'ai_privacy_mode.dart';
 
 @immutable
 class AiPrivacySettings {
