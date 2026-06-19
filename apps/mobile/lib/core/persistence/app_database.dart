@@ -71,7 +71,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 25;
+  int get schemaVersion => 26;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -364,6 +364,15 @@ class AppDatabase extends _$AppDatabase {
       if (from < 25) {
         await _createRecurringPatternObservations(this);
       }
+      // v25 -> v26: persist the current long-running AI task descriptor
+      // on the streaming assistant message. This lets chat surfaces
+      // survive a rebuild/reload while still clearing the descriptor when
+      // the turn completes.
+      if (from < 26) {
+        await customStatement(
+          'ALTER TABLE chat_messages ADD COLUMN progress_json TEXT',
+        );
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -395,6 +404,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   text_segments_json  TEXT,
   reasoning_text      TEXT,
   usage_json          TEXT,
+  progress_json       TEXT,
   status              TEXT NOT NULL,
   error_message       TEXT,
   stop_reason         TEXT,

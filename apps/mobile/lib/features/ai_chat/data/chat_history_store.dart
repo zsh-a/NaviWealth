@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
+import '../../../core/ai/progress/long_task_progress.dart';
 import '../../../core/persistence/app_database.dart';
 import '../domain/chat_events.dart';
 import '../domain/chat_models.dart';
@@ -175,9 +176,9 @@ class ChatHistoryStore {
     await _db.customStatement(
       'INSERT INTO chat_messages '
       '(id, session_id, owner_user_id, role, content, tool_calls_json, '
-      ' text_segments_json, reasoning_text, usage_json, status, '
-      ' error_message, stop_reason, created_at) '
-      'VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)',
+      ' text_segments_json, reasoning_text, usage_json, progress_json, '
+      ' status, error_message, stop_reason, created_at) '
+      'VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)',
       <Object?>[
         msg.id,
         msg.sessionId,
@@ -188,6 +189,7 @@ class ChatHistoryStore {
         _encodeTextSegments(msg.textSegments),
         msg.reasoningText,
         _encodeUsage(msg.usage),
+        _encodeProgress(msg.progress),
         msg.status.wire,
         msg.errorMessage,
         _encodeStopReason(msg.stopReason),
@@ -201,8 +203,8 @@ class ChatHistoryStore {
     await _db.customStatement(
       'UPDATE chat_messages SET '
       ' content = ?2, tool_calls_json = ?3, text_segments_json = ?4,'
-      ' reasoning_text = ?5, usage_json = ?6, status = ?7,'
-      ' error_message = ?8, stop_reason = ?9 '
+      ' reasoning_text = ?5, usage_json = ?6, progress_json = ?7,'
+      ' status = ?8, error_message = ?9, stop_reason = ?10 '
       'WHERE id = ?1',
       <Object?>[
         msg.id,
@@ -211,6 +213,7 @@ class ChatHistoryStore {
         _encodeTextSegments(msg.textSegments),
         msg.reasoningText,
         _encodeUsage(msg.usage),
+        _encodeProgress(msg.progress),
         msg.status.wire,
         msg.errorMessage,
         _encodeStopReason(msg.stopReason),
@@ -268,6 +271,22 @@ class ChatHistoryStore {
     }
   }
 
+  static String? _encodeProgress(LongTaskProgress? progress) =>
+      progress == null ? null : jsonEncode(progress.toJson());
+
+  static LongTaskProgress? _decodeProgress(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return null;
+      return LongTaskProgress.fromJson(
+        decoded.map((k, v) => MapEntry('$k', v)),
+      );
+    } on FormatException {
+      return null;
+    }
+  }
+
   // ─── row decoders ─────────────────────────────────────────────────
 
   ChatSession _sessionFromRow(QueryRow row) {
@@ -310,6 +329,7 @@ class ChatHistoryStore {
       stopReason: stopRaw == null ? null : ChatStopReasonX.parse(stopRaw),
       reasoningText: row.readNullable<String>('reasoning_text'),
       usage: _decodeUsage(row.readNullable<String>('usage_json')),
+      progress: _decodeProgress(row.readNullable<String>('progress_json')),
       createdAt: DateTime.fromMillisecondsSinceEpoch(
         row.read<int>('created_at'),
         isUtc: true,

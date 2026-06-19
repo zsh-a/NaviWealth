@@ -6,6 +6,7 @@
 /// construction, tool results, usage, spans, error, and done.
 library;
 
+import '../progress/long_task_progress.dart';
 import 'contracts.dart' show AiSpanKind, AiSpanStatus, SpanTokens;
 
 sealed class AiChatEvent {
@@ -112,6 +113,14 @@ class TokenUsage {
 class UsageEvent extends AiChatEvent {
   const UsageEvent(this.usage);
   final TokenUsage usage;
+}
+
+/// Long-running task update for the visible assistant turn. Producers
+/// emit this before and during slow model/tool/apply work so the chat
+/// surface can show a stable progress row instead of a generic spinner.
+class ProgressEvent extends AiChatEvent {
+  const ProgressEvent(this.progress);
+  final LongTaskProgress progress;
 }
 
 /// Worker hit a fatal condition (Anthropic 5xx, rate limit exhaustion,

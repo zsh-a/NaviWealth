@@ -132,6 +132,10 @@ void main() {
       expect(session.roundsUsed, 2);
       expect(adapter.calls, 2);
       expect(events.whereType<ToolCallEvent>().single.name, 'get_risk_alerts');
+      final progress = events.whereType<ProgressEvent>().single.progress;
+      expect(progress.id, 'tool:t1');
+      expect(progress.label, 'tool');
+      expect(progress.detail, 'get_risk_alerts');
       expect(
         events.whereType<ToolResultEvent>().single.name,
         'get_risk_alerts',
@@ -143,41 +147,43 @@ void main() {
       expect(session.messages.length, 3);
     });
 
-    test('ask_user is terminal — loop pauses without re-invoking the model',
-        () async {
-      // Round 1 calls ask_user (toolUse stop). A round 2 is scripted but
-      // must NOT be consumed: the decision is handed to the user, so the
-      // loop ends the turn cleanly instead of letting the model answer
-      // its own question.
-      final adapter = _ScriptedAdapter([
-        [
-          const LlmToolCallStart(id: 'd1', name: 'ask_user'),
-          const LlmToolCallEnd(id: 'd1', name: 'ask_user', input: {}),
-          const LlmMessageStop(LlmStopReason.toolUse),
-        ],
-        [
-          const LlmTextDelta('should not run'),
-          const LlmMessageStop(LlmStopReason.endTurn),
-        ],
-      ]);
-      final dispatcher = _RecordingDispatcher();
-      final loop = DeviceAgentLoop(
-        streamFn: adapter.stream,
-        model: 'm',
-        dispatcher: dispatcher,
-      );
-      final session = _session([_user('hi')]);
-      final events = await loop.run(session).toList();
+    test(
+      'ask_user is terminal — loop pauses without re-invoking the model',
+      () async {
+        // Round 1 calls ask_user (toolUse stop). A round 2 is scripted but
+        // must NOT be consumed: the decision is handed to the user, so the
+        // loop ends the turn cleanly instead of letting the model answer
+        // its own question.
+        final adapter = _ScriptedAdapter([
+          [
+            const LlmToolCallStart(id: 'd1', name: 'ask_user'),
+            const LlmToolCallEnd(id: 'd1', name: 'ask_user', input: {}),
+            const LlmMessageStop(LlmStopReason.toolUse),
+          ],
+          [
+            const LlmTextDelta('should not run'),
+            const LlmMessageStop(LlmStopReason.endTurn),
+          ],
+        ]);
+        final dispatcher = _RecordingDispatcher();
+        final loop = DeviceAgentLoop(
+          streamFn: adapter.stream,
+          model: 'm',
+          dispatcher: dispatcher,
+        );
+        final session = _session([_user('hi')]);
+        final events = await loop.run(session).toList();
 
-      expect(dispatcher.calls, ['ask_user']);
-      expect(adapter.calls, 1, reason: 'model not re-invoked after ask_user');
-      expect(session.roundsUsed, 1);
-      final done = events.last as DoneEvent;
-      expect(done.stopReason, 'end_turn');
-      expect(done.rounds, 1);
-      // The tool_result is still recorded so the turn is well-formed.
-      expect(events.whereType<ToolResultEvent>().single.name, 'ask_user');
-    });
+        expect(dispatcher.calls, ['ask_user']);
+        expect(adapter.calls, 1, reason: 'model not re-invoked after ask_user');
+        expect(session.roundsUsed, 1);
+        final done = events.last as DoneEvent;
+        expect(done.stopReason, 'end_turn');
+        expect(done.rounds, 1);
+        // The tool_result is still recorded so the turn is well-formed.
+        expect(events.whereType<ToolResultEvent>().single.name, 'ask_user');
+      },
+    );
 
     test('reasoning + signature survive into the next tool round', () async {
       // Round 1: the model reasons (thinking + signature), then calls

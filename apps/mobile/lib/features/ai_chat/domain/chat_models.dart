@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../../core/ai/composition/proposal_apply_state.dart';
+import '../../../core/ai/progress/long_task_progress.dart';
 import 'chat_events.dart' show TokenUsage;
 
 /// Roles understood by the chat runtime.
@@ -207,6 +208,7 @@ class ChatMessage {
     this.stopReason,
     this.reasoningText,
     this.usage,
+    this.progress,
   });
 
   final String id;
@@ -229,6 +231,7 @@ class ChatMessage {
   final ChatStopReason? stopReason;
   final String? reasoningText;
   final TokenUsage? usage;
+  final LongTaskProgress? progress;
   final DateTime createdAt;
 
   /// Render-ready segment list. Always returns
@@ -254,6 +257,8 @@ class ChatMessage {
     ChatStopReason? stopReason,
     String? reasoningText,
     TokenUsage? usage,
+    LongTaskProgress? progress,
+    bool clearProgress = false,
   }) => ChatMessage(
     id: id,
     sessionId: sessionId,
@@ -267,6 +272,7 @@ class ChatMessage {
     stopReason: stopReason ?? this.stopReason,
     reasoningText: reasoningText ?? this.reasoningText,
     usage: usage ?? this.usage,
+    progress: clearProgress ? null : (progress ?? this.progress),
     createdAt: createdAt,
   );
 }

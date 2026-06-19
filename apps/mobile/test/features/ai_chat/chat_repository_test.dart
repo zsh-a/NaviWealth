@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/local/skills/skills.dart';
+import 'package:naviwealth/core/ai/progress/long_task_progress.dart';
 import 'package:naviwealth/core/ai/trace/trace.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
@@ -127,6 +128,34 @@ void main() {
       // Wire form sent to the API: just the new user turn (no prior history).
       expect(api.lastMessages, hasLength(1));
       expect(api.lastMessages!.single.role, 'user');
+    });
+
+    test('clears long-task progress when the turn completes', () async {
+      api.script.addAll(<AiChatEvent>[
+        ProgressEvent(
+          LongTaskProgress(
+            id: 'tool:t1',
+            label: 'tool',
+            detail: 'get_holdings',
+            startedAt: DateTime.utc(2026, 4, 30),
+          ),
+        ),
+        const TextEvent('done'),
+        const DoneEvent(stopReason: 'end_turn', rounds: 1),
+      ]);
+      final id = await activeSessionId();
+      final outcome = await repo.sendMessage(
+        sessionId: id,
+        ownerUserId: 'user-1',
+        content: '查一下持仓',
+      );
+      expect(outcome, SendOutcome.completed);
+
+      final assistant = (await store.listMessages(
+        id,
+      )).where((m) => m.role == ChatRole.assistant).single;
+      expect(assistant.content, 'done');
+      expect(assistant.progress, isNull);
     });
 
     test('creates a missing session before inserting messages', () async {

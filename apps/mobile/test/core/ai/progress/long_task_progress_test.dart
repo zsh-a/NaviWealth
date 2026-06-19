@@ -54,6 +54,20 @@ void main() {
       expect(next.cancelable, isTrue);
     });
 
+    test('round-trips through JSON', () {
+      final p = LongTaskProgress(
+        id: 'tool:t1',
+        label: 'tool',
+        startedAt: startedAt,
+        detail: 'get_holdings',
+        ratio: 0.4,
+        cancelable: true,
+      );
+      final decoded = LongTaskProgress.fromJson(p.toJson());
+      expect(decoded, p);
+      expect(decoded.normalisedRatio, 0.4);
+    });
+
     test('equality covers every observable field', () {
       final a = LongTaskProgress(
         id: 't',

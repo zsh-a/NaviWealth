@@ -333,6 +333,7 @@ class ChatRepository {
             assistant = assistant.copyWith(
               toolCalls: [for (final k in invocationOrder) invocations[k]!],
               textSegments: List<String>.unmodifiable(segments),
+              clearProgress: true,
             );
             await _store.updateMessage(assistant);
           case ErrorEvent(:final message):
@@ -341,10 +342,14 @@ class ChatRepository {
             assistant = assistant.copyWith(
               status: ChatMessageStatus.errored,
               errorMessage: message,
+              clearProgress: true,
             );
             await _store.updateMessage(assistant);
           case UsageEvent(:final usage):
             assistant = assistant.copyWith(usage: usage);
+            await _store.updateMessage(assistant);
+          case ProgressEvent(:final progress):
+            assistant = assistant.copyWith(progress: progress);
             await _store.updateMessage(assistant);
           case SpanEvent():
             // Observability-only: never mutates the assistant turn.
@@ -379,9 +384,13 @@ class ChatRepository {
               assistant = assistant.copyWith(
                 status: ChatMessageStatus.complete,
                 stopReason: reason,
+                clearProgress: true,
               );
             } else {
-              assistant = assistant.copyWith(stopReason: reason);
+              assistant = assistant.copyWith(
+                stopReason: reason,
+                clearProgress: true,
+              );
             }
             await _store.updateMessage(assistant);
         }
@@ -393,6 +402,7 @@ class ChatRepository {
           status: ChatMessageStatus.errored,
           errorMessage: 'AI response stream ended without any events',
           stopReason: ChatStopReason.error,
+          clearProgress: true,
         );
         await _store.updateMessage(assistant);
       } else if (!sawDone && assistant.status == ChatMessageStatus.streaming) {
@@ -402,6 +412,7 @@ class ChatRepository {
           status: ChatMessageStatus.errored,
           errorMessage: 'AI response stream ended before done',
           stopReason: ChatStopReason.error,
+          clearProgress: true,
         );
         await _store.updateMessage(assistant);
       }
@@ -413,6 +424,7 @@ class ChatRepository {
           status: ChatMessageStatus.errored,
           errorMessage: kCancelledError,
           stopReason: ChatStopReason.error,
+          clearProgress: true,
         );
         await _store.updateMessage(assistant);
       } else {
@@ -422,6 +434,7 @@ class ChatRepository {
           status: ChatMessageStatus.errored,
           errorMessage: _describeError(e),
           stopReason: ChatStopReason.error,
+          clearProgress: true,
         );
         await _store.updateMessage(assistant);
       }

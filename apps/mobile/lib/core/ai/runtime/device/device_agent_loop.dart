@@ -21,6 +21,7 @@ import 'package:dio/dio.dart';
 import '../../contracts/chat_events.dart';
 import '../../contracts/contracts.dart'
     show AiSpanKind, AiSpanStatus, SpanTokens, kTurnSpanId;
+import '../../progress/long_task_progress.dart';
 import 'anthropic/anthropic_wire.dart';
 import 'device_session.dart';
 import 'device_system_prompt.dart';
@@ -241,6 +242,16 @@ class DeviceAgentLoop {
         if (aborted()) return;
         final isPropose = tu.name.startsWith('propose_');
         final toolStart = DateTime.now().toUtc();
+        emit(
+          ProgressEvent(
+            LongTaskProgress(
+              id: 'tool:${tu.id}',
+              label: 'tool',
+              detail: tu.name,
+              startedAt: toolStart,
+            ),
+          ),
+        );
         final Object? output;
         if (isPropose &&
             proposalsBefore + proposalsThisTurn >=

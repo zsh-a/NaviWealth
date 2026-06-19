@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/progress/long_task_progress.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_history_store.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_events.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_models.dart';
@@ -92,6 +93,13 @@ void main() {
           cacheRead: 2,
           cacheWrite: 1,
         ),
+        progress: LongTaskProgress(
+          id: 'tool:t',
+          label: 'tool',
+          detail: 'compute_xirr',
+          startedAt: DateTime.utc(2026, 4, 30, 0, 0, 1),
+          ratio: 0.5,
+        ),
         status: ChatMessageStatus.complete,
         toolCalls: [
           const ToolInvocation(id: 't', name: 'compute_xirr', input: {}),
@@ -103,6 +111,8 @@ void main() {
       expect(rows.single.content, '回答');
       expect(rows.single.reasoningText, 'checked read models');
       expect(rows.single.usage?.total, 18);
+      expect(rows.single.progress?.detail, 'compute_xirr');
+      expect(rows.single.progress?.normalisedRatio, 0.5);
       expect(rows.single.status, ChatMessageStatus.complete);
       expect(rows.single.toolCalls.single.name, 'compute_xirr');
     });

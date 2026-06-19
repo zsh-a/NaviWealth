@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 
 import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
+import '../../../core/ai/progress/long_task_progress.dart';
 import '../../../core/ai/runtime/device/tools/ask_user_tool.dart'
     show kAskUserToolName;
 import '../../../core/ai/visual/visual.dart';
@@ -315,6 +316,10 @@ class _AssistantBubble extends StatelessWidget {
           _ReasoningPanel(text: message.reasoningText!),
           const SizedBox(height: AppSpacing.s8),
         ],
+        if (isStreaming && message.progress != null) ...[
+          _LongTaskProgressRow(progress: message.progress!),
+          const SizedBox(height: AppSpacing.s8),
+        ],
         ..._buildInterleavedBlocks(
           context: context,
           textColor: textColor,
@@ -553,6 +558,76 @@ String? _findPendingToolName(List<ToolInvocation> tools) {
     if (tools[i].output == null) return tools[i].name;
   }
   return null;
+}
+
+class _LongTaskProgressRow extends StatelessWidget {
+  const _LongTaskProgressRow({required this.progress});
+
+  final LongTaskProgress progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final ratio = progress.normalisedRatio;
+    final toolName = progress.label == 'tool' ? progress.detail : null;
+    final label = toolName == null
+        ? progress.label
+        : l10n.aiChatRunningTool(friendlyToolName(l10n, toolName));
+    final detail = toolName == null ? progress.detail : null;
+    final active = AiTone.active(context);
+    return Semantics(
+      container: true,
+      label: label,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: active.withValues(alpha: AppOpacity.subtle),
+          borderRadius: BorderRadius.circular(AppRadius.xs),
+          border: Border.all(color: active.withValues(alpha: 0.24)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const AiSparkle(active: true),
+                  const SizedBox(width: AppSpacing.s6),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: AiType.meta(
+                        context,
+                      ).copyWith(color: active, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+              if (detail != null && detail.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.s4),
+                Text(
+                  detail,
+                  style: context.theme.typography.xs.copyWith(
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.s8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.xxs),
+                child: LinearProgressIndicator(
+                  minHeight: 3,
+                  value: ratio,
+                  backgroundColor: active.withValues(alpha: AppOpacity.subtle),
+                  valueColor: AlwaysStoppedAnimation<Color>(active),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _AssistantBody extends StatelessWidget {

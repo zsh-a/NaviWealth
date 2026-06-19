@@ -83,6 +83,33 @@ class LongTaskProgress {
     );
   }
 
+  Map<String, Object?> toJson() => <String, Object?>{
+    'id': id,
+    'label': label,
+    'started_at': startedAt.toUtc().toIso8601String(),
+    if (detail != null) 'detail': detail,
+    if (ratio != null) 'ratio': ratio,
+    'cancelable': cancelable,
+  };
+
+  factory LongTaskProgress.fromJson(Map<String, Object?> json) {
+    final rawStartedAt = json['started_at'];
+    final parsedStartedAt = rawStartedAt is String
+        ? DateTime.tryParse(rawStartedAt)?.toUtc()
+        : null;
+    final rawRatio = json['ratio'];
+    return LongTaskProgress(
+      id: (json['id'] as String?) ?? '',
+      label: (json['label'] as String?) ?? '',
+      startedAt:
+          parsedStartedAt ??
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      detail: json['detail'] as String?,
+      ratio: rawRatio is num ? rawRatio.toDouble() : null,
+      cancelable: json['cancelable'] == true,
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       other is LongTaskProgress &&
