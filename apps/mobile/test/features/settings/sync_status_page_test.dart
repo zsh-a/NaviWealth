@@ -100,15 +100,19 @@ void main() {
     );
   }
 
+  Future<void> pumpPage(WidgetTester tester, Size size) async {
+    await tester.binding.setSurfaceSize(size);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await seedDiagnostics();
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  }
+
   testWidgets('renders diagnostics and reacts to status updates', (
     tester,
   ) async {
-    await tester.binding.setSurfaceSize(const Size(900, 1600));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await seedDiagnostics();
-
-    await tester.pumpWidget(wrap());
-    await tester.pumpAndSettle();
+    await pumpPage(tester, const Size(900, 1600));
 
     expect(find.text('Sync Status'), findsOneWidget);
     expect(find.text('Offline'), findsOneWidget);
@@ -137,5 +141,27 @@ void main() {
     expect(find.text('All synced'), findsOneWidget);
     expect(find.text('Offline'), findsNothing);
     expect(find.text('network down'), findsNothing);
+  });
+
+  testWidgets('stacks stat tiles on compact width', (tester) async {
+    await pumpPage(tester, const Size(320, 1400));
+
+    final pendingY = tester.getTopLeft(find.text('Pending')).dy;
+    final localRowsY = tester.getTopLeft(find.text('Local rows')).dy;
+    final lastSyncY = tester.getTopLeft(find.text('Last sync')).dy;
+
+    expect(pendingY, lessThan(localRowsY));
+    expect(localRowsY, lessThan(lastSyncY));
+  });
+
+  testWidgets('lays out stat tiles in one row on wide width', (tester) async {
+    await pumpPage(tester, const Size(900, 1400));
+
+    final pendingY = tester.getTopLeft(find.text('Pending')).dy;
+    final localRowsY = tester.getTopLeft(find.text('Local rows')).dy;
+    final lastSyncY = tester.getTopLeft(find.text('Last sync')).dy;
+
+    expect((pendingY - localRowsY).abs(), lessThan(1));
+    expect((pendingY - lastSyncY).abs(), lessThan(1));
   });
 }

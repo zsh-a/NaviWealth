@@ -282,8 +282,9 @@ path once the production connection implements database encryption.
   local row-count refresh on status changes. `SyncStatusPage` now has widget
   coverage for offline/error/conflict diagnostics, cursor/outbox/local-count
   rendering, and status-event UI refresh, plus a mobile golden for the
-  diagnostic offline/conflict first viewport. Next expansion is selected
-  responsive-breakpoint coverage for these diagnostic surfaces.
+  diagnostic offline/conflict first viewport and responsive-breakpoint checks
+  for compact stacked vs. wide one-row stat tiles. Next expansion is AI
+  boundary cleanup coverage and selected semantic/vision validation.
 - AI exploratory + semantic (vision) validation, nightly, non-blocking.
 
 ## 8. Conventions
