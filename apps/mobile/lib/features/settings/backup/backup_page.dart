@@ -10,7 +10,6 @@ import '../../../core/backup/backup_codec.dart';
 import '../../../core/backup/backup_service.dart';
 import '../../../core/backup/providers.dart';
 import '../../../core/logging/app_logger.dart';
-import '../../../core/sync/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../ui/inline_setting_row.dart';
@@ -22,6 +21,31 @@ typedef BackupFileSaver =
 final backupFileSaverProvider = Provider<BackupFileSaver>(
   (ref) => saveBackupFile,
 );
+
+class PickedBackupFile {
+  const PickedBackupFile({required this.name, required this.bytes});
+
+  final String name;
+  final Uint8List bytes;
+
+  int get size => bytes.length;
+}
+
+typedef BackupRestoreFilePicker = Future<PickedBackupFile?> Function();
+
+final backupRestoreFilePickerProvider = Provider<BackupRestoreFilePicker>((
+  ref,
+) {
+  return () async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['bak'],
+    );
+    if (result == null || result.files.isEmpty) return null;
+    final file = result.files.first;
+    return PickedBackupFile(name: file.name, bytes: await file.readAsBytes());
+  };
+});
 
 class BackupPage extends ConsumerWidget {
   const BackupPage({super.key});
@@ -144,47 +168,24 @@ class BackupPage extends ConsumerWidget {
 
     // Pick backup file.
     logger.d('backup_ui: import flow started, opening file picker');
-    FilePickerResult? result;
+    PickedBackupFile? pickedFile;
     try {
-      result = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['bak'],
-      );
+      pickedFile = await ref.read(backupRestoreFilePickerProvider)();
     } catch (e, st) {
       logger.e('backup_ui: file picker threw', error: e, stackTrace: st);
       if (!context.mounted) return;
       AppMessenger.show(context, ToastKind.error, l10n.backupFilePickerError);
       return;
     }
-    if (result == null || result.files.isEmpty) {
+    if (pickedFile == null) {
       logger.d('backup_ui: import cancelled (no file selected)');
       return;
     }
 
-    final pickedFile = result.files.first;
     logger.d(
       'backup_ui: picked file name=${pickedFile.name} size=${pickedFile.size}',
     );
-    // file_picker 12: read bytes via XFile (handles both web blobs and
-    // desktop disk reads). Replaces the old `withData` + path-fallback dance.
-    Uint8List? fileBytes;
-    try {
-      fileBytes = await pickedFile.readAsBytes();
-    } catch (e, st) {
-      logger.e(
-        'backup_ui: failed to read file bytes',
-        error: e,
-        stackTrace: st,
-      );
-    }
-
-    if (fileBytes == null) {
-      logger.w('backup_ui: no bytes available after file pick');
-      if (!context.mounted) return;
-      AppMessenger.show(context, ToastKind.error, l10n.backupFilePickerError);
-      return;
-    }
-
+    final fileBytes = pickedFile.bytes;
     logger.d('backup_ui: file loaded (${fileBytes.length} bytes)');
     if (!context.mounted) return;
 
@@ -200,18 +201,15 @@ class BackupPage extends ConsumerWidget {
 
     try {
       final sw = Stopwatch()..start();
-      final service = await ref.read(backupServiceProvider.future);
-      if (service == null) {
+      final restore = await ref.read(backupRestoreRunnerProvider.future);
+      if (restore == null) {
         throw StateError('Backup requires an authenticated session.');
       }
-      final scheduler = await ref.read(syncSchedulerProvider.future);
       logger.d('backup_ui: service resolved, pausing sync and restoring');
 
-      final restoreResult = await service.restoreBackup(
+      final restoreResult = await restore(
         passphrase: passphrase,
         fileBytes: fileBytes,
-        pauseSync: scheduler?.pause,
-        resumeSync: scheduler?.resume,
       );
       sw.stop();
       logger.i(

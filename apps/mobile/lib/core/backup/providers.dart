@@ -46,3 +46,25 @@ final backupExportRunnerProvider = FutureProvider<BackupExportRunner?>((
     return service.exportBackup(passphrase: passphrase);
   };
 });
+
+typedef BackupRestoreRunner =
+    Future<RestoreResult> Function({
+      required String passphrase,
+      required Uint8List fileBytes,
+    });
+
+final backupRestoreRunnerProvider = FutureProvider<BackupRestoreRunner?>((
+  ref,
+) async {
+  final service = await ref.watch(backupServiceProvider.future);
+  if (service == null) return null;
+  final scheduler = await ref.watch(syncSchedulerProvider.future);
+  return ({required String passphrase, required Uint8List fileBytes}) {
+    return service.restoreBackup(
+      passphrase: passphrase,
+      fileBytes: fileBytes,
+      pauseSync: scheduler?.pause,
+      resumeSync: scheduler?.resume,
+    );
+  };
+});

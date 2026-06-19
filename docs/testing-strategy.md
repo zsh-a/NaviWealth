@@ -136,7 +136,10 @@ and land on the rebalance prerequisite surface), and
 `options_income_flow_test.dart` (Task #9 — discover Income Planner from the
 Plan hub and land on the risk/preferences setup surface), and
 `portfolio_analysis_flow_test.dart` (Task #7 — discover Holdings from Wealth
-and land on the Portfolio analysis surface).
+and land on the Portfolio analysis surface), and
+`restore_backup_flow_test.dart` (Task #11 — discover Backup & Restore through
+global Settings, import a backup file, and pass restore credentials to the
+restore boundary).
 
 ### Contract (Dart↔Rust↔wire, ~5%)
 The client and the Rust Worker share a wire format but no generated
@@ -227,10 +230,10 @@ cover Task #11 (backup/restore) and any SQLCipher PRAGMA path on-device.
 - ✅ Net-worth read model covered in every direction — manual assets,
   liabilities, and ledger-reconstructed securities — through the real chain.
 - ✅ On-device `integration_test/` stood up (real file DB boot + emulator CI).
-- Flow layer: 10 of 12 Tasks done (view net worth, add account, add
+- Flow layer: 11 of 12 Tasks done (view net worth, add account, add
   transaction entry, import statement drafts, portfolio analysis, rebalance,
-  options income, FIRE report, export backup, navigate primaries); grow
-  toward the remaining Tasks in §3 (AI, backup restore).
+  options income, FIRE report, backup restore, export backup, navigate
+  primaries); grow toward the remaining Task in §3 (AI).
 - Contracts-as-code: generated enum SSOT + `sync-v2` wire roundtrip vs the
   Rust serializer.
 - Expand golden coverage to each Task surface + responsive breakpoints.

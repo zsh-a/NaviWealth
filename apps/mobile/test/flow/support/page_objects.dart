@@ -175,6 +175,7 @@ class BackupPageObject {
   void expectLanded() {
     expect(find.text('Backup & Restore'), findsWidgets);
     expect(find.text('Export Backup'), findsWidgets);
+    expect(find.text('Import Backup'), findsWidgets);
   }
 
   Future<void> exportWithPassphrase(String passphrase) async {
@@ -200,6 +201,40 @@ class BackupPageObject {
 
   void expectExportSucceeded() {
     expect(find.text('Backup exported successfully'), findsOneWidget);
+  }
+
+  Future<void> importWithPassphrase(String passphrase) async {
+    final importTile = find.text('Import Backup');
+    expect(importTile, findsWidgets, reason: 'import backup action missing');
+    await tester.ensureVisible(importTile.first);
+    await settle(tester);
+    await tester.tap(importTile.first);
+    await settle(tester);
+
+    expect(find.text('Restore Backup'), findsWidgets);
+    expect(
+      find.text(
+        'This will replace ALL local data with the contents of the backup. This cannot be undone. Continue?',
+      ),
+      findsOneWidget,
+    );
+    await tester.enterText(
+      find.widgetWithText(FTextFormField, 'Passphrase'),
+      passphrase,
+    );
+    await settle(tester);
+
+    final restore = find.text('Restore');
+    expect(restore, findsWidgets, reason: 'restore submit action missing');
+    await tester.tap(restore.last);
+    await settle(tester);
+  }
+
+  void expectImportSucceeded({required int rows}) {
+    expect(
+      find.text('Backup restored successfully. $rows rows imported.'),
+      findsOneWidget,
+    );
   }
 }
 
