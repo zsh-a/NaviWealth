@@ -379,10 +379,12 @@ Chat → providers.dart _prepareChatTrace(ref, requestId)
 | 多 provider profile + 切换 + 连通性测试（无 opt-in 开关）| ✅ |
 | §4.6 Device LLM Runtime（用户自带 key · 直连 provider · 工具读 Drift · 全原生平台含桌面 · 删除 cloud relay）| ✅ |
 | Boundary audit 2026-05-24（四轮）：删 freshness/router/RuntimeRegistry/CloudProposal/ChatSyncGate/disclosure 全链/TaskContext 死字段/readModelLayer/AllowedRuntime/AnonymizationLevel/usedCloud/analyticalUploads 字段/l10n orphans（累计净删 ~4 400 行）| ✅ |
+| UI 测试准出 P1 | A11y baseline / 性能预算已接入 `tool/check-ui-baselines.sh` 与 mobile CI | ✅ |
 
 **测试 gate**：`flutter analyze --fatal-infos` clean；`flutter test` 全绿（golden 按平台
 skip，known-failing 钉基线）；`tool/check-tool-descriptors.sh` / `check-enum-mirror.sh` /
-`check-l10n-parity.sh` 跑 Dart 契约测试。
+`check-l10n-parity.sh` 跑 Dart 契约测试；`tool/check-ui-baselines.sh` 单独守护
+assistive-tech semantics 与热点性能预算。
 > 已知失败基线：`ai_trace_waterfall_test.dart` 在干净 main 即 l10n-null 失败，
 > 与功能无关，勿追（见 `known-failing-tests.txt`）。
 
@@ -414,6 +416,5 @@ tools / proposals / guardrails / read_models / policy）。
 - **iOS Share Extension**：`receive_sharing_intent` 需 Xcode 独立 native target
   （App Group + entitlements + 签名），仓内不可盲建。Android 分享已可用。
 - 长历史 `subscription_changes`：跨会话比对需把 `recurring_patterns` 经 OpLog 持久化到 Drift。
-- 测试准出 P1：A11y baseline / 性能预算。
 - Prompt injection corpus：已加入静态 regression corpus 基线（finance / insight / FIRE
   probes，`kPromptInjectionRegressionTag`），由 nightly `ai-semantic` workflow 覆盖。

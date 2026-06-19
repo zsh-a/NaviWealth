@@ -90,6 +90,11 @@ jobs:
       - name: ARB l10n key parity — en/zh define the same key set
         # Otherwise zh users see English at runtime via the silent fallback.
         run: ./tool/check-l10n-parity.sh
+      - name: UI a11y + performance baselines
+        # Focused P1 gate for assistive-tech semantics and hot-path perf
+        # budgets. Full flutter test still runs below with the known-failure
+        # footprint pinning.
+        run: ./tool/check-ui-baselines.sh
       - name: Contract & boundary lints
         # High-value architecture gates, run from the repo root:
         #   - enum mirror: Dart↔Rust enums stay in sync (Wave 42)
