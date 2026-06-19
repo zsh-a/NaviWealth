@@ -25,8 +25,11 @@ void main() {
 
       expect(summary.windowCount, 4);
       expect(summary.sampleCount, 3);
+      expect(summary.sampleCoveragePercent, 75);
       expect(summary.avgPackBytes, 2389);
       expect(summary.p95PackBytes, 4096);
+      expect(summary.packBudgetBytes, 10000);
+      expect(summary.p95PackBudgetPercent, 41);
       expect(summary.avgAppendixBytes, 556);
       expect(summary.p95AppendixBytes, 900);
       expect(summary.appendixCapBytes, 1000);
@@ -42,6 +45,7 @@ void main() {
       expect(summary.windowCount, 2);
       expect(summary.hasSamples, isFalse);
       expect(summary.avgPackBytes, 0);
+      expect(summary.p95PackBudgetPercent, 0);
       expect(summary.p95AppendixCapPercent, 0);
     });
   });
@@ -87,8 +91,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.text('ctx samples 2/2'), findsOneWidget);
       expect(find.text('ctx avg 2.5KB'), findsOneWidget);
       expect(find.text('ctx p95 4.0KB'), findsOneWidget);
+      expect(find.text('ctx p95 41% budget'), findsOneWidget);
       expect(find.text('appendix avg 578B'), findsOneWidget);
       expect(find.text('appendix p95 90% cap'), findsOneWidget);
     });
@@ -98,6 +104,7 @@ void main() {
 AiTrace _trace(
   String requestId, {
   int? packBytes,
+  int? packBudgetBytes = 10000,
   int? appendixBytes,
   int? appendixCapBytes,
 }) {
@@ -105,6 +112,7 @@ AiTrace _trace(
       ? null
       : <String, Object?>{
           'context_pack_json_bytes': packBytes,
+          'context_pack_budget_bytes': ?packBudgetBytes,
           'context_appendix_bytes': appendixBytes,
           'context_appendix_cap_bytes': ?appendixCapBytes,
         };

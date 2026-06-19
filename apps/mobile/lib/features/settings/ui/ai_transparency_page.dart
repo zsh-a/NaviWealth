@@ -246,12 +246,29 @@ class _AggregateHeader extends StatelessWidget {
                 if (contextSummary.hasSamples) ...[
                   AiPill(
                     label:
+                        'ctx samples ${contextSummary.sampleCount}/'
+                        '${contextSummary.windowCount}',
+                    state: contextSummary.sampleCoveragePercent < 80
+                        ? AiPillState.selected
+                        : AiPillState.neutral,
+                  ),
+                  AiPill(
+                    label:
                         'ctx avg ${_formatBytes(contextSummary.avgPackBytes)}',
                   ),
                   AiPill(
                     label:
                         'ctx p95 ${_formatBytes(contextSummary.p95PackBytes)}',
                   ),
+                  if (contextSummary.packBudgetBytes > 0)
+                    AiPill(
+                      label:
+                          'ctx p95 '
+                          '${contextSummary.p95PackBudgetPercent}% budget',
+                      state: contextSummary.p95PackBudgetPercent >= 80
+                          ? AiPillState.selected
+                          : AiPillState.neutral,
+                    ),
                   AiPill(
                     label:
                         'appendix avg '
@@ -293,6 +310,7 @@ class ContextPackTraceWindowSummary {
     required this.sampleCount,
     required this.avgPackBytes,
     required this.p95PackBytes,
+    required this.packBudgetBytes,
     required this.avgAppendixBytes,
     required this.p95AppendixBytes,
     required this.appendixCapBytes,
@@ -302,11 +320,22 @@ class ContextPackTraceWindowSummary {
   final int sampleCount;
   final int avgPackBytes;
   final int p95PackBytes;
+  final int packBudgetBytes;
   final int avgAppendixBytes;
   final int p95AppendixBytes;
   final int appendixCapBytes;
 
   bool get hasSamples => sampleCount > 0;
+
+  int get sampleCoveragePercent {
+    if (windowCount <= 0) return 0;
+    return (sampleCount / windowCount * 100).round();
+  }
+
+  int get p95PackBudgetPercent {
+    if (packBudgetBytes <= 0) return 0;
+    return (p95PackBytes / packBudgetBytes * 100).round();
+  }
 
   int get p95AppendixCapPercent {
     if (appendixCapBytes <= 0) return 0;
@@ -319,6 +348,7 @@ ContextPackTraceWindowSummary summarizeContextPackTraceWindow(
 ) {
   final packBytes = <int>[];
   final appendixBytes = <int>[];
+  var packBudgetBytes = 0;
   var appendixCapBytes = 0;
   for (final trace in traces) {
     final attrs = _turnAttributes(trace);
@@ -327,6 +357,8 @@ ContextPackTraceWindowSummary summarizeContextPackTraceWindow(
     if (pack == null || appendix == null) continue;
     packBytes.add(pack);
     appendixBytes.add(appendix);
+    final budget = _intAttr(attrs, 'context_pack_budget_bytes');
+    if (budget != null && budget > 0) packBudgetBytes = budget;
     final cap = _intAttr(attrs, 'context_appendix_cap_bytes');
     if (cap != null && cap > 0) appendixCapBytes = cap;
   }
@@ -338,6 +370,7 @@ ContextPackTraceWindowSummary summarizeContextPackTraceWindow(
     sampleCount: packBytes.length,
     avgPackBytes: _avg(packBytes),
     p95PackBytes: _pctInts(packBytes, 0.95),
+    packBudgetBytes: packBudgetBytes,
     avgAppendixBytes: _avg(appendixBytes),
     p95AppendixBytes: _pctInts(appendixBytes, 0.95),
     appendixCapBytes: appendixCapBytes,

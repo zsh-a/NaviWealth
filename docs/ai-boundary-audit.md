@@ -190,8 +190,8 @@ staleness 分支不命中。
   **2026-06-19 更新**：turn root span 已记录 `context_pack_json_bytes`、
   `context_pack_budget_*`、`context_appendix_bytes` 和 `context_appendix_cap_bytes`，
   Waterfall 详情面板可直接查看这些 attributes，AI 透明度页的最近调用汇总也会显示
-  ContextPack / appendix 的平均值和 p95；下一步可以基于真实 trace 样本决定是否删
-  `AnalyticalUpload` pre-load。
+  ContextPack / appendix 的样本覆盖率、平均值、p95 和 p95 占预算比例；下一步可以基于
+  真实 trace 样本决定是否删 `AnalyticalUpload` pre-load。
 
 ### 2.5 `features/ai_chat/data/providers.dart`
 
@@ -335,8 +335,9 @@ device tool 直接读本地 Drift，本地写入对端侧立即可见，根本�
 4. **批 D（ContextPack 精简——需先测量）**
    见 §2.4 修订：决策应基于"预注入 context 成本 vs 多一次 LLM round 成本"的实测，
    不能凭"端侧免费"的直觉删。2026-06-19 已补 ContextPack / appendix 字节度量，并在
-   Waterfall span detail 与 AI 透明度页最近调用汇总中暴露；剩余工作是收集真实 trace
-   样本后决定是否移除 `AnalyticalUpload` pre-load。
+   Waterfall span detail 与 AI 透明度页最近调用汇总中暴露；汇总同时显示样本覆盖率和
+   p95 占预算比例，剩余工作是收集真实 trace 样本后决定是否移除 `AnalyticalUpload`
+   pre-load。
 5. **批 E（剩余 docstring 收敛）**
    已清理用户可见 AI 透明度徽标与 Analytical device tool descriptor 中的
    "云端推理 / 云端表镜像 / 后端镜像"当前路径表述；2026-06-19 复核时
