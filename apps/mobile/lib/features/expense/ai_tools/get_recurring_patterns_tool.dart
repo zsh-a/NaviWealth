@@ -29,7 +29,7 @@ class GetRecurringPatternsTool implements DeviceTool {
       '返回端侧 detector 检测到的周期性支出（月度/周度订阅、定期账单等）。'
       '数据来自 AI Read Model `recurring_patterns`（Analytical 层 P1）—— '
       '这是 device-sourced read model：端侧 recurring_detector 跑启发式产生，'
-      '通过 ContextPack.analytical_uploads 形成本地分析信号（避免 Dart/Rust 双份漂移）。'
+      '本工具按 AnalyticalUpload shape 输出本地分析信号（避免 Dart/Rust 双份漂移）。'
       '典型问题：「我有哪些订阅」「每月定期支出多少」「哪些订阅最近涨价了」（最后这个需配合 subscription_changes，待落）。'
       '可选 currency / cadence 过滤。';
 
@@ -102,8 +102,8 @@ class GetRecurringPatternsTool implements DeviceTool {
       'count': patterns.length,
       'source': 'device_analytical_read_model',
       'note':
-          'device-sourced：端侧 recurring_detector 检测，通过 ContextPack.analytical_uploads 上报。'
-          '当结果为空时，可能是端侧还没上报过 / 端侧检测不到稳定周期 / 用户没有订阅。',
+          'device-sourced：端侧 recurring_detector 检测，本工具按 AnalyticalUpload shape 投影。'
+          '当结果为空时，可能是端侧检测不到稳定周期或用户没有订阅。',
     };
   }
 }

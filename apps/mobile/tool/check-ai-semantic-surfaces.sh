@@ -12,6 +12,11 @@ touch assets/fonts/inter-regular.woff2 assets/fonts/inter-medium.woff2 \
   assets/fonts/inter-semibold.woff2 assets/fonts/inter-bold.woff2 \
   assets/fonts/outfit-bold.woff2
 
+if grep -R "ContextPack\\.analytical_uploads" lib test; then
+  echo "ContextPack.analytical_uploads has been removed; use device analytical signal/tool output wording." >&2
+  exit 1
+fi
+
 flutter test \
   test/features/ai_chat/tool_invocation_renderers_test.dart \
   test/core/ai/regression/regression_corpus_test.dart \

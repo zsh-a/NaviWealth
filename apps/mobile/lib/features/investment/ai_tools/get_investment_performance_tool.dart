@@ -25,8 +25,8 @@ class GetInvestmentPerformanceTool implements DeviceTool {
   String get description =>
       '返回 per-asset 当前持仓表现：market_value / cost_basis / unrealized_pnl / weight。'
       '数据来自 AI Read Model `investment_performance`（Analytical P1，device-sourced）—— '
-      '端侧 holdingsSnapshotProvider 算出 per-asset 持仓后通过 '
-      'ContextPack.analytical_uploads 形成本地分析信号，AI 不需要再做计算。'
+      '端侧 holdingsSnapshotProvider 算出 per-asset 持仓后，本工具按 AnalyticalUpload '
+      'shape 输出本地分析信号，AI 不需要再做计算。'
       '每行: asset_id / asset_currency / base_currency / market_value_base / '
       'cost_basis_base / unrealized_pnl_base / weight / holding_days? / as_of。'
       '典型问题：「我现在赚最多的是哪个标的」「AAPL 持仓现值」「未实现盈亏总计」。'
@@ -96,7 +96,7 @@ class GetInvestmentPerformanceTool implements DeviceTool {
       'count': assets.length,
       'source': 'device_analytical_read_model',
       'note':
-          'device-sourced：端侧 holdingsSnapshotProvider 算出 per-asset 持仓快照后上报。'
+          'device-sourced：端侧 holdingsSnapshotProvider 算出 per-asset 持仓快照后投影。'
           'decimal 字段为字符串避免精度丢失。端侧运行时当前不广告 XIRR 工具。',
     };
   }

@@ -301,9 +301,9 @@ class _AggregateHeader extends StatelessWidget {
 
 /// Aggregate over recent trace root-span ContextPack sizing attributes.
 ///
-/// This powers the batch-D decision about whether ContextPack pre-load
-/// is worth its prompt cost. It intentionally ignores traces written
-/// before these attributes existed, so the sample count is explicit.
+/// This powers the batch-D decision about whether the ContextPack prompt
+/// appendix is worth its byte cost. It intentionally ignores traces
+/// written before these attributes existed, so the sample count is explicit.
 class ContextPackTraceWindowSummary {
   const ContextPackTraceWindowSummary({
     required this.windowCount,

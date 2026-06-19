@@ -93,10 +93,9 @@ String _monthKey(DateTime date) =>
 
 /// The canonical anomaly → [AnalyticalUpload] conversion (§4.3.3).
 ///
-/// Single source for the `ContextPack.analytical_uploads` signal and
-/// the device `get_anomaly_flags` tool, so the device tool's output is
-/// exactly the local analytical read-model row. `null` ⇒ no anomaly to
-/// report.
+/// Single source for the device `get_anomaly_flags` tool output, so
+/// prompt-facing tool data and local detector semantics stay aligned.
+/// `null` ⇒ no anomaly to report.
 AnalyticalUpload? analyticalAnomalyUpload(
   ExpenseAnomalySummary? anomaly, {
   DateTime? now,

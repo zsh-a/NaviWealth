@@ -8,7 +8,7 @@
 >   `retrieved`/`aggregates`/ScopedAggregate、ToolDescriptor.readModelLayer + ReadModelLayer enum、
 >   AnonymizationLevel enum + amountAnonymization getter、3 个 l10n orphan keys
 > - **第四轮（M / N / D-partial）**：删 ToolDescriptor.`allowedRuntimes` + `AllowedRuntime` enum、
->   `AiTrace.usedCloud`（持久化但零读取）、`TaskContext.analyticalUploads` 预注入 + `deviceHlc` +
+>   `AiTrace.usedCloud`（持久化但零读取）、`TaskContext.analyticalUploads` 字段 + `deviceHlc` +
 >   `_buildAnalyticalUploads` 链（保留 `AnalyticalUpload` class，6 个 device tool 仍作输出 shape 用）
 >
 > 累计 stats（四轮合计）：~4 400 行净删除，约 55 个文件触及。
@@ -16,8 +16,10 @@
 >
 > **2026-06-19 复核**：当前代码中已无 `RuntimeRegistry`、`AiRouter`、
 > `ChatSyncGate`、`pendingFreshnessHintProvider`、`FreshnessHint`、`markStaleReadModel`
-> 等符号；AI chat 的生产路径是 `RuntimeRoutingAiChatApiClient → DeviceLlmRuntime`
-> 或 `device_unavailable`。下方原文中关于批 A/B/C/F 的"待删/待论证"措辞只保留作历史。
+> 或 `TaskContext.analyticalUploads` 等符号；AI chat 的生产路径是
+> `RuntimeRoutingAiChatApiClient → DeviceLlmRuntime` 或 `device_unavailable`。
+> `AnalyticalUpload` class 仍保留为 device tool 输出 shape，不再是 ContextPack 字段。
+> 下方原文中关于批 A/B/C/D/F 的"待删/待论证"措辞只保留作历史。
 >
 > 保留本文档作历史参考，解释这轮清理"删了什么 / 留了什么 / 为什么"。
 >
@@ -163,35 +165,24 @@ staleness 分支不命中。
 
 ### 2.4 `core/ai/contracts/task_context.dart`
 
-`FreshnessHint` 与 `AnalyticalUpload` 是为云端协作设计的 payload。当前 `_prepareChatTrace`
-仍然构造它们并序列化进 `ContextPack` → 喂给端侧 LLM。Device LLM 拿到这些 JSON
-**没有专门的语义处理**——它们最多作为 generic context 影响模型生成，但不再触发任何
-"force_refresh_read_models" / 重投影行为。
+`FreshnessHint` 与 `TaskContext.analyticalUploads` 曾是为云端协作设计的 payload。
+2026-06-19 复核时，当前代码已无 `FreshnessHint` / `TaskContext.analyticalUploads`
+/ `deviceHlc` 字段，`ContextCompressor.compress()` 只构造 `TaskContext.route` /
+`intent` / `signals`。`AnalyticalUpload` class 仍保留，但只作为 6 个 device tool 复用的
+输出 shape，不再被序列化进 `ContextPack` 喂给 LLM。
 
 | 符号 | 状态 |
 |---|---|
-| `class FreshnessHint` + `toJson()` | 序列化路径还在（喂给 LLM），但消费者已删 |
-| `class AnalyticalUpload` + `toJson()` | 同上。`_buildAnalyticalUploads` 仍跑端侧 detector，但已有专门的 device tools（`get_anomaly_flags` / `get_recurring_patterns` 等）做同样的事 |
-| `ContextPack.{freshnessHint, analyticalUploads}` 字段 | LLM 收到但无定向语义 |
+| `class FreshnessHint` + `toJson()` | 已删除 |
+| `TaskContext.analyticalUploads` / `ContextPack.analytical_uploads` | 已删除；当前 `TaskContext` 只有 `route` / `intent` / `signals` |
+| `class AnalyticalUpload` + `toJson()` | 保留为 device tool 输出 shape（`get_anomaly_flags` / `get_recurring_patterns` 等），不进入 ContextPack |
 
-**建议动作**：分两步，不必一次做完。
-- **必做**：删 `FreshnessHint`。它的唯一"消费者"`force_refresh_read_models` 字段在
-  LLM prompt 里语义模糊。同步删 `providers.dart:184–203` 构造 `FreshnessHint` 的块、
-  `_prepareChatTrace` 的相关分支、`ai_trace_builder.dart:94` 的过期注释、`task_context.dart`
-  里所有对 `force_refresh_read_models` 的引用。
-- **可议（需测量后决策）**：`AnalyticalUpload` 同时被 device tool 暴露和 ContextPack
-  pre-load。**注意：每轮 LLM 都是真实网络调用**——`DeviceAgentLoop` 每轮调
-  `_streamFn(request)` 流式拿用户配置的 Anthropic/OpenAI 端点
-  （`device_agent_loop.dart:189`），多一次 tool round 仍有网络延迟、token 成本和
-  provider 错误风险。先前审计的"端侧 round-trip 免费"判断是错的。所以这个权衡变成：
-  **预注入 context 的 token 成本 + 噪声 vs 多一次 LLM round 的延迟/成本/失败率**。
-  决策应该基于实测（典型 turn 里 anomaly summary 用到的频率、平均 turn 数变化），
-  而不是基于"端侧免费"的直觉。建议**先保留**，到批 D 之前补一次实测。
-  **2026-06-19 更新**：turn root span 已记录 `context_pack_json_bytes`、
-  `context_pack_budget_*`、`context_appendix_bytes` 和 `context_appendix_cap_bytes`，
-  Waterfall 详情面板可直接查看这些 attributes，AI 透明度页的最近调用汇总也会显示
-  ContextPack / appendix 的样本覆盖率、平均值、p95 和 p95 占预算比例；下一步可以基于
-  真实 trace 样本决定是否删 `AnalyticalUpload` pre-load。
+**当前动作**：旧 payload 删除已落地。`AnalyticalUpload` 的剩余工作是保持 device tool
+描述与当前架构一致：它是 tool output shape，不是 ContextPack prompt payload。
+ContextPack 本身仍用于 device runtime 的 prompt grounding；turn root span 已记录
+`context_pack_json_bytes`、`context_pack_budget_*`、`context_appendix_bytes` 和
+`context_appendix_cap_bytes`。Waterfall 详情面板可直接查看这些 attributes，AI 透明度页的
+最近调用汇总也会显示 ContextPack / appendix 的样本覆盖率、平均值、p95 和 p95 占预算比例。
 
 ### 2.5 `features/ai_chat/data/providers.dart`
 
@@ -333,11 +324,12 @@ device tool 直接读本地 Drift，本地写入对端侧立即可见，根本�
    已落地；当前代码无 `AiRouter` / `aiRouterProvider`，生产路径直接路由到
    device runtime 或 `device_unavailable`。
 4. **批 D（ContextPack 精简——需先测量）**
-   见 §2.4 修订：决策应基于"预注入 context 成本 vs 多一次 LLM round 成本"的实测，
-   不能凭"端侧免费"的直觉删。2026-06-19 已补 ContextPack / appendix 字节度量，并在
-   Waterfall span detail 与 AI 透明度页最近调用汇总中暴露；汇总同时显示样本覆盖率和
-   p95 占预算比例，剩余工作是收集真实 trace 样本后决定是否移除 `AnalyticalUpload`
-   pre-load。
+   `TaskContext.analyticalUploads` / `deviceHlc` 已删除；`AnalyticalUpload` class 仅作为
+   device tool 输出 shape 保留。当前剩余的 ContextPack 精简决策只针对仍在 prompt
+   grounding 中使用的 BaseContext / TaskContext signals / appendix 成本。2026-06-19 已补
+   ContextPack / appendix 字节度量，并在 Waterfall span detail 与 AI 透明度页最近调用汇总
+   中暴露；汇总同时显示样本覆盖率和 p95 占预算比例，剩余工作是收集真实 trace 样本后决定
+   是否继续压缩 prompt appendix。
 5. **批 E（剩余 docstring 收敛）**
    已清理用户可见 AI 透明度徽标与 Analytical device tool descriptor 中的
    "云端推理 / 云端表镜像 / 后端镜像"当前路径表述；2026-06-19 复核时

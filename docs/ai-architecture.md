@@ -19,7 +19,7 @@
 > - disclosure 全链：`DisclosureRequest`/`DisclosureResponse`/`LedgerField`/`UserConsent`/
 >   `DisclosureSummary`/`AiTrace.disclosures`/`AiTrace.usedRawLedger`/`addDisclosure`
 > - `TaskContext.retrieved`/`TaskContext.aggregates`/`ScopedAggregate`
-> - `TaskContext.analyticalUploads` 预注入 + `deviceHlc`（`AnalyticalUpload` class 保留作 6 个 device tool 的输出 shape）
+> - `TaskContext.analyticalUploads` 字段 + `deviceHlc`（`AnalyticalUpload` class 保留作 6 个 device tool 的输出 shape）
 > - `ToolDescriptor.readModelLayer`/`ReadModelLayer`/`AllowedRuntime`/`allowedRuntimes`
 > - `AnonymizationLevel`/`amountAnonymization` getter
 > - `AiTrace.usedCloud`（持久化但零读取的 wire fossil）
@@ -378,7 +378,7 @@ Chat → providers.dart _prepareChatTrace(ref, requestId)
 | AiTrace span 可观测性（Opik 瀑布树，取代旧 flat 格式，不向后兼容）| ✅ |
 | 多 provider profile + 切换 + 连通性测试（无 opt-in 开关）| ✅ |
 | §4.6 Device LLM Runtime（用户自带 key · 直连 provider · 工具读 Drift · 全原生平台含桌面 · 删除 cloud relay）| ✅ |
-| Boundary audit 2026-05-24（四轮）：删 freshness/router/RuntimeRegistry/CloudProposal/ChatSyncGate/disclosure 全链/TaskContext 死字段/readModelLayer/AllowedRuntime/AnonymizationLevel/usedCloud/analyticalUploads 预注入/l10n orphans（累计净删 ~4 400 行）| ✅ |
+| Boundary audit 2026-05-24（四轮）：删 freshness/router/RuntimeRegistry/CloudProposal/ChatSyncGate/disclosure 全链/TaskContext 死字段/readModelLayer/AllowedRuntime/AnonymizationLevel/usedCloud/analyticalUploads 字段/l10n orphans（累计净删 ~4 400 行）| ✅ |
 
 **测试 gate**：`flutter analyze --fatal-infos` clean；`flutter test` 全绿（golden 按平台
 skip，known-failing 钉基线）；`tool/check-tool-descriptors.sh` / `check-enum-mirror.sh` /

@@ -145,12 +145,11 @@ class DateRange {
 
 /// 端侧 detector 输出的单条分析信号。**类名沿用"Upload"是历史**：此前
 /// 这是端侧信号同步到后端 read model 的载体；删除后端 AI 后，这些条目
-/// 现在的唯一用途是**预注入 device LLM 的 prompt**（在 LLM 调对应 device tool
-/// 之前给它一个聚合摘要，减少首轮 tool round）。
+/// 只作为 device tool 的稳定输出 shape，供各工具复用同一套端侧 detector
+/// 结果，避免 prompt grounding 和 tool 输出各自漂移。
 ///
-/// 保留 class/字段/wire key（`analytical_uploads`）只为序列化稳定；如果未来
-/// 改名应改成 `PromptAnalyticalSignal` 之类。是否保留这层预注入待测量
-/// （`docs/ai-boundary-audit.md` 批 D）。
+/// 保留 class/字段/wire key 只为序列化稳定；如果未来改名应改成
+/// `DeviceAnalyticalSignal` 之类。
 class AnalyticalUpload {
   const AnalyticalUpload({
     required this.kind,

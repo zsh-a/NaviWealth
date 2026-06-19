@@ -86,7 +86,7 @@ class GetRefundLinksTool implements DeviceTool {
       'count': links.length,
       'source': 'device_analytical_read_model',
       'note':
-          'device-sourced：端侧 refundMatcher 检测，通过 ContextPack.analytical_uploads 上报。'
+          'device-sourced：端侧 refundMatcher 检测，本工具按 AnalyticalUpload shape 投影。'
           '空结果可能是端侧没检到或没退款。',
     };
   }

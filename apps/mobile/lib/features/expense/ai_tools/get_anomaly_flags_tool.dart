@@ -26,7 +26,7 @@ class GetAnomalyFlagsTool implements DeviceTool {
       '返回端侧 detector 检测到的支出 / 现金流异常。'
       '数据来自 AI Read Model `anomaly_flags`（Analytical 层 P1）—— '
       'device-sourced：端侧（如 expenseAnomalyInsightProvider）跑启发式 → '
-      'ContextPack.analytical_uploads 本地分析信号。'
+      'device analytical signal，本工具按 AnalyticalUpload shape 输出。'
       'payload.kind 包含 monthly_spike / subscription_price_up / cashflow_anomaly 等。'
       '可选 severity_min 过滤（info ≤ warn ≤ critical）。';
 
@@ -90,8 +90,8 @@ class GetAnomalyFlagsTool implements DeviceTool {
       'count': flags.length,
       'source': 'device_analytical_read_model',
       'note':
-          'device-sourced：端侧 detector 检测，通过 ContextPack.analytical_uploads 上报。'
-          '空结果可能是端侧还没上报 / 没有异常。',
+          'device-sourced：端侧 detector 检测，本工具按 AnalyticalUpload shape 投影。'
+          '空结果可能是端侧没检到或没有异常。',
     };
   }
 }
