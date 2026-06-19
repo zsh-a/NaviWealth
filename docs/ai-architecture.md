@@ -413,5 +413,7 @@ tools / proposals / guardrails / read_models / policy）。
 - **iOS Share Extension**：`receive_sharing_intent` 需 Xcode 独立 native target
   （App Group + entitlements + 签名），仓内不可盲建。Android 分享已可用。
 - 长历史 `subscription_changes`：跨会话比对需把 `recurring_patterns` 经 OpLog 持久化到 Drift。
-- 测试准出 P1：A11y baseline / 性能预算 / Prompt injection corpus。
+- 测试准出 P1：A11y baseline / 性能预算。
+- Prompt injection corpus：已加入静态 regression corpus 基线（finance / insight / FIRE
+  probes，`kPromptInjectionRegressionTag`），由 nightly `ai-semantic` workflow 覆盖。
 - expense_list 选区工具条（§5.4 Layer 2 的 `transactions.explainSelection`，基础设施已就绪）。

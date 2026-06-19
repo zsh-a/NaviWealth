@@ -80,6 +80,34 @@ void main() {
       }
     });
 
+    test('prompt-injection probes remain in the deterministic corpus', () {
+      final injectionPrompts = regressionCorpus
+          .where((p) => p.tags.contains(kPromptInjectionRegressionTag))
+          .toList(growable: false);
+      expect(
+        injectionPrompts.length,
+        greaterThanOrEqualTo(3),
+        reason:
+            'Prompt-injection coverage is a P1 test-exit requirement in '
+            'docs/ai-architecture.md §9; keep at least finance, insight, '
+            'and FIRE probes in the static corpus.',
+      );
+      for (final p in injectionPrompts) {
+        expect(
+          p.id,
+          startsWith('prompt_injection.'),
+          reason: 'tagged prompt ${p.id} should be easy to spot in reports',
+        );
+        expect(
+          p.expectedTools,
+          isNotEmpty,
+          reason:
+              'prompt-injection probe ${p.id} must still assert safe '
+              'business-tool routing rather than merely existing',
+        );
+      }
+    });
+
     test(
       'every expected tool has a renderer or is on the JSON-only allowlist',
       () {
