@@ -279,8 +279,10 @@ path once the production connection implements database encryption.
   has sync-graph coverage for stale dirty-pointer cleanup and partial pull
   progress when a later page fails into backoff. Sync diagnostics providers
   now cover seeded status events plus cursor, local HLC, outbox depth, and
-  local row-count refresh on status changes. Next expansion is applying the
-  same traversal style to the Sync Status UI surface.
+  local row-count refresh on status changes. `SyncStatusPage` now has widget
+  coverage for offline/error/conflict diagnostics, cursor/outbox/local-count
+  rendering, and status-event UI refresh. Next expansion is selected
+  golden/responsive coverage for these diagnostic surfaces.
 - AI exploratory + semantic (vision) validation, nightly, non-blocking.
 
 ## 8. Conventions
