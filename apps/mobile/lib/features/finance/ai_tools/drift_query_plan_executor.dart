@@ -10,9 +10,9 @@
 ///      negative — see [expenseToTransactionInput]).
 ///   3. Delegates to [InMemoryQueryPlanExecutor].
 ///
-/// `NetWorthTrendPlan` continues to return a note (handled by the
-/// dashboard adapter); we deliberately don't double-implement
-/// it here.
+/// `NetWorthTrendPlan` is handled here through `dashboardTrendProvider`
+/// so Ask AI can answer net-worth trend questions from the live dashboard
+/// series.
 ///
 /// The adapter is Riverpod-aware so callers can hand in any `Ref` —
 /// chat repository, dev page, future natural-language CLI. Tests that

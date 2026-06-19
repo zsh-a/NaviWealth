@@ -4532,6 +4532,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chartEmptyDefault => 'No data yet';
 
   @override
+  String get chartTotalLabel => 'Total';
+
+  @override
   String get formAmountFieldLabelDefault => 'Amount';
 
   @override

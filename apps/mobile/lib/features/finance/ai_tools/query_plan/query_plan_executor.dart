@@ -5,7 +5,7 @@
 /// [InMemoryQueryPlanExecutor] runs against an injected list of
 /// [TransactionInput] — sufficient for tests and for the device's
 /// 'cached recent transactions' fast path. NetWorthTrendPlan is
-/// returned with an empty result by the in-memory executor because
+/// deliberately left to the Drift-backed dashboard adapter because
 /// net-worth requires the dashboard time series, not transactions.
 library;
 
@@ -74,8 +74,7 @@ class InMemoryQueryPlanExecutor implements QueryPlanExecutor {
       final NetWorthTrendPlan p => QueryResult(
         plan: p,
         rows: const <QueryRow>[],
-        note:
-            'net-worth trend requires the dashboard adapter (not wired in Phase 3-A)',
+        note: 'net-worth trend requires the dashboard adapter',
       ),
       final SubscriptionListPlan p => _subscriptions(p),
       final RefundMatchingPlan p => _refunds(p),

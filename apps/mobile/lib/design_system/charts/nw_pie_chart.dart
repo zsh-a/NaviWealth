@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
+import '../../l10n/gen/app_localizations.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'chart_palette.dart';
@@ -211,7 +212,7 @@ class _NwPieChartState extends State<NwPieChart> {
           overflow: TextOverflow.ellipsis,
         ),
         Text(
-          'Total',
+          AppLocalizations.of(context).chartTotalLabel,
           style: TypographyTokens.numericCaption.copyWith(
             color: onSurface.withValues(alpha: 0.5),
           ),

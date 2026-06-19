@@ -1,6 +1,8 @@
 /// KnowledgeOS Riverpod wiring (`docs/knowledgeos-domain.md` §3).
 library;
 
+import 'dart:ui' show Locale, PlatformDispatcher;
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -13,6 +15,8 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/logging/providers.dart' show loggerProvider;
 import '../../../core/persistence/providers.dart';
 import '../../../core/sync/outbox_provider.dart';
+import '../../../design_system/preferences/theme_preferences.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../ai_chat/data/providers.dart' show deviceLlmClientProvider;
 import '../domain/knowledge_models.dart';
 import 'capture_classifier.dart';
@@ -54,11 +58,25 @@ final knowledgeSearchServiceProvider = FutureProvider<KnowledgeSearchService>((
 ) async {
   final repository = await ref.watch(knowledgeRepositoryProvider.future);
   final memoryRuntime = await ref.watch(memoryRuntimeProvider.future);
+  final l10n = _knowledgeDataL10n(ref.watch(localeProvider));
   return KnowledgeSearchService(
     repository: repository,
     memoryRuntime: memoryRuntime,
+    displayCopy: KnowledgeSearchDisplayCopy(
+      untitled: l10n.knowledgeUntitled,
+      routineInterval: (statement, intervalDays) =>
+          l10n.knowledgeReviewRoutineMeta(statement, intervalDays),
+    ),
   );
 });
+
+AppLocalizations _knowledgeDataL10n(Locale? preferred) {
+  final locale = preferred ?? PlatformDispatcher.instance.locale;
+  final supported = locale.languageCode == 'zh'
+      ? const Locale('zh')
+      : const Locale('en');
+  return lookupAppLocalizations(supported);
+}
 
 final inboxTriageRepositoryProvider = FutureProvider<InboxTriageRepository>((
   ref,

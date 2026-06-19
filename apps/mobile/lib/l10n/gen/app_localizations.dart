@@ -7791,6 +7791,12 @@ abstract class AppLocalizations {
   /// **'No data yet'**
   String get chartEmptyDefault;
 
+  /// No description provided for @chartTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get chartTotalLabel;
+
   /// Default label for the shared AmountField when no caller-provided label is supplied.
   ///
   /// In en, this message translates to:

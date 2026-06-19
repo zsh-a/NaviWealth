@@ -19,6 +19,7 @@
 library;
 
 import 'dart:async';
+import 'dart:ui' show Locale, PlatformDispatcher;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -28,6 +29,8 @@ import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
+import '../../../design_system/preferences/theme_preferences.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../domain/knowledge_models.dart';
 import '../domain/knowledge_text.dart';
 import 'knowledge_repository.dart';
@@ -144,6 +147,7 @@ Future<void> _reindexNotes(
   MemoryRuntime runtime,
   List<KnowledgeNote> notes, {
   required String ownerUserId,
+  required String untitled,
 }) async {
   final now = DateTime.now().toUtc();
   await _forgetMissingSourceIds(
@@ -165,7 +169,7 @@ Future<void> _reindexNotes(
         scope: '*',
         source: kKnowledgeNoteMemorySource,
         sourceId: n.id,
-        title: n.title.isEmpty ? '(untitled note)' : n.title,
+        title: n.title.isEmpty ? untitled : n.title,
         summary: summary,
         payload: <String, Object?>{
           'body_md': n.bodyMd,
@@ -189,12 +193,26 @@ Future<void> _reindexNotes(
 }
 
 final knowledgeNoteMemoryIndexerProvider = Provider<void>((ref) {
+  final l10n = _knowledgeIndexerL10n(ref.watch(localeProvider));
   subscribeKnowledgeIndexer<KnowledgeNote>(
     ref,
     streamOf: (r, uid) => r.watchNotes(ownerUserId: uid, limit: 200),
-    reindex: _reindexNotes,
+    reindex: (runtime, notes, {required ownerUserId}) => _reindexNotes(
+      runtime,
+      notes,
+      ownerUserId: ownerUserId,
+      untitled: l10n.knowledgeUntitled,
+    ),
   );
 });
+
+AppLocalizations _knowledgeIndexerL10n(Locale? preferred) {
+  final locale = preferred ?? PlatformDispatcher.instance.locale;
+  final supported = locale.languageCode == 'zh'
+      ? const Locale('zh')
+      : const Locale('en');
+  return lookupAppLocalizations(supported);
+}
 
 // ── Principles ───────────────────────────────────────────────────────────
 

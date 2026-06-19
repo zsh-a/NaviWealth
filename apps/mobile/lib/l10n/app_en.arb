@@ -2416,6 +2416,7 @@
   "aiChatSheetNewTooltip": "New conversation",
 
   "chartEmptyDefault": "No data yet",
+  "chartTotalLabel": "Total",
 
   "formAmountFieldLabelDefault": "Amount",
   "@formAmountFieldLabelDefault": { "description": "Default label for the shared AmountField when no caller-provided label is supplied." },

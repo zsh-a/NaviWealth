@@ -4356,6 +4356,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chartEmptyDefault => '暂无数据';
 
   @override
+  String get chartTotalLabel => '合计';
+
+  @override
   String get formAmountFieldLabelDefault => '金额';
 
   @override
@@ -5441,7 +5444,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get knowledgeNoteDetailTitle => 'Note';
+  String get knowledgeNoteDetailTitle => '笔记';
 
   @override
   String get knowledgeNoteEditTitle => '编辑笔记';
@@ -5471,7 +5474,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeAssumptionDetailTitle => '假设';
 
   @override
-  String get knowledgeRoutineDetailTitle => 'Routine';
+  String get knowledgeRoutineDetailTitle => '例行事项';
 
   @override
   String get knowledgeObjectDetailTitle => '详情';
@@ -8450,25 +8453,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeSegmentAll => '全部';
 
   @override
-  String get knowledgeSegmentDecisions => 'Decisions';
+  String get knowledgeSegmentDecisions => '决策';
 
   @override
-  String get knowledgeSegmentPrinciples => 'Principles';
+  String get knowledgeSegmentPrinciples => '原则';
 
   @override
-  String get knowledgeSegmentAssumptions => 'Assumptions';
+  String get knowledgeSegmentAssumptions => '假设';
 
   @override
-  String get knowledgeSegmentNotes => 'Notes';
+  String get knowledgeSegmentNotes => '笔记';
 
   @override
-  String get knowledgeSegmentConcepts => 'Concepts';
+  String get knowledgeSegmentConcepts => '概念';
 
   @override
-  String get knowledgeSegmentExperiments => 'Experiments';
+  String get knowledgeSegmentExperiments => '实验';
 
   @override
-  String get knowledgeSegmentRoutines => 'Routines';
+  String get knowledgeSegmentRoutines => '例行事项';
 
   @override
   String get knowledgeNewDecision => '新建 Decision';

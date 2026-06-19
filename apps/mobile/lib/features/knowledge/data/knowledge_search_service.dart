@@ -17,11 +17,13 @@ class KnowledgeSearchService {
   KnowledgeSearchService({
     required KnowledgeRepository repository,
     required MemoryRuntime memoryRuntime,
+    this.displayCopy = const KnowledgeSearchDisplayCopy(),
   }) : _repository = repository,
        _memoryRuntime = memoryRuntime;
 
   final KnowledgeRepository _repository;
   final MemoryRuntime _memoryRuntime;
+  final KnowledgeSearchDisplayCopy displayCopy;
 
   Future<List<KnowledgeSearchHit>> searchKnowledge({
     required String ownerUserId,
@@ -127,7 +129,10 @@ class KnowledgeSearchService {
     final hits = <KnowledgeSearchHit>[];
     for (final note in notes) {
       if (!_matchesNoteFilters(note, tags: tags, project: project)) continue;
-      final doc = KnowledgeSearchDocument.fromNote(note);
+      final doc = KnowledgeSearchDocument.fromNote(
+        note,
+        untitled: displayCopy.untitled,
+      );
       final lexical = q.isEmpty
           ? const KnowledgeLexicalMatch(
               score: 1,
@@ -302,7 +307,10 @@ class KnowledgeSearchService {
             .then(
               (v) => v == null || v.sync.deletedAt != null
                   ? null
-                  : KnowledgeSearchDocument.fromNote(v),
+                  : KnowledgeSearchDocument.fromNote(
+                      v,
+                      untitled: displayCopy.untitled,
+                    ),
             ),
       'principle' =>
         _repository
@@ -350,7 +358,10 @@ class KnowledgeSearchService {
             .then(
               (v) => v == null || v.sync.deletedAt != null
                   ? null
-                  : KnowledgeSearchDocument.fromRoutine(v),
+                  : KnowledgeSearchDocument.fromRoutine(
+                      v,
+                      routineInterval: displayCopy.routineInterval,
+                    ),
             ),
       _ => Future<KnowledgeSearchDocument?>.value(),
     };
@@ -561,8 +572,11 @@ class KnowledgeSearchDocument {
   final KnowledgeDecision? decision;
   final KnowledgeRoutine? routine;
 
-  static KnowledgeSearchDocument fromNote(KnowledgeNote n) {
-    final title = n.title.isEmpty ? '(untitled note)' : n.title;
+  static KnowledgeSearchDocument fromNote(
+    KnowledgeNote n, {
+    String untitled = 'Untitled',
+  }) {
+    final title = n.title.isEmpty ? untitled : n.title;
     return KnowledgeSearchDocument(
       kind: 'note',
       id: n.id,
@@ -649,17 +663,36 @@ class KnowledgeSearchDocument {
     );
   }
 
-  static KnowledgeSearchDocument fromRoutine(KnowledgeRoutine r) {
+  static KnowledgeSearchDocument fromRoutine(
+    KnowledgeRoutine r, {
+    String Function(String statement, int intervalDays)? routineInterval,
+  }) {
+    final excerpt = routineInterval == null
+        ? '${r.statement} · every ${r.intervalDays} days'
+        : routineInterval(r.statement, r.intervalDays);
     return KnowledgeSearchDocument(
       kind: 'routine',
       id: r.id,
       title: r.statement,
-      excerpt: '${r.statement} — every ${r.intervalDays} days',
+      excerpt: excerpt,
       searchText: '${r.statement} ${r.scope} ${r.status.wire}',
       updatedAt: r.sync.updatedAt,
       routine: r,
     );
   }
+}
+
+class KnowledgeSearchDisplayCopy {
+  const KnowledgeSearchDisplayCopy({
+    this.untitled = 'Untitled',
+    this.routineInterval = _defaultRoutineInterval,
+  });
+
+  final String untitled;
+  final String Function(String statement, int intervalDays) routineInterval;
+
+  static String _defaultRoutineInterval(String statement, int intervalDays) =>
+      '$statement · every $intervalDays days';
 }
 
 class KnowledgeLexicalMatch {
