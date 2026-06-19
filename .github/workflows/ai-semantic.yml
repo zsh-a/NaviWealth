@@ -1,0 +1,73 @@
+name: ai-semantic
+
+# Nightly AI semantic surface validation. This is intentionally outside the
+# blocking PR path: it catches renderer/corpus drift and can optionally notify
+# an external screenshot+vision agent without making ordinary PR checks depend
+# on a networked model.
+on:
+  schedule:
+    # 03:15 UTC nightly, after web-smoke starts and before integration-device
+    # usually finishes.
+    - cron: '15 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ai-semantic-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  semantic-surrogate:
+    name: semantic surrogate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Run deterministic AI semantic checks
+        run: |
+          set +e
+          bash tool/check-ai-semantic-surfaces.sh 2>&1 | tee /tmp/ai-semantic-surrogate.log
+          status=${PIPESTATUS[0]}
+          set -e
+          exit "$status"
+      - name: Upload semantic surrogate log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-semantic-surrogate-log
+          path: /tmp/ai-semantic-surrogate.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+  external-vision-agent:
+    name: external vision agent hook
+    runs-on: ubuntu-latest
+    needs: semantic-surrogate
+    continue-on-error: true
+    env:
+      AI_VISION_AGENT_WEBHOOK_URL: ${{ secrets.AI_VISION_AGENT_WEBHOOK_URL }}
+    steps:
+      - name: Skip when webhook is not configured
+        if: env.AI_VISION_AGENT_WEBHOOK_URL == ''
+        run: |
+          echo "AI_VISION_AGENT_WEBHOOK_URL is not configured; deterministic semantic surrogate was the nightly signal."
+      - name: Dispatch external screenshot + vision validation
+        if: env.AI_VISION_AGENT_WEBHOOK_URL != ''
+        run: |
+          payload=$(jq -n \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg sha "$GITHUB_SHA" \
+            --arg ref "$GITHUB_REF_NAME" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            '{repository:$repository, sha:$sha, ref:$ref, run_id:$run_id, run_attempt:$run_attempt, check:"ai-semantic-vision-agent"}')
+          curl -fsS \
+            -X POST "$AI_VISION_AGENT_WEBHOOK_URL" \
+            -H 'content-type: application/json' \
+            --data "$payload"

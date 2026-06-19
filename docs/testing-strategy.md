@@ -176,13 +176,13 @@ multi-device convergence with deterministic time. 70 documented cases in
 `docs/sync-protocol-tests.md`. This is the canonical Task #5 coverage.
 
 ### AI exploratory + semantic (~1%, nightly, non-blocking)
-The deterministic surrogate lives in
-`test/features/ai_chat/tool_invocation_renderers_test.dart`: it renders the
-net-worth, allocation, and account-list AI surfaces at phone width, asserts the
-key facts are visible, checks the semantics tree for machine-readable labels,
-and fails on layout exceptions. The remaining non-blocking nightly step is to
-drive the app from natural-language Tasks (Computer-Use style), screenshot each
-surface, and have a vision model assert "net worth + allocation + account list
+`.github/workflows/ai-semantic.yml` runs the deterministic surrogate nightly
+and on manual dispatch via `apps/mobile/tool/check-ai-semantic-surfaces.sh`.
+That surrogate renders the net-worth, allocation, and account-list AI surfaces
+at phone width, asserts the key facts are visible, checks the semantics tree for
+machine-readable labels, and fails on layout exceptions. The same workflow has a
+non-blocking `AI_VISION_AGENT_WEBHOOK_URL` hook for an external screenshot +
+vision-model validator to assert "net worth + allocation + account list
 visible; no overlap/truncation." Catches layout breakage the deterministic
 layers can't. Strictly non-blocking.
 
@@ -199,7 +199,8 @@ PR  ├─ analyze --fatal-infos + boundary lints      (mobile.yml, existing)
     ├─ contract tests                               ~30 s
     └─ web smoke (chromium)                         ~2 min   ← ADDED (web-smoke.yml)
 Nightly ├─ web smoke full matrix (Firefox/WebKit/OPFS)       ← ADDED
-        └─ AI exploratory + semantic vision agent            (future)
+        ├─ AI semantic surrogate                             ← ADDED (ai-semantic.yml)
+        └─ external AI vision-agent webhook                  ← OPTIONAL
 ```
 
 **Known-failing ratchet.** `tool/check-known-failing-tests.sh` pins the
@@ -292,8 +293,10 @@ path once the production connection implements database encryption.
   stale cloud-inference/mirror language in user-visible badges and analytical
   device-tool descriptors. Selected semantic/vision surrogate coverage now
   verifies the AI-rendered net-worth, allocation, and account-list surfaces at
-  phone width. Next expansion is the external nightly vision-agent pass.
-- AI exploratory + semantic (vision agent), nightly, non-blocking.
+  phone width, and `ai-semantic.yml` runs it nightly with an optional external
+  vision-agent webhook.
+- AI exploratory + semantic: remaining work is wiring an external service behind
+  `AI_VISION_AGENT_WEBHOOK_URL` if the team wants model-based screenshot review.
 
 ## 8. Conventions
 
