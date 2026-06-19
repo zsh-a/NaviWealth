@@ -30,6 +30,8 @@ jobs:
           cache: true
       - run: flutter pub get
       - name: Run deterministic AI semantic checks
+        env:
+          AI_SEMANTIC_SCREENSHOT_DIR: /tmp/ai-semantic-surfaces
         run: |
           set +e
           bash tool/check-ai-semantic-surfaces.sh 2>&1 | tee /tmp/ai-semantic-surrogate.log
@@ -42,6 +44,14 @@ jobs:
         with:
           name: ai-semantic-surrogate-log
           path: /tmp/ai-semantic-surrogate.log
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Upload semantic vision artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-semantic-vision-artifacts
+          path: /tmp/ai-semantic-surfaces
           if-no-files-found: ignore
           retention-days: 7
 
@@ -57,16 +67,27 @@ jobs:
         if: env.AI_VISION_AGENT_WEBHOOK_URL == ''
         run: |
           echo "AI_VISION_AGENT_WEBHOOK_URL is not configured; deterministic semantic surrogate was the nightly signal."
+      - name: Download semantic vision artifacts
+        if: env.AI_VISION_AGENT_WEBHOOK_URL != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-semantic-vision-artifacts
+          path: ai-semantic-vision-artifacts
       - name: Dispatch external screenshot + vision validation
         if: env.AI_VISION_AGENT_WEBHOOK_URL != ''
         run: |
+          manifest="$(jq -c . ai-semantic-vision-artifacts/manifest.json)"
           payload=$(jq -n \
             --arg repository "$GITHUB_REPOSITORY" \
             --arg sha "$GITHUB_SHA" \
             --arg ref "$GITHUB_REF_NAME" \
             --arg run_id "$GITHUB_RUN_ID" \
             --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
-            '{repository:$repository, sha:$sha, ref:$ref, run_id:$run_id, run_attempt:$run_attempt, check:"ai-semantic-vision-agent"}')
+            --arg run_url "https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --arg artifacts_url "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" \
+            --arg artifact_name "ai-semantic-vision-artifacts" \
+            --argjson manifest "$manifest" \
+            '{repository:$repository, sha:$sha, ref:$ref, run_id:$run_id, run_attempt:$run_attempt, run_url:$run_url, check:"ai-semantic-vision-agent", artifact:{name:$artifact_name, artifacts_url:$artifacts_url, manifest:$manifest}}')
           curl -fsS \
             -X POST "$AI_VISION_AGENT_WEBHOOK_URL" \
             -H 'content-type: application/json' \

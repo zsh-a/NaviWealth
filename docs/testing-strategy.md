@@ -182,9 +182,11 @@ That surrogate renders the net-worth, allocation, and account-list AI surfaces
 at phone width, asserts the key facts are visible, checks the semantics tree for
 machine-readable labels, and fails on layout exceptions. The same workflow has a
 non-blocking `AI_VISION_AGENT_WEBHOOK_URL` hook for an external screenshot +
-vision-model validator to assert "net worth + allocation + account list
-visible; no overlap/truncation." Catches layout breakage the deterministic
-layers can't. Strictly non-blocking.
+vision-model validator. The deterministic job writes
+`ai-semantic-vision-artifacts` (PNG screenshot + manifest); the webhook payload
+includes the run URL, artifact API URL, and manifest so the external service can
+assert "net worth + allocation + account list visible; no overlap/truncation."
+Catches layout breakage the deterministic layers can't. Strictly non-blocking.
 
 ## 5. CI gate design
 
@@ -200,7 +202,7 @@ PR  ├─ analyze --fatal-infos + boundary lints      (mobile.yml, existing)
     └─ web smoke (chromium)                         ~2 min   ← ADDED (web-smoke.yml)
 Nightly ├─ web smoke full matrix (Firefox/WebKit/OPFS)       ← ADDED
         ├─ AI semantic surrogate                             ← ADDED (ai-semantic.yml)
-        └─ external AI vision-agent webhook                  ← OPTIONAL
+        └─ external AI vision-agent webhook + screenshot artifacts ← OPTIONAL
 ```
 
 **Known-failing ratchet.** `tool/check-known-failing-tests.sh` pins the
@@ -293,10 +295,12 @@ path once the production connection implements database encryption.
   stale cloud-inference/mirror language in user-visible badges and analytical
   device-tool descriptors. Selected semantic/vision surrogate coverage now
   verifies the AI-rendered net-worth, allocation, and account-list surfaces at
-  phone width, and `ai-semantic.yml` runs it nightly with an optional external
-  vision-agent webhook.
-- AI exploratory + semantic: remaining work is wiring an external service behind
-  `AI_VISION_AGENT_WEBHOOK_URL` if the team wants model-based screenshot review.
+  phone width, and `ai-semantic.yml` runs it nightly with optional screenshot
+  artifact upload plus an external vision-agent webhook.
+- AI exploratory + semantic: the repo side is wired. To enable model-based
+  screenshot review, configure an external service behind
+  `AI_VISION_AGENT_WEBHOOK_URL` that consumes the manifest and downloaded
+  artifact.
 
 ## 8. Conventions
 
