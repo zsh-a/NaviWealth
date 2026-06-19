@@ -374,7 +374,8 @@ String friendlyToolName(AppLocalizations l10n, String wireName) {
   return switch (wireName) {
     'get_holdings' => l10n.aiChatToolGetHoldings,
     'compute_xirr' => l10n.aiChatToolComputeXirr,
-    'compute_net_worth' => l10n.aiChatToolComputeNetWorth,
+    'compute_net_worth' ||
+    'get_net_worth_summary' => l10n.aiChatToolComputeNetWorth,
     'get_industry_breakdown' => l10n.aiChatToolGetIndustryBreakdown,
     'get_geo_breakdown' => l10n.aiChatToolGetGeoBreakdown,
     'get_market_cap_breakdown' => l10n.aiChatToolGetMarketCapBreakdown,

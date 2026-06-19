@@ -176,10 +176,15 @@ multi-device convergence with deterministic time. 70 documented cases in
 `docs/sync-protocol-tests.md`. This is the canonical Task #5 coverage.
 
 ### AI exploratory + semantic (~1%, nightly, non-blocking)
-Drive the app from natural-language Tasks (Computer-Use style), screenshot
-each surface, and have a vision model assert "net worth + allocation +
-account list visible; no overlap/truncation." Catches layout breakage the
-deterministic layers can't. Strictly non-blocking.
+The deterministic surrogate lives in
+`test/features/ai_chat/tool_invocation_renderers_test.dart`: it renders the
+net-worth, allocation, and account-list AI surfaces at phone width, asserts the
+key facts are visible, checks the semantics tree for machine-readable labels,
+and fails on layout exceptions. The remaining non-blocking nightly step is to
+drive the app from natural-language Tasks (Computer-Use style), screenshot each
+surface, and have a vision model assert "net worth + allocation + account list
+visible; no overlap/truncation." Catches layout breakage the deterministic
+layers can't. Strictly non-blocking.
 
 ## 5. CI gate design
 
@@ -194,7 +199,7 @@ PR  ├─ analyze --fatal-infos + boundary lints      (mobile.yml, existing)
     ├─ contract tests                               ~30 s
     └─ web smoke (chromium)                         ~2 min   ← ADDED (web-smoke.yml)
 Nightly ├─ web smoke full matrix (Firefox/WebKit/OPFS)       ← ADDED
-        └─ AI exploratory + semantic                         (future)
+        └─ AI exploratory + semantic vision agent            (future)
 ```
 
 **Known-failing ratchet.** `tool/check-known-failing-tests.sh` pins the
@@ -285,9 +290,10 @@ path once the production connection implements database encryption.
   diagnostic offline/conflict first viewport and responsive-breakpoint checks
   for compact stacked vs. wide one-row stat tiles. AI boundary copy now avoids
   stale cloud-inference/mirror language in user-visible badges and analytical
-  device-tool descriptors. Next expansion is selected semantic/vision
-  validation.
-- AI exploratory + semantic (vision) validation, nightly, non-blocking.
+  device-tool descriptors. Selected semantic/vision surrogate coverage now
+  verifies the AI-rendered net-worth, allocation, and account-list surfaces at
+  phone width. Next expansion is the external nightly vision-agent pass.
+- AI exploratory + semantic (vision agent), nightly, non-blocking.
 
 ## 8. Conventions
 

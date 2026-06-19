@@ -33,8 +33,10 @@ Widget? renderToolOutput(
   try {
     return switch (toolName) {
       'get_holdings' => _HoldingsTable(output: output),
+      'list_payment_accounts' => _PaymentAccountsView(output: output),
       'compute_xirr' => _XirrSummary(output: output),
-      'compute_net_worth' => _NetWorthSparkline(output: output),
+      'compute_net_worth' ||
+      'get_net_worth_summary' => _NetWorthSparkline(output: output),
       'get_industry_breakdown' ||
       'get_geo_breakdown' ||
       'get_market_cap_breakdown' => _BreakdownView(output: output),
@@ -283,6 +285,149 @@ class _HoldingRow {
 }
 
 // ---------------------------------------------------------------------------
+// list_payment_accounts → compact account picker preview.
+// Payload: { accounts: [ { id, name, type, currency } ], total_count, truncated }
+// ---------------------------------------------------------------------------
+
+class _PaymentAccountsView extends StatelessWidget {
+  const _PaymentAccountsView({required this.output});
+  final Object? output;
+
+  @override
+  Widget build(BuildContext context) {
+    final outMap = _asMap(output);
+    if (outMap == null) return const SizedBox.shrink();
+    final raw = _asList(outMap['accounts']) ?? const <Object?>[];
+    final rows = <_PaymentAccountRow>[];
+    for (final item in raw) {
+      final m = _asMap(item);
+      if (m == null) continue;
+      final id = _asString(m['id']) ?? _asString(m['account_id']);
+      final name = _asString(m['name']);
+      if (id == null && name == null) continue;
+      rows.add(
+        _PaymentAccountRow(
+          id: id ?? name!,
+          name: name ?? id!,
+          type: _asString(m['type']) ?? '',
+          currency: _asString(m['currency']) ?? '',
+        ),
+      );
+    }
+    if (rows.isEmpty) {
+      return const _EmptyResult(message: '没有可用的支付账户');
+    }
+
+    final visible = rows.take(_kMaxVisibleRows).toList();
+    final total = (outMap['total_count'] is int)
+        ? outMap['total_count']! as int
+        : rows.length;
+    final hidden = math.max(0, total - visible.length);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s8,
+            vertical: AppSpacing.s4,
+          ),
+          child: Text(
+            '可用支付账户',
+            style: context.theme.typography.xs2.copyWith(
+              color: context.theme.colors.mutedForeground,
+            ),
+          ),
+        ),
+        for (final row in visible) _paymentAccountTile(context, row),
+        if (hidden > 0)
+          Padding(
+            padding: const EdgeInsets.only(
+              top: AppSpacing.s4,
+              left: AppSpacing.s8,
+            ),
+            child: Text(
+              '还有 $hidden 个账户未展示',
+              style: context.theme.typography.xs.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _paymentAccountTile(BuildContext context, _PaymentAccountRow row) {
+    final meta = [
+      if (row.type.isNotEmpty) row.type,
+      if (row.currency.isNotEmpty) row.currency,
+    ].join(' · ');
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s6,
+      ),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: context.theme.colors.border.withValues(
+              alpha: AppOpacity.muted,
+            ),
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            FLucideIcons.landmark,
+            size: AppIconSizes.sm,
+            color: context.theme.colors.mutedForeground,
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  row.name,
+                  style: context.theme.typography.xs.copyWith(
+                    color: context.theme.colors.foreground,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  meta.isEmpty ? row.id : meta,
+                  style: context.theme.typography.xs2.copyWith(
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentAccountRow {
+  const _PaymentAccountRow({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.currency,
+  });
+
+  final String id;
+  final String name;
+  final String type;
+  final String currency;
+}
+
+// ---------------------------------------------------------------------------
 // compute_xirr → big rate number + range label.
 // Payload: { rate, from, to, scope, asset_id, currency, flows, ... }
 // ---------------------------------------------------------------------------
@@ -352,8 +497,9 @@ class _XirrSummary extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// compute_net_worth → mini sparkline + endpoints.
-// Payload: { from, to, granularity, series: [ { date, value, currency } ] }
+// compute_net_worth / get_net_worth_summary → mini sparkline + endpoints.
+// Legacy payload: { from, to, granularity, series: [ { date, value, currency } ] }
+// Device payload: { from, to, series: [ { year_month, cumulative_minor, currency } ] }
 // ---------------------------------------------------------------------------
 
 class _NetWorthSparkline extends StatelessWidget {
@@ -370,8 +516,8 @@ class _NetWorthSparkline extends StatelessWidget {
     for (final item in raw) {
       final m = _asMap(item);
       if (m == null) continue;
-      final d = _asDate(m['date']);
-      final v = _asDouble(m['value']);
+      final d = _netWorthPointDate(m);
+      final v = _netWorthPointValue(m);
       if (d == null || v == null) continue;
       points.add((d, v));
       final c = _asString(m['currency']);
@@ -453,6 +599,27 @@ class _NetWorthSparkline extends StatelessWidget {
       ),
     );
   }
+}
+
+DateTime? _netWorthPointDate(Map<String, Object?> row) {
+  final date = _asDate(row['date']);
+  if (date != null) return date;
+  final yearMonth = _asString(row['year_month']);
+  if (yearMonth == null) return null;
+  final parts = yearMonth.split('-');
+  if (parts.length != 2) return null;
+  final year = int.tryParse(parts[0]);
+  final month = int.tryParse(parts[1]);
+  if (year == null || month == null || month < 1 || month > 12) return null;
+  return DateTime.utc(year, month);
+}
+
+double? _netWorthPointValue(Map<String, Object?> row) {
+  final value = _asDouble(row['value']);
+  if (value != null) return value;
+  final minor = _asDouble(row['cumulative_minor']);
+  if (minor == null) return null;
+  return minor / 100.0;
 }
 
 // ---------------------------------------------------------------------------
