@@ -10748,6 +10748,24 @@ abstract class AppLocalizations {
   /// **'No expenses yet. Tap the + button to start tracking.'**
   String get expenseListEmptyDefault;
 
+  /// Expense list: selected transaction count in the selection toolbar
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 transaction selected} other{{count} transactions selected}}'**
+  String expenseListSelectedCount(int count);
+
+  /// Expense list: clear selected transactions button label
+  ///
+  /// In en, this message translates to:
+  /// **'Clear selection'**
+  String get expenseListClearSelection;
+
+  /// Expense list: ask AI to explain selected transactions action
+  ///
+  /// In en, this message translates to:
+  /// **'Explain selected'**
+  String get expenseListExplainSelected;
+
   /// Expense list: month group header
   ///
   /// In en, this message translates to:

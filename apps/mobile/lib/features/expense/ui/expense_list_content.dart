@@ -184,12 +184,16 @@ class ExpenseGroupedList extends StatelessWidget {
     required this.expenseAccountById,
     required this.grouping,
     required this.onTap,
+    this.selectedExpenseIds = const <String>{},
+    this.onToggleSelected,
   });
 
   final List<Expense> expenses;
   final Map<String, Account> expenseAccountById;
   final ExpenseGrouping grouping;
   final ValueChanged<Expense> onTap;
+  final Set<String> selectedExpenseIds;
+  final ValueChanged<Expense>? onToggleSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -251,10 +255,87 @@ class ExpenseGroupedList extends StatelessWidget {
             account: expenseAccountById[expense.expenseAccountId],
             formatter: formatter,
             onTap: () => onTap(expense),
+            selected: selectedExpenseIds.contains(expense.id),
+            onToggleSelected: onToggleSelected == null
+                ? null
+                : () => onToggleSelected!(expense),
             showDivider: showDivider,
           ),
         };
       },
+    );
+  }
+}
+
+class ExpenseSelectionToolbar extends StatelessWidget {
+  const ExpenseSelectionToolbar({
+    super.key,
+    required this.selectedCount,
+    required this.onExplain,
+    required this.onClear,
+  });
+
+  final int selectedCount;
+  final VoidCallback onExplain;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s8,
+        AppSpacing.s16,
+        0,
+      ),
+      child: SoftCard(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s10,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.expenseListSelectedCount(selectedCount),
+              style: context.theme.typography.sm.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            Wrap(
+              spacing: AppSpacing.s6,
+              runSpacing: AppSpacing.s6,
+              children: [
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: onClear,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(FLucideIcons.x, size: AppIconSizes.h18),
+                      const SizedBox(width: AppSpacing.s4),
+                      Text(l10n.expenseListClearSelection),
+                    ],
+                  ),
+                ),
+                FButton(
+                  onPress: onExplain,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(FLucideIcons.sparkles, size: AppIconSizes.h18),
+                      const SizedBox(width: AppSpacing.s4),
+                      Text(l10n.expenseListExplainSelected),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -282,6 +363,8 @@ class _ExpenseRow extends StatelessWidget {
     required this.account,
     required this.formatter,
     required this.onTap,
+    required this.selected,
+    required this.onToggleSelected,
     required this.showDivider,
   });
 
@@ -289,6 +372,8 @@ class _ExpenseRow extends StatelessWidget {
   final Account? account;
   final AppFormatters formatter;
   final VoidCallback onTap;
+  final bool selected;
+  final VoidCallback? onToggleSelected;
   final bool showDivider;
 
   @override
@@ -305,62 +390,80 @@ class _ExpenseRow extends StatelessWidget {
     ].join(' · ');
     return Column(
       children: [
-        FTappable(
-          onPress: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s16,
-              vertical: AppSpacing.s10,
-            ),
-            child: Row(
-              children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s16,
+            vertical: AppSpacing.s10,
+          ),
+          child: Row(
+            children: [
+              if (onToggleSelected != null) ...[
                 SizedBox(
                   width: AppSpacing.s32,
-                  height: AppSpacing.s32,
-                  child: Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Icon(
-                      account?.iconData ?? FLucideIcons.banknote,
-                      size: AppIconSizes.md,
-                      color: accent.withValues(alpha: AppOpacity.prominent),
-                    ),
+                  child: FCheckbox(
+                    value: selected,
+                    onChange: (_) => onToggleSelected!(),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.s12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(width: AppSpacing.s8),
+              ],
+              Expanded(
+                child: FTappable(
+                  onPress: onTap,
+                  child: Row(
                     children: [
-                      Text(
-                        title,
-                        style: context.theme.typography.sm.copyWith(
-                          fontWeight: FontWeight.w600,
+                      SizedBox(
+                        width: AppSpacing.s32,
+                        height: AppSpacing.s32,
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Icon(
+                            account?.iconData ?? FLucideIcons.banknote,
+                            size: AppIconSizes.md,
+                            color: accent.withValues(
+                              alpha: AppOpacity.prominent,
+                            ),
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: AppSpacing.s2),
-                      Text(
-                        subtitle,
-                        style: context.theme.typography.xs.copyWith(
-                          color: context.theme.colors.mutedForeground,
+                      const SizedBox(width: AppSpacing.s12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: context.theme.typography.sm.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: AppSpacing.s2),
+                            Text(
+                              subtitle,
+                              style: context.theme.typography.xs.copyWith(
+                                color: context.theme.colors.mutedForeground,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(width: AppSpacing.s12),
+                      MoneyText(
+                        amount: expense.amount.toDouble(),
+                        currencyCode: expense.currency,
+                        style: context.theme.typography.sm.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: AppSpacing.s12),
-                MoneyText(
-                  amount: expense.amount.toDouble(),
-                  currencyCode: expense.currency,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
         if (showDivider)

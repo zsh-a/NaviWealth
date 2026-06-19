@@ -1869,6 +1869,9 @@
   "expenseListUncategorized": "未分类",
   "expenseListEmptyFiltered": "没有匹配的支出。",
   "expenseListEmptyDefault": "还没有记账。点底部加号按钮，开始追踪日常消费。",
+  "expenseListSelectedCount": "{count, plural, other{已选择 {count} 笔交易}}",
+  "expenseListClearSelection": "清除选择",
+  "expenseListExplainSelected": "解读所选",
   "expenseListMonthGroup": "{year} 年 {month} 月",
   "expenseListWeekGroup": "{year} 年第 {week} 周",
 

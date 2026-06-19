@@ -6252,6 +6252,23 @@ class AppLocalizationsEn extends AppLocalizations {
       'No expenses yet. Tap the + button to start tracking.';
 
   @override
+  String expenseListSelectedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transactions selected',
+      one: '1 transaction selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get expenseListClearSelection => 'Clear selection';
+
+  @override
+  String get expenseListExplainSelected => 'Explain selected';
+
+  @override
   String expenseListMonthGroup(int year, int month) {
     return '$year 年 $month 月';
   }

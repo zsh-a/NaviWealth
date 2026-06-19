@@ -3276,6 +3276,15 @@
   "@expenseListEmptyFiltered": { "description": "Expense list: empty state when filtered" },
   "expenseListEmptyDefault": "No expenses yet. Tap the + button to start tracking.",
   "@expenseListEmptyDefault": { "description": "Expense list: empty state default" },
+  "expenseListSelectedCount": "{count, plural, one{1 transaction selected} other{{count} transactions selected}}",
+  "@expenseListSelectedCount": {
+    "description": "Expense list: selected transaction count in the selection toolbar",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "expenseListClearSelection": "Clear selection",
+  "@expenseListClearSelection": { "description": "Expense list: clear selected transactions button label" },
+  "expenseListExplainSelected": "Explain selected",
+  "@expenseListExplainSelected": { "description": "Expense list: ask AI to explain selected transactions action" },
   "expenseListMonthGroup": "{year} 年 {month} 月",
   "@expenseListMonthGroup": {
     "description": "Expense list: month group header",

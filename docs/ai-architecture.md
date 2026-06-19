@@ -407,6 +407,7 @@ tools / proposals / guardrails / read_models / policy）。
 | 修复 | 修复多轮 CancelToken 中毒（含 tool 调用的 round-2 误判 provider_error）| ✅ |
 | Catalog | active catalog 对齐：移除未注册工具，descriptor 28→22；`ai-protocol.md` 改为设备事件契约 | ✅ |
 | 端侧 LLM | 自带 key → 直连 provider → 工具读 Drift → 全原生平台含桌面 → **删除 cloud relay**（§4.6）| ✅ 当前架构 |
+| Expense Layer 2 | 支出列表多选工具条接入 `transactions.explainSelection`，可直接打开 AI bottom sheet | ✅ |
 
 ## 9. 剩余工作
 
@@ -416,4 +417,3 @@ tools / proposals / guardrails / read_models / policy）。
 - 测试准出 P1：A11y baseline / 性能预算。
 - Prompt injection corpus：已加入静态 regression corpus 基线（finance / insight / FIRE
   probes，`kPromptInjectionRegressionTag`），由 nightly `ai-semantic` workflow 覆盖。
-- expense_list 选区工具条（§5.4 Layer 2 的 `transactions.explainSelection`，基础设施已就绪）。

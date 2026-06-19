@@ -6024,6 +6024,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get expenseListEmptyDefault => '还没有记账。点底部加号按钮，开始追踪日常消费。';
 
   @override
+  String expenseListSelectedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '已选择 $count 笔交易',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get expenseListClearSelection => '清除选择';
+
+  @override
+  String get expenseListExplainSelected => '解读所选';
+
+  @override
   String expenseListMonthGroup(int year, int month) {
     return '$year 年 $month 月';
   }
