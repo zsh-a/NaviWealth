@@ -14,6 +14,11 @@
 > 累计 stats（四轮合计）：~4 400 行净删除，约 55 个文件触及。
 > 当前架构 SSOT 见 `docs/ai-architecture.md`。
 >
+> **2026-06-19 复核**：当前代码中已无 `RuntimeRegistry`、`AiRouter`、
+> `ChatSyncGate`、`pendingFreshnessHintProvider`、`FreshnessHint`、`markStaleReadModel`
+> 等符号；AI chat 的生产路径是 `RuntimeRoutingAiChatApiClient → DeviceLlmRuntime`
+> 或 `device_unavailable`。下方原文中关于批 A/B/C/F 的"待删/待论证"措辞只保留作历史。
+>
 > 保留本文档作历史参考，解释这轮清理"删了什么 / 留了什么 / 为什么"。
 >
 > ---
@@ -314,25 +319,25 @@ device tool 直接读本地 Drift，本地写入对端侧立即可见，根本�
    1–2 小时工作量，零行为变化，能立刻让 A/B/C 的 reviewer 看到正确语义。
    **2026-06-19：当前代码的 A0 注释收敛已复核完成。**
 1. **批 A（纯 dead code 删除，零行为变化）**
-   `CloudAnthropicRuntime`、`RulesDeviceRuntime`、`RuntimeId.{cloudAnthropic,rulesDevice}`、
-   `RuntimeRegistry.pickFor`、`runtimeRegistryProvider`、配套测试。
+   已落地；当前代码无 `CloudAnthropicRuntime`、`RulesDeviceRuntime`、
+   `RuntimeRegistry` 或 `runtimeRegistryProvider`。
 2. **批 B（freshness 整条链）**
-   `freshness/` 目录、`chat_repository.dart` 的 staleness 块、`providers.dart` 的
-   `pendingFreshnessHintProvider` / `onTraceFinalized` 桥、`ai_trace_builder` 的 stale
-   名册字段、`FreshnessHint` contract。
+   已落地；当前代码无 `freshness/` 目录、`pendingFreshnessHintProvider`、
+   `FreshnessHint`、`markStaleReadModel` 或 stale read-model 名册。
 3. **批 C（router 收缩或删除）**
-   选 §2.2 (a)（默认推荐）或 (b)。如选 (b)，先在 LifeOS 北极星文档定位 router 的
-   新职责，再动代码。
+   已落地；当前代码无 `AiRouter` / `aiRouterProvider`，生产路径直接路由到
+   device runtime 或 `device_unavailable`。
 4. **批 D（ContextPack 精简——需先测量）**
    见 §2.4 修订：决策应基于"预注入 context 成本 vs 多一次 LLM round 成本"的实测，
    不能凭"端侧免费"的直觉删。建议在批 A–C 落地后再排。
 5. **批 E（剩余 docstring 收敛）**
    已清理用户可见 AI 透明度徽标与 Analytical device tool descriptor 中的
-   "云端推理 / 云端表镜像 / 后端镜像"当前路径表述。后续只应继续收敛
-   `runtime/device/*.dart` 里 "phase 5 will / cloud relay 中转"等历史注释，以及
-   删除批 A/B/C 之后留下的孤立引用。
-6. **批 F（ChatSyncGate 单独论证）**
-   决定是否在 device-only 世界保留 AI 触发的 sync gate；若不保留则一起删。
+   "云端推理 / 云端表镜像 / 后端镜像"当前路径表述；2026-06-19 复核时
+   `runtime/device/*.dart` 已无 "phase 5 will / cloud relay 中转"残留。后续只需在
+   删除新孤立引用时同步更新本文档。
+6. **批 F（ChatSyncGate 删除复核）**
+   已落地为删除；当前代码无 `ChatSyncGate` / `chatSyncGateProvider`。device tool 读本地
+   Drift，不再需要 AI 触发的 push-gate。
 
 每批应当对应一个独立 PR，每批合并前跑：
 - `flutter analyze --fatal-infos`

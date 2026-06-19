@@ -170,8 +170,8 @@ class AiSpan {
   /// `null` unless verbose capture is on.
   final Object? output;
 
-  /// Free-form per-kind extras (round index, tool_use id, freshness
-  /// watermark, …). Always cheap/scalar — never raw ledger rows.
+  /// Free-form per-kind extras (round index, tool_use id, renderer
+  /// metadata, …). Always cheap/scalar — never raw ledger rows.
   final Map<String, Object?>? attributes;
 
   int get endOffsetMs => startOffsetMs + durationMs;

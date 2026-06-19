@@ -13,14 +13,14 @@
 ///          the intent descriptor's `preferredReadModels`
 ///        Runs in every PR CI.
 ///
-///   2. **Live LLM regression** (future nightly job — extension point
+///   2. **Live LLM regression** (future nightly extension point
 ///      below): pump each prompt through a runtime that hits
 ///      Anthropic, capture the dispatched tool names, fail if the
 ///      union of dispatched tools doesn't include `expectedTools`.
 ///      Catches: SYSTEM_PROMPT regression, tool descriptor schema
-///      drift, upstream model behaviour change, freshness gate
-///      brokenness. Requires API credentials + a $/run budget and is
-///      not wired in this commit.
+///      drift, and upstream model behaviour change. Requires API
+///      credentials + a $/run budget and is intentionally outside the
+///      deterministic `ai-semantic` workflow.
 ///
 /// Add prompts to widen coverage. Removing prompts requires a
 /// `// coverage shrink rationale: …` comment.

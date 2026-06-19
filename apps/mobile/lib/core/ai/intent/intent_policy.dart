@@ -135,8 +135,8 @@ class IntentDescriptor {
   final Set<AiCapability> preferredCapabilities;
 
   /// Read models this intent typically consults. Kept as a lightweight
-  /// hint for context preparation and future freshness diagnostics;
-  /// empty means no hint.
+  /// hint for context preparation, regression corpus checks, and UI
+  /// affordance selection; empty means no hint.
   final List<String> preferredReadModels;
 
   /// §5.10.6 — irreversible-operation guard. When `true`, surfaces that

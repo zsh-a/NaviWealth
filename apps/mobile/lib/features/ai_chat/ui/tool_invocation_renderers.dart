@@ -953,7 +953,7 @@ class _EmptyResult extends StatelessWidget {
 // get_asset_allocation → donut + weight list.
 // Payload shape: { buckets: [{bucket_dim, bucket_key, currency,
 //   total_cost_minor (string), position_count (int), weight (double)}],
-//   count, freshness, note }
+//   count, source, note }
 // Weights are normalised per-currency (sum=1 within a currency); when the
 // caller mixes multiple currencies we split into per-currency groups so
 // the donut stays interpretable.
@@ -1186,7 +1186,7 @@ class _DonutPainter extends CustomPainter {
 // get_recurring_patterns → subscription cards with cadence chips.
 // Payload shape: { patterns: [{id, merchant_key, cadence, currency,
 //   median_amount_minor (string), occurrences (int), last_seen_at}],
-//   count, freshness, source, note }
+//   count, source, note }
 // ---------------------------------------------------------------------------
 
 class RecurringPatternsView extends StatelessWidget {
@@ -1313,7 +1313,7 @@ Widget _miniChip(BuildContext context, String label) {
 // get_subscription_changes → price-diff bars (↑/↓).
 // Payload shape: { changes: [{id, merchant_key, cadence, currency,
 //   prev_amount_minor (string), new_amount_minor (string),
-//   delta_ratio (double), since (iso datetime)}], count, freshness }
+//   delta_ratio (double), since (iso datetime)}], count, source, note }
 // ---------------------------------------------------------------------------
 
 class SubscriptionChangesView extends StatelessWidget {
@@ -1421,7 +1421,7 @@ class SubscriptionChangesView extends StatelessWidget {
 // ---------------------------------------------------------------------------
 // get_refund_links → original ↔ refund pair cards.
 // Payload shape: { links: [{id, original_txn_id, refund_txn_id,
-//   amount_minor (string), currency, payload}], count, freshness }
+//   amount_minor (string), currency, payload}], count, source, note }
 // ---------------------------------------------------------------------------
 
 class RefundLinksView extends StatelessWidget {
