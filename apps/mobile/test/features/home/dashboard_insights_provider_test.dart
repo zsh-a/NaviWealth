@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/domain/services/currency_converter.dart';
@@ -10,7 +11,9 @@ import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
 import 'package:naviwealth/features/finance/data/domain/manual_asset_metadata.dart';
+import 'package:naviwealth/features/home/data/dashboard_insights_provider.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/home/domain/insight_models.dart';
 import 'package:naviwealth/features/rebalance/data/rebalance_drift_insight_provider.dart';
 import 'package:naviwealth/features/rebalance/domain/rebalance_models.dart';
 
@@ -95,6 +98,34 @@ void main() {
 
     expect(summary, isNotNull);
     expect(summary!.deltaRatio, greaterThan(1));
+  });
+
+  test('summarizeCurrencyMismatchInsight emits an actionable FX insight', () {
+    final insight = summarizeCurrencyMismatchInsight(
+      mismatches: const [
+        CurrencyMismatch(id: 'aapl', currency: 'USD'),
+        CurrencyMismatch(id: 'btc', currency: 'USD'),
+      ],
+      baseCurrency: 'CNY',
+    );
+
+    expect(insight, isNotNull);
+    expect(insight!.kind, InsightKind.currencyMismatch);
+    expect(insight.tone, InsightTone.warning);
+    expect(insight.route, AppRoutes.settingsFxRates);
+    expect(insight.currencyMismatchCount, 2);
+    expect(insight.currencyMismatchBaseCurrency, 'CNY');
+    expect(insightScopeHash(insight), '2:CNY');
+  });
+
+  test('summarizeCurrencyMismatchInsight stays quiet with no mismatches', () {
+    expect(
+      summarizeCurrencyMismatchInsight(
+        mismatches: const [],
+        baseCurrency: 'CNY',
+      ),
+      isNull,
+    );
   });
 }
 

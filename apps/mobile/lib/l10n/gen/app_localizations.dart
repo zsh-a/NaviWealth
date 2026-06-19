@@ -12198,6 +12198,18 @@ abstract class AppLocalizations {
   /// **'This month is short {amount}'**
   String dashboardInsightCashFlowDeficitValue(String amount);
 
+  /// Dashboard insight label shown when holdings are excluded because FX conversion is missing
+  ///
+  /// In en, this message translates to:
+  /// **'FX rate missing'**
+  String get dashboardInsightCurrencyMismatchLabel;
+
+  /// Dashboard insight detail for holdings omitted from dashboard totals due to missing FX conversion
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 holding is excluded from {currency} totals} other{{count} holdings are excluded from {currency} totals}}'**
+  String dashboardInsightCurrencyMismatchValue(int count, String currency);
+
   /// Layer 4 ingest review page title
   ///
   /// In en, this message translates to:

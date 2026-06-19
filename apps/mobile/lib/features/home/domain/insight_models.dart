@@ -24,6 +24,9 @@ enum InsightKind {
   ingestQueue,
   // Current-month operating cashflow is below zero.
   cashFlowDeficit,
+  // One or more holdings were excluded from dashboard totals because no
+  // FX rate can convert them to the active base currency.
+  currencyMismatch,
   // FIRE OS Phase 1 — trailing-12-month withdrawal rate is above the
   // plan's safe withdrawal rate.
   fireOsHighWithdrawalRate,
@@ -86,6 +89,8 @@ class InsightItem {
     this.cashFlowMonthKey,
     this.cashFlowNetMinor,
     this.cashFlowCurrency,
+    this.currencyMismatchCount,
+    this.currencyMismatchBaseCurrency,
     this.fireOsWithdrawalRate,
     this.fireOsSafeWithdrawalRate,
     this.fireOsCashBucketMonths,
@@ -140,6 +145,10 @@ class InsightItem {
   final String? cashFlowMonthKey;
   final int? cashFlowNetMinor;
   final String? cashFlowCurrency;
+
+  // ── currencyMismatch fields ────────────────────────────────────
+  final int? currencyMismatchCount;
+  final String? currencyMismatchBaseCurrency;
 
   // ── FIRE OS fields ──────────────────────────────────────────────
   /// Current withdrawal rate as a decimal (`0.046` = 4.6%). Used by

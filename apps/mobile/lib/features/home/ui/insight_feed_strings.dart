@@ -19,6 +19,7 @@ String insightHeadline(AppLocalizations l10n, InsightItem item) {
     InsightKind.monthlySummary => l10n.dashboardInsightMonthlySummaryLabel,
     InsightKind.ingestQueue => l10n.dashboardInsightIngestQueueLabel,
     InsightKind.cashFlowDeficit => l10n.dashboardInsightCashFlowDeficitLabel,
+    InsightKind.currencyMismatch => l10n.dashboardInsightCurrencyMismatchLabel,
     InsightKind.fireOsHighWithdrawalRate =>
       l10n.fireOsInsightHighWithdrawalRate,
     InsightKind.fireOsLowCashBucket => l10n.fireOsInsightLowCashBucket,
@@ -46,6 +47,10 @@ String insightDetail(AppLocalizations l10n, InsightItem item) {
       item.ingestFreshCount ?? 0,
     ),
     InsightKind.cashFlowDeficit => _cashFlowDeficit(l10n, item),
+    InsightKind.currencyMismatch => l10n.dashboardInsightCurrencyMismatchValue(
+      item.currencyMismatchCount ?? 0,
+      item.currencyMismatchBaseCurrency ?? '',
+    ),
     InsightKind.fireOsHighWithdrawalRate =>
       l10n.fireOsInsightHighWithdrawalRateValue(
         ((item.fireOsWithdrawalRate ?? 0) * 100).toStringAsFixed(1),
@@ -129,4 +134,3 @@ String _drift(AppLocalizations l10n, InsightItem item) {
       : AssetCategoryVisuals.label(l10n, category);
   return l10n.dashboardInsightDriftValue(label, direction, pp);
 }
-

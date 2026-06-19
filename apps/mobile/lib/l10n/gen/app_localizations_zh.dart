@@ -6816,6 +6816,14 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get dashboardInsightCurrencyMismatchLabel => '缺少汇率';
+
+  @override
+  String dashboardInsightCurrencyMismatchValue(int count, String currency) {
+    return '$count 项资产未计入 $currency 合计';
+  }
+
+  @override
   String get ingestReviewTitle => '录入待确认';
 
   @override

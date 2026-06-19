@@ -45,8 +45,8 @@
 - **`features/portfolio/`**：作为 `assets/` 的薄包装存在；评估能否合并，或将其升级为"组合视角"（按账户/币种/资产类别多维聚合）。
 
 ### 1.2 仪表盘洞察补全
-- `lib/features/home/data/dashboard_insights_provider.dart:7` 的 TODO："Add more insights when providers are available"。
-- 待 providers 成熟后接入：本月支出/上月对比、净资产周/月变化、风险告警 Top-N、再平衡偏离提醒、AI 生成的每周摘要。
+- `lib/features/home/data/dashboard_insights_provider.dart` 已接入 FIRE、再平衡偏离、到期提醒、支出异常、疑似重复扣款、上月回顾、现金流缺口、汇率缺失和 Layer 4 待确认队列。
+- 后续若接入真正的 AI 周报，应作为独立 device-only insight producer 落地，并继续复用 `InsightKind` / `InsightItem` / 本地化字符串约定。
 
 ### 1.3 后端 AI 工具落地
 - `apps/backend/src/ai/tools.rs`：成本基础（FIFO/LIFO）目前是粗略近似，需把客户端的持仓引擎移植到 Worker，或定义"客户端先算、提案携带证据"的协作协议。

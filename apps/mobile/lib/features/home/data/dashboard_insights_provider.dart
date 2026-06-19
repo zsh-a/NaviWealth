@@ -13,7 +13,9 @@ import '../../fire/data/fire_providers.dart';
 import '../../fire/domain/fire_bucket.dart';
 import '../../ingest/data/ingest_queue_insight_provider.dart';
 import '../../rebalance/data/rebalance_drift_insight_provider.dart';
+import '../domain/dashboard_models.dart';
 import '../domain/insight_models.dart';
+import 'dashboard_providers.dart';
 import 'dismissed_insights_store.dart';
 import 'duplicate_charge_insight_provider.dart';
 import 'monthly_summary_insight_provider.dart';
@@ -226,6 +228,14 @@ final dashboardInsightsProvider = Provider<List<InsightItem>>((ref) {
     }
   });
 
+  final currencyMismatchInsight = summarizeCurrencyMismatchInsight(
+    mismatches: ref.watch(dashboardCurrencyMismatchesProvider),
+    baseCurrency: ref.watch(dashboardBaseCurrencyProvider),
+  );
+  if (currencyMismatchInsight != null) {
+    insights.add(currencyMismatchInsight);
+  }
+
   // §5.10.10 / S5a.1 — Layer 4 queue surfaces as a calm ambient card;
   // row tap deep-links to the review page (AppRoutes.activityIngest).
   final ingest = ref.watch(ingestQueueInsightProvider);
@@ -272,6 +282,11 @@ String insightScopeHash(InsightItem item) {
     case InsightKind.fireOsUnmappedHoldings:
       // Single-instance kinds — one hash is enough to dismiss them.
       return '';
+    case InsightKind.currencyMismatch:
+      return [
+        item.currencyMismatchCount ?? 0,
+        item.currencyMismatchBaseCurrency ?? '',
+      ].join(':');
     case InsightKind.fireOsBucketDeviation:
       // Dismissable per role — if the user silences the "growth bucket
       // off-target" prompt that shouldn't also silence "risk reserve
@@ -297,6 +312,26 @@ String insightScopeHash(InsightItem item) {
           '${item.cashFlowNetMinor ?? 0}:'
           '${item.cashFlowCurrency ?? ''}';
   }
+}
+
+/// Convert dashboard FX coverage gaps into a home insight.
+///
+/// The dashboard still renders a dedicated warning banner with per-holding
+/// details. This insight makes the same data visible in the user's action
+/// queue and deep-links to the FX rate manager.
+InsightItem? summarizeCurrencyMismatchInsight({
+  required List<CurrencyMismatch> mismatches,
+  required String baseCurrency,
+}) {
+  if (mismatches.isEmpty) return null;
+  return InsightItem(
+    icon: FLucideIcons.arrowLeftRight,
+    kind: InsightKind.currencyMismatch,
+    tone: InsightTone.warning,
+    route: AppRoutes.settingsFxRates,
+    currencyMismatchCount: mismatches.length,
+    currencyMismatchBaseCurrency: baseCurrency,
+  );
 }
 
 int _moneyToMinor(Decimal amount) =>

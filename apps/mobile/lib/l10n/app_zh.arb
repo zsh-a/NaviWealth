@@ -2121,6 +2121,8 @@
   "dashboardInsightIngestQueueValue": "解析 {count} 条 · {fresh} 条可入账",
   "dashboardInsightCashFlowDeficitLabel": "现金流缺口",
   "dashboardInsightCashFlowDeficitValue": "本月缺口 {amount}",
+  "dashboardInsightCurrencyMismatchLabel": "缺少汇率",
+  "dashboardInsightCurrencyMismatchValue": "{count} 项资产未计入 {currency} 合计",
   "ingestReviewTitle": "录入待确认",
   "ingestAccountsLoadError": "账户加载失败：{error}",
   "ingestQueueLoadError": "待确认队列加载失败：{error}",

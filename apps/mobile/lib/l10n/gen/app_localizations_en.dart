@@ -7105,6 +7105,20 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get dashboardInsightCurrencyMismatchLabel => 'FX rate missing';
+
+  @override
+  String dashboardInsightCurrencyMismatchValue(int count, String currency) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count holdings are excluded from $currency totals',
+      one: '1 holding is excluded from $currency totals',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get ingestReviewTitle => 'Review entries';
 
   @override

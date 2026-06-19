@@ -3850,6 +3850,16 @@
     "description": "Dashboard insight detail for current-month negative cashflow",
     "placeholders": { "amount": { "type": "String", "example": "$420.00" } }
   },
+  "dashboardInsightCurrencyMismatchLabel": "FX rate missing",
+  "@dashboardInsightCurrencyMismatchLabel": { "description": "Dashboard insight label shown when holdings are excluded because FX conversion is missing" },
+  "dashboardInsightCurrencyMismatchValue": "{count, plural, one{1 holding is excluded from {currency} totals} other{{count} holdings are excluded from {currency} totals}}",
+  "@dashboardInsightCurrencyMismatchValue": {
+    "description": "Dashboard insight detail for holdings omitted from dashboard totals due to missing FX conversion",
+    "placeholders": {
+      "count": { "type": "int" },
+      "currency": { "type": "String", "example": "CNY" }
+    }
+  },
   "ingestReviewTitle": "Review entries",
   "@ingestReviewTitle": { "description": "Layer 4 ingest review page title" },
   "ingestAccountsLoadError": "Failed to load accounts: {error}",
