@@ -381,6 +381,7 @@ Chat → providers.dart _prepareChatTrace(ref, requestId)
 | Boundary audit 2026-05-24（四轮）：删 freshness/router/RuntimeRegistry/CloudProposal/ChatSyncGate/disclosure 全链/TaskContext 死字段/readModelLayer/AllowedRuntime/AnonymizationLevel/usedCloud/analyticalUploads 字段/l10n orphans（累计净删 ~4 400 行）| ✅ |
 | UI 测试准出 P1 | A11y baseline / 性能预算已接入 `tool/check-ui-baselines.sh` 与 mobile CI | ✅ |
 | 长历史 subscription_changes | `recurring_pattern_observations` local-only Drift observation log 持久化 detector 输出，跨会话比较 old-vs-new stable median | ✅ |
+| Prompt injection corpus | 静态 regression corpus 覆盖 finance / insight / selection / chart / FIRE probes，`kPromptInjectionRegressionTag` 下限提升到 6 | ✅ |
 
 **测试 gate**：`flutter analyze --fatal-infos` clean；`flutter test` 全绿（golden 按平台
 skip，known-failing 钉基线）；`tool/check-tool-descriptors.sh` / `check-enum-mirror.sh` /
@@ -417,5 +418,3 @@ tools / proposals / guardrails / read_models / policy）。
 
 - **iOS Share Extension**：`receive_sharing_intent` 需 Xcode 独立 native target
   （App Group + entitlements + 签名），仓内不可盲建。Android 分享已可用。
-- Prompt injection corpus：已加入静态 regression corpus 基线（finance / insight / FIRE
-  probes，`kPromptInjectionRegressionTag`），由 nightly `ai-semantic` workflow 覆盖。

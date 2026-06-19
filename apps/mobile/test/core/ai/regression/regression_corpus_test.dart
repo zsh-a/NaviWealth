@@ -86,11 +86,11 @@ void main() {
           .toList(growable: false);
       expect(
         injectionPrompts.length,
-        greaterThanOrEqualTo(3),
+        greaterThanOrEqualTo(6),
         reason:
             'Prompt-injection coverage is a P1 test-exit requirement in '
-            'docs/ai-architecture.md §9; keep at least finance, insight, '
-            'and FIRE probes in the static corpus.',
+            'docs/ai-architecture.md §9; keep broad finance, insight, '
+            'selection, chart, and FIRE probes in the static corpus.',
       );
       for (final p in injectionPrompts) {
         expect(
