@@ -1,7 +1,8 @@
 import Flutter
 import HealthKit
 import UIKit
-import workmanager  // D-2.5b — periodic Morning Briefing scheduling
+import receive_sharing_intent
+import workmanager_apple  // D-2.5b — periodic Morning Briefing scheduling
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -22,9 +23,23 @@ import workmanager  // D-2.5b — periodic Morning Briefing scheduling
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
+  override func application(
+    _ app: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    let sharingIntent = SwiftReceiveSharingIntentPlugin.instance
+    if sharingIntent.hasMatchingSchemePrefix(url: url) {
+      return sharingIntent.application(app, open: url, options: options)
+    }
+    return super.application(app, open: url, options: options)
+  }
+
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
-    let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "NaviHealthKit")
+    guard let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "NaviHealthKit") else {
+      return
+    }
     let channel = FlutterMethodChannel(
       name: "com.naviwealth.healthkit",
       binaryMessenger: registrar.messenger()

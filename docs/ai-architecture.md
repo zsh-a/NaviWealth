@@ -373,7 +373,7 @@ Chat → providers.dart _prepareChatTrace(ref, requestId)
 |------|------|
 | 端侧 contracts / trace / skills / NL→QueryPlan / SemanticMemory(stub) | ✅ |
 | §5 Interaction Grammar（§5.1–5.9 契约 + 四层拓扑 + 命令栏主入口 + Layer 2/3）| ✅ |
-| §5.10 Layer 4 录入：CSV/paste 端侧解析 + 草稿队列 + 确认链 + 隐私门 + 文件/相机/拖拽/分享捕获 | ✅（iOS Share Extension Xcode target 待做）|
+| §5.10 Layer 4 录入：CSV/paste 端侧解析 + 草稿队列 + 确认链 + 隐私门 + 文件/相机/拖拽/分享捕获 | ✅ |
 | 端侧 Vision 直发（图片/PDF 摄取，`DeviceVisionIngestClient`，替代已删除的 Worker 中转）| ✅ |
 | AiTrace span 可观测性（Opik 瀑布树，取代旧 flat 格式，不向后兼容）| ✅ |
 | 多 provider profile + 切换 + 连通性测试（无 opt-in 开关）| ✅ |
@@ -416,5 +416,6 @@ tools / proposals / guardrails / read_models / policy）。
 
 ## 9. 剩余工作
 
-- **iOS Share Extension**：`receive_sharing_intent` 需 Xcode 独立 native target
-  （App Group + entitlements + 签名），仓内不可盲建。Android 分享已可用。
+暂无仓内待实现项。发布前需在 Apple Developer Portal 为 Runner 与 Share
+Extension 开通同一个 App Group（`group.com.naviwealth.naviwealth`），并用真实
+provisioning profile 做签名归档验证。
