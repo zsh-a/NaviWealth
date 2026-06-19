@@ -1,0 +1,12 @@
+{
+  "table": "fin:accounts",
+  "id": "acc-1",
+  "payload": {
+    "id": "acc-1",
+    "name": "Cash",
+    "hlc": "1716381000123.0000-device-a",
+    "deleted_at": null
+  },
+  "version": "1716381000123.0000-device-a",
+  "deleted": false
+}

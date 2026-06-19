@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/sync_api_client.dart';
 
@@ -35,6 +38,15 @@ void main() {
         'version': '1716381000123.0000-device-a',
         'deleted': false,
       });
+    });
+
+    test('RowChange.toJson matches the shared client-push fixture', () {
+      // This fixture is also consumed by the backend Rust tests, pinning the
+      // Dart and Rust serializers to the same row-change wire shape.
+      final fixture = _readFixture('sync_v2_client_push_row_change.json');
+      final change = RowChange.fromJson(fixture);
+
+      expect(change.toJson(), fixture);
     });
 
     test('RowChange.toJson preserves tombstone shape', () {
@@ -99,6 +111,19 @@ void main() {
       expect(change.seq, 1288);
     });
 
+    test('RowChange.fromJson reads the shared server tombstone fixture', () {
+      final fixture = _readFixture('sync_v2_server_tombstone_row_change.json');
+      final change = RowChange.fromJson(fixture);
+
+      expect(change.table, 'health:health_metrics');
+      expect(change.id, 'metric-1');
+      expect(change.payload, isEmpty);
+      expect(change.version, '1716381000124.0000-device-b');
+      expect(change.deleted, isTrue);
+      expect(change.deviceId, 'device-b');
+      expect(change.seq, 42);
+    });
+
     test('RowAck and SyncResponse expose accepted wire keys', () {
       // SP-C-3 / SP-C-4: the engine clears only dirty pointers whose wire
       // keys appear in the server's accepted list.
@@ -122,4 +147,11 @@ void main() {
       });
     });
   });
+}
+
+Map<String, Object?> _readFixture(String name) {
+  final file = File('../../docs/fixtures/$name');
+  return (jsonDecode(file.readAsStringSync()) as Map<String, Object?>).map(
+    (key, value) => MapEntry(key, value),
+  );
 }

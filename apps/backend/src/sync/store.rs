@@ -262,6 +262,11 @@ mod tests {
     use super::*;
     use serde_json::json;
 
+    const CLIENT_PUSH_FIXTURE: &str =
+        include_str!("../../../../docs/fixtures/sync_v2_client_push_row_change.json");
+    const SERVER_TOMBSTONE_FIXTURE: &str =
+        include_str!("../../../../docs/fixtures/sync_v2_server_tombstone_row_change.json");
+
     // Version tokens are compared lexically; the client mints them so they
     // sort the same as their intended order (canonical HLC strings do).
     #[test]
@@ -325,6 +330,27 @@ mod tests {
     }
 
     #[test]
+    fn row_change_deserializes_shared_client_push_fixture() {
+        let row: RowChange = serde_json::from_str(CLIENT_PUSH_FIXTURE).unwrap();
+
+        assert_eq!(row.table, "fin:accounts");
+        assert_eq!(row.id, "acc-1");
+        assert_eq!(
+            row.payload,
+            Some(json!({
+                "id": "acc-1",
+                "name": "Cash",
+                "hlc": "1716381000123.0000-device-a",
+                "deleted_at": null
+            }))
+        );
+        assert_eq!(row.version, "1716381000123.0000-device-a");
+        assert!(!row.deleted);
+        assert_eq!(row.device_id, "");
+        assert_eq!(row.seq, 0);
+    }
+
+    #[test]
     fn row_change_round_trips_server_tombstone_shape() {
         let row = RowChange {
             table: "health:health_metrics".into(),
@@ -349,5 +375,14 @@ mod tests {
                 "seq": 42
             })
         );
+    }
+
+    #[test]
+    fn row_change_serializes_shared_server_tombstone_fixture() {
+        let row: RowChange = serde_json::from_str(SERVER_TOMBSTONE_FIXTURE).unwrap();
+        let actual = serde_json::to_value(&row).unwrap();
+        let expected: serde_json::Value = serde_json::from_str(SERVER_TOMBSTONE_FIXTURE).unwrap();
+
+        assert_eq!(actual, expected);
     }
 }
