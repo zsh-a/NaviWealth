@@ -13,7 +13,7 @@ void main() {
     ];
 
     final legacyTopLevelRoute = RegExp(
-      r'''(^|[\s`'"(\[{>])/(assets|accounts|expenses|analytics|fire|rebalance|me|more|transactions)(?=$|[\s`'"),\].<])''',
+      r'''(^|[\s`'"(\[{>])/(assets|accounts|expenses|analytics|fire|rebalance|me|more|transactions)(?=$|/|[\s`'"),\].<])''',
       multiLine: true,
     );
 

@@ -265,8 +265,10 @@ AI 元素默认 surface tone（非 accent）；单色细线 sparkle（字号 ≤
 | 3 | 环境式洞察 | 主屏卡片三动作（展开/问一下/忽略）+ 偏好学习 | `ai_insight_feed.dart` |
 | 4 | 录入链路隐形 AI | 截图/文件/粘贴/分享自动解析 | `features/ingest/`（见 §5.10）|
 
-拓扑结果：`/ai` tab 下线（4-tab：Home/Activity/Accounts/Settings）；chat 迁
-`/settings/ai-history`（只读回放）；FIRE/Rebalance/Analytics 迁 `/accounts/{fire,rebalance,analytics}`。
+拓扑结果：`/ai` tab 下线（FinanceOS 4-tab：Home/Activity/Wealth/Plan；Settings
+是全局 meta，不是 tab）；chat 迁 `/settings/ai-history`（只读回放）；
+FIRE/Rebalance 迁 `/plan/{fire,rebalance}`，Portfolio Analytics 迁
+`/wealth/portfolio`。
 
 #### 5.10 反模式清单（代码引用 §5.10.7；PR review 一票否决，与 §5.8 累加）
 
