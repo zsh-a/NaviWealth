@@ -37,10 +37,22 @@ class _ListNotifier extends ConventionalAsyncNotifier<List<int>> {
   Future<List<int>> fetch() => ref.read(_sourceProvider).load();
 }
 
+class _NoPreviousListNotifier extends ConventionalAsyncNotifier<List<int>> {
+  @override
+  bool get keepPreviousOnRefresh => false;
+
+  @override
+  Future<List<int>> fetch() => ref.read(_sourceProvider).load();
+}
+
 final _sourceProvider = Provider<_Source>((_) => _Source());
 final _listProvider = AsyncNotifierProvider<_ListNotifier, List<int>>(
   _ListNotifier.new,
 );
+final _noPreviousListProvider =
+    AsyncNotifierProvider<_NoPreviousListNotifier, List<int>>(
+      _NoPreviousListNotifier.new,
+    );
 
 void main() {
   test('build() resolves with the fetched payload', () async {
@@ -95,6 +107,56 @@ void main() {
     await refreshing;
 
     expect(container.read(_listProvider).value, [4, 5, 6]);
+    expect(source.loads, 2);
+  });
+
+  test(
+    'refresh() routes fetch errors through AsyncError without throwing',
+    () async {
+      final source = _Source();
+      final container = ProviderContainer(
+        overrides: [_sourceProvider.overrideWithValue(source)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(_listProvider.future);
+      source.failWith = StateError('refresh failed');
+
+      await container.read(_listProvider.notifier).refresh();
+
+      final state = container.read(_listProvider);
+      expect(state.hasError, isTrue);
+      expect(state.error, isA<StateError>());
+    },
+  );
+
+  test('refresh() can mark stale display as a full reload', () async {
+    final source = _Source();
+    final container = ProviderContainer(
+      overrides: [_sourceProvider.overrideWithValue(source)],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(_noPreviousListProvider.future);
+    expect(container.read(_noPreviousListProvider).value, [1, 2, 3]);
+
+    source
+      ..nextPayload = [7, 8, 9]
+      ..gate = Completer<void>();
+
+    final refreshing = container
+        .read(_noPreviousListProvider.notifier)
+        .refresh();
+
+    final inFlight = container.read(_noPreviousListProvider);
+    expect(inFlight.isLoading, isTrue);
+    expect(inFlight.isReloading, isTrue);
+    expect(inFlight.isRefreshing, isFalse);
+
+    source.gate!.complete();
+    await refreshing;
+
+    expect(container.read(_noPreviousListProvider).value, [7, 8, 9]);
     expect(source.loads, 2);
   });
 

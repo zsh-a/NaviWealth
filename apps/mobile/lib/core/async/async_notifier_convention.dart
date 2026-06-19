@@ -57,8 +57,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 abstract class ConventionalAsyncNotifier<T> extends AsyncNotifier<T> {
   /// Whether [refresh] should keep the previous data attached to the new
   /// `AsyncLoading` state. Default `true`, which is what almost every list /
-  /// detail screen wants. Set `false` for screens where seeing stale data
-  /// would mislead (e.g. a security review screen).
+  /// detail screen wants. Set `false` for screens where the UI should treat
+  /// refresh as a full reload. Riverpod may still attach the previous value to
+  /// the loading state, but it marks the transition as `isReloading` rather
+  /// than `isRefreshing` so `when`-based UIs can show full-screen loading.
   bool get keepPreviousOnRefresh => true;
 
   @override
@@ -82,7 +84,12 @@ abstract class ConventionalAsyncNotifier<T> extends AsyncNotifier<T> {
       // previous value attached.
       ref.invalidateSelf(asReload: true);
       // Wait for the rebuild to complete by reading the future.
-      await future;
+      try {
+        await future;
+      } catch (_) {
+        // The provider state now contains AsyncError. Keep refresh() itself
+        // non-throwing so pull-to-refresh callers do not need local try/catch.
+      }
     } else {
       state = const AsyncLoading();
       final next = await AsyncValue.guard(fetch);
