@@ -6,7 +6,7 @@ import '../logging/app_logger.dart';
 import 'domain_prefix.dart';
 import 'sync_api_client.dart';
 
-/// The closed set of tables that participate in sync (`docs/sync-v2.md` §4).
+/// The closed set of tables that participate in sync (`docs/sync-v2.md` §7.1).
 /// Adding a value is a data-model change only — the server's row store is
 /// schema-agnostic.
 const Set<String> kSyncableTables = {

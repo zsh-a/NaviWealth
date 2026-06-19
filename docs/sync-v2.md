@@ -58,8 +58,8 @@ versioned blob store.
 | Term | Definition |
 |------|------------|
 | **row** | One business-table row, identified by `(table, id)`. The unit of sync. |
-| **payload** | The row's full column set as a JSON object. Opaque to the server. `null` iff `deleted`. |
-| **version** | `i64` LWW stamp the authoring device assigns. Wall-clock milliseconds, forced monotonic per device. The conflict key. |
+| **payload** | The row's full column set as a JSON object. Opaque to the server. Client pushes may send `null` for deletes; stored tombstones use an empty JSON object. |
+| **version** | Opaque, lexicographically ordered LWW token the authoring device assigns. The current client uses canonical HLC strings. |
 | **device_id** | Stable UUID per install. LWW tie-breaker and echo filter. |
 | **seq** | `i64` the server assigns to a row each time it is stored. Strictly monotonic per user. The pull cursor. |
 | **cursor** | Highest `seq` a device has drained. Next sync sends `since = cursor`. |
@@ -83,7 +83,7 @@ CREATE TABLE sync_rows (
   user_id     TEXT    NOT NULL,
   table_name  TEXT    NOT NULL,
   row_id      TEXT    NOT NULL,
-  payload     TEXT    NOT NULL,                   -- opaque JSON row; carried even for tombstones
+  payload     TEXT    NOT NULL,                   -- opaque JSON row; "{}" for tombstones
   version     TEXT    NOT NULL,                   -- client LWW token (opaque, ordered)
   device_id   TEXT    NOT NULL,                   -- author
   deleted     INTEGER NOT NULL DEFAULT 0,         -- 0 | 1
@@ -107,9 +107,11 @@ as its intended order). LWW compares it as a string, never with SQL
 arithmetic.
 
 The server does not know the business schema. `payload` is an opaque JSON
-blob it never inspects — it is the full row, kept even for tombstones so a
-device that never saw the row can still materialise it. There are **no
-per-table materialised tables**, no `op_log`, no `sync_state`.
+blob it never inspects. Live rows carry their full row JSON. Deleted inbound
+rows may send `payload: null`; the server stores `{}` plus `deleted = 1`,
+and clients materialise the tombstone from the row identity, version, and
+deleted flag. There are **no per-table materialised tables**, no `op_log`,
+no `sync_state`.
 
 ## 4. The version stamp & LWW
 
@@ -171,10 +173,10 @@ One round trip does push **and** pull.
   "since": 1287,
   "changes": [
     {
-      "table": "accounts",
+      "table": "fin:accounts",
       "id": "e2c4-…",
       "payload": { "name": "Brokerage", "currency": "USD", "...": "..." },
-      "version": 1716381000123,
+      "version": "1716381000123.0000-1f5b0c3a",
       "deleted": false
     }
   ]
@@ -197,10 +199,10 @@ One round trip does push **and** pull.
   "seq": 1342,
   "changes": [
     {
-      "table": "assets",
+      "table": "fin:assets",
       "id": "a1b2-…",
       "payload": { "...": "..." },
-      "version": 1716381005000,
+      "version": "1716381005000.0000-9f0e",
       "device_id": "9f0e-…",
       "deleted": false,
       "seq": 1340
@@ -258,10 +260,9 @@ client bug, not adversarial.
 
 - **LWW** per §4.2, whole-row, applied on both ends.
 - **Delete** = a normal row write whose `deleted` flag is set (the client's
-  `deleted_at` column is non-null). The `payload` still carries the full
-  row, so a peer that never saw it can still materialise the tombstone. The
-  row identity persists; a later write with a higher `(version, device_id)`
-  resurrects it.
+  `deleted_at` column is non-null). The row identity and version persist; a
+  peer can materialise the tombstone from `(table, id, version, deleted)`.
+  A later write with a higher `(version, device_id)` resurrects it.
 - **Tombstone GC** (v2 makes this trivial, unlike v1): a row that is
   `deleted = 1` and whose `seq` is below every device's cursor can be hard
   deleted. Deferred until `sync_rows` row count is a concern; one tombstone
@@ -280,6 +281,16 @@ Every syncable Drift table already carries the metadata v2 needs, via the
 | `hlc` | The row's `version` token (§4.1). |
 | `deleted_at` | Tombstone — non-null ⇒ `deleted`. |
 | `owner_user_id`, `updated_by_device`, `updated_at` | Author / audit metadata, carried in the payload. |
+
+Current syncable table inventory is pinned by
+`apps/mobile/lib/core/sync/row_applier.dart` and mirrored by
+`apps/mobile/test/core/sync/op_test.dart`:
+
+| Row family | Tables |
+|------------|--------|
+| `fin:` | `accounts`, `assets`, `liabilities`, `fx_rates`, `tags`, `budgets`, `goals`, `devices`, `amortization_entries`, `tag_links`, `categories`, `settings`, `users`, `journal_entries`, `postings`, `prices`, `watchlist_items`, `options_strategy_profile`, `approved_underlyings`, `options_trade_journal` |
+| `health:` | `health_metrics` |
+| `know:` | `knowledge_notes`, `knowledge_principles`, `knowledge_assumptions`, `knowledge_decisions`, `knowledge_concepts`, `knowledge_experiments`, `knowledge_routines` |
 
 Locally-dirty rows are tracked in a lightweight **dirty-pointer log**, the
 `op_outbox` table — exactly four columns: `(op_id, table_name, row_id,

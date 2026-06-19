@@ -24,7 +24,8 @@ const PULL_BODY_BUDGET: usize = 900 * 1024;
 pub struct RowChange {
     pub table: String,
     pub id: String,
-    /// Full row payload as a JSON object. `null` when `deleted`.
+    /// Full row payload as a JSON object. Client pushes may send `null` for
+    /// deletes; stored tombstones are returned as `{}` with `deleted = true`.
     #[serde(default)]
     pub payload: Option<Value>,
     /// Opaque, lexicographically-ordered LWW token the client assigns; the
