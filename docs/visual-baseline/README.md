@@ -2,7 +2,7 @@
 
 Final acceptance for the "premium UI" epic. Three deliverables:
 
-1. **Golden screenshot regression** — locks the rendered look of the seven golden-path mobile pages against drift.
+1. **Golden screenshot regression** — locks the rendered look of the mobile task surfaces and AI visual primitives against drift.
 2. **Figma mock baseline** — three-breakpoint mocks, kept in sync with the Dart `design_tokens/tokens.json`.
 3. **Cross-end walkthrough** — manual verification of "Golden Path", with screenshots archived under `walkthrough/`.
 
@@ -20,8 +20,21 @@ Final acceptance for the "premium UI" epic. Three deliverables:
 | FIRE (unconfigured) | `apps/mobile/test/golden/fire_page_golden_test.dart` | dark / colorblind |
 | AI Chat (login required) | `apps/mobile/test/golden/ai_chat_page_golden_test.dart` | dark / colorblind |
 | Settings | `apps/mobile/test/golden/settings_page_golden_test.dart` | dark / colorblind |
+| Account activity / Wealth / Accounts | `apps/mobile/test/golden/account_activity_golden_test.dart` | dark / colorblind |
+| Cashflow / Dividend Center / Corporate Action Entry | `apps/mobile/test/golden/cashflow_golden_test.dart` | dark / colorblind |
+| Portfolio Hub | `apps/mobile/test/golden/portfolio_hub_page_golden_test.dart` | dark / colorblind |
+| Watchlist | `apps/mobile/test/golden/watchlist_page_golden_test.dart` | dark / colorblind |
+| DCA simulator | `apps/mobile/test/golden/dca_simulator_page_golden_test.dart` | dark / colorblind |
+| Rebalance execution sheet | `apps/mobile/test/golden/rebalance_execution_sheet_golden_test.dart` | dark / colorblind |
+| Target allocation editor sheet | `apps/mobile/test/golden/target_allocation_editor_sheet_golden_test.dart` | dark / colorblind |
+| Asset FX PnL card | `apps/mobile/test/golden/asset_fx_pnl_card_golden_test.dart` | dark / colorblind |
+| FIRE OS cards | `apps/mobile/test/golden/fire_os_cards_golden_test.dart` | dark / colorblind |
+| AI visual primitives / renderers | `apps/mobile/test/golden/ai_surfaces_golden_test.dart` | component-scoped light surfaces |
 
-6 pages × 2 themes = **12 PNG baselines** under `apps/mobile/test/golden/goldens/`. (Light-mode was dropped — see *Variant choice* below.)
+16 test files currently produce **48 PNG baselines** under
+`apps/mobile/test/golden/goldens/`. Light-mode page variants were dropped — see
+*Variant choice* below — but AI primitive/component goldens keep their own
+minimal light surfaces to isolate the visual language from app chrome.
 
 Mobile-only for now. Tablet and desktop snapshots are deferred — those layouts use the same primitives the mobile goldens already cover, and the master-detail surfaces add CI flake without a visual signal we don't already get from the unit suite.
 

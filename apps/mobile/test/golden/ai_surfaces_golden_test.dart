@@ -4,8 +4,8 @@
 // These goldens are intentionally component-scoped: one widget,
 // deterministic inputs, minimal chrome.
 //
-// Coverage: 7 goldens / 1 file
-//   - ai_pill_neutral / ai_pill_selected / ai_pill_error
+// Coverage: 4 PNG baselines / 1 file
+//   - ai_pill_variants
 //   - ai_object_capsule
 //   - asset_allocation_view (Wave 34 domain renderer)
 //   - subscription_changes_view (Wave 34 domain renderer)

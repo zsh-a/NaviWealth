@@ -163,28 +163,8 @@ void main() {
     });
 
     test('server sync response fixture parses into SyncResponse shape', () {
-      final fixture = _readFixture('sync_v2_server_sync_response.json');
-      final changesRaw = (fixture['changes'] as List<Object?>)
-          .cast<Map<Object?, Object?>>();
-      final acceptedRaw = (fixture['accepted'] as List<Object?>)
-          .cast<Map<Object?, Object?>>();
-      final response = SyncResponse(
-        seq: (fixture['seq'] as num).toInt(),
-        changes: changesRaw
-            .map(
-              (m) => RowChange.fromJson(
-                m.map((key, value) => MapEntry(key.toString(), value)),
-              ),
-            )
-            .toList(growable: false),
-        more: (fixture['more'] as bool?) ?? false,
-        accepted: acceptedRaw
-            .map(
-              (m) => RowAck.fromJson(
-                m.map((key, value) => MapEntry(key.toString(), value)),
-              ),
-            )
-            .toList(growable: false),
+      final response = _readSyncResponseFixture(
+        'sync_v2_server_sync_response.json',
       );
 
       expect(response.seq, 42);
@@ -193,6 +173,42 @@ void main() {
       expect(response.changes.single.deviceId, 'device-b');
       expect(response.acceptedKeys, {'fin:accounts\u{0}acc-1'});
     });
+
+    test('server empty response fixture parses as idle page', () {
+      final response = _readSyncResponseFixture(
+        'sync_v2_server_empty_response.json',
+      );
+
+      expect(response.seq, 42);
+      expect(response.more, isFalse);
+      expect(response.changes, isEmpty);
+      expect(response.accepted, isEmpty);
+      expect(response.acceptedKeys, isEmpty);
+    });
+
+    test('server more response fixture preserves pagination flag', () {
+      final response = _readSyncResponseFixture(
+        'sync_v2_server_more_response.json',
+      );
+
+      expect(response.seq, 42);
+      expect(response.more, isTrue);
+      expect(response.changes.single.table, 'health:health_metrics');
+      expect(response.changes.single.deleted, isTrue);
+      expect(response.acceptedKeys, isEmpty);
+    });
+
+    test('server no-accepted response fixture leaves dirty keys uncleared', () {
+      final response = _readSyncResponseFixture(
+        'sync_v2_server_no_accepted_response.json',
+      );
+
+      expect(response.seq, 41);
+      expect(response.more, isFalse);
+      expect(response.changes, isEmpty);
+      expect(response.accepted, isEmpty);
+      expect(response.acceptedKeys, isEmpty);
+    });
   });
 }
 
@@ -200,5 +216,31 @@ Map<String, Object?> _readFixture(String name) {
   final file = File('../../docs/fixtures/$name');
   return (jsonDecode(file.readAsStringSync()) as Map<String, Object?>).map(
     (key, value) => MapEntry(key, value),
+  );
+}
+
+SyncResponse _readSyncResponseFixture(String name) {
+  final fixture = _readFixture(name);
+  final changesRaw = (fixture['changes'] as List<Object?>)
+      .cast<Map<Object?, Object?>>();
+  final acceptedRaw = (fixture['accepted'] as List<Object?>)
+      .cast<Map<Object?, Object?>>();
+  return SyncResponse(
+    seq: (fixture['seq'] as num).toInt(),
+    changes: changesRaw
+        .map(
+          (m) => RowChange.fromJson(
+            m.map((key, value) => MapEntry(key.toString(), value)),
+          ),
+        )
+        .toList(growable: false),
+    more: (fixture['more'] as bool?) ?? false,
+    accepted: acceptedRaw
+        .map(
+          (m) => RowAck.fromJson(
+            m.map((key, value) => MapEntry(key.toString(), value)),
+          ),
+        )
+        .toList(growable: false),
   );
 }

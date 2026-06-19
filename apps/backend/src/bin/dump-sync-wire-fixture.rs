@@ -22,6 +22,27 @@ fn main() {
             }],
         })
         .unwrap(),
+        "sync_v2_server_empty_response" => serde_json::to_string_pretty(&SyncResponse {
+            seq: 42,
+            changes: vec![],
+            more: false,
+            accepted: vec![],
+        })
+        .unwrap(),
+        "sync_v2_server_more_response" => serde_json::to_string_pretty(&SyncResponse {
+            seq: 42,
+            changes: vec![server_tombstone()],
+            more: true,
+            accepted: vec![],
+        })
+        .unwrap(),
+        "sync_v2_server_no_accepted_response" => serde_json::to_string_pretty(&SyncResponse {
+            seq: 41,
+            changes: vec![],
+            more: false,
+            accepted: vec![],
+        })
+        .unwrap(),
         other => {
             eprintln!("unknown sync wire fixture: {other}");
             std::process::exit(64);

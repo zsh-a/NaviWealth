@@ -25,5 +25,8 @@ check_fixture() {
 
 check_fixture sync_v2_server_tombstone_row_change
 check_fixture sync_v2_server_sync_response
+check_fixture sync_v2_server_empty_response
+check_fixture sync_v2_server_more_response
+check_fixture sync_v2_server_no_accepted_response
 
 echo "sync-v2 server fixtures match the Rust serializer."

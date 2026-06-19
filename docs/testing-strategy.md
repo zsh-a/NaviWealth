@@ -158,10 +158,10 @@ server tombstone fixture consumed by Dart against the backend
 `tool/check-sync-client-wire-fixtures.sh` compares it against
 `apps/mobile/tool/dump_sync_wire_fixture.dart`, which emits the actual
 `RowChange.toJson()` output and the full client `/sync` request envelope.
-The Rust gate also covers the full server `/sync` response envelope. Target:
-broaden generated sync fixtures to edge-case envelopes (empty pages, `more`
-pagination, rejected-domain rows) and keep the enum manifest complete as the
-contract surface evolves.
+The Rust gate also covers the full server `/sync` response envelope, including
+edge-case envelopes for empty pages, `more` pagination, and no-accepted-row
+responses. Keep the enum manifest and sync fixture set complete as the contract
+surface evolves.
 
 ### Golden (visual, ~5%)
 `test/golden/` via golden_toolkit, Linux-pinned (`flutter_test_config.dart`
@@ -256,8 +256,9 @@ backup/restore.
   golden surfaces and on-device `integration_test/` coverage rather than adding
   more page-bound smoke tests.
 - Contracts-as-code: AI enum wire manifest now gates against Dart code and
-  `sync-v2` row-change fixtures gate against Dart/Rust serializers; remaining
-  work is generated sync edge-case fixtures.
+  `sync-v2` row-change/request/response fixtures gate against Dart/Rust
+  serializers, including edge-case server envelopes. Next work is keeping new
+  contract variants fixture-backed as they are introduced.
 - Expand golden coverage to each Task surface + responsive breakpoints.
 - Keep `tool/known-failing-tests.txt` empty; any temporary entry needs a
   reviewer-approved reason and must be removed as soon as the test recovers.
