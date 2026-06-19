@@ -1,6 +1,7 @@
 // Wave 33 — IntentDescriptor registry invariants.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/production_ai_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/intent.dart'
     show kDomainFinance, kDomainHealth, kDomainKnowledge;
 import 'package:naviwealth/core/ai/intent/intent.dart';
@@ -40,6 +41,47 @@ void main() {
       reason: 'duplicate intent name detected',
     );
   });
+
+  test('production intent catalog has unique registered descriptors', () {
+    final names = productionIntentCatalog.descriptors.map((d) => d.name);
+
+    expect(productionIntentCatalog.descriptors, isNotEmpty);
+    expect(
+      names.toSet().length,
+      productionIntentCatalog.descriptors.length,
+      reason: 'duplicate production intent name detected',
+    );
+  });
+
+  test(
+    'production intent catalog resolves localized copy for every intent',
+    () {
+      final l10n = AppLocalizationsZh();
+      final resolver = localizedIntentCopyResolver(l10n);
+
+      for (final d in productionIntentCatalog.descriptors) {
+        final copy = resolver(d);
+        expect(d.name, isNotEmpty);
+        expect(d.allowedObjectTypes, isNotEmpty, reason: d.name);
+        expect(
+          d.preferredCapabilities,
+          contains(AiCapability.chat),
+          reason: d.name,
+        );
+        expect(copy.label, isNotEmpty, reason: d.name);
+        expect(
+          copy.label,
+          isNot(d.name),
+          reason:
+              'Production intents must be registered in '
+              'localizedIntentCopyResolver; falling back to the raw name leaks '
+              'machine copy into capsules.',
+        );
+        expect(copy.promptTemplate, isNotEmpty, reason: d.name);
+        expect(intentAllowsDomain(d, d.domain), isTrue, reason: d.name);
+      }
+    },
+  );
 
   test('lookupIntent returns the matching descriptor', () {
     final hit = lookupIntent('explain_change', catalog: _catalog);
