@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 24', () {
-      expect(db.schemaVersion, 24);
+    test('is 25', () {
+      expect(db.schemaVersion, 25);
     });
   });
 
@@ -189,6 +189,26 @@ void main() {
           )
           .get();
       expect(result, hasLength(1));
+    });
+
+    test('recurring_pattern_observations table has expected columns', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(recurring_pattern_observations)')
+          .get();
+      final columns = result.map((r) => r.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll([
+          'id',
+          'owner_user_id',
+          'merchant_key',
+          'cadence',
+          'currency',
+          'median_amount_minor',
+          'last_seen_at',
+          'observed_at',
+        ]),
+      );
     });
   });
 

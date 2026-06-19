@@ -3,6 +3,9 @@
 /// - `options_opportunity_cache` — scoring engine output. Each device
 ///   computes its own opportunities from its own chain pull
 ///   (`docs/options-income.md` §6.2).
+/// - `recurring_pattern_observations` — device analytical read-model history
+///   for subscription price-change comparison. Derived from local expenses,
+///   re-materializable, never synced.
 /// - `memories` + `memory_embeddings` + `events` — Memory Runtime
 ///   (`docs/lifeos-shell.md` §6, D-1.7b). Typed records with
 ///   lifecycle, vectors in a side table so embedder swap doesn't have
@@ -63,6 +66,54 @@ const List<String> optionsOpportunityCacheDdl = [
   createOptionsOpportunityCache,
   createOptionsOpportunityCacheOwnerScannedIndex,
   createOptionsOpportunityCacheSymbolIndex,
+];
+
+// ----------------------------------------------------------------------
+// Device analytical recurring-pattern history
+// ----------------------------------------------------------------------
+
+/// Append-mostly local observation log for detected recurring patterns.
+///
+/// The detector can only see stable runs in the current expense window. Keeping
+/// historical observations lets `subscription_changes` compare "old stable
+/// price" vs "new stable price" across app sessions without promoting derived
+/// analytical signals into sync state.
+const String createRecurringPatternObservations = '''
+CREATE TABLE IF NOT EXISTS recurring_pattern_observations (
+  id                  TEXT PRIMARY KEY,
+  owner_user_id       TEXT NOT NULL,
+  merchant_key        TEXT NOT NULL,
+  cadence             TEXT NOT NULL,
+  currency            TEXT NOT NULL,
+  median_amount_minor INTEGER NOT NULL,
+  occurrences         INTEGER NOT NULL,
+  occurrence_ids_json TEXT NOT NULL,
+  last_seen_at        INTEGER NOT NULL,      -- millis since epoch (UTC)
+  observed_at         INTEGER NOT NULL,      -- millis since epoch (UTC)
+  payload_json        TEXT NOT NULL
+)
+''';
+
+const String createRecurringPatternObservationsSeriesIndex = '''
+CREATE INDEX IF NOT EXISTS idx_recurring_pattern_obs_series
+  ON recurring_pattern_observations(
+    owner_user_id,
+    merchant_key,
+    currency,
+    cadence,
+    last_seen_at
+  )
+''';
+
+const String createRecurringPatternObservationsObservedIndex = '''
+CREATE INDEX IF NOT EXISTS idx_recurring_pattern_obs_owner_observed
+  ON recurring_pattern_observations(owner_user_id, observed_at DESC)
+''';
+
+const List<String> recurringPatternObservationDdl = [
+  createRecurringPatternObservations,
+  createRecurringPatternObservationsSeriesIndex,
+  createRecurringPatternObservationsObservedIndex,
 ];
 
 // ----------------------------------------------------------------------

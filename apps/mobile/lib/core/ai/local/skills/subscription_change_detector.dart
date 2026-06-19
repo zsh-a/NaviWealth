@@ -50,6 +50,26 @@ class SubscriptionChange {
   final DateTime since;
 }
 
+class RecurringPatternObservation {
+  const RecurringPatternObservation({
+    required this.merchantKey,
+    required this.cadence,
+    required this.currency,
+    required this.medianAmountMinor,
+    required this.occurrences,
+    required this.lastSeenAt,
+    required this.observedAt,
+  });
+
+  final String merchantKey;
+  final RecurringCadence cadence;
+  final String currency;
+  final int medianAmountMinor;
+  final int occurrences;
+  final DateTime lastSeenAt;
+  final DateTime observedAt;
+}
+
 /// The canonical [SubscriptionChange] → [AnalyticalUpload] conversion.
 ///
 /// `AnalyticalUpload` is a historical wire name. Today the output feeds
@@ -124,6 +144,67 @@ List<SubscriptionChange> detectSubscriptionChanges(
     );
   }
   return out;
+}
+
+List<SubscriptionChange> detectSubscriptionChangesFromPatternHistory(
+  Iterable<RecurringPatternObservation> observations,
+) {
+  final bySeries = <String, List<RecurringPatternObservation>>{};
+  for (final o in observations) {
+    final key = '${o.merchantKey}|${o.currency}|${o.cadence.name}';
+    bySeries.putIfAbsent(key, () => <RecurringPatternObservation>[]).add(o);
+  }
+
+  final out = <SubscriptionChange>[];
+  for (final series in bySeries.values) {
+    series.sort((a, b) {
+      final lastSeen = a.lastSeenAt.compareTo(b.lastSeenAt);
+      if (lastSeen != 0) return lastSeen;
+      return a.observedAt.compareTo(b.observedAt);
+    });
+    if (series.length < 2) continue;
+
+    RecurringPatternObservation? previousStable;
+    SubscriptionChange? latestChange;
+    for (final current in series) {
+      final previous = previousStable;
+      if (previous == null) {
+        previousStable = current;
+        continue;
+      }
+      if (current.medianAmountMinor == previous.medianAmountMinor) {
+        previousStable = current;
+        continue;
+      }
+      final change = _changeFromPatternObservations(previous, current);
+      if (change != null) latestChange = change;
+      previousStable = current;
+    }
+    if (latestChange != null) out.add(latestChange);
+  }
+  return out;
+}
+
+SubscriptionChange? _changeFromPatternObservations(
+  RecurringPatternObservation previous,
+  RecurringPatternObservation current,
+) {
+  final prev = previous.medianAmountMinor;
+  if (prev == 0) return null;
+  final next = current.medianAmountMinor;
+  final delta = next - prev;
+  if (delta.abs() < kSubscriptionChangeMinAbsMinor) return null;
+  final ratio = delta / prev.abs();
+  if (ratio.abs() < kSubscriptionChangeMinFraction) return null;
+  return SubscriptionChange(
+    merchantKey: current.merchantKey,
+    cadence: current.cadence,
+    currency: current.currency,
+    prevMedianAmountMinor: prev,
+    newMedianAmountMinor: next,
+    deltaRatio: ratio,
+    since: current.lastSeenAt,
+  );
 }
 
 int _medianSigned(List<TransactionInput> txns) {

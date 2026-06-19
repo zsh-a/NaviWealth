@@ -14,6 +14,9 @@ import 'package:naviwealth/core/ai/contracts/task_context.dart'
     show AnalyticalUpload;
 import 'package:naviwealth/core/ai/local/skills/skills.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/features/expense/data/recurring_pattern_history_store.dart';
 import 'package:naviwealth/features/finance/ai_tools/expense_to_transaction_input.dart';
 import 'package:naviwealth/features/finance/data/domain/expense.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
@@ -30,7 +33,8 @@ class GetRecurringPatternsTool implements DeviceTool {
       '数据来自 AI Read Model `recurring_patterns`（Analytical 层 P1）—— '
       '这是 device-sourced read model：端侧 recurring_detector 跑启发式产生，'
       '本工具按 AnalyticalUpload shape 输出本地分析信号（避免 Dart/Rust 双份漂移）。'
-      '典型问题：「我有哪些订阅」「每月定期支出多少」「哪些订阅最近涨价了」（最后这个需配合 subscription_changes，待落）。'
+      '检测结果会作为 local-only observation log 写入 Drift，供 subscription_changes 跨会话比较。'
+      '典型问题：「我有哪些订阅」「每月定期支出多少」「哪些订阅最近涨价了」。'
       '可选 currency / cadence 过滤。';
 
   @override
@@ -54,10 +58,9 @@ class GetRecurringPatternsTool implements DeviceTool {
     final List<Expense> expenses = await ctx.ref.read(
       journalExpensesStreamProvider.future,
     );
-    final uploads = [
-      for (final p in detectRecurring(expenses.map(expenseToTransactionInput)))
-        recurringPatternToUpload(p),
-    ];
+    final patterns = detectRecurring(expenses.map(expenseToTransactionInput));
+    await _recordPatternHistoryBestEffort(ctx, patterns);
+    final uploads = [for (final p in patterns) recurringPatternToUpload(p)];
     return shape(
       uploads,
       currency: input['currency'] is String
@@ -105,5 +108,24 @@ class GetRecurringPatternsTool implements DeviceTool {
           'device-sourced：端侧 recurring_detector 检测，本工具按 AnalyticalUpload shape 投影。'
           '当结果为空时，可能是端侧检测不到稳定周期或用户没有订阅。',
     };
+  }
+
+  static Future<void> _recordPatternHistoryBestEffort(
+    DeviceToolContext ctx,
+    List<RecurringPattern> patterns,
+  ) async {
+    if (patterns.isEmpty) return;
+    try {
+      final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
+      final db = await ctx.ref.read(appDatabaseProvider.future);
+      await RecurringPatternHistoryStore(db).recordPatterns(
+        ownerUserId: ownerUserId,
+        observedAt: DateTime.now().toUtc(),
+        patterns: patterns,
+      );
+    } on Object {
+      // Keep the tool read-like from the user's perspective: cache failures
+      // must not hide the live detector result.
+    }
   }
 }

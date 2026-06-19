@@ -71,7 +71,7 @@ class AppDatabase extends _$AppDatabase {
     : super(openAppConnection(dbFileName: dbFileName ?? defaultDbFileName));
 
   @override
-  int get schemaVersion => 24;
+  int get schemaVersion => 25;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -88,6 +88,7 @@ class AppDatabase extends _$AppDatabase {
       await _createAiTouchedEntitiesTable(this);
       await _createIngestTables(this);
       await _createOptionsOpportunityCache(this);
+      await _createRecurringPatternObservations(this);
       await _createMemoryRuntime(this);
       await _createKnowledgeInboxTriage(this);
     },
@@ -356,6 +357,13 @@ class AppDatabase extends _$AppDatabase {
           'ALTER TABLE options_trade_journal ADD COLUMN contract_size INTEGER',
         );
       }
+      // v24 -> v25: local analytical observation log for recurring
+      // pattern detector output. This is derived device state, so it is
+      // intentionally local-only; `subscription_changes` reads it to compare
+      // old vs new stable subscription prices across app sessions.
+      if (from < 25) {
+        await _createRecurringPatternObservations(this);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -556,6 +564,12 @@ Future<void> _createOptionsTradeJournalIndexes(AppDatabase db) async {
 
 Future<void> _createOptionsOpportunityCache(AppDatabase db) async {
   for (final stmt in optionsOpportunityCacheDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
+Future<void> _createRecurringPatternObservations(AppDatabase db) async {
+  for (final stmt in recurringPatternObservationDdl) {
     await db.customStatement(stmt);
   }
 }
