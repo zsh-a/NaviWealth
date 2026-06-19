@@ -200,8 +200,12 @@ or a real on-device Drift connection. The on-device layer closes that gap:
 opens the **real** file-backed `AppDatabase` through `openAppConnection()`
 (path_provider + `createInBackground` + on-disk migration to schemaVersion)
 and proves a write survives a full close/reopen cycle — the production
-connection every headless test bypasses via `NativeDatabase.memory`. The
-`integration_test` dev dependency is wired in `pubspec.yaml`.
+connection every headless test bypasses via `NativeDatabase.memory`.
+`apps/mobile/integration_test/backup_restore_integration_test.dart` then boots
+the real app shell with that file-backed DB, drives Settings → Backup &
+Restore through Page Objects, and restores encrypted bytes through
+`BackupService` into the same on-disk database. The `integration_test` dev
+dependency is wired in `pubspec.yaml`.
 
 Because it needs a real device, it runs via the `integration-device.yml`
 workflow on an Android emulator (nightly + manual + PRs touching the
@@ -209,8 +213,9 @@ harness or `core/persistence/`), not the unit-test VM. Run locally with:
 `flutter test integration_test/ -d <device>` (needs a full Apple/Android
 toolchain — it can't run on the headless `flutter test` host).
 
-Next here: boot the full app with a real `AppDatabase` + Page Objects to
-cover Task #11 (backup/restore) and any SQLCipher PRAGMA path on-device.
+Next here: broaden the on-device layer to the SQLCipher PRAGMA/key-recovery
+path and add one native smoke for a high-value repository write beyond
+backup/restore.
 
 ## 7. Roadmap
 

@@ -118,7 +118,7 @@ Future<void> bootApp(
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues({'naviwealth.locale': 'en'});
   final prefs = await SharedPreferences.getInstance();
   await markAiPrivacyOnboardingSeen(prefs);
   final testDb = liveData == null ? makeTestDatabase() : null;
