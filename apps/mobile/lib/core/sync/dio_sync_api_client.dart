@@ -38,6 +38,8 @@ class DioSyncApiClient implements SyncApiClient {
     );
     final changesRaw = (res['changes'] as List? ?? const [])
         .cast<Map<Object?, Object?>>();
+    final acceptedRaw = (res['accepted'] as List? ?? const [])
+        .cast<Map<Object?, Object?>>();
     return SyncResponse(
       seq: (res['seq'] as num).toInt(),
       changes: changesRaw
@@ -47,6 +49,11 @@ class DioSyncApiClient implements SyncApiClient {
           )
           .toList(growable: false),
       more: (res['more'] as bool?) ?? false,
+      accepted: acceptedRaw
+          .map(
+            (m) => RowAck.fromJson(m.map((k, v) => MapEntry(k as String, v))),
+          )
+          .toList(growable: false),
     );
   }
 

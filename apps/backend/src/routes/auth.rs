@@ -14,10 +14,16 @@ use crate::error::AppError;
 struct AuthRequest {
     email: String,
     password: String,
+    domains: Vec<String>,
     #[serde(default)]
     device_name: Option<String>,
     #[serde(default)]
     device_id: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct RefreshRequest {
+    domains: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -85,6 +91,7 @@ fn into_response<T: Serialize>(result: Result<T, AppError>) -> WorkerResult<Resp
 fn issue_token(
     user_id: &str,
     device_id: &str,
+    domains: Vec<String>,
     secret: &[u8],
     now: DateTime<Utc>,
 ) -> Result<(String, String, DateTime<Utc>), AppError> {
@@ -96,13 +103,49 @@ fn issue_token(
         jti: jti.clone(),
         iat: now.timestamp(),
         exp: exp.timestamp(),
-        // D-1.5: Every freshly minted token starts FinanceOS-only.
-        // Health (and future) domain activation flips the row in
-        // `domain_opt_ins` and is reflected on the next token rotation.
-        domains: default_domains(),
+        domains: normalise_domains(domains),
     };
     let token = jwt::encode(&claims, secret)?;
     Ok((token, jti, exp))
+}
+
+fn normalise_domains(domains: Vec<String>) -> Vec<String> {
+    let mut out = default_domains();
+    for d in domains {
+        match d.as_str() {
+            "finance" | "health" | "knowledge" => {
+                if !out.iter().any(|existing| existing == &d) {
+                    out.push(d);
+                }
+            }
+            _ => {}
+        }
+    }
+    out.sort();
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn normalise_domains_keeps_finance_and_curated_optional_domains() {
+        let domains = normalise_domains(vec![
+            "knowledge".to_string(),
+            "time".to_string(),
+            "health".to_string(),
+            "health".to_string(),
+        ]);
+        assert_eq!(
+            domains,
+            vec![
+                "finance".to_string(),
+                "health".to_string(),
+                "knowledge".to_string()
+            ]
+        );
+    }
 }
 
 pub async fn login(mut req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
@@ -139,7 +182,15 @@ async fn login_inner(body: AuthRequest, ctx: &RouteContext<()>) -> Result<LoginR
         }
     };
 
-    issue_session(user_id, body.device_name, body.device_id, ctx, &db).await
+    issue_session(
+        user_id,
+        body.domains,
+        body.device_name,
+        body.device_id,
+        ctx,
+        &db,
+    )
+    .await
 }
 
 pub async fn register(mut req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
@@ -206,11 +257,20 @@ async fn register_inner(
             }
         })?;
 
-    issue_session(user_id, body.device_name, body.device_id, ctx, &db).await
+    issue_session(
+        user_id,
+        body.domains,
+        body.device_name,
+        body.device_id,
+        ctx,
+        &db,
+    )
+    .await
 }
 
 async fn issue_session(
     user_id: String,
+    domains: Vec<String>,
     device_name: Option<String>,
     requested_device_id: Option<String>,
     ctx: &RouteContext<()>,
@@ -224,7 +284,7 @@ async fn issue_session(
             .to_string(),
         _ => Uuid::new_v4().to_string(),
     };
-    let (token, jti, exp) = issue_token(&user_id, &device_id, secret.as_bytes(), now)?;
+    let (token, jti, exp) = issue_token(&user_id, &device_id, domains, secret.as_bytes(), now)?;
 
     let now_iso = now.to_rfc3339();
     let name_value = match device_name.as_deref().map(str::trim) {
@@ -351,7 +411,7 @@ async fn logout_inner(
     Ok(OkResponse { ok: true })
 }
 
-pub async fn refresh(req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
+pub async fn refresh(mut req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
     let auth = match require_auth(&req, &ctx).await {
         Ok(a) => a,
         Err(e) => {
@@ -359,16 +419,29 @@ pub async fn refresh(req: Request, ctx: RouteContext<()>) -> WorkerResult<Respon
             return e.into_response();
         }
     };
-    into_response(refresh_inner(auth, &ctx).await)
+    let body: RefreshRequest = match req.json().await {
+        Ok(b) => b,
+        Err(_) => {
+            return AppError::BadRequest("invalid JSON body".into()).into_response();
+        }
+    };
+    into_response(refresh_inner(auth, body.domains, &ctx).await)
 }
 
 async fn refresh_inner(
     auth: AuthContext,
+    domains: Vec<String>,
     ctx: &RouteContext<()>,
 ) -> Result<RefreshResponse, AppError> {
     let secret = jwt_secret(ctx)?;
     let now = Utc::now();
-    let (token, jti, exp) = issue_token(&auth.user_id, &auth.device_id, secret.as_bytes(), now)?;
+    let (token, jti, exp) = issue_token(
+        &auth.user_id,
+        &auth.device_id,
+        domains,
+        secret.as_bytes(),
+        now,
+    )?;
 
     let now_iso = now.to_rfc3339();
     let db = db(ctx)?;

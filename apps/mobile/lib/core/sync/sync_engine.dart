@@ -138,16 +138,17 @@ class SyncEngine {
           break;
         }
 
-        pushed += batch.changes.length;
+        pushed += resp.accepted.length;
         if (resp.changes.isNotEmpty) {
           final report = await applier.applyWithReport(resp.changes);
           pulled += report.written;
           conflicts = conflicts.merge(_conflictsFromApplyReport(report));
           await _mergeHighest(resp.changes);
         }
-        // Acknowledge: drop the pointers we pushed. New edits queued
-        // mid-flight carry fresh op_ids and survive for the next cycle.
-        await pending.clear(batch.pushedOpIds);
+        // Acknowledge only rows the server explicitly accepted. Rows dropped
+        // at the domain-claim boundary stay dirty so the user can fix their
+        // opt-in/token state and retry instead of losing local edits.
+        await pending.clear(batch.acknowledgedOpIds(resp.acceptedKeys));
         since = resp.seq;
         await cursors.writeSeq(since);
 
@@ -203,18 +204,25 @@ class SyncEngine {
         ? kSyncMaxChanges
         : order.length;
     final changes = <RowChange>[];
-    final pushedOpIds = <String>[];
+    final staleOpIds = <String>[];
+    final opIdsByWireKey = <String, List<String>>{};
     for (var i = 0; i < take; i++) {
       final key = order[i];
       final pointer = keyToPointer[key]!;
       final data = await pending.readRow(pointer.table, pointer.rowId);
-      pushedOpIds.addAll(opIdsByKey[key]!);
-      if (data == null) continue; // stale pointer — drop it
-      changes.add(_toRowChange(pointer.table, pointer.rowId, data));
+      final opIds = opIdsByKey[key]!;
+      if (data == null) {
+        staleOpIds.addAll(opIds);
+        continue;
+      }
+      final change = _toRowChange(pointer.table, pointer.rowId, data);
+      changes.add(change);
+      opIdsByWireKey[_rowKey(change.table, change.id)] = opIds;
     }
     return _Batch(
       changes: changes,
-      pushedOpIds: pushedOpIds,
+      staleOpIds: staleOpIds,
+      opIdsByWireKey: opIdsByWireKey,
       morePending: order.length > take,
     );
   }
@@ -328,10 +336,21 @@ class SyncEngine {
 class _Batch {
   const _Batch({
     required this.changes,
-    required this.pushedOpIds,
+    required this.staleOpIds,
+    required this.opIdsByWireKey,
     required this.morePending,
   });
   final List<RowChange> changes;
-  final List<String> pushedOpIds;
+  final List<String> staleOpIds;
+  final Map<String, List<String>> opIdsByWireKey;
   final bool morePending;
+
+  List<String> acknowledgedOpIds(Set<String> acceptedKeys) {
+    return <String>[
+      ...staleOpIds,
+      for (final key in acceptedKeys) ...?opIdsByWireKey[key],
+    ];
+  }
 }
+
+String _rowKey(String table, String id) => '$table\u{0}$id';

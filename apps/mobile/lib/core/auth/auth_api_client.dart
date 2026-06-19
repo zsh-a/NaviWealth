@@ -54,6 +54,7 @@ abstract class AuthApiClient {
   Future<AuthSession> login({
     required String email,
     required String password,
+    required List<String> domains,
     String? deviceName,
     String? deviceId,
   });
@@ -64,12 +65,16 @@ abstract class AuthApiClient {
   Future<AuthSession> register({
     required String email,
     required String password,
+    required List<String> domains,
     String? deviceName,
     String? deviceId,
   });
 
   /// `POST /auth/refresh` (Bearer). Rotates the JWT for the current device.
-  Future<RefreshedToken> refresh(AuthSession current);
+  Future<RefreshedToken> refresh(
+    AuthSession current, {
+    required List<String> domains,
+  });
 
   /// `GET /auth/devices` (Bearer).
   Future<DevicesResponse> listDevices(AuthSession current);

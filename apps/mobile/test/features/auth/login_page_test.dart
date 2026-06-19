@@ -18,11 +18,23 @@ class _StubAuthApi implements AuthApiClient {
   AuthSession? registerResponse;
   Object? registerError;
   final List<
-    ({String email, String password, String? deviceName, String? deviceId})
+    ({
+      String email,
+      String password,
+      List<String> domains,
+      String? deviceName,
+      String? deviceId,
+    })
   >
   loginCalls = [];
   final List<
-    ({String email, String password, String? deviceName, String? deviceId})
+    ({
+      String email,
+      String password,
+      List<String> domains,
+      String? deviceName,
+      String? deviceId,
+    })
   >
   registerCalls = [];
 
@@ -30,12 +42,14 @@ class _StubAuthApi implements AuthApiClient {
   Future<AuthSession> login({
     required String email,
     required String password,
+    required List<String> domains,
     String? deviceName,
     String? deviceId,
   }) async {
     loginCalls.add((
       email: email,
       password: password,
+      domains: domains,
       deviceName: deviceName,
       deviceId: deviceId,
     ));
@@ -47,12 +61,14 @@ class _StubAuthApi implements AuthApiClient {
   Future<AuthSession> register({
     required String email,
     required String password,
+    required List<String> domains,
     String? deviceName,
     String? deviceId,
   }) async {
     registerCalls.add((
       email: email,
       password: password,
+      domains: domains,
       deviceName: deviceName,
       deviceId: deviceId,
     ));
@@ -61,8 +77,10 @@ class _StubAuthApi implements AuthApiClient {
   }
 
   @override
-  Future<RefreshedToken> refresh(AuthSession current) =>
-      throw UnimplementedError();
+  Future<RefreshedToken> refresh(
+    AuthSession current, {
+    required List<String> domains,
+  }) => throw UnimplementedError();
 
   @override
   Future<DevicesResponse> listDevices(AuthSession current) =>

@@ -21,26 +21,40 @@ class _FakeAuthApi implements AuthApiClient {
   Object? logoutError;
 
   final List<
-    ({String email, String password, String? deviceName, String? deviceId})
+    ({
+      String email,
+      String password,
+      List<String> domains,
+      String? deviceName,
+      String? deviceId,
+    })
   >
   loginCalls = [];
   final List<
-    ({String email, String password, String? deviceName, String? deviceId})
+    ({
+      String email,
+      String password,
+      List<String> domains,
+      String? deviceName,
+      String? deviceId,
+    })
   >
   registerCalls = [];
-  final List<AuthSession> refreshCalls = [];
+  final List<({AuthSession session, List<String> domains})> refreshCalls = [];
   final List<({AuthSession session, String deviceId})> logoutCalls = [];
 
   @override
   Future<AuthSession> login({
     required String email,
     required String password,
+    required List<String> domains,
     String? deviceName,
     String? deviceId,
   }) async {
     loginCalls.add((
       email: email,
       password: password,
+      domains: domains,
       deviceName: deviceName,
       deviceId: deviceId,
     ));
@@ -52,12 +66,14 @@ class _FakeAuthApi implements AuthApiClient {
   Future<AuthSession> register({
     required String email,
     required String password,
+    required List<String> domains,
     String? deviceName,
     String? deviceId,
   }) async {
     registerCalls.add((
       email: email,
       password: password,
+      domains: domains,
       deviceName: deviceName,
       deviceId: deviceId,
     ));
@@ -66,8 +82,11 @@ class _FakeAuthApi implements AuthApiClient {
   }
 
   @override
-  Future<RefreshedToken> refresh(AuthSession current) async {
-    refreshCalls.add(current);
+  Future<RefreshedToken> refresh(
+    AuthSession current, {
+    required List<String> domains,
+  }) async {
+    refreshCalls.add((session: current, domains: domains));
     if (refreshError != null) throw refreshError!;
     return refreshResponse!;
   }

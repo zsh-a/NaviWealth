@@ -23,6 +23,8 @@ import '../core/ai/intent/intent.dart';
 import '../core/ai/runtime/device/tools/device_tool.dart';
 import '../core/ai/runtime/device/tools/device_tool_registry.dart'
     show kShellDeviceToolsCore, kShellToolDescriptors;
+import '../core/auth/domain_scope.dart';
+import '../core/auth/providers.dart' as auth_providers;
 import '../core/command_palette/command_palette_entry.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/shell/domain_shell.dart';
@@ -67,6 +69,11 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
         _resolvedShellLocale(ref.watch(localeProvider)),
       );
       return domainShellSpecs(ref.watch(activeDomainPacksProvider), l10n);
+    }),
+    auth_providers.authTokenDomainsProvider.overrideWith((ref) {
+      return (ref.watch(auth_providers.domainOptInsProvider).value ??
+              DomainOptIns.financeOnly)
+          .toWire();
     }),
     ...domainProviderOverrides(resolvedPacks),
   ];

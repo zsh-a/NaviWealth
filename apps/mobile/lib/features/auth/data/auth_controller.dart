@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -100,10 +98,12 @@ class AuthController extends AsyncNotifier<AuthState> {
     final deviceIdentity = ref.read(deviceIdentityStoreProvider);
     final logger = ref.read(loggerProvider);
     final deviceId = await deviceIdentity.getOrCreate();
+    final domains = _activeDomainsForToken();
 
     final session = await api.login(
       email: email,
       password: password,
+      domains: domains,
       deviceName: deviceName,
       deviceId: deviceId,
     );
@@ -126,10 +126,12 @@ class AuthController extends AsyncNotifier<AuthState> {
     final deviceIdentity = ref.read(deviceIdentityStoreProvider);
     final logger = ref.read(loggerProvider);
     final deviceId = await deviceIdentity.getOrCreate();
+    final domains = _activeDomainsForToken();
 
     final session = await api.register(
       email: email,
       password: password,
+      domains: domains,
       deviceName: deviceName,
       deviceId: deviceId,
     );
@@ -191,10 +193,12 @@ class AuthController extends AsyncNotifier<AuthState> {
     final deviceIdentity = ref.read(deviceIdentityStoreProvider);
     final logger = ref.read(loggerProvider);
     final deviceId = await deviceIdentity.getOrCreate();
+    final domains = _activeDomainsForToken();
 
     final session = await api.register(
       email: email,
       password: password,
+      domains: domains,
       deviceName: deviceName,
       deviceId: deviceId,
     );
@@ -233,10 +237,12 @@ class AuthController extends AsyncNotifier<AuthState> {
     final deviceIdentity = ref.read(deviceIdentityStoreProvider);
     final logger = ref.read(loggerProvider);
     final deviceId = await deviceIdentity.getOrCreate();
+    final domains = _activeDomainsForToken();
 
     final session = await api.login(
       email: email,
       password: password,
+      domains: domains,
       deviceName: deviceName,
       deviceId: deviceId,
     );
@@ -371,7 +377,10 @@ class AuthController extends AsyncNotifier<AuthState> {
     final store = ref.read(tokenStoreProvider);
     final logger = ref.read(loggerProvider);
     try {
-      final rotated = await api.refresh(session);
+      final rotated = await api.refresh(
+        session,
+        domains: _activeDomainsForToken(),
+      );
       final updated = session.withRotatedToken(
         accessToken: rotated.accessToken,
         expiresAt: rotated.expiresAt,
@@ -395,6 +404,8 @@ class AuthController extends AsyncNotifier<AuthState> {
     state = AsyncData(AuthLoggedOut(reason: reason));
     _bumpRouterRedirect();
   }
+
+  List<String> _activeDomainsForToken() => ref.read(authTokenDomainsProvider);
 
   /// Notify go_router (via refresh listenable) that auth state
   /// changed. Deferred to a microtask so we don't mutate

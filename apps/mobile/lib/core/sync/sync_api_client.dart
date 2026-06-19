@@ -74,12 +74,30 @@ class RowChange {
   }
 }
 
+/// A push row the server accepted at the sync boundary. Acceptance means
+/// the row passed protocol/domain authorization; LWW may still decide the
+/// stored server version already wins.
+class RowAck {
+  const RowAck({required this.table, required this.id});
+
+  final String table;
+  final String id;
+
+  String get key => '$table\u{0}$id';
+
+  Map<String, Object?> toJson() => <String, Object?>{'table': table, 'id': id};
+
+  static RowAck fromJson(Map<String, Object?> json) =>
+      RowAck(table: json['table'] as String, id: json['id'] as String);
+}
+
 /// `POST /sync` response (`docs/sync-v2.md` §5.1).
 class SyncResponse {
   const SyncResponse({
     required this.seq,
     required this.changes,
     required this.more,
+    this.accepted = const <RowAck>[],
   });
 
   /// Cursor the client adopts after applying [changes].
@@ -90,6 +108,11 @@ class SyncResponse {
 
   /// `true` ⇔ the client must sync again to drain the backlog.
   final bool more;
+
+  /// Push rows accepted by the server in this cycle.
+  final List<RowAck> accepted;
+
+  Set<String> get acceptedKeys => accepted.map((a) => a.key).toSet();
 }
 
 /// HTTP client for the single `POST /sync` endpoint.

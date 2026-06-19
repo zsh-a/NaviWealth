@@ -47,14 +47,16 @@ const Set<String> kKnowledgeTables = <String>{
   'knowledge_routines',
 };
 
+/// HealthOS rows that sync through the generic row-state store.
+const Set<String> kHealthTables = <String>{'health_metrics'};
+
 /// The LifeOS domain prefix an outbound row should carry, by local table
-/// name. KnowledgeOS rows ride `know:`; all other currently-routed
-/// syncable rows ride `fin:`. Add a table set here when another domain
-/// starts syncing outbound rows.
-String domainPrefixForTable(String localTable) =>
-    kKnowledgeTables.contains(localTable)
-    ? kKnowledgeDomainPrefix
-    : kFinanceDomainPrefix;
+/// name.
+String domainPrefixForTable(String localTable) {
+  if (kKnowledgeTables.contains(localTable)) return kKnowledgeDomainPrefix;
+  if (kHealthTables.contains(localTable)) return kHealthDomainPrefix;
+  return kFinanceDomainPrefix;
+}
 
 /// Add the correct LifeOS domain prefix to an outbound Drift table name
 /// (see [domainPrefixForTable]).

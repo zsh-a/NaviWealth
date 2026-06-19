@@ -137,6 +137,22 @@ final domainOptInsProvider =
       _DomainOptInsNotifier.new,
     );
 
+/// Domains to stamp into the next backend JWT request.
+///
+/// Default stays Finance-only so auth-only tests and early startup do not
+/// initialise Drift just to build the auth controller. Production composition
+/// overrides this with the current [domainOptInsProvider] snapshot.
+final authTokenDomainsProvider = Provider<List<String>>(
+  (ref) => DomainOptIns.financeOnly.toWire(),
+);
+
+/// Hook called after domain opt-ins change so cloud sessions can rotate a JWT
+/// with the new `domains` claim. Production bootstrap wires this to
+/// `AuthController.refreshIfPossible`; local-only/tests keep the no-op.
+final domainOptInTokenRefreshProvider = Provider<Future<void> Function()>(
+  (ref) => () async {},
+);
+
 class _DomainOptInsNotifier extends AsyncNotifier<DomainOptIns> {
   @override
   Future<DomainOptIns> build() async {
@@ -150,5 +166,6 @@ class _DomainOptInsNotifier extends AsyncNotifier<DomainOptIns> {
     final store = await ref.read(domainOptInStoreProvider.future);
     await store.write(next);
     state = AsyncData(next);
+    await ref.read(domainOptInTokenRefreshProvider)();
   }
 }

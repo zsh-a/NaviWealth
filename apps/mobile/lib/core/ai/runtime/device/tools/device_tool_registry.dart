@@ -134,6 +134,16 @@ class DriftDeviceToolDispatcher implements DeviceToolDispatcher {
     if (descriptor?.sideEffect == SideEffect.externalCall) {
       return _policyDenied(name, 'runtime_not_allowed', '该工具有外部副作用，端侧不自动执行。');
     }
+    if (descriptor != null &&
+        !name.startsWith('propose_') &&
+        (descriptor.sideEffect == SideEffect.deviceLocalWrite ||
+            descriptor.requiresConfirmation != Confirmation.none)) {
+      return _policyDenied(
+        name,
+        'confirmation_required',
+        '该工具需要用户确认，不能作为普通工具自动执行。',
+      );
+    }
 
     final args = input is Map
         ? input.map((k, v) => MapEntry(k.toString(), v))

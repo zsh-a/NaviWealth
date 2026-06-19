@@ -182,6 +182,39 @@ void main() {
       expect(await pending.depth(), 0);
     });
 
+    test('server-rejected push rows stay dirty', () async {
+      pending.put(
+        opId: 'op-1',
+        table: 'knowledge_notes',
+        rowId: 'K1',
+        row: _rowState(id: 'K1', hlc: _hlc(1_500_000_000_000)),
+      );
+      api.programmedResponses.add(
+        const SyncResponse(seq: 0, changes: [], more: false, accepted: []),
+      );
+
+      final result = await engine.run();
+
+      expect(result.success, isTrue);
+      expect(result.pushed, 0);
+      expect(await pending.depth(), 1);
+      expect(api.pushedBatches.single.single.table, 'know:knowledge_notes');
+    });
+
+    test('health metrics use the health row family', () async {
+      pending.put(
+        opId: 'op-1',
+        table: 'health_metrics',
+        rowId: 'H1',
+        row: _rowState(id: 'H1', hlc: _hlc(1_500_000_000_000)),
+      );
+
+      await engine.run();
+
+      expect(api.pushedBatches.single.single.table, 'health:health_metrics');
+      expect(await pending.depth(), 0);
+    });
+
     test('pull applies peer rows and advances the cursor by seq', () async {
       api.seedRemote(
         RowChange(

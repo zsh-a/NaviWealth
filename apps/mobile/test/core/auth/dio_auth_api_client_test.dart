@@ -117,6 +117,7 @@ void main() {
       final session = await client.login(
         email: 'a@b.com',
         password: 'hunter22',
+        domains: const ['finance', 'health'],
         deviceName: 'iOS',
         deviceId: 'install-device-1',
       );
@@ -130,6 +131,7 @@ void main() {
       final body = jsonDecode(call.body) as Map<String, Object?>;
       expect(body['email'], 'a@b.com');
       expect(body['password'], 'hunter22');
+      expect(body['domains'], ['finance', 'health']);
       expect(body['device_name'], 'iOS');
       expect(body['device_id'], 'install-device-1');
       expect(call.options.headers['Authorization'], isNull);
@@ -149,7 +151,11 @@ void main() {
           }),
         );
       final client = _buildClient(adapter);
-      await client.login(email: '  user@example.com\n', password: 'p');
+      await client.login(
+        email: '  user@example.com\n',
+        password: 'p',
+        domains: const ['finance'],
+      );
       final body =
           jsonDecode(adapter.calls.single.body) as Map<String, Object?>;
       expect(body['email'], 'user@example.com');
@@ -165,7 +171,11 @@ void main() {
       final client = _buildClient(adapter);
 
       expect(
-        () => client.login(email: 'a@b.com', password: 'wrong'),
+        () => client.login(
+          email: 'a@b.com',
+          password: 'wrong',
+          domains: const ['finance'],
+        ),
         throwsA(
           isA<AuthException>().having(
             (e) => e.kind,
@@ -185,7 +195,11 @@ void main() {
         );
       final client = _buildClient(adapter);
       expect(
-        () => client.login(email: 'a@b.com', password: 'p'),
+        () => client.login(
+          email: 'a@b.com',
+          password: 'p',
+          domains: const ['finance'],
+        ),
         throwsA(
           isA<AuthException>().having(
             (e) => e.kind,
@@ -201,7 +215,11 @@ void main() {
         ..on('POST', '/auth/login', _Reply.networkError());
       final client = _buildClient(adapter);
       expect(
-        () => client.login(email: 'a@b.com', password: 'p'),
+        () => client.login(
+          email: 'a@b.com',
+          password: 'p',
+          domains: const ['finance'],
+        ),
         throwsA(
           isA<AuthException>().having(
             (e) => e.kind,
@@ -226,13 +244,19 @@ void main() {
           }),
         );
       final client = _buildClient(adapter);
-      final result = await client.refresh(_liveSession());
+      final result = await client.refresh(
+        _liveSession(),
+        domains: const ['finance', 'knowledge'],
+      );
       expect(result.accessToken, 'rotated');
       expect(result.expiresAt, DateTime.utc(2027, 1, 1));
       expect(
         adapter.calls.single.options.headers['Authorization'],
         'Bearer live-token',
       );
+      final body =
+          jsonDecode(adapter.calls.single.body) as Map<String, Object?>;
+      expect(body['domains'], ['finance', 'knowledge']);
     });
 
     test('401 on refresh → unauthorized (not invalidCredentials)', () async {
@@ -244,7 +268,7 @@ void main() {
         );
       final client = _buildClient(adapter);
       expect(
-        () => client.refresh(_liveSession()),
+        () => client.refresh(_liveSession(), domains: const ['finance']),
         throwsA(
           isA<AuthException>().having(
             (e) => e.kind,

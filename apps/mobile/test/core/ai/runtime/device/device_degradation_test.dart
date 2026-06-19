@@ -237,7 +237,6 @@ void main() {
         'read_asset_window',
         'read_category_window',
         'recall_decision',
-        'record_body_measurement',
         'review_knowledge_health',
         'search_knowledge',
         'search_notes',

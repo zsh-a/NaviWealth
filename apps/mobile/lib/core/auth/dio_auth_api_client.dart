@@ -29,12 +29,14 @@ class DioAuthApiClient implements AuthApiClient {
   Future<AuthSession> login({
     required String email,
     required String password,
+    required List<String> domains,
     String? deviceName,
     String? deviceId,
   }) async {
     final body = <String, Object?>{
       'email': email.trim(),
       'password': password,
+      'domains': domains,
       if (deviceName != null && deviceName.isNotEmpty)
         'device_name': deviceName,
       if (deviceId != null && deviceId.isNotEmpty) 'device_id': deviceId,
@@ -47,12 +49,14 @@ class DioAuthApiClient implements AuthApiClient {
   Future<AuthSession> register({
     required String email,
     required String password,
+    required List<String> domains,
     String? deviceName,
     String? deviceId,
   }) async {
     final body = <String, Object?>{
       'email': email.trim(),
       'password': password,
+      'domains': domains,
       if (deviceName != null && deviceName.isNotEmpty)
         'device_name': deviceName,
       if (deviceId != null && deviceId.isNotEmpty) 'device_id': deviceId,
@@ -62,8 +66,15 @@ class DioAuthApiClient implements AuthApiClient {
   }
 
   @override
-  Future<RefreshedToken> refresh(AuthSession current) async {
-    final res = await _post('/auth/refresh', bearer: current.accessToken);
+  Future<RefreshedToken> refresh(
+    AuthSession current, {
+    required List<String> domains,
+  }) async {
+    final res = await _post(
+      '/auth/refresh',
+      body: <String, Object?>{'domains': domains},
+      bearer: current.accessToken,
+    );
     return RefreshedToken(
       accessToken: res['access_token'] as String,
       expiresAt: DateTime.parse(res['expires_at'] as String).toUtc(),

@@ -118,6 +118,11 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
         (ref) =>
             () => ref.read(authControllerProvider.notifier).refreshIfPossible(),
       ),
+      core_auth.domainOptInTokenRefreshProvider.overrideWith(
+        (ref) => () async {
+          await ref.read(authControllerProvider.notifier).refreshIfPossible();
+        },
+      ),
       // LifeOS domain inventory + active-domain aggregators
       // (`docs/lifeos-shell.md` §4): tools, prompt blocks, agents, shell
       // specs, domain provider seams, and the registry all derive from

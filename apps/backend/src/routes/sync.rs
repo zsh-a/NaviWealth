@@ -19,7 +19,11 @@ use crate::sync::store::{self, RowChange};
 /// domain set is curated, not user-extensible. Note that the wire
 /// prefix is a *short tag* (`fin:`, `health:`) while the claim spells
 /// the domain in full (`finance`, `health`).
-const RECOGNISED_DOMAIN_PREFIXES: &[(&str, &str)] = &[("fin:", "finance"), ("health:", "health")];
+const RECOGNISED_DOMAIN_PREFIXES: &[(&str, &str)] = &[
+    ("fin:", "finance"),
+    ("health:", "health"),
+    ("know:", "knowledge"),
+];
 
 /// True when `wire_table` carries a domain prefix that's both recognised
 /// by the server and present in the caller's `domains` claim.
@@ -64,6 +68,13 @@ mod tests {
     }
 
     #[test]
+    fn knowledge_claim_accepts_knowledge_rows() {
+        let claim = vec![s("finance"), s("knowledge")];
+        assert!(caller_owns_prefix("know:knowledge_notes", &claim));
+        assert!(caller_owns_prefix("fin:accounts", &claim));
+    }
+
+    #[test]
     fn unprefixed_rows_are_always_rejected() {
         let claim = vec![s("finance"), s("health")];
         assert!(!caller_owns_prefix("accounts", &claim));
@@ -104,6 +115,16 @@ struct SyncResponse {
     seq: i64,
     changes: Vec<RowChange>,
     more: bool,
+    /// Push rows accepted at the domain/protocol boundary. The client only
+    /// clears matching outbox pointers, so rejected-domain rows cannot be
+    /// silently lost.
+    accepted: Vec<RowAck>,
+}
+
+#[derive(Serialize)]
+struct RowAck {
+    table: String,
+    id: String,
 }
 
 pub async fn sync(req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
@@ -176,6 +197,13 @@ async fn sync_inner(
         .into_iter()
         .filter(|c| caller_owns_prefix(&c.table, &auth.domains))
         .collect();
+    let accepted: Vec<RowAck> = allowed_changes
+        .iter()
+        .map(|c| RowAck {
+            table: c.table.clone(),
+            id: c.id.clone(),
+        })
+        .collect();
     metrics.dropped_push = body_changes_len.saturating_sub(allowed_changes.len());
 
     // Apply the caller's changes first, then pull — so a row the caller just
@@ -200,6 +228,7 @@ async fn sync_inner(
         seq: page.high_seq,
         changes: page.changes,
         more: page.more,
+        accepted,
     };
     Response::from_json(&resp).map_err(AppError::from)
 }
