@@ -43,7 +43,7 @@ test.describe('multi-tab Drift sharing', () => {
     const spyA = attachConsoleSpy(tabA);
     await tabA.goto('/');
     await waitForFlutterReady(tabA);
-    for (const route of ['/assets', '/analytics', '/settings']) {
+    for (const route of ['/activity', '/wealth', '/plan', '/settings']) {
       await tabA.goto(route);
       await waitForFlutterReady(tabA);
     }
@@ -64,7 +64,7 @@ test.describe('multi-tab Drift sharing', () => {
     const spyB = attachConsoleSpy(tabB);
     await tabB.goto('/');
     await waitForFlutterReady(tabB);
-    for (const route of ['/assets', '/analytics', '/settings']) {
+    for (const route of ['/activity', '/wealth', '/plan', '/settings']) {
       await tabB.goto(route);
       await waitForFlutterReady(tabB);
     }

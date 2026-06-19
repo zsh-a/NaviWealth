@@ -44,7 +44,7 @@ test.describe('Drift persistence', () => {
 
     // Walk every tab so any DB-touching widget that lands on one of them
     // gets a chance to materialize `appDatabaseProvider`.
-    for (const route of ['/assets', '/analytics', '/settings', '/']) {
+    for (const route of ['/activity', '/wealth', '/plan', '/settings', '/']) {
       await page.goto(route);
       await waitForFlutterReady(page);
     }
@@ -85,7 +85,7 @@ test.describe('Drift persistence', () => {
     const spy = attachConsoleSpy(page);
     await page.goto('/');
     await waitForFlutterReady(page);
-    for (const route of ['/assets', '/analytics', '/settings']) {
+    for (const route of ['/activity', '/wealth', '/plan', '/settings']) {
       await page.goto(route);
       await waitForFlutterReady(page);
     }
@@ -100,7 +100,7 @@ test.describe('Drift persistence', () => {
 
     await page.reload();
     await waitForFlutterReady(page);
-    for (const route of ['/assets', '/analytics', '/settings']) {
+    for (const route of ['/activity', '/wealth', '/plan', '/settings']) {
       await page.goto(route);
       await waitForFlutterReady(page);
     }
