@@ -205,6 +205,7 @@ class _AggregateHeader extends StatelessWidget {
         hasCost = true;
       }
     }
+    final contextSummary = summarizeContextPackTraceWindow(traces);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s16,
@@ -242,6 +243,30 @@ class _AggregateHeader extends StatelessWidget {
                 AiPill(label: 'p95 ${p95}ms'),
                 if (tokens > 0) AiPill(label: '$tokens tok'),
                 if (hasCost) AiPill(label: '≈¥${cost.toStringAsFixed(3)}'),
+                if (contextSummary.hasSamples) ...[
+                  AiPill(
+                    label:
+                        'ctx avg ${_formatBytes(contextSummary.avgPackBytes)}',
+                  ),
+                  AiPill(
+                    label:
+                        'ctx p95 ${_formatBytes(contextSummary.p95PackBytes)}',
+                  ),
+                  AiPill(
+                    label:
+                        'appendix avg '
+                        '${_formatBytes(contextSummary.avgAppendixBytes)}',
+                  ),
+                  if (contextSummary.appendixCapBytes > 0)
+                    AiPill(
+                      label:
+                          'appendix p95 '
+                          '${contextSummary.p95AppendixCapPercent}% cap',
+                      state: contextSummary.p95AppendixCapPercent >= 80
+                          ? AiPillState.selected
+                          : AiPillState.neutral,
+                    ),
+                ],
               ],
             ),
           ],
@@ -255,6 +280,102 @@ class _AggregateHeader extends StatelessWidget {
     final idx = ((sortedAsc.length - 1) * q).round();
     return sortedAsc[idx];
   }
+}
+
+/// Aggregate over recent trace root-span ContextPack sizing attributes.
+///
+/// This powers the batch-D decision about whether ContextPack pre-load
+/// is worth its prompt cost. It intentionally ignores traces written
+/// before these attributes existed, so the sample count is explicit.
+class ContextPackTraceWindowSummary {
+  const ContextPackTraceWindowSummary({
+    required this.windowCount,
+    required this.sampleCount,
+    required this.avgPackBytes,
+    required this.p95PackBytes,
+    required this.avgAppendixBytes,
+    required this.p95AppendixBytes,
+    required this.appendixCapBytes,
+  });
+
+  final int windowCount;
+  final int sampleCount;
+  final int avgPackBytes;
+  final int p95PackBytes;
+  final int avgAppendixBytes;
+  final int p95AppendixBytes;
+  final int appendixCapBytes;
+
+  bool get hasSamples => sampleCount > 0;
+
+  int get p95AppendixCapPercent {
+    if (appendixCapBytes <= 0) return 0;
+    return (p95AppendixBytes / appendixCapBytes * 100).round();
+  }
+}
+
+ContextPackTraceWindowSummary summarizeContextPackTraceWindow(
+  List<AiTrace> traces,
+) {
+  final packBytes = <int>[];
+  final appendixBytes = <int>[];
+  var appendixCapBytes = 0;
+  for (final trace in traces) {
+    final attrs = _turnAttributes(trace);
+    final pack = _intAttr(attrs, 'context_pack_json_bytes');
+    final appendix = _intAttr(attrs, 'context_appendix_bytes');
+    if (pack == null || appendix == null) continue;
+    packBytes.add(pack);
+    appendixBytes.add(appendix);
+    final cap = _intAttr(attrs, 'context_appendix_cap_bytes');
+    if (cap != null && cap > 0) appendixCapBytes = cap;
+  }
+
+  packBytes.sort();
+  appendixBytes.sort();
+  return ContextPackTraceWindowSummary(
+    windowCount: traces.length,
+    sampleCount: packBytes.length,
+    avgPackBytes: _avg(packBytes),
+    p95PackBytes: _pctInts(packBytes, 0.95),
+    avgAppendixBytes: _avg(appendixBytes),
+    p95AppendixBytes: _pctInts(appendixBytes, 0.95),
+    appendixCapBytes: appendixCapBytes,
+  );
+}
+
+Map<String, Object?>? _turnAttributes(AiTrace trace) {
+  for (final span in trace.spans) {
+    if (span.kind == AiSpanKind.turn) return span.attributes;
+  }
+  return null;
+}
+
+int? _intAttr(Map<String, Object?>? attrs, String key) {
+  final value = attrs?[key];
+  if (value is int) return value;
+  if (value is num) return value.round();
+  return null;
+}
+
+int _avg(List<int> sortedAsc) {
+  if (sortedAsc.isEmpty) return 0;
+  final total = sortedAsc.fold<int>(0, (sum, value) => sum + value);
+  return (total / sortedAsc.length).round();
+}
+
+int _pctInts(List<int> sortedAsc, double q) {
+  if (sortedAsc.isEmpty) return 0;
+  final idx = ((sortedAsc.length - 1) * q).round();
+  return sortedAsc[idx];
+}
+
+String _formatBytes(int bytes) {
+  if (bytes < 1024) return '${bytes}B';
+  if (bytes < 1024 * 1024) {
+    return '${(bytes / 1024).toStringAsFixed(1)}KB';
+  }
+  return '${(bytes / (1024 * 1024)).toStringAsFixed(2)}MB';
 }
 
 /// Pending-undo section. Lists every persisted entry in
@@ -545,7 +666,8 @@ class AiTransparencyDetailPage extends ConsumerWidget {
             return Center(child: Text(l10n.aiTransparencyTraceNotFound));
           }
           return _TraceWaterfallBody(trace: trace);
-        },        error: (e, _) =>
+        },
+        error: (e, _) =>
             Center(child: Text(l10n.aiTransparencyLoadError('$e'))),
       ),
     );
