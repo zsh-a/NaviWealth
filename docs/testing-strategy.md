@@ -217,8 +217,12 @@ connection every headless test bypasses via `NativeDatabase.memory`.
 `apps/mobile/integration_test/backup_restore_integration_test.dart` then boots
 the real app shell with that file-backed DB, drives Settings → Backup &
 Restore through Page Objects, and restores encrypted bytes through
-`BackupService` into the same on-disk database. The `integration_test` dev
-dependency is wired in `pubspec.yaml`.
+`BackupService` into the same on-disk database.
+`apps/mobile/integration_test/journal_repository_integration_test.dart` covers
+a high-value non-UI write path: `JournalEntryRepository.create()` writes a
+balanced journal entry, postings, and Drift-backed outbox pointers through the
+same production file-backed connection, then proves they survive close/reopen.
+The `integration_test` dev dependency is wired in `pubspec.yaml`.
 
 Because it needs a real device, it runs via the `integration-device.yml`
 workflow on an Android emulator (nightly + manual + PRs touching the
@@ -227,8 +231,7 @@ harness or `core/persistence/`), not the unit-test VM. Run locally with:
 toolchain — it can't run on the headless `flutter test` host).
 
 Next here: broaden the on-device layer to the SQLCipher PRAGMA/key-recovery
-path and add one native smoke for a high-value repository write beyond
-backup/restore.
+path once the production connection implements database encryption.
 
 ## 7. Roadmap
 
@@ -241,14 +244,16 @@ backup/restore.
 - ✅ Integration layer seeded — `test/integration/` real-Drift harness +
   net-worth coverage in every direction (manual asset, liability, securities).
 - ✅ On-device `integration_test/` seeded — real file-backed DB boot/migrate/
-  reopen test + `integration-device.yml` Android-emulator runner (§6).
+  reopen, backup/restore, and journal-repository write smokes +
+  `integration-device.yml` Android-emulator runner (§6).
 - Both new layers run inside the existing `flutter test` job (tagged `flow`
   / `integration` in `dart_test.yaml`); no emulator required.
 
 **P1 — fill the missing layers (in progress):**
 - ✅ Net-worth read model covered in every direction — manual assets,
   liabilities, and ledger-reconstructed securities — through the real chain.
-- ✅ On-device `integration_test/` stood up (real file DB boot + emulator CI).
+- ✅ On-device `integration_test/` stood up (real file DB boot, repository
+  write smoke, backup/restore, and emulator CI).
 - Flow layer: 12 of 12 Tasks done (view net worth, add account, add
   transaction entry, import statement drafts, portfolio analysis, rebalance,
   options income, FIRE report, backup restore, export backup, navigate
