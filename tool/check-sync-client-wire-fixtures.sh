@@ -10,10 +10,16 @@ FIXTURES="${ROOT}/docs/fixtures"
 actual="$(mktemp)"
 trap 'rm -f "${actual}"' EXIT
 
-(
-  cd "${MOBILE}"
-  dart run tool/dump_sync_wire_fixture.dart sync_v2_client_push_row_change
-) >"${actual}"
+check_fixture() {
+  local fixture="$1"
+  (
+    cd "${MOBILE}"
+    dart run tool/dump_sync_wire_fixture.dart "${fixture}"
+  ) >"${actual}"
+  diff -u "${FIXTURES}/${fixture}.json" "${actual}"
+}
 
-diff -u "${FIXTURES}/sync_v2_client_push_row_change.json" "${actual}"
-echo "sync-v2 client-push fixture matches the Dart serializer."
+check_fixture sync_v2_client_push_row_change
+check_fixture sync_v2_client_sync_request
+
+echo "sync-v2 client fixtures match the Dart serializer."

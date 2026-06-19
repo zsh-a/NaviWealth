@@ -1,0 +1,21 @@
+{
+  "seq": 42,
+  "changes": [
+    {
+      "table": "health:health_metrics",
+      "id": "metric-1",
+      "payload": {},
+      "version": "1716381000124.0000-device-b",
+      "deleted": true,
+      "device_id": "device-b",
+      "seq": 42
+    }
+  ],
+  "more": false,
+  "accepted": [
+    {
+      "table": "fin:accounts",
+      "id": "acc-1"
+    }
+  ]
+}

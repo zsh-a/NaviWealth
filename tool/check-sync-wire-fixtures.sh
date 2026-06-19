@@ -14,10 +14,16 @@ FIXTURES="${ROOT}/docs/fixtures"
 actual="$(mktemp)"
 trap 'rm -f "${actual}"' EXIT
 
-cargo run --quiet \
-  --manifest-path "${BACKEND}/Cargo.toml" \
-  --bin dump-sync-wire-fixture \
-  -- sync_v2_server_tombstone_row_change >"${actual}"
+check_fixture() {
+  local fixture="$1"
+  cargo run --quiet \
+    --manifest-path "${BACKEND}/Cargo.toml" \
+    --bin dump-sync-wire-fixture \
+    -- "${fixture}" >"${actual}"
+  diff -u "${FIXTURES}/${fixture}.json" "${actual}"
+}
 
-diff -u "${FIXTURES}/sync_v2_server_tombstone_row_change.json" "${actual}"
-echo "✓ sync-v2 wire fixtures match the Rust serializer."
+check_fixture sync_v2_server_tombstone_row_change
+check_fixture sync_v2_server_sync_response
+
+echo "sync-v2 server fixtures match the Rust serializer."

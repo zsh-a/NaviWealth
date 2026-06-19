@@ -110,21 +110,21 @@ struct SyncRequest {
 }
 
 #[derive(Serialize)]
-struct SyncResponse {
+pub struct SyncResponse {
     /// Cursor the client adopts after applying this page.
-    seq: i64,
-    changes: Vec<RowChange>,
-    more: bool,
+    pub seq: i64,
+    pub changes: Vec<RowChange>,
+    pub more: bool,
     /// Push rows accepted at the domain/protocol boundary. The client only
     /// clears matching outbox pointers, so rejected-domain rows cannot be
     /// silently lost.
-    accepted: Vec<RowAck>,
+    pub accepted: Vec<RowAck>,
 }
 
 #[derive(Serialize)]
-struct RowAck {
-    table: String,
-    id: String,
+pub struct RowAck {
+    pub table: String,
+    pub id: String,
 }
 
 pub async fn sync(req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {

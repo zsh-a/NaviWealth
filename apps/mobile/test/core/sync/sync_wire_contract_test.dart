@@ -49,6 +49,21 @@ void main() {
       expect(change.toJson(), fixture);
     });
 
+    test('client sync request fixture uses RowChange.toJson shape', () {
+      final fixture = _readFixture('sync_v2_client_sync_request.json');
+      final changesRaw = fixture['changes'] as List<Object?>;
+
+      expect(fixture['device_id'], 'device-a');
+      expect(fixture['since'], 41);
+      expect(changesRaw, hasLength(1));
+      final change = RowChange.fromJson(
+        (changesRaw.single as Map<Object?, Object?>).map(
+          (key, value) => MapEntry(key.toString(), value),
+        ),
+      );
+      expect(change.toJson(), changesRaw.single);
+    });
+
     test('RowChange.toJson preserves tombstone shape', () {
       // SP-B-5: a delete is still a row-state change with the same row id.
       const change = RowChange(
@@ -145,6 +160,38 @@ void main() {
         'table': 'fin:accounts',
         'id': 'acc-1',
       });
+    });
+
+    test('server sync response fixture parses into SyncResponse shape', () {
+      final fixture = _readFixture('sync_v2_server_sync_response.json');
+      final changesRaw = (fixture['changes'] as List<Object?>)
+          .cast<Map<Object?, Object?>>();
+      final acceptedRaw = (fixture['accepted'] as List<Object?>)
+          .cast<Map<Object?, Object?>>();
+      final response = SyncResponse(
+        seq: (fixture['seq'] as num).toInt(),
+        changes: changesRaw
+            .map(
+              (m) => RowChange.fromJson(
+                m.map((key, value) => MapEntry(key.toString(), value)),
+              ),
+            )
+            .toList(growable: false),
+        more: (fixture['more'] as bool?) ?? false,
+        accepted: acceptedRaw
+            .map(
+              (m) => RowAck.fromJson(
+                m.map((key, value) => MapEntry(key.toString(), value)),
+              ),
+            )
+            .toList(growable: false),
+      );
+
+      expect(response.seq, 42);
+      expect(response.more, isFalse);
+      expect(response.changes.single.table, 'health:health_metrics');
+      expect(response.changes.single.deviceId, 'device-b');
+      expect(response.acceptedKeys, {'fin:accounts\u{0}acc-1'});
     });
   });
 }

@@ -2,7 +2,7 @@ use worker::*;
 
 mod auth;
 pub mod error;
-mod routes;
+pub mod routes;
 pub mod sync;
 
 /// Append CORS headers to a response.
