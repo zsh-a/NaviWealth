@@ -15,6 +15,7 @@ import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/knowledge/ai_tools/recall_decision_tool.dart';
 import 'package:naviwealth/features/knowledge/ai_tools/review_knowledge_health_tool.dart';
 import 'package:naviwealth/features/knowledge/ai_tools/search_knowledge_tool.dart';
@@ -22,10 +23,12 @@ import 'package:naviwealth/features/knowledge/ai_tools/search_notes_tool.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/persistence/test_database.dart';
 
 const _owner = 'u1';
+late SharedPreferences _prefs;
 
 Future<T> _withRef<T>(ProviderContainer c, Future<T> Function(Ref ref) body) {
   final probe = FutureProvider<T>((ref) => body(ref));
@@ -119,6 +122,11 @@ Future<void> _upsertMemorySource(
 }
 
 void main() {
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues(const <String, Object>{});
+    _prefs = await SharedPreferences.getInstance();
+  });
+
   final created = DateTime.utc(2026, 1, 1);
   SyncMeta meta() => SyncMeta(
     ownerUserId: _owner,
@@ -149,6 +157,7 @@ void main() {
       }
       final c = ProviderContainer(
         overrides: [
+          sharedPreferencesProvider.overrideWithValue(_prefs),
           memoryRuntimeProvider.overrideWith((ref) async => rt),
           knowledgeRepositoryProvider.overrideWith((ref) async => repo),
           currentUserIdProvider.overrideWithValue(() async => _owner),
@@ -269,6 +278,7 @@ void main() {
         );
         final c = ProviderContainer(
           overrides: [
+            sharedPreferencesProvider.overrideWithValue(_prefs),
             memoryRuntimeProvider.overrideWith((ref) async => rt),
             knowledgeRepositoryProvider.overrideWith((ref) async => repo),
             currentUserIdProvider.overrideWithValue(() async => _owner),
@@ -333,6 +343,7 @@ void main() {
       );
       final c = ProviderContainer(
         overrides: [
+          sharedPreferencesProvider.overrideWithValue(_prefs),
           memoryRuntimeProvider.overrideWith((ref) async => rt),
           knowledgeRepositoryProvider.overrideWith((ref) async => repo),
           currentUserIdProvider.overrideWithValue(() async => _owner),
@@ -359,6 +370,7 @@ void main() {
       await seed(repo);
       final c = ProviderContainer(
         overrides: [
+          sharedPreferencesProvider.overrideWithValue(_prefs),
           knowledgeRepositoryProvider.overrideWith((ref) async => repo),
           currentUserIdProvider.overrideWithValue(() async => _owner),
         ],

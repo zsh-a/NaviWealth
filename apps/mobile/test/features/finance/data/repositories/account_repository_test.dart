@@ -183,9 +183,9 @@ void main() {
     test('seedSystemAccounts inserts the full tree once', () async {
       final inserted = await repo.seedSystemAccounts();
       // 3 roots plus seeded income / expense / equity leaves.
-      // 37 total today — the count is asserted concretely so a future
+      // 38 total today — the count is asserted concretely so a future
       // seed change has to update the contract.
-      expect(inserted, 37);
+      expect(inserted, 38);
 
       // Re-running is a free no-op — same primary keys, no duplicates.
       final reseeded = await repo.seedSystemAccounts();
@@ -193,7 +193,7 @@ void main() {
 
       final ops = outbox.queued;
       // Inserts on the first call only; the no-op doesn't queue.
-      expect(ops, hasLength(37));
+      expect(ops, hasLength(38));
       expect(ops.every((o) => o.table == 'accounts'), isTrue);
     });
 

@@ -15,15 +15,18 @@ import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/knowledge/ai_tools/find_similar_knowledge_tool.dart';
 import 'package:naviwealth/features/knowledge/ai_tools/propose_merge_tool.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/persistence/test_database.dart';
 
 const _kOwner = 'u1';
+late SharedPreferences _prefs;
 
 MemoryRecord _noteMem({
   required String sourceId,
@@ -92,6 +95,7 @@ Future<ProviderContainer> _seededSearchContainer(
   }
   final c = ProviderContainer(
     overrides: [
+      sharedPreferencesProvider.overrideWithValue(_prefs),
       memoryRuntimeProvider.overrideWith((ref) async => rt),
       knowledgeRepositoryProvider.overrideWith((ref) async => repo),
       currentUserIdProvider.overrideWithValue(() async => _kOwner),
@@ -126,6 +130,11 @@ Future<Map<String, Object?>> _invoke(
 }
 
 void main() {
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues(const <String, Object>{});
+    _prefs = await SharedPreferences.getInstance();
+  });
+
   group('FindSimilarKnowledgeTool', () {
     const tool = FindSimilarKnowledgeTool();
 
@@ -142,6 +151,7 @@ void main() {
       final rt = await _seededRuntime(const []);
       final c = ProviderContainer(
         overrides: [
+          sharedPreferencesProvider.overrideWithValue(_prefs),
           memoryRuntimeProvider.overrideWith((ref) async => rt),
           currentUserIdProvider.overrideWithValue(() async => _kOwner),
         ],
@@ -216,6 +226,7 @@ void main() {
       await seed(repo);
       final c = ProviderContainer(
         overrides: [
+          sharedPreferencesProvider.overrideWithValue(_prefs),
           knowledgeRepositoryProvider.overrideWith((ref) async => repo),
           currentUserIdProvider.overrideWithValue(() async => _kOwner),
         ],

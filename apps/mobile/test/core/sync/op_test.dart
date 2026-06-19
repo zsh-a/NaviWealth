@@ -38,6 +38,8 @@ void main() {
         'approved_underlyings',
         // Options Income Planner P3 — trade journal.
         'options_trade_journal',
+        // HealthOS (`docs/healthos-domain.md` §6.1).
+        'health_metrics',
         // KnowledgeOS (`docs/knowledgeos-domain.md` §9) — all seven tables
         // ride the row-state protocol under the `know:` row family.
         'knowledge_notes',

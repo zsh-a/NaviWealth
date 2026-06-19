@@ -161,11 +161,11 @@ void main() {
 
     test('mobile descriptor catalog carries active device tools', () {
       // 3 shell (query_memory, build_context, ask_user) + 35 FinanceOS +
-      // 6 HealthOS + 16 KnowledgeOS = 60. `ask_user` is the structured
+      // 7 HealthOS + 16 KnowledgeOS = 61. `ask_user` is the structured
       // decision-point tool (Claude-Code-style interactive choices). Each
       // LifeOS domain co-locates its descriptors with its tool barrel; the
       // union here is derived from the production DomainPack registrations.
-      expect(productionToolDescriptors.values, hasLength(60));
+      expect(productionToolDescriptors.values, hasLength(61));
       expect(
         productionToolDescriptors['propose_options_profile_update']?.sideEffect,
         SideEffect.deviceLocalWrite,

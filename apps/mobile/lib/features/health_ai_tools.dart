@@ -15,6 +15,7 @@ import 'health/ai_tools/get_hrv_trend_tool.dart';
 import 'health/ai_tools/get_recent_sleep_summary_tool.dart';
 import 'health/ai_tools/get_recovery_signal_tool.dart';
 import 'health/ai_tools/get_stress_trend_tool.dart';
+import 'health/ai_tools/record_body_measurement_tool.dart';
 
 /// HealthOS device tools and policy metadata. Adding a Health tool means
 /// adding one registration here; the runtime tool list and descriptor map
@@ -31,6 +32,10 @@ final List<RegisteredDeviceTool> kHealthToolRegistrations =
       _healthTool.read(const GetBodyBatteryTrendTool()),
       _healthTool.read(const GetActivitySummaryTool()),
       _healthTool.read(const GetRecoverySignalTool(), risk: RiskLevel.suggest),
+      _healthTool.propose(
+        const RecordBodyMeasurementTool(),
+        risk: RiskLevel.commit,
+      ),
     ];
 
 final List<DeviceTool> kHealthDeviceTools = registeredDeviceTools(
@@ -46,7 +51,7 @@ final Map<String, ToolDescriptor> kHealthToolDescriptors =
 const String kHealthSystemPromptBlock =
     '[HealthOS 域]\n'
     '- 读取工具:get_recent_sleep_summary / get_hrv_trend / get_stress_trend / get_body_battery_trend / get_activity_summary / get_recovery_signal。\n'
-    '- AI 当前不直接写入 HealthOS 指标。用户要记录体重或体脂时,请引导其使用 HealthOS Today 顶部的手动记录入口。\n'
+    '- 写入工具:record_body_measurement。只在用户明确要求记录体重或体脂并给出数值时使用,且需要用户确认。\n'
     '- 解读趋势时使用工具返回的实际数值；不要凭体感推断「最近睡得好不好」。\n'
     '- HRV / 压力 / Body Battery / 恢复评分有窗口期，工具会返回 window_days；引用结论时一并说明窗口长度，便于用户判断信号强度。\n'
     '- 压力和 Body Battery 是 Garmin 独有数据；如果用户未连接 Garmin，这些工具会返回空数据。';
