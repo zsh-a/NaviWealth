@@ -22,11 +22,15 @@ Future<void> showCommandPalette(
   required List<CommandPaletteEntry> commands,
   void Function(String query)? onAskAi,
 }) {
-  if (_isOpen) return Future<void>.value();
-  _isOpen = true;
-  return showFDialog<void>(
+  final current = _openDialog;
+  final navigator = Navigator.of(context);
+  if (current != null && _openNavigator == navigator && navigator.mounted) {
+    return current;
+  }
+  final future = showFDialog<void>(
     context: context,
     barrierDismissible: true,
+    routeSettings: const RouteSettings(name: _kCommandPaletteRouteName),
     // NB: we intentionally do *not* wrap in `FDialog.raw`. forui's dialog
     // vertically centres its (min-sized) child and reserves the keyboard as
     // bottom padding, so on mobile the palette floats to the middle and leaves
@@ -37,20 +41,33 @@ Future<void> showCommandPalette(
       onAskAi: onAskAi,
       animation: animation,
     ),
-  ).whenComplete(() => _isOpen = false);
+  );
+  _openNavigator = navigator;
+  late final Future<void> guarded;
+  guarded = future.whenComplete(() {
+    if (identical(_openDialog, guarded)) {
+      _openDialog = null;
+      _openNavigator = null;
+    }
+  });
+  _openDialog = guarded;
+  return guarded;
 }
 
 @visibleForTesting
-bool get debugCommandPaletteOpen => _isOpen;
+bool get debugCommandPaletteOpen => _openDialog != null;
 
 /// Test-only: clear the open-guard so a previous test that bailed before the
 /// dialog popped doesn't make the next call a no-op.
 @visibleForTesting
 void resetCommandPaletteForTest() {
-  _isOpen = false;
+  _openDialog = null;
+  _openNavigator = null;
 }
 
-bool _isOpen = false;
+const String _kCommandPaletteRouteName = 'command-palette';
+Future<void>? _openDialog;
+NavigatorState? _openNavigator;
 const double _kCommandRowExtent = AppSpacing.s56;
 
 class _CommandPaletteDialog extends ConsumerStatefulWidget {

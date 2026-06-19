@@ -13,6 +13,8 @@ import '../domain/knowledge_text.dart';
 import 'knowledge_object_memory_indexers.dart';
 import 'knowledge_repository.dart';
 
+const int _lexicalFallbackPageSize = 100;
+
 class KnowledgeSearchService {
   KnowledgeSearchService({
     required KnowledgeRepository repository,
@@ -194,39 +196,50 @@ class KnowledgeSearchService {
       if (out.isNotEmpty) return out;
     }
 
-    final decisions = await _repository.listDecisions(
-      ownerUserId: ownerUserId,
-      limit: 1000,
-    );
     final out = <KnowledgeDecisionSearchHit>[];
-    for (final decision in decisions) {
-      if (!_matchesDecisionFilters(
-        decision,
-        query: q,
-        topic: topicQuery,
-        from: from,
-        to: to,
-      )) {
-        continue;
-      }
-      final doc = KnowledgeSearchDocument.fromDecision(decision);
-      final lexical = q.isEmpty
-          ? const KnowledgeLexicalMatch(score: 1, matchedFields: <String>[])
-          : KnowledgeLexicalMatch.calculate(q, doc);
-      out.add(
-        KnowledgeDecisionSearchHit(
-          decision: decision,
-          hit: KnowledgeSearchHit(
-            document: doc,
-            score: q.isEmpty ? 1 : lexical.score,
-            semanticScore: null,
-            semanticSim: null,
-            lexicalScore: q.isEmpty ? 1 : lexical.score,
-            matchedFields: lexical.matchedFields,
-          ),
-        ),
+    var offset = 0;
+    while (true) {
+      final decisions = await _repository.listDecisions(
+        ownerUserId: ownerUserId,
+        limit: _lexicalFallbackPageSize,
+        offset: offset,
       );
-      if (out.length >= effectiveLimit) break;
+      if (decisions.isEmpty) break;
+      for (final decision in decisions) {
+        if (!_matchesDecisionFilters(
+          decision,
+          query: q,
+          topic: topicQuery,
+          from: from,
+          to: to,
+        )) {
+          continue;
+        }
+        final doc = KnowledgeSearchDocument.fromDecision(decision);
+        final lexical = q.isEmpty
+            ? const KnowledgeLexicalMatch(score: 1, matchedFields: <String>[])
+            : KnowledgeLexicalMatch.calculate(q, doc);
+        out.add(
+          KnowledgeDecisionSearchHit(
+            decision: decision,
+            hit: KnowledgeSearchHit(
+              document: doc,
+              score: q.isEmpty ? 1 : lexical.score,
+              semanticScore: null,
+              semanticSim: null,
+              lexicalScore: q.isEmpty ? 1 : lexical.score,
+              matchedFields: lexical.matchedFields,
+            ),
+          ),
+        );
+      }
+      out.sort((a, b) => _compareHits(a.hit, b.hit));
+      if (out.length > effectiveLimit) {
+        out.removeRange(effectiveLimit, out.length);
+      }
+      if (q.isEmpty && out.length >= effectiveLimit) break;
+      if (decisions.length < _lexicalFallbackPageSize) break;
+      offset += decisions.length;
     }
     out.sort((a, b) => _compareHits(a.hit, b.hit));
     return out.take(effectiveLimit).toList(growable: false);
@@ -373,24 +386,38 @@ class KnowledgeSearchService {
     required Set<String> types,
     required int limit,
   }) async {
-    final docs = <KnowledgeSearchDocument>[];
-    for (final type in types) {
-      docs.addAll(await _documentsForKind(ownerUserId, type));
-    }
     final hits = <KnowledgeSearchHit>[];
-    for (final doc in docs) {
-      final lexical = KnowledgeLexicalMatch.calculate(query, doc);
-      if (lexical.score <= 0) continue;
-      hits.add(
-        KnowledgeSearchHit(
-          document: doc,
-          score: lexical.score,
-          semanticScore: null,
-          semanticSim: null,
-          lexicalScore: lexical.score,
-          matchedFields: lexical.matchedFields,
-        ),
-      );
+    for (final type in types) {
+      var offset = 0;
+      while (true) {
+        final docs = await _documentsForKind(
+          ownerUserId,
+          type,
+          limit: _lexicalFallbackPageSize,
+          offset: offset,
+        );
+        if (docs.isEmpty) break;
+        for (final doc in docs) {
+          final lexical = KnowledgeLexicalMatch.calculate(query, doc);
+          if (lexical.score <= 0) continue;
+          hits.add(
+            KnowledgeSearchHit(
+              document: doc,
+              score: lexical.score,
+              semanticScore: null,
+              semanticSim: null,
+              lexicalScore: lexical.score,
+              matchedFields: lexical.matchedFields,
+            ),
+          );
+        }
+        hits.sort(_compareHits);
+        if (hits.length > limit) {
+          hits.removeRange(limit, hits.length);
+        }
+        if (docs.length < _lexicalFallbackPageSize) break;
+        offset += docs.length;
+      }
     }
     hits.sort(_compareHits);
     return hits.take(limit).toList(growable: false);
@@ -398,36 +425,45 @@ class KnowledgeSearchService {
 
   Future<List<KnowledgeSearchDocument>> _documentsForKind(
     String ownerUserId,
-    String kind,
-  ) async {
+    String kind, {
+    required int limit,
+    required int offset,
+  }) async {
     return switch (kind) {
       'note' => (await _repository.listNotes(
         ownerUserId: ownerUserId,
-        limit: 1000,
+        limit: limit,
+        offset: offset,
       )).map(KnowledgeSearchDocument.fromNote).toList(growable: false),
       'principle' => (await _repository.listPrinciples(
         ownerUserId: ownerUserId,
-        limit: 1000,
+        limit: limit,
+        offset: offset,
       )).map(KnowledgeSearchDocument.fromPrinciple).toList(growable: false),
       'assumption' => (await _repository.listAssumptions(
         ownerUserId: ownerUserId,
-        limit: 1000,
+        limit: limit,
+        offset: offset,
       )).map(KnowledgeSearchDocument.fromAssumption).toList(growable: false),
       'concept' => (await _repository.listConcepts(
         ownerUserId: ownerUserId,
-        limit: 1000,
+        limit: limit,
+        offset: offset,
       )).map(KnowledgeSearchDocument.fromConcept).toList(growable: false),
       'experiment' => (await _repository.listExperiments(
         ownerUserId: ownerUserId,
-        limit: 1000,
+        limit: limit,
+        offset: offset,
       )).map(KnowledgeSearchDocument.fromExperiment).toList(growable: false),
       'decision' => (await _repository.listDecisions(
         ownerUserId: ownerUserId,
-        limit: 1000,
+        limit: limit,
+        offset: offset,
       )).map(KnowledgeSearchDocument.fromDecision).toList(growable: false),
       'routine' => (await _repository.listRoutines(
         ownerUserId: ownerUserId,
-        limit: 1000,
+        limit: limit,
+        offset: offset,
       )).map(KnowledgeSearchDocument.fromRoutine).toList(growable: false),
       _ => const <KnowledgeSearchDocument>[],
     };

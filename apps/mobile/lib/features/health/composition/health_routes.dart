@@ -3,18 +3,20 @@
 ///
 /// Mirrors `features/finance/composition/finance_routes.dart`. Self-
 /// contained per Plan B: every Health route lives here so adding a
-/// third domain doesn't touch existing domain files. No deferred
-/// libraries today — placeholder pages ship in the main bundle.
+/// third domain doesn't touch existing domain files. The page widgets
+/// are deferred so HealthOS stays off the main bundle until the user
+/// opts in or navigates into the domain.
 library;
 
 import 'package:go_router/go_router.dart';
 
+import '../../../app/deferred_route.dart';
 import '../../../app/domain_tabs_shell.dart';
 import '../../../app/route_paths.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../ui/health_plan_page.dart';
-import '../ui/health_today_page.dart';
-import '../ui/health_trend_page.dart';
+import '../ui/health_plan_page.dart' deferred as plan_lib;
+import '../ui/health_today_page.dart' deferred as today_lib;
+import '../ui/health_trend_page.dart' deferred as trend_lib;
 import 'health_domain_shell.dart';
 
 /// HealthOS `StatefulShellRoute`: 3 branches (Today / Trend / Plan)
@@ -32,7 +34,10 @@ StatefulShellRoute healthShellRoute() {
           GoRoute(
             path: AppRoutes.healthToday,
             name: AppRouteNames.healthToday,
-            builder: (context, state) => const HealthTodayPage(),
+            builder: (context, state) => DeferredRoute(
+              load: today_lib.loadLibrary,
+              builder: (_) => today_lib.HealthTodayPage(),
+            ),
           ),
         ],
       ),
@@ -41,8 +46,13 @@ StatefulShellRoute healthShellRoute() {
           GoRoute(
             path: AppRoutes.healthTrend,
             name: AppRouteNames.healthTrend,
-            builder: (context, state) =>
-                HealthTrendPage.fromQuery(state.uri.queryParameters),
+            builder: (context, state) {
+              final query = state.uri.queryParameters;
+              return DeferredRoute(
+                load: trend_lib.loadLibrary,
+                builder: (_) => trend_lib.HealthTrendPage.fromQuery(query),
+              );
+            },
           ),
         ],
       ),
@@ -51,10 +61,21 @@ StatefulShellRoute healthShellRoute() {
           GoRoute(
             path: AppRoutes.healthPlan,
             name: AppRouteNames.healthPlan,
-            builder: (context, state) => const HealthPlanPage(),
+            builder: (context, state) => DeferredRoute(
+              load: plan_lib.loadLibrary,
+              builder: (_) => plan_lib.HealthPlanPage(),
+            ),
           ),
         ],
       ),
     ],
   );
+}
+
+Future<void> preloadHealthDeferredRoutesForTest() async {
+  await Future.wait<void>(<Future<void>>[
+    today_lib.loadLibrary(),
+    trend_lib.loadLibrary(),
+    plan_lib.loadLibrary(),
+  ]);
 }

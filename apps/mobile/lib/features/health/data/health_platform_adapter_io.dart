@@ -18,7 +18,7 @@
 /// | totalEnergyDaily      | —                                        | `TOTAL_CALORIES_BURNED`                             |
 /// | floorsClimbedDaily    | `FLIGHTS_CLIMBED`                        | `FLIGHTS_CLIMBED`                                   |
 /// | respiratoryRateDaily  | `RESPIRATORY_RATE`                       | `RESPIRATORY_RATE`                                  |
-/// | vo2Max                | *not yet exposed by `package:health@13.3.1`* — list stays empty until plugin support lands or a native channel is added |
+/// | vo2Max                | Native HealthKit channel                 | Not exposed by `package:health` yet                 |
 ///
 /// The plugin returns meters in both cases (we still bucket per UTC day
 /// and sum, matching the steps/active-energy pipeline).
@@ -34,6 +34,7 @@ library;
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:health/health.dart';
 
 import 'health_platform_adapter.dart';
@@ -42,6 +43,10 @@ HealthPlatformAdapter createHealthPlatformAdapter() => _HealthPackageAdapter();
 
 class _HealthPackageAdapter implements HealthPlatformAdapter {
   _HealthPackageAdapter();
+
+  static const MethodChannel _healthKitChannel = MethodChannel(
+    'com.naviwealth.healthkit',
+  );
 
   final Health _health = Health();
   bool _configured = false;
@@ -142,10 +147,12 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
   Future<bool> requestPermissions() async {
     if (!await isAvailable()) return false;
     final types = _types;
-    return _health.requestAuthorization(
+    final granted = await _health.requestAuthorization(
       types,
       permissions: _readOnlyPermissions(types),
     );
+    if (!Platform.isIOS) return granted;
+    return granted && await _requestIosVo2MaxAuthorization();
   }
 
   @override
@@ -256,10 +263,7 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
         .whereType<RawWorkoutSession>()
         .toList(growable: false);
 
-    // VO2 max is intentionally empty — see the docstring at the top of
-    // this file. The day `package:health` exposes it (or we add a
-    // native MethodChannel) it lands here.
-    const vo2Max = <RawDailyValue>[];
+    final vo2Max = await _fetchIosVo2Max(from: from, to: to);
 
     return HealthPlatformSnapshot(
       sleepSessions: sleepSessions,
@@ -277,6 +281,70 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
       floorsClimbed: floorsClimbed,
       respiratoryRate: respiratoryRate,
     );
+  }
+
+  Future<bool> _requestIosVo2MaxAuthorization() async {
+    try {
+      return await _healthKitChannel.invokeMethod<bool>(
+            'requestVo2MaxAuthorization',
+          ) ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  Future<List<RawDailyValue>> _fetchIosVo2Max({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    if (!Platform.isIOS) return const <RawDailyValue>[];
+    try {
+      final rows = await _healthKitChannel
+          .invokeListMethod<Object?>('readVo2Max', <String, Object?>{
+            'from': from.toUtc().millisecondsSinceEpoch,
+            'to': to.toUtc().millisecondsSinceEpoch,
+          });
+      if (rows == null || rows.isEmpty) return const <RawDailyValue>[];
+      return _dailyAverageVo2Max(rows);
+    } on MissingPluginException {
+      return const <RawDailyValue>[];
+    } on PlatformException {
+      return const <RawDailyValue>[];
+    }
+  }
+
+  List<RawDailyValue> _dailyAverageVo2Max(List<Object?> rows) {
+    final buckets = <String, _DailyBucket>{};
+    for (final row in rows) {
+      if (row is! Map) continue;
+      final value = (row['value'] as num?)?.toDouble();
+      final measuredAtMs = (row['measured_at_ms'] as num?)?.toInt();
+      if (value == null || measuredAtMs == null) continue;
+      final measuredAt = DateTime.fromMillisecondsSinceEpoch(
+        measuredAtMs,
+        isUtc: true,
+      );
+      final dayKey = _dayKeyUtc(measuredAt);
+      final bucket = buckets.putIfAbsent(
+        dayKey,
+        () => _DailyBucket(
+          dayKey: dayKey,
+          source: row['source_device'] as String?,
+        ),
+      );
+      bucket.add(value);
+    }
+    return buckets.values
+        .map(
+          (b) => b.toDaily(
+            externalId: 'hk:vo2_max:${b.dayKey}',
+            reduce: _Reduce.average,
+          ),
+        )
+        .toList(growable: false);
   }
 
   RawSleepSession? _sleepFrom(HealthDataPoint p, String platformPrefix) {

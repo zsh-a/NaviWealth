@@ -78,6 +78,7 @@ final DomainPack kHealthPack = DomainPack(
   systemPromptBlock: kHealthSystemPromptBlock,
   shellSpecBuilder: healthDomainShell,
   shellRouteBuilder: healthShellRoute,
+  deferredPreloader: preloadHealthDeferredRoutesForTest,
   tabPaths: [
     AppRoutes.healthToday,
     AppRoutes.healthTrend,

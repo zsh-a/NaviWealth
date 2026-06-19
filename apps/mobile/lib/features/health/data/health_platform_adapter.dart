@@ -112,13 +112,11 @@ class HealthPlatformSnapshot {
   /// reports — any may be missing.
   final List<RawWorkoutSession> workouts;
 
-  /// Daily VO2 max (ml/(kg·min)). HK `HKQuantityTypeIdentifierVO2Max`
-  /// / HC `Vo2MaxRecord`. **NOTE**: as of `package:health@13.3.1` the
-  /// plugin does not expose VO2 max — adapters keep this list empty
-  /// until either the plugin gains VO2 max support or a native
-  /// MethodChannel is added. The rest of the pipeline (repo / sync /
-  /// indexer / AI tools) is wired so the day VO2 starts flowing only
-  /// the adapter needs to change.
+  /// Daily VO2 max (ml/(kg·min)). iOS reads
+  /// `HKQuantityTypeIdentifierVO2Max` through the app's native
+  /// HealthKit channel because `package:health` does not expose the
+  /// type yet. Android stays empty until the plugin or a Health
+  /// Connect channel exposes `Vo2MaxRecord`.
   final List<RawDailyValue> vo2Max;
 
   /// Daily walking + running distance (meters). HK

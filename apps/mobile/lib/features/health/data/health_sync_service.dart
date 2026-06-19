@@ -16,11 +16,8 @@ library;
 
 import 'dart:convert';
 
-import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
-import 'package:naviwealth/core/sync/sync_meta.dart';
 
-import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 import 'health_metric_ingestor.dart';
 import 'health_metric_repository.dart';
@@ -128,7 +125,7 @@ class HealthSyncService {
       );
     }
 
-    final ingest = await _ingestor.ingest(_metricsFromSnapshot(snapshot));
+    final ingest = await _ingestor.ingestRaw(_metricsFromSnapshot(snapshot));
 
     return HealthSyncResult(
       startedAt: startedAt,
@@ -139,7 +136,7 @@ class HealthSyncService {
     );
   }
 
-  Iterable<HealthMetric> _metricsFromSnapshot(
+  Iterable<RawHealthMetric> _metricsFromSnapshot(
     HealthPlatformSnapshot snapshot,
   ) sync* {
     for (final s in snapshot.sleepSessions) {
@@ -186,7 +183,7 @@ class HealthSyncService {
     }
   }
 
-  HealthMetric _sleepMetric(RawSleepSession s) => HealthMetric(
+  RawHealthMetric _sleepMetric(RawSleepSession s) => RawHealthMetric(
     id: s.externalId,
     capturedAt: s.startedAt,
     kind: HealthMetricKind.sleepSession,
@@ -194,32 +191,29 @@ class HealthSyncService {
     unit: HealthMetricKind.sleepSession.defaultUnit,
     payloadJson: s.stageHistogramJson,
     sourceDevice: s.sourceDevice,
-    sync: _placeholderSync,
   );
 
-  HealthMetric _dailyMetric(RawDailyValue d, HealthMetricKind kind) =>
-      HealthMetric(
+  RawHealthMetric _dailyMetric(RawDailyValue d, HealthMetricKind kind) =>
+      RawHealthMetric(
         id: d.externalId,
         capturedAt: d.day,
         kind: kind,
         value: d.value,
         unit: kind.defaultUnit,
         sourceDevice: d.sourceDevice,
-        sync: _placeholderSync,
       );
 
-  HealthMetric _pointMetric(RawPointValue p, HealthMetricKind kind) =>
-      HealthMetric(
+  RawHealthMetric _pointMetric(RawPointValue p, HealthMetricKind kind) =>
+      RawHealthMetric(
         id: p.externalId,
         capturedAt: p.measuredAt,
         kind: kind,
         value: p.value,
         unit: kind.defaultUnit,
         sourceDevice: p.sourceDevice,
-        sync: _placeholderSync,
       );
 
-  HealthMetric _workoutMetric(RawWorkoutSession w) {
+  RawHealthMetric _workoutMetric(RawWorkoutSession w) {
     // Stable, canonical payload so `_payloadEquivalent` can rely on
     // string equality. Keep fields in a fixed order via the literal
     // map and only include non-null values to avoid string churn when
@@ -230,7 +224,7 @@ class HealthSyncService {
       if (w.totalDistanceMeters != null)
         'total_distance_meters': w.totalDistanceMeters,
     };
-    return HealthMetric(
+    return RawHealthMetric(
       id: w.externalId,
       capturedAt: w.startedAt,
       kind: HealthMetricKind.workoutSession,
@@ -238,15 +232,6 @@ class HealthSyncService {
       unit: HealthMetricKind.workoutSession.defaultUnit,
       payloadJson: payload.isEmpty ? null : jsonEncode(payload),
       sourceDevice: w.sourceDevice,
-      sync: _placeholderSync,
     );
   }
-
-  /// Sync meta is replaced by [HealthMetricIngestor] right before writes.
-  static final SyncMeta _placeholderSync = SyncMeta(
-    ownerUserId: '',
-    updatedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-    updatedByDevice: '',
-    hlc: Hlc.zero('placeholder'),
-  );
 }

@@ -119,6 +119,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
   Future<List<KnowledgeNote>> listNotes({
     required String ownerUserId,
     int limit = 200,
+    int offset = 0,
   }) async {
     final q = _db.select(_db.knowledgeNotes)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
@@ -126,7 +127,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ..orderBy([
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
-      ..limit(limit);
+      ..limit(limit, offset: offset);
     final rows = await q.get();
     return rows.map(_noteFromRow).toList();
   }
@@ -186,6 +187,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
   Future<List<KnowledgePrinciple>> listPrinciples({
     required String ownerUserId,
     int limit = 1000,
+    int offset = 0,
   }) async {
     final q = _db.select(_db.knowledgePrinciples)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
@@ -193,7 +195,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ..orderBy([
         (t) => OrderingTerm(expression: t.declaredAt, mode: OrderingMode.desc),
       ])
-      ..limit(limit);
+      ..limit(limit, offset: offset);
     final rows = await q.get();
     return rows.map(_principleFromRow).toList();
   }
@@ -263,6 +265,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
   Future<List<KnowledgeAssumption>> listAssumptions({
     required String ownerUserId,
     int limit = 1000,
+    int offset = 0,
   }) async {
     final q = _db.select(_db.knowledgeAssumptions)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
@@ -270,7 +273,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ..orderBy([
         (t) => OrderingTerm(expression: t.declaredAt, mode: OrderingMode.desc),
       ])
-      ..limit(limit);
+      ..limit(limit, offset: offset);
     final rows = await q.get();
     return rows.map(_assumptionFromRow).toList();
   }
@@ -351,6 +354,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
     required String ownerUserId,
     Set<DecisionStatus>? statuses,
     int limit = 200,
+    int offset = 0,
   }) async {
     final q = _db.select(_db.knowledgeDecisions)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
@@ -365,7 +369,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ..orderBy([
         (t) => OrderingTerm(expression: t.decidedAt, mode: OrderingMode.desc),
       ])
-      ..limit(limit);
+      ..limit(limit, offset: offset);
     final rows = await q.get();
     return rows.map(_decisionFromRow).toList();
   }
@@ -504,6 +508,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
   Future<List<KnowledgeExperiment>> listExperiments({
     required String ownerUserId,
     int limit = 1000,
+    int offset = 0,
   }) async {
     final q = _db.select(_db.knowledgeExperiments)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
@@ -511,7 +516,7 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
       ..orderBy([
         (t) => OrderingTerm(expression: t.startedAt, mode: OrderingMode.desc),
       ])
-      ..limit(limit);
+      ..limit(limit, offset: offset);
     final rows = await q.get();
     return rows.map(_experimentFromRow).toList();
   }
@@ -597,12 +602,13 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
   Future<List<KnowledgeRoutine>> listRoutines({
     required String ownerUserId,
     int limit = 1000,
+    int offset = 0,
   }) async {
     final q = _db.select(_db.knowledgeRoutines)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([(t) => OrderingTerm(expression: t.nextDueAt)])
-      ..limit(limit);
+      ..limit(limit, offset: offset);
     final rows = await q.get();
     return rows.map(_routineFromRow).toList();
   }
@@ -648,12 +654,13 @@ WHERE id = ? AND owner_user_id = ? AND deleted_at IS NULL
   Future<List<KnowledgeConcept>> listConcepts({
     required String ownerUserId,
     int limit = 1000,
+    int offset = 0,
   }) async {
     final q = _db.select(_db.knowledgeConcepts)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([(t) => OrderingTerm(expression: t.name)])
-      ..limit(limit);
+      ..limit(limit, offset: offset);
     final rows = await q.get();
     return rows.map(_conceptFromRow).toList();
   }

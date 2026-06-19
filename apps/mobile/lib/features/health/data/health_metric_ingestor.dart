@@ -5,7 +5,6 @@
 /// the same conflict/outbox behavior.
 library;
 
-import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 
@@ -32,7 +31,7 @@ class RawHealthMetric {
   final String? payloadJson;
   final String? sourceDevice;
 
-  HealthMetric toUnstamped() => HealthMetric(
+  HealthMetric toMetric({required SyncMeta sync}) => HealthMetric(
     id: id,
     capturedAt: capturedAt,
     kind: kind,
@@ -40,7 +39,7 @@ class RawHealthMetric {
     unit: unit.isEmpty ? kind.defaultUnit : unit,
     payloadJson: payloadJson,
     sourceDevice: sourceDevice,
-    sync: _placeholderSync,
+    sync: sync,
   );
 }
 
@@ -66,8 +65,33 @@ class HealthMetricIngestor {
   final HealthMetricRepository _repo;
   final MutationStamper _stamper;
 
-  Future<HealthIngestResult> ingestRaw(Iterable<RawHealthMetric> rows) {
-    return ingest(rows.map((r) => r.toUnstamped()));
+  Future<HealthIngestResult> ingestRaw(Iterable<RawHealthMetric> rows) async {
+    final batch = rows.toList(growable: false);
+    if (batch.isEmpty) {
+      return const HealthIngestResult(total: 0, upserted: 0, unchanged: 0);
+    }
+
+    final existingById = await _repo.findByIds(batch.map((r) => r.id));
+    final writes = <HealthMetric>[];
+    var unchanged = 0;
+
+    for (final row in batch) {
+      final existing = existingById[row.id];
+      if (existing != null && _payloadEquivalentRaw(existing, row)) {
+        unchanged++;
+        continue;
+      }
+      final stamped = row.toMetric(sync: await _stampMeta());
+      writes.add(stamped);
+      existingById[row.id] = stamped;
+    }
+
+    await _repo.upsertAll(writes);
+    return HealthIngestResult(
+      total: batch.length,
+      upserted: writes.length,
+      unchanged: unchanged,
+    );
   }
 
   Future<HealthIngestResult> ingest(Iterable<HealthMetric> rows) async {
@@ -100,14 +124,16 @@ class HealthMetricIngestor {
   }
 
   Future<HealthMetric> _stamp(HealthMetric unstamped) async {
+    return unstamped.copyWith(sync: await _stampMeta());
+  }
+
+  Future<SyncMeta> _stampMeta() async {
     final stamp = await _stamper.stamp();
-    return unstamped.copyWith(
-      sync: SyncMeta(
-        ownerUserId: stamp.ownerUserId,
-        updatedAt: stamp.now,
-        updatedByDevice: stamp.deviceId,
-        hlc: stamp.hlc,
-      ),
+    return SyncMeta(
+      ownerUserId: stamp.ownerUserId,
+      updatedAt: stamp.now,
+      updatedByDevice: stamp.deviceId,
+      hlc: stamp.hlc,
     );
   }
 
@@ -119,11 +145,13 @@ class HealthMetricIngestor {
         a.payloadJson == b.payloadJson &&
         a.sourceDevice == b.sourceDevice;
   }
-}
 
-final SyncMeta _placeholderSync = SyncMeta(
-  ownerUserId: '',
-  updatedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-  updatedByDevice: '',
-  hlc: Hlc.zero('placeholder'),
-);
+  bool _payloadEquivalentRaw(HealthMetric a, RawHealthMetric b) {
+    return a.kind == b.kind &&
+        a.capturedAt.isAtSameMomentAs(b.capturedAt) &&
+        a.value == b.value &&
+        a.unit == (b.unit.isEmpty ? b.kind.defaultUnit : b.unit) &&
+        a.payloadJson == b.payloadJson &&
+        a.sourceDevice == b.sourceDevice;
+  }
+}

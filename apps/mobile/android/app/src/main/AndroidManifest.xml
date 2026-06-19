@@ -23,11 +23,10 @@
          returns false for the whole batch, blocking sync. -->
     <uses-permission android:name="android.permission.health.READ_DISTANCE"/>
     <!-- D-2.6 — workout sessions (`HealthDataType.WORKOUT` →
-         `ExerciseSessionRecord` on Health Connect). VO₂max
-         (`READ_VO2_MAX`) intentionally NOT requested yet: `package:health`
-         13.3.1 does not expose VO2_MAX through its enum, so even if the
-         user grants it we have no way to pull data. Add the permission
-         alongside the platform wiring when that lands. -->
+         `ExerciseSessionRecord` on Health Connect). VO2max enters
+         through Garmin and the iOS HealthKit channel today; Android
+         Health Connect VO2max remains pending until the Flutter plugin
+         or a local native channel exposes Vo2MaxRecord. -->
     <uses-permission android:name="android.permission.health.READ_EXERCISE"/>
     <!-- D-2.5b (`docs/healthos-domain.md` §8) — local notifications +
          workmanager. POST_NOTIFICATIONS is the Android 13+ runtime
