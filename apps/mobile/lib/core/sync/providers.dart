@@ -78,8 +78,8 @@ final syncCursorProvider = FutureProvider<int>((ref) async {
   return DriftCursorStore(db).readSeq();
 });
 
-/// Latest local HLC used to stamp local writes. The AI freshness gate
-/// compares this against the read model's watermark.
+/// Latest local HLC used to stamp local writes. Exposed for diagnostics and
+/// any future sync freshness surfaces.
 final syncLocalHlcProvider = FutureProvider<Hlc?>((ref) async {
   ref.watch(syncStatusEventStreamProvider);
   final db = await ref.watch(appDatabaseProvider.future);

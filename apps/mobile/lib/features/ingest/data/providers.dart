@@ -114,14 +114,14 @@ class IngestController {
 
   Future<IngestResult> ingest(IngestSource source) async {
     // §5.10.10 / S5b — privacy gate (隐私门). Image / PDF / email need
-    // cloud Vision; the §5.10.5 posture decides if that is permitted.
+    // provider Vision; the §5.10.5 posture decides if that is permitted.
     final mode = _ref.read(aiPrivacySettingsProvider).mode;
     switch (ingestPrivacyGate(source.kind, mode)) {
       case IngestGateVerdict.blockedByPrivacy:
         return const IngestResult(
           drafts: <IngestDraft>[],
           rejectedReason:
-              '隐私模式「金额完全本地」已禁用云端解析；'
+              '隐私模式「金额完全本地」已禁用模型解析；'
               '请改用 CSV / 文本粘贴，或在设置中调整 AI 隐私模式',
         );
       case IngestGateVerdict.cloudAllowed:
@@ -208,9 +208,9 @@ class IngestController {
     return result;
   }
 
-  /// Best-effort transparency record — a Vision parse is a cloud model
-  /// call and must show up in the §5.10.5 audit surface. Failing to
-  /// write the trace never fails the ingest.
+  /// Best-effort transparency record — a Vision parse sends content to the
+  /// user's configured model provider and must show up in the §5.10.5 audit
+  /// surface. Failing to write the trace never fails the ingest.
   Future<void> _appendCloudTrace({
     required String requestId,
     required IngestSourceKind kind,

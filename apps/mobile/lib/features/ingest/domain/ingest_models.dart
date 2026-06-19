@@ -8,9 +8,9 @@
 library;
 
 /// Where a batch of raw input came from. Only [csv] / [pasteText] are
-/// handled on-device in S5a; the image / pdf / email kinds are reserved
-/// for the cloud-Vision path (S5b/S5c/S5d) and currently rejected by the
-/// pipeline with a clear reason.
+/// handled by deterministic parsers in S5a; the image / pdf / email kinds
+/// require the provider-Vision path (S5b/S5c/S5d) and are rejected when the
+/// device has no configured model runtime.
 enum IngestSourceKind { csv, pasteText, receiptImage, statementPdf, email }
 
 extension IngestSourceKindX on IngestSourceKind {
@@ -66,8 +66,8 @@ extension DraftStatusX on DraftStatus {
 }
 
 /// A raw input batch handed to the pipeline. [payload] is the textual
-/// content for device kinds (CSV / pasted text) or the base64 binary
-/// for cloud kinds (receipt image / statement PDF); [mime] is set only
+/// content for deterministic kinds (CSV / pasted text) or the base64 binary
+/// for Vision kinds (receipt image / statement PDF); [mime] is set only
 /// for the latter (S5b-vision). [originLabel] is a human breadcrumb
 /// (filename / "粘贴文本") surfaced in the trace.
 class IngestSource {

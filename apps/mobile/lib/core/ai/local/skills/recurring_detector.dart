@@ -40,12 +40,11 @@ class RecurringPattern {
   final DateTime lastSeenAt;
 }
 
-/// The canonical [RecurringPattern] → [AnalyticalUpload] conversion
-/// (§4.3.3). Single source shared by the cloud
-/// `ContextPack.analytical_uploads` path and the device
-/// `get_recurring_patterns` tool, so the device tool's output
-/// is exactly what the backend `recurring_patterns` read model mirrors
-/// (no Dart/Rust heuristic drift; §10).
+/// The canonical [RecurringPattern] → [AnalyticalUpload] conversion.
+///
+/// `AnalyticalUpload` is a historical wire name. Today the output feeds
+/// device prompt context and the `get_recurring_patterns` tool from the
+/// same local heuristic, so prompt preloading and tool responses cannot drift.
 AnalyticalUpload recurringPatternToUpload(RecurringPattern p) {
   return AnalyticalUpload(
     kind: 'recurring_pattern',

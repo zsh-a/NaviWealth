@@ -173,7 +173,7 @@ class AppDatabase extends _$AppDatabase {
       // / OpLog until the user confirms; this is what makes §4.2's
       // "draft gate" hold by construction. `ingest_attachments` is
       // created now (schema-ready) but only wired by S5b/S5c when the
-      // cloud Vision path actually has a blob to stage.
+      // Vision path actually has a blob to stage.
       if (from < 8) {
         await _createIngestTables(this);
       }
@@ -725,7 +725,7 @@ Future<void> _createIngestTables(AppDatabase db) async {
     'ON ingest_drafts(owner_user_id, status, created_at_iso DESC)',
   );
   // Forward-compat: the original capture artefact (receipt image / PDF)
-  // for the S5b/S5c cloud-Vision path. Encrypted at rest by SQLCipher
+  // for the S5b/S5c Vision path. Encrypted at rest by SQLCipher
   // like the rest of the DB; purged on confirm or after expiry. Unused
   // in S5a (text/CSV has no binary blob) but created here so S5b does
   // not need a second schema bump.

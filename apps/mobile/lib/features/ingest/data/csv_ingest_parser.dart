@@ -2,8 +2,8 @@
 ///
 /// No network, no LLM: a pasted CSV / TSV statement is turned into
 /// [ParsedTransaction]s by pure string work. This is the "device-first,
-/// 云端仅在必要时" rule in practice — the cloud Vision path (S5b) only
-/// exists for inputs this parser structurally cannot read (images/PDF).
+/// 模型仅在必要时" rule in practice — the provider-Vision path (S5b)
+/// only exists for inputs this parser structurally cannot read (images/PDF).
 library;
 
 import 'package:decimal/decimal.dart';

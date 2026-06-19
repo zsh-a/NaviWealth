@@ -269,8 +269,10 @@ path once the production connection implements database encryption.
   reviewer-approved reason and must be removed as soon as the test recovers.
 
 **P2 — modern differentiators:**
-- State-machine traversal tests over `ConventionalAsyncNotifier` states
-  (Initial→Loading→Loaded→Error) for sync / import / AI-chat graphs.
+- ✅ Seeded: `ConventionalAsyncNotifier` now has state-machine coverage for
+  build, refresh-with-previous, refresh error, reload semantics, and mutate
+  success/error. Next expansion is applying the same traversal style to sync /
+  import / AI-chat feature graphs.
 - AI exploratory + semantic (vision) validation, nightly, non-blocking.
 
 ## 8. Conventions

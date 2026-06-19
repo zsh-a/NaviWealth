@@ -2,8 +2,8 @@
 ///
 /// This file previously held the full cloud disclosure protocol
 /// (DisclosureRequest / DisclosureResponse / LedgerField / UserConsent /
-/// AnonymizationLevel-keyed responses). The cloud planner is
-/// gone, but the [DisclosurePurpose] enum is still useful: device
+/// AnonymizationLevel-keyed responses). The planner is now the on-device
+/// runtime, but the [DisclosurePurpose] enum is still useful: device
 /// scoped-window tools require callers to declare *why* they're pulling
 /// detail rows, and that requires a stable enumerated value.
 ///

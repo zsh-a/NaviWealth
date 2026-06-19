@@ -1,16 +1,16 @@
 /// On-device Vision ingest (user's own key, direct to the
 /// provider; the original image never reaches our servers).
 ///
-/// Implements the [CloudIngestClient] surface (the cloud Worker relay
-/// was removed), so the ingest pipeline is unchanged. It runs
+/// Implements the historical [CloudIngestClient] surface (the cloud Worker
+/// relay was removed), so the ingest pipeline is unchanged. It runs
 /// the one-shot forced-tool parse locally via [DeviceLlmClient.complete]
 /// using the verbatim-ported schema/prompt/extraction
 /// (`device_vision_parse.dart`), then maps rows through the *shared*
-/// `parsedTransactionFromWire` — so device and cloud yield identical
-/// [ParsedTransaction]s for the same model JSON.
+/// `parsedTransactionFromWire` — so deterministic and Vision paths share the
+/// same [ParsedTransaction] JSON semantics.
 ///
 /// **Privacy-correct divergence from the chat failover (§4.6.4)**: a
-/// device Vision failure is *not* retried on our cloud relay. The user
+/// device Vision failure is *not* retried on a cloud relay. The user
 /// opted into "原图不经我方服务器"; silently re-sending the image to our
 /// Worker would break exactly that promise. The error surfaces instead.
 library;

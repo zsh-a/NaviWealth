@@ -28,11 +28,11 @@ class RefundMatch {
   final String currency;
 }
 
-/// The canonical [RefundMatch] → [AnalyticalUpload] conversion
-/// (§4.3.3). Single source shared by the cloud
-/// `ContextPack.analytical_uploads` path and the device
-/// `get_refund_links` tool so the device tool's output is
-/// exactly what the backend `refund_links` read model mirrors (§10).
+/// The canonical [RefundMatch] → [AnalyticalUpload] conversion.
+///
+/// `AnalyticalUpload` is a historical wire name. Today the output feeds
+/// device prompt context and the `get_refund_links` tool from the same local
+/// heuristic, so prompt preloading and tool responses cannot drift.
 AnalyticalUpload refundMatchToUpload(RefundMatch m) {
   return AnalyticalUpload(
     kind: 'refund_link',

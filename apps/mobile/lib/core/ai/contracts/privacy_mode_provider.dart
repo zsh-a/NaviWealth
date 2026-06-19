@@ -1,13 +1,14 @@
 /// §5.10.5 — runtime user-facing toggle for AI privacy posture.
 ///
-/// The chat path is device-only, so this setting now only
-/// gates the cloud-Vision ingest fallback (see `ingest_privacy_gate`).
+/// The chat path is device-only, so this setting now mainly gates
+/// device-direct Vision ingest that sends image/PDF content to the user's
+/// configured model provider (see `ingest_privacy_gate`).
 /// [maxBudgetTier] is also read by ingest to stamp the AiTrace tier.
 ///
 ///   * `amountsAllowed`  — default for new installs.
 ///   * `amountsBucketed` — middle posture.
-///   * `amountsLocal`    — ingest layer 4 cloud Vision is refused for
-///                         payloads carrying amount-bearing fields.
+///   * `amountsLocal`    — ingest layer 4 Vision is refused for payloads
+///                         carrying amount-bearing fields.
 ///
 /// State is persisted via [SharedPreferences] so a setting picked on
 /// device A survives a relaunch. Cross-device sync of this preference

@@ -29,11 +29,11 @@ class TransferMatch {
   final String currency;
 }
 
-/// The canonical [TransferMatch] → [AnalyticalUpload] conversion
-/// (§4.3.3). Single source shared by the cloud
-/// `ContextPack.analytical_uploads` path and the device
-/// `get_transfer_links` tool so the device tool's output is
-/// exactly what the backend `transfer_links` read model mirrors (§10).
+/// The canonical [TransferMatch] → [AnalyticalUpload] conversion.
+///
+/// `AnalyticalUpload` is a historical wire name. Today the output feeds
+/// device prompt context and the `get_transfer_links` tool from the same local
+/// heuristic, so prompt preloading and tool responses cannot drift.
 AnalyticalUpload transferMatchToUpload(TransferMatch m) {
   return AnalyticalUpload(
     kind: 'transfer_link',

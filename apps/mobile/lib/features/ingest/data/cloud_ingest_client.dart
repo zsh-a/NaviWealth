@@ -32,7 +32,7 @@ abstract class CloudIngestClient {
 String cloudIngestKindWire(IngestSourceKind kind) => switch (kind) {
   IngestSourceKind.receiptImage => 'receipt_image',
   IngestSourceKind.statementPdf => 'statement_pdf',
-  // Device-parsable / email never reach the cloud Vision route.
+  // Device-parsable / email never reach the Vision model route.
   _ => kind.name,
 };
 
@@ -62,8 +62,8 @@ ParsedTransaction? parsedTransactionFromWire(Map<String, Object?> row) {
     description: ((row['description'] as String?) ?? '').trim().isEmpty
         ? '未命名交易'
         : (row['description'] as String).trim(),
-    // S5b backend already follows the expense-negative convention; keep
-    // it regardless so dedup matches the device path's sign.
+    // The S5b wire already follows the expense-negative convention; keep
+    // it regardless so dedup matches the deterministic path's sign.
     amountMinor: -amount.abs(),
     currency: currency.toUpperCase(),
     occurredAt: occurredAt.toUtc(),
