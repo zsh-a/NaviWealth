@@ -100,6 +100,38 @@ void main() {
           'assistant shell; avoid generic "Ask AI" / "AI analysis" labels.',
     );
   });
+
+  test('AI entry topology keeps global contextual ambient ingest layers', () {
+    final globalPalette = File(
+      'lib/core/command_palette/default_commands.dart',
+    ).readAsStringSync();
+    expect(globalPalette, contains("id: 'action.askAi'"));
+    expect(globalPalette, contains('onAskAi'));
+    expect(globalPalette, contains('commandPaletteOpenAi'));
+
+    final contextualCapsule = File(
+      'lib/features/ai_chat/ui/ai_object_capsule.dart',
+    ).readAsStringSync();
+    expect(contextualCapsule, contains('class AiObjectCapsule'));
+    expect(contextualCapsule, contains('askAi('));
+    expect(contextualCapsule, contains('intent: intent'));
+    expect(contextualCapsule, contains('AiContextChipScope.contextMapOf'));
+
+    final ambientFeed = File(
+      'lib/features/home/ui/ai_insight_feed.dart',
+    ).readAsStringSync();
+    expect(ambientFeed, contains('class AiInsightFeed'));
+    expect(ambientFeed, contains('AiObjectCapsule('));
+    expect(ambientFeed, contains("intent: 'explain_insight'"));
+    expect(ambientFeed, contains("source: 'home_insight_card'"));
+
+    final ingestProjection = File(
+      'lib/features/ingest/data/ingest_queue_insight_provider.dart',
+    ).readAsStringSync();
+    expect(ingestProjection, contains('ingestQueueInsightProvider'));
+    expect(ingestProjection, contains('pendingIngestDraftsProvider'));
+    expect(ingestProjection, contains('IngestQueueSummary'));
+  });
 }
 
 final _pushesChatPage = RegExp(
