@@ -15,15 +15,21 @@ void main() {
       token: 'batch-token',
       proposalId: 'batch-1',
       summaryZh: '批量记录 1 项支出',
+      chatSessionId: 'session-1',
+      chatMessageId: 'message-1',
+      chatToolInvocationId: 'tool-1',
       children: [child],
       createdAt: DateTime.utc(2026, 6, 19, 12),
       expiresAt: DateTime.utc(2026, 6, 19, 12, 1),
     );
 
     expect(entry.kind, kBatchProposalUndoKind);
-    expect(entry.showGlobalBanner, isFalse);
+    expect(entry.showGlobalBanner, isTrue);
     expect(entry.payload['proposal_id'], 'batch-1');
     expect(entry.payload['summary_zh'], '批量记录 1 项支出');
+    expect(entry.payload['chat_session_id'], 'session-1');
+    expect(entry.payload['chat_message_id'], 'message-1');
+    expect(entry.payload['chat_tool_invocation_id'], 'tool-1');
 
     final children = batchProposalUndoChildren(entry.payload);
     expect(children, hasLength(1));

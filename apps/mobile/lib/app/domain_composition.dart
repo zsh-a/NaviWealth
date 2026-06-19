@@ -12,9 +12,11 @@ import 'package:flutter_riverpod/misc.dart';
 
 import '../core/ai/agents/agent.dart';
 import '../core/ai/agents/agent_registry.dart';
+import '../core/ai/composition/batch_proposal_undo.dart';
 import '../core/ai/composition/composite_proposal_applier.dart';
 import '../core/ai/composition/device_tools_provider.dart';
 import '../core/ai/composition/proposal_applier.dart';
+import '../core/ai/composition/proposal_apply_state.dart';
 import '../core/ai/composition/proposal_kind_registry.dart';
 import '../core/ai/composition/system_prompt_blocks.dart';
 import '../core/ai/composition/tool_descriptor_lookup.dart';
@@ -23,12 +25,14 @@ import '../core/ai/intent/intent.dart';
 import '../core/ai/runtime/device/tools/device_tool.dart';
 import '../core/ai/runtime/device/tools/device_tool_registry.dart'
     show kShellDeviceToolsCore, kShellToolDescriptors;
+import '../core/ai/write/persisted_undo_dispatcher.dart';
 import '../core/auth/domain_scope.dart';
 import '../core/auth/providers.dart' as auth_providers;
 import '../core/command_palette/command_palette_entry.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/shell/domain_shell.dart';
 import '../design_system/preferences/theme_preferences.dart';
+import '../features/ai_chat/data/providers.dart' as ai_chat_providers;
 import '../l10n/gen/app_localizations.dart';
 import 'domain_packs.dart';
 
@@ -58,6 +62,9 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
       );
       return CompositeProposalApplier(routes: routes);
     }),
+    persistedUndoRevertersProvider.overrideWith((ref) {
+      return appPersistedUndoReverters(ref);
+    }),
     systemPromptBlocksProvider.overrideWith(
       (ref) => domainSystemPromptBlocks(ref.watch(activeDomainPacksProvider)),
     ),
@@ -77,6 +84,46 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
     }),
     ...domainProviderOverrides(resolvedPacks),
   ];
+}
+
+Map<String, PersistedUndoReverter> appPersistedUndoReverters(Ref ref) {
+  return <String, PersistedUndoReverter>{
+    kBatchProposalUndoKind: (entry) async {
+      final applier = await ref.read(proposalApplierProvider.future);
+      final children = batchProposalUndoChildren(entry.payload);
+      for (final childState in children.reversed) {
+        await applier.undo(childState);
+      }
+
+      final sessionId = entry.payload['chat_session_id'] as String?;
+      final messageId = entry.payload['chat_message_id'] as String?;
+      final toolInvocationId =
+          entry.payload['chat_tool_invocation_id'] as String?;
+      if (sessionId == null || messageId == null || toolInvocationId == null) {
+        return;
+      }
+
+      final repo = await ref.read(
+        ai_chat_providers.chatRepositoryProvider.future,
+      );
+      await repo.updateToolApplyState(
+        sessionId: sessionId,
+        messageId: messageId,
+        toolInvocationId: toolInvocationId,
+        newState: ProposalApplyState(
+          status: ProposalApplyStatus.undone,
+          appliedTable: kBatchProposalAppliedTable,
+          appliedAt: entry.createdAt,
+          undoData: <String, Object?>{
+            'proposal_id': entry.payload['proposal_id'],
+            'child_count': children.length,
+          },
+          undoToken: entry.token,
+          shortLabel: entry.payload['summary_zh'] as String?,
+        ),
+      );
+    },
+  };
 }
 
 Locale _resolvedShellLocale(Locale? preferred) {

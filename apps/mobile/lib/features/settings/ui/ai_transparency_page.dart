@@ -24,6 +24,7 @@ import '../../../core/ai/trace/ai_trace_capture_preference.dart';
 import '../../../core/ai/trace/providers.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/ai/write/drift_undo_stack.dart';
+import '../../../core/ai/write/persisted_undo_dispatcher.dart';
 import '../../../core/ai/write/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -536,9 +537,9 @@ class _UndoRow extends ConsumerWidget {
             label: l10n.aiTransparencyUndoAction,
             state: AiPillState.selected,
             onTap: () async {
-              final stack = ref.read(undoStackProvider);
-              if (stack == null) return;
-              await stack.take(entry.token);
+              final dispatcher = ref.read(persistedUndoDispatcherProvider);
+              if (dispatcher == null) return;
+              await dispatcher.undo(entry.token);
             },
           ),
         ],

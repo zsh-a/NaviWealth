@@ -11,11 +11,9 @@
 /// reverter implementation by `kind`, hands it the payload, and lets
 /// it construct + run the inverse mutation.
 ///
-/// This module is intentionally storage-only — the executor refactor
-/// to consult both an in-memory ring AND the persistent stack lives
-/// in a follow-up wave. Storing the primitive first means future
-/// callers that need durability can adopt it without changing the
-/// API for callers that don't.
+/// This module is intentionally storage-only. PersistedUndoDispatcher owns
+/// the `kind` → reverter lookup, while callers that still rely on
+/// process-local closures can keep using LocalImmediateWriteExecutor.
 library;
 
 import 'dart:async';

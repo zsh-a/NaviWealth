@@ -7,5 +7,6 @@ export 'drift_ai_touched_store.dart';
 export 'drift_undo_stack.dart';
 export 'interaction_mode.dart';
 export 'local_immediate_executor.dart';
+export 'persisted_undo_dispatcher.dart';
 export 'persistent_undo_banner.dart';
 export 'providers.dart';

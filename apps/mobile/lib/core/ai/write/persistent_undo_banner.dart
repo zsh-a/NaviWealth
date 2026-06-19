@@ -17,6 +17,7 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../visual/visual.dart';
 import 'drift_undo_stack.dart';
+import 'persisted_undo_dispatcher.dart';
 import 'providers.dart';
 
 class PersistentUndoBanner extends ConsumerWidget {
@@ -54,12 +55,9 @@ class PersistentUndoBanner extends ConsumerWidget {
   }
 
   Future<void> _handleUndo(WidgetRef ref, String token) async {
-    final stack = ref.read(undoStackProvider);
-    if (stack == null) return;
-    await stack.take(token);
-    // The reverter (kind → impl) lookup is the caller's responsibility
-    // — deliberately doesn't bake one in. The banner just
-    // surfaces + removes; future wiring adds the reverter dispatch.
+    final dispatcher = ref.read(persistedUndoDispatcherProvider);
+    if (dispatcher == null) return;
+    await dispatcher.undo(token);
   }
 }
 

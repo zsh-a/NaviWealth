@@ -16,6 +16,9 @@ PersistedUndoEntry buildBatchProposalUndoEntry({
   required String token,
   required String proposalId,
   required String summaryZh,
+  required String chatSessionId,
+  required String chatMessageId,
+  required String chatToolInvocationId,
   required List<ProposalApplyState> children,
   required DateTime createdAt,
   required DateTime expiresAt,
@@ -26,11 +29,11 @@ PersistedUndoEntry buildBatchProposalUndoEntry({
     payload: <String, Object?>{
       'proposal_id': proposalId,
       'summary_zh': summaryZh,
+      'chat_session_id': chatSessionId,
+      'chat_message_id': chatMessageId,
+      'chat_tool_invocation_id': chatToolInvocationId,
       'children': [for (final child in children) child.toJson()],
-      // The global undo banner currently only knows how to consume entries,
-      // not run proposal-specific reversions. Keep this entry owned by the
-      // chat proposal card until a real global reverter dispatch exists.
-      'show_global_banner': false,
+      'show_global_banner': true,
     },
     createdAt: createdAt,
     expiresAt: expiresAt,
