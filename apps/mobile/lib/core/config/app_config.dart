@@ -20,8 +20,7 @@ class AppConfig {
   /// Optional Sentry DSN. Defaults to empty so unconfigured builds keep
   /// the [NoopCrashReporter] and never reach out to sentry.io. Inject in
   /// CI via `--dart-define=SENTRY_DSN=https://...@o0.ingest.sentry.io/0`.
-  /// `roadmap-next.md` §8 picked Sentry SaaS over self-hosted; the actual
-  /// `sentry_flutter` dependency lands together with the DSN secret.
+  /// `roadmap-next.md` §8 picked Sentry SaaS over self-hosted.
   final String sentryDsn;
 
   bool get hasSentryDsn => sentryDsn.isNotEmpty;

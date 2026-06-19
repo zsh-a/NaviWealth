@@ -18,17 +18,14 @@
 ///
 /// ## Wiring
 ///
-/// The default app build uses [NoopCrashReporter] so unit tests and dev runs
-/// don't ship telemetry. To enable Sentry in staging / prod, the integration
-/// task (follow-up) will:
-///   * add `sentry_flutter` to `pubspec.yaml`,
-///   * add a `SentryCrashReporter` implementing this interface and call
-///     `SentryFlutter.init(...)` from `bootstrap.dart`,
-///   * register it via `crashReporterProvider` overrides keyed off
-///     [AppEnvironment].
+/// The default app build uses [NoopCrashReporter] so unit tests, local dev,
+/// and builds without `SENTRY_DSN` don't ship telemetry. Builds that inject
+/// `--dart-define=SENTRY_DSN=...` initialise `sentry_flutter` in
+/// `bootstrap.dart` and install `SentryCrashReporter` as the delegate; the
+/// user opt-in wrapper still gates every event before upload.
 ///
-/// Until then this file is the contract: anything that wants to record errors
-/// goes through [CrashReporter], not the vendor SDK directly.
+/// Anything that wants to record errors goes through [CrashReporter], not the
+/// vendor SDK directly.
 abstract class CrashReporter {
   const CrashReporter();
 

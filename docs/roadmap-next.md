@@ -146,9 +146,9 @@
 - ✅ **Preference + gating** (2026-05-24): `core/logging/crash_reporting_preference.dart`。`crashReportingEnabledProvider` 默认 OFF,`OptInCrashReporter` wrapper 包装任意底层 reporter,disabled 时丢弃所有事件包括 breadcrumb。4 个测试。
 - ✅ **Provider 接线 + Settings UI** (2026-05-24): `crashReporterProvider` 现在包装 delegate + opt-in 状态;Settings 页 Data section 加 `_CrashReportingRow`(`InlineSwitchRow`);新增 l10n key + zh 翻译。3 个集成测试(默认 OFF / 持久化 / opt-in 生效)。
 - ✅ **`LoggingCrashReporter`** (2026-05-24): `core/logging/logging_crash_reporter.dart` — dev/staging 用的 reporter,把 captureError/captureMessage/breadcrumb 路由到 `Talker`,让 opt-in pipeline 在没有 Sentry 依赖时也能端到端 visible(在 logs / TalkerScreen 里看到事件)。5 个测试。
-- ✅ **debug builds 默认装载 LoggingCrashReporter** (2026-05-24): `app/bootstrap.dart` 在 `kDebugMode` 时把 `crashReporterDelegateProvider` 重写为 `LoggingCrashReporter(talker)`。Release 仍是 `NoopCrashReporter` 默认,等 Sentry SDK 接入;opt-in gate 同时套着两者。这意味着开发者现在可以在 dev 里**直接验证 opt-in pipeline 端到端**:翻开 Settings → 启用 → 触发任意错误 → TalkerScreen 可见。
+- ✅ **debug builds 默认装载 LoggingCrashReporter** (2026-05-24): `app/bootstrap.dart` 在未配置 `SENTRY_DSN` 且 `kDebugMode` 时把 `crashReporterDelegateProvider` 重写为 `LoggingCrashReporter(talker)`。这意味着开发者可以在 dev 里**直接验证 opt-in pipeline 端到端**:翻开 Settings → 启用 → 触发任意错误 → TalkerScreen 可见。
 - ✅ **AppConfig DSN slot 已落地** (2026-05-24):`AppConfig.sentryDsn` 通过 `--dart-define=SENTRY_DSN=...` 注入,`hasSentryDsn` 提供布尔门;默认空 = NoopCrashReporter 不变。2 个 config 单测。
-- ⏳ Sentry SDK 实际接入(`sentry_flutter` 依赖 + `SentryCrashReporter` 在 `bootstrap.dart` 里替换 `crashReporterDelegateProvider`)— 决策门 (§8) 已选 **Sentry SaaS** (sentry.io managed),等用户提供 DSN secret + 同意添加 ~2MB SDK 依赖后单独 PR 接入
+- ✅ **Sentry SDK 实际接入** (2026-06-19):`sentry_flutter` 依赖 + `SentryCrashReporter` 已落地;`bootstrap.dart` 在 `SENTRY_DSN` 非空且 SDK 初始化成功时替换 `crashReporterDelegateProvider`。默认仍为 opt-in OFF,无 DSN 时无远端上报。3 个 delegate 测试 + mobile analyze。
 - 详: [midterm 2.6 M1](./roadmap-midterm-execution.md)
 
 ---
@@ -245,7 +245,7 @@
 | ~~`me/` 与 `more/` 的最终去留~~ | §2 N-3 | ✅ **已关闭** (2026-05-24):IA migration (commits aacded4 / 3e37cfc) 后两个目录均不再存在,功能已挪进 Today / Settings。无遗留 caller |
 | ~~Plan tab 内 FIRE / Budget / Cashflow / Income 的二级 IA(平铺还是分组)~~ | §3.2 / §3.3 | ✅ **已关闭** (2026-05-24):`features/plan/ui/plan_hub_page.dart` 已落 flat tile grid (`_PlanSectionGrid`),按"决策面" tile 罗列;不引入二级 tabs,避免 IA 三层嵌套 |
 | Tax export 格式优先级(IRS Schedule D / 中国个税 / 通用 CSV) | §4 M-4 | ⏳ 待决:M-4 启动前需选定 |
-| ~~Crash reporter 后端(自托管 Sentry / Cloudflare D1 自存 / 第三方 SaaS)~~ | §3.6 | ✅ **已决策** (2026-05-24):**Sentry SaaS** (sentry.io managed)。理由:`sentry_flutter` 是行业标配,opt-in 阀已在客户端把关(默认 OFF),不必为单用户 app 跑自托管基础设施;DSN 通过 `--dart-define=SENTRY_DSN=...` 注入。剩余工作:依赖添加 + `SentryCrashReporter` 实现,等 DSN secret |
+| ~~Crash reporter 后端(自托管 Sentry / Cloudflare D1 自存 / 第三方 SaaS)~~ | §3.6 | ✅ **已关闭** (2026-06-19):**Sentry SaaS** (sentry.io managed)。`sentry_flutter` + `SentryCrashReporter` 已接入;DSN 通过 `--dart-define=SENTRY_DSN=...` 注入,默认空且用户未 opt-in 时无远端上报。 |
 | Tradier OAuth 的 backend proxy 是否单独 Worker | §4 M-3 | ⏳ 待决:P5 启动前需选定 |
 
 ---

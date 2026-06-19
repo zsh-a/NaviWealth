@@ -20,6 +20,7 @@ import '../core/logging/app_logger.dart';
 import '../core/logging/crash_reporter.dart';
 import '../core/logging/logging_crash_reporter.dart';
 import '../core/logging/providers.dart';
+import '../core/logging/sentry_crash_reporter.dart';
 import '../core/notifications/providers.dart' as notif_providers;
 import '../core/perf/providers.dart';
 import '../core/sync/providers.dart';
@@ -54,6 +55,7 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
 
   final prefs = await SharedPreferences.getInstance();
   final effectiveConfig = config ?? AppConfig.dev;
+  final sentryReady = await initializeSentryCrashReporter(effectiveConfig);
 
   // Resolve embedder asset paths before the container is built
   // so the override list knows whether to wire the Rust embedder. Each
@@ -68,13 +70,15 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
     overrides: [
       if (config != null) appConfigProvider.overrideWithValue(config),
       sharedPreferencesProvider.overrideWithValue(prefs),
-      // `roadmap-next.md` §3.6 — in debug builds, route captureError /
-      // recordBreadcrumb through TalkerScreen via [LoggingCrashReporter]
-      // so engineers see the opt-in pipeline fire end-to-end without
-      // taking on the `sentry_flutter` dependency. Release builds keep
-      // the [NoopCrashReporter] default until the Sentry SDK lands; the
-      // opt-in gate (`crashReportingEnabledProvider`) still wraps both.
-      if (kDebugMode)
+      // `roadmap-next.md` §3.6 — Sentry is installed only when a build
+      // supplies SENTRY_DSN and SDK init succeeds. Otherwise debug builds
+      // keep routing captureError / breadcrumbs through Talker so engineers
+      // can verify the opt-in pipeline without shipping telemetry.
+      if (sentryReady)
+        crashReporterDelegateProvider.overrideWithValue(
+          const SentryCrashReporter(),
+        )
+      else if (kDebugMode)
         crashReporterDelegateProvider.overrideWith(
           (ref) => LoggingCrashReporter(talker: ref.watch(talkerProvider)),
         ),

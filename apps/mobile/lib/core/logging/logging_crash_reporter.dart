@@ -8,12 +8,11 @@ import 'crash_reporter.dart';
 /// This is the **development-and-staging** sink: it proves the opt-in
 /// pipeline end-to-end (preference flip → `crashReporterProvider` re-emits
 /// → captureError actually surfaces somewhere) without taking on the
-/// `sentry_flutter` dependency or requiring a DSN secret.
+/// risk of shipping telemetry from local runs that do not provide a DSN.
 ///
-/// **Not a replacement for Sentry.** When the production Sentry wiring
-/// lands it should override [crashReporterDelegateProvider] with a
-/// `SentryCrashReporter`; this implementation stays around for dev runs
-/// and tests where shipping telemetry would be wrong.
+/// **Not a replacement for Sentry.** Builds with a configured `SENTRY_DSN`
+/// install `SentryCrashReporter`; this implementation stays around for dev
+/// runs and tests where shipping telemetry would be wrong.
 class LoggingCrashReporter extends CrashReporter {
   LoggingCrashReporter({required Talker talker}) : _talker = talker;
 
