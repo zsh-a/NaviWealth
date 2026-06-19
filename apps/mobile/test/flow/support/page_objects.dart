@@ -289,6 +289,28 @@ class WealthPage {
     await tester.tap(card.first);
     await settle(tester);
   }
+
+  Future<void> openPortfolio() async {
+    final card = find.text('Holdings');
+    expect(card, findsWidgets, reason: 'portfolio entry missing on Wealth');
+    await tester.tap(card.first);
+    await settle(tester);
+  }
+}
+
+/// Wealth → Portfolio analysis surface.
+class PortfolioAnalysisPageObject {
+  PortfolioAnalysisPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectEmptyAnalysis() {
+    expect(find.text('Portfolio'), findsWidgets);
+    expect(find.text('MARKET VALUE'), findsOneWidget);
+    expect(find.text('Allocation'), findsOneWidget);
+    expect(find.text('Positions'), findsOneWidget);
+    expect(find.text('No investment holdings yet.'), findsWidgets);
+  }
 }
 
 /// Accounts list surface.
