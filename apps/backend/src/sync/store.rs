@@ -260,6 +260,7 @@ pub async fn max_seq(db: &D1Database, user_id: &str) -> Result<i64, AppError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     // Version tokens are compared lexically; the client mints them so they
     // sort the same as their intended order (canonical HLC strings do).
@@ -290,5 +291,63 @@ mod tests {
         // Lower device_id loses; equal device_id is an idempotent no-op.
         assert!(!lww_wins(v, "dev-a", Some(&stored)));
         assert!(!lww_wins(v, "dev-b", Some(&stored)));
+    }
+
+    #[test]
+    fn row_change_deserializes_client_push_shape() {
+        let row: RowChange = serde_json::from_value(json!({
+            "table": "fin:accounts",
+            "id": "acc-1",
+            "payload": {
+                "id": "acc-1",
+                "name": "Cash",
+                "hlc": "1716381000123.0000-device-a"
+            },
+            "version": "1716381000123.0000-device-a",
+            "deleted": false
+        }))
+        .unwrap();
+
+        assert_eq!(row.table, "fin:accounts");
+        assert_eq!(row.id, "acc-1");
+        assert_eq!(
+            row.payload,
+            Some(json!({
+                "id": "acc-1",
+                "name": "Cash",
+                "hlc": "1716381000123.0000-device-a"
+            }))
+        );
+        assert_eq!(row.version, "1716381000123.0000-device-a");
+        assert!(!row.deleted);
+        assert_eq!(row.device_id, "");
+        assert_eq!(row.seq, 0);
+    }
+
+    #[test]
+    fn row_change_round_trips_server_tombstone_shape() {
+        let row = RowChange {
+            table: "health:health_metrics".into(),
+            id: "metric-1".into(),
+            payload: Some(json!({})),
+            version: "1716381000124.0000-device-b".into(),
+            deleted: true,
+            device_id: "device-b".into(),
+            seq: 42,
+        };
+
+        let value = serde_json::to_value(&row).unwrap();
+        assert_eq!(
+            value,
+            json!({
+                "table": "health:health_metrics",
+                "id": "metric-1",
+                "payload": {},
+                "version": "1716381000124.0000-device-b",
+                "deleted": true,
+                "device_id": "device-b",
+                "seq": 42
+            })
+        );
     }
 }
