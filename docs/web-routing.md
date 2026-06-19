@@ -79,7 +79,7 @@ Expected:
 - Riverpod state resets (in-memory toggles back to defaults). Durable preferences (`SharedPreferences`: theme, market-color mode) survive.
 - Routes that store domain state in the URL (e.g. asset detail IDs, query params) restore from the URL on first paint.
 
-Repeat at `/`, `/activity`, `/accounts`, `/settings`.
+Repeat at `/`, `/activity`, `/wealth`, `/plan`, `/settings`.
 
 ### D. 404 / unknown paths
 
