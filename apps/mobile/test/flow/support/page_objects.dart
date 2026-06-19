@@ -215,6 +215,13 @@ class PlanPageObject {
     await tester.tap(action.first);
     await settle(tester);
   }
+
+  Future<void> openRebalance() async {
+    final action = find.text('Rebalance');
+    expect(action, findsWidgets, reason: 'rebalance planning action missing');
+    await tester.tap(action.first);
+    await settle(tester);
+  }
 }
 
 /// Plan → FIRE report/dashboard surface.
@@ -227,6 +234,24 @@ class FireReportPageObject {
     expect(find.text('FIRE'), findsWidgets);
     expect(find.text('Set your FIRE goal'), findsOneWidget);
     expect(find.text('Set goal'), findsOneWidget);
+  }
+}
+
+/// Plan → Rebalance execution surface.
+class RebalancePageObject {
+  RebalancePageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectEmptyPlan() {
+    expect(find.text('Rebalance'), findsWidgets);
+    expect(find.text('No data yet'), findsOneWidget);
+    expect(
+      find.text(
+        'Add assets to see your allocation drift and rebalance suggestions.',
+      ),
+      findsOneWidget,
+    );
   }
 }
 
