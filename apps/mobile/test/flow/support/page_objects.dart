@@ -222,6 +222,15 @@ class PlanPageObject {
     await tester.tap(action.first);
     await settle(tester);
   }
+
+  Future<void> openIncomeStrategy() async {
+    final action = find.text('Income strategy');
+    expect(action, findsWidgets, reason: 'income strategy action missing');
+    await tester.ensureVisible(action.first);
+    await settle(tester);
+    await tester.tap(action.first);
+    await settle(tester);
+  }
 }
 
 /// Plan → FIRE report/dashboard surface.
@@ -252,6 +261,19 @@ class RebalancePageObject {
       ),
       findsOneWidget,
     );
+  }
+}
+
+/// Plan → Income Planner surface.
+class IncomePlannerPageObject {
+  IncomePlannerPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectStartState() {
+    expect(find.text('Income Planner'), findsWidgets);
+    expect(find.text('Set up your stance'), findsOneWidget);
+    expect(find.text('Configure preferences'), findsOneWidget);
   }
 }
 

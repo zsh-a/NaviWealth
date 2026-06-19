@@ -128,7 +128,13 @@ class _StartState extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s20),
             FButton(
               onPress: () => showOccDisclosureSheet(context),
-              child: Text(l10n.incomePlannerStartCta),
+              child: Flexible(
+                child: Text(
+                  l10n.incomePlannerStartCta,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ),
           ],
         ),
