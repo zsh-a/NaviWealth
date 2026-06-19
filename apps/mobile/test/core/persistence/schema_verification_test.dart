@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 25', () {
-      expect(db.schemaVersion, 25);
+    test('is 26', () {
+      expect(db.schemaVersion, 26);
     });
   });
 
@@ -207,6 +207,24 @@ void main() {
           'median_amount_minor',
           'last_seen_at',
           'observed_at',
+        ]),
+      );
+    });
+
+    test('chat_messages table has AI progress columns', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(chat_messages)')
+          .get();
+      final columns = result.map((r) => r.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll([
+          'id',
+          'tool_calls_json',
+          'text_segments_json',
+          'reasoning_text',
+          'usage_json',
+          'progress_json',
         ]),
       );
     });
