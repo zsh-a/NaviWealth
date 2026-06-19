@@ -17,6 +17,9 @@ const ALLOWED_CONSOLE_NOISE: RegExp[] = [
   /Using the .* renderer/i,
   // Flutter sometimes logs an info line when the SW updates the cache.
   /service worker.*update/i,
+  // Firefox/Playwright can report an internal juggler worker cancellation
+  // during rapid history navigation; it is not emitted by the app page.
+  /NS_BINDING_ABORTED: .*chrome:\/\/juggler\/content\/content\/WorkerMain\.js/i,
 ];
 
 export function attachConsoleSpy(page: Page) {
