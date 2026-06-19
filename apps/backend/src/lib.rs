@@ -3,7 +3,7 @@ use worker::*;
 mod auth;
 pub mod error;
 mod routes;
-mod sync;
+pub mod sync;
 
 /// Append CORS headers to a response.
 fn add_cors(resp: &mut Response, origin: &str) {

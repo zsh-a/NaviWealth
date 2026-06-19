@@ -6,11 +6,15 @@ on:
       - main
     paths:
       - 'apps/backend/**'
+      - 'docs/fixtures/sync_v2_*.json'
+      - 'tool/check-sync-wire-fixtures.sh'
       - '.github/workflows/backend.yml'
       - 'codecov.yml'
   pull_request:
     paths:
       - 'apps/backend/**'
+      - 'docs/fixtures/sync_v2_*.json'
+      - 'tool/check-sync-wire-fixtures.sh'
       - '.github/workflows/backend.yml'
       - 'codecov.yml'
 
@@ -45,6 +49,9 @@ jobs:
         # the JWT-domain-claim and sync LWW-conflict tests actually gate
         # PRs — previously they compiled but never executed in CI.
         run: cargo test
+      - name: Verify sync wire fixtures
+        working-directory: ${{ github.workspace }}
+        run: ./tool/check-sync-wire-fixtures.sh
 
   deploy:
     needs: [check]

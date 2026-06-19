@@ -146,9 +146,13 @@ shell-level AI sheet, send a question, and render the assistant reply).
 The client and the Rust Worker share a wire format but no generated
 types. Today: `test/core/ai/contracts/contracts_roundtrip_test.dart`
 (ContextPack snake_case stability) + `tool/check-enum-mirror.sh`
-(grep-based Dart↔Rust enum sync). Target: promote the enum mirror to a
-generated SSOT and add a `sync-v2` wire roundtrip asserted against the
-**actual Rust serializer output** (golden JSON), not a hand-written copy.
+(grep-based Dart↔Rust enum sync). The `sync-v2` shared fixtures are now
+partly serializer-owned: `tool/check-sync-wire-fixtures.sh` compares the
+server tombstone fixture consumed by Dart against the backend
+`dump-sync-wire-fixture` binary, which emits the **actual Rust
+`RowChange` serializer output**. Target: promote the remaining enum mirror
+to a generated SSOT and broaden generated wire fixtures beyond the seeded
+server tombstone.
 
 ### Golden (visual, ~5%)
 `test/golden/` via golden_toolkit, Linux-pinned (`flutter_test_config.dart`
@@ -242,8 +246,9 @@ backup/restore.
   primaries, AI chat). Next expansion should deepen these flows with selected
   golden surfaces and on-device `integration_test/` coverage rather than adding
   more page-bound smoke tests.
-- Contracts-as-code: generated enum SSOT + `sync-v2` wire roundtrip vs the
-  Rust serializer.
+- Contracts-as-code: `sync-v2` server tombstone fixture now gates against the
+  Rust serializer; remaining work is generated enum SSOT plus broader
+  generated sync fixtures.
 - Expand golden coverage to each Task surface + responsive breakpoints.
 - Keep `tool/known-failing-tests.txt` empty; any temporary entry needs a
   reviewer-approved reason and must be removed as soon as the test recovers.
