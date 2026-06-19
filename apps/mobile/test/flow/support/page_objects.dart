@@ -203,6 +203,33 @@ class BackupPageObject {
   }
 }
 
+/// Plan destination entry points used by task-level flows.
+class PlanPageObject {
+  PlanPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  Future<void> openFireReport() async {
+    final action = find.text('FIRE');
+    expect(action, findsWidgets, reason: 'FIRE planning action missing');
+    await tester.tap(action.first);
+    await settle(tester);
+  }
+}
+
+/// Plan → FIRE report/dashboard surface.
+class FireReportPageObject {
+  FireReportPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectUnconfiguredReport() {
+    expect(find.text('FIRE'), findsWidgets);
+    expect(find.text('Set your FIRE goal'), findsOneWidget);
+    expect(find.text('Set goal'), findsOneWidget);
+  }
+}
+
 /// Wealth destination entry points used by task-level flows.
 class WealthPage {
   WealthPage(this.tester);
