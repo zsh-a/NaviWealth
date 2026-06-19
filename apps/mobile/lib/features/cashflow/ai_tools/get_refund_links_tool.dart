@@ -2,11 +2,11 @@
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/get_refund_links.rs`. Per §4.3.3 the
-/// device `refundMatcher` is the sole computer; the backend
-/// `refund_links` read model mirrors what the device uploaded. The
-/// tool runs the same matcher + the shared [refundMatchToUpload]
-/// converter (single source with the cloud upload) and projects into
-/// the backend row shape — no D1, no freshness gate.
+/// device `refundMatcher` is the sole computer; the `refund_links`
+/// read-model shape is derived from the same device analytical signal.
+/// The tool runs the same matcher + the shared [refundMatchToUpload]
+/// converter (single source) and projects into the row shape — no D1,
+/// no freshness gate.
 library;
 
 import 'package:naviwealth/core/ai/contracts/task_context.dart'

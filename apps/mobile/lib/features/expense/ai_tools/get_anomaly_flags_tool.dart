@@ -2,16 +2,16 @@
 ///
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/get_anomaly_flags.rs`. Per §4.3.3 the
-/// device detector is the **sole computer** — the backend
-/// `anomaly_flags` read model is just a mirror of what the device
-/// uploaded via `ContextPack.analytical_uploads`. So the device tool
-/// calls the same detector ([expenseAnomalyInsightProvider]) through
-/// the shared [analyticalAnomalyUpload] converter (the exact upload the
-/// cloud mirrors) and projects it into the backend flag-row shape —
-/// byte-identical, no D1, no freshness gate (§4.6.1).
+/// device detector is the **sole computer** — the `anomaly_flags` read
+/// model shape is derived from the same device analytical signal. So
+/// the device tool calls the same detector
+/// ([expenseAnomalyInsightProvider]) through the shared
+/// [analyticalAnomalyUpload] converter and projects it into the
+/// flag-row shape — byte-identical, no D1, no freshness gate (§4.6.1).
 library;
 
-import 'package:naviwealth/core/ai/contracts/task_context.dart' show AnalyticalUpload;
+import 'package:naviwealth/core/ai/contracts/task_context.dart'
+    show AnalyticalUpload;
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/features/expense/data/expense_anomaly_insight_provider.dart';
 
@@ -26,7 +26,7 @@ class GetAnomalyFlagsTool implements DeviceTool {
       '返回端侧 detector 检测到的支出 / 现金流异常。'
       '数据来自 AI Read Model `anomaly_flags`（Analytical 层 P1）—— '
       'device-sourced：端侧（如 expenseAnomalyInsightProvider）跑启发式 → '
-      'ContextPack.analytical_uploads 上报 → 后端镜像。'
+      'ContextPack.analytical_uploads 本地分析信号。'
       'payload.kind 包含 monthly_spike / subscription_price_up / cashflow_anomaly 等。'
       '可选 severity_min 过滤（info ≤ warn ≤ critical）。';
 
@@ -59,8 +59,8 @@ class GetAnomalyFlagsTool implements DeviceTool {
   static const _rank = {'info': 0, 'warn': 1, 'critical': 2};
 
   /// Pure projection of the device anomaly [AnalyticalUpload] into the
-  /// backend `get_anomaly_flags` envelope. `upload == null` ⇒ no
-  /// anomaly (empty result, same as the cloud "尚未上报 / 无异常" case).
+  /// `get_anomaly_flags` envelope. `upload == null` ⇒ no anomaly
+  /// (empty result, same as the historical "尚未上报 / 无异常" case).
   static Map<String, Object?> shape(
     AnalyticalUpload? upload, {
     String? severityMin,

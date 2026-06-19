@@ -283,8 +283,10 @@ path once the production connection implements database encryption.
   coverage for offline/error/conflict diagnostics, cursor/outbox/local-count
   rendering, and status-event UI refresh, plus a mobile golden for the
   diagnostic offline/conflict first viewport and responsive-breakpoint checks
-  for compact stacked vs. wide one-row stat tiles. Next expansion is AI
-  boundary cleanup coverage and selected semantic/vision validation.
+  for compact stacked vs. wide one-row stat tiles. AI boundary copy now avoids
+  stale cloud-inference/mirror language in user-visible badges and analytical
+  device-tool descriptors. Next expansion is selected semantic/vision
+  validation.
 - AI exploratory + semantic (vision) validation, nightly, non-blocking.
 
 ## 8. Conventions

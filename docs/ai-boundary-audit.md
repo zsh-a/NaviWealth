@@ -327,8 +327,10 @@ device tool 直接读本地 Drift，本地写入对端侧立即可见，根本�
    见 §2.4 修订：决策应基于"预注入 context 成本 vs 多一次 LLM round 成本"的实测，
    不能凭"端侧免费"的直觉删。建议在批 A–C 落地后再排。
 5. **批 E（剩余 docstring 收敛）**
-   A0 没覆盖的零散注释：`runtime/device/*.dart` 里 "phase 5 will / cloud relay 中转"
-   等过期注释、删除批 A/B/C 之后留下的孤立引用。
+   已清理用户可见 AI 透明度徽标与 Analytical device tool descriptor 中的
+   "云端推理 / 云端表镜像 / 后端镜像"当前路径表述。后续只应继续收敛
+   `runtime/device/*.dart` 里 "phase 5 will / cloud relay 中转"等历史注释，以及
+   删除批 A/B/C 之后留下的孤立引用。
 6. **批 F（ChatSyncGate 单独论证）**
    决定是否在 device-only 世界保留 AI 触发的 sync gate；若不保留则一起删。
 

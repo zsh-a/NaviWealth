@@ -3,12 +3,11 @@
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/get_recurring_patterns.rs`. Per §4.3.3
 /// the device `recurring_detector` is the **sole computer** — the
-/// backend `recurring_patterns` read model is a mirror of what the
-/// device uploaded via `ContextPack.analytical_uploads`. So the device
-/// tool runs the same detector and the shared
-/// [recurringPatternToUpload] converter (single source with the cloud
-/// upload, no Dart/Rust drift) and projects the uploads into the
-/// backend row shape — byte-identical, no D1, no freshness gate.
+/// `recurring_patterns` read model shape is derived from the same
+/// device analytical signal. So the device tool runs the same detector
+/// and the shared [recurringPatternToUpload] converter (single source,
+/// no Dart/Rust drift) and projects the signal into the read-model row
+/// shape — byte-identical, no D1, no freshness gate.
 library;
 
 import 'package:naviwealth/core/ai/contracts/task_context.dart'
@@ -30,7 +29,7 @@ class GetRecurringPatternsTool implements DeviceTool {
       '返回端侧 detector 检测到的周期性支出（月度/周度订阅、定期账单等）。'
       '数据来自 AI Read Model `recurring_patterns`（Analytical 层 P1）—— '
       '这是 device-sourced read model：端侧 recurring_detector 跑启发式产生，'
-      '通过 ContextPack.analytical_uploads 镜像到云端表（避免 Dart/Rust 双份漂移）。'
+      '通过 ContextPack.analytical_uploads 形成本地分析信号（避免 Dart/Rust 双份漂移）。'
       '典型问题：「我有哪些订阅」「每月定期支出多少」「哪些订阅最近涨价了」（最后这个需配合 subscription_changes，待落）。'
       '可选 currency / cadence 过滤。';
 

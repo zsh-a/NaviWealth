@@ -67,7 +67,7 @@ class AiTransparencyIndicator extends ConsumerWidget {
 /// Pure formatter — exposed for tests. Joins the relevant axes of the
 /// trace into a compact one-liner the user can read at a glance:
 ///
-///   `本地数据 + 云端推理 · 未上传原始交易明细 · 1 个工具 · 1.2s`
+///   `本地数据 + 端侧推理 · 1 个工具 · 1.2s`
 String formatAiTraceBadge(AiTrace trace) {
   final parts = <String>[];
   switch (trace.backend) {
@@ -81,9 +81,9 @@ String formatAiTraceBadge(AiTrace trace) {
             : '全部本地处理',
       );
     case Backend.cloud:
-      parts.add('仅云端推理');
+      parts.add('端侧模型推理');
     case Backend.hybrid:
-      parts.add('本地数据 + 云端推理');
+      parts.add('本地数据 + 端侧推理');
   }
   if (trace.toolSpans.isNotEmpty) {
     parts.add('${trace.toolSpans.length} 个工具');

@@ -84,10 +84,10 @@ void main() {
       expect(s, isNot(contains('未经我方服务器')));
     });
 
-    test('cloud unchanged', () {
+    test('legacy cloud trace is shown as device model inference', () {
       expect(
         formatAiTraceBadge(_trace(backend: Backend.cloud)),
-        contains('仅云端推理'),
+        contains('端侧模型推理'),
       );
     });
   });

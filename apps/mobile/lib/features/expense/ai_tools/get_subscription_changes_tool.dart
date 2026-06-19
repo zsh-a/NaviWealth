@@ -3,12 +3,12 @@
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/get_subscription_changes.rs`. Per §4.3.3
 /// the device `detectSubscriptionChanges` is the sole computer; the
-/// backend `subscription_changes` read model mirrors what the device
-/// uploaded. The tool runs the same detector + the shared
-/// [subscriptionChangeToUpload] converter (single source with the
-/// cloud upload) and projects into the backend row shape — no D1, no
-/// freshness gate. Detection window is the expenses on hand (no
-/// cross-session persistence), same as the backend note.
+/// `subscription_changes` read-model shape is derived from the same
+/// device analytical signal. The tool runs the same detector + the
+/// shared [subscriptionChangeToUpload] converter (single source) and
+/// projects into the row shape — no D1, no freshness gate. Detection
+/// window is the expenses on hand (no cross-session persistence), same
+/// as the backend note.
 library;
 
 import 'package:naviwealth/core/ai/contracts/task_context.dart'

@@ -632,11 +632,11 @@ Map<String, Object?> holdingSnapshotJson(HoldingSnapshot snap, Asset? asset) {
 }
 
 /// The canonical [HoldingSnapshot] → [AnalyticalUpload] conversion
-/// (§4.3.3). Single source shared by the cloud
-/// `ContextPack.analytical_uploads` path and the device
-/// `get_investment_performance` tool, so the device tool's
-/// output is exactly what the backend `investment_performance` read
-/// model mirrors (§10). Decimals are stringified to avoid float drift.
+/// (§4.3.3). Single source shared by the
+/// `ContextPack.analytical_uploads` signal and the device
+/// `get_investment_performance` tool, so the device tool's output is
+/// exactly the local analytical read-model row (§10). Decimals are
+/// stringified to avoid float drift.
 AnalyticalUpload holdingSnapshotToUpload(HoldingSnapshot snap) {
   return AnalyticalUpload(
     kind: 'investment_performance',

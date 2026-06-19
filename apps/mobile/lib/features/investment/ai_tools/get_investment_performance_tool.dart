@@ -3,14 +3,14 @@
 /// Schema + description verbatim from
 /// `apps/backend/src/ai/tools/get_investment_performance.rs`. Per
 /// §4.3.3 the device `holdingsSnapshotProvider` is the sole computer;
-/// the backend `investment_performance` read model mirrors what the
-/// device uploaded. The tool reads the same provider + the shared
-/// [holdingSnapshotToUpload] converter (single source with the cloud
-/// upload) and projects into the backend row shape — no D1, no
-/// freshness gate.
+/// the `investment_performance` read model shape is derived from the
+/// same device analytical signal. The tool reads the same provider +
+/// the shared [holdingSnapshotToUpload] converter (single source) and
+/// projects into the read-model row shape — no D1, no freshness gate.
 library;
 
-import 'package:naviwealth/core/ai/contracts/task_context.dart' show AnalyticalUpload;
+import 'package:naviwealth/core/ai/contracts/task_context.dart'
+    show AnalyticalUpload;
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
@@ -26,7 +26,7 @@ class GetInvestmentPerformanceTool implements DeviceTool {
       '返回 per-asset 当前持仓表现：market_value / cost_basis / unrealized_pnl / weight。'
       '数据来自 AI Read Model `investment_performance`（Analytical P1，device-sourced）—— '
       '端侧 holdingsSnapshotProvider 算出 per-asset 持仓后通过 '
-      'ContextPack.analytical_uploads 镜像到云端表，AI 不需要再做计算。'
+      'ContextPack.analytical_uploads 形成本地分析信号，AI 不需要再做计算。'
       '每行: asset_id / asset_currency / base_currency / market_value_base / '
       'cost_basis_base / unrealized_pnl_base / weight / holding_days? / as_of。'
       '典型问题：「我现在赚最多的是哪个标的」「AAPL 持仓现值」「未实现盈亏总计」。'
