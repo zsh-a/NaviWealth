@@ -51,6 +51,7 @@ void resetCommandPaletteForTest() {
 }
 
 bool _isOpen = false;
+const double _kCommandRowExtent = AppSpacing.s56;
 
 class _CommandPaletteDialog extends ConsumerStatefulWidget {
   const _CommandPaletteDialog({
@@ -144,7 +145,7 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
 
   void _scrollSelectedIntoView() {
     if (!_listScroll.hasClients) return;
-    const double itemExtent = 56;
+    const double itemExtent = _kCommandRowExtent;
     final double target = _selectedIndex * itemExtent;
     final double viewportHeight = _listScroll.position.viewportDimension;
     final double offset = _listScroll.offset;
@@ -249,7 +250,7 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
                         controller: _listScroll,
                         shrinkWrap: true,
                         itemCount: _filtered.length,
-                        itemExtent: 56,
+                        itemExtent: _kCommandRowExtent,
                         itemBuilder: (BuildContext _, int i) {
                           final CommandPaletteEntry entry = _filtered[i];
                           final bool selected = i == _selectedIndex;
@@ -328,7 +329,7 @@ class _CommandRow extends StatelessWidget {
           ),
           child: Row(
             children: <Widget>[
-              Icon(entry.icon, size: 20, color: iconColor),
+              Icon(entry.icon, size: AppIconSizes.md, color: iconColor),
               const SizedBox(width: AppSpacing.s16),
               Expanded(
                 child: Column(

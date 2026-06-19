@@ -162,6 +162,18 @@ class TypographyTokens {
     weight: FontWeight.w600,
     letterSpacing: 0.5,
   );
+  static final TextStyle labelXSmall = _t(
+    10,
+    height: 1.3,
+    weight: FontWeight.w600,
+    letterSpacing: 0.5,
+  );
+  static final TextStyle labelTiny = _t(
+    9,
+    height: 1.2,
+    weight: FontWeight.w700,
+    letterSpacing: 0.5,
+  );
 
   // Numeric — money, percentages, charts axis labels. These
   // are no longer the only carriers of `tabularFigures`; they remain a

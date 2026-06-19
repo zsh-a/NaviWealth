@@ -5,6 +5,7 @@ import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/motion_utils.dart';
+import '../tokens/typography_tokens.dart';
 
 const double kFloatingGlassNavBarHeight = AppSpacing.s64;
 
@@ -68,11 +69,11 @@ class FloatingGlassNavBar extends StatelessWidget {
     // Light: near-opaque white tint (matches the old 0.94 alpha).
     // Dark:  deep navy tint (matches the old 0.88 alpha).
     final glassColor = isDark
-        ? const Color(0xFF0F2A35).withValues(alpha: AppOpacity.overlay)
-        : const Color(0xFFF7FAFA).withValues(alpha: AppOpacity.nearOpaque);
+        ? ColorPalette.navyGlass.withValues(alpha: AppOpacity.overlay)
+        : ColorPalette.neutralGlass.withValues(alpha: AppOpacity.nearOpaque);
     final borderColor = isDark
         ? Colors.white.withValues(alpha: AppOpacity.faint)
-        : const Color(0xFFE3ECEE).withValues(alpha: AppOpacity.strong);
+        : ColorPalette.neutralGlassBorder.withValues(alpha: AppOpacity.strong);
 
     // Top-edge highlight gradient simulates light refracting through the
     // frosted surface — the main visual cue that replaces the real blur.
@@ -261,8 +262,7 @@ class _NavTabButton extends StatelessWidget {
               ),
               Text(
                 tab.label,
-                style: TextStyle(
-                  fontSize: 11,
+                style: TypographyTokens.labelSmall.copyWith(
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                   color: labelColor,
                   height: 1.2,
@@ -396,12 +396,10 @@ class _CenterActionButtonSurface extends StatelessWidget {
         children: [
           Icon(icon, color: iconColor, size: AppIconSizes.lg),
           if (label != null) ...[
-            const SizedBox(height: 1),
+            const SizedBox(height: AppSpacing.hairline),
             Text(
               label!,
-              style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
+              style: TypographyTokens.labelTiny.copyWith(
                 color: iconColor,
                 height: 1.0,
               ),

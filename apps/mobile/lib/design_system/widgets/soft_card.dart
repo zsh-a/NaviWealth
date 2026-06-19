@@ -130,9 +130,9 @@ class _SoftCardState extends State<SoftCard> {
     // Reference style: flat rows stay white; elevated surfaces pick up a
     // barely-blue wash so dashboard cards read like soft app panels.
     final lightSurface = switch (widget.level) {
-      SoftCardLevel.flat => Colors.white,
-      SoftCardLevel.raised => const Color(0xFFF7FBFB),
-      SoftCardLevel.hero => const Color(0xFFF1F7F8),
+      SoftCardLevel.flat => ColorPalette.neutral0,
+      SoftCardLevel.raised => ColorPalette.neutralCardRaised,
+      SoftCardLevel.hero => ColorPalette.neutralCardHero,
     };
     final baseTint = widget.tinted
         ? (isDark ? colors.card : lightSurface)
@@ -155,7 +155,7 @@ class _SoftCardState extends State<SoftCard> {
         ? Colors.transparent
         : (isDark
               ? colors.border.withValues(alpha: borderAlpha)
-              : const Color(0xFFCAD7DA).withValues(alpha: borderAlpha));
+              : ColorPalette.navySoftBorder.withValues(alpha: borderAlpha));
 
     return BoxDecoration(
       color: tint,

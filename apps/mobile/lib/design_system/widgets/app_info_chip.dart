@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
+import '../tokens/typography_tokens.dart';
 import 'app_icon_tile.dart';
 
 /// Compact two-line chip for dense metric summaries.
@@ -42,7 +43,7 @@ class AppInfoChip extends StatelessWidget {
             AppIconTile(
               icon: icon,
               color: color,
-              size: 22,
+              size: AppIconSizes.mlg,
               iconSize: AppIconSizes.xs,
               radius: AppRadius.xs,
               backgroundOpacity: AppOpacity.whisper,
@@ -66,9 +67,9 @@ class AppInfoChip extends StatelessWidget {
                   ),
                   Text(
                     label,
-                    style: typography.xs.copyWith(
+                    style: TypographyTokens.labelXSmall.copyWith(
                       color: colors.mutedForeground,
-                      fontSize: 10,
+                      fontWeight: typography.xs.fontWeight,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

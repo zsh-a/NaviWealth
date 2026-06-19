@@ -147,7 +147,7 @@ class _AppToastSurface extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Theme.of(context).shadowColor.withValues(
+                color: SemanticColors.of(context).scrim.withValues(
                   alpha: isDark ? AppOpacity.muted : AppOpacity.faint,
                 ),
                 blurRadius: 24,

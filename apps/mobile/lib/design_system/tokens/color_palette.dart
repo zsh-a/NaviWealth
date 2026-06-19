@@ -49,6 +49,8 @@ class ColorPalette {
   static const Color navy800 = Color(0xFF1A2830);
   static const Color navy900 = Color(0xFF111827);
   static const Color navy950 = Color(0xFF002A38);
+  static const Color navyGlass = Color(0xFF0F2A35);
+  static const Color navySoftBorder = Color(0xFFCAD7DA);
 
   // ── Secondary accent (warm orange) — low-frequency highlights ─────────
   static const Color secondary500 = Color(0xFFFA6400);
@@ -70,6 +72,10 @@ class ColorPalette {
   static const Color neutral0 = Color(0xFFFFFFFF);
   static const Color neutral50 = Color(0xFFF7F8FA);
   static const Color neutral75 = Color(0xFFF1F5F5); // cool-toned surface tint
+  static const Color neutralGlass = Color(0xFFF7FAFA);
+  static const Color neutralGlassBorder = Color(0xFFE3ECEE);
+  static const Color neutralCardRaised = Color(0xFFF7FBFB);
+  static const Color neutralCardHero = Color(0xFFF1F7F8);
   static const Color neutral100 = Color(0xFFEFF1F4);
   static const Color neutral200 = Color(0xFFE2E5EA);
   static const Color neutral300 = Color(0xFFCBD0D7);
@@ -94,6 +100,7 @@ class ColorPalette {
   static const Color green600 = Color(0xFF059669); // emerald — light mode fg
   static const Color green700 = Color(0xFF047857);
   static const Color green900 = Color(0xFF064E3B);
+  static const Color green950 = Color(0xFF0F3D22);
 
   // ── Loss / danger (rose / soft crimson) ─────────────────────────────────
   // Migrated from saturated red #DC2626 to Tailwind rose. The
@@ -106,13 +113,16 @@ class ColorPalette {
   static const Color red600 = Color(0xFFBE123C); // rose — light mode fg
   static const Color red700 = Color(0xFF9F1239);
   static const Color red900 = Color(0xFF4C0519);
+  static const Color red950 = Color(0xFF3F1010);
 
   // ── Ambers (warning) ────────────────────────────────────────────────────
   static const Color amber50 = Color(0xFFFEF6E5);
   static const Color amber100 = Color(0xFFFCE7B0);
   static const Color amber400 = Color(0xFFF59E0B);
+  static const Color amber450 = Color(0xFFF5B544);
   static const Color amber500 = Color(0xFFD97706);
   static const Color amber700 = Color(0xFF8E4E03);
+  static const Color amber950 = Color(0xFF3D2A05);
 
   // ── Cyan / blue accents (info) ──────────────────────────────────────────
   static const Color cyan50 = Color(0xFFE6F4FB);
@@ -120,6 +130,11 @@ class ColorPalette {
   static const Color cyan500 = Color(0xFF0891B2);
   static const Color cyan600 = Color(0xFF06B6D4);
   static const Color cyan700 = Color(0xFF075E73);
+  static const Color cyan950 = Color(0xFF0A3540);
+
+  // ── Overlay / scrim ─────────────────────────────────────────────────────
+  static const Color scrimLight = Color(0x66002A38);
+  static const Color scrimDark = Color(0x99002A38);
 
   // ── Violet (knowledge concepts) ────────────────────────────────────────
   static const Color violet500 = Color(0xFF8B5CF6);
@@ -177,7 +192,9 @@ class ExpenseCategoryColors {
   static const Color slate = Color(0xFF64748B); // apartment
   static const Color yellow = Color(0xFFEAB308); // utilities (bolt)
   static const Color teal = ColorPalette.teal500; // furniture (chair)
-  static const Color purple = Color(0xFFA855F7); // entertainment (esports, movie)
+  static const Color purple = Color(
+    0xFFA855F7,
+  ); // entertainment (esports, movie)
   static const Color red = ColorPalette.red500; // medical_services
   static const Color rose = ColorPalette.red600; // local_hospital
   static const Color emerald = ColorPalette.green600; // education (school)

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 
 class AppGroupedAction {
@@ -32,7 +33,7 @@ class AppGroupedActionList extends StatelessWidget {
     final isDark = colors.brightness == Brightness.dark;
     final background = isDark
         ? colors.card.withValues(alpha: AppOpacity.muted)
-        : const Color(0xFFF1F5F5);
+        : ColorPalette.neutral75;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: background,
@@ -50,7 +51,7 @@ class AppGroupedActionList extends StatelessWidget {
                     start: AppSpacing.s48,
                   ),
                   child: SizedBox(
-                    height: 1,
+                    height: AppSpacing.hairline,
                     child: ColoredBox(
                       color: colors.border.withValues(alpha: AppOpacity.faint),
                     ),

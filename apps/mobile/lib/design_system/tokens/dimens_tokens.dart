@@ -13,7 +13,9 @@ class AppSpacing {
   const AppSpacing._();
 
   static const double s0 = 0;
+  static const double hairline = 1;
   static const double s2 = 2;
+  static const double accentBar = 3;
   static const double s4 = 4;
   static const double s6 = 6;
   static const double s8 = 8;

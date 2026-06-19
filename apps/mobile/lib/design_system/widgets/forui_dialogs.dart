@@ -166,7 +166,7 @@ class _GlassDialog extends StatelessWidget {
                     top: Radius.circular(AppRadius.xl),
                   ),
                 ),
-                child: const SizedBox(height: 3),
+                child: const SizedBox(height: AppSpacing.accentBar),
               ),
               // Content area.
               Padding(
