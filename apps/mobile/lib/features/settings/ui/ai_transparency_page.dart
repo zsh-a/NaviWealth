@@ -427,7 +427,11 @@ class _UndoSection extends ConsumerWidget {
     final entries = entriesAsync.value ?? const <PersistedUndoEntry>[];
     final now = DateTime.now().toUtc();
     final live = entries
-        .where((e) => e.expiresAt == null || e.expiresAt!.isAfter(now))
+        .where(
+          (e) =>
+              e.showGlobalBanner &&
+              (e.expiresAt == null || e.expiresAt!.isAfter(now)),
+        )
         .toList(growable: false);
     return Padding(
       padding: const EdgeInsets.fromLTRB(

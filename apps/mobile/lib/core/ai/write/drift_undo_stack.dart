@@ -48,6 +48,13 @@ class PersistedUndoEntry {
 
   /// `null` means no expiry (caller must prune explicitly).
   final DateTime? expiresAt;
+
+  /// Whether generic global undo surfaces may show this entry.
+  ///
+  /// Some entries are owned by a richer UI that can run the matching reverter
+  /// and update local state. Generic surfaces currently only consume tokens,
+  /// so those entries opt out with `show_global_banner: false`.
+  bool get showGlobalBanner => payload['show_global_banner'] != false;
 }
 
 class DriftUndoStack {

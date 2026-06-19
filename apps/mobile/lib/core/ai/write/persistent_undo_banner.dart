@@ -31,6 +31,7 @@ class PersistentUndoBanner extends ConsumerWidget {
     final now = DateTime.now().toUtc();
     PersistedUndoEntry? top;
     for (final e in entries) {
+      if (!e.showGlobalBanner) continue;
       if (e.expiresAt == null || e.expiresAt!.isAfter(now)) {
         top = e;
         break;

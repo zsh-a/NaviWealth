@@ -48,6 +48,7 @@ class ProposalApplyState {
     this.appliedAt,
     this.errorMessage,
     this.undoData,
+    this.undoToken,
     this.shortLabel,
   });
 
@@ -74,6 +75,13 @@ class ProposalApplyState {
   /// `asset_valuation`, which must restore the previous `last_price`).
   final Map<String, Object?>? undoData;
 
+  /// Token of a structured undo entry persisted in `ai_undo_stack`.
+  ///
+  /// Inline [undoData] remains for small single-row reversals and backward
+  /// compatibility. Multi-row applies should prefer this token so the
+  /// reversal description survives chat-state truncation and reloads.
+  final String? undoToken;
+
   /// One-line label rendered in the collapsed confirmed state — usually a
   /// shortened form of the plan summary. Persisted so the post-confirm
   /// row keeps showing the right text after a reload, even if the original
@@ -87,6 +95,7 @@ class ProposalApplyState {
     DateTime? appliedAt,
     String? errorMessage,
     Map<String, Object?>? undoData,
+    String? undoToken,
     String? shortLabel,
   }) {
     return ProposalApplyState(
@@ -96,6 +105,7 @@ class ProposalApplyState {
       appliedAt: appliedAt ?? this.appliedAt,
       errorMessage: errorMessage ?? this.errorMessage,
       undoData: undoData ?? this.undoData,
+      undoToken: undoToken ?? this.undoToken,
       shortLabel: shortLabel ?? this.shortLabel,
     );
   }
@@ -107,6 +117,7 @@ class ProposalApplyState {
     if (appliedAt != null) 'applied_at': appliedAt!.toUtc().toIso8601String(),
     if (errorMessage != null) 'error_message': errorMessage,
     if (undoData != null) 'undo_data': undoData,
+    if (undoToken != null) 'undo_token': undoToken,
     if (shortLabel != null) 'short_label': shortLabel,
   };
 
@@ -124,6 +135,7 @@ class ProposalApplyState {
       undoData: undo is Map
           ? undo.map((k, v) => MapEntry(k.toString(), v))
           : null,
+      undoToken: json['undo_token'] as String?,
       shortLabel: json['short_label'] as String?,
     );
   }

@@ -126,4 +126,16 @@ void main() {
     expect(read!.payload, payload);
     await db.close();
   });
+
+  test('showGlobalBanner defaults on and can opt out', () {
+    final shown = entry(token: 'shown', createdAt: DateTime.utc(2026, 5, 12));
+    final hidden = entry(
+      token: 'hidden',
+      createdAt: DateTime.utc(2026, 5, 12),
+      payload: const <String, Object?>{'show_global_banner': false},
+    );
+
+    expect(shown.showGlobalBanner, isTrue);
+    expect(hidden.showGlobalBanner, isFalse);
+  });
 }

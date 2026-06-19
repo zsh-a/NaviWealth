@@ -34,6 +34,7 @@ void main() {
         appliedAt: DateTime.utc(2026, 4, 30, 12),
         errorMessage: null,
         undoData: const <String, Object?>{'previous_value': '100'},
+        undoToken: 'undo-token-1',
         shortLabel: '已记录买入 AAPL',
       );
       final round = ProposalApplyState.fromJson(state.toJson());
@@ -42,6 +43,7 @@ void main() {
       expect(round.appliedTable, state.appliedTable);
       expect(round.appliedAt, state.appliedAt);
       expect(round.undoData, state.undoData);
+      expect(round.undoToken, state.undoToken);
       expect(round.shortLabel, state.shortLabel);
     });
 

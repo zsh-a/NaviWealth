@@ -3,13 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:uuid/uuid.dart';
 
+import '../../../core/ai/composition/batch_proposal_undo.dart';
 import '../../../core/ai/composition/proposal_applier.dart';
 import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/composition/proposal_kind_registry.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/ai/write/interaction_mode.dart';
+import '../../../core/ai/write/providers.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -57,6 +60,9 @@ class ProposeCard extends ConsumerStatefulWidget {
 }
 
 class _ProposeCardState extends ConsumerState<ProposeCard> {
+  static const _undoWindow = Duration(seconds: 60);
+  static const _uuid = Uuid();
+
   // Override values applied via the inline edit sheet, layered on top of
   // the original plan when the user finally confirms.
   Map<String, Object?>? _overrides;
@@ -214,16 +220,38 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
         appliedChildren.add(childState);
       }
       if (!mounted) return;
+      final appliedAt = DateTime.now().toUtc();
+      final childrenJson = [
+        for (final childState in appliedChildren) childState.toJson(),
+      ];
+      final stack = ref.read(undoStackProvider);
+      String? undoToken;
+      Map<String, Object?> undoData = <String, Object?>{
+        'proposal_id': plan.proposalId,
+        'child_count': appliedChildren.length,
+      };
+      if (stack != null) {
+        undoToken = 'batch_undo:${plan.proposalId}:${_uuid.v4()}';
+        await stack.put(
+          buildBatchProposalUndoEntry(
+            token: undoToken,
+            proposalId: plan.proposalId,
+            summaryZh: plan.summaryZh,
+            children: appliedChildren,
+            createdAt: appliedAt,
+            expiresAt: appliedAt.add(_undoWindow),
+          ),
+        );
+      } else {
+        undoData = <String, Object?>{'children': childrenJson};
+      }
       await _persist(
         ProposalApplyState(
           status: ProposalApplyStatus.applied,
-          appliedTable: '__batch__',
-          appliedAt: DateTime.now().toUtc(),
-          undoData: <String, Object?>{
-            'children': [
-              for (final childState in appliedChildren) childState.toJson(),
-            ],
-          },
+          appliedTable: kBatchProposalAppliedTable,
+          appliedAt: appliedAt,
+          undoData: undoData,
+          undoToken: undoToken,
           shortLabel: plan.summaryZh,
         ),
       );
@@ -249,7 +277,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     if (state.status != ProposalApplyStatus.applied) return;
     try {
       final applier = await ref.read(proposalApplierProvider.future);
-      if (state.appliedTable == '__batch__') {
+      if (state.appliedTable == kBatchProposalAppliedTable) {
         await _undoBatchState(applier, state);
       } else {
         await applier.undo(state);
@@ -300,18 +328,38 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
     ProposalApplier applier,
     ProposalApplyState state,
   ) async {
-    final rawChildren = state.undoData?['children'];
-    if (rawChildren is! List) {
+    final token = state.undoToken;
+    if (token != null) {
+      final stack = ref.read(undoStackProvider);
+      if (stack != null) {
+        final entry = await stack.take(token);
+        if (entry == null) {
+          throw ProposalApplyException('batch undo entry missing');
+        }
+        if (entry.kind != kBatchProposalUndoKind) {
+          throw ProposalApplyException(
+            'unexpected batch undo kind: ${entry.kind}',
+          );
+        }
+        return _undoBatchChildren(
+          applier,
+          batchProposalUndoChildren(entry.payload),
+        );
+      }
+    }
+
+    final undoData = state.undoData;
+    if (undoData == null) {
       throw ProposalApplyException('batch undo data missing children');
     }
-    final children = rawChildren
-        .whereType<Map<Object?, Object?>>()
-        .map(
-          (m) => ProposalApplyState.fromJson(
-            m.map((key, value) => MapEntry(key.toString(), value)),
-          ),
-        )
-        .toList(growable: false);
+    final children = batchProposalUndoChildren(undoData);
+    return _undoBatchChildren(applier, children);
+  }
+
+  Future<void> _undoBatchChildren(
+    ProposalApplier applier,
+    List<ProposalApplyState> children,
+  ) async {
     for (final childState in children.reversed) {
       await applier.undo(childState);
     }
