@@ -611,6 +611,32 @@ void main() {
       expect(trace.toolSpans.single.isError, isFalse);
     });
 
+    test('persists invocation trace metadata on finalised AiTrace', () async {
+      api.script.add(const DoneEvent(stopReason: 'end_turn', rounds: 1));
+      final id = await activeSessionId();
+
+      await repo.sendMessage(
+        sessionId: id,
+        ownerUserId: 'user-1',
+        content: 'Explain this card',
+        invocationTrace: const <String, Object?>{
+          'source': '/wealth/portfolio',
+          'intent': 'summarize_account',
+          'object_type': 'account',
+          'object_id': 'acct-1',
+          'domain': 'finance',
+        },
+      );
+
+      final trace = (await traceStore.recent()).single;
+      expect(trace.invocation, isNotNull);
+      expect(trace.invocation!['source'], '/wealth/portfolio');
+      expect(trace.invocation!['intent'], 'summarize_account');
+      expect(trace.invocation!['object_type'], 'account');
+      expect(trace.invocation!['object_id'], 'acct-1');
+      expect(trace.invocation!['domain'], 'finance');
+    });
+
     test('flags tool error in trace when span status is error', () async {
       final t0 = DateTime.parse('2026-05-10T10:00:00.100Z');
       api.script.addAll(<AiChatEvent>[
