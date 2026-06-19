@@ -29,6 +29,8 @@ import 'inline_setting_row.dart';
 class SettingsOverview extends ConsumerWidget {
   const SettingsOverview({super.key});
 
+  static const double _twoColumnBreakpoint = 760;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -37,9 +39,9 @@ class SettingsOverview extends ConsumerWidget {
       title: l10n.settingsAccountSection,
       child: _AccountSection(),
     );
-    const appearanceGroup = _Section(
-      titleKey: _SectionTitleKey.appearance,
-      child: _AppearanceSection(),
+    final appearanceGroup = _Section(
+      title: l10n.settingsAppearanceSection,
+      child: const _AppearanceSection(),
     );
     final aiGroup = _Section(
       title: l10n.settingsAiSection,
@@ -141,10 +143,11 @@ class SettingsOverview extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Two-column at ≥ 760dp instead of 1024dp — settings is
+        // Two-column at a list-specific breakpoint instead of the global
+        // page breakpoint — settings is
         // list-heavy and benefits from horizontal density on phones in
         // landscape, foldables, and small tablets.
-        final isWide = constraints.maxWidth >= 760;
+        final isWide = constraints.maxWidth >= _twoColumnBreakpoint;
         final basePadding = Breakpoints.isMobile(constraints.maxWidth)
             ? const EdgeInsets.all(AppSpacing.s16)
             : const EdgeInsets.all(AppSpacing.s24);
@@ -215,41 +218,24 @@ class SettingsOverview extends ConsumerWidget {
   }
 }
 
-/// Section title lookup for one historical key that lived under a
-/// dedicated widget. Most sections now pass `title:` directly.
-enum _SectionTitleKey { appearance }
-
 class _Section extends StatelessWidget {
-  const _Section({this.title, this.titleKey, required this.child})
-    : assert(
-        title != null || titleKey != null,
-        'A section needs either a literal title or a titleKey',
-      );
+  const _Section({required this.title, required this.child});
 
-  final String? title;
-  final _SectionTitleKey? titleKey;
+  final String title;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final resolvedTitle = title ?? _resolveTitleKey(context, titleKey!);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SectionHeader(title: resolvedTitle),
+        _SectionHeader(title: title),
         SoftCard(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
           child: child,
         ),
       ],
     );
-  }
-
-  static String _resolveTitleKey(BuildContext context, _SectionTitleKey key) {
-    final l10n = AppLocalizations.of(context);
-    return switch (key) {
-      _SectionTitleKey.appearance => l10n.settingsAppearanceSection,
-    };
   }
 }
 
@@ -338,22 +324,37 @@ class _AccountSection extends ConsumerWidget {
       context: context,
       title: l10n.settingsSwitchToLocalConfirmTitle,
       builder: (_) => const _SwitchToLocalSheetBody(),
+      footer: const _SwitchToLocalSheetFooter(),
     );
   }
 }
 
 /// Sheet body for confirming the cloud → local-only downgrade.
-/// Handles its own busy state internally.
-class _SwitchToLocalSheetBody extends ConsumerStatefulWidget {
+class _SwitchToLocalSheetBody extends StatelessWidget {
   const _SwitchToLocalSheetBody();
 
   @override
-  ConsumerState<_SwitchToLocalSheetBody> createState() =>
-      _SwitchToLocalSheetBodyState();
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Text(
+      l10n.settingsSwitchToLocalConfirmBody,
+      style: context.theme.typography.sm.copyWith(
+        color: context.theme.colors.mutedForeground,
+      ),
+    );
+  }
 }
 
-class _SwitchToLocalSheetBodyState
-    extends ConsumerState<_SwitchToLocalSheetBody> {
+class _SwitchToLocalSheetFooter extends ConsumerStatefulWidget {
+  const _SwitchToLocalSheetFooter();
+
+  @override
+  ConsumerState<_SwitchToLocalSheetFooter> createState() =>
+      _SwitchToLocalSheetFooterState();
+}
+
+class _SwitchToLocalSheetFooterState
+    extends ConsumerState<_SwitchToLocalSheetFooter> {
   bool _busy = false;
 
   Future<void> _confirm() async {
@@ -369,45 +370,12 @@ class _SwitchToLocalSheetBodyState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s16,
-        0,
-        AppSpacing.s16,
-        AppSpacing.s24,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            l10n.settingsSwitchToLocalConfirmBody,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s20),
-          FButton(
-            variant: FButtonVariant.outline,
-            onPress: _busy ? null : () => Navigator.of(context).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          FButton(
-            variant: FButtonVariant.primary,
-            onPress: _busy ? null : _confirm,
-            child: _busy
-                ? const SizedBox(
-                    width: AppIconSizes.h18,
-                    height: AppIconSizes.h18,
-                    child: FCircularProgress(
-                      size: FCircularProgressSizeVariant.sm,
-                    ),
-                  )
-                : Text(l10n.settingsSwitchToLocal),
-          ),
-        ],
-      ),
+    return AppSheetFooter(
+      cancelLabel: l10n.commonCancel,
+      onCancel: () => Navigator.of(context).pop(false),
+      submitLabel: l10n.settingsSwitchToLocal,
+      onSubmit: _confirm,
+      busy: _busy,
     );
   }
 }

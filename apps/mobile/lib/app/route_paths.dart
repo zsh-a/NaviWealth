@@ -199,7 +199,7 @@ abstract final class AppRouteNames {
   static const wealthPortfolio = 'wealth-portfolio';
   static const wealthWatchlist = 'wealth-watchlist';
 
-  // ── HealthOS (Phase D-2.3 placeholder, real pages in D-2.2) ────────────
+  // ── HealthOS — gated by opt-in. 3 tabs per healthos-domain.md §5. ─────
   static const healthToday = 'health-today';
   static const healthTrend = 'health-trend';
   static const healthPlan = 'health-plan';

@@ -7,6 +7,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/settings/data/base_currency_preference.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
 import 'package:naviwealth/features/settings/ui/domains_settings_page.dart';
+import 'package:naviwealth/features/settings/ui/knowledge_domain_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,6 +23,11 @@ GoRouter _router({String initialLocation = AppRoutes.settingsDomains}) {
             path: 'domains',
             name: AppRouteNames.domains,
             builder: (_, _) => const DomainsSettingsPage(),
+          ),
+          GoRoute(
+            path: 'domains/knowledge',
+            name: AppRouteNames.domainsKnowledge,
+            builder: (_, _) => const KnowledgeDomainSettingsPage(),
           ),
         ],
       ),
@@ -100,5 +106,24 @@ void main() {
         expect(find.textContaining('USD'), findsWidgets);
       },
     );
+  });
+
+  group('Settings → KnowledgeOS', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    testWidgets('surfaces inbox, library, review, and memory settings', (
+      tester,
+    ) async {
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        await _wrap(prefs, initialLocation: AppRoutes.settingsDomainsKnowledge),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('KnowledgeOS · Inbox'), findsOneWidget);
+      expect(find.text('KnowledgeOS · Library'), findsOneWidget);
+      expect(find.text('KnowledgeOS · Review'), findsOneWidget);
+      expect(find.text('KnowledgeOS Memory'), findsOneWidget);
+    });
   });
 }

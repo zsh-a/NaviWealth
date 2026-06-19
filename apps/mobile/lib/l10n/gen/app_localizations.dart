@@ -9129,6 +9129,30 @@ abstract class AppLocalizations {
   /// **'Capture notes, write decisions, and review the library'**
   String get settingsDomainsKnowledgeInboxSubtitle;
 
+  /// No description provided for @settingsDomainsKnowledgeLibrarySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse decisions, assumptions, routines, concepts, and notes'**
+  String get settingsDomainsKnowledgeLibrarySubtitle;
+
+  /// No description provided for @settingsDomainsKnowledgeReviewSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review due decisions, stale assumptions, and due routines'**
+  String get settingsDomainsKnowledgeReviewSubtitle;
+
+  /// No description provided for @settingsDomainsKnowledgeMemoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'KnowledgeOS Memory'**
+  String get settingsDomainsKnowledgeMemoryTitle;
+
+  /// No description provided for @settingsDomainsKnowledgeMemorySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage the local model used for recall, dedupe, and semantic search'**
+  String get settingsDomainsKnowledgeMemorySubtitle;
+
   /// No description provided for @settingsDomainsHealthPermissionDenied.
   ///
   /// In en, this message translates to:

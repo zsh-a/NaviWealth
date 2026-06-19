@@ -176,6 +176,8 @@ class _DesktopDock extends ConsumerWidget {
                 onTap: () => _switchToDomain(context, spec),
               ),
             const Spacer(),
+            const _DockGroupDivider(),
+            const SizedBox(height: AppSpacing.s8),
             _AskAiDockButton(onPress: () => askAi(context, ref)),
             const SizedBox(height: AppSpacing.s12),
           ],
@@ -200,18 +202,34 @@ class _AskAiDockButton extends StatelessWidget {
       icon: FLucideIcons.sparkles,
       tooltip: AppLocalizations.of(context).commandPaletteOpenAi,
       onPress: onPress,
+      size: AppSpacing.s48,
+      iconSize: AppIconSizes.mlg,
       iconColor: colors.primary,
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s8,
-        vertical: AppSpacing.s4,
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
       decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: AppOpacity.faint),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        color: colors.primary.withValues(alpha: AppOpacity.subtle),
+        borderRadius: BorderRadius.circular(AppRadius.full),
         border: Border.all(
           color: colors.primary.withValues(alpha: AppOpacity.muted),
           width: 1,
         ),
+      ),
+    );
+  }
+}
+
+class _DockGroupDivider extends StatelessWidget {
+  const _DockGroupDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Container(
+      width: AppSpacing.s24,
+      height: AppSpacing.hairline,
+      decoration: BoxDecoration(
+        color: colors.border.withValues(alpha: AppOpacity.medium),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
     );
   }

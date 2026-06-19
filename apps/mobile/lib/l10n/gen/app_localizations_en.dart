@@ -5280,6 +5280,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Capture notes, write decisions, and review the library';
 
   @override
+  String get settingsDomainsKnowledgeLibrarySubtitle =>
+      'Browse decisions, assumptions, routines, concepts, and notes';
+
+  @override
+  String get settingsDomainsKnowledgeReviewSubtitle =>
+      'Review due decisions, stale assumptions, and due routines';
+
+  @override
+  String get settingsDomainsKnowledgeMemoryTitle => 'KnowledgeOS Memory';
+
+  @override
+  String get settingsDomainsKnowledgeMemorySubtitle =>
+      'Manage the local model used for recall, dedupe, and semantic search';
+
+  @override
   String get settingsDomainsHealthPermissionDenied =>
       'Permission denied — try again in system Health settings';
 

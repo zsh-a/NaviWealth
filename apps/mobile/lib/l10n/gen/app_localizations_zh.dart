@@ -5080,6 +5080,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDomainsKnowledgeInboxSubtitle => '捕获笔记、写决策、查看资料库与复盘';
 
   @override
+  String get settingsDomainsKnowledgeLibrarySubtitle =>
+      '浏览 Decision、Assumption、Routine、Concept 与 Note';
+
+  @override
+  String get settingsDomainsKnowledgeReviewSubtitle =>
+      '复盘到期 Decision、过期 Assumption 与到期 Routine';
+
+  @override
+  String get settingsDomainsKnowledgeMemoryTitle => 'KnowledgeOS Memory';
+
+  @override
+  String get settingsDomainsKnowledgeMemorySubtitle => '管理用于召回、查重与语义搜索的本地模型';
+
+  @override
   String get settingsDomainsHealthPermissionDenied =>
       '权限被拒绝 — 在系统 Health 设置里再试';
 
