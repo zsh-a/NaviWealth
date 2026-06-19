@@ -37,6 +37,13 @@ class AppShell {
     await tester.tap(tab.first);
     await settle(tester);
   }
+
+  Future<void> openSettings() async {
+    final action = find.byIcon(FLucideIcons.settings);
+    expect(action, findsWidgets, reason: 'settings action missing');
+    await tester.tap(action.last);
+    await settle(tester);
+  }
 }
 
 /// The home ("Today") destination — the FinanceOS landing surface.
@@ -106,6 +113,63 @@ class IngestReviewPageObject {
 
   void expectConfirmAllCount(int count) {
     expect(find.text('Confirm all · new only ($count)'), findsOneWidget);
+  }
+}
+
+/// Global settings landing page.
+class SettingsPageObject {
+  SettingsPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectLanded() {
+    expect(find.text('Settings'), findsWidgets);
+  }
+
+  Future<void> openBackupAndRestore() async {
+    final action = find.text('Backup & Restore');
+    expect(action, findsWidgets, reason: 'backup settings row missing');
+    await tester.ensureVisible(action.first);
+    await settle(tester);
+    await tester.tap(action.first);
+    await settle(tester);
+  }
+}
+
+/// Settings → Backup & Restore.
+class BackupPageObject {
+  BackupPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectLanded() {
+    expect(find.text('Backup & Restore'), findsWidgets);
+    expect(find.text('Export Backup'), findsWidgets);
+  }
+
+  Future<void> exportWithPassphrase(String passphrase) async {
+    final exportTile = find.text('Export Backup');
+    expect(exportTile, findsWidgets, reason: 'export backup action missing');
+    await tester.ensureVisible(exportTile.first);
+    await settle(tester);
+    await tester.tap(exportTile.first);
+    await settle(tester);
+
+    expect(find.text('Passphrase'), findsWidgets);
+    await tester.enterText(
+      find.widgetWithText(FTextFormField, 'Passphrase'),
+      passphrase,
+    );
+    await settle(tester);
+
+    final export = find.text('Export');
+    expect(export, findsWidgets, reason: 'export submit action missing');
+    await tester.tap(export.last);
+    await settle(tester);
+  }
+
+  void expectExportSucceeded() {
+    expect(find.text('Backup exported successfully'), findsOneWidget);
   }
 }
 

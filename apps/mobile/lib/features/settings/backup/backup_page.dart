@@ -16,6 +16,13 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../ui/inline_setting_row.dart';
 import 'file_saver.dart';
 
+typedef BackupFileSaver =
+    Future<bool> Function(Uint8List bytes, String fileName);
+
+final backupFileSaverProvider = Provider<BackupFileSaver>(
+  (ref) => saveBackupFile,
+);
+
 class BackupPage extends ConsumerWidget {
   const BackupPage({super.key});
 
@@ -87,12 +94,12 @@ class BackupPage extends ConsumerWidget {
 
     try {
       final sw = Stopwatch()..start();
-      final service = await ref.read(backupServiceProvider.future);
-      if (service == null) {
+      final exporter = await ref.read(backupExportRunnerProvider.future);
+      if (exporter == null) {
         throw StateError('Backup requires an authenticated session.');
       }
-      logger.d('backup_ui: service resolved, calling exportBackup');
-      final bytes = await service.exportBackup(passphrase: passphrase);
+      logger.d('backup_ui: exporter resolved, calling exportBackup');
+      final bytes = await exporter(passphrase: passphrase);
       sw.stop();
       logger.d(
         'backup_ui: encryption done (${bytes.length} bytes, '
@@ -109,7 +116,7 @@ class BackupPage extends ConsumerWidget {
       final date = DateTime.now().toIso8601String().substring(0, 10);
       final fileName = 'naviwealth-backup-$date.bak';
       logger.d('backup_ui: opening save dialog for $fileName');
-      final saved = await saveBackupFile(bytes, fileName);
+      final saved = await ref.read(backupFileSaverProvider)(bytes, fileName);
       logger.d('backup_ui: saveBackupFile returned $saved');
 
       if (!context.mounted || !saved) {

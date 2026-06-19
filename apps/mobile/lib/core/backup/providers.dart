@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/persistence/providers.dart';
@@ -30,4 +32,17 @@ final backupServiceProvider = FutureProvider<BackupService?>((ref) async {
     stampHlc: engine.stampHlc,
     logger: ref.read(loggerProvider),
   );
+});
+
+typedef BackupExportRunner =
+    Future<Uint8List> Function({required String passphrase});
+
+final backupExportRunnerProvider = FutureProvider<BackupExportRunner?>((
+  ref,
+) async {
+  final service = await ref.watch(backupServiceProvider.future);
+  if (service == null) return null;
+  return ({required String passphrase}) {
+    return service.exportBackup(passphrase: passphrase);
+  };
 });
