@@ -68,11 +68,41 @@ class ActivityPageObject {
 
   final WidgetTester tester;
 
+  Future<void> openTradeEntry() async {
+    final add = find.byIcon(FLucideIcons.plus);
+    expect(add, findsWidgets, reason: 'activity add action missing');
+    await tester.tap(add.last);
+    await settle(tester);
+
+    expect(find.text('Record activity'), findsOneWidget);
+    final trade = find.text('Trade');
+    expect(trade, findsWidgets, reason: 'trade action missing');
+    await tester.tap(trade.first);
+    await settle(tester);
+  }
+
   Future<void> openIngestQueue() async {
     final action = find.byIcon(FLucideIcons.inbox);
     expect(action, findsWidgets, reason: 'ingest queue action missing');
     await tester.tap(action.first);
     await settle(tester);
+  }
+}
+
+/// Activity → Record trade form.
+class TradeEntryPageObject {
+  TradeEntryPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectCreateMode() {
+    expect(find.text('Record trade'), findsWidgets);
+    expect(find.text('Asset search'), findsOneWidget);
+    expect(find.text('Buy'), findsOneWidget);
+    expect(find.text('Sell'), findsOneWidget);
+    expect(find.text('Valuation adjust'), findsOneWidget);
+    expect(find.text('Quantity'), findsOneWidget);
+    expect(find.text('Price'), findsOneWidget);
   }
 }
 

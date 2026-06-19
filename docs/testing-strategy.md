@@ -120,14 +120,16 @@ body does not. Use a bounded `settle()` pump, never `pumpAndSettle`
 Seeds: `net_worth_flow_test.dart` (Task #1 — land on Today, move between
 destinations), `add_account_flow_test.dart` (Task #2 — discover account
 creation from Wealth, save through the real repository into in-memory Drift,
-and return to the live account list), `import_statement_flow_test.dart`
-(Task #4 — discover the Activity ingest queue, paste a statement, and stage
-reviewable drafts), and `navigation_flow_test.dart` (route-smoke across all
-four FinanceOS primary tabs — Today / Activity / Wealth / Plan — asserting
-each resolves and keeps the shell mounted rather than hitting the 404 page),
-and `export_backup_flow_test.dart` (Task #12 — discover Backup & Restore
-through global Settings, enter an export passphrase, and hand encrypted bytes
-to the file-save boundary).
+and return to the live account list), `add_transaction_flow_test.dart`
+(Task #3 — discover the Activity quick-add menu and enter the trade-entry
+form), `import_statement_flow_test.dart` (Task #4 — discover the Activity
+ingest queue, paste a statement, and stage reviewable drafts),
+`navigation_flow_test.dart` (route-smoke across all four FinanceOS primary
+tabs — Today / Activity / Wealth / Plan — asserting each resolves and keeps
+the shell mounted rather than hitting the 404 page), and
+`export_backup_flow_test.dart` (Task #12 — discover Backup & Restore through
+global Settings, enter an export passphrase, and hand encrypted bytes to the
+file-save boundary).
 
 ### Contract (Dart↔Rust↔wire, ~5%)
 The client and the Rust Worker share a wire format but no generated
@@ -218,9 +220,10 @@ cover Task #11 (backup/restore) and any SQLCipher PRAGMA path on-device.
 - ✅ Net-worth read model covered in every direction — manual assets,
   liabilities, and ledger-reconstructed securities — through the real chain.
 - ✅ On-device `integration_test/` stood up (real file DB boot + emulator CI).
-- Flow layer: 5 of 12 Tasks done (view net worth, add account, import
-  statement drafts, export backup, navigate primaries); grow toward the
-  remaining Tasks in §3 (AI, options income, etc.).
+- Flow layer: 6 of 12 Tasks done (view net worth, add account, add
+  transaction entry, import statement drafts, export backup, navigate
+  primaries); grow toward the remaining Tasks in §3 (AI, options income,
+  etc.).
 - Contracts-as-code: generated enum SSOT + `sync-v2` wire roundtrip vs the
   Rust serializer.
 - Expand golden coverage to each Task surface + responsive breakpoints.
