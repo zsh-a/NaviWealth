@@ -28,6 +28,7 @@ class AiTraceBuilder {
   final bool _capturePayloads;
   final DateTime _start;
   final List<AiSpan> _spans = <AiSpan>[];
+  final Map<String, Object?> _turnAttributes = <String, Object?>{};
   Map<String, Object?>? _invocation;
 
   /// Attach an `AiIntentInvocation.toTraceJson()` summary to this
@@ -35,6 +36,19 @@ class AiTraceBuilder {
   /// originated from a registered invocation.
   void attachInvocation(Map<String, Object?> invocation) {
     _invocation = invocation;
+  }
+
+  /// Attach cheap scalar attributes to the synthesised root turn span.
+  /// Used for per-turn observability that is not itself an execution
+  /// slice, such as ContextPack prompt-size metrics.
+  void addTurnAttributes(Map<String, Object?> attributes) {
+    for (final entry in attributes.entries) {
+      final value = entry.value;
+      if (value == null) continue;
+      if (value is String || value is num || value is bool) {
+        _turnAttributes[entry.key] = value;
+      }
+    }
   }
 
   /// Record one finished execution span. Wall-clock [startedAt] /
@@ -97,7 +111,7 @@ class AiTraceBuilder {
       totalDurationMs: total,
       terminalReason: terminalReason,
       invocation: _invocation,
-      spans: _spans.isEmpty
+      spans: _spans.isEmpty && _turnAttributes.isEmpty
           ? const <AiSpan>[]
           : List<AiSpan>.unmodifiable(<AiSpan>[
               _rootTurnSpan(terminalReason, total),
@@ -106,9 +120,9 @@ class AiTraceBuilder {
     );
   }
 
-  /// Synthesised root that every LLM-round span hangs off of. Only
-  /// emitted when there are child spans, so the legacy flat-timeline
-  /// fallback still triggers for span-free traces.
+  /// Synthesised root that every LLM-round span hangs off of. Emitted
+  /// when there are child spans or turn-level attributes; otherwise
+  /// the legacy flat-timeline fallback still triggers for empty traces.
   AiSpan _rootTurnSpan(TerminalReason reason, int totalMs) => AiSpan(
     id: kTurnSpanId,
     kind: AiSpanKind.turn,
@@ -120,6 +134,9 @@ class AiTraceBuilder {
       TerminalReason.userCancel => AiSpanStatus.cancelled,
       _ => AiSpanStatus.error,
     },
-    attributes: <String, Object?>{'terminal_reason': reason.wire},
+    attributes: <String, Object?>{
+      'terminal_reason': reason.wire,
+      ..._turnAttributes,
+    },
   );
 }

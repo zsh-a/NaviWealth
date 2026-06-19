@@ -187,6 +187,10 @@ staleness 分支不命中。
   **预注入 context 的 token 成本 + 噪声 vs 多一次 LLM round 的延迟/成本/失败率**。
   决策应该基于实测（典型 turn 里 anomaly summary 用到的频率、平均 turn 数变化），
   而不是基于"端侧免费"的直觉。建议**先保留**，到批 D 之前补一次实测。
+  **2026-06-19 更新**：turn root span 已记录 `context_pack_json_bytes`、
+  `context_pack_budget_*`、`context_appendix_bytes` 和 `context_appendix_cap_bytes`，
+  Waterfall 详情面板可直接查看这些 attributes；下一步可以基于真实 trace 样本决定是否删
+  `AnalyticalUpload` pre-load。
 
 ### 2.5 `features/ai_chat/data/providers.dart`
 
@@ -329,7 +333,9 @@ device tool 直接读本地 Drift，本地写入对端侧立即可见，根本�
    device runtime 或 `device_unavailable`。
 4. **批 D（ContextPack 精简——需先测量）**
    见 §2.4 修订：决策应基于"预注入 context 成本 vs 多一次 LLM round 成本"的实测，
-   不能凭"端侧免费"的直觉删。建议在批 A–C 落地后再排。
+   不能凭"端侧免费"的直觉删。2026-06-19 已补 ContextPack / appendix 字节度量并在
+   Waterfall span detail 暴露 attributes；剩余工作是收集真实 trace 样本后决定是否移除
+   `AnalyticalUpload` pre-load。
 5. **批 E（剩余 docstring 收敛）**
    已清理用户可见 AI 透明度徽标与 Analytical device tool descriptor 中的
    "云端推理 / 云端表镜像 / 后端镜像"当前路径表述；2026-06-19 复核时

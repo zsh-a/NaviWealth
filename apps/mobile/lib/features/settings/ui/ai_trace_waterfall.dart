@@ -360,6 +360,10 @@ class _SpanDetail extends StatelessWidget {
             const SizedBox(height: AppSpacing.s10),
             AiJsonView(value: span.output, label: 'output'),
           ],
+          if (span.attributes != null && span.attributes!.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s10),
+            AiJsonView(value: span.attributes, label: 'attributes'),
+          ],
           if (isPayloadKind && span.input == null && span.output == null) ...[
             const SizedBox(height: AppSpacing.s10),
             Text(

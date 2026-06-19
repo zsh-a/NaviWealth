@@ -600,6 +600,12 @@ void main() {
       final trace = traces.single;
       expect(trace.intent.label, 'chat_turn');
       expect(trace.backend, Backend.hybrid);
+      final rootAttrs = trace.spans.first.attributes!;
+      expect(rootAttrs['context_pack_present'], isTrue);
+      expect(rootAttrs['context_pack_json_bytes'], isA<int>());
+      expect(rootAttrs['context_pack_budget_tier'], 'standard');
+      expect(rootAttrs['context_appendix_present'], isTrue);
+      expect(rootAttrs['context_appendix_bytes'], isA<int>());
       expect(trace.toolSpans, hasLength(1));
       expect(trace.toolSpans.single.name, 'tool:list_recent_expenses');
       expect(trace.toolSpans.single.isError, isFalse);

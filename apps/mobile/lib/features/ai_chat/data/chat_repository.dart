@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
@@ -6,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/ai/composition/chat_trace_prep.dart';
 import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/contracts/contracts.dart';
+import '../../../core/ai/runtime/device/device_user_profile_prompt.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../core/auth/auth_session.dart';
 import '../../../core/auth/providers.dart';
@@ -215,6 +217,7 @@ class ChatRepository {
     if (traceBuilder != null && invocationTrace != null) {
       traceBuilder.attachInvocation(invocationTrace);
     }
+    traceBuilder?.addTurnAttributes(_contextPackTraceAttributes(contextPack));
 
     // Interleaved record of the assistant turn. `segments` and
     // `invocationOrder` together rebuild the original
@@ -622,4 +625,27 @@ class ChatRepository {
   bool _isUserCancelled(CancelToken token) {
     return token.cancelError?.error == _userCancelledReason;
   }
+}
+
+Map<String, Object?> _contextPackTraceAttributes(ContextPack? pack) {
+  if (pack == null) {
+    return const <String, Object?>{
+      'context_pack_present': false,
+      'context_pack_json_bytes': 0,
+      'context_appendix_present': false,
+      'context_appendix_bytes': 0,
+    };
+  }
+  final appendix = renderContextPackSystemAppendix(pack);
+  return <String, Object?>{
+    'context_pack_present': true,
+    'context_pack_json_bytes': pack.serializedByteSize,
+    'context_pack_budget_bytes': pack.budget.byteCap,
+    'context_pack_budget_tier': pack.budget.tier.wire,
+    'context_appendix_present': appendix != null,
+    'context_appendix_bytes': appendix == null
+        ? 0
+        : utf8.encode(appendix).length,
+    'context_appendix_cap_bytes': kUserProfileAppendixByteCap,
+  };
 }

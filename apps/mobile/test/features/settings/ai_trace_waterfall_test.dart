@@ -19,6 +19,11 @@ AiTrace _trace() => const AiTrace(
       name: 'turn',
       startOffsetMs: 0,
       durationMs: 1500,
+      attributes: {
+        'terminal_reason': 'done',
+        'context_pack_json_bytes': 512,
+        'context_appendix_bytes': 128,
+      },
     ),
     AiSpan(
       id: 'r1',
@@ -110,10 +115,29 @@ void main() {
       expect(find.text('output'), findsOneWidget);
     });
 
+    testWidgets('turn detail shows ContextPack sizing attributes', (
+      tester,
+    ) async {
+      await _pump(tester, AiTraceWaterfall(trace: _trace()));
+
+      await tester.tap(find.text('turn'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('attributes'), findsOneWidget);
+      expect(_richTextContaining('context_pack_json_bytes'), findsOneWidget);
+      expect(_richTextContaining('context_appendix_bytes'), findsOneWidget);
+    });
+
     testWidgets('cost estimate resolves for a known model', (tester) async {
       final c = estimateTraceCostCny(_trace());
       expect(c, isNotNull);
       expect(c, greaterThan(0));
     });
   });
+}
+
+Finder _richTextContaining(String text) {
+  return find.byWidgetPredicate(
+    (widget) => widget is RichText && widget.text.toPlainText().contains(text),
+  );
 }
