@@ -51,7 +51,13 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         children: [
           const AiSparkle(size: AppIconSizes.sm),
           const SizedBox(width: AppSpacing.s6),
-          Text(l10n.ingestReviewTitle),
+          Flexible(
+            child: Text(
+              l10n.ingestReviewTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
       actions: [
@@ -207,7 +213,13 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
                 onPress: _isBusy
                     ? null
                     : () => _confirmAllFresh(drafts, selectedId),
-                child: Text(l10n.ingestConfirmAllFresh(freshCount)),
+                child: Flexible(
+                  child: Text(
+                    l10n.ingestConfirmAllFresh(freshCount),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
             ),
           ),
@@ -599,7 +611,13 @@ class _DraftCard extends StatelessWidget {
                 child: FButton(
                   variant: FButtonVariant.outline,
                   onPress: busy ? null : onSkip,
-                  child: Text(l10n.ingestSkip),
+                  child: Flexible(
+                    child: Text(
+                      l10n.ingestSkip,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),
@@ -607,7 +625,13 @@ class _DraftCard extends StatelessWidget {
                 child: FButton(
                   variant: FButtonVariant.primary,
                   onPress: busy ? null : onConfirm,
-                  child: Text(l10n.ingestConfirm),
+                  child: Flexible(
+                    child: Text(
+                      l10n.ingestConfirm,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -735,19 +759,37 @@ class _EmptyState extends StatelessWidget {
             variant: FButtonVariant.outline,
             onPress: onCamera,
             prefix: const Icon(FLucideIcons.camera),
-            child: Text(l10n.ingestCameraAction),
+            child: Flexible(
+              child: Text(
+                l10n.ingestCameraAction,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ),
           FButton(
             variant: FButtonVariant.outline,
             onPress: onImport,
             prefix: const Icon(FLucideIcons.paperclip),
-            child: Text(l10n.ingestImportFileAction),
+            child: Flexible(
+              child: Text(
+                l10n.ingestImportFileAction,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ),
           FButton(
             variant: FButtonVariant.outline,
             onPress: onPaste,
             prefix: const Icon(FLucideIcons.clipboard),
-            child: Text(l10n.ingestPasteAction),
+            child: Flexible(
+              child: Text(
+                l10n.ingestPasteAction,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ),
         ],
       ),

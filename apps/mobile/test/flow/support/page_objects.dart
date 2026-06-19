@@ -55,6 +55,60 @@ class HomePage {
   }
 }
 
+/// Activity destination entry points used by task-level flows.
+class ActivityPageObject {
+  ActivityPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  Future<void> openIngestQueue() async {
+    final action = find.byIcon(FLucideIcons.inbox);
+    expect(action, findsWidgets, reason: 'ingest queue action missing');
+    await tester.tap(action.first);
+    await settle(tester);
+  }
+}
+
+/// Layer 4 ingest review queue.
+class IngestReviewPageObject {
+  IngestReviewPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectLandedEmpty() {
+    expect(find.text('Review entries'), findsWidgets);
+    expect(find.text('Nothing to confirm'), findsOneWidget);
+  }
+
+  Future<void> pasteStatement(String text) async {
+    final paste = find.text('Paste text');
+    expect(paste, findsWidgets, reason: 'paste action missing');
+    await tester.tap(paste.first);
+    await settle(tester);
+
+    expect(find.text('Paste statement text'), findsOneWidget);
+    await tester.enterText(find.byType(FTextField), text);
+    await settle(tester);
+
+    final parse = find.text('Parse');
+    expect(parse, findsWidgets, reason: 'parse action missing');
+    await tester.tap(parse.last);
+    await settle(tester);
+  }
+
+  void expectDraftVisible(String description) {
+    expect(
+      find.textContaining(description),
+      findsWidgets,
+      reason: 'imported draft not visible',
+    );
+  }
+
+  void expectConfirmAllCount(int count) {
+    expect(find.text('Confirm all · new only ($count)'), findsOneWidget);
+  }
+}
+
 /// Wealth destination entry points used by task-level flows.
 class WealthPage {
   WealthPage(this.tester);
