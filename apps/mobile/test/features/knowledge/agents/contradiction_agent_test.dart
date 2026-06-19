@@ -72,6 +72,7 @@ class _FakeRepo implements KnowledgeRepository {
     required String ownerUserId,
     Set<DecisionStatus>? statuses,
     int limit = 200,
+    int offset = 0,
   }) async => decisions;
 
   @override

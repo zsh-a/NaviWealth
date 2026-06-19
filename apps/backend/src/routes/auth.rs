@@ -113,39 +113,14 @@ fn normalise_domains(domains: Vec<String>) -> Vec<String> {
     let mut out = default_domains();
     for d in domains {
         match d.as_str() {
-            "finance" | "health" | "knowledge" => {
-                if !out.iter().any(|existing| existing == &d) {
-                    out.push(d);
-                }
+            "finance" | "health" | "knowledge" if !out.iter().any(|existing| existing == &d) => {
+                out.push(d);
             }
             _ => {}
         }
     }
     out.sort();
     out
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn normalise_domains_keeps_finance_and_curated_optional_domains() {
-        let domains = normalise_domains(vec![
-            "knowledge".to_string(),
-            "time".to_string(),
-            "health".to_string(),
-            "health".to_string(),
-        ]);
-        assert_eq!(
-            domains,
-            vec![
-                "finance".to_string(),
-                "health".to_string(),
-                "knowledge".to_string()
-            ]
-        );
-    }
 }
 
 pub async fn login(mut req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
@@ -478,4 +453,27 @@ async fn refresh_inner(
         token_type: "Bearer",
         expires_at: exp.to_rfc3339(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn normalise_domains_keeps_finance_and_curated_optional_domains() {
+        let domains = normalise_domains(vec![
+            "knowledge".to_string(),
+            "time".to_string(),
+            "health".to_string(),
+            "health".to_string(),
+        ]);
+        assert_eq!(
+            domains,
+            vec![
+                "finance".to_string(),
+                "health".to_string(),
+                "knowledge".to_string()
+            ]
+        );
+    }
 }
