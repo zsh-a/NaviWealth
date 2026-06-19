@@ -21,8 +21,8 @@ class ChatComposer extends StatefulWidget {
 
   final bool isStreaming;
 
-  /// Optional text to pre-fill the composer with (e.g. from "Ask AI" in
-  /// the command palette).
+  /// Optional text to pre-fill the composer with (e.g. from the assistant
+  /// entry in the command palette).
   final String? initialText;
   final ValueChanged<String> onSend;
   final VoidCallback onCancel;

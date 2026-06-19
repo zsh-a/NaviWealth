@@ -11,7 +11,7 @@
 ///   3. Delegates to [InMemoryQueryPlanExecutor].
 ///
 /// `NetWorthTrendPlan` is handled here through `dashboardTrendProvider`
-/// so Ask AI can answer net-worth trend questions from the live dashboard
+/// so the assistant can answer net-worth trend questions from the live dashboard
 /// series.
 ///
 /// The adapter is Riverpod-aware so callers can hand in any `Ref` —

@@ -3689,7 +3689,7 @@ abstract class AppLocalizations {
   /// Dynamic command palette entry that opens AI chat with the user's query prefilled
   ///
   /// In en, this message translates to:
-  /// **'Ask AI: {query}'**
+  /// **'Assistant: {query}'**
   String commandPaletteAskAi(String query);
 
   /// Tiny badge on the command palette result pane showing the answer was computed on-device
@@ -3803,7 +3803,7 @@ abstract class AppLocalizations {
   /// Command palette: open a new AI chat (via askAi helper, routes through aiContextProvider)
   ///
   /// In en, this message translates to:
-  /// **'Ask AI'**
+  /// **'Open assistant'**
   String get commandPaletteOpenAi;
 
   /// Command palette: open the read-only AI session history under Settings
@@ -7806,7 +7806,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiFloatingPillLabel.
   ///
   /// In en, this message translates to:
-  /// **'Ask AI'**
+  /// **'Open assistant'**
   String get aiFloatingPillLabel;
 
   /// No description provided for @aiChatSheetTitle.

@@ -2058,7 +2058,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String commandPaletteAskAi(String query) {
-    return 'Ask AI: $query';
+    return 'Assistant: $query';
   }
 
   @override
@@ -2124,7 +2124,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commandPaletteNewExpense => 'New expense';
 
   @override
-  String get commandPaletteOpenAi => 'Ask AI';
+  String get commandPaletteOpenAi => 'Open assistant';
 
   @override
   String get commandPaletteAiHistory => 'AI history';
@@ -4548,7 +4548,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatToolShowCompactView => 'Back to compact view';
 
   @override
-  String get aiFloatingPillLabel => 'Ask AI';
+  String get aiFloatingPillLabel => 'Open assistant';
 
   @override
   String get aiChatSheetTitle => 'AI assistant';

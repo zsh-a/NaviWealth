@@ -1134,7 +1134,7 @@
   "@commandPaletteMobileEntryHint": { "description": "Placeholder text on the mobile shell's command-bar pill (§5.10.2 / S2.5)" },
   "commandPaletteEmpty": "No commands match your search",
   "@commandPaletteEmpty": { "description": "Shown in the command palette when the query matches no commands" },
-  "commandPaletteAskAi": "Ask AI: {query}",
+  "commandPaletteAskAi": "Assistant: {query}",
   "@commandPaletteAskAi": {
     "description": "Dynamic command palette entry that opens AI chat with the user's query prefilled",
     "placeholders": { "query": { "type": "String", "example": "portfolio summary" } }
@@ -1184,7 +1184,7 @@
   "@commandPaletteNewTrade": { "description": "Command palette: open the trade entry form" },
   "commandPaletteNewExpense": "New expense",
   "@commandPaletteNewExpense": { "description": "Command palette: open the new expense form" },
-  "commandPaletteOpenAi": "Ask AI",
+  "commandPaletteOpenAi": "Open assistant",
   "@commandPaletteOpenAi": { "description": "Command palette: open a new AI chat (via askAi helper, routes through aiContextProvider)" },
   "commandPaletteAiHistory": "AI history",
   "@commandPaletteAiHistory": { "description": "Command palette: open the read-only AI session history under Settings" },
@@ -2422,7 +2422,7 @@
   "aiChatToolShowRawJson": "View raw JSON",
   "aiChatToolShowCompactView": "Back to compact view",
 
-  "aiFloatingPillLabel": "Ask AI",
+  "aiFloatingPillLabel": "Open assistant",
   "aiChatSheetTitle": "AI assistant",
   "aiChatSheetEmpty": "Ask anything about your Life OS.",
   "aiChatSheetExpandTooltip": "Expand to full screen",

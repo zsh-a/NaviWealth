@@ -187,7 +187,7 @@ class _DesktopDock extends ConsumerWidget {
   }
 }
 
-/// Shell-level "Ask AI" affordance docked at the bottom of the desktop
+/// Shell-level assistant affordance docked at the bottom of the desktop
 /// rail. Always visible (not gated on multi-domain) so HealthOS /
 /// KnowledgeOS users get the same one-tap entry FinanceOS has.
 class _AskAiDockButton extends StatelessWidget {

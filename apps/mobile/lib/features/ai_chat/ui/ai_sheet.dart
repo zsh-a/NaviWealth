@@ -402,7 +402,7 @@ class AiSheetShell extends ConsumerStatefulWidget {
   /// `{{object_label}}` in the prompt template and the context header.
   final String? objectLabel;
 
-  /// Conversation-mode composer pre-fill (command palette "Ask AI").
+  /// Conversation-mode composer pre-fill (command palette assistant entry).
   final String? prefill;
 
   bool get isInvocation => invocation != null;

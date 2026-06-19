@@ -6,7 +6,7 @@
 /// invocation.
 ///
 /// §5.8 hard constraint: label text comes from the active intent catalog,
-/// not free-form. No "Ask AI" / glow / generic chat icon. Domain is
+/// not free-form. No generic assistant label / glow / chat icon. Domain is
 /// auto-derived from the current route via [askAi]; capsules never
 /// hard-code which OS they live in.
 library;

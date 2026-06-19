@@ -75,6 +75,31 @@ void main() {
           'route. Trigger surfaces should use the bottom-sheet invocation path.',
     );
   });
+
+  test('AI surface copy avoids generic Ask AI labels', () {
+    final violations = <String>[];
+
+    for (final file in _copyContractFiles()) {
+      final lines = file.readAsLinesSync();
+      for (var i = 0; i < lines.length; i++) {
+        final code = file.path.endsWith('.arb')
+            ? lines[i]
+            : _stripLineComment(lines[i]);
+        if (code.trim().isEmpty) continue;
+        if (_genericAiLabel.hasMatch(code)) {
+          violations.add('${file.path}:${i + 1}: ${code.trim()}');
+        }
+      }
+    }
+
+    expect(
+      violations,
+      isEmpty,
+      reason:
+          'AI trigger copy should name the object/action or open the '
+          'assistant shell; avoid generic "Ask AI" / "AI analysis" labels.',
+    );
+  });
 }
 
 final _pushesChatPage = RegExp(
@@ -83,6 +108,26 @@ final _pushesChatPage = RegExp(
 final _openAiChatEntrypoint = RegExp(r'\bopenAiChat\s*\(');
 final _showAiSheetCall = RegExp(r'\bshowAiSheet\s*\(');
 final _aiChatPageConstruction = RegExp(r'\bAiChatPage\s*\(');
+final _genericAiLabel = RegExp(r'Ask AI|AI\s*分析|AI分析|问\s*AI|问问\s*AI');
+
+List<File> _copyContractFiles() {
+  final files = <File>[
+    File('lib/l10n/app_en.arb'),
+    File('lib/l10n/app_zh.arb'),
+  ];
+
+  files.addAll(
+    Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'))
+        .where((file) => !file.path.contains('/l10n/gen/'))
+        .where((file) => !file.path.endsWith('.g.dart'))
+        .where((file) => !file.path.endsWith('.freezed.dart')),
+  );
+
+  return files..sort((a, b) => a.path.compareTo(b.path));
+}
 
 bool _isShowAiSheetDefinition(String code) =>
     code.contains('Future<void> showAiSheet(');

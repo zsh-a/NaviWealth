@@ -1986,7 +1986,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String commandPaletteAskAi(String query) {
-    return '问 AI：$query';
+    return '助理：$query';
   }
 
   @override
@@ -2050,7 +2050,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commandPaletteNewExpense => '新增支出';
 
   @override
-  String get commandPaletteOpenAi => '问 AI';
+  String get commandPaletteOpenAi => '打开助理';
 
   @override
   String get commandPaletteAiHistory => 'AI 历史会话';
@@ -4372,7 +4372,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatToolShowCompactView => '返回精简视图';
 
   @override
-  String get aiFloatingPillLabel => '问问 AI';
+  String get aiFloatingPillLabel => '打开助理';
 
   @override
   String get aiChatSheetTitle => 'AI 助手';

@@ -13,7 +13,7 @@
 ///
 /// Calm Intelligence (§5.6): chips are typography-first, outline,
 /// no icons. Suggestions are object-semantic phrases, not generic
-/// "Ask AI" copy.
+/// generic assistant copy.
 library;
 
 import '../../../l10n/gen/app_localizations.dart';
