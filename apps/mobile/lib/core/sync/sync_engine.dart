@@ -230,9 +230,8 @@ class SyncEngine {
   RowChange _toRowChange(String table, String id, Map<String, Object?> data) {
     final version = (data['hlc'] as String?) ?? Hlc.zero(deviceId).toString();
     // D-1.4: tag every outgoing row with its LifeOS domain prefix. The prefix
-    // is dispatched per table ([domainPrefixForTable]): KnowledgeOS rows ride
-    // `know:`, FinanceOS rows `fin:`. HealthOS rows are intentionally excluded
-    // — they sync via HealthKit/Health Connect, not the server row store.
+    // is dispatched per table ([domainPrefixForTable]): FinanceOS rows ride
+    // `fin:`, HealthOS rows ride `health:`, and KnowledgeOS rows ride `know:`.
     return RowChange(
       table: prefixTable(table),
       id: id,

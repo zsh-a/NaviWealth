@@ -1,18 +1,24 @@
-# Sync Protocol — Test Case Catalogue
+# Sync v2 Protocol — Test Case Catalogue
 
-Companion to [`sync-protocol.md`](./sync-protocol.md). These are
-**protocol-level** scenarios that both the client (Flutter) and server
-(Workers + Rust) test suites must cover. Implementation tickets:
+Companion to [`sync-v2.md`](./sync-v2.md). These are protocol-level
+scenarios that the Flutter client and Cloudflare Worker backend should cover
+for the active row-state sync protocol.
 
-- Server: Sync API implementation.
-- Client: SyncEngine implementation.
+The historical v1 OpLog test catalogue has been removed from this file. v1
+concepts such as `op_type`, `fields_diff`, `/sync/push`, `/sync/pull`,
+server HLC restamping, `clock_skew_too_large`, and per-table materialisers
+belong only in [`sync-protocol.md`](./sync-protocol.md), which is kept as
+deleted-history reference.
 
-Each case lists: **setup → action → expected outcome**. Test names follow
-`SP-<group>-<n>` for cross-referencing in PRs.
+Each case lists **setup -> action -> expected outcome**. Test names follow
+`SP-<group>-<n>` for cross-referencing in test comments.
 
 ---
 
-## A. HLC mechanics (unit-level, both client and server)
+## A. HLC mechanics
+
+The client still uses canonical HLC strings as the v2 row `version` token, so
+the existing HLC unit-test IDs remain stable.
 
 ### SP-A-1 — `next` advances logical when phys equal
 
@@ -28,471 +34,474 @@ Each case lists: **setup → action → expected outcome**. Test names follow
 
 ### SP-A-3 — `next` keeps `pmax` when local > now
 
-- **Setup**: `local = (2000, 0)`, `now_ms = 1500` (clock went backwards).
-- **Action**: `next(...)`.
+- **Setup**: `local = (2000, 0)`, `now_ms = 1500`.
+- **Action**: `next(local, now_ms, dev)`.
 - **Expect**: `(2000, 1, dev)`.
 
 ### SP-A-4 — `merge` takes max of three sources
 
 - **Setup**: `local = (1000, 3)`, `recv = (1500, 7)`, `now = 1200`.
-- **Action**: `merge(...)`.
+- **Action**: `merge(local, recv, now, dev)`.
 - **Expect**: `(1500, 8, dev)`.
 
 ### SP-A-5 — Logical overflow bumps phys
 
 - **Setup**: `local = (1000, 65535)`, `now_ms = 1000`.
-- **Action**: `next(...)`.
+- **Action**: `next(local, now_ms, dev)`.
 - **Expect**: `(1001, 0, dev)`.
 
 ### SP-A-6 — Canonical string round-trip
 
 - **Setup**: `hlc = (1714291200000, 1, "1f5b...c01")`.
-- **Action**: serialise, parse.
-- **Expect**: input == output bit-for-bit.
+- **Action**: serialize, parse.
+- **Expect**: input equals output bit-for-bit.
 
-### SP-A-7 — Lex order matches tuple order (random fuzz, 1k pairs)
+### SP-A-7 — Lex order matches tuple order
 
-- **Action**: for each pair `(a, b)` of random HLCs, assert
-  `cmp(serialise(a), serialise(b)) == cmp_tuple(a, b)`.
-
----
-
-## B. OpLog encoding
-
-### SP-B-1 — Insert encodes full row (incl. PK)
-
-- **Setup**: new `Account { id="A1", name="Cash", currency="USD", … }`.
-- **Action**: encode op.
-- **Expect**: `op_type == "insert"`, `fields_diff` contains `id`, `name`,
-  `currency`, all required cols.
-
-### SP-B-2 — Update encodes only changed fields
-
-- **Setup**: existing row with `name="Cash"`, user changes name to `"Wallet"`.
-- **Action**: encode op.
-- **Expect**: `fields_diff == {"name":"Wallet","updated_at":"…Z"}` (no other
-  cols).
-
-### SP-B-3 — Delete encodes null diff
-
-- **Action**: delete op for row.
-- **Expect**: `fields_diff == null`, `op_type == "delete"`.
-
-### SP-B-4 — Empty update is rejected client-side before push
-
-- **Setup**: caller passes `{}` to repo.update.
-- **Expect**: error raised at repo layer; no op_log row written.
-
-### SP-B-5 — `null` vs absent column distinction
-
-- **Setup**: row has `notes = "x"`. User clears notes (sets to NULL).
-- **Action**: encode update.
-- **Expect**: `fields_diff` contains `"notes": null`. Subsequent test of a
-  no-op edit: `"notes"` key absent.
-
-### SP-B-6 — DateTime serialised UTC RFC3339 with millisecond precision
-
-- **Setup**: `created_at = 2026-04-28T12:00:00.123 in Asia/Shanghai`.
-- **Expect**: encoded as `"2026-04-28T04:00:00.123Z"`.
-
-### SP-B-7 — `fields_diff` rejected when > 64 KB serialised
-
-- **Setup**: synthetic op with 70 KB `note`.
-- **Action**: push.
-- **Expect**: server returns per-op `payload_too_large`. Client drops op,
-  records to `sync_errors`.
+- **Action**: for random HLC pairs `(a, b)`, compare canonical strings and
+  tuple order.
+- **Expect**: `cmp(a.toString(), b.toString()) == cmp_tuple(a, b)`.
 
 ---
 
-## C. Push API
+## B. Row-state wire model
 
-### SP-C-1 — Happy path push of 3 ops
+### SP-B-1 — Local write enqueues a dirty pointer
 
-- **Setup**: client outbox has 3 ops (insert, update, delete).
-- **Action**: `POST /sync/push`.
-- **Expect**: 200, `accepted == 3`, `rejected == []`. Rows materialised on
-  server. `op_log` has 3 rows with `server_hlc > 0`.
+- **Setup**: a repository creates a syncable row in one Drift transaction.
+- **Action**: the mutation stamps `hlc`, writes the business row, and calls
+  `OutboxStore.enqueue(table, rowId)`.
+- **Expect**: the row is visible locally immediately and `op_outbox` contains
+  one dirty pointer for `(table, rowId)`.
 
-### SP-C-2 — Idempotent re-push
+### SP-B-2 — Multiple edits to one row collapse to current state
 
-- **Setup**: SP-C-1 succeeded. Client did not delete outbox (simulate
-  partial-failure resume).
-- **Action**: re-push the same batch.
-- **Expect**: 200, `accepted == 3`. No duplicate rows in `op_log` (PK on
-  `op_id`). No double-apply on materialised tables.
+- **Setup**: the same row is edited three times while offline, producing
+  three dirty pointers.
+- **Action**: `SyncEngine` collects a batch.
+- **Expect**: it sends one `RowChange` for that `(table, id)` with the latest
+  row payload and latest `hlc`, while retaining all pointer IDs for ack
+  clearing.
 
-### SP-C-3 — `op_id_mutated` on conflicting re-push
+### SP-B-3 — Outgoing table names carry LifeOS prefixes
 
-- **Setup**: re-push SP-C-1 batch but bump `client_hlc` of one op.
-- **Expect**: that op rejected with `op_id_mutated`. Other ops accepted.
+- **Setup**: dirty rows exist in Finance, Health, and Knowledge tables.
+- **Action**: the client builds `RowChange.table`.
+- **Expect**: wire tables use `fin:`, `health:`, or `know:` prefixes at the
+  sync boundary; unprefixed business table names are not sent.
 
-### SP-C-4 — Out-of-order batch rejected
+### SP-B-4 — Outgoing row sends full current payload
 
-- **Setup**: 3 ops with HLCs `[h2, h1, h3]` (h1 < h2 < h3).
-- **Action**: push.
-- **Expect**: 400 `ops_unordered`, no ops persisted.
+- **Setup**: a dirty row has many non-null columns plus sync metadata.
+- **Action**: the client serializes the row.
+- **Expect**: `payload` is the full JSON-safe row map, `version` equals the
+  row `hlc`, and `deleted` reflects whether `deleted_at` is non-null.
+
+### SP-B-5 — Tombstone is sent as a deleted row
+
+- **Setup**: a local delete marks `deleted_at` and stamps a higher `hlc`.
+- **Action**: the client serializes the row.
+- **Expect**: `deleted == true`, `version` is the tombstone `hlc`, and the
+  row identity remains `(table, id)` so peers can materialize the tombstone.
+
+### SP-B-6 — Missing dirty row clears stale pointer only
+
+- **Setup**: `op_outbox` points at a row that no longer exists locally.
+- **Action**: `SyncEngine` collects a batch.
+- **Expect**: no `RowChange` is sent for that pointer and the stale pointer
+  can be cleared after the cycle.
+
+### SP-B-7 — Request batch caps at 500 changes
+
+- **Setup**: more than 500 distinct dirty rows are queued.
+- **Action**: `SyncEngine` collects a batch.
+- **Expect**: at most 500 `changes` are sent and the cycle loops after the
+  response because more dirty rows remain.
+
+---
+
+## C. `POST /sync` API
+
+### SP-C-1 — Empty first sync succeeds
+
+- **Setup**: a new device has cursor `0` and no dirty rows.
+- **Action**: `POST /sync { device_id, since: 0, changes: [] }`.
+- **Expect**: `200`, `changes` contains peer rows newer than `0`, `more`
+  reflects pagination, and `seq` is the cursor the client should adopt.
+
+### SP-C-2 — Push and pull happen in one request
+
+- **Setup**: D1 has dirty rows and D2 has already stored newer peer rows.
+- **Action**: D1 sends one `POST /sync` with `changes` and `since`.
+- **Expect**: the server applies D1's winning changes first, then returns
+  D2 rows with `seq > since` and `device_id != D1`.
+
+### SP-C-3 — Response includes accepted push rows
+
+- **Setup**: the request includes three domain-authorized changes.
+- **Action**: the server handles the request.
+- **Expect**: response `accepted` includes each accepted `(table, id)` even
+  if LWW decides an already stored server row still wins.
+
+### SP-C-4 — Client clears only accepted pointers
+
+- **Setup**: request includes one accepted Finance row and one row rejected by
+  domain authorization.
+- **Action**: the client processes the response.
+- **Expect**: only dirty pointers whose wire keys appear in `accepted` are
+  cleared; unauthorized rows remain dirty.
 
 ### SP-C-5 — Device mismatch rejected
 
-- **Setup**: batch `device_id = D1`, op inside has `device_id = D2`.
-- **Action**: push.
-- **Expect**: 400 `device_mismatch`.
+- **Setup**: JWT binds the caller to D1 but body has `device_id = D2`.
+- **Action**: `POST /sync`.
+- **Expect**: `400 device_mismatch`; no rows are stored.
 
-### SP-C-6 — Clock skew above cap rejected
+### SP-C-6 — Wrong protocol version rejected
 
-- **Setup**: client phys_ms = `server_now + 5 min`.
-- **Action**: push.
-- **Expect**: 409 `clock_skew_too_large`.
+- **Setup**: request header `Sync-Protocol-Version: 999`.
+- **Action**: `POST /sync`.
+- **Expect**: `426 protocol_version`; client surfaces update-required UX.
 
-### SP-C-7 — Body size cap enforced
+### SP-C-7 — Body and row size limits enforced
 
-- **Setup**: 500 ops × 3 KB each ≈ 1.5 MB body.
-- **Action**: push.
-- **Expect**: 413 `payload_too_large`. Client splits and retries.
+- **Setup**: request body exceeds 1 MB, `changes.length > 500`, or a single
+  row payload exceeds 64 KB.
+- **Action**: `POST /sync`.
+- **Expect**: `413 payload_too_large`; client keeps dirty pointers for retry
+  after splitting or user intervention.
 
-### SP-C-8 — Server stamps server_hlc and persists in op_log.hlc_text
+### SP-C-8 — Malformed JSON rejected
 
-- **Setup**: client_hlc.phys_ms = 1000, server_now = 5000.
-- **Action**: push 1 op.
-- **Expect**: `op_log.hlc_text.phys_ms == 5000` (server_now wins),
-  `op_log.client_hlc.phys_ms == 1000` preserved.
+- **Setup**: body is not valid JSON or misses required wire fields.
+- **Action**: `POST /sync`.
+- **Expect**: `400 bad_request`; no rows are stored.
 
-### SP-C-9 — Push response advances client HLC state
+### SP-C-9 — Missing JWT rejected
 
-- **Setup**: client_hlc state = `(1000, 0)`. Server returns
-  `server_hlc_high = (5000, 3)`.
-- **Action**: client merges.
-- **Expect**: client_hlc state = `(5000, 4, self_device_id)` (next on top).
-
-### SP-C-10 — Stale op records to op_log but doesn't update row
-
-- **Setup**: server has row with `last_hlc = 1000`. Client pushes update
-  with `client_hlc.phys_ms = 500` (older than current after server stamp it
-  becomes server_hlc > 1000 if `server_now > 1000`; to construct true
-  shadow, push two ops in batch where the **second** has higher HLC for
-  same row, then a third op for same row with older HLC).
-- **Expect**: shadowed op recorded in `op_log` with its stamped `server_hlc`
-  but does not change materialised row state. `accepted` count includes it
-  (it's not "rejected" — it's recorded but inert for that row).
-
-> **Note**: Because the server always stamps with `next()` on top of the
-> current server clock, no incoming op will ever produce a `server_hlc`
-> lower than an older op's `server_hlc` for the same row, *unless ops are
-> intentionally pre-ordered such that the materialiser sees an older one
-> last*. This test is most cleanly written by manually inserting a high-HLC
-> op_log row first, then pushing.
+- **Setup**: no `Authorization` header.
+- **Action**: `POST /sync`.
+- **Expect**: `401 unauthorized`.
 
 ---
 
-## D. Pull API
+## D. Server row store and pull cursor
 
-### SP-D-1 — First sync (`since` empty)
+### SP-D-1 — First write stores a row and mints seq
 
-- **Setup**: server has 7 ops total for user.
-- **Action**: `GET /sync/pull?since=&device_id=D1` (no ops authored by D1).
-- **Expect**: 200, 7 ops returned in HLC ascending order, `has_more = false`.
+- **Setup**: no stored row for `(user, table, id)`.
+- **Action**: apply an incoming change.
+- **Expect**: the row is inserted with payload, version, device_id, deleted
+  flag, and a positive `seq`.
 
-### SP-D-2 — Pull filters out caller's own device
+### SP-D-2 — Winning update mints a higher seq
 
-- **Setup**: server has 5 ops from D1, 3 ops from D2.
-- **Action**: pull as D1.
-- **Expect**: 3 ops returned (only D2's). All 3 have `device_id == D2`.
+- **Setup**: server has row version `v1`.
+- **Action**: incoming version `v2 > v1` is applied.
+- **Expect**: stored payload/version are replaced and `seq` increases, making
+  the row visible to peers whose cursor was the old `seq`.
 
-### SP-D-3 — Strictly greater-than `since`
+### SP-D-3 — Losing update is idempotent
 
-- **Setup**: 3 ops with HLCs `h1 < h2 < h3`.
-- **Action**: pull with `since = h2`.
-- **Expect**: only the op with HLC `h3` returned (h2 is **not** included).
+- **Setup**: server has row `(version = v2, device_id = D2)`.
+- **Action**: incoming `(version = v1, device_id = D1)` where `(v1, D1)` loses
+  under LWW.
+- **Expect**: no stored fields change and no new `seq` is minted.
 
-### SP-D-4 — Pagination, `has_more` true on full page
+### SP-D-4 — Equal version and equal device is a no-op
 
-- **Setup**: 1200 ops on server.
-- **Action**: pull with `limit=500`.
-- **Expect**: 500 ops, `has_more = true`. Repeat with `since = last.hlc` →
-  500 more, still `has_more = true`. Third call → 200, `has_more = false`.
+- **Setup**: server has a row written by D1 at version `v1`.
+- **Action**: D1 retries the same row at version `v1`.
+- **Expect**: no new `seq` is minted; retry is safe.
 
-### SP-D-5 — Pagination cursor advances even on empty page
+### SP-D-5 — Pull filters caller echo
 
-- **Setup**: server has ops only from caller's own device (filtered out).
-- **Action**: pull.
-- **Expect**: `ops == []`, `server_hlc_high` set to current max HLC,
-  `has_more = false`. Client persists `server_hlc_high` as cursor.
+- **Setup**: server has rows from D1 and D2 with `seq > since`.
+- **Action**: D1 syncs with that `since`.
+- **Expect**: response `changes` includes only rows whose `device_id != D1`.
 
-### SP-D-6 — Body-size cap shortens page
+### SP-D-6 — Pull returns rows ordered by seq
 
-- **Setup**: 500 ops on server, each ~3 KB.
-- **Action**: pull with `limit=500`.
-- **Expect**: < 500 ops returned, `has_more = true`. Total response body
-  ≤ 1 MB.
+- **Setup**: server has several peer rows newer than cursor.
+- **Action**: pull phase runs.
+- **Expect**: rows are ordered by ascending `seq`.
 
-### SP-D-7 — `invalid_hlc` on garbage `since`
+### SP-D-7 — Cursor fast-forwards past echo-filtered own rows
 
-- **Action**: `GET /sync/pull?since=banana&device_id=D1`.
-- **Expect**: 400 `invalid_hlc`.
+- **Setup**: all rows newer than `since` were authored by the caller.
+- **Action**: caller syncs.
+- **Expect**: `changes == []`, `more == false`, and `seq` equals the user's
+  global `MAX(seq)` so the caller does not pull its own rows later.
 
----
+### SP-D-8 — Pagination uses last returned seq when more is true
 
-## E. Conflict resolution (LWW)
+- **Setup**: peer backlog exceeds one page.
+- **Action**: server returns a capped page.
+- **Expect**: `more == true` and response `seq` equals the last returned
+  row's `seq`; the next request with that `since` continues draining.
 
-### SP-E-1 — Two devices update same row, higher HLC wins
+### SP-D-9 — Pull body budget can shorten a page
 
-- **Setup**: D1 sets `name="Foo"` at HLC h_a. D2 sets `name="Bar"` at HLC
-  h_b > h_a. Both push (any order).
-- **Action**: D1 pulls.
-- **Expect**: D1's local row reflects `name="Bar"`. Server row also `"Bar"`.
-
-### SP-E-2 — Same scenario but D2's clock is behind
-
-- **Setup**: D1 HLC phys=2000, D2 HLC phys=1000. D2 sets `name="Bar"` at
-  (1000, 0). D1 sets `name="Foo"` at (2000, 0).
-- **Action**: both push, D1 pulls.
-- **Expect**: D1 unchanged (`Foo`), D2 after pull also `Foo`. (Higher HLC
-  is D1's, regardless of arrival order.)
-
-### SP-E-3 — Insert vs insert tie-break by node_id
-
-- **Setup**: pathological — both devices generate ops with identical
-  `(phys_ms, logical)`. (Achievable in tests by faking clocks.)
-- **Expect**: deterministic winner = the one with lex-greater `node_id`
-  UUID. Both devices converge to that row.
-
-### SP-E-4 — Delete then late update resurrects
-
-- **Setup**: D1 deletes row at h_d. D2 (offline before delete) updates row at
-  h_u > h_d.
-- **Action**: D1 pushes, then D2 pushes, both pull.
-- **Expect**: server and both clients show row alive (`deleted_at = null`)
-  with D2's update applied. `last_hlc = h_u`.
-
-### SP-E-5 — Late delete wins over earlier update
-
-- **Setup**: D1 update at h_u, D2 delete at h_d > h_u.
-- **Expect**: row marked deleted (`deleted_at` set, `last_hlc = h_d`).
-
-### SP-E-6 — Update on a deleted row before resurrection is shadowed
-
-- **Setup**: row already deleted at h_d. New op with `op_type=update` at
-  hlc h_u < h_d arrives.
-- **Expect**: shadowed; row remains deleted. OpLog still records.
-
-### SP-E-7 — Insert on a row that already exists is treated as update
-
-- **Setup**: row exists with `name="A"`. Op `insert` arrives with
-  `name="B"` and higher HLC.
-- **Expect**: row materialises as if it were an update — `name="B"`,
-  `last_hlc = new`. No PK conflict error.
+- **Setup**: peer rows are individually valid but the serialized response
+  would exceed the pull body budget.
+- **Action**: pull phase accumulates rows.
+- **Expect**: it stops before exceeding the budget, sets `more == true`, and
+  returns a cursor safe for the next page.
 
 ---
 
-## F. Offline editing
+## E. Conflict resolution and tombstones
 
-### SP-F-1 — Many local edits while offline, single push when online
+### SP-E-1 — Higher version wins
 
-- **Setup**: airplane mode. User creates 3 accounts, edits 2, deletes 1
-  over 10 minutes.
-- **Action**: come online.
-- **Expect**: SyncEngine pushes a batch of 6 ops. All accepted. Server
-  state matches client. `op_outbox` empty.
+- **Setup**: D1 writes row at `v1`; D2 writes same row at `v2 > v1`.
+- **Action**: both changes reach the server in any order.
+- **Expect**: server and all clients converge to D2's row.
 
-### SP-F-2 — Outbox survives app restart
+### SP-E-2 — Lower version loses even if it arrives later
 
-- **Setup**: SP-F-1 setup, then kill app before going online.
-- **Action**: relaunch app, come online.
-- **Expect**: outbox replayed; same outcome as SP-F-1.
+- **Setup**: server stores row at `v2`; a late offline update at `v1 < v2`
+  arrives.
+- **Action**: apply incoming change.
+- **Expect**: stored row remains at `v2`.
 
-### SP-F-3 — Long offline divergence between two devices, then reconcile
+### SP-E-3 — Equal version tie breaks by device_id
 
-- **Setup**: D1 and D2 both offline 24 h, each edits ~50 rows independently.
-- **Action**: both come online, both push, both pull.
-- **Expect**: both converge to the same materialised state. For
-  same-row collisions: row reflects the higher-HLC op. No data loss in
-  OpLog.
+- **Setup**: two devices produce the same version token for the same row.
+- **Action**: both changes reach the server.
+- **Expect**: lexicographically greater `device_id` wins; all clients apply
+  the same rule locally.
 
-### SP-F-4 — Local row already reflects un-pushed op
+### SP-E-4 — Delete wins over older live row
 
-- **Setup**: user creates row offline. Goes online before push completes
-  (simulated via slow network).
-- **Action**: pull runs first, returns no ops for this row (no other
-  device has it). Push runs after.
-- **Expect**: no double-apply; local row matches server after push.
+- **Setup**: server has live row at `v1`; D2 deletes at `v2 > v1`.
+- **Action**: D2 syncs, peers pull.
+- **Expect**: peers materialize `deleted_at != null` and user-facing queries
+  hide the row.
 
----
+### SP-E-5 — Later live write resurrects tombstone
 
-## G. Concurrency & echo prevention
+- **Setup**: server has a tombstone at `v2`.
+- **Action**: D1 writes a live row at `v3 > v2`.
+- **Expect**: server and peers clear the tombstone and show the live row.
 
-### SP-G-1 — Push on D1, pull on D1 right after — no echo
+### SP-E-6 — Older live write cannot resurrect tombstone
 
-- **Setup**: D1 pushes 3 ops successfully.
-- **Action**: D1 pulls.
-- **Expect**: own 3 ops are **not** returned (server filters by `device_id
-  != D1`). Cursor still advances to `server_hlc_high`.
+- **Setup**: server has a tombstone at `v2`.
+- **Action**: an offline live row at `v1 < v2` arrives.
+- **Expect**: tombstone remains the winning row.
 
-### SP-G-2 — Push on D1, pull on D2 — D2 receives them
+### SP-E-7 — Client apply skips remote rows when local wins
 
-- **Action**: D2 pulls after SP-G-1's push.
-- **Expect**: D2 gets all 3 ops. After local apply, materialised state
-  matches server.
-
-### SP-G-3 — Concurrent push from same device serialised
-
-- **Setup**: client triggers two pushes back-to-back (simulate UI bug).
-- **Expect**: SyncEngine mutex enforces serial execution; second push waits
-  for first. No duplicate ops on server.
-
-### SP-G-4 — Push and pull from same device do not interleave
-
-- **Action**: kick a push, immediately ask for a pull on the same engine.
-- **Expect**: pull blocks until push completes. Verified by counting
-  state-machine transitions in test instrumentation.
+- **Setup**: local row has version `v2`; pulled row has version `v1 < v2`.
+- **Action**: `RowApplier` applies the page.
+- **Expect**: local row is unchanged and conflict diagnostics record a local
+  win / skipped row.
 
 ---
 
-## H. Tombstones
+## F. Client sync cycle
 
-### SP-H-1 — Deleted rows hidden from default queries
+### SP-F-1 — Successful cycle drains push and pull
 
-- **Setup**: row with `deleted_at != null`.
-- **Action**: query `accountRepo.list()`.
-- **Expect**: row not returned. `accountRepo.listIncludingDeleted()`
-  (admin/diag) does return it.
+- **Setup**: dirty rows exist and server has peer rows.
+- **Action**: `SyncEngine.run()`.
+- **Expect**: accepted dirty pointers clear, peer rows apply in one
+  transaction, cursor is persisted, status becomes online, and backoff resets.
 
-### SP-H-2 — Tombstone propagates across devices
+### SP-F-2 — Loop continues while dirty backlog remains
 
-- **Setup**: D1 deletes row at h_d.
-- **Action**: D2 pulls.
-- **Expect**: D2's local row has `deleted_at = …`, hidden from list.
+- **Setup**: more than one push batch is needed.
+- **Action**: `SyncEngine.run()`.
+- **Expect**: engine keeps calling `/sync` until no dirty rows remain and the
+  server response has `more == false`.
 
-### SP-H-3 — Tombstone replays idempotently
+### SP-F-3 — Loop continues while pull backlog remains
 
-- **Setup**: D2 has already applied delete. Pulls again with old `since`.
-- **Expect**: re-applying the delete leaves state unchanged
-  (`deleted_at` not bumped to a different value, `last_hlc` not regressed).
+- **Setup**: no local dirty rows, but server returns `more == true`.
+- **Action**: `SyncEngine.run()`.
+- **Expect**: engine immediately syncs again with the response cursor.
 
-### SP-H-4 — Resurrection clears `deleted_at` on materialised row
+### SP-F-4 — Concurrent runs share one in-flight future
 
-- **Setup**: SP-E-4 setup.
-- **Action**: pull on a third device.
-- **Expect**: row appears alive in queries. `deleted_at = null`.
+- **Setup**: two callers invoke `run()` while the first cycle is in progress.
+- **Action**: both futures complete.
+- **Expect**: only one cycle executes and both callers receive the same
+  result.
+
+### SP-F-5 — Failed request keeps dirty pointers
+
+- **Setup**: dirty rows exist and `/sync` returns a retryable error.
+- **Action**: `SyncEngine.run()`.
+- **Expect**: no accepted keys are processed, dirty pointers remain queued,
+  and engine enters backoff.
+
+### SP-F-6 — Remote rows merge local HLC
+
+- **Setup**: pulled rows include a high remote version.
+- **Action**: apply succeeds.
+- **Expect**: local HLC state merges the highest remote version so the next
+  local write of that row can produce a newer token.
 
 ---
 
-## I. Auth, drift, errors
+## G. Domain authorization and row-family namespace
 
-### SP-I-1 — Missing JWT → 401
+### SP-G-1 — Finance claim accepts `fin:` rows
 
-- **Action**: any sync endpoint without `Authorization`.
-- **Expect**: 401 `unauthorized`. Client triggers re-auth.
+- **Setup**: JWT `domains = ["finance"]`.
+- **Action**: caller pushes `fin:accounts`.
+- **Expect**: row is accepted at the sync boundary.
 
-### SP-I-2 — Expired JWT → 401, refresh, retry
+### SP-G-2 — Missing domain claim drops optional-domain push rows
 
-- **Action**: pull with expired token.
-- **Expect**: client refreshes via auth flow and retries
-  transparently.
+- **Setup**: JWT `domains = ["finance"]`.
+- **Action**: caller pushes `health:health_metrics` or `know:knowledge_notes`.
+- **Expect**: those rows are omitted from `accepted`, not stored, and the
+  client keeps their dirty pointers.
 
-### SP-I-3 — Wrong protocol version → 426
+### SP-G-3 — Optional-domain claim accepts matching rows
 
-- **Action**: send `Sync-Protocol-Version: 999`.
-- **Expect**: 426 `protocol_version`. Client surfaces "update required" UX.
+- **Setup**: JWT includes `health` or `knowledge`.
+- **Action**: caller pushes matching `health:` or `know:` rows.
+- **Expect**: rows are accepted and participate in LWW.
 
-### SP-I-4 — Drift correction via `/me`
+### SP-G-4 — Unprefixed rows are rejected
 
-- **Setup**: device clock 2 hours fast.
-- **Action**: call `/me` on launch.
-- **Expect**: client logs warning, biases first HLC after sync toward
-  server_now. Subsequent push: server stamps `server_hlc.phys_ms ≈
-  server_now`, client merges back into a sane state.
+- **Setup**: caller pushes `accounts` instead of `fin:accounts`.
+- **Action**: server filters by recognized prefixes.
+- **Expect**: row is not accepted or stored.
 
-### SP-I-5 — `429` honours `Retry-After`
+### SP-G-5 — Pull filters revoked domains
 
-- **Setup**: server returns 429 with `Retry-After: 10`.
-- **Expect**: SyncEngine waits ≥ 10 s before retrying push or pull.
+- **Setup**: server has `health:` rows but caller's refreshed token no longer
+  includes `health`.
+- **Action**: caller syncs.
+- **Expect**: pull response omits those rows.
+
+---
+
+## H. Bootstrap and resync
+
+### SP-H-1 — Fresh device drains final row state
+
+- **Setup**: new device has cursor `0`; server has rows across multiple
+  pages.
+- **Action**: sync runs until complete.
+- **Expect**: local DB contains final row state, not historical edits, and
+  cursor equals the server horizon.
+
+### SP-H-2 — Cursor reset forces full pull without duplicates
+
+- **Setup**: existing device clears `sync.cursor`.
+- **Action**: sync starts with `since = 0`.
+- **Expect**: rows are re-applied idempotently under LWW and local state
+  converges without duplicate business rows.
+
+### SP-H-3 — Local-only promotion enqueues existing rows once
+
+- **Setup**: user signs in after using the app local-only.
+- **Action**: promotion/backfill scans syncable tables.
+- **Expect**: one dirty pointer per existing syncable row is queued, and the
+  first sync uploads current state.
+
+### SP-H-4 — Cursor ahead of server is harmless
+
+- **Setup**: corrupted client cursor is greater than server `MAX(seq)`.
+- **Action**: sync runs.
+- **Expect**: server returns no changes, `more == false`, and the client can
+  continue from the returned cursor.
+
+---
+
+## I. Errors, retry, and scheduling
+
+### SP-I-1 — Expired JWT refreshes before retry
+
+- **Setup**: `/sync` returns `401 unauthorized` and auth can refresh.
+- **Action**: client retries through the auth layer.
+- **Expect**: retry uses a fresh token; if refresh fails, sync surfaces auth
+  failure and does not drop dirty pointers.
+
+### SP-I-2 — Fatal protocol errors halt
+
+- **Setup**: server returns `426 protocol_version` or a non-retryable 400.
+- **Action**: `SyncEngine.run()` handles the error.
+- **Expect**: engine state becomes halted/failed, not backoff.
+
+### SP-I-3 — Payload-too-large does not lose local edits
+
+- **Setup**: server returns `413 payload_too_large`.
+- **Action**: `SyncEngine.run()` handles the error.
+- **Expect**: dirty pointers remain queued and UI/diagnostics can surface the
+  oversized row.
+
+### SP-I-4 — `429` honors `Retry-After`
+
+- **Setup**: server returns `429` with `Retry-After: 10`.
+- **Action**: `SyncEngine.run()` computes retry delay.
+- **Expect**: next backoff is at least 10 seconds.
+
+### SP-I-5 — Backoff resets after success
+
+- **Setup**: engine has consecutive retryable failures.
+- **Action**: a later cycle succeeds.
+- **Expect**: consecutive failure count and next backoff clear.
 
 ### SP-I-6 — `5xx` exponential backoff
 
-- **Setup**: server returns 500 three times in a row.
-- **Expect**: client backs off 1 s, 2 s, 4 s. Cap 5 minutes. Resets on
-  success.
+- **Setup**: server returns `500` three times in a row.
+- **Action**: `SyncEngine.run()` handles each failure.
+- **Expect**: client backs off according to the configured exponential policy,
+  capped by the policy maximum, and resets on success.
 
 ---
 
-## J. Bootstrap & re-sync
+## J. Diagnostics and observability
 
-### SP-J-1 — Fresh device first sync
+### SP-J-1 — Apply report records local wins
 
-- **Setup**: brand new device, never synced. Server has 250 ops for user.
-- **Action**: launch, login, sync.
-- **Expect**: pull drains all 250 ops (1 page or 1+ pages depending on size).
-  Local DB materialised. Cursor = max HLC.
+- **Setup**: pull page contains rows that lose to local versions.
+- **Action**: `RowApplier.applyWithReport`.
+- **Expect**: report increments attempted rows and skipped-local-win rows.
 
-### SP-J-2 — Cursor reset / forced full re-sync
+### SP-J-2 — Apply report records ignored rows
 
-- **Setup**: existing device, `last_pulled_hlc` cleared (e.g. user nuked
-  local cache).
-- **Action**: pull.
-- **Expect**: same outcome as SP-J-1. Materialised state converges (no
-  duplicate inserts because LWW + idempotent op_id).
+- **Setup**: pull page contains an unknown or locally unsupported table.
+- **Action**: `RowApplier.applyWithReport`.
+- **Expect**: row is skipped, diagnostics record an ignored row, and the
+  transaction remains usable for supported rows.
 
-### SP-J-3 — Cursor ahead of server (impossible / corrupted state)
+### SP-J-3 — Sync status surfaces conflict diagnostics
 
-- **Setup**: client cursor `= 9999999999000`, server max HLC much lower.
-- **Action**: pull.
-- **Expect**: 200, 0 ops, `has_more = false`. Client logs and continues —
-  no harm done. (Server SELECT trivially returns empty.)
+- **Setup**: a sync cycle applies some remote rows and skips others.
+- **Action**: cycle completes.
+- **Expect**: status bus emits online status with remote/applied/local-win
+  counters.
 
-### SP-J-4 — Mixed: pull + simultaneous local edits
+### SP-J-4 — Server sync log includes dropped-domain counts
 
-- **Action**: while a multi-page pull is in progress, user creates 2 new
-  rows.
-- **Expect**: local rows are written immediately; SyncEngine queues the new
-  ops in outbox. After pull completes, push runs and ships them. No
-  ordering anomaly.
-
----
-
-## K. Misc / smoke
-
-### SP-K-1 — `/me` returns user, server_now, server_hlc
-
-- **Action**: call `/me` with valid JWT.
-- **Expect**: 200 with all three fields. `server_now` within 100 ms of test
-  clock.
-
-### SP-K-2 — Health endpoints unaffected
-
-- **Action**: hit `/health`, `/health/db`.
-- **Expect**: 200 (existing baseline still passes).
-
-### SP-K-3 — Unknown table in op rejected
-
-- **Setup**: client somehow submits op with `table = "secret_diary"`.
-- **Action**: push.
-- **Expect**: server rejects per-op with `unknown_table` (subtype of
-  `bad_request`). Client logs to `sync_errors`.
-
-### SP-K-4 — Unknown column in `fields_diff` ignored on apply, recorded raw
-
-- **Setup**: server schema knows columns `a, b`. Client sends
-  `{"a":1,"c":2}`.
-- **Expect**: row updates `a`. `c` is silently dropped from the
-  materialiser but the **op_log row preserves the original diff** — so a
-  future schema migration can replay and pick up `c`.
+- **Setup**: request includes rows outside the caller's domain claims.
+- **Action**: server handles `/sync`.
+- **Expect**: structured sync log includes `dropped_push` or `dropped_pull`
+  counts for diagnostics.
 
 ---
 
 ## Coverage matrix
 
-| Section | Lines of spec covered |
-|---------|-----------------------|
-| HLC (§3) | A-1 … A-7 |
-| OpLog (§4) | B-1 … B-7 |
-| Push API (§5.2) | C-1 … C-10 |
-| Pull API (§5.3) | D-1 … D-7 |
-| Conflict (§6) | E-1 … E-7 |
-| Client flow (§7) | F-1 … F-4, G-1 … G-4, J-4 |
-| Server flow (§8) | C-*, D-*, E-* |
-| Tombstones (§4.3, §6.3) | H-1 … H-4 |
-| Errors / version (§5.4, §10) | I-1 … I-6, K-3, K-4 |
-| Bootstrap | J-1 … J-3 |
+| Spec area | Case IDs |
+|---|---|
+| HLC version token | SP-A-* |
+| Dirty pointers and row serialization | SP-B-* |
+| `POST /sync` wire API | SP-C-* |
+| Server row store and cursors | SP-D-* |
+| LWW, tombstones, resurrection | SP-E-* |
+| Client cycle behavior | SP-F-* |
+| Domain prefixes and claims | SP-G-* |
+| Bootstrap and forced resync | SP-H-* |
+| Errors, retry, scheduling | SP-I-* |
+| Diagnostics | SP-J-* |
 
-If you add a new behaviour to the spec, add at least one SP-* case here and
-cite it in the spec section that introduces the behaviour.
+If `sync-v2.md` adds behavior, add at least one `SP-*` case here and cite the
+case ID from the test that covers it.

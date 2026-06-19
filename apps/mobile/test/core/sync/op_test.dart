@@ -13,8 +13,8 @@ void main() {
     });
 
     test('matches the documented closed set', () {
-      // Mirror of `docs/sync-v2.md` §4. Updating either side without the
-      // other is the bug this test catches.
+      // Mirror of the syncable Drift table inventory. Updating the row-state
+      // sync surface without this closed-set test is the bug it catches.
       const expected = <String>{
         'accounts',
         'assets',
