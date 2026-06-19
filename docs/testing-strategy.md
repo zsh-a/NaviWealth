@@ -273,7 +273,10 @@ path once the production connection implements database encryption.
   build, refresh-with-previous, refresh error, reload semantics, and mutate
   success/error. `ChatController` also has AI-chat graph coverage for idle →
   streaming → idle, busy-turn suppression, error unwind, and cancellation.
-  Next expansion is applying the same traversal style to sync / import graphs.
+  `IngestController` now has import-graph coverage for device CSV
+  persistence, pending-draft dedup, privacy-gated Vision refusal, Vision
+  parse persistence + trace metadata, and DB-boot rejection. Next expansion is
+  applying the same traversal style to sync graphs.
 - AI exploratory + semantic (vision) validation, nightly, non-blocking.
 
 ## 8. Conventions
