@@ -271,8 +271,9 @@ path once the production connection implements database encryption.
 **P2 — modern differentiators:**
 - ✅ Seeded: `ConventionalAsyncNotifier` now has state-machine coverage for
   build, refresh-with-previous, refresh error, reload semantics, and mutate
-  success/error. Next expansion is applying the same traversal style to sync /
-  import / AI-chat feature graphs.
+  success/error. `ChatController` also has AI-chat graph coverage for idle →
+  streaming → idle, busy-turn suppression, error unwind, and cancellation.
+  Next expansion is applying the same traversal style to sync / import graphs.
 - AI exploratory + semantic (vision) validation, nightly, non-blocking.
 
 ## 8. Conventions
