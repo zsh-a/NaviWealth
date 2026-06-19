@@ -90,7 +90,24 @@ void main() {
 
     final router = await _pump(tester, container, initial: AppRoutes.wealth);
 
-    expect(_path(router), '/login?next=%2Fwealth');
+    expect(_path(router), '/login?redirect=%2Fwealth');
+    expect(find.text('login'), findsOneWidget);
+  });
+
+  testWidgets('logged-out deep link preserves query in redirect parameter', (
+    tester,
+  ) async {
+    final container = _container();
+    addTearDown(container.dispose);
+    await container.read(authControllerProvider.future);
+
+    final router = await _pump(
+      tester,
+      container,
+      initial: '${AppRoutes.wealth}?selected=asset-1',
+    );
+
+    expect(_path(router), '/login?redirect=%2Fwealth%3Fselected%3Dasset-1');
     expect(find.text('login'), findsOneWidget);
   });
 
@@ -121,7 +138,7 @@ void main() {
   });
 
   testWidgets(
-    'logged-in user on /login?next=/portfolio bounces back to portfolio',
+    'logged-in user on /login?redirect=/portfolio bounces back to portfolio',
     (tester) async {
       final container = _container(
         seed: {TokenStore.storageKey: _session().encode()},
@@ -132,13 +149,51 @@ void main() {
       final router = await _pump(
         tester,
         container,
-        initial: '/login?next=${AppRoutes.wealth}',
+        initial: '/login?redirect=${AppRoutes.wealth}',
       );
 
       expect(_path(router), AppRoutes.wealth);
       expect(find.text('portfolio'), findsOneWidget);
     },
   );
+
+  testWidgets('logged-in user still honours legacy /login?next=', (
+    tester,
+  ) async {
+    final container = _container(
+      seed: {TokenStore.storageKey: _session().encode()},
+    );
+    addTearDown(container.dispose);
+    await container.read(authControllerProvider.future);
+
+    final router = await _pump(
+      tester,
+      container,
+      initial: '/login?next=${AppRoutes.wealth}',
+    );
+
+    expect(_path(router), AppRoutes.wealth);
+    expect(find.text('portfolio'), findsOneWidget);
+  });
+
+  testWidgets('logged-in user cannot redirect to protocol-relative URL', (
+    tester,
+  ) async {
+    final container = _container(
+      seed: {TokenStore.storageKey: _session().encode()},
+    );
+    addTearDown(container.dispose);
+    await container.read(authControllerProvider.future);
+
+    final router = await _pump(
+      tester,
+      container,
+      initial: '/login?redirect=%2F%2Fevil.example',
+    );
+
+    expect(_path(router), '/');
+    expect(find.text('home'), findsOneWidget);
+  });
 
   testWidgets('logged-in user can navigate freely', (tester) async {
     final container = _container(
@@ -153,7 +208,7 @@ void main() {
     expect(find.text('portfolio'), findsOneWidget);
   });
 
-  testWidgets('logging in from /login bounces to home (no `next`)', (
+  testWidgets('logging in from /login bounces to home (no `redirect`)', (
     tester,
   ) async {
     final container = _container();
@@ -174,5 +229,29 @@ void main() {
 
     expect(_path(router), '/');
     expect(find.text('home'), findsOneWidget);
+  });
+
+  testWidgets('logging in from /login?redirect returns to original route', (
+    tester,
+  ) async {
+    final container = _container();
+    addTearDown(container.dispose);
+    await container.read(authControllerProvider.future);
+
+    final router = await _pump(
+      tester,
+      container,
+      initial: '/login?redirect=${AppRoutes.wealth}',
+    );
+    expect(_path(router), '/login?redirect=${AppRoutes.wealth}');
+
+    await container.read(tokenStoreProvider).write(_session());
+    container.read(authControllerProvider.notifier).state = AsyncData(
+      AuthLoggedIn(_session()),
+    );
+    await tester.pumpAndSettle();
+
+    expect(_path(router), AppRoutes.wealth);
+    expect(find.text('portfolio'), findsOneWidget);
   });
 }

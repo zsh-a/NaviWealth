@@ -19,6 +19,21 @@ bool _isPublicPath(String location) {
   return location == kLoginPath || location == kOnboardingPath;
 }
 
+String? _redirectTarget(GoRouterState state) {
+  final redirect = state.uri.queryParameters['redirect'];
+  if (redirect != null) return redirect;
+
+  // Back-compat for route hints and tests minted before the web-routing
+  // contract settled on `redirect`.
+  return state.uri.queryParameters['next'];
+}
+
+bool _isSafeRedirectTarget(String target) {
+  if (!target.startsWith('/') || target.startsWith('//')) return false;
+  final path = Uri.tryParse(target)?.path;
+  return path != null && !_isPublicPath(path);
+}
+
 class AuthRouteGuard implements RouteGuard {
   AuthRouteGuard(this._ref);
 
@@ -47,11 +62,11 @@ class AuthRouteGuard implements RouteGuard {
 
     if (value is AuthLoggedIn) {
       if (location == kLoginPath || location == kOnboardingPath) {
-        // Honour `?next=` from the login flow if it's a real in-app path,
-        // otherwise drop to home.
-        final next = state.uri.queryParameters['next'];
-        if (next != null && next.startsWith('/') && !_isPublicPath(next)) {
-          return next;
+        // Honour the web-routing contract's `?redirect=` from the login
+        // flow if it's a real in-app path, otherwise drop to home.
+        final redirect = _redirectTarget(state);
+        if (redirect != null && _isSafeRedirectTarget(redirect)) {
+          return redirect;
         }
         return '/';
       }
@@ -77,7 +92,7 @@ class AuthRouteGuard implements RouteGuard {
     if (target.isEmpty || target == '/') return kLoginPath;
     return Uri(
       path: kLoginPath,
-      queryParameters: <String, String>{'next': target},
+      queryParameters: <String, String>{'redirect': target},
     ).toString();
   }
 }

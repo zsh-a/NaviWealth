@@ -17,24 +17,26 @@ Repeat on each browser in the cross-browser matrix (Chrome, Safari, Edge, Firefo
 
 ## Routes in scope
 
-Four primary tabs in display order (see `apps/mobile/lib/app/route_paths.dart::kPrimaryTabPaths`):
+Primary tabs in display order are produced by `primaryTabPathsProvider`
+from the registered domain packs:
 
 | Path | Tab | Notes |
 |------|-----|-------|
 | `/` | Home | Default landing; index 0 |
 | `/activity` | Activity | Index 1 |
-| `/accounts` | Accounts | Index 2 |
-| `/settings` | Settings | Index 3 |
+| `/wealth` | Wealth | Index 2 |
+| `/plan` | Plan | Index 3 |
 
 There is **no `/ai` tab**. AI is not a destination: it lives in the command-palette
 overlay and inline capsules; chat history is read-only under `/settings/ai-history`.
 The former `/ai/insights/*` dashboards (FIRE / Rebalance / Analytics) are
-deterministic and now live under `/accounts/*`.
+deterministic and now live under `/plan/*` or `/wealth/*` according to the IA
+boundary.
 
 Common deep links (sample — `route_paths.dart` is the full list):
 
-- `/accounts/asset/<id>`, `/accounts/physical/<id>`, `/accounts/liabilities/<id>` — detail pages
-- `/accounts/{fire,rebalance,analytics}` — plan dashboards (formerly `/ai/insights/*`)
+- `/wealth/assets/<id>`, `/wealth/physical/<id>`, `/wealth/liabilities/<id>` — detail pages
+- `/plan/{fire,rebalance}` — plan dashboards (formerly `/ai/insights/*`)
 - `/activity/expenses`, `/activity/expenses/<id>`, `/activity/trade`, `/activity/transfer`
 - `/settings/{devices,fx-rates,backup,logs,sync,ai-history}`
 - `/login` (with optional `?redirect=`)
@@ -46,10 +48,10 @@ For each item: tick **Pass** if behavior matches; otherwise file a follow-up.
 ### A. Tab navigation pushes browser history
 
 1. Open `/`. Click **Activity** → URL becomes `/activity`, page renders Activity.
-2. Click **Accounts** → URL becomes `/accounts`, page renders Accounts.
+2. Click **Wealth** → URL becomes `/wealth`, page renders Wealth.
 3. Browser **Back** → URL returns to `/activity`, Activity tab highlighted.
 4. Browser **Back** again → URL returns to `/`, Home renders, Home highlighted.
-5. **Forward** twice → walks back to `/accounts`, each step renders the matching page.
+5. **Forward** twice → walks back to `/wealth`, each step renders the matching page.
 
 Expected: every tab tap creates exactly one new history entry. Back/Forward never skip an entry and never strand the URL on a non-matching page.
 
@@ -58,17 +60,18 @@ Expected: every tab tap creates exactly one new history entry. Back/Forward neve
 For each URL: paste into a fresh tab, press Enter, confirm the listed page renders without flashing through `/` first. Bottom-nav highlight must match the URL on the first frame.
 
 - [ ] `/activity`
-- [ ] `/accounts`
+- [ ] `/wealth`
+- [ ] `/plan`
 - [ ] `/settings`
-- [ ] `/accounts/asset/<known-id>` — asset detail
+- [ ] `/wealth/assets/<known-id>` — asset detail
 - [ ] `/activity/expenses` — expense list
-- [ ] `/accounts/fire` — FIRE plan dashboard
+- [ ] `/plan/fire` — FIRE plan dashboard
 - [ ] `/settings/ai-history` — read-only chat history
 - [ ] `/settings/devices`
 
 ### C. Hard refresh (F5 / ⌘R)
 
-1. Navigate to `/accounts/analytics` via tabs/links.
+1. Navigate to `/plan/rebalance` via tabs/links.
 2. Hard-refresh.
 
 Expected:
