@@ -7,6 +7,7 @@
 ///   "proposal_id": "uuid",
 ///   "kind":        "trade" | "expense" | "sleep_target_adjust" | ...
 ///   "status":      "ready" | "needs_clarification",
+///   "envelope_kind": "local_proposal", // optional legacy default
 ///   "summary_zh":  "买入 AAPL 100 股 @ $180（盈透）",
 ///   // status=ready
 ///   "payload":     { ... per-kind shape ... },
@@ -81,6 +82,7 @@ sealed class ProposalPlan {
         return ReadyProposalPlan(
           proposalId: id,
           kind: kind,
+          envelopeKind: _envelopeKind(m['envelope_kind']),
           summaryZh: summary,
           payload: payload.map((k, v) => MapEntry(k.toString(), v)),
           warnings: _stringList(m['warnings']),
@@ -99,6 +101,13 @@ sealed class ProposalPlan {
         return null;
     }
   }
+}
+
+enum ProposalEnvelopeKind {
+  localImmediate,
+  localProposal,
+  externalSideEffect,
+  unknown,
 }
 
 /// `envelope_kind = batch` — one user confirmation applies multiple local
@@ -124,11 +133,16 @@ final class ReadyProposalPlan extends ProposalPlan {
   const ReadyProposalPlan({
     required super.proposalId,
     required super.kind,
+    this.envelopeKind = ProposalEnvelopeKind.localProposal,
     required this.summaryZh,
     required this.payload,
     this.warnings = const <String>[],
     this.missing = const <String>[],
   });
+
+  /// Side-effect scope that drives confirmation friction. Missing legacy
+  /// values default to [ProposalEnvelopeKind.localProposal].
+  final ProposalEnvelopeKind envelopeKind;
 
   final String summaryZh;
   final Map<String, Object?> payload;
@@ -187,6 +201,16 @@ bool isProposeTool(String toolName) => toolName.startsWith('propose_');
 List<String> _stringList(Object? v) {
   if (v is! List) return const <String>[];
   return v.whereType<String>().toList(growable: false);
+}
+
+ProposalEnvelopeKind _envelopeKind(Object? v) {
+  if (v is! String || v.isEmpty) return ProposalEnvelopeKind.localProposal;
+  return switch (v) {
+    'local_immediate' => ProposalEnvelopeKind.localImmediate,
+    'local_proposal' => ProposalEnvelopeKind.localProposal,
+    'external_side_effect' => ProposalEnvelopeKind.externalSideEffect,
+    _ => ProposalEnvelopeKind.unknown,
+  };
 }
 
 List<ProposalCandidate> _candidateList(Object? v) {

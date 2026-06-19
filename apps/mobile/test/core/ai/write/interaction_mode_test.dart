@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/write/write.dart';
 
@@ -43,6 +44,61 @@ void main() {
         payload: <String, Object?>{},
       );
       expect(deriveInteractionMode(p), InteractionMode.confirmDiff);
+    });
+
+    test('ReadyProposalPlan derives from envelope kind', () {
+      ReadyProposalPlan plan(ProposalEnvelopeKind kind) => ReadyProposalPlan(
+        proposalId: 'p',
+        kind: 'expense',
+        envelopeKind: kind,
+        summaryZh: 's',
+        payload: const <String, Object?>{},
+      );
+
+      expect(
+        deriveInteractionModeForPlan(plan(ProposalEnvelopeKind.localImmediate)),
+        InteractionMode.swipe,
+      );
+      expect(
+        deriveInteractionModeForPlan(plan(ProposalEnvelopeKind.localProposal)),
+        InteractionMode.confirmDiff,
+      );
+      expect(
+        deriveInteractionModeForPlan(
+          plan(ProposalEnvelopeKind.externalSideEffect),
+        ),
+        InteractionMode.typed,
+      );
+      expect(
+        deriveInteractionModeForPlan(plan(ProposalEnvelopeKind.unknown)),
+        InteractionMode.typed,
+      );
+    });
+
+    test('BatchProposalPlan uses most conservative child mode', () {
+      const batch = BatchProposalPlan(
+        proposalId: 'batch',
+        kind: 'batch',
+        summaryZh: 'batch',
+        children: <ReadyProposalPlan>[
+          ReadyProposalPlan(
+            proposalId: 'a',
+            kind: 'expense',
+            envelopeKind: ProposalEnvelopeKind.localImmediate,
+            summaryZh: 'a',
+            payload: <String, Object?>{},
+          ),
+          ReadyProposalPlan(
+            proposalId: 'b',
+            kind: 'trade',
+            envelopeKind: ProposalEnvelopeKind.localProposal,
+            summaryZh: 'b',
+            payload: <String, Object?>{},
+          ),
+        ],
+      );
+
+      expect(deriveInteractionModeForPlan(batch), InteractionMode.confirmDiff);
     });
   });
 

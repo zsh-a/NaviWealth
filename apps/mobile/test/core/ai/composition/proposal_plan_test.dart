@@ -31,6 +31,7 @@ void main() {
       final ready = plan! as ReadyProposalPlan;
       expect(ready.proposalId, 'p-1');
       expect(ready.kind, 'trade');
+      expect(ready.envelopeKind, ProposalEnvelopeKind.localProposal);
       expect(ready.summaryZh, '买入 AAPL 100 股 @ 180（盈透）');
       expect(ready.warnings, hasLength(1));
       expect(ready.get('asset_id'), 'aapl-id');
@@ -93,6 +94,40 @@ void main() {
       });
       expect(plan, isA<ReadyProposalPlan>());
       expect((plan! as ReadyProposalPlan).kind, 'sleep_target_adjust');
+    });
+
+    test('preserves explicit envelope kind for confirmation friction', () {
+      final plan = ProposalPlan.tryParse(<String, Object?>{
+        'proposal_id': 'external-1',
+        'kind': 'broker_order',
+        'status': 'ready',
+        'envelope_kind': 'external_side_effect',
+        'summary_zh': 'Submit broker order',
+        'payload': <String, Object?>{},
+      });
+
+      expect(plan, isA<ReadyProposalPlan>());
+      expect(
+        (plan! as ReadyProposalPlan).envelopeKind,
+        ProposalEnvelopeKind.externalSideEffect,
+      );
+    });
+
+    test('keeps unknown envelope kind conservative', () {
+      final plan = ProposalPlan.tryParse(<String, Object?>{
+        'proposal_id': 'unknown-1',
+        'kind': 'future_kind',
+        'status': 'ready',
+        'envelope_kind': 'server_defined_kind',
+        'summary_zh': 'Future proposal',
+        'payload': <String, Object?>{},
+      });
+
+      expect(plan, isA<ReadyProposalPlan>());
+      expect(
+        (plan! as ReadyProposalPlan).envelopeKind,
+        ProposalEnvelopeKind.unknown,
+      );
     });
 
     test('parses a batch envelope with ready children', () {

@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/composition/proposal_kind_registry.dart';
-import 'package:naviwealth/core/ai/write/interaction_mode.dart';
 import 'package:naviwealth/features/finance/composition/finance_proposal_kinds.dart';
 
 void main() {
@@ -9,18 +8,15 @@ void main() {
     expect(registered, kFinanceProposalAppliedKinds);
   });
 
-  test('Finance proposal interaction modes are declared by specs', () {
+  test('Finance proposal registry remains presentation-only', () {
     expect(
-      kFinanceProposalKinds.metaFor('expense')!.interactionMode,
-      InteractionMode.oneTap,
+      kFinanceProposalKinds.metaFor('expense')!.toolName,
+      'propose_expense',
     );
+    expect(kFinanceProposalKinds.metaFor('trade')!.toolName, 'propose_trade');
     expect(
-      kFinanceProposalKinds.metaFor('trade')!.interactionMode,
-      InteractionMode.confirmDiff,
-    );
-    expect(
-      kFinanceProposalKinds.metaFor('options_journal_entry')!.interactionMode,
-      InteractionMode.confirmDiff,
+      kFinanceProposalKinds.metaFor('options_journal_entry')!.toolName,
+      'propose_options_journal_entry',
     );
   });
 }

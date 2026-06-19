@@ -95,10 +95,7 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
       case ProposalApplyStatus.pending:
       case ProposalApplyStatus.errored:
       case ProposalApplyStatus.applying:
-        final registry = ref.watch(proposalKindRegistryProvider);
-        final mode =
-            registry.metaFor(plan.kind)?.interactionMode ??
-            InteractionMode.confirmDiff;
+        final mode = deriveInteractionModeForPlan(plan);
         return switch (mode) {
           InteractionMode.oneTap => _OneTapView(
             plan: plan,

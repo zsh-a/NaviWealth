@@ -1,4 +1,4 @@
-/// `InteractionMode` derived from a [ProposalEnvelope].
+/// `InteractionMode` derived from proposal side-effect scope.
 ///
 /// The §5.5 doc rule: confirmation UI must come from `(risk,
 /// side_effect)` — feature code is *not allowed* to hand-pick a mode.
@@ -12,10 +12,9 @@
 ///   - `LocalProposal`                  → `confirmDiff`
 ///   - `ExternalSideEffect`             → `typed`
 ///
-/// `propose_*` card modes are declared by each domain's
-/// `ProposalKindMeta.interactionMode`, not by a second kind-name mapping here.
 library;
 
+import '../composition/proposal_plan.dart';
 import '../contracts/proposal_envelope.dart';
 
 enum InteractionMode {
@@ -47,6 +46,32 @@ InteractionMode deriveInteractionMode(ProposalEnvelope p) {
     case BatchProposal batch:
       return _deriveBatchMode(batch);
   }
+}
+
+InteractionMode deriveInteractionModeForPlan(ProposalPlan plan) {
+  return switch (plan) {
+    ReadyProposalPlan ready => _modeForEnvelopeKind(ready.envelopeKind),
+    BatchProposalPlan batch => _deriveBatchPlanMode(batch),
+    ClarificationProposalPlan _ => InteractionMode.confirmDiff,
+  };
+}
+
+InteractionMode _modeForEnvelopeKind(ProposalEnvelopeKind kind) {
+  return switch (kind) {
+    ProposalEnvelopeKind.localImmediate => InteractionMode.swipe,
+    ProposalEnvelopeKind.localProposal => InteractionMode.confirmDiff,
+    ProposalEnvelopeKind.externalSideEffect => InteractionMode.typed,
+    ProposalEnvelopeKind.unknown => InteractionMode.typed,
+  };
+}
+
+InteractionMode _deriveBatchPlanMode(BatchProposalPlan batch) {
+  var rank = 0;
+  for (final child in batch.children) {
+    final childRank = _rankOf(deriveInteractionModeForPlan(child));
+    if (childRank > rank) rank = childRank;
+  }
+  return _modeForRank(rank);
 }
 
 /// `roadmap-next.md` §4 M-2 — most-conservative-child wins. Order

@@ -3,7 +3,9 @@
 ///
 /// Each domain contributes a [ProposalKindMeta] for every kind it
 /// emits — presentation (icon / label) plus the per-kind edit field
-/// list and preview row builder consumed by `propose_card.dart`. The
+/// list and preview row builder consumed by `propose_card.dart`.
+/// Confirmation friction is derived from the proposal envelope kind, not
+/// from this registry. The
 /// shell propose card never enumerates kinds itself; everything goes
 /// through this registry, so a new domain (HealthOS, KnowledgeOS, …)
 /// adds its kinds by registering more metas, no shell edits.
@@ -18,7 +20,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
-import '../write/interaction_mode.dart';
 import 'proposal_plan.dart';
 
 /// Per-kind presentation + render hooks.
@@ -29,7 +30,6 @@ class ProposalKindMeta {
     required this.icon,
     required this.label,
     required this.toolName,
-    this.interactionMode = InteractionMode.confirmDiff,
     this.editableFields,
     this.previewRows,
   });
@@ -46,9 +46,6 @@ class ProposalKindMeta {
 
   /// Matching tool name, e.g. `'propose_trade'`. Used by trace lookups.
   final String toolName;
-
-  /// Confirmation surface used by the chat propose card.
-  final InteractionMode interactionMode;
 
   /// Optional curated editable field list rendered in the inline
   /// edit sheet. `null` falls back to "no curated fields" → the

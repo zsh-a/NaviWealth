@@ -11,7 +11,6 @@ import 'package:forui/forui.dart';
 
 import '../../../core/ai/composition/proposal_kind_registry.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
-import '../../../core/ai/write/interaction_mode.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
 /// Active Finance kinds. Bootstrap merges these into
@@ -30,7 +29,6 @@ const List<ProposalKindMeta> kFinanceProposalKinds = [
     icon: FLucideIcons.receipt,
     label: _expenseLabel,
     toolName: 'propose_expense',
-    interactionMode: InteractionMode.oneTap,
     editableFields: _expenseFields,
     previewRows: _expenseRows,
   ),
