@@ -631,9 +631,14 @@ All existing lints pass unchanged:
 | **Phase 2c**: Rust sync engine + FRB | ✅ Done | `sync_engine.rs`, `health.rs` FRB surface (primitive types only) |
 | **Phase 2d**: Dart shell | ✅ Done | `garmin_bridge.dart`, `garmin_sync_controller.dart`, `garmin_snapshot_writer.dart` |
 | **Phase 2e**: UI | ✅ Done | `garmin_account_bind_sheet.dart`, `garmin_sync_status_card.dart` |
-| **Phase 2f**: FRB codegen | ⏳ Pending | Run `tool/build-lifeos-native.sh` to generate Dart bindings |
+| **Phase 2f**: FRB codegen | ✅ Done | Generated Dart/Rust FRB bindings for the Garmin surface |
 
-**Remaining**: Run FRB codegen to generate Dart bindings from the Rust API surface.
+**Codegen guard**: `apps/mobile/test/native/frb_garmin_codegen_contract_test.dart`
+asserts that `lib/src/rust/api/health.dart`, `frb_generated.dart`,
+`frb_generated.{io,web}.dart`, and `native/lifeos_native/src/frb_generated.rs`
+continue to expose the Garmin auth, sync, cancel, cursor, logout, export, and
+`GarminSyncProgress` bridge symbols. When the Rust API surface changes, rerun
+`tool/build-lifeos-native.sh` and keep this contract green.
 
 ---
 
@@ -671,6 +676,7 @@ All existing lints pass unchanged:
 | File | Purpose |
 |---|---|
 | `lifeos_native/src/api/health/mod.rs` | FRB public surface |
+| `lifeos_native/src/frb_generated.rs` | Generated Rust FRB dispatch for Garmin bridge |
 | `lifeos_native/src/api/health/provider.rs` | `HealthProvider` trait + snapshot types |
 | `lifeos_native/src/api/health/sync_engine.rs` | Cursor-based incremental sync |
 | `lifeos_native/src/api/health/garmin/mod.rs` | `GarminProvider` impl |
@@ -692,6 +698,10 @@ All existing lints pass unchanged:
 | `features/health/ui/garmin_account_bind_sheet.dart` | Login/MFA UI |
 | `features/health/ui/garmin_sync_status_card.dart` | Sync status |
 | `features/health/ui/health_source_selector.dart` | Source picker |
+| `lib/src/rust/api/health.dart` | Generated Dart FRB facade for Garmin calls |
+| `lib/src/rust/frb_generated.dart` | Generated Dart FRB API dispatch |
+| `lib/src/rust/frb_generated.io.dart` | Generated Dart native codec bindings |
+| `lib/src/rust/frb_generated.web.dart` | Generated Dart web codec bindings |
 | `scripts/garmin_probe.py` | Phase 1 probe |
 
 ### Modified Files
