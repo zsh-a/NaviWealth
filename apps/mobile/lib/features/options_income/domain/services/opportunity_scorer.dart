@@ -29,6 +29,7 @@ class OpportunityScorer {
     required ApprovedUnderlying? approved,
     required int sharesOwned,
     required Money availableCash,
+    Decimal? currentUnderlyingExposurePct,
     bool hasUpcomingEarnings = false,
     bool hasUpcomingMacroEvent = false,
     DateTime? now,
@@ -52,6 +53,7 @@ class OpportunityScorer {
       contract: contract,
       strategy: strategy,
       profile: profile,
+      currentUnderlyingExposurePct: currentUnderlyingExposurePct,
       hasUpcomingEarnings: hasUpcomingEarnings,
       hasUpcomingMacroEvent: hasUpcomingMacroEvent,
     );
@@ -89,6 +91,7 @@ class OpportunityScorer {
     required ApprovedUnderlying? approved,
     required int sharesOwned,
     required Money availableCash,
+    Decimal? currentUnderlyingExposurePct,
     bool hasUpcomingEarnings = false,
     bool hasUpcomingMacroEvent = false,
   }) {
@@ -208,6 +211,7 @@ class OpportunityScorer {
     required OptionContract contract,
     required OptionsStrategyKind strategy,
     required OptionsStrategyProfile profile,
+    required Decimal? currentUnderlyingExposurePct,
     required bool hasUpcomingEarnings,
     required bool hasUpcomingMacroEvent,
   }) {
@@ -258,9 +262,10 @@ class OpportunityScorer {
       ivScore = (Decimal.one - norm).clamp(Decimal.zero, Decimal.one);
     }
 
-    // Portfolio-fit: not yet wired to exposure data; default neutral 0.5
-    // for both strategies. Hook reserved for §10 ExposureChecker.
-    final portfolioFitScore = Decimal.parse('0.50');
+    final portfolioFitScore = _portfolioFitScore(
+      currentExposure: currentUnderlyingExposurePct,
+      maxExposure: profile.maxUnderlyingExposurePct,
+    );
 
     final eventSafetyScore = (hasUpcomingEarnings || hasUpcomingMacroEvent)
         ? Decimal.parse('0.20')
@@ -274,6 +279,25 @@ class OpportunityScorer {
       'portfolio_fit': portfolioFitScore,
       'event_safety': eventSafetyScore,
     };
+  }
+
+  Decimal _portfolioFitScore({
+    required Decimal? currentExposure,
+    required Decimal maxExposure,
+  }) {
+    if (currentExposure == null || maxExposure <= Decimal.zero) {
+      return Decimal.parse('0.50');
+    }
+    final halfCap = (maxExposure / Decimal.fromInt(2)).toDecimal(
+      scaleOnInfinitePrecision: 4,
+    );
+    if (currentExposure <= halfCap) return Decimal.one;
+    if (currentExposure >= maxExposure) return Decimal.zero;
+    return (Decimal.one -
+            ((currentExposure - halfCap) / halfCap).toDecimal(
+              scaleOnInfinitePrecision: 4,
+            ))
+        .clamp(Decimal.zero, Decimal.one);
   }
 
   Decimal _composite(Map<String, Decimal> breakdown) {

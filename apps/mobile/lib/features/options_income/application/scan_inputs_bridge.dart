@@ -16,14 +16,17 @@ import '../../investment/data/providers.dart';
 ///
 /// Two outputs:
 ///   * `holdingsBySymbol` — share counts keyed by uppercase ticker
+///   * `exposureBySymbol` — current portfolio weight keyed by uppercase ticker
 ///   * `availableCash` — cash bucket usable as the per-trade cap denominator
 class ScanSideInputs {
   const ScanSideInputs({
     required this.holdingsBySymbol,
+    required this.exposureBySymbol,
     required this.availableCash,
   });
 
   final Map<String, int> holdingsBySymbol;
+  final Map<String, Decimal> exposureBySymbol;
   final Money availableCash;
 }
 
@@ -36,16 +39,20 @@ final scanSideInputsProvider = FutureProvider.autoDispose<ScanSideInputs>((
   // keeps the bridge invalidating when the user switches.
   await ref.watch(currentUserIdProvider)();
   Map<String, int> holdings;
+  Map<String, Decimal> exposures;
   try {
     final snapshot = await ref.watch(devicePortfolioSnapshotProvider.future);
     holdings = _extractShares(snapshot);
+    exposures = _extractExposures(snapshot);
   } catch (_) {
     holdings = const {};
+    exposures = const {};
   }
   final manualAssets = await ref.watch(manualAssetsStreamProvider.future);
   final balances = await ref.watch(accountBalancesByIdProvider.future);
   return ScanSideInputs(
     holdingsBySymbol: holdings,
+    exposureBySymbol: exposures,
     availableCash: optionsAvailableCashFromBalances(
       manualAssets: manualAssets,
       balancesByAccountId: balances,
@@ -67,6 +74,23 @@ Map<String, int> _extractShares(Map<String, Object?>? snapshot) {
     final qty = Decimal.tryParse(qtyRaw.toString());
     if (qty == null) return;
     out[symbol] = qty.floor().toBigInt().toInt();
+  });
+  return out;
+}
+
+Map<String, Decimal> _extractExposures(Map<String, Object?>? snapshot) {
+  if (snapshot == null) return const {};
+  final raw = snapshot['holdings'];
+  if (raw is! Map) return const {};
+  final out = <String, Decimal>{};
+  raw.forEach((_, value) {
+    if (value is! Map) return;
+    final symbol = (value['symbol'] as String?)?.toUpperCase();
+    final weightRaw = value['weight'];
+    if (symbol == null || weightRaw == null) return;
+    final weight = Decimal.tryParse(weightRaw.toString());
+    if (weight == null) return;
+    out[symbol] = weight.clamp(Decimal.zero, Decimal.one);
   });
   return out;
 }

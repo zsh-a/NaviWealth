@@ -514,7 +514,7 @@ void main() {
         store: store,
         api: api,
         sessionReader: () => _fakeSession,
-        tracePrep: ({required requestId}) async {
+        tracePrep: ({required requestId, required userMessage}) async {
           const route = RouteContext(path: '/expense', area: 'expense');
           const intent = IntentHint(
             capability: Capability.analyze,

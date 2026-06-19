@@ -200,6 +200,7 @@ class _ConfiguredBody extends ConsumerWidget {
     final result = await controller.runScan(
       availableCash: side.availableCash,
       holdingsBySymbol: side.holdingsBySymbol,
+      exposureBySymbol: side.exposureBySymbol,
     );
     if (!context.mounted || result == null || result.opportunities.isNotEmpty) {
       return;

@@ -161,10 +161,29 @@ final budgetsForMonthProvider = StreamProvider.autoDispose
 /// (`docs/roadmap-next.md` §3.2 — Budget × FIRE松耦合.)
 final monthlyBudgetSignalProvider = Provider.autoDispose
     .family<AsyncValue<BudgetSignal>, String>((ref, periodMonth) {
+      final summaryAsync = ref.watch(monthlyBudgetSummaryProvider(periodMonth));
+      if (summaryAsync.hasError) {
+        return AsyncValue.error(
+          summaryAsync.error!,
+          summaryAsync.stackTrace ?? StackTrace.current,
+        );
+      }
+      if (!summaryAsync.hasValue) return const AsyncValue.loading();
+      return AsyncValue.data(
+        budgetSignalFor(summaryAsync.requireValue.summary),
+      );
+    });
+
+typedef MonthlyBudgetSummaryRead = ({
+  MonthlyBudgetSummary summary,
+  int mismatchedCount,
+});
+
+final monthlyBudgetSummaryProvider = Provider.autoDispose
+    .family<AsyncValue<MonthlyBudgetSummaryRead>, String>((ref, periodMonth) {
       final budgetsAsync = ref.watch(budgetsForMonthProvider(periodMonth));
       final expensesAsync = ref.watch(journalExpensesStreamProvider);
       final ratesAsync = ref.watch(fxRatesStreamProvider);
-
       if (budgetsAsync.hasError) {
         return AsyncValue.error(
           budgetsAsync.error!,
@@ -206,7 +225,7 @@ final monthlyBudgetSignalProvider = Provider.autoDispose
         spendByCategoryId: spendByCategoryId,
         targetCurrency: targetCurrency,
       );
-      return AsyncValue.data(budgetSignalFor(res.summary));
+      return AsyncValue.data(res);
     });
 
 /// Live stream of every recorded FX rate. The dashboard converter and the

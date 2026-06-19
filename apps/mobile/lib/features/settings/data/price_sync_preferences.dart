@@ -3,9 +3,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../design_system/preferences/theme_preferences.dart';
 
-/// Phase E feature flag: whether [PriceSyncCoordinator] writes daily-close
-/// snapshots into the synced `prices` ledger. Default ON — cross-device
-/// historical valuation is the eventually-consistent valuation contract.
+/// Whether [PriceSyncCoordinator] writes daily-close snapshots into the
+/// synced `prices` ledger. Default ON — cross-device historical valuation
+/// is the eventually-consistent valuation contract.
 const bool kDefaultWriteDailyPriceSnapshots = true;
 
 /// User preference controlling the coordinator's daily snapshot write-back.

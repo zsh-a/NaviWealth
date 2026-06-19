@@ -21,10 +21,14 @@ import 'package:naviwealth/features/finance/data/repositories/price_repository.d
 ///   2. Ledger (fresh) — `prices` row within [PriceResolverPolicy.ledgerFreshWindow].
 ///   3. Live quote — composite market service. Skipped when [asOf] is too far
 ///      in the past or the asset has no quotable symbol.
-///   4. (Reserved) Cloud snapshot — future shared-cache tier; not implemented.
-///   5. Historical bar — most recent daily close within
+///   4. Historical bar — most recent daily close within
 ///      [PriceResolverPolicy.historicalLookback].
-///   6. Ledger (stale) — last-known row, downgraded to [PriceConfidence.stale].
+///   5. Ledger (stale) — last-known row, downgraded to [PriceConfidence.stale].
+///
+/// Cross-device cache note: Phase E daily-close write-back stores
+/// `auto:<provider>` rows in the synced `prices` ledger. Those rows flow
+/// through the fresh/stale ledger tiers above; there is no separate cloud
+/// snapshot tier in the device resolver.
 ///
 /// The class is plain Dart with constructor injection; Riverpod owns wiring.
 class LayeredPriceResolver implements PriceResolver {
@@ -59,8 +63,6 @@ class LayeredPriceResolver implements PriceResolver {
 
     final live = await _liveQuoteTier(asset, at, now);
     if (live != null) return live;
-
-    // Future: CloudSnapshotTier slots here.
 
     final bar = await _historicalBarTier(asset, at);
     if (bar != null) return bar;

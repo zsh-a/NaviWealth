@@ -197,13 +197,13 @@ class ChatRepository {
     }
     final portfolioSnapshot = await _portfolioSnapshotReader?.call();
 
-    // Phase 2-A: build the typed ContextPack + seed an AiTrace keyed by
-    // the assistant message id. Failures here are absorbed: chat must
-    // never break because the AI transparency layer hiccupped, so the
-    // prep closure already returns null on its own errors.
+    // Build the typed ContextPack + seed an AiTrace keyed by the assistant
+    // message id. Failures here are absorbed: chat must never break because
+    // the AI transparency layer hiccupped, so the prep closure already
+    // returns null on its own errors.
     final prepResult = _tracePrep == null
         ? null
-        : await _tracePrep.call(requestId: assistantId);
+        : await _tracePrep.call(requestId: assistantId, userMessage: content);
     final contextPack = prepResult?.pack;
     final traceSeed = prepResult?.traceSeed;
     final traceBuilder = traceSeed == null

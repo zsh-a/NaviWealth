@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
@@ -39,6 +40,7 @@ class ScanController extends StateNotifier<ScanState> {
   Future<ScanResult?> runScan({
     required Money availableCash,
     Map<String, int> holdingsBySymbol = const {},
+    Map<String, Decimal> exposureBySymbol = const {},
     Set<String> upcomingEarningsSymbols = const {},
     bool upcomingMacroEvent = false,
   }) async {
@@ -57,6 +59,7 @@ class ScanController extends StateNotifier<ScanState> {
         profile: profile,
         approved: approved,
         holdingsBySymbol: holdingsBySymbol,
+        exposureBySymbol: exposureBySymbol,
         availableCash: availableCash,
         upcomingEarningsSymbols: upcomingEarningsSymbols,
         upcomingMacroEvent: upcomingMacroEvent,

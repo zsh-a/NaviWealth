@@ -7,6 +7,8 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/cashflow/domain/budget_summary.dart';
 import 'package:naviwealth/features/cashflow/ui/budget_page.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -45,6 +47,45 @@ Future<void> _pump(WidgetTester tester, List<BudgetRow> rows) async {
               .where((r) => r.periodMonth == periodMonth && r.deletedAt == null)
               .toList();
         }),
+        monthlyBudgetSummaryProvider.overrideWith((ref, periodMonth) {
+          final filtered = rows
+              .where((r) => r.periodMonth == periodMonth && r.deletedAt == null)
+              .toList();
+          final currency = filtered.isEmpty
+              ? 'CNY'
+              : filtered.first.currency.toUpperCase();
+          var total = Decimal.zero;
+          final categories = <CategoryBudgetStatus>[];
+          for (final row in filtered) {
+            total += row.amount;
+            final spent = row.categoryId == 'cat-food'
+                ? Decimal.parse('1200')
+                : Decimal.zero;
+            categories.add(
+              CategoryBudgetStatus(
+                categoryId: row.categoryId,
+                budgeted: Money(row.amount, row.currency),
+                spent: Money(spent, row.currency),
+              ),
+            );
+          }
+          return AsyncValue.data((
+            summary: MonthlyBudgetSummary(
+              periodMonth: periodMonth,
+              currency: currency,
+              totalBudgeted: Money(total, currency),
+              totalSpent: Money(
+                categories.fold<Decimal>(
+                  Decimal.zero,
+                  (sum, item) => sum + item.spent.amount,
+                ),
+                currency,
+              ),
+              categories: categories,
+            ),
+            mismatchedCount: 0,
+          ));
+        }),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -82,6 +123,8 @@ void main() {
     expect(find.text('cat-food'), findsOneWidget);
     expect(find.text('cat-rent'), findsOneWidget);
     expect(find.textContaining('6,500'), findsWidgets);
+    expect(find.textContaining('Spent 1200 of 6500 CNY'), findsOneWidget);
+    expect(find.textContaining('300 CNY left'), findsOneWidget);
     expect(find.text('No budgets yet'), findsNothing);
   });
 

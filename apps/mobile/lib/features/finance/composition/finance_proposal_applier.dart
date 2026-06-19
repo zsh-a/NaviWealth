@@ -103,15 +103,14 @@ class FinanceProposalApplier implements ProposalApplier {
   /// about the active user.
   final Future<String> Function() currentUserId;
 
-  /// FIRE OS Phase 5 — apply a `fire_plan_update` payload by updating
-  /// the FIRE plan storage. Production wiring delegates to
-  /// `saveFirePlanWithRef`; tests can pass a fake. Null = unsupported
-  /// (the apply branch returns a typed error).
+  /// Applies a `fire_plan_update` payload by updating the FIRE plan storage.
+  /// Production wiring delegates to `saveFirePlanWithRef`; tests can pass a
+  /// fake. Null = unsupported (the apply branch returns a typed error).
   final Future<void> Function(Map<String, Object?> after)? firePlanWriter;
 
-  /// FIRE OS Phase 5 — apply a `fire_bucket_rule` payload by
-  /// upserting into the bucket-rules store. Returns the resulting
-  /// rule id (= payload `target_id`, since rules are keyed by it).
+  /// Applies a `fire_bucket_rule` payload by upserting into the bucket-rules
+  /// store. Returns the resulting rule id (= payload `target_id`, since rules
+  /// are keyed by it).
   final Future<String> Function(Map<String, Object?> payload)?
   fireBucketRuleWriter;
 
@@ -735,9 +734,8 @@ class FinanceProposalApplier implements ProposalApplier {
     hlc: const Hlc(wallMillis: 0, counter: 0, nodeId: ''),
   );
 
-  /// FIRE OS Phase 5 — apply a `fire_plan_update` proposal. Delegates
-  /// to the injected [firePlanWriter]; throws if production wiring
-  /// didn't supply one.
+  /// Applies a `fire_plan_update` proposal. Delegates to the injected
+  /// [firePlanWriter]; throws if production wiring didn't supply one.
   Future<ProposalApplyState> _applyFirePlanUpdate(
     ReadyProposalPlan plan,
     DateTime at,
@@ -764,8 +762,8 @@ class FinanceProposalApplier implements ProposalApplier {
     );
   }
 
-  /// FIRE OS Phase 5 — apply a `fire_bucket_rule` proposal. Delegates
-  /// to the injected [fireBucketRuleWriter].
+  /// Applies a `fire_bucket_rule` proposal. Delegates to the injected
+  /// [fireBucketRuleWriter].
   Future<ProposalApplyState> _applyFireBucketRule(
     ReadyProposalPlan plan,
     DateTime at,

@@ -26,13 +26,16 @@ import '../../fire/data/fire_providers.dart';
 import '../../fire/domain/fire_projection.dart' show FireScenarioTier;
 import '../../home/data/dashboard_providers.dart';
 import '../../settings/data/risk_appetite_preferences.dart';
+import '../ai_tools/query_plan/finance_query_plan.dart';
+import '../ai_tools/query_plan/nl_to_query_plan.dart';
 
 /// Finance-domain trace-prep closure. Watches all the dashboard
 /// providers + FIRE plan + risk appetite + account summary that the
 /// model expects at chat-turn build time, and returns the typed
 /// [ContextPack] + seed [AiTrace] for the repository to finalise.
 final financeChatTracePrepProvider = Provider<ChatTracePrep>((ref) {
-  return ({required String requestId}) => _prepareChatTrace(ref, requestId);
+  return ({required String requestId, required String userMessage}) =>
+      _prepareChatTrace(ref, requestId, userMessage);
 });
 
 /// Build the typed [ContextPack] + seed [AiTrace] for one chat turn.
@@ -44,6 +47,7 @@ final financeChatTracePrepProvider = Provider<ChatTracePrep>((ref) {
 Future<ChatTracePrepResult> _prepareChatTrace(
   Ref ref,
   String requestId,
+  String userMessage,
 ) async {
   try {
     final compressor = ref.read(contextCompressorProvider);
@@ -52,13 +56,7 @@ Future<ChatTracePrepResult> _prepareChatTrace(
       path: routeCtx.path,
       area: _routeAreaFromPath(routeCtx.path),
     );
-    // Phase 2-A: chat is `analyze × suggest` by default. Phase 3 will
-    // classify per user message via NL→QueryPlan.
-    const intent = IntentHint(
-      capability: Capability.analyze,
-      risk: RiskLevel.suggest,
-      label: 'chat_turn',
-    );
+    final intent = _intentForUserMessage(userMessage);
 
     final metricsAsync = ref.read(dashboardHeaderMetricsProvider);
     final metrics = metricsAsync.value;
@@ -109,6 +107,42 @@ Future<ChatTracePrepResult> _prepareChatTrace(
   } catch (_) {
     return (pack: null, traceSeed: null, traceVerbose: false);
   }
+}
+
+IntentHint _intentForUserMessage(String message) {
+  final plan = parseNlQuery(message, now: DateTime.now().toUtc());
+  return switch (plan) {
+    SpendingByCategoryPlan() => const IntentHint(
+      capability: Capability.analyze,
+      risk: RiskLevel.info,
+      label: 'finance_spending_query',
+    ),
+    TransactionsFilterPlan() => const IntentHint(
+      capability: Capability.search,
+      risk: RiskLevel.info,
+      label: 'finance_transaction_query',
+    ),
+    NetWorthTrendPlan() => const IntentHint(
+      capability: Capability.analyze,
+      risk: RiskLevel.info,
+      label: 'finance_net_worth_trend_query',
+    ),
+    SubscriptionListPlan() => const IntentHint(
+      capability: Capability.search,
+      risk: RiskLevel.info,
+      label: 'finance_subscription_query',
+    ),
+    RefundMatchingPlan() => const IntentHint(
+      capability: Capability.search,
+      risk: RiskLevel.info,
+      label: 'finance_refund_query',
+    ),
+    null => const IntentHint(
+      capability: Capability.analyze,
+      risk: RiskLevel.suggest,
+      label: 'chat_turn',
+    ),
+  };
 }
 
 /// Build a [FireGoalSummary] from the live `firePlanProvider` +

@@ -116,6 +116,40 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planBudgetTotalLabel => '月度预算合计';
 
   @override
+  String planBudgetSpentOf(String spent, String budgeted, String currency) {
+    return '已花 $spent / $budgeted $currency';
+  }
+
+  @override
+  String planBudgetRemaining(String amount, String currency) {
+    return '剩余 $amount $currency';
+  }
+
+  @override
+  String planBudgetOverBy(String amount, String currency) {
+    return '超出 $amount $currency';
+  }
+
+  @override
+  String get planBudgetEditTitle => '编辑预算';
+
+  @override
+  String planBudgetAmountLabel(String currency) {
+    return '金额（$currency）';
+  }
+
+  @override
+  String get planBudgetNoteLabel => '备注';
+
+  @override
+  String get planBudgetInvalidAmount => '请输入非负金额。';
+
+  @override
+  String planBudgetSaveFailed(String error) {
+    return '保存预算失败：$error';
+  }
+
+  @override
   String get planWheelSectionTitle => 'Wheel 周期';
 
   @override

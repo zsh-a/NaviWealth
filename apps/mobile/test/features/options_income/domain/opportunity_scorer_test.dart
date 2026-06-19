@@ -131,6 +131,39 @@ void main() {
       // mid = 2.60, breakeven = 212.6
       expect(m.breakeven.amount.toString(), '212.6');
     });
+
+    test('portfolio fit drops as current underlying exposure nears cap', () {
+      const scorer = OpportunityScorer();
+      final contract = _putContract(strike: 190, bid: 2.5, ask: 2.6);
+      final profile = _profileBalanced().copyWith(
+        maxUnderlyingExposurePct: Decimal.parse('0.20'),
+      );
+      final lowExposure = scorer.scoreOne(
+        contract: contract,
+        strategy: OptionsStrategyKind.cashSecuredPut,
+        profile: profile,
+        approved: _approved(symbol: 'AAPL'),
+        sharesOwned: 0,
+        availableCash: Money.parse('1000000', 'USD'),
+        currentUnderlyingExposurePct: Decimal.parse('0.05'),
+      );
+      final highExposure = scorer.scoreOne(
+        contract: contract,
+        strategy: OptionsStrategyKind.cashSecuredPut,
+        profile: profile,
+        approved: _approved(symbol: 'AAPL'),
+        sharesOwned: 0,
+        availableCash: Money.parse('1000000', 'USD'),
+        currentUnderlyingExposurePct: Decimal.parse('0.20'),
+      );
+
+      expect(lowExposure, isNotNull);
+      expect(highExposure, isNotNull);
+      expect(
+        lowExposure!.opportunity.score,
+        greaterThan(highExposure!.opportunity.score),
+      );
+    });
   });
 }
 

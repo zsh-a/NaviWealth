@@ -30,6 +30,7 @@ class ScanInputs {
     required this.profile,
     required this.approved,
     required this.holdingsBySymbol,
+    required this.exposureBySymbol,
     required this.availableCash,
     required this.upcomingEarningsSymbols,
     required this.upcomingMacroEvent,
@@ -41,6 +42,10 @@ class ScanInputs {
 
   /// Symbol → integer share count. Symbols not in the map default to 0.
   final Map<String, int> holdingsBySymbol;
+
+  /// Symbol → current portfolio weight as a 0..1 decimal. Missing means
+  /// exposure is unknown and the scorer falls back to a neutral fit score.
+  final Map<String, Decimal> exposureBySymbol;
 
   final Money availableCash;
 
@@ -165,6 +170,7 @@ class ScanOrchestrator {
   }) {
     final symbol = ap.symbol.toUpperCase();
     final shares = inputs.holdingsBySymbol[symbol] ?? 0;
+    final exposure = inputs.exposureBySymbol[symbol];
     final hasEarnings = inputs.upcomingEarningsSymbols.contains(symbol);
     final hasMacro = inputs.upcomingMacroEvent;
     final opps = <OptionsOpportunity>[];
@@ -198,6 +204,7 @@ class ScanOrchestrator {
         approved: ap,
         sharesOwned: shares,
         availableCash: inputs.availableCash,
+        currentUnderlyingExposurePct: exposure,
         hasUpcomingEarnings: hasEarnings,
         hasUpcomingMacroEvent: hasMacro,
         now: now,
@@ -212,6 +219,7 @@ class ScanOrchestrator {
           approved: ap,
           sharesOwned: shares,
           availableCash: inputs.availableCash,
+          currentUnderlyingExposurePct: exposure,
           hasUpcomingEarnings: hasEarnings,
           hasUpcomingMacroEvent: hasMacro,
         );

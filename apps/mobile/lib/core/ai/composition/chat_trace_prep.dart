@@ -32,7 +32,10 @@ typedef ChatTracePrepResult = ({
 /// close over `Ref` without forcing repository constructors to depend
 /// on Riverpod directly.
 typedef ChatTracePrep =
-    Future<ChatTracePrepResult> Function({required String requestId});
+    Future<ChatTracePrepResult> Function({
+      required String requestId,
+      required String userMessage,
+    });
 
 /// Active trace-prep closure for the current build. Default is `null`
 /// (no preparer registered); `ChatRepository` falls back to its

@@ -308,6 +308,54 @@ abstract class AppLocalizations {
   /// **'Total monthly budget'**
   String get planBudgetTotalLabel;
 
+  /// No description provided for @planBudgetSpentOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Spent {spent} of {budgeted} {currency}'**
+  String planBudgetSpentOf(String spent, String budgeted, String currency);
+
+  /// No description provided for @planBudgetRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} {currency} left'**
+  String planBudgetRemaining(String amount, String currency);
+
+  /// No description provided for @planBudgetOverBy.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} {currency} over'**
+  String planBudgetOverBy(String amount, String currency);
+
+  /// No description provided for @planBudgetEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit budget'**
+  String get planBudgetEditTitle;
+
+  /// No description provided for @planBudgetAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount ({currency})'**
+  String planBudgetAmountLabel(String currency);
+
+  /// No description provided for @planBudgetNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get planBudgetNoteLabel;
+
+  /// No description provided for @planBudgetInvalidAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a non-negative amount.'**
+  String get planBudgetInvalidAmount;
+
+  /// No description provided for @planBudgetSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save budget: {error}'**
+  String planBudgetSaveFailed(String error);
+
   /// Plan hub: options Wheel lifecycle section title (roadmap-next.md §3.3)
   ///
   /// In en, this message translates to:

@@ -119,6 +119,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planBudgetTotalLabel => 'Total monthly budget';
 
   @override
+  String planBudgetSpentOf(String spent, String budgeted, String currency) {
+    return 'Spent $spent of $budgeted $currency';
+  }
+
+  @override
+  String planBudgetRemaining(String amount, String currency) {
+    return '$amount $currency left';
+  }
+
+  @override
+  String planBudgetOverBy(String amount, String currency) {
+    return '$amount $currency over';
+  }
+
+  @override
+  String get planBudgetEditTitle => 'Edit budget';
+
+  @override
+  String planBudgetAmountLabel(String currency) {
+    return 'Amount ($currency)';
+  }
+
+  @override
+  String get planBudgetNoteLabel => 'Note';
+
+  @override
+  String get planBudgetInvalidAmount => 'Enter a non-negative amount.';
+
+  @override
+  String planBudgetSaveFailed(String error) {
+    return 'Could not save budget: $error';
+  }
+
+  @override
   String get planWheelSectionTitle => 'Wheel cycles';
 
   @override
