@@ -24,27 +24,39 @@ import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/route_error_page.dart';
 import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/app/router.dart';
+import 'package:naviwealth/core/auth/auth_api_client.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/domain/values/money.dart';
+import 'package:naviwealth/features/activity/activity_page.dart';
 import 'package:naviwealth/features/activity/ui/activity_entry_detail_page.dart';
+import 'package:naviwealth/features/ai_chat/ui/ai_chat_page.dart';
 import 'package:naviwealth/features/analytics/data/benchmark/benchmark_history_source.dart';
 import 'package:naviwealth/features/analytics/data/benchmark/benchmark_providers.dart';
 import 'package:naviwealth/features/analytics/data/providers.dart'
     as analytics_data;
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_comparison.dart';
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
+import 'package:naviwealth/features/assets/asset_detail_page.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
+import 'package:naviwealth/features/auth/presentation/devices_page.dart';
 import 'package:naviwealth/features/cashflow/data/cash_flow_providers.dart';
 import 'package:naviwealth/features/cashflow/data/dividend_center_providers.dart';
 import 'package:naviwealth/features/cashflow/domain/cash_flow_aggregator.dart';
 import 'package:naviwealth/features/cashflow/domain/dividend_center.dart';
 import 'package:naviwealth/features/cashflow/ui/cashflow_page.dart';
 import 'package:naviwealth/features/cashflow/ui/dividend_center_page.dart';
+import 'package:naviwealth/features/expense/ui/expense_list_page.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/domain/expense.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/fire/data/fire_providers.dart';
+import 'package:naviwealth/features/fire/domain/fire_calculator.dart';
+import 'package:naviwealth/features/fire/domain/fire_goal.dart';
+import 'package:naviwealth/features/fire/presentation/fire_page.dart';
 import 'package:naviwealth/features/health/ui/health_trend_page.dart';
 import 'package:naviwealth/features/home/home_page.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
@@ -52,6 +64,7 @@ import 'package:naviwealth/features/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
+import 'package:naviwealth/features/plan/ui/plan_hub_page.dart';
 import 'package:naviwealth/features/rebalance/ui/rebalance_page.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
 import 'package:naviwealth/features/wealth/ui/wealth_hub_page.dart';
@@ -80,6 +93,12 @@ class _EmptyHoldingService implements HoldingService {
       throw UnimplementedError();
   @override
   Future<void> invalidateFrom(DateTime from) async {}
+}
+
+class _StaticDevicesNotifier extends DevicesNotifier {
+  @override
+  Future<DevicesResponse> build() async =>
+      const DevicesResponse(devices: [], currentDeviceId: 'test-device');
 }
 
 // Standard test surface sizes for the three responsive shell breakpoints.
@@ -128,6 +147,12 @@ Future<ProviderContainer> _pumpAt(
       accountsStreamProvider.overrideWith(
         (ref) => Stream<List<Account>>.value(const []),
       ),
+      allAccountsStreamProvider.overrideWith(
+        (ref) => Stream<List<Account>>.value(const []),
+      ),
+      journalExpensesStreamProvider.overrideWith(
+        (ref) => Stream<List<Expense>>.value(const []),
+      ),
       // The real `physicalAssetsListProvider` reaches through
       // `appDatabaseProvider` → `FlutterSecureKeyStore`, neither of which
       // is available under `flutter_test`. Stub with an immediate empty
@@ -170,6 +195,17 @@ Future<ProviderContainer> _pumpAt(
       dividendCenterSnapshotProvider.overrideWith(
         (ref) async => _emptyDividendSnapshot(),
       ),
+      fireDashboardViewProvider.overrideWith(
+        (ref) => AsyncValue.data(
+          const FireCalculator().buildView(
+            goal: FireGoal.unset(),
+            currentNetWorth: Decimal.zero,
+            baseCurrency: 'CNY',
+            start: DateTime(2026, 6, 19),
+          ),
+        ),
+      ),
+      devicesProvider.overrideWith(_StaticDevicesNotifier.new),
     ],
   );
   addTearDown(container.dispose);
@@ -231,6 +267,44 @@ void main() {
       await _pumpAt(tester);
       expect(find.byType(HomePage), findsOneWidget);
       expect(find.byType(FloatingGlassNavBar), findsOneWidget);
+    });
+
+    testWidgets('web checklist primary deep links render canonical pages', (
+      tester,
+    ) async {
+      final cases = <String, Type>{
+        AppRoutes.activity: ActivityPage,
+        AppRoutes.wealth: WealthHubPage,
+        AppRoutes.plan: PlanHubPage,
+        AppRoutes.settings: SettingsPage,
+      };
+
+      for (final entry in cases.entries) {
+        final container = await _pumpAt(tester, initialLocation: entry.key);
+        expect(_currentPath(container), entry.key);
+        expect(find.byType(entry.value), findsOneWidget);
+        await _drainTimers(tester);
+        await tester.pumpWidget(const SizedBox.shrink());
+      }
+    });
+
+    testWidgets('web checklist secondary deep links resolve', (tester) async {
+      final cases = <String, Type>{
+        AppRoutes.wealthAsset('asset-1'): AssetDetailPage,
+        AppRoutes.activityExpenses: ExpenseListPage,
+        AppRoutes.planFire: FirePage,
+        AppRoutes.settingsAiHistory: AiChatPage,
+        AppRoutes.settingsDevices: DevicesPage,
+      };
+
+      for (final entry in cases.entries) {
+        final container = await _pumpAt(tester, initialLocation: entry.key);
+        expect(_currentPath(container), Uri.parse(entry.key).path);
+        expect(find.byType(RouteErrorPage), findsNothing);
+        expect(find.byType(entry.value), findsOneWidget);
+        await _drainTimers(tester);
+        await tester.pumpWidget(const SizedBox.shrink());
+      }
     });
 
     for (final legacy in <String>[
