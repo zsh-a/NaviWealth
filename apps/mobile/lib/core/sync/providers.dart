@@ -62,12 +62,17 @@ final syncStatusBusProvider = Provider<SyncStatusBus>((ref) {
 
 /// Live stream of sync status events seeded with the bus's current snapshot,
 /// so a status page opened mid-cycle paints immediately.
-final syncStatusEventStreamProvider = StreamProvider<SyncStatusEvent>((
-  ref,
-) async* {
+final syncStatusEventStreamProvider = StreamProvider<SyncStatusEvent>((ref) {
   final bus = ref.watch(syncStatusBusProvider);
-  yield bus.current;
-  yield* bus.stream;
+  return Stream<SyncStatusEvent>.multi((controller) {
+    controller.add(bus.current);
+    final subscription = bus.stream.listen(
+      controller.add,
+      onError: controller.addError,
+      onDone: controller.close,
+    );
+    controller.onCancel = subscription.cancel;
+  });
 });
 
 /// Last persisted pull cursor (server `seq`). `0` before the first sync.

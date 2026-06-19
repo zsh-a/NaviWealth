@@ -277,8 +277,10 @@ path once the production connection implements database encryption.
   persistence, pending-draft dedup, privacy-gated Vision refusal, Vision
   parse persistence + trace metadata, and DB-boot rejection. `SyncEngine` now
   has sync-graph coverage for stale dirty-pointer cleanup and partial pull
-  progress when a later page fails into backoff. Next expansion is applying
-  the same traversal style to provider-level sync diagnostics.
+  progress when a later page fails into backoff. Sync diagnostics providers
+  now cover seeded status events plus cursor, local HLC, outbox depth, and
+  local row-count refresh on status changes. Next expansion is applying the
+  same traversal style to the Sync Status UI surface.
 - AI exploratory + semantic (vision) validation, nightly, non-blocking.
 
 ## 8. Conventions
