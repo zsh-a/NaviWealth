@@ -5,9 +5,11 @@
 // like user stories and survive UI refactors. Keep selectors here; keep
 // assertions about *outcomes* in the `*_flow_test.dart` files.
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/ai_chat/ui/chat_composer.dart';
 
 import 'app_harness.dart';
 
@@ -44,6 +46,13 @@ class AppShell {
     await tester.tap(action.last);
     await settle(tester);
   }
+
+  Future<void> openAi() async {
+    final action = find.descendant(of: bottomNav, matching: find.text('AI'));
+    expect(action, findsWidgets, reason: 'AI center action missing');
+    await tester.tap(action.first);
+    await settle(tester);
+  }
 }
 
 /// The home ("Today") destination — the FinanceOS landing surface.
@@ -59,6 +68,50 @@ class HomePage {
       findsWidgets,
       reason: 'expected to land on the Today home surface',
     );
+  }
+}
+
+/// Shell-level AI assistant sheet.
+class AiChatSheetObject {
+  AiChatSheetObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectReady() {
+    expect(find.byType(ChatComposer), findsOneWidget);
+    expect(find.text('AI assistant'), findsWidgets);
+    expect(find.text('Ask anything about your Life OS.'), findsOneWidget);
+    expect(
+      find
+          .descendant(
+            of: find.byType(ChatComposer),
+            matching: find.byType(EditableText),
+          )
+          .hitTestable(),
+      findsOneWidget,
+    );
+  }
+
+  Future<void> ask(String question) async {
+    final composer = find.byType(ChatComposer);
+    expect(composer, findsOneWidget);
+    await tester.enterText(
+      find
+          .descendant(of: composer, matching: find.byType(EditableText))
+          .hitTestable(),
+      question,
+    );
+    await settle(tester);
+    expect(find.text(question), findsWidgets);
+
+    tester.widget<ChatComposer>(composer).onSend(question);
+    await settle(tester);
+    await settle(tester);
+  }
+
+  void expectExchange({required String question, required String answer}) {
+    expect(find.textContaining(question, findRichText: true), findsWidgets);
+    expect(find.textContaining(answer, findRichText: true), findsWidgets);
   }
 }
 
