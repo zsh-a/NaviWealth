@@ -78,7 +78,11 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
       ),
       child: sessionsAsync.when(
         loading: () => const Center(
-          child: SizedBox(width: AppSpacing.s24, height: AppSpacing.s24, child: FCircularProgress()),
+          child: SizedBox(
+            width: AppSpacing.s24,
+            height: AppSpacing.s24,
+            child: FCircularProgress(),
+          ),
         ),
         error: (e, _) => _PanelMessage(
           icon: FLucideIcons.circleAlert,
@@ -113,7 +117,10 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
           final now = DateTime.now();
           final groups = _groupByRecency(filtered, now, l10n);
           return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s8,
+              vertical: AppSpacing.s8,
+            ),
             itemCount: groups.length,
             itemBuilder: (context, i) {
               final group = groups[i];
@@ -122,13 +129,16 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
                 children: [
                   if (i > 0) const SizedBox(height: AppSpacing.s10),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(AppSpacing.s8, AppSpacing.s4, AppSpacing.s8, AppSpacing.s4),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.s8,
+                      AppSpacing.s4,
+                      AppSpacing.s8,
+                      AppSpacing.s4,
+                    ),
                     child: Text(
                       group.label,
-                      style: context.theme.typography.xs2.copyWith(
+                      style: context.microLabelStyle.copyWith(
                         color: context.theme.colors.mutedForeground,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.4,
                       ),
                     ),
                   ),
@@ -169,10 +179,7 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
         ),
         child: Text(
           l10n.aiChatSessionDeleteBody(session.title),
-          style: context.theme.typography.sm.copyWith(
-            color: context.theme.colors.mutedForeground,
-            height: 1.4,
-          ),
+          style: context.bodyCaptionStyle.copyWith(height: 1.4),
         ),
       ),
     );
@@ -245,7 +252,12 @@ class _PanelShell extends StatelessWidget {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s16, AppSpacing.s8, AppSpacing.s12),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s16,
+                    AppSpacing.s16,
+                    AppSpacing.s8,
+                    AppSpacing.s12,
+                  ),
                   child: Row(
                     children: [
                       Icon(
@@ -256,9 +268,8 @@ class _PanelShell extends StatelessWidget {
                       const SizedBox(width: AppSpacing.s8),
                       Text(
                         l10n.aiChatSessionsHeader,
-                        style: context.theme.typography.md.copyWith(
+                        style: context.rowTitleStyle.copyWith(
                           color: colors.foreground,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const Spacer(),
@@ -269,7 +280,10 @@ class _PanelShell extends StatelessWidget {
                           child: FButton.icon(
                             variant: FButtonVariant.secondary,
                             onPress: onNew,
-                            child: const Icon(FLucideIcons.plus, size: AppIconSizes.h18),
+                            child: const Icon(
+                              FLucideIcons.plus,
+                              size: AppIconSizes.h18,
+                            ),
                           ),
                         ),
                     ],
@@ -277,7 +291,12 @@ class _PanelShell extends StatelessWidget {
                 ),
                 if (searchBar != null)
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(AppSpacing.s12, 0, AppSpacing.s12, AppSpacing.s10),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.s12,
+                      0,
+                      AppSpacing.s12,
+                      AppSpacing.s10,
+                    ),
                     child: searchBar!,
                   ),
               ],
@@ -412,16 +431,21 @@ class _PanelMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: AppIconSizes.xl, color: iconColor ?? colors.mutedForeground),
+            Icon(
+              icon,
+              size: AppIconSizes.xl,
+              color: iconColor ?? colors.mutedForeground,
+            ),
             const SizedBox(height: AppSpacing.s12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: context.theme.typography.sm.copyWith(
-                color: colors.mutedForeground,
-              ),
+              style: context.bodyCaptionStyle,
             ),
-            if (action != null) ...[const SizedBox(height: AppSpacing.s16), action!],
+            if (action != null) ...[
+              const SizedBox(height: AppSpacing.s16),
+              action!,
+            ],
           ],
         ),
       ),
@@ -458,7 +482,10 @@ class _SessionTile extends StatelessWidget {
         child: FTappable(
           onPress: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s12,
+              vertical: AppSpacing.s8,
+            ),
             child: Row(
               children: [
                 Container(
@@ -466,7 +493,9 @@ class _SessionTile extends StatelessWidget {
                   height: AppSpacing.s32,
                   decoration: BoxDecoration(
                     color: selected ? colors.primary : Colors.transparent,
-                    borderRadius: const BorderRadius.all(Radius.circular(AppRadius.xxs)),
+                    borderRadius: const BorderRadius.all(
+                      Radius.circular(AppRadius.xxs),
+                    ),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s8),
@@ -484,19 +513,19 @@ class _SessionTile extends StatelessWidget {
                         session.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: context.theme.typography.sm.copyWith(
-                          color: colors.foreground,
-                          fontWeight: selected
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                        ),
+                        style: selected
+                            ? context.labelStyle.copyWith(
+                                color: colors.foreground,
+                              )
+                            : context.theme.typography.sm.copyWith(
+                                color: colors.foreground,
+                                fontWeight: FontWeight.w500,
+                              ),
                       ),
                       const SizedBox(height: AppSpacing.s2),
                       Text(
                         _formatRelative(l10n, lastAt),
-                        style: context.theme.typography.xs2.copyWith(
-                          color: colors.mutedForeground,
-                        ),
+                        style: context.microCaptionStyle,
                       ),
                     ],
                   ),
@@ -574,7 +603,10 @@ class _ActionRow extends StatelessWidget {
       child: FTappable(
         onPress: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12, vertical: AppSpacing.s12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s12,
+            vertical: AppSpacing.s12,
+          ),
           child: Row(
             children: [
               Icon(icon, size: AppIconSizes.md, color: fg),
@@ -598,6 +630,7 @@ String _formatRelative(AppLocalizations l10n, DateTime when) =>
       minutesAgo: l10n.aiChatRelativeMinutesAgo,
       hoursAgo: l10n.aiChatRelativeHoursAgo,
       daysAgo: l10n.aiChatRelativeDaysAgo,
-      dateFallback: (d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+      dateFallback: (d) =>
+          '${d.year}-${d.month.toString().padLeft(2, '0')}-'
           '${d.day.toString().padLeft(2, '0')}',
     );

@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/domain/entities/fx_rate.dart' as dom;
 import 'package:naviwealth/features/analytics/analytics_page.dart';
 import 'package:naviwealth/features/analytics/data/benchmark/benchmark_history_source.dart';
 import 'package:naviwealth/features/analytics/data/benchmark/benchmark_providers.dart';
@@ -16,13 +18,16 @@ import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
-import 'package:naviwealth/features/finance/data/repositories/providers.dart' as repo_providers;
+import 'package:naviwealth/features/finance/data/repositories/providers.dart'
+    as repo_providers;
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
+import '../../core/persistence/test_database.dart';
 
 class _EmptyBenchmarkSource implements BenchmarkHistorySource {
   @override
@@ -100,9 +105,13 @@ ProviderContainer _container({
   required List<Asset> assets,
   String baseCurrency = _baseCurrency,
 }) {
+  final db = makeTestDatabase();
+  addTearDown(db.close);
   return ProviderContainer(
     overrides: [
+      appDatabaseProvider.overrideWith((_) async => db),
       equityAssetsStreamProvider.overrideWith((_) => Stream.value(assets)),
+      holdingsSnapshotProvider.overrideWith((_) async => snapshots),
       holdingServiceProvider.overrideWith(
         (ref) async => _StubHoldingService(snapshots),
       ),
@@ -112,6 +121,9 @@ ProviderContainer _container({
       // touching the database / market-data service.
       repo_providers.manualAssetsStreamProvider.overrideWith(
         (_) => Stream.value(const <Asset>[]),
+      ),
+      repo_providers.fxRatesStreamProvider.overrideWith(
+        (_) => Stream.value(const <dom.FxRate>[]),
       ),
       physicalAssetsListProvider.overrideWith(
         (_) => Stream.value(const <PhysicalAsset>[]),

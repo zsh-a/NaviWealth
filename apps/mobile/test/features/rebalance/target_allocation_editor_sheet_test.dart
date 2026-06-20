@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/home/data/dashboard_providers.dart';
@@ -14,6 +15,8 @@ import 'package:naviwealth/features/rebalance/ui/target_allocation_editor_sheet.
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/persistence/test_database.dart';
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -23,8 +26,13 @@ void main() {
     tester,
   ) async {
     final prefs = await SharedPreferences.getInstance();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
     final container = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        appDatabaseProvider.overrideWith((_) async => db),
+      ],
     );
     addTearDown(container.dispose);
     final dirty = FormDirtyController();
@@ -55,8 +63,13 @@ void main() {
     tester,
   ) async {
     final prefs = await SharedPreferences.getInstance();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
     final container = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        appDatabaseProvider.overrideWith((_) async => db),
+      ],
     );
     addTearDown(container.dispose);
     final dirty = FormDirtyController();
@@ -90,9 +103,12 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
     final prefs = await SharedPreferences.getInstance();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
     final container = ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        appDatabaseProvider.overrideWith((_) async => db),
         dashboardSnapshotProvider.overrideWithValue(
           AsyncValue.data(_snapshotWithQqq()),
         ),
@@ -132,9 +148,12 @@ void main() {
     tester,
   ) async {
     final prefs = await SharedPreferences.getInstance();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
     final container = ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        appDatabaseProvider.overrideWith((_) async => db),
         rebalancePlanProvider.overrideWithValue(_plan),
       ],
     );

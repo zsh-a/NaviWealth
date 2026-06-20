@@ -12,35 +12,33 @@
 /// alert color, and otherwise typography.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart';
 
 class AiTone {
   AiTone._();
 
   /// Default text on AI surfaces. Used for primary content.
-  static Color onSurface(BuildContext c) => Theme.of(c).colorScheme.onSurface;
+  static Color onSurface(BuildContext c) => c.theme.colors.foreground;
 
   /// Secondary / metadata text. Most "label", "subtitle", "muted"
   /// strings live here. Replaces ad-hoc `onSurfaceVariant` lookups so
   /// future palette swaps land in one place.
-  static Color muted(BuildContext c) =>
-      Theme.of(c).colorScheme.onSurfaceVariant;
+  static Color muted(BuildContext c) => c.theme.colors.mutedForeground;
 
   /// The **only** active / accent color allowed on AI surfaces.
   /// Reserved for "AI is alive" signals (streaming cursor, selected
   /// filter, active capsule). Don't use as a decoration tone.
-  static Color active(BuildContext c) => Theme.of(c).colorScheme.primary;
+  static Color active(BuildContext c) => c.theme.colors.primary;
 
   /// Failure / denied / policy violation. Use sparingly — most "warn"
   /// or "stale" signals should encode in iconography, not color.
-  static Color error(BuildContext c) => Theme.of(c).colorScheme.error;
+  static Color error(BuildContext c) => c.theme.colors.destructive;
 
   /// Hairline / divider tone. Stays subtle.
-  static Color outline(BuildContext c) =>
-      Theme.of(c).colorScheme.outlineVariant;
+  static Color outline(BuildContext c) => c.theme.colors.border;
 
   /// Surface used for AI pill / capsule backgrounds. Sits 4% above
   /// the page surface, no shadow.
-  static Color surfaceTint(BuildContext c) =>
-      Theme.of(c).colorScheme.surfaceContainerHighest;
+  static Color surfaceTint(BuildContext c) => c.theme.colors.secondary;
 }

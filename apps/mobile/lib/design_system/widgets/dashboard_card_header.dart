@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
+import '../tokens/text_style_presets.dart';
 
 /// A reusable card header with a tinted icon disc, title, and chevron.
 ///
@@ -37,10 +38,7 @@ class DashboardCardHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-              fontWeight: FontWeight.w600,
-            ),
+            style: context.mutedLabelStyle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -48,8 +46,9 @@ class DashboardCardHeader extends StatelessWidget {
         Icon(
           FLucideIcons.chevronRight,
           size: AppIconSizes.h18,
-          color: context.theme.colors.mutedForeground
-              .withValues(alpha: AppOpacity.prominent),
+          color: context.theme.colors.mutedForeground.withValues(
+            alpha: AppOpacity.prominent,
+          ),
         ),
       ],
     );

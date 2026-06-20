@@ -51,5 +51,5 @@ Decimal _allocated({
 }) {
   if (total == Decimal.zero || basis == Decimal.zero) return Decimal.zero;
   if (denominator == Decimal.zero) return Decimal.zero;
-  return total * (basis / denominator).toDecimal(scaleOnInfinitePrecision: 16);
+  return (total * basis / denominator).toDecimal(scaleOnInfinitePrecision: 16);
 }

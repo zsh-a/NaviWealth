@@ -76,10 +76,7 @@ class HomeGreetingHeader extends ConsumerWidget {
               Expanded(
                 child: Text(
                   greeting,
-                  style: context.theme.typography.xl.copyWith(
-                    fontWeight: FontWeight.w600,
-                    height: 1.1,
-                  ),
+                  style: context.titleLabelStyle.copyWith(height: 1.1),
                 ),
               ),
               // Today has no `FHeader`, so the editorial greeting row is
@@ -93,10 +90,7 @@ class HomeGreetingHeader extends ConsumerWidget {
           if (statusFragments.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.s6),
             DefaultTextStyle.merge(
-              style: context.theme.typography.sm.copyWith(
-                color: colors.mutedForeground,
-                height: 1.35,
-              ),
+              style: context.bodyCaptionStyle.copyWith(height: 1.35),
               child: Wrap(
                 spacing: AppSpacing.s8,
                 runSpacing: AppSpacing.s2,
@@ -108,7 +102,7 @@ class HomeGreetingHeader extends ConsumerWidget {
                         if (i > 0) ...[
                           Text(
                             '·',
-                            style: context.theme.typography.sm.copyWith(
+                            style: context.bodyCaptionStyle.copyWith(
                               color: colors.mutedForeground.withValues(
                                 alpha: AppOpacity.scrim,
                               ),
@@ -118,7 +112,7 @@ class HomeGreetingHeader extends ConsumerWidget {
                         ],
                         Text(
                           statusFragments[i].text,
-                          style: context.theme.typography.sm.copyWith(
+                          style: context.bodyCaptionStyle.copyWith(
                             color: statusFragments[i].color,
                             fontWeight: FontWeight.w500,
                           ),

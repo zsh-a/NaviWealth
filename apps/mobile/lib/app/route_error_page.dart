@@ -17,7 +17,6 @@ class RouteErrorPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
     final error = state.error;
     final hasError = error != null;
@@ -44,7 +43,7 @@ class RouteErrorPage extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s16),
                 Text(
                   title,
-                  style: typography.lg.copyWith(fontWeight: FontWeight.w600),
+                  style: context.titleLabelStyle,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.s8),

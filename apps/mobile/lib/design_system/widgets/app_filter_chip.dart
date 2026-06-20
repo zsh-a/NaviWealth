@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/motion_utils.dart';
+import '../tokens/text_style_presets.dart';
 
 /// Low-noise selectable filter chip for dense filter rows.
 ///
@@ -68,10 +69,13 @@ class AppFilterChip extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: context.theme.typography.xs.copyWith(
-                    color: foreground,
-                    fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-                  ),
+                  style:
+                      (active
+                              ? context.captionLabelStyle
+                              : context.theme.typography.xs.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                ))
+                          .copyWith(color: foreground),
                 ),
               ),
               if (active && onClear != null) ...[

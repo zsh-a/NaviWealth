@@ -99,10 +99,7 @@ class _ActivityPreviewSection extends StatelessWidget {
               Expanded(
                 child: Text(
                   l10n.dashboardActivityPreviewTitle,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: context.mutedLabelStyle,
                 ),
               ),
               FTappable(
@@ -114,9 +111,8 @@ class _ActivityPreviewSection extends StatelessWidget {
                   ),
                   child: Text(
                     l10n.dashboardActivityPreviewViewAll,
-                    style: context.theme.typography.xs.copyWith(
+                    style: context.captionLabelStyle.copyWith(
                       color: context.theme.colors.primary,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -199,12 +195,7 @@ class _ActivityPreviewError extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              l10n.commonLoadFailed,
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
+            child: Text(l10n.commonLoadFailed, style: context.bodyCaptionStyle),
           ),
           FButton(
             variant: FButtonVariant.ghost,
@@ -282,9 +273,7 @@ class _PreviewRow extends StatelessWidget {
                       padding: const EdgeInsets.only(top: AppSpacing.s2),
                       child: Text(
                         subtitle,
-                        style: context.theme.typography.xs.copyWith(
-                          color: colors.mutedForeground,
-                        ),
+                        style: context.captionStyle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -302,17 +291,10 @@ class _PreviewRow extends StatelessWidget {
                     amount: headline.units,
                     unit: headline.unit,
                     formatters: formatter,
-                    style: context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: context.labelStyle,
                   ),
                 const SizedBox(height: AppSpacing.s2),
-                Text(
-                  timeStr,
-                  style: context.theme.typography.xs.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                ),
+                Text(timeStr, style: context.captionStyle),
               ],
             ),
           ],

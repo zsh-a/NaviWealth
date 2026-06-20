@@ -35,9 +35,7 @@ class BenchmarkComparisonCard extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s4),
             Text(
               l10n.benchmarkComparisonSubtitle,
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.bodyCaptionStyle,
             ),
             const SizedBox(height: AppSpacing.s12),
             const _BenchmarkSelectionChips(),
@@ -98,7 +96,7 @@ class _BenchmarkRangeChips extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final selected = ref.watch(benchmarkComparisonRangeProvider);
     return SizedBox(
-      height: 40,
+      height: AppControlHeights.chipRail,
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [

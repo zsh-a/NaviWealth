@@ -84,9 +84,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
                       entry.entry.narration.isEmpty
                           ? '—'
                           : entry.entry.narration,
-                      style: context.theme.typography.sm.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: context.labelStyle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -94,9 +92,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
                       const SizedBox(height: AppSpacing.s2),
                       Text(
                         subtitle,
-                        style: context.theme.typography.xs.copyWith(
-                          color: colors.mutedForeground,
-                        ),
+                        style: context.captionStyle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -119,12 +115,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
                       ),
                     ),
                   const SizedBox(height: AppSpacing.s2),
-                  Text(
-                    timeStr,
-                    style: context.theme.typography.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                  ),
+                  Text(timeStr, style: context.captionStyle),
                 ],
               ),
             ],

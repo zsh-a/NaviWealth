@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/color_palette.dart';
+import '../tokens/dimens_tokens.dart';
 
 /// Single source of truth for the accent (cyan brand) color used across
 /// `ColorScheme.primary`, the Forui `FColors.primary` override, chart
@@ -13,7 +14,7 @@ class AccentColors {
 
   /// Foreground / interaction color (used as `colors.primary`).
   ///
-  /// Light mode → a calmer teal-cyan for premium fintech surfaces.
+  /// Light mode → a calmer cyan brand shade for premium fintech surfaces.
   /// Dark mode  → medium cyan, avoiding the neon read of cyanBrand400.
   static Color primary(Brightness brightness) => brightness == Brightness.dark
       ? ColorPalette.cyanBrand500
@@ -37,7 +38,7 @@ class AccentColors {
 
   /// Translucent overlay for area-fill gradients beneath sparklines.
   static Color areaFill(Brightness brightness) =>
-      primary(brightness).withValues(alpha: 0.10);
+      primary(brightness).withValues(alpha: AppOpacity.subtle);
 
   /// Warm orange secondary accent — low-frequency highlights (badges,
   /// special callouts). Not used for primary interactions.

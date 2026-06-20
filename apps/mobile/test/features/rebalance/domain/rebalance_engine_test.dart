@@ -2,10 +2,35 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/domain/values/money.dart';
 import 'package:naviwealth/features/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/rebalance/domain/allocation_schemes.dart';
 import 'package:naviwealth/features/rebalance/domain/rebalance_engine.dart';
 import 'package:naviwealth/features/rebalance/domain/rebalance_models.dart';
 
 void main() {
+  test('built-in allocation presets are valid full allocations', () {
+    for (final preset in AllocationSchemePreset.values) {
+      final allocation = allocationScheme(preset);
+
+      expect(allocation.isValid, isTrue, reason: preset.name);
+      expect(
+        allocation.weights.keys,
+        containsAll(
+          AssetCategory.values.where((c) => c != AssetCategory.liability),
+        ),
+        reason: preset.name,
+      );
+      expect(allocation[AssetCategory.liability], 0);
+    }
+  });
+
+  test('custom allocation starts from balanced as an editable template', () {
+    final custom = allocationScheme(AllocationSchemePreset.custom);
+    final balanced = allocationScheme(AllocationSchemePreset.balanced);
+
+    expect(custom.weights, balanced.weights);
+    expect(custom.assetTargets, isEmpty);
+  });
+
   test('target allocation serializes category and asset targets', () {
     final allocation = TargetAllocation(
       weights: {
@@ -115,6 +140,64 @@ void main() {
     expect(cash.targetWeight, 0.4);
     expect(plan.trades.where((t) => t.assetId == 'qqq'), hasLength(1));
     expect(plan.trades.singleWhere((t) => t.assetId == 'qqq').isSell, isTrue);
+  });
+
+  test('drifts below warning threshold do not generate noise trades', () {
+    final snapshot = DashboardSnapshot(
+      asOf: DateTime.utc(2026, 5, 30),
+      baseCurrency: 'USD',
+      allocations: [
+        CategoryAllocation(
+          category: AssetCategory.stock,
+          totalInBase: Money(Decimal.parse('520'), 'USD'),
+          items: [
+            CategoryItem(
+              id: 'stock',
+              name: 'Stock',
+              subtitle: null,
+              valueInBase: Money(Decimal.parse('520'), 'USD'),
+              nativeAmount: Decimal.parse('520'),
+              nativeCurrency: 'USD',
+            ),
+          ],
+        ),
+        CategoryAllocation(
+          category: AssetCategory.cash,
+          totalInBase: Money(Decimal.parse('480'), 'USD'),
+          items: [
+            CategoryItem(
+              id: 'cash',
+              name: 'Cash',
+              subtitle: null,
+              valueInBase: Money(Decimal.parse('480'), 'USD'),
+              nativeAmount: Decimal.parse('480'),
+              nativeCurrency: 'USD',
+            ),
+          ],
+        ),
+      ],
+      totalAssets: Money(Decimal.parse('1000'), 'USD'),
+      totalLiabilities: Money.zero('USD'),
+      netWorth: Money(Decimal.parse('1000'), 'USD'),
+    );
+    final target = TargetAllocation(
+      weights: {
+        for (final category in AssetCategory.values)
+          if (category != AssetCategory.liability) category: 0,
+        AssetCategory.stock: 0.5,
+        AssetCategory.cash: 0.5,
+      },
+    );
+
+    final plan = const RebalanceEngine(
+      warningThreshold: 0.05,
+    ).compute(snapshot: snapshot, target: target);
+
+    expect(plan.isBalanced, isTrue);
+    expect(plan.drifts.where((d) => d.severity != DriftSeverity.ok), isEmpty);
+    expect(plan.trades, isEmpty);
+    expect(plan.estimatedFees, Money.zero('USD'));
+    expect(plan.estimatedTaxes, Money.zero('USD'));
   });
 
   test('empty trade fee estimates keep the snapshot base currency', () {

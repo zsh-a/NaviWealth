@@ -72,22 +72,24 @@ class FloatingGlassNavBar extends StatelessWidget {
         ? ColorPalette.navyGlass.withValues(alpha: AppOpacity.overlay)
         : ColorPalette.neutralGlass.withValues(alpha: AppOpacity.nearOpaque);
     final borderColor = isDark
-        ? Colors.white.withValues(alpha: AppOpacity.faint)
+        ? ColorPalette.neutral0.withValues(alpha: AppOpacity.faint)
         : ColorPalette.neutralGlassBorder.withValues(alpha: AppOpacity.strong);
 
     // Top-edge highlight gradient simulates light refracting through the
     // frosted surface — the main visual cue that replaces the real blur.
     final highlightColor = isDark
-        ? Colors.white.withValues(alpha: 0.06)
-        : Colors.white.withValues(alpha: 0.55);
-    final highlightColorTransparent = highlightColor.withValues(alpha: 0);
+        ? ColorPalette.neutral0.withValues(alpha: AppOpacity.faint)
+        : ColorPalette.neutral0.withValues(alpha: AppOpacity.softScrim);
+    final highlightColorTransparent = highlightColor.withValues(
+      alpha: AppOpacity.transparent,
+    );
 
     return RepaintBoundary(
       child: Container(
         height: kFloatingGlassNavBarHeight,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.nav),
-          border: Border.all(color: borderColor, width: 1),
+          border: Border.all(color: borderColor, width: AppStroke.hairline),
           boxShadow: AppShadow.nav,
         ),
         clipBehavior: Clip.antiAlias,
@@ -262,11 +264,13 @@ class _NavTabButton extends StatelessWidget {
               ),
               Text(
                 tab.label,
-                style: TypographyTokens.labelSmall.copyWith(
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                  color: labelColor,
-                  height: 1.2,
-                ),
+                style:
+                    (selected
+                            ? TypographyTokens.labelSmall
+                            : TypographyTokens.labelSmall.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ))
+                        .copyWith(color: labelColor, height: 1.2),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -385,7 +389,7 @@ class _CenterActionButtonSurface extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
-            color: buttonColor.withValues(alpha: 0.3),
+            color: buttonColor.withValues(alpha: AppOpacity.muted),
             blurRadius: 14,
             offset: const Offset(0, 5),
           ),

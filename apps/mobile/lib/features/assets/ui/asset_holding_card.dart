@@ -87,9 +87,7 @@ class AssetHoldingCard extends ConsumerWidget {
                     padding: const EdgeInsets.only(top: AppSpacing.s8),
                     child: Text(
                       l10n.assetDetailPriceUnavailable,
-                      style: context.theme.typography.xs.copyWith(
-                        color: context.theme.colors.mutedForeground,
-                      ),
+                      style: context.captionStyle,
                     ),
                   ),
               ],

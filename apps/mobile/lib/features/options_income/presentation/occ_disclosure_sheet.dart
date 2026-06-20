@@ -78,10 +78,7 @@ class _OccDisclosureSheetState extends ConsumerState<_OccDisclosureSheet> {
         children: [
           Text(
             l10n.incomePlannerOccBody,
-            style: context.theme.typography.sm.copyWith(
-              color: colors.mutedForeground,
-              height: 1.45,
-            ),
+            style: context.bodyCaptionStyle.copyWith(height: 1.45),
           ),
           const SizedBox(height: AppSpacing.s16),
           // External-link affordance is a stub for P0 (no in-app browser

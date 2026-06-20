@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
+import '../tokens/text_style_presets.dart';
 import 'soft_card.dart';
 
 /// Canonical section surface with optional title and trailing control.
@@ -59,7 +59,6 @@ class AppSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     final t = title;
     return SoftCard(
       onPress: onPress,
@@ -75,9 +74,7 @@ class AppSection extends StatelessWidget {
                 Expanded(
                   child: Text(
                     t,
-                    style:
-                        titleStyle ??
-                        typography.md.copyWith(fontWeight: FontWeight.w600),
+                    style: titleStyle ?? context.rowTitleStyle,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

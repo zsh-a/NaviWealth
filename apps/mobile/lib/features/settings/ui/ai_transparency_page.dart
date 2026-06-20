@@ -224,7 +224,7 @@ class _AggregateHeader extends StatelessWidget {
           children: [
             Text(
               l10n.aiTransparencyRecentCalls(n),
-              style: AiType.body(context).copyWith(fontWeight: FontWeight.w600),
+              style: AiType.bodyStrong(context),
             ),
             const SizedBox(height: AppSpacing.s8),
             Wrap(
@@ -424,7 +424,6 @@ class _UndoSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final entriesAsync = ref.watch(undoEntriesStreamProvider);
-    final colors = context.theme.colors;
     final entries = entriesAsync.value ?? const <PersistedUndoEntry>[];
     final now = DateTime.now().toUtc();
     final live = entries
@@ -451,7 +450,7 @@ class _UndoSection extends ConsumerWidget {
             ),
             child: Text(
               l10n.aiTransparencyUndoSectionTitle,
-              style: context.labelStyle.copyWith(color: colors.mutedForeground),
+              style: context.mutedLabelStyle,
             ),
           ),
           if (live.isEmpty)
@@ -462,9 +461,7 @@ class _UndoSection extends ConsumerWidget {
               ),
               child: Text(
                 l10n.aiTransparencyUndoEmpty,
-                style: context.theme.typography.xs.copyWith(
-                  color: colors.mutedForeground,
-                ),
+                style: context.captionStyle,
               ),
             )
           else
@@ -520,12 +517,7 @@ class _UndoRow extends ConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (entry.expiresAt != null)
-                  Text(
-                    entry.kind,
-                    style: context.theme.typography.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                  ),
+                  Text(entry.kind, style: context.captionStyle),
               ],
             ),
           ),
@@ -669,7 +661,7 @@ class _StatusDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 24,
+      width: AppIconSizes.lg,
       child: Container(
         width: 8,
         height: 8,

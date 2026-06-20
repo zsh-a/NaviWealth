@@ -38,10 +38,7 @@ class CurrencyMismatchNotice extends ConsumerWidget {
         message: l10n.dashboardCurrencyMismatchBanner(mismatches.length, base),
         action: Text(
           l10n.dashboardCurrencyMismatchAction,
-          style: context.theme.typography.sm.copyWith(
-            color: semantic.onDangerContainer,
-            fontWeight: FontWeight.w600,
-          ),
+          style: context.labelStyle.copyWith(color: semantic.onDangerContainer),
         ),
       ),
     );

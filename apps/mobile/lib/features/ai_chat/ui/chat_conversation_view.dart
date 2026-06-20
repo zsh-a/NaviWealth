@@ -197,8 +197,8 @@ class _ChatConversationViewState extends ConsumerState<ChatConversationView> {
               ),
             ),
             Positioned(
-              right: 16,
-              bottom: 16,
+              right: AppSpacing.s16,
+              bottom: AppSpacing.s16,
               child: _JumpToBottomButton(
                 visible: !_atBottom,
                 onPressed: () => _scrollToBottom(),

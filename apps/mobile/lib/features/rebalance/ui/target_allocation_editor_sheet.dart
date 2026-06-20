@@ -467,9 +467,8 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: context.theme.typography.xs.copyWith(
+      style: context.captionLabelStyle.copyWith(
         color: context.theme.colors.mutedForeground,
-        fontWeight: FontWeight.w600,
       ),
     );
   }
@@ -493,12 +492,7 @@ class _EmptyAssetTargets extends StatelessWidget {
         ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s12),
-          child: Text(
-            message,
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          child: Text(message, style: context.captionStyle),
         ),
       ),
     );
@@ -539,9 +533,7 @@ class _TotalCard extends StatelessWidget {
             Expanded(
               child: Text(
                 l10n.targetAllocationEditorTotalLabel,
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: context.labelStyle,
               ),
             ),
             Row(
@@ -618,7 +610,7 @@ class _AllocationRow extends StatelessWidget {
                   child: Text(label, style: context.theme.typography.sm),
                 ),
                 SizedBox(
-                  width: 96,
+                  width: AppControlWidths.detailLabel,
                   child: FTextFormField(
                     key: ValueKey('target-allocation-field-$rowKey'),
                     control: FTextFieldControl.managed(controller: controller),
@@ -685,9 +677,8 @@ class _TargetPreview extends StatelessWidget {
       children: [
         Text(
           l10n.targetAllocationEditorPreviewTitle,
-          style: context.theme.typography.xs.copyWith(
+          style: context.captionLabelStyle.copyWith(
             color: context.theme.colors.mutedForeground,
-            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: AppSpacing.s4),

@@ -37,7 +37,7 @@ commits above:
 | `./tool/check-enum-mirror.sh` | Passed |
 | `./tool/lint-money-display.sh --strict` | Passed |
 | `dart tool/check_cn_literals.dart` | Passed |
-| `rtk bash tool/check-known-failing-tests.sh < /dev/null` | Passed |
+| Known-failing allowlist gate | Retired; non-golden mobile tests are now zero-failure blocking checks |
 
 ## Residual Scope
 

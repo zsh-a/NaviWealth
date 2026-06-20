@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/route_paths.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/settings/data/base_currency_preference.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
@@ -10,6 +11,8 @@ import 'package:naviwealth/features/settings/ui/domains_settings_page.dart';
 import 'package:naviwealth/features/settings/ui/knowledge_domain_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../core/persistence/test_database.dart';
 
 GoRouter _router({String initialLocation = AppRoutes.settingsDomains}) {
   return GoRouter(
@@ -39,8 +42,13 @@ Future<Widget> _wrap(
   SharedPreferences prefs, {
   String initialLocation = AppRoutes.settingsDomains,
 }) async {
+  final db = makeTestDatabase();
+  addTearDown(db.close);
   return ProviderScope(
-    overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      appDatabaseProvider.overrideWith((_) async => db),
+    ],
     child: MaterialApp.router(
       theme: AppTheme.light(),
       routerConfig: _router(initialLocation: initialLocation),
@@ -72,10 +80,15 @@ void main() {
       'tapping the row opens the picker and persists the new selection',
       (tester) async {
         final prefs = await SharedPreferences.getInstance();
+        final db = makeTestDatabase();
+        addTearDown(db.close);
         late ProviderContainer container;
         await tester.pumpWidget(
           ProviderScope(
-            overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+            overrides: [
+              sharedPreferencesProvider.overrideWithValue(prefs),
+              appDatabaseProvider.overrideWith((_) async => db),
+            ],
             child: MaterialApp.router(
               theme: AppTheme.light(),
               routerConfig: _router(),

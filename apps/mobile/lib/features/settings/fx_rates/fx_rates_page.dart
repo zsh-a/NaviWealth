@@ -32,9 +32,7 @@ class FxRatesPage extends ConsumerWidget {
         ),
       ],
       childPad: false,
-      child: ratesAsync.whenOrError(
-        data: (rates) => _RateList(rates: rates),
-      ),
+      child: ratesAsync.whenOrError(data: (rates) => _RateList(rates: rates)),
     );
   }
 
@@ -73,9 +71,7 @@ class _RateList extends ConsumerWidget {
           child: Text(
             l10n.fxRatesEmpty,
             textAlign: TextAlign.center,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
+            style: context.bodyCaptionStyle,
           ),
         ),
       );
@@ -151,9 +147,7 @@ class _RateList extends ConsumerWidget {
                       const SizedBox(height: AppSpacing.s2),
                       Text(
                         '${formatters.date(r.date)} · ${r.source}',
-                        style: context.theme.typography.xs.copyWith(
-                          color: colors.mutedForeground,
-                        ),
+                        style: context.captionStyle,
                       ),
                     ],
                   ),

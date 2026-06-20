@@ -162,7 +162,7 @@ class _AppToastSurface extends StatelessWidget {
               children: [
                 // Accent bar — severity-colored left strip for instant scanning.
                 Container(
-                  width: 3,
+                  width: AppStroke.accent,
                   decoration: BoxDecoration(
                     color: palette.accent.withValues(alpha: AppOpacity.strong),
                     borderRadius: const BorderRadius.horizontal(

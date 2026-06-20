@@ -152,9 +152,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
           ),
           child: Text(
             l10n.ingestExpenseAccountLabel,
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
+            style: context.captionStyle,
           ),
         ),
         Padding(
@@ -500,17 +498,11 @@ class _ProcessingPanel extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          state.title,
-                          style: context.theme.typography.sm.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        Text(state.title, style: context.labelStyle),
                         const SizedBox(height: AppSpacing.s4),
                         Text(
                           state.message,
-                          style: context.theme.typography.sm.copyWith(
-                            color: colors.mutedForeground,
+                          style: context.bodyCaptionStyle.copyWith(
                             height: 1.35,
                           ),
                         ),
@@ -559,10 +551,7 @@ class _DraftCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   p.description,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                    height: 1.25,
-                  ),
+                  style: context.labelStyle.copyWith(height: 1.25),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -572,7 +561,7 @@ class _DraftCard extends StatelessWidget {
                 amount: p.amountMinor.abs() / 100.0,
                 currencyCode: p.currency,
                 style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
@@ -697,9 +686,8 @@ class _DraftMetaChip extends StatelessWidget {
           const SizedBox(width: AppSpacing.s4),
           Text(
             label,
-            style: context.theme.typography.xs2.copyWith(
+            style: context.microLabelStyle.copyWith(
               color: colors.mutedForeground,
-              fontWeight: FontWeight.w600,
             ),
           ),
         ],

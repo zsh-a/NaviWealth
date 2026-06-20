@@ -245,10 +245,7 @@ class _NetWorthHeader extends ConsumerWidget {
               Expanded(
                 child: Text(
                   l10n.homeNetWorthTitle,
-                  style: context.theme.typography.sm.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.mutedLabelStyle,
                 ),
               ),
               Semantics(
@@ -299,9 +296,7 @@ class _NetWorthHeader extends ConsumerWidget {
           // mirrors the Accounts-hub net-worth card, so money reads the
           // same everywhere instead of a raw "123456 (CNY)" string.
           DefaultTextStyle.merge(
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
+            style: context.captionStyle,
             child: hasData
                 ? Wrap(
                     spacing: AppSpacing.s6,
@@ -387,10 +382,7 @@ class _ValuationStatusLine extends ConsumerWidget {
           Flexible(
             child: Text(
               label,
-              style: context.theme.typography.xs.copyWith(
-                color: colors.mutedForeground,
-                fontWeight: FontWeight.w500,
-              ),
+              style: context.captionStyle.copyWith(fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -504,12 +496,7 @@ class _MetricCell extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          label,
-          style: context.theme.typography.xs2.copyWith(
-            color: context.theme.colors.mutedForeground,
-          ),
-        ),
+        Text(label, style: context.microCaptionStyle),
         const SizedBox(width: AppSpacing.s4),
         child,
       ],

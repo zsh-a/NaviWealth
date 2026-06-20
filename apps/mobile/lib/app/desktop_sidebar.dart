@@ -40,7 +40,9 @@ class DesktopSidebar extends ConsumerWidget {
       width: collapsed ? kSidebarCollapsedWidth : kSidebarExpandedWidth,
       decoration: BoxDecoration(
         color: colors.background,
-        border: Border(right: BorderSide(color: colors.border, width: 1)),
+        border: Border(
+          right: BorderSide(color: colors.border, width: AppStroke.hairline),
+        ),
       ),
       child: SafeArea(
         right: false,
@@ -112,10 +114,13 @@ class _SidebarItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final iconColor = selected ? colors.primary : colors.mutedForeground;
-    final labelStyle = context.theme.typography.sm.copyWith(
-      color: selected ? colors.primary : colors.foreground,
-      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-    );
+    final labelStyle =
+        (selected
+                ? context.labelStyle
+                : context.theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ))
+            .copyWith(color: selected ? colors.primary : colors.foreground);
     final row = Row(
       children: [
         SizedBox(
@@ -146,10 +151,10 @@ class _SidebarItem extends StatelessWidget {
         if (selected)
           Positioned(
             left: 0,
-            top: 4,
-            bottom: 4,
+            top: AppSpacing.s4,
+            bottom: AppSpacing.s4,
             child: Container(
-              width: 3,
+              width: AppStroke.accent,
               decoration: BoxDecoration(
                 color: colors.primary,
                 borderRadius: const BorderRadius.horizontal(
@@ -266,7 +271,7 @@ class _CollapseToggle extends StatelessWidget {
         child: FTappable(
           onPress: onToggle,
           child: SizedBox(
-            height: 40,
+            height: AppControlHeights.sidebarToggle,
             child: Row(
               mainAxisAlignment: collapsed
                   ? MainAxisAlignment.center

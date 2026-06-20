@@ -251,13 +251,7 @@ class _KpiTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            label,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(label, style: context.mutedLabelStyle),
           const SizedBox(height: AppSpacing.s8),
           _DualMoneyText(
             money: money,
@@ -295,12 +289,7 @@ class _ChartsPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            l10n.cashFlowIncomeExpenseTitle,
-            style: context.theme.typography.md.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(l10n.cashFlowIncomeExpenseTitle, style: context.rowTitleStyle),
           const SizedBox(height: AppSpacing.s12),
           NwBarChart(
             series: [
@@ -335,15 +324,10 @@ class _ChartsPanel extends StatelessWidget {
             semanticLabel: l10n.cashFlowIncomeExpenseTitle,
           ),
           const SizedBox(height: AppSpacing.s20),
-          Text(
-            l10n.cashFlowNetTrendTitle,
-            style: context.theme.typography.md.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(l10n.cashFlowNetTrendTitle, style: context.rowTitleStyle),
           const SizedBox(height: AppSpacing.s12),
           SizedBox(
-            height: 220,
+            height: AppChartHeights.full,
             child: NwLineChart(
               series: [
                 ChartSeries(
@@ -393,12 +377,7 @@ class _CategoryPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            l10n.cashFlowCategoryTitle,
-            style: context.theme.typography.md.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(l10n.cashFlowCategoryTitle, style: context.rowTitleStyle),
           const SizedBox(height: AppSpacing.s12),
           NwPieChart(
             slices: slices,
@@ -459,9 +438,7 @@ class _CategoryRow extends StatelessWidget {
           ),
           Text(
             formatter.percent(percent, decimalDigits: 0),
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
+            style: context.captionStyle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

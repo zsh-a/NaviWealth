@@ -137,21 +137,26 @@ class _SoftCardState extends State<SoftCard> {
     final baseTint = widget.tinted
         ? (isDark ? colors.card : lightSurface)
         : Colors.transparent;
-    final hoverBoost = isDark ? 0.03 : 0.02;
+    final hoverBoost = isDark ? AppOpacity.hoverTintDark : AppOpacity.hoverTint;
     final tint = !widget.onPress.isNull && (hovered || pressed)
         ? (widget.tinted
               ? (isDark
-                    ? colors.card.withValues(alpha: 1.0 - hoverBoost)
-                    : lightSurface.withValues(alpha: 1.0 - hoverBoost))
+                    ? colors.card.withValues(
+                        alpha: AppOpacity.opaque - hoverBoost,
+                      )
+                    : lightSurface.withValues(
+                        alpha: AppOpacity.opaque - hoverBoost,
+                      ))
               : colors.foreground.withValues(alpha: hoverBoost))
         : baseTint;
 
     final borderAlpha = switch (widget.level) {
-      SoftCardLevel.flat => 0.0,
+      SoftCardLevel.flat => AppOpacity.transparent,
       SoftCardLevel.raised => AppOpacity.faint,
       SoftCardLevel.hero => AppOpacity.subtle,
     };
-    final borderColor = widget.borderless || borderAlpha == 0
+    final borderColor =
+        widget.borderless || borderAlpha == AppOpacity.transparent
         ? Colors.transparent
         : (isDark
               ? colors.border.withValues(alpha: borderAlpha)
@@ -160,9 +165,9 @@ class _SoftCardState extends State<SoftCard> {
     return BoxDecoration(
       color: tint,
       borderRadius: BorderRadius.circular(widget.borderRadius),
-      border: widget.borderless || borderAlpha == 0
+      border: widget.borderless || borderAlpha == AppOpacity.transparent
           ? null
-          : Border.all(color: borderColor, width: 1),
+          : Border.all(color: borderColor, width: AppStroke.hairline),
       boxShadow: _shadows(
         colors,
         isDark: isDark,

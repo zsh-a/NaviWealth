@@ -173,7 +173,7 @@ class _BriefingHourSheet extends StatelessWidget {
     final colors = context.theme.colors;
     final typography = context.theme.typography;
     return SizedBox(
-      height: 44,
+      height: AppControlHeights.pickerStrip,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
@@ -201,10 +201,12 @@ class _BriefingHourSheet extends StatelessWidget {
               ),
               child: Text(
                 '${index.toString().padLeft(2, '0')}:00',
-                style: typography.xs.copyWith(
-                  color: selected ? colors.primary : colors.foreground,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                ),
+                style: selected
+                    ? context.captionLabelStyle.copyWith(color: colors.primary)
+                    : typography.xs.copyWith(
+                        color: colors.foreground,
+                        fontWeight: FontWeight.w400,
+                      ),
               ),
             ),
           );

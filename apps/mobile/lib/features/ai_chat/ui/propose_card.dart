@@ -409,19 +409,14 @@ class _BatchProposalView extends ConsumerWidget {
               const SizedBox(width: AppSpacing.s8),
               Text(
                 l10n.aiChatProposalBatchPending(plan.children.length),
-                style: context.theme.typography.xs.copyWith(
-                  color: colors.mutedForeground,
-                ),
+                style: context.captionStyle,
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.s6),
           Text(
             plan.summaryZh,
-            style: context.theme.typography.md.copyWith(
-              color: colors.foreground,
-              fontWeight: FontWeight.w600,
-            ),
+            style: context.rowTitleStyle.copyWith(color: colors.foreground),
           ),
           const SizedBox(height: AppSpacing.s8),
           _BatchChildrenList(plan: plan, registry: registry),
@@ -500,16 +495,13 @@ class _BatchChildrenList extends StatelessWidget {
         children: [
           for (var i = 0; i < plan.children.length; i++)
             Padding(
-              padding: EdgeInsets.only(top: i == 0 ? 0 : AppSpacing.s6),
+              padding: EdgeInsets.only(
+                top: i == 0 ? AppSpacing.s0 : AppSpacing.s6,
+              ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '${i + 1}.',
-                    style: context.theme.typography.xs2.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
-                  ),
+                  Text('${i + 1}.', style: context.microCaptionStyle),
                   const SizedBox(width: AppSpacing.s8),
                   Expanded(
                     child: Text(
@@ -650,19 +642,14 @@ class _ExpandedView extends ConsumerWidget {
                 l10n.aiChatProposalPendingHeader(
                   proposalKindLabel(l10n, registry, plan.kind),
                 ),
-                style: context.theme.typography.xs.copyWith(
-                  color: colors.mutedForeground,
-                ),
+                style: context.captionStyle,
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.s6),
           Text(
             summary,
-            style: context.theme.typography.md.copyWith(
-              color: colors.foreground,
-              fontWeight: FontWeight.w600,
-            ),
+            style: context.rowTitleStyle.copyWith(color: colors.foreground),
           ),
           const SizedBox(height: AppSpacing.s8),
           ProposalPayloadDetails(plan: plan, overrides: overrides),
@@ -780,8 +767,8 @@ class _OneTapView extends ConsumerWidget {
               const Spacer(),
               if (_isApplying)
                 const SizedBox(
-                  width: 14,
-                  height: 14,
+                  width: AppIconSizes.xs,
+                  height: AppIconSizes.xs,
                   child: FCircularProgress(size: .xs),
                 )
               else
@@ -1160,9 +1147,7 @@ class _ClarificationView extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.s8),
                 Text(
                   l10n.aiChatProposalCandidatesHeading,
-                  style: context.theme.typography.xs2.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: context.microCaptionStyle,
                 ),
                 const SizedBox(height: AppSpacing.s4),
                 // Tapping a candidate sends its label as the next user
@@ -1240,13 +1225,8 @@ class ProposalPayloadDetails extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
-                    width: 64,
-                    child: Text(
-                      r.label,
-                      style: context.theme.typography.xs2.copyWith(
-                        color: context.theme.colors.mutedForeground,
-                      ),
-                    ),
+                    width: AppControlWidths.aiCompactColumn,
+                    child: Text(r.label, style: context.microCaptionStyle),
                   ),
                   const SizedBox(width: AppSpacing.s8),
                   Expanded(
@@ -1624,7 +1604,7 @@ class _WarningCallout extends StatelessWidget {
             color: AiTone.active(
               context,
             ).withValues(alpha: AppOpacity.prominent),
-            width: 2,
+            width: AppStroke.branch,
           ),
         ),
       ),

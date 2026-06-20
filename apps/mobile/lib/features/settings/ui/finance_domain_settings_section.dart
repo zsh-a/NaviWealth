@@ -97,9 +97,7 @@ class _FinanceHeaderRow extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   l10n.settingsDomainsFinanceSubtitle,
-                  style: context.theme.typography.xs.copyWith(
-                    color: colors.mutedForeground,
-                  ),
+                  style: context.captionStyle,
                 ),
               ],
             ),
@@ -291,10 +289,12 @@ class _SettingsChoicePill extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: context.theme.typography.xs.copyWith(
-            color: selected ? colors.primary : colors.foreground,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-          ),
+          style: selected
+              ? context.captionLabelStyle.copyWith(color: colors.primary)
+              : context.theme.typography.xs.copyWith(
+                  color: colors.foreground,
+                  fontWeight: FontWeight.w500,
+                ),
         ),
       ),
     );

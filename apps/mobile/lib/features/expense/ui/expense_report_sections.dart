@@ -40,7 +40,7 @@ class ExpenseCategoryPieCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.s12),
             if (report.byCategory.isEmpty)
               const SizedBox(
-                height: 200,
+                height: AppChartHeights.card,
                 child: EmptyChartPlaceholder(icon: FLucideIcons.chartPie),
               )
             else
@@ -56,7 +56,10 @@ class ExpenseCategoryPieCard extends StatelessWidget {
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        SizedBox(width: 232, child: pie),
+                        SizedBox(
+                          width: AppControlWidths.chartSidePanel,
+                          child: pie,
+                        ),
                         const SizedBox(width: AppSpacing.s20),
                         Expanded(child: legend),
                       ],
@@ -331,8 +334,8 @@ class _LegendRow extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 12,
-              height: 12,
+              width: AppSpacing.s12,
+              height: AppSpacing.s12,
               decoration: BoxDecoration(
                 color: color,
                 borderRadius: BorderRadius.circular(AppRadius.xs),
@@ -431,9 +434,7 @@ class _CategoryTile extends StatelessWidget {
                       category,
                       l10n.expenseReportUncategorized,
                     ),
-                    style: context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: context.labelStyle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -518,9 +519,7 @@ class _CategoryDrillDown extends StatelessWidget {
                         category,
                         l10n.expenseReportUncategorized,
                       ),
-                      style: context.theme.typography.md.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: context.rowTitleStyle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -592,9 +591,7 @@ class _ExpenseLine extends StatelessWidget {
                 children: [
                   Text(
                     expense.note ?? formatter.date(expense.tradeDate),
-                    style: context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: context.labelStyle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

@@ -82,7 +82,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       Text(
                         l10n.onboardingTitle,
                         style: context.theme.typography.xl.copyWith(
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                           height: 1.12,
                         ),
                         textAlign: TextAlign.center,
@@ -90,9 +90,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       const SizedBox(height: AppSpacing.s8),
                       Text(
                         l10n.onboardingSubtitle,
-                        style: context.theme.typography.sm.copyWith(
-                          color: context.theme.colors.mutedForeground,
-                        ),
+                        style: context.bodyCaptionStyle,
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: AppSpacing.s28),
@@ -172,12 +170,7 @@ class _ModeCard extends StatelessWidget {
               children: [
                 Text(title, style: context.theme.typography.md),
                 const SizedBox(height: AppSpacing.s2),
-                Text(
-                  description,
-                  style: context.theme.typography.sm.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                ),
+                Text(description, style: context.bodyCaptionStyle),
               ],
             ),
           ),

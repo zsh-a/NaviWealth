@@ -1,35 +1,20 @@
-/// Downloader integration tests against a localhost HTTP server.
-/// Faster + more honest than mocking Dio — exercises the real
-/// stream → .partial → rename → SHA-verify pipeline end to end.
+/// Downloader tests using an in-memory Dio adapter.
+///
+/// Flutter's test binding intentionally blocks real HttpClient requests with
+/// status 400, so these tests exercise the stream -> .partial -> rename ->
+/// SHA-verify pipeline without touching the network stack.
 library;
 
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/local/embedding/model_downloader.dart';
 import 'package:naviwealth/core/ai/local/embedding/model_manifest.dart';
 import 'package:path/path.dart' as p;
-
-typedef _Handler = Future<void> Function(HttpRequest);
-
-class _LocalServer {
-  _LocalServer._(this._server, this.port);
-  final HttpServer _server;
-  final int port;
-  Future<void> close() => _server.close(force: true);
-
-  static Future<_LocalServer> start(_Handler handler) async {
-    final server = await HttpServer.bind('127.0.0.1', 0);
-    server.listen((req) async {
-      try {
-        await handler(req);
-      } catch (_) {}
-    });
-    return _LocalServer._(server, server.port);
-  }
-}
 
 Uint8List _bytes(int len, {int seed = 0}) {
   final out = Uint8List(len);
@@ -40,6 +25,58 @@ Uint8List _bytes(int len, {int seed = 0}) {
 }
 
 String _sha256Hex(List<int> bytes) => sha256.convert(bytes).toString();
+
+Dio _dioWith(_DownloadReply reply) =>
+    Dio()..httpClientAdapter = _DownloadAdapter(reply);
+
+class _DownloadReply {
+  const _DownloadReply(
+    this.payload, {
+    this.chunkSize,
+    this.chunkDelay = Duration.zero,
+  });
+
+  final Uint8List payload;
+  final int? chunkSize;
+  final Duration chunkDelay;
+}
+
+class _DownloadAdapter implements HttpClientAdapter {
+  _DownloadAdapter(this.reply);
+
+  final _DownloadReply reply;
+
+  @override
+  void close({bool force = false}) {}
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    return ResponseBody(
+      _streamPayload(reply),
+      200,
+      headers: <String, List<String>>{
+        Headers.contentLengthHeader: <String>[reply.payload.length.toString()],
+        Headers.contentTypeHeader: <String>['application/octet-stream'],
+      },
+    );
+  }
+}
+
+Stream<Uint8List> _streamPayload(_DownloadReply reply) async* {
+  final chunkSize = reply.chunkSize ?? reply.payload.length;
+  for (var offset = 0; offset < reply.payload.length; offset += chunkSize) {
+    if (reply.chunkDelay > Duration.zero) {
+      await Future<void>.delayed(reply.chunkDelay);
+    }
+
+    final end = (offset + chunkSize).clamp(0, reply.payload.length);
+    yield Uint8List.sublistView(reply.payload, offset, end);
+  }
+}
 
 void main() {
   late Directory tmp;
@@ -54,22 +91,14 @@ void main() {
   group('ModelDownloader.download', () {
     test('happy path: streams to .partial, renames on success', () async {
       final payload = _bytes(8192);
-      final server = await _LocalServer.start((req) async {
-        req.response.headers.contentType =
-            ContentType('application', 'octet-stream');
-        req.response.contentLength = payload.length;
-        req.response.add(payload);
-        await req.response.close();
-      });
-      addTearDown(server.close);
 
-      final dl = ModelDownloader();
+      final dl = ModelDownloader(dio: _dioWith(_DownloadReply(payload)));
       var lastReceived = -1;
       int? lastTotal;
       await dl.download(
         file: ModelFile(
           localName: 'thing.bin',
-          url: 'http://127.0.0.1:${server.port}/x',
+          url: 'https://models.test/thing.bin',
           sizeBytes: payload.length,
         ),
         destDir: tmp.path,
@@ -91,16 +120,11 @@ void main() {
     test('sha256 match: succeeds', () async {
       final payload = _bytes(2048, seed: 7);
       final expected = _sha256Hex(payload);
-      final server = await _LocalServer.start((req) async {
-        req.response.add(payload);
-        await req.response.close();
-      });
-      addTearDown(server.close);
 
-      await ModelDownloader().download(
+      await ModelDownloader(dio: _dioWith(_DownloadReply(payload))).download(
         file: ModelFile(
           localName: 'verified.bin',
-          url: 'http://127.0.0.1:${server.port}/y',
+          url: 'https://models.test/verified.bin',
           sha256: expected,
         ),
         destDir: tmp.path,
@@ -110,17 +134,12 @@ void main() {
 
     test('sha256 mismatch: throws + deletes partial', () async {
       final payload = _bytes(2048, seed: 9);
-      final server = await _LocalServer.start((req) async {
-        req.response.add(payload);
-        await req.response.close();
-      });
-      addTearDown(server.close);
 
       await expectLater(
-        () => ModelDownloader().download(
+        () => ModelDownloader(dio: _dioWith(_DownloadReply(payload))).download(
           file: ModelFile(
             localName: 'bad.bin',
-            url: 'http://127.0.0.1:${server.port}/z',
+            url: 'https://models.test/bad.bin',
             sha256: '0' * 64,
           ),
           destDir: tmp.path,
@@ -132,31 +151,21 @@ void main() {
     });
 
     test('cancel: aborts download + cleans .partial', () async {
-      // Server that drips bytes slowly so we can cancel mid-stream.
-      final server = await _LocalServer.start((req) async {
-        req.response.headers.contentType =
-            ContentType('application', 'octet-stream');
-        // 1 MB total declared; emit slowly.
-        req.response.contentLength = 1024 * 1024;
-        try {
-          for (var i = 0; i < 16; i++) {
-            req.response.add(_bytes(64 * 1024, seed: i));
-            await req.response.flush();
-            await Future<void>.delayed(const Duration(milliseconds: 100));
-          }
-          await req.response.close();
-        } on Object {
-          // client disconnected — expected after cancel
-        }
-      });
-      addTearDown(server.close);
-
+      final payload = _bytes(1024 * 1024);
       final cancel = DownloadCancellation();
-      final dl = ModelDownloader();
+      final dl = ModelDownloader(
+        dio: _dioWith(
+          _DownloadReply(
+            payload,
+            chunkSize: 64 * 1024,
+            chunkDelay: const Duration(milliseconds: 100),
+          ),
+        ),
+      );
       final fut = dl.download(
-        file: ModelFile(
+        file: const ModelFile(
           localName: 'slow.bin',
-          url: 'http://127.0.0.1:${server.port}/s',
+          url: 'https://models.test/slow.bin',
           sizeBytes: 1024 * 1024,
         ),
         destDir: tmp.path,
@@ -176,16 +185,10 @@ void main() {
       final newPayload = _bytes(200, seed: 2);
       await File(p.join(tmp.path, 'rewrite.bin')).writeAsBytes(oldPayload);
 
-      final server = await _LocalServer.start((req) async {
-        req.response.add(newPayload);
-        await req.response.close();
-      });
-      addTearDown(server.close);
-
-      await ModelDownloader().download(
+      await ModelDownloader(dio: _dioWith(_DownloadReply(newPayload))).download(
         file: ModelFile(
           localName: 'rewrite.bin',
-          url: 'http://127.0.0.1:${server.port}/r',
+          url: 'https://models.test/rewrite.bin',
           sizeBytes: newPayload.length,
         ),
         destDir: tmp.path,

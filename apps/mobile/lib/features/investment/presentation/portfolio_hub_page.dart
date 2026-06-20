@@ -453,15 +453,16 @@ class _PortfolioSectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(2, AppSpacing.s4, 2, AppSpacing.s10),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s2,
+        AppSpacing.s4,
+        AppSpacing.s2,
+        AppSpacing.s10,
+      ),
       child: Text(
         title,
-        style: context.theme.typography.sm.copyWith(
-          color: colors.mutedForeground,
-          fontWeight: FontWeight.w700,
-        ),
+        style: context.bodyCaptionStyle.copyWith(fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -481,9 +482,7 @@ class _PortfolioSummary extends StatelessWidget {
       children: [
         Text(
           l10n.portfolioHubMarketValueLabel.toUpperCase(),
-          style: context.theme.typography.xs2.copyWith(
-            color: context.theme.colors.mutedForeground,
-          ),
+          style: context.microCaptionStyle,
         ),
         const SizedBox(height: AppSpacing.s4),
         AnimatedMoneyText(
@@ -572,12 +571,7 @@ class _SummaryMetric extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              label,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
+            Text(label, style: context.captionStyle),
             const SizedBox(height: AppSpacing.s4),
             if (amount == null)
               Text(value ?? '—', style: context.theme.typography.lg)
@@ -839,21 +833,9 @@ class _EngineCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+              Expanded(child: Text(title, style: context.labelStyle)),
               const SizedBox(width: AppSpacing.s8),
-              Text(
-                trailing,
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
-              ),
+              Text(trailing, style: context.captionStyle),
             ],
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -887,9 +869,7 @@ class _TwoLineAmountRow extends StatelessWidget {
           amount,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: context.theme.typography.xs.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: context.captionLabelStyle,
         ),
       ],
     );
@@ -903,12 +883,7 @@ class _MutedText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: context.theme.typography.xs.copyWith(
-        color: context.theme.colors.mutedForeground,
-      ),
-    );
+    return Text(text, style: context.captionStyle);
   }
 }
 
@@ -1058,18 +1033,14 @@ class _GroupRowCard extends StatelessWidget {
             children: [
               Text(
                 _formatRatio(context, group.weight.toDouble()),
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
+                style: context.captionStyle,
               ),
               const Spacer(),
               AnimatedMoneyText(
                 amount: group.unrealizedPnlInBase.toDouble(),
                 currencyCode: group.baseCurrency,
                 showSign: true,
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
+                style: context.captionStyle,
               ),
             ],
           ),
@@ -1126,7 +1097,7 @@ class _HoldingRowCard extends StatelessWidget {
                         showSign: true,
                         style: context.theme.typography.xs.copyWith(
                           color: pnlColor,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -1175,19 +1146,14 @@ class _HoldingMetric extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: context.theme.typography.xs.copyWith(
-              color: colors.mutedForeground,
-            ),
+            style: context.captionStyle,
           ),
           const SizedBox(height: AppSpacing.s2),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: context.theme.typography.xs.copyWith(
-              color: colors.foreground,
-              fontWeight: FontWeight.w600,
-            ),
+            style: context.captionLabelStyle.copyWith(color: colors.foreground),
           ),
         ],
       ),
@@ -1210,18 +1176,14 @@ class _TitleSubtitle extends StatelessWidget {
           title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: context.theme.typography.sm.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: context.labelStyle,
         ),
         const SizedBox(height: AppSpacing.s4),
         Text(
           subtitle,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: context.theme.typography.xs.copyWith(
-            color: context.theme.colors.mutedForeground,
-          ),
+          style: context.captionStyle,
         ),
       ],
     );

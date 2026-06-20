@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/motion_utils.dart';
+import '../tokens/text_style_presets.dart';
 
 /// Shared Forui-based segmented control with a quiet single-surface chrome.
 ///
@@ -99,10 +100,13 @@ class SegmentedRow<T> extends StatelessWidget {
     final content = AnimatedDefaultTextStyle(
       duration: duration,
       curve: Motion.standard,
-      style: context.theme.typography.sm.copyWith(
-        color: foreground,
-        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-      ),
+      style:
+          (selected
+                  ? context.labelStyle
+                  : context.theme.typography.sm.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ))
+              .copyWith(color: foreground),
       child: Row(
         mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -141,7 +145,7 @@ class SegmentedRow<T> extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected
                 ? colors.background
-                : colors.background.withValues(alpha: 0),
+                : colors.background.withValues(alpha: AppOpacity.transparent),
             borderRadius: BorderRadius.circular(AppRadius.full),
             boxShadow: selected ? AppShadow.elevation1 : const [],
           ),

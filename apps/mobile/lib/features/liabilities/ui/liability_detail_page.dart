@@ -201,12 +201,7 @@ class _SummaryRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          Text(label, style: context.bodyCaptionStyle),
           Text(value, style: context.theme.typography.sm),
         ],
       ),
@@ -309,15 +304,15 @@ class _AmortizationHeaderRow extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 48,
+            width: AppControlWidths.scheduleIndex,
             child: Text(l10n.liabilityScheduleColPeriod, style: style),
           ),
           SizedBox(
-            width: 100,
+            width: AppControlWidths.scheduleValue,
             child: Text(l10n.liabilityScheduleColDue, style: style),
           ),
           SizedBox(
-            width: 100,
+            width: AppControlWidths.scheduleValue,
             child: Text(
               l10n.liabilityScheduleColPrincipal,
               style: style,
@@ -325,7 +320,7 @@ class _AmortizationHeaderRow extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 100,
+            width: AppControlWidths.scheduleValue,
             child: Text(
               l10n.liabilityScheduleColInterest,
               style: style,
@@ -333,7 +328,7 @@ class _AmortizationHeaderRow extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 100,
+            width: AppControlWidths.scheduleValue,
             child: Text(
               l10n.liabilityScheduleColRemaining,
               style: style,
@@ -374,15 +369,15 @@ class _AmortizationDataRow extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 48,
+            width: AppControlWidths.scheduleIndex,
             child: Text('${row.periodIndex}', style: textStyle),
           ),
           SizedBox(
-            width: 100,
+            width: AppControlWidths.scheduleValue,
             child: Text(formatters.date(row.dueDate), style: textStyle),
           ),
           SizedBox(
-            width: 100,
+            width: AppControlWidths.scheduleValue,
             child: Text(
               formatters.currency(row.principalPayment, code: currency),
               style: textStyle,
@@ -390,7 +385,7 @@ class _AmortizationDataRow extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 100,
+            width: AppControlWidths.scheduleValue,
             child: Text(
               formatters.currency(row.interestPayment, code: currency),
               style: textStyle,
@@ -398,7 +393,7 @@ class _AmortizationDataRow extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 100,
+            width: AppControlWidths.scheduleValue,
             child: Text(
               formatters.currency(row.remainingBalance, code: currency),
               style: textStyle,

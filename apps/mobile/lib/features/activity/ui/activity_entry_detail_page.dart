@@ -228,9 +228,7 @@ class _HeroAmountCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.end,
-                  style: context.theme.typography.xs.copyWith(
-                    color: colors.mutedForeground,
-                  ),
+                  style: context.captionStyle,
                 ),
               ),
             ],
@@ -244,22 +242,10 @@ class _HeroAmountCard extends StatelessWidget {
               style: TypographyTokens.numericDisplay.copyWith(height: 1.05),
             ),
           const SizedBox(height: AppSpacing.s12),
-          Text(
-            title,
-            style: context.theme.typography.lg.copyWith(
-              fontWeight: FontWeight.w600,
-              height: 1.22,
-            ),
-          ),
+          Text(title, style: context.titleLabelStyle.copyWith(height: 1.22)),
           if (payee != null && payee.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.s4),
-            Text(
-              payee,
-              style: context.theme.typography.sm.copyWith(
-                color: colors.mutedForeground,
-                height: 1.35,
-              ),
-            ),
+            Text(payee, style: context.bodyCaptionStyle.copyWith(height: 1.35)),
           ],
         ],
       ),
@@ -310,10 +296,7 @@ class _KindLabel extends StatelessWidget {
         label,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: context.theme.typography.xs2.copyWith(
-          color: colors.foreground,
-          fontWeight: FontWeight.w600,
-        ),
+        style: context.microLabelStyle.copyWith(color: colors.foreground),
       ),
     );
   }
@@ -355,17 +338,12 @@ class _AiInsightCard extends StatelessWidget {
               children: [
                 Text(
                   l10n.activityEntryDetailAiExplanation,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.labelStyle,
                 ),
                 const SizedBox(height: AppSpacing.s4),
                 Text(
                   insight,
-                  style: context.theme.typography.sm.copyWith(
-                    color: colors.mutedForeground,
-                    height: 1.38,
-                  ),
+                  style: context.bodyCaptionStyle.copyWith(height: 1.38),
                 ),
               ],
             ),
@@ -404,9 +382,7 @@ class _LedgerBreakdownCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   l10n.activityEntryDetailLedgerTitle,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.labelStyle,
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),
@@ -491,9 +467,7 @@ class _DetailPostingRow extends StatelessWidget {
                 amount: posting.units,
                 unit: _displayUnit(posting.unit),
                 formatters: formatters,
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: context.labelStyle,
               ),
             ],
           ),
@@ -553,9 +527,8 @@ class _DetailUnitBalanceRow extends StatelessWidget {
           Expanded(
             child: Text(
               'Σ ${_displayUnit(unit)}',
-              style: context.theme.typography.xs.copyWith(
+              style: context.captionLabelStyle.copyWith(
                 color: colors.destructive,
-                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -563,9 +536,7 @@ class _DetailUnitBalanceRow extends StatelessWidget {
             amount: total,
             unit: _displayUnit(unit),
             formatters: formatters,
-            style: context.theme.typography.xs.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: context.captionLabelStyle,
             color: colors.destructive,
           ),
         ],

@@ -225,9 +225,8 @@ class _DriftOverview extends StatelessWidget {
                     ),
                     child: Text(
                       l10n.rebalanceBalanced,
-                      style: context.theme.typography.xs2.copyWith(
+                      style: context.microLabelStyle.copyWith(
                         color: context.theme.colors.primary,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -238,9 +237,7 @@ class _DriftOverview extends StatelessWidget {
               l10n.rebalanceOverallDrift(
                 '${(plan.driftBeforePct * 100).toStringAsFixed(1)}%',
               ),
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.captionStyle,
             ),
             const SizedBox(height: AppSpacing.s8),
             for (final drift in plan.drifts)
@@ -301,9 +298,7 @@ class _TradeList extends StatelessWidget {
                 Expanded(
                   child: Text(
                     l10n.rebalanceEstimatedFees,
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                    style: context.captionStyle,
                   ),
                 ),
                 AnimatedMoneyText(
@@ -320,9 +315,7 @@ class _TradeList extends StatelessWidget {
                 Expanded(
                   child: Text(
                     l10n.rebalanceEstimatedTaxes,
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                    style: context.captionStyle,
                   ),
                 ),
                 AnimatedMoneyText(
@@ -339,16 +332,12 @@ class _TradeList extends StatelessWidget {
                 Expanded(
                   child: Text(
                     l10n.rebalanceDriftAfter,
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                    style: context.captionStyle,
                   ),
                 ),
                 Text(
                   '${(plan.driftAfterPct * 100).toStringAsFixed(1)}%',
-                  style: context.theme.typography.xs.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.captionLabelStyle,
                 ),
               ],
             ),
@@ -461,9 +450,7 @@ class _TradeRow extends StatelessWidget {
                 if (trade.isAssetTarget)
                   Text(
                     AssetCategoryVisuals.label(l10n, trade.category),
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                    style: context.captionStyle,
                   ),
               ],
             ),

@@ -101,7 +101,6 @@ class _FireSummaryCard extends ConsumerWidget {
   }
 
   Widget _emptyHero(BuildContext context, AppLocalizations l10n) {
-    final colors = context.theme.colors;
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s16),
       borderRadius: AppRadius.lg,
@@ -110,13 +109,7 @@ class _FireSummaryCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.planHubTitle,
-            style: context.theme.typography.sm.copyWith(
-              color: colors.mutedForeground,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(l10n.planHubTitle, style: context.mutedLabelStyle),
           const SizedBox(height: AppSpacing.s8),
           Text(l10n.planHeroEmpty, style: context.theme.typography.md),
           const SizedBox(height: AppSpacing.s16),
@@ -136,7 +129,6 @@ class _FireSummaryCard extends ConsumerWidget {
     required double progress,
     required int? monthsToTarget,
   }) {
-    final colors = context.theme.colors;
     final years = monthsToTarget == null
         ? null
         : (monthsToTarget / 12).toStringAsFixed(monthsToTarget < 24 ? 1 : 0);
@@ -149,13 +141,7 @@ class _FireSummaryCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.planFireSectionTitle,
-            style: context.theme.typography.sm.copyWith(
-              color: colors.mutedForeground,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(l10n.planFireSectionTitle, style: context.mutedLabelStyle),
           const SizedBox(height: AppSpacing.s8),
           if (years != null)
             Text(
@@ -172,9 +158,7 @@ class _FireSummaryCard extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s8),
           Text(
             '${l10n.planHeroProgressLabel} $progressPct%',
-            style: context.theme.typography.xs.copyWith(
-              color: colors.mutedForeground,
-            ),
+            style: context.captionStyle,
           ),
           const SizedBox(height: AppSpacing.s16),
           Row(
@@ -218,6 +202,12 @@ class _PlanActions extends StatelessWidget {
               title: l10n.planRebalanceSectionTitle,
               subtitle: l10n.planRebalanceSectionSubtitle,
               path: AppRoutes.planRebalance,
+            ),
+            _PlanActionSpec(
+              icon: FLucideIcons.piggyBank,
+              title: l10n.planBudgetSectionTitle,
+              subtitle: l10n.planBudgetSectionSubtitle,
+              path: AppRoutes.planBudget,
             ),
           ],
         ),

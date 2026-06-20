@@ -153,7 +153,9 @@ class SettingsOverview extends ConsumerWidget {
             : const EdgeInsets.all(AppSpacing.s24);
         final padding = basePadding.copyWith(
           bottom:
-              basePadding.bottom + 64 + MediaQuery.paddingOf(context).bottom,
+              basePadding.bottom +
+              AppSpacing.s64 +
+              MediaQuery.paddingOf(context).bottom,
         );
 
         final allGroupsSingleColumn = Column(
@@ -271,7 +273,6 @@ class _SectionHeader extends StatelessWidget {
             title.toUpperCase(),
             style: context.microLabelStyle.copyWith(
               color: colors.mutedForeground,
-              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -337,9 +338,7 @@ class _SwitchToLocalSheetBody extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Text(
       l10n.settingsSwitchToLocalConfirmBody,
-      style: context.theme.typography.sm.copyWith(
-        color: context.theme.colors.mutedForeground,
-      ),
+      style: context.bodyCaptionStyle,
     );
   }
 }
@@ -504,12 +503,7 @@ class _AboutTile extends ConsumerWidget {
                   style: context.theme.typography.sm,
                 ),
                 const SizedBox(height: AppSpacing.s2),
-                Text(
-                  subtitle,
-                  style: context.theme.typography.xs.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                ),
+                Text(subtitle, style: context.captionStyle),
               ],
             ),
           ),

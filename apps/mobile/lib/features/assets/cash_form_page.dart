@@ -384,12 +384,7 @@ class _CashAccountField extends StatelessWidget {
           trailing: const Icon(FLucideIcons.lock, size: AppIconSizes.sm),
         ),
         const SizedBox(height: AppSpacing.s6),
-        Text(
-          l10n.cashFormAccountLockedHint,
-          style: context.theme.typography.xs.copyWith(
-            color: context.theme.colors.mutedForeground,
-          ),
-        ),
+        Text(l10n.cashFormAccountLockedHint, style: context.captionStyle),
       ],
     );
   }

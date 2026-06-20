@@ -165,9 +165,7 @@ class _TotalsRow extends StatelessWidget {
       children: [
         Text(
           l10n.analyticsTotalValueLabel(baseCurrency),
-          style: context.theme.typography.sm.copyWith(
-            color: context.theme.colors.mutedForeground,
-          ),
+          style: context.bodyCaptionStyle,
         ),
         AnimatedMoneyText(
           amount: totalValueInBase.toDouble(),
@@ -210,12 +208,10 @@ class _BucketRow extends StatelessWidget {
       ),
       subtitle: Text(
         l10n.analyticsHoldingsCount(bucket.holdings.length),
-        style: context.theme.typography.xs.copyWith(
-          color: context.theme.colors.mutedForeground,
-        ),
+        style: context.captionStyle,
       ),
       suffix: SizedBox(
-        width: 96,
+        width: AppControlWidths.detailLabel,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -228,9 +224,7 @@ class _BucketRow extends StatelessWidget {
             ),
             Text(
               formatters.percent(pct, decimalDigits: 1),
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.captionStyle,
             ),
           ],
         ),

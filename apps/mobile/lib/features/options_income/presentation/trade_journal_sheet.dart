@@ -366,9 +366,8 @@ class _LabeledTextField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: context.theme.typography.xs.copyWith(
+          style: context.captionLabelStyle.copyWith(
             color: context.theme.colors.mutedForeground,
-            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: AppSpacing.s4),

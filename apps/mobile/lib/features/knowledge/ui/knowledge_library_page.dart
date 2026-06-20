@@ -1424,7 +1424,6 @@ class _SearchAssistChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return FTappable(
       onPress: onPress,
       child: DecoratedBox(
@@ -1447,7 +1446,7 @@ class _SearchAssistChip extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: 112),
                 child: Text(
                   value,
-                  style: typography.xs.copyWith(fontWeight: FontWeight.w600),
+                  style: context.captionLabelStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1594,9 +1593,8 @@ class _LibraryTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return SizedBox(
-      height: 36,
+      height: AppControlHeights.compactChipRail,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _LibrarySegment.values.length,
@@ -1635,10 +1633,14 @@ class _LibraryTabBar extends StatelessWidget {
                   const SizedBox(width: AppSpacing.s4),
                   Text(
                     _segmentLabel(l10n, segment),
-                    style: typography.xs.copyWith(
-                      color: active ? colors.primary : colors.mutedForeground,
-                      fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-                    ),
+                    style: active
+                        ? context.captionLabelStyle.copyWith(
+                            color: colors.primary,
+                          )
+                        : context.captionStyle.copyWith(
+                            color: colors.mutedForeground,
+                            fontWeight: FontWeight.w500,
+                          ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -2056,7 +2058,6 @@ Widget _buildRoutineTile(
   required VoidCallback onDelete,
   String? itemKey,
 }) {
-  final typography = context.theme.typography;
   final colors = context.theme.colors;
   final l10n = AppLocalizations.of(context);
   final now = DateTime.now();
@@ -2070,7 +2071,7 @@ Widget _buildRoutineTile(
   final subtitle = <Widget>[
     Text(
       l10n.knowledgeRoutineLibraryMeta(dueLabel, r.intervalDays, r.scope),
-      style: typography.sm.copyWith(color: dueColor),
+      style: context.bodyCaptionStyle.copyWith(color: dueColor),
     ),
   ];
   return _buildLibraryTile(
@@ -2115,9 +2116,7 @@ class _LibraryTileHeader extends StatelessWidget {
             child: KnowledgeHighlightedText(
               text: title,
               query: query,
-              style: context.theme.typography.md.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: context.rowTitleStyle,
               maxLines: 2,
             ),
           ),

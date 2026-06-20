@@ -41,10 +41,7 @@ class WealthPerspectiveSection extends ConsumerWidget {
           ),
           child: Text(
             l10n.wealthPerspectiveSectionTitle,
-            style: context.theme.typography.sm.copyWith(
-              fontWeight: FontWeight.w600,
-              color: context.theme.colors.mutedForeground,
-            ),
+            style: context.mutedLabelStyle,
           ),
         ),
         _PerspectiveToggle(
@@ -115,9 +112,7 @@ class _PerspectiveBody extends ConsumerWidget {
           padding: const EdgeInsets.all(AppSpacing.s16),
           child: Text(
             l10n.wealthPerspectiveEmpty,
-            style: context.theme.typography.sm.copyWith(
-              color: colors.mutedForeground,
-            ),
+            style: context.bodyCaptionStyle,
           ),
         ),
       );
@@ -146,7 +141,7 @@ class _PerspectiveBody extends ConsumerWidget {
               ),
               if (i != aggregation.buckets.length - 1)
                 SizedBox(
-                  height: 1,
+                  height: AppSpacing.hairline,
                   child: ColoredBox(
                     color: colors.border.withValues(alpha: AppOpacity.faint),
                   ),
@@ -186,9 +181,7 @@ class _BucketRow extends StatelessWidget {
             Expanded(
               child: Text(
                 bucket.label,
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: context.labelStyle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -210,9 +203,7 @@ class _BucketRow extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   formatters.percent(share, decimalDigits: 1),
-                  style: context.theme.typography.xs.copyWith(
-                    color: colors.mutedForeground,
-                  ),
+                  style: context.captionStyle,
                 ),
               ],
             ),
@@ -222,7 +213,7 @@ class _BucketRow extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(AppRadius.full),
           child: SizedBox(
-            height: 4,
+            height: AppSpacing.s4,
             child: Stack(
               children: [
                 ColoredBox(

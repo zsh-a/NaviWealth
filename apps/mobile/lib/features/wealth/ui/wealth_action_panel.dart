@@ -148,8 +148,7 @@ class _WealthActionSection extends StatelessWidget {
           padding: const EdgeInsets.only(left: AppSpacing.s4),
           child: Text(
             title,
-            style: context.theme.typography.xs.copyWith(
-              fontWeight: FontWeight.w600,
+            style: context.captionLabelStyle.copyWith(
               color: context.theme.colors.mutedForeground,
             ),
           ),
@@ -217,19 +216,14 @@ class _WealthActionTile extends StatelessWidget {
                   action.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.labelStyle,
                 ),
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   action.subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: context.theme.typography.xs2.copyWith(
-                    color: colors.mutedForeground,
-                    height: 1.2,
-                  ),
+                  style: context.microCaptionStyle.copyWith(height: 1.2),
                 ),
               ],
             ),

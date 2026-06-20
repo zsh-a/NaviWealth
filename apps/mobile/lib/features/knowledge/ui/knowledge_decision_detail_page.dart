@@ -215,11 +215,11 @@ class _BodyState extends ConsumerState<_Body> {
                         children: [
                           Text(
                             opt.label,
-                            style: typography.sm.copyWith(
-                              fontWeight: opt.label == d.selectedLabel
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
-                            ),
+                            style: opt.label == d.selectedLabel
+                                ? context.labelStyle
+                                : typography.sm.copyWith(
+                                    fontWeight: FontWeight.w400,
+                                  ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -227,9 +227,7 @@ class _BodyState extends ConsumerState<_Body> {
                               opt.rationale!.isNotEmpty)
                             Text(
                               opt.rationale!,
-                              style: typography.xs.copyWith(
-                                color: colors.mutedForeground,
-                              ),
+                              style: context.captionStyle,
                               maxLines: 4,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -379,9 +377,12 @@ class _RelatedKnowledgeLink extends StatelessWidget {
           children: [
             if (icon != null) ...[
               Container(
-                width: 24,
-                height: 24,
-                margin: const EdgeInsets.only(right: AppSpacing.s8, top: 2),
+                width: AppIconSizes.lg,
+                height: AppIconSizes.lg,
+                margin: const EdgeInsets.only(
+                  right: AppSpacing.s8,
+                  top: AppSpacing.s2,
+                ),
                 decoration: BoxDecoration(
                   color: (iconColor ?? colors.primary).withValues(
                     alpha: AppOpacity.subtle,
@@ -403,12 +404,7 @@ class _RelatedKnowledgeLink extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: AppSpacing.s2),
-                  Text(
-                    status,
-                    style: typography.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                  ),
+                  Text(status, style: context.captionStyle),
                 ],
               ),
             ),

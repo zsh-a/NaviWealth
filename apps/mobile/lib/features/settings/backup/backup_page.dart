@@ -393,10 +393,7 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
         children: [
           Text(
             l10n.backupConfirmRestoreMessage,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-              height: 1.4,
-            ),
+            style: context.bodyCaptionStyle.copyWith(height: 1.4),
           ),
           const SizedBox(height: AppSpacing.s16),
           FTextFormField(

@@ -30,7 +30,12 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
     );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, 0, AppSpacing.s16, AppSpacing.s16),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        0,
+        AppSpacing.s16,
+        AppSpacing.s16,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -42,18 +47,11 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s4),
           Text(
             l10n.analyticsHoldingsCount(bucket.holdings.length),
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
+            style: context.captionStyle,
           ),
           if (bucket.isUnclassified) ...[
             const SizedBox(height: AppSpacing.s8),
-            Text(
-              l10n.analyticsUnclassifiedRowCta,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
+            Text(l10n.analyticsUnclassifiedRowCta, style: context.captionStyle),
           ],
           const SizedBox(height: AppSpacing.s12),
           Flexible(
@@ -81,9 +79,7 @@ class EquityBucketHoldingsSheet extends ConsumerWidget {
                           h.weight.toDouble(),
                           decimalDigits: 1,
                         ),
-                        style: context.theme.typography.xs.copyWith(
-                          color: context.theme.colors.mutedForeground,
-                        ),
+                        style: context.captionStyle,
                       ),
                     ],
                   ),

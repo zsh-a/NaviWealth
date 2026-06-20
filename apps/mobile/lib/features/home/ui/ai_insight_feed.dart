@@ -42,10 +42,7 @@ class AiInsightFeed extends StatelessWidget {
           ),
           child: Text(
             l10n.dashboardAiInsightsTitle,
-            style: context.theme.typography.sm.copyWith(
-              fontWeight: FontWeight.w600,
-              color: context.theme.colors.mutedForeground,
-            ),
+            style: context.mutedLabelStyle,
           ),
         ),
         StaggeredColumn(
@@ -125,18 +122,14 @@ class _InsightCardState extends ConsumerState<_InsightCard> {
             children: [
               Text(
                 insightHeadline(l10n, item),
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: context.labelStyle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: AppSpacing.s2),
               Text(
                 insightDetail(l10n, item),
-                style: context.theme.typography.xs.copyWith(
-                  color: colors.mutedForeground,
-                ),
+                style: context.captionStyle,
                 maxLines: _expanded ? null : 2,
                 overflow: _expanded
                     ? TextOverflow.visible

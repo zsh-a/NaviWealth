@@ -210,9 +210,7 @@ class _ErrorView extends StatelessWidget {
             Text(
               details!,
               textAlign: TextAlign.center,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.captionStyle,
             ),
           ],
           if (onRetry != null) ...[

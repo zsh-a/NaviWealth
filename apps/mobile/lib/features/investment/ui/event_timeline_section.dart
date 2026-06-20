@@ -35,10 +35,7 @@ class EventTimelineSection extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
           child: Text(
             l10n.investmentEventTimelineTitle,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-              fontWeight: FontWeight.w600,
-            ),
+            style: context.mutedLabelStyle,
           ),
         ),
         const SizedBox(height: AppSpacing.s8),
@@ -47,9 +44,7 @@ class EventTimelineSection extends ConsumerWidget {
             padding: const EdgeInsets.all(AppSpacing.s16),
             child: Text(
               l10n.investmentEventTimelineEmpty,
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.bodyCaptionStyle,
             ),
           )
         else

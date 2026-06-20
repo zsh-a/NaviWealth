@@ -142,7 +142,9 @@ class _FinanceAskAiResultPaneState extends State<FinanceAskAiResultPane> {
       ),
       decoration: BoxDecoration(
         color: colors.secondary,
-        border: Border(bottom: BorderSide(color: colors.border, width: 1)),
+        border: Border(
+          bottom: BorderSide(color: colors.border, width: AppStroke.hairline),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -237,12 +239,11 @@ class _StatusBadge extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.background,
           borderRadius: BorderRadius.circular(AppRadius.xs),
-          border: Border.all(color: colors.border, width: 1),
+          border: Border.all(color: colors.border, width: AppStroke.hairline),
         ),
         child: Text(
           label,
-          style: context.theme.typography.xs.copyWith(
-            color: colors.mutedForeground,
+          style: context.captionStyle.copyWith(
             fontFeatures: TypographyTokens.tabularFigures,
           ),
         ),
@@ -330,10 +331,7 @@ class _ResultView extends StatelessWidget {
       children: <Widget>[
         Text(
           _planTitleFor(result.plan, l10n),
-          style: context.theme.typography.sm.copyWith(
-            color: colors.foreground,
-            fontWeight: FontWeight.w600,
-          ),
+          style: context.labelStyle.copyWith(color: colors.foreground),
         ),
         if (summary != null) ...<Widget>[
           const SizedBox(height: AppSpacing.s4),
@@ -342,12 +340,7 @@ class _ResultView extends StatelessWidget {
         if (preview.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.s8),
-            child: Text(
-              l10n.askAiResultEmpty,
-              style: context.theme.typography.sm.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
+            child: Text(l10n.askAiResultEmpty, style: context.bodyCaptionStyle),
           )
         else ...<Widget>[
           const SizedBox(height: AppSpacing.s8),
@@ -361,20 +354,13 @@ class _ResultView extends StatelessWidget {
               padding: const EdgeInsets.only(top: AppSpacing.s4),
               child: Text(
                 l10n.askAiResultMoreRows(rows.length - preview.length),
-                style: context.theme.typography.xs.copyWith(
-                  color: colors.mutedForeground,
-                ),
+                style: context.captionStyle,
               ),
             ),
         ],
         if (result.note != null) ...<Widget>[
           const SizedBox(height: AppSpacing.s8),
-          Text(
-            result.note!,
-            style: context.theme.typography.xs.copyWith(
-              color: colors.mutedForeground,
-            ),
-          ),
+          Text(result.note!, style: context.captionStyle),
         ],
       ],
     );
@@ -413,8 +399,7 @@ class _SummaryLine extends StatelessWidget {
         if (summary.rowCount != null)
           Text(
             l10n.askAiResultRowCount(summary.rowCount!),
-            style: context.theme.typography.xs.copyWith(
-              color: colors.mutedForeground,
+            style: context.captionStyle.copyWith(
               fontFeatures: TypographyTokens.tabularFigures,
             ),
           ),

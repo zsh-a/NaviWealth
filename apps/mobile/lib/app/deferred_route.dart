@@ -102,9 +102,7 @@ class _DeferredError extends StatelessWidget {
               const SizedBox(height: AppSpacing.s4),
               Text(
                 '$error',
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
+                style: context.captionStyle,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.s16),

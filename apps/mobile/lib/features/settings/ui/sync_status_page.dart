@@ -78,7 +78,7 @@ class _Body extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.s16).copyWith(
         bottom:
             const EdgeInsets.all(AppSpacing.s16).bottom +
-            64 +
+            AppSpacing.s64 +
             MediaQuery.paddingOf(context).bottom,
       ),
       children: [
@@ -162,9 +162,7 @@ class _HeroCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   _heroSubtitle(l10n, event, now),
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: context.captionStyle,
                 ),
               ],
             ),
@@ -232,7 +230,7 @@ class _StatGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, c) {
         final wide = c.maxWidth >= 360;
-        final gap = wide ? 8.0 : 8.0;
+        const gap = AppSpacing.s8;
         Widget tile(Widget w) => SizedBox(
           width: wide ? (c.maxWidth - gap * 2) / 3 : c.maxWidth,
           child: w,
@@ -310,12 +308,7 @@ class _StatTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.s2),
-          Text(
-            label,
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          Text(label, style: context.captionStyle),
         ],
       ),
     );
@@ -388,17 +381,13 @@ class _ConflictCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   l10n.syncStatusConflictsLocalWins(diagnostics.localWins),
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: context.captionStyle,
                 ),
                 if (diagnostics.ignoredRows > 0) ...[
                   const SizedBox(height: AppSpacing.s2),
                   Text(
                     l10n.syncStatusConflictsIgnored(diagnostics.ignoredRows),
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                    style: context.captionStyle,
                   ),
                 ],
               ],
@@ -513,14 +502,12 @@ class _LocalCountsCard extends StatelessWidget {
             Expanded(
               child: Text(
                 _localCountLabel(l10n, id),
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
+                style: context.captionStyle,
               ),
             ),
             Text(
               '$value',
-              style: context.theme.typography.sm.copyWith(
+              style: context.bodyCaptionStyle.copyWith(
                 color: value > 0
                     ? context.theme.colors.foreground
                     : context.theme.colors.mutedForeground,
@@ -546,10 +533,7 @@ class _LocalCountsCard extends StatelessWidget {
             ),
             child: Text(
               l10n.syncStatusLocalCountsHeader,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-                letterSpacing: 0.4,
-              ),
+              style: context.captionStyle,
             ),
           ),
           for (var i = 0; i < kFinanceLocalCountIds.length; i += 2)
@@ -716,13 +700,8 @@ class _Row extends StatelessWidget {
             : CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 96,
-            child: Text(
-              label,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
+            width: AppControlWidths.detailLabel,
+            child: Text(label, style: context.captionStyle),
           ),
           Expanded(
             child: Text(value, style: valueStyle, maxLines: wrap ? null : 1),

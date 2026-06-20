@@ -142,21 +142,14 @@ class _HoldingsTable extends StatelessWidget {
             children: [
               Expanded(
                 flex: 4,
-                child: Text(
-                  '资产',
-                  style: context.theme.typography.xs2.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
-                ),
+                child: Text('资产', style: context.microCaptionStyle),
               ),
               Expanded(
                 flex: 3,
                 child: Text(
                   '数量',
                   textAlign: TextAlign.right,
-                  style: context.theme.typography.xs2.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: context.microCaptionStyle,
                 ),
               ),
               Expanded(
@@ -164,9 +157,7 @@ class _HoldingsTable extends StatelessWidget {
                 child: Text(
                   '成本',
                   textAlign: TextAlign.right,
-                  style: context.theme.typography.xs2.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: context.microCaptionStyle,
                 ),
               ),
             ],
@@ -179,12 +170,7 @@ class _HoldingsTable extends StatelessWidget {
               top: AppSpacing.s4,
               left: AppSpacing.s8,
             ),
-            child: Text(
-              '还有 $hidden 项未展示',
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
+            child: Text('还有 $hidden 项未展示', style: context.captionStyle),
           ),
       ],
     );
@@ -227,9 +213,7 @@ class _HoldingsTable extends StatelessWidget {
                 if (secondary != null)
                   Text(
                     secondary,
-                    style: context.theme.typography.xs2.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                    style: context.microCaptionStyle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -332,12 +316,7 @@ class _PaymentAccountsView extends StatelessWidget {
             horizontal: AppSpacing.s8,
             vertical: AppSpacing.s4,
           ),
-          child: Text(
-            '可用支付账户',
-            style: context.theme.typography.xs2.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          child: Text('可用支付账户', style: context.microCaptionStyle),
         ),
         for (final row in visible) _paymentAccountTile(context, row),
         if (hidden > 0)
@@ -346,12 +325,7 @@ class _PaymentAccountsView extends StatelessWidget {
               top: AppSpacing.s4,
               left: AppSpacing.s8,
             ),
-            child: Text(
-              '还有 $hidden 个账户未展示',
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
+            child: Text('还有 $hidden 个账户未展示', style: context.captionStyle),
           ),
       ],
     );
@@ -398,9 +372,7 @@ class _PaymentAccountsView extends StatelessWidget {
                 ),
                 Text(
                   meta.isEmpty ? row.id : meta,
-                  style: context.theme.typography.xs2.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: context.microCaptionStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -462,20 +434,10 @@ class _XirrSummary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            scopeLabel,
-            style: context.theme.typography.xs2.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          Text(scopeLabel, style: context.microCaptionStyle),
           const SizedBox(height: AppSpacing.s4),
           if (rate == null)
-            Text(
-              '无法计算（现金流方向单一或样本不足）',
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            )
+            Text('无法计算（现金流方向单一或样本不足）', style: context.bodyCaptionStyle)
           else
             DeltaText(
               value: rate * 100,
@@ -486,9 +448,7 @@ class _XirrSummary extends StatelessWidget {
           const SizedBox(height: AppSpacing.s4),
           Text(
             '$rangeLabel · ${flows.length} 条现金流',
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
+            style: context.captionStyle,
           ),
         ],
       ),
@@ -551,12 +511,7 @@ class _NetWorthSparkline extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '当前净资产',
-                      style: context.theme.typography.xs2.copyWith(
-                        color: context.theme.colors.mutedForeground,
-                      ),
-                    ),
+                    Text('当前净资产', style: context.microCaptionStyle),
                     MoneyText(
                       amount: end,
                       currencyCode: currency,
@@ -571,7 +526,7 @@ class _NetWorthSparkline extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s8),
           SizedBox(
-            height: 40,
+            height: AppControlHeights.chipRail,
             child: NwLineChart(
               series: [
                 ChartSeries(
@@ -591,9 +546,7 @@ class _NetWorthSparkline extends StatelessWidget {
           const SizedBox(height: AppSpacing.s4),
           Text(
             '${_displayDate(points.first.$1)} → ${_displayDate(points.last.$1)} · ${points.length} 个采样点',
-            style: context.theme.typography.xs2.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
+            style: context.microCaptionStyle,
           ),
         ],
       ),
@@ -678,8 +631,8 @@ class _BreakdownView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 64,
-            height: 64,
+            width: AppControlWidths.aiCompactColumn,
+            height: AppControlWidths.aiCompactColumn,
             child: NwPieChart(
               slices: slices,
               hole: 0.62,
@@ -735,9 +688,7 @@ class _BreakdownView extends StatelessWidget {
                     child: Text(
                       '其他 ${buckets.length - top.length} 类共 '
                       '${NumberFormat.percentPattern().format(buckets.skip(top.length).fold<double>(0, (s, b) => s + b.share).clamp(0.0, 1.0))}',
-                      style: context.theme.typography.xs2.copyWith(
-                        color: context.theme.colors.mutedForeground,
-                      ),
+                      style: context.microCaptionStyle,
                     ),
                   ),
               ],
@@ -811,12 +762,7 @@ class _RiskAlertList extends StatelessWidget {
               top: AppSpacing.s4,
               left: AppSpacing.s8,
             ),
-            child: Text(
-              '还有 $hidden 项未展示',
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
+            child: Text('还有 $hidden 项未展示', style: context.captionStyle),
           ),
       ],
     );
@@ -927,12 +873,7 @@ class _EmptyResult extends StatelessWidget {
             color: context.theme.colors.mutedForeground,
           ),
           const SizedBox(width: AppSpacing.s8),
-          Text(
-            message,
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          Text(message, style: context.captionStyle),
         ],
       ),
     );
@@ -1067,19 +1008,14 @@ class _AllocBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            currency,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          Text(currency, style: context.bodyCaptionStyle),
           const SizedBox(height: AppSpacing.s10),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
-                width: 88,
-                height: 88,
+                width: AppControlWidths.aiDonut,
+                height: AppControlWidths.aiDonut,
                 child: CustomPaint(
                   painter: _DonutPainter(
                     slices: sorted,
@@ -1136,9 +1072,7 @@ class _AllocBlock extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           Text(
             '合计成本 ${fmt.format(sorted.fold<int>(0, (a, b) => a + b.totalMinor) / 100.0)} · ${sorted.length} 类持仓',
-            style: context.theme.typography.xs2.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
+            style: context.microCaptionStyle,
           ),
         ],
       ),
@@ -1215,9 +1149,7 @@ class RecurringPatternsView extends StatelessWidget {
             padding: const EdgeInsets.only(top: AppSpacing.s4),
             child: Text(
               '+ 还有 ${raw.length - visible.length} 项',
-              style: context.theme.typography.xs2.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.microCaptionStyle,
             ),
           ),
       ],
@@ -1271,9 +1203,7 @@ class RecurringPatternsView extends StatelessWidget {
                     const SizedBox(width: AppSpacing.s6),
                     Text(
                       '$occ 次${lastSeen != null ? ' · 最近 ${_displayDate(lastSeen)}' : ''}',
-                      style: context.theme.typography.xs2.copyWith(
-                        color: context.theme.colors.mutedForeground,
-                      ),
+                      style: context.microCaptionStyle,
                     ),
                   ],
                 ),
@@ -1295,17 +1225,15 @@ class RecurringPatternsView extends StatelessWidget {
 
 Widget _miniChip(BuildContext context, String label) {
   return Container(
-    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6, vertical: 1),
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppSpacing.s6,
+      vertical: AppSpacing.hairline,
+    ),
     decoration: BoxDecoration(
       color: context.theme.colors.border.withValues(alpha: AppOpacity.light),
       borderRadius: BorderRadius.circular(AppRadius.full),
     ),
-    child: Text(
-      label,
-      style: context.theme.typography.xs2.copyWith(
-        color: context.theme.colors.mutedForeground,
-      ),
-    ),
+    child: Text(label, style: context.microCaptionStyle),
   );
 }
 
@@ -1341,9 +1269,7 @@ class SubscriptionChangesView extends StatelessWidget {
             padding: const EdgeInsets.only(top: AppSpacing.s4),
             child: Text(
               '+ 还有 ${raw.length - visible.length} 项',
-              style: context.theme.typography.xs2.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.microCaptionStyle,
             ),
           ),
       ],
@@ -1396,9 +1322,7 @@ class SubscriptionChangesView extends StatelessWidget {
                 Text(
                   '${fmt.format(prev.abs() / 100.0)} → ${fmt.format(next.abs() / 100.0)} $currency'
                   '${since != null ? ' · 自 ${_displayDate(since)}' : ''}',
-                  style: context.theme.typography.xs2.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: context.microCaptionStyle,
                 ),
               ],
             ),
@@ -1406,9 +1330,8 @@ class SubscriptionChangesView extends StatelessWidget {
           const SizedBox(width: AppSpacing.s8),
           Text(
             '${delta >= 0 ? '+' : ''}${(delta * 100).toStringAsFixed(1)}%',
-            style: context.theme.typography.sm.copyWith(
+            style: context.labelStyle.copyWith(
               color: accent,
-              fontWeight: FontWeight.w600,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
@@ -1450,9 +1373,7 @@ class RefundLinksView extends StatelessWidget {
             padding: const EdgeInsets.only(top: AppSpacing.s4),
             child: Text(
               '+ 还有 ${raw.length - visible.length} 项',
-              style: context.theme.typography.xs2.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.microCaptionStyle,
             ),
           ),
       ],
@@ -1494,9 +1415,8 @@ class RefundLinksView extends StatelessWidget {
                     Expanded(
                       child: Text(
                         origin,
-                        style: context.theme.typography.sm.copyWith(
+                        style: context.bodyCaptionStyle.copyWith(
                           fontFamily: 'monospace',
-                          color: context.theme.colors.mutedForeground,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1547,12 +1467,7 @@ class _EmptyHint extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
-      child: Text(
-        text,
-        style: context.theme.typography.xs.copyWith(
-          color: context.theme.colors.mutedForeground,
-        ),
-      ),
+      child: Text(text, style: context.captionStyle),
     );
   }
 }

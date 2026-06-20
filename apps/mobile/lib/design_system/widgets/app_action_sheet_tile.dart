@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
+import '../tokens/text_style_presets.dart';
 
 /// One row in a bottom-sheet action list.
 ///
@@ -40,21 +41,14 @@ class AppActionSheetTile extends StatelessWidget with FTileMixin {
         alignment: Alignment.center,
         child: Icon(icon, size: AppIconSizes.md, color: colors.primary),
       ),
-      title: Text(
-        title,
-        style: context.theme.typography.sm.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+      title: Text(title, style: context.labelStyle),
       // Single line keeps every row the same height — uneven 1-vs-2
       // line subtitles were a big part of the "messy" read.
       subtitle: Text(
         subtitle,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: context.theme.typography.xs.copyWith(
-          color: colors.mutedForeground,
-        ),
+        style: context.captionStyle,
       ),
       suffix: Icon(
         FLucideIcons.chevronRight,

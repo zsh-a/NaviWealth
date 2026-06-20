@@ -150,8 +150,8 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
             FHeaderAction(
               icon: _syncing
                   ? const SizedBox(
-                      width: 18,
-                      height: 18,
+                      width: AppIconSizes.h18,
+                      height: AppIconSizes.h18,
                       child: FCircularProgress(),
                     )
                   : const Icon(FLucideIcons.refreshCw),

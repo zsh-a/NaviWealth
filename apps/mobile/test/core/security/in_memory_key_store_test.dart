@@ -22,4 +22,15 @@ void main() {
     expect(await store.contains('refresh-token'), isFalse);
     expect(await store.read('refresh-token'), isNull);
   });
+
+  test('copies seed map so later caller mutations do not leak in', () async {
+    final seed = {'db-key': 'v1'};
+    final store = InMemoryKeyStore(seed);
+
+    seed['db-key'] = 'v2';
+    seed['refresh-token'] = 'token';
+
+    expect(await store.read('db-key'), 'v1');
+    expect(await store.contains('refresh-token'), isFalse);
+  });
 }

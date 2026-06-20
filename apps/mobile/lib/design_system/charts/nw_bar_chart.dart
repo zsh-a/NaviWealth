@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'axes.dart';
 import 'chart_palette.dart';
@@ -101,7 +102,9 @@ class NwBarChart extends StatelessWidget {
             fromY: stackBottom,
             width: barWidth,
             rodStackItems: stackItems,
-            borderRadius: const BorderRadius.all(Radius.circular(2)),
+            borderRadius: const BorderRadius.all(
+              Radius.circular(AppRadius.xxs),
+            ),
           ),
         );
         if (stackTop > maxY) maxY = stackTop;
@@ -118,7 +121,9 @@ class NwBarChart extends StatelessWidget {
               toY: datum.value,
               width: barWidth,
               color: color,
-              borderRadius: const BorderRadius.all(Radius.circular(2)),
+              borderRadius: const BorderRadius.all(
+                Radius.circular(AppRadius.xxs),
+              ),
             ),
           );
           if (datum.value > maxY) maxY = datum.value;
@@ -147,8 +152,10 @@ class NwBarChart extends StatelessWidget {
               gridData: FlGridData(
                 show: yAxis.showGrid,
                 drawVerticalLine: false,
-                getDrawingHorizontalLine: (_) =>
-                    FlLine(color: palette.gridLine, strokeWidth: 1),
+                getDrawingHorizontalLine: (_) => FlLine(
+                  color: palette.gridLine,
+                  strokeWidth: AppStroke.hairline,
+                ),
               ),
               borderData: FlBorderData(show: false),
               titlesData: _buildTitles(palette, yRange),
@@ -180,7 +187,7 @@ class NwBarChart extends StatelessWidget {
             );
             if (ci < 0 || ci >= source.data.length) return const SizedBox();
             return Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: AppSpacing.s4),
               child: Text(
                 source.data[ci].label,
                 style: labelStyle,
@@ -205,7 +212,7 @@ class NwBarChart extends StatelessWidget {
               return const SizedBox.shrink();
             }
             return Padding(
-              padding: const EdgeInsets.only(right: 4),
+              padding: const EdgeInsets.only(right: AppSpacing.s4),
               child: Text(
                 yAxis.formatValue(value),
                 style: labelStyle,
@@ -231,8 +238,11 @@ class NwBarChart extends StatelessWidget {
       enabled: true,
       touchTooltipData: BarTouchTooltipData(
         getTooltipColor: (_) => palette.tooltipBackground,
-        tooltipBorderRadius: BorderRadius.circular(6),
-        tooltipPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        tooltipBorderRadius: BorderRadius.circular(AppRadius.xs),
+        tooltipPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s8,
+          vertical: AppSpacing.s6,
+        ),
         getTooltipItem: (group, groupIndex, rod, rodIndex) {
           final ci = group.x;
           final si = stacked ? rodIndex : rodIndex;

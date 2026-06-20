@@ -171,7 +171,6 @@ class _NoteSuggestionGroupState extends ConsumerState<_NoteSuggestionGroup> {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     if (_loading) {
@@ -211,7 +210,7 @@ class _NoteSuggestionGroupState extends ConsumerState<_NoteSuggestionGroup> {
               Expanded(
                 child: Text(
                   note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
-                  style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+                  style: context.labelStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -476,7 +475,7 @@ class _ProposalDetailsPanel extends StatelessWidget {
         children: [
           Text(
             '${l10n.knowledgeAiSuggestionPayloadTitle} · ${proposal.kind.wire}',
-            style: typography.xs.copyWith(fontWeight: FontWeight.w600),
+            style: context.captionLabelStyle,
           ),
           if (entries.isNotEmpty) const SizedBox(height: AppSpacing.s6),
           for (final entry in entries)
@@ -486,13 +485,10 @@ class _ProposalDetailsPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
-                    width:
-                        104, // Payload key column — keeps label/value ratio stable.
+                    width: AppControlWidths.payloadKey,
                     child: Text(
                       entry.key,
-                      style: typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
+                      style: context.captionStyle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -519,7 +515,7 @@ class _ProposalDetailsPanel extends StatelessWidget {
                 ),
               ),
               SizedBox(
-                width: 220,
+                width: AppControlWidths.feedbackSegmented,
                 child: SegmentedRow<InboxProposalFeedback?>(
                   options: const <InboxProposalFeedback?>[
                     InboxProposalFeedback.positive,

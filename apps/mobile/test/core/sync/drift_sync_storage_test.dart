@@ -95,6 +95,22 @@ void main() {
       expect(await pending.readRow('accounts', 'nope'), isNull);
     });
 
+    test('readRow ignores unsupported dirty-pointer tables', () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final pending = DriftPendingRows(db);
+      await _insertAccount(db, 'acc-1', name: 'Brokerage');
+
+      expect(await pending.readRow('ai_traces', 'trace-1'), isNull);
+      expect(
+        await pending.readRow('accounts WHERE id = id --', 'acc-1'),
+        isNull,
+      );
+
+      final row = await pending.readRow('accounts', 'acc-1');
+      expect(row?['name'], 'Brokerage');
+    });
+
     test('clear deletes the named op pointers', () async {
       final db = makeTestDatabase();
       addTearDown(db.close);

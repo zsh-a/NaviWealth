@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/motion_utils.dart';
+import '../tokens/text_style_presets.dart';
 import 'app_busy_button.dart';
 import 'app_gradient_divider.dart';
 import 'form_dirty_controller.dart';
@@ -208,7 +209,6 @@ class AppSheet extends StatelessWidget {
   );
 
   Widget _header(BuildContext context) {
-    final colors = context.theme.colors;
     final hasSubtitle = subtitle != null && subtitle!.isNotEmpty;
     return Padding(
       padding: kHeaderPadding,
@@ -232,12 +232,7 @@ class AppSheet extends StatelessWidget {
                 ),
                 if (hasSubtitle) ...[
                   const SizedBox(height: AppSpacing.s4),
-                  Text(
-                    subtitle!,
-                    style: context.theme.typography.sm.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                  ),
+                  Text(subtitle!, style: context.bodyCaptionStyle),
                 ],
               ],
             ),
@@ -343,7 +338,7 @@ class AppSheetDragHandle extends StatelessWidget {
       child: Center(
         child: Container(
           width: AppSpacing.s40,
-          height: 3.5,
+          height: AppStroke.handle,
           margin: const EdgeInsets.only(
             top: AppSpacing.s10,
             bottom: AppSpacing.s8,
@@ -503,7 +498,11 @@ class AppSheetSurface extends StatelessWidget {
     final decorated = DecoratedBox(
       decoration: BoxDecoration(
         color: surface,
-        border: border ?? Border(top: BorderSide(color: hairline, width: 1)),
+        border:
+            border ??
+            Border(
+              top: BorderSide(color: hairline, width: AppStroke.hairline),
+            ),
       ),
       child: SafeArea(top: safeTop, bottom: safeBottom, child: child),
     );

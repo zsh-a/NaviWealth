@@ -264,10 +264,7 @@ class _TrendChart extends StatelessWidget {
               const SizedBox(height: AppSpacing.s12),
               Text(
                 AppLocalizations.of(context).dashboardTrendFlatHint,
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                  height: 1.4,
-                ),
+                style: context.captionStyle.copyWith(height: 1.4),
               ),
             ],
           );

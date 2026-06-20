@@ -377,8 +377,8 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
               ? (ctx, style, variants) => const Padding(
                   padding: EdgeInsets.all(AppSpacing.s12),
                   child: SizedBox(
-                    width: 20,
-                    height: 20,
+                    width: AppIconSizes.md,
+                    height: AppIconSizes.md,
                     child: FCircularProgress(),
                   ),
                 )
@@ -477,7 +477,7 @@ class _ReadOnlySummary extends StatelessWidget {
         choice.name == null
             ? choice.symbol
             : '${choice.symbol} — ${choice.name}',
-        style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w600),
+        style: context.labelStyle,
       ),
       subtitle: Text(
         subtitleParts.join(' · '),
@@ -495,12 +495,16 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s4),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s12,
+        AppSpacing.s16,
+        AppSpacing.s4,
+      ),
       child: Text(
         text,
-        style: context.theme.typography.xs.copyWith(
+        style: context.captionLabelStyle.copyWith(
           color: context.theme.colors.primary,
-          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -517,10 +521,7 @@ class _HitTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final display = hit.nameCn ?? hit.nameEn;
     return FTile(
-      title: Text(
-        hit.symbol,
-        style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w600),
-      ),
+      title: Text(hit.symbol, style: context.labelStyle),
       subtitle: display == null
           ? null
           : Text(display, maxLines: 1, overflow: TextOverflow.ellipsis),

@@ -90,10 +90,13 @@ class _DomainRow extends StatelessWidget {
             Expanded(
               child: Text(
                 spec.label,
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                  color: iconColor,
-                ),
+                style:
+                    (selected
+                            ? context.labelStyle
+                            : context.theme.typography.sm.copyWith(
+                                fontWeight: FontWeight.w400,
+                              ))
+                        .copyWith(color: iconColor),
               ),
             ),
             if (selected)

@@ -130,9 +130,7 @@ class _RecurringRow extends ConsumerWidget {
               children: [
                 Text(
                   _describeRecurrence(l10n, rule.rrule),
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.labelStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

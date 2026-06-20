@@ -196,9 +196,9 @@ class _NwLineChartState extends State<NwLineChart> {
           drawHorizontalLine: showGrid && widget.yAxis.showGrid,
           drawVerticalLine: showGrid && widget.xAxis.showGrid,
           getDrawingHorizontalLine: (_) =>
-              FlLine(color: palette.gridLine, strokeWidth: 1),
+              FlLine(color: palette.gridLine, strokeWidth: AppStroke.hairline),
           getDrawingVerticalLine: (_) =>
-              FlLine(color: palette.gridLine, strokeWidth: 1),
+              FlLine(color: palette.gridLine, strokeWidth: AppStroke.hairline),
         ),
         borderData: FlBorderData(show: false),
         titlesData: widget.minimal
@@ -326,7 +326,9 @@ class _NwLineChartState extends State<NwLineChart> {
         ? 1.5
         : 2.5;
 
-    final effectiveColor = isComparison ? color.withValues(alpha: 0.6) : color;
+    final effectiveColor = isComparison
+        ? color.withValues(alpha: AppOpacity.prominent)
+        : color;
     final effectiveDash = isComparison
         ? (dashArray ?? const [6, 4])
         : (dashArray ?? (isProjection ? const [4, 4] : null));
@@ -350,8 +352,10 @@ class _NwLineChartState extends State<NwLineChart> {
                 return FlDotCirclePainter(
                   radius: 5,
                   color: effectiveColor,
-                  strokeColor: effectiveColor.withValues(alpha: 0.25),
-                  strokeWidth: 6,
+                  strokeColor: effectiveColor.withValues(
+                    alpha: AppOpacity.halo,
+                  ),
+                  strokeWidth: AppStroke.halo,
                 );
               }
             : (spot, percent, barData, index) =>
@@ -367,7 +371,7 @@ class _NwLineChartState extends State<NwLineChart> {
                   color.withValues(
                     alpha: s.fillOpacity ?? _defaultFillTopAlpha(context),
                   ),
-                  color.withValues(alpha: 0),
+                  color.withValues(alpha: AppOpacity.transparent),
                 ],
               ),
             )
@@ -480,7 +484,7 @@ class _NwLineChartState extends State<NwLineChart> {
               return const SizedBox.shrink();
             }
             return Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: AppSpacing.s4),
               child: Text(
                 widget.xAxis.formatTimestamp(value),
                 style: labelStyle,
@@ -507,7 +511,7 @@ class _NwLineChartState extends State<NwLineChart> {
               return const SizedBox.shrink();
             }
             return Padding(
-              padding: const EdgeInsets.only(right: 4),
+              padding: const EdgeInsets.only(right: AppSpacing.s4),
               child: Text(
                 hideAmounts
                     ? AmountPrivacyScope.mask
@@ -544,14 +548,17 @@ class _NwLineChartState extends State<NwLineChart> {
       getTouchedSpotIndicator: (barData, spotIndexes) {
         return spotIndexes.map((index) {
           return TouchedSpotIndicatorData(
-            const FlLine(color: Colors.transparent, strokeWidth: 0),
+            const FlLine(
+              color: Colors.transparent,
+              strokeWidth: AppStroke.none,
+            ),
             FlDotData(
               show: true,
               getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
                 radius: 4,
                 color: bar.color ?? Colors.transparent,
                 strokeColor: palette.dotStroke,
-                strokeWidth: 1.5,
+                strokeWidth: AppStroke.medium,
               ),
             ),
           );
@@ -745,13 +752,13 @@ class _CrosshairPainter extends CustomPainter {
   // Cached Paint objects — reused across frames.
   late final _hairlinePaint = Paint()
     ..color = color.withValues(alpha: AppOpacity.muted)
-    ..strokeWidth = 1
+    ..strokeWidth = AppStroke.hairline
     ..style = PaintingStyle.stroke;
   late final _dotFillPaint = Paint()..style = PaintingStyle.fill;
   late final _dotStrokePaint = Paint()
     ..color = dotStrokeColor
     ..style = PaintingStyle.stroke
-    ..strokeWidth = 1.5;
+    ..strokeWidth = AppStroke.medium;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -882,11 +889,15 @@ class _ChartTooltip extends StatelessWidget {
                 vertical: AppSpacing.s8,
               ),
               decoration: BoxDecoration(
-                color: context.theme.colors.muted.withValues(alpha: 0.94),
+                color: context.theme.colors.muted.withValues(
+                  alpha: AppOpacity.solidSurface,
+                ),
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(
-                  color: context.theme.colors.border.withValues(alpha: 0.5),
-                  width: 1,
+                  color: context.theme.colors.border.withValues(
+                    alpha: AppOpacity.scrim,
+                  ),
+                  width: AppStroke.hairline,
                 ),
               ),
               child: Column(
@@ -896,7 +907,7 @@ class _ChartTooltip extends StatelessWidget {
                   Text(
                     xAxis.formatPrecise(point.x),
                     style: TypographyTokens.numericCaption.copyWith(
-                      color: onSurface.withValues(alpha: 0.6),
+                      color: onSurface.withValues(alpha: AppOpacity.prominent),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.s4),
@@ -932,7 +943,7 @@ class _ChartTooltip extends StatelessWidget {
     final delta = touchStartPoint != null ? p.y - touchStartPoint!.y : 0.0;
 
     return Padding(
-      padding: const EdgeInsets.only(top: 3),
+      padding: const EdgeInsets.only(top: AppSpacing.accentBar),
       child: Row(
         children: [
           Expanded(
@@ -985,17 +996,17 @@ class _TouchXAxisLabel extends StatelessWidget {
           children: [
             Positioned(
               left: left,
-              bottom: plotInsets.bottom + 2,
+              bottom: plotInsets.bottom + AppSpacing.s2,
               width: width,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: palette.tooltipBackground,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 3,
+                    horizontal: AppSpacing.s6,
+                    vertical: AppSpacing.accentBar,
                   ),
                   child: Text(
                     label,
@@ -1049,17 +1060,20 @@ class _DeltaBadge extends StatelessWidget {
     final market = MarketColors.of(context);
     final positive = value >= 0;
     final color = market.forDelta(value);
-    final bg = color.withValues(alpha: 0.15);
+    final bg = color.withValues(alpha: AppOpacity.accentContainer);
     final sign = positive ? '+' : '';
     final label = hideAmounts
         ? AmountPrivacyScope.mask
         : '$sign${yAxis.formatValue(value)}';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s6,
+        vertical: AppSpacing.hairline,
+      ),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Text(
         label,

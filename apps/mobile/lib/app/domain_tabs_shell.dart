@@ -268,7 +268,7 @@ class _TabletLayout extends StatelessWidget {
       // must not double-count the inset.
       resizeToAvoidBottomInset: false,
       sidebar: SizedBox(
-        width: 80,
+        width: AppControlWidths.tabletRail,
         child: FSidebar(
           children: [
             for (var i = 0; i < tabs.length; i++)
@@ -324,10 +324,15 @@ class _TabletRailItem extends StatelessWidget {
             const SizedBox(height: AppSpacing.s4),
             Text(
               tab.label,
-              style: context.theme.typography.xs.copyWith(
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                color: selected ? colors.primary : colors.foreground,
-              ),
+              style:
+                  (selected
+                          ? context.captionLabelStyle
+                          : context.theme.typography.xs.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ))
+                      .copyWith(
+                        color: selected ? colors.primary : colors.foreground,
+                      ),
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
             ),

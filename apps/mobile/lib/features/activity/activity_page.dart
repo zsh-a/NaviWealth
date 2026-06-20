@@ -177,12 +177,7 @@ class _ActivityRightRail extends ConsumerWidget {
                   AppSpacing.s16,
                   AppSpacing.s12,
                 ),
-                child: Text(
-                  l10n.navActivity,
-                  style: context.theme.typography.md.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: Text(l10n.navActivity, style: context.rowTitleStyle),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
@@ -300,7 +295,7 @@ class _ActivityKindFilterRow extends ConsumerWidget {
     ];
 
     return SizedBox(
-      height: 44,
+      height: AppControlHeights.pickerStrip,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(

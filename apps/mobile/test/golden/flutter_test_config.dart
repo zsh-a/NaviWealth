@@ -17,13 +17,12 @@ import 'package:golden_toolkit/golden_toolkit.dart';
 ///     `flutter test --tags=golden` and get a green bar — they just won't
 ///     get a real visual regression check until the PR hits CI.
 ///
-///  2. **Lock font fallback** so we don't depend on whatever the host OS
-///     happens to call "sans-serif". The app's Inter / Outfit subsets are
-///     gitignored build artifacts (see `tool/build-latin-fonts.sh`); in
-///     CI they are stubbed empty by `mobile.yml`. We force-load `Roboto`
-///     from `flutter_test`'s embedded asset bundle in
-///     `_golden_setup.dart#loadGoldenFonts` so the surface is reproducible
-///     even when the woff2 stubs decode as zero glyphs.
+///  2. **Lock font loading** so we don't depend on whatever the host OS
+///     happens to call "sans-serif". The shared golden harness calls
+///     `loadAppFonts()` before each snapshot after verifying the generated
+///     Inter / Outfit / AppCnSans assets are present and non-empty. Empty font
+///     stubs fail early instead of silently falling back to Flutter's test
+///     font; CI owns the byte-compared Linux baseline.
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   return GoldenToolkit.runWithConfiguration(
     () async {

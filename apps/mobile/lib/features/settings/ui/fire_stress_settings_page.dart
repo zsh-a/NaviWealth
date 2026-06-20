@@ -64,10 +64,7 @@ class _Hint extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
       child: Text(
         l10n.settingsStressTestHint,
-        style: context.theme.typography.xs.copyWith(
-          color: context.theme.colors.mutedForeground,
-          height: 1.45,
-        ),
+        style: context.captionStyle.copyWith(height: 1.45),
       ),
     );
   }
@@ -222,7 +219,6 @@ class _PercentSliderState extends State<_PercentSlider> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s14,
@@ -241,20 +237,14 @@ class _PercentSliderState extends State<_PercentSlider> {
                   children: [
                     Text(widget.label, style: context.theme.typography.sm),
                     const SizedBox(height: AppSpacing.s2),
-                    Text(
-                      widget.subtitle,
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
+                    Text(widget.subtitle, style: context.captionStyle),
                   ],
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),
               Text(
                 '${(widget.value * 100).round()}%',
-                style: context.theme.typography.sm.copyWith(
-                  color: colors.mutedForeground,
+                style: context.bodyCaptionStyle.copyWith(
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
@@ -341,7 +331,6 @@ class _LumpSumFieldState extends State<_LumpSumField> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s14,
@@ -359,9 +348,7 @@ class _LumpSumFieldState extends State<_LumpSumField> {
           const SizedBox(height: AppSpacing.s2),
           Text(
             l10n.settingsStressTestLumpSumSubtitle,
-            style: context.theme.typography.xs.copyWith(
-              color: colors.mutedForeground,
-            ),
+            style: context.captionStyle,
           ),
           const SizedBox(height: AppSpacing.s6),
           Row(
@@ -377,12 +364,7 @@ class _LumpSumFieldState extends State<_LumpSumField> {
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),
-              Text(
-                widget.baseCurrency,
-                style: context.theme.typography.sm.copyWith(
-                  color: colors.mutedForeground,
-                ),
-              ),
+              Text(widget.baseCurrency, style: context.bodyCaptionStyle),
             ],
           ),
         ],

@@ -150,7 +150,6 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final typography = context.theme.typography;
     final optIns = ref.watch(core_auth.domainOptInsProvider).value;
     final enabled = optIns?.contains(DomainScope.health) ?? false;
 
@@ -175,7 +174,7 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
               children: [
                 Text(
                   l10n.healthKitTitle,
-                  style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+                  style: context.labelStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -248,7 +247,7 @@ class _RecoveryHero extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: async.when(
         loading: () => const SizedBox(
-          height: 96,
+          height: AppControlHeights.compactLoadingState,
           child: Center(child: FCircularProgress()),
         ),
         error: (e, _) => Text(
@@ -280,10 +279,7 @@ class _RecoveryHero extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       l10n.healthRecoveryTitle,
-                      style: typography.sm.copyWith(
-                        color: colors.mutedForeground,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: context.mutedLabelStyle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -349,7 +345,7 @@ class _RecoverySparkline extends ConsumerWidget {
       data: (values) {
         if (values.length < 2) return const SizedBox.shrink();
         return SizedBox(
-          height: 32,
+          height: AppChartHeights.sparklineLg,
           child: CustomPaint(
             size: Size.infinite,
             painter: _SparklinePainter(
@@ -379,7 +375,7 @@ class _SparklinePainter extends CustomPainter {
 
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 1.5
+      ..strokeWidth = AppStroke.medium
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
@@ -652,7 +648,7 @@ class _SleepStageBar extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(AppRadius.xs),
           child: SizedBox(
-            height: 4,
+            height: AppSpacing.s4,
             child: Row(
               children: [
                 if (deepPct > 0)
@@ -1130,10 +1126,7 @@ class _MetricCardHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: context.theme.typography.sm.copyWith(
-              color: colors.mutedForeground,
-              fontWeight: FontWeight.w600,
-            ),
+            style: context.mutedLabelStyle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -1168,7 +1161,6 @@ class _ValueBig extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
-    final colors = context.theme.colors;
     final source = metric == null ? null : sourceForHealthMetric(metric!);
     final sourceLabel = source == null || source == HealthMetricSource.unknown
         ? null
@@ -1195,8 +1187,7 @@ class _ValueBig extends StatelessWidget {
               const SizedBox(width: AppSpacing.s2),
               Text(
                 unit!,
-                style: typography.xs.copyWith(
-                  color: colors.mutedForeground,
+                style: context.captionStyle.copyWith(
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -1243,7 +1234,6 @@ class _TrendBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final dir = trend.direction;
     if (dir == TrendDirection.flat) return const SizedBox.shrink();
-    final typography = context.theme.typography;
     final colors = context.theme.colors;
     final isUp = dir == TrendDirection.up;
     final color = isUp ? colors.primary : colors.destructive;
@@ -1251,7 +1241,7 @@ class _TrendBadge extends StatelessWidget {
     final pct = trend.deltaPct.abs().round();
     return Text(
       '$arrow$pct%',
-      style: typography.xs.copyWith(color: color, fontWeight: FontWeight.w600),
+      style: context.captionLabelStyle.copyWith(color: color),
     );
   }
 }

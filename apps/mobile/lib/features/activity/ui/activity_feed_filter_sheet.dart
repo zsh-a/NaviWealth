@@ -80,9 +80,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
             ),
             child: Text(
               _formatRange(l10n, query.dateRange!),
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.captionStyle,
             ),
           ),
         const SizedBox(height: AppSpacing.s20),
@@ -95,9 +93,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
             ),
             child: Text(
               l10n.activityFeedFilterAccountEmpty,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.captionStyle,
             ),
           )
         else
@@ -264,9 +260,8 @@ class _HeaderTextAction extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: context.theme.typography.sm.copyWith(
+          style: context.labelStyle.copyWith(
             color: context.theme.colors.primary,
-            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -281,13 +276,16 @@ class _SheetSectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, AppSpacing.s8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s0,
+        AppSpacing.s0,
+        AppSpacing.s0,
+        AppSpacing.s8,
+      ),
       child: Text(
         text.toUpperCase(),
-        style: context.theme.typography.xs2.copyWith(
+        style: context.microLabelStyle.copyWith(
           color: context.theme.colors.mutedForeground,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.6,
         ),
       ),
     );

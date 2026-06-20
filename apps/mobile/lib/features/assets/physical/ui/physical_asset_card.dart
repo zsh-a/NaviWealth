@@ -40,9 +40,7 @@ class PhysicalAssetCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.s2),
                   Text(
                     _subtitleFor(asset, l10n),
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                    style: context.captionStyle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

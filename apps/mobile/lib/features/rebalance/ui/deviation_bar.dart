@@ -43,15 +43,11 @@ class DeviationBar extends StatelessWidget {
               Expanded(child: Text(label, style: context.theme.typography.sm)),
               Text(
                 '${(actualWeight * 100).toStringAsFixed(1)}%',
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: context.labelStyle,
               ),
               Text(
                 ' / ${(targetWeight * 100).toStringAsFixed(1)}%',
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
+                style: context.captionStyle,
               ),
               const SizedBox(width: AppSpacing.s8),
               _DeviationChip(deviation: deviation, severity: severity),
@@ -69,21 +65,21 @@ class DeviationBar extends StatelessWidget {
                   width * targetWeight.clamp(0.0, 1.0).toDouble();
               return SizedBox(
                 width: width,
-                height: 8,
+                height: AppSpacing.s8,
                 child: Stack(
                   children: [
                     // Background bar.
                     ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadius.xs),
                       child: SizedBox(
-                        height: 8,
+                        height: AppSpacing.s8,
                         child: ColoredBox(
                           color: bgBarColor,
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: SizedBox(
                               width: actualWidth,
-                              height: 8,
+                              height: AppSpacing.s8,
                               child: ColoredBox(color: barColor),
                             ),
                           ),
@@ -139,18 +135,15 @@ class _DeviationChip extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s2,
+      ),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
-      child: Text(
-        text,
-        style: context.theme.typography.xs2.copyWith(
-          color: fg,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+      child: Text(text, style: context.microLabelStyle.copyWith(color: fg)),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
+import '../tokens/text_style_presets.dart';
 
 class AppGroupedAction {
   const AppGroupedAction({
@@ -107,9 +108,8 @@ class _ActionRow extends StatelessWidget {
                       action.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: context.theme.typography.sm.copyWith(
+                      style: context.labelStyle.copyWith(
                         color: colors.foreground,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     if (action.subtitle.isNotEmpty) ...[
@@ -118,9 +118,7 @@ class _ActionRow extends StatelessWidget {
                         action.subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: context.theme.typography.xs.copyWith(
-                          color: colors.mutedForeground,
-                        ),
+                        style: context.captionStyle,
                       ),
                     ],
                   ],

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
+import '../tokens/text_style_presets.dart';
 
 class AppMetricHeader extends StatelessWidget {
   const AppMetricHeader({super.key, required this.icon, required this.title});
@@ -23,10 +24,7 @@ class AppMetricHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: context.theme.typography.sm.copyWith(
-              color: colors.mutedForeground,
-              fontWeight: FontWeight.w600,
-            ),
+            style: context.mutedLabelStyle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

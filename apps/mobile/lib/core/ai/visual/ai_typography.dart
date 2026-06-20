@@ -15,7 +15,7 @@
 /// automatic.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../../../design_system/design_system.dart';
 import 'ai_tone.dart';
@@ -24,18 +24,25 @@ class AiType {
   AiType._();
 
   /// Primary body text on AI surfaces (chat bubbles, timeline rows).
-  static TextStyle body(BuildContext c) => Theme.of(c).textTheme.bodyMedium!
-      .copyWith(fontSize: TypographyTokens.bodySmall.fontSize, height: 1.45, color: AiTone.onSurface(c));
+  static TextStyle body(BuildContext c) => TypographyTokens.bodySmall.copyWith(
+    height: 1.45,
+    color: AiTone.onSurface(c),
+  );
+
+  /// Strong body text for selected rows and AI-surface section labels.
+  static TextStyle bodyStrong(BuildContext c) => strong(body(c));
 
   /// Subtle metadata: timestamps, durations, "x ms", chip values.
-  static TextStyle meta(BuildContext c) => Theme.of(c).textTheme.labelSmall!
-      .copyWith(fontSize: TypographyTokens.labelSmall.fontSize, height: 1.3, color: AiTone.muted(c));
+  static TextStyle meta(BuildContext c) =>
+      TypographyTokens.labelSmall.copyWith(height: 1.3, color: AiTone.muted(c));
+
+  /// Strong metadata for selected dense timeline labels.
+  static TextStyle metaStrong(BuildContext c) => strong(meta(c));
 
   /// Pill / capsule / chip label. Slightly weightier than meta to
   /// signal interactivity.
   static TextStyle label(BuildContext c) =>
-      Theme.of(c).textTheme.labelMedium!.copyWith(
-        fontSize: TypographyTokens.labelMedium.fontSize,
+      TypographyTokens.labelMedium.copyWith(
         height: 1.3,
         fontWeight: FontWeight.w500,
         color: AiTone.onSurface(c),
@@ -43,6 +50,28 @@ class AiType {
 
   /// Sheet / page headers. Kept at Material titleMedium size so
   /// transitions from non-AI pages don't jump.
-  static TextStyle title(BuildContext c) => Theme.of(c).textTheme.titleMedium!
+  static TextStyle title(BuildContext c) => TypographyTokens.titleLarge
       .copyWith(fontWeight: FontWeight.w600, color: AiTone.onSurface(c));
+
+  /// Inline emphasis for markdown strong text and other AI-rendered content.
+  static TextStyle strong(TextStyle base) =>
+      base.copyWith(fontWeight: FontWeight.w600);
+
+  /// Markdown heading style derived from the active AI body style so custom
+  /// base styles keep their scale relationship.
+  static TextStyle heading(BuildContext c, TextStyle base, int level) {
+    final baseSize = base.fontSize ?? 13;
+    final fontSize = switch (level) {
+      1 => baseSize + 3,
+      2 => baseSize + 2,
+      _ => baseSize + 1,
+    };
+    return strong(
+      base,
+    ).copyWith(fontSize: fontSize, height: 1.35, color: AiTone.onSurface(c));
+  }
+
+  /// Table header style for markdown tables.
+  static TextStyle tableHeader(BuildContext c, TextStyle base) =>
+      strong(base).copyWith(color: AiTone.onSurface(c));
 }

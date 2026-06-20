@@ -6,6 +6,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../design_system/design_system.dart';
 import '../accounts/account_icon_catalog.dart';
+import 'account_color.dart';
 import 'account_l10n.dart';
 
 /// Drop-in replacement for the legacy flat
@@ -174,7 +175,7 @@ class _LeadingGlyph extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconData = resolveAccountIcon(account.icon);
-    final iconColor = _parseHexColor(account.color);
+    final iconColor = parseAccountColor(account.color);
     if (iconData != null) {
       return Icon(
         iconData,
@@ -184,22 +185,7 @@ class _LeadingGlyph extends StatelessWidget {
     }
     return Text(
       account.parentId == null ? '•' : '›',
-      style: context.theme.typography.sm.copyWith(
-        color: context.theme.colors.mutedForeground,
-      ),
+      style: context.bodyCaptionStyle,
     );
   }
-}
-
-/// `#RRGGBB` (with or without leading `#`) → [Color]; returns `null`
-/// for any malformed input so callers can fall back to the theme's
-/// default tint without a try / catch.
-Color? _parseHexColor(String? value) {
-  if (value == null || value.isEmpty) return null;
-  var hex = value.replaceFirst('#', '');
-  if (hex.length == 6) hex = 'FF$hex';
-  if (hex.length != 8) return null;
-  final parsed = int.tryParse(hex, radix: 16);
-  if (parsed == null) return null;
-  return Color(parsed);
 }

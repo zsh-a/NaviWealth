@@ -1,5 +1,7 @@
 import 'package:flutter/painting.dart';
 
+import 'color_palette.dart';
+
 /// Spacing + corner-radius scale.
 ///
 /// Dart mirror of the `spacing` / `radius` groups in
@@ -33,6 +35,21 @@ class AppSpacing {
   static const double s64 = 64;
 }
 
+class AppStroke {
+  const AppStroke._();
+
+  static const double none = 0;
+  static const double hairline = 1;
+  static const double thin = 1.2;
+  static const double medium = 1.5;
+  static const double branch = 2;
+  static const double sparkline = 2.2;
+  static const double accent = 3;
+  static const double handle = 3.5;
+  static const double indicator = 4;
+  static const double halo = 6;
+}
+
 class AppRadius {
   const AppRadius._();
 
@@ -59,6 +76,15 @@ class AppRadius {
 class AppOpacity {
   const AppOpacity._();
 
+  /// Fully transparent -- gradient endpoints, invisible unselected fills.
+  static const double transparent = 0.0;
+
+  /// Tiny hover tint on light surfaces. (~0.02)
+  static const double hoverTint = 0.02;
+
+  /// Tiny hover tint on dark surfaces. (~0.03)
+  static const double hoverTintDark = 0.03;
+
   /// Barely visible -- hairline dividers, ghost backgrounds. (~0.04)
   static const double whisper = 0.04;
 
@@ -74,8 +100,17 @@ class AppOpacity {
   /// Medium -- visible but not dominant accents. (~0.14)
   static const double medium = 0.14;
 
+  /// Soft accent container fill. (~0.15)
+  static const double accentContainer = 0.15;
+
   /// Highlight -- accent bars, subtle emphasis. (~0.20)
   static const double highlight = 0.20;
+
+  /// Active/focus outline. (~0.24)
+  static const double focusRing = 0.24;
+
+  /// Hover/hero-dot halo. (~0.25)
+  static const double halo = 0.25;
 
   /// Muted -- borders, muted backgrounds, secondary text. (~0.30)
   static const double muted = 0.30;
@@ -86,20 +121,32 @@ class AppOpacity {
   /// Scrim / overlay backdrop. (~0.50)
   static const double scrim = 0.50;
 
+  /// Softer scrim / light glass highlight. (~0.55)
+  static const double softScrim = 0.55;
+
   /// Prominent -- emphasized text, active states. (~0.60)
   static const double prominent = 0.60;
 
   /// Strong -- high-emphasis foreground. (~0.70)
   static const double strong = 0.70;
 
+  /// Emphasis -- stronger than [strong] but below overlay. (~0.80)
+  static const double emphasis = 0.80;
+
   /// Overlay -- near-opaque overlays, greeting text. (~0.85)
   static const double overlay = 0.85;
+
+  /// Solid surface overlay -- opaque chart/tooltips without flattening. (~0.94)
+  static const double solidSurface = 0.94;
 
   /// Near-opaque -- frosted glass surface fills. (~0.97)
   static const double nearOpaque = 0.97;
 
   /// Near-opaque variant -- darker glass surfaces. (~0.98)
   static const double nearOpaqueDark = 0.98;
+
+  /// Fully opaque.
+  static const double opaque = 1.0;
 }
 
 /// Canonical icon sizes used across the app's chrome.
@@ -164,43 +211,79 @@ class AppShadow {
 
   /// Subtle chip / badge shadow — minimal depth.
   static const List<BoxShadow> elevation1 = [
-    BoxShadow(color: Color(0x0A002A38), blurRadius: 4, offset: Offset(0, 1)),
+    BoxShadow(
+      color: ColorPalette.shadowNavy04,
+      blurRadius: 4,
+      offset: Offset(0, 1),
+    ),
   ];
 
   /// Standard elevation — FABs, scroll-to-bottom buttons.
   static const List<BoxShadow> elevation2 = [
-    BoxShadow(color: Color(0x0A002A38), blurRadius: 8, offset: Offset(0, 2)),
+    BoxShadow(
+      color: ColorPalette.shadowNavy04,
+      blurRadius: 8,
+      offset: Offset(0, 2),
+    ),
   ];
 
   /// Standard card shadow — subtle depth.
   static const List<BoxShadow> card = [
-    BoxShadow(color: Color(0x0A002A38), blurRadius: 28, offset: Offset(0, 10)),
+    BoxShadow(
+      color: ColorPalette.shadowNavy04,
+      blurRadius: 28,
+      offset: Offset(0, 10),
+    ),
   ];
 
   /// Card hover / pressed state — slightly deeper.
   static const List<BoxShadow> cardHover = [
-    BoxShadow(color: Color(0x14002A38), blurRadius: 36, offset: Offset(0, 14)),
+    BoxShadow(
+      color: ColorPalette.shadowNavy08,
+      blurRadius: 36,
+      offset: Offset(0, 14),
+    ),
   ];
 
   /// Left-edge panel shadow — desktop side panels.
   static const List<BoxShadow> panel = [
-    BoxShadow(color: Color(0x1A002A38), blurRadius: 24, offset: Offset(-8, 0)),
+    BoxShadow(
+      color: ColorPalette.shadowNavy10,
+      blurRadius: 24,
+      offset: Offset(-8, 0),
+    ),
   ];
 
   /// Desktop sheet elevation — floating overlays.
   static const List<BoxShadow> desktopSheet = [
-    BoxShadow(color: Color(0x1A002A38), blurRadius: 24, offset: Offset(0, 12)),
+    BoxShadow(
+      color: ColorPalette.shadowNavy10,
+      blurRadius: 24,
+      offset: Offset(0, 12),
+    ),
   ];
 
   /// Update banner shadow — bottom-edge accent.
   static const List<BoxShadow> banner = [
-    BoxShadow(color: Color(0x1A002A38), blurRadius: 12, offset: Offset(0, -2)),
+    BoxShadow(
+      color: ColorPalette.shadowNavy10,
+      blurRadius: 12,
+      offset: Offset(0, -2),
+    ),
   ];
 
   /// Floating glass nav bar — soft ambient glow.
   static const List<BoxShadow> nav = [
-    BoxShadow(color: Color(0x1A002A38), blurRadius: 36, offset: Offset(0, 14)),
-    BoxShadow(color: Color(0x0A3BC6D9), blurRadius: 20, offset: Offset(0, -2)),
+    BoxShadow(
+      color: ColorPalette.shadowNavy10,
+      blurRadius: 36,
+      offset: Offset(0, 14),
+    ),
+    BoxShadow(
+      color: ColorPalette.shadowCyan04,
+      blurRadius: 20,
+      offset: Offset(0, -2),
+    ),
   ];
 }
 
@@ -210,12 +293,130 @@ class AppShadow {
 class AppChartHeights {
   const AppChartHeights._();
 
+  /// Tiny inline sparkline inside compact metric cards.
+  static const double sparkline = AppSpacing.s28;
+
+  /// Inline sparkline in metric rows where 28px is too tight.
+  static const double sparklineLg = AppSpacing.s32;
+
+  /// Compact card chart / chart-shaped loading state.
+  static const double compact = 140;
+
   /// Mini sparkline in dashboard cards.
   static const double mini = 132;
 
   /// Standard chart in detail pages.
   static const double standard = 160;
 
+  /// Medium chart inside cards that need a little more vertical room.
+  static const double medium = 180;
+
+  /// Card-sized chart or chart placeholder.
+  static const double card = 200;
+
   /// Full-width chart in dedicated analytics views.
   static const double full = 220;
+
+  /// Donut chart container in allocation/detail summaries.
+  static const double allocationDonut = 230;
+}
+
+/// Canonical heights for fixed-format controls.
+class AppControlHeights {
+  const AppControlHeights._();
+
+  /// Desktop/sidebar collapse affordance height.
+  static const double sidebarToggle = AppSpacing.s40;
+
+  /// Horizontal chip/filter rail with compact pill controls.
+  static const double chipRail = AppSpacing.s40;
+
+  /// Denser horizontal chip/filter rail used under search fields.
+  static const double compactChipRail = 36;
+
+  /// Drag-hit area at the top of floating sheets.
+  static const double sheetDragHandleHitArea = AppIconSizes.lg;
+
+  /// Compact time/value picker strip inside settings sheets.
+  static const double pickerStrip = 44;
+
+  /// Compact loading placeholder that keeps cards from collapsing.
+  static const double compactLoadingState = 96;
+}
+
+/// Canonical widths for fixed-format controls and chart side panels.
+class AppControlWidths {
+  const AppControlWidths._();
+
+  /// Tablet sidebar rail width.
+  static const double tabletRail = 80;
+
+  /// AI chat sessions side panel width.
+  static const double aiSessionsPanel = 320;
+
+  /// Horizontal AI action card width.
+  static const double aiActionCard = 240;
+
+  /// Markdown ordered-list marker column.
+  static const double markdownMarker = AppIconSizes.h18;
+
+  /// Fixed label column in compact key/value diagnostic rows.
+  static const double detailLabel = 96;
+
+  /// Compact value/skeleton column in dense financial rows.
+  static const double compactValue = 80;
+
+  /// Center label column inside donut allocation charts.
+  static const double donutCenterLabel = 132;
+
+  /// Compact AI result label/value column.
+  static const double aiCompactColumn = AppSpacing.s64;
+
+  /// Key column in compact JSON/payload review rows.
+  static const double payloadKey = 104;
+
+  /// Segmented feedback control in compact proposal review cards.
+  static const double feedbackSegmented = 220;
+
+  /// Large donut chart in AI-rendered compact cards.
+  static const double aiDonut = 88;
+
+  /// Left tree-label column in AI trace waterfall rows.
+  static const double traceTreeLabel = 150;
+
+  /// Compact duration column in AI trace waterfall rows.
+  static const double traceDuration = AppSpacing.s56;
+
+  /// Key column in AI trace detail key/value rows.
+  static const double traceDetailKey = 76;
+
+  /// Fixed label column in AI runtime diagnostics rows.
+  static const double runtimeLabel = 86;
+
+  /// Short setting labels and action buttons with predictable copy length.
+  static const double settingsShortLabel = 72;
+
+  /// Compact trailing percentage/value column in slider setting rows.
+  static const double settingsShortValue = 44;
+
+  /// Narrow index column for dense tabular schedules.
+  static const double scheduleIndex = AppSpacing.s48;
+
+  /// Numeric/date columns in dense tabular schedules.
+  static const double scheduleValue = 100;
+
+  /// Side-by-side chart rail that must hold a compact circular chart.
+  static const double chartSidePanel = 232;
+
+  /// Segmented controls with short labels in desktop/tablet rows.
+  static const double segmentedCompact = 260;
+
+  /// Compact metric tile in analytical wrap layouts.
+  static const double metricTile = 148;
+
+  /// Short statistic tile in sheet summary grids.
+  static const double statsTile = 140;
+
+  /// Fixed suffix column for compact scenario summaries.
+  static const double scenarioSuffix = 110;
 }

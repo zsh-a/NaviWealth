@@ -213,9 +213,7 @@ class _ActiveEmbedderCard extends ConsumerWidget {
               if (d.sourceStats.isEmpty)
                 Text(
                   l10n.settingsAiModelsNoSources,
-                  style: context.theme.typography.xs.copyWith(
-                    color: colors.mutedForeground,
-                  ),
+                  style: context.captionStyle,
                 )
               else
                 for (final source in d.sourceStats)
@@ -260,12 +258,7 @@ class _MetricTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.s2),
-          Text(
-            label,
-            style: context.theme.typography.xs2.copyWith(
-              color: colors.mutedForeground,
-            ),
-          ),
+          Text(label, style: context.microCaptionStyle),
         ],
       ),
     );
@@ -401,13 +394,8 @@ class _RuntimeRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: 86,
-          child: Text(
-            label,
-            style: context.theme.typography.xs2.copyWith(
-              color: colors.mutedForeground,
-            ),
-          ),
+          width: AppControlWidths.runtimeLabel,
+          child: Text(label, style: context.microCaptionStyle),
         ),
         Expanded(
           child: SelectableText(
@@ -463,12 +451,7 @@ class _Footnote extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
-      child: Text(
-        l10n.settingsAiModelsFootnote,
-        style: context.theme.typography.xs.copyWith(
-          color: context.theme.colors.mutedForeground,
-        ),
-      ),
+      child: Text(l10n.settingsAiModelsFootnote, style: context.captionStyle),
     );
   }
 }
@@ -504,12 +487,7 @@ class _BundleCard extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.s2),
-                    Text(
-                      bundle.description,
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
+                    Text(bundle.description, style: context.captionStyle),
                   ],
                 ),
               ),
@@ -693,9 +671,7 @@ class _FileRow extends StatelessWidget {
             Text(
               '${_formatBytes(file.bytesDownloaded)}'
               '${file.file.sizeBytes != null ? ' / ${_formatBytes(file.file.sizeBytes!)}' : ''}',
-              style: context.theme.typography.xs2.copyWith(
-                color: colors.mutedForeground,
-              ),
+              style: context.microCaptionStyle,
             ),
           ],
           if (file.status == ModelFileStatus.failed && file.error != null) ...[
@@ -722,8 +698,8 @@ class _FileRow extends StatelessWidget {
         color: colors.mutedForeground,
       ),
       ModelFileStatus.downloading => const SizedBox(
-        width: 12,
-        height: 12,
+        width: AppSpacing.s12,
+        height: AppSpacing.s12,
         child: FCircularProgress(),
       ),
       ModelFileStatus.installed => Icon(

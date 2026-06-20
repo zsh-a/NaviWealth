@@ -22,22 +22,29 @@ class AiContextSummaryHeader extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final summary = builder(l10n);
     if (summary.isEmpty) return const SizedBox.shrink();
-    final colors = context.theme.colors;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s12, AppSpacing.s16, AppSpacing.s4),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s12,
+        AppSpacing.s16,
+        AppSpacing.s4,
+      ),
       child: SoftCard(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.s16, AppSpacing.s14, AppSpacing.s16, AppSpacing.s14),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s16,
+          AppSpacing.s14,
+          AppSpacing.s16,
+          AppSpacing.s14,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               l10n.aiContextSummaryThisMonth.toUpperCase(),
-              style: context.theme.typography.xs2.copyWith(
-                color: colors.mutedForeground,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.6,
+              style: context.microLabelStyle.copyWith(
+                color: context.theme.colors.mutedForeground,
               ),
             ),
             const SizedBox(height: AppSpacing.s8),
@@ -71,7 +78,11 @@ class _InfoLine extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: AppSpacing.s2),
-          child: Icon(fact.icon, size: AppIconSizes.xs, color: _toneColor(fact.tone, colors)),
+          child: Icon(
+            fact.icon,
+            size: AppIconSizes.xs,
+            color: _toneColor(fact.tone, colors),
+          ),
         ),
         const SizedBox(width: AppSpacing.s8),
         Expanded(

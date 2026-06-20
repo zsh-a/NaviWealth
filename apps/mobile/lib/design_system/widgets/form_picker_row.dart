@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
+import '../tokens/text_style_presets.dart';
 
 /// Form row for values chosen from a picker instead of typed directly.
 ///
@@ -70,12 +71,7 @@ class _FormPickerRowState extends State<FormPickerRow> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.label,
-                        style: context.theme.typography.xs.copyWith(
-                          color: colors.mutedForeground,
-                        ),
-                      ),
+                      Text(widget.label, style: context.captionStyle),
                       const SizedBox(height: AppSpacing.s2),
                       Text(
                         widget.value,

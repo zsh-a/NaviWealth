@@ -18,7 +18,7 @@ class AppDivider extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: Container(
-        height: 1,
+        height: AppStroke.hairline,
         color: context.theme.colors.foreground.withValues(
           alpha: AppOpacity.whisper,
         ),

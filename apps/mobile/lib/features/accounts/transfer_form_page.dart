@@ -345,9 +345,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                     fromCcy: fromCurrency,
                     toCcy: toCurrency,
                   ),
-                  style: context.theme.typography.xs2.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: context.microCaptionStyle,
                 ),
               ),
           ],

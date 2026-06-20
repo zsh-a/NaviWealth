@@ -76,9 +76,8 @@ class EntryKindIndicator extends StatelessWidget {
                 const SizedBox(width: AppSpacing.s4),
                 Text(
                   label,
-                  style: context.theme.typography.xs2.copyWith(
+                  style: context.microLabelStyle.copyWith(
                     color: visuals.foreground,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],

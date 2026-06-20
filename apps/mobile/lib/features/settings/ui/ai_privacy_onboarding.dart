@@ -97,9 +97,7 @@ class _AiPrivacyOnboardingSheet extends ConsumerWidget {
             Expanded(
               child: Text(
                 l10n.aiPrivacyOnboardingBody,
-                style: context.theme.typography.sm.copyWith(
-                  color: colors.mutedForeground,
-                ),
+                style: context.bodyCaptionStyle,
               ),
             ),
           ],
@@ -172,7 +170,6 @@ class _OnboardingChoiceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final isSelected = mode == selected;
     return SoftCard(
       onPress: () => onSelect(mode),
@@ -196,12 +193,7 @@ class _OnboardingChoiceTile extends StatelessWidget {
               children: <Widget>[
                 Text(label, style: context.labelStyle),
                 const SizedBox(height: AppSpacing.s2),
-                Text(
-                  description,
-                  style: context.theme.typography.xs.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                ),
+                Text(description, style: context.captionStyle),
               ],
             ),
           ),

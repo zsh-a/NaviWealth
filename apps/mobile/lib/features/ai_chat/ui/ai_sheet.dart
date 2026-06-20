@@ -290,7 +290,10 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
               decoration: BoxDecoration(
                 color: colors.background,
                 borderRadius: BorderRadius.circular(AppRadius.xl),
-                border: Border.all(color: colors.border, width: 1),
+                border: Border.all(
+                  color: colors.border,
+                  width: AppStroke.hairline,
+                ),
                 boxShadow: AppShadow.desktopSheet,
               ),
               child: Stack(
@@ -308,7 +311,7 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
                         child: MouseRegion(
                           cursor: SystemMouseCursors.move,
                           child: SizedBox(
-                            height: 24,
+                            height: AppControlHeights.sheetDragHandleHitArea,
                             child: AppSheetDragHandle(colors: colors),
                           ),
                         ),
@@ -332,8 +335,8 @@ class _DesktopSheetOverlayState extends ConsumerState<_DesktopSheetOverlay> {
                       child: MouseRegion(
                         cursor: SystemMouseCursors.resizeDownRight,
                         child: SizedBox(
-                          width: 22,
-                          height: 22,
+                          width: AppIconSizes.mlg,
+                          height: AppIconSizes.mlg,
                           child: CustomPaint(
                             painter: _ResizeGripPainter(
                               color: colors.mutedForeground.withValues(
@@ -367,7 +370,7 @@ class _ResizeGripPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 1.5
+      ..strokeWidth = AppStroke.medium
       ..strokeCap = StrokeCap.round;
     final w = size.width;
     final h = size.height;
@@ -687,9 +690,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
                       padding: const EdgeInsets.all(AppSpacing.s24),
                       child: Text(
                         AppLocalizations.of(context).aiChatSheetEmpty,
-                        style: context.theme.typography.sm.copyWith(
-                          color: context.theme.colors.mutedForeground,
-                        ),
+                        style: context.bodyCaptionStyle,
                         textAlign: TextAlign.center,
                       ),
                     ),

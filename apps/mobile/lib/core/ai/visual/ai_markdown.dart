@@ -189,18 +189,7 @@ class _MdHeading extends _MdBlock {
     required InlineSpan? trailing,
     required bool selectable,
   }) {
-    final baseSize = base.fontSize ?? 13;
-    final fontSize = switch (level) {
-      1 => baseSize + 3,
-      2 => baseSize + 2,
-      _ => baseSize + 1,
-    };
-    final style = base.copyWith(
-      fontSize: fontSize,
-      fontWeight: FontWeight.w600,
-      height: 1.35,
-      color: AiTone.onSurface(context),
-    );
+    final style = AiType.heading(context, base, level);
     final spans = _InlineParser.parse(text, style, context);
     if (trailing != null) spans.add(trailing);
     // Heading semantics so TalkBack / VoiceOver announce "Heading,
@@ -226,7 +215,10 @@ class _MdHr extends _MdBlock {
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-      child: Container(height: 1, color: AiTone.outline(context)),
+      child: Container(
+        height: AppStroke.hairline,
+        color: AiTone.outline(context),
+      ),
     );
   }
 }
@@ -251,7 +243,10 @@ class _MdQuote extends _MdBlock {
     return Container(
       decoration: BoxDecoration(
         border: Border(
-          left: BorderSide(color: AiTone.outline(context), width: 3),
+          left: BorderSide(
+            color: AiTone.outline(context),
+            width: AppStroke.accent,
+          ),
         ),
       ),
       padding: const EdgeInsets.only(left: AppSpacing.s8),
@@ -352,7 +347,7 @@ class _MdList extends _MdBlock {
             Padding(
               padding: const EdgeInsets.only(right: AppSpacing.s4),
               child: SizedBox(
-                width: 18,
+                width: AppControlWidths.markdownMarker,
                 child: Text(marker, style: style, textAlign: TextAlign.right),
               ),
             ),
@@ -367,7 +362,7 @@ class _MdList extends _MdBlock {
       return Padding(
         padding: const EdgeInsets.only(right: AppSpacing.s8),
         child: SizedBox(
-          width: 18,
+          width: AppControlWidths.markdownMarker,
           child: Text(item.marker!, style: style, textAlign: TextAlign.right),
         ),
       );
@@ -376,11 +371,11 @@ class _MdList extends _MdBlock {
       padding: const EdgeInsets.only(
         left: AppSpacing.s4,
         right: AppSpacing.s8,
-        top: 6,
+        top: AppSpacing.s6,
       ),
       child: Container(
-        width: 4,
-        height: 4,
+        width: AppStroke.indicator,
+        height: AppStroke.indicator,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: AiTone.muted(context),
@@ -407,7 +402,7 @@ class _TaskCheckbox extends StatelessWidget {
         color: checked ? AiTone.active(context) : Colors.transparent,
         border: Border.all(
           color: checked ? AiTone.active(context) : AiTone.outline(context),
-          width: 1.2,
+          width: AppStroke.thin,
         ),
         borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
@@ -566,10 +561,7 @@ class _MdTable extends _MdBlock {
   }) {
     final cols = header.length;
     final outline = AiTone.outline(context);
-    final headerStyle = base.copyWith(
-      fontWeight: FontWeight.w600,
-      color: AiTone.onSurface(context),
-    );
+    final headerStyle = AiType.tableHeader(context, base);
     final headerBg = AiTone.surfaceTint(
       context,
     ).withValues(alpha: AppOpacity.disabled);
@@ -619,7 +611,7 @@ class _MdTable extends _MdBlock {
     }
 
     final table = Table(
-      border: TableBorder.all(color: outline, width: 1),
+      border: TableBorder.all(color: outline, width: AppStroke.hairline),
       defaultColumnWidth: const IntrinsicColumnWidth(),
       children: [
         TableRow(
@@ -1061,7 +1053,7 @@ class _InlineParser {
         final marker = '$ch$ch';
         final end = text.indexOf(marker, i + 2);
         flush();
-        final childStyle = base.copyWith(fontWeight: FontWeight.w600);
+        final childStyle = AiType.strong(base);
         final inner = end == -1
             ? text.substring(i + 2)
             : text.substring(i + 2, end);

@@ -130,7 +130,6 @@ class _NetWorthHero extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     final formatters = context.formatters(ref);
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s20),
@@ -140,13 +139,7 @@ class _NetWorthHero extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.homeNetWorthTitle,
-            style: context.theme.typography.sm.copyWith(
-              color: colors.mutedForeground,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(l10n.homeNetWorthTitle, style: context.mutedLabelStyle),
           const SizedBox(height: AppSpacing.s8),
           MediaQuery.withClampedTextScaling(
             maxScaleFactor: 1.3,
@@ -163,9 +156,7 @@ class _NetWorthHero extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s8),
           DefaultTextStyle.merge(
-            style: context.theme.typography.xs.copyWith(
-              color: colors.mutedForeground,
-            ),
+            style: context.captionStyle,
             child: Wrap(
               spacing: AppSpacing.s6,
               children: [

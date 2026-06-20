@@ -171,9 +171,8 @@ class _MetricCard extends StatelessWidget {
         children: [
           Text(
             label,
-            style: context.theme.typography.xs.copyWith(
+            style: context.captionLabelStyle.copyWith(
               color: context.theme.colors.mutedForeground,
-              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: AppSpacing.s8),
@@ -355,12 +354,7 @@ class _TimelineSection extends ConsumerWidget {
           _SectionHeading(title: l10n.dividendCenterHistoryTimeline),
           const SizedBox(height: AppSpacing.s12),
           for (final month in snapshot.months) ...[
-            Text(
-              formatters.monthYear(month.month),
-              style: context.theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            Text(formatters.monthYear(month.month), style: context.labelStyle),
             const SizedBox(height: AppSpacing.s8),
             for (final event in month.events)
               Padding(
@@ -521,12 +515,7 @@ class _ForecastText extends StatelessWidget {
           ),
         ],
         const SizedBox(height: AppSpacing.s4),
-        Text(
-          subtitle,
-          style: context.theme.typography.xs.copyWith(
-            color: context.theme.colors.mutedForeground,
-          ),
-        ),
+        Text(subtitle, style: context.captionStyle),
       ],
     );
   }
@@ -578,21 +567,8 @@ class _SectionHeading extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(
-          child: Text(
-            title,
-            style: context.theme.typography.md.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        if (trailing != null)
-          Text(
-            trailing!,
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+        Expanded(child: Text(title, style: context.rowTitleStyle)),
+        if (trailing != null) Text(trailing!, style: context.captionStyle),
       ],
     );
   }

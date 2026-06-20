@@ -117,7 +117,8 @@ installable and diagnosable before more native runtime is added:
 
 Keep the ratchets moving down:
 
-- Remove known-failing tests rather than expanding allowlists.
+- Keep the non-golden test suite at zero failures; do not introduce failure
+  allowlists.
 - Keep boundary lint gates green.
 - Prefer contract tests for cross-language or cross-domain seams.
 

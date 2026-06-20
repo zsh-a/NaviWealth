@@ -92,6 +92,15 @@ void main() {
 
       await sub.cancel();
     });
+
+    test('get only returns the profile for the requested owner', () async {
+      await profileRepo.upsert(
+        defaultProfileForMode(OptionsStrategyMode.aggressive),
+      );
+
+      expect(await profileRepo.get('u-test'), isNotNull);
+      expect(await profileRepo.get('other-user'), isNull);
+    });
   });
 
   group('ApprovedUnderlyingsRepository', () {
@@ -148,6 +157,16 @@ void main() {
       // List queries omit the soft-deleted row.
       final active = await approvedRepo.listActive('u-test');
       expect(active, isEmpty);
+    });
+
+    test('listActive only returns rows owned by the requested user', () async {
+      await approvedRepo.add(symbol: 'AAPL', market: AssetMarket.usStock);
+
+      final ownRows = await approvedRepo.listActive('u-test');
+      final otherRows = await approvedRepo.listActive('other-user');
+
+      expect(ownRows.map((row) => row.symbol), ['AAPL']);
+      expect(otherRows, isEmpty);
     });
   });
 }

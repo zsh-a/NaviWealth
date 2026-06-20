@@ -462,7 +462,9 @@ class _ClassifyingBody extends StatelessWidget {
           ...List.generate(3, (i) {
             final widths = <double>[double.infinity, 200, 140];
             return Padding(
-              padding: EdgeInsets.only(bottom: i < 2 ? AppSpacing.s8 : 0),
+              padding: EdgeInsets.only(
+                bottom: i < 2 ? AppSpacing.s8 : AppSpacing.s0,
+              ),
               child: SkeletonBox(
                 height: 14,
                 width: widths[i],
@@ -670,9 +672,7 @@ class _SuggestionBody extends StatelessWidget {
             padding: const EdgeInsets.only(top: AppSpacing.s8),
             child: Text(
               l10n.knowledgeCaptureNotePolishOnly(suggestion.reasonZh),
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.captionStyle,
             ),
           ),
       ],
@@ -764,8 +764,7 @@ class _DiffRow extends StatelessWidget {
           ),
           child: Text(
             knowledgeExcerpt(before),
-            style: typography.sm.copyWith(
-              color: colors.mutedForeground,
+            style: context.bodyCaptionStyle.copyWith(
               decoration: TextDecoration.lineThrough,
               decorationColor: colors.mutedForeground,
             ),

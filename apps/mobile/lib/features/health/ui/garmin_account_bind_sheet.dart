@@ -151,12 +151,7 @@ class _GarminRegionPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.healthGarminRegionLabel,
-          style: context.theme.typography.xs.copyWith(
-            color: context.theme.colors.mutedForeground,
-          ),
-        ),
+        Text(l10n.healthGarminRegionLabel, style: context.captionStyle),
         const SizedBox(height: AppSpacing.s6),
         SegmentedRow<health_data.GarminRegion>(
           options: health_data.GarminRegion.values,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'accent_colors.dart';
@@ -37,18 +38,17 @@ class AppTheme {
   static ThemeData _build(Brightness brightness, bool compact) {
     final isDark = brightness == Brightness.dark;
     final f = isDark ? FColors.slateDark : FColors.slateLight;
-    // Override Slate's slate-grey primary with teal so the Material side of
-    // the tree (residual MaterialButton / Switch / etc.) reads the same
-    // brand interaction color as the forui side. See app.dart for the
-    // matching FColors.copyWith on the forui surface.
+    // Override Slate's slate-grey primary with the cyan brand accent so the
+    // Material side of the tree (residual MaterialButton / Switch / etc.)
+    // reads the same brand interaction color as the forui side. See app.dart
+    // for the matching FColors.copyWith on the forui surface.
     final accent = AccentColors.primary(brightness);
     final onAccent = AccentColors.onPrimary(brightness);
-    // Cool-white page background per fintech spec — not pure white (which
-    // reads as bare canvas) and not warm gray. Dark mode uses a deep
-    // navy-tinted background for brand consistency.
+    // Keep residual Material surfaces aligned with the FTheme background
+    // overrides in app.dart.
     final pageBackground = isDark
-        ? const Color(0xFF0A1F28)
-        : const Color(0xFFF6F9F9);
+        ? ColorPalette.navy950
+        : ColorPalette.neutralGlass;
     final scheme = ColorScheme(
       brightness: brightness,
       primary: accent,
@@ -71,7 +71,7 @@ class AppTheme {
       outlineVariant: f.border,
       inverseSurface: f.foreground,
       onInverseSurface: f.background,
-      shadow: const Color(0x33000000),
+      shadow: ColorPalette.shadowMedium,
       scrim: f.barrier,
     );
     final textTheme = TypographyTokens.textTheme().apply(

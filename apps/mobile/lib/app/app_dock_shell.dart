@@ -162,7 +162,9 @@ class _DesktopDock extends ConsumerWidget {
       width: _width,
       decoration: BoxDecoration(
         color: colors.background,
-        border: Border(right: BorderSide(color: colors.border, width: 1)),
+        border: Border(
+          right: BorderSide(color: colors.border, width: AppStroke.hairline),
+        ),
       ),
       child: SafeArea(
         right: false,
@@ -211,7 +213,7 @@ class _AskAiDockButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.full),
         border: Border.all(
           color: colors.primary.withValues(alpha: AppOpacity.muted),
-          width: 1,
+          width: AppStroke.hairline,
         ),
       ),
     );

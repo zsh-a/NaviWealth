@@ -25,6 +25,7 @@ library;
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
 import 'ai_tone.dart';
@@ -252,7 +253,9 @@ class _Connector extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: AppSpacing.s16,
-      child: Center(child: Container(width: 1.5, color: color)),
+      child: Center(
+        child: Container(width: AppStroke.medium, color: color),
+      ),
     );
   }
 }
@@ -264,10 +267,9 @@ class _StepCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final surface = Theme.of(context).colorScheme.surfaceContainerLow;
     return Container(
       decoration: BoxDecoration(
-        color: surface,
+        color: context.theme.colors.card,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
           color: AiTone.outline(context).withValues(alpha: AppOpacity.light),
@@ -277,7 +279,7 @@ class _StepCard extends StatelessWidget {
         children: [
           // Accent bar
           Container(
-            width: 3,
+            width: AppStroke.accent,
             height: 40,
             decoration: BoxDecoration(
               color: AiTone.active(context),
@@ -319,7 +321,7 @@ class _InfoCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 3,
+            width: AppStroke.accent,
             height: 36,
             decoration: BoxDecoration(
               color: AiTone.muted(context),
@@ -388,20 +390,15 @@ class _DecisionBlock extends StatelessWidget {
                   decoration: BoxDecoration(
                     border: Border.all(
                       color: AiTone.active(context),
-                      width: 1.5,
+                      width: AppStroke.medium,
                     ),
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(AppRadius.xxs),
                   ),
                 ),
               ),
               const SizedBox(width: AppSpacing.s10),
               Expanded(
-                child: Text(
-                  node.label,
-                  style: AiType.body(
-                    context,
-                  ).copyWith(fontWeight: FontWeight.w600),
-                ),
+                child: Text(node.label, style: AiType.bodyStrong(context)),
               ),
             ],
           ),
@@ -471,15 +468,13 @@ class _BranchBlock extends StatelessWidget {
             ),
             child: Text(
               label,
-              style: AiType.meta(
-                context,
-              ).copyWith(color: accent, fontWeight: FontWeight.w600),
+              style: AiType.metaStrong(context).copyWith(color: accent),
             ),
           ),
           const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: Container(
-              height: 1,
+              height: AppStroke.hairline,
               color: accent.withValues(alpha: AppOpacity.light),
             ),
           ),
@@ -499,7 +494,7 @@ class _BranchBlock extends StatelessWidget {
             height: AppSpacing.s8,
             child: Center(
               child: Container(
-                width: 1,
+                width: AppStroke.hairline,
                 color: accent.withValues(alpha: AppOpacity.light),
               ),
             ),
@@ -515,7 +510,7 @@ class _BranchBlock extends StatelessWidget {
         border: Border(
           left: BorderSide(
             color: accent.withValues(alpha: AppOpacity.muted),
-            width: 2,
+            width: AppStroke.branch,
           ),
         ),
       ),
@@ -534,7 +529,7 @@ class _BranchBlock extends StatelessWidget {
         vertical: AppSpacing.s6,
       ),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        color: context.theme.colors.card,
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Text(node.label, style: AiType.body(context)),

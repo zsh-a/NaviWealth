@@ -200,6 +200,11 @@ class TypographyTokens {
     height: 1.3,
     weight: FontWeight.w500,
   );
+  static final TextStyle numericCaptionStrong = _t(
+    12,
+    height: 1.3,
+    weight: FontWeight.w600,
+  );
 
   /// §5.10.4 — true monospace numeral style for surfaces that explicitly
   /// want a "data-grid" read (structured answer tables in the command

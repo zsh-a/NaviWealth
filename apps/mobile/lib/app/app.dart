@@ -64,7 +64,12 @@ class NaviWealthApp extends ConsumerWidget {
         // and the current platform. Forui ships separate touch/desktop
         // variants of each palette; route iOS / Android to .touch and
         // everything else to .desktop.
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final platformBrightness = MediaQuery.platformBrightnessOf(ctx);
+        final isDark = switch (themeMode) {
+          ThemeMode.dark => true,
+          ThemeMode.light => false,
+          ThemeMode.system => platformBrightness == Brightness.dark,
+        };
         final platform = isDark ? FThemes.slate.dark : FThemes.slate.light;
         final isTouch =
             !kIsWeb &&

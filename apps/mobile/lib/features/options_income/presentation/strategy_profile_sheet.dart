@@ -208,12 +208,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-      child: Text(
-        text,
-        style: context.theme.typography.sm.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+      child: Text(text, style: context.labelStyle),
     );
   }
 }

@@ -112,18 +112,14 @@ class _DetailBody extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.s4),
                   Text(
                     formatters.date(asset.lastValuationAt!),
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                    style: context.captionStyle,
                   ),
                 ],
                 if (estimatedToday != null) ...[
                   const SizedBox(height: AppSpacing.s8),
                   Text(
                     l10n.physicalAssetDetailEstimatedToday(estimatedToday),
-                    style: context.theme.typography.sm.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                    style: context.bodyCaptionStyle,
                   ),
                 ],
                 const SizedBox(height: AppSpacing.s16),
@@ -272,12 +268,7 @@ class _FactsCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: Text(
-                        label,
-                        style: context.theme.typography.sm.copyWith(
-                          color: context.theme.colors.mutedForeground,
-                        ),
-                      ),
+                      child: Text(label, style: context.bodyCaptionStyle),
                     ),
                     Expanded(
                       flex: 2,
@@ -331,12 +322,7 @@ class _HistoryRow extends StatelessWidget {
                   style: context.theme.typography.sm,
                 ),
                 if (point.note != null && point.note!.isNotEmpty)
-                  Text(
-                    point.note!,
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
-                  ),
+                  Text(point.note!, style: context.captionStyle),
               ],
             ),
           ),

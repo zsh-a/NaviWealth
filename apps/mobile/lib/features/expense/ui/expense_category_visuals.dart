@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../shared/account_color.dart';
 
 /// UI-side visual lookup for expense [Account]s.
 ///
@@ -62,7 +63,7 @@ const Map<String, Color> _kExpenseCategoryAccentByIcon = <String, Color>{
   'home': ExpenseCategoryColors.indigo,
   'apartment': ExpenseCategoryColors.slate,
   'bolt': ExpenseCategoryColors.yellow,
-  'chair': ExpenseCategoryColors.teal,
+  'chair': ExpenseCategoryColors.cyanBrand,
   'sports_esports': ExpenseCategoryColors.purple,
   'movie': ExpenseCategoryColors.purple,
   'medical_services': ExpenseCategoryColors.red,
@@ -96,13 +97,7 @@ extension ExpenseAccountVisuals on Account {
   /// or `#AARRGGBB`; an unparseable value returns `null` rather than
   /// surfacing an exception mid-list.
   Color? get accentColor {
-    final raw = color;
-    if (raw == null || raw.isEmpty) return null;
-    final hex = raw.startsWith('#') ? raw.substring(1) : raw;
-    if (hex.length != 6 && hex.length != 8) return null;
-    final v = int.tryParse(hex, radix: 16);
-    if (v == null) return null;
-    return Color(hex.length == 6 ? 0xFF000000 | v : v);
+    return parseAccountColor(color);
   }
 
   /// Display accent for expense surfaces.

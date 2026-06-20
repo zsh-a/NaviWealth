@@ -159,9 +159,7 @@ class _MetaChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isNumeric = RegExp(r'\d').hasMatch(label);
-    final base = context.theme.typography.xs2;
-    final textStyle = base.copyWith(
-      color: context.theme.colors.mutedForeground,
+    final textStyle = context.microCaptionStyle.copyWith(
       fontFeatures: isNumeric ? TypographyTokens.tabularFigures : null,
     );
     return DecoratedBox(

@@ -171,8 +171,7 @@ class _AllocationDetailBodyState extends State<_AllocationDetailBody> {
       mainAxisSize: widget.expandList ? MainAxisSize.max : MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (widget.showHandle)
-          AppSheetDragHandle(colors: context.theme.colors),
+        if (widget.showHandle) AppSheetDragHandle(colors: context.theme.colors),
         if (widget.showTitle)
           Padding(
             padding: const EdgeInsets.fromLTRB(
@@ -305,10 +304,12 @@ class _DimensionButton extends StatelessWidget {
               child: Text(
                 label,
                 overflow: TextOverflow.ellipsis,
-                style: context.theme.typography.xs.copyWith(
-                  color: color,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                ),
+                style: selected
+                    ? context.captionLabelStyle.copyWith(color: color)
+                    : context.theme.typography.xs.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w500,
+                      ),
               ),
             ),
           ],
@@ -332,7 +333,7 @@ class _AllocationDonut extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 230,
+      height: AppChartHeights.allocationDonut,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -349,7 +350,7 @@ class _AllocationDonut extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 132,
+            width: AppControlWidths.donutCenterLabel,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -363,9 +364,7 @@ class _AllocationDonut extends StatelessWidget {
                 ),
                 Text(
                   AppLocalizations.of(context).assetsAppBarTitle,
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: context.captionStyle,
                 ),
               ],
             ),
@@ -478,9 +477,7 @@ class _BreakdownRow extends StatelessWidget {
                     group.label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: context.labelStyle,
                   ),
                 ),
                 Column(
@@ -490,15 +487,11 @@ class _BreakdownRow extends StatelessWidget {
                       amount: group.value,
                       currencyCode: baseCurrency,
                       compact: true,
-                      style: context.theme.typography.sm.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: context.labelStyle,
                     ),
                     Text(
                       '${pct.toStringAsFixed(pct >= 10 ? 0 : 1)}%',
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
+                      style: context.captionStyle,
                     ),
                   ],
                 ),
@@ -525,9 +518,8 @@ class _DrillDownList extends StatelessWidget {
       children: [
         Text(
           l10n.dashboardDrillDownItemCount(group.items.length),
-          style: context.theme.typography.xs.copyWith(
+          style: context.captionLabelStyle.copyWith(
             color: context.theme.colors.mutedForeground,
-            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: AppSpacing.s8),

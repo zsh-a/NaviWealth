@@ -186,9 +186,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               _mode == _AuthMode.signIn
                                   ? l10n.authUpgradeConnectHint
                                   : l10n.authUpgradeRegisterHint,
-                              style: context.theme.typography.sm.copyWith(
-                                color: context.theme.colors.mutedForeground,
-                              ),
+                              style: context.bodyCaptionStyle,
                               textAlign: TextAlign.center,
                             ),
                           ],

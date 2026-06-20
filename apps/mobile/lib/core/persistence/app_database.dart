@@ -277,6 +277,7 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(knowledgeConcepts);
         await m.createTable(knowledgeExperiments);
         for (final stmt in knowledgeIndexStmts) {
+          if (stmt.contains('knowledge_routines')) continue;
           await customStatement(stmt);
         }
       }
@@ -309,11 +310,17 @@ class AppDatabase extends _$AppDatabase {
       // soft-deleted duplicate's content went after `propose_merge`.
       // Additive nullable columns — no rewrite of existing rows.
       if (from < 22) {
-        await customStatement(
-          'ALTER TABLE knowledge_notes ADD COLUMN merged_into_id TEXT',
+        await _addColumnIfMissing(
+          this,
+          table: 'knowledge_notes',
+          column: 'merged_into_id',
+          definition: 'TEXT',
         );
-        await customStatement(
-          'ALTER TABLE knowledge_concepts ADD COLUMN merged_into_id TEXT',
+        await _addColumnIfMissing(
+          this,
+          table: 'knowledge_concepts',
+          column: 'merged_into_id',
+          definition: 'TEXT',
         );
       }
       // v22 → v23: extend the dedupe pointer to the remaining merge-able
@@ -321,17 +328,29 @@ class AppDatabase extends _$AppDatabase {
       // also re-point inbound references; Experiment merges only tombstone.
       // Additive nullable columns — no rewrite of existing rows.
       if (from < 23) {
-        await customStatement(
-          'ALTER TABLE knowledge_principles ADD COLUMN merged_into_id TEXT',
+        await _addColumnIfMissing(
+          this,
+          table: 'knowledge_principles',
+          column: 'merged_into_id',
+          definition: 'TEXT',
         );
-        await customStatement(
-          'ALTER TABLE knowledge_assumptions ADD COLUMN merged_into_id TEXT',
+        await _addColumnIfMissing(
+          this,
+          table: 'knowledge_assumptions',
+          column: 'merged_into_id',
+          definition: 'TEXT',
         );
-        await customStatement(
-          'ALTER TABLE knowledge_decisions ADD COLUMN merged_into_id TEXT',
+        await _addColumnIfMissing(
+          this,
+          table: 'knowledge_decisions',
+          column: 'merged_into_id',
+          definition: 'TEXT',
         );
-        await customStatement(
-          'ALTER TABLE knowledge_experiments ADD COLUMN merged_into_id TEXT',
+        await _addColumnIfMissing(
+          this,
+          table: 'knowledge_experiments',
+          column: 'merged_into_id',
+          definition: 'TEXT',
         );
       }
       // v23 -> v24: Income Planner journal rows can optionally carry the
@@ -378,6 +397,18 @@ class AppDatabase extends _$AppDatabase {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+}
+
+Future<void> _addColumnIfMissing(
+  AppDatabase db, {
+  required String table,
+  required String column,
+  required String definition,
+}) async {
+  final columns = await db.customSelect('PRAGMA table_info($table)').get();
+  final exists = columns.any((row) => row.read<String>('name') == column);
+  if (exists) return;
+  await db.customStatement('ALTER TABLE $table ADD COLUMN $column $definition');
 }
 
 Future<void> _createChatTables(AppDatabase db) async {

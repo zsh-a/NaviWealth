@@ -678,9 +678,7 @@ class _AssumptionTargetPicker extends ConsumerWidget {
                     AppLocalizations.of(
                       context,
                     ).knowledgeExperimentTargetAssumptionLabel,
-                    style: context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: context.labelStyle,
                   ),
                   const SizedBox(height: AppSpacing.s4),
                   for (final a in all)

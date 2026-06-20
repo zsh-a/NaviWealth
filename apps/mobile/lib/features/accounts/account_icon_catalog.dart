@@ -125,6 +125,6 @@ const List<String> kAccountColorPalette = [
   '#F59E0B', // amber — Trading / liability accent
   '#8B5CF6', // violet — Investments
   '#EC4899', // pink — Lifestyle
-  '#14B8A6', // teal — Savings
+  '#3BC6D9', // cyan brand — Savings
   '#6B7280', // slate — Generic
 ];

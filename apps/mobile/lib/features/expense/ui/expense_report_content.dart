@@ -311,9 +311,7 @@ class _SummaryCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.s4),
             Text(
               l10n.expenseReportBaseCurrency(report.baseCurrency, monthSpan),
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.captionStyle,
             ),
           ],
         ),
@@ -337,9 +335,7 @@ class _Metric extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: context.theme.typography.xs.copyWith(
-            color: context.theme.colors.mutedForeground,
-          ),
+          style: context.captionStyle,
         ),
         Text(
           value,

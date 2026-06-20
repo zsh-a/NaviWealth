@@ -53,12 +53,7 @@ class _SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.settingsPerfRecentFrames,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          Text(l10n.settingsPerfRecentFrames, style: context.bodyCaptionStyle),
           const SizedBox(height: AppSpacing.s8),
           Text(
             stats.frameCount.toString(),
@@ -95,12 +90,7 @@ class _TimingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.settingsPerfTimingTitle,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          Text(l10n.settingsPerfTimingTitle, style: context.bodyCaptionStyle),
           const SizedBox(height: AppSpacing.s8),
           _MetricRow(
             label: l10n.settingsPerfTotalP50,

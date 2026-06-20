@@ -111,19 +111,12 @@ class _StartState extends ConsumerWidget {
               color: colors.mutedForeground,
             ),
             const SizedBox(height: AppSpacing.s16),
-            Text(
-              l10n.incomePlannerStartTitle,
-              style: context.theme.typography.lg.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            Text(l10n.incomePlannerStartTitle, style: context.titleLabelStyle),
             const SizedBox(height: AppSpacing.s8),
             Text(
               l10n.incomePlannerStartBody,
               textAlign: TextAlign.center,
-              style: context.theme.typography.sm.copyWith(
-                color: colors.mutedForeground,
-              ),
+              style: context.bodyCaptionStyle,
             ),
             const SizedBox(height: AppSpacing.s20),
             FButton(
@@ -245,15 +238,13 @@ class _OpportunitiesHeader extends StatelessWidget {
             children: [
               Text(
                 l10n.incomePlannerOpportunitiesSectionTitle,
-                style: context.theme.typography.lg.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: context.titleLabelStyle,
               ),
               if (cacheState != null) ...[
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   _formatLastScan(l10n, cacheState!),
-                  style: context.theme.typography.xs.copyWith(
+                  style: context.captionStyle.copyWith(
                     color: cacheState!.isStale
                         ? context.theme.colors.destructive
                         : context.theme.colors.mutedForeground,
@@ -380,9 +371,7 @@ class _OpportunityCard extends StatelessWidget {
                 const Spacer(),
                 Text(
                   '${contract.underlying} ${contract.dte}DTE',
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.labelStyle,
                 ),
               ],
             ),
@@ -392,8 +381,7 @@ class _OpportunityCard extends StatelessWidget {
             if (opportunity.explanation.whyGood.isNotEmpty) ...[
               Text(
                 l10n.incomePlannerDetailWhyGood,
-                style: context.theme.typography.xs.copyWith(
-                  fontWeight: FontWeight.w600,
+                style: context.captionLabelStyle.copyWith(
                   color: colors.mutedForeground,
                 ),
               ),
@@ -405,8 +393,7 @@ class _OpportunityCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.s8),
               Text(
                 l10n.incomePlannerDetailWhyRisky,
-                style: context.theme.typography.xs.copyWith(
-                  fontWeight: FontWeight.w600,
+                style: context.captionLabelStyle.copyWith(
                   color: colors.destructive,
                 ),
               ),
@@ -440,28 +427,16 @@ class _MetricsRow extends StatelessWidget {
             amount: contract.strike.amount.toDouble(),
             currencyCode: contract.strike.currency,
             symbolStyle: MoneySymbolStyle.isoCode,
-            style: context.theme.typography.sm.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: context.labelStyle,
           ),
         ),
         _Metric(
           label: l10n.incomePlannerMetricAnnualized,
-          value: Text(
-            _pct(metrics.annualizedYield),
-            style: context.theme.typography.sm.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          value: Text(_pct(metrics.annualizedYield), style: context.labelStyle),
         ),
         _Metric(
           label: l10n.incomePlannerMetricMargin,
-          value: Text(
-            _pct(metrics.marginOfSafety),
-            style: context.theme.typography.sm.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          value: Text(_pct(metrics.marginOfSafety), style: context.labelStyle),
         ),
         _Metric(
           label: l10n.incomePlannerMetricCash,
@@ -469,9 +444,7 @@ class _MetricsRow extends StatelessWidget {
             amount: metrics.cashRequired.amount.toDouble(),
             currencyCode: metrics.cashRequired.currency,
             symbolStyle: MoneySymbolStyle.isoCode,
-            style: context.theme.typography.sm.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: context.labelStyle,
           ),
         ),
       ],
@@ -498,20 +471,9 @@ class _ScanEmptyResultCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l10n.incomePlannerNoMatchesTitle,
-              style: context.theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            Text(l10n.incomePlannerNoMatchesTitle, style: context.labelStyle),
             const SizedBox(height: AppSpacing.s4),
-            Text(
-              body,
-              style: context.theme.typography.sm.copyWith(
-                color: colors.mutedForeground,
-                height: 1.45,
-              ),
-            ),
+            Text(body, style: context.bodyCaptionStyle.copyWith(height: 1.45)),
             const SizedBox(height: AppSpacing.s8),
             Text(
               l10n.incomePlannerScanSummary(
@@ -519,9 +481,7 @@ class _ScanEmptyResultCard extends StatelessWidget {
                 result.rejected.length,
                 result.errors.length,
               ),
-              style: context.theme.typography.xs.copyWith(
-                color: colors.mutedForeground,
-              ),
+              style: context.captionStyle,
             ),
             if (result.errors.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.s4),
@@ -568,16 +528,10 @@ class _Metric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: context.theme.typography.xs.copyWith(
-            color: colors.mutedForeground,
-          ),
-        ),
+        Text(label, style: context.captionStyle),
         const SizedBox(height: AppSpacing.s2),
         value,
       ],
@@ -622,16 +576,12 @@ class _EmptyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Text(
           body,
-          style: context.theme.typography.sm.copyWith(
-            color: colors.mutedForeground,
-            height: 1.45,
-          ),
+          style: context.bodyCaptionStyle.copyWith(height: 1.45),
         ),
       ),
     );
@@ -655,10 +605,7 @@ class _ErrorCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: context.theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colors.destructive,
-              ),
+              style: context.labelStyle.copyWith(color: colors.destructive),
             ),
             const SizedBox(height: AppSpacing.s4),
             Text(
@@ -681,26 +628,17 @@ class _ApprovedEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     return SoftCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l10n.incomePlannerNoApprovedTitle,
-              style: context.theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            Text(l10n.incomePlannerNoApprovedTitle, style: context.labelStyle),
             const SizedBox(height: AppSpacing.s4),
             Text(
               l10n.incomePlannerNoApprovedBody,
-              style: context.theme.typography.xs.copyWith(
-                color: colors.mutedForeground,
-                height: 1.4,
-              ),
+              style: context.captionStyle.copyWith(height: 1.4),
             ),
           ],
         ),
@@ -736,7 +674,6 @@ class _ApprovedTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     return SoftCard(
       onPress: () => showApprovedUnderlyingSheet(context, existing: item),
       borderRadius: AppRadius.md,
@@ -751,19 +688,9 @@ class _ApprovedTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    item.displaySymbol,
-                    style: context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  Text(item.displaySymbol, style: context.labelStyle),
                   const SizedBox(height: AppSpacing.s2),
-                  Text(
-                    item.market.wire,
-                    style: context.theme.typography.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                  ),
+                  Text(item.market.wire, style: context.captionStyle),
                 ],
               ),
             ),
@@ -807,7 +734,7 @@ class _StrategyChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: context.theme.typography.xs.copyWith(
+          style: context.captionStyle.copyWith(
             color: enabled ? colors.primary : colors.mutedForeground,
             fontWeight: FontWeight.w500,
           ),
@@ -890,10 +817,7 @@ class _TradeJournalSection extends ConsumerWidget {
                                     children: [
                                       Text(
                                         '${entry.symbol} · ${entry.optionSymbol}',
-                                        style: context.theme.typography.sm
-                                            .copyWith(
-                                              fontWeight: FontWeight.w600,
-                                            ),
+                                        style: context.labelStyle,
                                       ),
                                       const SizedBox(height: AppSpacing.s2),
                                       Text(
@@ -901,18 +825,14 @@ class _TradeJournalSection extends ConsumerWidget {
                                           l10n,
                                           entry.status,
                                         ),
-                                        style: context.theme.typography.xs
-                                            .copyWith(
-                                              color: colors.mutedForeground,
-                                            ),
+                                        style: context.captionStyle,
                                       ),
                                     ],
                                   ),
                                 ),
                                 Text(
                                   '+${entry.entryCredit}',
-                                  style: context.theme.typography.sm.copyWith(
-                                    fontWeight: FontWeight.w600,
+                                  style: context.labelStyle.copyWith(
                                     color: colors.primary,
                                   ),
                                   maxLines: 1,

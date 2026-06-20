@@ -122,17 +122,13 @@ class _PostingRow extends StatelessWidget {
               if (cost != null)
                 Text(
                   _costLabel(cost),
-                  style: context.theme.typography.xs2.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: context.microCaptionStyle,
                   overflow: TextOverflow.ellipsis,
                 ),
               if (price != null)
                 Text(
                   '@ ${price.perUnit} ${price.currency}',
-                  style: context.theme.typography.xs2.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: context.microCaptionStyle,
                 ),
             ],
           ),

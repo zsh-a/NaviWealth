@@ -454,7 +454,6 @@ class _NoAccountsHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     final semantic = SemanticColors.of(context);
     return SoftCard(
       padding: const EdgeInsets.fromLTRB(
@@ -488,17 +487,12 @@ class _NoAccountsHint extends StatelessWidget {
               children: [
                 Text(
                   l10n.expenseFormNoAccountsTitle,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.labelStyle,
                 ),
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   l10n.expenseFormNoAccountsBody,
-                  style: context.theme.typography.xs.copyWith(
-                    color: colors.mutedForeground,
-                    height: 1.4,
-                  ),
+                  style: context.captionStyle.copyWith(height: 1.4),
                 ),
                 const SizedBox(height: AppSpacing.s10),
                 FButton(

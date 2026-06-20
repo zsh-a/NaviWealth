@@ -3,14 +3,28 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-# These web font files are generated artifacts in normal builds. The semantic
-# surrogate tests do not rasterize real glyphs, but Flutter's asset bundle still
-# needs readable files for the registered paths.
-mkdir -p assets/fonts
-touch assets/fonts/app-cn-base.woff2 assets/fonts/app-cn-ext.woff2
-touch assets/fonts/inter-regular.woff2 assets/fonts/inter-medium.woff2 \
-  assets/fonts/inter-semibold.woff2 assets/fonts/inter-bold.woff2 \
+required_fonts=(
+  assets/fonts/app-cn-base.woff2
+  assets/fonts/app-cn-ext.woff2
+  assets/fonts/inter-regular.woff2
+  assets/fonts/inter-medium.woff2
+  assets/fonts/inter-semibold.woff2
+  assets/fonts/inter-bold.woff2
   assets/fonts/outfit-bold.woff2
+)
+missing_fonts=()
+for font in "${required_fonts[@]}"; do
+  if [[ ! -s "$font" ]]; then
+    missing_fonts+=("$font")
+  fi
+done
+
+if (( ${#missing_fonts[@]} > 0 )); then
+  printf 'Missing or empty font assets required for semantic golden artifacts:\n' >&2
+  printf '  %s\n' "${missing_fonts[@]}" >&2
+  printf 'Run apps/mobile/tool/build-latin-fonts.sh and apps/mobile/tool/build-cn-fonts.sh first.\n' >&2
+  exit 1
+fi
 
 export AI_SEMANTIC_SCREENSHOT_DIR="${AI_SEMANTIC_SCREENSHOT_DIR:-/tmp/ai-semantic-surfaces}"
 mkdir -p "$AI_SEMANTIC_SCREENSHOT_DIR"

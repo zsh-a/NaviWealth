@@ -20,6 +20,8 @@ import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:naviwealth/core/ai/visual/visual.dart';
 import 'package:naviwealth/features/ai_chat/ui/tool_invocation_renderers.dart';
 
+import '_golden_setup.dart';
+
 const Size _surface = Size(360, 480);
 
 Future<void> _pumpComponent(
@@ -29,6 +31,7 @@ Future<void> _pumpComponent(
 }) async {
   // No-op theme — system default light. We test our own Ai* tokens,
   // not the page theme chrome.
+  await loadGoldenFonts();
   await tester.binding.setSurfaceSize(_surface);
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
@@ -46,7 +49,8 @@ Future<void> _pumpComponent(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 100));
   await screenMatchesGolden(tester, name);
 }
 

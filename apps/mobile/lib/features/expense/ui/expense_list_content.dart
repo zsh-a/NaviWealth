@@ -73,7 +73,7 @@ class ExpenseFiltersBar extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s8),
           SizedBox(
-            height: 36,
+            height: AppControlHeights.compactChipRail,
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
@@ -242,9 +242,7 @@ class ExpenseGroupedList extends StatelessWidget {
                   child: MoneyText(
                     amount: group.total.toDouble(),
                     compact: true,
-                    style: context.theme.typography.sm.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                    style: context.bodyCaptionStyle,
                   ),
                 ),
               ],
@@ -299,9 +297,7 @@ class ExpenseSelectionToolbar extends StatelessWidget {
           children: [
             Text(
               l10n.expenseListSelectedCount(selectedCount),
-              style: context.theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: context.labelStyle,
             ),
             const SizedBox(height: AppSpacing.s8),
             Wrap(
@@ -433,18 +429,14 @@ class _ExpenseRow extends StatelessWidget {
                           children: [
                             Text(
                               title,
-                              style: context.theme.typography.sm.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: context.labelStyle,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: AppSpacing.s2),
                             Text(
                               subtitle,
-                              style: context.theme.typography.xs.copyWith(
-                                color: context.theme.colors.mutedForeground,
-                              ),
+                              style: context.captionStyle,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -470,7 +462,7 @@ class _ExpenseRow extends StatelessWidget {
           Padding(
             padding: const EdgeInsetsDirectional.only(start: AppSpacing.s64),
             child: SizedBox(
-              height: 1,
+              height: AppSpacing.hairline,
               child: ColoredBox(
                 color: context.theme.colors.border.withValues(
                   alpha: AppOpacity.faint,

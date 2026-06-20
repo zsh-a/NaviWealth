@@ -102,28 +102,21 @@ class _AlertRow extends ConsumerWidget {
           dimensionLabel,
           formatters.percent(alert.threshold, decimalDigits: 0),
         ),
-        style: context.theme.typography.xs.copyWith(
-          color: context.theme.colors.mutedForeground,
-        ),
+        style: context.captionStyle,
       ),
       suffix: SizedBox(
-        width: 96,
+        width: AppControlWidths.detailLabel,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               formatters.percent(alert.weight, decimalDigits: 1),
-              style: context.theme.typography.sm.copyWith(
-                color: severityColor,
-                fontWeight: FontWeight.w600,
-              ),
+              style: context.labelStyle.copyWith(color: severityColor),
             ),
             Text(
               formatters.currency(alert.valueInBase, code: _baseCurrency(ref)),
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.captionStyle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

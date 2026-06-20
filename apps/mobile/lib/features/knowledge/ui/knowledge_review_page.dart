@@ -746,9 +746,8 @@ class _SwipeReviewAction extends StatelessWidget {
           children: [
             Text(
               label,
-              style: context.theme.typography.sm.copyWith(
+              style: context.labelStyle.copyWith(
                 color: colors.primaryForeground,
-                fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(width: AppSpacing.s8),

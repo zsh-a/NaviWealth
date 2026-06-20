@@ -6,6 +6,8 @@
 // an account, and see it return to the live account list.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/features/finance/data/domain/enums.dart';
+import 'package:naviwealth/features/finance/data/repositories/account_repository.dart';
 
 import 'support/app_harness.dart';
 import 'support/page_objects.dart';
@@ -43,6 +45,45 @@ void main() {
         await form.save();
 
         accounts.expectAccountVisible('Flow Checking');
+        await closeApp(tester);
+      },
+      tags: 'flow',
+    );
+
+    testWidgets(
+      'user edits an existing account from the Wealth accounts surface',
+      (tester) async {
+        final accountRepo = AccountRepository(
+          db: data.db,
+          outbox: data.outbox,
+          stamper: data.stamper,
+        );
+        final account = await accountRepo.create(
+          type: AccountCategory.bank,
+          name: 'Flow Checking',
+          currency: 'CNY',
+        );
+
+        await bootApp(tester, liveData: data);
+
+        final shell = AppShell(tester)..expectMounted();
+        await shell.openTab('Wealth');
+
+        final wealth = WealthPage(tester);
+        await wealth.openAccounts();
+
+        final accounts = AccountsPageObject(tester);
+        await accounts.openAccount('Flow Checking');
+
+        final form = AccountFormObject(tester);
+        form.expectEditMode('Flow Checking');
+        await form.enterName('Flow Checking Renamed');
+        await form.save();
+
+        accounts.expectAccountVisible('Flow Checking Renamed');
+
+        final saved = await accountRepo.findById(account.id);
+        expect(saved?.name, 'Flow Checking Renamed');
         await closeApp(tester);
       },
       tags: 'flow',

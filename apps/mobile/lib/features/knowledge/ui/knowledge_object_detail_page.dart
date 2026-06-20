@@ -441,14 +441,7 @@ List<Widget> _noteSections(BuildContext context, KnowledgeNote n) {
       const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
         title: l10n.knowledgeDetailSourceTitle,
-        children: [
-          Text(
-            n.sourceUrl!,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
-        ],
+        children: [Text(n.sourceUrl!, style: context.bodyCaptionStyle)],
       ),
     ],
   ];
@@ -929,9 +922,12 @@ class _RelatedObjectLink extends StatelessWidget {
         children: [
           if (icon != null) ...[
             Container(
-              width: 24,
-              height: 24,
-              margin: const EdgeInsets.only(right: AppSpacing.s8, top: 2),
+              width: AppIconSizes.lg,
+              height: AppIconSizes.lg,
+              margin: const EdgeInsets.only(
+                right: AppSpacing.s8,
+                top: AppSpacing.s2,
+              ),
               decoration: BoxDecoration(
                 color: (iconColor ?? colors.primary).withValues(
                   alpha: AppOpacity.subtle,
@@ -956,9 +952,7 @@ class _RelatedObjectLink extends StatelessWidget {
                   const SizedBox(height: AppSpacing.s2),
                   Text(
                     meta,
-                    style: typography.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
+                    style: context.captionStyle,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

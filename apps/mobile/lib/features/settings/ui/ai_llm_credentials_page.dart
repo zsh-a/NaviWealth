@@ -243,12 +243,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
             horizontal: AppSpacing.s16,
             vertical: AppSpacing.s20,
           ),
-          child: Text(
-            l10n.aiLlmEmpty,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          child: Text(l10n.aiLlmEmpty, style: context.bodyCaptionStyle),
         )
       else
         for (final p in profiles) ...[
@@ -312,20 +307,13 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
                     if (isActive)
                       _tag(context, l10n.aiLlmActiveTag, colors.primary)
                     else
-                      Text(
-                        l10n.aiLlmTapToSwitch,
-                        style: context.theme.typography.xs.copyWith(
-                          color: colors.mutedForeground,
-                        ),
-                      ),
+                      Text(l10n.aiLlmTapToSwitch, style: context.captionStyle),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.s4),
                 Text(
                   meta,
-                  style: context.theme.typography.xs.copyWith(
-                    color: colors.mutedForeground,
-                  ),
+                  style: context.captionStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -489,12 +477,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-      child: Text(
-        l10n.aiLlmIntro,
-        style: context.theme.typography.sm.copyWith(
-          color: context.theme.colors.mutedForeground,
-        ),
-      ),
+      child: Text(l10n.aiLlmIntro, style: context.bodyCaptionStyle),
     );
   }
 
@@ -512,12 +495,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
         children: [
           Text(l10n.aiLlmUnsupportedTitle, style: context.labelStyle),
           const SizedBox(height: AppSpacing.s6),
-          Text(
-            l10n.aiLlmUnsupportedBody,
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          Text(l10n.aiLlmUnsupportedBody, style: context.captionStyle),
         ],
       ),
     );
@@ -536,12 +514,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
       AsyncError() => l10n.aiLlmStatusReadFailed,
       _ => l10n.aiLlmStatusNotConfigured,
     };
-    return Text(
-      text,
-      style: context.theme.typography.xs.copyWith(
-        color: context.theme.colors.mutedForeground,
-      ),
-    );
+    return Text(text, style: context.captionStyle);
   }
 
   Widget _label(BuildContext context, String text) => Text(

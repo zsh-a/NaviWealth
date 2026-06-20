@@ -38,7 +38,8 @@ class JournalEntryListPage extends ConsumerWidget {
             for (final a in accountsAsync.value ?? const <Account>[]) a.id: a,
           };
           return _JournalList(entries: entries, accountsById: accountsById);
-        },        error: (_, _) => Center(
+        },
+        error: (_, _) => Center(
           child: AppEmptyState.error(
             title: l10n.commonLoadFailed,
             action: FButton(
@@ -162,20 +163,13 @@ class _JournalEntryRow extends StatelessWidget {
                         compact: true,
                       ),
                       const SizedBox(width: AppSpacing.s8),
-                      Text(
-                        dateLabel,
-                        style: context.theme.typography.xs2.copyWith(
-                          color: context.theme.colors.mutedForeground,
-                        ),
-                      ),
+                      Text(dateLabel, style: context.microCaptionStyle),
                       if (entry.entry.payee != null) ...[
                         const SizedBox(width: AppSpacing.s8),
                         Flexible(
                           child: Text(
                             '· ${entry.entry.payee}',
-                            style: context.theme.typography.xs2.copyWith(
-                              color: context.theme.colors.mutedForeground,
-                            ),
+                            style: context.microCaptionStyle,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),

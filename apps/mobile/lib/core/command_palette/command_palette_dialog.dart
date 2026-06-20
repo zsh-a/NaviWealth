@@ -220,7 +220,7 @@ class _CommandPaletteDialogState extends ConsumerState<_CommandPaletteDialog> {
         decoration: BoxDecoration(
           color: colors.background,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: colors.border, width: 1),
+          border: Border.all(color: colors.border, width: AppStroke.hairline),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -355,12 +355,13 @@ class _CommandRow extends StatelessWidget {
                   children: <Widget>[
                     Text(
                       entry.label,
-                      style: typography.sm.copyWith(
-                        color: labelColor,
-                        fontWeight: selected
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                      ),
+                      style:
+                          (selected
+                                  ? context.labelStyle
+                                  : typography.sm.copyWith(
+                                      fontWeight: FontWeight.w400,
+                                    ))
+                              .copyWith(color: labelColor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -394,14 +395,7 @@ class _EmptyState extends StatelessWidget {
         vertical: AppSpacing.s32,
         horizontal: AppSpacing.s16,
       ),
-      child: Center(
-        child: Text(
-          message,
-          style: context.theme.typography.sm.copyWith(
-            color: context.theme.colors.mutedForeground,
-          ),
-        ),
-      ),
+      child: Center(child: Text(message, style: context.bodyCaptionStyle)),
     );
   }
 }

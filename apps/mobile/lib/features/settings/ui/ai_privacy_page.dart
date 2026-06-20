@@ -36,12 +36,7 @@ class AiPrivacyPage extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
-            child: Text(
-              l10n.aiPrivacyIntro,
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
+            child: Text(l10n.aiPrivacyIntro, style: context.bodyCaptionStyle),
           ),
           const SizedBox(height: AppSpacing.s8),
           SoftCard(
@@ -94,9 +89,7 @@ class AiPrivacyPage extends ConsumerWidget {
                       const SizedBox(height: AppSpacing.s2),
                       Text(
                         l10n.aiPrivacyMaskAccountsDescription,
-                        style: context.theme.typography.xs.copyWith(
-                          color: context.theme.colors.mutedForeground,
-                        ),
+                        style: context.captionStyle,
                       ),
                     ],
                   ),
@@ -162,12 +155,7 @@ class _ModeRow extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.s2),
-                  Text(
-                    description,
-                    style: context.theme.typography.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                  ),
+                  Text(description, style: context.captionStyle),
                 ],
               ),
             ),

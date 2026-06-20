@@ -205,11 +205,11 @@ Nightly ├─ web smoke full matrix (Firefox/WebKit/OPFS)       ← ADDED
         └─ external AI vision-agent webhook + screenshot artifacts ← OPTIONAL
 ```
 
-**Known-failing ratchet.** `tool/check-known-failing-tests.sh` pins the
-failing-test footprint. The baseline is currently zero, and the gate remains
-a **monotonic ratchet**: a new red file fails CI (regression), and any
-temporary allowlist entry that stops failing *also* fails CI until removed.
-The footprint may only ever decrease.
+**Zero-failure unit/widget gate.** `mobile.yml` runs
+`flutter test --coverage --reporter=expanded --exclude-tags=golden` directly.
+There is no known-failing allowlist: any non-golden test failure fails CI.
+Golden PNG comparison remains isolated in the Linux-pinned
+`golden-regression` job.
 
 ## 6. On-device integration (`integration_test/`) — the next layer
 
@@ -247,7 +247,7 @@ path once the production connection implements database encryption.
 - ✅ Backend tests run in CI — `cargo test` (native host) added to `backend.yml`.
   The 11 JWT-domain / sync-LWW tests now gate PRs.
 - ✅ Web smoke wired up — `web-smoke.yml`: chromium on PRs, full matrix nightly.
-- ✅ Known-failing gate is now a monotonic ratchet (fixed-but-listed fails CI).
+- ✅ Non-golden mobile tests are zero-failure blocking checks in CI.
 - ✅ Flow layer seeded — `test/flow/` with Page Object Model + Task #1.
 - ✅ Integration layer seeded — `test/integration/` real-Drift harness +
   net-worth coverage in every direction (manual asset, liability, securities).
@@ -273,8 +273,8 @@ path once the production connection implements database encryption.
   serializers, including edge-case server envelopes. Next work is keeping new
   contract variants fixture-backed as they are introduced.
 - Expand golden coverage to each Task surface + responsive breakpoints.
-- Keep `tool/known-failing-tests.txt` empty; any temporary entry needs a
-  reviewer-approved reason and must be removed as soon as the test recovers.
+- Keep the non-golden suite at zero failures; temporary test failures should
+  be fixed or explicitly skipped at the test with a dated rationale.
 
 **P2 — modern differentiators:**
 - ✅ Seeded: `ConventionalAsyncNotifier` now has state-machine coverage for

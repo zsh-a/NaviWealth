@@ -2,14 +2,14 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../theme/market_colors.dart';
+import '../tokens/color_palette.dart';
 
 /// Chart-only color sequence and theme-derived palette helpers.
 ///
 /// `accent` colors are scoped to chart series (benchmarks, allocation slices,
-/// stacked-bar segments). They are deliberately NOT exposed in
-/// [ColorPalette] / [ColorScheme] because regular UI controls should pick
-/// from the semantic / market token sets — chart palettes are picked for
-/// distinguishability, not for brand consistency.
+/// stacked-bar segments). They resolve from chart-specific [ColorPalette]
+/// tokens, not general semantic tokens, because categorical charts need
+/// distinguishability rather than brand consistency.
 @immutable
 class ChartPalette {
   const ChartPalette({
@@ -68,25 +68,25 @@ class ChartPalette {
     // crimson; the rest of the sequence is unchanged.
     if (isDark) {
       return const [
-        Color(0xFF67D6F0), // cyan
-        Color(0xFFB497F1), // purple
-        Color(0xFFF6C863), // orange
-        Color(0xFF34D399), // emerald (matches MarketColors.profit dark)
-        Color(0xFFEB7BB1), // pink
-        Color(0xFFE8D45A), // yellow
-        Color(0xFF7AB7FB), // blue
-        Color(0xFFFB7185), // rose (matches MarketColors.loss dark)
+        ColorPalette.chartCyanDark,
+        ColorPalette.chartPurpleDark,
+        ColorPalette.cbOrangeLight,
+        ColorPalette.chartEmeraldDark,
+        ColorPalette.chartPinkDark,
+        ColorPalette.chartYellowDark,
+        ColorPalette.chartBlueDark,
+        ColorPalette.chartRoseDark,
       ];
     }
     return const [
-      Color(0xFF0891B2), // cyan
-      Color(0xFF7C3AED), // purple
-      Color(0xFFD97706), // orange
-      Color(0xFF059669), // emerald (matches MarketColors.profit light)
-      Color(0xFFDB2777), // pink
-      Color(0xFFCA8A04), // yellow
-      Color(0xFF1F6FEB), // blue
-      Color(0xFFBE123C), // rose (matches MarketColors.loss light)
+      ColorPalette.cyan500,
+      ColorPalette.chartPurpleLight,
+      ColorPalette.amber500,
+      ColorPalette.green600,
+      ColorPalette.chartPinkLight,
+      ColorPalette.chartYellowLight,
+      ColorPalette.brand500,
+      ColorPalette.red600,
     ];
   }
 }

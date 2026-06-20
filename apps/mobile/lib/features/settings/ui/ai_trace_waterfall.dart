@@ -186,7 +186,7 @@ class _WaterfallRow extends StatelessWidget {
           children: [
             // Tree label column (indented by depth).
             SizedBox(
-              width: 150,
+              width: AppControlWidths.traceTreeLabel,
               child: Padding(
                 padding: EdgeInsets.only(left: AppSpacing.s10 * row.depth),
                 child: Row(
@@ -203,11 +203,11 @@ class _WaterfallRow extends StatelessWidget {
                     Expanded(
                       child: Text(
                         label,
-                        style: AiType.meta(context).copyWith(
-                          fontWeight: selected
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                        ),
+                        style: selected
+                            ? AiType.metaStrong(context)
+                            : AiType.meta(
+                                context,
+                              ).copyWith(fontWeight: FontWeight.w400),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -260,7 +260,7 @@ class _WaterfallRow extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.s8),
             SizedBox(
-              width: 56,
+              width: AppControlWidths.traceDuration,
               child: Text(
                 '${span.durationMs}ms',
                 style: AiType.meta(
@@ -312,12 +312,7 @@ class _SpanDetail extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.s6),
               Expanded(
-                child: Text(
-                  span.name,
-                  style: AiType.body(
-                    context,
-                  ).copyWith(fontWeight: FontWeight.w600),
-                ),
+                child: Text(span.name, style: AiType.bodyStrong(context)),
               ),
               AiPill(
                 label: span.status.wire,
@@ -385,7 +380,7 @@ class _SpanDetail extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 76,
+            width: AppControlWidths.traceDetailKey,
             child: Text(
               k,
               style: AiType.meta(

@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../l10n/gen/app_localizations.dart';
+import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'chart_palette.dart';
@@ -184,7 +185,7 @@ class _NwPieChartState extends State<NwPieChart> {
           Text(
             s.label,
             style: TypographyTokens.numericCaption.copyWith(
-              color: onSurface.withValues(alpha: 0.7),
+              color: onSurface.withValues(alpha: AppOpacity.strong),
             ),
             textAlign: TextAlign.center,
             maxLines: 1,
@@ -193,7 +194,7 @@ class _NwPieChartState extends State<NwPieChart> {
           Text(
             '${pct.toStringAsFixed(1)}%',
             style: TypographyTokens.numericCaption.copyWith(
-              color: onSurface.withValues(alpha: 0.5),
+              color: onSurface.withValues(alpha: AppOpacity.scrim),
               fontSize: 10,
             ),
           ),
@@ -214,7 +215,7 @@ class _NwPieChartState extends State<NwPieChart> {
         Text(
           AppLocalizations.of(context).chartTotalLabel,
           style: TypographyTokens.numericCaption.copyWith(
-            color: onSurface.withValues(alpha: 0.5),
+            color: onSurface.withValues(alpha: AppOpacity.scrim),
           ),
         ),
       ],
@@ -252,7 +253,7 @@ class _NwPieChartState extends State<NwPieChart> {
 
   Color _onColor(Color background) {
     final luminance = background.computeLuminance();
-    return luminance > 0.5 ? const Color(0xFF111827) : const Color(0xFFFFFFFF);
+    return luminance > 0.5 ? ColorPalette.neutral900 : ColorPalette.neutral0;
   }
 }
 
@@ -281,7 +282,7 @@ class LegendRow extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.accentBar),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -294,7 +295,7 @@ class LegendRow extends StatelessWidget {
                   height: 10,
                   decoration: BoxDecoration(
                     color: color,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(AppRadius.xxs),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s6),
@@ -311,7 +312,7 @@ class LegendRow extends StatelessWidget {
                 Text(
                   '${percent.toStringAsFixed(1)}%',
                   style: TypographyTokens.numericCaption.copyWith(
-                    color: onSurface.withValues(alpha: 0.6),
+                    color: onSurface.withValues(alpha: AppOpacity.prominent),
                     fontSize: 10,
                   ),
                 ),
@@ -320,7 +321,7 @@ class LegendRow extends StatelessWidget {
                   Text(
                     value!,
                     style: TypographyTokens.numericCaption.copyWith(
-                      color: onSurface.withValues(alpha: 0.8),
+                      color: onSurface.withValues(alpha: AppOpacity.emphasis),
                       fontSize: 10,
                     ),
                   ),
@@ -329,11 +330,11 @@ class LegendRow extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.s2),
             Container(
-              height: 2,
+              height: AppStroke.branch,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(1),
+                color: color.withValues(alpha: AppOpacity.disabled),
+                borderRadius: BorderRadius.circular(AppRadius.full),
               ),
             ),
           ],

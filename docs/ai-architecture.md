@@ -385,12 +385,10 @@ Chat → providers.dart _prepareChatTrace(ref, requestId)
 | 长历史 subscription_changes | `recurring_pattern_observations` local-only Drift observation log 持久化 detector 输出，跨会话比较 old-vs-new stable median | ✅ |
 | Prompt injection corpus | 静态 regression corpus 覆盖 finance / insight / selection / chart / FIRE probes，`kPromptInjectionRegressionTag` 下限提升到 6 | ✅ |
 
-**测试 gate**：`flutter analyze --fatal-infos` clean；`flutter test` 全绿（golden 按平台
-skip，known-failing 钉基线）；`tool/check-tool-descriptors.sh` / `check-enum-mirror.sh` /
+**测试 gate**：`flutter analyze --fatal-infos` clean；非 golden `flutter test` 零失败（golden 按平台
+skip，并由 Linux CI 做 PNG diff）；`tool/check-tool-descriptors.sh` / `check-enum-mirror.sh` /
 `check-l10n-parity.sh` 跑 Dart 契约测试；`tool/check-ui-baselines.sh` 单独守护
 assistive-tech semantics 与热点性能预算。
-> 已知失败基线：`ai_trace_waterfall_test.dart` 在干净 main 即 l10n-null 失败，
-> 与功能无关，勿追（见 `known-failing-tests.txt`）。
 
 ### 历史：已删除的云端协作架构
 

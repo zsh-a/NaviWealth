@@ -10,6 +10,7 @@ import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../shared/account_color.dart';
 import '../account_icon_catalog.dart';
 import '../domain/account_balances.dart';
 import 'account_labels.dart';
@@ -122,13 +123,7 @@ class _AccountsSection extends StatelessWidget {
               AppSpacing.s4,
               AppSpacing.s8,
             ),
-            child: Text(
-              title,
-              style: context.theme.typography.sm.copyWith(
-                color: colors.mutedForeground,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            child: Text(title, style: context.mutedLabelStyle),
           ),
           DecoratedBox(
             decoration: BoxDecoration(
@@ -156,7 +151,7 @@ class _AccountsSection extends StatelessWidget {
                           start: AppSpacing.s48,
                         ),
                         child: SizedBox(
-                          height: 1,
+                          height: AppSpacing.hairline,
                           child: ColoredBox(
                             color: colors.border.withValues(
                               alpha: AppOpacity.faint,
@@ -259,9 +254,8 @@ class _AccountRowState extends State<_AccountRow> {
                                   enabled: widget.heroEnabled,
                                   child: Text(
                                     accountName,
-                                    style: context.theme.typography.sm.copyWith(
+                                    style: context.labelStyle.copyWith(
                                       color: colors.foreground,
-                                      fontWeight: FontWeight.w600,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -271,9 +265,7 @@ class _AccountRowState extends State<_AccountRow> {
                                   const SizedBox(height: AppSpacing.s2),
                                   Text(
                                     institution,
-                                    style: context.theme.typography.xs.copyWith(
-                                      color: colors.mutedForeground,
-                                    ),
+                                    style: context.captionStyle,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -285,12 +277,7 @@ class _AccountRowState extends State<_AccountRow> {
                           if (primaryLeg != null)
                             _PrimaryAmount(leg: primaryLeg)
                           else
-                            Text(
-                              '-',
-                              style: context.theme.typography.sm.copyWith(
-                                color: colors.mutedForeground,
-                              ),
-                            ),
+                            Text('-', style: context.bodyCaptionStyle),
                         ],
                       ),
                     ),
@@ -365,15 +352,8 @@ class _AccountIconMark extends StatelessWidget {
   }
 
   Color _accountAccent(BuildContext context, Account account) {
-    final color = account.color;
-    if (color == null || color.isEmpty) {
-      return context.theme.colors.mutedForeground;
-    }
-    final hex = color.startsWith('#') ? color.substring(1) : color;
-    if (hex.length != 6) return context.theme.colors.mutedForeground;
-    final value = int.tryParse(hex, radix: 16);
-    if (value == null) return context.theme.colors.mutedForeground;
-    return Color(0xFF000000 | value);
+    return parseAccountColor(account.color) ??
+        context.theme.colors.mutedForeground;
   }
 
   IconData _iconFor(AccountCategory cat) {
@@ -403,7 +383,7 @@ class _PrimaryAmount extends ConsumerWidget {
       formatters: context.formatters(ref),
       showPositiveSign: false,
       colorBySign: false,
-      style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w600),
+      style: context.labelStyle,
     );
   }
 }
@@ -415,7 +395,6 @@ class _SubLegRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.theme.colors;
     final formatters = context.formatters(ref);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
@@ -424,10 +403,7 @@ class _SubLegRow extends ConsumerWidget {
           Expanded(
             child: Text(
               AppFormatters.assetCode(leg.unit),
-              style: context.theme.typography.xs.copyWith(
-                color: colors.mutedForeground,
-                fontWeight: FontWeight.w500,
-              ),
+              style: context.captionStyle.copyWith(fontWeight: FontWeight.w500),
             ),
           ),
           Text(

@@ -430,7 +430,6 @@ class KnowledgeSelectableRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
-    final colors = context.theme.colors;
     final control = switch (mode) {
       KnowledgeSelectionMode.checkbox => FCheckbox(
         value: selected,
@@ -461,9 +460,7 @@ class KnowledgeSelectableRow extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: typography.sm.copyWith(
-                      color: enabled ? null : colors.mutedForeground,
-                    ),
+                    style: enabled ? typography.sm : context.bodyCaptionStyle,
                     maxLines: maxLines,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -471,9 +468,7 @@ class KnowledgeSelectableRow extends StatelessWidget {
                     const SizedBox(height: AppSpacing.s2),
                     Text(
                       detail!,
-                      style: typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
+                      style: context.captionStyle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -640,7 +635,6 @@ class _KnowledgeStateRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final iconColor = switch (tone) {
       AppEmptyStateTone.neutral => colors.primary,
       AppEmptyStateTone.error => colors.destructive,
@@ -659,18 +653,10 @@ class _KnowledgeStateRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-                ),
+                Text(title, style: context.labelStyle),
                 if (message != null) ...[
                   const SizedBox(height: AppSpacing.s2),
-                  Text(
-                    message!,
-                    style: typography.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                  ),
+                  Text(message!, style: context.captionStyle),
                 ],
                 if (action != null) ...[
                   const SizedBox(height: AppSpacing.s8),
@@ -801,17 +787,13 @@ class _MarkdownEditorWithPreviewState extends State<MarkdownEditorWithPreview> {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (widget.label != null) ...[
-          Text(
-            widget.label!,
-            style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-          ),
+          Text(widget.label!, style: context.labelStyle),
           const SizedBox(height: AppSpacing.s4),
         ],
         SegmentedRow<_MarkdownMode>(
@@ -843,9 +825,7 @@ class _MarkdownEditorWithPreviewState extends State<MarkdownEditorWithPreview> {
             child: widget.controller.text.trim().isEmpty
                 ? Text(
                     l10n.knowledgeMarkdownPreviewEmpty,
-                    style: typography.sm.copyWith(
-                      color: colors.mutedForeground,
-                    ),
+                    style: context.bodyCaptionStyle,
                   )
                 : AiMarkdown(text: widget.controller.text),
           ),
@@ -895,7 +875,6 @@ class KnowledgeObjectHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     final typography = context.theme.typography;
     return KnowledgeSection.group(
       title: typeLabel,
@@ -928,9 +907,7 @@ class KnowledgeObjectHeader extends StatelessWidget {
                     l10n.knowledgeDetailUpdatedAt(
                       knowledgeDate(context, updatedAt, long: true),
                     ),
-                    style: typography.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
+                    style: context.captionStyle,
                   ),
                 ],
               ),
@@ -982,7 +959,6 @@ class _KnowledgeWriterSectionState extends State<KnowledgeWriterSection> {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final header = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -991,10 +967,7 @@ class _KnowledgeWriterSectionState extends State<KnowledgeWriterSection> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                widget.title,
-                style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-              ),
+              Text(widget.title, style: context.labelStyle),
               if (widget.subtitle != null) ...[
                 const SizedBox(height: AppSpacing.s2),
                 Text(
@@ -1083,7 +1056,6 @@ class KnowledgeCreateTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return FTappable(
       onPress: onPress,
       child: AnimatedContainer(
@@ -1122,8 +1094,7 @@ class KnowledgeCreateTile extends StatelessWidget {
             const SizedBox(height: AppSpacing.s8),
             Text(
               label,
-              style: typography.xs.copyWith(
-                fontWeight: FontWeight.w600,
+              style: context.captionLabelStyle.copyWith(
                 color: highlighted ? colors.primary : null,
               ),
               maxLines: 1,

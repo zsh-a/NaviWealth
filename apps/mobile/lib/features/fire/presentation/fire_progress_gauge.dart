@@ -79,9 +79,7 @@ class FireProgressGauge extends StatelessWidget {
                     Text(
                       caption!,
                       textAlign: TextAlign.center,
-                      style: context.theme.typography.xs.copyWith(
-                        color: context.theme.colors.mutedForeground,
-                      ),
+                      style: context.captionStyle,
                     ),
                   ],
                 ],

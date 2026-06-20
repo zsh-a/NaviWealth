@@ -253,7 +253,7 @@ class _MorningBriefingHourSheet extends StatelessWidget {
       children: [
         for (var hour = 0; hour < 24; hour++)
           SizedBox(
-            width: 72,
+            width: AppControlWidths.settingsShortLabel,
             child: FButton(
               variant: hour == selectedHour
                   ? FButtonVariant.primary

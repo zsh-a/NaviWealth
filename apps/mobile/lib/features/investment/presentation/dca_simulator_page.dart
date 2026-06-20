@@ -333,9 +333,7 @@ class _DcaResults extends StatelessWidget {
                   Expanded(
                     child: Text(
                       l10n.dcaSimulatorResultTitle,
-                      style: context.theme.typography.md.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: context.rowTitleStyle,
                     ),
                   ),
                   _FreshnessChip(freshness: state.freshness),
@@ -344,15 +342,10 @@ class _DcaResults extends StatelessWidget {
               const SizedBox(height: AppSpacing.s14),
               _MetricGrid(result: result),
               const SizedBox(height: AppSpacing.s20),
-              Text(
-                l10n.dcaSimulatorChartTitle,
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              Text(l10n.dcaSimulatorChartTitle, style: context.labelStyle),
               const SizedBox(height: AppSpacing.s10),
               SizedBox(
-                height: 220,
+                height: AppChartHeights.full,
                 child: NwLineChart(
                   series: [
                     ChartSeries(
@@ -423,7 +416,10 @@ class _MetricGrid extends StatelessWidget {
         ),
         _TextMetric(
           label: l10n.dcaSimulatorCumulativeReturn,
-          value: formatters.percent(result.cumulativeReturn.toDouble(), decimalDigits: 1),
+          value: formatters.percent(
+            result.cumulativeReturn.toDouble(),
+            decimalDigits: 1,
+          ),
         ),
         _MoneyMetric(
           label: l10n.dcaSimulatorAverageCost,
@@ -432,7 +428,10 @@ class _MetricGrid extends StatelessWidget {
         ),
         _TextMetric(
           label: l10n.dcaSimulatorMaxDrawdown,
-          value: formatters.percent(result.maxDrawdown.toDouble(), decimalDigits: 1),
+          value: formatters.percent(
+            result.maxDrawdown.toDouble(),
+            decimalDigits: 1,
+          ),
         ),
       ],
     );
@@ -494,7 +493,7 @@ class _MetricShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 148,
+      width: AppControlWidths.metricTile,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: context.theme.colors.foreground.withValues(
@@ -507,12 +506,7 @@ class _MetricShell extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
-              ),
+              Text(label, style: context.captionStyle),
               const SizedBox(height: AppSpacing.s4),
               child,
             ],
@@ -537,23 +531,14 @@ class _PositionRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              position.symbol,
-              style: context.theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
+          Expanded(child: Text(position.symbol, style: context.labelStyle)),
           Flexible(
             child: Text(
               l10n.dcaSimulatorPositionAverageCost(
                 currency,
                 formatters.currency(position.averageCost, code: currency),
               ),
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.captionStyle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -602,9 +587,7 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppEmptyState.error(
-      title: message,
-    );
+    return AppEmptyState.error(title: message);
   }
 }
 
@@ -612,4 +595,3 @@ List<String> _parseSymbols(String raw) => [
   for (final token in raw.split(RegExp(r'[,，\\s]+')))
     if (token.trim().isNotEmpty) token.trim().toUpperCase(),
 ];
-

@@ -145,7 +145,10 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
                 children: [
                   Expanded(child: groupPicker),
                   const SizedBox(width: AppSpacing.s12),
-                  SizedBox(width: 260, child: windowPicker),
+                  SizedBox(
+                    width: AppControlWidths.segmentedCompact,
+                    child: windowPicker,
+                  ),
                 ],
               );
             },
@@ -283,10 +286,7 @@ class _TrendCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   spec.title,
-                  style: typography.sm.copyWith(
-                    color: colors.mutedForeground,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.mutedLabelStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -303,8 +303,8 @@ class _TrendCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 6,
-                        height: 6,
+                        width: AppSpacing.s6,
+                        height: AppSpacing.s6,
                         decoration: BoxDecoration(
                           color: accent.withValues(alpha: AppOpacity.strong),
                           borderRadius: BorderRadius.circular(AppRadius.full),
@@ -364,7 +364,7 @@ class _TrendCard extends StatelessWidget {
                       name: spec.title,
                       points: pts,
                       colorOverride: accent,
-                      strokeWidth: 2,
+                      strokeWidth: AppStroke.branch,
                     ),
                   ],
                 );

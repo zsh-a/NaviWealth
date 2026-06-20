@@ -197,9 +197,7 @@ class _CountdownCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.s4),
               Text(
                 l10n.fireCountdownReachedSubtitle,
-                style: context.theme.typography.sm.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
+                style: context.bodyCaptionStyle,
               ),
             ],
           )
@@ -213,9 +211,7 @@ class _CountdownCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.s4),
               Text(
                 l10n.fireCountdownDaysAprox(_approxDays(months)),
-                style: context.theme.typography.sm.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
+                style: context.bodyCaptionStyle,
               ),
             ],
           );
@@ -260,12 +256,7 @@ class _ProjectionCard extends StatelessWidget {
         children: [
           Text(l10n.fireProjectionTitle, style: context.theme.typography.md),
           const SizedBox(height: AppSpacing.s4),
-          Text(
-            l10n.fireProjectionSubtitle,
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          Text(l10n.fireProjectionSubtitle, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s12),
           LayoutBuilder(
             builder: (context, c) => FireScenariosChart(
@@ -349,7 +340,7 @@ class _ScenariosTable extends StatelessWidget {
                 ),
               ),
               suffix: SizedBox(
-                width: 110,
+                width: AppControlWidths.scenarioSuffix,
                 child: Text(
                   scenario.monthsToTarget == null
                       ? l10n.fireCountdownUnreachableShort
@@ -404,12 +395,7 @@ class _SafeWithdrawalCard extends StatelessWidget {
             style: context.theme.typography.md,
           ),
           const SizedBox(height: AppSpacing.s4),
-          Text(
-            l10n.fireSafeWithdrawalSubtitle,
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          Text(l10n.fireSafeWithdrawalSubtitle, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s12),
           _LabelValueRow(
             label: l10n.fireSafeWithdrawalMonthly,
@@ -429,7 +415,7 @@ class _SafeWithdrawalCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           Text(
             coverageHint,
-            style: context.theme.typography.xs.copyWith(
+            style: context.captionStyle.copyWith(
               color: surplus >= 0 || monthlyExpenses == 0
                   ? context.theme.colors.mutedForeground
                   : context.theme.colors.destructive,
@@ -458,12 +444,7 @@ class _SensitivityCard extends StatelessWidget {
         children: [
           Text(l10n.fireSensitivityTitle, style: context.theme.typography.md),
           const SizedBox(height: AppSpacing.s4),
-          Text(
-            l10n.fireSensitivitySubtitle,
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          Text(l10n.fireSensitivitySubtitle, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s12),
           _LabelValueRow(
             label: l10n.fireSensitivityHigherSurplus,
@@ -501,14 +482,7 @@ class _LabelValueRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          child: Text(
-            label,
-            style: context.theme.typography.sm.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
-        ),
+        Expanded(child: Text(label, style: context.bodyCaptionStyle)),
         const SizedBox(width: AppSpacing.s8),
         child ?? Text(value!, style: context.theme.typography.sm),
       ],
@@ -537,7 +511,9 @@ class _LegendDot extends StatelessWidget {
           height: 4,
           decoration: BoxDecoration(
             color: dashed ? null : color,
-            border: dashed ? Border.all(color: color, width: 1.5) : null,
+            border: dashed
+                ? Border.all(color: color, width: AppStroke.medium)
+                : null,
             borderRadius: BorderRadius.circular(AppRadius.xxs),
           ),
         ),

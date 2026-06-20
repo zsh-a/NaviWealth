@@ -12,6 +12,7 @@ import '../../core/haptics/haptics.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../settings/data/base_currency_preference.dart';
+import '../shared/account_color.dart';
 import '../shared/account_tree_picker.dart';
 import '../shared/forms/forms.dart';
 import 'account_icon_catalog.dart';
@@ -295,10 +296,7 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
                       ),
                       child: Text(
                         l10n.accountFormTypeLabel,
-                        style: context.theme.typography.sm.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: context.theme.colors.mutedForeground,
-                        ),
+                        style: context.mutedLabelStyle,
                       ),
                     ),
                     AccountCategoryPicker(
@@ -508,7 +506,7 @@ class _IconPickerSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final tint = _parseHexColor(color) ?? context.theme.colors.primary;
+    final tint = parseAccountColor(color) ?? context.theme.colors.primary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -516,7 +514,7 @@ class _IconPickerSection extends StatelessWidget {
         Text(l10n.accountFormIconHeading, style: context.theme.typography.xs),
         const SizedBox(height: AppSpacing.s4),
         SizedBox(
-          height: 56,
+          height: AppSpacing.s56,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: kAccountIconCatalogue.length + 1,
@@ -635,7 +633,7 @@ class _ColorPickerSection extends StatelessWidget {
               _ColorSwatch(
                 isSelected: selected == hex,
                 onTap: () => onChanged(hex),
-                fill: _parseHexColor(hex) ?? context.theme.colors.secondary,
+                fill: parseAccountColor(hex) ?? context.theme.colors.secondary,
                 tooltip: hex,
                 border: selected == hex
                     ? context.theme.colors.primary
@@ -684,18 +682,4 @@ class _ColorSwatch extends StatelessWidget {
       ),
     );
   }
-}
-
-/// `#RRGGBB` (with or without leading `#`) → [Color]; returns `null`
-/// for any malformed input. Mirrors the helper in `account_tree_picker.dart`
-/// — duplicated here on purpose so the form file stays self-contained
-/// for the picker sub-widgets above.
-Color? _parseHexColor(String? value) {
-  if (value == null || value.isEmpty) return null;
-  var hex = value.replaceFirst('#', '');
-  if (hex.length == 6) hex = 'FF$hex';
-  if (hex.length != 8) return null;
-  final parsed = int.tryParse(hex, radix: 16);
-  if (parsed == null) return null;
-  return Color(parsed);
 }

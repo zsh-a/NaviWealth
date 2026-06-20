@@ -92,10 +92,7 @@ class _BudgetBody extends ConsumerWidget {
         const SizedBox(height: AppSpacing.s16),
         Text(
           l10n.planBudgetMonthHeader(monthKey),
-          style: context.theme.typography.sm.copyWith(
-            color: context.theme.colors.mutedForeground,
-            fontWeight: FontWeight.w600,
-          ),
+          style: context.mutedLabelStyle,
         ),
         const SizedBox(height: AppSpacing.s8),
         for (final row in rows) ...[
@@ -127,18 +124,12 @@ class _MonthHeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.planBudgetTotalLabel,
-            style: context.theme.typography.sm.copyWith(
-              color: colors.mutedForeground,
-            ),
-          ),
+          Text(l10n.planBudgetTotalLabel, style: context.bodyCaptionStyle),
           const SizedBox(height: AppSpacing.s8),
           for (final entry in totalsByCurrency.entries)
             Padding(
@@ -159,12 +150,7 @@ class _MonthHeaderCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: AppSpacing.s4),
-          Text(
-            '$monthKey · $rowCount',
-            style: context.theme.typography.xs.copyWith(
-              color: colors.mutedForeground,
-            ),
-          ),
+          Text('$monthKey · $rowCount', style: context.captionStyle),
         ],
       ),
     );

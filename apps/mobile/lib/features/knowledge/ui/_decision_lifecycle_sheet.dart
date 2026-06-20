@@ -172,7 +172,7 @@ class _DecisionLifecycleSheetState
             title: l10n.knowledgeDecisionStatusLabel,
             children: [
               SizedBox(
-                height: 32,
+                height: AppSpacing.s32,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: DecisionStatus.values.length,
@@ -208,14 +208,14 @@ class _DecisionLifecycleSheetState
                         ),
                         child: Text(
                           decisionStatusLabel(context, s),
-                          style: context.theme.typography.xs.copyWith(
-                            color: active
-                                ? colors.primary
-                                : colors.mutedForeground,
-                            fontWeight: active
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                          ),
+                          style: active
+                              ? context.captionLabelStyle.copyWith(
+                                  color: colors.primary,
+                                )
+                              : context.captionStyle.copyWith(
+                                  color: colors.mutedForeground,
+                                  fontWeight: FontWeight.w400,
+                                ),
                         ),
                       ),
                     );

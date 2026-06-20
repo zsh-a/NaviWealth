@@ -32,7 +32,6 @@ class DecisionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
@@ -46,20 +45,12 @@ class DecisionCard extends StatelessWidget {
                 color: colors.primary,
               ),
               const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: Text(
-                  request.title,
-                  style: typography.sm.copyWith(fontWeight: FontWeight.w600),
-                ),
-              ),
+              Expanded(child: Text(request.title, style: context.labelStyle)),
             ],
           ),
           if (request.context.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.s4),
-            Text(
-              request.context,
-              style: context.captionStyle,
-            ),
+            Text(request.context, style: context.captionStyle),
           ],
           const SizedBox(height: AppSpacing.s8),
           for (var i = 0; i < request.options.length; i++) ...[
@@ -73,10 +64,7 @@ class DecisionCard extends StatelessWidget {
           ],
           if (request.allowCustom && interactive) ...[
             const SizedBox(height: AppSpacing.s8),
-            Text(
-              '或在下方直接输入你的方案。',
-              style: context.captionStyle,
-            ),
+            Text('或在下方直接输入你的方案。', style: context.captionStyle),
           ],
         ],
       ),
@@ -97,7 +85,6 @@ class _OptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -123,8 +110,7 @@ class _OptionTile extends StatelessWidget {
                 Expanded(
                   child: Text(
                     option.label,
-                    style: typography.sm.copyWith(
-                      fontWeight: FontWeight.w600,
+                    style: context.labelStyle.copyWith(
                       color: colors.foreground,
                     ),
                   ),
@@ -147,10 +133,7 @@ class _OptionTile extends StatelessWidget {
             ),
             if (option.description.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.s2),
-              Text(
-                option.description,
-                style: context.captionStyle,
-              ),
+              Text(option.description, style: context.captionStyle),
             ],
             for (final pro in option.pros) _Tradeoff(text: pro, positive: true),
             for (final con in option.cons)
@@ -182,12 +165,7 @@ class _Tradeoff extends StatelessWidget {
             color: positive ? colors.primary : colors.mutedForeground,
           ),
           const SizedBox(width: AppSpacing.s4),
-          Expanded(
-            child: Text(
-              text,
-              style: context.captionStyle,
-            ),
-          ),
+          Expanded(child: Text(text, style: context.captionStyle)),
         ],
       ),
     );

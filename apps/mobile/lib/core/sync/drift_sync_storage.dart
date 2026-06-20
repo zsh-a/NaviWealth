@@ -5,7 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/persistence/app_database.dart';
 import 'cursor_store.dart';
 import 'op_outbox.dart';
-import 'row_applier.dart' show kSyncPkOverrides;
+import 'row_applier.dart' show kSyncPkOverrides, kSyncableTables;
 
 /// Drift-backed [OutboxStore] over the `op_outbox` table.
 ///
@@ -81,6 +81,7 @@ class DriftPendingRows implements PendingRows {
   /// operation the row always exists; a `null` means a stale pointer.
   @override
   Future<Map<String, Object?>?> readRow(String table, String rowId) async {
+    if (!kSyncableTables.contains(table)) return null;
     final pk = kSyncPkOverrides[table] ?? 'id';
     final row = await _db
         .customSelect(

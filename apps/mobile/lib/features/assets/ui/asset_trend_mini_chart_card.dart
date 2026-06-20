@@ -33,12 +33,7 @@ class AssetTrendMiniChartCard extends ConsumerWidget {
                 style: context.theme.typography.sm,
               ),
               const SizedBox(height: AppSpacing.s8),
-              Text(
-                l10n.assetDetailNoMarketLinked,
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
-              ),
+              Text(l10n.assetDetailNoMarketLinked, style: context.captionStyle),
             ],
           ),
         ),
@@ -98,13 +93,13 @@ class _ChartBody extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     if (history.isLoading && history.value == null) {
       return const SizedBox(
-        height: 160,
-        child: SkeletonBox(height: 160, radius: 8),
+        height: AppChartHeights.standard,
+        child: SkeletonBox(height: AppChartHeights.standard, radius: 8),
       );
     }
     if (history.hasError && history.value == null) {
       return SizedBox(
-        height: 160,
+        height: AppChartHeights.standard,
         child: Center(
           child: Text(
             l10n.assetDetailTrendLoadError('${history.error}'),
@@ -150,7 +145,7 @@ class _ChartBody extends StatelessWidget {
     ];
     return LayoutBuilder(
       builder: (context, constraints) => SizedBox(
-        height: 180,
+        height: AppChartHeights.medium,
         child: NwLineChart(
           series: series,
           xAxis: const TimeAxis(format: AxisDateFormat.dayMonth, maxLabels: 4),

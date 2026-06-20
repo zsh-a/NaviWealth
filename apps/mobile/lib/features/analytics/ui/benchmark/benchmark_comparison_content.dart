@@ -86,7 +86,7 @@ class _ComparisonChart extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, c) => SizedBox(
-        height: 220,
+        height: AppChartHeights.full,
         child: NwLineChart(
           series: series,
           xAxis: TimeAxis(format: dateFmt, maxLabels: 5),
@@ -123,8 +123,7 @@ class _AnnualizedSummary extends StatelessWidget {
         ),
         Text(
           port == null ? '—' : _formatPercent(port),
-          style: context.theme.typography.md.copyWith(
-            fontWeight: FontWeight.w600,
+          style: context.rowTitleStyle.copyWith(
             color: port == null
                 ? context.theme.colors.mutedForeground
                 : (port >= 0
@@ -165,9 +164,7 @@ class _ExcessRow extends StatelessWidget {
                   l10n.benchmarkAnnualizedSubtitle(
                     benchAnn == null ? '—' : _formatPercent(benchAnn),
                   ),
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: context.captionStyle,
                 ),
               ],
             ),

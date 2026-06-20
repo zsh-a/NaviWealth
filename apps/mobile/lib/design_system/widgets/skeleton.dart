@@ -153,7 +153,11 @@ class _ShimmerPainter extends CustomPainter {
   late final _gradient = LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
-    colors: [base.withValues(alpha: 0), highlight, base.withValues(alpha: 0)],
+    colors: [
+      base.withValues(alpha: AppOpacity.transparent),
+      highlight,
+      base.withValues(alpha: AppOpacity.transparent),
+    ],
     stops: const [0.0, 0.5, 1.0],
   );
 

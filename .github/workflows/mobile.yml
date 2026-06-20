@@ -67,17 +67,13 @@ jobs:
           cache: true
       - run: flutter --version
       - run: flutter pub get
-      - name: Stub web-only font assets so test asset bundle resolves
-        # All five files are gitignored build artifacts (see
-        # tool/build-{cn,latin}-fonts.sh). flutter analyze + flutter test
-        # don't actually rasterise glyphs; the asset bundler just needs
-        # readable files at the registered paths. Empty stubs are enough.
+      - name: Build test font assets
+        # These files are gitignored build artifacts. The UI baseline gate
+        # verifies they are present and non-empty so tests don't silently
+        # fall back to Flutter's default test font.
         run: |
-          mkdir -p assets/fonts
-          touch assets/fonts/app-cn-base.woff2 assets/fonts/app-cn-ext.woff2
-          touch assets/fonts/inter-regular.woff2 assets/fonts/inter-medium.woff2 \
-                assets/fonts/inter-semibold.woff2 assets/fonts/inter-bold.woff2 \
-                assets/fonts/outfit-bold.woff2
+          tool/build-cn-fonts.sh
+          tool/build-latin-fonts.sh
       - run: flutter analyze --fatal-infos
       - name: Verify generated code is up to date
         run: |
@@ -111,20 +107,8 @@ jobs:
           ./tool/lint-cross-feature-imports.sh
           ./tool/lint-row-family-prefix.sh
           ./tool/lint-domain-neutral-contracts.sh
-      - name: Run tests + pin failure footprint (Wave 41)
-        # We can't yet bring the failing-test footprint to zero (~50
-        # files broken by design-system API drift unrelated to the AI
-        # work). The gate below pins the footprint at its Wave 41
-        # baseline so new red files can't sneak in. Reducing the
-        # baseline is welcome; tool/known-failing-tests.txt explains.
-        run: |
-          set +e
-          flutter test --coverage --reporter=expanded --exclude-tags=golden \
-            | tee /tmp/test_out.log
-          test_exit=${PIPESTATUS[0]}
-          set -e
-          ./tool/check-known-failing-tests.sh < /tmp/test_out.log
-          echo "Test run completed (flutter exit=${test_exit}; baseline gate=PASS)"
+      - name: Run tests
+        run: flutter test --coverage --reporter=expanded --exclude-tags=golden
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:

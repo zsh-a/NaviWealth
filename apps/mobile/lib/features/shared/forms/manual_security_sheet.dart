@@ -206,12 +206,7 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
                     'manual-security-import-candidate-${hit.symbol}-'
                     '${hit.exchange ?? 'unknown'}',
                   ),
-                  title: Text(
-                    hit.symbol,
-                    style: context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  title: Text(hit.symbol, style: context.labelStyle),
                   subtitle: Text(
                     [
                       hit.name,

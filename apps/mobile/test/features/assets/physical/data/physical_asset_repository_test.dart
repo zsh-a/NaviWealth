@@ -105,6 +105,68 @@ void main() {
     },
   );
 
+  test(
+    'updateValuation appends manual valuation history and sync pointer',
+    () async {
+      final asset = await repo.createVehicle(
+        name: 'Car',
+        currency: 'USD',
+        purchaseDate: DateTime.utc(2023, 1, 1),
+        purchasePrice: Decimal.parse('30000'),
+      );
+
+      await repo.updateValuation(
+        assetId: asset.id,
+        newValuation: Decimal.parse('24000'),
+        asOf: DateTime.utc(2024, 1, 1),
+        note: 'dealer quote',
+      );
+
+      final history = await repo.getValuationHistory(asset.id);
+      expect(history.map((p) => p.kind), [
+        ValuationPointKind.purchase,
+        ValuationPointKind.manual,
+        ValuationPointKind.manual,
+      ]);
+      expect(history.last.value, Decimal.parse('24000'));
+      expect(
+        history.last.asOf.isAtSameMomentAs(DateTime.utc(2024, 1, 1)),
+        isTrue,
+      );
+      expect(history.last.note, 'dealer quote');
+
+      expect(outbox.queued.last.table, 'prices');
+    },
+  );
+
+  test('updateValuation rejects missing or deleted assets', () async {
+    await expectLater(
+      repo.updateValuation(
+        assetId: 'missing',
+        newValuation: Decimal.parse('1'),
+        asOf: DateTime.utc(2024, 1, 1),
+      ),
+      throwsStateError,
+    );
+
+    final asset = await repo.createVehicle(
+      name: 'Car',
+      currency: 'USD',
+      purchaseDate: DateTime.utc(2023, 1, 1),
+      purchasePrice: Decimal.parse('30000'),
+    );
+    await repo.delete(asset.id);
+
+    await expectLater(
+      repo.updateValuation(
+        assetId: asset.id,
+        newValuation: Decimal.parse('1'),
+        asOf: DateTime.utc(2024, 1, 1),
+      ),
+      throwsStateError,
+    );
+  });
+
   test('delete tombstones physical asset and hides it from reads', () async {
     final asset = await repo.createVehicle(
       name: 'Car',

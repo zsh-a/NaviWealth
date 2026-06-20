@@ -56,13 +56,12 @@ Widget _buildHeader(
   required Widget badge,
 }) {
   final colors = context.theme.colors;
-  final typography = context.theme.typography;
   return Row(
     children: [
       AppIconTile(
         icon: icon,
         color: colors.foreground,
-        size: 22,
+        size: AppIconSizes.mlg,
         iconSize: AppIconSizes.xs,
         backgroundOpacity: AppOpacity.whisper,
         foregroundOpacity: AppOpacity.strong,
@@ -71,7 +70,7 @@ Widget _buildHeader(
       Expanded(
         child: Text(
           title,
-          style: typography.sm.copyWith(fontWeight: FontWeight.w600),
+          style: context.labelStyle,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -307,7 +306,7 @@ class _Syncing extends ConsumerWidget {
         if (hasProgress) ...[
           const SizedBox(height: AppSpacing.s6),
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 3,

@@ -145,8 +145,7 @@ class _CategoryCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.s10),
               Text(
                 label,
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w600,
+                style: context.labelStyle.copyWith(
                   color: selected ? colors.primary : colors.foreground,
                 ),
                 maxLines: 1,
@@ -155,10 +154,7 @@ class _CategoryCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.s2),
               Text(
                 hint,
-                style: context.theme.typography.xs2.copyWith(
-                  color: colors.mutedForeground,
-                  height: 1.25,
-                ),
+                style: context.microCaptionStyle.copyWith(height: 1.25),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../tokens/color_palette.dart';
+import '../tokens/dimens_tokens.dart';
 import 'market_color_mode.dart';
 
 /// Direction-sensitive color tokens (gain / loss / flat).
@@ -55,7 +56,7 @@ class MarketColors {
 
   /// Inner color of the radial profit-glow used behind hero numbers. The
   /// outer stop is fully transparent — render as
-  /// `RadialGradient(colors: [profitGlow, profitGlow.withValues(alpha: 0)])`.
+  /// `RadialGradient(colors: [profitGlow, profitGlow.withValues(alpha: AppOpacity.transparent)])`.
   /// Always emerald-tinted regardless of [mode] so the visual treatment
   /// stays "this is your money, in the green" even under green-down or
   /// colorblind preferences.
@@ -76,7 +77,7 @@ class MarketColors {
   /// Container/background variant for a delta value.
   Color containerForDelta(num? delta) {
     if (delta == null || delta == 0) {
-      return flat.withValues(alpha: 0.12);
+      return flat.withValues(alpha: AppOpacity.light);
     }
     return delta > 0 ? upContainer : downContainer;
   }
@@ -113,7 +114,9 @@ class MarketColors {
     final blue = _BlueTone.forBrightness(isDark);
     final orange = _OrangeTone.forBrightness(isDark);
 
-    final glow = isDark ? const Color(0x6610B981) : const Color(0x66059669);
+    final glow = isDark
+        ? ColorPalette.profitGlowDark
+        : ColorPalette.profitGlowLight;
 
     switch (mode) {
       case MarketColorMode.redUpGreenDown:
@@ -216,7 +219,7 @@ class _LossTone {
         fg: ColorPalette.red500,
         mutedFg: _muted(ColorPalette.red500),
         onFg: ColorPalette.neutral0,
-        container: const Color(0xFF3F0A1A),
+        container: ColorPalette.redContainerDark,
         onContainer: ColorPalette.red100,
       );
     }
@@ -237,7 +240,7 @@ class _ProfitTone {
         fg: ColorPalette.green500,
         mutedFg: _muted(ColorPalette.green500),
         onFg: ColorPalette.neutral0,
-        container: const Color(0xFF053527),
+        container: ColorPalette.greenContainerDark,
         onContainer: ColorPalette.green100,
       );
     }

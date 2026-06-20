@@ -24,18 +24,20 @@ class AppGradientDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resolved = color ?? FTheme.of(context).colors.foreground.withValues(
-      alpha: AppOpacity.whisper,
-    );
+    final resolved =
+        color ??
+        FTheme.of(
+          context,
+        ).colors.foreground.withValues(alpha: AppOpacity.whisper);
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: ShaderMask(
         shaderCallback: (rect) => LinearGradient(
           colors: [
-            resolved.withValues(alpha: 0),
+            resolved.withValues(alpha: AppOpacity.transparent),
             resolved,
             resolved,
-            resolved.withValues(alpha: 0),
+            resolved.withValues(alpha: AppOpacity.transparent),
           ],
           stops: stops,
         ).createShader(rect),

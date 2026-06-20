@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/ai_chat/ui/chat_composer.dart';
+import 'package:naviwealth/features/shared/account_tree_picker.dart';
 
 import 'app_harness.dart';
 
@@ -128,15 +129,48 @@ class ActivityPageObject {
     await settle(tester);
 
     expect(find.text('Record activity'), findsOneWidget);
-    final trade = find.text('Trade');
+    final trade = find.byType(AppActionSheetTile);
     expect(trade, findsWidgets, reason: 'trade action missing');
-    await tester.tap(trade.first);
+    await tester.tap(trade.at(1));
+    await settle(tester);
+  }
+
+  Future<void> openExpenseEntry() async {
+    final add = find.byIcon(FLucideIcons.plus);
+    expect(add, findsWidgets, reason: 'activity add action missing');
+    await tester.tap(add.last);
+    await settle(tester);
+
+    expect(find.text('Record activity'), findsOneWidget);
+    final expense = find.byType(AppActionSheetTile);
+    expect(expense, findsWidgets, reason: 'expense action missing');
+    await tester.tap(expense.first);
+    await settle(tester);
+  }
+
+  Future<void> openTransferEntry() async {
+    final add = find.byIcon(FLucideIcons.plus);
+    expect(add, findsWidgets, reason: 'activity add action missing');
+    await tester.tap(add.last);
+    await settle(tester);
+
+    expect(find.text('Record activity'), findsOneWidget);
+    final transfer = find.byType(AppActionSheetTile);
+    expect(transfer, findsWidgets, reason: 'transfer action missing');
+    await tester.tap(transfer.at(2));
     await settle(tester);
   }
 
   Future<void> openIngestQueue() async {
     final action = find.byIcon(FLucideIcons.inbox);
     expect(action, findsWidgets, reason: 'ingest queue action missing');
+    await tester.tap(action.first);
+    await settle(tester);
+  }
+
+  Future<void> openExpenseList() async {
+    final action = find.text('Expenses');
+    expect(action, findsWidgets, reason: 'expenses quick link missing');
     await tester.tap(action.first);
     await settle(tester);
   }
@@ -156,6 +190,112 @@ class TradeEntryPageObject {
     expect(find.text('Valuation adjust'), findsOneWidget);
     expect(find.text('Quantity'), findsOneWidget);
     expect(find.text('Price'), findsOneWidget);
+  }
+}
+
+/// Activity -> New expense form.
+class ExpenseFormObject {
+  ExpenseFormObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectCreateMode() {
+    expect(find.text('New expense'), findsWidgets);
+    expect(find.widgetWithText(FTextFormField, 'Amount'), findsOneWidget);
+    expect(find.text('Category'), findsWidgets);
+    expect(find.text('Account'), findsWidgets);
+  }
+
+  Future<void> enterAmount(String amount) async {
+    await tester.enterText(
+      find.widgetWithText(FTextFormField, 'Amount'),
+      amount,
+    );
+    await settle(tester);
+  }
+
+  Future<void> enterNote(String note) async {
+    final field = find.widgetWithText(FTextFormField, 'Notes');
+    expect(field, findsOneWidget);
+    await tester.ensureVisible(field);
+    await settle(tester);
+    await tester.enterText(field, note);
+    await settle(tester);
+  }
+
+  Future<void> save() async {
+    final save = find.widgetWithText(FButton, 'Save');
+    expect(save, findsOneWidget);
+    await tester.tap(save);
+    await settle(tester);
+    await settle(tester);
+  }
+}
+
+/// Activity -> Expenses list.
+class ExpenseListPageObject {
+  ExpenseListPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectExpenseVisible(String note) {
+    expect(find.textContaining(note), findsWidgets);
+  }
+}
+
+/// Activity -> Transfer form.
+class TransferFormObject {
+  TransferFormObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectCreateMode() {
+    expect(find.text('Transfer'), findsWidgets);
+    expect(find.text('From account'), findsOneWidget);
+    expect(find.text('To account'), findsOneWidget);
+    expect(find.widgetWithText(FButton, 'Transfer'), findsOneWidget);
+  }
+
+  Future<void> selectFromAccount(String accountName) async {
+    await _selectAccount(pickerIndex: 0, accountName: accountName);
+  }
+
+  Future<void> selectToAccount(String accountName) async {
+    await _selectAccount(pickerIndex: 1, accountName: accountName);
+  }
+
+  Future<void> enterAmount(String amount, {String currency = 'CNY'}) async {
+    final field = find.widgetWithText(FTextFormField, 'Amount ($currency)');
+    expect(field, findsOneWidget);
+    await tester.enterText(field, amount);
+    await settle(tester);
+  }
+
+  Future<void> enterNote(String note) async {
+    final field = find.widgetWithText(FTextFormField, 'Notes');
+    expect(field, findsOneWidget);
+    await tester.ensureVisible(field);
+    await settle(tester);
+    await tester.enterText(field, note);
+    await settle(tester);
+  }
+
+  Future<void> save() async {
+    final save = find.widgetWithText(FButton, 'Transfer');
+    expect(save, findsOneWidget);
+    await tester.tap(save);
+    await settle(tester);
+    await settle(tester);
+  }
+
+  Future<void> _selectAccount({
+    required int pickerIndex,
+    required String accountName,
+  }) async {
+    await tester.tap(find.byType(AccountTreePicker).at(pickerIndex));
+    await settle(tester);
+    await tester.tap(find.text(accountName).last);
+    await settle(tester);
   }
 }
 
@@ -311,6 +451,13 @@ class PlanPageObject {
     await settle(tester);
   }
 
+  Future<void> openBudget() async {
+    final action = find.text('Budget');
+    expect(action, findsWidgets, reason: 'budget planning action missing');
+    await tester.tap(action.first);
+    await settle(tester);
+  }
+
   Future<void> openIncomeStrategy() async {
     final action = find.text('Income strategy');
     expect(action, findsWidgets, reason: 'income strategy action missing');
@@ -349,6 +496,51 @@ class RebalancePageObject {
       ),
       findsOneWidget,
     );
+  }
+}
+
+/// Plan -> Budget surface.
+class BudgetPageObject {
+  BudgetPageObject(this.tester);
+
+  final WidgetTester tester;
+
+  void expectBudgetVisible(String categoryId) {
+    expect(find.text('Budget'), findsWidgets);
+    expect(find.text(categoryId), findsOneWidget);
+  }
+
+  Future<void> editBudget({
+    required String categoryId,
+    required String amount,
+    required String note,
+    String currency = 'CNY',
+  }) async {
+    final tile = find.text(categoryId);
+    expect(tile, findsOneWidget, reason: 'budget tile missing');
+    await tester.tap(tile);
+    await settle(tester);
+
+    expect(find.text('Edit budget'), findsOneWidget);
+    final amountField = find.widgetWithText(FTextField, 'Amount ($currency)');
+    expect(amountField, findsOneWidget);
+    await tester.enterText(amountField, amount);
+    await settle(tester);
+
+    final noteField = find.widgetWithText(FTextField, 'Note');
+    expect(noteField, findsOneWidget);
+    await tester.enterText(noteField, note);
+    await settle(tester);
+
+    final save = find.widgetWithText(FButton, 'Save');
+    expect(save, findsWidgets);
+    await tester.tap(save.last);
+    await settle(tester);
+    await settle(tester);
+  }
+
+  void expectNoteVisible(String note) {
+    expect(find.text(note), findsOneWidget);
   }
 }
 
@@ -425,6 +617,12 @@ class AccountsPageObject {
   void expectAccountVisible(String name) {
     expect(find.text(name), findsWidgets, reason: 'saved account not visible');
   }
+
+  Future<void> openAccount(String name) async {
+    expectAccountVisible(name);
+    await tester.tap(find.text(name).first);
+    await settle(tester);
+  }
 }
 
 /// New/edit account form.
@@ -435,6 +633,11 @@ class AccountFormObject {
 
   void expectCreateMode() {
     expect(find.text('New account'), findsWidgets);
+    expect(find.widgetWithText(FTextFormField, 'Account name'), findsOneWidget);
+  }
+
+  void expectEditMode(String name) {
+    expect(find.text(name), findsWidgets);
     expect(find.widgetWithText(FTextFormField, 'Account name'), findsOneWidget);
   }
 

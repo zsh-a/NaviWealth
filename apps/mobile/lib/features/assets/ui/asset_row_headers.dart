@@ -34,16 +34,16 @@ class CashAccountGroupHeader extends StatelessWidget {
     final subtitle = account?.institution;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s8,
+      ),
       color: context.theme.colors.secondary.withValues(alpha: AppOpacity.muted),
       child: Text(
         subtitle != null && subtitle.isNotEmpty
             ? '${account!.name} \u00B7 $subtitle'
             : account?.name ?? accountId,
-        style: context.theme.typography.xs.copyWith(
-          color: context.theme.colors.mutedForeground,
-          fontWeight: FontWeight.w500,
-        ),
+        style: context.captionStyle.copyWith(fontWeight: FontWeight.w500),
       ),
     );
   }

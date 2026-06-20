@@ -119,9 +119,7 @@ class _ExecutionTradeRow extends StatelessWidget {
                   trade.isAssetTarget
                       ? AssetCategoryVisuals.label(l10n, trade.category)
                       : l10n.rebalanceExecutionTradeValue,
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: context.captionStyle,
                 ),
               ],
             ),
@@ -131,9 +129,7 @@ class _ExecutionTradeRow extends StatelessWidget {
             currencyCode: trade.amount.currency,
             compact: true,
             showSign: false,
-            style: context.theme.typography.sm.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: context.labelStyle,
           ),
         ],
       ),
@@ -159,21 +155,12 @@ class _MoneySummaryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(
-          child: Text(
-            label,
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
-        ),
+        Expanded(child: Text(label, style: context.captionStyle)),
         AnimatedMoneyText(
           amount: amount,
           currencyCode: currencyCode,
           compact: true,
-          style: context.theme.typography.xs.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: context.captionLabelStyle,
         ),
       ],
     );

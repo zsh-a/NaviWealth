@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../../l10n/gen/app_localizations.dart';
 import '../tokens/dimens_tokens.dart';
+import '../tokens/text_style_presets.dart';
 import 'back_navigation.dart';
 
 /// Standard back action for [FHeader.nested.prefixes].
@@ -83,14 +84,12 @@ class _AppHeaderTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     final colors = context.theme.colors;
     return DefaultTextStyle.merge(
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: typography.lg.copyWith(
+      style: context.titleLabelStyle.copyWith(
         color: colors.foreground,
-        fontWeight: FontWeight.w600,
         height: 1.15,
       ),
       child: Padding(

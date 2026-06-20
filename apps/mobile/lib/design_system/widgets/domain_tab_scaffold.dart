@@ -160,7 +160,6 @@ class _DomainHeaderTitle extends StatelessWidget {
         color: colors.foreground,
         fontWeight: FontWeight.w700,
         height: 1.15,
-        letterSpacing: -0.3,
       ),
     );
   }

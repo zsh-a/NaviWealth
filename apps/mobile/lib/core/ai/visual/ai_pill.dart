@@ -50,8 +50,11 @@ class AiPill extends StatelessWidget {
     };
     final BorderSide side = switch (state) {
       AiPillState.neutral => BorderSide.none,
-      AiPillState.selected => BorderSide(color: tone, width: 1),
-      AiPillState.error => BorderSide(color: tone, width: 1),
+      AiPillState.selected => BorderSide(
+        color: tone,
+        width: AppStroke.hairline,
+      ),
+      AiPillState.error => BorderSide(color: tone, width: AppStroke.hairline),
     };
     final Color fg = switch (state) {
       AiPillState.neutral => AiTone.onSurface(context),

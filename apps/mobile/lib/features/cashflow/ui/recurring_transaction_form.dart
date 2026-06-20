@@ -436,13 +436,7 @@ class _Segmented<T> extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: context.theme.typography.sm.copyWith(
-            color: context.theme.colors.mutedForeground,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text(label, style: context.mutedLabelStyle),
         const SizedBox(height: AppSpacing.s8),
         Wrap(
           spacing: AppSpacing.s8,

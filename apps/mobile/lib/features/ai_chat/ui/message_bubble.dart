@@ -219,10 +219,7 @@ class _UserBubble extends ConsumerWidget {
           children: [
             Text(
               l10n.aiChatEditUserMessageWarning,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-                height: 1.4,
-              ),
+              style: context.captionStyle.copyWith(height: 1.4),
             ),
             const SizedBox(height: AppSpacing.s12),
             FTextField(
@@ -303,9 +300,8 @@ class _AssistantBubble extends StatelessWidget {
               const SizedBox(width: AppSpacing.s6),
               Text(
                 l10n.aiChatSemanticsAssistantError,
-                style: context.theme.typography.xs.copyWith(
+                style: context.captionLabelStyle.copyWith(
                   color: colors.destructive,
-                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -393,7 +389,7 @@ class _AssistantBubble extends StatelessWidget {
           color: _isError
               ? colors.destructive.withValues(alpha: AppOpacity.scrim)
               : colors.border,
-          width: _isError ? 1.5 : 1,
+          width: _isError ? AppStroke.medium : AppStroke.hairline,
         ),
       ),
       child: body,
@@ -582,7 +578,9 @@ class _LongTaskProgressRow extends StatelessWidget {
         decoration: BoxDecoration(
           color: active.withValues(alpha: AppOpacity.subtle),
           borderRadius: BorderRadius.circular(AppRadius.xs),
-          border: Border.all(color: active.withValues(alpha: 0.24)),
+          border: Border.all(
+            color: active.withValues(alpha: AppOpacity.focusRing),
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s8),
@@ -596,21 +594,14 @@ class _LongTaskProgressRow extends StatelessWidget {
                   Expanded(
                     child: Text(
                       label,
-                      style: AiType.meta(
-                        context,
-                      ).copyWith(color: active, fontWeight: FontWeight.w600),
+                      style: AiType.metaStrong(context).copyWith(color: active),
                     ),
                   ),
                 ],
               ),
               if (detail != null && detail.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.s4),
-                Text(
-                  detail,
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
-                ),
+                Text(detail, style: context.captionStyle),
               ],
               const SizedBox(height: AppSpacing.s8),
               ClipRRect(
@@ -872,7 +863,7 @@ class _TruncationFooter extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            height: 1,
+            height: AppStroke.hairline,
             color: context.theme.colors.border.withValues(
               alpha: AppOpacity.scrim,
             ),
@@ -934,10 +925,7 @@ class _ContinueButton extends StatelessWidget {
           children: [
             Text(
               label,
-              style: context.theme.typography.xs.copyWith(
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
+              style: context.captionLabelStyle.copyWith(color: color),
             ),
             const SizedBox(width: AppSpacing.s2),
             Icon(FLucideIcons.arrowRight, size: AppIconSizes.xs, color: color),
@@ -963,9 +951,8 @@ class _ReasoningPanelState extends State<_ReasoningPanel> {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final labelStyle = context.theme.typography.xs.copyWith(
+    final labelStyle = context.captionLabelStyle.copyWith(
       color: colors.mutedForeground,
-      fontWeight: FontWeight.w600,
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1000,10 +987,7 @@ class _ReasoningPanelState extends State<_ReasoningPanel> {
             // panel matches the visual language of the main bubble.
             child: AiMarkdown(
               text: widget.text,
-              baseStyle: context.theme.typography.xs.copyWith(
-                height: 1.45,
-                color: colors.mutedForeground,
-              ),
+              baseStyle: context.captionStyle.copyWith(height: 1.45),
             ),
           ),
       ],
@@ -1023,7 +1007,10 @@ class _AssistantAvatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AiTone.surfaceTint(context),
-        border: Border.all(color: AiTone.outline(context), width: 1),
+        border: Border.all(
+          color: AiTone.outline(context),
+          width: AppStroke.hairline,
+        ),
       ),
       alignment: Alignment.center,
       child: const AiSparkle(size: AppIconSizes.sm),
@@ -1055,12 +1042,7 @@ class _SystemNotice extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(AppRadius.full),
             ),
-            child: Text(
-              text,
-              style: context.theme.typography.xs2.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
+            child: Text(text, style: context.microCaptionStyle),
           ),
         ),
       ),

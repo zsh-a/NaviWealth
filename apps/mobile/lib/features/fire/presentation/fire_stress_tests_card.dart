@@ -38,12 +38,7 @@ class FireStressTestsCard extends ConsumerWidget {
           children: [
             Text(l10n.fireOsStressTitle, style: context.theme.typography.md),
             const SizedBox(height: AppSpacing.s4),
-            Text(
-              l10n.fireOsStressSubtitle,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
+            Text(l10n.fireOsStressSubtitle, style: context.captionStyle),
             const SizedBox(height: AppSpacing.s12),
             stressAsync.when(
               loading: () => const Padding(
@@ -60,9 +55,7 @@ class FireStressTestsCard extends ConsumerWidget {
                 if (results.isEmpty) {
                   return Text(
                     l10n.fireOsStressEmpty,
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                    style: context.captionStyle,
                   );
                 }
                 return Column(
@@ -95,7 +88,6 @@ class _StressRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final verdictColor = fireStressVerdictColor(
       SemanticColors.of(context),
       result.verdict,
@@ -127,9 +119,7 @@ class _StressRow extends StatelessWidget {
             Expanded(
               child: Text(
                 scenarioLabel,
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: context.labelStyle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -148,10 +138,7 @@ class _StressRow extends StatelessWidget {
               ),
               child: Text(
                 verdictLabel,
-                style: context.theme.typography.xs.copyWith(
-                  color: verdictColor,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: context.captionLabelStyle.copyWith(color: verdictColor),
               ),
             ),
           ],
@@ -161,24 +148,9 @@ class _StressRow extends StatelessWidget {
           spacing: AppSpacing.s12,
           runSpacing: AppSpacing.s4,
           children: [
-            Text(
-              wrLabel,
-              style: context.theme.typography.xs.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
-            Text(
-              cashLabel,
-              style: context.theme.typography.xs.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
-            Text(
-              nwLabel,
-              style: context.theme.typography.xs.copyWith(
-                color: colors.mutedForeground,
-              ),
-            ),
+            Text(wrLabel, style: context.captionStyle),
+            Text(cashLabel, style: context.captionStyle),
+            Text(nwLabel, style: context.captionStyle),
           ],
         ),
       ],

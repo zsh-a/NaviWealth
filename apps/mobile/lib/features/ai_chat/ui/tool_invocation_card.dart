@@ -48,7 +48,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
         decoration: BoxDecoration(
           color: colors.muted,
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: colors.border, width: 1),
+          border: Border.all(color: colors.border, width: AppStroke.hairline),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,15 +84,11 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
                             if (summary != null) ...[
                               TextSpan(
                                 text: '  ·  ',
-                                style: context.theme.typography.xs.copyWith(
-                                  color: context.theme.colors.mutedForeground,
-                                ),
+                                style: context.captionStyle,
                               ),
                               TextSpan(
                                 text: summary,
-                                style: context.theme.typography.xs.copyWith(
-                                  color: context.theme.colors.mutedForeground,
-                                ),
+                                style: context.captionStyle,
                               ),
                             ],
                           ],
@@ -203,12 +199,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
       children: [
         Row(
           children: [
-            Text(
-              l10n.aiChatToolOutputLabel,
-              style: context.theme.typography.xs2.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
+            Text(l10n.aiChatToolOutputLabel, style: context.microCaptionStyle),
             const Spacer(),
             if (body != null)
               FTappable(
@@ -306,7 +297,7 @@ class _CodeBlock extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.muted,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: colors.border, width: 1),
+        border: Border.all(color: colors.border, width: AppStroke.hairline),
       ),
       child: SelectableText(
         text,

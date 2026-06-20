@@ -69,7 +69,6 @@ class _HeroBody extends ConsumerWidget {
     final formatters = ref.watch(
       appFormattersProvider(Localizations.localeOf(context)),
     );
-    final colors = context.theme.colors;
     final accent = fireSafetyColor(
       SemanticColors.of(context),
       state.safetyLevel,
@@ -92,12 +91,7 @@ class _HeroBody extends ConsumerWidget {
                       style: context.theme.typography.md,
                     ),
                     const SizedBox(height: AppSpacing.s4),
-                    Text(
-                      l10n.fireOsHeroSubtitle,
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
+                    Text(l10n.fireOsHeroSubtitle, style: context.captionStyle),
                   ],
                 ),
               ),
@@ -259,18 +253,11 @@ class _MetricTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: context.theme.typography.xs.copyWith(
-              color: colors.mutedForeground,
-            ),
-          ),
+          Text(label, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s4),
           Text(
             value,
-            style: context.theme.typography.sm.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: context.labelStyle,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -294,7 +281,6 @@ class _SuggestedActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (state.suggestedActions.isEmpty) return const SizedBox.shrink();
-    final colors = context.theme.colors;
     return AiHoverOverlay(
       topOffset: 0,
       endOffset: 0,
@@ -308,9 +294,7 @@ class _SuggestedActions extends StatelessWidget {
         children: [
           Text(
             l10n.fireOsSuggestedActionsTitle,
-            style: context.theme.typography.sm.copyWith(
-              color: colors.mutedForeground,
-            ),
+            style: context.bodyCaptionStyle,
           ),
           const SizedBox(height: AppSpacing.s6),
           for (final action in state.suggestedActions.take(3)) ...[
@@ -336,7 +320,6 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final severityColor = fireActionSeverityColor(
       SemanticColors.of(context),
       action.severity,
@@ -363,12 +346,7 @@ class _ActionRow extends StatelessWidget {
               Text(title, style: context.theme.typography.sm),
               if (detail != null) ...[
                 const SizedBox(height: AppSpacing.s2),
-                Text(
-                  detail,
-                  style: context.theme.typography.xs.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                ),
+                Text(detail, style: context.captionStyle),
               ],
             ],
           ),

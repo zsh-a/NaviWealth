@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 
 import '../theme/semantic_colors.dart';
 import '../tokens/dimens_tokens.dart';
+import '../tokens/text_style_presets.dart';
 
 /// Show a forui-styled confirm dialog with frosted glass surface.
 ///
@@ -190,7 +191,7 @@ class _GlassDialog extends StatelessWidget {
           decoration: BoxDecoration(
             color: surface,
             borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(color: borderColor, width: 1),
+            border: Border.all(color: borderColor, width: AppStroke.hairline),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -223,17 +224,13 @@ class _GlassDialog extends StatelessWidget {
                       const SizedBox(height: AppSpacing.s12),
                     ],
                     DefaultTextStyle(
-                      style: context.theme.typography.lg.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: context.titleLabelStyle,
                       child: title,
                     ),
                     if (body != null) ...[
                       const SizedBox(height: AppSpacing.s8),
                       DefaultTextStyle(
-                        style: context.theme.typography.sm.copyWith(
-                          color: colors.mutedForeground,
-                        ),
+                        style: context.bodyCaptionStyle,
                         child: body!,
                       ),
                     ],

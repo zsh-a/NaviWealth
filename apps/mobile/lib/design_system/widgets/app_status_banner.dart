@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../theme/semantic_colors.dart';
 import '../tokens/dimens_tokens.dart';
+import '../tokens/text_style_presets.dart';
 
 enum AppStatusKind { neutral, info, success, warning, error }
 
@@ -57,26 +58,17 @@ class AppStatusBanner extends StatelessWidget {
                 children: [
                   Text(
                     message,
-                    style:
-                        (compact
-                                ? context.theme.typography.xs
-                                : context.theme.typography.sm)
-                            .copyWith(
-                              color: compact
-                                  ? colors.mutedForeground
-                                  : colors.foreground,
-                            ),
+                    style: compact
+                        ? context.captionStyle
+                        : context.theme.typography.sm.copyWith(
+                            color: colors.foreground,
+                          ),
                     maxLines: compact ? 2 : null,
                     overflow: compact ? TextOverflow.ellipsis : null,
                   ),
                   if (hasDetails) ...[
                     const SizedBox(height: AppSpacing.s2),
-                    Text(
-                      details!,
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
+                    Text(details!, style: context.captionStyle),
                   ],
                 ],
               ),

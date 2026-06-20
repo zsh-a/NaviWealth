@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -60,14 +62,43 @@ extension GoldenThemeData on GoldenTheme {
 
 bool _fontsLoaded = false;
 
+const List<String> _goldenFontAssets = <String>[
+  'assets/fonts/inter-regular.woff2',
+  'assets/fonts/inter-medium.woff2',
+  'assets/fonts/inter-semibold.woff2',
+  'assets/fonts/inter-bold.woff2',
+  'assets/fonts/outfit-bold.woff2',
+  'assets/fonts/app-cn-base.woff2',
+  'assets/fonts/app-cn-ext.woff2',
+];
+
+void _verifyGoldenFontAssets() {
+  final missingOrEmpty = <String>[];
+  for (final path in _goldenFontAssets) {
+    final file = File(path);
+    if (!file.existsSync() || file.lengthSync() == 0) {
+      missingOrEmpty.add(path);
+    }
+  }
+  if (missingOrEmpty.isEmpty) return;
+
+  throw StateError(
+    'Golden font assets are missing or empty:\n'
+    '${missingOrEmpty.map((path) => '  - $path').join('\n')}\n'
+    'Run apps/mobile/tool/build-latin-fonts.sh and '
+    'apps/mobile/tool/build-cn-fonts.sh before golden tests.',
+  );
+}
+
 /// Load every font declared in `pubspec.yaml` (Inter, Outfit, AppCnSans).
 ///
-/// On CI these .woff2 files are regenerated before the golden job starts.
-/// Fresh local checkouts may still use gitignored stubs; Flutter then falls
-/// through to its built-in test font, which is acceptable for non-Linux runs
-/// where golden comparison is skipped by `flutter_test_config.dart`.
+/// On CI these .woff2 files are regenerated before the golden job starts. The
+/// assets are gitignored build artifacts, so fail early if a checkout only has
+/// empty placeholder files; otherwise Flutter can silently fall back to its
+/// built-in test font and make the PNG baseline meaningless.
 Future<void> loadGoldenFonts() async {
   if (_fontsLoaded) return;
+  _verifyGoldenFontAssets();
   await loadAppFonts();
   _fontsLoaded = true;
 }
@@ -140,28 +171,21 @@ Future<void> pumpAndSnapshotMobile(
       ),
     ),
   );
-  // Drain skeleton → first data frame, glass blur first paint, intro
-  // tweens, etc. Some pages (skeleton shimmer, AI composer cursor) hold
-  // a Ticker open forever; bail after a few seconds and accept whatever
-  // the surface looks like. Goldens are about *visual* steady state, not
-  // about reaching an absent ticker.
-  try {
-    await tester.pumpAndSettle(
-      const Duration(milliseconds: 100),
-      EnginePhase.sendSemanticsUpdate,
-      const Duration(seconds: 4),
-    );
-  } catch (_) {
-    await tester.pump(const Duration(milliseconds: 200));
-    await tester.pump(const Duration(milliseconds: 200));
-  }
+  // Advance a fixed number of frames so async provider completions and first
+  // paints land deterministically. Avoid pumpAndSettle here: several golden
+  // surfaces intentionally keep a ticker alive, and timeout fallbacks can
+  // capture different frames on different hosts.
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 100));
+  await tester.pump(const Duration(milliseconds: 200));
+  await tester.pump(const Duration(milliseconds: 200));
 
   await screenMatchesGolden(tester, '${name}_${variant.filenameSuffix}');
 }
 
-/// Convenience: declare a `testGoldens` block that captures a page in all
-/// three theme variants. The closure receives the variant so callers can
-/// pass it to [pumpAndSnapshotMobile].
+/// Convenience: declare a `testGoldens` block that captures a page in every
+/// theme variant. The closure receives the variant so callers can pass it to
+/// [pumpAndSnapshotMobile].
 void runAllVariants(
   String pageName,
   Future<void> Function(WidgetTester tester, GoldenTheme variant) body,

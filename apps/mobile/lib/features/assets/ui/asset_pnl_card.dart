@@ -80,9 +80,7 @@ class AssetPnLCard extends ConsumerWidget {
                     children: [
                       Text(
                         l10n.assetDetailUnrealizedPnL,
-                        style: context.theme.typography.xs.copyWith(
-                          color: context.theme.colors.mutedForeground,
-                        ),
+                        style: context.captionStyle,
                       ),
                       const SizedBox(height: AppSpacing.s4),
                       DeltaText(
@@ -104,9 +102,7 @@ class AssetPnLCard extends ConsumerWidget {
               Text(
                 '${l10n.assetDetailBaseCurrency(snap.baseCurrency)} '
                 '${_formatBaseAmount(snap.unrealizedPnlInBase)}',
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
+                style: context.captionStyle,
               ),
             ],
             const FDivider(),
@@ -162,16 +158,14 @@ class _DailyChangeView extends StatelessWidget {
     }
     if (isLoading && value == null) {
       return const SizedBox(
-        width: 80,
+        width: AppControlWidths.compactValue,
         child: SkeletonBox(height: 14, radius: 4),
       );
     }
     if (value == null) {
       return Text(
         isStale ? l10n.assetDetailQuoteStale : l10n.assetDetailQuoteUnavailable,
-        style: context.theme.typography.xs.copyWith(
-          color: context.theme.colors.mutedForeground,
-        ),
+        style: context.captionStyle,
       );
     }
     return DeltaText(value: value!.toDouble(), currencyCode: currency);

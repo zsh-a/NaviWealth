@@ -61,10 +61,7 @@ class _Hint extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
       child: Text(
         l10n.settingsMonthlyExpenseHint,
-        style: context.theme.typography.xs.copyWith(
-          color: context.theme.colors.mutedForeground,
-          height: 1.45,
-        ),
+        style: context.captionStyle.copyWith(height: 1.45),
       ),
     );
   }
@@ -191,7 +188,6 @@ class _WindowSliderState extends State<_WindowSlider> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s14,
@@ -215,9 +211,7 @@ class _WindowSliderState extends State<_WindowSlider> {
                     const SizedBox(height: AppSpacing.s2),
                     Text(
                       l10n.settingsMonthlyExpenseWindowSubtitle,
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
+                      style: context.captionStyle,
                     ),
                   ],
                 ),
@@ -225,8 +219,7 @@ class _WindowSliderState extends State<_WindowSlider> {
               const SizedBox(width: AppSpacing.s8),
               Text(
                 l10n.settingsMonthlyExpenseWindowValue(widget.windowMonths),
-                style: context.theme.typography.sm.copyWith(
-                  color: colors.mutedForeground,
+                style: context.bodyCaptionStyle.copyWith(
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
@@ -314,7 +307,6 @@ class _OverrideFieldState extends State<_OverrideField> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s14,
@@ -332,9 +324,7 @@ class _OverrideFieldState extends State<_OverrideField> {
           const SizedBox(height: AppSpacing.s2),
           Text(
             l10n.settingsMonthlyExpenseOverrideSubtitle,
-            style: context.theme.typography.xs.copyWith(
-              color: colors.mutedForeground,
-            ),
+            style: context.captionStyle,
           ),
           const SizedBox(height: AppSpacing.s6),
           Row(
@@ -350,12 +340,7 @@ class _OverrideFieldState extends State<_OverrideField> {
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),
-              Text(
-                widget.baseCurrency,
-                style: context.theme.typography.sm.copyWith(
-                  color: colors.mutedForeground,
-                ),
-              ),
+              Text(widget.baseCurrency, style: context.bodyCaptionStyle),
             ],
           ),
         ],

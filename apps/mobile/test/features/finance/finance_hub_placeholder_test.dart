@@ -32,7 +32,7 @@ void main() {
     expect(find.text('Strategy tools'), findsOneWidget);
     expect(find.text('Rebalance'), findsOneWidget);
     expect(find.text('DCA simulator'), findsOneWidget);
-    expect(find.text('Budget'), findsNothing);
+    expect(find.text('Budget'), findsOneWidget);
     expect(find.text('Scenario analytics'), findsNothing);
     expect(find.text('Scenarios'), findsNothing);
     expect(find.text('Goals'), findsNothing);

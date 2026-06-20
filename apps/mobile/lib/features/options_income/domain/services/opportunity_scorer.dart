@@ -146,7 +146,14 @@ class OpportunityScorer {
           reasons.add('underlying_not_approved_for_put');
         }
         final cashRequired = _putCashRequired(contract);
-        final cap = availableCash.amount * profile.maxCapitalPerTradePct;
+        final cashCurrencyMatches =
+            availableCash.currency == cashRequired.currency;
+        if (!cashCurrencyMatches) {
+          reasons.add('available_cash_currency_mismatch');
+        }
+        final cap = cashCurrencyMatches
+            ? availableCash.amount * profile.maxCapitalPerTradePct
+            : Decimal.zero;
         if (cashRequired.amount > cap) {
           reasons.add('cash_required_above_cap');
         }

@@ -113,9 +113,7 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
                         padding: const EdgeInsets.only(top: AppSpacing.s2),
                         child: Text(
                           widget.subtitle!,
-                          style: context.theme.typography.xs.copyWith(
-                            color: colors.mutedForeground,
-                          ),
+                          style: context.captionStyle,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -128,9 +126,7 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
                 constraints: const BoxConstraints(maxWidth: 172),
                 child: Text(
                   selectedLabel,
-                  style: context.theme.typography.sm.copyWith(
-                    color: colors.mutedForeground,
-                  ),
+                  style: context.bodyCaptionStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.end,
@@ -239,10 +235,12 @@ class _OptionRow<T> extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected ? accentColor : colors.foreground,
-                ),
+                style: isSelected
+                    ? context.labelStyle.copyWith(color: accentColor)
+                    : context.theme.typography.sm.copyWith(
+                        fontWeight: FontWeight.w400,
+                        color: colors.foreground,
+                      ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -294,12 +292,7 @@ class InlineSwitchRow extends StatelessWidget {
                 if (subtitle != null)
                   Padding(
                     padding: const EdgeInsets.only(top: AppSpacing.s2),
-                    child: Text(
-                      subtitle!,
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
+                    child: Text(subtitle!, style: context.captionStyle),
                   ),
               ],
             ),
@@ -383,12 +376,7 @@ class InlineLinkRow extends StatelessWidget {
                   if (subtitle != null)
                     Padding(
                       padding: const EdgeInsets.only(top: AppSpacing.s2),
-                      child: Text(
-                        subtitle!,
-                        style: context.theme.typography.xs.copyWith(
-                          color: colors.mutedForeground,
-                        ),
-                      ),
+                      child: Text(subtitle!, style: context.captionStyle),
                     ),
                 ],
               ),
@@ -398,9 +386,7 @@ class InlineLinkRow extends StatelessWidget {
               Flexible(
                 child: Text(
                   trailingValue!,
-                  style: context.theme.typography.sm.copyWith(
-                    color: colors.mutedForeground,
-                  ),
+                  style: context.bodyCaptionStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.end,

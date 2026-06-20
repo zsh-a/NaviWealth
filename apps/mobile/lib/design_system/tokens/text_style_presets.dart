@@ -32,6 +32,10 @@ extension AppTextStyles on BuildContext {
   TextStyle get labelStyle =>
       theme.typography.sm.copyWith(fontWeight: FontWeight.w600);
 
+  /// `typography.sm` + semibold + muted — subdued compact labels.
+  TextStyle get mutedLabelStyle =>
+      labelStyle.copyWith(color: theme.colors.mutedForeground);
+
   /// `typography.xs` + semibold — compact emphasis labels and mini chips.
   TextStyle get captionLabelStyle =>
       theme.typography.xs.copyWith(fontWeight: FontWeight.w600);
@@ -40,7 +44,16 @@ extension AppTextStyles on BuildContext {
   TextStyle get microLabelStyle =>
       theme.typography.xs2.copyWith(fontWeight: FontWeight.w600);
 
+  /// `typography.md` + semibold — primary row titles and compact section
+  /// headings.
+  TextStyle get rowTitleStyle =>
+      theme.typography.md.copyWith(fontWeight: FontWeight.w600);
+
   /// `typography.lg` + semibold — page-local hero values/headlines.
   TextStyle get titleLabelStyle =>
       theme.typography.lg.copyWith(fontWeight: FontWeight.w600);
+
+  /// `typography.xl2` + semibold — empty-state and page hero titles.
+  TextStyle get displayTitleStyle =>
+      theme.typography.xl2.copyWith(fontWeight: FontWeight.w600);
 }

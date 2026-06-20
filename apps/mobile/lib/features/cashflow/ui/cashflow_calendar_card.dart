@@ -99,9 +99,7 @@ class _CashflowCalendarContent extends ConsumerWidget {
                       ),
                     )
                   : l10n.homeMonthlyCashFlowEmpty,
-              style: context.theme.typography.xs.copyWith(
-                color: colors.mutedForeground,
-              ),
+              style: context.captionStyle,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -128,7 +126,7 @@ class _CashflowCalendarSkeleton extends StatelessWidget {
       borderless: true,
       level: SoftCardLevel.raised,
       child: SizedBox(
-        height: 140,
+        height: AppChartHeights.compact,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -157,7 +155,7 @@ class _CashflowCalendarError extends StatelessWidget {
       borderless: true,
       level: SoftCardLevel.raised,
       child: SizedBox(
-        height: 140,
+        height: AppChartHeights.compact,
         child: Text(
           AppLocalizations.of(context).homeCashFlowCardError,
           style: context.theme.typography.sm.copyWith(
@@ -229,7 +227,7 @@ class _CashflowBalancePainter extends CustomPainter {
       Offset(center, size.height - 1),
       Paint()
         ..color = zeroColor
-        ..strokeWidth = 1,
+        ..strokeWidth = AppStroke.hairline,
     );
   }
 

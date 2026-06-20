@@ -141,9 +141,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
             // the same sheet so saving stays a single confirm.
             Text(
               l10n.fireOsPlanFormAdvancedTitle,
-              style: context.theme.typography.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.bodyCaptionStyle,
             ),
             const SizedBox(height: AppSpacing.s12),
             Text(
@@ -160,12 +158,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                 }),
               ),
             ),
-            Text(
-              l10n.fireOsPlanFormSwrHelper,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
+            Text(l10n.fireOsPlanFormSwrHelper, style: context.captionStyle),
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(
               control: FTextFieldControl.managed(controller: _cashBucketCtrl),

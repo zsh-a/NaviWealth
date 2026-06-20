@@ -27,9 +27,7 @@ class AssetSummaryCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.s8),
             Text(
               '${asset.market ?? l10n.assetDetailUnknown} \u00B7 ${asset.currency}',
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.captionStyle,
             ),
           ],
         ),

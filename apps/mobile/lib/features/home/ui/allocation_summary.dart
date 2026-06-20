@@ -96,10 +96,7 @@ class AllocationSummary extends StatelessWidget {
           ),
           child: Text(
             l10n.dashboardAllocationSummaryTitle,
-            style: context.theme.typography.sm.copyWith(
-              fontWeight: FontWeight.w600,
-              color: context.theme.colors.mutedForeground,
-            ),
+            style: context.mutedLabelStyle,
           ),
         ),
         SoftCard(
@@ -139,9 +136,8 @@ class AllocationSummary extends StatelessWidget {
                     ),
                     child: Text(
                       l10n.dashboardAllocationViewBreakdown,
-                      style: context.theme.typography.xs.copyWith(
+                      style: context.captionLabelStyle.copyWith(
                         color: context.theme.colors.primary,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -179,7 +175,7 @@ class _StackedBar extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.xs),
       child: SizedBox(
-        height: 8,
+        height: AppSpacing.s8,
         child: Row(
           children: [
             for (final s in segments)
@@ -231,15 +227,12 @@ class _SegmentLegendRow extends StatelessWidget {
               amount: segment.amount.toDouble(),
               currencyCode: baseCurrency,
               compact: true,
-              style: context.theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: context.labelStyle,
             ),
             const SizedBox(height: AppSpacing.s2),
             Text(
               '$pct%',
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
+              style: context.captionStyle.copyWith(
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),

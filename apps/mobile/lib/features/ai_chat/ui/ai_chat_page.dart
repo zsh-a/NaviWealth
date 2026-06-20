@@ -70,7 +70,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
         ),
         safeTop: true,
         child: SizedBox(
-          width: 320,
+          width: AppControlWidths.aiSessionsPanel,
           child: SessionsPanel(
             activeSessionId: activeId,
             onSelect: (id) {
@@ -283,7 +283,7 @@ class _EmptyConversation extends ConsumerWidget {
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: AiTone.outline(context),
-                          width: 1,
+                          width: AppStroke.hairline,
                         ),
                       ),
                       child: const AiSparkle(size: 28),
@@ -293,18 +293,15 @@ class _EmptyConversation extends ConsumerWidget {
                   Text(
                     l10n.aiChatEmptyTitle,
                     textAlign: TextAlign.center,
-                    style: context.theme.typography.xl2.copyWith(
+                    style: context.displayTitleStyle.copyWith(
                       color: colors.foreground,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.s8),
                   Text(
                     l10n.aiChatEmptyBody,
                     textAlign: TextAlign.center,
-                    style: context.theme.typography.sm.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                    style: context.bodyCaptionStyle,
                   ),
                   const SizedBox(height: AppSpacing.s8),
                   SectionHeader(title: l10n.aiChatEmptySuggestionsHeader),
@@ -436,12 +433,7 @@ class _BootstrappingPane extends StatelessWidget {
             child: FCircularProgress(),
           ),
           const SizedBox(height: AppSpacing.s12),
-          Text(
-            l10n.aiChatBootstrappingLabel,
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          Text(l10n.aiChatBootstrappingLabel, style: context.captionStyle),
         ],
       ),
     );

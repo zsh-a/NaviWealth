@@ -57,6 +57,34 @@ void main() {
       expect(result!.reasons, contains('cash_required_above_cap'));
     });
 
+    test('rejects sell put when available cash is a different currency', () {
+      const scorer = OpportunityScorer();
+      final contract = _putContract(strike: 190);
+      final result = scorer.filter(
+        contract: contract,
+        strategy: OptionsStrategyKind.cashSecuredPut,
+        profile: _profileBalanced(),
+        approved: _approved(symbol: 'AAPL'),
+        sharesOwned: 0,
+        availableCash: Money.parse('1000000', 'CNY'),
+      );
+
+      expect(result, isNotNull);
+      expect(result!.reasons, contains('available_cash_currency_mismatch'));
+      expect(result.reasons, contains('cash_required_above_cap'));
+      expect(
+        scorer.scoreOne(
+          contract: contract,
+          strategy: OptionsStrategyKind.cashSecuredPut,
+          profile: _profileBalanced(),
+          approved: _approved(symbol: 'AAPL'),
+          sharesOwned: 0,
+          availableCash: Money.parse('1000000', 'CNY'),
+        ),
+        isNull,
+      );
+    });
+
     test('rejects when spread is too wide', () {
       const scorer = OpportunityScorer();
       final contract = _putContract(strike: 190, bid: 1.0, ask: 5.0);

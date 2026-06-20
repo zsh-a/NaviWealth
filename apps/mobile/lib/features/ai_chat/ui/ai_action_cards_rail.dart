@@ -24,27 +24,29 @@ class AiActionCardsRail extends ConsumerWidget {
     final items = selector(l10n);
     if (items.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(0, AppSpacing.s8, 0, 0),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s0,
+        AppSpacing.s8,
+        AppSpacing.s0,
+        AppSpacing.s0,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.s20,
-              0,
+              AppSpacing.s0,
               AppSpacing.s16,
               AppSpacing.s8,
             ),
             child: Text(
               l10n.aiActionCardsTitle,
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-                fontWeight: FontWeight.w600,
-              ),
+              style: context.mutedLabelStyle,
             ),
           ),
           SizedBox(
-            height: 132,
+            height: AppChartHeights.mini,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
@@ -79,7 +81,7 @@ class _ActionCard extends StatelessWidget {
     };
     final route = item.route;
     return SizedBox(
-      width: 240,
+      width: AppControlWidths.aiActionCard,
       child: SoftCard(
         onPress: route == null ? null : () => context.push(route),
         padding: const EdgeInsets.all(AppSpacing.s14),
@@ -102,9 +104,7 @@ class _ActionCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     item.headline,
-                    style: context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: context.labelStyle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -115,10 +115,7 @@ class _ActionCard extends StatelessWidget {
             Expanded(
               child: Text(
                 item.detail,
-                style: context.theme.typography.xs.copyWith(
-                  color: colors.mutedForeground,
-                  height: 1.4,
-                ),
+                style: context.captionStyle.copyWith(height: 1.4),
                 maxLines: 4,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -128,9 +125,8 @@ class _ActionCard extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   l10n.aiActionCardsOpen,
-                  style: context.theme.typography.xs.copyWith(
+                  style: context.captionLabelStyle.copyWith(
                     color: colors.primary,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../theme/market_color_mode.dart';
 import '../theme/market_colors.dart';
+import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'amount_privacy_scope.dart';
 import 'money_text.dart';
@@ -100,7 +101,7 @@ class DeltaText extends StatelessWidget {
           children: [
             if (showIcon)
               Padding(
-                padding: const EdgeInsets.only(right: 2),
+                padding: const EdgeInsets.only(right: AppSpacing.s2),
                 child: Icon(
                   _iconFor(value, market.mode),
                   size: (effectiveStyle.fontSize ?? 14) + 2,

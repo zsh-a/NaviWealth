@@ -19,7 +19,7 @@ void main() {
       _wrap(
         const AppIconTile(
           icon: FLucideIcons.activity,
-          color: Color(0xFF2563EB),
+          color: ColorPalette.brand500,
         ),
       ),
     );

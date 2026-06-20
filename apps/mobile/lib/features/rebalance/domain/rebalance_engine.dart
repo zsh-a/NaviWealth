@@ -191,6 +191,7 @@ class RebalanceEngine {
 
     // Sell overweight categories first.
     for (final drift in drifts) {
+      if (drift.severity == DriftSeverity.ok) continue;
       if (drift.deviation <= 0) continue;
       final sellAmount = total * Decimal.parse(drift.deviation.toString());
       if (sellAmount <= Decimal.zero) continue;
@@ -208,6 +209,7 @@ class RebalanceEngine {
 
     // Then buy underweight categories.
     for (final drift in drifts) {
+      if (drift.severity == DriftSeverity.ok) continue;
       if (drift.deviation >= 0) continue;
       final buyAmount = total * Decimal.parse((-drift.deviation).toString());
       if (buyAmount <= Decimal.zero) continue;

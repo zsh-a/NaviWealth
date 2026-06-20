@@ -12,6 +12,8 @@ import 'package:naviwealth/core/security/in_memory_key_store.dart';
 import 'package:naviwealth/features/auth/data/auth_controller.dart';
 import 'package:naviwealth/features/auth/data/auth_route_guard.dart';
 
+import '../../core/persistence/test_database.dart';
+
 class _Marker extends StatelessWidget {
   const _Marker(this.label);
   final String label;
@@ -29,9 +31,12 @@ AuthSession _session({DateTime? expiresAt}) => AuthSession(
 
 ProviderContainer _container({Map<String, String>? seed}) {
   final keyStore = InMemoryKeyStore(seed);
+  final db = makeTestDatabase();
+  addTearDown(db.close);
   return ProviderContainer(
     overrides: [
       secureKeyStoreProvider.overrideWithValue(keyStore),
+      appDatabaseProvider.overrideWith((_) async => db),
       // Plug the AuthRouteGuard into FIR-15's empty default — same wiring
       // bootstrap.dart does in production.
       routeGuardsProvider.overrideWith(

@@ -48,12 +48,7 @@ class _FireReviewCardState extends ConsumerState<FireReviewCard> {
         children: [
           Text(l10n.fireOsReviewTitle, style: context.theme.typography.md),
           const SizedBox(height: AppSpacing.s4),
-          Text(
-            l10n.fireOsReviewSubtitle,
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          Text(l10n.fireOsReviewSubtitle, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s12),
           Wrap(
             spacing: AppSpacing.s8,
@@ -99,9 +94,7 @@ class _FireReviewCardState extends ConsumerState<FireReviewCard> {
                 const SizedBox(width: AppSpacing.s8),
                 Text(
                   l10n.fireOsReviewSaved(_savedKey!),
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
+                  style: context.captionStyle,
                 ),
               ],
             ],
@@ -140,7 +133,6 @@ class _ReviewBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.theme.colors;
     final generated = review.generatedAt.toLocal().toIso8601String();
     final cache = ref.watch(fireReviewCacheProvider);
     final prior = _findPriorCached(cache, review.kind, review.periodKey);
@@ -149,9 +141,7 @@ class _ReviewBody extends ConsumerWidget {
       children: [
         Text(
           '${review.periodKey} · ${l10n.fireOsReviewGeneratedAt(generated)}',
-          style: context.theme.typography.xs.copyWith(
-            color: colors.mutedForeground,
-          ),
+          style: context.captionStyle,
         ),
         const SizedBox(height: AppSpacing.s8),
         _DiffPanel(
@@ -160,12 +150,7 @@ class _ReviewBody extends ConsumerWidget {
           l10n: l10n,
         ),
         const SizedBox(height: AppSpacing.s12),
-        Text(
-          l10n.fireOsReviewFindingsTitle,
-          style: context.theme.typography.sm.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text(l10n.fireOsReviewFindingsTitle, style: context.labelStyle),
         const SizedBox(height: AppSpacing.s4),
         for (final f in review.findings) ...[
           _FindingRow(finding: f, formatters: formatters, l10n: l10n),
@@ -200,9 +185,7 @@ class _DiffPanel extends StatelessWidget {
         ),
         child: Text(
           l10n.fireOsReviewDiffNoBaseline,
-          style: context.theme.typography.xs.copyWith(
-            color: colors.mutedForeground,
-          ),
+          style: context.captionStyle,
         ),
       );
     }
@@ -225,25 +208,24 @@ class _DiffPanel extends StatelessWidget {
         children: [
           Text(
             l10n.fireOsReviewDiffTitle(before.periodKey),
-            style: context.theme.typography.xs.copyWith(
-              color: colors.mutedForeground,
-              fontWeight: FontWeight.w600,
+            style: context.captionLabelStyle.copyWith(
+              color: context.theme.colors.mutedForeground,
             ),
           ),
           const SizedBox(height: AppSpacing.s4),
           Text(
             safetyLine,
-            style: context.theme.typography.xs.copyWith(
-              color: diff.safetyLevelChanged
-                  ? fireSafetyColor(
+            style: diff.safetyLevelChanged
+                ? context.captionLabelStyle.copyWith(
+                    color: fireSafetyColor(
                       SemanticColors.of(context),
                       diff.after.safetyLevel,
-                    )
-                  : colors.foreground,
-              fontWeight: diff.safetyLevelChanged
-                  ? FontWeight.w600
-                  : FontWeight.w400,
-            ),
+                    ),
+                  )
+                : context.theme.typography.xs.copyWith(
+                    color: colors.foreground,
+                    fontWeight: FontWeight.w400,
+                  ),
           ),
           Text(wrLine, style: context.theme.typography.xs),
           Text(nwLine, style: context.theme.typography.xs),

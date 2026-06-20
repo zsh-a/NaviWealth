@@ -110,6 +110,7 @@ Future<void> bootApp(
   WidgetTester tester, {
   FlowSeed seed = const FlowSeed(),
   FlowDataHarness? liveData,
+  Map<String, Object> initialPrefs = const {},
   List<Override> extraOverrides = const [],
 }) async {
   // Phone surface so the shell renders the bottom navigation bar; the
@@ -118,7 +119,10 @@ Future<void> bootApp(
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
-  SharedPreferences.setMockInitialValues({'naviwealth.locale': 'en'});
+  SharedPreferences.setMockInitialValues({
+    'naviwealth.locale': 'en',
+    ...initialPrefs,
+  });
   final prefs = await SharedPreferences.getInstance();
   await markAiPrivacyOnboardingSeen(prefs);
   final testDb = liveData == null ? makeTestDatabase() : null;

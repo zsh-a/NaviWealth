@@ -148,8 +148,6 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
-    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return AppSheet(
       title: l10n.knowledgeDecisionWriterTitle,
@@ -270,9 +268,7 @@ class _DecisionWriterState extends ConsumerState<_DecisionWriter> {
                           : l10n.knowledgeDecisionReviewDateScheduled(
                               knowledgeDate(context, _reviewDate!, long: true),
                             ),
-                      style: typography.sm.copyWith(
-                        color: colors.mutedForeground,
-                      ),
+                      style: context.bodyCaptionStyle,
                     ),
                   ),
                   FButton(
@@ -541,10 +537,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-    child: Text(
-      text,
-      style: context.theme.typography.sm.copyWith(fontWeight: FontWeight.w600),
-    ),
+    child: Text(text, style: context.labelStyle),
   );
 }
 

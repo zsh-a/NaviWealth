@@ -89,6 +89,7 @@ class ColorPalette {
   static const Color green700 = Color(0xFF047857);
   static const Color green900 = Color(0xFF064E3B);
   static const Color green950 = Color(0xFF0F3D22);
+  static const Color greenContainerDark = Color(0xFF053527);
 
   // ── Loss / danger (rose / soft crimson) ─────────────────────────────────
   // Migrated from saturated red #DC2626 to Tailwind rose. The
@@ -102,6 +103,7 @@ class ColorPalette {
   static const Color red700 = Color(0xFF9F1239);
   static const Color red900 = Color(0xFF4C0519);
   static const Color red950 = Color(0xFF3F1010);
+  static const Color redContainerDark = Color(0xFF3F0A1A);
 
   // ── Ambers (warning) ────────────────────────────────────────────────────
   static const Color amber50 = Color(0xFFFEF6E5);
@@ -121,8 +123,15 @@ class ColorPalette {
   static const Color cyan950 = Color(0xFF0A3540);
 
   // ── Overlay / scrim ─────────────────────────────────────────────────────
+  static const Color shadowMedium = Color(0x33000000);
   static const Color scrimLight = Color(0x66002A38);
   static const Color scrimDark = Color(0x99002A38);
+  static const Color shadowNavy04 = Color(0x0A002A38);
+  static const Color shadowNavy08 = Color(0x14002A38);
+  static const Color shadowNavy10 = Color(0x1A002A38);
+  static const Color shadowCyan04 = Color(0x0A3BC6D9);
+  static const Color profitGlowDark = Color(0x6610B981);
+  static const Color profitGlowLight = Color(0x66059669);
 
   // ── Violet (knowledge concepts) ────────────────────────────────────────
   static const Color violet500 = Color(0xFF8B5CF6);
@@ -144,6 +153,21 @@ class ColorPalette {
   static const Color cbOrangeDark = Color(0xFF8A5F00);
   static const Color cbOrangeContainerLight = Color(0xFFFCEED1);
   static const Color cbOrangeContainerDark = Color(0xFF402C00);
+
+  // ── Chart categorical series accents ─────────────────────────────────
+  // Chart-only sequence tokens. Regular UI controls should keep using
+  // semantic / market tokens instead of these categorical hues.
+  static const Color chartCyanDark = Color(0xFF67D6F0);
+  static const Color chartPurpleDark = Color(0xFFB497F1);
+  static const Color chartEmeraldDark = Color(0xFF34D399);
+  static const Color chartPinkDark = Color(0xFFEB7BB1);
+  static const Color chartYellowDark = Color(0xFFE8D45A);
+  static const Color chartBlueDark = Color(0xFF7AB7FB);
+  static const Color chartRoseDark = Color(0xFFFB7185);
+
+  static const Color chartPurpleLight = Color(0xFF7C3AED);
+  static const Color chartPinkLight = Color(0xFFDB2777);
+  static const Color chartYellowLight = Color(0xFFCA8A04);
 }
 
 /// Knowledge-type accent colours.
@@ -179,7 +203,7 @@ class ExpenseCategoryColors {
   static const Color indigo = Color(0xFF6366F1); // home
   static const Color slate = Color(0xFF64748B); // apartment
   static const Color yellow = Color(0xFFEAB308); // utilities (bolt)
-  static const Color teal = ColorPalette.cyanBrand500; // furniture (chair)
+  static const Color cyanBrand = ColorPalette.cyanBrand500; // furniture
   static const Color purple = Color(
     0xFFA855F7,
   ); // entertainment (esports, movie)

@@ -56,15 +56,11 @@ class _Hint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
       child: Text(
         l10n.settingsRiskThresholdsHint,
-        style: context.theme.typography.xs.copyWith(
-          color: colors.mutedForeground,
-          height: 1.45,
-        ),
+        style: context.captionStyle.copyWith(height: 1.45),
       ),
     );
   }
@@ -242,7 +238,7 @@ class _ThresholdSliderState extends State<_ThresholdSlider> {
           ),
           const SizedBox(width: AppSpacing.s12),
           SizedBox(
-            width: 72,
+            width: AppControlWidths.settingsShortLabel,
             child: Text(
               widget.label,
               style: context.theme.typography.sm,
@@ -260,11 +256,10 @@ class _ThresholdSliderState extends State<_ThresholdSlider> {
             ),
           ),
           SizedBox(
-            width: 44,
+            width: AppControlWidths.settingsShortValue,
             child: Text(
               '${(widget.value * 100).round()}%',
-              style: context.theme.typography.sm.copyWith(
-                color: colors.mutedForeground,
+              style: context.bodyCaptionStyle.copyWith(
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
               textAlign: TextAlign.end,

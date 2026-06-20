@@ -104,9 +104,7 @@ class _PassiveIncomeContent extends ConsumerWidget {
                           )
                         : l10n.homePassiveIncomeSubtitle
                   : l10n.homePassiveIncomeEmpty,
-              style: context.theme.typography.xs.copyWith(
-                color: colors.mutedForeground,
-              ),
+              style: context.captionStyle,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -115,7 +113,7 @@ class _PassiveIncomeContent extends ConsumerWidget {
               children: [
                 Expanded(
                   child: SizedBox(
-                    height: 28,
+                    height: AppChartHeights.sparkline,
                     child: _PassiveIncomeSparkline(
                       values: metrics.monthlyTotals
                           .map((money) => money.amount)
@@ -161,7 +159,7 @@ class _PassiveIncomeSkeleton extends StatelessWidget {
       borderless: true,
       level: SoftCardLevel.raised,
       child: SizedBox(
-        height: 140,
+        height: AppChartHeights.compact,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -193,7 +191,7 @@ class _PassiveIncomeError extends StatelessWidget {
       borderless: true,
       level: SoftCardLevel.raised,
       child: SizedBox(
-        height: 140,
+        height: AppChartHeights.compact,
         child: Text(
           AppLocalizations.of(context).homeCashFlowCardError,
           style: context.theme.typography.sm.copyWith(
@@ -240,7 +238,7 @@ class _SparklinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final guidePaint = Paint()
       ..color = guideColor
-      ..strokeWidth = 1;
+      ..strokeWidth = AppStroke.hairline;
     canvas.drawLine(
       Offset(0, size.height * 0.72),
       Offset(size.width, size.height * 0.72),
@@ -274,7 +272,7 @@ class _SparklinePainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round
-        ..strokeWidth = 2.2,
+        ..strokeWidth = AppStroke.sparkline,
     );
   }
 

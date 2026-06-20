@@ -525,7 +525,10 @@ class _SankeyPainter extends CustomPainter {
 
     nodePaint.color = neutralColor;
     canvas.drawRRect(
-      RRect.fromRectAndRadius(layout.assetRect, const Radius.circular(4)),
+      RRect.fromRectAndRadius(
+        layout.assetRect,
+        const Radius.circular(AppRadius.xs),
+      ),
       nodePaint,
     );
     _drawLabel(
@@ -554,7 +557,10 @@ class _SankeyPainter extends CustomPainter {
     );
     nodePaint.color = profitColor;
     canvas.drawRRect(
-      RRect.fromRectAndRadius(layout.netWorthRect, const Radius.circular(4)),
+      RRect.fromRectAndRadius(
+        layout.netWorthRect,
+        const Radius.circular(AppRadius.xs),
+      ),
       nodePaint,
     );
     _drawLabel(
@@ -580,7 +586,7 @@ class _SankeyPainter extends CustomPainter {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           layout.liabilityRect!,
-          const Radius.circular(4),
+          const Radius.circular(AppRadius.xs),
         ),
         nodePaint,
       );
@@ -630,9 +636,8 @@ class _SankeyPainter extends CustomPainter {
     final title = TextPainter(
       text: TextSpan(
         text: label,
-        style: TypographyTokens.numericCaption.copyWith(
+        style: TypographyTokens.numericCaptionStrong.copyWith(
           color: labelColor,
-          fontWeight: FontWeight.w600,
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -780,12 +785,7 @@ class _LegendRow extends StatelessWidget {
                     children: [
                       Text(label, style: context.theme.typography.sm),
                       if (pctText != null)
-                        Text(
-                          pctText,
-                          style: context.theme.typography.xs.copyWith(
-                            color: context.theme.colors.mutedForeground,
-                          ),
-                        ),
+                        Text(pctText, style: context.captionStyle),
                     ],
                   ),
                 ),
@@ -869,9 +869,7 @@ class CategoryDrillDownSheet extends StatelessWidget {
             ],
             Text(
               l10n.dashboardDrillDownItemCount(allocation.items.length),
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.captionStyle,
             ),
             const SizedBox(height: AppSpacing.s8),
             Flexible(
@@ -912,9 +910,7 @@ class CategoryDrillDownSheet extends StatelessWidget {
                             currencyCode: item.nativeCurrency,
                             compact: true,
                             symbolStyle: MoneySymbolStyle.isoCode,
-                            style: context.theme.typography.xs.copyWith(
-                              color: context.theme.colors.mutedForeground,
-                            ),
+                            style: context.captionStyle,
                           ),
                       ],
                     ),

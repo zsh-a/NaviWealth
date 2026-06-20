@@ -71,8 +71,7 @@ class SecurityAssetTile extends StatelessWidget {
                       const SizedBox(height: AppSpacing.s4),
                       Text(
                         qtyLabel,
-                        style: context.theme.typography.xs.copyWith(
-                          color: context.theme.colors.mutedForeground,
+                        style: context.captionStyle.copyWith(
                           fontFeatures: hasQty
                               ? TypographyTokens.tabularFigures
                               : null,

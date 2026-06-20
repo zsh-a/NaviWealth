@@ -84,13 +84,7 @@ class _ActionPlanCard extends StatelessWidget {
                 color: colors.mutedForeground,
               ),
               const SizedBox(width: AppSpacing.s8),
-              Text(
-                l10n.healthPlanTodayActions,
-                style: typography.sm.copyWith(
-                  color: colors.mutedForeground,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              Text(l10n.healthPlanTodayActions, style: context.mutedLabelStyle),
             ],
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -166,7 +160,6 @@ class _InputMetricsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
     final score = out['score'];
     final inputs = (out['inputs'] as Map?)?.cast<String, Object?>() ?? const {};
@@ -221,10 +214,7 @@ class _InputMetricsCard extends StatelessWidget {
               const SizedBox(width: AppSpacing.s8),
               Text(
                 l10n.healthInputMetricsTitle,
-                style: typography.sm.copyWith(
-                  color: colors.mutedForeground,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: context.mutedLabelStyle,
               ),
             ],
           ),

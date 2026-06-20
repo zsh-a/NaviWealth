@@ -243,25 +243,18 @@ class _WatchlistRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      item.displaySymbol,
-                      style: context.theme.typography.sm.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    Text(item.displaySymbol, style: context.labelStyle),
                     Text(
                       _marketLabel(l10n, item.market),
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
+                      style: context.captionStyle,
                     ),
                   ],
                 ),
               ),
               if (loadingQuote)
                 const SizedBox(
-                  width: 18,
-                  height: 18,
+                  width: AppIconSizes.h18,
+                  height: AppIconSizes.h18,
                   child: FCircularProgress(),
                 )
               else if (quote == null)

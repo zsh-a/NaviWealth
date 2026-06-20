@@ -61,12 +61,7 @@ class _FireBucketsCardState extends ConsumerState<FireBucketsCard> {
             children: [
               Text(l10n.fireOsBucketsTitle, style: context.theme.typography.md),
               const SizedBox(height: AppSpacing.s4),
-              Text(
-                l10n.fireOsBucketsSubtitle,
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
-              ),
+              Text(l10n.fireOsBucketsSubtitle, style: context.captionStyle),
               const SizedBox(height: AppSpacing.s12),
               for (final bucket in allocation.buckets) ...[
                 _BucketRow(
@@ -96,7 +91,10 @@ class _FireBucketsCardState extends ConsumerState<FireBucketsCard> {
                 child: FButton(
                   variant: FButtonVariant.outline,
                   onPress: () => showFireBucketMappingSheet(context),
-                  prefix: const Icon(FLucideIcons.slidersHorizontal, size: AppIconSizes.xs),
+                  prefix: const Icon(
+                    FLucideIcons.slidersHorizontal,
+                    size: AppIconSizes.xs,
+                  ),
                   child: Text(l10n.fireOsBucketsManageCta),
                 ),
               ),
@@ -139,7 +137,11 @@ class _BucketRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final statusColor = fireBucketStatusColor(SemanticColors.of(context), colors, bucket.status);
+    final statusColor = fireBucketStatusColor(
+      SemanticColors.of(context),
+      colors,
+      bucket.status,
+    );
     final coverage = bucket.coverageRatio?.clamp(0.0, 1.5) ?? 0.0;
     final hasTarget = bucket.targetValue.amount.toDouble() > 0;
     final hasAssets = bucket.assetIds.isNotEmpty;
@@ -163,9 +165,7 @@ class _BucketRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   _roleLabel(l10n, bucket.role),
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.labelStyle,
                 ),
               ),
               if (hasAssets)
@@ -176,11 +176,16 @@ class _BucketRow extends StatelessWidget {
                 ),
               const SizedBox(width: AppSpacing.s6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8, vertical: AppSpacing.s2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s8,
+                  vertical: AppSpacing.s2,
+                ),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: AppOpacity.light),
                   borderRadius: BorderRadius.circular(AppRadius.full),
-                  border: Border.all(color: statusColor.withValues(alpha: AppOpacity.disabled)),
+                  border: Border.all(
+                    color: statusColor.withValues(alpha: AppOpacity.disabled),
+                  ),
                 ),
                 child: Text(
                   _statusLabel(l10n, bucket.status),
@@ -196,9 +201,7 @@ class _BucketRow extends StatelessWidget {
             hasTarget
                 ? l10n.fireOsBucketCoverage(currentText, targetText)
                 : '$currentText · ${l10n.fireOsBucketNoTarget}',
-            style: context.theme.typography.xs.copyWith(
-              color: colors.mutedForeground,
-            ),
+            style: context.captionStyle,
           ),
           if (hasTarget) ...[
             const SizedBox(height: AppSpacing.s6),
@@ -206,11 +209,15 @@ class _BucketRow extends StatelessWidget {
               value: coverage > 1.5 ? 1.0 : coverage / 1.5,
               style: FDeterminateProgressStyle(
                 trackDecoration: ShapeDecoration(
-                  shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: context.theme.style.borderRadius.pill,
+                  ),
                   color: colors.muted,
                 ),
                 fillDecoration: ShapeDecoration(
-                  shape: RoundedSuperellipseBorder(borderRadius: context.theme.style.borderRadius.pill),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: context.theme.style.borderRadius.pill,
+                  ),
                   color: statusColor,
                 ),
               ),
@@ -220,9 +227,7 @@ class _BucketRow extends StatelessWidget {
             const SizedBox(height: AppSpacing.s4),
             Text(
               l10n.fireOsBucketAssets(bucket.assetIds.length),
-              style: context.theme.typography.xs.copyWith(
-                color: colors.mutedForeground,
-              ),
+              style: context.captionStyle,
             ),
           ],
           if (expanded && hasAssets) ...[
@@ -257,7 +262,10 @@ class _BucketAssetList extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s10, vertical: AppSpacing.s8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s10,
+        vertical: AppSpacing.s8,
+      ),
       decoration: BoxDecoration(
         color: colors.muted.withValues(alpha: AppOpacity.muted),
         borderRadius: BorderRadius.circular(AppRadius.xs),
@@ -284,9 +292,7 @@ class _BucketAssetList extends StatelessWidget {
                         itemsById[id]!.valueInBase.amount,
                         code: itemsById[id]!.valueInBase.currency,
                       ),
-                      style: context.theme.typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
+                      style: context.captionStyle,
                     ),
                 ],
               ),
@@ -320,19 +326,9 @@ class _UnmappedSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.fireOsUnmappedTitle,
-            style: context.theme.typography.sm.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(l10n.fireOsUnmappedTitle, style: context.labelStyle),
           const SizedBox(height: AppSpacing.s2),
-          Text(
-            l10n.fireOsUnmappedSubtitle,
-            style: context.theme.typography.xs.copyWith(
-              color: colors.mutedForeground,
-            ),
-          ),
+          Text(l10n.fireOsUnmappedSubtitle, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s6),
           for (final u in unmapped.take(5))
             Padding(
@@ -349,9 +345,7 @@ class _UnmappedSection extends StatelessWidget {
                   ),
                   Text(
                     formatters.currency(u.value.amount, code: u.value.currency),
-                    style: context.theme.typography.xs.copyWith(
-                      color: colors.mutedForeground,
-                    ),
+                    style: context.captionStyle,
                   ),
                 ],
               ),
@@ -415,4 +409,3 @@ String _statusLabel(AppLocalizations l10n, FireBucketStatus status) {
       return l10n.fireOsBucketStatusEmpty;
   }
 }
-

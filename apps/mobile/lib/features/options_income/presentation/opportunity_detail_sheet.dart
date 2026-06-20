@@ -65,9 +65,7 @@ class _DetailBody extends StatelessWidget {
                   amount: opportunity.contract.strike.amount.toDouble(),
                   currencyCode: opportunity.contract.strike.currency,
                   symbolStyle: MoneySymbolStyle.isoCode,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.labelStyle,
                 ),
               ),
               (
@@ -76,9 +74,7 @@ class _DetailBody extends StatelessWidget {
                   amount: metrics.breakeven.amount.toDouble(),
                   currencyCode: metrics.breakeven.currency,
                   symbolStyle: MoneySymbolStyle.isoCode,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.labelStyle,
                 ),
               ),
               (
@@ -87,37 +83,20 @@ class _DetailBody extends StatelessWidget {
                   amount: metrics.cashRequired.amount.toDouble(),
                   currencyCode: metrics.cashRequired.currency,
                   symbolStyle: MoneySymbolStyle.isoCode,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.labelStyle,
                 ),
               ),
               (
                 l10n.incomePlannerMetricAnnualized,
-                Text(
-                  _pct(metrics.annualizedYield),
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text(_pct(metrics.annualizedYield), style: context.labelStyle),
               ),
               (
                 l10n.incomePlannerMetricMargin,
-                Text(
-                  _pct(metrics.marginOfSafety),
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text(_pct(metrics.marginOfSafety), style: context.labelStyle),
               ),
               (
                 l10n.incomePlannerMetricDte,
-                Text(
-                  '${opportunity.contract.dte}',
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text('${opportunity.contract.dte}', style: context.labelStyle),
               ),
             ],
           ),
@@ -174,13 +153,7 @@ class _Section extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: context.theme.typography.xs.copyWith(
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
-        ),
+        Text(title, style: context.captionLabelStyle.copyWith(color: color)),
         const SizedBox(height: AppSpacing.s4),
         child,
       ],
@@ -201,16 +174,11 @@ class _StatsGrid extends StatelessWidget {
       children: [
         for (final e in entries)
           SizedBox(
-            width: 140,
+            width: AppControlWidths.statsTile,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  e.$1,
-                  style: context.theme.typography.xs.copyWith(
-                    color: context.theme.colors.mutedForeground,
-                  ),
-                ),
+                Text(e.$1, style: context.captionStyle),
                 const SizedBox(height: AppSpacing.s2),
                 e.$2,
               ],
@@ -257,9 +225,8 @@ class _LabeledLine extends StatelessWidget {
       children: [
         Text(
           '$label：',
-          style: context.theme.typography.xs.copyWith(
+          style: context.captionLabelStyle.copyWith(
             color: context.theme.colors.mutedForeground,
-            fontWeight: FontWeight.w600,
           ),
         ),
         Expanded(
@@ -290,13 +257,8 @@ class _ScoreBreakdown extends StatelessWidget {
             child: Row(
               children: [
                 SizedBox(
-                  width: 96,
-                  child: Text(
-                    entry.key,
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
-                  ),
+                  width: AppControlWidths.detailLabel,
+                  child: Text(entry.key, style: context.captionStyle),
                 ),
                 Expanded(
                   child: ClipRRect(
@@ -307,12 +269,7 @@ class _ScoreBreakdown extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s8),
-                Text(
-                  _pct(entry.value),
-                  style: context.theme.typography.xs.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text(_pct(entry.value), style: context.captionLabelStyle),
               ],
             ),
           ),

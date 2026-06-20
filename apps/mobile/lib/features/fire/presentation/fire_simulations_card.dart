@@ -87,12 +87,7 @@ class _Body extends StatelessWidget {
       children: [
         Text(l10n.fireOsSimulationsTitle, style: context.theme.typography.md),
         const SizedBox(height: AppSpacing.s4),
-        Text(
-          l10n.fireOsSimulationsSubtitle,
-          style: context.theme.typography.xs.copyWith(
-            color: context.theme.colors.mutedForeground,
-          ),
-        ),
+        Text(l10n.fireOsSimulationsSubtitle, style: context.captionStyle),
         const SizedBox(height: AppSpacing.s12),
         Wrap(
           spacing: AppSpacing.s6,
@@ -190,38 +185,22 @@ class _DeltaPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            presetLabel,
-            style: context.theme.typography.sm.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(presetLabel, style: context.labelStyle),
           const SizedBox(height: AppSpacing.s6),
           Wrap(
             spacing: AppSpacing.s12,
             runSpacing: AppSpacing.s4,
             children: [
-              Text(
-                wrLabel,
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
-              ),
-              Text(
-                cashLabel,
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
-              ),
+              Text(wrLabel, style: context.captionStyle),
+              Text(cashLabel, style: context.captionStyle),
               if (safetyChanged)
                 Text(
                   '${baseline.safetyLevel.name} → ${result.safetyLevel.name}',
-                  style: context.theme.typography.xs.copyWith(
+                  style: context.captionLabelStyle.copyWith(
                     color: fireSafetyColor(
                       SemanticColors.of(context),
                       result.safetyLevel,
                     ),
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
             ],
