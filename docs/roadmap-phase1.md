@@ -275,9 +275,13 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
 
 ## P1-G · E2E sync 测试落地
 
-**现状**：`docs/sync-e2e-manual.md` 与 CLAUDE.md 都提到 `SyncCluster` / `VirtualDevice` 框架，但 `apps/mobile/test/e2e/` 是否存在需确认；至少 features 目录下没有协议级 E2E。
+**现状**：协议级 harness 已落地在 `apps/mobile/test/e2e/`：
+`sync_e2e_test.dart` 通过 `SyncCluster` / `VirtualDevice` 覆盖双设备收敛、
+离线追赶、墓碑同步、HLC 与 LWW 冲突路径；`finance_ledger_e2e_test.dart`
+补了财务账本 bundle 级覆盖。
 
-**目标**：落地 5 个最小可信集合：
+**后续目标**：在现有 harness 上继续扩展高价值业务 bundle，并保持以下
+最小可信集合：
 
 | ID | 场景 | 关键断言 |
 |----|------|---------|
@@ -300,15 +304,18 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
 
 ## P1-H · 测试覆盖空白补齐
 
-按 codecov 60%/70% 阈值，目前空白集中在：
+按 codecov 60%/70% 阈值，原始空白项当前状态如下：
 
-- `features/home/`：缺 widget 测试（仅有 domain 测试）。补：DashboardPage 渲染 + InsightStrip × 4 类 insight 渲染。
-- `features/activity/`：仅 1 个测试。配合 P1-C 一起补到 ≥ 4 个（query / pagination / filter / widget）。
-- `features/portfolio/`：无测试。配合 P1-D 一起补到 ≥ 3 个（视角切换 / 数据聚合 / 空态）。
+- `features/home/`：已有 domain/data/widget 覆盖，包括 greeting、allocation、
+  insight feed、timeline preview、currency mismatch 和 dashboard insights。
+- `features/activity/`：已有 query、feed、kind filter、filter sheet 和 detail
+  page 覆盖；后续可随分页/更多事件类型继续补测试。
+- `features/portfolio/`：当前不再是独立 feature 目录；组合分析覆盖在
+  `features/investment/` 与 `test/flow/portfolio_analysis_flow_test.dart`。
 
-不在 phase 1 强制补的（codecov 中应加入 ignore 或暂时降低阈值）：
-- `features/me/`、`features/more/` → P1-A 删除后无需测试；
-- `features/plan/`：当前只是路由壳，子页面 fire/analytics/rebalance 已有测试，可暂缓。
+不在 phase 1 强制补的：
+- `features/me/`、`features/more/` → 当前不再是 feature 目录。
+- `features/plan/`：保留为规划入口，并已有 `plan_hub_page_test.dart`。
 
 ---
 

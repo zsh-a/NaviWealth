@@ -358,22 +358,35 @@ class AppDatabase extends _$AppDatabase {
       // forward ledger. Old rows keep these fields NULL and remain
       // review-only.
       if (from < 24) {
-        await customStatement(
-          'ALTER TABLE options_trade_journal '
-          'ADD COLUMN brokerage_account_id TEXT',
+        await _addColumnIfMissing(
+          this,
+          table: 'options_trade_journal',
+          column: 'brokerage_account_id',
+          definition: 'TEXT',
         );
-        await customStatement(
-          'ALTER TABLE options_trade_journal ADD COLUMN cash_account_id TEXT',
+        await _addColumnIfMissing(
+          this,
+          table: 'options_trade_journal',
+          column: 'cash_account_id',
+          definition: 'TEXT',
         );
-        await customStatement(
-          'ALTER TABLE options_trade_journal '
-          'ADD COLUMN underlying_market TEXT',
+        await _addColumnIfMissing(
+          this,
+          table: 'options_trade_journal',
+          column: 'underlying_market',
+          definition: 'TEXT',
         );
-        await customStatement(
-          'ALTER TABLE options_trade_journal ADD COLUMN strike_price TEXT',
+        await _addColumnIfMissing(
+          this,
+          table: 'options_trade_journal',
+          column: 'strike_price',
+          definition: 'TEXT',
         );
-        await customStatement(
-          'ALTER TABLE options_trade_journal ADD COLUMN contract_size INTEGER',
+        await _addColumnIfMissing(
+          this,
+          table: 'options_trade_journal',
+          column: 'contract_size',
+          definition: 'INTEGER',
         );
       }
       // v24 -> v25: local analytical observation log for recurring

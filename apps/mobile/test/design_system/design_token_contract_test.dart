@@ -67,7 +67,7 @@ void main() {
     _expectNoMatches(
       libFiles,
       RegExp(r'(ColorPalette|ExpenseCategoryColors)\.teal|Colors\.teal'),
-      'Use CyanBrand / semantic tokens instead of the retained teal aliases.',
+      'Use CyanBrand / semantic tokens instead of legacy teal aliases.',
     );
 
     _expectNoMatches(

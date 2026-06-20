@@ -38,6 +38,60 @@ void main() {
       expect(text, isNot(contains('pumpAndSettle')));
     });
 
+    test(
+      'runtime test skips stay limited to platform/native dependency gates',
+      () {
+        final testRoot = Directory('${appRoot.path}/test');
+        final skipPattern = RegExp(r'\bskip\s*:|\bmarkTestSkipped\s*\(');
+        final filesWithRuntimeSkips =
+            _testFiles(testRoot)
+                .where(
+                  (file) => !file.path.endsWith(
+                    '/testing_infrastructure_contract_test.dart',
+                  ),
+                )
+                .where((file) => skipPattern.hasMatch(file.readAsStringSync()))
+                .map((file) => _relativeToAppRoot(appRoot, file))
+                .toList(growable: false)
+              ..sort();
+
+        expect(
+          filesWithRuntimeSkips,
+          orderedEquals(<String>[
+            'test/core/ai/local/embedding/rust_gemma_embedder_test.dart',
+            'test/core/background/background_scheduler_provider_test.dart',
+            'test/core/notifications/notification_service_provider_test.dart',
+            'test/golden/ai_semantic_vision_artifact_test.dart',
+          ]),
+        );
+
+        for (final path in <String>[
+          'test/core/background/background_scheduler_provider_test.dart',
+          'test/core/notifications/notification_service_provider_test.dart',
+        ]) {
+          final text = File('${appRoot.path}/$path').readAsStringSync();
+          expect(text, contains('Platform.isIOS || Platform.isAndroid'));
+          expect(text, contains('Host-only provider safety check.'));
+        }
+
+        final rustEmbeddingText = File(
+          '${appRoot.path}/test/core/ai/local/embedding/rust_gemma_embedder_test.dart',
+        ).readAsStringSync();
+        expect(rustEmbeddingText, contains('liblifeos_native.dylib not found'));
+        expect(rustEmbeddingText, contains('RUST_EMBEDDER_MODEL_DIR not set'));
+        expect(
+          rustEmbeddingText,
+          contains('RUST_EMBEDDER_ORT_DYLIB_PATH not set'),
+        );
+        expect(rustEmbeddingText, contains('markTestSkipped(realSkipReason)'));
+
+        final aiVisionText = File(
+          '${appRoot.path}/test/golden/ai_semantic_vision_artifact_test.dart',
+        ).readAsStringSync();
+        expect(aiVisionText, contains('AI_SEMANTIC_SCREENSHOT_DIR is not set'));
+      },
+    );
+
     test('critical user flows stay covered outside the sync E2E test', () {
       const flowFiles = <String>[
         'test/flow/add_account_flow_test.dart',
@@ -196,7 +250,7 @@ void main() {
         // and app database behavior must stay directly covered.
         'test/core/persistence/schema_verification_test.dart': 1,
         'test/core/persistence/converters_test.dart': 3,
-        'test/core/persistence/app_database_behavior_test.dart': 17,
+        'test/core/persistence/app_database_behavior_test.dart': 18,
       };
 
       for (final entry in requiredFiles.entries) {
@@ -210,6 +264,70 @@ void main() {
               'test cases; empty shell files do not count.',
         );
       }
+    });
+
+    test('persistence migration coverage keeps legacy upgrade paths pinned', () {
+      final behaviorTest = File(
+        '${appRoot.path}/test/core/persistence/app_database_behavior_test.dart',
+      );
+
+      expect(behaviorTest.existsSync(), isTrue);
+      final text = behaviorTest.readAsStringSync();
+      expect(
+        text,
+        contains('migrates v3 legacy account taxonomy to current enum labels'),
+      );
+      expect(text, contains("'brokerage-account': (type: 'broker'"));
+      expect(text, contains("'crypto-wallet': (type: 'crypto'"));
+      expect(text, contains("'real-estate': (type: 'asset'"));
+      expect(text, contains("'vehicle': (type: 'asset'"));
+      expect(text, contains("'other-asset': (type: 'asset'"));
+    });
+
+    test('recent regression-risk surfaces keep focused coverage', () {
+      const requiredFiles = <String, int>{
+        // Recent AI transparency churn should keep both aggregate model and
+        // widget coverage.
+        'test/features/settings/ai_transparency_page_test.dart': 3,
+
+        // Proposal kind registry refactors should keep both domain registries
+        // pinned to their appliers/presentation contract.
+        'test/features/finance/composition/proposal_kind_registry_contract_test.dart':
+            2,
+        'test/features/knowledge/composition/proposal_kind_registry_contract_test.dart':
+            1,
+
+        // Chat composer copy/interaction changes should keep direct widget
+        // coverage instead of relying only on broad AI flow tests.
+        'test/features/ai_chat/chat_composer_test.dart': 2,
+
+        // Sync status diagnostics were a recent golden churn hotspot; keep
+        // direct responsive/widget coverage alongside the visual baseline.
+        'test/features/settings/sync_status_page_test.dart': 3,
+      };
+
+      for (final entry in requiredFiles.entries) {
+        final file = File('${appRoot.path}/${entry.key}');
+        expect(file.existsSync(), isTrue, reason: '${entry.key} should exist');
+        expect(
+          _countTestCases([file]),
+          greaterThanOrEqualTo(entry.value),
+          reason:
+              '${entry.key} should keep at least ${entry.value} focused '
+              'regression tests.',
+        );
+      }
+
+      final syncStatusGolden = File(
+        '${appRoot.path}/test/golden/sync_status_page_golden_test.dart',
+      );
+      expect(syncStatusGolden.existsSync(), isTrue);
+      final goldenText = syncStatusGolden.readAsStringSync();
+      expect(
+        goldenText,
+        contains("runAllVariants('sync_status_page_diagnostics'"),
+      );
+      expect(goldenText, contains('pumpAndSnapshotMobile'));
     });
 
     test('golden harness uses deterministic fixed-frame pumping', () {
@@ -299,6 +417,12 @@ int _countTestCases(Iterable<File> files) {
     0,
     (count, file) => count + pattern.allMatches(file.readAsStringSync()).length,
   );
+}
+
+String _relativeToAppRoot(Directory appRoot, File file) {
+  final prefix = '${appRoot.path}/';
+  if (!file.path.startsWith(prefix)) return file.path;
+  return file.path.substring(prefix.length);
 }
 
 Directory _appRoot() {

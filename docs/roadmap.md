@@ -26,12 +26,14 @@
 | 核心域 | 资产 / 账户 / 投资 / 负债 / 支出 / FIRE / 再平衡 / 分析 / AI 助手 已上线 |
 | 同步 | Sync Protocol v1.0 已冻结（轮询 30s，HLC + OpLog + 行级 LWW） |
 | 后端 | Cloudflare Workers + D1，路由极简（health/auth/me/sync；AI 路由已删除） |
-| 测试 | 62 个 `*_test.dart`，分布不均；E2E sync 框架存在但未落地 |
+| 测试 | 400+ 个 `*_test.dart`；flow/e2e/golden/contract 层已落地，当前事实以 [`docs/testing-strategy.md`](./testing-strategy.md) 为准 |
 | 国际化 | en + zh；设计稿提及 ja 尚未支持 |
 | 安全 | 原生端 SQLCipher；Web 端为 sqlite3 WASM（弱于原生）；JWT HS256 单用户 |
 
 **优势**：投资模块（35 文件，FIFO/LIFO/avg、FX PnL、税务）、AI 对话（22 文件，SSE 流 + 提案/确认）、分析（集中度风险、基准对比）。
-**缺口**：`me/`、`more/` 仅占位；`plan/`、`portfolio/` 是薄壳；活动 Feed 单薄；后端 AI 工具中成本基础是粗略近似；Web 安全与 a11y 自动化空白。
+**当前主要缺口**：历史 `me/`、`more/`、`portfolio/` 占位已不再是当前 feature
+目录；`plan/` 已保留为规划入口并有直接测试。后续重点是继续深化 Activity
+Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 
 ---
 
@@ -63,9 +65,16 @@
 - 路径策略：核对 `docs/web-routing.md` 检查清单，确保所有 deep link 都能直达。
 
 ### 1.6 测试空白补齐
-- 没有测试目录的 feature：`me`、`more`、`plan`、`portfolio`。
-- 测试明显偏薄的：`activity`（1 个测试）、`home`（仅 domain 测试，无 widget 测试）。
-- 文档（`docs/sync-e2e-manual.md`、CLAUDE.md）提到的 `SyncCluster` / `VirtualDevice` E2E 框架尚未在 `test/features/` 落地，需要至少 3–5 个端到端用例：双设备并发写、离线追赶、墓碑同步、HLC 时钟漂移、冲突 LWW。
+- 本节原始测试空白判断已过期：当前 `apps/mobile/test` 有 400+ 个
+  `*_test.dart`，`plan`、`activity`、`home` 已有直接测试，flow/e2e/golden/
+  contract 层也已落地；`me`、`more`、`portfolio` 不再是当前 feature 目录。
+- 后续测试优先级以 [`docs/testing-strategy.md`](./testing-strategy.md) 和
+  `apps/mobile/test/testing_infrastructure_contract_test.dart` 为准，重点是
+  扩展高价值业务 bundle、保持零已知失败、以及让新增风险面进入 contract。
+- Sync E2E 已落地在 `apps/mobile/test/e2e/`：`sync_e2e_test.dart`
+  覆盖双设备收敛、离线追赶、墓碑同步、HLC 与 LWW 冲突路径，
+  `finance_ledger_e2e_test.dart` 覆盖财务账本 bundle。后续测试工作应
+  扩展高价值业务 bundle，而不是再重复搭建协议级 harness。
 
 ---
 
@@ -312,9 +321,9 @@
 这些不是单一 feature，但会影响所有功能的可信度。
 
 ### 4.1 测试
-- **覆盖率**：当前目标 60%（项目）/ 70%（patch），需检查 `me`、`more`、`plan`、`portfolio`、`activity` 是否在 codecov ignore 之外；
-- **黄金图测试（visual regression）**：`docs/visual-baseline/` 已有规划，需要在 CI 落地（platform pinned，每个主页面至少 1 个 golden）；
-- **E2E sync**：见 §1.6；
+- **覆盖率**：当前目标 60%（项目）/ 70%（patch），新增高风险模块时应同步补直接测试或更新 `testing_infrastructure_contract_test.dart`；
+- **黄金图测试（visual regression）**：`docs/visual-baseline/` 与 Linux-pinned CI 已落地；后续重点是扩展任务主表面与响应式断点；
+- **E2E sync**：协议级 harness 已落地，见 §1.6；后续扩展高价值业务 bundle；
 - **a11y 自动化**：`docs/design/12-usability-self-check.md §7` 提到引入 `dart_a11y` 或自定义 Semantics 校验器，目前是手工 checklist。
 
 ### 4.2 性能
@@ -340,8 +349,7 @@
 |------|----------|------|
 | Backend 成本基础粗略近似 | `apps/backend/src/ai/tools.rs:34-39` | AI 提案对成本基础类问题的回答可能与客户端不一致 |
 | Web 端弱于原生的存储加密 | `core/db/connection_*.dart` | Web 端不应承诺与原生同等的安全等级 |
-| `me/` `more/` 空目录 | `lib/features/me/`、`lib/features/more/` | 占位含义不明，影响新人理解 |
-| `plan/` `portfolio/` 薄壳 | `lib/features/plan/`、`lib/features/portfolio/` | 模块边界与 FIRE/assets 重叠 |
+| Activity Feed 业务深度仍可扩展 | `lib/features/activity/` | 已有筛选/详情基础，后续可继续补分页和更多事件类型 |
 | 单一后端路由表无 domain endpoint | `apps/backend/src/routes/` | 所有非 sync 查询走 oplog 物化，未来扩展可能撞瓶颈 |
 | Activity Feed 缺 data 层 | `lib/features/activity/` | 难以扩展过滤/分页/事件类型 |
 
@@ -361,11 +369,11 @@
 按"价值 / 完成度"两个维度，建议下一阶段优先做：
 
 1. **【收尾】** 补完仪表盘洞察 + activity feed → 用户每日打开就能看到的体验提升 (§1.2 / §1.4)
-2. **【收尾】** `me`/`more`/`plan`/`portfolio` 的产品定位决策 + 合并或落地 (§1.1)
+2. **【收尾】** 深化 `plan` 规划入口的信息密度，并继续把历史占位模块的文档引用清理干净 (§1.1)
 3. **【拓展 / M1】** 多币种 dual-display 组件 → 是 §2.1 / §2.2 报表 UI 的前置（§2.3 M1）
 4. **【拓展 / M1】** 预算与现金流模块 MVP → 当前最显著的产品空白（§2.1 M1）
 5. **【基础 / M1】** 崩溃上报 opt-in 上线 → 给后续两个迭代提供观测反馈（§2.6 M1）
-6. **【基础】** E2E sync 测试 + visual regression 上 CI → 让后续大改不再心虚（§4.1）
+6. **【基础】** 扩展业务 bundle E2E 与响应式 golden 覆盖 → 让后续大改不再心虚（§4.1）
 
 剩余项可在 §1–4 的 backlog 中按 FIR 编号细化跟踪。中期 §2 的详细分解见每个工作流下的 M1/M2/M3 拆分。
 

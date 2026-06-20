@@ -721,6 +721,118 @@ void main() {
     expect(row.read<String>('event_kind'), 'created');
   });
 
+  test('migrates v3 legacy account taxonomy to current enum labels', () async {
+    final dir = await Directory.systemTemp.createTemp('naviwealth_migration_');
+    addTearDown(() async {
+      if (await dir.exists()) await dir.delete(recursive: true);
+    });
+    final file = File('${dir.path}/naviwealth.db');
+
+    final legacy = sqlite3.open(file.path);
+    try {
+      legacy
+        ..execute('''
+          CREATE TABLE accounts (
+            id                  TEXT PRIMARY KEY,
+            name                TEXT NOT NULL,
+            type                TEXT NOT NULL,
+            category            TEXT NOT NULL,
+            currency            TEXT NOT NULL,
+            owner_user_id       TEXT NOT NULL,
+            updated_at          INTEGER NOT NULL,
+            updated_by_device   TEXT NOT NULL,
+            hlc                 TEXT NOT NULL
+          )
+        ''')
+        ..execute('''
+          CREATE TABLE chat_sessions (
+            id              TEXT PRIMARY KEY,
+            owner_user_id   TEXT NOT NULL,
+            title           TEXT NOT NULL,
+            model           TEXT,
+            created_at      INTEGER NOT NULL,
+            updated_at      INTEGER NOT NULL,
+            last_message_at INTEGER
+          )
+        ''')
+        ..execute('''
+          CREATE TABLE chat_messages (
+            id                  TEXT PRIMARY KEY,
+            session_id          TEXT NOT NULL,
+            owner_user_id       TEXT NOT NULL,
+            role                TEXT NOT NULL,
+            content             TEXT NOT NULL DEFAULT '',
+            tool_calls_json     TEXT,
+            text_segments_json  TEXT,
+            status              TEXT NOT NULL,
+            error_message       TEXT,
+            stop_reason         TEXT,
+            created_at          INTEGER NOT NULL,
+            FOREIGN KEY (session_id) REFERENCES chat_sessions(id)
+              ON DELETE CASCADE
+          )
+        ''');
+
+      void insertLegacyAccount(String id, String type) {
+        legacy.execute(
+          '''
+          INSERT INTO accounts (
+            id,
+            name,
+            type,
+            category,
+            currency,
+            owner_user_id,
+            updated_at,
+            updated_by_device,
+            hlc
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ''',
+          [id, id, type, 'asset', 'CNY', 'u1', 1, 'dev1', '1:dev1'],
+        );
+      }
+
+      insertLegacyAccount('brokerage-account', 'brokerage');
+      insertLegacyAccount('crypto-wallet', 'cryptoWallet');
+      insertLegacyAccount('real-estate', 'realEstate');
+      insertLegacyAccount('vehicle', 'vehicle');
+      insertLegacyAccount('other-asset', 'other');
+      legacy.execute('PRAGMA user_version = 3');
+    } finally {
+      legacy.close();
+    }
+
+    final db = AppDatabase(
+      DatabaseConnection(NativeDatabase(file, logStatements: false)),
+    );
+    addTearDown(db.close);
+
+    final rows = await db.customSelect('''
+          SELECT id, type, category
+          FROM accounts
+          ORDER BY id
+          ''').get();
+    expect(
+      {
+        for (final row in rows)
+          row.read<String>('id'): (
+            type: row.read<String>('type'),
+            category: row.read<String>('category'),
+          ),
+      },
+      <String, ({String type, String category})>{
+        'brokerage-account': (type: 'broker', category: 'asset'),
+        'crypto-wallet': (type: 'crypto', category: 'asset'),
+        'other-asset': (type: 'asset', category: 'asset'),
+        'real-estate': (type: 'asset', category: 'asset'),
+        'vehicle': (type: 'asset', category: 'asset'),
+      },
+    );
+
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.read<int>('user_version'), db.schemaVersion);
+  });
+
   test('migrates v21 with pre-existing dedupe columns idempotently', () async {
     final dir = await Directory.systemTemp.createTemp('naviwealth_migration_');
     addTearDown(() async {

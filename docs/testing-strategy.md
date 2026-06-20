@@ -166,7 +166,9 @@ surface evolves.
 ### Golden (visual, ~5%)
 `test/golden/` via golden_toolkit, Linux-pinned (`flutter_test_config.dart`
 skips comparison off Linux; CI `golden-regression` job is the source of
-truth). 16 surfaces × {dark, colorblind} today. Expand to every Task's
+truth). 17 golden test files currently produce 50 PNG baselines; page
+surfaces primarily run dark + colorblind variants, while AI primitive
+goldens use component-scoped light surfaces. Expand to every Task's
 primary surface and add responsive breakpoints (phone/tablet/web) ahead
 of layout refactors.
 
@@ -273,8 +275,10 @@ path once the production connection implements database encryption.
   serializers, including edge-case server envelopes. Next work is keeping new
   contract variants fixture-backed as they are introduced.
 - Expand golden coverage to each Task surface + responsive breakpoints.
-- Keep the non-golden suite at zero failures; temporary test failures should
-  be fixed or explicitly skipped at the test with a dated rationale.
+- Keep the non-golden suite at zero failures. Runtime skips are limited by
+  `test/testing_infrastructure_contract_test.dart` to platform/native/artifact
+  dependency gates; temporary product/test regressions should be fixed, not
+  hidden behind a new skip.
 
 **P2 — modern differentiators:**
 - ✅ Seeded: `ConventionalAsyncNotifier` now has state-machine coverage for
