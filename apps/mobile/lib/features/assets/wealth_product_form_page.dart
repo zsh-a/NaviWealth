@@ -116,23 +116,46 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context);
+    final accountId = _accountId;
+    final currency = _currency;
+    if (accountId == null || currency == null) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.formAccountPickerRequired,
+      );
+      return;
+    }
     setState(() => _busy = true);
     dirty.busy = true;
     try {
-      final repo = await ref.read(manualAssetRepositoryProvider.future);
-      final principal = Decimal.parse(_principalController.text.trim());
-      final returnPct = Decimal.parse(_expectedReturnPctController.text.trim());
-      final expectedReturn = (returnPct / Decimal.fromInt(100)).toDecimal(
-        scaleOnInfinitePrecision: 12,
+      final principal = Decimal.tryParse(_principalController.text.trim());
+      final returnPct = Decimal.tryParse(
+        _expectedReturnPctController.text.trim(),
       );
       final valuation = _valuationController.text.trim().isEmpty
           ? null
-          : Decimal.parse(_valuationController.text.trim());
+          : Decimal.tryParse(_valuationController.text.trim());
+      if (principal == null ||
+          returnPct == null ||
+          (_valuationController.text.trim().isNotEmpty && valuation == null)) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          l10n.formAmountFieldInvalid,
+        );
+        return;
+      }
+      final repo = await ref.read(manualAssetRepositoryProvider.future);
+      final expectedReturn = (returnPct / Decimal.fromInt(100)).toDecimal(
+        scaleOnInfinitePrecision: 12,
+      );
       if (_initial == null) {
         await repo.createWealthProduct(
-          accountId: _accountId!,
+          accountId: accountId,
           name: _nameController.text.trim(),
-          currency: _currency!,
+          currency: currency,
           principal: principal,
           expectedAnnualReturn: expectedReturn,
           startDate: _startDate,
@@ -143,7 +166,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
         );
       } else {
         final newMeta = WealthProductMetadata(
-          accountId: _accountId!,
+          accountId: accountId,
           principal: principal,
           expectedAnnualReturn: expectedReturn,
           startDate: _startDate,
@@ -168,12 +191,16 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
       unawaited(
         ref
             .read(formDefaultsProvider.notifier)
-            .rememberAsset(accountId: _accountId, currency: _currency),
+            .rememberAsset(accountId: accountId, currency: currency),
       );
       if (!mounted) return;
       dirty.markPristine();
       Haptics.success();
       popOrGo(context, fallback: AppRoutes.wealth);
+    } on Object {
+      if (!mounted) return;
+      Haptics.error();
+      AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
     } finally {
       dirty.busy = false;
       if (mounted) setState(() => _busy = false);
@@ -248,7 +275,15 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
             ),
         ],
         child: accountsAsync.whenOrLoading(
-          error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
+          error: (e, _) => AppEmptyState.error(
+            title: l10n.commonLoadFailed,
+            message: l10n.commonLoadError('$e'),
+            action: FButton(
+              variant: FButtonVariant.ghost,
+              onPress: () => ref.invalidate(accountsStreamProvider),
+              child: Text(l10n.commonRetry),
+            ),
+          ),
           data: (accounts) => _buildForm(accounts),
         ),
       ),

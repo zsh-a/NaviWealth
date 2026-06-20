@@ -699,49 +699,56 @@ Widget _buildLibraryTile(
         color: colors.destructive,
       ),
     ),
-    child: KnowledgeSection.item(
-      onPress: onPress,
-      children: [
-        _LibraryTileHeader(
-          title: title,
-          query: query,
-          leading: typeIcon != null
-              ? Container(
-                  width: 28,
-                  height: 28,
-                  margin: const EdgeInsets.only(right: AppSpacing.s8),
-                  decoration: BoxDecoration(
-                    color: (typeColor ?? colors.primary).withValues(
-                      alpha: AppOpacity.subtle,
+    child: Semantics(
+      button: true,
+      label: [
+        title.isEmpty ? AppLocalizations.of(context).knowledgeUntitled : title,
+        ?statusBadge,
+      ].join(', '),
+      child: KnowledgeSection.item(
+        onPress: onPress,
+        children: [
+          _LibraryTileHeader(
+            title: title,
+            query: query,
+            leading: typeIcon != null
+                ? Container(
+                    width: 28,
+                    height: 28,
+                    margin: const EdgeInsets.only(right: AppSpacing.s8),
+                    decoration: BoxDecoration(
+                      color: (typeColor ?? colors.primary).withValues(
+                        alpha: AppOpacity.subtle,
+                      ),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: Icon(
+                      typeIcon,
+                      size: AppIconSizes.xs,
+                      color: typeColor ?? colors.primary,
+                    ),
+                  )
+                : null,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (statusBadge != null) ...[
+                  KnowledgeStatusLabel(label: statusBadge),
+                  const SizedBox(width: AppSpacing.s4),
+                ],
+                Icon(
+                  FLucideIcons.chevronRight,
+                  size: AppIconSizes.xs,
+                  color: colors.mutedForeground.withValues(
+                    alpha: AppOpacity.muted,
                   ),
-                  child: Icon(
-                    typeIcon,
-                    size: AppIconSizes.xs,
-                    color: typeColor ?? colors.primary,
-                  ),
-                )
-              : null,
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (statusBadge != null) ...[
-                KnowledgeStatusLabel(label: statusBadge),
-                const SizedBox(width: AppSpacing.s4),
-              ],
-              Icon(
-                FLucideIcons.chevronRight,
-                size: AppIconSizes.xs,
-                color: colors.mutedForeground.withValues(
-                  alpha: AppOpacity.muted,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        ...subtitle,
-      ],
+          ...subtitle,
+        ],
+      ),
     ),
   );
 }

@@ -1001,7 +1001,7 @@ void main() {
         expect(p['type'], 'bank');
         expect(p['currency'], 'CNY'); // defaulted
         expect((p['id'] as String).isNotEmpty, isTrue);
-        expect(ok['summary_zh'], '创建账户「招行储蓄」（bank / CNY）');
+        expect(ok['summary_zh'], 'Create account "招行储蓄" (bank / CNY)');
         expect((ok['warnings'] as List).single, contains('CNY'));
       },
     );
@@ -1159,13 +1159,13 @@ void main() {
     });
 
     test('_qty / summary composition (pure, mirrors invoke tail)', () {
-      // integer qty → " {n} 股"; fractional → " {value}"
+      // integer qty → " {n} shares"; fractional → " {value}"
       final intPlan = readyPlan(
         kind: 'trade',
-        summaryZh: '买入 AAPL 10 股 @ 190（券商）',
+        summaryZh: 'Buy AAPL 10 shares @ 190 (Brokerage)',
         payload: const {'type': 'buy'},
       );
-      expect(intPlan['summary_zh'], '买入 AAPL 10 股 @ 190（券商）');
+      expect(intPlan['summary_zh'], 'Buy AAPL 10 shares @ 190 (Brokerage)');
       expect(formatProposalAmount(190.0), '190');
       expect(formatProposalAmount(1.5), '1.5');
     });

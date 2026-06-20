@@ -289,7 +289,7 @@ class FinanceProposalApplier implements ProposalApplier {
           appliedEntityId: stored.entry.id,
           appliedTable: 'journal_entries',
           appliedAt: at,
-          shortLabel: '已记录${plan.summaryZh}',
+          shortLabel: 'Recorded ${plan.summaryZh}',
         );
       } else {
         // Sell — cost basis from resolved lots.
@@ -353,7 +353,7 @@ class FinanceProposalApplier implements ProposalApplier {
           appliedEntityId: stored.entry.id,
           appliedTable: 'journal_entries',
           appliedAt: at,
-          shortLabel: '已记录${plan.summaryZh}',
+          shortLabel: 'Recorded ${plan.summaryZh}',
         );
       }
     }
@@ -389,7 +389,7 @@ class FinanceProposalApplier implements ProposalApplier {
       appliedEntityId: stored.entry.id,
       appliedTable: 'journal_entries',
       appliedAt: at,
-      shortLabel: '已记录${plan.summaryZh}',
+      shortLabel: 'Recorded ${plan.summaryZh}',
     );
   }
 
@@ -404,7 +404,7 @@ class FinanceProposalApplier implements ProposalApplier {
     final note = plan.get('note');
     final categorySlug = plan.get('category') ?? 'other';
     if (!isExpenseCategorySlug(categorySlug)) {
-      throw ProposalApplyException('未知支出类目: $categorySlug');
+      throw ProposalApplyException('Unknown expense category: $categorySlug');
     }
     final ownerUserId = await currentUserId();
     final expenseAccountId = AccountRepository.systemAccountIdForPath(
@@ -429,7 +429,7 @@ class FinanceProposalApplier implements ProposalApplier {
       appliedEntityId: stored.entry.id,
       appliedTable: 'journal_entries',
       appliedAt: at,
-      shortLabel: '已记录${plan.summaryZh}',
+      shortLabel: 'Recorded ${plan.summaryZh}',
     );
   }
 
@@ -446,11 +446,14 @@ class FinanceProposalApplier implements ProposalApplier {
 
     final liability = await liabilityRepo.findById(liabilityId);
     if (liability == null) {
-      throw ProposalApplyException('负债 $liabilityId 不存在');
+      throw ProposalApplyException('Liability $liabilityId does not exist');
     }
     final liabilityAccountId = liability.accountId;
     if (liabilityAccountId == null) {
-      throw ProposalApplyException('负债 ${liability.name} 未关联账户，无法记录还款');
+      throw ProposalApplyException(
+        'Liability ${liability.name} is not linked to an account, so the '
+        'payment cannot be recorded',
+      );
     }
 
     final uid = await currentUserId();
@@ -480,7 +483,7 @@ class FinanceProposalApplier implements ProposalApplier {
       appliedEntityId: stored.entry.id,
       appliedTable: 'journal_entries',
       appliedAt: at,
-      shortLabel: '已${plan.summaryZh}',
+      shortLabel: 'Applied ${plan.summaryZh}',
     );
   }
 
@@ -506,7 +509,7 @@ class FinanceProposalApplier implements ProposalApplier {
       appliedEntityId: stored.id,
       appliedTable: 'accounts',
       appliedAt: at,
-      shortLabel: '已${plan.summaryZh}',
+      shortLabel: 'Created ${plan.summaryZh}',
     );
   }
 
@@ -518,7 +521,9 @@ class FinanceProposalApplier implements ProposalApplier {
     final newValue = _requireDecimal(plan, 'new_value');
     final existing = await manualAssetRepo.findById(assetId);
     if (existing == null) {
-      throw ProposalApplyException('asset $assetId 不存在或不是手工估值类型');
+      throw ProposalApplyException(
+        'Asset $assetId does not exist or is not a manual-valuation type',
+      );
     }
     await manualAssetRepo.recordValuationAdjust(
       assetId: assetId,
@@ -529,7 +534,7 @@ class FinanceProposalApplier implements ProposalApplier {
       appliedEntityId: assetId,
       appliedTable: 'assets',
       appliedAt: at,
-      shortLabel: '已${plan.summaryZh}',
+      shortLabel: 'Updated ${plan.summaryZh}',
     );
   }
 
@@ -545,7 +550,7 @@ class FinanceProposalApplier implements ProposalApplier {
     final ownerUserId = await currentUserId();
     final current = await optionsProfileRepo.get(ownerUserId);
     if (current == null) {
-      throw ProposalApplyException('Income Planner profile 尚未初始化');
+      throw ProposalApplyException('Income Planner profile is not initialized');
     }
     final updated = current.copyWith(
       mode: _parseOptionsMode(after['mode']) ?? current.mode,
@@ -574,7 +579,7 @@ class FinanceProposalApplier implements ProposalApplier {
       status: ProposalApplyStatus.applied,
       appliedEntityId: saved.sync.ownerUserId,
       appliedTable: 'options_strategy_profile',
-      shortLabel: '已更新${plan.summaryZh}',
+      shortLabel: 'Updated ${plan.summaryZh}',
     );
   }
 
@@ -584,7 +589,9 @@ class FinanceProposalApplier implements ProposalApplier {
   ) async {
     final strategy = parseOptionsStrategyKind(_requireString(plan, 'strategy'));
     if (strategy == null) {
-      throw ProposalApplyException('不支持的期权策略: ${plan.get('strategy')}');
+      throw ProposalApplyException(
+        'Unsupported options strategy: ${plan.get('strategy')}',
+      );
     }
     final openedAt = _parseRequiredDate(plan, 'opened_at_iso');
     final entry = await tradeJournalRepo.create(
@@ -608,7 +615,7 @@ class FinanceProposalApplier implements ProposalApplier {
       appliedEntityId: entry.id,
       appliedTable: 'options_trade_journal',
       appliedAt: at,
-      shortLabel: '已记录${plan.summaryZh}',
+      shortLabel: 'Recorded ${plan.summaryZh}',
     );
   }
 
@@ -617,7 +624,7 @@ class FinanceProposalApplier implements ProposalApplier {
   String _requireString(ReadyProposalPlan plan, String key) {
     final v = plan.get(key);
     if (v == null || v.isEmpty) {
-      throw ProposalApplyException('缺少字段 $key');
+      throw ProposalApplyException('Missing field $key');
     }
     return v;
   }
@@ -625,12 +632,12 @@ class FinanceProposalApplier implements ProposalApplier {
   Decimal _requireDecimal(ReadyProposalPlan plan, String key) {
     final raw = plan.payload[key];
     if (raw == null) {
-      throw ProposalApplyException('缺少字段 $key');
+      throw ProposalApplyException('Missing field $key');
     }
     final s = raw is String ? raw : raw.toString();
     final d = Decimal.tryParse(s);
     if (d == null) {
-      throw ProposalApplyException('字段 $key 不是合法数字: $s');
+      throw ProposalApplyException('Field $key is not a valid number: $s');
     }
     return d;
   }
@@ -683,7 +690,7 @@ class FinanceProposalApplier implements ProposalApplier {
     final raw = _requireString(plan, key);
     final parsed = DateTime.tryParse(raw);
     if (parsed == null) {
-      throw ProposalApplyException('字段 $key 不是合法日期: $raw');
+      throw ProposalApplyException('Field $key is not a valid date: $raw');
     }
     return parsed.toUtc();
   }
@@ -695,7 +702,9 @@ class FinanceProposalApplier implements ProposalApplier {
       'balanced' => OptionsStrategyMode.balanced,
       'aggressive' => OptionsStrategyMode.aggressive,
       'custom' => OptionsStrategyMode.custom,
-      _ => throw ProposalApplyException('不支持的 Income Planner mode: $raw'),
+      _ => throw ProposalApplyException(
+        'Unsupported Income Planner mode: $raw',
+      ),
     };
   }
 
@@ -704,7 +713,7 @@ class FinanceProposalApplier implements ProposalApplier {
       'buy' => TradeType.buy,
       'sell' => TradeType.sell,
       'valuationAdjust' => TradeType.valuationAdjust,
-      _ => throw ProposalApplyException('不支持的交易类型: $s'),
+      _ => throw ProposalApplyException('Unsupported trade type: $s'),
     };
   }
 
@@ -718,7 +727,7 @@ class FinanceProposalApplier implements ProposalApplier {
       'liability' => AccountCategory.liability,
       'cash' => AccountCategory.cash,
       'other' => AccountCategory.asset,
-      _ => throw ProposalApplyException('不支持的账户类型: $s'),
+      _ => throw ProposalApplyException('Unsupported account type: $s'),
     };
   }
 
@@ -758,7 +767,7 @@ class FinanceProposalApplier implements ProposalApplier {
       appliedEntityId: 'default',
       appliedTable: 'fire_plans',
       appliedAt: at,
-      shortLabel: '已更新${plan.summaryZh}',
+      shortLabel: 'Updated ${plan.summaryZh}',
     );
   }
 
@@ -787,7 +796,7 @@ class FinanceProposalApplier implements ProposalApplier {
       appliedEntityId: id,
       appliedTable: 'fire_bucket_rules',
       appliedAt: at,
-      shortLabel: '已绑定${plan.summaryZh}',
+      shortLabel: 'Bound ${plan.summaryZh}',
     );
   }
 }

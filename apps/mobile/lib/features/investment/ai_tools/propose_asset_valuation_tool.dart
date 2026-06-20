@@ -74,13 +74,15 @@ class ProposeAssetValuationTool implements DeviceTool {
         ResolvedMany(:final candidates) => needsClarification(
           kind: 'asset_valuation',
           field: 'asset',
-          reason: '存在多个匹配的资产，请让用户选择具体哪一个。',
+          reason: 'Multiple assets matched. Ask the user to choose one.',
           candidates: candidates,
         ),
         _ => needsClarification(
           kind: 'asset_valuation',
           field: 'asset',
-          reason: '未找到匹配的资产。如果是新资产，请先用 propose_account_create 建立资产 / 账户。',
+          reason:
+              'No matching asset was found. If this is a new asset, create it '
+              'with propose_account_create first.',
           candidates: const [],
         ),
       };
@@ -126,7 +128,7 @@ class ProposeAssetValuationTool implements DeviceTool {
     return readyPlan(
       kind: 'asset_valuation',
       summaryZh:
-          '更新「$displayName」估值为 ${formatProposalAmount(newValue)} $currency',
+          'Update "$displayName" valuation to ${formatProposalAmount(newValue)} $currency',
       payload: payload,
       warnings: warnings,
     );

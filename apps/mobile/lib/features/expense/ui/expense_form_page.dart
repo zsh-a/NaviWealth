@@ -126,9 +126,10 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       );
       return;
     }
-    if (_expenseAccountId == null ||
-        _fromAccountId == null ||
-        _currency == null) {
+    final fromAccountId = _fromAccountId;
+    final expenseAccountId = _expenseAccountId;
+    final currency = _currency;
+    if (expenseAccountId == null || fromAccountId == null || currency == null) {
       AppMessenger.show(
         context,
         ToastKind.error,
@@ -140,9 +141,6 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     final note = _noteController.text.trim().isEmpty
         ? null
         : _noteController.text.trim();
-    final fromAccountId = _fromAccountId!;
-    final expenseAccountId = _expenseAccountId!;
-    final currency = _currency!;
     final date = _date;
     final initial = _initial;
     if (!mounted) return;

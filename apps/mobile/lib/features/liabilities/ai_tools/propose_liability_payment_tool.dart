@@ -75,13 +75,15 @@ class ProposeLiabilityPaymentTool implements DeviceTool {
         ResolvedMany(:final candidates) => needsClarification(
           kind: 'liability_payment',
           field: 'liability',
-          reason: '存在多个匹配的负债，请让用户选择具体哪一笔。',
+          reason: 'Multiple liabilities matched. Ask the user to choose one.',
           candidates: candidates,
         ),
         _ => needsClarification(
           kind: 'liability_payment',
           field: 'liability',
-          reason: '未找到匹配的负债。请让用户先在「负债」里录入这笔贷款 / 信用卡。',
+          reason:
+              'No matching liability was found. Ask the user to add the loan '
+              'or credit card first.',
           candidates: const [],
         ),
       };
@@ -101,11 +103,15 @@ class ProposeLiabilityPaymentTool implements DeviceTool {
         return needsClarification(
           kind: 'liability_payment',
           field: 'from_account',
-          reason: '存在多个匹配的还款账户，请让用户选择具体哪一个。',
+          reason:
+              'Multiple repayment accounts matched. Ask the user to choose one.',
           candidates: candidates,
         );
       case ResolvedNone():
-        warnings.add('from_account 未指定，前端会让用户在确认页选择还款来源账户。');
+        warnings.add(
+          'from_account was not specified; the confirmation UI will ask the '
+          'user to choose a repayment source account.',
+        );
     }
 
     // Backend: explicit → liability.currency → ('CNY' + warn). Device
@@ -122,7 +128,9 @@ class ProposeLiabilityPaymentTool implements DeviceTool {
         );
       }
     } else {
-      warnings.add('date 未指定，前端将默认为今天。');
+      warnings.add(
+        'date was not specified; the confirmation UI will default to today.',
+      );
     }
 
     final payload = <String, Object?>{
@@ -140,7 +148,7 @@ class ProposeLiabilityPaymentTool implements DeviceTool {
     return readyPlan(
       kind: 'liability_payment',
       summaryZh:
-          '向「${liability.name}」还款 ${formatProposalAmount(amount)} $currency',
+          'Pay ${formatProposalAmount(amount)} $currency toward "${liability.name}"',
       payload: payload,
       warnings: warnings,
     );

@@ -112,32 +112,49 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_kind == AssetType.bankDepositTerm && _maturityDate == null) {
+    final l10n = AppLocalizations.of(context);
+    final accountId = _accountId;
+    final currency = _currency;
+    if (accountId == null || currency == null) {
       AppMessenger.show(
         context,
         ToastKind.error,
-        AppLocalizations.of(context).depositMaturityRequired,
+        l10n.formAccountPickerRequired,
       );
+      return;
+    }
+    if (_kind == AssetType.bankDepositTerm && _maturityDate == null) {
+      AppMessenger.show(context, ToastKind.error, l10n.depositMaturityRequired);
       return;
     }
     setState(() => _busy = true);
     dirty.busy = true;
     try {
+      final principal = Decimal.tryParse(_principalController.text.trim());
+      final ratePercent = Decimal.tryParse(_ratePercentController.text.trim());
+      final valuation = _valuationController.text.trim().isEmpty
+          ? null
+          : Decimal.tryParse(_valuationController.text.trim());
+      if (principal == null ||
+          ratePercent == null ||
+          (_valuationController.text.trim().isNotEmpty && valuation == null)) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          l10n.formAmountFieldInvalid,
+        );
+        return;
+      }
       final repo = await ref.read(manualAssetRepositoryProvider.future);
-      final principal = Decimal.parse(_principalController.text.trim());
-      final ratePercent = Decimal.parse(_ratePercentController.text.trim());
       final rate = (ratePercent / Decimal.fromInt(100)).toDecimal(
         scaleOnInfinitePrecision: 12,
       );
-      final valuation = _valuationController.text.trim().isEmpty
-          ? null
-          : Decimal.parse(_valuationController.text.trim());
       if (_initial == null) {
         await repo.createDeposit(
-          accountId: _accountId!,
+          accountId: accountId,
           type: _kind,
           name: _nameController.text.trim(),
-          currency: _currency!,
+          currency: currency,
           principal: principal,
           interestRate: rate,
           startDate: _startDate,
@@ -147,7 +164,7 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
         );
       } else {
         final newMeta = DepositMetadata(
-          accountId: _accountId!,
+          accountId: accountId,
           principal: principal,
           interestRate: rate,
           startDate: _startDate,
@@ -171,12 +188,16 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
       unawaited(
         ref
             .read(formDefaultsProvider.notifier)
-            .rememberAsset(accountId: _accountId, currency: _currency),
+            .rememberAsset(accountId: accountId, currency: currency),
       );
       if (!mounted) return;
       dirty.markPristine();
       Haptics.success();
       popOrGo(context, fallback: AppRoutes.wealth);
+    } on Object {
+      if (!mounted) return;
+      Haptics.error();
+      AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
     } finally {
       dirty.busy = false;
       if (mounted) setState(() => _busy = false);
@@ -240,7 +261,15 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
             ),
         ],
         child: accountsAsync.whenOrLoading(
-          error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
+          error: (e, _) => AppEmptyState.error(
+            title: l10n.commonLoadFailed,
+            message: l10n.commonLoadError('$e'),
+            action: FButton(
+              variant: FButtonVariant.ghost,
+              onPress: () => ref.invalidate(accountsStreamProvider),
+              child: Text(l10n.commonRetry),
+            ),
+          ),
           data: (accounts) => _buildForm(accounts),
         ),
       ),

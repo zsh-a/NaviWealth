@@ -445,7 +445,15 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         title: Text(l10n.tradeEntryAppBarTitle),
         confirmLeave: handleBackIntent,
         child: accountsAsync.whenOrLoading(
-          error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
+          error: (e, _) => AppEmptyState.error(
+            title: l10n.commonLoadFailed,
+            message: l10n.commonLoadError('$e'),
+            action: FButton(
+              variant: FButtonVariant.ghost,
+              onPress: () => ref.invalidate(accountsStreamProvider),
+              child: Text(l10n.commonRetry),
+            ),
+          ),
           data: (accounts) => _buildForm(accounts),
         ),
       ),

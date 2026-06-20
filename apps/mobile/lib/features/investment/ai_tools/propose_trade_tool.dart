@@ -108,15 +108,16 @@ class ProposeTradeTool implements DeviceTool {
         ResolvedMany(:final candidates) => needsClarification(
           kind: 'trade',
           field: 'asset',
-          reason: '存在多个匹配的资产，请让用户选择具体哪一个。',
+          reason: 'Multiple assets matched. Ask the user to choose one.',
           candidates: candidates,
         ),
         _ => needsClarification(
           kind: 'trade',
           field: 'asset',
           reason:
-              '未找到匹配的资产。可以请用户确认股票代码 / 名称，'
-              '或先 propose_account_create + propose_asset_valuation 录入。',
+              'No matching asset was found. Ask the user to confirm the '
+              'symbol/name, or create it with propose_account_create and '
+              'propose_asset_valuation first.',
           candidates: const [],
         ),
       };
@@ -137,15 +138,16 @@ class ProposeTradeTool implements DeviceTool {
         ResolvedMany(:final candidates) => needsClarification(
           kind: 'trade',
           field: 'account',
-          reason: '存在多个匹配的账户，请让用户选择具体哪一个。',
+          reason: 'Multiple accounts matched. Ask the user to choose one.',
           candidates: candidates,
         ),
         _ => needsClarification(
           kind: 'trade',
           field: 'account',
           reason:
-              '未找到匹配的账户。先用 propose_account_create 创建一个，'
-              '或让用户提供准确账户名。',
+              'No matching account was found. Create one with '
+              'propose_account_create or ask the user for the exact account '
+              'name.',
           candidates: const [],
         ),
       };
@@ -158,14 +160,19 @@ class ProposeTradeTool implements DeviceTool {
 
     final tradeDate = proposalOptionalStr(input, 'trade_date');
     if (tradeDate == null) {
-      warnings.add('trade_date 未指定，前端将默认显示今天，请用户确认。');
+      warnings.add(
+        'trade_date was not specified; the confirmation UI will default to today.',
+      );
     } else if (!isRfc3339(tradeDate)) {
       return proposalBadRequest(
         "propose_trade: trade_date '$tradeDate' is not RFC3339",
       );
     }
     if (price == null) {
-      warnings.add('price 未指定，前端将根据 MarketDataService 回填交易日收盘价（用户可覆盖）。');
+      warnings.add(
+        'price was not specified; the confirmation UI will try to backfill '
+        'the trade-date close via MarketDataService and let the user override it.',
+      );
     }
 
     final payload = <String, Object?>{
@@ -185,11 +192,11 @@ class ProposeTradeTool implements DeviceTool {
     };
 
     final action = switch (txType) {
-      'buy' => '买入',
-      'sell' => '卖出',
-      'transferIn' => '转入',
-      'transferOut' => '转出',
-      'valuationAdjust' => '估值调整',
+      'buy' => 'Buy',
+      'sell' => 'Sell',
+      'transferIn' => 'Transfer in',
+      'transferOut' => 'Transfer out',
+      'valuationAdjust' => 'Adjust valuation',
       _ => txType,
     };
     final symbol = asset.symbol.isNotEmpty
@@ -198,9 +205,9 @@ class ProposeTradeTool implements DeviceTool {
     final pricePhrase = price != null
         ? ' @ ${formatProposalAmount(price)}'
         : '';
-    final feePhrase = fee > 0 ? '，含手续费 ${formatProposalAmount(fee)}' : '';
+    final feePhrase = fee > 0 ? ', fee ${formatProposalAmount(fee)}' : '';
     final summary =
-        '$action $symbol${_qty(qty)}$pricePhrase$feePhrase（${account.name}）';
+        '$action $symbol${_qty(qty)}$pricePhrase$feePhrase (${account.name})';
 
     return readyPlan(
       kind: 'trade',
@@ -210,9 +217,9 @@ class ProposeTradeTool implements DeviceTool {
     );
   }
 
-  /// Port of `format_args_qty`: integer → " {n} 股", else " {qty}"
+  /// Port of `format_args_qty`: integer → " {n} shares", else " {qty}"
   /// (note the leading space, matching the Rust format string).
   static String _qty(double q) => q == q.roundToDouble()
-      ? ' ${q.toInt()} 股'
+      ? ' ${q.toInt()} shares'
       : ' ${formatProposalAmount(q)}';
 }

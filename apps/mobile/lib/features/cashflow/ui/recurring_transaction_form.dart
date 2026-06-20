@@ -358,7 +358,15 @@ class _RecurringTransactionSheetState
     setState(() => _saving = true);
     widget.dirty.busy = true;
     try {
-      final amount = Decimal.parse(_amountCtrl.text.trim());
+      final amount = Decimal.tryParse(_amountCtrl.text.trim());
+      if (amount == null || amount <= Decimal.zero) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          l10n.recurringValidationPositive,
+        );
+        return;
+      }
       final cashUnits = _kind == _RecurringKind.income ? amount : -amount;
       final narration = _noteCtrl.text.trim().isEmpty
           ? l10n.recurringDefaultNarration

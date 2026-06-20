@@ -106,7 +106,7 @@ class ProposeExpenseTool implements DeviceTool {
         return needsClarification(
           kind: 'expense',
           field: 'account',
-          reason: '存在多个匹配的账户，请让用户选择具体哪一个。',
+          reason: 'Multiple accounts matched. Ask the user to choose one.',
           candidates: candidates,
         );
       case ResolvedNone():
@@ -149,11 +149,11 @@ class ProposeExpenseTool implements DeviceTool {
     };
 
     final label = kExpenseCategories
-        .firstWhere((e) => e.$1 == category, orElse: () => ('other', '其它'))
-        .$2;
-    final accountPhrase = account != null ? '（${account.name}）' : '';
+        .firstWhere((e) => e.$1 == category, orElse: () => ('other', 'other'))
+        .$1;
+    final accountPhrase = account != null ? ' (${account.name})' : '';
     final summary =
-        '记一笔$label支出 ${formatProposalAmount(amount)} $currency$accountPhrase';
+        'Record $label expense ${formatProposalAmount(amount)} $currency$accountPhrase';
 
     return readyPlan(
       kind: 'expense',

@@ -87,7 +87,7 @@ class ProposeAccountCreateTool implements DeviceTool {
 
     return readyPlan(
       kind: 'account_create',
-      summaryZh: '创建账户「$name」（$acctType / $currency）',
+      summaryZh: 'Create account "$name" ($acctType / $currency)',
       payload: payload,
       warnings: warnings,
     );

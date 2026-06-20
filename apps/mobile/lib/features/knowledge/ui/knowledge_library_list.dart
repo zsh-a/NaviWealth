@@ -37,9 +37,8 @@ class _LibraryList extends ConsumerWidget {
             onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
           ),
           data: (repo) => switch (segment) {
-            _LibrarySegment.all => _SegmentList<_LibraryEntry>(
+            _LibrarySegment.all => _segmentList<_LibraryEntry>(
               stream: _watchAllKnowledge(repo, ownerUserId: owner),
-              query: query,
               searchableText: (entry) => entry.searchText,
               searchSuggestions: (context, entry) => [
                 _segmentLabel(l10n, entry.segment),
@@ -52,11 +51,6 @@ class _LibraryList extends ConsumerWidget {
               emptyIcon: FLucideIcons.library,
               emptyTitle: l10n.knowledgeLibraryEmptyAllTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyAllBody,
-              searchHistory: searchHistory,
-              onSearchSelected: onSearchSelected,
-              onSearchHistoryClear: onSearchHistoryClear,
-              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
-              onRefresh: onRefresh,
               tileBuilder: (context, entry, query) => _buildAllTile(
                 context,
                 entry,
@@ -73,9 +67,8 @@ class _LibraryList extends ConsumerWidget {
                 ),
               ),
             ),
-            _LibrarySegment.decisions => _SegmentList<KnowledgeDecision>(
+            _LibrarySegment.decisions => _segmentList<KnowledgeDecision>(
               stream: repo.watchDecisions(ownerUserId: owner),
-              query: query,
               searchableText: (d) => [
                 d.question,
                 d.selectedLabel,
@@ -95,11 +88,6 @@ class _LibraryList extends ConsumerWidget {
               emptyTitle: l10n.knowledgeLibraryEmptyDecisionsTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyDecisionsBody,
               statusOf: (d) => d.status.wire,
-              searchHistory: searchHistory,
-              onSearchSelected: onSearchSelected,
-              onSearchHistoryClear: onSearchHistoryClear,
-              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
-              onRefresh: onRefresh,
               tileBuilder: (context, d, query) => _buildDecisionTile(
                 context,
                 d,
@@ -114,9 +102,8 @@ class _LibraryList extends ConsumerWidget {
                 ),
               ),
             ),
-            _LibrarySegment.principles => _SegmentList<KnowledgePrinciple>(
+            _LibrarySegment.principles => _segmentList<KnowledgePrinciple>(
               stream: repo.watchPrinciples(ownerUserId: owner),
-              query: query,
               searchableText: (p) => [
                 p.statement,
                 p.rationaleMd,
@@ -131,11 +118,6 @@ class _LibraryList extends ConsumerWidget {
               emptyTitle: l10n.knowledgeLibraryEmptyPrinciplesTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyPrinciplesBody,
               statusOf: (p) => p.status.wire,
-              searchHistory: searchHistory,
-              onSearchSelected: onSearchSelected,
-              onSearchHistoryClear: onSearchHistoryClear,
-              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
-              onRefresh: onRefresh,
               tileBuilder: (context, p, query) => _buildPrincipleTile(
                 context,
                 p,
@@ -150,9 +132,8 @@ class _LibraryList extends ConsumerWidget {
                 ),
               ),
             ),
-            _LibrarySegment.assumptions => _SegmentList<KnowledgeAssumption>(
+            _LibrarySegment.assumptions => _segmentList<KnowledgeAssumption>(
               stream: repo.watchAssumptions(ownerUserId: owner),
-              query: query,
               searchableText: (a) => [
                 a.statement,
                 a.scope,
@@ -170,11 +151,6 @@ class _LibraryList extends ConsumerWidget {
               emptyTitle: l10n.knowledgeLibraryEmptyAssumptionsTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyAssumptionsBody,
               statusOf: (a) => a.status.wire,
-              searchHistory: searchHistory,
-              onSearchSelected: onSearchSelected,
-              onSearchHistoryClear: onSearchHistoryClear,
-              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
-              onRefresh: onRefresh,
               tileBuilder: (context, a, query) => _buildAssumptionTile(
                 context,
                 a,
@@ -189,9 +165,8 @@ class _LibraryList extends ConsumerWidget {
                 ),
               ),
             ),
-            _LibrarySegment.notes => _SegmentList<KnowledgeNote>(
+            _LibrarySegment.notes => _segmentList<KnowledgeNote>(
               stream: repo.watchNotes(ownerUserId: owner),
-              query: query,
               searchableText: (n) => [
                 n.title,
                 n.bodyMd,
@@ -208,11 +183,6 @@ class _LibraryList extends ConsumerWidget {
               emptyIcon: FLucideIcons.fileText,
               emptyTitle: l10n.knowledgeLibraryEmptyNotesTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyNotesBody,
-              searchHistory: searchHistory,
-              onSearchSelected: onSearchSelected,
-              onSearchHistoryClear: onSearchHistoryClear,
-              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
-              onRefresh: onRefresh,
               tileBuilder: (context, n, query) => _buildNoteTile(
                 context,
                 n,
@@ -229,9 +199,8 @@ class _LibraryList extends ConsumerWidget {
                 ),
               ),
             ),
-            _LibrarySegment.concepts => _SegmentList<KnowledgeConcept>(
+            _LibrarySegment.concepts => _segmentList<KnowledgeConcept>(
               stream: repo.watchConcepts(ownerUserId: owner),
-              query: query,
               searchableText: (c) => [
                 c.name,
                 c.summaryMd,
@@ -244,11 +213,6 @@ class _LibraryList extends ConsumerWidget {
               emptyIcon: FLucideIcons.folderTree,
               emptyTitle: l10n.knowledgeLibraryEmptyConceptsTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyConceptsBody,
-              searchHistory: searchHistory,
-              onSearchSelected: onSearchSelected,
-              onSearchHistoryClear: onSearchHistoryClear,
-              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
-              onRefresh: onRefresh,
               tileBuilder: (context, c, query) => _buildConceptTile(
                 context,
                 c,
@@ -263,9 +227,8 @@ class _LibraryList extends ConsumerWidget {
                 ),
               ),
             ),
-            _LibrarySegment.experiments => _SegmentList<KnowledgeExperiment>(
+            _LibrarySegment.experiments => _segmentList<KnowledgeExperiment>(
               stream: repo.watchExperiments(ownerUserId: owner),
-              query: query,
               searchableText: (e) => [
                 e.hypothesis,
                 e.methodMd,
@@ -280,11 +243,6 @@ class _LibraryList extends ConsumerWidget {
               emptyTitle: l10n.knowledgeLibraryEmptyExperimentsTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyExperimentsBody,
               statusOf: (e) => e.status.wire,
-              searchHistory: searchHistory,
-              onSearchSelected: onSearchSelected,
-              onSearchHistoryClear: onSearchHistoryClear,
-              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
-              onRefresh: onRefresh,
               tileBuilder: (context, e, query) => _buildExperimentTile(
                 context,
                 e,
@@ -299,9 +257,8 @@ class _LibraryList extends ConsumerWidget {
                 ),
               ),
             ),
-            _LibrarySegment.routines => _SegmentList<KnowledgeRoutine>(
+            _LibrarySegment.routines => _segmentList<KnowledgeRoutine>(
               stream: repo.watchRoutines(ownerUserId: owner),
-              query: query,
               searchableText: (r) => [r.statement, r.scope].join('\n'),
               searchSuggestions: (_, r) =>
                   [r.status.wire, r.scope].toList(growable: false),
@@ -311,11 +268,6 @@ class _LibraryList extends ConsumerWidget {
               emptyTitle: l10n.knowledgeLibraryEmptyRoutinesTitle,
               emptyMessage: l10n.knowledgeLibraryEmptyRoutinesBody,
               statusOf: (r) => r.status.wire,
-              searchHistory: searchHistory,
-              onSearchSelected: onSearchSelected,
-              onSearchHistoryClear: onSearchHistoryClear,
-              onSearchHistoryItemDelete: onSearchHistoryItemDelete,
-              onRefresh: onRefresh,
               tileBuilder: (context, r, query) => _buildRoutineTile(
                 context,
                 r,
@@ -333,6 +285,40 @@ class _LibraryList extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+
+  Widget _segmentList<T>({
+    required Stream<List<T>> stream,
+    required String Function(T item) searchableText,
+    required List<String> Function(BuildContext context, T item)
+    searchSuggestions,
+    required List<String> Function(BuildContext context, T item) filterFacets,
+    required DateTime Function(T item)? dateOf,
+    required IconData emptyIcon,
+    required String emptyTitle,
+    required String emptyMessage,
+    required Widget Function(BuildContext context, T item, String query)
+    tileBuilder,
+    String Function(T item)? statusOf,
+  }) {
+    return _SegmentList<T>(
+      stream: stream,
+      query: query,
+      searchableText: searchableText,
+      searchSuggestions: searchSuggestions,
+      filterFacets: filterFacets,
+      dateOf: dateOf,
+      emptyIcon: emptyIcon,
+      emptyTitle: emptyTitle,
+      emptyMessage: emptyMessage,
+      statusOf: statusOf,
+      searchHistory: searchHistory,
+      onSearchSelected: onSearchSelected,
+      onSearchHistoryClear: onSearchHistoryClear,
+      onSearchHistoryItemDelete: onSearchHistoryItemDelete,
+      onRefresh: onRefresh,
+      tileBuilder: tileBuilder,
     );
   }
 }

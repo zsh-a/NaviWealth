@@ -121,15 +121,23 @@ class _AccountFormPageState extends ConsumerState<AccountFormPage>
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _busy = true);
     final l10n = AppLocalizations.of(context);
-    final repo = await ref.read(accountRepositoryProvider.future);
-    if (!mounted) return;
-
     final type = _type;
     final category = _category;
     final name = _nameController.text.trim();
-    final currency = _currency!;
+    final currency = _currency;
+    if (currency == null) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.formCurrencyPickerRequired,
+      );
+      return;
+    }
+    setState(() => _busy = true);
+    final repo = await ref.read(accountRepositoryProvider.future);
+    if (!mounted) return;
+
     final institution = _emptyToNull(_institutionController.text);
     final accountNumber = _emptyToNull(_accountNumberController.text);
     final note = _emptyToNull(_noteController.text);
