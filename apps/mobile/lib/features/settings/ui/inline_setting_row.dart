@@ -238,7 +238,6 @@ class _OptionRow<T> extends StatelessWidget {
                 style: isSelected
                     ? context.labelStyle.copyWith(color: accentColor)
                     : context.theme.typography.sm.copyWith(
-                        fontWeight: FontWeight.w400,
                         color: colors.foreground,
                       ),
                 maxLines: 1,

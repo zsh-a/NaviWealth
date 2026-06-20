@@ -205,9 +205,7 @@ class _WaterfallRow extends StatelessWidget {
                         label,
                         style: selected
                             ? AiType.metaStrong(context)
-                            : AiType.meta(
-                                context,
-                              ).copyWith(fontWeight: FontWeight.w400),
+                            : AiType.meta(context),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

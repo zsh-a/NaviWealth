@@ -202,10 +202,7 @@ class _BriefingHourSheet extends StatelessWidget {
                 '${index.toString().padLeft(2, '0')}:00',
                 style: selected
                     ? context.captionLabelStyle.copyWith(color: colors.primary)
-                    : context.captionStyle.copyWith(
-                        color: colors.foreground,
-                        fontWeight: FontWeight.w400,
-                      ),
+                    : context.captionStyle.copyWith(color: colors.foreground),
               ),
             ),
           );
