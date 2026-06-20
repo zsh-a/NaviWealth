@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../theme/semantic_colors.dart';
 import '../tokens/dimens_tokens.dart';
+import '../tokens/text_style_presets.dart';
 
 enum AppBadgeTone { neutral, accent, info, success, warning, error }
 
@@ -44,8 +45,8 @@ class AppBadge extends StatelessWidget {
       AppBadgeSize.regular => AppSpacing.s4,
     };
     final textStyle = switch (size) {
-      AppBadgeSize.compact => context.theme.typography.xs2,
-      AppBadgeSize.regular => context.theme.typography.xs,
+      AppBadgeSize.compact => context.compactBadgeLabelStyle,
+      AppBadgeSize.regular => context.badgeLabelStyle,
     };
     return ConstrainedBox(
       constraints: BoxConstraints(minWidth: minWidth ?? 0),
@@ -74,10 +75,7 @@ class AppBadge extends StatelessWidget {
               ],
               Text(
                 label,
-                style: textStyle.copyWith(
-                  color: foreground,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: textStyle.copyWith(color: foreground),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

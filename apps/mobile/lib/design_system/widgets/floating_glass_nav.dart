@@ -267,9 +267,7 @@ class _NavTabButton extends StatelessWidget {
                 style:
                     (selected
                             ? TypographyTokens.labelSmall
-                            : TypographyTokens.labelSmall.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ))
+                            : TypographyTokens.labelSmallMedium)
                         .copyWith(color: labelColor, height: 1.2),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

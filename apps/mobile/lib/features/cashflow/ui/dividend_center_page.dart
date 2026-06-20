@@ -283,12 +283,7 @@ class _RankRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s8),
-                Text(
-                  amount,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                Text(amount, style: context.strongLabelStyle),
               ],
             ),
             const SizedBox(height: AppSpacing.s2),
@@ -507,12 +502,7 @@ class _ForecastText extends StatelessWidget {
         Text(title, style: context.theme.typography.sm),
         if (value != null) ...[
           const SizedBox(height: AppSpacing.s4),
-          Text(
-            value!,
-            style: context.theme.typography.lg.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text(value!, style: context.strongTitleStyle),
         ],
         const SizedBox(height: AppSpacing.s4),
         Text(subtitle, style: context.captionStyle),

@@ -460,10 +460,7 @@ class _PortfolioSectionTitle extends StatelessWidget {
         AppSpacing.s2,
         AppSpacing.s10,
       ),
-      child: Text(
-        title,
-        style: context.bodyCaptionStyle.copyWith(fontWeight: FontWeight.w700),
-      ),
+      child: Text(title, style: context.bodyCaptionStrongStyle),
     );
   }
 }
@@ -488,9 +485,7 @@ class _PortfolioSummary extends StatelessWidget {
         AnimatedMoneyText(
           amount: data.marketValueInBase.toDouble(),
           currencyCode: data.baseCurrency,
-          style: TypographyTokens.numericTitle.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          style: TypographyTokens.numericTitleStrong,
         ),
         const SizedBox(height: AppSpacing.s14),
         Row(
@@ -580,9 +575,7 @@ class _SummaryMetric extends StatelessWidget {
                 amount: amount,
                 currencyCode: currency!,
                 showSign: true,
-                style: context.theme.typography.lg.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: context.strongTitleStyle,
               ),
           ],
         ),
@@ -667,9 +660,7 @@ class _RealizedPnlCard extends ConsumerWidget {
             amount: total.toDouble(),
             currencyCode: data.baseCurrency,
             showSign: true,
-            style: context.theme.typography.lg.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: context.strongTitleStyle,
           ),
           const SizedBox(height: AppSpacing.s10),
           if (rows.isEmpty)
@@ -718,9 +709,7 @@ class _DividendForecastCard extends ConsumerWidget {
             currencyCode: forecast.currency.isEmpty
                 ? baseCurrency
                 : forecast.currency,
-            style: context.theme.typography.lg.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: context.strongTitleStyle,
           ),
           const SizedBox(height: AppSpacing.s4),
           _MutedText(_confidenceLabel(l10n, forecast.confidence)),
@@ -983,10 +972,11 @@ class _ViewChip extends StatelessWidget {
               child: Text(
                 label,
                 overflow: TextOverflow.ellipsis,
-                style: context.captionStyle.copyWith(
-                  color: color,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                ),
+                style:
+                    (selected
+                            ? context.captionStrongStyle
+                            : context.captionMediumStyle)
+                        .copyWith(color: color),
               ),
             ),
           ],
@@ -1020,9 +1010,7 @@ class _GroupRowCard extends StatelessWidget {
               AnimatedMoneyText(
                 amount: group.marketValueInBase.toDouble(),
                 currencyCode: group.baseCurrency,
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: context.labelStyle,
               ),
             ],
           ),
@@ -1086,9 +1074,7 @@ class _HoldingRowCard extends StatelessWidget {
                       AnimatedMoneyText(
                         amount: holding.marketValueInBase.toDouble(),
                         currencyCode: holding.baseCurrency,
-                        style: context.theme.typography.sm.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: context.labelStyle,
                       ),
                       const SizedBox(height: AppSpacing.s4),
                       AnimatedMoneyText(
@@ -1097,7 +1083,6 @@ class _HoldingRowCard extends StatelessWidget {
                         showSign: true,
                         style: context.captionLabelStyle.copyWith(
                           color: pnlColor,
-                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],

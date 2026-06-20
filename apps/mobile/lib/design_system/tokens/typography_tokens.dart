@@ -162,6 +162,12 @@ class TypographyTokens {
     weight: FontWeight.w600,
     letterSpacing: 0.5,
   );
+  static final TextStyle labelSmallMedium = _t(
+    11,
+    height: 1.3,
+    weight: FontWeight.w500,
+    letterSpacing: 0.5,
+  );
   static final TextStyle labelXSmall = _t(
     10,
     height: 1.3,
@@ -190,10 +196,20 @@ class TypographyTokens {
     height: 1.3,
     weight: FontWeight.w600,
   );
+  static final TextStyle numericTitleStrong = _t(
+    20,
+    height: 1.3,
+    weight: FontWeight.w700,
+  );
   static final TextStyle numericBody = _t(
     14,
     height: 1.4,
     weight: FontWeight.w500,
+  );
+  static final TextStyle numericBodyStrong = _t(
+    14,
+    height: 1.4,
+    weight: FontWeight.w700,
   );
   static final TextStyle numericCaption = _t(
     12,

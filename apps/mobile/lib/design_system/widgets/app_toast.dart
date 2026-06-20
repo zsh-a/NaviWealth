@@ -6,6 +6,7 @@ import 'package:forui/forui.dart';
 import '../../core/haptics/haptics.dart';
 import '../theme/semantic_colors.dart';
 import '../tokens/dimens_tokens.dart';
+import '../tokens/text_style_presets.dart';
 
 /// Toast severity levels.
 enum ToastKind { success, warning, error, info }
@@ -190,9 +191,8 @@ class _AppToastSurface extends StatelessWidget {
                             message,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
-                            style: context.theme.typography.sm.copyWith(
+                            style: context.mediumLabelStyle.copyWith(
                               color: colors.foreground,
-                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),

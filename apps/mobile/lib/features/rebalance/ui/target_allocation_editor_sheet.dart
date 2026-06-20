@@ -544,19 +544,10 @@ class _TotalCard extends StatelessWidget {
                   currencyCode: 'PCT',
                   symbolStyle: MoneySymbolStyle.none,
                   fractionDigits: 1,
-                  style: context.theme.typography.sm.copyWith(
-                    color: fg,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: context.strongLabelStyle.copyWith(color: fg),
                   semanticsLabel: '${totalPct.toStringAsFixed(1)}%',
                 ),
-                Text(
-                  '%',
-                  style: context.theme.typography.sm.copyWith(
-                    color: fg,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                Text('%', style: context.strongLabelStyle.copyWith(color: fg)),
               ],
             ),
           ],

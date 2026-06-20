@@ -224,9 +224,7 @@ class AppSheet extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: context.theme.typography.xl.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: context.strongHeadlineStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

@@ -76,9 +76,7 @@ class AssetFxPnlCard extends ConsumerWidget {
                 amount: breakdown?.totalPnLInBase.toDouble(),
                 currencyCode: baseCurrency,
                 showSign: true,
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: context.strongLabelStyle,
               ),
             ),
           ],

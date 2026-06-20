@@ -403,7 +403,7 @@ class _SubLegRow extends ConsumerWidget {
           Expanded(
             child: Text(
               AppFormatters.assetCode(leg.unit),
-              style: context.captionStyle.copyWith(fontWeight: FontWeight.w500),
+              style: context.captionMediumStyle,
             ),
           ),
           Text(

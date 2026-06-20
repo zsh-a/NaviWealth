@@ -1190,12 +1190,7 @@ class RecurringPatternsView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  merchant,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text(merchant, style: context.mediumLabelStyle),
                 const SizedBox(height: AppSpacing.s2),
                 Row(
                   children: [
@@ -1312,12 +1307,7 @@ class SubscriptionChangesView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  merchant,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text(merchant, style: context.mediumLabelStyle),
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   '${fmt.format(prev.abs() / 100.0)} → ${fmt.format(next.abs() / 100.0)} $currency'

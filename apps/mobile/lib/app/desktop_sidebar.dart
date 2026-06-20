@@ -115,12 +115,9 @@ class _SidebarItem extends StatelessWidget {
     final colors = context.theme.colors;
     final iconColor = selected ? colors.primary : colors.mutedForeground;
     final labelStyle =
-        (selected
-                ? context.labelStyle
-                : context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ))
-            .copyWith(color: selected ? colors.primary : colors.foreground);
+        (selected ? context.labelStyle : context.mediumLabelStyle).copyWith(
+          color: selected ? colors.primary : colors.foreground,
+        );
     final row = Row(
       children: [
         SizedBox(
@@ -216,9 +213,8 @@ class _SettingsPinnedRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: context.theme.typography.sm.copyWith(
+              style: context.mediumLabelStyle.copyWith(
                 color: colors.foreground,
-                fontWeight: FontWeight.w500,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

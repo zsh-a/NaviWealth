@@ -456,10 +456,7 @@ class _DetailPostingRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   accountLabel,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w500,
-                    height: 1.35,
-                  ),
+                  style: context.mediumLabelStyle.copyWith(height: 1.35),
                 ),
               ),
               const SizedBox(width: AppSpacing.s12),

@@ -147,9 +147,7 @@ class _JournalEntryRow extends StatelessWidget {
                           amount: headline.units,
                           unit: headline.unit,
                           formatters: formatter,
-                          style: context.theme.typography.sm.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: context.mediumLabelStyle,
                         ),
                       ),
                   ],

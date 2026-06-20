@@ -5,6 +5,7 @@ import '../theme/semantic_colors.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/motion_utils.dart';
+import '../tokens/text_style_presets.dart';
 
 enum AppQuietButtonTone { neutral, danger }
 
@@ -110,10 +111,7 @@ class AppQuietButton extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: DefaultTextStyle.merge(
-            style: context.theme.typography.sm.copyWith(
-              color: foreground,
-              fontWeight: FontWeight.w500,
-            ),
+            style: context.mediumLabelStyle.copyWith(color: foreground),
             child: content,
           ),
         ),

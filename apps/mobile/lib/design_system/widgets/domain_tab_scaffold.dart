@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/motion_utils.dart';
+import '../tokens/text_style_presets.dart';
 
 /// Unified scaffold for a domain's **top-level tab / hub page** (Today,
 /// Trend, Inbox, Library, …).
@@ -148,17 +149,13 @@ class _DomainHeaderTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     final colors = context.theme.colors;
     return Text(
       title,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      // Spec: page title 28-34, bold 700. Using typography.xl (closest
-      // forui scale) with w700 for the heavy, confident fintech look.
-      style: typography.xl.copyWith(
+      style: context.strongHeadlineStyle.copyWith(
         color: colors.foreground,
-        fontWeight: FontWeight.w700,
         height: 1.15,
       ),
     );

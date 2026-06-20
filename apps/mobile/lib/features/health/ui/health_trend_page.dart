@@ -266,7 +266,6 @@ class _TrendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     final colors = context.theme.colors;
     final accent = spec.color ?? colors.primary;
     return SoftCard(
@@ -313,9 +312,8 @@ class _TrendCard extends StatelessWidget {
                       const SizedBox(width: AppSpacing.s6),
                       Text(
                         _formatLatest(last, spec.kind),
-                        style: typography.md.copyWith(
+                        style: context.strongRowTitleStyle.copyWith(
                           color: colors.foreground,
-                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],

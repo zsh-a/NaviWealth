@@ -81,8 +81,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       const SizedBox(height: AppSpacing.s20),
                       Text(
                         l10n.onboardingTitle,
-                        style: context.theme.typography.xl.copyWith(
-                          fontWeight: FontWeight.w700,
+                        style: context.strongHeadlineStyle.copyWith(
                           height: 1.12,
                         ),
                         textAlign: TextAlign.center,

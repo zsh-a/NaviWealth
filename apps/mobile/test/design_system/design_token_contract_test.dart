@@ -136,6 +136,18 @@ void main() {
     );
 
     _expectNoFileMatches(
+      libFiles.where(
+        (file) =>
+            !file.path.endsWith('/text_style_presets.dart') &&
+            !file.path.endsWith('/typography_tokens.dart') &&
+            !file.path.endsWith('/core/ai/visual/ai_typography.dart'),
+      ),
+      RegExp(r'fontWeight:\s*[\s\S]{0,80}?FontWeight\.(?:w500|w700|bold)'),
+      'UI surfaces should use text-style presets/tokens rather than manual '
+      'FontWeight.w500/w700/bold.',
+    );
+
+    _expectNoFileMatches(
       libFiles.where((file) => !file.path.endsWith('/typography_tokens.dart')),
       RegExp(r'letterSpacing:\s*-?(?:0\.[1-9]\d*|[1-9]\d*(?:\.\d+)?)'),
       'UI surfaces should not override letterSpacing outside typography '

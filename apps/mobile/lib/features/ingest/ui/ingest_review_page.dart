@@ -560,9 +560,7 @@ class _DraftCard extends StatelessWidget {
               MoneyText(
                 amount: p.amountMinor.abs() / 100.0,
                 currencyCode: p.currency,
-                style: context.theme.typography.sm.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: context.strongLabelStyle,
               ),
             ],
           ),

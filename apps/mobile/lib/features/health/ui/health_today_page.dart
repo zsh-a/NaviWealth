@@ -240,7 +240,6 @@ class _RecoveryHero extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(recoverySignalProvider);
-    final typography = context.theme.typography;
     final colors = context.theme.colors;
     return SoftCard(
       level: SoftCardLevel.hero,
@@ -295,10 +294,7 @@ class _RecoveryHero extends ConsumerWidget {
                     fit: FlexFit.loose,
                     child: Text(
                       RecoveryVerdict.label(verdict, l10n),
-                      style: typography.xl.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: context.strongHeadlineStyle.copyWith(color: color),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -307,7 +303,7 @@ class _RecoveryHero extends ConsumerWidget {
                     const SizedBox(width: AppSpacing.s8),
                     Text(
                       scoreText,
-                      style: typography.sm.copyWith(
+                      style: context.theme.typography.sm.copyWith(
                         color: color.withValues(alpha: AppOpacity.strong),
                       ),
                     ),
@@ -1159,7 +1155,6 @@ class _ValueBig extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     final source = metric == null ? null : sourceForHealthMetric(metric!);
     final sourceLabel = source == null || source == HealthMetricSource.unknown
         ? null
@@ -1179,17 +1174,12 @@ class _ValueBig extends StatelessWidget {
                 value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: typography.lg.copyWith(fontWeight: FontWeight.w700),
+                style: context.strongTitleStyle,
               ),
             ),
             if (unit != null && unit!.isNotEmpty) ...[
               const SizedBox(width: AppSpacing.s2),
-              Text(
-                unit!,
-                style: context.captionStyle.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              Text(unit!, style: context.captionMediumStyle),
             ],
           ],
         ),
@@ -1250,12 +1240,16 @@ class _ValueDash extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     final colors = context.theme.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('—', style: typography.lg.copyWith(color: colors.mutedForeground)),
+        Text(
+          '—',
+          style: context.strongTitleStyle.copyWith(
+            color: colors.mutedForeground,
+          ),
+        ),
         const SizedBox(height: AppSpacing.s2),
         Text(
           AppLocalizations.of(context).healthNoData,
@@ -1334,7 +1328,6 @@ class _HealthPanelHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     return Row(
       children: [
         AppIconTile(
@@ -1352,7 +1345,7 @@ class _HealthPanelHeader extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: typography.sm.copyWith(fontWeight: FontWeight.w700),
+                style: context.labelStyle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

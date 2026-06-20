@@ -447,9 +447,7 @@ class _ExpenseRow extends StatelessWidget {
                       MoneyText(
                         amount: expense.amount.toDouble(),
                         currencyCode: expense.currency,
-                        style: context.theme.typography.sm.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: context.strongLabelStyle,
                       ),
                     ],
                   ),

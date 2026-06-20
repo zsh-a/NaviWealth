@@ -525,12 +525,7 @@ class KnowledgeHighlightedText extends StatelessWidget {
       spans.add(
         TextSpan(
           text: text.substring(match, end),
-          style:
-              highlightStyle ??
-              style.copyWith(
-                color: context.theme.colors.primary,
-                fontWeight: FontWeight.w700,
-              ),
+          style: highlightStyle ?? style.merge(context.searchHighlightStyle),
         ),
       );
       cursor = end;
@@ -875,7 +870,6 @@ class KnowledgeObjectHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final typography = context.theme.typography;
     return KnowledgeSection.group(
       title: typeLabel,
       trailing: status == null ? null : KnowledgeStatusLabel(label: status!),
@@ -898,7 +892,7 @@ class KnowledgeObjectHeader extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: typography.lg.copyWith(fontWeight: FontWeight.w700),
+                    style: context.strongTitleStyle,
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
                   ),

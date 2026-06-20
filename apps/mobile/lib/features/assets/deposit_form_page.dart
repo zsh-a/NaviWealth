@@ -501,10 +501,7 @@ class _DepositKindChip extends StatelessWidget {
               label,
               style: selected
                   ? context.labelStyle.copyWith(color: stateColor)
-                  : context.bodyCaptionStyle.copyWith(
-                      color: stateColor,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  : context.mediumLabelStyle.copyWith(color: stateColor),
             ),
           ],
         ),

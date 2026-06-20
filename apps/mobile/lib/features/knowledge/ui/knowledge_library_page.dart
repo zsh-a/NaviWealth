@@ -1637,9 +1637,8 @@ class _LibraryTabBar extends StatelessWidget {
                         ? context.captionLabelStyle.copyWith(
                             color: colors.primary,
                           )
-                        : context.captionStyle.copyWith(
+                        : context.captionMediumStyle.copyWith(
                             color: colors.mutedForeground,
-                            fontWeight: FontWeight.w500,
                           ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

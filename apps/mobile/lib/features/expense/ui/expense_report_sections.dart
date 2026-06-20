@@ -451,9 +451,7 @@ class _CategoryTile extends StatelessWidget {
               amount: breakdown.total.amount.toDouble(),
               currencyCode: baseCurrency,
               compact: true,
-              style: context.theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: context.strongLabelStyle,
             ),
           ],
         ),
@@ -606,8 +604,7 @@ class _ExpenseLine extends StatelessWidget {
             const SizedBox(width: AppSpacing.s12),
             Text(
               formatter.currency(expense.amount, code: expense.currency),
-              style: context.theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w700,
+              style: context.strongLabelStyle.copyWith(
                 fontFeatures: TypographyTokens.tabularFigures,
               ),
             ),

@@ -517,9 +517,8 @@ class _SessionTile extends StatelessWidget {
                             ? context.labelStyle.copyWith(
                                 color: colors.foreground,
                               )
-                            : context.theme.typography.sm.copyWith(
+                            : context.mediumLabelStyle.copyWith(
                                 color: colors.foreground,
-                                fontWeight: FontWeight.w500,
                               ),
                       ),
                       const SizedBox(height: AppSpacing.s2),

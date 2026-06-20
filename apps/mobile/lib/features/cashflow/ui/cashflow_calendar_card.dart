@@ -76,8 +76,7 @@ class _CashflowCalendarContent extends ConsumerWidget {
                       code: metrics.net.currency,
                     )
                   : l10n.homeCashFlowEmptyValue,
-              style: context.theme.typography.xl.copyWith(
-                fontWeight: FontWeight.w700,
+              style: context.strongHeadlineStyle.copyWith(
                 color: metrics.net.amount < Decimal.zero
                     ? colors.destructive
                     : colors.foreground,

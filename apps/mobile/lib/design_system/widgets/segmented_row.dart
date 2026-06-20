@@ -100,13 +100,8 @@ class SegmentedRow<T> extends StatelessWidget {
     final content = AnimatedDefaultTextStyle(
       duration: duration,
       curve: Motion.standard,
-      style:
-          (selected
-                  ? context.labelStyle
-                  : context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ))
-              .copyWith(color: foreground),
+      style: (selected ? context.labelStyle : context.mediumLabelStyle)
+          .copyWith(color: foreground),
       child: Row(
         mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,

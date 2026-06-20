@@ -145,12 +145,7 @@ class _RecurringRow extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.s12),
-          Text(
-            amountLabel,
-            style: context.theme.typography.sm.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text(amountLabel, style: context.strongLabelStyle),
           const SizedBox(width: AppSpacing.s8),
           FTappable(
             onPress: () => _showRowActions(context, ref, rule),

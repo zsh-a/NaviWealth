@@ -270,9 +270,8 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
       children: [
         Text(
           label,
-          style: TypographyTokens.labelSmall.copyWith(
+          style: TypographyTokens.labelSmallMedium.copyWith(
             height: 1.2,
-            fontWeight: FontWeight.w500,
             color: colors.mutedForeground,
           ),
         ),

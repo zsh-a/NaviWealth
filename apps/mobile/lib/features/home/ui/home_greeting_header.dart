@@ -112,9 +112,8 @@ class HomeGreetingHeader extends ConsumerWidget {
                         ],
                         Text(
                           statusFragments[i].text,
-                          style: context.bodyCaptionStyle.copyWith(
+                          style: context.mediumLabelStyle.copyWith(
                             color: statusFragments[i].color,
-                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],

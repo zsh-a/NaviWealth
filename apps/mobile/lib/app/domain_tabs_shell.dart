@@ -327,9 +327,7 @@ class _TabletRailItem extends StatelessWidget {
               style:
                   (selected
                           ? context.captionLabelStyle
-                          : context.captionStyle.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ))
+                          : context.captionMediumStyle)
                       .copyWith(
                         color: selected ? colors.primary : colors.foreground,
                       ),

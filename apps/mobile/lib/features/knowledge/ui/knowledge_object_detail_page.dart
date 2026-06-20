@@ -837,7 +837,6 @@ class _MetaPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s8,
@@ -860,7 +859,7 @@ class _MetaPill extends StatelessWidget {
           const SizedBox(height: AppSpacing.s2),
           Text(
             value,
-            style: typography.sm.copyWith(fontWeight: FontWeight.w500),
+            style: context.mediumLabelStyle,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),

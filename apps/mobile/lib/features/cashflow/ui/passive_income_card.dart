@@ -86,9 +86,7 @@ class _PassiveIncomeContent extends ConsumerWidget {
                       code: metrics.totalTtm.currency,
                     )
                   : l10n.homeCashFlowEmptyValue,
-              style: context.theme.typography.xl.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: context.strongHeadlineStyle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

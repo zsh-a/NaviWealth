@@ -379,12 +379,7 @@ class _ValuationStatusLine extends ConsumerWidget {
               ),
             ),
           const SizedBox(width: AppSpacing.s8),
-          Flexible(
-            child: Text(
-              label,
-              style: context.captionStyle.copyWith(fontWeight: FontWeight.w500),
-            ),
-          ),
+          Flexible(child: Text(label, style: context.captionMediumStyle)),
         ],
       ),
     );

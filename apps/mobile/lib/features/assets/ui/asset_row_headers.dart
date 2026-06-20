@@ -43,7 +43,7 @@ class CashAccountGroupHeader extends StatelessWidget {
         subtitle != null && subtitle.isNotEmpty
             ? '${account!.name} \u00B7 $subtitle'
             : account?.name ?? accountId,
-        style: context.captionStyle.copyWith(fontWeight: FontWeight.w500),
+        style: context.captionMediumStyle,
       ),
     );
   }

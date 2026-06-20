@@ -110,9 +110,7 @@ class ActivityFeedEntryRow extends StatelessWidget {
                       amount: headline.units,
                       unit: headline.unit,
                       formatters: formatter,
-                      style: context.theme.typography.sm.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: context.strongLabelStyle,
                     ),
                   const SizedBox(height: AppSpacing.s2),
                   Text(timeStr, style: context.captionStyle),

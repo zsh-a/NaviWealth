@@ -1623,9 +1623,8 @@ class _WarningCallout extends StatelessWidget {
                 Expanded(
                   child: Text(
                     warnings[i],
-                    style: context.captionStyle.copyWith(
+                    style: context.captionMediumStyle.copyWith(
                       color: AiTone.onSurface(context),
-                      fontWeight: FontWeight.w500,
                       height: 1.4,
                     ),
                   ),

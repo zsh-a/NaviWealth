@@ -262,9 +262,7 @@ class _PreviewRow extends StatelessWidget {
                 children: [
                   Text(
                     entry.entry.narration.isEmpty ? '—' : entry.entry.narration,
-                    style: context.theme.typography.sm.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: context.mediumLabelStyle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

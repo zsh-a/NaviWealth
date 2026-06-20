@@ -409,12 +409,7 @@ class _QuickLinkTile extends StatelessWidget {
             color: colors.mutedForeground,
           ),
         ),
-        title: Text(
-          label,
-          style: context.theme.typography.sm.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        title: Text(label, style: context.mediumLabelStyle),
         suffix: Icon(
           FLucideIcons.chevronRight,
           size: AppIconSizes.sm,

@@ -196,9 +196,7 @@ class _BucketRow extends StatelessWidget {
                     bucket.valueInBase.amount,
                     code: baseCurrency,
                   ),
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: context.strongLabelStyle,
                 ),
                 const SizedBox(height: AppSpacing.s2),
                 Text(

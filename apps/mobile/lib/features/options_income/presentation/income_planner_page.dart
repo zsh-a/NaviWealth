@@ -731,9 +731,8 @@ class _StrategyChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: context.captionStyle.copyWith(
+          style: context.captionMediumStyle.copyWith(
             color: enabled ? colors.primary : colors.mutedForeground,
-            fontWeight: FontWeight.w500,
           ),
         ),
       ),

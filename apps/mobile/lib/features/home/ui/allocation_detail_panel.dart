@@ -306,10 +306,7 @@ class _DimensionButton extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: selected
                     ? context.captionLabelStyle.copyWith(color: color)
-                    : context.captionStyle.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    : context.captionMediumStyle.copyWith(color: color),
               ),
             ),
           ],
@@ -358,9 +355,7 @@ class _AllocationDonut extends StatelessWidget {
                   amount: total,
                   currencyCode: currencyCode,
                   compact: true,
-                  style: context.theme.typography.lg.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: context.strongTitleStyle,
                 ),
                 Text(
                   AppLocalizations.of(context).assetsAppBarTitle,
