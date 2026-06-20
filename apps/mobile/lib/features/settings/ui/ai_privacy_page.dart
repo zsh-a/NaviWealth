@@ -89,9 +89,7 @@ class AiPrivacyPage extends ConsumerWidget {
                     children: [
                       Text(
                         l10n.aiPrivacyMaskAccountsLabel,
-                        style: context.theme.typography.sm.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: context.labelStyle,
                       ),
                       const SizedBox(height: AppSpacing.s2),
                       Text(
@@ -159,9 +157,8 @@ class _ModeRow extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: context.theme.typography.sm.copyWith(
+                    style: context.labelStyle.copyWith(
                       color: colors.foreground,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.s2),

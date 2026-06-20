@@ -157,9 +157,7 @@ class _HeroCard extends StatelessWidget {
               children: [
                 Text(
                   _statusHeadline(l10n, event.status),
-                  style: context.theme.typography.lg.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.titleLabelStyle,
                 ),
                 const SizedBox(height: AppSpacing.s2),
                 Text(
@@ -306,8 +304,7 @@ class _StatTile extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           Text(
             value,
-            style: context.theme.typography.lg.copyWith(
-              fontWeight: FontWeight.w600,
+            style: context.titleLabelStyle.copyWith(
               fontFeatures: const [FontFeature.tabularFigures()],
               color: accent ?? context.theme.colors.foreground,
             ),
@@ -387,12 +384,7 @@ class _ConflictCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l10n.syncStatusConflictsHeader,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text(l10n.syncStatusConflictsHeader, style: context.labelStyle),
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   l10n.syncStatusConflictsLocalWins(diagnostics.localWins),

@@ -451,10 +451,7 @@ class _UndoSection extends ConsumerWidget {
             ),
             child: Text(
               l10n.aiTransparencyUndoSectionTitle,
-              style: context.theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colors.mutedForeground,
-              ),
+              style: context.labelStyle.copyWith(color: colors.mutedForeground),
             ),
           ),
           if (live.isEmpty)

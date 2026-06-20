@@ -50,7 +50,7 @@ class RouteErrorPage extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s8),
                 Text(
                   message,
-                  style: typography.sm.copyWith(color: colors.mutedForeground),
+                  style: context.bodyCaptionStyle,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.s24),

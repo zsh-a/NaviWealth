@@ -8,19 +8,6 @@ import 'package:flutter/material.dart';
 class ColorPalette {
   const ColorPalette._();
 
-  // ── Accent (Tailwind teal) — legacy brand interaction color ─────────────
-  // Retained for backward compatibility; new code should use cyanBrand.
-  static const Color teal50 = Color(0xFFF0FDFA);
-  static const Color teal100 = Color(0xFFCCFBF1);
-  static const Color teal200 = Color(0xFF99F6E4);
-  static const Color teal300 = Color(0xFF5EEAD4);
-  static const Color teal400 = Color(0xFF2DD4BF);
-  static const Color teal500 = Color(0xFF14B8A6);
-  static const Color teal600 = Color(0xFF0D9488);
-  static const Color teal700 = Color(0xFF0F766E);
-  static const Color teal800 = Color(0xFF115E59);
-  static const Color teal900 = Color(0xFF134E4A);
-
   // ── Cyan brand (spec primary) — bright turquoise interaction color ─────
   // The primary brand hue per the fintech UI spec. cyanBrand500 is the
   // light-mode foreground; cyanBrand400 is the dark-mode foreground.

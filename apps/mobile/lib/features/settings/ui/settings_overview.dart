@@ -269,9 +269,8 @@ class _SectionHeader extends StatelessWidget {
           const SizedBox(width: AppSpacing.s8),
           Text(
             title.toUpperCase(),
-            style: context.theme.typography.xs2.copyWith(
+            style: context.microLabelStyle.copyWith(
               color: colors.mutedForeground,
-              fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
             ),
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
+import '../tokens/text_style_presets.dart';
 import 'soft_card.dart';
 
 class DomainAiPromptAction {
@@ -32,7 +33,6 @@ class DomainAiPromptBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -53,7 +53,7 @@ class DomainAiPromptBar extends StatelessWidget {
               Expanded(
                 child: Text(
                   hint,
-                  style: typography.sm.copyWith(color: colors.mutedForeground),
+                  style: context.bodyCaptionStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

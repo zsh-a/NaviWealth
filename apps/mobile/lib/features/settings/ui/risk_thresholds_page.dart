@@ -139,9 +139,8 @@ class RiskThresholdSettings extends ConsumerWidget {
                 ),
                 child: Text(
                   l10n.settingsRiskResetDefaults,
-                  style: context.theme.typography.xs.copyWith(
+                  style: context.captionLabelStyle.copyWith(
                     color: context.theme.colors.primary,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -152,8 +151,6 @@ class RiskThresholdSettings extends ConsumerWidget {
     );
   }
 }
-
-
 
 /// Compact slider row — icon + label · slider · trailing percent.
 ///

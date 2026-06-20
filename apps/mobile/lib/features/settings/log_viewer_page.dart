@@ -134,10 +134,7 @@ class _LogTile extends StatelessWidget {
                   ),
                   child: Text(
                     log.title ?? log.logLevel?.name ?? 'log',
-                    style: context.theme.typography.xs2.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: context.microLabelStyle.copyWith(color: color),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s8),

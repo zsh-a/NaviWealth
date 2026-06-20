@@ -116,9 +116,8 @@ class MonthlyExpenseSettings extends ConsumerWidget {
                 ),
                 child: Text(
                   l10n.settingsMonthlyExpenseResetDefaults,
-                  style: context.theme.typography.xs.copyWith(
+                  style: context.captionLabelStyle.copyWith(
                     color: context.theme.colors.primary,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -129,8 +128,6 @@ class MonthlyExpenseSettings extends ConsumerWidget {
     );
   }
 }
-
-
 
 class _WindowSlider extends StatefulWidget {
   const _WindowSlider({required this.windowMonths, required this.onChanged});

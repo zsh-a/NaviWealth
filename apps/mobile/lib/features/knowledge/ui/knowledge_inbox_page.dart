@@ -195,7 +195,6 @@ class _NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     final candidateKind = _extractCandidateKind(note.tags);
@@ -236,7 +235,7 @@ class _NoteCard extends StatelessWidget {
               Flexible(
                 child: Text(
                   note.projectTag!,
-                  style: typography.xs.copyWith(color: colors.mutedForeground),
+                  style: context.captionStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

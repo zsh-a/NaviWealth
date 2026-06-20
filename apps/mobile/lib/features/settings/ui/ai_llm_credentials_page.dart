@@ -303,9 +303,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
                     Flexible(
                       child: Text(
                         p.displayName,
-                        style: context.theme.typography.sm.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: context.labelStyle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -377,9 +375,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
         children: [
           Text(
             existing == null ? l10n.aiLlmAddProvider : l10n.aiLlmEditProvider,
-            style: context.theme.typography.sm.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: context.labelStyle,
           ),
           const SizedBox(height: AppSpacing.s14),
           _label(context, l10n.aiLlmNameLabel),
@@ -514,12 +510,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.aiLlmUnsupportedTitle,
-            style: context.theme.typography.sm.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(l10n.aiLlmUnsupportedTitle, style: context.labelStyle),
           const SizedBox(height: AppSpacing.s6),
           Text(
             l10n.aiLlmUnsupportedBody,
@@ -555,9 +546,8 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
 
   Widget _label(BuildContext context, String text) => Text(
     text,
-    style: context.theme.typography.xs.copyWith(
+    style: context.captionLabelStyle.copyWith(
       color: context.theme.colors.mutedForeground,
-      fontWeight: FontWeight.w600,
     ),
   );
 
@@ -570,13 +560,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
       color: color.withValues(alpha: AppOpacity.medium),
       borderRadius: BorderRadius.circular(AppRadius.xs),
     ),
-    child: Text(
-      text,
-      style: context.theme.typography.xs.copyWith(
-        color: color,
-        fontWeight: FontWeight.w600,
-      ),
-    ),
+    child: Text(text, style: context.captionLabelStyle.copyWith(color: color)),
   );
 
   Widget _iconAction(

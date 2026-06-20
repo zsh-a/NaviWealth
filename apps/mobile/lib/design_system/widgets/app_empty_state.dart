@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
+import '../tokens/text_style_presets.dart';
 
 /// Tone of an [AppEmptyState] — drives the icon tint.
 ///
@@ -74,7 +75,7 @@ class AppEmptyState extends StatelessWidget {
               const SizedBox(height: AppSpacing.s8),
               Text(
                 message!,
-                style: typography.sm.copyWith(color: colors.mutedForeground),
+                style: context.bodyCaptionStyle,
                 textAlign: TextAlign.center,
               ),
             ],

@@ -194,12 +194,7 @@ class _OnboardingChoiceTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Text(
-                  label,
-                  style: context.theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text(label, style: context.labelStyle),
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   description,

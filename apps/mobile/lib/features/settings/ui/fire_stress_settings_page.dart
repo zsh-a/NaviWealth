@@ -140,9 +140,8 @@ class FireStressSettings extends ConsumerWidget {
                 ),
                 child: Text(
                   l10n.settingsStressTestResetDefaults,
-                  style: context.theme.typography.xs.copyWith(
+                  style: context.captionLabelStyle.copyWith(
                     color: context.theme.colors.primary,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -153,8 +152,6 @@ class FireStressSettings extends ConsumerWidget {
     );
   }
 }
-
-
 
 /// Slider for a percentage parameter in [0, max], rendered with a
 /// trailing percent badge so the user always sees the magnitude

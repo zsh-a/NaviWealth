@@ -77,7 +77,10 @@ class _ActiveEmbedderCard extends ConsumerWidget {
       child: diagnostics.when(
         loading: () => Row(
           children: [
-            const SizedBox.square(dimension: AppIconSizes.xs, child: FCircularProgress()),
+            const SizedBox.square(
+              dimension: AppIconSizes.xs,
+              child: FCircularProgress(),
+            ),
             const SizedBox(width: AppSpacing.s8),
             Text(
               l10n.settingsAiModelsActiveRuntimeLoading,
@@ -133,9 +136,8 @@ class _ActiveEmbedderCard extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       l10n.settingsAiModelsActiveRuntimeTitle,
-                      style: context.theme.typography.sm.copyWith(
+                      style: context.labelStyle.copyWith(
                         color: colors.foreground,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -203,9 +205,8 @@ class _ActiveEmbedderCard extends ConsumerWidget {
               const SizedBox(height: AppSpacing.s12),
               Text(
                 l10n.settingsAiModelsSourcesTitle,
-                style: context.theme.typography.xs.copyWith(
+                style: context.captionLabelStyle.copyWith(
                   color: colors.mutedForeground,
-                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: AppSpacing.s6),
@@ -320,7 +321,10 @@ class _RuntimeDiagnosticsCard extends StatelessWidget {
       child: resolution.when(
         loading: () => Row(
           children: [
-            const SizedBox.square(dimension: AppIconSizes.xs, child: FCircularProgress()),
+            const SizedBox.square(
+              dimension: AppIconSizes.xs,
+              child: FCircularProgress(),
+            ),
             const SizedBox(width: AppSpacing.s8),
             Text(
               l10n.settingsAiModelsCheckingRuntime,
@@ -350,9 +354,8 @@ class _RuntimeDiagnosticsCard extends StatelessWidget {
                       complete
                           ? l10n.settingsAiModelsRuntimeReady
                           : l10n.settingsAiModelsRuntimeStub,
-                      style: context.theme.typography.sm.copyWith(
+                      style: context.labelStyle.copyWith(
                         color: colors.foreground,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -496,9 +499,8 @@ class _BundleCard extends ConsumerWidget {
                   children: [
                     Text(
                       bundle.displayName,
-                      style: context.theme.typography.sm.copyWith(
+                      style: context.labelStyle.copyWith(
                         color: colors.foreground,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.s2),

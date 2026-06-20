@@ -133,7 +133,6 @@ class MasterDetailEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s24),
@@ -149,7 +148,7 @@ class MasterDetailEmpty extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: typography.sm.copyWith(color: colors.mutedForeground),
+              style: context.bodyCaptionStyle,
             ),
           ],
         ),

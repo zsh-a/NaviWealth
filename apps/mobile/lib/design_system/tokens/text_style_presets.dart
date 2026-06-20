@@ -27,4 +27,20 @@ extension AppTextStyles on BuildContext {
   /// caption style used for badges and micro-labels.
   TextStyle get microCaptionStyle =>
       theme.typography.xs2.copyWith(color: theme.colors.mutedForeground);
+
+  /// `typography.sm` + semibold — compact row labels and card subtitles.
+  TextStyle get labelStyle =>
+      theme.typography.sm.copyWith(fontWeight: FontWeight.w600);
+
+  /// `typography.xs` + semibold — compact emphasis labels and mini chips.
+  TextStyle get captionLabelStyle =>
+      theme.typography.xs.copyWith(fontWeight: FontWeight.w600);
+
+  /// `typography.xs2` + semibold — dense status tags and overlines.
+  TextStyle get microLabelStyle =>
+      theme.typography.xs2.copyWith(fontWeight: FontWeight.w600);
+
+  /// `typography.lg` + semibold — page-local hero values/headlines.
+  TextStyle get titleLabelStyle =>
+      theme.typography.lg.copyWith(fontWeight: FontWeight.w600);
 }
