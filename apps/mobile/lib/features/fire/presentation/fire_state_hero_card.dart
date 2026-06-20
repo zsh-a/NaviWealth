@@ -118,7 +118,7 @@ class _HeroBody extends ConsumerWidget {
                   FLucideIcons.sparkles,
                   size: AppIconSizes.xs,
                 ),
-                child: const Text('Explain'),
+                child: Text(l10n.aiIntentExplainFireStateLabel),
               ),
             ),
           ],

@@ -76,7 +76,7 @@ class _FireSummaryCard extends ConsumerWidget {
           ],
         ),
       ),
-      error: (_, _) => _emptyHero(context, l10n),
+      error: (error, _) => _errorHero(context, ref, l10n, error),
       data: (view) {
         final progress = view.progressRatio;
         if (progress == null) {
@@ -119,6 +119,29 @@ class _FireSummaryCard extends ConsumerWidget {
             child: Text(l10n.planHeroSeePlan),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _errorHero(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+    Object error,
+  ) {
+    return SoftCard(
+      padding: EdgeInsets.zero,
+      borderRadius: AppRadius.lg,
+      borderless: true,
+      tinted: false,
+      child: AppEmptyState.error(
+        title: l10n.commonLoadFailed,
+        message: '$error',
+        action: FButton(
+          variant: FButtonVariant.ghost,
+          onPress: () => ref.invalidate(fireDashboardViewProvider),
+          child: Text(l10n.commonRetry),
+        ),
       ),
     );
   }

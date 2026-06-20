@@ -453,19 +453,24 @@ class OpportunityScorer {
     final pct = _pct(entry.value);
     switch (entry.key) {
       case 'yield':
-        return '年化收益 ${_pct(metrics.annualizedYield)}（评分 $pct）';
+        return 'Annualized yield ${_pct(metrics.annualizedYield)} (score $pct)';
       case 'liquidity':
-        return '流动性好：买卖价差 ${_pct(contract.bidAskSpreadPct)}，未平仓 ${contract.openInterest}（评分 $pct）';
+        return 'Good liquidity: bid/ask spread '
+            '${_pct(contract.bidAskSpreadPct)}, open interest '
+            '${contract.openInterest} (score $pct)';
       case 'safety_margin':
-        return '安全边际 ${_pct(metrics.marginOfSafety)} 距盈亏平衡（评分 $pct）';
+        return 'Margin of safety ${_pct(metrics.marginOfSafety)} from '
+            'breakeven (score $pct)';
       case 'iv':
-        return '隐含波动率 ${contract.impliedVolatility == null ? "未知" : _pct(contract.impliedVolatility!)} 处于稳健区间（评分 $pct）';
+        return 'Implied volatility '
+            '${contract.impliedVolatility == null ? "unknown" : _pct(contract.impliedVolatility!)} '
+            'is in a resilient range (score $pct)';
       case 'portfolio_fit':
-        return '与现有仓位契合（评分 $pct）';
+        return 'Fits current positions (score $pct)';
       case 'event_safety':
-        return '近 7 天无业绩/宏观事件（评分 $pct）';
+        return 'No earnings or macro event in the next 7 days (score $pct)';
       default:
-        return '${entry.key} 评分 $pct';
+        return '${entry.key} score $pct';
     }
   }
 
@@ -477,19 +482,22 @@ class OpportunityScorer {
     final pct = _pct(entry.value);
     switch (entry.key) {
       case 'yield':
-        return '年化收益偏低：${_pct(metrics.annualizedYield)}（评分 $pct）';
+        return 'Lower annualized yield: ${_pct(metrics.annualizedYield)} '
+            '(score $pct)';
       case 'liquidity':
-        return '流动性一般：买卖价差 ${_pct(contract.bidAskSpreadPct)}（评分 $pct）';
+        return 'Moderate liquidity: bid/ask spread '
+            '${_pct(contract.bidAskSpreadPct)} (score $pct)';
       case 'safety_margin':
-        return '安全边际有限：${_pct(metrics.marginOfSafety)}（评分 $pct）';
+        return 'Limited margin of safety: ${_pct(metrics.marginOfSafety)} '
+            '(score $pct)';
       case 'iv':
-        return '隐含波动率偏离常态（评分 $pct）';
+        return 'Implied volatility is outside the normal range (score $pct)';
       case 'portfolio_fit':
-        return '与现有仓位契合度一般（评分 $pct）';
+        return 'Only a moderate fit with current positions (score $pct)';
       case 'event_safety':
-        return '事件窗口内执行需注意（评分 $pct）';
+        return 'Execution needs caution inside the event window (score $pct)';
       default:
-        return '${entry.key} 评分 $pct';
+        return '${entry.key} score $pct';
     }
   }
 
@@ -499,9 +507,12 @@ class OpportunityScorer {
     required OpportunityMetrics metrics,
   }) {
     final action = strategy == OptionsStrategyKind.cashSecuredPut
-        ? '卖看跌'
-        : '备兑看涨';
-    return '${contract.underlying} ${contract.dte}DTE $action @ ${_fmt(contract.strike)} —— 年化 ${_pct(metrics.annualizedYield)}，安全边际 ${_pct(metrics.marginOfSafety)}';
+        ? 'sell put'
+        : 'covered call';
+    return '${contract.underlying} ${contract.dte}DTE $action @ '
+        '${_fmt(contract.strike)} — annualized '
+        '${_pct(metrics.annualizedYield)}, margin of safety '
+        '${_pct(metrics.marginOfSafety)}';
   }
 
   String _bestForLine(OptionsStrategyKind strategy, OptionsStrategyMode mode) {
@@ -509,22 +520,28 @@ class OpportunityScorer {
       case OptionsStrategyKind.cashSecuredPut:
         switch (mode) {
           case OptionsStrategyMode.conservative:
-            return '适合保守现金流偏好：高安全边际、流动性优先';
+            return 'Best for conservative cash-flow preference: higher margin '
+                'of safety and liquidity first.';
           case OptionsStrategyMode.balanced:
           case OptionsStrategyMode.custom:
-            return '适合稳健现金流偏好：平衡收益与下跌风险';
+            return 'Best for balanced cash-flow preference: balances yield '
+                'against downside risk.';
           case OptionsStrategyMode.aggressive:
-            return '适合愿意承担更高被行权概率以换取年化收益的策略';
+            return 'Best when you accept higher assignment probability in '
+                'exchange for annualized yield.';
         }
       case OptionsStrategyKind.coveredCall:
         switch (mode) {
           case OptionsStrategyMode.conservative:
-            return '适合保守增益偏好：卖远 OTM call，少触发被行权';
+            return 'Best for conservative enhancement: sell farther OTM calls '
+                'with lower assignment probability.';
           case OptionsStrategyMode.balanced:
           case OptionsStrategyMode.custom:
-            return '适合稳健增益偏好：在不打散持仓的前提下增厚收益';
+            return 'Best for balanced enhancement: add income without '
+                'materially disrupting the position.';
           case OptionsStrategyMode.aggressive:
-            return '适合愿意接受被行权以兑现盈利的策略';
+            return 'Best when you are willing to accept assignment to realize '
+                'gains.';
         }
     }
   }
@@ -532,9 +549,10 @@ class OpportunityScorer {
   String _avoidIfLine(OptionsStrategyKind strategy) {
     switch (strategy) {
       case OptionsStrategyKind.cashSecuredPut:
-        return '若你不愿在被行权时按 strike 买入 100 股，请放弃此机会';
+        return 'Avoid if you are not willing to buy 100 shares at the strike '
+            'when assigned.';
       case OptionsStrategyKind.coveredCall:
-        return '若你不愿在 strike 价位卖出 100 股，请放弃此机会';
+        return 'Avoid if you are not willing to sell 100 shares at the strike.';
     }
   }
 
@@ -545,15 +563,17 @@ class OpportunityScorer {
   ) {
     switch (strategy) {
       case OptionsStrategyKind.cashSecuredPut:
-        return '若 ${contract.underlying} 跌破 ${_fmt(contract.strike)}，'
-            '你将以实际成本 ${_fmt(metrics.breakeven)} 买入 100 股，'
-            '占用现金 ${_fmt(metrics.cashRequired)}';
+        return 'If ${contract.underlying} falls below '
+            '${_fmt(contract.strike)}, you would buy 100 shares at an '
+            'effective cost of ${_fmt(metrics.breakeven)}, using '
+            '${_fmt(metrics.cashRequired)} cash.';
       case OptionsStrategyKind.coveredCall:
         final cap = contract.strike.amount + contract.mid.amount;
         final capMoney = Money(cap, contract.strike.currency);
-        return '若 ${contract.underlying} 涨到 ${_fmt(contract.strike)}，'
-            '你将以 ${_fmt(contract.strike)} 卖出 100 股，'
-            '错过该价位以上的全部上涨；总收益上限为 ${_fmt(capMoney)}';
+        return 'If ${contract.underlying} rises to '
+            '${_fmt(contract.strike)}, you would sell 100 shares at '
+            '${_fmt(contract.strike)} and miss upside above that level; '
+            'total proceeds are capped at ${_fmt(capMoney)}.';
     }
   }
 

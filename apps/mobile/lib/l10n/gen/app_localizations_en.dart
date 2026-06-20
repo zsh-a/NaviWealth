@@ -3906,6 +3906,175 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatLoginRequired => 'Sign in to use the AI assistant.';
 
   @override
+  String get aiToolHoldingsEmpty => 'No holdings data yet';
+
+  @override
+  String get aiToolAssetColumn => 'Asset';
+
+  @override
+  String get aiToolQuantityColumn => 'Quantity';
+
+  @override
+  String get aiToolCostColumn => 'Cost';
+
+  @override
+  String aiToolHiddenItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count more items hidden',
+      one: '1 more item hidden',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiToolPaymentAccountsEmpty => 'No payment accounts available';
+
+  @override
+  String get aiToolPaymentAccountsTitle => 'Available payment accounts';
+
+  @override
+  String aiToolHiddenAccounts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count more accounts hidden',
+      one: '1 more account hidden',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiToolXirrAssetScope(String assetId) {
+    return 'Asset $assetId';
+  }
+
+  @override
+  String get aiToolXirrPortfolioScope => 'Portfolio';
+
+  @override
+  String get aiToolAllHistory => 'All history';
+
+  @override
+  String get aiToolXirrUnavailable =>
+      'Cannot calculate: cash flows are one-sided or insufficient';
+
+  @override
+  String aiToolCashFlowCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count cash flows',
+      one: '1 cash flow',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiToolNetWorthEmpty => 'No net worth data in this range';
+
+  @override
+  String get aiToolCurrentNetWorth => 'Current net worth';
+
+  @override
+  String get aiToolNetWorthSeriesName => 'Net worth';
+
+  @override
+  String aiToolSamplePointCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sample points',
+      one: '1 sample point',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiToolBreakdownCostEmpty => 'No cost basis to break down';
+
+  @override
+  String aiToolOtherCategoriesSummary(int count, String share) {
+    return 'Other $count categories total $share';
+  }
+
+  @override
+  String get aiToolRiskAlertsEmpty => 'No risk alerts triggered';
+
+  @override
+  String get aiToolRiskAlertTitle => 'Risk alert';
+
+  @override
+  String get aiToolHoldingsDataMalformed => 'Holdings data format is invalid';
+
+  @override
+  String aiToolTotalCostSummary(String cost, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count holding classes',
+      one: '1 holding class',
+    );
+    return 'Total cost $cost · $_temp0';
+  }
+
+  @override
+  String get aiToolRecurringPatternsEmpty =>
+      'No stable recurring spending detected yet';
+
+  @override
+  String aiToolMoreItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '+ $count more items',
+      one: '+ 1 more item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiToolCadenceMonthly => 'Monthly';
+
+  @override
+  String get aiToolCadenceWeekly => 'Weekly';
+
+  @override
+  String aiToolOccurrences(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+      one: '1 time',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aiToolOccurrencesRecent(int count, String date) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+      one: '1 time',
+    );
+    return '$_temp0 · last $date';
+  }
+
+  @override
+  String get aiToolSubscriptionChangesEmpty =>
+      'No subscription price changes detected this period';
+
+  @override
+  String aiToolSinceDate(String date) {
+    return ' · since $date';
+  }
+
+  @override
+  String get aiToolRefundLinksEmpty => 'No refund matches detected yet';
+
+  @override
   String get aiChatEmptyTitle => 'Your Life OS assistant';
 
   @override

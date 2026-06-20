@@ -59,7 +59,9 @@ class ProposeAccountCreateTool implements DeviceTool {
       return needsClarification(
         kind: 'account_create',
         field: 'type',
-        reason: "'$acctType' 不是合法的账户类型，请让用户从这些里选：",
+        reason:
+            "'$acctType' is not a valid account type. Ask the user to choose "
+            'one of these options.',
         candidates: [
           for (final t in kProposalAccountTypes)
             <String, Object?>{'id': t, 'label': t},
@@ -70,7 +72,8 @@ class ProposeAccountCreateTool implements DeviceTool {
     final explicitCurrency = proposalOptionalStr(input, 'currency');
     final currency = explicitCurrency ?? 'CNY';
     final warnings = <String>[
-      if (explicitCurrency == null) 'currency 未指定，已默认 CNY',
+      if (explicitCurrency == null)
+        'currency was not specified; defaulted to CNY.',
     ];
 
     final payload = <String, Object?>{

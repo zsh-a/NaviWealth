@@ -51,6 +51,14 @@ class AssetsMaster extends ConsumerWidget {
       holdingsAsync: holdingsAsync,
       valuationsAsync: valuationsAsync,
       accountsAsync: accountsAsync,
+      onRetry: () {
+        ref.invalidate(manualAssetsStreamProvider);
+        ref.invalidate(physicalAssetsListProvider);
+        ref.invalidate(securitiesAssetsStreamProvider);
+        ref.invalidate(holdingsSnapshotProvider);
+        ref.invalidate(dashboardManualAssetValuationsProvider);
+        ref.invalidate(accountsStreamProvider);
+      },
       securities: securitiesOrdered,
       holdings: holdingsAsync.value ?? const {},
       valuationMap: valuationMap,

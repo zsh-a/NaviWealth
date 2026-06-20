@@ -98,6 +98,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
       ),
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -224,6 +225,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context);
     setState(() => _saving = true);
     widget.dirty.busy = true;
     try {
@@ -248,6 +250,10 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
       widget.dirty.markPristine();
       Haptics.success();
       Navigator.of(context).pop();
+    } on Object {
+      if (!mounted) return;
+      Haptics.error();
+      AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
     } finally {
       widget.dirty.busy = false;
       if (mounted) setState(() => _saving = false);

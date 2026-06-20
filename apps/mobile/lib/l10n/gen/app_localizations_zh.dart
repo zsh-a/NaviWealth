@@ -3746,6 +3746,124 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatLoginRequired => '请先登录后再使用 AI 助手。';
 
   @override
+  String get aiToolHoldingsEmpty => '暂无持仓数据';
+
+  @override
+  String get aiToolAssetColumn => '资产';
+
+  @override
+  String get aiToolQuantityColumn => '数量';
+
+  @override
+  String get aiToolCostColumn => '成本';
+
+  @override
+  String aiToolHiddenItems(int count) {
+    return '还有 $count 项未展示';
+  }
+
+  @override
+  String get aiToolPaymentAccountsEmpty => '没有可用的支付账户';
+
+  @override
+  String get aiToolPaymentAccountsTitle => '可用支付账户';
+
+  @override
+  String aiToolHiddenAccounts(int count) {
+    return '还有 $count 个账户未展示';
+  }
+
+  @override
+  String aiToolXirrAssetScope(String assetId) {
+    return '资产 $assetId';
+  }
+
+  @override
+  String get aiToolXirrPortfolioScope => '组合整体';
+
+  @override
+  String get aiToolAllHistory => '全部历史';
+
+  @override
+  String get aiToolXirrUnavailable => '无法计算（现金流方向单一或样本不足）';
+
+  @override
+  String aiToolCashFlowCount(int count) {
+    return '$count 条现金流';
+  }
+
+  @override
+  String get aiToolNetWorthEmpty => '区间内没有净资产数据';
+
+  @override
+  String get aiToolCurrentNetWorth => '当前净资产';
+
+  @override
+  String get aiToolNetWorthSeriesName => '净资产';
+
+  @override
+  String aiToolSamplePointCount(int count) {
+    return '$count 个采样点';
+  }
+
+  @override
+  String get aiToolBreakdownCostEmpty => '没有可分布的成本';
+
+  @override
+  String aiToolOtherCategoriesSummary(int count, String share) {
+    return '其他 $count 类共 $share';
+  }
+
+  @override
+  String get aiToolRiskAlertsEmpty => '没有触发的风险预警';
+
+  @override
+  String get aiToolRiskAlertTitle => '风险预警';
+
+  @override
+  String get aiToolHoldingsDataMalformed => '持仓数据格式异常';
+
+  @override
+  String aiToolTotalCostSummary(String cost, int count) {
+    return '合计成本 $cost · $count 类持仓';
+  }
+
+  @override
+  String get aiToolRecurringPatternsEmpty => '尚未检测到稳定的周期性支出';
+
+  @override
+  String aiToolMoreItems(int count) {
+    return '+ 还有 $count 项';
+  }
+
+  @override
+  String get aiToolCadenceMonthly => '每月';
+
+  @override
+  String get aiToolCadenceWeekly => '每周';
+
+  @override
+  String aiToolOccurrences(int count) {
+    return '$count 次';
+  }
+
+  @override
+  String aiToolOccurrencesRecent(int count, String date) {
+    return '$count 次 · 最近 $date';
+  }
+
+  @override
+  String get aiToolSubscriptionChangesEmpty => '本期未检测到订阅价格变化';
+
+  @override
+  String aiToolSinceDate(String date) {
+    return ' · 自 $date';
+  }
+
+  @override
+  String get aiToolRefundLinksEmpty => '尚未检测到退款配对';
+
+  @override
   String get aiChatEmptyTitle => '你的 Life OS 助手';
 
   @override

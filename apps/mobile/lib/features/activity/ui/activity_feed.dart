@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
@@ -24,22 +24,34 @@ class ActivityFeed extends ConsumerWidget {
     return feedAsync.when(
       data: (page) {
         if (page.entries.isEmpty) {
-          return _EmptyFeed(
-            message: page.isFiltered
-                ? l10n.activityFeedFilteredEmpty
-                : l10n.activityFeedEmpty,
+          return _RefreshableFeed(
+            onRefresh: () async {
+              ref.invalidate(activityFeedProvider);
+              await ref.read(activityFeedProvider.future);
+            },
+            child: _EmptyFeed(
+              message: page.isFiltered
+                  ? l10n.activityFeedFilteredEmpty
+                  : l10n.activityFeedEmpty,
+            ),
           );
         }
         final groups = groupActivityEntriesByDate(page.entries);
         final formatter = AppFormatters(
           locale: Localizations.localeOf(context),
         );
-        return _FeedList(
-          groups: groups,
-          accountsById: page.accountsById,
-          formatter: formatter,
-          l10n: l10n,
-          hasMore: page.hasMore,
+        return _RefreshableFeed(
+          onRefresh: () async {
+            ref.invalidate(activityFeedProvider);
+            await ref.read(activityFeedProvider.future);
+          },
+          child: _FeedList(
+            groups: groups,
+            accountsById: page.accountsById,
+            formatter: formatter,
+            l10n: l10n,
+            hasMore: page.hasMore,
+          ),
         );
       },
       loading: () => const PageSkeletonShell<Object>(
@@ -58,6 +70,18 @@ class ActivityFeed extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+class _RefreshableFeed extends StatelessWidget {
+  const _RefreshableFeed({required this.onRefresh, required this.child});
+
+  final RefreshCallback onRefresh;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(onRefresh: onRefresh, child: child);
   }
 }
 
@@ -88,6 +112,7 @@ class _FeedList extends StatelessWidget {
     items.add(_FeedItem.footer(hasMore));
 
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(AppSpacing.s16).copyWith(
         bottom:
             const EdgeInsets.all(AppSpacing.s16).bottom +
@@ -192,6 +217,14 @@ class _EmptyFeed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppEmptyState(icon: FLucideIcons.workflow, title: message);
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(
+          height: MediaQuery.sizeOf(context).height * 0.55,
+          child: AppEmptyState(icon: FLucideIcons.workflow, title: message),
+        ),
+      ],
+    );
   }
 }

@@ -76,8 +76,9 @@ class ProposeExpenseTool implements DeviceTool {
             kind: 'expense',
             field: 'category',
             reason:
-                "无法在 ${kExpenseCategories.length} 个内置类目中确定 '$rawCategory'，"
-                '请让用户从下面三个里选一个。',
+                "Could not resolve '$rawCategory' against "
+                '${kExpenseCategories.length} built-in categories. Ask the '
+                'user to choose one of these three options.',
             candidates: [
               for (final (slug, label) in top3)
                 <String, Object?>{'id': slug, 'label': label},
@@ -85,7 +86,9 @@ class ProposeExpenseTool implements DeviceTool {
           );
       }
     } else {
-      warnings.add('category 未指定，已默认归入「其它」（用户可在确认页改）。');
+      warnings.add(
+        'category was not specified; defaulted to other for review.',
+      );
       category = 'other';
     }
 
@@ -107,14 +110,17 @@ class ProposeExpenseTool implements DeviceTool {
           candidates: candidates,
         );
       case ResolvedNone():
-        warnings.add('account 未指定或未匹配；前端会让用户在确认页选择支付账户。');
+        warnings.add(
+          'account was not specified or did not match; the confirmation UI '
+          'will ask the user to choose a payment account.',
+        );
     }
 
     final currency =
         proposalOptionalStr(input, 'currency') ??
         account?.currency ??
         (() {
-          warnings.add('currency 未指定，已默认 CNY');
+          warnings.add('currency was not specified; defaulted to CNY.');
           return 'CNY';
         })();
 
@@ -126,7 +132,9 @@ class ProposeExpenseTool implements DeviceTool {
         );
       }
     } else {
-      warnings.add('date 未指定，前端将默认为今天。');
+      warnings.add(
+        'date was not specified; the confirmation UI will default to today.',
+      );
     }
 
     final payload = <String, Object?>{

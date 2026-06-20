@@ -87,6 +87,17 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context);
+    final accountId = _accountId;
+    final currency = _currency;
+    if (accountId == null || currency == null) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.formAccountPickerRequired,
+      );
+      return;
+    }
     setState(() => _busy = true);
     dirty.busy = true;
     try {
@@ -96,12 +107,12 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
       var createdNew = false;
       // Check for existing cash on the same account — each account can
       // have at most one cash asset (double-entry invariant).
-      editing ??= await repo.findCashByAccountId(_accountId!);
+      editing ??= await repo.findCashByAccountId(accountId);
       if (editing == null) {
         createdNew = true;
         await repo.createCash(
-          accountId: _accountId!,
-          currency: _currency!,
+          accountId: accountId,
+          currency: currency,
           balance: balance,
           nickname: _nicknameController.text.trim().isEmpty
               ? null
@@ -123,13 +134,17 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
         unawaited(
           ref
               .read(formDefaultsProvider.notifier)
-              .rememberAsset(accountId: _accountId, currency: _currency),
+              .rememberAsset(accountId: accountId, currency: currency),
         );
       }
       if (!mounted) return;
       dirty.markPristine();
       Haptics.success();
       popOrGo(context, fallback: AppRoutes.wealth);
+    } on Object {
+      if (!mounted) return;
+      Haptics.error();
+      AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
     } finally {
       dirty.busy = false;
       if (mounted) setState(() => _busy = false);

@@ -51,6 +51,18 @@ class LiabilitiesPage extends ConsumerWidget {
           ),
         );
       },
+      error: (error, _) => AppEmptyState.error(
+        title: l10n.commonLoadFailed,
+        message: '$error',
+        action: FButton(
+          variant: FButtonVariant.ghost,
+          onPress: () {
+            ref.invalidate(liabilitiesStreamProvider);
+            ref.invalidate(allLiabilitySummariesProvider);
+          },
+          child: Text(l10n.commonRetry),
+        ),
+      ),
     );
 
     return AppPageScaffold(

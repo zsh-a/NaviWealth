@@ -167,11 +167,35 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context);
     final selected = _selected;
-    if (selected == null) return;
+    if (selected == null) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.localSecuritiesValidationRequired,
+      );
+      return;
+    }
+    final accountId = _accountId;
+    final currency = _currency;
+    if (accountId == null || currency == null) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.formAccountPickerRequired,
+      );
+      return;
+    }
+    final quantity = Decimal.tryParse(_quantityController.text.trim());
+    final priceText = _priceController.text.trim();
+    final price = priceText.isEmpty ? null : Decimal.tryParse(priceText);
+    if (quantity == null || (priceText.isNotEmpty && price == null)) {
+      AppMessenger.show(context, ToastKind.error, l10n.formAmountFieldInvalid);
+      return;
+    }
 
     setState(() => _busy = true);
-    final l10n = AppLocalizations.of(context);
     final securitiesRepo = await ref.read(
       securitiesAssetRepositoryProvider.future,
     );
@@ -182,13 +206,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     if (!mounted) return;
 
     final type = _type;
-    final accountId = _accountId!;
-    final currency = _currency!;
     final tradeDate = _tradeDate;
-    final quantity = Decimal.parse(_quantityController.text.trim());
-    final price = _priceController.text.trim().isEmpty
-        ? null
-        : Decimal.parse(_priceController.text.trim());
     // Normalise zero to null so the JE builder's _normalizeOptionalAmount
     // doesn't reject a user-entered "0" as an invalid positive amount.
     final fee = _nonZeroOr(Decimal.tryParse(_feeController.text.trim()));

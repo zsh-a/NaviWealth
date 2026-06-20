@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../../design_system/design_system.dart';
+import '../../../l10n/gen/app_localizations.dart';
 
 /// Maximum number of rows a list-style renderer will draw before
 /// collapsing the rest behind a "+ N 项" hint. Keeps the assistant
@@ -104,9 +105,10 @@ class _HoldingsTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final outMap = _asMap(output);
     if (outMap == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
     final holdings = _asMap(outMap['holdings']);
     if (holdings == null || holdings.isEmpty) {
-      return const _EmptyResult(message: '暂无持仓数据');
+      return _EmptyResult(message: l10n.aiToolHoldingsEmpty);
     }
 
     final rows = <_HoldingRow>[];
@@ -125,7 +127,7 @@ class _HoldingsTable extends StatelessWidget {
         ),
       );
     }
-    if (rows.isEmpty) return const _EmptyResult(message: '暂无持仓数据');
+    if (rows.isEmpty) return _EmptyResult(message: l10n.aiToolHoldingsEmpty);
     rows.sort((a, b) => b.costBasis.compareTo(a.costBasis));
     final visible = rows.take(_kMaxVisibleRows).toList();
     final hidden = rows.length - visible.length;
@@ -142,12 +144,15 @@ class _HoldingsTable extends StatelessWidget {
             children: [
               Expanded(
                 flex: 4,
-                child: Text('资产', style: context.microCaptionStyle),
+                child: Text(
+                  l10n.aiToolAssetColumn,
+                  style: context.microCaptionStyle,
+                ),
               ),
               Expanded(
                 flex: 3,
                 child: Text(
-                  '数量',
+                  l10n.aiToolQuantityColumn,
                   textAlign: TextAlign.right,
                   style: context.microCaptionStyle,
                 ),
@@ -155,7 +160,7 @@ class _HoldingsTable extends StatelessWidget {
               Expanded(
                 flex: 3,
                 child: Text(
-                  '成本',
+                  l10n.aiToolCostColumn,
                   textAlign: TextAlign.right,
                   style: context.microCaptionStyle,
                 ),
@@ -170,7 +175,10 @@ class _HoldingsTable extends StatelessWidget {
               top: AppSpacing.s4,
               left: AppSpacing.s8,
             ),
-            child: Text('还有 $hidden 项未展示', style: context.captionStyle),
+            child: Text(
+              l10n.aiToolHiddenItems(hidden),
+              style: context.captionStyle,
+            ),
           ),
       ],
     );
@@ -281,6 +289,7 @@ class _PaymentAccountsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final outMap = _asMap(output);
     if (outMap == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
     final raw = _asList(outMap['accounts']) ?? const <Object?>[];
     final rows = <_PaymentAccountRow>[];
     for (final item in raw) {
@@ -299,7 +308,7 @@ class _PaymentAccountsView extends StatelessWidget {
       );
     }
     if (rows.isEmpty) {
-      return const _EmptyResult(message: '没有可用的支付账户');
+      return _EmptyResult(message: l10n.aiToolPaymentAccountsEmpty);
     }
 
     final visible = rows.take(_kMaxVisibleRows).toList();
@@ -316,7 +325,10 @@ class _PaymentAccountsView extends StatelessWidget {
             horizontal: AppSpacing.s8,
             vertical: AppSpacing.s4,
           ),
-          child: Text('可用支付账户', style: context.microCaptionStyle),
+          child: Text(
+            l10n.aiToolPaymentAccountsTitle,
+            style: context.microCaptionStyle,
+          ),
         ),
         for (final row in visible) _paymentAccountTile(context, row),
         if (hidden > 0)
@@ -325,7 +337,10 @@ class _PaymentAccountsView extends StatelessWidget {
               top: AppSpacing.s4,
               left: AppSpacing.s8,
             ),
-            child: Text('还有 $hidden 个账户未展示', style: context.captionStyle),
+            child: Text(
+              l10n.aiToolHiddenAccounts(hidden),
+              style: context.captionStyle,
+            ),
           ),
       ],
     );
@@ -412,6 +427,7 @@ class _XirrSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final outMap = _asMap(output);
     if (outMap == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
     final rate = _asDouble(outMap['rate']);
     final scope = _asString(outMap['scope']) ?? 'portfolio';
     final assetId = _asString(outMap['asset_id']);
@@ -420,11 +436,11 @@ class _XirrSummary extends StatelessWidget {
     final flows = _asList(outMap['flows']) ?? const <Object?>[];
 
     final scopeLabel = scope == 'asset' && assetId != null
-        ? '资产 $assetId'
-        : '组合整体';
+        ? l10n.aiToolXirrAssetScope(assetId)
+        : l10n.aiToolXirrPortfolioScope;
     final rangeLabel = (from != null && to != null)
         ? '${_displayDate(from)} → ${_displayDate(to)}'
-        : '全部历史';
+        : l10n.aiToolAllHistory;
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -437,7 +453,7 @@ class _XirrSummary extends StatelessWidget {
           Text(scopeLabel, style: context.microCaptionStyle),
           const SizedBox(height: AppSpacing.s4),
           if (rate == null)
-            Text('无法计算（现金流方向单一或样本不足）', style: context.bodyCaptionStyle)
+            Text(l10n.aiToolXirrUnavailable, style: context.bodyCaptionStyle)
           else
             DeltaText(
               value: rate * 100,
@@ -447,7 +463,7 @@ class _XirrSummary extends StatelessWidget {
             ),
           const SizedBox(height: AppSpacing.s4),
           Text(
-            '$rangeLabel · ${flows.length} 条现金流',
+            '$rangeLabel · ${l10n.aiToolCashFlowCount(flows.length)}',
             style: context.captionStyle,
           ),
         ],
@@ -470,6 +486,7 @@ class _NetWorthSparkline extends StatelessWidget {
   Widget build(BuildContext context) {
     final outMap = _asMap(output);
     if (outMap == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
     final raw = _asList(outMap['series']) ?? const <Object?>[];
     final points = <(DateTime, double)>[];
     String currency = 'CNY';
@@ -484,7 +501,7 @@ class _NetWorthSparkline extends StatelessWidget {
       if (c != null && c.isNotEmpty) currency = c;
     }
     if (points.isEmpty) {
-      return const _EmptyResult(message: '区间内没有净资产数据');
+      return _EmptyResult(message: l10n.aiToolNetWorthEmpty);
     }
     points.sort((a, b) => a.$1.compareTo(b.$1));
     final start = points.first.$2;
@@ -511,7 +528,10 @@ class _NetWorthSparkline extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('当前净资产', style: context.microCaptionStyle),
+                    Text(
+                      l10n.aiToolCurrentNetWorth,
+                      style: context.microCaptionStyle,
+                    ),
                     MoneyText(
                       amount: end,
                       currencyCode: currency,
@@ -530,7 +550,7 @@ class _NetWorthSparkline extends StatelessWidget {
             child: NwLineChart(
               series: [
                 ChartSeries(
-                  name: '净资产',
+                  name: l10n.aiToolNetWorthSeriesName,
                   points: chartPoints,
                   intent: SeriesIntent.primary,
                   fillOpacity: 0.12,
@@ -545,7 +565,7 @@ class _NetWorthSparkline extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s4),
           Text(
-            '${_displayDate(points.first.$1)} → ${_displayDate(points.last.$1)} · ${points.length} 个采样点',
+            '${_displayDate(points.first.$1)} → ${_displayDate(points.last.$1)} · ${l10n.aiToolSamplePointCount(points.length)}',
             style: context.microCaptionStyle,
           ),
         ],
@@ -588,6 +608,7 @@ class _BreakdownView extends StatelessWidget {
   Widget build(BuildContext context) {
     final outMap = _asMap(output);
     if (outMap == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
     final raw = _asList(outMap['buckets']) ?? const <Object?>[];
     final buckets = <_BreakdownBucket>[];
     for (final item in raw) {
@@ -607,7 +628,7 @@ class _BreakdownView extends StatelessWidget {
       );
     }
     if (buckets.isEmpty) {
-      return const _EmptyResult(message: '没有可分布的成本');
+      return _EmptyResult(message: l10n.aiToolBreakdownCostEmpty);
     }
     buckets.sort((a, b) => b.cost.compareTo(a.cost));
     final palette = ChartPalette.of(context);
@@ -686,8 +707,15 @@ class _BreakdownView extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: AppSpacing.s4),
                     child: Text(
-                      '其他 ${buckets.length - top.length} 类共 '
-                      '${NumberFormat.percentPattern().format(buckets.skip(top.length).fold<double>(0, (s, b) => s + b.share).clamp(0.0, 1.0))}',
+                      l10n.aiToolOtherCategoriesSummary(
+                        buckets.length - top.length,
+                        NumberFormat.percentPattern().format(
+                          buckets
+                              .skip(top.length)
+                              .fold<double>(0, (s, b) => s + b.share)
+                              .clamp(0.0, 1.0),
+                        ),
+                      ),
                       style: context.microCaptionStyle,
                     ),
                   ),
@@ -727,9 +755,10 @@ class _RiskAlertList extends StatelessWidget {
   Widget build(BuildContext context) {
     final outMap = _asMap(output);
     if (outMap == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
     final raw = _asList(outMap['alerts']) ?? const <Object?>[];
     if (raw.isEmpty) {
-      return const _EmptyResult(message: '没有触发的风险预警', positive: true);
+      return _EmptyResult(message: l10n.aiToolRiskAlertsEmpty, positive: true);
     }
     final alerts = <_RiskAlert>[];
     for (final item in raw) {
@@ -762,7 +791,10 @@ class _RiskAlertList extends StatelessWidget {
               top: AppSpacing.s4,
               left: AppSpacing.s8,
             ),
-            child: Text('还有 $hidden 项未展示', style: context.captionStyle),
+            child: Text(
+              l10n.aiToolHiddenItems(hidden),
+              style: context.captionStyle,
+            ),
           ),
       ],
     );
@@ -807,7 +839,9 @@ class _RiskAlertList extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  alert.subject.isEmpty ? '风险预警' : alert.subject,
+                  alert.subject.isEmpty
+                      ? AppLocalizations.of(context).aiToolRiskAlertTitle
+                      : alert.subject,
                   style: context.theme.typography.xs2.copyWith(color: fg),
                 ),
                 Text(
@@ -907,9 +941,10 @@ class AssetAllocationView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final m = _asMap(output);
+    final l10n = AppLocalizations.of(context);
     final raw = _asList(m?['buckets']) ?? const <Object?>[];
     if (raw.isEmpty) {
-      return const _EmptyHint(text: '尚无持仓数据');
+      return _EmptyHint(text: l10n.aiToolHoldingsEmpty);
     }
     final colors = context.theme.colors;
     final palette = <Color>[
@@ -933,7 +968,7 @@ class AssetAllocationView extends StatelessWidget {
           .add(bucket);
     }
     if (byCurrency.isEmpty) {
-      return const _EmptyHint(text: '持仓数据格式异常');
+      return _EmptyHint(text: l10n.aiToolHoldingsDataMalformed);
     }
 
     return Column(
@@ -997,6 +1032,7 @@ class _AllocBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final sorted = [...buckets]..sort((a, b) => b.weight.compareTo(a.weight));
     final fmt = NumberFormat.decimalPattern();
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
@@ -1071,7 +1107,12 @@ class _AllocBlock extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s8),
           Text(
-            '合计成本 ${fmt.format(sorted.fold<int>(0, (a, b) => a + b.totalMinor) / 100.0)} · ${sorted.length} 类持仓',
+            l10n.aiToolTotalCostSummary(
+              fmt.format(
+                sorted.fold<int>(0, (a, b) => a + b.totalMinor) / 100.0,
+              ),
+              sorted.length,
+            ),
             style: context.microCaptionStyle,
           ),
         ],
@@ -1130,9 +1171,10 @@ class RecurringPatternsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final m = _asMap(output);
+    final l10n = AppLocalizations.of(context);
     final raw = _asList(m?['patterns']) ?? const <Object?>[];
     if (raw.isEmpty) {
-      return const _EmptyHint(text: '尚未检测到稳定的周期性支出');
+      return _EmptyHint(text: l10n.aiToolRecurringPatternsEmpty);
     }
     final visible = raw.take(_kMaxVisibleRows).toList();
     final fmt = NumberFormat.decimalPattern();
@@ -1148,7 +1190,7 @@ class RecurringPatternsView extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.s4),
             child: Text(
-              '+ 还有 ${raw.length - visible.length} 项',
+              l10n.aiToolMoreItems(raw.length - visible.length),
               style: context.microCaptionStyle,
             ),
           ),
@@ -1159,6 +1201,7 @@ class RecurringPatternsView extends StatelessWidget {
   Widget _patternRow(BuildContext context, Object? entry, NumberFormat fmt) {
     final mp = _asMap(entry);
     if (mp == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
     final merchant = _asString(mp['merchant_key']) ?? '(unknown)';
     final cadence = _asString(mp['cadence']) ?? '?';
     final currency = _asString(mp['currency']) ?? '';
@@ -1169,8 +1212,8 @@ class RecurringPatternsView extends StatelessWidget {
         : int.tryParse(_asString(mp['occurrences']) ?? '0') ?? 0;
     final lastSeen = _asDate(mp['last_seen_at']);
     final cadenceLabel = switch (cadence) {
-      'monthly' => '每月',
-      'weekly' => '每周',
+      'monthly' => l10n.aiToolCadenceMonthly,
+      'weekly' => l10n.aiToolCadenceWeekly,
       _ => cadence,
     };
     return Container(
@@ -1197,7 +1240,12 @@ class RecurringPatternsView extends StatelessWidget {
                     _miniChip(context, cadenceLabel),
                     const SizedBox(width: AppSpacing.s6),
                     Text(
-                      '$occ 次${lastSeen != null ? ' · 最近 ${_displayDate(lastSeen)}' : ''}',
+                      lastSeen == null
+                          ? l10n.aiToolOccurrences(occ)
+                          : l10n.aiToolOccurrencesRecent(
+                              occ,
+                              _displayDate(lastSeen),
+                            ),
                       style: context.microCaptionStyle,
                     ),
                   ],
@@ -1246,9 +1294,10 @@ class SubscriptionChangesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final m = _asMap(output);
+    final l10n = AppLocalizations.of(context);
     final raw = _asList(m?['changes']) ?? const <Object?>[];
     if (raw.isEmpty) {
-      return const _EmptyHint(text: '本期未检测到订阅价格变化');
+      return _EmptyHint(text: l10n.aiToolSubscriptionChangesEmpty);
     }
     final visible = raw.take(_kMaxVisibleRows).toList();
     return Column(
@@ -1263,7 +1312,7 @@ class SubscriptionChangesView extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.s4),
             child: Text(
-              '+ 还有 ${raw.length - visible.length} 项',
+              l10n.aiToolMoreItems(raw.length - visible.length),
               style: context.microCaptionStyle,
             ),
           ),
@@ -1274,6 +1323,7 @@ class SubscriptionChangesView extends StatelessWidget {
   Widget _changeRow(BuildContext context, Object? entry) {
     final mp = _asMap(entry);
     if (mp == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
     final merchant = _asString(mp['merchant_key']) ?? '(unknown)';
     final currency = _asString(mp['currency']) ?? '';
     final prev = int.tryParse(_asString(mp['prev_amount_minor']) ?? '') ?? 0;
@@ -1311,7 +1361,7 @@ class SubscriptionChangesView extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   '${fmt.format(prev.abs() / 100.0)} → ${fmt.format(next.abs() / 100.0)} $currency'
-                  '${since != null ? ' · 自 ${_displayDate(since)}' : ''}',
+                  '${since != null ? l10n.aiToolSinceDate(_displayDate(since)) : ''}',
                   style: context.microCaptionStyle,
                 ),
               ],
@@ -1344,9 +1394,10 @@ class RefundLinksView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final m = _asMap(output);
+    final l10n = AppLocalizations.of(context);
     final raw = _asList(m?['links']) ?? const <Object?>[];
     if (raw.isEmpty) {
-      return const _EmptyHint(text: '尚未检测到退款配对');
+      return _EmptyHint(text: l10n.aiToolRefundLinksEmpty);
     }
     final visible = raw.take(_kMaxVisibleRows).toList();
     final fmt = NumberFormat.decimalPattern();
@@ -1362,7 +1413,7 @@ class RefundLinksView extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.s4),
             child: Text(
-              '+ 还有 ${raw.length - visible.length} 项',
+              l10n.aiToolMoreItems(raw.length - visible.length),
               style: context.microCaptionStyle,
             ),
           ),

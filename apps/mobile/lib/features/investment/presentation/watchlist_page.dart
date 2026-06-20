@@ -57,6 +57,7 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
       actions: [
         FHeaderAction(
           icon: const Icon(FLucideIcons.refreshCw),
+          semanticsLabel: l10n.commonRetry,
           onPress: () => ref.invalidate(watchlistQuoteSnapshotsProvider),
         ),
         FHeaderAction(
@@ -75,6 +76,18 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
           onEdit: (item) =>
               showWatchlistItemSheet(context: context, item: item),
           onRemove: (item) => _removeItem(item),
+        ),
+        error: (error, _) => AppEmptyState.error(
+          title: l10n.commonLoadFailed,
+          message: '$error',
+          action: FButton(
+            variant: FButtonVariant.ghost,
+            onPress: () {
+              ref.invalidate(watchlistItemsProvider);
+              ref.invalidate(watchlistQuoteSnapshotsProvider);
+            },
+            child: Text(l10n.commonRetry),
+          ),
         ),
       ),
     );

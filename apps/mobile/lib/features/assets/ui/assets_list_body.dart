@@ -41,6 +41,7 @@ class AssetsBody extends StatelessWidget {
     required this.holdingsAsync,
     required this.valuationsAsync,
     required this.accountsAsync,
+    required this.onRetry,
     required this.securities,
     required this.holdings,
     required this.valuationMap,
@@ -55,6 +56,7 @@ class AssetsBody extends StatelessWidget {
   final AsyncValue<Map<String, HoldingSnapshot>> holdingsAsync;
   final AsyncValue<List<ManualAssetValuation>> valuationsAsync;
   final AsyncValue<List<Account>> accountsAsync;
+  final VoidCallback onRetry;
   final List<Asset> securities;
   final Map<String, HoldingSnapshot> holdings;
   final Map<String, Decimal> valuationMap;
@@ -95,8 +97,15 @@ class AssetsBody extends StatelessWidget {
         _firstError(valuationsAsync) ??
         _firstError(accountsAsync);
     if (loadError != null) {
-      return Center(
-        child: Text(AppLocalizations.of(context).assetsLoadError('$loadError')),
+      final l10n = AppLocalizations.of(context);
+      return AppEmptyState.error(
+        title: l10n.commonLoadFailed,
+        message: l10n.assetsLoadError('$loadError'),
+        action: FButton(
+          variant: FButtonVariant.ghost,
+          onPress: onRetry,
+          child: Text(l10n.commonRetry),
+        ),
       );
     }
     final manual = manualAsync.value ?? const <Asset>[];

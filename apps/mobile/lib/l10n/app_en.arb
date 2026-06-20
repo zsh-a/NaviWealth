@@ -2094,6 +2094,80 @@
   "aiChatHistoryTooltip": "Conversation history",
   "aiChatNewSessionTooltip": "New conversation",
   "aiChatLoginRequired": "Sign in to use the AI assistant.",
+  "aiToolHoldingsEmpty": "No holdings data yet",
+  "aiToolAssetColumn": "Asset",
+  "aiToolQuantityColumn": "Quantity",
+  "aiToolCostColumn": "Cost",
+  "aiToolHiddenItems": "{count, plural, =1{1 more item hidden} other{{count} more items hidden}}",
+  "@aiToolHiddenItems": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiToolPaymentAccountsEmpty": "No payment accounts available",
+  "aiToolPaymentAccountsTitle": "Available payment accounts",
+  "aiToolHiddenAccounts": "{count, plural, =1{1 more account hidden} other{{count} more accounts hidden}}",
+  "@aiToolHiddenAccounts": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiToolXirrAssetScope": "Asset {assetId}",
+  "@aiToolXirrAssetScope": {
+    "placeholders": { "assetId": { "type": "String" } }
+  },
+  "aiToolXirrPortfolioScope": "Portfolio",
+  "aiToolAllHistory": "All history",
+  "aiToolXirrUnavailable": "Cannot calculate: cash flows are one-sided or insufficient",
+  "aiToolCashFlowCount": "{count, plural, =1{1 cash flow} other{{count} cash flows}}",
+  "@aiToolCashFlowCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiToolNetWorthEmpty": "No net worth data in this range",
+  "aiToolCurrentNetWorth": "Current net worth",
+  "aiToolNetWorthSeriesName": "Net worth",
+  "aiToolSamplePointCount": "{count, plural, =1{1 sample point} other{{count} sample points}}",
+  "@aiToolSamplePointCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiToolBreakdownCostEmpty": "No cost basis to break down",
+  "aiToolOtherCategoriesSummary": "Other {count} categories total {share}",
+  "@aiToolOtherCategoriesSummary": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "share": { "type": "String" }
+    }
+  },
+  "aiToolRiskAlertsEmpty": "No risk alerts triggered",
+  "aiToolRiskAlertTitle": "Risk alert",
+  "aiToolHoldingsDataMalformed": "Holdings data format is invalid",
+  "aiToolTotalCostSummary": "Total cost {cost} · {count, plural, =1{1 holding class} other{{count} holding classes}}",
+  "@aiToolTotalCostSummary": {
+    "placeholders": {
+      "cost": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "aiToolRecurringPatternsEmpty": "No stable recurring spending detected yet",
+  "aiToolMoreItems": "{count, plural, =1{+ 1 more item} other{+ {count} more items}}",
+  "@aiToolMoreItems": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiToolCadenceMonthly": "Monthly",
+  "aiToolCadenceWeekly": "Weekly",
+  "aiToolOccurrences": "{count, plural, =1{1 time} other{{count} times}}",
+  "@aiToolOccurrences": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "aiToolOccurrencesRecent": "{count, plural, =1{1 time} other{{count} times}} · last {date}",
+  "@aiToolOccurrencesRecent": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "date": { "type": "String" }
+    }
+  },
+  "aiToolSubscriptionChangesEmpty": "No subscription price changes detected this period",
+  "aiToolSinceDate": " · since {date}",
+  "@aiToolSinceDate": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "aiToolRefundLinksEmpty": "No refund matches detected yet",
   "aiChatEmptyTitle": "Your Life OS assistant",
   "aiChatEmptyBody": "Ask across finance, knowledge, health, and plans. Answers are grounded in local data and enabled domain tools; when key fields are missing, the assistant asks before assuming.",
   "aiChatEmptySuggestion1": "What needs my attention right now?",

@@ -377,6 +377,9 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                             category: AccountSide.expense,
                             label: l10n.expenseCategoryPickerLabelDefault,
                             leafOnly: true,
+                            validator: (id) => id == null || id.isEmpty
+                                ? l10n.expenseCategoryPickerRequired
+                                : null,
                           );
                         },
                         loading: () => const Padding(

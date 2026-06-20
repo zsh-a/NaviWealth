@@ -89,8 +89,8 @@ class ProposeAssetValuationTool implements DeviceTool {
     final assetType = asset.type.name;
     if (!kProposalManualValuationTypes.contains(assetType)) {
       return proposalBadRequest(
-        "propose_asset_valuation: '$assetType' 不支持手工估值"
-        '（请改用 propose_trade type=valuationAdjust）',
+        "propose_asset_valuation: '$assetType' does not support manual "
+        'valuation. Use propose_trade type=valuationAdjust instead.',
       );
     }
 
@@ -107,7 +107,9 @@ class ProposeAssetValuationTool implements DeviceTool {
         );
       }
     } else {
-      warnings.add('date 未指定，前端将默认为今天。');
+      warnings.add(
+        'date was not specified; the confirmation UI will default to today.',
+      );
     }
 
     final displayName = asset.name ?? asset.symbol;

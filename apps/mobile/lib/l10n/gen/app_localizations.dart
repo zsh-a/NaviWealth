@@ -6759,6 +6759,198 @@ abstract class AppLocalizations {
   /// **'Sign in to use the AI assistant.'**
   String get aiChatLoginRequired;
 
+  /// No description provided for @aiToolHoldingsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No holdings data yet'**
+  String get aiToolHoldingsEmpty;
+
+  /// No description provided for @aiToolAssetColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset'**
+  String get aiToolAssetColumn;
+
+  /// No description provided for @aiToolQuantityColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get aiToolQuantityColumn;
+
+  /// No description provided for @aiToolCostColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost'**
+  String get aiToolCostColumn;
+
+  /// No description provided for @aiToolHiddenItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 more item hidden} other{{count} more items hidden}}'**
+  String aiToolHiddenItems(int count);
+
+  /// No description provided for @aiToolPaymentAccountsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No payment accounts available'**
+  String get aiToolPaymentAccountsEmpty;
+
+  /// No description provided for @aiToolPaymentAccountsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Available payment accounts'**
+  String get aiToolPaymentAccountsTitle;
+
+  /// No description provided for @aiToolHiddenAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 more account hidden} other{{count} more accounts hidden}}'**
+  String aiToolHiddenAccounts(int count);
+
+  /// No description provided for @aiToolXirrAssetScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset {assetId}'**
+  String aiToolXirrAssetScope(String assetId);
+
+  /// No description provided for @aiToolXirrPortfolioScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio'**
+  String get aiToolXirrPortfolioScope;
+
+  /// No description provided for @aiToolAllHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'All history'**
+  String get aiToolAllHistory;
+
+  /// No description provided for @aiToolXirrUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot calculate: cash flows are one-sided or insufficient'**
+  String get aiToolXirrUnavailable;
+
+  /// No description provided for @aiToolCashFlowCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 cash flow} other{{count} cash flows}}'**
+  String aiToolCashFlowCount(int count);
+
+  /// No description provided for @aiToolNetWorthEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No net worth data in this range'**
+  String get aiToolNetWorthEmpty;
+
+  /// No description provided for @aiToolCurrentNetWorth.
+  ///
+  /// In en, this message translates to:
+  /// **'Current net worth'**
+  String get aiToolCurrentNetWorth;
+
+  /// No description provided for @aiToolNetWorthSeriesName.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth'**
+  String get aiToolNetWorthSeriesName;
+
+  /// No description provided for @aiToolSamplePointCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 sample point} other{{count} sample points}}'**
+  String aiToolSamplePointCount(int count);
+
+  /// No description provided for @aiToolBreakdownCostEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No cost basis to break down'**
+  String get aiToolBreakdownCostEmpty;
+
+  /// No description provided for @aiToolOtherCategoriesSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Other {count} categories total {share}'**
+  String aiToolOtherCategoriesSummary(int count, String share);
+
+  /// No description provided for @aiToolRiskAlertsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No risk alerts triggered'**
+  String get aiToolRiskAlertsEmpty;
+
+  /// No description provided for @aiToolRiskAlertTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk alert'**
+  String get aiToolRiskAlertTitle;
+
+  /// No description provided for @aiToolHoldingsDataMalformed.
+  ///
+  /// In en, this message translates to:
+  /// **'Holdings data format is invalid'**
+  String get aiToolHoldingsDataMalformed;
+
+  /// No description provided for @aiToolTotalCostSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Total cost {cost} · {count, plural, =1{1 holding class} other{{count} holding classes}}'**
+  String aiToolTotalCostSummary(String cost, int count);
+
+  /// No description provided for @aiToolRecurringPatternsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No stable recurring spending detected yet'**
+  String get aiToolRecurringPatternsEmpty;
+
+  /// No description provided for @aiToolMoreItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{+ 1 more item} other{+ {count} more items}}'**
+  String aiToolMoreItems(int count);
+
+  /// No description provided for @aiToolCadenceMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get aiToolCadenceMonthly;
+
+  /// No description provided for @aiToolCadenceWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get aiToolCadenceWeekly;
+
+  /// No description provided for @aiToolOccurrences.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 time} other{{count} times}}'**
+  String aiToolOccurrences(int count);
+
+  /// No description provided for @aiToolOccurrencesRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 time} other{{count} times}} · last {date}'**
+  String aiToolOccurrencesRecent(int count, String date);
+
+  /// No description provided for @aiToolSubscriptionChangesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No subscription price changes detected this period'**
+  String get aiToolSubscriptionChangesEmpty;
+
+  /// No description provided for @aiToolSinceDate.
+  ///
+  /// In en, this message translates to:
+  /// **' · since {date}'**
+  String aiToolSinceDate(String date);
+
+  /// No description provided for @aiToolRefundLinksEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No refund matches detected yet'**
+  String get aiToolRefundLinksEmpty;
+
   /// No description provided for @aiChatEmptyTitle.
   ///
   /// In en, this message translates to:

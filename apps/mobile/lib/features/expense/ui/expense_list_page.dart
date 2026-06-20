@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/intent/intent.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
@@ -87,7 +88,18 @@ class _ExpenseListPageState extends ConsumerState<ExpenseListPage> {
           ],
         );
       },
-      error: (e, _) => Center(child: Text(l10n.commonLoadError('$e'))),
+      error: (e, _) => AppEmptyState.error(
+        title: l10n.commonLoadFailed,
+        message: l10n.commonLoadError('$e'),
+        action: FButton(
+          variant: FButtonVariant.ghost,
+          onPress: () {
+            ref.invalidate(journalExpensesStreamProvider);
+            ref.invalidate(allAccountsStreamProvider);
+          },
+          child: Text(l10n.commonRetry),
+        ),
+      ),
     );
 
     return AppPageScaffold(

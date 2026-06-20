@@ -1,5 +1,5 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -74,7 +74,7 @@ class WealthHubPage extends ConsumerWidget {
   }
 }
 
-class _WealthHubBody extends StatelessWidget {
+class _WealthHubBody extends ConsumerWidget {
   const _WealthHubBody({
     required this.baseCurrency,
     required this.netWorth,
@@ -88,28 +88,35 @@ class _WealthHubBody extends StatelessWidget {
   final Decimal totalLiabilities;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final width = MediaQuery.sizeOf(context).width;
     final hPad = Breakpoints.isMobile(width) ? AppSpacing.s16 : AppSpacing.s24;
-    return ListView(
-      padding: EdgeInsets.fromLTRB(
-        hPad,
-        AppSpacing.s12,
-        hPad,
-        kTabBarOffset + MediaQuery.paddingOf(context).bottom,
-      ),
-      children: [
-        _NetWorthHero(
-          baseCurrency: baseCurrency,
-          netWorth: netWorth,
-          totalAssets: totalAssets,
-          totalLiabilities: totalLiabilities,
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(dashboardSnapshotProvider);
+        await ref.read(dashboardSnapshotProvider.future);
+      },
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(
+          hPad,
+          AppSpacing.s12,
+          hPad,
+          kTabBarOffset + MediaQuery.paddingOf(context).bottom,
         ),
-        const SizedBox(height: AppSpacing.s16),
-        const _WealthSectionGrid(),
-        const SizedBox(height: AppSpacing.s16),
-        const WealthPerspectiveSection(),
-      ],
+        children: [
+          _NetWorthHero(
+            baseCurrency: baseCurrency,
+            netWorth: netWorth,
+            totalAssets: totalAssets,
+            totalLiabilities: totalLiabilities,
+          ),
+          const SizedBox(height: AppSpacing.s16),
+          const _WealthSectionGrid(),
+          const SizedBox(height: AppSpacing.s16),
+          const WealthPerspectiveSection(),
+        ],
+      ),
     );
   }
 }
@@ -143,14 +150,19 @@ class _NetWorthHero extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s8),
           MediaQuery.withClampedTextScaling(
             maxScaleFactor: 1.3,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: AlignmentDirectional.centerStart,
-              child: AnimatedMoneyText(
-                amount: netWorth.toDouble(),
-                currencyCode: baseCurrency,
-                style: TypographyTokens.numericDisplay,
-                showSign: netWorth.toDouble() < 0,
+            child: Semantics(
+              label:
+                  '${l10n.homeNetWorthTitle} '
+                  '${formatters.currency(netWorth, code: baseCurrency)}',
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerStart,
+                child: AnimatedMoneyText(
+                  amount: netWorth.toDouble(),
+                  currencyCode: baseCurrency,
+                  style: TypographyTokens.numericDisplay,
+                  showSign: netWorth.toDouble() < 0,
+                ),
               ),
             ),
           ),

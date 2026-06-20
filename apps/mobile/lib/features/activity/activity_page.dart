@@ -63,15 +63,18 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
         // pending count lives inside the review page.
         FHeaderAction(
           icon: const Icon(FLucideIcons.inbox),
+          semanticsLabel: l10n.ingestReviewTitle,
           onPress: () => context.push(AppRoutes.activityIngest),
         ),
         if (!isDesktop) ...[
           FHeaderAction(
             icon: const Icon(FLucideIcons.filter),
+            semanticsLabel: l10n.activityFeedFilterTitle,
             onPress: () => ActivityFeedFilterSheet.show(context),
           ),
           FHeaderAction(
             icon: const Icon(FLucideIcons.plus),
+            semanticsLabel: l10n.activityAddAction,
             onPress: () => showActivityActionPanel(context),
           ),
         ],
