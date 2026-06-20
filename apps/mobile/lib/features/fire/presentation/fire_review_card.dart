@@ -74,7 +74,7 @@ class _FireReviewCardState extends ConsumerState<FireReviewCard> {
             ),
             error: (e, _) => Text(
               '$e',
-              style: context.theme.typography.xs.copyWith(
+              style: context.captionStyle.copyWith(
                 color: context.theme.colors.destructive,
               ),
             ),
@@ -222,7 +222,7 @@ class _DiffPanel extends StatelessWidget {
                       diff.after.safetyLevel,
                     ),
                   )
-                : context.theme.typography.xs.copyWith(
+                : context.captionStyle.copyWith(
                     color: colors.foreground,
                     fontWeight: FontWeight.w400,
                   ),

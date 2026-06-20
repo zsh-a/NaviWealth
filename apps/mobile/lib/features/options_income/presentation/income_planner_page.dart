@@ -490,7 +490,7 @@ class _ScanEmptyResultCard extends StatelessWidget {
                     .take(2)
                     .map((e) => '${e.key}: ${e.value}')
                     .join('\n'),
-                style: context.theme.typography.xs.copyWith(
+                style: context.captionStyle.copyWith(
                   color: colors.destructive,
                   height: 1.35,
                 ),
@@ -548,10 +548,7 @@ class _BulletRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: AppSpacing.s4, top: AppSpacing.s2),
-      child: Text(
-        '• $line',
-        style: context.theme.typography.xs.copyWith(height: 1.4),
-      ),
+      child: Text('• $line', style: context.captionStyle.copyWith(height: 1.4)),
     );
   }
 }
@@ -610,7 +607,7 @@ class _ErrorCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.s4),
             Text(
               message,
-              style: context.theme.typography.xs.copyWith(
+              style: context.captionStyle.copyWith(
                 color: colors.destructive,
                 height: 1.4,
               ),

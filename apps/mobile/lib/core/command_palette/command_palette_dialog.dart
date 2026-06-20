@@ -368,7 +368,7 @@ class _CommandRow extends StatelessWidget {
                     if (entry.subtitle != null)
                       Text(
                         entry.subtitle!,
-                        style: typography.xs.copyWith(color: iconColor),
+                        style: context.captionStyle.copyWith(color: iconColor),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

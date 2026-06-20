@@ -325,7 +325,7 @@ class _AssistantBubble extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           Text(
             errorMessage,
-            style: context.theme.typography.xs.copyWith(
+            style: context.captionStyle.copyWith(
               color: context.theme.colors.destructive,
             ),
           ),
@@ -876,7 +876,7 @@ class _TruncationFooter extends ConsumerWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: context.theme.typography.xs.copyWith(color: muted),
+                  style: context.captionStyle.copyWith(color: muted),
                 ),
               ),
               if (canContinue)
@@ -1179,10 +1179,7 @@ class _ActionButton extends StatelessWidget {
           children: [
             Icon(icon, size: AppIconSizes.xs, color: color),
             const SizedBox(width: AppSpacing.s4),
-            Text(
-              label,
-              style: context.theme.typography.xs.copyWith(color: color),
-            ),
+            Text(label, style: context.captionStyle.copyWith(color: color)),
           ],
         ),
       ),

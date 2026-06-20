@@ -352,7 +352,7 @@ class _TrendError extends StatelessWidget {
       child: Center(
         child: Text(
           l10n.dashboardTrendError('$error'),
-          style: context.theme.typography.xs.copyWith(
+          style: context.captionStyle.copyWith(
             color: context.theme.colors.destructive,
           ),
         ),

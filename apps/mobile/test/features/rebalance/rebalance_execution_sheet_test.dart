@@ -89,6 +89,32 @@ void main() {
 
     expect(drafts, isEmpty);
   });
+
+  test('allocates zero fees and taxes when trade amounts are zero', () {
+    final drafts = buildRebalanceTradeEntryPrefills(
+      plan: _plan(
+        trades: [
+          SuggestedTrade(
+            category: AssetCategory.stock,
+            direction: TradeDirection.sell,
+            amount: Money(Decimal.zero, 'CNY'),
+          ),
+          SuggestedTrade(
+            category: AssetCategory.etf,
+            direction: TradeDirection.buy,
+            amount: Money(Decimal.zero, 'CNY'),
+          ),
+        ],
+        estimatedFees: Money(Decimal.parse('2'), 'CNY'),
+        estimatedTaxes: Money(Decimal.parse('1'), 'CNY'),
+      ),
+      tradeDate: DateTime.utc(2026, 5, 18),
+      noteBuilder: (trade) => trade.category.name,
+    );
+
+    expect(drafts.map((draft) => draft.fee), [Decimal.zero, Decimal.zero]);
+    expect(drafts.map((draft) => draft.tax), [Decimal.zero, Decimal.zero]);
+  });
 }
 
 RebalancePlan _plan({

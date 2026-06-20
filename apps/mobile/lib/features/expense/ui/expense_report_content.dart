@@ -303,7 +303,7 @@ class _SummaryCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.s8),
               Text(
                 l10n.expenseReportSkippedFx(report.skippedFxCount),
-                style: context.theme.typography.xs.copyWith(
+                style: context.captionStyle.copyWith(
                   color: context.theme.colors.destructive,
                 ),
               ),

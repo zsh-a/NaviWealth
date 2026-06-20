@@ -291,10 +291,7 @@ class _SettingsChoicePill extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: selected
               ? context.captionLabelStyle.copyWith(color: colors.primary)
-              : context.theme.typography.xs.copyWith(
-                  color: colors.foreground,
-                  fontWeight: FontWeight.w500,
-                ),
+              : context.captionLabelStyle.copyWith(color: colors.foreground),
         ),
       ),
     );

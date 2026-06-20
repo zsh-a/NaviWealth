@@ -399,7 +399,7 @@ class _HeroErrorCard extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: context.theme.typography.xs.copyWith(
+              style: context.captionStyle.copyWith(
                 color: context.theme.colors.destructive,
               ),
               maxLines: 2,

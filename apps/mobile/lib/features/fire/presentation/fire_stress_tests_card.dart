@@ -47,7 +47,7 @@ class FireStressTestsCard extends ConsumerWidget {
               ),
               error: (e, _) => Text(
                 '$e',
-                style: context.theme.typography.xs.copyWith(
+                style: context.captionStyle.copyWith(
                   color: context.theme.colors.destructive,
                 ),
               ),

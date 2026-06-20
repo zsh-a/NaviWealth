@@ -171,7 +171,6 @@ class _BriefingHourSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return SizedBox(
       height: AppControlHeights.pickerStrip,
       child: ListView.separated(
@@ -203,7 +202,7 @@ class _BriefingHourSheet extends StatelessWidget {
                 '${index.toString().padLeft(2, '0')}:00',
                 style: selected
                     ? context.captionLabelStyle.copyWith(color: colors.primary)
-                    : typography.xs.copyWith(
+                    : context.captionStyle.copyWith(
                         color: colors.foreground,
                         fontWeight: FontWeight.w400,
                       ),

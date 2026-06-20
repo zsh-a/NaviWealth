@@ -137,7 +137,7 @@ class _RecurringRow extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.s4),
                 Text(
                   l10n.recurringNextDue(formatters.date(rule.nextDueAt)),
-                  style: context.theme.typography.xs.copyWith(color: muted),
+                  style: context.captionStyle.copyWith(color: muted),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

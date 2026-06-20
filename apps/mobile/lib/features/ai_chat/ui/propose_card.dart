@@ -429,7 +429,7 @@ class _BatchProposalView extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s8),
             Text(
               l10n.aiChatProposalFailure(applyState.errorMessage!),
-              style: context.theme.typography.xs.copyWith(
+              style: context.captionStyle.copyWith(
                 color: context.theme.colors.destructive,
               ),
             ),
@@ -507,7 +507,7 @@ class _BatchChildrenList extends StatelessWidget {
                     child: Text(
                       '${proposalKindLabel(l10n, registry, plan.children[i].kind)} · '
                       '${plan.children[i].summaryZh}',
-                      style: context.theme.typography.xs.copyWith(
+                      style: context.captionStyle.copyWith(
                         color: context.theme.colors.foreground,
                       ),
                     ),
@@ -668,7 +668,7 @@ class _ExpandedView extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s8),
             Text(
               l10n.aiChatProposalFailure(applyState.errorMessage!),
-              style: context.theme.typography.xs.copyWith(
+              style: context.captionStyle.copyWith(
                 color: context.theme.colors.destructive,
               ),
             ),
@@ -1130,7 +1130,7 @@ class _ClarificationView extends ConsumerWidget {
                     l10n.aiChatProposalNeedsClarificationHeader(
                       proposalKindLabel(l10n, registry, plan.kind),
                     ),
-                    style: context.theme.typography.xs.copyWith(
+                    style: context.captionStyle.copyWith(
                       color: context.theme.colors.foreground,
                     ),
                   ),
@@ -1232,7 +1232,7 @@ class ProposalPayloadDetails extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       r.value,
-                      style: context.theme.typography.xs.copyWith(
+                      style: context.captionStyle.copyWith(
                         color: context.theme.colors.foreground,
                       ),
                     ),
@@ -1485,9 +1485,7 @@ class _ProposeBatchActionsState extends ConsumerState<ProposeBatchActions> {
           Expanded(
             child: Text(
               l10n.aiChatProposalBatchPending(widget.pending.length),
-              style: context.theme.typography.xs.copyWith(
-                color: colors.primary,
-              ),
+              style: context.captionStyle.copyWith(color: colors.primary),
             ),
           ),
           FButton(
@@ -1625,7 +1623,7 @@ class _WarningCallout extends StatelessWidget {
                 Expanded(
                   child: Text(
                     warnings[i],
-                    style: context.theme.typography.xs.copyWith(
+                    style: context.captionStyle.copyWith(
                       color: AiTone.onSurface(context),
                       fontWeight: FontWeight.w500,
                       height: 1.4,

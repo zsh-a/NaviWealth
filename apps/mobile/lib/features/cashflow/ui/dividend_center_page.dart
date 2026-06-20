@@ -294,7 +294,7 @@ class _RankRow extends StatelessWidget {
             const SizedBox(height: AppSpacing.s2),
             Text(
               detail,
-              style: context.theme.typography.xs.copyWith(color: muted),
+              style: context.captionStyle.copyWith(color: muted),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

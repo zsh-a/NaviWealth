@@ -57,9 +57,8 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           Text(
             stats.frameCount.toString(),
-            style: context.theme.typography.xl.copyWith(
+            style: TypographyTokens.numericDisplay.copyWith(
               color: context.theme.colors.foreground,
-              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: AppSpacing.s12),

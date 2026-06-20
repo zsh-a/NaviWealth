@@ -28,6 +28,13 @@ void main() {
       'instead of rebuilding the muted xs caption style.',
     );
 
+    _expectNoFileMatches(
+      libFiles.where((file) => !file.path.endsWith('/text_style_presets.dart')),
+      RegExp(r'(?:context\.theme\.)?typography\.xs\.copyWith\('),
+      'Use context.captionStyle / captionLabelStyle / microCaptionStyle as '
+      'the base for xs text instead of rebuilding typography.xs.copyWith.',
+    );
+
     _expectNoMatches(
       libFiles.where((file) => !file.path.endsWith('/text_style_presets.dart')),
       RegExp(
@@ -83,9 +90,9 @@ void main() {
 
     _expectNoMatches(
       _dartFiles(Directory('${appRoot.path}/lib/features/settings')),
-      RegExp(r'fontWeight:\s*FontWeight\.w600'),
+      RegExp(r'fontWeight:\s*FontWeight\.(?:w500|w600|w700|bold)'),
       'Settings typography should use text-style presets/tokens rather than '
-      'manual FontWeight.w600.',
+      'manual FontWeight overrides.',
     );
 
     _expectNoMatches(

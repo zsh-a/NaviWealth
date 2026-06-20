@@ -433,7 +433,7 @@ class _AiLlmCredentialsPageState extends ConsumerState<AiLlmCredentialsPage> {
             Text(
               '${_probeResult!.ok ? '● ' : (_probeResult!.reachedProvider ? '◐ ' : '○ ')}'
               '${_probeResult!.message}',
-              style: context.theme.typography.xs.copyWith(
+              style: context.captionStyle.copyWith(
                 color: _probeResult!.ok
                     ? context.theme.colors.primary
                     : _probeResult!.reachedProvider

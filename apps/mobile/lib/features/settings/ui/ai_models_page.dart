@@ -100,9 +100,7 @@ class _ActiveEmbedderCard extends ConsumerWidget {
             Expanded(
               child: Text(
                 l10n.settingsAiModelsActiveRuntimeFailed('$e'),
-                style: context.theme.typography.xs.copyWith(
-                  color: semantic.danger,
-                ),
+                style: context.captionStyle.copyWith(color: semantic.danger),
               ),
             ),
           ],
@@ -148,9 +146,7 @@ class _ActiveEmbedderCard extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.s8),
                 Text(
                   d.error!,
-                  style: context.theme.typography.xs.copyWith(
-                    color: semantic.danger,
-                  ),
+                  style: context.captionStyle.copyWith(color: semantic.danger),
                 ),
               ],
               const SizedBox(height: AppSpacing.s10),
@@ -197,9 +193,7 @@ class _ActiveEmbedderCard extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.s8),
                 Text(
                   l10n.settingsAiModelsStaleVectorsHint,
-                  style: context.theme.typography.xs.copyWith(
-                    color: semantic.warning,
-                  ),
+                  style: context.captionStyle.copyWith(color: semantic.warning),
                 ),
               ],
               const SizedBox(height: AppSpacing.s12),
@@ -252,9 +246,8 @@ class _MetricTile extends StatelessWidget {
         children: [
           Text(
             '$value',
-            style: TypographyTokens.numericCaption.copyWith(
+            style: TypographyTokens.numericCaptionStrong.copyWith(
               color: valueColor,
-              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: AppSpacing.s2),
@@ -327,7 +320,7 @@ class _RuntimeDiagnosticsCard extends StatelessWidget {
         ),
         error: (e, _) => Text(
           l10n.settingsAiModelsRuntimeCheckFailed('$e'),
-          style: context.theme.typography.xs.copyWith(color: semantic.danger),
+          style: context.captionStyle.copyWith(color: semantic.danger),
         ),
         data: (r) {
           final complete = r.isComplete;
@@ -506,9 +499,7 @@ class _BundleCard extends ConsumerWidget {
             ),
             error: (e, _) => Text(
               l10n.settingsAiModelsStateLoadFailed('$e'),
-              style: context.theme.typography.xs.copyWith(
-                color: semantic.danger,
-              ),
+              style: context.captionStyle.copyWith(color: semantic.danger),
             ),
             data: (bundleState) => _BundleBody(
               state: bundleState,

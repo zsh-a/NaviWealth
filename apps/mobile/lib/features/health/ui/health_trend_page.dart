@@ -342,7 +342,9 @@ class _TrendCard extends StatelessWidget {
               error: (e, _) => Center(
                 child: Text(
                   AppLocalizations.of(context).healthTrendLoadFailed(''),
-                  style: typography.xs.copyWith(color: colors.destructive),
+                  style: context.captionStyle.copyWith(
+                    color: colors.destructive,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),

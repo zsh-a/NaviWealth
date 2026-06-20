@@ -582,6 +582,38 @@ void main() {
     );
   });
 
+  test('op_outbox enforces unique operation ids', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+
+    Future<void> insertOutboxOp({required String opId, required String rowId}) {
+      return db.customStatement(
+        '''
+        INSERT INTO op_outbox (
+          op_id,
+          table_name,
+          row_id,
+          created_at
+        ) VALUES (?, ?, ?, ?)
+        ''',
+        [opId, 'assets', rowId, DateTime.utc(2026, 6, 20).toIso8601String()],
+      );
+    }
+
+    await insertOutboxOp(opId: 'op-1', rowId: 'asset-1');
+    await insertOutboxOp(opId: 'op-2', rowId: 'asset-1');
+    await expectLater(
+      insertOutboxOp(opId: 'op-1', rowId: 'asset-2'),
+      throwsA(isA<SqliteException>()),
+    );
+
+    final rows = await db
+        .customSelect('SELECT op_id, row_id FROM op_outbox ORDER BY op_id')
+        .get();
+    expect(rows.map((row) => row.read<String>('op_id')), ['op-1', 'op-2']);
+    expect(rows.map((row) => row.read<String>('row_id')).toSet(), {'asset-1'});
+  });
+
   test('deleting a chat session cascades to its messages', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);

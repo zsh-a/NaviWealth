@@ -94,6 +94,32 @@ void main() {
     expect(await repo.latestScanState('u1'), isNull);
     expect(await repo.getLatest('u2'), hasLength(1));
   });
+
+  test(
+    'getLatest round-trips contract, metrics, risk, and explanation',
+    () async {
+      await repo.replaceBatch(
+        ownerUserId: 'u1',
+        scanId: 'scan-1',
+        opportunities: [
+          _opportunity(symbol: 'AAPL', score: '0.45', scanId: 'scan-1'),
+        ],
+      );
+
+      final latest = await repo.getLatest('u1');
+      expect(latest, hasLength(1));
+      final opp = latest.single;
+      expect(opp.strategy, OptionsStrategyKind.cashSecuredPut);
+      expect(opp.contract.optionSymbol, 'AAPL250620P00190000');
+      expect(opp.contract.market, AssetMarket.usStock);
+      expect(opp.contract.strike, Money.parse('190', 'USD'));
+      expect(opp.metrics.premium, Money.parse('255', 'USD'));
+      expect(opp.metrics.marginOfSafety, Decimal.parse('0.0627'));
+      expect(opp.risk, OpportunityRiskLevel.moderate);
+      expect(opp.explanation.summary, 'AAPL put');
+      expect(opp.explanation.scoreBreakdown['yield'], Decimal.parse('0.45'));
+    },
+  );
 }
 
 OptionsOpportunity _opportunity({

@@ -204,7 +204,7 @@ class _HoldingsTable extends StatelessWidget {
               children: [
                 Text(
                   primary,
-                  style: context.theme.typography.xs.copyWith(
+                  style: context.captionStyle.copyWith(
                     color: context.theme.colors.foreground,
                   ),
                   maxLines: 1,
@@ -225,7 +225,7 @@ class _HoldingsTable extends StatelessWidget {
             child: Text(
               qtyText,
               textAlign: TextAlign.right,
-              style: context.theme.typography.xs.copyWith(
+              style: context.captionStyle.copyWith(
                 color: context.theme.colors.foreground,
                 fontFeatures: TypographyTokens.tabularFigures,
               ),
@@ -364,7 +364,7 @@ class _PaymentAccountsView extends StatelessWidget {
               children: [
                 Text(
                   row.name,
-                  style: context.theme.typography.xs.copyWith(
+                  style: context.captionStyle.copyWith(
                     color: context.theme.colors.foreground,
                   ),
                   maxLines: 1,
@@ -663,7 +663,7 @@ class _BreakdownView extends StatelessWidget {
                         Expanded(
                           child: Text(
                             top[i].label,
-                            style: context.theme.typography.xs.copyWith(
+                            style: context.captionStyle.copyWith(
                               color: context.theme.colors.foreground,
                             ),
                             maxLines: 1,
@@ -674,7 +674,7 @@ class _BreakdownView extends StatelessWidget {
                           NumberFormat.percentPattern().format(
                             top[i].share.clamp(0.0, 1.0),
                           ),
-                          style: context.theme.typography.xs.copyWith(
+                          style: context.captionStyle.copyWith(
                             color: context.theme.colors.foreground,
                             fontFeatures: TypographyTokens.tabularFigures,
                           ),
@@ -812,7 +812,7 @@ class _RiskAlertList extends StatelessWidget {
                 ),
                 Text(
                   alert.message,
-                  style: context.theme.typography.xs.copyWith(color: fg),
+                  style: context.captionStyle.copyWith(color: fg),
                 ),
               ],
             ),
@@ -1055,7 +1055,7 @@ class _AllocBlock extends StatelessWidget {
                             ),
                             Text(
                               '${(sorted[i].weight * 100).toStringAsFixed(1)}%',
-                              style: context.theme.typography.xs.copyWith(
+                              style: context.captionStyle.copyWith(
                                 fontFeatures: const [
                                   FontFeature.tabularFigures(),
                                 ],

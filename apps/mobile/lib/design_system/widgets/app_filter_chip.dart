@@ -72,7 +72,7 @@ class AppFilterChip extends StatelessWidget {
                   style:
                       (active
                               ? context.captionLabelStyle
-                              : context.theme.typography.xs.copyWith(
+                              : context.captionStyle.copyWith(
                                   fontWeight: FontWeight.w500,
                                 ))
                           .copyWith(color: foreground),

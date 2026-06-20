@@ -215,7 +215,7 @@ class BenchmarkCardError extends StatelessWidget {
       child: Center(
         child: Text(
           l10n.benchmarkComparisonError('$error'),
-          style: context.theme.typography.xs.copyWith(
+          style: context.captionStyle.copyWith(
             color: context.theme.colors.destructive,
           ),
         ),

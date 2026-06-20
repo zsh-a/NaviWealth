@@ -252,7 +252,7 @@ class _RecoveryHero extends ConsumerWidget {
         ),
         error: (e, _) => Text(
           AppLocalizations.of(context).healthSyncFailed,
-          style: typography.xs.copyWith(color: colors.destructive),
+          style: context.captionStyle.copyWith(color: colors.destructive),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
@@ -634,7 +634,6 @@ class _SleepStageBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typography = context.theme.typography;
     final colors = context.theme.colors;
     if (totalSeconds <= 0) return const SizedBox.shrink();
 
@@ -691,26 +690,26 @@ class _SleepStageBar extends StatelessWidget {
           runSpacing: AppSpacing.s2,
           children: [
             _stageChip(
-              typography,
+              context,
               colors.primary,
               l10n.healthSleepDeepLabel,
               deepSeconds,
             ),
             _stageChip(
-              typography,
+              context,
               colors.primary.withValues(alpha: AppOpacity.prominent),
               l10n.healthSleepRemLabel,
               remSeconds,
             ),
             _stageChip(
-              typography,
+              context,
               colors.mutedForeground,
               l10n.healthSleepLightLabel,
               lightSeconds,
             ),
             if (awakeSeconds > 0)
               _stageChip(
-                typography,
+                context,
                 colors.destructive.withValues(alpha: AppOpacity.prominent),
                 l10n.healthSleepAwakeLabel,
                 awakeSeconds,
@@ -722,7 +721,7 @@ class _SleepStageBar extends StatelessWidget {
   }
 
   Widget _stageChip(
-    FTypography typography,
+    BuildContext context,
     Color color,
     String label,
     double seconds,
@@ -730,7 +729,7 @@ class _SleepStageBar extends StatelessWidget {
     final hours = seconds / 3600.0;
     return Text(
       '$label ${_round(hours)}h',
-      style: typography.xs.copyWith(color: color, fontSize: 10),
+      style: context.captionStyle.copyWith(color: color, fontSize: 10),
     );
   }
 }
@@ -1606,7 +1605,6 @@ class _BriefingPanelState extends ConsumerState<_BriefingPanel> {
       health_agent_providers.latestMorningBriefingProvider,
     );
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1620,7 +1618,7 @@ class _BriefingPanelState extends ConsumerState<_BriefingPanel> {
           const SizedBox(height: AppSpacing.s8),
           Text(
             _errorMessage!,
-            style: typography.xs.copyWith(color: colors.destructive),
+            style: context.captionStyle.copyWith(color: colors.destructive),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),

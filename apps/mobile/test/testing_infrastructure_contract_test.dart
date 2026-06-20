@@ -26,6 +26,18 @@ void main() {
       );
     });
 
+    test('AI trace waterfall regression tests stay active', () {
+      final file = File(
+        '${appRoot.path}/test/features/settings/ai_trace_waterfall_test.dart',
+      );
+
+      expect(file.existsSync(), isTrue);
+      final text = file.readAsStringSync();
+      expect(_countTestCases([file]), greaterThanOrEqualTo(5));
+      expect(text, isNot(contains('skip:')));
+      expect(text, isNot(contains('pumpAndSettle')));
+    });
+
     test('critical user flows stay covered outside the sync E2E test', () {
       const flowFiles = <String>[
         'test/flow/add_account_flow_test.dart',
@@ -141,6 +153,65 @@ void main() {
       }
     });
 
+    test('review-priority module tests span their risky slices', () {
+      const requiredFiles = <String, int>{
+        // Assets: keep provider, physical asset, depreciation, and UI list
+        // model behavior covered directly.
+        'test/features/assets/assets_page_securities_test.dart': 2,
+        'test/features/assets/data/asset_detail_providers_test.dart': 4,
+        'test/features/assets/data/deposit_maturity_insight_provider_test.dart':
+            2,
+        'test/features/assets/physical/data/physical_asset_repository_test.dart':
+            4,
+        'test/features/assets/physical/domain/vehicle_depreciation_test.dart':
+            3,
+        'test/features/assets/ui/assets_list_models_test.dart': 2,
+
+        // Options income: scanner/application, repositories, scoring, AI, and
+        // presentation should not collapse back into one broad smoke file.
+        'test/features/options_income/application/scan_inputs_bridge_test.dart':
+            3,
+        'test/features/options_income/application/scan_orchestrator_test.dart':
+            3,
+        'test/features/options_income/data/options_income_repositories_test.dart':
+            6,
+        'test/features/options_income/data/options_opportunity_cache_repository_test.dart':
+            3,
+        'test/features/options_income/domain/opportunity_scorer_test.dart': 8,
+        'test/features/options_income/domain/wheel_lifecycle_test.dart': 4,
+        'test/features/options_income/ai_tools/get_wheel_lifecycle_tool_test.dart':
+            3,
+        'test/features/options_income/presentation/wheel_lifecycle_page_test.dart':
+            1,
+
+        // Rebalance: engine behavior, insight provider, and both editing /
+        // execution surfaces need separate regression coverage.
+        'test/features/rebalance/domain/rebalance_engine_test.dart': 5,
+        'test/features/rebalance/data/rebalance_drift_insight_provider_test.dart':
+            2,
+        'test/features/rebalance/rebalance_execution_sheet_test.dart': 4,
+        'test/features/rebalance/target_allocation_editor_sheet_test.dart': 4,
+
+        // Persistence: schema verification alone is not enough; converters
+        // and app database behavior must stay directly covered.
+        'test/core/persistence/schema_verification_test.dart': 1,
+        'test/core/persistence/converters_test.dart': 3,
+        'test/core/persistence/app_database_behavior_test.dart': 17,
+      };
+
+      for (final entry in requiredFiles.entries) {
+        final file = File('${appRoot.path}/${entry.key}');
+        expect(file.existsSync(), isTrue, reason: '${entry.key} should exist');
+        expect(
+          _countTestCases([file]),
+          greaterThanOrEqualTo(entry.value),
+          reason:
+              '${entry.key} should keep at least ${entry.value} concrete '
+              'test cases; empty shell files do not count.',
+        );
+      }
+    });
+
     test('golden harness uses deterministic fixed-frame pumping', () {
       final setup = File('${appRoot.path}/test/golden/_golden_setup.dart');
 
@@ -155,6 +226,21 @@ void main() {
         text,
         isNot(matches(RegExp(r'\bawait\s+tester\.pumpAndSettle\('))),
       );
+
+      final goldenDartFiles = Directory('${appRoot.path}/test/golden')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.dart'));
+      final pumpAndSettle = RegExp(r'\bawait\s+tester\.pumpAndSettle\(');
+      for (final file in goldenDartFiles) {
+        expect(
+          file.readAsStringSync(),
+          isNot(matches(pumpAndSettle)),
+          reason:
+              '${file.path} should use deterministic bounded pumps for '
+              'goldens instead of pumpAndSettle.',
+        );
+      }
     });
 
     test('golden comparison policy stays Linux-pinned and update-friendly', () {

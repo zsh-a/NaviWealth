@@ -94,6 +94,32 @@ void main() {
         );
       },
     );
+
+    test(
+      'preserves null market for assets without a linked exchange',
+      () async {
+        final market = _RecordingMarketDataService();
+        final container = ProviderContainer(
+          overrides: [
+            marketDataServiceProvider.overrideWith((_) async => market),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        await container.read(
+          assetPriceHistoryProvider(
+            const PriceHistoryKey(symbol: 'BTC', market: null, days: 7),
+          ).future,
+        );
+
+        expect(market.lastHistoricalSymbol, 'BTC');
+        expect(market.lastHistoricalMarket, isNull);
+        expect(
+          market.lastHistoricalTo!.difference(market.lastHistoricalFrom!),
+          const Duration(days: 7),
+        );
+      },
+    );
   });
 
   group('assetHoldingSnapshotProvider', () {

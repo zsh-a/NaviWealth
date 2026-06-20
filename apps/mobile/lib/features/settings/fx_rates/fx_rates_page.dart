@@ -139,8 +139,7 @@ class _RateList extends ConsumerWidget {
                     children: [
                       Text(
                         '1 ${r.base} = ${r.rate} ${r.quote}',
-                        style: context.theme.typography.sm.copyWith(
-                          fontWeight: FontWeight.w500,
+                        style: TypographyTokens.numericBody.copyWith(
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),

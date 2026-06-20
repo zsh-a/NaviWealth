@@ -49,7 +49,7 @@ class AssetDetailErrorCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.s16),
         child: Text(
           message,
-          style: context.theme.typography.xs.copyWith(
+          style: context.captionStyle.copyWith(
             color: context.theme.colors.destructive,
           ),
         ),

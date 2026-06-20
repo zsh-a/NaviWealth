@@ -47,7 +47,7 @@ class _FireSimulationsCardState extends ConsumerState<FireSimulationsCard> {
           loading: () => const SizedBox.shrink(),
           error: (e, _) => Text(
             '$e',
-            style: context.theme.typography.xs.copyWith(
+            style: context.captionStyle.copyWith(
               color: context.theme.colors.destructive,
             ),
           ),
@@ -143,7 +143,7 @@ class _PresetChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: context.theme.typography.xs.copyWith(color: fg),
+          style: context.captionLabelStyle.copyWith(color: fg),
         ),
       ),
     );

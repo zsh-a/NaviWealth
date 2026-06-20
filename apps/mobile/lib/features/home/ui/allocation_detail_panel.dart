@@ -306,7 +306,7 @@ class _DimensionButton extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: selected
                     ? context.captionLabelStyle.copyWith(color: color)
-                    : context.theme.typography.xs.copyWith(
+                    : context.captionStyle.copyWith(
                         color: color,
                         fontWeight: FontWeight.w500,
                       ),

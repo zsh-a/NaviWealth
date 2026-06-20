@@ -448,7 +448,7 @@ class _TargetAllocationEditorSheetState
                 l10n.targetAllocationEditorTotalHint(
                   _totalPct.toStringAsFixed(1),
                 ),
-                style: context.theme.typography.xs.copyWith(color: totalColor),
+                style: context.captionStyle.copyWith(color: totalColor),
                 textAlign: TextAlign.center,
               ),
             ),

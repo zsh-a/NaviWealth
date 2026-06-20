@@ -1038,7 +1038,7 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
                       dueLabel,
                       widget.routine.intervalDays,
                     ),
-                    style: typography.xs.copyWith(color: dueColor),
+                    style: context.captionStyle.copyWith(color: dueColor),
                   ),
                 ],
               ),

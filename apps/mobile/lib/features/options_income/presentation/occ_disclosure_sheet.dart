@@ -86,7 +86,7 @@ class _OccDisclosureSheetState extends ConsumerState<_OccDisclosureSheet> {
           // the help-center landing.
           Text(
             l10n.incomePlannerOccLearnMore,
-            style: context.theme.typography.xs.copyWith(color: colors.primary),
+            style: context.captionStyle.copyWith(color: colors.primary),
           ),
         ],
       ),

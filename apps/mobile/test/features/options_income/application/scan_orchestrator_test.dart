@@ -129,6 +129,41 @@ void main() {
       expect(cached, hasLength(2));
     },
   );
+
+  test(
+    'scan only fetches covered-call underlyings with at least 100 shares',
+    () async {
+      final chainProvider = _FakeOptionsChainProvider(
+        snapshots: {'AAPL': _snapshot('AAPL', const [])},
+      );
+      final orchestrator = ScanOrchestrator(
+        chainProvider: chainProvider,
+        scorer: const OpportunityScorer(),
+        cache: cache,
+      );
+
+      final result = await orchestrator.run(
+        ScanInputs(
+          ownerUserId: 'u1',
+          profile: _profile(),
+          approved: [
+            _approved(symbol: 'AAPL', allowPut: false),
+            _approved(symbol: 'MSFT', allowPut: false),
+          ],
+          holdingsBySymbol: const {'AAPL': 100, 'MSFT': 99},
+          exposureBySymbol: const {},
+          availableCash: Money.parse('1000000', 'USD'),
+          upcomingEarningsSymbols: const {},
+          upcomingMacroEvent: false,
+        ),
+      );
+
+      expect(result.universe, ['AAPL']);
+      expect(chainProvider.requests.map((r) => r.underlying), ['AAPL']);
+      expect(result.opportunities, isEmpty);
+      expect(result.errors, isEmpty);
+    },
+  );
 }
 
 class _FakeOptionsChainProvider implements OptionsChainProvider {

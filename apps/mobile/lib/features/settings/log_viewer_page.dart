@@ -147,7 +147,7 @@ class _LogTile extends StatelessWidget {
               const SizedBox(height: AppSpacing.s4),
               Text(
                 '${log.error}',
-                style: context.theme.typography.xs.copyWith(
+                style: context.captionStyle.copyWith(
                   color: context.theme.colors.destructive,
                 ),
               ),

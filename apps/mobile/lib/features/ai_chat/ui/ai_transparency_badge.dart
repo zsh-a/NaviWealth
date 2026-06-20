@@ -46,7 +46,7 @@ class AiTransparencyIndicator extends ConsumerWidget {
                 Flexible(
                   child: Text(
                     formatAiTraceBadge(trace),
-                    style: context.theme.typography.xs.copyWith(color: muted),
+                    style: context.captionStyle.copyWith(color: muted),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s4),

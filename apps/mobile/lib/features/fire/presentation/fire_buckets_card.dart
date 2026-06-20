@@ -189,9 +189,7 @@ class _BucketRow extends StatelessWidget {
                 ),
                 child: Text(
                   _statusLabel(l10n, bucket.status),
-                  style: context.theme.typography.xs.copyWith(
-                    color: statusColor,
-                  ),
+                  style: context.captionLabelStyle.copyWith(color: statusColor),
                 ),
               ),
             ],

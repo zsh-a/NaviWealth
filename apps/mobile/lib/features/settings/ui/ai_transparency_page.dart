@@ -141,9 +141,7 @@ class _CaptureToggle extends ConsumerWidget {
                 children: [
                   Text(
                     l10n.aiTransparencyVerboseTitle,
-                    style: AiType.body(
-                      context,
-                    ).copyWith(fontWeight: FontWeight.w500),
+                    style: AiType.label(context),
                   ),
                   const SizedBox(height: AppSpacing.s2),
                   Text(
@@ -583,9 +581,7 @@ class _TraceRow extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: AiType.body(
-                      context,
-                    ).copyWith(fontWeight: FontWeight.w500),
+                    style: AiType.label(context),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

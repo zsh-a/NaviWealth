@@ -64,7 +64,13 @@ Future<void> _pump(WidgetTester tester, Widget child) async {
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  await _pumpBounded(tester);
+}
+
+Future<void> _pumpBounded(WidgetTester tester) async {
+  for (var i = 0; i < 6; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
 }
 
 void main() {
@@ -108,7 +114,7 @@ void main() {
 
       // Tap the tool row → detail panel appears with metadata + IO.
       await tester.tap(find.text('get_holdings'));
-      await tester.pumpAndSettle();
+      await _pumpBounded(tester);
       expect(find.text('tool:get_holdings'), findsOneWidget);
       expect(find.textContaining('window'), findsOneWidget);
       expect(find.text('input'), findsOneWidget);
@@ -121,7 +127,7 @@ void main() {
       await _pump(tester, AiTraceWaterfall(trace: _trace()));
 
       await tester.tap(find.text('turn'));
-      await tester.pumpAndSettle();
+      await _pumpBounded(tester);
 
       expect(find.text('attributes'), findsOneWidget);
       expect(_richTextContaining('context_pack_json_bytes'), findsOneWidget);

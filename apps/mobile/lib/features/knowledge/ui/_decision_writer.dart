@@ -629,7 +629,6 @@ class _ReviewDateSheetState extends State<_ReviewDateSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     Widget choice(int days, String label) => KnowledgeSelectableRow(
       label: label,
       selected: false,
@@ -664,7 +663,9 @@ class _ReviewDateSheetState extends State<_ReviewDateSheet> {
               if (_error != null)
                 Text(
                   _error!,
-                  style: typography.xs.copyWith(color: colors.destructive),
+                  style: context.captionStyle.copyWith(
+                    color: colors.destructive,
+                  ),
                 ),
               FButton(
                 onPress: () {

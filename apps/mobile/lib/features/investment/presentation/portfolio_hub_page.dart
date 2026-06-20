@@ -983,7 +983,7 @@ class _ViewChip extends StatelessWidget {
               child: Text(
                 label,
                 overflow: TextOverflow.ellipsis,
-                style: context.theme.typography.xs.copyWith(
+                style: context.captionStyle.copyWith(
                   color: color,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
@@ -1095,7 +1095,7 @@ class _HoldingRowCard extends StatelessWidget {
                         amount: pnl.toDouble(),
                         currencyCode: holding.baseCurrency,
                         showSign: true,
-                        style: context.theme.typography.xs.copyWith(
+                        style: context.captionLabelStyle.copyWith(
                           color: pnlColor,
                           fontWeight: FontWeight.w700,
                         ),

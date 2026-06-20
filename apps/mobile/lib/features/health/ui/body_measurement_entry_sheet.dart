@@ -125,7 +125,7 @@ class _BodyMeasurementEntrySheetState
               const SizedBox(height: AppSpacing.s4),
               Text(
                 _valueError!,
-                style: context.theme.typography.xs.copyWith(
+                style: context.captionStyle.copyWith(
                   color: context.theme.colors.destructive,
                 ),
               ),

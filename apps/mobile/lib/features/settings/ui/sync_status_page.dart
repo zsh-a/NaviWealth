@@ -341,7 +341,7 @@ class _ErrorCard extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: context.theme.typography.xs.copyWith(
+              style: context.captionStyle.copyWith(
                 color: semantic.onDangerContainer,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),

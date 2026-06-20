@@ -245,7 +245,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                     Expanded(
                       child: Text(
                         l10n.transferConvertModeBanner,
-                        style: context.theme.typography.xs.copyWith(
+                        style: context.captionStyle.copyWith(
                           color: context.theme.colors.foreground,
                           height: 1.4,
                         ),
