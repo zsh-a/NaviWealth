@@ -17,6 +17,7 @@ import '../core/persistence/test_database.dart';
 import '_golden_setup.dart';
 
 const _deviceId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+final _goldenNow = DateTime.utc(2026, 6, 19, 14);
 
 void main() {
   runAllVariants('sync_status_page_diagnostics', (tester, variant) async {
@@ -79,7 +80,7 @@ void main() {
           ),
         ),
       ],
-      child: const SyncStatusPage(),
+      child: SyncStatusPage(now: _goldenNow),
     );
   });
 }

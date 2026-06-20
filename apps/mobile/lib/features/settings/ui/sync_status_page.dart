@@ -15,7 +15,9 @@ import '../../../l10n/gen/app_localizations.dart';
 /// hero status, three quick-read stat tiles, and a collapsible details
 /// panel. Reachable from Settings → Sync.
 class SyncStatusPage extends ConsumerWidget {
-  const SyncStatusPage({super.key});
+  const SyncStatusPage({super.key, this.now});
+
+  final DateTime? now;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,7 +39,7 @@ class SyncStatusPage extends ConsumerWidget {
             child: Text(l10n.syncStatusBusError(e.toString())),
           ),
         ),
-        data: (event) => _Body(event: event),
+        data: (event) => _Body(event: event, now: now),
       ),
     );
   }
@@ -56,9 +58,10 @@ Future<void> _triggerSyncNow(WidgetRef ref) async {
 // ---------------------------------------------------------------------------
 
 class _Body extends ConsumerWidget {
-  const _Body({required this.event});
+  const _Body({required this.event, required this.now});
 
   final SyncStatusEvent event;
+  final DateTime? now;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -69,6 +72,7 @@ class _Body extends ConsumerWidget {
     final config = ref.watch(appConfigProvider);
 
     final localTotal = countsAsync.value?.values.fold<int>(0, (a, b) => a + b);
+    final relativeNow = now ?? DateTime.now();
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s16).copyWith(
@@ -80,6 +84,7 @@ class _Body extends ConsumerWidget {
       children: [
         _HeroCard(
           event: event,
+          now: relativeNow,
           onSyncNow: session == null ? null : () => _triggerSyncNow(ref),
         ),
         const SizedBox(height: AppSpacing.s12),
@@ -87,6 +92,7 @@ class _Body extends ConsumerWidget {
           pending: outboxAsync.value,
           localTotal: localTotal,
           lastSyncAt: event.lastSuccessAt,
+          now: relativeNow,
         ),
         if (event.lastError != null) ...[
           const SizedBox(height: AppSpacing.s12),
@@ -102,6 +108,7 @@ class _Body extends ConsumerWidget {
           cursor: cursorAsync.value,
           deviceId: session?.deviceId,
           apiBaseUrl: kDebugMode ? config.apiBaseUrl : null,
+          now: relativeNow,
         ),
         if (kDebugMode) ...[
           const SizedBox(height: AppSpacing.s12),
@@ -117,9 +124,14 @@ class _Body extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 
 class _HeroCard extends StatelessWidget {
-  const _HeroCard({required this.event, required this.onSyncNow});
+  const _HeroCard({
+    required this.event,
+    required this.now,
+    required this.onSyncNow,
+  });
 
   final SyncStatusEvent event;
+  final DateTime now;
   final VoidCallback? onSyncNow;
 
   @override
@@ -151,7 +163,7 @@ class _HeroCard extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.s2),
                 Text(
-                  _heroSubtitle(l10n, event),
+                  _heroSubtitle(l10n, event, now),
                   style: context.theme.typography.xs.copyWith(
                     color: context.theme.colors.mutedForeground,
                   ),
@@ -181,11 +193,11 @@ String _statusHeadline(AppLocalizations l10n, SyncStatus s) => switch (s) {
   SyncStatus.failed => l10n.syncStatusHeadlineFailed,
 };
 
-String _heroSubtitle(AppLocalizations l10n, SyncStatusEvent e) {
+String _heroSubtitle(AppLocalizations l10n, SyncStatusEvent e, DateTime now) {
   if (e.status == SyncStatus.syncing) return l10n.syncStatusHeroSyncing;
   final last = e.lastSuccessAt;
   if (last == null) return l10n.syncStatusSubtitleNeverSynced;
-  return l10n.syncStatusSubtitleLastSynced(_relativeTime(l10n, last));
+  return l10n.syncStatusSubtitleLastSynced(_relativeTime(l10n, last, now));
 }
 
 // ---------------------------------------------------------------------------
@@ -197,11 +209,13 @@ class _StatGrid extends StatelessWidget {
     required this.pending,
     required this.localTotal,
     required this.lastSyncAt,
+    required this.now,
   });
 
   final int? pending;
   final int? localTotal;
   final DateTime? lastSyncAt;
+  final DateTime now;
 
   @override
   Widget build(BuildContext context) {
@@ -215,7 +229,7 @@ class _StatGrid extends StatelessWidget {
 
     final lastSyncLabel = lastSyncAt == null
         ? l10n.syncStatusStatNever
-        : _relativeTimeShort(l10n, lastSyncAt!);
+        : _relativeTimeShort(l10n, lastSyncAt!, now);
 
     return LayoutBuilder(
       builder: (context, c) {
@@ -335,7 +349,7 @@ class _ErrorCard extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.s8),
           Expanded(
-            child: SelectableText(
+            child: Text(
               message,
               style: context.theme.typography.xs.copyWith(
                 color: semantic.onDangerContainer,
@@ -414,12 +428,14 @@ class _DiagnosticsCard extends StatelessWidget {
     required this.cursor,
     required this.deviceId,
     required this.apiBaseUrl,
+    required this.now,
   });
 
   final SyncStatusEvent event;
   final int? cursor;
   final String? deviceId;
   final String? apiBaseUrl;
+  final DateTime now;
 
   @override
   Widget build(BuildContext context) {
@@ -431,7 +447,7 @@ class _DiagnosticsCard extends StatelessWidget {
           const FDivider(),
           _Row(
             label: l10n.syncStatusDetailUpdatedAt,
-            value: _relativeTime(l10n, event.at),
+            value: _relativeTime(l10n, event.at, now),
           ),
           if (deviceId != null) ...[
             const FDivider(),
@@ -717,11 +733,7 @@ class _Row extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SelectableText(
-              value,
-              style: valueStyle,
-              maxLines: wrap ? null : 1,
-            ),
+            child: Text(value, style: valueStyle, maxLines: wrap ? null : 1),
           ),
         ],
       ),
@@ -777,8 +789,8 @@ String _shortDeviceId(String id) {
   return '${id.substring(0, 8)}…${id.substring(id.length - 4)}';
 }
 
-String _relativeTime(AppLocalizations l10n, DateTime ts) {
-  final diff = DateTime.now().difference(ts);
+String _relativeTime(AppLocalizations l10n, DateTime ts, DateTime now) {
+  final diff = now.difference(ts);
   if (diff.inSeconds < 45) return l10n.syncStatusJustNow;
   if (diff.inMinutes < 60) return l10n.syncStatusMinutesAgo(diff.inMinutes);
   if (diff.inHours < 24) return l10n.syncStatusHoursAgo(diff.inHours);
@@ -787,8 +799,8 @@ String _relativeTime(AppLocalizations l10n, DateTime ts) {
 
 /// Compact form for the stat tile — drops the "ago" suffix to fit the
 /// narrow column width without truncation.
-String _relativeTimeShort(AppLocalizations l10n, DateTime ts) {
-  final diff = DateTime.now().difference(ts);
+String _relativeTimeShort(AppLocalizations l10n, DateTime ts, DateTime now) {
+  final diff = now.difference(ts);
   if (diff.inSeconds < 45) return l10n.syncStatusStatJustNow;
   if (diff.inMinutes < 60) return '${diff.inMinutes}m';
   if (diff.inHours < 24) return '${diff.inHours}h';
