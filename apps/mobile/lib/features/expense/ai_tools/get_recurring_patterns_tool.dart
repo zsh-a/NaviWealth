@@ -1,7 +1,7 @@
 /// `get_recurring_patterns` — device port (Analytical).
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/get_recurring_patterns.rs`. Per §4.3.3
+/// the historical backend `get_recurring_patterns` tool. Per §4.3.3
 /// the device `recurring_detector` is the **sole computer** — the
 /// `recurring_patterns` read model shape is derived from the same
 /// device analytical signal. So the device tool runs the same detector

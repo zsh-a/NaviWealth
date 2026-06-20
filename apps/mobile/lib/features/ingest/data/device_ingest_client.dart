@@ -1,8 +1,8 @@
 /// On-device Vision ingest (user's own key, direct to the
 /// provider; the original image never reaches our servers).
 ///
-/// Implements the historical [CloudIngestClient] surface (the cloud Worker
-/// relay was removed), so the ingest pipeline is unchanged. It runs
+/// Implements the shared [VisionIngestClient] surface, so the ingest pipeline
+/// can choose device-direct Vision or an unavailable fallback. It runs
 /// the one-shot forced-tool parse locally via [DeviceLlmClient.complete]
 /// using the verbatim-ported schema/prompt/extraction
 /// (`device_vision_parse.dart`), then maps rows through the *shared*
@@ -19,12 +19,12 @@ import '../../../core/ai/runtime/device/anthropic/anthropic_client.dart';
 import '../../../core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import '../../../core/ai/runtime/device/device_vision_parse.dart';
 import '../domain/ingest_models.dart';
-import 'cloud_ingest_client.dart';
+import 'vision_ingest_client.dart';
 
 /// Mirrors the backend `VISION_MAX_TOKENS`.
 const int _kVisionMaxTokens = 4096;
 
-class DeviceVisionIngestClient implements CloudIngestClient {
+class DeviceVisionIngestClient implements VisionIngestClient {
   const DeviceVisionIngestClient({required DeviceLlmClient client})
     : _client = client;
 
@@ -54,14 +54,14 @@ class DeviceVisionIngestClient implements CloudIngestClient {
     try {
       completion = await _client.complete(request);
     } on LlmRequestException catch (e) {
-      throw CloudIngestException('端侧解析失败：${e.message}');
+      throw VisionIngestException('端侧解析失败：${e.message}');
     }
 
     final List<Map<String, Object?>> rows;
     try {
       rows = extractVisionDraftRows(completion.content);
     } on VisionNoExtraction {
-      throw CloudIngestException('未能从该文件解析出交易');
+      throw VisionIngestException('未能从该文件解析出交易');
     }
 
     final out = <ParsedTransaction>[];
@@ -73,17 +73,17 @@ class DeviceVisionIngestClient implements CloudIngestClient {
   }
 }
 
-/// Picks device-direct Vision when a usable on-device runtime exists,
-/// else the Worker relay. No device→cloud failover (see library doc).
-class RoutingCloudIngestClient implements CloudIngestClient {
-  const RoutingCloudIngestClient({
-    required CloudIngestClient cloud,
-    CloudIngestClient? device,
-  }) : _cloud = cloud,
+/// Picks device-direct Vision when a usable on-device runtime exists, else the
+/// unavailable fallback. No device→cloud failover (see library doc).
+class RoutingVisionIngestClient implements VisionIngestClient {
+  const RoutingVisionIngestClient({
+    required VisionIngestClient fallback,
+    VisionIngestClient? device,
+  }) : _fallback = fallback,
        _device = device;
 
-  final CloudIngestClient _cloud;
-  final CloudIngestClient? _device;
+  final VisionIngestClient _fallback;
+  final VisionIngestClient? _device;
 
   bool get usesDevice => _device != null;
 
@@ -94,7 +94,7 @@ class RoutingCloudIngestClient implements CloudIngestClient {
     required String contentBase64,
     String? currencyHint,
   }) {
-    final client = _device ?? _cloud;
+    final client = _device ?? _fallback;
     return client.parse(
       kind: kind,
       mime: mime,

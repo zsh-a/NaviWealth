@@ -1,7 +1,7 @@
 /// `get_anomaly_flags` — device port (Analytical layer).
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/get_anomaly_flags.rs`. Per §4.3.3 the
+/// the historical backend `get_anomaly_flags` tool. Per §4.3.3 the
 /// device detector is the **sole computer** — the `anomaly_flags` read
 /// model shape is derived from the same device analytical signal. So
 /// the device tool calls the same detector

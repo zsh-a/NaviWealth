@@ -1,7 +1,7 @@
 /// `propose_liability_payment` — device port.
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/propose_liability_payment.rs`; logic a
+/// the historical backend `propose_liability_payment` tool; logic a
 /// verbatim port of `proposals::propose_liability_payment`. Resolves
 /// the liability against `liabilitiesStreamProvider` and the optional
 /// from-account against `accountsStreamProvider` (mirrors the backend

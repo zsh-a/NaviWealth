@@ -1,10 +1,10 @@
 /// Provider-neutral device LLM/tool loop.
 ///
-/// Dart port of `apps/backend/src/ai/runtime/agent_loop.rs`
+/// Dart port of the historical backend agent loop
 /// (`run_inner` + `collect_model_round`). Consumes the
 /// [LlmStreamEvent] stream per round and emits the existing
 /// [AiChatEvent] taxonomy so `ChatRepository` / the chat UI / the trace
-/// builder stay byte-for-byte unchanged versus the cloud path.
+/// builder stay byte-for-byte unchanged versus the historical runtime.
 ///
 /// Differences from the backend, all intentional:
 /// * tool data comes from a [DeviceToolDispatcher] over Drift,

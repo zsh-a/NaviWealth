@@ -5,10 +5,10 @@
 > 分析基础：仓库现状全量扫描（feature 模块、backend 路由、同步协议、测试覆盖、git 历史）。
 > 本路线图是**方向性参考**，不是承诺；优先级会随用户反馈与开发节奏调整。
 >
-> ⚠️ **已过时提示**：本文部分章节（§0 后端速览、§1.3、§2.5、§5）写于云端 AI 时代。
-> `apps/backend/src/ai/` 已删除，AI 改为 **device-only**——所有
-> `apps/backend/src/ai/*` 引用与「后端 AI 工具/SSE/proposals」计划均已被取代，
-> 以 [`docs/ai-architecture.md`](./ai-architecture.md) 为准。
+> ⚠️ **AI 架构提示**：云端 AI relay 已删除，AI 改为 **device-only**。
+> 本文中 AI 相关排期按端侧 runtime、DomainPack 工具聚合与本地 proposal
+> applier 维护；具体架构以 [`docs/ai-architecture.md`](./ai-architecture.md)
+> 为准。
 > FIRE OS 演进计划见 [`docs/roadmap-fire-os.md`](./roadmap-fire-os.md)。
 >
 > ⚠️ **历史档案**：本文保留 2026-05-10 的判断用于追溯，不再作为当前
@@ -30,7 +30,7 @@
 | 国际化 | en + zh；设计稿提及 ja 尚未支持 |
 | 安全 | 原生端 SQLCipher；Web 端为 sqlite3 WASM（弱于原生）；JWT HS256 单用户 |
 
-**优势**：投资模块（35 文件，FIFO/LIFO/avg、FX PnL、税务）、AI 对话（22 文件，SSE 流 + 提案/确认）、分析（集中度风险、基准对比）。
+**优势**：投资模块（35 文件，FIFO/LIFO/avg、FX PnL、税务）、AI 对话（端侧模型流 + 提案/确认）、分析（集中度风险、基准对比）。
 **当前主要缺口**：历史 `me/`、`more/`、`portfolio/` 占位已不再是当前 feature
 目录；`plan/` 已保留为规划入口并有直接测试。后续重点是继续深化 Activity
 Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
@@ -53,10 +53,15 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 - `lib/features/home/data/dashboard_insights_provider.dart` 已接入 FIRE、再平衡偏离、到期提醒、支出异常、疑似重复扣款、上月回顾、现金流缺口、汇率缺失和 Layer 4 待确认队列。
 - 后续若接入真正的 AI 周报，应作为独立 device-only insight producer 落地，并继续复用 `InsightKind` / `InsightItem` / 本地化字符串约定。
 
-### 1.3 后端 AI 工具落地
-- `apps/backend/src/ai/tools.rs`：成本基础（FIFO/LIFO）目前是粗略近似，需把客户端的持仓引擎移植到 Worker，或定义"客户端先算、提案携带证据"的协作协议。
-- 跨币种合并：当前未做自动 FX 汇总；要支持多币种组合的总览查询。
-- 写入提案 `apps/backend/src/ai/proposals.rs` 的 guardrails 需要补充更细的 schema 校验与冲突回退路径。
+### 1.3 端侧 AI 工具对齐
+- Finance / Health / Knowledge 工具通过 `DomainPack` 聚合到
+  `deviceToolsProvider`；持仓问答以端侧 `GetHoldingsTool` 为准，继续复用
+  客户端 holdings read-model，避免双实现成本基础。
+- 跨币种总览仍需补齐：只有在工具输入带 `base_currency` 且本地 FX 证据完整时
+  才输出折算总额；否则按币种分组并在 evidence 中说明限制。
+- 写入类 `propose_*` 工具继续产出本地 `ProposalEnvelope`，由
+  `proposalApplierProvider` 路由到各 domain applier；后续重点是更细 schema
+  校验、冲突回退路径和批量提案的本地事务语义。
 
 ### 1.4 活动 Feed（`features/activity/`）
 - `features/activity/data/` 已落地 `ActivityFeedQuery` /
@@ -234,16 +239,20 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 
 ### 2.5 AI 助手能力升级
 
-**现状**：`features/ai_chat/` 22 文件已上线 SSE 流 + 提案/确认；`apps/backend/src/ai/` 有 anthropic.rs / sse.rs / tools.rs / proposals.rs / guardrails.rs；多 session 已具备但**无用户画像、无批量提案、无回滚**。
+**现状**：`features/ai_chat/` 已切到端侧 runtime；`core/ai/runtime/device/`
+负责模型流、工具 dispatch 与事件映射，工具清单来自 active `DomainPack`。多
+session 已具备，但**无用户画像、无批量提案、无回滚**。
 
 **阶段拆分**：
 - **M1（月 1）— 用户画像 v0 + 引用证据**
   - 客户端聚合"画像因子"（消费集中度、储蓄率、风险偏好的代理：投资板块/资产类别分布、定期定额情况），作为只读上下文注入 system prompt。
-  - **不持久化在后端**：画像每次会话开始时由客户端组装并随首条消息发送（局部计算，避免后端越界）。
-  - 引用证据：`tools.rs` 工具返回结果在客户端 UI 中显示"基于这 N 笔交易/这 X 个账户"，链接可跳转。
+  - **不持久化到云端**：画像每次会话开始时由客户端本地组装，受 token budget
+    和隐私预算限制。
+  - 引用证据：device tool 返回结果在客户端 UI 中显示"基于这 N 笔交易/这
+    X 个账户"，链接可跳转到本地详情页。
   - 提案 / 工具卡片复用现有组件，新增 evidence 区块。
 - **M2（月 3）— 批量提案 + 回滚**
-  - 后端 `proposals.rs` 支持批量提案（一次确认 N 个写操作，原子性走客户端事务）。
+  - 本地 proposal applier 支持批量提案（一次确认 N 个写操作，原子性走客户端事务）。
   - 客户端"撤销最近 N 个 AI 写入"：从 oplog 标记 `actor = ai_proposal:{proposal_id}` 倒序逆向（生成补偿 op，不直接删 oplog，保持审计）。
   - 撤销窗口默认 24h，超出后需手动定位逐条撤销。
 - **M3（月 6）— 长任务进度 + 多轮上下文**
@@ -254,7 +263,7 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 **验收**：
 - 画像生成 < 50ms（10k journal entries）。
 - 批量提案确认 / 回滚双设备 LWW 一致（E2E 用例）。
-- 长任务 SSE 在网络波动下不丢 progress（重连后续传，已有 SSE 基础上加 last-event-id）。
+- 长任务进度在模型流重连或工具失败重试后不丢失，UI 能恢复到最近一步。
 
 **风险**：
 - 用户画像注入可能让 prompt 体积膨胀。**对策**：硬上限 8KB，超出降级（只发"profile_summary_hash"，模型按需用 tool 拉取）。
@@ -355,7 +364,7 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 
 | 债务 | 文件/位置 | 影响 |
 |------|----------|------|
-| Backend 成本基础粗略近似 | `apps/backend/src/ai/tools.rs:34-39` | AI 提案对成本基础类问题的回答可能与客户端不一致 |
+| 端侧 AI 持仓证据仍需扩展 | `lib/features/investment/ai_tools/get_holdings_tool.dart` | 成本基础已与客户端 read-model 对齐，但跨币种折算和 evidence 链接仍需补强 |
 | Web 端弱于原生的存储加密 | `core/db/connection_*.dart` | Web 端不应承诺与原生同等的安全等级 |
 | Activity Feed 业务深度仍可扩展 | `lib/features/activity/` | 已有 data/query/filter/detail 基础，后续可把 load-more 升级为 keyset pagination 并补更多事件类型 |
 | 单一后端路由表无 domain endpoint | `apps/backend/src/routes/` | 所有非 sync 查询走 oplog 物化，未来扩展可能撞瓶颈 |

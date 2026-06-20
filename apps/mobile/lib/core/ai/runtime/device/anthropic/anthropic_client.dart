@@ -1,6 +1,6 @@
 /// Device-side Anthropic Messages API client.
 ///
-/// Dart port of `apps/backend/src/ai/adapters/anthropic/client.rs`,
+/// Dart port of the historical backend Anthropic client,
 /// using the user's own key and calling the provider directly —
 /// no Worker in the path. Streaming feeds [decodeAnthropicSse]; the
 /// one-shot [complete] backs on-device Vision ingest.

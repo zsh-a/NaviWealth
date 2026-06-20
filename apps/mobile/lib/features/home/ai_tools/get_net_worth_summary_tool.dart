@@ -1,7 +1,7 @@
 /// `get_net_worth_summary` — device port (Snapshot P0).
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/get_net_worth_summary.rs`; the monthly
+/// the historical backend `get_net_worth_summary` tool; the monthly
 /// roll-up is a faithful port of
 /// `read_models::net_worth_snapshot::aggregate` and the
 /// `impls::get_net_worth_summary` read path (window math + output

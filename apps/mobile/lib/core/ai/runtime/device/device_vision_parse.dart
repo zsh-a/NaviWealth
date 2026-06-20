@@ -1,13 +1,12 @@
 /// On-device Vision parse — schema / prompt / message builder /
 /// extractor.
 ///
-/// Verbatim Dart port of `apps/backend/src/ai/ingest/parse.rs` so a
+/// Verbatim Dart port of the historical backend Vision parser so a
 /// receipt/statement parsed on-device (user's own key, straight to the
-/// provider) yields the **same** structured rows the cloud
-/// `/ingest/parse` route would. Pure — no Riverpod, no HTTP — so the
+/// provider) yields the **same** structured rows the former relay
+/// produced. Pure — no Riverpod, no HTTP — so the
 /// schema/prompt/extraction can be parity-tested against the Rust unit
-/// tests (§10 drift rule: a backend change to parse.rs mirrors here in
-/// the same PR).
+/// tests.
 library;
 
 import 'anthropic/anthropic_wire.dart';
@@ -123,9 +122,9 @@ class VisionNoExtraction implements Exception {
 /// Pull the forced tool call out of the model reply and return the raw
 /// `transactions` rows (capped at [kVisionMaxParsedDrafts]). Row→model
 /// mapping + per-row validation is done by the existing mobile
-/// `parsedTransactionFromWire` (shared with the cloud path), so device
-/// and cloud produce identical [ParsedTransaction]s for the same model
-/// JSON. Mirrors `parse::extract_drafts`' tool-presence contract.
+/// `parsedTransactionFromWire` (shared with the provider-Vision path), so
+/// every Vision caller produces identical [ParsedTransaction]s for the same
+/// model JSON. Mirrors `parse::extract_drafts`' tool-presence contract.
 List<Map<String, Object?>> extractVisionDraftRows(List<Object?> content) {
   Object? toolInput;
   for (final block in content) {

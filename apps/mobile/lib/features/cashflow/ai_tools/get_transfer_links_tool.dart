@@ -1,7 +1,7 @@
 /// `get_transfer_links` — device port (Analytical).
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/get_transfer_links.rs`. Per §4.3.3 the
+/// the historical backend `get_transfer_links` tool. Per §4.3.3 the
 /// device `transferMatcher` is the sole computer; the `transfer_links`
 /// read-model shape is derived from the same device analytical signal.
 /// The tool runs the same matcher + the shared [transferMatchToUpload]

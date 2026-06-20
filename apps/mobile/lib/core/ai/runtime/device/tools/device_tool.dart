@@ -1,9 +1,8 @@
 /// Device tool contract.
 ///
-/// The device equivalent of one `apps/backend/src/ai/tools/*` entry.
+/// The device equivalent of one historical backend tool entry.
 /// Schema + description are ported **verbatim** from the backend so the
-/// model sees an identical tool surface on device and (frozen) cloud
-/// (§10 drift rule — any backend schema change mirrors here same PR).
+/// model sees the stabilized tool surface on device.
 /// The implementation, however, reads **Drift** (local source of
 /// truth) instead of D1 read models — so there is no freshness gate on
 /// this path (§4.6.1 / §11).

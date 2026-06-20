@@ -1,6 +1,6 @@
 /// Shared Scoped-Detail helpers — Dart port of the
 /// constants + parsing公约 in
-/// `apps/backend/src/ai/read_models/scoped_detail/common.rs`.
+/// the historical scoped-detail common helpers.
 ///
 /// **Two intentional device divergences** (§4.6.3 — device-direct data
 /// never leaves the device):

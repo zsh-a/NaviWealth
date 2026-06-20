@@ -1,7 +1,7 @@
 /// `read_asset_window` — device port (Scoped Detail).
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/read_asset_window.rs`; logic a faithful
+/// the historical backend `read_asset_window` tool; logic a faithful
 /// port of `scoped_detail::asset_window::filter_and_extract`. Returns
 /// the asset *legs* (signed `qty_delta` + side + `cost_per_unit` +
 /// currency) for postings whose `unit == asset_id` within the window.

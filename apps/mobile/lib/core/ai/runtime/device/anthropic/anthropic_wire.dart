@@ -1,6 +1,6 @@
 /// Anthropic Messages API wire types.
 ///
-/// Dart mirror of `apps/backend/src/ai/adapters/anthropic/wire.rs`,
+/// Dart mirror of the historical backend Anthropic wire types,
 /// plus content-block builders the device loop and on-device
 /// Vision ingest need. snake_case JSON per §10, even though
 /// these requests never touch our servers.

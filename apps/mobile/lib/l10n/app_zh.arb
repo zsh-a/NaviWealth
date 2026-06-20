@@ -2184,7 +2184,7 @@
   "aiLlmSaving": "保存中…",
   "aiLlmIntro": "使用你自己的 LLM API Key，让 AI 在本机直连提供商运行。可保存多个 Provider 并随时切换。Key 仅存于本设备安全存储（Keychain/Keystore），不会上传、不进云同步、不进备份。费用与限流由你的提供商账户承担。",
   "aiLlmUnsupportedTitle": "当前平台不支持端侧直连",
-  "aiLlmUnsupportedBody": "自带 Key 的端侧 AI 在原生平台（iOS / Android / macOS / Windows / Linux）可用（需要系统级安全存储）。Web 继续使用云端 AI。",
+  "aiLlmUnsupportedBody": "自带 Key 的端侧 AI 在原生平台（iOS / Android / macOS / Windows / Linux）可用（需要系统级安全存储）。Web 暂不运行本地 AI runtime。",
   "aiLlmStatusActive": "使用中：{name} · 本机直连运行",
   "aiLlmStatusSavedNoActive": "已保存 Provider，但未选择可用项",
   "aiLlmStatusReadFailed": "读取安全存储失败",

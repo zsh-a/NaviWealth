@@ -1,7 +1,7 @@
 /// `list_payment_accounts` — device port.
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/list_payment_accounts.rs`. The backend
+/// the historical backend `list_payment_accounts` tool. The backend
 /// scans the D1 `accounts` table + JSON payload; here we read the same
 /// truth from Drift via `accountsStreamProvider` (already
 /// active-only + system/deleted-excluded — matching the backend

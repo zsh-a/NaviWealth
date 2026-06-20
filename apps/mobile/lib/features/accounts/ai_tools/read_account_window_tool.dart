@@ -1,7 +1,7 @@
 /// `read_account_window` — device port (Scoped Detail).
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/read_account_window.rs`; primary logic a
+/// the historical backend `read_account_window` tool; primary logic a
 /// port of `scoped_detail::account_window::filter_and_sanitise`. The
 /// backend scans D1 journal_entries+postings; the device reads the
 /// same truth from Drift via `journalEntriesWithPostingsStreamProvider`

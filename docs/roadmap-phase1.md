@@ -9,7 +9,7 @@
 本文档撰写时 IA 还是 Home / Portfolio / Activity / Plan,后端 AI relay 尚未删除。之后两件事改变了部分前提:
 
 1. **IA contract migration**(commits 3e37cfc / aacded4): 主 tab 改为 Today / Activity / Wealth / Plan。`features/portfolio/` 和 `features/me/` / `features/more/` 已删除,`features/wealth/` 接管原 Portfolio 职责。
-2. 后端 AI relay 已删除。`apps/backend/src/ai/tools.rs` 不再存在;持仓由端侧 `GetHoldingsTool` 计算。
+2. 后端 AI relay 已删除;持仓由端侧 `GetHoldingsTool` 计算。
 3. **E2E sync 5 case** (P1-G): 已在 `apps/mobile/test/e2e/sync_e2e_test.dart` 落地完毕(2026-05-24)。
 
 因此下表中**已过时**的条目:
@@ -43,7 +43,7 @@
 | P1-B | Dashboard Insights 扩展（4 类洞察） | P0 | 3d |
 | P1-C | Activity Feed 数据层 + 过滤/分页 | P0 | 4d |
 | P1-D | Portfolio Tab 升级（多视角聚合） | P1 | 5d |
-| P1-E | 后端 AI 工具补全（持仓引擎对齐 + 跨币种） | P1 | 6d |
+| P1-E | 端侧 AI 持仓工具对齐（原后端 AI 工具项作废） | P1 | 6d |
 | P1-F | Web 备份/恢复完成 + 安全提示 | P1 | 3d |
 | P1-G | E2E sync 测试落地（最小集合 5 例） | P1 | 4d |
 | P1-H | 测试覆盖空白补齐（home / activity / portfolio） | P2 | 3d |
@@ -204,52 +204,51 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
 
 ---
 
-## P1-E · 后端 AI 工具补全
+## P1-E · 端侧 AI 持仓工具对齐（原后端 AI 工具项作废）
 
-**现状**（`apps/backend/src/ai/tools.rs` 头部注释明确）：
-- `get_holdings` 是"postings 近似读模型"，带 `approximation: true`；
-- 跨币种合并被显式延后（"We do *not* fabricate cross-currency totals"）；
-- Holding engine 未移植到 Worker。
+**当前事实**：
+- 云端 AI relay 已删除，移动端不再向后端发送对话请求；
+- Finance 工具通过 `DomainPack` 聚合到 `deviceToolsProvider`；
+- `GetHoldingsTool` 直接读取端侧 holdings read-model，成本基础与客户端展示保持同一计算源。
 
-**目标**：让 AI 工具产出与客户端一致的数字，去掉 `approximation: true` 标签。
+**目标**：保持 AI 持仓回答与客户端 dashboard / Wealth 视图一致；后续只在端侧工具
+和 evidence 链路上扩展，不再恢复后端持仓重算。
 
-### 三种实现路径权衡
+### 当前路径
 
-1. **客户端先算、提案携带证据**（推荐）
-   - 客户端把当前持仓快照（带成本基础、币种、FX 折算）作为 conversation context 发给后端；
-   - 后端工具直接读 context，而不是从 D1 重算；
-   - 优点：不用移植 holding engine，单一计算源；缺点：context 体积、隐私。
+1. **端侧单一计算源**
+   - holdings 由本地 investment read-model 计算；
+   - AI 工具只投影稳定输出 shape，不维护第二套成本基础算法；
+   - 回答需要金额证据时，工具结果带来源字段供 UI 展示。
 
-2. **将 holding engine 移植到 Worker**（重）
-   - 把 `lib/features/investment/domain/` 的 cost basis 引擎用 Rust 重写；
-   - 优点：服务端可独立计算；缺点：双实现需要长期对齐。
+2. **跨币种按证据输出**
+   - 没有 `base_currency` 或本地 FX 证据不足时，按原币种分组；
+   - 有完整 FX 证据时输出折算总额，并保留每个 holding 的原币种金额；
+   - 不用 LLM 自行推断汇率或补全缺失市场价。
 
-3. **保持现状，仅在系统提示中告知 LLM "approximation 数字仅供说明，金额请引用客户端给出的"**（最轻）
-   - 短期解；不是真正解决。
-
-**建议路径 1**：phase 1 落地。具体做法：
-- 客户端在每次会话开始时，向 `/ai/chat` 附带一个 `portfolio_snapshot` field（最近一次成功的 holding 计算结果，schema 与客户端 `Holding` 对齐）；
-- `apps/backend/src/ai/tools.rs::get_holdings` 改为先读 snapshot；如果 snapshot 缺失，再走 D1 近似（保留作为 fallback）；
-- `approximation: true` 仅在走 fallback 时保留。
-
-### 跨币种合并
-- `compute_*` 工具新增 `base_currency` 参数；
-- 如果 snapshot 中 holding 已带 base 折算，直接用；否则后端通过 `data/market` 的 FX rate 折算（FX rate 可由客户端 snapshot 一起带过来，或服务端缓存）。
+3. **提案仍走本地 proposal applier**
+   - `propose_*` 工具产出 `ProposalEnvelope`；
+   - 各 domain applier 负责 schema 校验、冲突检测、事务写入和 outbox stamp；
+   - 批量提案与撤销属于后续端侧 runtime / sync E2E 范围。
 
 ### 文件改动
-- 修改：`apps/backend/src/ai/tools.rs` — 增加 snapshot 读取；调整 `compute_*` 跨币种参数。
-- 修改：`apps/backend/src/ai/anthropic.rs` — request body 接受 `portfolio_snapshot`。
-- 修改：`apps/backend/src/ai/guardrails.rs` — system prompt 更新（不再警告"不能跨币种"）。
-- 修改：`apps/mobile/lib/features/ai_chat/data/` — 在请求构造时附带 snapshot。
+- 维护：`apps/mobile/lib/features/investment/ai_tools/get_holdings_tool.dart` —
+  持仓输出、跨币种 evidence 和金额字段 shape。
+- 维护：`apps/mobile/lib/features/finance_ai_tools.dart` — Finance 工具注册清单。
+- 维护：`apps/mobile/lib/app/domain_composition.dart` — active `DomainPack`
+  工具聚合。
+- 维护：`apps/mobile/lib/core/ai/composition/proposal_applier.dart` — 本地提案
+  路由和 applier contract。
 
 ### 验收
-- AI 对"我现在的持仓总值是多少"类问题回答的数字与 dashboard 一致（误差 ≤ 0.01）；
-- `cargo clippy --target wasm32-unknown-unknown -- -D warnings` 通过；
-- `cargo fmt --all -- --check` 通过；
-- 新增集成测试：固定 snapshot input，断言工具 dispatch 输出。
+- AI 对"我现在的持仓总值是多少"类问题回答的数字与 dashboard / Wealth 视图一致；
+- 没有 FX 证据时回答按币种分组，并明确不输出伪造折算总额；
+- 新增/保留 device tool 测试：固定 holdings snapshot，断言工具 dispatch 输出；
+- 新增/保留 flow/E2E：批量提案或撤销改动必须在双设备 sync 下保持 LWW 一致。
 
 ### 风险
-- snapshot 体积：5k 持仓量级时 JSON 可能 ~200KB，需要监控 request body 大小；必要时只发 top-N + 摘要。
+- tool result 体积：5k 持仓量级时 JSON 可能 ~200KB，需要监控本地 prompt /
+  transcript 预算；必要时只返回 top-N + 摘要，并让模型按需继续调用细分工具。
 
 ---
 

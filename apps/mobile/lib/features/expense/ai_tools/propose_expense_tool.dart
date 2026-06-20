@@ -1,7 +1,7 @@
 /// `propose_expense` — device port.
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/propose_expense.rs`; logic a verbatim
+/// the historical backend `propose_expense` tool; logic a verbatim
 /// port of `proposals::propose_expense`. Returns the shared
 /// `ready_plan` / `needs_clarification` JSON, so the propose interception
 /// + the existing

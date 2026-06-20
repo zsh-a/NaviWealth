@@ -1,24 +1,24 @@
 /// §5.10.10 / S5b-vision — Vision ingest client surface.
 ///
-/// The cloud Vision relay (`POST /ingest/parse`) was removed together
-/// with the rest of the cloud AI backend. Vision parsing now runs
+/// The former Vision relay (`POST /ingest/parse`) was removed together
+/// with the backend AI surface. Vision parsing now runs
 /// device-direct ([DeviceVisionIngestClient]); when no on-device
-/// runtime exists the [CloudIngestClient] slot is the
-/// [UnavailableCloudIngestClient] stub, which fails with a clear
+/// runtime exists the [VisionIngestClient] slot is the
+/// [UnavailableVisionIngestClient] stub, which fails with a clear
 /// "configure a key" message instead of hitting a dead endpoint. The
 /// pure wire mappers below are retained — the device path reuses them.
 library;
 
 import '../domain/ingest_models.dart';
 
-class CloudIngestException implements Exception {
-  CloudIngestException(this.message);
+class VisionIngestException implements Exception {
+  VisionIngestException(this.message);
   final String message;
   @override
-  String toString() => 'CloudIngestException: $message';
+  String toString() => 'VisionIngestException: $message';
 }
 
-abstract class CloudIngestClient {
+abstract class VisionIngestClient {
   Future<List<ParsedTransaction>> parse({
     required IngestSourceKind kind,
     required String mime,
@@ -27,9 +27,9 @@ abstract class CloudIngestClient {
   });
 }
 
-/// Wire name the backend's `validate_kind` expects (snake_case, distinct
-/// from `IngestSourceKind.wire` which is the Dart enum name).
-String cloudIngestKindWire(IngestSourceKind kind) => switch (kind) {
+/// Stable wire name used by the Vision schema (snake_case, distinct from
+/// `IngestSourceKind.wire` which is the Dart enum name).
+String visionIngestKindWire(IngestSourceKind kind) => switch (kind) {
   IngestSourceKind.receiptImage => 'receipt_image',
   IngestSourceKind.statementPdf => 'statement_pdf',
   // Device-parsable / email never reach the Vision model route.
@@ -37,8 +37,7 @@ String cloudIngestKindWire(IngestSourceKind kind) => switch (kind) {
 };
 
 /// Pure: one wire row → [ParsedTransaction]. Returns null when the row
-/// lacks the fields the draft/confirm path needs (mirrors the backend's
-/// own skip-malformed-rows stance).
+/// lacks the fields the draft/confirm path needs.
 ParsedTransaction? parsedTransactionFromWire(Map<String, Object?> row) {
   final amount = (row['amount_minor'] as num?)?.toInt();
   final currency = (row['currency'] as String?)?.trim();
@@ -73,7 +72,7 @@ ParsedTransaction? parsedTransactionFromWire(Map<String, Object?> row) {
 }
 
 /// Pure: full `{model, drafts:[...]}` response → parsed list.
-List<ParsedTransaction> parseCloudIngestResponse(Map<String, Object?> body) {
+List<ParsedTransaction> parseVisionIngestResponse(Map<String, Object?> body) {
   final raw = body['drafts'];
   if (raw is! List) return const <ParsedTransaction>[];
   final out = <ParsedTransaction>[];
@@ -88,13 +87,13 @@ List<ParsedTransaction> parseCloudIngestResponse(Map<String, Object?> body) {
   return out;
 }
 
-/// Replacement for the deleted `DioCloudIngestClient`. The cloud
-/// Vision relay is gone; with no on-device runtime, Vision ingest is
-/// simply unavailable. `IngestController._ingestCloud` catches
-/// [CloudIngestException] and surfaces `message` as the rejected
+/// Replacement for the deleted remote Vision client. The relay is gone; with
+/// no on-device runtime, Vision ingest is
+/// simply unavailable. `IngestController._ingestProviderVision` catches
+/// [VisionIngestException] and surfaces `message` as the rejected
 /// reason — so the user gets actionable guidance, not a dead request.
-class UnavailableCloudIngestClient implements CloudIngestClient {
-  const UnavailableCloudIngestClient();
+class UnavailableVisionIngestClient implements VisionIngestClient {
+  const UnavailableVisionIngestClient();
 
   @override
   Future<List<ParsedTransaction>> parse({
@@ -103,7 +102,7 @@ class UnavailableCloudIngestClient implements CloudIngestClient {
     required String contentBase64,
     String? currencyHint,
   }) async {
-    throw CloudIngestException(
+    throw VisionIngestException(
       '图像/PDF 解析需要在设置中配置自带 API Key 后启用（本机直连模型）；'
       'Web 端暂不支持。也可改用 CSV / 文本粘贴导入。',
     );

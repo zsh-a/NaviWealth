@@ -1,7 +1,7 @@
 /// `get_subscription_changes` — device port.
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/get_subscription_changes.rs`. Per §4.3.3
+/// the historical backend `get_subscription_changes` tool. Per §4.3.3
 /// the device `detectSubscriptionChanges` is the sole computer; the
 /// `subscription_changes` read-model shape is derived from the same
 /// device analytical signal. The tool runs the same detector + the

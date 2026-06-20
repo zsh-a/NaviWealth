@@ -214,9 +214,9 @@ deleted_at_hlc TEXT;
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
 | MT-2.5.M1.1 | P0 | M | 客户端 profile composer（消费集中度、储蓄率、风险偏好代理） | — | `features/ai_chat/domain/profile/` |
-| MT-2.5.M1.2 | P0 | M | system prompt 注入 profile（首条消息携带，会话内复用） | MT-2.5.M1.1 | `features/ai_chat/data/`, `apps/backend/src/ai/anthropic.rs` |
+| MT-2.5.M1.2 | P0 | M | 端侧 system prompt 注入 profile（会话内复用，不上传后端） | MT-2.5.M1.1 | `core/ai/runtime/device/`, `features/ai_chat/data/` |
 | MT-2.5.M1.3 | P0 | S | 8KB 硬上限 + 降级策略（仅发 hash） | MT-2.5.M1.1 | 同上 |
-| MT-2.5.M1.4 | P0 | M | 工具返回结果加 evidence 字段（涉及的交易 / 账户 ID 列表） | — | `apps/backend/src/ai/tools.rs` |
+| MT-2.5.M1.4 | P0 | M | device tool 返回结果加 evidence 字段（涉及的交易 / 账户 ID 列表） | — | `features/*/ai_tools/`, `core/ai/runtime/device/tools/` |
 | MT-2.5.M1.5 | P1 | M | UI：工具卡片 evidence 区块 + 点击跳转 | MT-2.5.M1.4 | `features/ai_chat/ui/` |
 | MT-2.5.M1.6 | P0 | M | 10k entries profile 生成 < 50ms bench | MT-2.5.M1.1 | `test/features/ai_chat/profile/` |
 
@@ -224,7 +224,7 @@ deleted_at_hlc TEXT;
 
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
-| MT-2.5.M2.1 | P0 | L | `proposals.rs` 支持 batch 提案 schema（多个 plan 原子性） | — | `apps/backend/src/ai/proposals.rs` |
+| MT-2.5.M2.1 | P0 | L | 本地 `ProposalEnvelope` / applier 支持 batch 提案 schema（多个 plan 原子性） | — | `core/ai/composition/proposal_applier.dart`, `features/*/composition/` |
 | MT-2.5.M2.2 | P0 | M | 客户端事务执行（任一失败回滚整批） | MT-2.5.M2.1 | `features/ai_chat/domain/proposal_plan.dart` |
 | MT-2.5.M2.3 | P0 | L | oplog `actor` 字段补 `ai_proposal:{id}` + 后端 materialise | — | `apps/backend/src/sync/`, migration `0007_*.sql` |
 | MT-2.5.M2.4 | P0 | L | 撤销最近 N 个 AI 写入（生成补偿 op，不删 oplog） | MT-2.5.M2.3 | `features/ai_chat/domain/undo/` |
@@ -235,10 +235,10 @@ deleted_at_hlc TEXT;
 
 | ID | P | Size | Title | Depends | Files |
 |---|---|---|---|---|---|
-| MT-2.5.M3.1 | P0 | M | SSE 增加 `progress` 事件 + last-event-id 续传 | — | `apps/backend/src/ai/sse.rs`, `features/ai_chat/data/` |
+| MT-2.5.M3.1 | P0 | M | 端侧模型流增加 `progress` 事件 + 本地恢复最近步骤 | — | `core/ai/runtime/device/`, `features/ai_chat/data/` |
 | MT-2.5.M3.2 | P1 | M | UI：长任务进度条 + 步骤树 | MT-2.5.M3.1 | `features/ai_chat/ui/` |
 | MT-2.5.M3.3 | P1 | M | 会话级摘要（每 5 轮压缩，存 session 元数据） | — | `features/ai_chat/domain/chat_models.dart` |
-| MT-2.5.M3.4 | P0 | M | 网络波动下 SSE 不丢 progress 集成测试 | MT-2.5.M3.1 | `test/features/ai_chat/sse/` |
+| MT-2.5.M3.4 | P0 | M | provider 流中断 / 工具失败重试后不丢 progress 集成测试 | MT-2.5.M3.1 | `test/features/ai_chat/runtime/` |
 
 ---
 

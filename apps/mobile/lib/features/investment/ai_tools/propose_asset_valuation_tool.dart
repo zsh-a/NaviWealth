@@ -1,7 +1,7 @@
 /// `propose_asset_valuation` — device port.
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/propose_asset_valuation.rs`; logic a
+/// the historical backend `propose_asset_valuation` tool; logic a
 /// verbatim port of `proposals::propose_asset_valuation`. Only valid
 /// for manual-valuation asset types ([kProposalManualValuationTypes]) —
 /// securities go through `propose_trade type=valuationAdjust`. Resolves

@@ -1,7 +1,7 @@
 /// `get_holdings` — device port.
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/get_holdings.rs`. The backend tool
+/// the historical backend `get_holdings` tool. The backend tool
 /// *prefers* the client `portfolio_snapshot` and short-circuits to it
 /// (`source: "client_portfolio_snapshot"`); on device that snapshot is
 /// the canonical local truth (holdings engine + FX + multi-lot), so

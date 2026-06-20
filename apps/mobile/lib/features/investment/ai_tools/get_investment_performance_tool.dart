@@ -1,7 +1,7 @@
 /// `get_investment_performance` — device port.
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/get_investment_performance.rs`. Per
+/// the historical backend `get_investment_performance` tool. Per
 /// §4.3.3 the device `holdingsSnapshotProvider` is the sole computer;
 /// the `investment_performance` read model shape is derived from the
 /// same device analytical signal. The tool reads the same provider +

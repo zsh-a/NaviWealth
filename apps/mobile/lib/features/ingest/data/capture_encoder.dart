@@ -2,7 +2,7 @@
 ///
 /// Pure: the file extension picks the lane. Text (CSV / TXT) rides the
 /// device parser as a UTF-8 payload; binary (image / PDF) rides the
-/// S5b-vision cloud path as a base64 payload + mime. Anything else is
+/// S5b provider-Vision path as a base64 payload + mime. Anything else is
 /// rejected here so the caller can say so instead of the pipeline
 /// failing opaquely later.
 library;

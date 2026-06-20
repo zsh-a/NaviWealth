@@ -19,6 +19,12 @@ import 'privacy_budget.dart' show BudgetTier, BudgetTierWire;
 /// path so the transparency badge can say "未经我方服务器".
 const String kDeviceLlmDirectRoutingReason = 'device_llm_direct';
 
+/// §5.10.10 — device Vision ingest used the user's own key and called the
+/// provider directly from the device runtime. This is not the deleted cloud
+/// relay; the transparency surface should disclose the same "no NaviWealth
+/// server" property as chat turns.
+const String kDeviceVisionDirectRoutingReason = 'device_vision_direct';
+
 /// Where the turn was executed.
 ///
 /// **Live producers**:
@@ -26,11 +32,8 @@ const String kDeviceLlmDirectRoutingReason = 'device_llm_direct';
 ///
 /// **Fossil values**, kept only to:
 ///  1. deserialize old AiTrace rows written before the cloud relay was
-///     removed;
-///  2. let `features/ingest/data/providers.dart` tag its Vision trace
-///     (`layer4_cloud_vision`) — that flow is itself pending a
-///     separate audit (see ingest module).
-///  - [Backend.cloud] — has the ingest producer above; otherwise fossil.
+///     removed.
+///  - [Backend.cloud] — no live producer; only old DB rows.
 ///  - [Backend.hybrid] — no live producer anywhere; only old DB rows.
 ///
 /// Per `docs/ai-boundary-audit.md`, we don't add new "maybe useful"
@@ -114,8 +117,9 @@ class AiTrace {
   final BudgetTier budgetTier;
 
   /// Short label for which runtime handled the turn — `device_llm_direct`
-  /// (see [kDeviceLlmDirectRoutingReason]), `device_unavailable`, or
-  /// `layer4_cloud_vision` (ingest). Free-form for now.
+  /// (see [kDeviceLlmDirectRoutingReason]), `device_vision_direct`
+  /// (see [kDeviceVisionDirectRoutingReason]), or `device_unavailable`.
+  /// Free-form for now.
   final String routingReason;
 
   final int totalDurationMs;

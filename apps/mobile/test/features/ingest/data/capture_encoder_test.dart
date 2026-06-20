@@ -45,7 +45,7 @@ void main() {
       expect(src.payload, contains('支出'));
     });
 
-    test('pdf → cloud statement lane (base64 + mime)', () {
+    test('pdf → provider Vision statement lane (base64 + mime)', () {
       final bytes = Uint8List.fromList(<int>[1, 2, 3, 4]);
       final src = ingestSourceFromCapture(
         fileName: 'statement.pdf',

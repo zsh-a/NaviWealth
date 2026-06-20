@@ -155,7 +155,7 @@ lib/features/activity/ui/activity_entry_detail_page.dart
 #      at the top (proposal_applier / chat_repository). A future pass
 #      restructures these to structured handles rendered at display
 #      time; tracked with the ai_chat data-layer follow-up.
-lib/features/ingest/data/cloud_ingest_client.dart
+lib/features/ingest/data/vision_ingest_client.dart
 lib/features/ingest/data/csv_ingest_parser.dart
 lib/features/ingest/data/device_ingest_client.dart
 lib/features/ingest/data/ingest_confirm_service.dart

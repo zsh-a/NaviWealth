@@ -7319,7 +7319,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiLlmUnsupportedBody =>
-      'Bring-your-own-key on-device AI works on native platforms (iOS / Android / macOS / Windows / Linux) with system secure storage. Web continues to use cloud AI.';
+      'Bring-your-own-key on-device AI works on native platforms (iOS / Android / macOS / Windows / Linux) with system secure storage. Web does not run the local AI runtime yet.';
 
   @override
   String aiLlmStatusActive(String name) {

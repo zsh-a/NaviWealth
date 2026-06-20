@@ -1,7 +1,7 @@
 /// `get_refund_links` — device port (Analytical).
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/get_refund_links.rs`. Per §4.3.3 the
+/// the historical backend `get_refund_links` tool. Per §4.3.3 the
 /// device `refundMatcher` is the sole computer; the `refund_links`
 /// read-model shape is derived from the same device analytical signal.
 /// The tool runs the same matcher + the shared [refundMatchToUpload]

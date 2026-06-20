@@ -23,7 +23,7 @@ enum IngestGateVerdict {
   deviceParse,
 
   /// Needs provider Vision and the privacy posture permits it.
-  cloudAllowed,
+  providerVisionAllowed,
 
   /// Needs provider Vision but the user pinned amounts/data to the device.
   blockedByPrivacy,
@@ -33,5 +33,5 @@ IngestGateVerdict ingestPrivacyGate(IngestSourceKind kind, AiPrivacyMode mode) {
   if (kind.isDeviceParsable) return IngestGateVerdict.deviceParse;
   return mode == AiPrivacyMode.amountsLocal
       ? IngestGateVerdict.blockedByPrivacy
-      : IngestGateVerdict.cloudAllowed;
+      : IngestGateVerdict.providerVisionAllowed;
 }

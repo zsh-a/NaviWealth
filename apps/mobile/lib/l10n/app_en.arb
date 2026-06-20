@@ -4001,7 +4001,7 @@
   "@aiLlmIntro": { "description": "Intro copy on the LLM credentials page" },
   "aiLlmUnsupportedTitle": "This platform does not support on-device direct connections",
   "@aiLlmUnsupportedTitle": { "description": "Unsupported-platform card title on the LLM credentials page" },
-  "aiLlmUnsupportedBody": "Bring-your-own-key on-device AI works on native platforms (iOS / Android / macOS / Windows / Linux) with system secure storage. Web continues to use cloud AI.",
+  "aiLlmUnsupportedBody": "Bring-your-own-key on-device AI works on native platforms (iOS / Android / macOS / Windows / Linux) with system secure storage. Web does not run the local AI runtime yet.",
   "@aiLlmUnsupportedBody": { "description": "Unsupported-platform card body on the LLM credentials page" },
   "aiLlmStatusActive": "Active: {name} · local direct connection",
   "@aiLlmStatusActive": {

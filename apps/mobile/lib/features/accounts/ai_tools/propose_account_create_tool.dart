@@ -1,7 +1,7 @@
 /// `propose_account_create` — device port.
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/propose_account_create.rs`; logic a
+/// the historical backend `propose_account_create` tool; logic a
 /// verbatim port of `proposals::propose_account_create`. Pure — no
 /// reference resolution, no provider read — validates `type` against
 /// the closed [kProposalAccountTypes] list and pre-allocates an id so

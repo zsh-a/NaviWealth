@@ -1,6 +1,6 @@
 /// Per-turn device agent session.
 ///
-/// Dart port of `apps/backend/src/ai/runtime/session.rs`. The message
+/// Dart port of the historical backend agent session. The message
 /// list is mutated in place across tool rounds (assistant `tool_use`
 /// then user `tool_result`), exactly like the backend loop.
 library;

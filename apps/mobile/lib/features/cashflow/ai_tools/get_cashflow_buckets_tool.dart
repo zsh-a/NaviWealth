@@ -1,7 +1,7 @@
 /// `get_cashflow_buckets` — device port (Snapshot P1).
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/get_cashflow_buckets.rs`; the monthly
+/// the historical backend `get_cashflow_buckets` tool; the monthly
 /// roll-up is a faithful port of
 /// `read_models::cashflow_buckets::aggregate` and the
 /// `impls::get_cashflow_buckets` read path (window math + output

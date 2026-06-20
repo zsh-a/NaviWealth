@@ -12567,7 +12567,7 @@ abstract class AppLocalizations {
   /// Unsupported-platform card body on the LLM credentials page
   ///
   /// In en, this message translates to:
-  /// **'Bring-your-own-key on-device AI works on native platforms (iOS / Android / macOS / Windows / Linux) with system secure storage. Web continues to use cloud AI.'**
+  /// **'Bring-your-own-key on-device AI works on native platforms (iOS / Android / macOS / Windows / Linux) with system secure storage. Web does not run the local AI runtime yet.'**
   String get aiLlmUnsupportedBody;
 
   /// Status line when an LLM provider is active

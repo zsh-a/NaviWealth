@@ -2,8 +2,8 @@
 ///
 /// `receive_sharing_intent` surfaces files/text the user "Share"d into
 /// NaviWealth (iOS Share Extension / Android SEND intent). Each share
-/// is funnelled through the existing pipeline (privacy gate → device
-/// or cloud) and the user is dropped on the review queue.
+/// is funnelled through the existing pipeline (privacy gate → device parser
+/// or provider Vision) and the user is dropped on the review queue.
 ///
 /// Hard-guarded: every plugin call is wrapped so the host test VM /
 /// web / desktop (no plugin registered → `MissingPluginException`)
@@ -80,7 +80,8 @@ class ShareIntentService {
     // go to the Finance ingest pipeline (receipt OCR / parser path).
     // Finance keeps text shares only when Knowledge is OFF — text
     // receipts (forwarded bank SMS etc.) still need a home there.
-    final knowledgeOn = _ref
+    final knowledgeOn =
+        _ref
             .read(core_auth.domainOptInsProvider)
             .value
             ?.contains(DomainScope.knowledge) ??
@@ -91,8 +92,7 @@ class ShareIntentService {
     for (final f in files) {
       try {
         if (knowledgeOn &&
-            (f.type == SharedMediaType.text ||
-                f.type == SharedMediaType.url)) {
+            (f.type == SharedMediaType.text || f.type == SharedMediaType.url)) {
           await _captureKnowledgeNote(f);
           handledKnowledge = true;
           continue;
@@ -126,7 +126,8 @@ class ShareIntentService {
     final repo = await _ref.read(know_data.knowledgeRepositoryProvider.future);
     final stamper = await _ref.read(mutationStamperProvider.future);
     final stamp = await stamper.stamp();
-    final isUrl = f.type == SharedMediaType.url ||
+    final isUrl =
+        f.type == SharedMediaType.url ||
         raw.startsWith('http://') ||
         raw.startsWith('https://');
     final firstLine = raw.split('\n').first.trim();

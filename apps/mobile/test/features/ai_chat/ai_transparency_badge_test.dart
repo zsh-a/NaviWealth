@@ -30,6 +30,16 @@ void main() {
       );
       expect(formatAiTraceBadge(trace), '端侧模型推理 · 13s');
     });
+
+    test('device Vision direct path discloses provider direct routing', () {
+      final trace = _trace(
+        backend: Backend.device,
+        toolCount: 0,
+        durationMs: 1300,
+        routingReason: kDeviceVisionDirectRoutingReason,
+      );
+      expect(formatAiTraceBadge(trace), '端侧直连模型 · 请求与数据未经我方服务器 · 1.3s');
+    });
   });
 }
 
@@ -37,6 +47,7 @@ AiTrace _trace({
   required Backend backend,
   required int toolCount,
   required int durationMs,
+  String routingReason = 'test',
 }) => AiTrace(
   requestId: 't',
   startedAtIso: '2026-05-10T10:00:00.000Z',
@@ -46,7 +57,7 @@ AiTrace _trace({
   ),
   backend: backend,
   budgetTier: BudgetTier.standard,
-  routingReason: 'test',
+  routingReason: routingReason,
   totalDurationMs: durationMs,
   spans: List<AiSpan>.generate(
     toolCount,

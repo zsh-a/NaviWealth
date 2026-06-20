@@ -1,7 +1,7 @@
 /// `propose_trade` — device port (final propose_*).
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/propose_trade.rs`; logic a verbatim port
+/// the historical backend `propose_trade` tool; logic a verbatim port
 /// of `proposals::propose_trade`. Resolves asset + account against the
 /// device typed providers (mirrors backend `resolve_asset` /
 /// `resolve_account`) and returns the same `ready_plan` /

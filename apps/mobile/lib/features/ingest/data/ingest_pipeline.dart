@@ -39,7 +39,7 @@ class IngestPipeline {
       return IngestResult(
         drafts: const <IngestDraft>[],
         rejectedReason:
-            '「${source.kind.name}」来源需云端 Vision 解析，S5a 仅支持 CSV / 粘贴文本',
+            '「${source.kind.name}」来源需模型 Vision 解析，S5a 仅支持 CSV / 粘贴文本',
       );
     }
 
@@ -57,7 +57,7 @@ class IngestPipeline {
   }
 
   /// Steps ④⑤⑥ on an already-parsed list. Shared by the device CSV
-  /// path ([plan]) and the S5b-vision cloud path (where the LLM did ③).
+  /// path ([plan]) and the S5b provider-Vision path (where the LLM did ③).
   IngestResult planFromParsed({
     required List<ParsedTransaction> parsed,
     required IngestSource source,

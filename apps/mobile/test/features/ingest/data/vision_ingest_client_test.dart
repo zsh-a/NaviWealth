@@ -1,16 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/features/ingest/data/cloud_ingest_client.dart';
+import 'package:naviwealth/features/ingest/data/vision_ingest_client.dart';
 import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
 
 void main() {
-  group('cloudIngestKindWire', () {
-    test('maps cloud kinds to the backend snake_case contract', () {
+  group('visionIngestKindWire', () {
+    test('maps Vision kinds to the snake_case schema contract', () {
       expect(
-        cloudIngestKindWire(IngestSourceKind.receiptImage),
+        visionIngestKindWire(IngestSourceKind.receiptImage),
         'receipt_image',
       );
       expect(
-        cloudIngestKindWire(IngestSourceKind.statementPdf),
+        visionIngestKindWire(IngestSourceKind.statementPdf),
         'statement_pdf',
       );
     });
@@ -81,9 +81,9 @@ void main() {
     });
   });
 
-  group('parseCloudIngestResponse', () {
+  group('parseVisionIngestResponse', () {
     test('extracts the drafts array and skips malformed rows', () {
-      final list = parseCloudIngestResponse(<String, Object?>{
+      final list = parseVisionIngestResponse(<String, Object?>{
         'model': 'mimo-v2.5-pro',
         'drafts': <Object?>[
           <String, Object?>{
@@ -101,9 +101,9 @@ void main() {
     });
 
     test('empty / missing drafts yields an empty list', () {
-      expect(parseCloudIngestResponse(<String, Object?>{}), isEmpty);
+      expect(parseVisionIngestResponse(<String, Object?>{}), isEmpty);
       expect(
-        parseCloudIngestResponse(<String, Object?>{'drafts': <Object?>[]}),
+        parseVisionIngestResponse(<String, Object?>{'drafts': <Object?>[]}),
         isEmpty,
       );
     });

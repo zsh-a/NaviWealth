@@ -20,6 +20,9 @@ void main() {
       expect(visibleValues, isNot(contains('placeholder')), reason: path);
       expect(visibleValues, isNot(contains('占位')), reason: path);
       expect(visibleValues, isNot(contains('即将推出')), reason: path);
+      expect(visibleValues, isNot(contains('web continues to use cloud ai')));
+      expect(visibleValues, isNot(contains('web 继续使用云端 ai')));
+      expect(visibleValues, isNot(contains('web 继续使用云端ai')));
     }
   });
 }

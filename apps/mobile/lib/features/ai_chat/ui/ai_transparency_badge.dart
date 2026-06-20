@@ -73,10 +73,12 @@ String formatAiTraceBadge(AiTrace trace) {
   switch (trace.backend) {
     case Backend.device:
       // Device-LLM-direct (user's own key, straight to the
-      // provider) is materially more private than the zero-model
-      // rules-device path; surface the distinction.
+      // provider) and device Vision direct share the same "no
+      // NaviWealth server" property; surface the distinction from the
+      // zero-model rules-device path.
       parts.add(
-        trace.routingReason == kDeviceLlmDirectRoutingReason
+        trace.routingReason == kDeviceLlmDirectRoutingReason ||
+                trace.routingReason == kDeviceVisionDirectRoutingReason
             ? '端侧直连模型 · 请求与数据未经我方服务器'
             : '全部本地处理',
       );

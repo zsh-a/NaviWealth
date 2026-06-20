@@ -7019,7 +7019,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiLlmUnsupportedBody =>
-      '自带 Key 的端侧 AI 在原生平台（iOS / Android / macOS / Windows / Linux）可用（需要系统级安全存储）。Web 继续使用云端 AI。';
+      '自带 Key 的端侧 AI 在原生平台（iOS / Android / macOS / Windows / Linux）可用（需要系统级安全存储）。Web 暂不运行本地 AI runtime。';
 
   @override
   String aiLlmStatusActive(String name) {

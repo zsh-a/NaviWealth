@@ -1,7 +1,7 @@
 /// `read_category_window` — device port (Scoped Detail).
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/read_category_window.rs`; primary logic a
+/// the historical backend `read_category_window` tool; primary logic a
 /// port of `scoped_detail::category_window::filter_and_sanitise`. The
 /// backend scans D1 journal_entries+postings and filters on
 /// `journal_entries.payload.category`; the device reads the same truth

@@ -59,7 +59,10 @@ Object, and a golden of its primary surface.
 | 11 | 本地加密备份/恢复 | Encrypted backup / restore | Settings → backup |
 | 12 | 导出 | Export | Settings → export |
 
-Task #1 is implemented as the seed: `test/flow/net_worth_flow_test.dart`.
+All 12 task flows are seeded under `test/flow/`: net worth, account creation,
+transaction entry, statement import, sync navigation coverage, AI chat,
+portfolio analysis, rebalance, options income, FIRE report, backup restore,
+and export backup.
 
 ## 4. Layers — what each is for and how to write it
 
@@ -174,8 +177,11 @@ of layout refactors.
 
 ### Sync protocol E2E (best-in-class — keep)
 `test/e2e/sync_e2e_test.dart` + `SyncCluster`/`VirtualDevice` simulate
-multi-device convergence with deterministic time. 70 documented cases in
-`docs/sync-protocol-tests.md`. This is the canonical Task #5 coverage.
+multi-device convergence with deterministic time. The current blocking bundle
+also includes `test/e2e/finance_ledger_e2e_test.dart`, so protocol behavior and
+Finance ledger convergence are proven together. `sync_e2e_test.dart` carries
+the P1-G E2E-1..5 markers; `docs/sync-protocol-tests.md` remains the broader
+case matrix. This is the canonical Task #5 coverage.
 
 ### AI exploratory + semantic (~1%, nightly, non-blocking)
 `.github/workflows/ai-semantic.yml` runs the deterministic surrogate nightly
@@ -250,7 +256,8 @@ path once the production connection implements database encryption.
   The 11 JWT-domain / sync-LWW tests now gate PRs.
 - ✅ Web smoke wired up — `web-smoke.yml`: chromium on PRs, full matrix nightly.
 - ✅ Non-golden mobile tests are zero-failure blocking checks in CI.
-- ✅ Flow layer seeded — `test/flow/` with Page Object Model + Task #1.
+- ✅ Flow layer seeded — `test/flow/` with Page Object Model + all 12 task
+  flows.
 - ✅ Integration layer seeded — `test/integration/` real-Drift harness +
   net-worth coverage in every direction (manual asset, liability, securities).
 - ✅ On-device `integration_test/` seeded — real file-backed DB boot/migrate/

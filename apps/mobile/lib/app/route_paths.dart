@@ -111,7 +111,7 @@ abstract final class AppRoutes {
   // §5.10.2 — AI chat is no longer a tab; sessions are read/replay-only
   // under Settings as part of the AI audit surface.
   static const settingsAiHistory = '/settings/ai-history';
-  // §5.10.5 — user-facing privacy posture for cloud-bound AI requests.
+  // §5.10.5 — user-facing privacy posture for provider-direct AI requests.
   static const settingsAiPrivacy = '/settings/ai-privacy';
   // Bring-your-own LLM key for the on-device AI runtime.
   static const settingsAiLlm = '/settings/ai-llm';

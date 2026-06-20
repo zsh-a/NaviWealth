@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_vision_parse.dart';
-import 'package:naviwealth/features/ingest/data/cloud_ingest_client.dart';
 import 'package:naviwealth/features/ingest/data/device_ingest_client.dart';
+import 'package:naviwealth/features/ingest/data/vision_ingest_client.dart';
 import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
 
-class _FakeIngest implements CloudIngestClient {
+class _FakeIngest implements VisionIngestClient {
   _FakeIngest(this.tag);
   final String tag;
   bool called = false;
@@ -88,7 +88,7 @@ void main() {
         },
       ]);
       expect(rows, hasLength(1));
-      // shared mapper → identical to the cloud path's output
+      // shared mapper → identical to the provider-Vision path's output
       final tx = parsedTransactionFromWire(rows.single)!;
       expect(tx.description, 'Starbucks');
       expect(tx.amountMinor, -3800); // expense-negative preserved
@@ -138,11 +138,11 @@ void main() {
     });
   });
 
-  group('RoutingCloudIngestClient (W-D5)', () {
-    test('device present → device used, cloud untouched', () async {
-      final cloud = _FakeIngest('cloud');
+  group('RoutingVisionIngestClient (W-D5)', () {
+    test('device present → device used, fallback untouched', () async {
+      final fallback = _FakeIngest('fallback');
       final device = _FakeIngest('device');
-      final r = RoutingCloudIngestClient(cloud: cloud, device: device);
+      final r = RoutingVisionIngestClient(fallback: fallback, device: device);
       expect(r.usesDevice, isTrue);
       final out = await r.parse(
         kind: IngestSourceKind.receiptImage,
@@ -150,21 +150,21 @@ void main() {
         contentBase64: 'Qkk=',
       );
       expect(device.called, isTrue);
-      expect(cloud.called, isFalse);
+      expect(fallback.called, isFalse);
       expect(out.single.description, 'device');
     });
 
-    test('no device → cloud used (behaviour unchanged)', () async {
-      final cloud = _FakeIngest('cloud');
-      final r = RoutingCloudIngestClient(cloud: cloud);
+    test('no device → unavailable fallback used', () async {
+      final fallback = _FakeIngest('fallback');
+      final r = RoutingVisionIngestClient(fallback: fallback);
       expect(r.usesDevice, isFalse);
       final out = await r.parse(
         kind: IngestSourceKind.statementPdf,
         mime: 'application/pdf',
         contentBase64: 'Qkk=',
       );
-      expect(cloud.called, isTrue);
-      expect(out.single.description, 'cloud');
+      expect(fallback.called, isTrue);
+      expect(out.single.description, 'fallback');
     });
   });
 }

@@ -289,9 +289,11 @@ FIRE/Rebalance 迁 `/plan/{fire,rebalance}`，Portfolio Analytics 迁
 - **后端 Vision relay 已删除**：原 `POST /ingest/parse` 与
   `apps/backend/src/ai/ingest/` 随后端 AI 一并删除。图片/PDF 的 Vision 解析改为
   **端侧直发**（`DeviceVisionIngestClient` + `core/ai/runtime/device/device_vision_parse.dart`，
-  用户 key，§4.6 决策 4，原图不出设备）；无可用端侧 runtime 时 `CloudIngestClient`
-  槽位降级为 `UnavailableCloudIngestClient` stub，回「去设置加 key」而非打死端点。
-- 隐私门 `ingest_privacy_gate.dart` 仍在：`amountsLocal` 拒云端摄取。
+  用户 key，§4.6 决策 4，原图不出设备）；无可用端侧 runtime 时
+  `VisionIngestClient` 槽位降级为 `UnavailableVisionIngestClient` stub，回
+  「去设置加 key」而非打死端点。
+- 隐私门 `ingest_privacy_gate.dart` 仍在：`amountsLocal` 拒绝 provider Vision
+  解析，CSV / 粘贴文本继续走本地确定性 parser。
 
 ## 6. 模块映射
 

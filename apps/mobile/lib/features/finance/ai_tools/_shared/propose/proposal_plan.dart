@@ -1,8 +1,8 @@
 /// Shared proposal scaffolding for the FinanceOS device `propose_*` tools.
 /// Cross-domain envelope helpers are re-exported from
 /// `core/ai/composition/proposal_envelope.dart`; this file keeps the
-/// Finance-specific reference resolution + category matching ported from
-/// `apps/backend/src/ai/proposals.rs`.
+/// Finance-specific reference resolution + category matching used by local
+/// [ProposalEnvelope] device tools.
 ///
 /// Reference resolution reads device **typed** [Account]/asset lists
 /// instead of D1 payload rows; the match semantics (`name_matches`,

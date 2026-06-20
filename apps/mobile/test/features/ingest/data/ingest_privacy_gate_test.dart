@@ -20,7 +20,7 @@ void main() {
       }
     });
 
-    test('cloud kinds are blocked only when amounts are fully local', () {
+    test('provider Vision kinds are blocked only when amounts are local', () {
       for (final kind in const [
         IngestSourceKind.receiptImage,
         IngestSourceKind.statementPdf,
@@ -33,11 +33,11 @@ void main() {
         );
         expect(
           ingestPrivacyGate(kind, AiPrivacyMode.amountsAllowed),
-          IngestGateVerdict.cloudAllowed,
+          IngestGateVerdict.providerVisionAllowed,
         );
         expect(
           ingestPrivacyGate(kind, AiPrivacyMode.amountsBucketed),
-          IngestGateVerdict.cloudAllowed,
+          IngestGateVerdict.providerVisionAllowed,
         );
       }
     });

@@ -24,12 +24,12 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/persistence/providers.dart';
 import '../../ai_chat/data/providers.dart' show deviceLlmRuntimeProvider;
 import '../domain/ingest_models.dart';
-import 'cloud_ingest_client.dart';
 import 'device_ingest_client.dart';
 import 'ingest_confirm_service.dart';
 import 'ingest_draft_store.dart';
 import 'ingest_pipeline.dart';
 import 'ingest_privacy_gate.dart';
+import 'vision_ingest_client.dart';
 
 /// Owner-scoped staging store. Null while the DB is mid-boot.
 final ingestDraftStoreProvider = Provider<IngestDraftStore?>((ref) {
@@ -67,16 +67,16 @@ final ingestPipelineProvider = Provider<IngestPipeline>(
 
 /// Vision parse runs device-direct when the on-device
 /// runtime is available (native incl. desktop × user key × opt-in),
-/// reusing the *same* [AnthropicClient] the chat path built. The cloud
-/// Vision relay (`/ingest/parse`) was deleted with the rest of the
-/// cloud AI backend, so the non-device slot is the
-/// [UnavailableCloudIngestClient] stub: it fails with actionable
+/// reusing the *same* [AnthropicClient] the chat path built. The former
+/// Vision relay (`/ingest/parse`) was deleted with the backend AI surface,
+/// so the non-device slot is the
+/// [UnavailableVisionIngestClient] stub: it fails with actionable
 /// guidance (configure a key / use CSV) which the controller surfaces
 /// as the rejected reason — no dead endpoint, no device→cloud failover.
-final cloudIngestClientProvider = Provider<CloudIngestClient>((ref) {
+final visionIngestClientProvider = Provider<VisionIngestClient>((ref) {
   final DeviceLlmRuntime? runtime = ref.watch(deviceLlmRuntimeProvider);
-  return RoutingCloudIngestClient(
-    cloud: const UnavailableCloudIngestClient(),
+  return RoutingVisionIngestClient(
+    fallback: const UnavailableVisionIngestClient(),
     device: runtime == null
         ? null
         : DeviceVisionIngestClient(client: runtime.client),
@@ -124,8 +124,8 @@ class IngestController {
               '隐私模式「金额完全本地」已禁用模型解析；'
               '请改用 CSV / 文本粘贴，或在设置中调整 AI 隐私模式',
         );
-      case IngestGateVerdict.cloudAllowed:
-        return _ingestCloud(source);
+      case IngestGateVerdict.providerVisionAllowed:
+        return _ingestProviderVision(source);
       case IngestGateVerdict.deviceParse:
         return _ingestDevice(source);
     }
@@ -158,7 +158,7 @@ class IngestController {
   /// is account-less, so there is no login gate — when no on-device
   /// runtime is configured the client surfaces actionable "configure a
   /// key" guidance instead.
-  Future<IngestResult> _ingestCloud(IngestSource source) async {
+  Future<IngestResult> _ingestProviderVision(IngestSource source) async {
     final store = _ref.read(ingestDraftStoreProvider);
     if (store == null) {
       return const IngestResult(
@@ -173,13 +173,13 @@ class IngestController {
     List<ParsedTransaction> parsed;
     try {
       parsed = await _ref
-          .read(cloudIngestClientProvider)
+          .read(visionIngestClientProvider)
           .parse(
             kind: source.kind,
             mime: source.mime ?? 'application/octet-stream',
             contentBase64: source.payload,
           );
-    } on CloudIngestException catch (e) {
+    } on VisionIngestException catch (e) {
       return IngestResult(
         drafts: const <IngestDraft>[],
         rejectedReason: e.message,
@@ -199,7 +199,7 @@ class IngestController {
     if (result.drafts.isNotEmpty) {
       await store.putAll(result.drafts);
     }
-    await _appendCloudTrace(
+    await _appendProviderVisionTrace(
       requestId: requestId,
       kind: source.kind,
       startedAt: startedAt,
@@ -211,7 +211,7 @@ class IngestController {
   /// Best-effort transparency record — a Vision parse sends content to the
   /// user's configured model provider and must show up in the §5.10.5 audit
   /// surface. Failing to write the trace never fails the ingest.
-  Future<void> _appendCloudTrace({
+  Future<void> _appendProviderVisionTrace({
     required String requestId,
     required IngestSourceKind kind,
     required DateTime startedAt,
@@ -227,9 +227,9 @@ class IngestController {
           risk: RiskLevel.info,
           label: 'ingest_vision',
         ),
-        backend: Backend.cloud,
+        backend: Backend.device,
         budgetTier: tier,
-        routingReason: 'layer4_cloud_vision',
+        routingReason: kDeviceVisionDirectRoutingReason,
         totalDurationMs: 0,
       );
       final parseEnd = DateTime.now().toUtc();
@@ -237,7 +237,7 @@ class IngestController {
           (AiTraceBuilder.fromSeed(seed)..addSpan(
                 id: 'tool:parse',
                 kind: AiSpanKind.tool,
-                name: 'tool:parse_${cloudIngestKindWire(kind)}',
+                name: 'tool:parse_${visionIngestKindWire(kind)}',
                 startedAt: startedAt,
                 endedAt: parseEnd,
               ))

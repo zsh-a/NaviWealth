@@ -1,7 +1,7 @@
 /// `get_asset_allocation` — device port.
 ///
 /// Schema + description verbatim from
-/// `apps/backend/src/ai/tools/get_asset_allocation.rs`. The backend
+/// the historical backend `get_asset_allocation` tool. The backend
 /// aggregates the `asset_allocation_snapshot` read model by
 /// `(asset_type, currency)`; here we run the **identical aggregation**
 /// (port of `asset_allocation_snapshot::aggregate`) over the device

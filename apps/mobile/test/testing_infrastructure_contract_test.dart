@@ -429,6 +429,20 @@ void main() {
       expect(text, isNot(contains('仅剩 P1-H')));
     });
 
+    test('testing strategy documents current flow and E2E coverage', () {
+      final repoRoot = appRoot.parent.parent;
+      final strategy = File('${repoRoot.path}/docs/testing-strategy.md');
+
+      expect(strategy.existsSync(), isTrue);
+      final text = strategy.readAsStringSync();
+      expect(text, contains('All 12 task flows are seeded'));
+      expect(text, contains('finance_ledger_e2e_test.dart'));
+      expect(text, contains('P1-G E2E-1..5 markers'));
+      expect(text, contains('There is no known-failing allowlist'));
+      expect(text, isNot(contains('Task #1 is implemented as the seed')));
+      expect(text, isNot(contains('only sync_e2e_test.dart')));
+    });
+
     test('roadmap activity feed status matches current implementation', () {
       final repoRoot = appRoot.parent.parent;
       final roadmap = File('${repoRoot.path}/docs/roadmap.md');
@@ -484,6 +498,134 @@ void main() {
         expect(text, isNot(contains('作为 `assets/` 的薄包装存在')));
       },
     );
+
+    test('roadmaps keep AI planning on device-only architecture', () {
+      final repoRoot = appRoot.parent.parent;
+      final roadmap = File('${repoRoot.path}/docs/roadmap.md');
+      final phase1 = File('${repoRoot.path}/docs/roadmap-phase1.md');
+      final midterm = File(
+        '${repoRoot.path}/docs/roadmap-midterm-execution.md',
+      );
+      final next = File('${repoRoot.path}/docs/roadmap-next.md');
+      final backendAiDir = Directory('${repoRoot.path}/apps/backend/src/ai');
+      final holdingsTool = File(
+        '${appRoot.path}/lib/features/investment/ai_tools/get_holdings_tool.dart',
+      );
+
+      expect(roadmap.existsSync(), isTrue);
+      expect(phase1.existsSync(), isTrue);
+      expect(midterm.existsSync(), isTrue);
+      expect(next.existsSync(), isTrue);
+      expect(backendAiDir.existsSync(), isFalse);
+      expect(holdingsTool.existsSync(), isTrue);
+
+      final roadmapText = roadmap.readAsStringSync();
+      final phase1Text = phase1.readAsStringSync();
+      final midtermText = midterm.readAsStringSync();
+      final nextText = next.readAsStringSync();
+      final combinedText = '$roadmapText\n$phase1Text\n$midtermText\n$nextText';
+
+      for (final staleReference in <String>[
+        'apps/backend/src/ai/tools.rs',
+        'apps/backend/src/ai/proposals.rs',
+        'apps/backend/src/ai/anthropic.rs',
+        'apps/backend/src/ai/guardrails.rs',
+        'apps/backend/src/ai/sse.rs',
+        '向 `/ai/chat`',
+        'SSE 流',
+        'layer4_cloud_vision',
+        'cloud_ingest_client',
+      ]) {
+        expect(
+          combinedText,
+          isNot(contains(staleReference)),
+          reason: 'roadmaps should not plan against deleted AI relay code',
+        );
+      }
+
+      expect(combinedText, contains('device-only'));
+      expect(combinedText, contains('GetHoldingsTool'));
+      expect(combinedText, contains('deviceToolsProvider'));
+      expect(combinedText, contains('ProposalEnvelope'));
+      expect(combinedText, contains('proposalApplierProvider'));
+      expect(combinedText, contains('vision_ingest_client'));
+    });
+
+    test('device Vision ingest does not produce cloud-relay trace labels', () {
+      final ingestGate = File(
+        '${appRoot.path}/lib/features/ingest/data/ingest_privacy_gate.dart',
+      );
+      final ingestProviders = File(
+        '${appRoot.path}/lib/features/ingest/data/providers.dart',
+      );
+      final visionClient = File(
+        '${appRoot.path}/lib/features/ingest/data/vision_ingest_client.dart',
+      );
+      final oldCloudClient = File(
+        '${appRoot.path}/lib/features/ingest/data/cloud_ingest_client.dart',
+      );
+      final aiTrace = File(
+        '${appRoot.path}/lib/core/ai/contracts/ai_trace.dart',
+      );
+
+      expect(ingestGate.existsSync(), isTrue);
+      expect(ingestProviders.existsSync(), isTrue);
+      expect(visionClient.existsSync(), isTrue);
+      expect(oldCloudClient.existsSync(), isFalse);
+      expect(aiTrace.existsSync(), isTrue);
+
+      final combinedText =
+          '${ingestGate.readAsStringSync()}\n'
+          '${ingestProviders.readAsStringSync()}\n'
+          '${visionClient.readAsStringSync()}\n'
+          '${aiTrace.readAsStringSync()}';
+
+      expect(combinedText, isNot(contains('CloudIngest')));
+      expect(combinedText, isNot(contains('cloudAllowed')));
+      expect(combinedText, isNot(contains('layer4_cloud_vision')));
+      expect(combinedText, contains('VisionIngestClient'));
+      expect(combinedText, contains('providerVisionAllowed'));
+      expect(combinedText, contains('kDeviceVisionDirectRoutingReason'));
+      expect(combinedText, contains('backend: Backend.device'));
+    });
+
+    test('live mobile AI code does not point to deleted backend AI paths', () {
+      final liveFiles = [
+        Directory('${appRoot.path}/lib/core/ai'),
+        Directory('${appRoot.path}/lib/features'),
+      ].expand(_dartFiles).toList(growable: false);
+
+      final stalePath = RegExp(r'apps/backend/src/ai/');
+      for (final file in liveFiles) {
+        expect(
+          file.readAsStringSync(),
+          isNot(matches(stalePath)),
+          reason:
+              '${file.path} should not point maintainers at deleted backend '
+              'AI paths; use current device/runtime naming.',
+        );
+      }
+    });
+
+    test('AI architecture docs use current Vision ingest naming', () {
+      final repoRoot = appRoot.parent.parent;
+      final architecture = File('${repoRoot.path}/docs/ai-architecture.md');
+
+      expect(architecture.existsSync(), isTrue);
+      final text = architecture.readAsStringSync();
+      final ingestSection = _sectionBetween(
+        text,
+        '#### 5.10.x Layer 4 录入管道',
+        '## 6. 模块映射',
+      );
+
+      expect(ingestSection, contains('VisionIngestClient'));
+      expect(ingestSection, contains('UnavailableVisionIngestClient'));
+      expect(ingestSection, contains('provider Vision'));
+      expect(ingestSection, isNot(contains('CloudIngestClient')));
+      expect(ingestSection, isNot(contains('UnavailableCloudIngestClient')));
+      expect(ingestSection, isNot(contains('拒云端摄取')));
+    });
   });
 }
 
@@ -495,6 +637,16 @@ List<File> _testFiles(Directory root) {
       .where((file) => file.path.endsWith('_test.dart'))
       .where((file) => !file.path.endsWith('/test_database.dart'))
       .toList(growable: false);
+}
+
+Iterable<File> _dartFiles(Directory root) {
+  if (!root.existsSync()) return const [];
+  return root
+      .listSync(recursive: true)
+      .whereType<File>()
+      .where((file) => file.path.endsWith('.dart'))
+      .where((file) => !file.path.endsWith('.g.dart'))
+      .where((file) => !file.path.endsWith('.freezed.dart'));
 }
 
 int _countTestCases(Iterable<File> files) {
@@ -523,4 +675,11 @@ Directory _appRoot() {
   throw StateError(
     'Unable to locate apps/mobile root from ${Directory.current}',
   );
+}
+
+String _sectionBetween(String text, String startMarker, String endMarker) {
+  final start = text.indexOf(startMarker);
+  if (start < 0) return '';
+  final end = text.indexOf(endMarker, start + startMarker.length);
+  return end < 0 ? text.substring(start) : text.substring(start, end);
 }

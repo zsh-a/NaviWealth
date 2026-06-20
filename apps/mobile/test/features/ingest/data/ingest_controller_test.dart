@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/contracts/ai_trace.dart';
 import 'package:naviwealth/core/ai/contracts/privacy_mode_provider.dart';
 import 'package:naviwealth/core/ai/trace/providers.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
@@ -7,9 +8,9 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
-import 'package:naviwealth/features/ingest/data/cloud_ingest_client.dart';
 import 'package:naviwealth/features/ingest/data/ingest_draft_store.dart';
 import 'package:naviwealth/features/ingest/data/providers.dart';
+import 'package:naviwealth/features/ingest/data/vision_ingest_client.dart';
 import 'package:naviwealth/features/ingest/domain/ingest_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -30,7 +31,7 @@ void main() {
   });
 
   ProviderContainer buildContainer({
-    CloudIngestClient? cloudClient,
+    VisionIngestClient? visionClient,
     String ownerUserId = 'owner-1',
   }) {
     return ProviderContainer(
@@ -41,8 +42,8 @@ void main() {
         journalExpensesStreamProvider.overrideWith(
           (_) => Stream.value(const []),
         ),
-        if (cloudClient != null)
-          cloudIngestClientProvider.overrideWithValue(cloudClient),
+        if (visionClient != null)
+          visionIngestClientProvider.overrideWithValue(visionClient),
       ],
     );
   }
@@ -129,10 +130,10 @@ void main() {
     });
 
     test('privacy gate blocks Vision before touching the client', () async {
-      final cloud = _RecordingCloudIngestClient(
+      final vision = _RecordingVisionIngestClient(
         parsed: const <ParsedTransaction>[],
       );
-      final container = buildContainer(cloudClient: cloud);
+      final container = buildContainer(visionClient: vision);
       addTearDown(container.dispose);
       await readyStore(container);
       await container
@@ -152,11 +153,11 @@ void main() {
       expect(result.isRejected, isTrue);
       expect(result.rejectedReason, contains('模型解析'));
       expect(result.drafts, isEmpty);
-      expect(cloud.calls, 0);
+      expect(vision.calls, 0);
     });
 
     test('Vision path persists parsed drafts and trace metadata', () async {
-      final cloud = _RecordingCloudIngestClient(
+      final vision = _RecordingVisionIngestClient(
         parsed: [
           ParsedTransaction(
             description: 'Taxi receipt',
@@ -167,7 +168,7 @@ void main() {
           ),
         ],
       );
-      final container = buildContainer(cloudClient: cloud);
+      final container = buildContainer(visionClient: vision);
       addTearDown(container.dispose);
       final store = await readyStore(container);
 
@@ -188,10 +189,10 @@ void main() {
       expect(result.drafts.single.parsed.description, 'Taxi receipt');
       expect(result.drafts.single.parsed.currency, 'cny');
       expect(result.drafts.single.sourceKind, IngestSourceKind.receiptImage);
-      expect(cloud.calls, 1);
-      expect(cloud.lastKind, IngestSourceKind.receiptImage);
-      expect(cloud.lastMime, 'image/png');
-      expect(cloud.lastContentBase64, 'base64-image');
+      expect(vision.calls, 1);
+      expect(vision.lastKind, IngestSourceKind.receiptImage);
+      expect(vision.lastMime, 'image/png');
+      expect(vision.lastContentBase64, 'base64-image');
 
       final persisted = await store.listByStatus(DraftStatus.pending);
       expect(persisted, hasLength(1));
@@ -201,7 +202,8 @@ void main() {
       final traces = await container.read(aiTraceStoreProvider).recent();
       expect(traces, hasLength(1));
       expect(traces.single.requestId, result.drafts.single.traceId);
-      expect(traces.single.routingReason, 'layer4_cloud_vision');
+      expect(traces.single.backend, Backend.device);
+      expect(traces.single.routingReason, kDeviceVisionDirectRoutingReason);
       expect(
         traces.single.spans.map((span) => span.name),
         contains('tool:parse_receipt_image'),
@@ -237,8 +239,8 @@ void main() {
   });
 }
 
-final class _RecordingCloudIngestClient implements CloudIngestClient {
-  _RecordingCloudIngestClient({required this.parsed});
+final class _RecordingVisionIngestClient implements VisionIngestClient {
+  _RecordingVisionIngestClient({required this.parsed});
 
   final List<ParsedTransaction> parsed;
 

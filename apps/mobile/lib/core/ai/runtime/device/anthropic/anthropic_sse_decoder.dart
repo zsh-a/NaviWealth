@@ -1,7 +1,7 @@
 /// Anthropic SSE → [LlmStreamEvent] decoder.
 ///
 /// Faithful Dart port of
-/// `apps/backend/src/ai/adapters/anthropic/event_map.rs`. The backend
+/// the historical backend Anthropic event-map. The backend
 /// buffers the whole body then maps; on device we stream incrementally
 /// for progressive rendering. [mapAnthropicFrame] mirrors
 /// `map_sse_frame` 1:1 for frame-level parity tests.
