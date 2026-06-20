@@ -1179,6 +1179,72 @@ void main() {
     expect(journalRow.read<String?>('brokerage_account_id'), null);
     expect(journalRow.read<String?>('strike_price'), null);
 
+    await db.customStatement(
+      '''
+      INSERT INTO options_trade_journal (
+        id,
+        strategy,
+        symbol,
+        option_symbol,
+        opened_at,
+        entry_credit,
+        currency,
+        status,
+        owner_user_id,
+        updated_at,
+        updated_by_device,
+        hlc,
+        brokerage_account_id,
+        cash_account_id,
+        underlying_market,
+        strike_price,
+        contract_size
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      [
+        'otj-2',
+        'covered_call',
+        'MSFT',
+        'MSFT260117C00400000',
+        2,
+        '3.10',
+        'USD',
+        'open',
+        'u1',
+        2,
+        'dev1',
+        '2:dev1',
+        'brokerage-1',
+        'cash-1',
+        'us_stock',
+        '400',
+        100,
+      ],
+    );
+
+    final newJournalRow = await db
+        .customSelect(
+          '''
+          SELECT
+            symbol,
+            brokerage_account_id,
+            cash_account_id,
+            underlying_market,
+            strike_price,
+            contract_size
+          FROM options_trade_journal
+          WHERE id = ?
+          ''',
+          variables: [Variable.withString('otj-2')],
+        )
+        .getSingle();
+    expect(newJournalRow.read<String>('symbol'), 'MSFT');
+    expect(newJournalRow.read<String?>('brokerage_account_id'), 'brokerage-1');
+    expect(newJournalRow.read<String?>('cash_account_id'), 'cash-1');
+    expect(newJournalRow.read<String?>('underlying_market'), 'us_stock');
+    expect(newJournalRow.read<String?>('strike_price'), '400');
+    expect(newJournalRow.read<int?>('contract_size'), 100);
+
     final observations = await db
         .customSelect(
           "SELECT name FROM sqlite_master WHERE type='table' "

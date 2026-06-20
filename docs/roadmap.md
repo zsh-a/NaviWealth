@@ -42,9 +42,12 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 目标：把"已经摆上去但还没做完"的部分收尾，让 0.3.x 系列功能闭环。
 
 ### 1.1 补完占位模块
-- **`features/me/`、`features/more/`**：当前目录为空，需明确产品定位（个人中心？设置入口？快捷面板？）；与 `settings/`、`activity/` 的边界要画清，避免重复。
-- **`features/plan/`**：目前只是路由壳（2 个文件），转发到 FIRE / analytics / rebalance。建议要么做成统一的"理财规划工作台"（goal-driven 视图），要么直接合并入 FIRE，删除该模块。
-- **`features/portfolio/`**：作为 `assets/` 的薄包装存在；评估能否合并，或将其升级为"组合视角"（按账户/币种/资产类别多维聚合）。
+- **历史 `features/me/`、`features/more/`、`features/portfolio/`**：已不再是当前
+  feature 目录；组合入口由 `features/wealth/` 承接，个人/更多入口并入
+  settings / command palette。
+- **`features/plan/`**：保留为规划入口，当前通过 Plan hub 聚合 FIRE /
+  analytics / rebalance / options income 等决策面，并已有直接测试。后续重点是
+  提升信息密度和目标驱动编排，而不是恢复历史占位模块。
 
 ### 1.2 仪表盘洞察补全
 - `lib/features/home/data/dashboard_insights_provider.dart` 已接入 FIRE、再平衡偏离、到期提醒、支出异常、疑似重复扣款、上月回顾、现金流缺口、汇率缺失和 Layer 4 待确认队列。
@@ -56,8 +59,13 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 - 写入提案 `apps/backend/src/ai/proposals.rs` 的 guardrails 需要补充更细的 schema 校验与冲突回退路径。
 
 ### 1.4 活动 Feed（`features/activity/`）
-- 仅 4 个 UI 文件 + 1 个 domain 模型，缺少筛选（按账户、按时间、按事件类型）、分页、空状态/加载骨架、跳转到详情。
-- 缺 data/repository 层；建议明确：activity 是 oplog 投影还是独立事件流。
+- `features/activity/data/` 已落地 `ActivityFeedQuery` /
+  `activityFeedProvider`，按日期、账户、事件类型筛选，筛选条件同步到 URL
+  query。
+- UI 已有 filter sheet、inline kind chips、详情页、空态/加载骨架，以及
+  `loadMore()` 驱动的递增 page-size 分页基础。
+- 后续扩展重点：把当前 page-size 递增升级为真正 keyset pagination，补更多
+  事件类型和批量操作，而不是再补 data 层骨架。
 
 ### 1.5 Web 端体验补齐
 - 备份/恢复：`file_saver_stub.dart` / `file_saver_web.dart` 还是 stub，需走 File System Access API（Chromium）+ 下载兜底。
@@ -349,9 +357,8 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 |------|----------|------|
 | Backend 成本基础粗略近似 | `apps/backend/src/ai/tools.rs:34-39` | AI 提案对成本基础类问题的回答可能与客户端不一致 |
 | Web 端弱于原生的存储加密 | `core/db/connection_*.dart` | Web 端不应承诺与原生同等的安全等级 |
-| Activity Feed 业务深度仍可扩展 | `lib/features/activity/` | 已有筛选/详情基础，后续可继续补分页和更多事件类型 |
+| Activity Feed 业务深度仍可扩展 | `lib/features/activity/` | 已有 data/query/filter/detail 基础，后续可把 load-more 升级为 keyset pagination 并补更多事件类型 |
 | 单一后端路由表无 domain endpoint | `apps/backend/src/routes/` | 所有非 sync 查询走 oplog 物化，未来扩展可能撞瓶颈 |
-| Activity Feed 缺 data 层 | `lib/features/activity/` | 难以扩展过滤/分页/事件类型 |
 
 ---
 
@@ -368,12 +375,12 @@ Feed 业务能力、Web 安全提示/导出体验与 a11y 自动化。
 
 按"价值 / 完成度"两个维度，建议下一阶段优先做：
 
-1. **【收尾】** 补完仪表盘洞察 + activity feed → 用户每日打开就能看到的体验提升 (§1.2 / §1.4)
-2. **【收尾】** 深化 `plan` 规划入口的信息密度，并继续把历史占位模块的文档引用清理干净 (§1.1)
-3. **【拓展 / M1】** 多币种 dual-display 组件 → 是 §2.1 / §2.2 报表 UI 的前置（§2.3 M1）
-4. **【拓展 / M1】** 预算与现金流模块 MVP → 当前最显著的产品空白（§2.1 M1）
-5. **【基础 / M1】** 崩溃上报 opt-in 上线 → 给后续两个迭代提供观测反馈（§2.6 M1）
-6. **【基础】** 扩展业务 bundle E2E 与响应式 golden 覆盖 → 让后续大改不再心虚（§4.1）
+1. **【收尾】** 深化 Activity Feed 的 keyset pagination / 更多事件类型，以及 Plan
+   规划入口的信息密度 (§1.1 / §1.4)
+2. **【拓展 / M1】** 多币种 dual-display 组件 → 是 §2.1 / §2.2 报表 UI 的前置（§2.3 M1）
+3. **【拓展 / M1】** 预算与现金流模块 MVP → 当前最显著的产品空白（§2.1 M1）
+4. **【基础 / M1】** 崩溃上报 opt-in 上线 → 给后续两个迭代提供观测反馈（§2.6 M1）
+5. **【基础】** 扩展业务 bundle E2E 与响应式 golden 覆盖 → 让后续大改不再心虚（§4.1）
 
 剩余项可在 §1–4 的 backlog 中按 FIR 编号细化跟踪。中期 §2 的详细分解见每个工作流下的 M1/M2/M3 拆分。
 

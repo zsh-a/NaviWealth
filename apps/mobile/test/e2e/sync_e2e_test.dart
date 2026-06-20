@@ -127,7 +127,8 @@ void main() {
       expect(await cluster.isConverged('accounts'), isTrue);
     });
 
-    // Scenario 3: concurrent same-row writes converge under LWW.
+    // E2E-1 (phase1 P1-G): two devices concurrently write the same account
+    // row; LWW must choose one winning version and converge both replicas.
     test('concurrent same-row writes converge to a single value', () async {
       final cluster = SyncCluster();
       addTearDown(cluster.disposeAll);
@@ -217,7 +218,8 @@ void main() {
       expect(await cluster.isConverged('accounts'), isTrue);
     });
 
-    // Scenario 5: a large backlog drains across paged push/pull without loss.
+    // E2E-2 (phase1 P1-G): a device accumulates a large offline backlog and
+    // catches up after reconnect without losing rows across batch boundaries.
     test('large backlog drains across paged push/pull without loss', () async {
       final cluster = SyncCluster();
       addTearDown(cluster.disposeAll);

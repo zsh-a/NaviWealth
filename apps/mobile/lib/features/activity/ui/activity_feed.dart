@@ -161,10 +161,7 @@ class _FeedFooter extends ConsumerWidget {
                 onPress: ref.read(activityFeedQueryProvider.notifier).loadMore,
                 child: Text(l10n.activityFeedLoadMore),
               )
-            : Text(
-                l10n.activityFeedAllLoaded,
-                style: context.theme.typography.xs,
-              ),
+            : Text(l10n.activityFeedAllLoaded, style: context.captionStyle),
       ),
     );
   }

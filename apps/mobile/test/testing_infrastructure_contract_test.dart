@@ -131,6 +131,23 @@ void main() {
           reason: '$path should exercise the virtual multi-device harness',
         );
       }
+
+      final syncE2eText = File(
+        '${appRoot.path}/test/e2e/sync_e2e_test.dart',
+      ).readAsStringSync();
+      for (final marker in <String>[
+        'E2E-1 (phase1 P1-G)',
+        'E2E-2 (phase1 P1-G)',
+        'E2E-3 (phase1 P1-G)',
+        'E2E-4 (phase1 P1-G)',
+        'E2E-5 (phase1 P1-G)',
+      ]) {
+        expect(
+          syncE2eText,
+          contains(marker),
+          reason: 'P1-G sync E2E coverage marker missing: $marker',
+        );
+      }
     });
 
     test('review-priority modules keep direct test coverage', () {
@@ -398,6 +415,75 @@ void main() {
       expect(text, contains('50 PNG baselines'));
       expect(text, contains('sync_status_page_golden_test.dart'));
     });
+
+    test('Phase 1 roadmap testing status matches current contracts', () {
+      final repoRoot = appRoot.parent.parent;
+      final roadmap = File('${repoRoot.path}/docs/roadmap-phase1.md');
+
+      expect(roadmap.existsSync(), isTrue);
+      final text = roadmap.readAsStringSync();
+      expect(text, contains('| P1-H 测试覆盖空白补齐 | ✅ 完成 |'));
+      expect(text, contains('Phase 1 实现项已收口'));
+      expect(text, contains('发布级 gate'));
+      expect(text, contains('[x] 5 个 E2E sync 用例稳定通过'));
+      expect(text, isNot(contains('仅剩 P1-H')));
+    });
+
+    test('roadmap activity feed status matches current implementation', () {
+      final repoRoot = appRoot.parent.parent;
+      final roadmap = File('${repoRoot.path}/docs/roadmap.md');
+      final phase1 = File('${repoRoot.path}/docs/roadmap-phase1.md');
+      final activityRepositoryTest = File(
+        '${appRoot.path}/test/features/finance/data/repositories/journal_entry_repository_test.dart',
+      );
+
+      expect(roadmap.existsSync(), isTrue);
+      expect(phase1.existsSync(), isTrue);
+      expect(activityRepositoryTest.existsSync(), isTrue);
+      final roadmapText = roadmap.readAsStringSync();
+      final phase1Text = phase1.readAsStringSync();
+      final activityRepositoryTestText = activityRepositoryTest
+          .readAsStringSync();
+
+      for (final text in [roadmapText, phase1Text]) {
+        expect(text, isNot(contains('lib/features/activity/data/` 是空目录')));
+        expect(text, isNot(contains('缺 data/repository 层')));
+      }
+      expect(roadmapText, contains('ActivityFeedQuery'));
+      expect(roadmapText, contains('activityFeedProvider'));
+      expect(roadmapText, contains('keyset pagination'));
+      expect(roadmapText, isNot(contains('Activity Feed 缺 data 层')));
+      expect(phase1Text, contains('activity_feed_query.dart'));
+      expect(phase1Text, contains('activity_feed_provider.dart'));
+      expect(phase1Text, contains('page-size 递增'));
+      expect(
+        activityRepositoryTestText,
+        contains('empty source reports no additional pages'),
+      );
+      expect(
+        activityRepositoryTestText,
+        contains('SQL filters with no matches report no additional pages'),
+      );
+    });
+
+    test(
+      'roadmap IA status does not reference retired feature placeholders',
+      () {
+        final repoRoot = appRoot.parent.parent;
+        final roadmap = File('${repoRoot.path}/docs/roadmap.md');
+
+        expect(roadmap.existsSync(), isTrue);
+        final text = roadmap.readAsStringSync();
+        expect(
+          text,
+          contains('历史 `features/me/`、`features/more/`、`features/portfolio/`'),
+        );
+        expect(text, contains('features/wealth/'));
+        expect(text, contains('Plan hub'));
+        expect(text, isNot(contains('当前目录为空')));
+        expect(text, isNot(contains('作为 `assets/` 的薄包装存在')));
+      },
+    );
   });
 }
 

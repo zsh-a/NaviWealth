@@ -314,6 +314,36 @@ void main() {
   });
 
   group('queryActivityFeed', () {
+    test('empty source reports no additional pages', () async {
+      final page = await repo.queryActivityFeed(
+        accountCategories: const {},
+        pageSize: 10,
+      );
+
+      expect(page.entries, isEmpty);
+      expect(page.hasMore, isFalse);
+    });
+
+    test('SQL filters with no matches report no additional pages', () async {
+      await repo.create(
+        entry: JournalEntryDraft(
+          id: 'je-cash',
+          date: DateTime.utc(2026, 5, 1),
+          narration: 'Cash movement',
+        ),
+        postings: [cashLeg('cash', '-1'), cashLeg('food', '1')],
+      );
+
+      final page = await repo.queryActivityFeed(
+        accountIds: {'missing-account'},
+        accountCategories: const {},
+        pageSize: 10,
+      );
+
+      expect(page.entries, isEmpty);
+      expect(page.hasMore, isFalse);
+    });
+
     test('uses SQL-backed date/account filters and keyset ordering', () async {
       await repo.create(
         entry: JournalEntryDraft(

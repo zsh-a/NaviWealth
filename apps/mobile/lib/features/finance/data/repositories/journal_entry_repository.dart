@@ -174,7 +174,10 @@ class JournalEntryRepository {
         after: cursor,
         limit: batchSize,
       );
-      if (rows.isEmpty) break;
+      if (rows.isEmpty) {
+        sourceExhausted = true;
+        break;
+      }
 
       final entries = rows.map(_journalToDomain).toList(growable: false);
       final page = await _entriesWithPostings(entries);

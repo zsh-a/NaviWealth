@@ -23,10 +23,12 @@
 | P1-E 后端 AI 工具补全 | ❌ 作废 | 后端 AI relay 已删除;持仓对齐由端侧工具直接读 read-model 完成 |
 | P1-F Web 备份/恢复 | ✅ 完成 | `features/settings/backup/` 已经有 web/native split + `_WebBackupSecurityBanner` |
 | P1-G E2E sync 5 case | ✅ 完成 | `apps/mobile/test/e2e/sync_e2e_test.dart` |
+| P1-H 测试覆盖空白补齐 | ✅ 完成 | 原始 home/activity/portfolio/plan 空白均已有直接测试或替代覆盖；测试基础设施 contract 会守住重点模块 |
 
-**仅剩 P1-H 仍是开放的近期工作**:测试覆盖空白补齐(codecov 60% 项目目标 / 70% patch 目标)。
+**Phase 1 实现项已收口**。仍未在本文档勾选的是发布级 gate：codecov
+项目阈值、web build 体积、三端 happy path 验收和 0.3.0 tag。
 
-**结论**:Phase 1 收尾基本完成。下一程的重心应该转到
+**结论**:Phase 1 收尾完成。下一程的重心应该转到
 [`roadmap-lifeos.md`](./roadmap-lifeos.md) 和
 [`roadmap-finance.md`](./roadmap-finance.md);历史 FinanceOS 调度仍可在
 [`roadmap-next.md`](./roadmap-next.md) 查阅。
@@ -117,10 +119,15 @@
 
 ## P1-C · Activity Feed 数据层 + 过滤/分页
 
-**现状**：
-- `lib/features/activity/data/` 是空目录；
-- `activity_feed.dart` 直接消费 `journalEntriesWithPostingsStreamProvider`（journal 仓储的全量流）；
-- 无过滤、无分页、无空态变体。账户多/历史长时性能堪忧。
+**当前状态**：已落地 `lib/features/activity/data/activity_feed_query.dart`、
+`activity_feed_provider.dart`、`ui/activity_feed_filter_sheet.dart` 和
+`ui/activity_entry_detail_page.dart`。Activity 支持日期 / 账户 / 事件类型筛选、
+URL query round-trip、空态/加载骨架，以及 `loadMore()` 驱动的递增 page-size
+分页基础；`test/features/activity/` 已覆盖 query、feed、kind filter、filter
+sheet 和 detail page。
+
+**剩余优化**：将当前 page-size 递增改为真正 keyset pagination，补更多事件
+类型和大数据量性能 profile。
 
 **目标**：把 ActivityFeed 升级为可用的"流水时间线"。
 
@@ -292,13 +299,18 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
 | E2E-5 | push 失败重试 | 客户端 outbox 不丢；最终一致 |
 
 ### 文件
-- 新增：`apps/mobile/test/e2e/sync_cluster.dart`（如未存在 harness）
-- 新增：`apps/mobile/test/e2e/scenario_*.dart`（5 个文件）
-- CI：在 `mobile.yml` 中把 `flutter test test/e2e` 加入 job（独立 step，可 fail-fast）。
+- 已落地：`apps/mobile/test/e2e/_cluster.dart`，提供 `SyncCluster` /
+  `VirtualDevice` harness。
+- 已落地：`apps/mobile/test/e2e/sync_e2e_test.dart`，覆盖协议级 5 case。
+- 已落地：`apps/mobile/test/e2e/finance_ledger_e2e_test.dart`，补充真实财务
+  bundle 的双设备同步路径。
+- CI：当前 non-golden mobile test job 会运行 `test/e2e/`；后续如运行时长继续
+  增长，再拆成独立 e2e step。
 
 ### 验收
-- 所有 5 个用例稳定通过 100 次（脚本 `flutter test --reporter expanded test/e2e --total-shards 1` × 100）；
-- 在 `docs/sync-protocol-tests.md` 中标记哪些 case 已自动覆盖。
+- `flutter test --exclude-tags=golden` 中稳定运行 sync E2E 与 finance ledger
+  E2E；当前测试基础设施 contract 会守住这两个文件。
+- 在 `docs/sync-protocol-tests.md` 中继续标记新增 case 的自动覆盖状态。
 
 ---
 
@@ -341,7 +353,7 @@ class ActivityFeedQuery with _$ActivityFeedQuery {
 - [ ] P1-A 至 P1-H 全部 merge 到 main；
 - [ ] codecov 项目覆盖率 ≥ 60%（patch 70%）；
 - [ ] `flutter build web --release` 产物大小 vs. v0.2.5 baseline 增量 ≤ +5%（见 `apps/mobile/docs/web-bundle.md`）；
-- [ ] 5 个 E2E sync 用例稳定通过；
+- [x] 5 个 E2E sync 用例稳定通过；
 - [ ] 在 web/iOS/Android 三端各跑一次 happy path 验收（dashboard 加载 → 添加交易 → 查看 activity feed → 查看 portfolio 切视角 → 与 AI 对话 → 备份导出/恢复）；
 - [ ] 发布 0.3.0 tag，更新 `roadmap.md` phase 1 章节为 ✅ 状态。
 

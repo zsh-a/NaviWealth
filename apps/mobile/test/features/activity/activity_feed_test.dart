@@ -81,6 +81,8 @@ JournalEntryWithPostings _entry({
 Widget _wrap({
   required List<JournalEntryWithPostings> entries,
   required List<Account> accounts,
+  bool hasMore = false,
+  bool isFiltered = false,
 }) {
   return ProviderScope(
     overrides: [
@@ -89,8 +91,8 @@ Widget _wrap({
           ActivityFeedPage(
             entries: entries,
             totalCount: entries.length,
-            hasMore: false,
-            isFiltered: false,
+            hasMore: hasMore,
+            isFiltered: isFiltered,
             accountsById: {for (final account in accounts) account.id: account},
           ),
         ),
@@ -167,6 +169,100 @@ void main() {
     expect(find.text('Coffee'), findsOneWidget);
     expect(find.text('Blue Bottle'), findsOneWidget);
     expect(find.text('-¥32'), findsOneWidget);
+  });
+
+  testWidgets('shows load-more footer when another page exists', (
+    tester,
+  ) async {
+    await _enlarge(tester);
+    final accounts = [
+      _account(
+        id: 'expenses:food',
+        name: 'Food',
+        category: AccountSide.expense,
+      ),
+      _account(
+        id: 'assets:wallet',
+        name: 'Wallet',
+        category: AccountSide.asset,
+      ),
+    ];
+    final today = DateTime.now();
+    final entry = _entry(
+      id: 'je-coffee',
+      date: DateTime(today.year, today.month, today.day, 10, 5),
+      narration: 'Coffee',
+      postings: [
+        _posting(
+          id: 'p-food',
+          journalEntryId: 'je-coffee',
+          accountId: 'expenses:food',
+          units: '32',
+        ),
+        _posting(
+          id: 'p-wallet',
+          journalEntryId: 'je-coffee',
+          accountId: 'assets:wallet',
+          units: '-32',
+          position: 1,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrap(entries: [entry], accounts: accounts, hasMore: true),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Load more'), findsOneWidget);
+    expect(find.text('All activity loaded'), findsNothing);
+  });
+
+  testWidgets('shows all-loaded footer when the page is exhausted', (
+    tester,
+  ) async {
+    await _enlarge(tester);
+    final accounts = [
+      _account(
+        id: 'expenses:food',
+        name: 'Food',
+        category: AccountSide.expense,
+      ),
+      _account(
+        id: 'assets:wallet',
+        name: 'Wallet',
+        category: AccountSide.asset,
+      ),
+    ];
+    final today = DateTime.now();
+    final entry = _entry(
+      id: 'je-coffee',
+      date: DateTime(today.year, today.month, today.day, 10, 5),
+      narration: 'Coffee',
+      postings: [
+        _posting(
+          id: 'p-food',
+          journalEntryId: 'je-coffee',
+          accountId: 'expenses:food',
+          units: '32',
+        ),
+        _posting(
+          id: 'p-wallet',
+          journalEntryId: 'je-coffee',
+          accountId: 'assets:wallet',
+          units: '-32',
+          position: 1,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrap(entries: [entry], accounts: accounts, hasMore: false),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Load more'), findsNothing);
+    expect(find.text('All activity loaded'), findsOneWidget);
   });
 
   testWidgets('expands a journal row to reveal posting details', (
