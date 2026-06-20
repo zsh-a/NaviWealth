@@ -85,9 +85,9 @@ class _ChatComposerState extends State<ChatComposer> {
         color: context.theme.colors.background,
         border: Border(
           top: BorderSide(
-            color: Theme.of(
-              context,
-            ).colorScheme.outlineVariant.withValues(alpha: AppOpacity.scrim),
+            color: context.theme.colors.border.withValues(
+              alpha: AppOpacity.scrim,
+            ),
           ),
         ),
       ),

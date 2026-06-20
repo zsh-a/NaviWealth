@@ -107,9 +107,7 @@ class _LiabilityHeaderCard extends ConsumerWidget {
               '${liabilityTypeLabel(l10n, l.type)} · '
               '${repaymentMethodLabel(l10n, l.paymentMethod)} · '
               '${rateTypeLabel(l10n, l.rateType)}',
-              style: context.theme.typography.xs.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
+              style: context.captionStyle,
             ),
             const SizedBox(height: AppSpacing.s12),
             Text(
@@ -180,9 +178,7 @@ class _LiabilitySummaryCard extends ConsumerWidget {
                   summary.paidPeriods,
                   summary.totalPeriods,
                 ),
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
+                style: context.captionStyle,
               ),
             ],
           ],
@@ -304,6 +300,7 @@ class _AmortizationHeaderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = context.theme.typography.xs2;
+    const actionColumnWidth = AppSpacing.s40 * 3;
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s16,
@@ -343,7 +340,7 @@ class _AmortizationHeaderRow extends StatelessWidget {
               textAlign: TextAlign.right,
             ),
           ),
-          const SizedBox(width: 120),
+          const SizedBox(width: actionColumnWidth),
         ],
       ),
     );
@@ -368,6 +365,7 @@ class _AmortizationDataRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textStyle = context.theme.typography.xs;
+    const actionColumnWidth = AppSpacing.s40 * 3;
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s16,
@@ -408,7 +406,7 @@ class _AmortizationDataRow extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 120,
+            width: actionColumnWidth,
             child: row.paidAt != null
                 ? FBadge(child: Text(l10n.liabilityScheduleStatusPaid))
                 : FButton(

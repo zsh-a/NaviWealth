@@ -132,7 +132,7 @@ class _StrategyProfileSheetState extends ConsumerState<_StrategyProfileSheet> {
     if (draft == null) {
       return AppSheet(
         title: l10n.incomePlannerProfileTitle,
-        child: const SizedBox(height: 80),
+        child: const SizedBox(height: AppSpacing.s40 * 2),
       );
     }
     return AppSheet(

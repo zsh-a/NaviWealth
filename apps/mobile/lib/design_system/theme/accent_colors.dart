@@ -30,7 +30,7 @@ class AccentColors {
   /// Soft tinted background (insight cards, chip backgrounds).
   static Color tint(Brightness brightness) => brightness == Brightness.dark
       ? ColorPalette.cyanBrand900
-      : const Color(0xFFEAF4F5);
+      : ColorPalette.neutralTint;
 
   /// Mid-saturation series color used by charts.
   static const Color series = ColorPalette.cyanBrand600;
@@ -41,5 +41,5 @@ class AccentColors {
 
   /// Warm orange secondary accent — low-frequency highlights (badges,
   /// special callouts). Not used for primary interactions.
-  static const Color secondary = Color(0xFFFA6400);
+  static const Color secondary = ColorPalette.secondary500;
 }

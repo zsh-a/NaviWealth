@@ -85,15 +85,17 @@ class NaviWealthApp extends ConsumerWidget {
             primary: AccentColors.primary(brightness),
             primaryForeground: AccentColors.onPrimary(brightness),
             background: isDark
-                ? const Color(0xFF0A1F28)
-                : const Color(0xFFF6F9F9),
+                ? ColorPalette.navy950
+                : ColorPalette.neutralGlass,
             foreground: isDark ? ColorPalette.navy50 : ColorPalette.navy900,
             mutedForeground: isDark
                 ? ColorPalette.navy400
                 : ColorPalette.navy400,
-            card: isDark ? const Color(0xFF0F2A35) : const Color(0xFFFFFFFF),
-            border: isDark ? ColorPalette.navy800 : const Color(0xFFE3ECEE),
-            muted: isDark ? const Color(0xFF0F2A35) : const Color(0xFFEEF5F5),
+            card: isDark ? ColorPalette.navyGlass : ColorPalette.neutral0,
+            border: isDark
+                ? ColorPalette.navy800
+                : ColorPalette.neutralGlassBorder,
+            muted: isDark ? ColorPalette.navyGlass : ColorPalette.neutralTint,
           ),
         );
         // Sync brightnessProvider so marketColorsProvider derives correctly.

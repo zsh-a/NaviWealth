@@ -328,7 +328,7 @@ class _TrendCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.s6),
             Text(
               spec.subtitle,
-              style: typography.xs.copyWith(color: colors.mutedForeground),
+              style: context.captionStyle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -352,9 +352,7 @@ class _TrendCard extends StatelessWidget {
                   return Center(
                     child: Text(
                       AppLocalizations.of(context).healthTrendNotEnoughData,
-                      style: typography.xs.copyWith(
-                        color: colors.mutedForeground,
-                      ),
+                      style: context.captionStyle,
                     ),
                   );
                 }

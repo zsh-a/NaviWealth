@@ -9,7 +9,9 @@
 /// chrome. If a brand refresh changes the palette, update this file only.
 library;
 
-import 'dart:ui';
+import 'package:flutter/painting.dart';
+
+import '../../../design_system/design_system.dart';
 
 /// Accent color per health metric identity.
 ///
@@ -17,9 +19,9 @@ import 'dart:ui';
 /// distinct accents, while individual metrics inherit from their group. Trend
 /// charts still keep semantic identity without turning the page into a rainbow.
 abstract final class HealthMetricColors {
-  static const Color recovery = Color(0xFF0F766E); // teal
-  static const Color activity = Color(0xFF2563EB); // blue
-  static const Color body = Color(0xFF7C3AED); // violet
+  static const Color recovery = ColorPalette.cyanBrand700;
+  static const Color activity = ColorPalette.brand500;
+  static const Color body = ColorPalette.violet500;
 
   // ── Recovery ──────────────────────────────────────────────────────
   static const Color hrv = recovery;

@@ -119,7 +119,7 @@ class ExpenseTrendCard extends StatelessWidget {
                   );
                 }
                 return SizedBox(
-                  height: 220,
+                  height: AppChartHeights.full,
                   child: NwBarChart(
                     series: [
                       CategorySeries(
@@ -295,12 +295,7 @@ class _PieLegend extends StatelessWidget {
             ),
           ),
         if (report.byCategory.isEmpty)
-          Text(
-            l10n.expenseReportNoExpenses,
-            style: context.theme.typography.xs.copyWith(
-              color: context.theme.colors.mutedForeground,
-            ),
-          ),
+          Text(l10n.expenseReportNoExpenses, style: context.captionStyle),
       ],
     );
   }
@@ -356,9 +351,7 @@ class _LegendRow extends StatelessWidget {
                   ),
                   Text(
                     '${(percent * 100).toStringAsFixed(1)}%',
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                    style: context.captionStyle,
                   ),
                 ],
               ),
@@ -447,9 +440,7 @@ class _CategoryTile extends StatelessWidget {
                   const SizedBox(height: AppSpacing.s2),
                   Text(
                     l10n.expenseReportItemCount(breakdown.items.length),
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                    style: context.captionStyle,
                   ),
                 ],
               ),
@@ -544,9 +535,7 @@ class _CategoryDrillDown extends StatelessWidget {
               const SizedBox(height: AppSpacing.s4),
               Text(
                 l10n.expenseReportItemCount(entries.length),
-                style: context.theme.typography.xs.copyWith(
-                  color: context.theme.colors.mutedForeground,
-                ),
+                style: context.captionStyle,
               ),
               const SizedBox(height: AppSpacing.s12),
               const FDivider(),
@@ -612,9 +601,7 @@ class _ExpenseLine extends StatelessWidget {
                   const SizedBox(height: AppSpacing.s2),
                   Text(
                     formatter.date(expense.tradeDate),
-                    style: context.theme.typography.xs.copyWith(
-                      color: context.theme.colors.mutedForeground,
-                    ),
+                    style: context.captionStyle,
                   ),
                 ],
               ),

@@ -150,7 +150,6 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     final typography = context.theme.typography;
     final optIns = ref.watch(core_auth.domainOptInsProvider).value;
     final enabled = optIns?.contains(DomainScope.health) ?? false;
@@ -183,7 +182,7 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
                 const SizedBox(height: AppSpacing.s2),
                 Text(
                   _healthKitText(l10n, enabled),
-                  style: typography.xs.copyWith(color: colors.mutedForeground),
+                  style: context.captionStyle,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -242,8 +241,8 @@ class _RecoveryHero extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(recoverySignalProvider);
-    final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final colors = context.theme.colors;
     return SoftCard(
       level: SoftCardLevel.hero,
       padding: const EdgeInsets.all(AppSpacing.s16),
@@ -639,8 +638,8 @@ class _SleepStageBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final colors = context.theme.colors;
     if (totalSeconds <= 0) return const SizedBox.shrink();
 
     final deepPct = deepSeconds / totalSeconds;
@@ -1244,8 +1243,8 @@ class _TrendBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final dir = trend.direction;
     if (dir == TrendDirection.flat) return const SizedBox.shrink();
-    final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final colors = context.theme.colors;
     final isUp = dir == TrendDirection.up;
     final color = isUp ? colors.primary : colors.destructive;
     final arrow = isUp ? '↑' : '↓';
@@ -1262,8 +1261,8 @@ class _ValueDash extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final typography = context.theme.typography;
+    final colors = context.theme.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1346,7 +1345,6 @@ class _HealthPanelHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     final typography = context.theme.typography;
     return Row(
       children: [
@@ -1372,7 +1370,7 @@ class _HealthPanelHeader extends StatelessWidget {
               const SizedBox(height: AppSpacing.s2),
               Text(
                 subtitle,
-                style: typography.xs.copyWith(color: colors.mutedForeground),
+                style: context.captionStyle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1397,7 +1395,6 @@ class _InlineEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.muted.withValues(alpha: AppOpacity.subtle),
@@ -1412,7 +1409,7 @@ class _InlineEmptyState extends StatelessWidget {
             Expanded(
               child: Text(
                 message,
-                style: typography.xs.copyWith(color: colors.mutedForeground),
+                style: context.captionStyle,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

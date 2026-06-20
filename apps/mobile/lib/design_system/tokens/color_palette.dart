@@ -72,6 +72,7 @@ class ColorPalette {
   static const Color neutral0 = Color(0xFFFFFFFF);
   static const Color neutral50 = Color(0xFFF7F8FA);
   static const Color neutral75 = Color(0xFFF1F5F5); // cool-toned surface tint
+  static const Color neutralTint = Color(0xFFEAF4F5);
   static const Color neutralGlass = Color(0xFFF7FAFA);
   static const Color neutralGlassBorder = Color(0xFFE3ECEE);
   static const Color neutralCardRaised = Color(0xFFF7FBFB);
@@ -191,7 +192,7 @@ class ExpenseCategoryColors {
   static const Color indigo = Color(0xFF6366F1); // home
   static const Color slate = Color(0xFF64748B); // apartment
   static const Color yellow = Color(0xFFEAB308); // utilities (bolt)
-  static const Color teal = ColorPalette.teal500; // furniture (chair)
+  static const Color teal = ColorPalette.cyanBrand500; // furniture (chair)
   static const Color purple = Color(
     0xFFA855F7,
   ); // entertainment (esports, movie)

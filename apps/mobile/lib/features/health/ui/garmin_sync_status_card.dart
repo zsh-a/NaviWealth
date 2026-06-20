@@ -4,7 +4,7 @@
 library;
 
 import 'package:flutter/material.dart'
-    show LinearProgressIndicator, AlwaysStoppedAnimation, showAdaptiveDialog;
+    show AlwaysStoppedAnimation, LinearProgressIndicator;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -138,7 +138,11 @@ class _Restoring extends StatelessWidget {
           ),
         ),
         const SizedBox(width: AppSpacing.s8),
-        const SizedBox(width: 14, height: 14, child: FProgress()),
+        const SizedBox(
+          width: AppIconSizes.xs,
+          height: AppIconSizes.xs,
+          child: FProgress(),
+        ),
       ],
     );
   }
@@ -187,8 +191,6 @@ class _Connected extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
 
     return Column(
@@ -214,7 +216,7 @@ class _Connected extends StatelessWidget {
                   '$totalMetrics',
                   _formatRelative(l10n, lastSyncAt!),
                 ),
-                style: typography.xs.copyWith(color: colors.mutedForeground),
+                style: context.captionStyle,
               ),
           ],
         ),
@@ -247,23 +249,14 @@ class _Connected extends StatelessWidget {
     WidgetRef ref,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showAdaptiveDialog<bool>(
+    final confirmed = await showConfirmDialog(
       context: context,
-      builder: (dialogCtx) => FDialog(
-        title: Text(l10n.healthGarminDisconnectTitle),
-        body: Text(l10n.healthGarminDisconnectBody),
-        actions: [
-          FButton(
-            variant: FButtonVariant.outline,
-            onPress: () => Navigator.pop(dialogCtx, false),
-            child: Text(l10n.healthGarminCancel),
-          ),
-          FButton(
-            onPress: () => Navigator.pop(dialogCtx, true),
-            child: Text(l10n.healthGarminDisconnect),
-          ),
-        ],
-      ),
+      title: Text(l10n.healthGarminDisconnectTitle),
+      body: Text(l10n.healthGarminDisconnectBody),
+      cancelLabel: l10n.healthGarminCancel,
+      confirmLabel: l10n.healthGarminDisconnect,
+      destructive: true,
+      icon: FLucideIcons.unlink,
     );
     if (confirmed == true && context.mounted) {
       await ref
@@ -279,7 +272,6 @@ class _Syncing extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
     final state =
         ref.watch(health_data.garminSyncControllerProvider) as GarminSyncing;
@@ -332,18 +324,19 @@ class _Syncing extends ConsumerWidget {
               state.totalDays.toString(),
               state.metricsCount.toString(),
             ),
-            style: typography.xs.copyWith(color: colors.mutedForeground),
+            style: context.captionStyle,
           ),
         ] else ...[
           const SizedBox(height: AppSpacing.s4),
           Row(
             children: [
-              const SizedBox(width: 14, height: 14, child: FProgress()),
-              const SizedBox(width: AppSpacing.s8),
-              Text(
-                l10n.healthGarminSyncingData,
-                style: typography.xs.copyWith(color: colors.mutedForeground),
+              const SizedBox(
+                width: AppIconSizes.xs,
+                height: AppIconSizes.xs,
+                child: FProgress(),
               ),
+              const SizedBox(width: AppSpacing.s8),
+              Text(l10n.healthGarminSyncingData, style: context.captionStyle),
             ],
           ),
         ],
@@ -359,8 +352,6 @@ class _Error extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
     return Row(
       children: [
@@ -381,7 +372,7 @@ class _Error extends StatelessWidget {
               const SizedBox(height: AppSpacing.s2),
               Text(
                 _issueMessage(l10n, issue),
-                style: typography.xs.copyWith(color: colors.mutedForeground),
+                style: context.captionStyle,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

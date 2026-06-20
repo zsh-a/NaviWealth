@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -114,7 +112,10 @@ class BackupPage extends ConsumerWidget {
     }
     if (!context.mounted) return;
 
-    final dismiss = _showProgressSheet(context, l10n.backupExportProgress);
+    final dismiss = await showProgressDialog(
+      context: context,
+      message: l10n.backupExportProgress,
+    );
 
     try {
       final sw = Stopwatch()..start();
@@ -197,7 +198,10 @@ class BackupPage extends ConsumerWidget {
     }
     if (!context.mounted) return;
 
-    final dismiss = _showProgressSheet(context, l10n.backupImportProgress);
+    final dismiss = await showProgressDialog(
+      context: context,
+      message: l10n.backupImportProgress,
+    );
 
     try {
       final sw = Stopwatch()..start();
@@ -278,33 +282,6 @@ class BackupPage extends ConsumerWidget {
       builder: (_) =>
           _RestoreConfirmSheet(title: l10n.backupConfirmRestoreTitle),
     );
-  }
-
-  /// Shows a non-dismissable progress indicator and returns a callback
-  /// that dismisses it. Uses [showFDialog] which creates its own
-  /// Navigator scope, so `Navigator.of(context).pop()` only dismisses
-  /// the dialog (not the underlying GoRouter page).
-  Future<void> Function() _showProgressSheet(
-    BuildContext context,
-    String message,
-  ) {
-    final completer = Completer<VoidCallback>();
-    showFDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx, style, animation) => FDialog.raw(
-        builder: (innerCtx, _) => _ProgressSheet(
-          message: message,
-          onReady: (dismiss) {
-            if (!completer.isCompleted) completer.complete(dismiss);
-          },
-        ),
-      ),
-    );
-    return () async {
-      final dismiss = await completer.future;
-      dismiss();
-    };
   }
 }
 
@@ -445,53 +422,5 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
       return;
     }
     Navigator.of(context).pop(_controller.text);
-  }
-}
-
-class _ProgressSheet extends StatefulWidget {
-  const _ProgressSheet({required this.message, required this.onReady});
-
-  final String message;
-
-  /// Called once the sheet's State is mounted with a dismiss callback that
-  /// pops the route from the sheet's own Navigator context.
-  final ValueChanged<VoidCallback> onReady;
-
-  @override
-  State<_ProgressSheet> createState() => _ProgressSheetState();
-}
-
-class _ProgressSheetState extends State<_ProgressSheet> {
-  @override
-  void initState() {
-    super.initState();
-    // Deliver the dismiss callback once we're safely mounted.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) widget.onReady(_dismiss);
-    });
-  }
-
-  void _dismiss() {
-    if (mounted) Navigator.of(context).pop();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s24,
-        vertical: AppSpacing.s24,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const FCircularProgress(),
-          const SizedBox(width: AppSpacing.s16),
-          Flexible(
-            child: Text(widget.message, style: context.theme.typography.sm),
-          ),
-        ],
-      ),
-    );
   }
 }

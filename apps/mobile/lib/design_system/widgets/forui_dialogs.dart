@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -78,6 +79,43 @@ Future<bool?> showInfoDialog(
       ),
     ),
   );
+}
+
+/// Show a non-dismissable progress dialog and return a callback that closes it.
+Future<Future<void> Function()> showProgressDialog({
+  required BuildContext context,
+  required String message,
+}) async {
+  final completer = Completer<VoidCallback>();
+  unawaited(
+    showFDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx, style, animation) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!completer.isCompleted) {
+            completer.complete(() => Navigator.of(ctx).pop());
+          }
+        });
+        return _DialogFrame(
+          child: _GlassDialog(
+            accentColor: FTheme.of(ctx).colors.primary,
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const FCircularProgress(),
+                const SizedBox(width: AppSpacing.s16),
+                Flexible(child: Text(message)),
+              ],
+            ),
+            actions: const [],
+          ),
+        );
+      },
+    ),
+  );
+  final dismiss = await completer.future;
+  return () async => dismiss();
 }
 
 class _DialogButtonLabel extends StatelessWidget {
@@ -202,16 +240,16 @@ class _GlassDialog extends StatelessWidget {
                   ],
                 ),
               ),
-              // Action buttons.
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.s20,
-                  AppSpacing.s4,
-                  AppSpacing.s20,
-                  AppSpacing.s20,
+              if (actions.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s20,
+                    AppSpacing.s4,
+                    AppSpacing.s20,
+                    AppSpacing.s20,
+                  ),
+                  child: _DialogActions(actions: actions),
                 ),
-                child: _DialogActions(actions: actions),
-              ),
             ],
           ),
         ),

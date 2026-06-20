@@ -78,4 +78,35 @@ void main() {
     expect(dialogSize.height, greaterThan(120));
     expect(dialogSize.width, lessThanOrEqualTo(460));
   });
+
+  testWidgets('progress dialog can be dismissed by returned callback', (
+    tester,
+  ) async {
+    late Future<Future<void> Function()> dismissFuture;
+    await tester.pumpWidget(
+      _wrap(
+        Builder(
+          builder: (context) => FButton(
+            onPress: () {
+              dismissFuture = showProgressDialog(
+                context: context,
+                message: 'Exporting backup',
+              );
+            },
+            child: const Text('Open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('Exporting backup'), findsOneWidget);
+    final dismiss = await dismissFuture;
+    await dismiss();
+    await tester.pumpAndSettle();
+    expect(find.text('Exporting backup'), findsNothing);
+  });
 }
