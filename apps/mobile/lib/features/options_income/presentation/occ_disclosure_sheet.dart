@@ -1,11 +1,15 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/options_strategy_profile.dart';
+
+const String _kOccOddUrl =
+    'https://www.theocc.com/company-information/documents-and-archives/options-disclosure-document';
 
 /// First-run OCC ODD disclosure (`docs/options-income.md` §11.2).
 ///
@@ -60,6 +64,20 @@ class _OccDisclosureSheetState extends ConsumerState<_OccDisclosureSheet> {
     }
   }
 
+  Future<void> _openOdd() async {
+    final launched = await launchUrl(
+      Uri.parse(_kOccOddUrl),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched && mounted) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        AppLocalizations.of(context).aiChatLinkOpenFailed,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -81,12 +99,21 @@ class _OccDisclosureSheetState extends ConsumerState<_OccDisclosureSheet> {
             style: context.bodyCaptionStyle.copyWith(height: 1.45),
           ),
           const SizedBox(height: AppSpacing.s16),
-          // External-link affordance is a stub for P0 (no in-app browser
-          // wiring); a real link to the OCC ODD PDF will be added with
-          // the help-center landing.
-          Text(
-            l10n.incomePlannerOccLearnMore,
-            style: context.captionStyle.copyWith(color: colors.primary),
+          FButton(
+            variant: FButtonVariant.outline,
+            onPress: _openOdd,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  FLucideIcons.externalLink,
+                  size: AppIconSizes.sm,
+                  color: colors.primary,
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Text(l10n.incomePlannerOccLearnMore),
+              ],
+            ),
           ),
         ],
       ),
