@@ -66,6 +66,20 @@ void main() {
       expect(rows, hasLength(1));
       expect(rows.single.description, '招商超市 · 快捷支付');
       expect(rows.single.amountMinor, -6680);
+      expect(rows.single.categoryHint, 'groceries');
+    });
+
+    test('bank provider supports amount plus debit-credit marker', () {
+      final rows = parseStatementLedger(
+        '账务日期,交易摘要,交易对方,借贷标志,发生额,币种\n'
+        '2026-05-13,地铁出行,上海地铁,借,7.00,CNY\n'
+        '2026-05-14,退款,商户,贷,7.00,CNY\n',
+      );
+
+      expect(rows, hasLength(1));
+      expect(rows.single.description, '上海地铁 · 地铁出行');
+      expect(rows.single.amountMinor, -700);
+      expect(rows.single.categoryHint, 'transport');
     });
 
     test('broker exports route to fee/tax-only parser', () {

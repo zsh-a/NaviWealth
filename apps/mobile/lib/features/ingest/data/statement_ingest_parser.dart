@@ -7,6 +7,7 @@
 library;
 
 import '../domain/ingest_models.dart';
+import 'bank_ingest_parser.dart';
 import 'broker_ingest_parser.dart';
 import 'csv_ingest_parser.dart';
 
@@ -26,7 +27,10 @@ StatementProvider detectStatementProvider(String raw) {
       compact.contains('贷方金额') ||
       compact.contains('支出金额,收入金额') ||
       compact.contains('借方发生额') ||
-      compact.contains('贷方发生额')) {
+      compact.contains('贷方发生额') ||
+      compact.contains('借贷标志') ||
+      compact.contains('借贷方向') ||
+      compact.toLowerCase().contains('debit,credit')) {
     return StatementProvider.bank;
   }
   final lower = compact.toLowerCase();
@@ -64,7 +68,11 @@ List<ParsedTransaction> parseStatementLedger(
       _preferAlipayPaidAt(raw),
       defaultCurrency: defaultCurrency,
     ),
-    StatementProvider.wechatPay || StatementProvider.bank => parseCsvLedger(
+    StatementProvider.wechatPay => parseCsvLedger(
+      raw,
+      defaultCurrency: defaultCurrency,
+    ),
+    StatementProvider.bank => parseBankCashLedger(
       raw,
       defaultCurrency: defaultCurrency,
     ),
