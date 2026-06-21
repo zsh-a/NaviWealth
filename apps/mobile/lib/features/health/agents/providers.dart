@@ -22,8 +22,13 @@ import '../../../core/background/background_scheduler.dart';
 import '../../../core/background/providers.dart' as background_providers;
 import '../../../core/notifications/notification_preferences.dart';
 import '../../../design_system/preferences/theme_preferences.dart';
+import '../data/health_sync_service.dart';
 import '../data/providers.dart';
 import 'morning_briefing_agent.dart';
+
+/// Shorter lookback for periodic foreground catch-up after a background wake.
+/// Manual sync and Morning Briefing still use [kDefaultHealthSyncWindow].
+const Duration kBackgroundHealthPlatformSyncWindow = Duration(days: 7);
 
 /// D-2.5b side-effecting provider — watches the Health domain opt-in
 /// and (re-)registers or cancels the workmanager periodic task that
@@ -73,6 +78,28 @@ final garminSyncCronProvider = Provider<void>((ref) {
   }());
 });
 
+/// Best-effort native background scheduler for HealthKit / Health Connect
+/// sync. The workmanager callback only stamps [kHealthPlatformSyncDueAtKey];
+/// [pendingHealthPlatformSyncRunProvider] performs the real platform/Drift
+/// sync in the foreground app process.
+final healthPlatformSyncCronProvider = Provider<void>((ref) {
+  final scheduler = ref.watch(background_providers.backgroundSchedulerProvider);
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
+  unawaited(() async {
+    try {
+      if (!await scheduler.isAvailable()) return;
+      if (healthEnabled) {
+        await scheduler.registerHealthPlatformSync();
+      } else {
+        await scheduler.cancelHealthPlatformSync();
+      }
+    } on Object {
+      // Best-effort scheduler plumbing; foreground manual sync remains.
+    }
+  }());
+});
+
 /// D-2.5b — runs the Morning Briefing agent inside the app process if
 /// the workmanager callback stamped [kMorningBriefingDueAtKey] while
 /// the app was backgrounded. Returns the [AgentRunResult] (or `null`
@@ -80,8 +107,8 @@ final garminSyncCronProvider = Provider<void>((ref) {
 final pendingBriefingRunProvider = FutureProvider.autoDispose<AgentRunResult?>((
   ref,
 ) async {
-  final optIns = ref.read(core_auth.domainOptInsProvider).value;
-  if (optIns == null || !optIns.contains(DomainScope.health)) return null;
+  final optIns = await ref.read(core_auth.domainOptInsProvider.future);
+  if (!optIns.contains(DomainScope.health)) return null;
   final SharedPreferences prefs = ref.read(sharedPreferencesProvider);
   final due = prefs.getInt(kMorningBriefingDueAtKey);
   if (due == null) return null;
@@ -97,13 +124,35 @@ final pendingGarminSyncRunProvider = FutureProvider.autoDispose<void>((
 ) async {
   final link = ref.keepAlive();
   try {
-    final optIns = ref.read(core_auth.domainOptInsProvider).value;
-    if (optIns == null || !optIns.contains(DomainScope.health)) return;
+    final optIns = await ref.read(core_auth.domainOptInsProvider.future);
+    if (!optIns.contains(DomainScope.health)) return;
     final SharedPreferences prefs = ref.read(sharedPreferencesProvider);
     final due = prefs.getInt(kGarminSyncDueAtKey);
     if (due == null) return;
     await prefs.remove(kGarminSyncDueAtKey);
     await ref.read(garminSyncControllerProvider.notifier).syncNow();
+  } finally {
+    link.close();
+  }
+});
+
+/// Runs a pending HealthKit / Health Connect sync after a native background
+/// wake-up stamped [kHealthPlatformSyncDueAtKey]. The workmanager callback
+/// cannot touch Drift, Riverpod, or platform auth safely, so the foreground
+/// process owns the real sync.
+final pendingHealthPlatformSyncRunProvider = FutureProvider.autoDispose<void>((
+  ref,
+) async {
+  final link = ref.keepAlive();
+  try {
+    final optIns = await ref.read(core_auth.domainOptInsProvider.future);
+    if (!optIns.contains(DomainScope.health)) return;
+    final SharedPreferences prefs = ref.read(sharedPreferencesProvider);
+    final due = prefs.getInt(kHealthPlatformSyncDueAtKey);
+    if (due == null) return;
+    await prefs.remove(kHealthPlatformSyncDueAtKey);
+    final service = await ref.read(healthSyncServiceProvider.future);
+    await service.syncRange(window: kBackgroundHealthPlatformSyncWindow);
   } finally {
     link.close();
   }

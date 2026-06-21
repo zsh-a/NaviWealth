@@ -19,8 +19,10 @@ void main() {
       await scheduler.initialize();
       await scheduler.registerMorningBriefing();
       await scheduler.registerGarminSync();
+      await scheduler.registerHealthPlatformSync();
       await scheduler.cancelMorningBriefing();
       await scheduler.cancelGarminSync();
+      await scheduler.cancelHealthPlatformSync();
     },
     skip: Platform.isIOS || Platform.isAndroid
         ? 'Host-only provider safety check.'

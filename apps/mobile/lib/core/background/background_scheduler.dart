@@ -26,6 +26,11 @@ const String kMorningBriefingTaskName = 'com.naviwealth.morningBriefing';
 /// Mirrors iOS native task registration and Info.plist identifiers.
 const String kGarminSyncTaskName = 'com.naviwealth.garminSync';
 
+/// Stable workmanager task name for best-effort HealthKit / Health Connect
+/// platform sync. Mirrors iOS native task registration and Info.plist
+/// identifiers.
+const String kHealthPlatformSyncTaskName = 'com.naviwealth.healthPlatformSync';
+
 /// SharedPreferences key set by the background callback when the OS
 /// fires the periodic task. The foreground app reads it on launch and
 /// triggers an in-process agent run if found (the background isolate
@@ -35,6 +40,11 @@ const String kMorningBriefingDueAtKey = 'lifeos.health.briefing.dueAt';
 /// SharedPreferences key set by the background callback when Garmin data
 /// should be refreshed in-process on next foreground launch/resume.
 const String kGarminSyncDueAtKey = 'lifeos.health.garminSync.dueAt';
+
+/// SharedPreferences key set by the background callback when native
+/// HealthKit / Health Connect data should be refreshed in-process on next
+/// foreground launch/resume.
+const String kHealthPlatformSyncDueAtKey = 'lifeos.health.platformSync.dueAt';
 
 abstract class BackgroundScheduler {
   /// `true` when the platform supports background tasks at all.
@@ -59,6 +69,12 @@ abstract class BackgroundScheduler {
     Duration interval = const Duration(hours: 6),
   });
 
+  /// Schedule best-effort HealthKit / Health Connect sync. The callback only
+  /// stamps a due flag; the foreground app runs the real Drift-backed sync.
+  Future<void> registerHealthPlatformSync({
+    Duration interval = const Duration(hours: 6),
+  });
+
   /// Cancel the previously-registered Morning Briefing task. Called
   /// when the user toggles HealthOS off so we don't keep waking the
   /// device for a domain they've disabled.
@@ -66,4 +82,7 @@ abstract class BackgroundScheduler {
 
   /// Cancel the previously-registered Garmin sync task.
   Future<void> cancelGarminSync();
+
+  /// Cancel the previously-registered HealthKit / Health Connect sync task.
+  Future<void> cancelHealthPlatformSync();
 }

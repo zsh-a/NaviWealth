@@ -10,6 +10,8 @@ void main() {
     expect(kMorningBriefingDueAtKey, 'lifeos.health.briefing.dueAt');
     expect(kGarminSyncTaskName, 'com.naviwealth.garminSync');
     expect(kGarminSyncDueAtKey, 'lifeos.health.garminSync.dueAt');
+    expect(kHealthPlatformSyncTaskName, 'com.naviwealth.healthPlatformSync');
+    expect(kHealthPlatformSyncDueAtKey, 'lifeos.health.platformSync.dueAt');
   });
 
   test('native iOS task registration mirrors Dart task identifiers', () {
@@ -27,13 +29,17 @@ void main() {
     expect(infoPlist, contains('BGTaskSchedulerPermittedIdentifiers'));
     expect(infoPlist, contains(kMorningBriefingTaskName));
     expect(infoPlist, contains(kGarminSyncTaskName));
+    expect(infoPlist, contains(kHealthPlatformSyncTaskName));
     expect(appDelegate, contains(kMorningBriefingTaskName));
     expect(appDelegate, contains(kGarminSyncTaskName));
+    expect(appDelegate, contains(kHealthPlatformSyncTaskName));
     expect(callback, contains("@pragma('vm:entry-point')"));
     expect(callback, contains('kMorningBriefingTaskName'));
     expect(callback, contains('kMorningBriefingDueAtKey'));
     expect(callback, contains('kGarminSyncTaskName'));
     expect(callback, contains('kGarminSyncDueAtKey'));
+    expect(callback, contains('kHealthPlatformSyncTaskName'));
+    expect(callback, contains('kHealthPlatformSyncDueAtKey'));
   });
 
   test('unsupported background scheduler is unavailable and no-ops', () async {
@@ -47,8 +53,13 @@ void main() {
     );
     await scheduler.registerGarminSync();
     await scheduler.registerGarminSync(interval: const Duration(minutes: 15));
+    await scheduler.registerHealthPlatformSync();
+    await scheduler.registerHealthPlatformSync(
+      interval: const Duration(minutes: 15),
+    );
     await scheduler.cancelMorningBriefing();
     await scheduler.cancelGarminSync();
+    await scheduler.cancelHealthPlatformSync();
   });
 }
 

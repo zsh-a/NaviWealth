@@ -23,6 +23,9 @@ import workmanager_apple  // HealthOS background task scheduling
     WorkmanagerPlugin.registerBGProcessingTask(
       withIdentifier: "com.naviwealth.garminSync"
     )
+    WorkmanagerPlugin.registerBGProcessingTask(
+      withIdentifier: "com.naviwealth.healthPlatformSync"
+    )
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 

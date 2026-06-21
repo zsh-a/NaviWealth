@@ -10,7 +10,7 @@
 ///   1. Stamp a task-specific SharedPreferences due key so the foreground
 ///      app sees there's pending work on next launch.
 ///   2. For Morning Briefing only, post a placeholder notification so the
-///      user knows the briefing is ready. Garmin sync stays silent.
+///      user knows the briefing is ready. Data sync tasks stay silent.
 ///
 /// Heavier "compute the briefing inside the background isolate"
 /// is intentionally deferred — booting Drift + SQLCipher + Memory
@@ -30,15 +30,18 @@ import 'background_scheduler.dart';
 void lifeosBackgroundCallback() {
   Workmanager().executeTask((taskName, inputData) async {
     if (taskName != kMorningBriefingTaskName &&
-        taskName != kGarminSyncTaskName) {
+        taskName != kGarminSyncTaskName &&
+        taskName != kHealthPlatformSyncTaskName) {
       return true;
     }
     try {
       final prefs = await SharedPreferences.getInstance();
       final now = DateTime.now();
-      final dueKey = taskName == kGarminSyncTaskName
-          ? kGarminSyncDueAtKey
-          : kMorningBriefingDueAtKey;
+      final dueKey = switch (taskName) {
+        kGarminSyncTaskName => kGarminSyncDueAtKey,
+        kHealthPlatformSyncTaskName => kHealthPlatformSyncDueAtKey,
+        _ => kMorningBriefingDueAtKey,
+      };
       await prefs.setInt(dueKey, now.toUtc().millisecondsSinceEpoch);
 
       if (taskName == kMorningBriefingTaskName) {

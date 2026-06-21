@@ -28,8 +28,16 @@ class _UnsupportedBackgroundScheduler implements BackgroundScheduler {
   }) async {}
 
   @override
+  Future<void> registerHealthPlatformSync({
+    Duration interval = const Duration(hours: 6),
+  }) async {}
+
+  @override
   Future<void> cancelMorningBriefing() async {}
 
   @override
   Future<void> cancelGarminSync() async {}
+
+  @override
+  Future<void> cancelHealthPlatformSync() async {}
 }

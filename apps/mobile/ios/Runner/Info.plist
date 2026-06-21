@@ -58,6 +58,7 @@
 	<array>
 		<string>com.naviwealth.morningBriefing</string>
 		<string>com.naviwealth.garminSync</string>
+		<string>com.naviwealth.healthPlatformSync</string>
 	</array>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>

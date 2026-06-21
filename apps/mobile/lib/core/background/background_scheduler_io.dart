@@ -41,6 +41,13 @@ class _WorkmanagerScheduler implements BackgroundScheduler {
     return _registerTask(kGarminSyncTaskName, interval: interval);
   }
 
+  @override
+  Future<void> registerHealthPlatformSync({
+    Duration interval = const Duration(hours: 6),
+  }) {
+    return _registerTask(kHealthPlatformSyncTaskName, interval: interval);
+  }
+
   Future<void> _registerTask(
     String taskName, {
     required Duration interval,
@@ -81,6 +88,11 @@ class _WorkmanagerScheduler implements BackgroundScheduler {
   @override
   Future<void> cancelGarminSync() async {
     return _cancelTask(kGarminSyncTaskName);
+  }
+
+  @override
+  Future<void> cancelHealthPlatformSync() async {
+    return _cancelTask(kHealthPlatformSyncTaskName);
   }
 
   Future<void> _cancelTask(String taskName) async {

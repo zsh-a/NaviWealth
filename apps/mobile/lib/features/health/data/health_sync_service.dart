@@ -9,8 +9,6 @@
 /// sync chain produces no duplicate events / memories.
 ///
 /// **Not in scope**:
-///   * generic HealthKit / Health Connect background fetch; Garmin has its
-///     own best-effort WorkManager due-flag path in `health/agents/providers`.
 ///   * write-back to HealthKit / Health Connect (§10 反目标)
 ///   * sleep-segment grouping on iOS (one row per asleep segment)
 library;
