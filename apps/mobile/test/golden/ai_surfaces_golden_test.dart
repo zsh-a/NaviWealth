@@ -19,6 +19,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:naviwealth/core/ai/visual/visual.dart';
 import 'package:naviwealth/features/ai_chat/ui/tool_invocation_renderers.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '_golden_setup.dart';
 
@@ -39,6 +40,9 @@ Future<void> _pumpComponent(
       data: const MediaQueryData(disableAnimations: true),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('en'),
         home: Scaffold(
           backgroundColor: Colors.white,
           body: Padding(
@@ -51,7 +55,7 @@ Future<void> _pumpComponent(
   );
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 100));
-  await screenMatchesGolden(tester, name);
+  await expectGoldenSurface('goldens/$name.png');
 }
 
 void main() {

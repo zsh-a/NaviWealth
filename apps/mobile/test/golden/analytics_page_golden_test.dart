@@ -9,7 +9,9 @@ import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_compari
 import 'package:naviwealth/features/analytics/domain/benchmark/benchmark_index.dart';
 import 'package:naviwealth/features/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/finance/data/domain/asset.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/home/data/dashboard_providers.dart';
 import 'package:naviwealth/features/investment/data/providers.dart';
 import 'package:naviwealth/features/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/investment/domain/models/holding_snapshot.dart';
@@ -66,6 +68,9 @@ void main() {
         manualAssetsStreamProvider.overrideWith(
           (_) => Stream.value(const <Asset>[]),
         ),
+        allAssetsStreamProvider.overrideWith(
+          (_) => Stream.value(const <Asset>[]),
+        ),
         physicalAssetsListProvider.overrideWith((_) => Stream.value(const [])),
         liabilitiesStreamProvider.overrideWith((_) => Stream.value(const [])),
         // BenchmarkComparisonCard pulls the dashboard currency converter,
@@ -74,6 +79,11 @@ void main() {
         // stream-query timer dangling at scope dispose.
         fxRatesStreamProvider.overrideWith(
           (_) => Stream<List<FxRate>>.value(const []),
+        ),
+        dashboardPriceRowsProvider.overrideWith((_) => Stream.value(const [])),
+        allAccountsStreamProvider.overrideWith((_) => Stream.value(const [])),
+        journalEntriesWithPostingsStreamProvider.overrideWith(
+          (_) => Stream.value(const []),
         ),
         benchmarkHistorySourceProvider.overrideWith(
           (_) async => _EmptyBenchmarkSource(),

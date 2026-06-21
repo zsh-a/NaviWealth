@@ -180,7 +180,20 @@ Future<void> pumpAndSnapshotMobile(
   await tester.pump(const Duration(milliseconds: 200));
   await tester.pump(const Duration(milliseconds: 200));
 
-  await screenMatchesGolden(tester, '${name}_${variant.filenameSuffix}');
+  await expectGoldenSurface('goldens/${name}_${variant.filenameSuffix}.png');
+}
+
+/// Compare the whole app surface against [goldenPath] without
+/// GoldenToolkit's implicit pumpAndSettle.
+///
+/// The directory-local flutter_test_config skips PNG assertion off Linux.
+/// This helper mirrors that policy because it intentionally bypasses
+/// GoldenToolkit's [screenMatchesGolden] to avoid settling on intentionally
+/// live tickers.
+Future<void> expectGoldenSurface(String goldenPath) async {
+  if (!Platform.isLinux && !autoUpdateGoldenFiles) return;
+
+  await expectLater(find.byType(MaterialApp), matchesGoldenFile(goldenPath));
 }
 
 /// Convenience: declare a `testGoldens` block that captures a page in every
