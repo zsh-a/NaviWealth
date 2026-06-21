@@ -9,6 +9,8 @@
 /// still resolves.
 library;
 
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -488,6 +490,15 @@ List<Widget> _conceptSections(
       KnowledgeSection.group(
         title: AppLocalizations.of(context).knowledgeDetailRelatedConceptsTitle,
         children: [
+          _ConceptGraphPanel(
+            concept: c,
+            relatedConcepts: relatedConcepts,
+            onConceptPress: (concept) => context.pushNamed(
+              AppRouteNames.knowledgeObjectDetail,
+              pathParameters: {'kind': 'concept', 'id': concept.id},
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s12),
           for (final concept in relatedConcepts)
             _RelatedObjectLink(
               label: concept.name,
@@ -505,6 +516,198 @@ List<Widget> _conceptSections(
       ),
     ],
   ];
+}
+
+class _ConceptGraphPanel extends StatelessWidget {
+  const _ConceptGraphPanel({
+    required this.concept,
+    required this.relatedConcepts,
+    required this.onConceptPress,
+  });
+
+  final KnowledgeConcept concept;
+  final List<KnowledgeConcept> relatedConcepts;
+  final ValueChanged<KnowledgeConcept> onConceptPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final shown = relatedConcepts.take(8).toList(growable: false);
+    final hiddenCount = relatedConcepts.length - shown.length;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 320.0;
+        const height = 192.0;
+        final center = Offset(width / 2, height / 2);
+        final nodeCenters = _conceptGraphNodeCenters(
+          center: center,
+          count: shown.length,
+          width: width,
+        );
+        return Semantics(
+          container: true,
+          child: DecoratedBox(
+            key: const ValueKey('knowledge-concept-graph'),
+            decoration: BoxDecoration(
+              color: colors.muted.withValues(alpha: AppOpacity.whisper),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                color: colors.border.withValues(alpha: AppOpacity.subtle),
+              ),
+            ),
+            child: SizedBox(
+              height: height,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: CustomPaint(
+                        painter: _ConceptGraphPainter(
+                          center: center,
+                          related: nodeCenters,
+                          color: KnowledgeTypeColors.concept.withValues(
+                            alpha: AppOpacity.medium,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: center.dx - 82,
+                    top: center.dy - 24,
+                    width: 164,
+                    height: 48,
+                    child: _ConceptNodeChip(label: concept.name, active: true),
+                  ),
+                  for (var i = 0; i < shown.length; i++)
+                    Positioned(
+                      left: nodeCenters[i].dx - 58,
+                      top: nodeCenters[i].dy - 21,
+                      width: 116,
+                      height: 42,
+                      child: _ConceptNodeChip(
+                        label: shown[i].name,
+                        onPress: () => onConceptPress(shown[i]),
+                      ),
+                    ),
+                  if (hiddenCount > 0)
+                    Positioned(
+                      right: AppSpacing.s12,
+                      bottom: AppSpacing.s12,
+                      child: Text('+$hiddenCount', style: context.captionStyle),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+List<Offset> _conceptGraphNodeCenters({
+  required Offset center,
+  required int count,
+  required double width,
+}) {
+  if (count == 0) return const <Offset>[];
+  final radiusX = math.min(width * 0.34, 150.0);
+  const radiusY = 62.0;
+  return [
+    for (var i = 0; i < count; i++)
+      Offset(
+        center.dx +
+            radiusX * math.cos((-math.pi / 2) + (2 * math.pi * i / count)),
+        center.dy +
+            radiusY * math.sin((-math.pi / 2) + (2 * math.pi * i / count)),
+      ),
+  ];
+}
+
+class _ConceptGraphPainter extends CustomPainter {
+  const _ConceptGraphPainter({
+    required this.center,
+    required this.related,
+    required this.color,
+  });
+
+  final Offset center;
+  final List<Offset> related;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+    for (final node in related) {
+      canvas.drawLine(center, node, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ConceptGraphPainter oldDelegate) {
+    return oldDelegate.center != center ||
+        oldDelegate.related != related ||
+        oldDelegate.color != color;
+  }
+}
+
+class _ConceptNodeChip extends StatelessWidget {
+  const _ConceptNodeChip({
+    required this.label,
+    this.active = false,
+    this.onPress,
+  });
+
+  final String label;
+  final bool active;
+  final VoidCallback? onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final foreground = active ? colors.primaryForeground : colors.foreground;
+    final background = active ? KnowledgeTypeColors.concept : colors.background;
+    Widget child = DecoratedBox(
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(
+          color: active
+              ? KnowledgeTypeColors.concept
+              : colors.border.withValues(alpha: AppOpacity.muted),
+        ),
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: context.captionStyle.copyWith(color: foreground),
+          ),
+        ),
+      ),
+    );
+    final onPress = this.onPress;
+    if (onPress == null) return child;
+    return Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onPress,
+        child: child,
+      ),
+    );
+  }
 }
 
 List<Widget> _experimentSections(
