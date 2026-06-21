@@ -33,7 +33,8 @@ class ProposeCaptureTool implements DeviceTool {
       '适用:Capture sheet 保存后 / 用户问「这条该归到哪里」/「这是不是一个 Routine」。'
       'kind == note 时表示无需升级,envelope.status == "no_upgrade"。'
       '内部走 captureClassifierProvider:有 LLM profile 时调 LLM(全 7 类抽取),'
-      '否则走纯 Dart heuristic(目前稳定识别 routine,其余兜底 note)。'
+      '否则走纯 Dart heuristic(覆盖 routine / decision / principle / '
+      'assumption / concept / experiment,低置信内容兜底 note)。'
       '任意失败(网络 / 解析)都退守 heuristic,前端永远拿到合法 envelope。';
 
   @override

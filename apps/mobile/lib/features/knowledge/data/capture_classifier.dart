@@ -219,6 +219,10 @@ class HeuristicCaptureClassifier implements CaptureClassifier {
         lower.contains('基金') ||
         lower.contains('rebalance') ||
         lower.contains('收益率') ||
+        lower.contains('对冲') ||
+        lower.contains('hedge') ||
+        lower.contains('qqq') ||
+        lower.contains('boxx') ||
         lower.contains('美债') ||
         lower.contains('债券') ||
         lower.contains('tlt')) {

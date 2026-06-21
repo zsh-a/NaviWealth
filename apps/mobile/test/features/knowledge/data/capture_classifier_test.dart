@@ -91,6 +91,7 @@ void main() {
       expect(r.kind, CaptureKind.decision);
       expect(r.confidence, greaterThanOrEqualTo(0.6));
       expect(r.statement, isNotNull);
+      expect(r.scope, 'finance/investing');
     });
 
     test('assumption language upgrades to Assumption candidate', () async {
