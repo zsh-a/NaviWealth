@@ -40,9 +40,8 @@ enum CorporateActionType {
 }
 
 /// Form-as-page for recording a corporate action against an existing
-/// holding. The page is pure — no Drift, no Riverpod — so it can be wired
-/// into either a stub demo route or a real persistence layer once it
-/// exists. Caller supplies:
+/// holding. The page stays presentation-only — no Drift, no Riverpod —
+/// while the route/repository layer owns persistence. Caller supplies:
 ///
 /// - [assets]: dropdown options (id, accountId, display name, currency).
 /// - [lotsForAsset]: returns the open lots used to compute the preview.
