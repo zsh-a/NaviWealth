@@ -750,7 +750,7 @@
   "analyticsCashFlowTrendAverageNet": "6 月平均净额",
   "analyticsCashFlowTrendInflow": "本月流入",
   "analyticsCashFlowTrendOutflow": "本月流出",
-  "analyticsCashFlowTrendSemantic": "最近每月净现金流柱状图",
+  "analyticsCashFlowTrendSemantic": "最近每月净现金流图表",
   "analyticsCashFlowTrendLoadError": "无法加载现金流趋势。",
   "analyticsFireProgressTitle": "FIRE 进度",
   "analyticsFireProgressSubtitle": "可投资资产相对目标净值与当前现金跑道。",

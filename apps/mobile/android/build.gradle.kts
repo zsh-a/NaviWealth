@@ -1,3 +1,6 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 allprojects {
     repositories {
         google()
@@ -18,13 +21,27 @@ subprojects {
 subprojects {
     project.evaluationDependsOn(":app")
 }
-// NOTE: stale third-party plugins (e.g. receive_sharing_intent, Kotlin
-// 1.9.22) compile Java at 1.8 / Kotlin at 17 and trip Gradle's JVM-target
-// validation. This is handled ordering-independently by
-// `kotlin.jvm.target.validation.mode=warning` in gradle.properties — a
-// root-script subprojects/afterEvaluate override is NOT used here because
-// Flutter's plugin-loader + evaluationDependsOn(":app") evaluates some
-// subprojects before this script runs ("project is already evaluated").
+// NOTE: stale third-party plugins can still publish Kotlin compile tasks with
+// languageVersion/apiVersion 1.6. Flutter stable now runs KGP 2.2.x, where
+// 1.6 is rejected before tests even install on the emulator. Configure every
+// Kotlin Android task lazily so already-created and future plugin tasks are
+// normalized without afterEvaluate ordering traps.
+subprojects {
+    fun normalizeKotlinCompileLanguage() {
+        tasks.withType<KotlinCompile>().configureEach {
+            compilerOptions {
+                languageVersion.set(KotlinVersion.KOTLIN_1_8)
+                apiVersion.set(KotlinVersion.KOTLIN_1_8)
+            }
+        }
+    }
+    plugins.withId("org.jetbrains.kotlin.android") {
+        normalizeKotlinCompileLanguage()
+    }
+    plugins.withId("kotlin-android") {
+        normalizeKotlinCompileLanguage()
+    }
+}
 
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)

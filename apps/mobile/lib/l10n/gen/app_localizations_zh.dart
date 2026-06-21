@@ -2375,7 +2375,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get analyticsCashFlowTrendOutflow => '本月流出';
 
   @override
-  String get analyticsCashFlowTrendSemantic => '最近每月净现金流柱状图';
+  String get analyticsCashFlowTrendSemantic => '最近每月净现金流图表';
 
   @override
   String get analyticsCashFlowTrendLoadError => '无法加载现金流趋势。';
