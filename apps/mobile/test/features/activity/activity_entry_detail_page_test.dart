@@ -1,14 +1,19 @@
 import 'package:decimal/decimal.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_client.dart';
+import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
+import 'package:naviwealth/core/ai/runtime/device/llm_stream_event.dart';
 import 'package:naviwealth/core/ai/write/providers.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/activity/ui/activity_entry_detail_page.dart';
+import 'package:naviwealth/features/ai_chat/data/providers.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
 import 'package:naviwealth/features/finance/data/domain/journal_entry.dart';
@@ -88,6 +93,7 @@ JournalEntryWithPostings _entry({required String narration, String? payee}) {
 Widget _wrap({
   required JournalEntryWithPostings entry,
   Locale locale = const Locale('en'),
+  DeviceLlmClient? client,
 }) {
   final accounts = {
     'expenses:living': _account(
@@ -104,6 +110,7 @@ Widget _wrap({
   return ProviderScope(
     overrides: [
       aiTouchedAtProvider.overrideWith((ref, key) => Stream.value(null)),
+      deviceLlmClientProvider.overrideWithValue(client),
     ],
     child: MaterialApp(
       theme: AppTheme.light(),
@@ -176,6 +183,50 @@ void main() {
     expect(find.text('暂无该笔记录的洞察。'), findsNothing);
   });
 
+  testWidgets('uses device LLM explanation when available', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        entry: _entry(narration: 'Spotify subscription'),
+        client: const _FakeActivityLlmClient(
+          'This looks like a recurring media subscription paid from cash.',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Entry insight'), findsOneWidget);
+    expect(
+      find.text(
+        'This looks like a recurring media subscription paid from cash.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Recurring subscription. Review whether it still fits your plan before the next renewal.',
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('falls back to heuristic when device LLM fails', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        entry: _entry(narration: 'Spotify subscription'),
+        client: const _FailingActivityLlmClient(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Entry insight'), findsOneWidget);
+    expect(
+      find.text(
+        'Recurring subscription. Review whether it still fits your plan before the next renewal.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('hides the entire insight card when no heuristic matches', (
     tester,
   ) async {
@@ -187,4 +238,60 @@ void main() {
     expect(find.text('No insight available for this entry.'), findsNothing);
     expect(find.text('Living'), findsOneWidget);
   });
+}
+
+class _FakeLlmConfig implements DeviceLlmConfig {
+  const _FakeLlmConfig();
+
+  @override
+  String get model => 'test-model';
+}
+
+class _FakeActivityLlmClient implements DeviceLlmClient {
+  const _FakeActivityLlmClient(this.text);
+
+  final String text;
+
+  @override
+  DeviceLlmConfig get config => const _FakeLlmConfig();
+
+  @override
+  Stream<LlmStreamEvent> streamMessages(
+    AnthropicRequest request, {
+    CancelToken? cancelToken,
+  }) => const Stream<LlmStreamEvent>.empty();
+
+  @override
+  Future<AnthropicCompletion> complete(
+    AnthropicRequest request, {
+    CancelToken? cancelToken,
+  }) async {
+    return AnthropicCompletion(
+      content: [
+        {'type': 'text', 'text': text},
+      ],
+      stopReason: 'end_turn',
+    );
+  }
+}
+
+class _FailingActivityLlmClient implements DeviceLlmClient {
+  const _FailingActivityLlmClient();
+
+  @override
+  DeviceLlmConfig get config => const _FakeLlmConfig();
+
+  @override
+  Stream<LlmStreamEvent> streamMessages(
+    AnthropicRequest request, {
+    CancelToken? cancelToken,
+  }) => const Stream<LlmStreamEvent>.empty();
+
+  @override
+  Future<AnthropicCompletion> complete(
+    AnthropicRequest request, {
+    CancelToken? cancelToken,
+  }) async {
+    throw StateError('llm down');
+  }
 }

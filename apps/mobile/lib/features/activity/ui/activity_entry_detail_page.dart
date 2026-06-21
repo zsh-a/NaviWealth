@@ -1,8 +1,11 @@
 import 'package:decimal/decimal.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_client.dart';
+import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
 import 'package:naviwealth/features/finance/data/domain/account.dart';
 import 'package:naviwealth/features/finance/data/domain/entry_kind.dart';
 import 'package:naviwealth/features/finance/data/domain/enums.dart';
@@ -15,6 +18,7 @@ import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../ai_chat/data/providers.dart';
 import '../../finance/data/repositories/journal_entry_providers.dart';
 import '../../finance/data/repositories/providers.dart';
 import '../../shared/account_l10n.dart';
@@ -42,7 +46,17 @@ class ActivityEntryDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    final aiInsight = _heuristicInsight(entry, l10n);
+    final aiInsight = ref
+        .watch(
+          aiExplainEntryProvider(
+            ActivityEntryInsightRequest(
+              entry: entry,
+              accountsById: accountsById,
+              locale: Localizations.localeOf(context),
+            ),
+          ),
+        )
+        .value;
     final classification = classifyEntryKind(
       postings: entry.postings,
       resolveCategory: (id) => accountsById[id]?.category,
@@ -95,6 +109,98 @@ class ActivityEntryDetailPage extends ConsumerWidget {
     );
   }
 }
+
+class ActivityEntryInsightRequest {
+  ActivityEntryInsightRequest({
+    required this.entry,
+    required this.accountsById,
+    required this.locale,
+  }) : _postingSignature = _buildPostingSignature(entry),
+       _accountSignature = _buildAccountSignature(entry, accountsById);
+
+  final JournalEntryWithPostings entry;
+  final Map<String, Account> accountsById;
+  final Locale locale;
+  final String _postingSignature;
+  final String _accountSignature;
+
+  @override
+  bool operator ==(Object other) {
+    return other is ActivityEntryInsightRequest &&
+        other.entry.entry.id == entry.entry.id &&
+        other.entry.entry.date == entry.entry.date &&
+        other.entry.entry.narration == entry.entry.narration &&
+        other.entry.entry.payee == entry.entry.payee &&
+        other.locale == locale &&
+        other._postingSignature == _postingSignature &&
+        other._accountSignature == _accountSignature;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    entry.entry.id,
+    entry.entry.date,
+    entry.entry.narration,
+    entry.entry.payee,
+    locale,
+    _postingSignature,
+    _accountSignature,
+  );
+
+  static String _buildPostingSignature(JournalEntryWithPostings entry) {
+    return entry.postings
+        .map((p) => '${p.id}:${p.accountId}:${p.units}:${p.unit}:${p.position}')
+        .join('|');
+  }
+
+  static String _buildAccountSignature(
+    JournalEntryWithPostings entry,
+    Map<String, Account> accountsById,
+  ) {
+    return entry.postings
+        .map((p) {
+          final account = accountsById[p.accountId];
+          return '${p.accountId}:${account?.name}:${account?.category.name}';
+        })
+        .join('|');
+  }
+}
+
+final aiExplainEntryProvider = FutureProvider.autoDispose
+    .family<String?, ActivityEntryInsightRequest>((ref, request) async {
+      final l10n = lookupAppLocalizations(
+        request.locale.languageCode == 'zh'
+            ? const Locale('zh')
+            : const Locale('en'),
+      );
+      final fallback = _heuristicInsight(request.entry, l10n);
+      final client = ref.watch(deviceLlmClientProvider);
+      if (client == null) return fallback;
+
+      try {
+        final completion = await client
+            .complete(
+              AnthropicRequest(
+                model: client.config.model,
+                maxTokens: 256,
+                system: _activityInsightSystem(request.locale),
+                messages: [
+                  AnthropicChatMessage.text(
+                    'user',
+                    _activityInsightPrompt(request, l10n),
+                  ),
+                ],
+                stream: false,
+              ),
+              cancelToken: CancelToken(),
+            )
+            .timeout(const Duration(seconds: 15));
+        final text = _cleanAiInsight(_extractCompletionText(completion));
+        return text ?? fallback;
+      } on Object {
+        return fallback;
+      }
+    });
 
 class ActivityEntryDetailArgs {
   const ActivityEntryDetailArgs({
@@ -641,6 +747,78 @@ String? _heuristicInsight(
 
 bool _containsAny(String text, List<String> keywords) {
   return keywords.any(text.contains);
+}
+
+String _activityInsightSystem(Locale locale) {
+  final zh = locale.languageCode == 'zh';
+  return zh
+      ? '你是 NaviWealth 的本地财务分析助手。根据一笔复式记账记录，输出一句具体、克制的洞察。'
+            '不要编造商户、类别、预算、频率或未来交易。不要输出 Markdown、项目符号或标题。'
+            '如果信息不足，只解释这笔记录本身。'
+      : 'You are NaviWealth local finance analysis. Explain one double-entry '
+            'journal entry in one concise, specific sentence. Do not invent '
+            'merchants, categories, budgets, recurrence, or future activity. '
+            'Do not output Markdown, bullets, or a heading. If evidence is '
+            'thin, explain only what this entry shows.';
+}
+
+String _activityInsightPrompt(
+  ActivityEntryInsightRequest request,
+  AppLocalizations l10n,
+) {
+  final entry = request.entry.entry;
+  final classification = classifyEntryKind(
+    postings: request.entry.postings,
+    resolveCategory: (id) => request.accountsById[id]?.category,
+  );
+  final lines = [
+    'kind: ${entryKindLabel(l10n, classification.kind)}',
+    'date: ${entry.date.toUtc().toIso8601String()}',
+    'narration: ${entry.narration}',
+    if (entry.payee != null && entry.payee!.isNotEmpty) 'payee: ${entry.payee}',
+    'postings:',
+    for (final p in request.entry.postings)
+      '- ${_promptAccountLabel(p, request.accountsById)}: '
+          '${p.units} ${_displayUnit(p.unit)}',
+  ];
+  return lines.join('\n');
+}
+
+String _promptAccountLabel(Posting posting, Map<String, Account> accountsById) {
+  final account = accountsById[posting.accountId];
+  if (account == null) return posting.accountId;
+  final side = account.category.name;
+  return side.isEmpty ? account.name : '${account.name} ($side)';
+}
+
+String? _extractCompletionText(AnthropicCompletion completion) {
+  for (final block in completion.content) {
+    if (block is! Map) continue;
+    final type = block['type'];
+    final text = block['text'];
+    if (type == 'text' && text is String && text.trim().isNotEmpty) {
+      return text;
+    }
+  }
+  return null;
+}
+
+String? _cleanAiInsight(String? text) {
+  if (text == null) return null;
+  var value = text
+      .replaceAll(RegExp(r'^```[a-zA-Z]*\s*'), '')
+      .replaceAll(RegExp(r'\s*```$'), '')
+      .trim();
+  value = value
+      .split('\n')
+      .map((line) => line.trim())
+      .where((line) => line.isNotEmpty)
+      .join(' ');
+  value = value.replaceFirst(RegExp(r'^[-*•]\s*'), '').trim();
+  if (value.isEmpty) return null;
+  const maxChars = 260;
+  if (value.length <= maxChars) return value;
+  return '${value.substring(0, maxChars).trimRight()}...';
 }
 
 Posting? _headlinePosting(
