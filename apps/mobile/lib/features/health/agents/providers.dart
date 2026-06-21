@@ -52,6 +52,27 @@ final morningBriefingCronProvider = Provider<void>((ref) {
   }());
 });
 
+/// Best-effort native background scheduler for Garmin sync. The workmanager
+/// callback only stamps [kGarminSyncDueAtKey]; [pendingGarminSyncRunProvider]
+/// performs the real sync in the foreground app process.
+final garminSyncCronProvider = Provider<void>((ref) {
+  final scheduler = ref.watch(background_providers.backgroundSchedulerProvider);
+  final optIns = ref.watch(core_auth.domainOptInsProvider).value;
+  final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
+  unawaited(() async {
+    try {
+      if (!await scheduler.isAvailable()) return;
+      if (healthEnabled) {
+        await scheduler.registerGarminSync();
+      } else {
+        await scheduler.cancelGarminSync();
+      }
+    } on Object {
+      // Best-effort scheduler plumbing; foreground manual sync remains.
+    }
+  }());
+});
+
 /// D-2.5b — runs the Morning Briefing agent inside the app process if
 /// the workmanager callback stamped [kMorningBriefingDueAtKey] while
 /// the app was backgrounded. Returns the [AgentRunResult] (or `null`
@@ -66,6 +87,26 @@ final pendingBriefingRunProvider = FutureProvider.autoDispose<AgentRunResult?>((
   if (due == null) return null;
   await prefs.remove(kMorningBriefingDueAtKey);
   return runMorningBriefingNow(ref);
+});
+
+/// Runs a pending Garmin sync after a native background wake-up stamped
+/// [kGarminSyncDueAtKey]. The Rust bridge, secure token store, and Drift
+/// writes stay in the foreground process instead of the background isolate.
+final pendingGarminSyncRunProvider = FutureProvider.autoDispose<void>((
+  ref,
+) async {
+  final link = ref.keepAlive();
+  try {
+    final optIns = ref.read(core_auth.domainOptInsProvider).value;
+    if (optIns == null || !optIns.contains(DomainScope.health)) return;
+    final SharedPreferences prefs = ref.read(sharedPreferencesProvider);
+    final due = prefs.getInt(kGarminSyncDueAtKey);
+    if (due == null) return;
+    await prefs.remove(kGarminSyncDueAtKey);
+    await ref.read(garminSyncControllerProvider.notifier).syncNow();
+  } finally {
+    link.close();
+  }
 });
 
 /// D-2.5b — manual one-shot trigger backing the Settings "Run morning

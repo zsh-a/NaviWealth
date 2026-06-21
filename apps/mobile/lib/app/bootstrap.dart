@@ -279,12 +279,16 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   // and reacts to subsequent toggles (workmanager register / cancel
   // happens inside the provider build, see `morningBriefingCronProvider`).
   container.read(health_agent_providers.morningBriefingCronProvider);
+  container.read(health_agent_providers.garminSyncCronProvider);
   // When the workmanager callback fired while the app was
   // backgrounded it stamped `kMorningBriefingDueAtKey`. Kick off the
   // in-process run so the freshest summary lands in Memory + the
   // notification gets refined to the actual content.
   unawaited(
     container.read(health_agent_providers.pendingBriefingRunProvider.future),
+  );
+  unawaited(
+    container.read(health_agent_providers.pendingGarminSyncRunProvider.future),
   );
   // Eager startup catch-up for due recurring transactions. This is a
   // local-first finance job (it writes through the mutation stamper /

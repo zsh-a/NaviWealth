@@ -55,6 +55,7 @@
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>com.naviwealth.morningBriefing</string>
+		<string>com.naviwealth.garminSync</string>
 	</array>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>

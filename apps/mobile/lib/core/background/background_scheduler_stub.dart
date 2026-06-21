@@ -23,5 +23,13 @@ class _UnsupportedBackgroundScheduler implements BackgroundScheduler {
   }) async {}
 
   @override
+  Future<void> registerGarminSync({
+    Duration interval = const Duration(hours: 6),
+  }) async {}
+
+  @override
   Future<void> cancelMorningBriefing() async {}
+
+  @override
+  Future<void> cancelGarminSync() async {}
 }

@@ -7,12 +7,10 @@
 /// isolate** with no Riverpod ProviderContainer, no Drift database,
 /// and no AI runtime; we therefore keep the work minimal:
 ///
-///   1. Stamp `kMorningBriefingDueAtKey` in SharedPreferences so the
-///      foreground app sees there's a pending run on next launch.
-///   2. Post a placeholder notification via [NotificationService] so
-///      the user knows the briefing is ready (the actual summary is
-///      filled in once the app foregrounds and the in-process agent
-///      runs against the full data).
+///   1. Stamp a task-specific SharedPreferences due key so the foreground
+///      app sees there's pending work on next launch.
+///   2. For Morning Briefing only, post a placeholder notification so the
+///      user knows the briefing is ready. Garmin sync stays silent.
 ///
 /// Heavier "compute the briefing inside the background isolate"
 /// is intentionally deferred — booting Drift + SQLCipher + Memory
@@ -31,24 +29,27 @@ import 'background_scheduler.dart';
 @pragma('vm:entry-point')
 void lifeosBackgroundCallback() {
   Workmanager().executeTask((taskName, inputData) async {
-    if (taskName != kMorningBriefingTaskName) {
+    if (taskName != kMorningBriefingTaskName &&
+        taskName != kGarminSyncTaskName) {
       return true;
     }
     try {
       final prefs = await SharedPreferences.getInstance();
       final now = DateTime.now();
-      await prefs.setInt(
-        kMorningBriefingDueAtKey,
-        now.toUtc().millisecondsSinceEpoch,
-      );
+      final dueKey = taskName == kGarminSyncTaskName
+          ? kGarminSyncDueAtKey
+          : kMorningBriefingDueAtKey;
+      await prefs.setInt(dueKey, now.toUtc().millisecondsSinceEpoch);
 
-      final notifier = createNotificationService();
-      if (await notifier.hasPermissions()) {
-        await notifier.showNow(
-          id: HealthNotifications.idForBriefing(now),
-          title: 'Morning briefing ready',
-          body: 'Open the app to see today\'s HealthOS summary.',
-        );
+      if (taskName == kMorningBriefingTaskName) {
+        final notifier = createNotificationService();
+        if (await notifier.hasPermissions()) {
+          await notifier.showNow(
+            id: HealthNotifications.idForBriefing(now),
+            title: 'Morning briefing ready',
+            body: 'Open the app to see today\'s HealthOS summary.',
+          );
+        }
       }
     } on Object {
       // Background-isolate failures aren't surfaced anywhere useful.

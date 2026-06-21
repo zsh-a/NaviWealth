@@ -18,7 +18,9 @@ void main() {
       expect(await scheduler.isAvailable(), isFalse);
       await scheduler.initialize();
       await scheduler.registerMorningBriefing();
+      await scheduler.registerGarminSync();
       await scheduler.cancelMorningBriefing();
+      await scheduler.cancelGarminSync();
     },
     skip: Platform.isIOS || Platform.isAndroid
         ? 'Host-only provider safety check.'

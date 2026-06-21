@@ -211,7 +211,11 @@ class GarminSyncController extends Notifier<GarminSyncState> {
     await _syncSub?.cancel();
 
     try {
-      await _ensureInit();
+      final canSync = await _ensureSessionForSync(logger);
+      if (!canSync) {
+        if (state is! GarminError) state = const GarminInitial();
+        return;
+      }
       final ranges = await _missingGarminRanges(now: now, window: window);
       logger.i(
         'HealthOS Garmin sync start: region=${region.label} '
@@ -262,6 +266,25 @@ class GarminSyncController extends Notifier<GarminSyncState> {
       }
       state = GarminError(issue);
     }
+  }
+
+  Future<bool> _ensureSessionForSync(AppLogger logger) async {
+    final stored = _initialized ? null : await _tokenStore.load();
+    if (!_initialized && stored == null) {
+      logger.i('HealthOS Garmin sync skipped: no persisted session');
+      return false;
+    }
+    await _ensureInit(storedTokenJson: stored);
+    final authState = await _bridge.authState();
+    if (authState.canMakeRequests) return true;
+
+    final issue = garminRestoreAuthIssue(authState);
+    if (issue.requiresReconnect) {
+      await _clearStaleSession();
+      logger.w('HealthOS Garmin stale session cleared before sync');
+    }
+    state = GarminError(issue);
+    return false;
   }
 
   Future<_GarminRangeSyncResult> _syncRange({

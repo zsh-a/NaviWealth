@@ -31,16 +31,30 @@ class _WorkmanagerScheduler implements BackgroundScheduler {
   Future<void> registerMorningBriefing({
     Duration interval = const Duration(hours: 24),
   }) async {
+    return _registerTask(kMorningBriefingTaskName, interval: interval);
+  }
+
+  @override
+  Future<void> registerGarminSync({
+    Duration interval = const Duration(hours: 6),
+  }) {
+    return _registerTask(kGarminSyncTaskName, interval: interval);
+  }
+
+  Future<void> _registerTask(
+    String taskName, {
+    required Duration interval,
+  }) async {
     if (!await isAvailable()) return;
     await initialize();
     if (Platform.isIOS) {
       // iOS only supports a single one-shot register via BGTaskScheduler.
       // workmanager exposes `registerOneOffTask` + recurring re-arm
-      // inside the callback for true periodic-on-iOS, but for D-2.5b
-      // we accept "fires opportunistically once per cycle" semantics.
+      // inside the callback for true periodic-on-iOS, but for now we
+      // accept opportunistic once-per-registration semantics.
       await Workmanager().registerOneOffTask(
-        kMorningBriefingTaskName,
-        kMorningBriefingTaskName,
+        taskName,
+        taskName,
         initialDelay: interval,
         existingWorkPolicy: ExistingWorkPolicy.replace,
       );
@@ -52,8 +66,8 @@ class _WorkmanagerScheduler implements BackgroundScheduler {
         ? const Duration(minutes: 15)
         : interval;
     await Workmanager().registerPeriodicTask(
-      kMorningBriefingTaskName,
-      kMorningBriefingTaskName,
+      taskName,
+      taskName,
       frequency: effective,
       existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
     );
@@ -61,8 +75,17 @@ class _WorkmanagerScheduler implements BackgroundScheduler {
 
   @override
   Future<void> cancelMorningBriefing() async {
+    return _cancelTask(kMorningBriefingTaskName);
+  }
+
+  @override
+  Future<void> cancelGarminSync() async {
+    return _cancelTask(kGarminSyncTaskName);
+  }
+
+  Future<void> _cancelTask(String taskName) async {
     if (!await isAvailable()) return;
     await initialize();
-    await Workmanager().cancelByUniqueName(kMorningBriefingTaskName);
+    await Workmanager().cancelByUniqueName(taskName);
   }
 }

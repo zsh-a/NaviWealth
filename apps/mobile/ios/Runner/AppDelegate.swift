@@ -2,7 +2,7 @@ import Flutter
 import HealthKit
 import UIKit
 import receive_sharing_intent
-import workmanager_apple  // D-2.5b — periodic Morning Briefing scheduling
+import workmanager_apple  // HealthOS background task scheduling
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -12,13 +12,16 @@ import workmanager_apple  // D-2.5b — periodic Morning Briefing scheduling
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // D-2.5b — register the background-task identifier so iOS
-    // BGTaskScheduler can fire it. Identifier must match the
+    // Register background-task identifiers so iOS BGTaskScheduler can fire
+    // them. Identifiers must match the
     // Info.plist `BGTaskSchedulerPermittedIdentifiers` entry and
     // the Dart `Workmanager().registerPeriodicTask(uniqueName, …)`
-    // task name.
+    // task names.
     WorkmanagerPlugin.registerBGProcessingTask(
       withIdentifier: "com.naviwealth.morningBriefing"
+    )
+    WorkmanagerPlugin.registerBGProcessingTask(
+      withIdentifier: "com.naviwealth.garminSync"
     )
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }

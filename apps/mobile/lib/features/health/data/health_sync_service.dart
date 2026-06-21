@@ -8,8 +8,9 @@
 /// Memory indexer downstream is already idempotent by stable id, so the
 /// sync chain produces no duplicate events / memories.
 ///
-/// **Not in scope** (deferred to D-2.5b / future):
-///   * background fetch / WorkManager scheduling — manual trigger only
+/// **Not in scope**:
+///   * generic HealthKit / Health Connect background fetch; Garmin has its
+///     own best-effort WorkManager due-flag path in `health/agents/providers`.
 ///   * write-back to HealthKit / Health Connect (§10 反目标)
 ///   * sleep-segment grouping on iOS (one row per asleep segment)
 library;

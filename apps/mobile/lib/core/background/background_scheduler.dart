@@ -1,10 +1,10 @@
 /// Cross-platform background-task scheduler for autonomous agents
 /// (`docs/lifeos-shell.md` §7.3, D-2.5b).
 ///
-/// Narrow surface: register / cancel the periodic "Morning Briefing"
-/// task. The actual platform driver (Android WorkManager, iOS
-/// BGTaskScheduler) sits in [createBackgroundScheduler]'s io impl and
-/// goes through `package:workmanager`.
+/// Narrow surface: register / cancel HealthOS background tasks. The actual
+/// platform driver (Android WorkManager, iOS BGTaskScheduler) sits in
+/// [createBackgroundScheduler]'s io impl and goes through
+/// `package:workmanager`.
 ///
 /// **iOS caveats** (BGTaskScheduler reality, not a code bug):
 ///   * minimum effective frequency ≈ 15 min;
@@ -22,11 +22,19 @@ library;
 /// **never** rename one without updating both.
 const String kMorningBriefingTaskName = 'com.naviwealth.morningBriefing';
 
+/// Stable workmanager task name for best-effort Garmin background sync.
+/// Mirrors iOS native task registration and Info.plist identifiers.
+const String kGarminSyncTaskName = 'com.naviwealth.garminSync';
+
 /// SharedPreferences key set by the background callback when the OS
 /// fires the periodic task. The foreground app reads it on launch and
 /// triggers an in-process agent run if found (the background isolate
 /// can't run the full agent — no ProviderContainer / Drift access).
 const String kMorningBriefingDueAtKey = 'lifeos.health.briefing.dueAt';
+
+/// SharedPreferences key set by the background callback when Garmin data
+/// should be refreshed in-process on next foreground launch/resume.
+const String kGarminSyncDueAtKey = 'lifeos.health.garminSync.dueAt';
 
 abstract class BackgroundScheduler {
   /// `true` when the platform supports background tasks at all.
@@ -45,8 +53,17 @@ abstract class BackgroundScheduler {
     Duration interval = const Duration(hours: 24),
   });
 
+  /// Schedule best-effort Garmin data sync. The callback only stamps a due
+  /// flag; the foreground app runs the real Rust/secure-storage sync.
+  Future<void> registerGarminSync({
+    Duration interval = const Duration(hours: 6),
+  });
+
   /// Cancel the previously-registered Morning Briefing task. Called
   /// when the user toggles HealthOS off so we don't keep waking the
   /// device for a domain they've disabled.
   Future<void> cancelMorningBriefing();
+
+  /// Cancel the previously-registered Garmin sync task.
+  Future<void> cancelGarminSync();
 }
