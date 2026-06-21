@@ -25,8 +25,7 @@ import '../../shared/entry_kind_labels.dart';
 ///
 /// Layout (top → bottom):
 ///  1. Hero amount + title + date / time
-///  2. AI Insight block (rule-based stub for now; future will hit the
-///     AI agent through `aiExplainEntryProvider`)
+///  2. Local insight block for deterministic transaction patterns
 ///  3. Posting breakdown (debits / credits in the existing widget)
 ///  4. (Future) tags, notes, edit / delete actions
 class ActivityEntryDetailPage extends ConsumerWidget {

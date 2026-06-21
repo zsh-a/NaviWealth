@@ -37,4 +37,21 @@ void main() {
     final knowledge = kKnowledgePack.commandPaletteEntriesBuilder!(l10n);
     expect(knowledge.map((e) => e.id), contains('nav.knowledge.inbox'));
   });
+
+  test('health entries are searchable by metrics and sync actions', () {
+    final health = kHealthPack.commandPaletteEntriesBuilder!(l10n);
+
+    expect(
+      health.where((entry) => entry.matches('vo2')).map((entry) => entry.id),
+      contains('nav.health.trend'),
+    );
+    expect(
+      health.where((entry) => entry.matches('sleep')).map((entry) => entry.id),
+      containsAll(<String>['nav.health.trend', 'nav.health.plan']),
+    );
+    expect(
+      health.where((entry) => entry.matches('garmin')).map((entry) => entry.id),
+      contains('nav.health.today'),
+    );
+  });
 }

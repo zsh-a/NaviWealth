@@ -325,15 +325,75 @@ class _ErrorCard extends StatelessWidget {
   }
 }
 
-class _DisclaimerCard extends StatelessWidget {
+class _DisclaimerCard extends StatefulWidget {
   const _DisclaimerCard();
+
+  @override
+  State<_DisclaimerCard> createState() => _DisclaimerCardState();
+}
+
+class _DisclaimerCardState extends State<_DisclaimerCard> {
+  bool _expanded = true;
+  bool _dismissed = false;
+
   @override
   Widget build(BuildContext context) {
-    return AppStatusBanner(
-      kind: AppStatusKind.neutral,
-      message: AppLocalizations.of(context).healthPlanDisclaimer,
-      icon: FLucideIcons.info,
-      compact: true,
+    if (_dismissed) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                FLucideIcons.info,
+                size: AppIconSizes.h18,
+                color: colors.mutedForeground,
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              Expanded(
+                child: Text(
+                  l10n.healthPlanDisclaimerTitle,
+                  style: context.captionLabelStyle,
+                ),
+              ),
+              FButton(
+                variant: FButtonVariant.ghost,
+                onPress: () => setState(() => _expanded = !_expanded),
+                child: Icon(
+                  _expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+                  size: AppIconSizes.h18,
+                ),
+              ),
+              FButton(
+                variant: FButtonVariant.ghost,
+                onPress: () => setState(() => _dismissed = true),
+                child: const Icon(FLucideIcons.x, size: AppIconSizes.h18),
+              ),
+            ],
+          ),
+          AnimatedCrossFade(
+            firstChild: Padding(
+              padding: const EdgeInsets.only(
+                top: AppSpacing.s8,
+                left: AppSpacing.s28,
+              ),
+              child: Text(
+                l10n.healthPlanDisclaimer,
+                style: context.captionStyle,
+              ),
+            ),
+            secondChild: const SizedBox.shrink(),
+            crossFadeState: _expanded
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            duration: motionDuration(context, Motion.fast),
+          ),
+        ],
+      ),
     );
   }
 }

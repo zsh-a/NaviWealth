@@ -99,6 +99,13 @@ class SettingsOverview extends ConsumerWidget {
             onTap: () => context.goNamed(AppRouteNames.backup),
           ),
           const AppGradientDivider(),
+          InlineLinkRow(
+            icon: FLucideIcons.bell,
+            label: l10n.settingsNotificationsTitle,
+            subtitle: l10n.settingsNotificationsSubtitle,
+            onTap: () => context.goNamed(AppRouteNames.notifications),
+          ),
+          const AppGradientDivider(),
           const _CrashReportingRow(),
         ],
       ),

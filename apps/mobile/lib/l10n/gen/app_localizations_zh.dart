@@ -1057,10 +1057,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityEntryDetailTitle => '交易明细';
 
   @override
-  String get activityEntryDetailAiExplanation => 'AI 洞察';
+  String get activityEntryDetailAiExplanation => '记录洞察';
 
   @override
-  String get activityEntryDetailNoExplanation => '暂无该笔记录的 AI 洞察。';
+  String get activityEntryDetailNoExplanation => '暂无该笔记录的洞察。';
 
   @override
   String get activityEntryDetailInsightSubscription =>
@@ -5122,6 +5122,53 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDataSubtitle => '导出或导入加密数据备份';
 
   @override
+  String get settingsNotificationsTitle => '通知';
+
+  @override
+  String get settingsNotificationsSubtitle => '权限、Agent 提醒与 HealthOS 简报告警';
+
+  @override
+  String get settingsNotificationsMasterTitle => '允许应用通知';
+
+  @override
+  String get settingsNotificationsMasterSubtitle => '控制本地 Agent 通知和后台提醒任务。';
+
+  @override
+  String get settingsNotificationsHealthBriefingTitle => 'Morning Briefing';
+
+  @override
+  String settingsNotificationsHealthBriefingSubtitle(String hour) {
+    return '大约 $hour:00 运行并推送 HealthOS 摘要。';
+  }
+
+  @override
+  String get settingsNotificationsHealthBriefingBlockedSubtitle =>
+      '开启应用通知后才会运行每日简报提醒。';
+
+  @override
+  String get settingsNotificationsPermissionChecking => '正在检查系统通知权限…';
+
+  @override
+  String get settingsNotificationsPermissionGranted => '系统通知已允许。';
+
+  @override
+  String get settingsNotificationsPermissionDenied => 'NaviWealth 的系统通知已关闭。';
+
+  @override
+  String get settingsNotificationsPermissionUnavailable => '当前平台不支持通知。';
+
+  @override
+  String settingsNotificationsPermissionFailed(String error) {
+    return '读取通知权限失败：$error';
+  }
+
+  @override
+  String get settingsNotificationsPermissionRequest => '启用';
+
+  @override
+  String get settingsNotificationsPermissionRequesting => '启用中…';
+
+  @override
   String get settingsCrashReportingTitle => '崩溃报告';
 
   @override
@@ -8134,6 +8181,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthPlanEnableHint => '请在 设置 → Domains 中启用 HealthOS，才能查看恢复建议。';
 
   @override
+  String get healthPlanDisclaimerTitle => '仅供健康参考';
+
+  @override
   String get healthPlanDisclaimer => '不是医学诊断，仅供日常作息判断。HealthOS 不会自动调整你的日程。';
 
   @override
@@ -8288,7 +8338,39 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeCaptureSuggestionSubtitle => '应用前先确认 AI 抽取的类型和字段。';
 
   @override
+  String get knowledgeCaptureTypeLabel => '保存为';
+
+  @override
+  String get knowledgeCaptureKindAuto => '自动';
+
+  @override
+  String get knowledgeCaptureKindNote => 'Note';
+
+  @override
+  String get knowledgeCaptureKindRoutine => 'Routine';
+
+  @override
+  String get knowledgeCaptureKindDecision => 'Decision';
+
+  @override
+  String get knowledgeCaptureKindAssumption => 'Assumption';
+
+  @override
+  String get knowledgeCaptureKindPrinciple => 'Principle';
+
+  @override
+  String get knowledgeCaptureKindConcept => 'Concept';
+
+  @override
+  String get knowledgeCaptureKindExperiment => 'Experiment';
+
+  @override
   String get knowledgeCaptureSave => '保存并分析';
+
+  @override
+  String knowledgeCaptureSaveTyped(String kind) {
+    return '保存为 $kind';
+  }
 
   @override
   String get knowledgeCaptureSaving => '保存中…';

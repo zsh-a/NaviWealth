@@ -20,8 +20,8 @@ import '../ui/health_trend_page.dart' deferred as trend_lib;
 import 'health_domain_shell.dart';
 
 /// HealthOS `StatefulShellRoute`: 3 branches (Today / Trend / Plan)
-/// backed by [DomainTabsShell] (no mobile search slot — Health doesn't
-/// use the command palette today).
+/// backed by [DomainTabsShell]. HealthOS command/search entries are
+/// contributed separately through `healthCommandPaletteEntries`.
 StatefulShellRoute healthShellRoute() {
   return StatefulShellRoute.indexedStack(
     builder: (context, state, shell) => DomainTabsShell(

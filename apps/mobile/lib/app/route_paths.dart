@@ -104,6 +104,7 @@ abstract final class AppRoutes {
   static const settingsDevices = '/settings/devices';
   static const settingsFxRates = '/settings/fx-rates';
   static const settingsBackup = '/settings/backup';
+  static const settingsNotifications = '/settings/notifications';
   static const settingsLogs = '/settings/logs';
   static const settingsPerformance = '/settings/performance';
   static const settingsSync = '/settings/sync';
@@ -169,6 +170,7 @@ abstract final class AppRouteNames {
   static const devices = 'devices';
   static const fxRates = 'fx-rates';
   static const backup = 'backup';
+  static const notifications = 'notifications';
   static const logs = 'logs';
   static const performance = 'performance';
   static const sync = 'sync';

@@ -150,7 +150,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('AI insight'), findsOneWidget);
+    expect(find.text('Entry insight'), findsOneWidget);
     expect(
       find.text(
         'Recurring subscription. Review whether it still fits your plan before the next renewal.',
@@ -171,18 +171,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('AI 洞察'), findsOneWidget);
+    expect(find.text('记录洞察'), findsOneWidget);
     expect(find.text('识别为主要收入流入。可作为现金流预测的稳定基线。'), findsOneWidget);
-    expect(find.text('暂无该笔记录的 AI 洞察。'), findsNothing);
+    expect(find.text('暂无该笔记录的洞察。'), findsNothing);
   });
 
-  testWidgets('hides the entire AI insight card when no heuristic matches', (
+  testWidgets('hides the entire insight card when no heuristic matches', (
     tester,
   ) async {
     await tester.pumpWidget(_wrap(entry: _entry(narration: 'Coffee')));
     await tester.pumpAndSettle();
 
-    expect(find.text('AI insight'), findsNothing);
+    expect(find.text('Entry insight'), findsNothing);
     expect(find.byIcon(FLucideIcons.sparkles), findsNothing);
     expect(find.text('No insight available for this entry.'), findsNothing);
     expect(find.text('Living'), findsOneWidget);

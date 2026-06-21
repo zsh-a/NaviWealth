@@ -21,6 +21,7 @@ import '../core/logging/crash_reporter.dart';
 import '../core/logging/logging_crash_reporter.dart';
 import '../core/logging/providers.dart';
 import '../core/logging/sentry_crash_reporter.dart';
+import '../core/notifications/notification_preferences.dart';
 import '../core/notifications/providers.dart' as notif_providers;
 import '../core/perf/providers.dart';
 import '../core/sync/providers.dart';
@@ -140,7 +141,13 @@ Future<ProviderContainer> bootstrap({AppConfig? config}) async {
       // shell decides "use which synthesis + which notifier".
       morningBriefingAgentProvider.overrideWith((ref) {
         final runtime = ref.watch(ai_chat_providers.deviceLlmRuntimeProvider);
-        final notifier = ref.watch(notif_providers.notificationServiceProvider);
+        final notificationsEnabled = ref.watch(notificationsEnabledProvider);
+        final briefingNotificationsEnabled = ref.watch(
+          healthBriefingNotificationsEnabledProvider,
+        );
+        final notifier = notificationsEnabled && briefingNotificationsEnabled
+            ? ref.watch(notif_providers.notificationServiceProvider)
+            : null;
         final hourLocal = ref.watch(morningBriefingHourProvider);
         final BriefingSynthesizer synth = runtime != null
             ? LlmBriefingSynthesizer(client: runtime.client)

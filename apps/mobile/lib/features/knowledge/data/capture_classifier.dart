@@ -88,17 +88,66 @@ class HeuristicCaptureClassifier implements CaptureClassifier {
     }
     final routine = _detectRoutine(trimmed);
     if (routine != null) return routine;
-    // Other kinds (decision / assumption / principle / concept /
-    // experiment) currently fall through to note. The LLM classifier
-    // covers them; the heuristic intentionally stays minimal so a
-    // user without an LLM profile still gets the routine case
-    // (highest-leverage real-world use) without any false positives
-    // from naive keyword matching against the other 5 types.
+    final structured = _detectStructuredKind(trimmed);
+    if (structured != null) return structured;
     return CaptureClassification(
       kind: CaptureKind.note,
       confidence: 0.0,
       reasonZh: '未检出特定结构,保留为 Note',
     );
+  }
+
+  CaptureClassification? _detectStructuredKind(String text) {
+    final lower = text.toLowerCase();
+    final statement = _statementFromText(text);
+    final scope = _scopeGuess(lower);
+
+    if (_experimentMarkers.hasMatch(lower)) {
+      return CaptureClassification(
+        kind: CaptureKind.experiment,
+        confidence: 0.72,
+        reasonZh: '检出 "实验 / 验证 / 指标 / A/B" 等实验结构关键词',
+        statement: statement,
+        scope: scope,
+      );
+    }
+    if (_decisionMarkers.hasMatch(lower)) {
+      return CaptureClassification(
+        kind: CaptureKind.decision,
+        confidence: 0.7,
+        reasonZh: '检出 "是否 / 还是 / vs / 选项" 等决策权衡关键词',
+        statement: statement,
+        scope: scope,
+      );
+    }
+    if (_principleMarkers.hasMatch(lower)) {
+      return CaptureClassification(
+        kind: CaptureKind.principle,
+        confidence: 0.68,
+        reasonZh: '检出 "原则 / 始终 / 不应该 / always / never" 等原则表述',
+        statement: statement,
+        scope: scope,
+      );
+    }
+    if (_assumptionMarkers.hasMatch(lower)) {
+      return CaptureClassification(
+        kind: CaptureKind.assumption,
+        confidence: 0.66,
+        reasonZh: '检出 "假设 / 我认为 / 预计 / 可能" 等可检验信念表述',
+        statement: statement,
+        scope: scope,
+      );
+    }
+    if (_conceptMarkers.hasMatch(text)) {
+      return CaptureClassification(
+        kind: CaptureKind.concept,
+        confidence: 0.64,
+        reasonZh: '检出概念定义句式',
+        statement: statement,
+        scope: scope,
+      );
+    }
+    return null;
   }
 
   /// Routine heuristic: surface text patterns that overwhelmingly mean
@@ -168,7 +217,11 @@ class HeuristicCaptureClassifier implements CaptureClassifier {
     if (lower.contains('定投') ||
         lower.contains('dca') ||
         lower.contains('基金') ||
-        lower.contains('rebalance')) {
+        lower.contains('rebalance') ||
+        lower.contains('收益率') ||
+        lower.contains('美债') ||
+        lower.contains('债券') ||
+        lower.contains('tlt')) {
       return 'finance/investing';
     }
     if (lower.contains('体检') ||
@@ -198,6 +251,31 @@ class HeuristicCaptureClassifier implements CaptureClassifier {
   // Routine markers without explicit interval.
   static final RegExp _routineMarkers = RegExp(
     r'(定期|需要.*活跃|需要.*续期|需要.*缴费|每.*提醒|提醒我每|periodically|recurring|every\s+(?:\d+\s+)?(?:months?|years?|weeks?|days?))',
+    caseSensitive: false,
+  );
+
+  static final RegExp _experimentMarkers = RegExp(
+    r'(实验|试验|验证|a/b|ab\s*test|hypothesis|experiment|metric|指标|对照组|样本|观察\s*\d+\s*(天|周|月)|试运行)',
+    caseSensitive: false,
+  );
+
+  static final RegExp _decisionMarkers = RegExp(
+    r'(是否|要不要|该不该|应该.*还是|还是.*比较好|vs\.?|versus|选项|方案\s*[ab]|权衡|取舍|decision|decide|choose|should\s+i|whether\s+to)',
+    caseSensitive: false,
+  );
+
+  static final RegExp _principleMarkers = RegExp(
+    r'(原则|底线|长期坚持|始终|永远不|不应该|应该始终|价值观|principle|rule of thumb|always|never)',
+    caseSensitive: false,
+  );
+
+  static final RegExp _assumptionMarkers = RegExp(
+    r'(假设|我认为|我相信|预计|预期|大概率|可能会|如果.*那么|because|i think|i believe|assume|assumption|expect|likely)',
+    caseSensitive: false,
+  );
+
+  static final RegExp _conceptMarkers = RegExp(
+    r'(^.{1,40}(是|指的是|意味着|定义为).{2,120}$|^.{1,40}\s+(means|is defined as|refers to)\s+.{2,120}$)',
     caseSensitive: false,
   );
 }

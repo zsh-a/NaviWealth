@@ -2,12 +2,15 @@
 /// (`docs/knowledgeos-domain.md` §3 + §5 + §14).
 ///
 /// One sheet, one textarea, one Save. Replaces the old Inbox-only
-/// `_NewNoteSheet`. The capture always lands as a `KnowledgeNote` —
-/// zero-latency, never blocks on AI. After save, the sheet awaits a
-/// single LLM round-trip via [captureClassifierProvider] (LLM when a
-/// device profile is configured, deterministic heuristic otherwise).
-/// When the classifier returns a non-Note kind the sheet swaps its
-/// body for an inline "AI 建议升级" card with ✓ / ✗:
+/// `_NewNoteSheet`. Default Auto mode lands as a `KnowledgeNote` first —
+/// zero-latency, never blocks on AI. Users can also pick a concrete
+/// target kind up front: Routine writes a structured row immediately;
+/// Decision / Principle / Assumption / Concept / Experiment land as
+/// candidate-tagged Notes for the typed writers. In Auto mode, after save,
+/// the sheet awaits a single LLM round-trip via [captureClassifierProvider]
+/// (LLM when a device profile is configured, deterministic heuristic
+/// otherwise). When the classifier returns a non-Note kind the sheet swaps
+/// its body for an inline "AI 建议升级" card with ✓ / ✗:
 ///
 /// - ✓ promotes:
 ///   * `routine` → writes a [KnowledgeRoutine] + soft-deletes the
@@ -60,6 +63,7 @@ class _KnowledgeCaptureSheetState
   final _titleCtrl = TextEditingController();
   final _bodyCtrl = TextEditingController();
   _CaptureStage _stage = _CaptureStage.composing;
+  CaptureKind? _manualKind;
 
   // Populated after save → classify().
   KnowledgeNote? _savedNote;
@@ -90,6 +94,7 @@ class _KnowledgeCaptureSheetState
 
   Future<void> _saveAndClassify() async {
     if (!_canSave) return;
+    final manualKind = _manualKind;
     setState(() => _stage = _CaptureStage.saving);
     try {
       final repo = await ref.read(knowledgeRepositoryProvider.future);
@@ -109,6 +114,13 @@ class _KnowledgeCaptureSheetState
         ),
       );
       await repo.upsertNote(note);
+
+      if (manualKind != null) {
+        _savedNote = note;
+        await _applyManualKind(note, manualKind);
+        if (mounted) Navigator.of(context).pop();
+        return;
+      }
 
       // Classify against title + body together — the routine signal
       // sometimes lives in the title ("港卡活跃") and sometimes in the
@@ -160,6 +172,84 @@ class _KnowledgeCaptureSheetState
           AppLocalizations.of(context).knowledgeCaptureSaveFailed('$e'),
         );
       }
+    }
+  }
+
+  Future<void> _applyManualKind(KnowledgeNote note, CaptureKind kind) async {
+    final repo = await ref.read(knowledgeRepositoryProvider.future);
+    final stamper = await ref.read(mutationStamperProvider.future);
+    final title = note.title.trim();
+    final statement = title.isNotEmpty
+        ? knowledgeExcerpt(title, max: 60)
+        : knowledgeExcerpt(note.bodyMd, max: 60);
+    switch (kind) {
+      case CaptureKind.routine:
+        final stamp = await stamper.stamp();
+        const intervalDays = 180;
+        await repo.upsertRoutine(
+          KnowledgeRoutine(
+            id: kKnowledgeUuid.v4(),
+            statement: statement,
+            intervalDays: intervalDays,
+            nextDueAt: stamp.now.add(const Duration(days: intervalDays)),
+            scope: '*',
+            status: RoutineStatus.active,
+            createdAt: stamp.now,
+            sync: SyncMeta(
+              ownerUserId: stamp.ownerUserId,
+              updatedAt: stamp.now,
+              updatedByDevice: stamp.deviceId,
+              hlc: stamp.hlc,
+            ),
+          ),
+        );
+        final tomb = await stamper.stamp();
+        await repo.upsertNote(
+          KnowledgeNote(
+            id: note.id,
+            title: note.title,
+            bodyMd: note.bodyMd,
+            sourceUrl: note.sourceUrl,
+            tags: note.tags,
+            projectTag: note.projectTag,
+            createdAt: note.createdAt,
+            sync: SyncMeta(
+              ownerUserId: tomb.ownerUserId,
+              updatedAt: tomb.now,
+              updatedByDevice: tomb.deviceId,
+              hlc: tomb.hlc,
+              deletedAt: tomb.now,
+            ),
+          ),
+        );
+      case CaptureKind.decision:
+      case CaptureKind.principle:
+      case CaptureKind.assumption:
+      case CaptureKind.concept:
+      case CaptureKind.experiment:
+        final candidateStamp = await stamper.stamp();
+        final tags = note.tags.toSet()
+          ..add('kind:${kind.wire}_candidate')
+          ..add('source:manual_capture');
+        await repo.upsertNote(
+          KnowledgeNote(
+            id: note.id,
+            title: note.title,
+            bodyMd: note.bodyMd,
+            sourceUrl: note.sourceUrl,
+            tags: tags.toList(growable: false),
+            projectTag: note.projectTag,
+            createdAt: note.createdAt,
+            sync: SyncMeta(
+              ownerUserId: candidateStamp.ownerUserId,
+              updatedAt: candidateStamp.now,
+              updatedByDevice: candidateStamp.deviceId,
+              hlc: candidateStamp.hlc,
+            ),
+          ),
+        );
+      case CaptureKind.note:
+        break;
     }
   }
 
@@ -323,7 +413,11 @@ class _KnowledgeCaptureSheetState
         _CaptureStage.composing || _CaptureStage.saving => AppSheetFooter(
           submitLabel: stage == _CaptureStage.saving
               ? l10n.knowledgeCaptureSaving
-              : l10n.knowledgeCaptureSave,
+              : _manualKind == null
+              ? l10n.knowledgeCaptureSave
+              : l10n.knowledgeCaptureSaveTyped(
+                  _captureKindShortLabel(l10n, _manualKind!),
+                ),
           cancelLabel: l10n.knowledgeCaptureCancel,
           busy: !_canSave,
           onSubmit: () {
@@ -377,6 +471,8 @@ class _KnowledgeCaptureSheetState
                 key: const ValueKey<String>('compose'),
                 titleController: _titleCtrl,
                 bodyController: _bodyCtrl,
+                selectedKind: _manualKind,
+                onKindChanged: (kind) => setState(() => _manualKind = kind),
               ),
               _CaptureStage.classifying => _ClassifyingBody(
                 key: const ValueKey<String>('classifying'),
@@ -607,9 +703,13 @@ class _ComposeBody extends StatelessWidget {
     super.key,
     required this.titleController,
     required this.bodyController,
+    required this.selectedKind,
+    required this.onKindChanged,
   });
   final TextEditingController titleController;
   final TextEditingController bodyController;
+  final CaptureKind? selectedKind;
+  final ValueChanged<CaptureKind?> onKindChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -617,6 +717,10 @@ class _ComposeBody extends StatelessWidget {
     return KnowledgeWriterSection(
       title: l10n.knowledgeCaptureTitle,
       children: [
+        _CaptureKindPicker(
+          selectedKind: selectedKind,
+          onChanged: onKindChanged,
+        ),
         FTextField(
           control: FTextFieldControl.managed(controller: titleController),
           label: Text(l10n.knowledgeCaptureTitleField),
@@ -632,6 +736,113 @@ class _ComposeBody extends StatelessWidget {
       ],
     );
   }
+}
+
+class _CaptureKindPicker extends StatelessWidget {
+  const _CaptureKindPicker({
+    required this.selectedKind,
+    required this.onChanged,
+  });
+
+  final CaptureKind? selectedKind;
+  final ValueChanged<CaptureKind?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final options = <_CaptureKindOption>[
+      _CaptureKindOption(null, l10n.knowledgeCaptureKindAuto),
+      for (final kind in CaptureKind.values)
+        _CaptureKindOption(kind, _captureKindShortLabel(l10n, kind)),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.knowledgeCaptureTypeLabel, style: context.captionStyle),
+        const SizedBox(height: AppSpacing.s6),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (var i = 0; i < options.length; i++) ...[
+                _CaptureKindChip(
+                  label: options[i].label,
+                  selected: options[i].kind == selectedKind,
+                  onTap: () => onChanged(options[i].kind),
+                ),
+                if (i != options.length - 1)
+                  const SizedBox(width: AppSpacing.s6),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CaptureKindChip extends StatelessWidget {
+  const _CaptureKindChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return FTappable(
+      onPress: onTap,
+      child: AnimatedContainer(
+        duration: motionDuration(context, Motion.fast),
+        curve: Motion.standardDecelerate,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s10,
+          vertical: AppSpacing.s6,
+        ),
+        decoration: BoxDecoration(
+          color: selected
+              ? colors.primary.withValues(alpha: AppOpacity.subtle)
+              : colors.muted,
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          border: Border.all(
+            color: selected
+                ? colors.primary.withValues(alpha: AppOpacity.prominent)
+                : colors.border.withValues(alpha: AppOpacity.muted),
+          ),
+        ),
+        child: Text(
+          label,
+          style: context.captionLabelStyle.copyWith(
+            color: selected ? colors.primary : colors.foreground,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CaptureKindOption {
+  const _CaptureKindOption(this.kind, this.label);
+
+  final CaptureKind? kind;
+  final String label;
+}
+
+String _captureKindShortLabel(AppLocalizations l10n, CaptureKind kind) {
+  return switch (kind) {
+    CaptureKind.note => l10n.knowledgeCaptureKindNote,
+    CaptureKind.routine => l10n.knowledgeCaptureKindRoutine,
+    CaptureKind.decision => l10n.knowledgeCaptureKindDecision,
+    CaptureKind.principle => l10n.knowledgeCaptureKindPrinciple,
+    CaptureKind.assumption => l10n.knowledgeCaptureKindAssumption,
+    CaptureKind.concept => l10n.knowledgeCaptureKindConcept,
+    CaptureKind.experiment => l10n.knowledgeCaptureKindExperiment,
+  };
 }
 
 class _SuggestionBody extends StatelessWidget {

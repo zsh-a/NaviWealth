@@ -1,8 +1,9 @@
 /// KnowledgeOS Inbox tab (`docs/knowledgeos-domain.md` §5).
 ///
-/// Renders captured Notes. The Inbox action is intentionally narrow:
-/// capture a Note quickly, then let AI classification suggest promotion
-/// into Routine / Decision / other knowledge objects.
+/// Renders captured Notes. The Inbox action now supports Auto capture
+/// plus explicit type selection: quick Notes remain one tap away, while
+/// Routine / Decision / Principle / Assumption / Concept / Experiment
+/// can be marked at capture time.
 library;
 
 import 'package:flutter/widgets.dart';
@@ -56,7 +57,7 @@ class _KnowledgeInboxPageState extends ConsumerState<KnowledgeInboxPage>
   }
 }
 
-/// Icon-only FAB for the Inbox's primary action: quick Note capture.
+/// Icon-only FAB for the Inbox's primary action: quick knowledge capture.
 class _InboxCaptureFab extends ConsumerWidget {
   const _InboxCaptureFab();
 
@@ -64,7 +65,7 @@ class _InboxCaptureFab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return KnowledgeFloatingActionSurface(
       icon: FLucideIcons.plus,
-      tooltip: AppLocalizations.of(context).knowledgeNewNote,
+      tooltip: AppLocalizations.of(context).knowledgeCaptureAction,
       onPress: () => showKnowledgeCaptureSheet(context, ref),
     );
   }

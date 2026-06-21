@@ -1982,10 +1982,10 @@ abstract class AppLocalizations {
   /// **'Transaction'**
   String get activityEntryDetailTitle;
 
-  /// Section header for the AI-generated explanation block in the activity entry detail page
+  /// Section header for the local rule-based explanation block in the activity entry detail page
   ///
   /// In en, this message translates to:
-  /// **'AI insight'**
+  /// **'Entry insight'**
   String get activityEntryDetailAiExplanation;
 
   /// Empty state when no AI explanation is available
@@ -1994,37 +1994,37 @@ abstract class AppLocalizations {
   /// **'No insight available for this entry.'**
   String get activityEntryDetailNoExplanation;
 
-  /// Heuristic AI insight shown for subscription-like transaction descriptions
+  /// Local insight shown for subscription-like transaction descriptions
   ///
   /// In en, this message translates to:
   /// **'Recurring subscription. Review whether it still fits your plan before the next renewal.'**
   String get activityEntryDetailInsightSubscription;
 
-  /// Heuristic AI insight shown for rent or mortgage-like transaction descriptions
+  /// Local insight shown for rent or mortgage-like transaction descriptions
   ///
   /// In en, this message translates to:
   /// **'Recurring housing payment. Keep it in the essential-spending baseline.'**
   String get activityEntryDetailInsightHousing;
 
-  /// Heuristic AI insight shown for salary or payroll-like transaction descriptions
+  /// Local insight shown for salary or payroll-like transaction descriptions
   ///
   /// In en, this message translates to:
   /// **'Primary income inflow. Keep it stable in cash-flow projections.'**
   String get activityEntryDetailInsightIncome;
 
-  /// Heuristic AI insight shown for restaurant or food delivery transaction descriptions
+  /// Local insight shown for restaurant or food delivery transaction descriptions
   ///
   /// In en, this message translates to:
   /// **'Dining expense. Review if it aligns with your monthly food budget.'**
   String get activityEntryDetailInsightDining;
 
-  /// Heuristic AI insight shown for ride-hailing, transit, or travel transaction descriptions
+  /// Local insight shown for ride-hailing, transit, or travel transaction descriptions
   ///
   /// In en, this message translates to:
   /// **'Transportation cost. Consider whether it\'s a routine commute or one-off trip.'**
   String get activityEntryDetailInsightTransport;
 
-  /// Heuristic AI insight shown for online shopping or retail transaction descriptions
+  /// Local insight shown for online shopping or retail transaction descriptions
   ///
   /// In en, this message translates to:
   /// **'Shopping purchase. Check if it was planned or impulse spending.'**
@@ -9159,6 +9159,90 @@ abstract class AppLocalizations {
   /// **'Export or import encrypted data backups'**
   String get settingsDataSubtitle;
 
+  /// Settings tile and page title for notification preferences
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settingsNotificationsTitle;
+
+  /// Settings tile subtitle for notification preferences
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions, agent reminders, and HealthOS briefing alerts'**
+  String get settingsNotificationsSubtitle;
+
+  /// Master app-level notification preference label
+  ///
+  /// In en, this message translates to:
+  /// **'Allow app notifications'**
+  String get settingsNotificationsMasterTitle;
+
+  /// Master app-level notification preference subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Controls local agent notifications and background reminder jobs.'**
+  String get settingsNotificationsMasterSubtitle;
+
+  /// HealthOS morning briefing notification preference label
+  ///
+  /// In en, this message translates to:
+  /// **'Morning Briefing'**
+  String get settingsNotificationsHealthBriefingTitle;
+
+  /// HealthOS morning briefing notification preference subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Runs around {hour}:00 and posts the HealthOS summary.'**
+  String settingsNotificationsHealthBriefingSubtitle(String hour);
+
+  /// HealthOS briefing subtitle when the master notification switch is off
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on app notifications to run the daily briefing reminder.'**
+  String get settingsNotificationsHealthBriefingBlockedSubtitle;
+
+  /// Notification settings permission status while loading
+  ///
+  /// In en, this message translates to:
+  /// **'Checking system notification permission…'**
+  String get settingsNotificationsPermissionChecking;
+
+  /// Notification settings permission status when OS permission is granted
+  ///
+  /// In en, this message translates to:
+  /// **'System notifications are allowed.'**
+  String get settingsNotificationsPermissionGranted;
+
+  /// Notification settings permission status when OS permission is denied
+  ///
+  /// In en, this message translates to:
+  /// **'System notifications are off for NaviWealth.'**
+  String get settingsNotificationsPermissionDenied;
+
+  /// Notification settings permission status when local notifications are unsupported
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are not available on this platform.'**
+  String get settingsNotificationsPermissionUnavailable;
+
+  /// Notification settings permission load error
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read notification permission: {error}'**
+  String settingsNotificationsPermissionFailed(String error);
+
+  /// Button label requesting OS notification permission
+  ///
+  /// In en, this message translates to:
+  /// **'Enable'**
+  String get settingsNotificationsPermissionRequest;
+
+  /// Button label while requesting OS notification permission
+  ///
+  /// In en, this message translates to:
+  /// **'Enabling…'**
+  String get settingsNotificationsPermissionRequesting;
+
   /// Settings switch row label for opt-in anonymous crash + error telemetry
   ///
   /// In en, this message translates to:
@@ -14596,6 +14680,12 @@ abstract class AppLocalizations {
   /// **'Enable HealthOS in Settings → Domains to see recovery advice.'**
   String get healthPlanEnableHint;
 
+  /// Title for the collapsible Health Plan disclaimer banner.
+  ///
+  /// In en, this message translates to:
+  /// **'Health guidance only'**
+  String get healthPlanDisclaimerTitle;
+
   /// No description provided for @healthPlanDisclaimer.
   ///
   /// In en, this message translates to:
@@ -14890,11 +14980,71 @@ abstract class AppLocalizations {
   /// **'Review the extracted type and fields before applying.'**
   String get knowledgeCaptureSuggestionSubtitle;
 
+  /// No description provided for @knowledgeCaptureTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as'**
+  String get knowledgeCaptureTypeLabel;
+
+  /// No description provided for @knowledgeCaptureKindAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get knowledgeCaptureKindAuto;
+
+  /// No description provided for @knowledgeCaptureKindNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get knowledgeCaptureKindNote;
+
+  /// No description provided for @knowledgeCaptureKindRoutine.
+  ///
+  /// In en, this message translates to:
+  /// **'Routine'**
+  String get knowledgeCaptureKindRoutine;
+
+  /// No description provided for @knowledgeCaptureKindDecision.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision'**
+  String get knowledgeCaptureKindDecision;
+
+  /// No description provided for @knowledgeCaptureKindAssumption.
+  ///
+  /// In en, this message translates to:
+  /// **'Assumption'**
+  String get knowledgeCaptureKindAssumption;
+
+  /// No description provided for @knowledgeCaptureKindPrinciple.
+  ///
+  /// In en, this message translates to:
+  /// **'Principle'**
+  String get knowledgeCaptureKindPrinciple;
+
+  /// No description provided for @knowledgeCaptureKindConcept.
+  ///
+  /// In en, this message translates to:
+  /// **'Concept'**
+  String get knowledgeCaptureKindConcept;
+
+  /// No description provided for @knowledgeCaptureKindExperiment.
+  ///
+  /// In en, this message translates to:
+  /// **'Experiment'**
+  String get knowledgeCaptureKindExperiment;
+
   /// No description provided for @knowledgeCaptureSave.
   ///
   /// In en, this message translates to:
   /// **'Save and analyze'**
   String get knowledgeCaptureSave;
+
+  /// Submit button when the user manually chooses a capture kind
+  ///
+  /// In en, this message translates to:
+  /// **'Save as {kind}'**
+  String knowledgeCaptureSaveTyped(String kind);
 
   /// No description provided for @knowledgeCaptureSaving.
   ///

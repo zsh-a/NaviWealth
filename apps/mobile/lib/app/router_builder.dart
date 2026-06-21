@@ -24,6 +24,7 @@ import '../features/settings/ui/fire_stress_settings_page.dart';
 import '../features/settings/ui/health_domain_settings_page.dart';
 import '../features/settings/ui/knowledge_domain_settings_page.dart';
 import '../features/settings/ui/monthly_expense_settings_page.dart';
+import '../features/settings/ui/notification_settings_page.dart';
 import '../features/settings/ui/perf_diagnostics_page.dart';
 import '../features/settings/ui/risk_thresholds_page.dart';
 import '../features/settings/ui/sync_status_page.dart';
@@ -158,6 +159,11 @@ GoRoute _settingsRoute() {
         path: 'backup',
         name: AppRouteNames.backup,
         builder: (context, state) => _backSafe(const BackupPage()),
+      ),
+      GoRoute(
+        path: 'notifications',
+        name: AppRouteNames.notifications,
+        builder: (context, state) => _backSafe(const NotificationSettingsPage()),
       ),
       GoRoute(
         path: 'logs',

@@ -20,6 +20,7 @@ import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../../../core/background/background_scheduler.dart';
 import '../../../core/background/providers.dart' as background_providers;
+import '../../../core/notifications/notification_preferences.dart';
 import '../../../design_system/preferences/theme_preferences.dart';
 import '../data/providers.dart';
 import 'morning_briefing_agent.dart';
@@ -34,10 +35,12 @@ final morningBriefingCronProvider = Provider<void>((ref) {
   final scheduler = ref.watch(background_providers.backgroundSchedulerProvider);
   final optIns = ref.watch(core_auth.domainOptInsProvider).value;
   final healthEnabled = optIns?.contains(DomainScope.health) ?? false;
+  final notificationsEnabled = ref.watch(notificationsEnabledProvider);
+  final briefingEnabled = ref.watch(healthBriefingNotificationsEnabledProvider);
   unawaited(() async {
     try {
       if (!await scheduler.isAvailable()) return;
-      if (healthEnabled) {
+      if (healthEnabled && notificationsEnabled && briefingEnabled) {
         await scheduler.registerMorningBriefing();
       } else {
         await scheduler.cancelMorningBriefing();

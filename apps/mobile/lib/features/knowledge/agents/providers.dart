@@ -8,6 +8,7 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/agents/agent.dart';
+import '../../../core/notifications/notification_preferences.dart';
 import '../../../core/notifications/providers.dart' as notif_providers;
 import 'assumption_agent.dart';
 import 'contradiction_agent.dart';
@@ -35,7 +36,10 @@ final inboxTriageAgentProvider = Provider<InboxTriageAgent>(
 /// override the way MorningBriefingAgent does because we don't swap in
 /// an LLM synthesizer here.
 final routineDueAgentProvider = Provider<RoutineDueAgent>((ref) {
-  final notifier = ref.watch(notif_providers.notificationServiceProvider);
+  final notificationsEnabled = ref.watch(notificationsEnabledProvider);
+  final notifier = notificationsEnabled
+      ? ref.watch(notif_providers.notificationServiceProvider)
+      : null;
   return RoutineDueAgent(notifier: notifier);
 });
 

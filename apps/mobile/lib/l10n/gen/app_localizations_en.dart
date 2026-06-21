@@ -1087,7 +1087,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityEntryDetailTitle => 'Transaction';
 
   @override
-  String get activityEntryDetailAiExplanation => 'AI insight';
+  String get activityEntryDetailAiExplanation => 'Entry insight';
 
   @override
   String get activityEntryDetailNoExplanation =>
@@ -5364,6 +5364,59 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDataSubtitle => 'Export or import encrypted data backups';
 
   @override
+  String get settingsNotificationsTitle => 'Notifications';
+
+  @override
+  String get settingsNotificationsSubtitle =>
+      'Permissions, agent reminders, and HealthOS briefing alerts';
+
+  @override
+  String get settingsNotificationsMasterTitle => 'Allow app notifications';
+
+  @override
+  String get settingsNotificationsMasterSubtitle =>
+      'Controls local agent notifications and background reminder jobs.';
+
+  @override
+  String get settingsNotificationsHealthBriefingTitle => 'Morning Briefing';
+
+  @override
+  String settingsNotificationsHealthBriefingSubtitle(String hour) {
+    return 'Runs around $hour:00 and posts the HealthOS summary.';
+  }
+
+  @override
+  String get settingsNotificationsHealthBriefingBlockedSubtitle =>
+      'Turn on app notifications to run the daily briefing reminder.';
+
+  @override
+  String get settingsNotificationsPermissionChecking =>
+      'Checking system notification permission…';
+
+  @override
+  String get settingsNotificationsPermissionGranted =>
+      'System notifications are allowed.';
+
+  @override
+  String get settingsNotificationsPermissionDenied =>
+      'System notifications are off for NaviWealth.';
+
+  @override
+  String get settingsNotificationsPermissionUnavailable =>
+      'Notifications are not available on this platform.';
+
+  @override
+  String settingsNotificationsPermissionFailed(String error) {
+    return 'Couldn\'t read notification permission: $error';
+  }
+
+  @override
+  String get settingsNotificationsPermissionRequest => 'Enable';
+
+  @override
+  String get settingsNotificationsPermissionRequesting => 'Enabling…';
+
+  @override
   String get settingsCrashReportingTitle => 'Crash reporting';
 
   @override
@@ -8523,6 +8576,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enable HealthOS in Settings → Domains to see recovery advice.';
 
   @override
+  String get healthPlanDisclaimerTitle => 'Health guidance only';
+
+  @override
   String get healthPlanDisclaimer =>
       'Not a medical diagnosis. HealthOS does not auto-adjust your schedule.';
 
@@ -8682,7 +8738,39 @@ class AppLocalizationsEn extends AppLocalizations {
       'Review the extracted type and fields before applying.';
 
   @override
+  String get knowledgeCaptureTypeLabel => 'Save as';
+
+  @override
+  String get knowledgeCaptureKindAuto => 'Auto';
+
+  @override
+  String get knowledgeCaptureKindNote => 'Note';
+
+  @override
+  String get knowledgeCaptureKindRoutine => 'Routine';
+
+  @override
+  String get knowledgeCaptureKindDecision => 'Decision';
+
+  @override
+  String get knowledgeCaptureKindAssumption => 'Assumption';
+
+  @override
+  String get knowledgeCaptureKindPrinciple => 'Principle';
+
+  @override
+  String get knowledgeCaptureKindConcept => 'Concept';
+
+  @override
+  String get knowledgeCaptureKindExperiment => 'Experiment';
+
+  @override
   String get knowledgeCaptureSave => 'Save and analyze';
+
+  @override
+  String knowledgeCaptureSaveTyped(String kind) {
+    return 'Save as $kind';
+  }
 
   @override
   String get knowledgeCaptureSaving => 'Saving...';
