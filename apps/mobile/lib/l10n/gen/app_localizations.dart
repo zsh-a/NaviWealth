@@ -9243,6 +9243,72 @@ abstract class AppLocalizations {
   /// **'Enabling…'**
   String get settingsNotificationsPermissionRequesting;
 
+  /// Settings switch row label for Face ID / fingerprint app unlock
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric unlock'**
+  String get settingsBiometricTitle;
+
+  /// Settings switch row subtitle for biometric unlock when available
+  ///
+  /// In en, this message translates to:
+  /// **'Require Face ID or fingerprint when NaviWealth opens.'**
+  String get settingsBiometricSubtitle;
+
+  /// Settings biometric row subtitle while checking device support or authenticating
+  ///
+  /// In en, this message translates to:
+  /// **'Checking biometric availability…'**
+  String get settingsBiometricChecking;
+
+  /// Settings biometric row subtitle when the current platform/device is unsupported
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric unlock is not available on this device.'**
+  String get settingsBiometricUnavailable;
+
+  /// Settings biometric row subtitle when the device supports biometrics but no biometric is enrolled
+  ///
+  /// In en, this message translates to:
+  /// **'Set up Face ID or fingerprint on this device first.'**
+  String get settingsBiometricNotEnrolled;
+
+  /// Title on the biometric app lock screen
+  ///
+  /// In en, this message translates to:
+  /// **'NaviWealth is locked'**
+  String get biometricUnlockTitle;
+
+  /// Subtitle on the biometric app lock screen
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock with your device biometric to continue.'**
+  String get biometricUnlockSubtitle;
+
+  /// Button on the biometric app lock screen
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get biometricUnlockButton;
+
+  /// Button label while biometric authentication is in progress
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocking…'**
+  String get biometricUnlockChecking;
+
+  /// Toast shown when biometric authentication is cancelled or fails
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric unlock failed.'**
+  String get biometricUnlockFailed;
+
+  /// System biometric prompt reason string
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock NaviWealth'**
+  String get biometricUnlockReason;
+
   /// Settings switch row label for opt-in anonymous crash + error telemetry
   ///
   /// In en, this message translates to:

@@ -35,6 +35,8 @@
 	<string>用于拍摄收据/账单照片，自动解析为待确认的交易草稿。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>用于选择收据/账单图片，自动解析为待确认的交易草稿。</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>用于在你开启应用锁后，通过 Face ID 解锁 NaviWealth 本地数据。</string>
 	<!-- D-2.2 (`docs/healthos-domain.md` §2) — HealthKit read-only access
 	     for睡眠 / HRV / 静息心率 / 步数 / 体重 / 体脂 / 活动卡路里.
 	     iOS terminates the app on first HealthKit access without these.

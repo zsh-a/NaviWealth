@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/route_paths.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/core/security/biometric_auth_service.dart';
+import 'package:naviwealth/core/security/biometric_lock_preferences.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/settings/data/base_currency_preference.dart';
 import 'package:naviwealth/features/settings/settings_page.dart';
@@ -139,4 +142,81 @@ void main() {
       expect(find.text('KnowledgeOS Memory'), findsOneWidget);
     });
   });
+
+  group('Settings → Security', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    testWidgets('enables biometric unlock after a successful prompt', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(900, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final prefs = await SharedPreferences.getInstance();
+      late ProviderContainer container;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+            appDatabaseProvider.overrideWith((_) async {
+              final db = makeTestDatabase();
+              addTearDown(db.close);
+              return db;
+            }),
+            biometricAuthServiceProvider.overrideWithValue(
+              _FakeBiometricAuthService(
+                availability: BiometricAvailability.available,
+              ),
+            ),
+          ],
+          child: MaterialApp.router(
+            theme: AppTheme.light(),
+            routerConfig: _router(initialLocation: AppRoutes.settings),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            builder: (context, child) => FTheme(
+              data: FThemes.slate.light.desktop,
+              child: Consumer(
+                builder: (context, ref, _) {
+                  container = ProviderScope.containerOf(context, listen: false);
+                  return child!;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Biometric unlock'));
+      await tester.pumpAndSettle();
+      final biometricSwitch = find.descendant(
+        of: find.ancestor(
+          of: find.text('Biometric unlock'),
+          matching: find.byType(Row),
+        ),
+        matching: find.byType(FSwitch),
+      );
+      await tester.tap(biometricSwitch.first);
+      await tester.pumpAndSettle();
+
+      expect(container.read(biometricUnlockEnabledProvider), isTrue);
+    });
+  });
+}
+
+class _FakeBiometricAuthService implements BiometricAuthService {
+  _FakeBiometricAuthService({required BiometricAvailability availability})
+    : _availability = availability;
+
+  final BiometricAvailability _availability;
+
+  @override
+  Future<BiometricAvailability> availability() async => _availability;
+
+  @override
+  Future<bool> authenticate({required String reason}) async {
+    return true;
+  }
 }

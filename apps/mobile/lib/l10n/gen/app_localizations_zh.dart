@@ -5169,6 +5169,39 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsNotificationsPermissionRequesting => '启用中…';
 
   @override
+  String get settingsBiometricTitle => '生物识别解锁';
+
+  @override
+  String get settingsBiometricSubtitle => '打开 NaviWealth 时要求 Face ID 或指纹验证。';
+
+  @override
+  String get settingsBiometricChecking => '正在检查生物识别可用性…';
+
+  @override
+  String get settingsBiometricUnavailable => '当前设备不支持生物识别解锁。';
+
+  @override
+  String get settingsBiometricNotEnrolled => '请先在本机设置 Face ID 或指纹。';
+
+  @override
+  String get biometricUnlockTitle => 'NaviWealth 已锁定';
+
+  @override
+  String get biometricUnlockSubtitle => '使用本机生物识别解锁后继续。';
+
+  @override
+  String get biometricUnlockButton => '解锁';
+
+  @override
+  String get biometricUnlockChecking => '解锁中…';
+
+  @override
+  String get biometricUnlockFailed => '生物识别解锁失败。';
+
+  @override
+  String get biometricUnlockReason => '解锁 NaviWealth';
+
+  @override
   String get settingsCrashReportingTitle => '崩溃报告';
 
   @override

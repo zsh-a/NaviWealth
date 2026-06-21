@@ -7,6 +7,8 @@ import '../../../app/route_paths.dart';
 import '../../../core/config/app_version.dart';
 import '../../../core/haptics/haptics.dart';
 import '../../../core/logging/crash_reporting_preference.dart';
+import '../../../core/security/biometric_auth_service.dart';
+import '../../../core/security/biometric_lock_preferences.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../auth/data/auth_controller.dart';
@@ -105,6 +107,8 @@ class SettingsOverview extends ConsumerWidget {
             subtitle: l10n.settingsNotificationsSubtitle,
             onTap: () => context.goNamed(AppRouteNames.notifications),
           ),
+          const AppGradientDivider(),
+          const _BiometricUnlockRow(),
           const AppGradientDivider(),
           const _CrashReportingRow(),
         ],
@@ -567,5 +571,77 @@ class _CrashReportingRow extends ConsumerWidget {
       onChanged: (next) =>
           ref.read(crashReportingEnabledProvider.notifier).setEnabled(next),
     );
+  }
+}
+
+class _BiometricUnlockRow extends ConsumerStatefulWidget {
+  const _BiometricUnlockRow();
+
+  @override
+  ConsumerState<_BiometricUnlockRow> createState() =>
+      _BiometricUnlockRowState();
+}
+
+class _BiometricUnlockRowState extends ConsumerState<_BiometricUnlockRow> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final enabled = ref.watch(biometricUnlockEnabledProvider);
+    final availability = ref.watch(biometricAvailabilityProvider);
+    final subtitle = availability.when(
+      data: (value) => switch (value) {
+        BiometricAvailability.available => l10n.settingsBiometricSubtitle,
+        BiometricAvailability.notEnrolled => l10n.settingsBiometricNotEnrolled,
+        BiometricAvailability.unsupported => l10n.settingsBiometricUnavailable,
+      },
+      loading: () => l10n.settingsBiometricChecking,
+      error: (_, _) => l10n.settingsBiometricUnavailable,
+    );
+    return InlineSwitchRow(
+      icon: FLucideIcons.fingerprint,
+      label: l10n.settingsBiometricTitle,
+      subtitle: _busy ? l10n.settingsBiometricChecking : subtitle,
+      value: enabled,
+      onChanged: (next) => _setEnabled(next),
+    );
+  }
+
+  Future<void> _setEnabled(bool enabled) async {
+    if (_busy) return;
+    final l10n = AppLocalizations.of(context);
+    if (!enabled) {
+      await ref.read(biometricUnlockEnabledProvider.notifier).setEnabled(false);
+      ref.read(biometricUnlockSessionProvider.notifier).lock();
+      return;
+    }
+
+    setState(() => _busy = true);
+    final availability = await ref.read(biometricAvailabilityProvider.future);
+    if (!mounted) return;
+    if (availability != BiometricAvailability.available) {
+      setState(() => _busy = false);
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        availability == BiometricAvailability.notEnrolled
+            ? l10n.settingsBiometricNotEnrolled
+            : l10n.settingsBiometricUnavailable,
+      );
+      return;
+    }
+
+    final ok = await ref
+        .read(biometricAuthServiceProvider)
+        .authenticate(reason: l10n.biometricUnlockReason);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (!ok) {
+      AppMessenger.show(context, ToastKind.error, l10n.biometricUnlockFailed);
+      return;
+    }
+    await ref.read(biometricUnlockEnabledProvider.notifier).setEnabled(true);
+    ref.read(biometricUnlockSessionProvider.notifier).unlock();
   }
 }

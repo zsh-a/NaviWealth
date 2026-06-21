@@ -5417,6 +5417,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsNotificationsPermissionRequesting => 'Enabling…';
 
   @override
+  String get settingsBiometricTitle => 'Biometric unlock';
+
+  @override
+  String get settingsBiometricSubtitle =>
+      'Require Face ID or fingerprint when NaviWealth opens.';
+
+  @override
+  String get settingsBiometricChecking => 'Checking biometric availability…';
+
+  @override
+  String get settingsBiometricUnavailable =>
+      'Biometric unlock is not available on this device.';
+
+  @override
+  String get settingsBiometricNotEnrolled =>
+      'Set up Face ID or fingerprint on this device first.';
+
+  @override
+  String get biometricUnlockTitle => 'NaviWealth is locked';
+
+  @override
+  String get biometricUnlockSubtitle =>
+      'Unlock with your device biometric to continue.';
+
+  @override
+  String get biometricUnlockButton => 'Unlock';
+
+  @override
+  String get biometricUnlockChecking => 'Unlocking…';
+
+  @override
+  String get biometricUnlockFailed => 'Biometric unlock failed.';
+
+  @override
+  String get biometricUnlockReason => 'Unlock NaviWealth';
+
+  @override
   String get settingsCrashReportingTitle => 'Crash reporting';
 
   @override

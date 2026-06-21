@@ -9,6 +9,7 @@ import 'package:forui/forui.dart';
 import '../core/command_palette/command_palette.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/pwa/pwa_update_banner.dart';
+import '../core/security/biometric_lock_gate.dart';
 import '../core/shortcuts/shortcuts.dart';
 import '../design_system/design_system.dart';
 import '../features/ai_chat/ui/ask_ai.dart';
@@ -172,8 +173,10 @@ class NaviWealthApp extends ConsumerWidget {
                     final path = _kVimGotoRoutes[target];
                     if (path != null) router.go(path);
                   },
-                  child: PwaUpdateBanner(
-                    child: child ?? const SizedBox.shrink(),
+                  child: BiometricLockGate(
+                    child: PwaUpdateBanner(
+                      child: child ?? const SizedBox.shrink(),
+                    ),
                   ),
                 ),
               ),
