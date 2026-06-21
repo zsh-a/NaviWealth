@@ -11,6 +11,7 @@ import '../core/lifeos/domain_pack.dart';
 import '../core/pwa/pwa_update_banner.dart';
 import '../core/security/biometric_lock_gate.dart';
 import '../core/shortcuts/shortcuts.dart';
+import '../core/update/native_update_banner.dart';
 import '../design_system/design_system.dart';
 import '../features/ai_chat/ui/ask_ai.dart';
 import '../l10n/gen/app_localizations.dart';
@@ -169,8 +170,10 @@ class NaviWealthApp extends ConsumerWidget {
                     if (path != null) router.go(path);
                   },
                   child: BiometricLockGate(
-                    child: PwaUpdateBanner(
-                      child: child ?? const SizedBox.shrink(),
+                    child: NativeUpdateBanner(
+                      child: PwaUpdateBanner(
+                        child: child ?? const SizedBox.shrink(),
+                      ),
                     ),
                   ),
                 ),

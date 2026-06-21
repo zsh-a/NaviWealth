@@ -1211,6 +1211,19 @@
   "@pwaUpdateApply": { "description": "Action to apply the pending PWA update and reload" },
   "pwaUpdateDismiss": "Later",
   "@pwaUpdateDismiss": { "description": "Action to dismiss the PWA update banner without refreshing" },
+  "nativeUpdateAvailable": "NaviWealth {version} is available.",
+  "@nativeUpdateAvailable": {
+    "description": "Banner shown when an iOS or Android native app update is available",
+    "placeholders": {
+      "version": { "type": "String", "example": "0.8.0" }
+    }
+  },
+  "nativeUpdateApply": "Update",
+  "@nativeUpdateApply": { "description": "Action to open the native app update URL" },
+  "nativeUpdateDismiss": "Later",
+  "@nativeUpdateDismiss": { "description": "Action to dismiss the native app update banner for this version" },
+  "nativeUpdateOpenFailed": "Could not open update link.",
+  "@nativeUpdateOpenFailed": { "description": "Toast shown when the native update URL cannot be opened" },
 
   "authLoginTitle": "Welcome back",
   "@authLoginTitle": { "description": "Subtitle on the login screen, sits below the app name." },

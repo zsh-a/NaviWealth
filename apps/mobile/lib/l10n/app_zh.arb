@@ -655,6 +655,10 @@
   "pwaUpdateAvailable": "NaviWealth 有新版本可用。",
   "pwaUpdateApply": "立即刷新",
   "pwaUpdateDismiss": "稍后",
+  "nativeUpdateAvailable": "NaviWealth {version} 可更新。",
+  "nativeUpdateApply": "更新",
+  "nativeUpdateDismiss": "稍后",
+  "nativeUpdateOpenFailed": "无法打开更新链接。",
 
   "authLoginTitle": "欢迎回来",
   "authRegisterTitle": "创建账号",

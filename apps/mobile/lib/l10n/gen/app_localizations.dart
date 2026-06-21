@@ -3878,6 +3878,30 @@ abstract class AppLocalizations {
   /// **'Later'**
   String get pwaUpdateDismiss;
 
+  /// Banner shown when an iOS or Android native app update is available
+  ///
+  /// In en, this message translates to:
+  /// **'NaviWealth {version} is available.'**
+  String nativeUpdateAvailable(String version);
+
+  /// Action to open the native app update URL
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get nativeUpdateApply;
+
+  /// Action to dismiss the native app update banner for this version
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get nativeUpdateDismiss;
+
+  /// Toast shown when the native update URL cannot be opened
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open update link.'**
+  String get nativeUpdateOpenFailed;
+
   /// Subtitle on the login screen, sits below the app name.
   ///
   /// In en, this message translates to:

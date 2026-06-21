@@ -19,4 +19,22 @@ void main() {
       expect(config.hasSentryDsn, isTrue);
     });
   });
+
+  group('AppConfig native updates', () {
+    test('stay disabled unless both latest version and URL are supplied', () {
+      expect(AppConfig.dev.latestNativeVersion, isEmpty);
+      expect(AppConfig.dev.nativeUpdateUrl, isEmpty);
+      expect(AppConfig.dev.hasNativeUpdateTarget, isFalse);
+    });
+
+    test('enable once a version and distribution URL are supplied', () {
+      const config = AppConfig(
+        apiBaseUrl: 'http://localhost:8787',
+        environment: AppEnvironment.staging,
+        latestNativeVersion: '0.8.0',
+        nativeUpdateUrl: 'https://example.com/download',
+      );
+      expect(config.hasNativeUpdateTarget, isTrue);
+    });
+  });
 }

@@ -2164,6 +2164,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pwaUpdateDismiss => 'Later';
 
   @override
+  String nativeUpdateAvailable(String version) {
+    return 'NaviWealth $version is available.';
+  }
+
+  @override
+  String get nativeUpdateApply => 'Update';
+
+  @override
+  String get nativeUpdateDismiss => 'Later';
+
+  @override
+  String get nativeUpdateOpenFailed => 'Could not open update link.';
+
+  @override
   String get authLoginTitle => 'Welcome back';
 
   @override

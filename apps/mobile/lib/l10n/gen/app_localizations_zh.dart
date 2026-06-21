@@ -2090,6 +2090,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pwaUpdateDismiss => '稍后';
 
   @override
+  String nativeUpdateAvailable(String version) {
+    return 'NaviWealth $version 可更新。';
+  }
+
+  @override
+  String get nativeUpdateApply => '更新';
+
+  @override
+  String get nativeUpdateDismiss => '稍后';
+
+  @override
+  String get nativeUpdateOpenFailed => '无法打开更新链接。';
+
+  @override
   String get authLoginTitle => '欢迎回来';
 
   @override
