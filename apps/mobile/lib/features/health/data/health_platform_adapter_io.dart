@@ -5,7 +5,7 @@
 ///
 /// | HealthOS kind         | iOS HK type                              | Android HC type                                    |
 /// |-----------------------|------------------------------------------|----------------------------------------------------|
-/// | sleepSession          | `SLEEP_ASLEEP` (per segment)             | `SLEEP_SESSION` (per session)                       |
+/// | sleepSession          | `SLEEP_*` stage segments                 | `SLEEP_SESSION` (per session)                       |
 /// | hrvDaily              | `HEART_RATE_VARIABILITY_SDNN`            | `HEART_RATE_VARIABILITY_RMSSD`                      |
 /// | rhrDaily              | `RESTING_HEART_RATE`                     | `RESTING_HEART_RATE`                                |
 /// | stepsDaily            | `STEPS`                                  | `STEPS`                                             |
@@ -23,12 +23,9 @@
 /// The plugin returns meters in both cases (we still bucket per UTC day
 /// and sum, matching the steps/active-energy pipeline).
 ///
-/// **iOS sleep MVP caveat**: HealthKit returns per-segment
-/// `SLEEP_ASLEEP` entries — one nightly sleep can become 3–7 segments
-/// depending on awakenings. We emit one [RawSleepSession] per segment
-/// for now; the Memory indexer downstream tolerates extra rows because
-/// the AI tools aggregate by day anyway. Proper segment→session
-/// merging is a follow-up.
+/// iOS HealthKit returns `HKCategoryTypeIdentifierSleepAnalysis` as
+/// per-stage segments. The adapter merges those into nightly
+/// [RawSleepSession] rows and persists a stage histogram.
 library;
 
 import 'dart:convert';
@@ -62,6 +59,12 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
     if (Platform.isIOS) {
       return <HealthDataType>[
         HealthDataType.SLEEP_ASLEEP,
+        HealthDataType.SLEEP_AWAKE,
+        HealthDataType.SLEEP_AWAKE_IN_BED,
+        HealthDataType.SLEEP_LIGHT,
+        HealthDataType.SLEEP_DEEP,
+        HealthDataType.SLEEP_REM,
+        HealthDataType.SLEEP_UNKNOWN,
         HealthDataType.HEART_RATE_VARIABILITY_SDNN,
         HealthDataType.RESTING_HEART_RATE,
         HealthDataType.STEPS,
@@ -172,26 +175,24 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
     final hrvType = Platform.isIOS
         ? HealthDataType.HEART_RATE_VARIABILITY_SDNN
         : HealthDataType.HEART_RATE_VARIABILITY_RMSSD;
-    final sleepType = Platform.isIOS
-        ? HealthDataType.SLEEP_ASLEEP
-        : HealthDataType.SLEEP_SESSION;
     final distanceType = _distanceWalkingRunningType;
 
     final platformPrefix = Platform.isIOS ? 'hk' : 'hc';
 
-    final rawSleep = points
-        .where((p) => p.type == sleepType)
-        .map((p) => _sleepFrom(p, platformPrefix))
-        .whereType<RawSleepSession>()
-        .toList(growable: false);
-    // iOS emits per-segment SLEEP_ASLEEP rows (3–7 per night). Merge
-    // them into one row per night so the Today UI + AI tools don't have
-    // to count segments. On Android the gap threshold guarantees this
-    // is a no-op (whole sessions don't fall within 30 min of each
-    // other unless the source recorded them that way).
-    final sleepSessions = Platform.isAndroid
-        ? _attachSleepStageHistograms(rawSleep, points)
-        : mergeSleepSegments(rawSleep);
+    final sleepSessions = Platform.isIOS
+        ? mergeSleepStageSegments(
+            points
+                .map((p) => _sleepStageSegmentFrom(p, platformPrefix))
+                .whereType<RawSleepStageSegment>(),
+          )
+        : _attachSleepStageHistograms(
+            points
+                .where((p) => p.type == HealthDataType.SLEEP_SESSION)
+                .map((p) => _sleepFrom(p, platformPrefix))
+                .whereType<RawSleepSession>()
+                .toList(growable: false),
+            points,
+          );
 
     final hrv = _aggregateDailyAverage(
       points: points.where((p) => p.type == hrvType),
@@ -358,6 +359,23 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
     );
   }
 
+  RawSleepStageSegment? _sleepStageSegmentFrom(
+    HealthDataPoint p,
+    String platformPrefix,
+  ) {
+    final stage = _sleepStageLabel(p.type);
+    if (stage == null) return null;
+    final duration = p.dateTo.difference(p.dateFrom);
+    if (duration <= Duration.zero) return null;
+    return RawSleepStageSegment(
+      externalId: '$platformPrefix:sleep_stage:${p.uuid}',
+      startedAt: p.dateFrom.toUtc(),
+      duration: duration,
+      stage: stage,
+      sourceDevice: _sourceLabel(p),
+    );
+  }
+
   List<RawSleepSession> _attachSleepStageHistograms(
     List<RawSleepSession> sessions,
     List<HealthDataPoint> points,
@@ -408,6 +426,7 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
   }
 
   static String? _sleepStageLabel(HealthDataType type) => switch (type) {
+    HealthDataType.SLEEP_ASLEEP => 'asleep',
     HealthDataType.SLEEP_LIGHT => 'light',
     HealthDataType.SLEEP_DEEP => 'deep',
     HealthDataType.SLEEP_REM => 'rem',

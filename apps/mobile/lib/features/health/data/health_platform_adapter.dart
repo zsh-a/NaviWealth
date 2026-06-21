@@ -11,6 +11,8 @@
 /// negotiation.
 library;
 
+import 'dart:convert';
+
 /// Capability surface the [HealthSyncService] needs from the platform.
 abstract class HealthPlatformAdapter {
   /// `true` when the OS supports HealthKit / Health Connect at all.
@@ -80,11 +82,11 @@ class HealthPlatformSnapshot {
       floorsClimbed = const <RawDailyValue>[],
       respiratoryRate = const <RawDailyValue>[];
 
-  /// One [RawSleepSession] per ended sleep session (HealthKit
-  /// `HKCategoryTypeIdentifierSleepAnalysis` of stage `asleep*`;
-  /// Health Connect `SleepSessionRecord`). Per-stage histograms can
-  /// land in [RawSleepSession.stageHistogramJson] later — MVP only
-  /// records the outer duration.
+  /// One [RawSleepSession] per ended sleep session. HealthKit
+  /// `HKCategoryTypeIdentifierSleepAnalysis` segments are coalesced into
+  /// nightly sessions with a per-stage histogram; Health Connect
+  /// `SleepSessionRecord` rows are already session-shaped and may carry
+  /// stage histograms from companion stage records.
   final List<RawSleepSession> sleepSessions;
 
   /// Daily HRV averages (ms). HealthKit `HKQuantityTypeIdentifier`
@@ -186,8 +188,9 @@ const Duration kSleepSegmentMergeGap = Duration(minutes: 30);
 ///
 /// `sourceDevice` is the first segment's device; an honest "merged from
 /// N segments" provenance hint goes into `stageHistogramJson` when
-/// already-null, otherwise the first segment's payload wins (no merge
-/// loss for the rare case where the user already attached a note).
+/// already-null. If the incoming segments already carry per-stage
+/// histograms, those histograms are summed so merges do not lose stage
+/// detail.
 List<RawSleepSession> mergeSleepSegments(
   Iterable<RawSleepSession> segments, {
   Duration gap = kSleepSegmentMergeGap,
@@ -210,9 +213,10 @@ List<RawSleepSession> mergeSleepSegments(
     final device = b
         .firstWhere((s) => s.sourceDevice != null, orElse: () => first)
         .sourceDevice;
-    final existingPayload = b
-        .firstWhere((s) => s.stageHistogramJson != null, orElse: () => first)
-        .stageHistogramJson;
+    final mergedHistogram = _mergeStageHistogramPayloads(
+      b.map((s) => s.stageHistogramJson),
+      fallbackSegments: b.length,
+    );
     // Keep the prefix of the underlying segments so the merged id stays
     // `hk:…` on iOS and `hc:…` on Android (Android shouldn't actually
     // produce merged buckets, but be defensive). Falls back to `hk` for
@@ -226,7 +230,7 @@ List<RawSleepSession> mergeSleepSegments(
       startedAt: first.startedAt,
       duration: totalDuration,
       sourceDevice: device,
-      stageHistogramJson: existingPayload ?? '{"merged_segments":${b.length}}',
+      stageHistogramJson: mergedHistogram,
     );
   }
 
@@ -243,6 +247,115 @@ List<RawSleepSession> mergeSleepSegments(
     }
   }
   merged.add(flush(bucket));
+  return List<RawSleepSession>.unmodifiable(merged);
+}
+
+/// One platform sleep-analysis segment with an explicit stage label.
+///
+/// iOS HealthKit often returns sleep as category segments rather than a
+/// session envelope. This DTO lets the adapter preserve stage detail
+/// (`light` / `deep` / `rem` / `awake` / `unknown` / `asleep`) while
+/// merging those segments into [RawSleepSession] rows. `awake` contributes
+/// to the histogram but not to [RawSleepSession.duration].
+class RawSleepStageSegment {
+  const RawSleepStageSegment({
+    required this.externalId,
+    required this.startedAt,
+    required this.duration,
+    required this.stage,
+    this.sourceDevice,
+  });
+
+  final String externalId;
+  final DateTime startedAt;
+  final Duration duration;
+  final String stage;
+  final String? sourceDevice;
+
+  bool get isAwake => stage == 'awake';
+}
+
+/// Coalesce HealthKit-style stage segments into nightly sessions.
+///
+/// Non-awake stages define session membership and total sleep duration.
+/// Awake segments within [gap] of the current sleep bucket are retained
+/// in the histogram but do not add to sleep duration. Awake-only ranges
+/// are ignored because they do not describe a completed sleep session.
+List<RawSleepSession> mergeSleepStageSegments(
+  Iterable<RawSleepStageSegment> segments, {
+  Duration gap = kSleepSegmentMergeGap,
+}) {
+  final sorted =
+      segments.where((s) => s.duration > Duration.zero).toList(growable: false)
+        ..sort((a, b) => a.startedAt.compareTo(b.startedAt));
+  if (sorted.isEmpty) return const <RawSleepSession>[];
+
+  final merged = <RawSleepSession>[];
+  var bucket = <RawSleepStageSegment>[];
+  DateTime? bucketEnd;
+
+  void flush() {
+    if (bucket.isEmpty) return;
+    final sleepSegments = bucket.where((s) => !s.isAwake).toList();
+    if (sleepSegments.isEmpty) {
+      bucket = <RawSleepStageSegment>[];
+      bucketEnd = null;
+      return;
+    }
+
+    final first = sleepSegments.first;
+    final totalDuration = sleepSegments.fold<Duration>(
+      Duration.zero,
+      (acc, s) => acc + s.duration,
+    );
+    final secondsByStage = <String, int>{};
+    for (final s in bucket) {
+      secondsByStage.update(
+        s.stage,
+        (value) => value + s.duration.inSeconds,
+        ifAbsent: () => s.duration.inSeconds,
+      );
+    }
+    final device = bucket
+        .firstWhere((s) => s.sourceDevice != null, orElse: () => first)
+        .sourceDevice;
+    final prefix = _platformPrefixFromExternalId(first.externalId);
+    merged.add(
+      RawSleepSession(
+        externalId: '$prefix:sleep:merged:${first.startedAt.toIso8601String()}',
+        startedAt: first.startedAt,
+        duration: totalDuration,
+        sourceDevice: device,
+        stageHistogramJson: _encodeStageHistogram(secondsByStage),
+      ),
+    );
+    bucket = <RawSleepStageSegment>[];
+    bucketEnd = null;
+  }
+
+  for (final segment in sorted) {
+    final end = segment.startedAt.add(segment.duration);
+    if (bucket.isEmpty) {
+      if (segment.isAwake) continue;
+      bucket = <RawSleepStageSegment>[segment];
+      bucketEnd = end;
+      continue;
+    }
+
+    final currentEnd = bucketEnd!;
+    if (segment.startedAt.difference(currentEnd) <= gap) {
+      bucket.add(segment);
+      if (end.isAfter(currentEnd)) bucketEnd = end;
+      continue;
+    }
+
+    flush();
+    if (!segment.isAwake) {
+      bucket = <RawSleepStageSegment>[segment];
+      bucketEnd = end;
+    }
+  }
+  flush();
   return List<RawSleepSession>.unmodifiable(merged);
 }
 
@@ -271,10 +384,9 @@ class RawSleepSession {
   /// Best-effort device label (`'Apple Watch'`, `'Pixel Watch'`, …).
   final String? sourceDevice;
 
-  /// Optional per-stage histogram JSON (`{"core": 18000, "deep": 5400,
+  /// Optional per-stage histogram JSON (`{"light": 18000, "deep": 5400,
   /// "rem": 5400, "awake": 1800}`). Null when the platform returns
-  /// only outer duration. MVP doesn't populate this; left as a seam
-  /// for follow-up.
+  /// only outer duration.
   final String? stageHistogramJson;
 }
 
@@ -298,6 +410,58 @@ class RawDailyValue {
   final double value;
 
   final String? sourceDevice;
+}
+
+String _platformPrefixFromExternalId(String externalId) {
+  return externalId.contains(':')
+      ? externalId.substring(0, externalId.indexOf(':'))
+      : 'hk';
+}
+
+String? _mergeStageHistogramPayloads(
+  Iterable<String?> payloads, {
+  required int fallbackSegments,
+}) {
+  final secondsByStage = <String, int>{};
+  for (final payload in payloads) {
+    if (payload == null || payload.trim().isEmpty) continue;
+    try {
+      final decoded = jsonDecode(payload);
+      if (decoded is! Map) continue;
+      for (final entry in decoded.entries) {
+        final value = entry.value;
+        if (value is! num) continue;
+        secondsByStage.update(
+          entry.key.toString(),
+          (current) => current + value.round(),
+          ifAbsent: () => value.round(),
+        );
+      }
+    } on Object {
+      continue;
+    }
+  }
+  if (secondsByStage.isEmpty) return '{"merged_segments":$fallbackSegments}';
+  return _encodeStageHistogram(secondsByStage);
+}
+
+String _encodeStageHistogram(Map<String, int> secondsByStage) {
+  final ordered = <String, int>{
+    for (final key in const <String>[
+      'light',
+      'deep',
+      'rem',
+      'awake',
+      'unknown',
+      'asleep',
+    ])
+      if ((secondsByStage[key] ?? 0) > 0) key: secondsByStage[key]!,
+  };
+  for (final entry in secondsByStage.entries) {
+    if (ordered.containsKey(entry.key) || entry.value <= 0) continue;
+    ordered[entry.key] = entry.value;
+  }
+  return jsonEncode(ordered);
 }
 
 /// One workout session that has already ended. Most fields are
