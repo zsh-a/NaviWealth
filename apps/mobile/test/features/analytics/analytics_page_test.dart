@@ -144,6 +144,9 @@ Future<ProviderContainer> _container({
 }
 
 Future<void> _pump(WidgetTester tester, ProviderContainer container) async {
+  tester.view.physicalSize = const Size(1200, 1800);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
@@ -155,7 +158,10 @@ Future<void> _pump(WidgetTester tester, ProviderContainer container) async {
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  for (var i = 0; i < 30; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+  await tester.pump();
 }
 
 void main() {
@@ -175,6 +181,8 @@ void main() {
     final l10n = AppLocalizations.of(
       tester.element(find.byType(AnalyticsPage)),
     );
+    expect(find.text(l10n.analyticsCashFlowTrendTitle), findsOneWidget);
+    expect(find.text(l10n.analyticsFireProgressTitle), findsOneWidget);
     expect(find.text(l10n.analyticsEmptyTitle), findsOneWidget);
   });
 
@@ -209,7 +217,10 @@ void main() {
         tester.element(find.byType(AnalyticsPage)),
       );
       await tester.tap(find.text(l10n.analyticsDimensionRegion));
-      await tester.pumpAndSettle();
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await tester.pump();
 
       expect(find.text(l10n.analyticsBucketRegionUs), findsOneWidget);
       expect(find.text(l10n.analyticsBucketRegionCnA), findsOneWidget);

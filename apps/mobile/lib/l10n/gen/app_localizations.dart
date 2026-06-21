@@ -4332,6 +4332,132 @@ abstract class AppLocalizations {
   /// **'—'**
   String get analyticsOverviewUnavailable;
 
+  /// Analytics card title for recent monthly cash-flow trend.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash-flow trend'**
+  String get analyticsCashFlowTrendTitle;
+
+  /// Analytics cash-flow trend card subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Net operating cash flow across the last six months.'**
+  String get analyticsCashFlowTrendSubtitle;
+
+  /// Bar chart series label for net cash flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Net cash flow'**
+  String get analyticsCashFlowTrendNetSeries;
+
+  /// Metric label for six-month average net cash flow.
+  ///
+  /// In en, this message translates to:
+  /// **'6M avg net'**
+  String get analyticsCashFlowTrendAverageNet;
+
+  /// Metric label for current month cash inflow.
+  ///
+  /// In en, this message translates to:
+  /// **'This month inflow'**
+  String get analyticsCashFlowTrendInflow;
+
+  /// Metric label for current month cash outflow.
+  ///
+  /// In en, this message translates to:
+  /// **'This month outflow'**
+  String get analyticsCashFlowTrendOutflow;
+
+  /// Accessibility label for the analytics cash-flow trend chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent monthly net cash-flow bar chart'**
+  String get analyticsCashFlowTrendSemantic;
+
+  /// Analytics cash-flow card error title.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load cash-flow trend.'**
+  String get analyticsCashFlowTrendLoadError;
+
+  /// Analytics card title for FIRE progress.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE progress'**
+  String get analyticsFireProgressTitle;
+
+  /// Analytics FIRE progress card subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Investable assets against your target and current runway.'**
+  String get analyticsFireProgressSubtitle;
+
+  /// FIRE progress percent caption.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} of target'**
+  String analyticsFireProgressPercent(String value);
+
+  /// Metric label for FIRE investable assets.
+  ///
+  /// In en, this message translates to:
+  /// **'Investable'**
+  String get analyticsFireProgressInvestable;
+
+  /// Metric label for FIRE target net worth.
+  ///
+  /// In en, this message translates to:
+  /// **'Target'**
+  String get analyticsFireProgressTarget;
+
+  /// Metric label for FIRE withdrawal rate.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal'**
+  String get analyticsFireProgressWithdrawalRate;
+
+  /// Metric label for FIRE cash bucket months.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash runway'**
+  String get analyticsFireProgressCashRunway;
+
+  /// Metric label for FIRE ETA.
+  ///
+  /// In en, this message translates to:
+  /// **'ETA'**
+  String get analyticsFireProgressEta;
+
+  /// Generic month count for FIRE progress metrics.
+  ///
+  /// In en, this message translates to:
+  /// **'{months, plural, =1 {1 month} other {{months} months}}'**
+  String analyticsFireProgressMonths(int months);
+
+  /// FIRE cash runway value when expenses are zero.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited'**
+  String get analyticsFireProgressUnlimited;
+
+  /// FIRE progress card empty-state title.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE plan not configured'**
+  String get analyticsFireProgressNotConfiguredTitle;
+
+  /// FIRE progress card empty-state body.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a FIRE target to track progress and runway here.'**
+  String get analyticsFireProgressNotConfiguredBody;
+
+  /// Analytics FIRE progress card error title.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load FIRE progress.'**
+  String get analyticsFireProgressLoadError;
+
   /// No description provided for @analyticsEquityTitle.
   ///
   /// In en, this message translates to:

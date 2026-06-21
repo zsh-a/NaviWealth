@@ -2343,6 +2343,79 @@ class AppLocalizationsZh extends AppLocalizations {
   String get analyticsOverviewUnavailable => '—';
 
   @override
+  String get analyticsCashFlowTrendTitle => '现金流趋势';
+
+  @override
+  String get analyticsCashFlowTrendSubtitle => '最近 6 个月的经营性净现金流。';
+
+  @override
+  String get analyticsCashFlowTrendNetSeries => '净现金流';
+
+  @override
+  String get analyticsCashFlowTrendAverageNet => '6 月平均净额';
+
+  @override
+  String get analyticsCashFlowTrendInflow => '本月流入';
+
+  @override
+  String get analyticsCashFlowTrendOutflow => '本月流出';
+
+  @override
+  String get analyticsCashFlowTrendSemantic => '最近每月净现金流柱状图';
+
+  @override
+  String get analyticsCashFlowTrendLoadError => '无法加载现金流趋势。';
+
+  @override
+  String get analyticsFireProgressTitle => 'FIRE 进度';
+
+  @override
+  String get analyticsFireProgressSubtitle => '可投资资产相对目标净值与当前现金跑道。';
+
+  @override
+  String analyticsFireProgressPercent(String value) {
+    return '已达目标 $value';
+  }
+
+  @override
+  String get analyticsFireProgressInvestable => '可投资资产';
+
+  @override
+  String get analyticsFireProgressTarget => '目标';
+
+  @override
+  String get analyticsFireProgressWithdrawalRate => '提取率';
+
+  @override
+  String get analyticsFireProgressCashRunway => '现金跑道';
+
+  @override
+  String get analyticsFireProgressEta => 'ETA';
+
+  @override
+  String analyticsFireProgressMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months 个月',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get analyticsFireProgressUnlimited => '无限';
+
+  @override
+  String get analyticsFireProgressNotConfiguredTitle => '尚未设置 FIRE 计划';
+
+  @override
+  String get analyticsFireProgressNotConfiguredBody =>
+      '设置 FIRE 目标后，这里会跟踪进度和现金跑道。';
+
+  @override
+  String get analyticsFireProgressLoadError => '无法加载 FIRE 进度。';
+
+  @override
   String get analyticsEquityTitle => '股票透视';
 
   @override

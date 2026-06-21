@@ -2437,6 +2437,85 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analyticsOverviewUnavailable => '—';
 
   @override
+  String get analyticsCashFlowTrendTitle => 'Cash-flow trend';
+
+  @override
+  String get analyticsCashFlowTrendSubtitle =>
+      'Net operating cash flow across the last six months.';
+
+  @override
+  String get analyticsCashFlowTrendNetSeries => 'Net cash flow';
+
+  @override
+  String get analyticsCashFlowTrendAverageNet => '6M avg net';
+
+  @override
+  String get analyticsCashFlowTrendInflow => 'This month inflow';
+
+  @override
+  String get analyticsCashFlowTrendOutflow => 'This month outflow';
+
+  @override
+  String get analyticsCashFlowTrendSemantic =>
+      'Recent monthly net cash-flow bar chart';
+
+  @override
+  String get analyticsCashFlowTrendLoadError =>
+      'Couldn\'t load cash-flow trend.';
+
+  @override
+  String get analyticsFireProgressTitle => 'FIRE progress';
+
+  @override
+  String get analyticsFireProgressSubtitle =>
+      'Investable assets against your target and current runway.';
+
+  @override
+  String analyticsFireProgressPercent(String value) {
+    return '$value of target';
+  }
+
+  @override
+  String get analyticsFireProgressInvestable => 'Investable';
+
+  @override
+  String get analyticsFireProgressTarget => 'Target';
+
+  @override
+  String get analyticsFireProgressWithdrawalRate => 'Withdrawal';
+
+  @override
+  String get analyticsFireProgressCashRunway => 'Cash runway';
+
+  @override
+  String get analyticsFireProgressEta => 'ETA';
+
+  @override
+  String analyticsFireProgressMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months months',
+      one: '1 month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get analyticsFireProgressUnlimited => 'Unlimited';
+
+  @override
+  String get analyticsFireProgressNotConfiguredTitle =>
+      'FIRE plan not configured';
+
+  @override
+  String get analyticsFireProgressNotConfiguredBody =>
+      'Set a FIRE target to track progress and runway here.';
+
+  @override
+  String get analyticsFireProgressLoadError => 'Couldn\'t load FIRE progress.';
+
+  @override
   String get analyticsEquityTitle => 'Equity Allocation';
 
   @override
