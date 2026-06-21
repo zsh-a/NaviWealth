@@ -54,8 +54,9 @@ final corporateActionEventsProvider = FutureProvider.autoDispose
 ///
 /// Returns an [AsyncValue]: the upstream fetcher is async, so this
 /// provider mirrors the same lifecycle (loading → data → error). The
-/// widget consumer renders an empty placeholder for loading + error
-/// because corporate-action data is best-effort, not load-bearing.
+/// widget consumer renders loading, empty, and retryable error states
+/// separately so "nothing scheduled" is never confused with a failed
+/// corporate-action fetch.
 final upcomingEventsForSymbolProvider = Provider.autoDispose
     .family<AsyncValue<List<CorporateActionEvent>>, String>((ref, symbol) {
       final eventsAsync = ref.watch(corporateActionEventsProvider(symbol));
