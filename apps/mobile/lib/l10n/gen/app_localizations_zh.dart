@@ -171,6 +171,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get investmentEventTimelineEmpty => '未来 90 天内没有分红或拆股事件。';
 
   @override
+  String get investmentEventTimelineError => '无法加载即将到来的事件。';
+
+  @override
   String get investmentEventDividend => '分红';
 
   @override
@@ -1559,6 +1562,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get liabilityFieldPaymentDueDay => '还款日';
 
   @override
+  String get liabilityFieldNote => '备注';
+
+  @override
+  String get liabilityEditAction => '编辑负债';
+
+  @override
+  String get liabilityEditMetadataOnlyHint =>
+      '此处只能编辑名称和备注。本金、利率和期限会驱动还款计划，因此保持锁定。';
+
+  @override
   String get liabilitySaveAction => '保存';
 
   @override
@@ -2155,6 +2168,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDevicesSubtitle => '查看已登录的设备并远程登出';
 
   @override
+  String get settingsSignOutTitle => '登出';
+
+  @override
+  String get settingsSignOutSubtitle => '关闭云同步，并将此设备保留为本地模式';
+
+  @override
   String get authDevicesTitle => '已登录设备';
 
   @override
@@ -2294,6 +2313,34 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get analyticsAppBarTitle => '组合分析';
+
+  @override
+  String get analyticsOverviewNetWorth => '净值';
+
+  @override
+  String get analyticsOverviewMonthlyChange => '本月变化';
+
+  @override
+  String get analyticsOverviewCashFlow => '现金流';
+
+  @override
+  String get analyticsOverviewFireEta => 'FIRE ETA';
+
+  @override
+  String analyticsOverviewFireEtaMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months 个月',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get analyticsOverviewFireNotConfigured => '未设置';
+
+  @override
+  String get analyticsOverviewUnavailable => '—';
 
   @override
   String get analyticsEquityTitle => '股票透视';

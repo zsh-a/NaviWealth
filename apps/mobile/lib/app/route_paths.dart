@@ -143,6 +143,9 @@ abstract final class AppRoutes {
   static String wealthLiability(String id) =>
       '/wealth/liabilities/${Uri.encodeComponent(id)}';
 
+  static String wealthLiabilityEdit(String id) =>
+      '/wealth/liabilities/${Uri.encodeComponent(id)}/edit';
+
   static String wealthAccount(String id) =>
       '/wealth/accounts/${Uri.encodeComponent(id)}';
 

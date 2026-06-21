@@ -50,6 +50,27 @@ Future<void> _pump(
   await tester.pump(const Duration(milliseconds: 50));
 }
 
+Future<void> _pumpError(WidgetTester tester, String symbol) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        corporateActionEventsProvider(symbol).overrideWith((ref) async {
+          throw StateError('network down');
+        }),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.light(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('en', 'US'),
+        home: Scaffold(body: EventTimelineSection(symbol: symbol)),
+      ),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 50));
+}
+
 void main() {
   testWidgets('renders empty state when provider has no events', (
     tester,
@@ -95,6 +116,15 @@ void main() {
     ]);
     expect(find.text('Dividend'), findsNothing);
     expect(find.textContaining('No upcoming'), findsOneWidget);
+  });
+
+  testWidgets('renders retryable error state when provider fails', (
+    tester,
+  ) async {
+    await _pumpError(tester, 'AAPL');
+    expect(find.text("Couldn't load upcoming events."), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.textContaining('No upcoming'), findsNothing);
   });
 
   testWidgets('only renders events for the supplied symbol', (tester) async {

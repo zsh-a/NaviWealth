@@ -301,17 +301,27 @@ class _AccountSection extends ConsumerWidget {
         onTap: () => context.go('${AppRoutes.login}?mode=upgrade'),
       );
     }
-    return InlineLinkRow(
-      icon: FLucideIcons.monitor,
-      label: l10n.settingsDevicesTitle,
-      subtitle: l10n.settingsDevicesSubtitle,
-      onTap: () => context.goNamed(AppRouteNames.devices),
-      trailing: Icon(
-        FLucideIcons.logOut,
-        size: AppIconSizes.h18,
-        color: context.theme.colors.mutedForeground,
-      ),
-      onTrailingTap: () => _showSwitchToLocalSheet(context, ref),
+    return Column(
+      children: [
+        InlineLinkRow(
+          icon: FLucideIcons.monitor,
+          label: l10n.settingsDevicesTitle,
+          subtitle: l10n.settingsDevicesSubtitle,
+          onTap: () => context.goNamed(AppRouteNames.devices),
+        ),
+        const AppGradientDivider(),
+        InlineLinkRow(
+          icon: FLucideIcons.logOut,
+          label: l10n.settingsSignOutTitle,
+          subtitle: l10n.settingsSignOutSubtitle,
+          trailing: Icon(
+            FLucideIcons.chevronRight,
+            size: AppIconSizes.h18,
+            color: context.theme.colors.mutedForeground,
+          ),
+          onTap: () => _showSwitchToLocalSheet(context, ref),
+        ),
+      ],
     );
   }
 

@@ -172,6 +172,35 @@ class LiabilityRepository {
     return (await findById(id))!;
   }
 
+  /// Update metadata that does not affect the amortization schedule.
+  ///
+  /// Principal, rate, term, start date and repayment method are deliberately
+  /// excluded; changing them requires schedule regeneration semantics.
+  Future<Liability> updateMetadata({
+    required String id,
+    required String name,
+    String? note,
+  }) async {
+    final stamp = await _stamper.stamp();
+    final changed =
+        await (_db.update(
+          _db.liabilities,
+        )..where((t) => t.id.equals(id) & t.deletedAt.isNull())).write(
+          LiabilitiesCompanion(
+            name: Value(name),
+            note: Value(note),
+            updatedAt: Value(stamp.now),
+            updatedByDevice: Value(stamp.deviceId),
+            hlc: Value(stamp.hlc),
+          ),
+        );
+    if (changed == 0) {
+      throw StateError('Liability $id not found');
+    }
+    await _outbox.enqueue(table: _liabilityTable, rowId: id);
+    return (await findById(id))!;
+  }
+
   /// Mark a single amortization period paid and emit the matching journal
   /// entry.
   ///

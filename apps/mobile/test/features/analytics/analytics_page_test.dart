@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/domain/entities/fx_rate.dart' as dom;
 import 'package:naviwealth/features/analytics/analytics_page.dart';
 import 'package:naviwealth/features/analytics/data/benchmark/benchmark_history_source.dart';
@@ -26,6 +27,7 @@ import 'package:naviwealth/features/investment/domain/models/holding_snapshot.da
 import 'package:naviwealth/features/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/liabilities/data/providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/persistence/test_database.dart';
 
@@ -100,15 +102,18 @@ HoldingSnapshot _snap(String assetId, String mvBase) {
   );
 }
 
-ProviderContainer _container({
+Future<ProviderContainer> _container({
   required Map<String, HoldingSnapshot> snapshots,
   required List<Asset> assets,
   String baseCurrency = _baseCurrency,
-}) {
+}) async {
+  SharedPreferences.setMockInitialValues({});
+  final prefs = await SharedPreferences.getInstance();
   final db = makeTestDatabase();
   addTearDown(db.close);
   return ProviderContainer(
     overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
       appDatabaseProvider.overrideWith((_) async => db),
       equityAssetsStreamProvider.overrideWith((_) => Stream.value(assets)),
       holdingsSnapshotProvider.overrideWith((_) async => snapshots),
@@ -163,7 +168,7 @@ void main() {
   testWidgets('renders empty state when no equity holdings exist', (
     tester,
   ) async {
-    final container = _container(snapshots: const {}, assets: const []);
+    final container = await _container(snapshots: const {}, assets: const []);
     addTearDown(container.dispose);
     await _pump(tester, container);
 
@@ -191,7 +196,7 @@ void main() {
         'b': _snap('b', '300'),
         'c': _snap('c', '200'),
       };
-      final container = _container(snapshots: snapshots, assets: assets);
+      final container = await _container(snapshots: snapshots, assets: assets);
       addTearDown(container.dispose);
       await _pump(tester, container);
 
@@ -219,7 +224,7 @@ void main() {
         _equity(id: 'b', symbol: 'XYZ'),
       ];
       final snapshots = {'a': _snap('a', '900'), 'b': _snap('b', '100')};
-      final container = _container(snapshots: snapshots, assets: assets);
+      final container = await _container(snapshots: snapshots, assets: assets);
       addTearDown(container.dispose);
       await _pump(tester, container);
 

@@ -104,6 +104,8 @@
   "@investmentEventTimelineTitle": { "description": "Holding detail tab title for upcoming corporate actions (roadmap-next.md §3.5)" },
   "investmentEventTimelineEmpty": "No upcoming dividends or splits in the next 90 days.",
   "@investmentEventTimelineEmpty": { "description": "Empty state body when no corporate actions are scheduled" },
+  "investmentEventTimelineError": "Couldn't load upcoming events.",
+  "@investmentEventTimelineError": { "description": "Error state title when corporate-action events fail to load" },
   "investmentEventDividend": "Dividend",
   "@investmentEventDividend": { "description": "Label on a cash-dividend event row" },
   "investmentEventSplit": "Split {ratio}",
@@ -918,6 +920,12 @@
   "liabilityFieldCurrency": "Currency",
   "liabilityFieldStatementDay": "Statement day",
   "liabilityFieldPaymentDueDay": "Payment due day",
+  "liabilityFieldNote": "Note",
+  "@liabilityFieldNote": { "description": "Optional note field for a liability" },
+  "liabilityEditAction": "Edit liability",
+  "@liabilityEditAction": { "description": "Button/title for editing liability metadata" },
+  "liabilityEditMetadataOnlyHint": "Only the name and note can be edited here. Principal, rate and term stay locked because they drive the repayment schedule.",
+  "@liabilityEditMetadataOnlyHint": { "description": "Info banner explaining liability edit mode limitations" },
   "liabilitySaveAction": "Save",
   "liabilityValidationRequired": "Required",
   "liabilityValidationPositive": "Must be greater than zero",
@@ -1247,6 +1255,10 @@
   "settingsDevicesTitle": "Devices",
   "@settingsDevicesTitle": { "description": "Settings row that opens the device list." },
   "settingsDevicesSubtitle": "View signed-in devices and revoke access",
+  "settingsSignOutTitle": "Sign out",
+  "@settingsSignOutTitle": { "description": "Settings row title for signing out / switching to local-only mode." },
+  "settingsSignOutSubtitle": "Disable cloud sync and keep this device in local mode",
+  "@settingsSignOutSubtitle": { "description": "Settings row subtitle for signing out / switching to local-only mode." },
 
   "authDevicesTitle": "Signed-in devices",
   "@authDevicesTitle": { "description": "AppBar title on the devices list page." },
@@ -1331,6 +1343,25 @@
 
   "analyticsAppBarTitle": "Analytics",
   "@analyticsAppBarTitle": { "description": "AppBar title for the analytics tab." },
+  "analyticsOverviewNetWorth": "Net worth",
+  "@analyticsOverviewNetWorth": { "description": "Analytics overview metric label for net worth." },
+  "analyticsOverviewMonthlyChange": "Month change",
+  "@analyticsOverviewMonthlyChange": { "description": "Analytics overview metric label for month-to-date change." },
+  "analyticsOverviewCashFlow": "Cash flow",
+  "@analyticsOverviewCashFlow": { "description": "Analytics overview metric label for current-period cash flow." },
+  "analyticsOverviewFireEta": "FIRE ETA",
+  "@analyticsOverviewFireEta": { "description": "Analytics overview metric label for FIRE projected ETA." },
+  "analyticsOverviewFireEtaMonths": "{months, plural, =1 {1 month} other {{months} months}}",
+  "@analyticsOverviewFireEtaMonths": {
+    "description": "Analytics overview FIRE ETA value in months.",
+    "placeholders": {
+      "months": { "type": "int" }
+    }
+  },
+  "analyticsOverviewFireNotConfigured": "Not set",
+  "@analyticsOverviewFireNotConfigured": { "description": "Analytics overview value when FIRE plan is not configured." },
+  "analyticsOverviewUnavailable": "—",
+  "@analyticsOverviewUnavailable": { "description": "Analytics overview unavailable metric placeholder." },
 
   "analyticsEquityTitle": "Equity Allocation",
   "analyticsEquitySubtitle": "Slice your stock & ETF holdings by sector, region, or market cap.",

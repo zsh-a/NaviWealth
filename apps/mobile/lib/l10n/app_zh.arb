@@ -55,6 +55,7 @@
   "planWheelEmptyBody": "录入一次卖 put 或备兑 call 交易后，周期会显示在这里。",
   "investmentEventTimelineTitle": "即将到来的事件",
   "investmentEventTimelineEmpty": "未来 90 天内没有分红或拆股事件。",
+  "investmentEventTimelineError": "无法加载即将到来的事件。",
   "investmentEventDividend": "分红",
   "investmentEventSplit": "拆股 {ratio}",
   "@investmentEventSplit": {
@@ -481,6 +482,9 @@
   "liabilityFieldCurrency": "币种",
   "liabilityFieldStatementDay": "账单日",
   "liabilityFieldPaymentDueDay": "还款日",
+  "liabilityFieldNote": "备注",
+  "liabilityEditAction": "编辑负债",
+  "liabilityEditMetadataOnlyHint": "此处只能编辑名称和备注。本金、利率和期限会驱动还款计划，因此保持锁定。",
   "liabilitySaveAction": "保存",
   "liabilityValidationRequired": "必填",
   "liabilityValidationPositive": "必须大于零",
@@ -683,6 +687,8 @@
 
   "settingsDevicesTitle": "已登录设备",
   "settingsDevicesSubtitle": "查看已登录的设备并远程登出",
+  "settingsSignOutTitle": "登出",
+  "settingsSignOutSubtitle": "关闭云同步，并将此设备保留为本地模式",
 
   "authDevicesTitle": "已登录设备",
   "authDeviceUnnamed": "未命名设备",
@@ -727,6 +733,13 @@
   "dashboardHeaderDeltaYtdLabel": "年初至今",
 
   "analyticsAppBarTitle": "组合分析",
+  "analyticsOverviewNetWorth": "净值",
+  "analyticsOverviewMonthlyChange": "本月变化",
+  "analyticsOverviewCashFlow": "现金流",
+  "analyticsOverviewFireEta": "FIRE ETA",
+  "analyticsOverviewFireEtaMonths": "{months, plural, other {{months} 个月}}",
+  "analyticsOverviewFireNotConfigured": "未设置",
+  "analyticsOverviewUnavailable": "—",
 
   "analyticsEquityTitle": "股票透视",
   "analyticsEquitySubtitle": "按行业、地域或市值切片查看股票 / ETF 持仓。",

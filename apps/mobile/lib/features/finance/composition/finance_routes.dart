@@ -290,6 +290,12 @@ StatefulShellRoute financeShellRoute() {
                     builder: (context, state) => const LiabilityFormPage(),
                   ),
                   GoRoute(
+                    path: ':id/edit',
+                    builder: (context, state) => LiabilityFormPage(
+                      liabilityId: state.pathParameters['id'],
+                    ),
+                  ),
+                  GoRoute(
                     path: ':id',
                     name: AppRouteNames.wealthLiabilityDetail,
                     builder: (context, state) {

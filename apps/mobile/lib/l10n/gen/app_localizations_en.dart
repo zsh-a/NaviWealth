@@ -176,6 +176,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'No upcoming dividends or splits in the next 90 days.';
 
   @override
+  String get investmentEventTimelineError => 'Couldn\'t load upcoming events.';
+
+  @override
   String get investmentEventDividend => 'Dividend';
 
   @override
@@ -1618,6 +1621,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get liabilityFieldPaymentDueDay => 'Payment due day';
 
   @override
+  String get liabilityFieldNote => 'Note';
+
+  @override
+  String get liabilityEditAction => 'Edit liability';
+
+  @override
+  String get liabilityEditMetadataOnlyHint =>
+      'Only the name and note can be edited here. Principal, rate and term stay locked because they drive the repayment schedule.';
+
+  @override
   String get liabilitySaveAction => 'Save';
 
   @override
@@ -2238,6 +2251,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'View signed-in devices and revoke access';
 
   @override
+  String get settingsSignOutTitle => 'Sign out';
+
+  @override
+  String get settingsSignOutSubtitle =>
+      'Disable cloud sync and keep this device in local mode';
+
+  @override
   String get authDevicesTitle => 'Signed-in devices';
 
   @override
@@ -2386,6 +2406,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get analyticsAppBarTitle => 'Analytics';
+
+  @override
+  String get analyticsOverviewNetWorth => 'Net worth';
+
+  @override
+  String get analyticsOverviewMonthlyChange => 'Month change';
+
+  @override
+  String get analyticsOverviewCashFlow => 'Cash flow';
+
+  @override
+  String get analyticsOverviewFireEta => 'FIRE ETA';
+
+  @override
+  String analyticsOverviewFireEtaMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months months',
+      one: '1 month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get analyticsOverviewFireNotConfigured => 'Not set';
+
+  @override
+  String get analyticsOverviewUnavailable => '—';
 
   @override
   String get analyticsEquityTitle => 'Equity Allocation';

@@ -103,6 +103,37 @@ void main() {
     expect(batch.single.table, 'liabilities');
   });
 
+  test(
+    'updateMetadata changes name and note without regenerating schedule',
+    () async {
+      final l = await repo.create(
+        type: LiabilityType.mortgage,
+        name: 'Home',
+        principal: d('120000'),
+        interestRate: d('0.05'),
+        currency: 'CNY',
+        paymentMethod: RepaymentMethod.equalPrincipal,
+        termMonths: 12,
+        startDate: DateTime.utc(2026, 1, 1),
+      );
+      final before = await repo.scheduleFor(l.id);
+      outbox.clearQueued();
+
+      final updated = await repo.updateMetadata(
+        id: l.id,
+        name: 'Primary home',
+        note: 'Refinance review in Q4',
+      );
+
+      expect(updated.name, 'Primary home');
+      expect(updated.note, 'Refinance review in Q4');
+      expect(await repo.scheduleFor(l.id), before);
+      expect(outbox.queued, hasLength(1));
+      expect(outbox.queued.single.table, 'liabilities');
+      expect(outbox.queued.single.rowId, l.id);
+    },
+  );
+
   test('registerPayment marks period paid, writes a journal entry, and queues '
       'amortization-update + journal-entry/posting ops', () async {
     final l = await repo.create(

@@ -398,6 +398,12 @@ abstract class AppLocalizations {
   /// **'No upcoming dividends or splits in the next 90 days.'**
   String get investmentEventTimelineEmpty;
 
+  /// Error state title when corporate-action events fail to load
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load upcoming events.'**
+  String get investmentEventTimelineError;
+
   /// Label on a cash-dividend event row
   ///
   /// In en, this message translates to:
@@ -2888,6 +2894,24 @@ abstract class AppLocalizations {
   /// **'Payment due day'**
   String get liabilityFieldPaymentDueDay;
 
+  /// Optional note field for a liability
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get liabilityFieldNote;
+
+  /// Button/title for editing liability metadata
+  ///
+  /// In en, this message translates to:
+  /// **'Edit liability'**
+  String get liabilityEditAction;
+
+  /// Info banner explaining liability edit mode limitations
+  ///
+  /// In en, this message translates to:
+  /// **'Only the name and note can be edited here. Principal, rate and term stay locked because they drive the repayment schedule.'**
+  String get liabilityEditMetadataOnlyHint;
+
   /// No description provided for @liabilitySaveAction.
   ///
   /// In en, this message translates to:
@@ -4010,6 +4034,18 @@ abstract class AppLocalizations {
   /// **'View signed-in devices and revoke access'**
   String get settingsDevicesSubtitle;
 
+  /// Settings row title for signing out / switching to local-only mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get settingsSignOutTitle;
+
+  /// Settings row subtitle for signing out / switching to local-only mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable cloud sync and keep this device in local mode'**
+  String get settingsSignOutSubtitle;
+
   /// AppBar title on the devices list page.
   ///
   /// In en, this message translates to:
@@ -4253,6 +4289,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Analytics'**
   String get analyticsAppBarTitle;
+
+  /// Analytics overview metric label for net worth.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth'**
+  String get analyticsOverviewNetWorth;
+
+  /// Analytics overview metric label for month-to-date change.
+  ///
+  /// In en, this message translates to:
+  /// **'Month change'**
+  String get analyticsOverviewMonthlyChange;
+
+  /// Analytics overview metric label for current-period cash flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash flow'**
+  String get analyticsOverviewCashFlow;
+
+  /// Analytics overview metric label for FIRE projected ETA.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRE ETA'**
+  String get analyticsOverviewFireEta;
+
+  /// Analytics overview FIRE ETA value in months.
+  ///
+  /// In en, this message translates to:
+  /// **'{months, plural, =1 {1 month} other {{months} months}}'**
+  String analyticsOverviewFireEtaMonths(int months);
+
+  /// Analytics overview value when FIRE plan is not configured.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get analyticsOverviewFireNotConfigured;
+
+  /// Analytics overview unavailable metric placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'—'**
+  String get analyticsOverviewUnavailable;
 
   /// No description provided for @analyticsEquityTitle.
   ///

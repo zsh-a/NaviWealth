@@ -13,8 +13,8 @@ import '../domain/reporting/event_timeline.dart';
 ///
 /// Reads [upcomingEventsForSymbolProvider] and renders a compact list of
 /// the next 90 days of corporate actions for [symbol]. Falls back to a
-/// quiet empty state when no events are scheduled — which is also the
-/// state on platforms / before the yfinance fetcher is wired.
+/// quiet empty state when no events are scheduled, and a retryable error
+/// state when the fetcher fails.
 class EventTimelineSection extends ConsumerWidget {
   const EventTimelineSection({super.key, required this.symbol});
 
@@ -24,10 +24,6 @@ class EventTimelineSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final eventsAsync = ref.watch(upcomingEventsForSymbolProvider(symbol));
-    // Network fetcher is best-effort: loading + error both reduce to
-    // the same empty placeholder so the holding detail page stays
-    // calm during a transient outage.
-    final events = eventsAsync.value ?? const <CorporateActionEvent>[];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -39,19 +35,40 @@ class EventTimelineSection extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.s8),
-        if (events.isEmpty)
-          SoftCard(
-            padding: const EdgeInsets.all(AppSpacing.s16),
-            child: Text(
-              l10n.investmentEventTimelineEmpty,
-              style: context.bodyCaptionStyle,
+        eventsAsync.when(
+          loading: () => const SoftCard(
+            padding: EdgeInsets.all(AppSpacing.s16),
+            child: SkeletonBox(height: AppSpacing.s40, radius: AppRadius.sm),
+          ),
+          error: (error, _) => AppEmptyState.error(
+            title: l10n.investmentEventTimelineError,
+            message: '$error',
+            action: FButton(
+              variant: FButtonVariant.ghost,
+              onPress: () {
+                ref.invalidate(corporateActionEventsProvider(symbol));
+                ref.invalidate(upcomingEventsForSymbolProvider(symbol));
+              },
+              child: Text(l10n.commonRetry),
             ),
-          )
-        else
-          for (final ev in events) ...[
-            _EventRow(event: ev),
-            const SizedBox(height: AppSpacing.s8),
-          ],
+          ),
+          data: (events) => events.isEmpty
+              ? SoftCard(
+                  padding: const EdgeInsets.all(AppSpacing.s16),
+                  child: Text(
+                    l10n.investmentEventTimelineEmpty,
+                    style: context.bodyCaptionStyle,
+                  ),
+                )
+              : Column(
+                  children: [
+                    for (final ev in events) ...[
+                      _EventRow(event: ev),
+                      const SizedBox(height: AppSpacing.s8),
+                    ],
+                  ],
+                ),
+        ),
       ],
     );
   }

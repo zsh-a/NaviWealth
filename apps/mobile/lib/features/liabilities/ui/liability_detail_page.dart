@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/features/finance/data/domain/amortization_entry.dart';
 import 'package:naviwealth/features/finance/data/domain/liability.dart';
 
+import '../../../app/route_paths.dart';
 import '../../../core/format/formatters.dart';
 import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
@@ -102,6 +104,23 @@ class _LiabilityHeaderCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l.name, style: context.theme.typography.lg),
+            const SizedBox(height: AppSpacing.s8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FButton(
+                variant: FButtonVariant.outline,
+                onPress: () =>
+                    context.push(AppRoutes.wealthLiabilityEdit(l.id)),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(FLucideIcons.pencil, size: AppIconSizes.sm),
+                    const SizedBox(width: AppSpacing.s6),
+                    Text(l10n.liabilityEditAction),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: AppSpacing.s4),
             Text(
               '${liabilityTypeLabel(l10n, l.type)} · '
