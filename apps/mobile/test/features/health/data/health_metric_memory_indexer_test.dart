@@ -317,6 +317,159 @@ void main() {
     });
   });
 
+  group('HealthMetricMemoryIndexer.reindex — trend memory extraction', () {
+    test(
+      'falling HRV writes semantic trend and procedural recovery rule',
+      () async {
+        final rt = _runtime();
+        final indexer = HealthMetricMemoryIndexer(clock: () => now);
+        final input = <HealthMetric>[
+          _metric(
+            id: 'hrv-1',
+            kind: HealthMetricKind.hrvDaily,
+            value: 72,
+            unit: 'ms',
+            capturedAt: now.subtract(const Duration(days: 4)),
+          ),
+          _metric(
+            id: 'hrv-2',
+            kind: HealthMetricKind.hrvDaily,
+            value: 68,
+            unit: 'ms',
+            capturedAt: now.subtract(const Duration(days: 3)),
+          ),
+          _metric(
+            id: 'hrv-3',
+            kind: HealthMetricKind.hrvDaily,
+            value: 59,
+            unit: 'ms',
+            capturedAt: now.subtract(const Duration(days: 2)),
+          ),
+          _metric(
+            id: 'hrv-4',
+            kind: HealthMetricKind.hrvDaily,
+            value: 55,
+            unit: 'ms',
+            capturedAt: now.subtract(const Duration(days: 1)),
+          ),
+        ];
+
+        final out = await indexer.reindex(rt, input, ownerUserId: 'u1');
+
+        expect(out.events, 4);
+        expect(out.memories, 2);
+
+        final semantic = await rt.recall(
+          queryText: '',
+          ownerUserId: 'u1',
+          kinds: const {MemoryKind.semantic},
+          source: kHealthSource,
+          entityFilter: const {'health_trend'},
+          topK: 5,
+        );
+        expect(semantic, hasLength(1));
+        expect(semantic.single.record.id, contains('semantic:trend:hrv_daily'));
+        expect(semantic.single.record.payload['trend'], 'decreasing');
+        expect(semantic.single.record.payload['sample_count'], 4);
+        expect(semantic.single.record.entities, contains('recovery_risk'));
+
+        final procedural = await rt.recall(
+          queryText: '',
+          ownerUserId: 'u1',
+          kinds: const {MemoryKind.procedural},
+          source: kHealthSource,
+          entityFilter: const {'health_rule'},
+          topK: 5,
+        );
+        expect(procedural, hasLength(1));
+        expect(procedural.single.record.payload['rule'], contains('HRV'));
+        expect(procedural.single.record.entities, contains('workout_planning'));
+      },
+    );
+
+    test('stable steps write semantic trend without procedural rule', () async {
+      final rt = _runtime();
+      final indexer = HealthMetricMemoryIndexer(clock: () => now);
+
+      final out = await indexer.reindex(rt, [
+        _metric(
+          id: 'steps-1',
+          kind: HealthMetricKind.stepsDaily,
+          value: 8000,
+          unit: 'count',
+          capturedAt: now.subtract(const Duration(days: 4)),
+        ),
+        _metric(
+          id: 'steps-2',
+          kind: HealthMetricKind.stepsDaily,
+          value: 8200,
+          unit: 'count',
+          capturedAt: now.subtract(const Duration(days: 3)),
+        ),
+        _metric(
+          id: 'steps-3',
+          kind: HealthMetricKind.stepsDaily,
+          value: 7900,
+          unit: 'count',
+          capturedAt: now.subtract(const Duration(days: 2)),
+        ),
+        _metric(
+          id: 'steps-4',
+          kind: HealthMetricKind.stepsDaily,
+          value: 8100,
+          unit: 'count',
+          capturedAt: now.subtract(const Duration(days: 1)),
+        ),
+      ], ownerUserId: 'u1');
+
+      expect(out.events, 4);
+      expect(out.memories, 1);
+
+      final semantic = await rt.recall(
+        queryText: '',
+        ownerUserId: 'u1',
+        kinds: const {MemoryKind.semantic},
+        source: kHealthSource,
+        entityFilter: const {'health_trend'},
+        topK: 5,
+      );
+      expect(semantic, hasLength(1));
+      expect(semantic.single.record.payload['trend'], 'stable');
+      expect(semantic.single.record.entities, isNot(contains('recovery_risk')));
+
+      final procedural = await rt.recall(
+        queryText: '',
+        ownerUserId: 'u1',
+        kinds: const {MemoryKind.procedural},
+        source: kHealthSource,
+        topK: 5,
+      );
+      expect(procedural, isEmpty);
+    });
+
+    test('trend memory ids are stable across repeated reindex', () async {
+      final rt = _runtime();
+      final indexer = HealthMetricMemoryIndexer(clock: () => now);
+      final input = [
+        for (var i = 0; i < 4; i++)
+          _metric(
+            id: 'rhr-$i',
+            kind: HealthMetricKind.rhrDaily,
+            value: 58 + i * 3,
+            unit: 'bpm',
+            capturedAt: now.subtract(Duration(days: 4 - i)),
+          ),
+      ];
+
+      final first = await indexer.reindex(rt, input, ownerUserId: 'u1');
+      final second = await indexer.reindex(rt, input, ownerUserId: 'u1');
+
+      expect(first.memories, 2);
+      expect(second.memories, 2);
+      expect(await rt.memoryCount, 2);
+    });
+  });
+
   group('HealthMetricMemoryIndexer.reindex — idempotency', () {
     test('repeated reindex with same input doesn\'t duplicate rows', () async {
       final rt = _runtime();
