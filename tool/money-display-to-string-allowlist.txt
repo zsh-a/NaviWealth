@@ -110,6 +110,7 @@ apps/mobile/lib/features/knowledge/ui/knowledge_object_detail_page.dart	'${targe
 apps/mobile/lib/features/knowledge/ui/knowledge_object_detail_page.dart	value: a.confidence.toStringAsFixed(2),	confidence-score
 apps/mobile/lib/features/knowledge/ui/knowledge_decision_detail_page.dart	'${a.status.wire} · ${a.confidence.toStringAsFixed(2)}',	confidence-score
 apps/mobile/lib/features/knowledge/ui/knowledge_library_page.dart	a.confidence.toStringAsFixed(2),	confidence-score
+apps/mobile/lib/features/knowledge/ui/knowledge_library_list.dart	a.confidence.toStringAsFixed(2),	confidence-score
 apps/mobile/lib/features/knowledge/ui/_object_writers.dart	'${_confidence.toStringAsFixed(2)}',	confidence-score
 apps/mobile/lib/features/knowledge/ui/_object_writers.dart	tooltipBuilder: (_, next) => Text(next.toStringAsFixed(2)),	confidence-score
 apps/mobile/lib/features/knowledge/ui/_object_writers.dart	next.toStringAsFixed(2),	confidence-score
@@ -137,3 +138,4 @@ apps/mobile/lib/features/finance/composition/finance_ai_context_summary_provider
 apps/mobile/lib/features/finance/data/market/providers/options/yfinance_options_provider.dart	final rounded = Decimal.parse(raw.toStringAsFixed(4));	decimal-rounding-before-currency-formatter
 apps/mobile/lib/features/knowledge/ui/_object_writers.dart	labelOf: (v) => v.toStringAsFixed(2),	confidence-score
 apps/mobile/lib/features/health/ui/health_trend_page.dart	if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}k';	compact-steps-label
+apps/mobile/lib/features/health/ui/metric_grid.dart	? '${(wm.value / 1000.0).toStringAsFixed(1)} km · ${_ago(l10n, m.capturedAt)}'	distance-display
