@@ -13,7 +13,6 @@ import '../core/security/biometric_lock_gate.dart';
 import '../core/shortcuts/shortcuts.dart';
 import '../design_system/design_system.dart';
 import '../features/ai_chat/ui/ask_ai.dart';
-import '../features/shared/forms/optimistic_form_submit.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'domain_composition.dart';
 import 'route_paths.dart';
@@ -44,7 +43,6 @@ class NaviWealthApp extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
     final compact = useCompactDensity(defaultTargetPlatform, kIsWeb);
-    final scaffoldMessengerKey = ref.watch(scaffoldMessengerKeyProvider);
 
     return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
@@ -53,9 +51,6 @@ class NaviWealthApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(compact: compact),
       themeMode: themeMode,
       locale: locale,
-      // Kept around for the few Material call sites still pushing
-      // SnackBar/etc; will be removed once Phase 3 lands FToaster.
-      scaffoldMessengerKey: scaffoldMessengerKey,
       routerConfig: router,
       onNavigationNotification: _claimSystemBack,
       localizationsDelegates: AppLocalizations.localizationsDelegates,

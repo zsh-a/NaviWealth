@@ -62,7 +62,7 @@ class Haptics {
     unawaited(HapticFeedback.lightImpact());
   }
 
-  /// Form / async action failed (error toast / SnackBar).
+  /// Form / async action failed (error toast).
   static void error() {
     if (!isEnabled) return;
     unawaited(HapticFeedback.heavyImpact());
